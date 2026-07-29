@@ -156,16 +156,16 @@ jobs:
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:
-    - name: Notify Zulip
-      uses: zulip/github-actions-zulip/send-message@v1
-      with:
-        api-key: ${{ secrets.PRBOT_API_KEY }}
-        email: "pr-reminder-bot@nebulastream.zulipchat.com"
-        organization-url: "https://nebulastream.zulipchat.com"
-        to: "ci"
-        topic: "nightly ci status"
-        type: "stream"
-        content: |
-          @**ls-1801** @**Nils** [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
-          If there are novel faults, please open corresponding issues/topics and notify potential owners/investigators.
-          If applicable, please communicate workarounds and/or expected time-to-fix.
+      - name: Notify Zulip
+        uses: zulip/github-actions-zulip/send-message@v1
+        with:
+          api-key: ${{ secrets.PRBOT_API_KEY }}
+          email: "pr-reminder-bot@nebulastream.zulipchat.com"
+          organization-url: "https://nebulastream.zulipchat.com"
+          to: "ci"
+          topic: "nightly ci status"
+          type: "stream"
+          content: |
+            @**ls-1801** @**Nils** @_**Oliver Czerwiak**  [Nightly run ${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.
+            If there are novel faults, please open corresponding issues/topics and notify potential owners/investigators.
+            If applicable, please communicate workarounds and/or expected time-to-fix.
