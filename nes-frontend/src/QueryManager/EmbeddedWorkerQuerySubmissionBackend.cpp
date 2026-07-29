@@ -222,9 +222,9 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
     return channel->workerStatus(after);
 }
 
-std::expected<std::string, Exception> EmbeddedWorkerQuerySubmissionBackend::version() const
+std::expected<VersionInfo, Exception> EmbeddedWorkerQuerySubmissionBackend::version() const
 {
-    return formatVersion(SingleNodeWorkerBinaryName);
+    return versionInfo(SingleNodeWorkerBinaryName);
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

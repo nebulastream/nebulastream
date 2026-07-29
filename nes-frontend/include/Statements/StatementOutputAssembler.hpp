@@ -40,6 +40,7 @@
 #include <DistributedQuery.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
+#include <Version.hpp>
 
 namespace NES
 {
@@ -439,8 +440,8 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
     }
 };
 
-using WorkerVersionOutputRowType = std::tuple<Host, std::string>;
-constexpr std::array<std::string_view, 2> workerVersionOutputColumns{"worker", "version"};
+using WorkerVersionOutputRowType = std::tuple<Host, std::optional<VersionInfo>, std::optional<std::string>>;
+constexpr std::array<std::string_view, 3> workerVersionOutputColumns{"worker", "version", "error"};
 
 template <>
 struct StatementOutputAssembler<ShowVersionStatementResult>
@@ -453,7 +454,14 @@ struct StatementOutputAssembler<ShowVersionStatementResult>
         output.reserve(result.versions.size());
         for (const auto& [host, version] : result.versions)
         {
-            output.emplace_back(host, version.has_value() ? *version : fmt::format("error: {}", version.error().what()));
+            if (version.has_value())
+            {
+                output.emplace_back(host, *version, std::nullopt);
+            }
+            else
+            {
+                output.emplace_back(host, std::nullopt, version.error().what());
+            }
         }
         return std::make_pair(workerVersionOutputColumns, output);
     }

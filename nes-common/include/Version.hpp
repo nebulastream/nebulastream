@@ -14,18 +14,20 @@
 
 #pragma once
 
-#include <string>
 #include <string_view>
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES
 {
 
+using VersionInfo = NESStrongStringType<struct VersionInfo_, "INVALID">;
+
 /// Builds the multi-line build-info report for the given binary name. The first line is
 /// `<binaryName> <version>`, followed by indented fields (commit, build, sanitizer, compiler,
 /// compiler flags, stdlib, log level, vcpkg baseline). The build metadata is embedded at CMake generation time (see BuildInfo.hpp).
-[[nodiscard]] std::string formatVersion(std::string_view binaryName);
+[[nodiscard]] VersionInfo versionInfo(std::string_view binaryName);
 
-/// Prints the build-info report produced by formatVersion to stdout.
+/// Prints the build-info report produced by versionInfo to stdout.
 void printVersion(std::string_view binaryName);
 
 /// Returns true if argv contains a `-v` or `--version` flag. Intended to be checked early in main()

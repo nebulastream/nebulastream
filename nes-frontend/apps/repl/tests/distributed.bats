@@ -109,7 +109,8 @@ docker_nes_repl() {
   [ "$status" -eq 0 ]
 
   [ "$(echo "${lines[1]}" | jq -r '.[0].worker')" = "worker-node:8080" ]
-  echo "${lines[1]}" | jq -r '.[0].version' | grep -q "error:"
+  [ "$(echo "${lines[1]}" | jq -r '.[0].version')" = "null" ]
+  [ "$(echo "${lines[1]}" | jq -r '.[0].error')" != "null" ]
 }
 
 @test "launch bad query should fail" {

@@ -152,7 +152,7 @@ std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(
     return deserializeWorkerStatus(&response);
 }
 
-std::expected<std::string, Exception> GRPCQuerySubmissionBackend::version() const
+std::expected<VersionInfo, Exception> GRPCQuerySubmissionBackend::version() const
 {
     grpc::ClientContext context;
     const google::protobuf::Empty request;
@@ -167,7 +167,7 @@ std::expected<std::string, Exception> GRPCQuerySubmissionBackend::version() cons
     {
         return std::unexpected(UnknownException("GRPC Status: {}", responseCode.error_message()));
     }
-    return response.version();
+    return VersionInfo{response.version()};
 }
 
 std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
