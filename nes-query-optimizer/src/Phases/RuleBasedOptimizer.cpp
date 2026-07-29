@@ -15,6 +15,7 @@
 
 #include <Phases/RuleBasedOptimizer.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -27,7 +28,8 @@
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include "ErrorHandling.hpp"
+#include <ErrorHandling.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
@@ -52,8 +54,30 @@ RuleBasedOptimizer::RuleBasedOptimizer(
         .modelCatalog = this->modelCatalog,
     };
 
-    for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())
+    const auto registeredRules = PlanRuleRegistry::instance().getRegisteredNames();
+
+
+    std::unordered_set<std::string> disabledRules;
+    for (const auto& disabledRule : this->defaultQueryOptimization.disabledRules.getValues())
     {
+        disabledRules.insert(toUpperCase(disabledRule.getValue()));
+    }
+
+    for (const auto& disabledRule : disabledRules)
+    {
+        if (std::ranges::find(registeredRules, disabledRule) == registeredRules.end())
+        {
+            throw UnknownOptimizerRule("The disabled rule \"{}\" is not registered in PlanRuleRegistry", disabledRule);
+        }
+    }
+
+    for (auto ruleName : registeredRules)
+    {
+        if (disabledRules.contains(ruleName))
+        {
+            continue;
+        }
+
         auto rule = PlanRuleRegistry::instance().create(ruleName, arguments);
         if (!rule.has_value())
         {

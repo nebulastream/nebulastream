@@ -67,3 +67,8 @@ workers:
     max_operators: 10000
     downstream:
       - node2:8080
+
+optimizer:
+  disabledRules:
+    - PredicatePushdown
+    - ProjectionPushdown

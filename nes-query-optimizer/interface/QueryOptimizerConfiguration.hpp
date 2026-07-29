@@ -44,10 +44,12 @@ public:
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
+    SequenceOption<StringOption> disabledRules = {"disabledRules", "list of disabled rules"};
+
     QueryOptimizerNetworkConfiguration network = {"network", "Network configuration overrides for query decomposition"};
 
 private:
-    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &network}; }
+    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &disabledRules, &network}; }
 };
 
 }

@@ -13,10 +13,13 @@
 */
 #pragma once
 
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -95,9 +98,17 @@ void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
 template <DerivedBaseOption T>
 void SequenceOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
-    auto option = T();
-    option.parseFromString(identifier, inputParams);
-    options.push_back(option);
+    if (!inputParams.contains(identifier))
+    {
+        throw InvalidConfigParameter("Identifier {} is not known.", identifier);
+    }
+    for (const auto& token : splitWithStringDelimiter<std::string>(inputParams[identifier], ","))
+    {
+        auto option = T();
+        std::unordered_map<std::string, std::string> singleValue{{identifier, std::string(token)}};
+        option.parseFromString(identifier, singleValue);
+        options.push_back(option);
+    }
     this->explicitlySet = true;
 }
 

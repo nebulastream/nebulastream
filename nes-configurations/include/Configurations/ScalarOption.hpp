@@ -159,11 +159,11 @@ void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 template <class T>
 void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
-    if (!inputParams.contains(this->getName()))
+    if (!inputParams.contains(identifier))
     {
         throw InvalidConfigParameter("Identifier {} is not known.", identifier);
     }
-    std::string value = inputParams[this->getName()];
+    std::string value = inputParams[identifier];
     if (value.empty())
     {
         throw InvalidConfigParameter("Identifier {} is not known.", identifier);
