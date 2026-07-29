@@ -23,6 +23,9 @@
 #include <vector>
 
 #include <AsOfJoin/AsOfJoinPhysicalOperator.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
@@ -64,8 +67,46 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
+    const auto logicalJoinFunction = join->getJoinFunction();
+    const auto constantJoinFunction = logicalJoinFunction.tryGetAs<ConstantValueLogicalFunction>();
+    const bool predicateFree = constantJoinFunction && constantJoinFunction.value()->getConstantValue() == "true";
+    std::optional<Record::RecordFieldIdentifier> rightKeyField;
+    if (!predicateFree)
+    {
+        const auto equality = logicalJoinFunction.tryGetAs<EqualsLogicalFunction>();
+        if (!equality)
+        {
+            throw UnsupportedQuery("ASOF JOIN supports only direct field equality predicates or no predicate");
+        }
+        const auto equalityChildren = equality.value()->getChildren();
+        const auto firstField = equalityChildren[0].tryGetAs<FieldAccessLogicalFunction>();
+        const auto secondField = equalityChildren[1].tryGetAs<FieldAccessLogicalFunction>();
+        if (!firstField || !secondField)
+        {
+            throw UnsupportedQuery("ASOF JOIN supports only direct field equality predicates or no predicate");
+        }
+        const auto rightLogicalField = [&]
+        {
+            if (firstField.value()->getField().getProducedBy() == children[1])
+            {
+                if (secondField.value()->getField().getProducedBy() != children[0])
+                {
+                    throw UnsupportedQuery("ASOF equality must compare one field from each input");
+                }
+                return firstField.value()->getField();
+            }
+            if (firstField.value()->getField().getProducedBy() != children[0]
+                || secondField.value()->getField().getProducedBy() != children[1])
+            {
+                throw UnsupportedQuery("ASOF equality must compare one field from each input");
+            }
+            return secondField.value()->getField();
+        }();
+        rightKeyField = children[1].getTraitSet().get<FieldMappingTrait>()->getMapping(rightLogicalField.unbound());
+        INVARIANT(rightKeyField.has_value(), "Missing physical mapping for ASOF right key {}", rightLogicalField);
+    }
     auto physicalJoinFunction
-        = QueryCompilation::FunctionProvider::lowerFunction(join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)});
+        = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, FieldMappingTrait{std::move(combinedMappings)});
 
     using BoundCharacteristics = std::array<Windowing::BoundTimeCharacteristic, 2>;
     const auto characteristics = join->getTimeCharacteristics();
@@ -115,8 +156,23 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
-    auto joinWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        AsOfJoinPhysicalOperator{
+    const auto makeJoinWrapper = [&](auto physicalJoin)
+    {
+        return std::make_shared<PhysicalOperatorWrapper>(
+            std::move(physicalJoin),
+            outputSchema,
+            outputSchema,
+            memoryLayout,
+            memoryLayout,
+            handlerId,
+            handler,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{leftWrapper, rightWrapper});
+    };
+    std::shared_ptr<PhysicalOperatorWrapper> joinWrapper;
+    if (predicateFree)
+    {
+        joinWrapper = makeJoinWrapper(PredicateFreeAsOfJoinPhysicalOperator{
             handlerId,
             std::move(physicalJoinFunction),
             std::move(leftInputBufferRef),
@@ -125,15 +181,23 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
             std::move(rightTupleLayout),
             outputOrigin,
             std::move(leftTimeFunction),
-            std::move(rightTimeFunction)},
-        outputSchema,
-        outputSchema,
-        memoryLayout,
-        memoryLayout,
-        handlerId,
-        handler,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftWrapper, rightWrapper});
+            std::move(rightTimeFunction),
+            std::nullopt});
+    }
+    else
+    {
+        joinWrapper = makeJoinWrapper(EqualityAsOfJoinPhysicalOperator{
+            handlerId,
+            std::move(physicalJoinFunction),
+            std::move(leftInputBufferRef),
+            std::move(rightInputBufferRef),
+            std::move(leftTupleLayout),
+            std::move(rightTupleLayout),
+            outputOrigin,
+            std::move(leftTimeFunction),
+            std::move(rightTimeFunction),
+            std::move(rightKeyField)});
+    }
 
     return {.root = joinWrapper, .leaves = {leftWrapper, rightWrapper}};
 }

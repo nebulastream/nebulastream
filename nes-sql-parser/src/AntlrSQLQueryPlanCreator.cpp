@@ -1241,6 +1241,10 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
         {
             throw InvalidQuerySyntax("ASOF JOIN requires TIME(left_timestamp, right_timestamp)");
         }
+        if (!helpers.top().joinKeyRelationHelper.empty() && !helpers.top().joinKeyRelationHelper.front().tryGetAs<EqualsLogicalFunction>())
+        {
+            throw UnsupportedQuery("ASOF JOIN supports only equality predicates or no predicate");
+        }
 
         const auto joinFunction = helpers.top().joinKeyRelationHelper.empty()
             ? LogicalFunction{ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true")}

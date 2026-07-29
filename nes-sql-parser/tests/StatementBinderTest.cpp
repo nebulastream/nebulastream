@@ -37,9 +37,9 @@
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Serialization/LogicalFunctionReflection.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -1051,6 +1051,24 @@ TEST_F(StatementBinderTest, StreamTableAsOfJoinRequiresTimeCharacteristics)
 
     const auto untimedQuery = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN TABLE (SELECT * FROM s2) ON s1key = s2key INTO sink";
     EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(untimedQuery), Exception);
+}
+
+TEST_F(StatementBinderTest, AsOfJoinRejectsNonEqualityPredicates)
+{
+    const auto query = "SELECT * FROM (SELECT * FROM s1) ASOF JOIN (SELECT * FROM s2) ON s1key < s2key TIME(s1key, s2key) INTO sink";
+    EXPECT_THROW(
+        {
+            try
+            {
+                static_cast<void>(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query));
+            }
+            catch (const Exception& exception)
+            {
+                EXPECT_EQ(exception.code(), ErrorCode::UnsupportedQuery);
+                throw;
+            }
+        },
+        Exception);
 }
 
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)

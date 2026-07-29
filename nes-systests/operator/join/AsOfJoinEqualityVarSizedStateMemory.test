@@ -1,0 +1,53 @@
+# name: join/AsOfJoinEqualityVarSizedStateMemory.test
+# description: Reproduces unbounded VARSIZED state in equality ASOF joins
+# groups: [Join, StreamTableJoin]
+
+# The right-side payload history totals 2 MiB, while only 1 MiB of unpooled memory is available.
+# All rows use the same key, so keyed watermark GC only needs to retain one predecessor plus future versions.
+GlobalConfiguration worker.total_memory_in_bytes: [67108864]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.015625]
+GlobalConfiguration worker.default_max_inflight_buffers: [2]
+
+CREATE LOGICAL SOURCE keyed_events(
+    event_id UINT64 NOT NULL,
+    event_key UINT64 NOT NULL,
+    event_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR keyed_events TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 AS "SOURCE".SEED,
+    'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+    'emit_rate 1000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    'SEQUENCE UINT64 0 32 1, SEQUENCE UINT64 7 8 0, SEQUENCE UINT64 0 32 1' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE keyed_thermal_frames(
+    thermal_id UINT64 NOT NULL,
+    thermal_key UINT64 NOT NULL,
+    thermal_image VARSIZED NOT NULL,
+    thermal_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR keyed_thermal_frames TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    2 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 32 1, SEQUENCE UINT64 7 8 0, RANDOMSTR 65536 65536, SEQUENCE UINT64 0 32 1'
+        AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK result(
+    event_id UINT64 NOT NULL,
+    thermal_id UINT64 NOT NULL,
+    thermal_size UINT64 NOT NULL
+) TYPE File;
+
+SELECT event_id, thermal_id, OCTET_LENGTH(thermal_image) AS thermal_size
+FROM (
+    SELECT *
+    FROM (SELECT * FROM keyed_events)
+    ASOF JOIN (SELECT * FROM keyed_thermal_frames) ON event_key = thermal_key
+    TIME(event_ts, thermal_ts)
+)
+WHERE event_id = 31
+INTO result;
+----
+31 31 65536

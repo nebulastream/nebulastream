@@ -53,6 +53,11 @@ public:
     void unlock();
 
     TupleBuffer* getOrCreateTableBuffer(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
+    TupleBuffer* beginTableCompaction(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
+    void appendTableTimestamp(uint64_t timestamp);
+    void appendCompactedTableTimestamp(uint64_t timestamp);
+    void finishTableCompaction();
+    [[nodiscard]] uint64_t getTableTimestamp(uint64_t index) const;
     TupleBuffer* getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
     TupleBuffer* beginPendingCompaction(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
 
@@ -75,6 +80,9 @@ public:
 private:
     std::recursive_mutex stateMutex;
     std::optional<TupleBuffer> tableBuffer;
+    std::optional<TupleBuffer> compactedTableBuffer;
+    std::vector<uint64_t> tableTimestamps;
+    std::vector<uint64_t> compactedTableTimestamps;
     std::optional<TupleBuffer> pendingBuffer;
     std::optional<TupleBuffer> compactedPendingBuffer;
     /// Only stream rows still waiting for the table watermark are retained.
