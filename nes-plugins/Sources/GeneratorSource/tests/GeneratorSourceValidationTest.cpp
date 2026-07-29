@@ -235,14 +235,18 @@ TEST_F(GeneratorSourceValidationTest, UnknownParameterIsRejected)
 namespace
 {
 /// A config whose validator throws (the legacy style) instead of returning nullopt.
+/// tryValidateAndFormat requires parameterMap as a static member, so this mirrors the static-inline
+/// declaration style of every production parameterMap (which predates the cert-err58 check).
 struct ThrowingValidatorConfig
 {
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<uint32_t> ALWAYS_THROWS{
         "ALWAYS_THROWS",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>&) -> std::optional<uint32_t>
         { throw InvalidConfigParameter("thrown from a legacy validator"); }};
 
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(ALWAYS_THROWS);
 };
