@@ -7,9 +7,9 @@ on:
   workflow_call:
 
 jobs:
-  # Placeholder so this reusable workflow is valid until a real docs check exists. PR #1745 replaces with something useful
-  no-op:
-    name: "Docs checks (none yet)"
-    runs-on: ubuntu-24.04
-    steps:
-      - run: echo "No docs checks configured yet."
+  docs-website:
+    name: "Build Docs Website"
+    uses: ./.github/workflows/docs_website_build.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      should_publish: false

@@ -1,0 +1,60 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+baseURL = "https://docs.nebula.stream/"
+languageCode = "en-US"
+title = "NebulaStream Documentation"
+enableRobotsTXT = true
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.parser]
+      autoHeadingID = true
+      autoHeadingIDType = "github"
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    lineNos = false
+    noClasses = true
+    style = "dracula"
+
+[params]
+  description = "NebulaStream is a general purpose, end-to-end data management system for the IoT."
+  repo = "https://github.com/nebulastream/nebulastream"
+
+# Pages shared with docs/ are mounted from there, never copied, so the site cannot
+# drift from the docs the contributors read on GitHub. Declaring any content mount
+# replaces the default one, hence the explicit content -> content entry.
+[module]
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "../development/development.md"
+    target = "content/development/developer.md"
+  [[module.mounts]]
+    source = "../guide/how_to_add_a_source.md"
+    target = "content/development/howToAddSource.md"
+  [[module.mounts]]
+    source = "../guide/how_to_add_a_sink.md"
+    target = "content/development/howToAddSink.md"
+  [[module.mounts]]
+    source = "../guide/query_api.md"
+    target = "content/reference/APIConcepts.md"
+  [[module.mounts]]
+    source = "../guide/extensibility.md"
+    target = "content/development/Extensibility.md"
+  [[module.mounts]]
+    source = "../guide/how_to_add_a_placement_strategy.md"
+    target = "content/development/HowToAddAPlacementStrategy.md"

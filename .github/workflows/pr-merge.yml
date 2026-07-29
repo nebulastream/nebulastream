@@ -24,6 +24,20 @@ jobs:
       branch-name: 'main'
     secrets: inherit
 
+  docs-website:
+    if: github.event.pull_request.merged == true
+    name: "Publish Docs Website"
+    uses: ./.github/workflows/docs_website_build.yml
+    # A called workflow can only narrow the caller's scopes, and id-token is not in the
+    # default token, so publish-website cannot request it unless it is granted here.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      head_sha: ${{ github.event.pull_request.merge_commit_sha }}
+      should_publish: true
+
   check-and-update-development-images:
     # This job is executed when a PR is merged into the main branch.
     # If changes to the dependencies are detected we update the `latest`

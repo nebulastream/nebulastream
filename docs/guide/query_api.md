@@ -1,3 +1,8 @@
+---
+title: "API Concepts"
+weight: 40
+---
+
 # NebulaStream Query API Guide
 
 NebulaStream provides stream processing through a declarative, SQL-like query language.
@@ -211,6 +216,8 @@ Each logical source can have multiple physical sources, allowing a single stream
 Supported physical source types:
 - `File`
 - `TCP`
+- `MQTT` — Source MQTT documentation coming soon.
+- `Generator` — Source Generator documentation coming soon.
 
 In our example, we define two physical sources that both feed the `lrb` logical source:
 ```sql
@@ -278,6 +285,8 @@ The sink name (`csv_sink`) must match the name used in the query's `INTO` clause
 Available sink types include:
 - `File`: Writes results to a file, either overwriting or appending.
 - `Print`: Writes results to standard output (stdout).
+- `Void` — Sink Void documentation coming soon.
+- `MQTT` — Sink MQTT documentation coming soon.
 
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
@@ -734,6 +743,9 @@ Functions are either unary (one input) or binary (two inputs).
 | Encode to base64                | `SELECT TO_BASE64(data) FROM s INTO sink`            |
 | Decode from base64              | `SELECT FROM_BASE64(encoded) FROM s INTO sink`       |
 | Cast to a different type        | `SELECT CAST(x AS FLOAT64) FROM s INTO sink`         |
+| String length                   | Function `CHAR_LENGTH` documentation coming soon.    |
+| Byte length                     | Function `OCTET_LENGTH` documentation coming soon.   |
+| Extract a timestamp component   | Function `EXTRACT` documentation coming soon.        |
 
 `TO_BASE64` and `FROM_BASE64` convert between raw binary data (`VARSIZED`) and base64-encoded text (`VARSIZED`).
 They use OpenSSL's EVP base64 implementation. These functions are particularly useful with `MODEL_INFERENCE` to

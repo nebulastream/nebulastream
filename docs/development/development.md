@@ -1,3 +1,8 @@
+---
+title: "Build instructions"
+weight: 10
+---
+
 # Development
 
 This document explains how to set up the development environment for NebulaStream.
@@ -113,7 +118,9 @@ docker run \
 ```
 
 In CLion these show up in the target dropdown and run like any other build target, so there is no need to edit the
-Docker toolchain environment. See [fixing clang-tidy warnings](fix_clang_tidy_warnings.md) for details.
+Docker toolchain environment. See
+[fixing clang-tidy warnings](https://github.com/nebulastream/nebulastream/blob/main/docs/development/fix_clang_tidy_warnings.md)
+for details.
 
 ### Modifying dependencies
 
@@ -177,7 +184,7 @@ cmake -B build-docker -DNES_SPLIT_TEST_BINARIES=OFF
 To integrate the container-based development environment you need to create a new docker-based toolchain. With the
 following settings:
 
-![CLion-Toolchain-Settings](../resources/SetupDockerToolchainClion.png)
+![CLion-Toolchain-Settings](https://raw.githubusercontent.com/nebulastream/nebulastream/main/docs/resources/SetupDockerToolchainClion.png)
 
 > [!IMPORTANT]
 > If running on MacOS with Colima as your docker VM, you will need to select Colima instead of the default docker daemon.
@@ -187,14 +194,15 @@ docker-based toolchains if you plan to experiment with different sanitizer.
 
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
-![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
+![CLion-CMake-Settings](https://raw.githubusercontent.com/nebulastream/nebulastream/main/docs/resources/SetupDockerCmakeClion.png)
 
 ## Non-Container Development Environment
 
 The relevant CI Jobs will be executed in the development container. This means in order to reproduce CI results, it is
 essential to replicate the development environment built into the base docker image. Note that NebulaStream uses llvm
 for its query compilation, which will take a while to build locally. You can follow the instructions of the instructions
-of the [base.dockerfile](../docker/dependency/Base.dockerfile) to replicate on Ubuntu or Debian systems.
+of the [base.dockerfile](https://github.com/nebulastream/nebulastream/blob/main/docker/dependency/Base.dockerfile) to
+replicate on Ubuntu or Debian systems.
 
 The compiler toolchain is based on `llvm-19` and libc++-19, and we use the mold linker for its better performance.
 Follow the [llvm documentation](https://apt.llvm.org/) to install a recent toolchain via your package manager.

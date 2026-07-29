@@ -1,3 +1,8 @@
+---
+title: "How to add a Placement Strategy"
+weight: 50
+---
+
 # How to add a `Placement Strategy`
 
 Operator placement decides on which worker each logical operator runs.
