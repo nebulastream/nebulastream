@@ -16,6 +16,8 @@
 
 #include <expected>
 #include <string>
+#include <vector>
+
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -26,6 +28,7 @@
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
+#include "Util/Strings.hpp"
 
 namespace NES
 {
@@ -54,18 +57,44 @@ const ConfigField<StreamJoinStrategy> JOIN_STRATEGY{
     },
     StreamJoinStrategy::OPTIMIZER_CHOOSES,
     "OPTIMIZER_CHOOSES"};
+
+const ConfigField<std::vector<std::string>> DISABLED_RULES{
+    Identifier::parse("disabled_rules"),
+    "List of disabled rules",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::vector<std::string>, Exception>
+                {
+                    std::vector<std::string> disabledRules;
+
+                    if (!value.starts_with("[") || !value.ends_with("]"))
+                    {
+                        return std::unexpected{InvalidConfigParameter("disabled_rules expects a list, such as \"[PredicatePushdown, ProjectionPushdown]\"")};
+                    }
+
+                    for (const auto& ruleName : splitWithStringDelimiter<std::string>(value.substr(1, value.size() - 2), ","))
+                    {
+                        disabledRules.emplace_back(trimWhiteSpaces(ruleName));
+                    }
+                    return disabledRules;
+                });
+    },
+    {}};
 /// NOLINTEND(cert-err58-cpp)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> QueryOptimizerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema());
+    return createConfigSchema(
+        Identifier::parse("optimizer"), JOIN_STRATEGY, QueryOptimizerNetworkConfiguration::getConfigSchema(), DISABLED_RULES);
 }
 
 QueryOptimizerConfiguration QueryOptimizerConfiguration::fromConfig(const InstantiatedConfig& config)
 {
-    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config)};
+    return {config.get(JOIN_STRATEGY), QueryOptimizerNetworkConfiguration::fromConfig(config), config.get(DISABLED_RULES)};
 }
 
 }

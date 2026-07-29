@@ -39,6 +39,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -151,6 +152,11 @@ struct DropModelStatementResult
     std::string name;
 };
 
+struct SetConfigStatementResult
+{
+    QueryOptimizerConfiguration config;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -171,7 +177,8 @@ using StatementResult = std::variant<
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
-    DropQueryStatementResult>;
+    DropQueryStatementResult,
+    SetConfigStatementResult>;
 
 /// A bit of CRTP magic for nicer syntax when the object is in a shared ptr
 template <typename HandlerImpl>
@@ -264,6 +271,15 @@ public:
     std::expected<ShowVersionStatementResult, Exception> operator()(const ShowVersionStatement& statement);
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
+};
+
+class ConfigStatementHandler final : public StatementHandler<ConfigStatementHandler>
+{
+    SharedPtr<QueryOptimizer> optimizer;
+
+public:
+    explicit ConfigStatementHandler(SharedPtr<QueryOptimizer> optimizer);
+    std::expected<SetConfigStatementResult, Exception> operator()(const SetConfigStatement& statement);
 };
 
 template <typename HandlerT>

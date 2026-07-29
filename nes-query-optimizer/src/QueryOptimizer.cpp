@@ -11,11 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <QueryOptimizer.hpp>
+
+#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -24,6 +27,11 @@ DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
     plan = ruleBasedOptimization.optimize(plan);
     return operatorPlacement.place(plan);
+}
+
+std::expected<void, Exception> QueryOptimizer::updateConfig(QueryOptimizerConfiguration updatedConfig)
+{
+    return this->ruleBasedOptimization.updateConfig(std::move(updatedConfig));
 }
 
 }

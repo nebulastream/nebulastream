@@ -349,10 +349,13 @@ int main(int argc, char** argv)
         auto queryOptimizer
             = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
+        NES::ConfigStatementHandler configStatementHandler{queryOptimizer};
+
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),
             std::move(topologyStatementHandler),
+            std::move(configStatementHandler),
             std::move(modelStatementHandler),
             queryStatementHandler,
             std::move(binder),

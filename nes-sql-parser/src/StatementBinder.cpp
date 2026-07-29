@@ -60,6 +60,7 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
@@ -616,6 +617,30 @@ public:
         return ExplainQueryStatement{.plan = queryBinder(explainAst->query()), .explainFormat = format, .explainStages = stages};
     }
 
+    std::expected<Statement, Exception> bindConfigStatement(AntlrSQLParser::ConfigStatementContext* configStatementAST) const
+    {
+        auto configMap = bindConfigOptions(configStatementAST->optionsClause()->options->namedConfigExpression());
+        std::unordered_map<QualifiedIdentifier, std::string> configurations;
+
+        for (const auto& [rootIdentifier, configs] : configMap)
+        {
+            for (const auto& [configIdentifier, value] : configs)
+            {
+                auto qualifiedIdentifier = QualifiedIdentifier::create(rootIdentifier, configIdentifier);
+
+                if (!std::holds_alternative<Literal>(value))
+                {
+                    throw InvalidStatement("Unrecognized configuration value: {}:{}", configIdentifier, value);
+                }
+
+                auto literal = std::get<Literal>(value);
+                configurations.emplace(qualifiedIdentifier, literalToString(literal));
+            }
+        }
+
+        return SetConfigStatement{configurations};
+    }
+
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
         try
@@ -658,6 +683,10 @@ public:
                     }
                 }
                 return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+            }
+            if (auto* const configStatementAST = statementAST->configStatement(); configStatementAST != nullptr)
+            {
+                return bindConfigStatement(configStatementAST);
             }
 
             throw InvalidStatement(statementAST->toString());

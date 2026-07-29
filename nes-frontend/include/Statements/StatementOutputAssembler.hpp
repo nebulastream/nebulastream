@@ -37,6 +37,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <rfl/json/write.hpp>
 #include <DistributedQuery.hpp>
@@ -545,6 +547,44 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
+using ConfigOptionOutputRowType = std::tuple<std::string, std::optional<std::string>>;
+constexpr std::array<std::string_view, 2> configOptionOutputColumns{"option", "value"};
+
+template <>
+struct StatementOutputAssembler<SetConfigStatementResult>
+{
+    using OutputRowType = ConfigOptionOutputRowType;
+
+    auto convert(const SetConfigStatementResult& result)
+    {
+        const auto& config = result.config;
+        const auto& network = config.network;
+        const auto disabledRules = config.disabledRules;
+
+        std::vector<OutputRowType> output;
+        output.emplace_back("optimizer.disabledRules", fmt::format("{}", fmt::join(disabledRules, ",")));
+        output.emplace_back("optimizer.joinStrategy", magic_enum::enum_name(config.joinStrategy));
+        output.emplace_back(
+            "optimizer.network.sender_queue_size",
+            (network.senderQueueSize ? std::make_optional(std::to_string(network.senderQueueSize.value())) : std::nullopt));
+        output.emplace_back(
+            "optimizer.network.max_pending_acks",
+            (network.maxPendingAcks ? std::make_optional(std::to_string(network.maxPendingAcks.value())) : std::nullopt));
+        output.emplace_back(
+            "optimizer.network.receiver_queue_size",
+            (network.receiverQueueSize ? std::make_optional(std::to_string(network.receiverQueueSize.value())) : std::nullopt));
+        output.emplace_back(
+            "optimizer.network.backpressure_upper_threshold",
+            (network.backpressureUpperThreshold ? std::make_optional(std::to_string(network.backpressureUpperThreshold.value()))
+                                                : std::nullopt));
+        output.emplace_back(
+            "optimizer.network.backpressure_lower_threshold",
+            (network.backpressureLowerThreshold ? std::make_optional(std::to_string(network.backpressureLowerThreshold.value()))
+                                                : std::nullopt));
+        return std::make_pair(configOptionOutputColumns, output);
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -565,5 +605,6 @@ static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
 static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
 static_assert(AssemblembleStatementResult<DropModelStatementResult>);
+static_assert(AssemblembleStatementResult<SetConfigStatementResult>);
 
 }

@@ -58,7 +58,9 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
+statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement | configStatement;
+
+configStatement: CONFIG optionsClause;
 
 explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
 explainStages: explainStage (',' explainStage)*;
@@ -552,6 +554,7 @@ AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 JSON: 'JSON';
 TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
+CONFIG: 'CONFIG' | 'config';
 MODEL: 'MODEL';
 MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';

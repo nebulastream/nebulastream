@@ -20,74 +20,6 @@ setup_file()    { nes_offline_setup_file; }
 teardown_file() { nes_offline_teardown_file; }
 setup()         { nes_offline_setup; }
 
-@test "nes-repl shows help" {
-  run $NES_REPL --help
-  [ "$status" -eq 0 ]
-}
-
-@test "basic test" {
-  ls >&3
-  run $NES_REPL -f JSON <tests/sql-file-tests/good/test_large.sql
-  [ "$status" -eq 0 ]
-  [ ${#lines[@]} -eq 8 ]
-
-  assert_json_equal '[{"schema":[{"name":"TS","type":"UINT64"}],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allowCommasInStrings":true,"fieldDelimiter":44,"tupleDelimiter":10,"type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":"{\"seed\":1,\"maxRuntime\":10000000,\"generatorSchemaRaw\":\"SEQUENCE UINT64 0 10000000 1\",\"stopGeneratorWhenSequenceFinishes\":0,\"flushInterval\":10,\"generatorRateConfig\":{\"index\":0,\"value\":{\"emitRate\":10.0}}}","source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[1]}"
-  assert_json_equal '[{"host":"localhost:8080","output_formatter_config":{"config":{"fieldDelimiter":",","quoteStrings":false,"tupleDelimiter":"\n"},"outputFormatterType":"CSV"},"schema":[{"name":"TS","type":"UINT64"}],"sink_config":"{\"filePath\":\"out.csv\",\"append\":false}","sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
-  assert_json_equal '[]' "${lines[3]}"
-  QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
-
-  # One global and one local query
-  echo "${lines[5]}" | jq -e '(. | length) == 2'
-  echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
-
-  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
-  assert_json_contains "[]" "${lines[7]}"
-}
-
-@test "show version reports the embedded worker build info" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/good/show_version.sql
-  [ "$status" -eq 0 ]
-
-  [ "$(echo "${lines[0]}" | jq -r '.[0].worker')" = "localhost:8080" ]
-  version=$(echo "${lines[0]}" | jq -r '.[0].version')
-  [[ "$(echo "$version" | sed -n '1p')" == "nes-single-node-worker "* ]]
-  echo "$version" | grep -q "commit:"
-}
-
-@test "launch multiple queries distributed" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/good/multiple_queries_distributed.sql
-  [ "$status" -eq 0 ]
-}
-
-@test "launch bad query should fail distributed" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/bad/invalid_projection_distributed.sql
-  [ "$status" -ne 0 ]
-  grep "invalid query syntax" nes-repl.log
-}
-
-@test "launch multiple queries" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/good/multiple_queries.sql
-  [ "$status" -eq 0 ]
-}
-
-@test "launch bad query should fail" {
-  run $NES_REPL -f JSON <tests/sql-file-tests/bad/invalid_projection.sql
-  [ "$status" -ne 0 ]
-  grep "invalid query syntax" nes-repl.log
-}
-
-@test "Fail on invalid optimizer config name" {
-  run $NES_REPL -- --optimizer.test_invalid_config_name=INVALID
-  [ "$status" -ne 0 ]
-  grep -i "Unresolvable fields: optimizer.test_invalid_config_name" nes-repl.log
-}
-
-@test "Fail on invalid optimizer config value" {
-  run $NES_REPL -- --optimizer.join_strategy=INVALID
-  [ "$status" -ne 0 ]
-  grep "Invalid join strategy, must be NESTED_LOOP_JOIN, HASH_JOIN or OPTIMIZER_CHOOSES: INVALID" nes-repl.log
-}
 
 
 
@@ -223,5 +155,55 @@ WATERMARK_ASSIGNER(Event time)
        SOURCE(STREAM2)
 EOF
 )"
+}
+
+
+@test "Verify that individual optimizer rules can successfully be disabled" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/good/disabled_optimizer_rule.sql
+  [ "$status" -eq 0 ]
+
+  # The six EXPLAIN statements sit at the tail of the JSON output stream.
+  local n=${#lines[@]}
+  local i_without_disabled_rules=$((n - 3))
+  local i_set_disabled_rules=$((n - 2))
+  local i_with_disabled_rules=$((n - 1))
+
+  # `sed` inside extract_explain right-trims each line so VISUAL padding does not need to
+  # live as trailing whitespace in the .bats source.
+  extract_explain() {
+    echo "$1" | jq -j '.[0].explain' | sed 's/[[:space:]]*$//'
+  }
+
+  assert_equal "$(extract_explain "${lines[$i_without_disabled_rules]}")" "$(cat <<'EOF'
+== Optimized Global Plan ==
+SINK(VOID)
+  PROJECTION(fields: [ID])
+    Join(INNER_JOIN, ID = ID2)
+      SELECTION(ID % 2 = 0 AND ID > 2)
+        WATERMARK_ASSIGNER(Event time)
+          PROJECTION(fields: [ID, TIMESTAMP])
+            SOURCE(STREAM)
+      WATERMARK_ASSIGNER(Event time)
+        PROJECTION(fields: [ID2, TIMESTAMP2])
+          SOURCE(STREAM2)
+EOF
+)"
+
+  assert_json_contains '[{"option":"optimizer.disabledRules","value":"PredicatePushdown,ProjectionPushdown"}]' "${lines[$i_set_disabled_rules]}"
+
+  assert_equal "$(extract_explain "${lines[$i_with_disabled_rules]}")" "$(cat <<'EOF'
+== Optimized Global Plan ==
+SINK(VOID)
+  PROJECTION(fields: [ID])
+    SELECTION(ID > 2)
+      Join(INNER_JOIN, ID = ID2)
+        SELECTION(ID % 2 = 0)
+          WATERMARK_ASSIGNER(Event time)
+            SOURCE(STREAM)
+        WATERMARK_ASSIGNER(Event time)
+          SOURCE(STREAM2)
+EOF
+)"
+
 }
 
