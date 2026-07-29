@@ -1,3 +1,8 @@
+---
+title: "API Concepts"
+weight: 210
+---
+
 # NebulaStream Query API Guide
 
 NebulaStream provides stream processing through a declarative, SQL-like query language.
