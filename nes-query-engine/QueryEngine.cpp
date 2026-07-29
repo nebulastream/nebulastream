@@ -641,6 +641,16 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 
             for (const auto& successor : stopPipelineTask.pipeline->successors)
             {
+                if (!successor->requiresTermination)
+                {
+                    ENGINE_LOG_WARNING(
+                        "Dropping tuple buffer emitted while stopping pipeline {}-{} because successor pipeline {} has not completed startup",
+                        stopPipelineTask.queryId,
+                        stopPipelineTask.pipeline->id,
+                        successor->id);
+                    continue;
+                }
+
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
