@@ -190,6 +190,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
 /// Constructs an empty spanning tuple, since it starts with a '\n' (and the SequenceShredder contains a buffer '0' containing a '\n'
 TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
@@ -208,6 +209,7 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
 /// of buffer 2 and the starting '\n'-byte of buffer 3 (leading spanning tuple)
 TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;
@@ -230,6 +232,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
 /// of buffer 2 and the starting '\n'-byte of buffer 3 (trailing spanning tuple)
 TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t>;

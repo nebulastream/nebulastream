@@ -354,6 +354,7 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .formatterType = "JSON",
@@ -367,6 +368,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     runTest(TestConfig{
         .testFileName = "Bimbo",
         .formatterType = "JSON",
@@ -380,6 +382,7 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     runTest(TestConfig{
         .testFileName = "Food",
         .formatterType = "JSON",
@@ -393,6 +396,7 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
 {
+    SKIP_IF_INPUT_FORMATTER_DISABLED("JSON");
     runTest(TestConfig{
         .testFileName = "Spacecraft_Telemetry",
         .formatterType = "JSON",

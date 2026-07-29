@@ -49,10 +49,25 @@
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
+#include <InputFormatterProvider.hpp>
 #include <TestTaskQueue.hpp>
 #include <Util.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+
+/// Skips the current test (with an explanatory message) when the named input formatter is not registered, i.e. its
+/// optional plugin was disabled at build time (e.g. -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF). This keeps the
+/// disabled-plugin CI configurations green without pulling an optional formatter's dependencies into every build.
+/// Add it to the top of any test that requires an optional input formatter.
+#define SKIP_IF_INPUT_FORMATTER_DISABLED(inputFormatterType) \
+    do \
+    { \
+        if (not NES::contains(inputFormatterType)) \
+        { \
+            GTEST_SKIP() << "Skipping test: the '" << (inputFormatterType) \
+                         << "' input formatter is disabled (its plugin was not built), so this test does not apply"; \
+        } \
+    } while (false)
 
 namespace NES::InputFormatterTestUtil
 {
