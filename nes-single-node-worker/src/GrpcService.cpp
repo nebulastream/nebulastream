@@ -218,7 +218,7 @@ grpc::Status GRPCServer::RequestVersion(grpc::ServerContext* context, const goog
     return tryWithDefaultHandling(
         [&]
         {
-            response->set_version(formatVersion(SingleNodeWorkerBinaryName));
+            response->set_version(versionInfo(SingleNodeWorkerBinaryName).getRawValue());
             return grpc::Status::OK;
         },
         context);

@@ -18,7 +18,6 @@
 
 #include <chrono>
 #include <memory>
-#include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -26,6 +25,7 @@
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <Version.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -41,7 +41,7 @@ public:
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
-    [[nodiscard]] std::expected<std::string, Exception> version() const override;
+    [[nodiscard]] std::expected<VersionInfo, Exception> version() const override;
 };
 
 BackendProvider createGRPCBackend();

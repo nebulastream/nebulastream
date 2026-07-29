@@ -39,6 +39,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -112,7 +113,7 @@ struct WorkerStatusStatementResult
 
 struct ShowVersionStatementResult
 {
-    std::map<Host, std::expected<std::string, Exception>> versions;
+    std::map<Host, std::expected<VersionInfo, Exception>> versions;
 };
 
 struct CreateWorkerStatementResult

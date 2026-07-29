@@ -29,11 +29,11 @@
 namespace NES
 {
 
-std::string formatVersion(const std::string_view binaryName)
+VersionInfo versionInfo(const std::string_view binaryName)
 {
     /// Plugin listing is deferred to a follow-up (see issue #1640); listing the registered
     /// plugins requires restructuring the CMake plugin discovery / registry.
-    return fmt::format(
+    return VersionInfo{fmt::format(
         "{} {}\n"
         "  commit:         {}\n"
         "  built:          {}\n"
@@ -54,12 +54,12 @@ std::string formatVersion(const std::string_view binaryName)
         BuildInfo::compilerFlags,
         BuildInfo::stdlib,
         BuildInfo::logLevel,
-        BuildInfo::vcpkgBaseline);
+        BuildInfo::vcpkgBaseline)};
 }
 
 void printVersion(const std::string_view binaryName)
 {
-    std::cout << formatVersion(binaryName);
+    std::cout << versionInfo(binaryName);
 }
 
 bool hasVersionFlag(const int argc, const char* const* argv)

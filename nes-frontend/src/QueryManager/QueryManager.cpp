@@ -262,9 +262,9 @@ std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std
     return distributedStatus;
 }
 
-std::map<Host, std::expected<std::string, Exception>> QueryManager::workerVersions() const
+std::map<Host, std::expected<VersionInfo, Exception>> QueryManager::workerVersions() const
 {
-    std::map<Host, std::expected<std::string, Exception>> versions;
+    std::map<Host, std::expected<VersionInfo, Exception>> versions;
     for (const auto& [wId, backend] : backends)
     {
         versions.try_emplace(wId, backend->version());

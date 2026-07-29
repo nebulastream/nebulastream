@@ -21,15 +21,15 @@
 namespace NES
 {
 
-TEST(VersionTest, formatVersionContainsBinaryName)
+TEST(VersionTest, versionInfoContainsBinaryName)
 {
-    const auto output = formatVersion("my-binary");
+    const auto output = versionInfo("my-binary").getRawValue();
     EXPECT_THAT(output, testing::HasSubstr("my-binary"));
 }
 
-TEST(VersionTest, formatVersionContainsAllFields)
+TEST(VersionTest, versionInfoContainsAllFields)
 {
-    const auto output = formatVersion("nes-single-node-worker");
+    const auto output = versionInfo("nes-single-node-worker").getRawValue();
     /// The labels for every embedded build-info field must be present.
     EXPECT_THAT(output, testing::HasSubstr("commit:"));
     EXPECT_THAT(output, testing::HasSubstr("built:"));
@@ -42,9 +42,9 @@ TEST(VersionTest, formatVersionContainsAllFields)
     EXPECT_THAT(output, testing::HasSubstr("vcpkg baseline:"));
 }
 
-TEST(VersionTest, formatVersionFirstLineIsBinaryNameAndVersion)
+TEST(VersionTest, versionInfoFirstLineIsBinaryNameAndVersion)
 {
-    const auto output = formatVersion("checksum");
+    const auto output = versionInfo("checksum").getRawValue();
     const auto firstLineEnd = output.find('\n');
     ASSERT_NE(firstLineEnd, std::string::npos);
     const auto firstLine = output.substr(0, firstLineEnd);

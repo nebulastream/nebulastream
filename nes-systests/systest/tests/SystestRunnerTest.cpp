@@ -51,6 +51,7 @@
 #include <QueryStatus.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
+#include <Version.hpp>
 
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
@@ -142,7 +143,7 @@ public:
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
     MOCK_METHOD((std::expected<LocalQueryStatusSnapshot, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
-    MOCK_METHOD((std::expected<std::string, Exception>), version, (), (const, override));
+    MOCK_METHOD((std::expected<VersionInfo, Exception>), version, (), (const, override));
 };
 
 namespace
