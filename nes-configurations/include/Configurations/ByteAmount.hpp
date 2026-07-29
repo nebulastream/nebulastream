@@ -26,8 +26,8 @@
 namespace NES
 {
 
-/// Parses a byte amount following the Kubernetes resource.Quantity suffix grammar
-/// (https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/quantity/):
+/// Parses a byte amount with a suffix grammar inspired by Kubernetes' resource.Quantity
+/// (not a strict implementation of it; e.g. exponent notation is not supported, and suffixes are case-insensitive here):
 /// - binary suffixes Ki, Mi, Gi, Ti, Pi, Ei scale by powers of 1024
 /// - decimal suffixes k, M, G, T, P, E scale by powers of 1000
 /// - no suffix means bytes
