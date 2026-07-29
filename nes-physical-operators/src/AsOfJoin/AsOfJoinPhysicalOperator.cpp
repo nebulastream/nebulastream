@@ -53,6 +53,11 @@ TupleBuffer* getRightBuffer(OperatorHandler* handler, AbstractBufferProvider* bu
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).getOrCreateTableBuffer(bufferProvider, tupleSize);
 }
 
+TupleBuffer* beginRightCompaction(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).beginTableCompaction(bufferProvider, tupleSize);
+}
+
 TupleBuffer* getPendingBuffer(OperatorHandler* handler, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
 {
     return dynamic_cast<StreamTableJoinOperatorHandler&>(*handler).getOrCreatePendingBuffer(bufferProvider, tupleSize);
@@ -125,7 +130,8 @@ void AsOfJoinInputPhysicalOperator::setChild(PhysicalOperator newChild)
     child = std::move(newChild);
 }
 
-AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(
+template <bool PredicateFree>
+AsOfJoinPhysicalOperator<PredicateFree>::AsOfJoinPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     PhysicalFunction joinFunction,
     std::shared_ptr<TupleBufferRef> leftInputBufferRef,
@@ -134,7 +140,8 @@ AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
     const OriginId outputOriginId,
     std::unique_ptr<TimeFunction> leftTimeFunction,
-    std::unique_ptr<TimeFunction> rightTimeFunction)
+    std::unique_ptr<TimeFunction> rightTimeFunction,
+    std::optional<Record::RecordFieldIdentifier> rightKeyField)
     : operatorHandlerId(operatorHandlerId)
     , joinFunction(std::move(joinFunction))
     , leftInputBufferRef(std::move(leftInputBufferRef))
@@ -148,11 +155,14 @@ AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(
     , outputOriginId(outputOriginId)
     , leftTimeFunction(std::move(leftTimeFunction))
     , rightTimeFunction(std::move(rightTimeFunction))
+    , rightKeyField(std::move(rightKeyField))
 {
     PRECONDITION(this->leftTimeFunction && this->rightTimeFunction, "ASOF join requires left and right time functions");
+    PRECONDITION(PredicateFree != this->rightKeyField.has_value(), "Equality ASOF requires exactly one right key field");
 }
 
-AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(const AsOfJoinPhysicalOperator& other)
+template <bool PredicateFree>
+AsOfJoinPhysicalOperator<PredicateFree>::AsOfJoinPhysicalOperator(const AsOfJoinPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , operatorHandlerId(other.operatorHandlerId)
     , joinFunction(other.joinFunction)
@@ -167,11 +177,13 @@ AsOfJoinPhysicalOperator::AsOfJoinPhysicalOperator(const AsOfJoinPhysicalOperato
     , outputOriginId(other.outputOriginId)
     , leftTimeFunction(other.leftTimeFunction->clone())
     , rightTimeFunction(other.rightTimeFunction->clone())
+    , rightKeyField(other.rightKeyField)
     , child(other.child)
 {
 }
 
-void AsOfJoinPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
@@ -242,10 +254,12 @@ void AsOfJoinPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     }
 }
 
-void AsOfJoinPhysicalOperator::processRightRecord(ExecutionContext& executionCtx, Record& record) const
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::processRightRecord(ExecutionContext& executionCtx, Record& record) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
+    const auto rightTimestamp = rightTimeFunction->getTs(executionCtx, record).convertToValue();
     const auto buffer = invoke(
         getRightBuffer,
         handler,
@@ -253,10 +267,16 @@ void AsOfJoinPhysicalOperator::processRightRecord(ExecutionContext& executionCtx
         nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
     PagedVectorRef rightState{BorrowedNautilusBuffer::from(buffer), rightTupleLayout};
     rightState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    invoke(
+        +[](OperatorHandler* ptr, const uint64_t timestamp)
+        { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendTableTimestamp(timestamp); },
+        handler,
+        rightTimestamp);
     invoke(unlockHandler, handler);
 }
 
-void AsOfJoinPhysicalOperator::processLeftRecord(ExecutionContext& executionCtx, Record& record) const
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::processLeftRecord(ExecutionContext& executionCtx, Record& record) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(lockHandler, handler);
@@ -288,7 +308,8 @@ void AsOfJoinPhysicalOperator::processLeftRecord(ExecutionContext& executionCtx,
     invoke(unlockHandler, handler);
 }
 
-void AsOfJoinPhysicalOperator::probeLeftRecord(
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::probeLeftRecord(
     ExecutionContext& executionCtx, const Record& leftRecord, const nautilus::val<Timestamp>& leftTimestamp) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
@@ -316,19 +337,29 @@ void AsOfJoinPhysicalOperator::probeLeftRecord(
     for (nautilus::val<uint64_t> rightIndex = 0; rightIndex < numberOfRightRows; rightIndex = rightIndex + 1_u64)
     {
         auto rightRecord = rightState.at(rightIndex);
-        const auto rightTimestampValue = rightTimeFunction->getTs(executionCtx, rightRecord).convertToValue();
-        Record joinedRecord;
-        for (const auto& field : nautilus::static_iterable(leftFields))
+        const auto rightTimestampValue = invoke(
+            +[](OperatorHandler* ptr, const uint64_t index)
+            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(index); },
+            handler,
+            rightIndex);
+        const auto qualifies = [&]
         {
-            joinedRecord.write(field, leftRecord.read(field));
-        }
-        for (const auto& field : nautilus::static_iterable(rightFields))
-        {
-            joinedRecord.write(field, rightRecord.read(field));
-        }
-        const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
-        const auto qualifies
-            = rightTimestampValue <= leftTimestampValue && !joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>();
+            if constexpr (PredicateFree)
+            {
+                return rightTimestampValue <= leftTimestampValue;
+            }
+            Record joinedRecord;
+            for (const auto& field : nautilus::static_iterable(leftFields))
+            {
+                joinedRecord.write(field, leftRecord.read(field));
+            }
+            for (const auto& field : nautilus::static_iterable(rightFields))
+            {
+                joinedRecord.write(field, rightRecord.read(field));
+            }
+            const auto joinResult = joinFunction.execute(joinedRecord, executionCtx.pipelineMemoryProvider.arena);
+            return rightTimestampValue <= leftTimestampValue && !joinResult.isNull() && joinResult.getRawValueAs<nautilus::val<bool>>();
+        }();
         const nautilus::val<uint64_t> currentBestTimestamp = *bestRightTimestamp;
         const nautilus::val<uint64_t> currentBestIndex = *bestRightIndex;
         const auto betterMatch
@@ -355,7 +386,8 @@ void AsOfJoinPhysicalOperator::probeLeftRecord(
     executeChild(executionCtx, joinedRecord);
 }
 
-void AsOfJoinPhysicalOperator::releasePending(
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::releasePending(
     ExecutionContext& executionCtx, const nautilus::val<Timestamp>& rightWatermark, const nautilus::val<bool>& releaseAll) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
@@ -400,7 +432,147 @@ void AsOfJoinPhysicalOperator::releasePending(
     invoke(+[](OperatorHandler* ptr) { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).finishPendingCompaction(); }, handler);
 }
 
-void AsOfJoinPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::compactRightState(
+    ExecutionContext& executionCtx, const nautilus::val<Timestamp>& watermark) const
+{
+    if (watermark == nautilus::val<Timestamp>{Timestamp{Timestamp::INITIAL_VALUE}})
+    {
+        return;
+    }
+
+    const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    const auto buffer = invoke(
+        getRightBuffer,
+        handler,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
+    const PagedVectorRef rightState{BorrowedNautilusBuffer::from(buffer), rightTupleLayout};
+    const auto numberOfRightRows = rightState.getNumberOfRecords();
+    const auto watermarkValue = watermark.convertToValue();
+
+    if constexpr (!PredicateFree)
+    {
+        const auto& keyField = rightKeyField.value();
+        // ponytail: quadratic compaction avoids a second generic key index; replace it with keyed state if profiling warrants it.
+        const auto shouldRetain = [&](const nautilus::val<uint64_t>& index)
+        {
+            const auto record = rightState.at(index);
+            const auto key = record.read(keyField);
+            const auto timestamp = invoke(
+                +[](OperatorHandler* ptr, const uint64_t pos)
+                { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },
+                handler,
+                index);
+            auto retain = !key.isNull();
+            for (nautilus::val<uint64_t> candidateIndex = 0; candidateIndex < numberOfRightRows; ++candidateIndex)
+            {
+                const auto candidateTimestamp = invoke(
+                    +[](OperatorHandler* ptr, const uint64_t pos)
+                    { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },
+                    handler,
+                    candidateIndex);
+                const auto candidateRecord = rightState.at(candidateIndex);
+                const auto keyEquality = key == candidateRecord.read(keyField);
+                const auto sameKey = !keyEquality.isNull() && keyEquality.getRawValueAs<nautilus::val<bool>>();
+                const auto supersedes = candidateTimestamp <= watermarkValue
+                    && (candidateTimestamp > timestamp || (candidateTimestamp == timestamp && candidateIndex < index)) && sameKey;
+                retain = retain && !(timestamp <= watermarkValue && supersedes);
+            }
+            return retain;
+        };
+
+        nautilus::val<uint64_t> retainedRows = 0_u64;
+        for (nautilus::val<uint64_t> index = 0; index < numberOfRightRows; ++index)
+        {
+            retainedRows = retainedRows + nautilus::select(shouldRetain(index), nautilus::val<uint64_t>{1}, nautilus::val<uint64_t>{0});
+        }
+        if (retainedRows == numberOfRightRows)
+        {
+            return;
+        }
+
+        const auto compactedBuffer = invoke(
+            beginRightCompaction,
+            handler,
+            executionCtx.pipelineMemoryProvider.bufferProvider,
+            nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
+        PagedVectorRef compactedRightState{BorrowedNautilusBuffer::from(compactedBuffer), rightTupleLayout};
+        for (nautilus::val<uint64_t> index = 0; index < numberOfRightRows; ++index)
+        {
+            if (shouldRetain(index))
+            {
+                compactedRightState.pushBack(rightState.at(index), executionCtx.pipelineMemoryProvider.bufferProvider);
+                const auto timestamp = invoke(
+                    +[](OperatorHandler* ptr, const uint64_t pos)
+                    { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },
+                    handler,
+                    index);
+                invoke(
+                    +[](OperatorHandler* ptr, const uint64_t retainedTimestamp)
+                    { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendCompactedTableTimestamp(retainedTimestamp); },
+                    handler,
+                    timestamp);
+            }
+        }
+        invoke(+[](OperatorHandler* ptr) { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).finishTableCompaction(); }, handler);
+        return;
+    }
+
+    nautilus::val<uint64_t> retainedPredecessor = nautilus::val<uint64_t>{UINT64_MAX};
+    nautilus::val<uint64_t> retainedTimestamp = 0_u64;
+    nautilus::val<uint64_t> numberOfFutureRows = 0_u64;
+    for (nautilus::val<uint64_t> index = 0; index < numberOfRightRows; ++index)
+    {
+        const auto timestamp = invoke(
+            +[](OperatorHandler* ptr, const uint64_t pos)
+            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },
+            handler,
+            index);
+        const auto retain
+            = timestamp <= watermarkValue && (retainedPredecessor == nautilus::val<uint64_t>{UINT64_MAX} || timestamp > retainedTimestamp);
+        retainedTimestamp = nautilus::select(retain, timestamp, retainedTimestamp);
+        retainedPredecessor = nautilus::select(retain, index, retainedPredecessor);
+        numberOfFutureRows
+            = numberOfFutureRows + nautilus::select(timestamp > watermarkValue, nautilus::val<uint64_t>{1}, nautilus::val<uint64_t>{0});
+    }
+    if (numberOfFutureRows
+            + nautilus::select(
+                retainedPredecessor != nautilus::val<uint64_t>{UINT64_MAX}, nautilus::val<uint64_t>{1}, nautilus::val<uint64_t>{0})
+        == numberOfRightRows)
+    {
+        return;
+    }
+
+    const auto compactedBuffer = invoke(
+        beginRightCompaction,
+        handler,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        nautilus::val<uint64_t>{rightTupleLayout->getSchema().getSizeInBytes()});
+    PagedVectorRef compactedRightState{BorrowedNautilusBuffer::from(compactedBuffer), rightTupleLayout};
+    for (nautilus::val<uint64_t> index = 0; index < numberOfRightRows; ++index)
+    {
+        const auto record = rightState.at(index);
+        const auto timestamp = invoke(
+            +[](OperatorHandler* ptr, const uint64_t pos)
+            { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },
+            handler,
+            index);
+        if (index == retainedPredecessor || timestamp > watermarkValue)
+        {
+            compactedRightState.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+            invoke(
+                +[](OperatorHandler* ptr, const uint64_t retainedTimestamp)
+                { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).appendCompactedTableTimestamp(retainedTimestamp); },
+                handler,
+                timestamp);
+        }
+    }
+    invoke(+[](OperatorHandler* ptr) { dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).finishTableCompaction(); }, handler);
+}
+
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     const auto handler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto isRight = invoke(
@@ -449,23 +621,30 @@ void AsOfJoinPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffe
             recordBuffer.isLastChunk(),
             recordBuffer.getOriginId());
         releasePending(executionCtx, rightWatermark, rightComplete);
+        compactRightState(executionCtx, executionCtx.watermarkTs);
     }
     else
     {
         invoke(lockHandler, handler);
+        compactRightState(executionCtx, executionCtx.watermarkTs);
     }
     invoke(unlockHandler, handler);
     closeChild(executionCtx, recordBuffer);
 }
 
-std::optional<PhysicalOperator> AsOfJoinPhysicalOperator::getChild() const
+template <bool PredicateFree>
+std::optional<PhysicalOperator> AsOfJoinPhysicalOperator<PredicateFree>::getChild() const
 {
     return child;
 }
 
-void AsOfJoinPhysicalOperator::setChild(PhysicalOperator newChild)
+template <bool PredicateFree>
+void AsOfJoinPhysicalOperator<PredicateFree>::setChild(PhysicalOperator newChild)
 {
     child = std::move(newChild);
 }
+
+template class AsOfJoinPhysicalOperator<true>;
+template class AsOfJoinPhysicalOperator<false>;
 
 }

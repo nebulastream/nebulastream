@@ -29,9 +29,7 @@ namespace NES
 {
 
 StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins)
-    : tableOrigins(tableOrigins)
-    , tableWatermarks(std::move(tableOrigins))
-    , outputWatermarks(std::move(inputOrigins))
+    : tableOrigins(tableOrigins), tableWatermarks(std::move(tableOrigins)), outputWatermarks(std::move(inputOrigins))
 {
     PRECONDITION(!this->tableOrigins.empty(), "Stream-table join requires at least one table origin");
 }
@@ -78,6 +76,39 @@ TupleBuffer* StreamTableJoinOperatorHandler::getOrCreateTableBuffer(AbstractBuff
         tableBuffer.emplace(createPagedVectorBuffer(*bufferProvider, tupleSize));
     }
     return &tableBuffer.value();
+}
+
+TupleBuffer* StreamTableJoinOperatorHandler::beginTableCompaction(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider must not be null");
+    PRECONDITION(!compactedTableBuffer.has_value(), "Table compaction already in progress");
+    compactedTableBuffer.emplace(createPagedVectorBuffer(*bufferProvider, tupleSize));
+    compactedTableTimestamps.clear();
+    return &compactedTableBuffer.value();
+}
+
+void StreamTableJoinOperatorHandler::appendTableTimestamp(const uint64_t timestamp)
+{
+    tableTimestamps.push_back(timestamp);
+}
+
+void StreamTableJoinOperatorHandler::appendCompactedTableTimestamp(const uint64_t timestamp)
+{
+    compactedTableTimestamps.push_back(timestamp);
+}
+
+void StreamTableJoinOperatorHandler::finishTableCompaction()
+{
+    PRECONDITION(compactedTableBuffer.has_value(), "No table compaction in progress");
+    tableBuffer.swap(compactedTableBuffer);
+    compactedTableBuffer.reset();
+    tableTimestamps.swap(compactedTableTimestamps);
+    compactedTableTimestamps.clear();
+}
+
+uint64_t StreamTableJoinOperatorHandler::getTableTimestamp(const uint64_t index) const
+{
+    return tableTimestamps.at(index);
 }
 
 TupleBuffer* StreamTableJoinOperatorHandler::getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)

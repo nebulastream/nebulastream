@@ -1,0 +1,143 @@
+# name: join/JoinVarSizedStateMemory.test
+# description: Stateful joins release obsolete large VARSIZED data
+# groups: [Join, StreamTableJoin, WindowOperators]
+
+# Each generated payload stream totals 8 MiB. The 8 MiB unpooled budget leaves room for bounded transient
+# state, but not for retaining the VARSIZED input history.
+GlobalConfiguration worker.total_memory_in_bytes: [67108864]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.125]
+GlobalConfiguration worker.default_max_inflight_buffers: [2]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [2]
+
+CREATE LOGICAL SOURCE table_events(
+    event_id UINT64 NOT NULL,
+    event_payload VARSIZED NOT NULL,
+    event_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR table_events TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 64 1, RANDOMSTR 131072 131072, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE lookup(lookup_id UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR lookup TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    2 AS "SOURCE".SEED,
+    'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+    'emit_rate 1000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    'SEQUENCE UINT64 0 64 1, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK stream_table_result(
+    event_id UINT64 NOT NULL,
+    event_size UINT64 NOT NULL,
+    lookup_id UINT64 NOT NULL
+) TYPE File;
+
+# The table watermark releases large pending stream rows; the scalar table remains available for later probes.
+SELECT event_id, OCTET_LENGTH(event_payload) AS event_size, lookup_id
+FROM (
+    SELECT *
+    FROM (SELECT * FROM table_events)
+    INNER JOIN TABLE (SELECT * FROM lookup) ON event_id = lookup_id
+    TIME(event_ts, lookup_ts)
+)
+WHERE event_id + lookup_id = 126
+INTO stream_table_result;
+----
+63 131072 63
+
+
+CREATE LOGICAL SOURCE hash_left(
+    left_id UINT64 NOT NULL,
+    left_payload VARSIZED NOT NULL,
+    left_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR hash_left TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    3 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 64 1, RANDOMSTR 131072 131072, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE hash_right(
+    right_id UINT64 NOT NULL,
+    right_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR hash_right TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    4 AS "SOURCE".SEED,
+    'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+    'emit_rate 1000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    'SEQUENCE UINT64 0 64 1, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK hash_result(
+    left_id UINT64 NOT NULL,
+    left_size UINT64 NOT NULL,
+    right_id UINT64 NOT NULL
+) TYPE File;
+
+# An equality predicate selects the hash join under the default optimizer strategy.
+# This query reproduces unpooled-memory exhaustion if obsolete window state remains pinned.
+SELECT
+    left_id,
+    OCTET_LENGTH(left_payload) AS left_size,
+    right_id
+FROM (
+    SELECT *
+    FROM (SELECT * FROM hash_left)
+    INNER JOIN (SELECT * FROM hash_right) ON left_id = right_id
+    WINDOW TUMBLING(left_ts, right_ts, SIZE 2000 MS)
+)
+WHERE left_id + right_id = 126
+INTO hash_result;
+----
+63 131072 63
+
+
+CREATE LOGICAL SOURCE nlj_left(
+    theta_left_id UINT64 NOT NULL,
+    theta_left_payload VARSIZED NOT NULL,
+    theta_left_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR nlj_left TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    5 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 64 1, RANDOMSTR 131072 131072, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE nlj_right(
+    theta_right_id UINT64 NOT NULL,
+    theta_right_ts UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR nlj_right TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    6 AS "SOURCE".SEED,
+    'FIXED' AS "SOURCE".GENERATOR_RATE_TYPE,
+    'emit_rate 1000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    'SEQUENCE UINT64 0 64 1, SEQUENCE UINT64 0 8000 125' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK nlj_result(
+    theta_left_id UINT64 NOT NULL,
+    left_size UINT64 NOT NULL,
+    theta_right_id UINT64 NOT NULL
+) TYPE File;
+
+# A non-equality predicate selects the nested-loop join under the default optimizer strategy.
+# This query reproduces the same exhaustion independently of the hash-map implementation.
+SELECT
+    theta_left_id,
+    OCTET_LENGTH(theta_left_payload) AS left_size,
+    theta_right_id
+FROM (
+    SELECT *
+    FROM (SELECT * FROM nlj_left)
+    INNER JOIN (SELECT * FROM nlj_right) ON theta_left_id <= theta_right_id
+    WINDOW TUMBLING(theta_left_ts, theta_right_ts, SIZE 2000 MS)
+)
+WHERE theta_left_id + theta_right_id = 126
+INTO nlj_result;
+----
+63 131072 63

@@ -49,6 +49,7 @@ private:
 
 /// A directional event-time ASOF join. Left tuples produce output after the
 /// right watermark makes their predecessor selection final.
+template <bool PredicateFree>
 class AsOfJoinPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
@@ -61,7 +62,8 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         OriginId outputOriginId,
         std::unique_ptr<TimeFunction> leftTimeFunction,
-        std::unique_ptr<TimeFunction> rightTimeFunction);
+        std::unique_ptr<TimeFunction> rightTimeFunction,
+        std::optional<Record::RecordFieldIdentifier> rightKeyField);
 
     AsOfJoinPhysicalOperator(const AsOfJoinPhysicalOperator& other);
 
@@ -77,6 +79,7 @@ private:
     void probeLeftRecord(ExecutionContext& executionCtx, const Record& leftRecord, const nautilus::val<Timestamp>& leftTimestamp) const;
     void releasePending(
         ExecutionContext& executionCtx, const nautilus::val<Timestamp>& rightWatermark, const nautilus::val<bool>& releaseAll) const;
+    void compactRightState(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& watermark) const;
 
     OperatorHandlerId operatorHandlerId;
     PhysicalFunction joinFunction;
@@ -91,7 +94,11 @@ private:
     OriginId outputOriginId;
     std::unique_ptr<TimeFunction> leftTimeFunction;
     std::unique_ptr<TimeFunction> rightTimeFunction;
+    std::optional<Record::RecordFieldIdentifier> rightKeyField;
     std::optional<PhysicalOperator> child;
 };
+
+using PredicateFreeAsOfJoinPhysicalOperator = AsOfJoinPhysicalOperator<true>;
+using EqualityAsOfJoinPhysicalOperator = AsOfJoinPhysicalOperator<false>;
 
 }
