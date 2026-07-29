@@ -1,7 +1,8 @@
 <div class="docs-layout">
   {{ partial "sidebar.html" . }}
   <main class="content">
-    <h1>{{ .Title }}</h1>
+    {{ /* Pages shared with docs/ carry their own H1 for GitHub; do not emit a second one. */ }}
+    {{ if not (findRE "<h1[ >]" .Content 1) }}<h1>{{ .Title }}</h1>{{ end }}
     {{ .Content }}
   </main>
 </div>

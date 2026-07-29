@@ -32,3 +32,23 @@ enableRobotsTXT = true
 [params]
   description = "NebulaStream is a general purpose, end-to-end data management system for the IoT."
   repo = "https://github.com/nebulastream/nebulastream"
+
+# Pages shared with docs/ are mounted from there, never copied, so the site cannot
+# drift from the docs the contributors read on GitHub. Declaring any content mount
+# replaces the default one, hence the explicit content -> content entry.
+[module]
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "../development/development.md"
+    target = "content/dev/developer.md"
+  [[module.mounts]]
+    source = "../guide/how_to_add_a_source.md"
+    target = "content/dev/howToAddSource.md"
+  [[module.mounts]]
+    source = "../guide/how_to_add_a_sink.md"
+    target = "content/dev/howToAddSink.md"
+  [[module.mounts]]
+    source = "../guide/query_api.md"
+    target = "content/query-api/APIConcepts.md"

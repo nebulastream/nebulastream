@@ -29,6 +29,12 @@ if [ ! -f "$INPUT_FILENAME" ]; then
   exit 1
 fi
 
+if [ ! -f "$DATA_SCRIPT" ]; then
+  echo "Data generator not found: $DATA_SCRIPT"
+  echo "Copy sys_resources.sh into generate_data/ as described in the Get Started guide."
+  exit 1
+fi
+
 # Patch compose file
 TMP_COMPOSE_FILE="docker-compose.monitoring.generated.yml"
 
@@ -49,6 +55,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-#bash "$DATA_SCRIPT"
+bash "$DATA_SCRIPT"
 
 wait

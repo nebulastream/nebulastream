@@ -1,8 +1,9 @@
 name: Build Documentation Website
 description: |
-  Builds the NebulaStream documentation website (docs/website), skipping entirely if no
-  files under docs/website/** changed. Called with should_publish: false to validate the
-  build, should_publish: true to also publish it.
+  Builds the NebulaStream documentation website (docs/website). Called with
+  should_publish: false to validate the build, should_publish: true to also publish it.
+  Callers decide whether the site is worth building: pr.yml's classify gate already runs
+  this only for documentation changes, and pr-merge.yml publishes every merge to main.
 
 on:
   workflow_call:
@@ -16,30 +17,15 @@ on:
 
 concurrency:
   group: docs-website-build-${{ inputs.head_sha }}
-  cancel-in-progress: true
+  # Superseded validation runs are worth cancelling; a half-finished Pages deployment is not.
+  cancel-in-progress: ${{ !inputs.should_publish }}
 
 permissions:
   contents: read
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-24.04
-    outputs:
-      changed: ${{ steps.changed-files.outputs.any_changed }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ inputs.head_sha }}
-      - id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            docs/website/**
-
   build-website:
     name: "Build website"
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5

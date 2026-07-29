@@ -48,7 +48,7 @@ Both scenarios use simple bash scripts to create a TCP server and send data over
 ## Getting Started
 
 ### Running the Demo with Docker Compose
-The scripts [run_monitoring_scenario.sh](/scripts/run_sys_monitoring_scenario.sh) and [run_keystrokes_scenario.sh](/scripts/run_keystrokes_scenario.sh) bundle the necessary steps from below into an executable script.
+The scripts [run_monitoring_scenario.sh]({{< rel "scripts/run_sys_monitoring_scenario.sh" >}}) and [run_keystrokes_scenario.sh]({{< rel "scripts/run_keystrokes_scenario.sh" >}}) bundle the necessary steps from below into an executable script.
 Both scripts 
 
 
@@ -65,9 +65,9 @@ Both scripts
 ### Running the Demo from Local Sources
 1. Build NebulaStream: Refer to the [Development Guide]( {{< relref "developer" >}})
 2. Start generating data: Copy the following files into `generate_data/`
-- [send_keystrokes_to_nebulastream.sh](/scripts/send_keystrokes_to_nebulastream.sh)
-- [sys_resources.sh](/scripts/sys_resources.sh)
-- [write_stdin_to_file.sh](/scripts/write_stdin_to_file.sh)
+- [send_keystrokes_to_nebulastream.sh]({{< rel "scripts/send_keystrokes_to_nebulastream.sh" >}})
+- [sys_resources.sh]({{< rel "scripts/sys_resources.sh" >}})
+- [write_stdin_to_file.sh]({{< rel "scripts/write_stdin_to_file.sh" >}})
 ```bash
 cd generate_data
 ./sys_resources.sh  # For the system monitoring scenario 
@@ -96,5 +96,5 @@ You should see the services starting up in sequence, followed by the execution o
 Upon successful completion, the terminal output for Docker Compose should indicate that the `get_started_nebuli_1` container has exited with code `0`, signifying that the process was completed without errors. 
 This visual confirmation helps ensure that your setup is correct and that NebulaStream is functioning as expected, allowing you to proceed with confidence in exploring its capabilities.
 
-![Successful Docker Compose run](/images/SuccessfulDockerComposeGetStarted.png)
+![Successful Docker Compose run]({{< rel "images/SuccessfulDockerComposeGetStarted.png" >}})
 
