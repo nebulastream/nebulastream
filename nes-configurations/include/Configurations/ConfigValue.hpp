@@ -34,10 +34,12 @@ namespace NES
 class ConfigValue
 {
     QualifiedIdentifier name;
+    ConfigFieldAddress originalFieldAddress;
     std::any value;
 
 public:
-    ConfigValue(QualifiedIdentifier name, std::any value) : name(std::move(name)), value(std::move(value))
+    ConfigValue(QualifiedIdentifier name, ConfigFieldAddress originalFieldAddress, std::any value)
+        : name(std::move(name)), originalFieldAddress(originalFieldAddress), value(std::move(value))
     {
         PRECONDITION(this->value.has_value(), "Cannot create a ConfigValue with an empty value");
     }
@@ -55,19 +57,34 @@ public:
 
     [[nodiscard]] const std::any& getRawValue() const { return value; }
 
+    [[nodiscard]] const ConfigFieldAddress getOriginalFieldAddress() const { return originalFieldAddress; }
+
     friend std::ostream& operator<<(std::ostream& os, const ConfigValue& value) { return os << value.getFullyQualifiedName(); }
 };
 
 class InstantiatedConfig
 {
-    Schema<ConfigValue, Ordered> values;
+    std::unordered_map<ConfigFieldAddress, std::any> values;
 
 public:
-    explicit InstantiatedConfig(Schema<ConfigValue, Ordered> values) : values(std::move(values)) { }
+    explicit InstantiatedConfig(Schema<ConfigValue, Ordered> values)
+        : values(
+              values
+              | std::views::transform([](const ConfigValue& configValue)
+                                      { return std::pair{configValue.getOriginalFieldAddress(), configValue.getRawValue()}; })
+              | std::ranges::to<std::unordered_map>())
+    {
+    }
 
     template <typename T>
     T get(const ConfigField<T>& field) const
     {
+        const auto valueIter = values.find(field);
+        PRECONDITION("Could not find config value for field {} at fieldAddress {}", fie)
+        if (valueIter == values.end())
+        {
+
+        }
         /// Field names are unqualified; the schema resolves them against any unambiguous suffix
         /// of the stored fully qualified names (e.g. SEED matches GENERATOR_SOURCE.SEED).
         auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{field.getName()}});

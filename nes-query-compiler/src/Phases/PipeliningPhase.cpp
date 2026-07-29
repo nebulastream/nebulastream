@@ -118,7 +118,7 @@ PhysicalOperator createScanOperator(
             /// The inputSchema (from the downstream operator) may be reordered (e.g. alphabetically by FieldOrderingTrait).
             /// Using it as the memoryProvider would mis-map CSV column N to the wrong field name.
             /// Always use the source's natural schema order for the InputFormatter's field-to-column mapping.
-            const auto& sourceLogicalSchema
+            const auto sourceLogicalSchema
                 = prevPipeline.getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getSchema();
             const auto sourceMemoryProvider
                 = LowerSchemaProvider::lowerSchema(configuredBufferSize, sourceLogicalSchema, memoryLayout.value());

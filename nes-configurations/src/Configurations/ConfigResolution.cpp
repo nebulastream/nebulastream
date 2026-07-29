@@ -121,12 +121,8 @@ std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConf
         {
             continue;
         }
-        else if (declaredField.hasDefault())
-        {
-            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getDefault());
-        }
-        else if (const auto defaultConfigValue = configDefaults.getFieldByName(declaredField.getFullyQualifiedName());
-                 defaultConfigValue.has_value())
+        if (const auto defaultConfigValue = configDefaults.getFieldByName(declaredField.getFullyQualifiedName());
+            defaultConfigValue.has_value())
         {
             auto defaultLiteral = defaultConfigValue->get();
             auto defaultValue = declaredField.apply(std::move(defaultLiteral));
@@ -136,6 +132,10 @@ std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConf
                 std::visit([](const auto& literal) { return fmt::format("{}", literal); }, defaultLiteral),
                 declaredField.getFullyQualifiedName());
             resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), std::move(defaultValue).value().getValue());
+        }
+        else if (declaredField.hasDefault())
+        {
+            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getDefault());
         }
         else
         {

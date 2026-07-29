@@ -27,15 +27,15 @@
 #include <utility>
 #include <variant>
 
+#include <Util/Any.hpp>
+#include <folly/hash/Hash.h>
+#include <ErrorHandling.hpp>
 #include <nameof.hpp>
 #include "DataTypes/UnboundField.hpp"
 #include "Identifiers/QualifiedIdentifier.hpp"
 #include "Schema/Schema.hpp"
 #include "Schema/SchemaFwd.hpp"
 #include "Util/Logger/Formatter.hpp"
-#include <Util/Any.hpp>
-#include <folly/hash/Hash.h>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -60,6 +60,7 @@ public:
     }
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
+
     [[nodiscard]] ConfigLiteral getValue() const { return value; }
 
     friend bool operator==(const LiteralConfigValue& lhs, const LiteralConfigValue& rhs) = default;
@@ -124,6 +125,11 @@ public:
     {
     }
 
+    ConfigField(const ConfigField& other) = delete;
+    ConfigField(ConfigField&& other) noexcept = delete;
+    ConfigField& operator=(const ConfigField& other) = delete;
+    ConfigField& operator=(ConfigField&& other) noexcept = delete;
+
     [[nodiscard]] Identifier getName() const { return name; }
 
     [[nodiscard]] std::type_index getType() const { return type; }
@@ -133,21 +139,39 @@ public:
     [[nodiscard]] std::optional<std::function<T()>> getDefaultSupplier() const { return defaultSupplier; }
 };
 
+class ConfigFieldAddress
+{
+    uintptr_t fieldAddress;
+
+public:
+    template <typename T>
+    explicit ConfigFieldAddress(const ConfigField<T>& field) : fieldAddress(reinterpret_cast<std::uintptr_t>(std::addressof(field)))
+    {
+    }
+
+    friend bool operator==(const ConfigFieldAddress& lhs, const ConfigFieldAddress& rhs) = default;
+
+    friend struct std::hash<ConfigFieldAddress>;
+};
+
+
 /// Type-erased view of a ConfigField, addressable by its fully qualified name. Erasure keeps the
 /// schema container homogeneous; the typed value is recovered by the source's config struct (see
 /// InstantiatedConfig::get), so the field itself carries no serialization machinery.
 class QualifiedErasedConfigField
 {
     QualifiedIdentifier name;
+    ConfigFieldAddress originalFieldAddress;
     std::function<std::expected<ExplicitAny, Exception>(const ConfigLiteral&)> factory;
     std::optional<std::function<std::any()>> defaultSupplier;
 
 public:
     QualifiedErasedConfigField(
         QualifiedIdentifier name,
+        ConfigFieldAddress originalFieldAddress,
         std::function<std::expected<ExplicitAny, Exception>(const ConfigLiteral&)> factory,
         std::optional<std::function<std::any()>> defaultFactory)
-        : name(std::move(name)), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
+        : name(std::move(name)), originalFieldAddress(originalFieldAddress), factory(std::move(factory)), defaultSupplier(std::move(defaultFactory))
     {
     }
 
@@ -159,17 +183,20 @@ public:
 
     [[nodiscard]] std::any getDefault() const { return defaultSupplier.value()(); }
 
+    [[nodiscard]] ConfigFieldAddress getOriginalFieldAddress() const { return originalFieldAddress; }
+
     friend std::ostream& operator<<(std::ostream& os, const QualifiedErasedConfigField& field) { return os << field.name; }
 };
 
 template <typename... T>
-Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix, ConfigField<T>... fields)
+Schema<QualifiedErasedConfigField, Ordered> createConfigSchema(Identifier prefix, const ConfigField<T>&... fields)
 {
-    auto convertField = [&prefix]<typename R>(ConfigField<R> field)
+    auto convertField = [&prefix]<typename R>(const ConfigField<R>& field)
     {
         auto defaultSupplier = field.getDefaultSupplier();
         return QualifiedErasedConfigField{
             QualifiedIdentifier::create(prefix, field.getName()),
+            ConfigFieldAddress{field},
             [factory = field.getFactory()](const ConfigLiteral& value)
             { return std::move(factory(value)).transform([](auto val) { return ExplicitAny{std::any(std::move(val))}; }); },
             defaultSupplier.has_value()
@@ -235,6 +262,7 @@ public:
     }
 
     ConfigLiteral get() const { return supplier(); }
+
     const QualifiedIdentifier& getFullyQualifiedName() const { return name; }
 
     LiteralConfigValue toLiteralConfigValue() const { return LiteralConfigValue{name, get()}; }
@@ -296,6 +324,15 @@ template <>
 struct std::hash<NES::ConfigFieldTransformation>
 {
     size_t operator()(const NES::ConfigFieldTransformation& obj) const noexcept { return std::hash<NES::QualifiedIdentifier>{}(obj.name); }
+};
+
+template <>
+struct std::hash<NES::ConfigFieldAddress>
+{
+    size_t operator()(const NES::ConfigFieldAddress& obj) const noexcept
+    {
+        return obj.fieldAddress;
+    }
 };
 
 FMT_OSTREAM(NES::ConfigFieldDefault);

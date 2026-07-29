@@ -245,23 +245,25 @@ std::expected<TCPSourceConfig, Exception> TCPSourceConfig::fromConfig(const Inst
         }
     }
 
+    /// In the overwriteable (systest) case host/port may be absent; the systest data adaptors
+    /// (provideInlineData/provideFileData) fill in the mock server's host and port later.
     return TCPSourceConfig{
-        .socketHost = config.get(SOCKET_HOST).value(),
-        .socketPort = config.get(SOCKET_PORT).value(),
+        .socketDestination = overwriteableHostAndPort
+            ? std::optional<SocketDestination>{}
+            : SocketDestination{.socketHost = config.get(SOCKET_HOST).value(), .socketPort = config.get(SOCKET_PORT).value()},
         .socketDomain = config.get(SOCKET_DOMAIN),
         .socketType = config.get(SOCKET_TYPE),
         .tupleDelimiter = config.get(TUPLE_DELIMITER),
         .socketBufferSize = config.get(SOCKET_BUFFER_SIZE),
         .bytesUsedForSocketBufferSizeTransfer = config.get(SOCKET_BUFFER_TRANSFER_SIZE),
         .flushIntervalInMs = config.get(FLUSH_INTERVAL_MS),
-        .connectTimeoutSeconds = config.get(CONNECT_TIMEOUT_SECONDS),
-        .overwriteableHostAndPort = overwriteableHostAndPort};
+        .connectTimeoutSeconds = config.get(CONNECT_TIMEOUT_SECONDS)};
 }
 
 TCPSource::TCPSource(const TCPSourceConfig& config)
     : errBuffer{}
-    , socketHost(config.socketHost)
-    , socketPort(std::to_string(config.socketPort))
+    , socketHost(config.socketDestination.value().socketHost)
+    , socketPort(std::to_string(config.socketDestination.value().socketPort))
     , socketType(config.socketType)
     , socketDomain(config.socketDomain)
     , tupleDelimiter(config.tupleDelimiter)
@@ -489,46 +491,44 @@ void TCPSource::close()
 
 InlineDataRegistryReturnType TCPSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    auto config = std::any_cast<TCPSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData());
+    auto config = systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getAs<TCPSourceConfig>();
     config.flushIntervalInMs = 100;
 
-    if (!config.overwriteableHostAndPort)
+    if (config.socketDestination.has_value())
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
 
-    config.socketPort = mockTCPServer->getPort();
-    config.socketHost = "localhost";
+    config.socketDestination = TCPSourceConfig::SocketDestination{.socketHost = "localhost", .socketPort = mockTCPServer->getPort()};
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
 
-    systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig
-        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
+    systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig = PluginSourceConfiguration{
+        systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
 
 FileDataRegistryReturnType TCPSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    auto config = std::any_cast<TCPSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData());
+    auto config = systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getAs<TCPSourceConfig>();
     config.flushIntervalInMs = 100;
 
-    if (!config.overwriteableHostAndPort)
+    if (config.socketDestination.has_value())
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
-    config.socketPort = mockTCPServer->getPort();
-    config.socketHost = "localhost";
+    config.socketDestination = TCPSourceConfig::SocketDestination{.socketHost = "localhost", .socketPort = mockTCPServer->getPort()};
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
-    systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig
-        = PluginSourceConfiguration{systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
+    systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig = PluginSourceConfiguration{
+        systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
     return systestAdaptorArguments.physicalSourceConfig;
 }

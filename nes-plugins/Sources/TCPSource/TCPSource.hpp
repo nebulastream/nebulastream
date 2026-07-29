@@ -43,8 +43,13 @@ namespace NES
 /// reflection of exactly this struct (all members are reflectable).
 struct TCPSourceConfig
 {
-    std::string socketHost;
-    uint32_t socketPort;
+    struct SocketDestination
+    {
+        std::string socketHost;
+        uint32_t socketPort;
+    };
+    /// To be left empty if overwriteable host and port is set, for example in the systests
+    std::optional<SocketDestination> socketDestination;
     int32_t socketDomain;
     int32_t socketType;
     char tupleDelimiter;
@@ -52,7 +57,6 @@ struct TCPSourceConfig
     uint32_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint32_t connectTimeoutSeconds;
-    bool overwriteableHostAndPort;
 
     static std::expected<TCPSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
