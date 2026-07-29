@@ -41,10 +41,7 @@ if (${USING_LIBCXX})
 endif ()
 
 set(CORROSION_NO_HOSTBUILD ON CACHE BOOL "Enable proper incremental builds for Rust targets")
-### Corrosion is vendored in-tree at cmake/corrosion (see cmake/corrosion/VENDORING.md) instead of
-### being fetched over the network, so fresh configures (including fully offline builds in the dev
-### Docker image) do not depend on GitHub reachability. Adding it as a subdirectory defines the
-### corrosion_import_crate() function used below.
+### Corrosion is vendored in-tree, see cmake/corrosion/VENDORING.md.
 add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/corrosion ${CMAKE_BINARY_DIR}/corrosion)
 
 list(JOIN CARGOFLAGS_LIST " " ADDITIONAL_CARGOFLAGS)

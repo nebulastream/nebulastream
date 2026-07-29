@@ -114,9 +114,6 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
 
-# Corrosion is vendored in-tree at cmake/corrosion (see cmake/corrosion/VENDORING.md), so there is
-# no Corrosion pre-clone / CORROSION_SRC fallback to bake into the image anymore.
-
 # Pre-fetch every crate pinned in nes-network/Cargo.lock into $CARGO_HOME so cargo can build
 # offline. Only manifests + lockfile are copied (filtered by .dockerignore); stub lib sources
 # let cargo resolve the workspace without the real source tree.

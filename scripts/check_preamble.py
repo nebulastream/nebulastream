@@ -86,6 +86,10 @@ INGORED_ENDINGS = {
 
 VENDORED_FILES = {
     "cmake/CodeCoverage.cmake",
+    "cmake/corrosion/CMakeLists.txt",
+    "cmake/corrosion/cmake/Corrosion.cmake",
+    "cmake/corrosion/cmake/CorrosionGenerator.cmake",
+    "cmake/corrosion/cmake/FindRust.cmake",
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew",
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew.bat",
     "vcpkg/vcpkg-registry/ports/llvm/portfile.cmake",
@@ -108,7 +112,7 @@ if __name__ == "__main__":
 
         suffix = filename.split(".")[-1]
 
-        if filename in VENDORED_FILES or filename.startswith("cmake/corrosion/"):
+        if filename in VENDORED_FILES:
             pass
         elif suffix in {"cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
             with open(filename, "r", encoding="utf-8") as fp:
