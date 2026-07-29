@@ -664,22 +664,6 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     functions.push_back(function);
 }
 
-void AntlrSQLQueryPlanCreator::exitBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* context)
-{
-    if (helpers.empty())
-    {
-        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
-    }
-
-    if (!isInsideDataTypeConstructorArgument(context))
-    {
-        const auto value = bindBooleanLiteral(context) ? "true" : "false";
-        helpers.top().functionBuilder.emplace_back(
-            ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), value));
-    }
-    AntlrSQLBaseListener::exitBooleanLiteral(context);
-}
-
 void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpressionContext* context)
 {
     if (helpers.empty())
