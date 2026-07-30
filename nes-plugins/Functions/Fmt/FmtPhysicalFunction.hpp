@@ -19,9 +19,9 @@
 #include <variant>
 #include <vector>
 
+#include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
@@ -41,6 +41,7 @@ public:
         std::shared_ptr<const std::byte[]> bytes;
         size_t size;
     };
+
     using Fragment = std::variant<LiteralFragment, PhysicalFunction>;
 
     explicit FmtPhysicalFunction(std::vector<Fragment> fragments);

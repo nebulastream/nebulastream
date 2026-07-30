@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "ToStringPhysicalFunction.hpp"
+#include <ToStringPhysicalFunction.hpp>
 
 #include <charconv>
 #include <cstdint>
@@ -20,10 +20,10 @@
 #include <type_traits>
 #include <utility>
 
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -127,8 +127,8 @@ VarVal ToStringPhysicalFunction::execute(const Record& record, ArenaRef& arena) 
                 using ValueType = typename U::basic_type;
                 constexpr uint32_t bufSize = toCharsBufferSize<ValueType>();
                 auto buf = arena.allocateVariableSizedData(nautilus::val<uint64_t>{bufSize});
-                nautilus::val<uint32_t> writtenSize = nautilus::invoke(
-                    toCharsValue<ValueType>, underlying, buf.getContent(), nautilus::val<uint32_t>{bufSize});
+                nautilus::val<uint32_t> writtenSize
+                    = nautilus::invoke(toCharsValue<ValueType>, underlying, buf.getContent(), nautilus::val<uint32_t>{bufSize});
                 return VariableSizedData{buf.getContent(), nautilus::val<uint64_t>{writtenSize}};
             }
         });

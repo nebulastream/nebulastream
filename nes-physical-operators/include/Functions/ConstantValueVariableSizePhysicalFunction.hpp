@@ -34,6 +34,14 @@ public:
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
+    /// Read-only view of the literal's bytes, for functions that must inspect a constant
+    /// argument while lowering rather than per tuple. FMT splits its format string into
+    /// literal fragments and placeholders once, at registration time; the physical registry
+    /// hands over only the lowered child functions, so this is the sole route to those bytes.
+    /// The alternative would be re-parsing the format string inside traced code for every
+    /// tuple.
+    [[nodiscard]] const std::vector<int8_t>& getData() const { return data; }
+
 private:
     std::vector<int8_t> data;
 };

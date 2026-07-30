@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "ToStringLogicalFunction.hpp"
+#include <ToStringLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -52,7 +52,7 @@ ToStringLogicalFunction ToStringLogicalFunction::withDataType(const DataType& da
     return copy;
 }
 
-LogicalFunction ToStringLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ToStringLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChild = child.withInferredDataType(schema);
     if (newChild.getDataType().type == DataType::Type::UNDEFINED)
@@ -96,14 +96,14 @@ std::string ToStringLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("to_string({})", child.explain(verbosity));
 }
 
-Reflected Reflector<ToStringLogicalFunction>::operator()(const ToStringLogicalFunction& function) const
+Reflected Reflector<ToStringLogicalFunction>::operator()(const ToStringLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedToStringLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedToStringLogicalFunction{.child = function.child});
 }
 
-ToStringLogicalFunction Unreflector<ToStringLogicalFunction>::operator()(const Reflected& reflected) const
+ToStringLogicalFunction Unreflector<ToStringLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedToStringLogicalFunction>(reflected);
+    auto [child] = context.unreflect<detail::ReflectedToStringLogicalFunction>(reflected);
     if (!child.has_value())
     {
         throw CannotDeserialize("ToStringLogicalFunction is missing its child");
@@ -114,10 +114,6 @@ ToStringLogicalFunction Unreflector<ToStringLogicalFunction>::operator()(const R
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::Registerto_stringLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<ToStringLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("to_string requires exactly one child, but got {}", arguments.children.size());

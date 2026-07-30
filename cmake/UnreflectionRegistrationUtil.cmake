@@ -97,14 +97,18 @@ function(add_unreflection_plugin registry plugin_name)
 
     # Derive the include path relative to the component's src/ root (mirrors the include
     # tree convention: <component>/include/<rel-dir>/<header_basename>).
+    # Bounded at PROJECT_SOURCE_DIR: some image builds ADD the whole checkout to a
+    # directory literally named "src" (e.g. docker/frontend/cli.dockerfile), which would
+    # otherwise false-match as a component's own src/ dir for out-of-tree plugins
+    # (nes-plugins/Functions/*) that have no real src/ ancestor of their own.
     set(search_dir "${CMAKE_CURRENT_LIST_DIR}")
     set(component_src_dir "")
     while(NOT component_src_dir)
         get_filename_component(parent_dir "${search_dir}" DIRECTORY)
         get_filename_component(dir_name "${search_dir}" NAME)
-        if(dir_name STREQUAL "src")
+        if(dir_name STREQUAL "src" AND NOT search_dir STREQUAL "${PROJECT_SOURCE_DIR}")
             set(component_src_dir "${search_dir}")
-        elseif(search_dir STREQUAL parent_dir)
+        elseif(search_dir STREQUAL parent_dir OR search_dir STREQUAL "${PROJECT_SOURCE_DIR}")
             set(component_src_dir "${CMAKE_CURRENT_LIST_DIR}")
             break()
         else()

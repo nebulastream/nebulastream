@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "FmtLogicalFunction.hpp"
+#include <FmtLogicalFunction.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -36,7 +36,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
-#include "ToStringLogicalFunction.hpp"
+#include <ToStringLogicalFunction.hpp>
 
 namespace NES
 {
@@ -134,15 +134,15 @@ std::string FmtLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("FMT({})", fmt::join(explained, ", "));
 }
 
-LogicalFunction FmtLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction FmtLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     if (children.empty())
     {
         throw CannotInferSchema("FMT requires at least the format string as its first argument");
     }
 
-    const auto inferredChildren
-        = children | std::views::transform([&schema](const auto& c) { return c.withInferredDataType(schema); }) | std::ranges::to<std::vector>();
+    const auto inferredChildren = children | std::views::transform([&schema](const auto& c) { return c.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
 
     const auto formatString = extractFormatString(inferredChildren.front());
     const auto placeholders = countPlaceholders(formatString);
@@ -170,29 +170,23 @@ LogicalFunction FmtLogicalFunction::withInferredDataType(const Schema& schema) c
     }
 
     auto newDataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
-    newDataType.nullable
-        = std::ranges::any_of(inferredChildren, [](const auto& c) { return c.getDataType().nullable; });
+    newDataType.nullable = std::ranges::any_of(inferredChildren, [](const auto& c) { return c.getDataType().nullable; });
     return withDataType(newDataType).withChildren(newChildren);
 }
 
-Reflected Reflector<FmtLogicalFunction>::operator()(const FmtLogicalFunction& function) const
+Reflected Reflector<FmtLogicalFunction>::operator()(const FmtLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedFmtLogicalFunction{.children = function.children});
+    return context.reflect(detail::ReflectedFmtLogicalFunction{.children = function.children});
 }
 
-FmtLogicalFunction Unreflector<FmtLogicalFunction>::operator()(const Reflected& reflected) const
+FmtLogicalFunction Unreflector<FmtLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto result = unreflect<detail::ReflectedFmtLogicalFunction>(reflected);
+    auto result = context.unreflect<detail::ReflectedFmtLogicalFunction>(reflected);
     return FmtLogicalFunction(std::move(result.children));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterFMTLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterFMTLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<FmtLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.empty())
     {
         throw CannotDeserialize("FMT requires at least the format string as its first argument");
