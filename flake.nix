@@ -231,6 +231,8 @@
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
+                pkgs.unixODBC
+                pkgs.curl
                 pahoMqttPkg.c
                 pahoMqttPkg.cpp
                 ireeruntimePkg
