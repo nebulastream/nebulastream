@@ -1,6 +1,6 @@
 # name: window/WindowAggregationDifferentDataTypes.test
 # description: Test window aggregations over different data types
-# groups: [Aggregation, WindowOperators, CompilationIntensive] TODO #1272
+# groups: [Aggregation, WindowOperators]
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]
 
 CREATE LOGICAL SOURCE stream1(i8 INT8 NOT NULL,  ts UINT64 NOT NULL);
