@@ -63,7 +63,7 @@ PhysicalSourceBuilder::PhysicalSourceBuilder(
 {
 }
 
-std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(Schema<UnqualifiedUnboundField, Ordered> schema) &&
+std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(Schema<UnqualifiedUnboundField, Ordered> schema, std::optional<Identifier> logicalSourceName) &&
 {
     INVARIANT(!this->wasCalled, "PhysicalSourceBuilder called twice");
     this->wasCalled = true;
@@ -75,7 +75,7 @@ std::expected<SourceDescriptor, Exception> PhysicalSourceBuilder::build(Schema<U
         this->generalSourceConfig.maxInflightBuffers,
         std::move(this->sourcePluginConfig),
         std::move(this->inputFormatterPluginConfig),
-        std::nullopt};
+        std::move(logicalSourceName)};
 }
 
 SourceConfigSchema::SourceConfigSchema(
@@ -213,7 +213,7 @@ SourceCatalog::registerWithLogicalSource(PhysicalSourceBuilder builder, const Id
         "Source catalog corrupted, logical source name existed, but no mapping to physical sources found");
 
     return std::move(builder)
-        .build(*logicalSourceIter->second.getSchema())
+        .build(*logicalSourceIter->second.getSchema(), logicalSourceName)
         .transform(
             [&logicalPhysicalIter](SourceDescriptor descriptor)
             {

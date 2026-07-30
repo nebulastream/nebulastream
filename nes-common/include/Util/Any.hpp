@@ -14,6 +14,7 @@
 
 #pragma once
 #include <boost/core/demangle.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

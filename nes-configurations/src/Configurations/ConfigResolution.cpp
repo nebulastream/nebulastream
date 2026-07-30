@@ -25,6 +25,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <Configurations/ConfigValue.hpp>
 
 namespace NES
 {
@@ -104,7 +105,7 @@ std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConf
             errors.failedInstantiations.emplace_back(passedValue.getFullyQualifiedName(), created.error());
             continue;
         }
-        resolvedConfig.emplace_back(configField->getFullyQualifiedName(), std::move(created).value().getValue());
+        resolvedConfig.emplace_back(configField->getFullyQualifiedName(), configField->getOriginalFieldAddress(), std::move(created).value());
     }
 
     /// I don't want to use an unordered_map<QualifiedIdentifier, ConfigValue> for resolved config just to avoid this n x m comparison
@@ -131,11 +132,11 @@ std::tuple<Schema<ConfigValue, Ordered>, InvalidConfigSpecification> resolveConf
                 "Additional default value {} for field {} could not be validated",
                 std::visit([](const auto& literal) { return fmt::format("{}", literal); }, defaultLiteral),
                 declaredField.getFullyQualifiedName());
-            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), std::move(defaultValue).value().getValue());
+            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getOriginalFieldAddress(), std::move(defaultValue).value());
         }
         else if (declaredField.hasDefault())
         {
-            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getDefault());
+            resolvedConfig.emplace_back(declaredField.getFullyQualifiedName(), declaredField.getOriginalFieldAddress(), ExplicitAny{declaredField.getDefault()});
         }
         else
         {
@@ -160,7 +161,11 @@ applyConfigTransformations(Schema<ConfigValue, Ordered> config, const Schema<Con
                   {
                       return transformation->transformation(validatedValue.getRawValue())
                           .transform_error([&](const auto& error) { return std::pair{validatedValue.getFullyQualifiedName(), error}; })
-                          .transform([&](const auto& value) { return ConfigValue{validatedValue.getFullyQualifiedName(), value}; });
+                          .transform(
+                              [&](const auto& value) {
+                                  return ConfigValue{
+                                      validatedValue.getFullyQualifiedName(), validatedValue.getOriginalFieldAddress(), value};
+                              });
                   }
                   return validatedValue;
               });

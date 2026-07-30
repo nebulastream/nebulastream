@@ -194,7 +194,7 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
 Schema<ConfigFieldTransformation, Unordered> makeConfigTransformations(const SystestConfiguration& config)
 {
     return Schema<ConfigFieldTransformation, Unordered>{ConfigFieldTransformation::create<std::filesystem::path>(
-        QualifiedIdentifier::parse("FILE_SOURCE.PATH"),
+        QualifiedIdentifier::parse("FILE_SOURCE.FILE_PATH"),
         [testDataDir = config.testDataDir](const std::filesystem::path& filePath)
         {
             if (!filePath.string().starts_with("/"))

@@ -35,13 +35,13 @@ class ConfigValue
 {
     QualifiedIdentifier name;
     ConfigFieldAddress originalFieldAddress;
-    std::any value;
+    ExplicitAny value;
 
 public:
-    ConfigValue(QualifiedIdentifier name, ConfigFieldAddress originalFieldAddress, std::any value)
+    ConfigValue(QualifiedIdentifier name, const ConfigFieldAddress originalFieldAddress, ExplicitAny value)
         : name(std::move(name)), originalFieldAddress(originalFieldAddress), value(std::move(value))
     {
-        PRECONDITION(this->value.has_value(), "Cannot create a ConfigValue with an empty value");
+        PRECONDITION(this->value.getValue().has_value(), "Cannot create a ConfigValue with an empty value");
     }
 
     [[nodiscard]] QualifiedIdentifier getFullyQualifiedName() const { return name; }
@@ -49,13 +49,10 @@ public:
     template <typename T>
     [[nodiscard]] T getValue() const
     {
-        const auto expectedTypeName = boost::core::demangle(typeid(T).name());
-        const auto actualTypeName = boost::core::demangle(value.type().name());
-        PRECONDITION(typeid(T) == value.type(), "Stored config type {} does not match requested type {}", actualTypeName, expectedTypeName);
-        return std::any_cast<T>(value);
+        return value.getAs<T>();
     }
 
-    [[nodiscard]] const std::any& getRawValue() const { return value; }
+    [[nodiscard]] const ExplicitAny& getRawValue() const { return value; }
 
     [[nodiscard]] const ConfigFieldAddress getOriginalFieldAddress() const { return originalFieldAddress; }
 
@@ -71,7 +68,7 @@ public:
         : values(
               values
               | std::views::transform([](const ConfigValue& configValue)
-                                      { return std::pair{configValue.getOriginalFieldAddress(), configValue.getRawValue()}; })
+                                      { return std::pair{configValue.getOriginalFieldAddress(), configValue.getRawValue().getValue()}; })
               | std::ranges::to<std::unordered_map>())
     {
     }
@@ -79,17 +76,18 @@ public:
     template <typename T>
     T get(const ConfigField<T>& field) const
     {
-        const auto valueIter = values.find(field);
-        PRECONDITION("Could not find config value for field {} at fieldAddress {}", fie)
-        if (valueIter == values.end())
-        {
+        const auto valueIter = values.find(ConfigFieldAddress{field});
+        PRECONDITION(
+            valueIter != values.end(),
+            "Could not find value for config field {} at address {}",
+            field.getName(),
+            ConfigFieldAddress{field});
 
-        }
-        /// Field names are unqualified; the schema resolves them against any unambiguous suffix
-        /// of the stored fully qualified names (e.g. SEED matches GENERATOR_SOURCE.SEED).
-        auto valueOpt = values.getFieldByName(QualifiedIdentifier{std::vector{field.getName()}});
-        PRECONDITION(valueOpt.has_value(), "Could not find config value for field {}", field.getName());
-        return valueOpt.value().template getValue<T>();
+        const auto expectedTypeName = boost::core::demangle(typeid(T).name());
+        const auto actualTypeName = boost::core::demangle(valueIter->second.type().name());
+        PRECONDITION(typeid(T) == valueIter->second.type(), "Stored config type {} does not match requested type {}", actualTypeName, expectedTypeName);
+        return std::any_cast<T>(valueIter->second);
+
     }
 };
 }

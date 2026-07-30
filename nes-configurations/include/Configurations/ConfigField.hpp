@@ -149,6 +149,11 @@ public:
     {
     }
 
+    friend std::ostream& operator<<(std::ostream& os, const ConfigFieldAddress& fieldAddress)
+    {
+        return os << fmt::format("{:#x}", fieldAddress.fieldAddress);
+    }
+
     friend bool operator==(const ConfigFieldAddress& lhs, const ConfigFieldAddress& rhs) = default;
 
     friend struct std::hash<ConfigFieldAddress>;
@@ -275,31 +280,25 @@ private:
 struct ConfigFieldTransformation
 {
     QualifiedIdentifier name;
-    std::function<std::expected<ExplicitAny, Exception>(const std::any&)> transformation;
+    std::function<std::expected<ExplicitAny, Exception>(const ExplicitAny&)> transformation;
 
     template <typename T>
     static ConfigFieldTransformation create(QualifiedIdentifier name, std::function<T(const T&)> transformation)
     {
-        return ConfigFieldTransformation{.name = std::move(name) , .transformation = ( [transformation = std::move(transformation)](const std::any& value)
-             {
-                 PRECONDITION(value.type() == typeid(T), "Transformation function expects a value of type {}", NAMEOF_TYPE(T));
-                 return std::expected<ExplicitAny, Exception>{ExplicitAny{std::any{transformation(std::any_cast<T>(value))}}};
-             })
-
-   };
+        return ConfigFieldTransformation{
+            .name = std::move(name),
+            .transformation = [transformation = std::move(transformation)](const ExplicitAny& value)
+            { return std::expected<ExplicitAny, Exception>{ExplicitAny{std::any{transformation(value.getAs<T>())}}}; }};
     }
 
     template <typename T>
     static ConfigFieldTransformation
     createWithFail(QualifiedIdentifier name, std::function<std::expected<T, Exception>(const T&)> transformation)
     {
-        return ConfigFieldTransformation{.name = std::move(name) , .transformation = ( [transformation = std::move(transformation)](const std::any& value)
-             {
-                 PRECONDITION(value.type() == typeid(T), "Transformation function expects a value of type {}", NAMEOF_TYPE(T));
-                 return transformation(std::any_cast<T>(value)).and_then([](const auto& result){ return ExplicitAny{std::any{result}};});
-             })
-
-   };
+        return ConfigFieldTransformation{
+            .name = std::move(name),
+            .transformation = [transformation = std::move(transformation)](const ExplicitAny& value)
+            { return transformation(value.getAs<T>()).transform([](const auto& result) { return ExplicitAny{std::any{result}}; }); }};
     }
 
     friend bool operator==(const ConfigFieldTransformation& lhs, const ConfigFieldTransformation& rhs) { return lhs.name == rhs.name; }
@@ -335,6 +334,7 @@ struct std::hash<NES::ConfigFieldAddress>
     }
 };
 
+FMT_OSTREAM(NES::ConfigFieldAddress);
 FMT_OSTREAM(NES::ConfigFieldDefault);
 FMT_OSTREAM(NES::ConfigFieldTransformation);
 FMT_OSTREAM(NES::QualifiedErasedConfigField);

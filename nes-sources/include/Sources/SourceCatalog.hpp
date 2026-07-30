@@ -59,7 +59,7 @@ public:
         PluginSourceConfiguration sourcePluginConfig,
         InputFormatterDescriptor inputFormatterPluginConfig,
         std::shared_ptr<const SourceCatalog> catalog);
-    std::expected<SourceDescriptor, Exception> build(Schema<UnqualifiedUnboundField, Ordered> schema) &&;
+    std::expected<SourceDescriptor, Exception> build(Schema<UnqualifiedUnboundField, Ordered> schema, std::optional<Identifier> logicalSourceName = std::nullopt) &&;
     PhysicalSourceBuilder(const PhysicalSourceBuilder& other) = delete;
     PhysicalSourceBuilder(PhysicalSourceBuilder&& other) noexcept = default;
     PhysicalSourceBuilder& operator=(const PhysicalSourceBuilder& other) = delete;
