@@ -152,7 +152,18 @@ jobs:
       dockerhub-tag: "latest"
 
   send-zulip-msg-on-failure:
-    needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy ]
+    needs:
+      - nix-build
+      - full-clang-tidy
+      - compile-time-regression
+      - check-format
+      - stress-test
+      - build-and-test
+      - run_large_scale_tests_random_config
+      - large-tests
+      - build-and-benchmark
+      - benchmark-compile-time
+      - create-nightly-image
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:
