@@ -15,9 +15,11 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <ANTLRInputStream.h>
@@ -33,9 +35,12 @@
 #include <Token.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
@@ -88,7 +93,7 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
     }
 }
 
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+QueryStatement createQueryStatementFromSQLString(std::string_view queryString)
 {
     try
     {
@@ -103,17 +108,28 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         {
             throw InvalidQuerySyntax("Expected a query statement in {}", queryString);
         }
+        auto* const queryWithOptions = statement->queryWithOptions();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->queryWithOptions()->query());
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryWithOptions->query());
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.setOriginalSql(std::string(queryString));
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
-        return queryPlan;
+        std::optional<DistributedQueryId> queryId;
+        if (queryWithOptions->optionsClause() != nullptr)
+        {
+            queryId = getQueryId(bindConfigOptions(queryWithOptions->optionsClause()->options->namedConfigExpression()));
+        }
+        return QueryStatement{.plan = std::move(queryPlan), .id = std::move(queryId)};
     }
     catch (antlr4::RuntimeException& antlrException)
     {
         throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
     }
+}
+
+LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+{
+    return std::move(createQueryStatementFromSQLString(queryString).plan);
 }
 
 std::shared_ptr<ManagedAntlrParser> ManagedAntlrParser::create(std::string_view input)

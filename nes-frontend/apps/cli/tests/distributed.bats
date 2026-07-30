@@ -57,6 +57,35 @@ teardown()      { nes_distributed_teardown; }
   [ "$status" -eq 0 ]
 }
 
+@test "launch query with an id chosen in the query" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start \
+    "select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK SET ('chosen-in-sql' AS \"QUERY\".\"ID\")"
+  [ "$status" -eq 0 ]
+  [ "$output" = "chosen-in-sql" ]
+
+  sleep 1
+
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml stop chosen-in-sql
+  [ "$status" -eq 0 ]
+}
+
+@test "launch query with an id chosen on the commandline" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  # --query-id wins over the id in the query itself.
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml start --query-id chosen-on-cli \
+    "select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK SET ('chosen-in-sql' AS \"QUERY\".\"ID\")"
+  [ "$status" -eq 0 ]
+  [ "$output" = "chosen-on-cli" ]
+
+  sleep 1
+
+  run docker_nes_cli -t tests/good/select-gen-into-void.yaml status chosen-on-cli
+  [ "$status" -eq 0 ]
+  QUERY_STATUS=$(echo "$output" | jq -r '.[] | select(.query_id == "chosen-on-cli" and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+}
+
 @test "launch bad query from commandline" {
   setup_distributed tests/good/select-gen-into-void.yaml
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml start 'selectaaa DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'

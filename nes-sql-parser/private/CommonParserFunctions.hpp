@@ -28,6 +28,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -49,6 +50,8 @@ std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& con
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions);
+/// Reads the user supplied query id from the options of a query statement, e.g. SET ('my-query' AS "QUERY"."ID").
+std::optional<DistributedQueryId> getQueryId(const ConfigMap& configOptions);
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);

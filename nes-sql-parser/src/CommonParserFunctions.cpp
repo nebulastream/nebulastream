@@ -40,6 +40,7 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -251,6 +252,26 @@ std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMa
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions)
 {
     return getSchema(std::move(configOptions), Identifier::parse("SINK"));
+}
+
+std::optional<DistributedQueryId> getQueryId(const ConfigMap& configOptions)
+{
+    const auto queryConfigIter = configOptions.find(Identifier::parse("QUERY"));
+    if (queryConfigIter == configOptions.end())
+    {
+        return std::nullopt;
+    }
+    const auto idIter = queryConfigIter->second.find(Identifier::parse("ID"));
+    if (idIter == queryConfigIter->second.end())
+    {
+        return std::nullopt;
+    }
+    const auto* const literal = std::get_if<Literal>(&idIter->second);
+    if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
+    {
+        throw InvalidQuerySyntax("Query id must be a string");
+    }
+    return DistributedQueryId(std::get<std::string>(*literal));
 }
 
 namespace

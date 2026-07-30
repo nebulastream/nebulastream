@@ -941,6 +941,34 @@ TEST_F(StatementBinderTest, ShowVersionStatementTest)
     ASSERT_FALSE(binder->parseAndBindSingle("SHOW VERSION WHERE NAME = 'worker'").has_value());
 }
 
+TEST_F(StatementBinderTest, BindQueryIdOption)
+{
+    const auto statement = binder->parseAndBindSingle(R"(SELECT * FROM testSource INTO testSink SET ('my-query' AS "QUERY"."ID"))");
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+    EXPECT_EQ(std::get<QueryStatement>(*statement).id, DistributedQueryId("my-query"));
+}
+
+TEST_F(StatementBinderTest, CreateQueryStatementKeepsQueryIdOption)
+{
+    const auto statement = AntlrSQLQueryParser::createQueryStatementFromSQLString(
+        R"(SELECT * FROM testSource INTO testSink SET ('my-query' AS "QUERY"."ID"))");
+    EXPECT_EQ(statement.id, DistributedQueryId("my-query"));
+}
+
+TEST_F(StatementBinderTest, CreateQueryStatementWithoutOptionsHasNoQueryId)
+{
+    const auto statement = AntlrSQLQueryParser::createQueryStatementFromSQLString("SELECT * FROM testSource INTO testSink");
+    EXPECT_FALSE(statement.id.has_value());
+}
+
+TEST_F(StatementBinderTest, CreateQueryStatementRejectsNonStringQueryId)
+{
+    EXPECT_THROW(
+        AntlrSQLQueryParser::createQueryStatementFromSQLString(R"(SELECT * FROM testSource INTO testSink SET (42 AS "QUERY"."ID"))"),
+        Exception);
+}
+
 TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "

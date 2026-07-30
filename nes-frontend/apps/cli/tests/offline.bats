@@ -119,6 +119,12 @@ JSONEOF
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli start rejects --query-id for more than one query" {
+  run $NES_CLI -d -t tests/good/multiple-select-gen-into-void.yaml start --query-id my-query
+  [ "$status" -eq 1 ]
+  grep -- "--query-id expects a single query" nes-cli.log
+}
+
 @test "nebucli dump with topology from stdin" {
   run bash -c "cat tests/good/chained-joins.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]

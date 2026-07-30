@@ -804,11 +804,25 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
 
     if (program.is_subcommand_used("start"))
     {
+        /// A query id given on the command line overrides the one a query carries in SET ('...' AS "QUERY"."ID").
+        /// Ids identify a query in the cluster, so a single one cannot stand in for a batch of queries.
+        const auto queryIdOverride = subcommand.present<std::string>("--query-id");
+        if (queryIdOverride.has_value() && queries.size() > 1)
+        {
+            throw NES::InvalidConfigParameter(
+                "--query-id expects a single query, but {} were submitted. Set the ids in the queries instead.", queries.size());
+        }
+
         NES::CLI::QueryStateBackend stateBackend;
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto statement = NES::AntlrSQLQueryParser::createQueryStatementFromSQLString(query);
+            if (queryIdOverride.has_value())
+            {
+                statement.id = NES::DistributedQueryId(*queryIdOverride);
+            }
+            auto result = queryStatementHandler(statement);
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -865,6 +879,10 @@ int main(int argc, char** argv)
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
+        startQuery.add_argument("--query-id")
+            .metavar("ID")
+            .help("Id to deploy the query under, instead of a generated one. Overrides an id set in the query itself via "
+                  R"(SET ('...' AS "QUERY"."ID"). Only valid when submitting a single query.)");
 
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);

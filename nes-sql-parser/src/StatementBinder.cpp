@@ -657,21 +657,7 @@ public:
                 std::optional<DistributedQueryId> queryId;
                 if (queryAst->optionsClause() != nullptr)
                 {
-                    auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
-                    static const auto QueryIdentifier = Identifier::parse("QUERY");
-                    static const auto IdIdentifier = Identifier::parse("ID");
-                    if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
-                    {
-                        if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
-                        {
-                            auto* literal = std::get_if<Literal>(&idIter->second);
-                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
-                            {
-                                throw InvalidQuerySyntax("Query id must be a string");
-                            }
-                            queryId = DistributedQueryId(std::get<std::string>(*literal));
-                        }
-                    }
+                    queryId = getQueryId(bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression()));
                 }
                 return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
             }
