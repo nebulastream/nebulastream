@@ -94,9 +94,10 @@ ColumnIndex::ColumnIndex(size_t index) : index(index + 1)
 
 std::expected<ColumnMapping, std::string> lookupColumnMapping(ColumnIndex index, const DataType& type, const SQLType& sqlType)
 {
-    /// This branch's DataType has no nullability, so SQL nullability is not enforced
-    /// against the NES type here; a SQL NULL is instead handled leniently at fetch time
-    /// (see ODBCSource.cpp): empty for variable-sized columns, a fetch error for fixed ones.
+    if (sqlType.isNullable && !type.nullable)
+    {
+        return std::unexpected{"Cannot bind nullable SQL type to non nullable NES Type"};
+    }
     auto conversion = conversions.find({sqlType.sqlType, type.type});
     if (conversion == conversions.end())
     {

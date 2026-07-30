@@ -287,6 +287,30 @@ struct Connection
     }
 };
 
+namespace
+{
+
+/// Translates ODBC's length/indicator value into the NES per-field null byte. Bound as a
+/// fixup so it runs on every fetch alongside the value conversions.
+void nullByteFixup(std::span<const std::byte> fixupMemory, std::span<std::byte> outputMemory)
+{
+    SQLBIGINT indicator = 0;
+    std::memcpy(&indicator, fixupMemory.data(), sizeof(indicator));
+    if (indicator == SQL_NULL_DATA)
+    {
+        outputMemory[0] = std::byte(1);
+    }
+    else
+    {
+        INVARIANT(indicator >= 0, "Negative Indicator caused by unhandled error: {}", indicator);
+        /// The output tuple is reused across fetches; clear the flag so a non-null
+        /// value after a NULL row is not left marked NULL by the prior fetch.
+        outputMemory[0] = std::byte(0);
+    }
+}
+
+}
+
 struct PreparedStatement
 {
     struct ApplyFixup
@@ -302,6 +326,10 @@ struct PreparedStatement
     {
         ColumnIndex columnIndex;
         CType cType;
+        /// Points at the field's null byte in the output tuple, or nullptr when the column is
+        /// not nullable. Variable-sized columns learn their nullness from SQLGetData rather
+        /// than a bound indicator, so the flag is written during fetch().
+        std::byte* nullable;
         std::span<std::byte> output;
     };
 
@@ -398,7 +426,11 @@ struct PreparedStatement
         }
     }
 
-    static PreparedStatement bind(const Connection& connection, const Schema& schema, std::string query, std::chrono::hours timezoneOffset)
+    static PreparedStatement bind(
+        const Connection& connection,
+        const Schema<UnqualifiedUnboundField, Ordered>& schema,
+        std::string query,
+        std::chrono::hours timezoneOffset)
     {
         SQLHSTMT hStmt = SQL_NULL_HSTMT;
         auto rc = SQLAllocHandle(SQL_HANDLE_STMT, connection.connection.get(), &hStmt);
@@ -410,9 +442,9 @@ struct PreparedStatement
         auto sqlTypes = getSqlResultTypes(hStmt);
         NES_DEBUG("Binding {} to {}.", fmt::join(sqlTypes, ", "), schema);
 
-        if (sqlTypes.size() != schema.getNumberOfFields())
+        if (sqlTypes.size() != schema.size())
         {
-            throw CannotOpenSource("Query returned {} columns, but schema expects {}.", sqlTypes.size(), schema.getNumberOfFields());
+            throw CannotOpenSource("Query returned {} columns, but schema expects {}.", sqlTypes.size(), schema.size());
         }
 
         auto columnMappingResults = NES::views::enumerate(std::views::zip(sqlTypes, schema))
@@ -421,7 +453,7 @@ struct PreparedStatement
                                         {
                                             auto [index, type] = types;
                                             auto [sqlType, nesType] = type;
-                                            return lookupColumnMapping(ColumnIndex(index), nesType.dataType, sqlType);
+                                            return lookupColumnMapping(ColumnIndex(index), nesType.getDataType(), sqlType);
                                         })
             | std::ranges::to<std::vector<std::expected<ColumnMapping, std::string>>>();
 
@@ -438,9 +470,13 @@ struct PreparedStatement
         std::ranges::sort(columnMappings, {}, &ColumnMapping::columnIndex);
 
         size_t fixupSize = 0;
-        const size_t tupleSize = schema.getSizeOfSchemaInBytes();
+        const size_t tupleSize = schema.getSizeInBytes();
         for (auto& columnMapping : columnMappings)
         {
+            if (columnMapping.nesType.nullable)
+            {
+                fixupSize += sizeof(SQLBIGINT);
+            }
             fixupSize += std::visit(
                 Overloaded{
                     [&](const Fixup& fixup) { return fixup.fixupSize; },
@@ -460,17 +496,32 @@ struct PreparedStatement
         bool watermarkColumnFound = false;
         for (const auto& columnMapping : columnMappings)
         {
-            /// This branch's DataType has no nullability, so every column binds as
-            /// non-nullable: no per-field null byte, and a null indicator of nullptr.
-            /// A SQL NULL in a fixed-width column then surfaces as an ODBC fetch error
-            /// (22002); a NULL in a variable-sized column is coerced to empty in fetch().
+            /// A nullable column carries a leading null byte in the NES tuple. Fixed-width and
+            /// fixup columns learn their nullness from the length/indicator ODBC writes during
+            /// SQLFetch, so reserve room for it in the fixup tuple and translate it via
+            /// nullByteFixup. Variable-sized columns instead get a pointer to the null byte and
+            /// set it from SQLGetData's indicator in fetch().
+            SQLBIGINT* nullValueIndicator = nullptr;
+            std::byte* nesNullByte = nullptr;
+            if (columnMapping.nesType.nullable)
+            {
+                if (!std::holds_alternative<VarSized>(columnMapping.translation))
+                {
+                    applyFixups.emplace_back(fixupTupleMemory.first(sizeof(SQLBIGINT)), outputTupleMemory.first(1), nullByteFixup);
+                    nullValueIndicator = reinterpret_cast<SQLBIGINT*>(fixupTupleMemory.data());
+                    fixupTupleMemory = fixupTupleMemory.subspan(sizeof(SQLBIGINT));
+                }
+                nesNullByte = outputTupleMemory.data();
+                outputTupleMemory = outputTupleMemory.subspan(1);
+            }
+
             std::visit(
                 Overloaded{
                     [&](const Fixup& fixup)
                     {
                         applyFixups.emplace_back(
                             fixupTupleMemory.first(fixup.fixupSize),
-                            outputTupleMemory.first(columnMapping.nesType.getSizeInBytes()),
+                            outputTupleMemory.first(columnMapping.nesType.getSizeInBytesWithoutNull()),
                             fixup.fixupFunction);
                         rc = SQLBindCol(
                             hStmt,
@@ -478,7 +529,7 @@ struct PreparedStatement
                             fixup.cType.type,
                             fixupTupleMemory.data(),
                             static_cast<SQLLEN>(fixup.fixupSize),
-                            nullptr);
+                            nullValueIndicator);
                         CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                         /// The (single) TIMESTAMP column is the watermark column: record where the
                         /// driver writes its raw SQL_TIMESTAMP_STRUCT so the poller can read the row's
@@ -497,20 +548,20 @@ struct PreparedStatement
                             columnMapping.columnIndex.index,
                             direct.cType.type,
                             outputTupleMemory.data(),
-                            columnMapping.nesType.getSizeInBytes(),
-                            nullptr);
+                            columnMapping.nesType.getSizeInBytesWithoutNull(),
+                            nullValueIndicator);
                         CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                     },
                     [&](const VarSized& varSized)
                     {
                         applyVarSized.emplace_back(
-                            columnMapping.columnIndex, varSized.cType, outputTupleMemory.first(sizeof(VariableSizedAccess)));
+                            columnMapping.columnIndex, varSized.cType, nesNullByte, outputTupleMemory.first(sizeof(VariableSizedAccess)));
                         CHECK(rc, SQL_HANDLE_STMT, hStmt, "SQLBindCol");
                     },
                 },
                 columnMapping.translation);
 
-            outputTupleMemory = outputTupleMemory.subspan(columnMapping.nesType.getSizeInBytes());
+            outputTupleMemory = outputTupleMemory.subspan(columnMapping.nesType.getSizeInBytesWithoutNull());
         }
 
 
@@ -579,8 +630,15 @@ struct PreparedStatement
         CHECK(rc, SQL_HANDLE_STMT, statement.get(), "SQLFetch");
 
         NES_DEBUG("ODBCSource fetch: got a row");
-        for (const auto& [index, cType, destination] : varsizedAccesses)
+        for (const auto& [index, cType, nullable, destination] : varsizedAccesses)
         {
+            /// The output tuple is reused across fetches; clear the flag up front so
+            /// a non-null value after a NULL row is not left marked NULL (only the
+            /// SQL_NULL_DATA branch below sets it).
+            if (nullable != nullptr)
+            {
+                *nullable = static_cast<std::byte>(0);
+            }
             std::array<SQLCHAR, 1> probe{};
             SQLLEN totalLen = 0;
             SQLRETURN getDataRc
@@ -588,16 +646,24 @@ struct PreparedStatement
             CHECK(getDataRc, SQL_HANDLE_STMT, statement.get(), "SQLGetData");
 
 
-            if (totalLen == SQL_NULL_DATA || totalLen == 0)
+            if (totalLen == SQL_NULL_DATA)
             {
-                /// This branch has no nullable columns, so a SQL NULL cannot be
-                /// represented distinctly and is coerced to an empty variable-sized
-                /// value (same as a genuinely empty string). A zero Size makes the
-                /// index a don't-care (no child buffer is read), so index 0 stands in
-                /// for the branch's old INVALID_VARIABLE_SIZED_INDEX sentinel, which
-                /// our tree's VariableSizedAccess no longer defines. The output tuple
-                /// is reused across fetches, so zeroing the slot also prevents a stale
-                /// non-zero size from a prior row emitting a bogus child payload.
+                INVARIANT(nullable, "SQLGetData returned SQL_NULL_DATA for a non nullable column.");
+                *nullable = static_cast<std::byte>(1);
+                /// Zero the slot too (size 0): the output tuple is reused across
+                /// fetches, so a stale non-zero size from a prior row would make a
+                /// reader emit a bogus child payload for this NULL value.
+                const auto emptyAccess = VariableSizedAccess{VariableSizedAccess::Index{0}, VariableSizedAccess::Size{0}};
+                std::memcpy(destination.data(), &emptyAccess, sizeof(emptyAccess));
+                continue;
+            }
+
+            if (totalLen == 0)
+            {
+                /// Empty variable-sized value: a zero Size makes the index a don't-care
+                /// (no child buffer is read), so index 0 stands in for the old
+                /// INVALID_VARIABLE_SIZED_INDEX sentinel, which our tree's
+                /// VariableSizedAccess no longer defines.
                 const auto emptyAccess = VariableSizedAccess{VariableSizedAccess::Index{0}, VariableSizedAccess::Size{0}};
                 std::memcpy(destination.data(), &emptyAccess, sizeof(emptyAccess));
                 continue;
@@ -631,8 +697,10 @@ struct PreparedStatement
             auto childBufferIndex = parent.storeChildBuffer(resultBuffer);
 
             NES_DEBUG("SQLGetData returned {} bytes.", bytesRead);
-            const std::string_view odbcVarSized{resultBuffer.getAvailableMemoryArea<char>().data(), static_cast<size_t>(bytesRead)};
-            // NES_DEBUG("Received varsized: {}", odbcVarSized);
+            /// Do not read resultBuffer past this point: storeChildBuffer() takes it by
+            /// non-const reference and empties it, so getAvailableMemoryArea() now yields a
+            /// null pointer. A string_view built over it here aborts under libc++ hardening
+            /// (`__len == 0 || __s != nullptr`) on the first non-empty varsized value.
             const auto access = VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{static_cast<uint64_t>(bytesRead)}};
             std::memcpy(destination.data(), &access, sizeof(access));
         }
@@ -823,6 +891,16 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
     NES_DEBUG("ODBCSource emitting buffer: {} tuple(s), watermark {}", numberOfTuples, watermark);
     tupleBuffer.setWatermark(watermark);
 
+    /// A tuple count, despite the factory's name — and it has to be, because the number this
+    /// source returns is exactly the number that reaches the buffer.
+    ///
+    /// SourceThread does `setNumberOfTuples(fillTupleResult.getNumberOfBytes())`
+    /// unconditionally, overwriting anything the source set on the buffer itself, so the
+    /// return value is the only lever a source has over the final tuple count. For a
+    /// byte-oriented source that is correct: an input formatter later reinterprets the byte
+    /// count and rewrites the field. This source is NATIVE — it writes engine tuples directly
+    /// and PipeliningPhase inserts no formatter behind it — so nothing would ever convert a
+    /// byte count, and the value handed over must already be the tuple count.
     return FillTupleBufferResult::withBytes(numberOfTuples);
 }
 

@@ -27,6 +27,8 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -66,7 +68,7 @@ public:
 private:
     size_t pollIntervalMs;
     std::string query;
-    Schema schema;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
     std::chrono::hours timezoneOffset;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
@@ -80,48 +82,52 @@ private:
 /// across every plugin — out of scope for any single PR.
 struct ConfigParametersODBC
 {
-    /// Named "db_host"/"db_port" rather than "host"/"port" so that inline source
-    /// SQL can still use `SOURCE.HOST` for worker placement (the inline-source
-    /// binder unconditionally extracts the "host" config key as placement). Matches
-    /// ODBCSink's db_host/db_port.
+    /// Named DB_HOST/DB_PORT rather than HOST/PORT so that inline source SQL can still use
+    /// `SOURCE.HOST` for worker placement (the inline-source binder unconditionally extracts
+    /// the HOST config key as placement).
+    ///
+    /// All keys here are upper case because the SQL parser canonicalises unquoted identifiers
+    /// to upper case (see Identifier::parse). A lower-case key is only reachable by quoting it
+    /// in every query, so it would look simply missing — `validateAndFormat` throws
+    /// std::out_of_range on the DRIVER lookup.
     static inline const DescriptorConfig::ConfigParameter<std::string> DB_HOST{
-        "db_host",
+        "DB_HOST",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DB_HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> DB_PORT{
-        "db_port",
+        "DB_PORT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DB_PORT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> DATABASE{
-        "database",
+        "DATABASE",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATABASE, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> USERNAME{
-        "username",
+        "USERNAME",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(USERNAME, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> PASSWORD{
-        "password",
+        "PASSWORD",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PASSWORD, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> DRIVER{
-        "driver",
+        "DRIVER",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         { return DescriptorConfig::tryGet(DRIVER, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<size_t> POLL_INTERVAL_MS{
-        "poll_interval_ms",
+        "POLL_INTERVAL_MS",
         1000,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
         { return DescriptorConfig::tryGet(POLL_INTERVAL_MS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> QUERY{
-        "query",
+        "QUERY",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         { return DescriptorConfig::tryGet(QUERY, config); }};
@@ -131,7 +137,7 @@ struct ConfigParametersODBC
     /// with a self-signed certificate needs TrustServerCertificate=yes. Defaults to false so the
     /// psqlodbc path (which has no such keyword) is unaffected.
     static inline const DescriptorConfig::ConfigParameter<bool> TRUST_SERVER_CERTIFICATE{
-        "trust_server_certificate",
+        "TRUST_SERVER_CERTIFICATE",
         false,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(TRUST_SERVER_CERTIFICATE, config); }};
@@ -142,7 +148,7 @@ struct ConfigParametersODBC
     /// timestamps by whole hours so they line up with the source column's timezone: set it to the
     /// column's UTC offset (e.g. 2 for GMT+2). Intended range [-24, 24]; validateAndFormat enforces it.
     static inline const DescriptorConfig::ConfigParameter<int32_t> TIMEZONE_OFFSET_HOURS{
-        "timezone_offset_hours",
+        "TIMEZONE_OFFSET_HOURS",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TIMEZONE_OFFSET_HOURS, config); }};
 
