@@ -93,8 +93,8 @@ template <LogicalOperatorConcept T>
 /// @note: in certain stages the source operators might not be Leaf operators
 [[nodiscard]] std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan);
 
-/// Returns a set of all operators
-[[nodiscard]] std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan);
+/// Returns a set of all operators, deduplicated structurally (see StructuralOperatorHash/StructuralOperatorEqual)
+[[nodiscard]] std::unordered_set<LogicalOperator, StructuralOperatorHash, StructuralOperatorEqual> flatten(const LogicalPlan& plan);
 
 }
 

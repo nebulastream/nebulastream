@@ -199,10 +199,10 @@ std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, Operator
     return std::nullopt;
 }
 
-std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan)
+std::unordered_set<LogicalOperator, StructuralOperatorHash, StructuralOperatorEqual> flatten(const LogicalPlan& plan)
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<LogicalOperator> visitedOperators;
+    std::unordered_set<LogicalOperator, StructuralOperatorHash, StructuralOperatorEqual> visitedOperators;
     for (const auto& rootOperator : plan.getRootOperators())
     {
         for (auto itr : BFSRange(rootOperator))
