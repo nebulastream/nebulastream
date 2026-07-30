@@ -14,6 +14,7 @@
 
 #include <SchemaJSONInputFormatIndexer.hpp>
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -22,8 +23,7 @@
 #include <simdjson.h>
 
 #include <ErrorHandling.hpp>
-#include <FieldOffsets.hpp>
-#include <RawTupleBuffer.hpp>
+#include <SchemaJSONFieldIndex.hpp>
 
 namespace NES
 {
@@ -32,44 +32,62 @@ namespace
 /// Flat JSON objects never nest, so a tiny fixed depth is enough for simdjson's open-container stack.
 constexpr size_t SCHEMA_JSON_MAX_DEPTH = 16;
 
-[[nodiscard]] bool isJsonWhitespace(const char character) noexcept
+/// One persistent simdjson stage-1 buffer per FIF ROLE per thread. In "option 2" the structural indexes must
+/// survive from the indexing phase into the read phase (the read gathers (start,end) from them on the fly),
+/// and a single readBuffer pass reads THREE distinct index sets (rawBufferFIF + leading + trailing spanning
+/// FIFs) -- so they must not share one buffer. Keying by the FIF's address gives each role its own persistent
+/// buffer: the three FIFs are fixed members of the InputFormatter's static thread_local IndexPhaseResult, so
+/// their addresses are stable across buffers even though the POD FIF state is reset each buffer. The buffer is
+/// (re)allocated only when a larger region than seen before arrives, so the steady state does no allocation
+/// (mirrors the baseline's persistent tlStage1).
+struct Stage1Slot
 {
-    return character == ' ' || character == '\t' || character == '\n' || character == '\r';
-}
-
-/// Per-thread simdjson stage-1 state. The indexer object itself stays stateless (the query engine calls the
-/// indexer concurrently), so the mutable structural-index buffer lives here in thread_local storage. It is
-/// (re)allocated only when a larger region than seen before arrives, so the steady state does no allocation.
-struct Stage1State
-{
+    const void* owner = nullptr;
     std::unique_ptr<simdjson::internal::dom_parser_implementation> implementation;
     size_t capacity = 0;
 };
 
-thread_local Stage1State tlStage1;
+/// At most three distinct owners exist per (thread, SchemaJSON formatter); 8 is comfortable headroom.
+thread_local std::array<Stage1Slot, 8> tlStage1Pool;
+
+Stage1Slot& acquireSlotFor(const void* const owner)
+{
+    for (auto& slot : tlStage1Pool)
+    {
+        if (slot.owner == owner)
+        {
+            return slot;
+        }
+    }
+    for (auto& slot : tlStage1Pool)
+    {
+        if (slot.owner == nullptr)
+        {
+            slot.owner = owner;
+            return slot;
+        }
+    }
+    throw CannotFormatSourceData("SchemaJSON: stage-1 slot pool exhausted (more than {} concurrent FIF roles)", tlStage1Pool.size());
+}
 }
 
-void schemaJsonStage1IntoFieldOffsets(
-    FieldOffsets<SCHEMA_JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const std::string_view region,
-    const FieldIndex base,
-    const uint32_t numFields)
+void schemaJsonIndexIntoFieldIndex(
+    SchemaJSONFieldIndex& fieldIndex, const std::string_view region, const FieldIndex base, const uint32_t numFields)
 {
     /// An empty region (e.g. two adjacent tuple delimiters at a buffer boundary) holds zero complete records;
-    /// nothing to index, and simdjson would reject a zero capacity.
+    /// nothing to index, and simdjson would reject a zero capacity. The FIF keeps totalNumberOfTuples == 0.
     if (region.empty())
     {
         return;
     }
 
-    auto& state = tlStage1;
+    auto& slot = acquireSlotFor(&fieldIndex);
 
-    /// (Re)allocate the structural-index buffer only when it must grow (it sizes the index array, unrelated to
-    /// the input padding below).
-    if (not state.implementation || state.capacity < region.size())
+    /// (Re)allocate the structural-index buffer only when it must grow.
+    if (not slot.implementation || slot.capacity < region.size())
     {
         const auto allocError = simdjson::get_active_implementation()->create_dom_parser_implementation(
-            region.size(), SCHEMA_JSON_MAX_DEPTH, state.implementation);
+            region.size(), SCHEMA_JSON_MAX_DEPTH, slot.implementation);
         if (allocError != simdjson::SUCCESS)
         {
             throw CannotFormatSourceData(
@@ -77,33 +95,27 @@ void schemaJsonStage1IntoFieldOffsets(
                 region.size(),
                 simdjson::error_message(allocError));
         }
-        state.capacity = region.size();
+        slot.capacity = region.size();
     }
 
     /// Zero-copy: run stage 1 straight over the source bytes. simdjson's SIMD loads may read up to
-    /// SIMDJSON_PADDING (64B) past `region.size()`, so those trailing bytes must be READABLE -- their content is
-    /// irrelevant (stage 1 only emits structural indexes for positions < len). That padding is guaranteed by the
-    /// source (raw engine buffers are over-allocated with SIMDJSON_PADDING trailing slack); `region` ends at the
-    /// last tuple delimiter, at or before the buffer's data end, so [region.end(), region.end()+64) stays inside
-    /// that slack. (This is the same contract the on-demand "JSON" indexer relies on; both drop the defensive
-    /// per-buffer copy.)
+    /// SIMDJSON_PADDING (64B) past `region.size()`; that padding is guaranteed by the source (raw engine
+    /// buffers are over-allocated with SIMDJSON_PADDING trailing slack), same contract as before.
     const auto* const bytes = reinterpret_cast<const uint8_t*>(region.data());
-    const auto stage1Error = state.implementation->stage1(bytes, region.size(), simdjson::stage1_mode::regular);
+    const auto stage1Error = slot.implementation->stage1(bytes, region.size(), simdjson::stage1_mode::regular);
     /// EMPTY (no structural element) is fine -- it just means zero complete records in this region.
     if (stage1Error != simdjson::SUCCESS && stage1Error != simdjson::EMPTY)
     {
         throw CannotFormatSourceData("SchemaJSON: simdjson stage-1 failed on JSON buffer: {}", simdjson::error_message(stage1Error));
     }
 
-    const uint32_t* const structuralIndexes = state.implementation->structural_indexes.get();
-    const uint32_t numStructuralIndexes = state.implementation->n_structural_indexes;
+    const uint32_t* const structuralIndexes = slot.implementation->structural_indexes.get();
+    const uint32_t numStructuralIndexes = slot.implementation->n_structural_indexes;
 
     /// A flat object of F fields emits exactly S = 4F + 1 structural indexes:
     ///   '{'  then F * ( key-quote, ':', value-start )  then (F-1) ',' then '}'  =  1 + 3F + (F-1) + 1.
-    /// Under the fixed schema every record has this exact shape, so the total structural count is a multiple
-    /// of S. Any shape deviation (missing/extra key, nested value, wrong arity) changes the count and is
-    /// rejected here. This is a SHAPE check, not a value-validity check: a per-record reordering that keeps
-    /// the count is not caught (SchemaJSON requires a consistent key order by contract).
+    /// Under the fixed schema the total is a multiple of S; any shape deviation changes the count and is
+    /// rejected here (a SHAPE check, not a value-validity check).
     const uint32_t structuralIndexesPerRecord = (4 * numFields) + 1;
     if (structuralIndexesPerRecord == 0 || (numStructuralIndexes % structuralIndexesPerRecord) != 0)
     {
@@ -119,40 +131,9 @@ void schemaJsonStage1IntoFieldOffsets(
     }
     const uint32_t numRecords = numStructuralIndexes / structuralIndexesPerRecord;
 
-    /// The record count is known now, so size the band in one shot -- the per-record emplaceTupleOffsets below
-    /// then only grows the vector's size within this capacity, never reallocates (TWO offsets per field).
-    fieldOffsets.reserveOffsets(static_cast<size_t>(numRecords) * numFields * 2);
-
-    for (uint32_t record = 0; record < numRecords; ++record)
-    {
-        const uint32_t recordBase = record * structuralIndexesPerRecord;
-
-        for (uint32_t field = 0; field < numFields; ++field)
-        {
-            /// Local layout within a record's S-index block: '{'=0, then for field f: key-quote=1+4f,
-            /// ':'=2+4f, value-start=3+4f, terminator (',' or '}')=4+4f.
-            const uint32_t colonSlot = recordBase + 2 + (4 * field);
-            const uint32_t valueSlot = recordBase + 3 + (4 * field);
-
-            INVARIANT(
-                bytes[structuralIndexes[colonSlot]] == static_cast<uint8_t>(':'),
-                "SchemaJSON: structural index misaligned -- expected ':' before the value of field {}",
-                field);
-
-            const uint32_t valueStart = structuralIndexes[valueSlot];
-            /// The next structural entry is the ',' or '}' that terminates the value.
-            uint32_t valueEnd = structuralIndexes[valueSlot + 1];
-            /// Trim whitespace that sits between the value and the terminator (pretty-printed JSON); packed
-            /// NDJSON hits this loop zero times.
-            while (valueEnd > valueStart && isJsonWhitespace(static_cast<char>(bytes[valueEnd - 1])))
-            {
-                --valueEnd;
-            }
-
-            /// Append in place (no resize value-init); reserveOffsets() above guarantees no reallocation.
-            fieldOffsets.emplaceFieldOffsetPair(static_cast<FieldIndex>(base + valueStart), static_cast<FieldIndex>(base + valueEnd));
-        }
-    }
+    /// No gather: hand the read path a NON-owning pointer into simdjson's own structural_indexes array; the
+    /// read computes (start,end) on the fly via the fixed 4F+1 stride, touching only projected fields.
+    fieldIndex.setStage1Result(structuralIndexes, base, numRecords);
 }
 
 }

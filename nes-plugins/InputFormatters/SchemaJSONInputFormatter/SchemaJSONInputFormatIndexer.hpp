@@ -28,10 +28,10 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawTupleBuffer.hpp>
 #include <RawValueParser.hpp>
+#include <SchemaJSONFieldIndex.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -63,11 +63,8 @@ struct ConfigParametersSchemaJSON
         = DescriptorConfig::createConfigParameterContainerMap(InputFormatterDescriptor::parameterMap, TUPLE_DELIMITER);
 };
 
-/// SchemaJSON emits a (start, end) byte offset pair per field, so it reuses the generic FieldOffsets index
-/// function in its TWO-offsets-per-field mode. The consumption phase (FieldOffsets::applyReadSpanningRecord)
-/// then does the strided gather + parseRawValueIntoRecord + projection push-down for free.
-constexpr auto SCHEMA_JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
-
+/// PROTOTYPE (option 2): SchemaJSON uses a custom FieldIndexFunction (SchemaJSONFieldIndex) that reads
+/// simdjson's stage-1 structural indexes directly at read time -- no separate FieldOffsets band, no gather.
 struct SchemaJSONMetaData
 {
     static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
@@ -120,11 +117,11 @@ private:
 };
 
 /// Runs simdjson stage 1 over `region` (the bytes of all COMPLETE records in the raw buffer, i.e. between the
-/// first and last tuple delimiter) and emplaces one (start, end) byte-offset pair per value into `fieldOffsets`.
-/// `base` is the absolute offset of `region` within the raw buffer, added to every emitted offset. `numFields`
-/// is the schema arity F. Defined in SchemaJSONStage1.cpp so that simdjson stays confined to a single TU.
-void schemaJsonStage1IntoFieldOffsets(
-    FieldOffsets<SCHEMA_JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, std::string_view region, FieldIndex base, uint32_t numFields);
+/// first and last tuple delimiter) into this FIF's thread_local-pooled dom_parser_implementation and records
+/// the (non-owning) structural-index base + record count on `fieldIndex`. NO gather, NO FieldOffsets band.
+/// `base` is the absolute offset of `region` within the raw buffer (added at read time). `numFields` is the
+/// schema arity F. Defined in SchemaJSONStage1.cpp so that simdjson stays confined to a single TU.
+void schemaJsonIndexIntoFieldIndex(SchemaJSONFieldIndex& fieldIndex, std::string_view region, FieldIndex base, uint32_t numFields);
 
 class SchemaJSONInputFormatIndexer final : public InputFormatIndexer<SchemaJSONInputFormatIndexer>
 {
@@ -134,15 +131,12 @@ public:
     static constexpr char TUPLE_DELIMITER = '\n';
 
     using IndexerMetaData = SchemaJSONMetaData;
-    using FieldIndexFunctionType = FieldOffsets<SCHEMA_JSON_NUM_OFFSETS_PER_FIELD>;
+    using FieldIndexFunctionType = SchemaJSONFieldIndex;
 
     SchemaJSONInputFormatIndexer() = default;
     ~SchemaJSONInputFormatIndexer() = default;
 
-    void indexRawBuffer(
-        FieldOffsets<SCHEMA_JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-        const RawTupleBuffer& rawBuffer,
-        const SchemaJSONMetaData& metaData) const;
+    void indexRawBuffer(SchemaJSONFieldIndex& fieldIndex, const RawTupleBuffer& rawBuffer, const SchemaJSONMetaData& metaData) const;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SchemaJSONInputFormatIndexer& indexer);

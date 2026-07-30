@@ -35,12 +35,10 @@ namespace NES
 {
 
 void SchemaJSONInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<SCHEMA_JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
-    const RawTupleBuffer& rawBuffer,
-    const SchemaJSONMetaData& metaData) const
+    SchemaJSONFieldIndex& fieldIndex, const RawTupleBuffer& rawBuffer, const SchemaJSONMetaData& metaData) const
 {
     const auto numFields = static_cast<uint32_t>(metaData.getNumberOfFields());
-    fieldOffsets.startSetup(numFields, SchemaJSONMetaData::SIZE_OF_TUPLE_DELIMITER);
+    fieldIndex.startSetup(numFields);
 
     const auto bufferView = rawBuffer.getBufferView();
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(bufferView.find(TUPLE_DELIMITER));
@@ -49,7 +47,7 @@ void SchemaJSONInputFormatIndexer::indexRawBuffer(
     /// fragment (handled by the SequenceShredder) and return.
     if (offsetOfFirstTupleDelimiter == static_cast<FieldIndex>(std::string_view::npos))
     {
-        fieldOffsets.markNoTupleDelimiters();
+        fieldIndex.markNoTupleDelimiters();
         return;
     }
 
@@ -61,10 +59,10 @@ void SchemaJSONInputFormatIndexer::indexRawBuffer(
     {
         const auto base = static_cast<FieldIndex>(offsetOfFirstTupleDelimiter + 1);
         const auto region = bufferView.substr(base, static_cast<size_t>(offsetOfLastTupleDelimiter) - base);
-        schemaJsonStage1IntoFieldOffsets(fieldOffsets, region, base, numFields);
+        schemaJsonIndexIntoFieldIndex(fieldIndex, region, base, numFields);
     }
 
-    fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
+    fieldIndex.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
 DescriptorConfig::Config SchemaJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
