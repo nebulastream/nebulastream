@@ -1,0 +1,104 @@
+# name: sample/SampleEdgeCases.test
+# description: Edge cases for the SAMPLE operator beyond the basic Sample.test/SampleUpsample.test
+# coverage - slot-boundary rounding, arrival-order independence of slot assignment, an entirely empty
+# source, and real data landing in the one slot that can only ever be closed by the termination flush
+# (not the tick watermark). See SampleMultiThreadMerge.test for the cross-worker-thread merge stress
+# case, which needs its own buffer-size configuration to be meaningful.
+# groups: [Sample]
+
+# --- Edge case 1: slot-boundary exactness. A record whose ts sits exactly on a slot boundary belongs
+# to the slot that STARTS there, not the one that ends there (slot = floor(ts/100)). ts=100 must land
+# in slot [100,200), not [0,100); same for ts=300.
+CREATE LOGICAL SOURCE boundaryStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR boundaryStream TYPE File;
+ATTACH INLINE
+1,10,99
+2,20,100
+3,30,299
+4,40,300
+
+CREATE SINK sink1(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM boundaryStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink1;
+----
+1,10,99
+2,20,100
+3,30,299
+4,40,300
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900
+
+# --- Edge case 2: slot assignment depends only on the record's own ts field, never on the order
+# records arrive in. The record for slot 3 is attached BEFORE the record for slot 0 here; both must
+# still land in their own correct slot untouched by the other.
+CREATE LOGICAL SOURCE reorderedStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR reorderedStream TYPE File;
+ATTACH INLINE
+1,10,350
+2,20,50
+
+CREATE SINK sink2(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM reorderedStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink2;
+----
+2,20,50
+NULL,NULL,100
+NULL,NULL,200
+1,10,350
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900
+
+# --- Edge case 3: a source that never emits a single record. Every slot must still be forced into
+# existence by the tick source and emit the empty-slot fallback row - SAMPLE must not depend on the
+# data source producing anything at all.
+CREATE LOGICAL SOURCE emptyStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR emptyStream TYPE File;
+ATTACH INLINE
+
+CREATE SINK sink3(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM emptyStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink3;
+----
+NULL,NULL,0
+NULL,NULL,100
+NULL,NULL,200
+NULL,NULL,300
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900
+
+# --- Edge case 4: real data landing in slot 9 ([900,1000)), the one slot the tick watermark can never
+# close on its own (there's no tick past 901) - it only gets emitted via terminate()'s unconditional
+# flush. This is the exact path SampleProbePhysicalOperator::open()'s insertOrUpdateEntry/initialize()
+# fix targeted; earlier testing only ever exercised this slot with zero data (the empty-slot fallback),
+# never with a real record to fold.
+CREATE LOGICAL SOURCE finalWindowStream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR finalWindowStream TYPE File;
+ATTACH INLINE
+5,50,950
+
+CREATE SINK sink4(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+SELECT * FROM finalWindowStream SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink4;
+----
+NULL,NULL,0
+NULL,NULL,100
+NULL,NULL,200
+NULL,NULL,300
+NULL,NULL,400
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+5,50,950

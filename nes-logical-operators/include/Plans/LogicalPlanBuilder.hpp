@@ -97,6 +97,16 @@ public:
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
+    /// timestampField is nullopt for processing/ingestion time; set for event time.
+    /// maxRuntimeMs/maxTicks are nullopt to run indefinitely; set to bound the tick source, e.g. for testing.
+    static LogicalPlan addSample(
+        LogicalPlan queryPlan,
+        std::optional<Identifier> timestampField,
+        uint64_t slotDurationMs,
+        std::optional<std::string> strategy,
+        std::optional<int32_t> maxRuntimeMs = std::nullopt,
+        std::optional<int64_t> maxTicks = std::nullopt);
+
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addAnonymousSink(
         Identifier type,

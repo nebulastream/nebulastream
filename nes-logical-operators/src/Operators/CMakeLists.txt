@@ -25,6 +25,7 @@ add_plugin(IngestionTimeWatermarkAssigner LogicalOperator IngestionTimeWatermark
 add_plugin(EventTimeWatermarkAssigner LogicalOperator EventTimeWatermarkAssignerLogicalOperator.cpp)
 add_plugin(InferModel LogicalOperator InferModelLogicalOperator.cpp)
 add_plugin(InferModelName LogicalOperator InferModelNameLogicalOperator.cpp)
+add_plugin(Sample LogicalOperator SampleLogicalOperator.cpp)
 
 add_unreflection_plugin(LogicalOperator Selection)
 add_unreflection_plugin(LogicalOperator Projection)
@@ -33,3 +34,4 @@ add_unreflection_plugin(LogicalOperator IngestionTimeWatermarkAssigner)
 add_unreflection_plugin(LogicalOperator EventTimeWatermarkAssigner)
 add_unreflection_plugin(LogicalOperator InferModel)
 add_unreflection_plugin(LogicalOperator InferModelName)
+add_unreflection_plugin(LogicalOperator Sample)

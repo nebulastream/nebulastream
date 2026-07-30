@@ -803,6 +803,18 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             std::move(characteristic));
     }
 
+    if (helpers.top().hasSampleClause)
+    {
+        const auto slotMs = buildTimeMeasure(helpers.top().sampleSize, helpers.top().sampleTimeUnitToken).getTime();
+        queryPlan = LogicalPlanBuilder::addSample(
+            queryPlan,
+            helpers.top().sampleTimestamp,
+            slotMs,
+            helpers.top().sampleStrategy,
+            helpers.top().sampleMaxRuntimeMs,
+            helpers.top().sampleMaxTicks);
+    }
+
     auto projections = helpers.top().getProjections()
         | std::views::transform(
                            [](const auto& pair)
@@ -939,6 +951,30 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     /// We use the ingestion time if the query does not have a timestamp fieldname specified
     helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::SlidingWindow(timeMeasure, slidingLength)});
     AntlrSQLBaseListener::exitSlidingWindow(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitSampleClause(AntlrSQLParser::SampleClauseContext* context)
+{
+    helpers.top().hasSampleClause = true;
+    if (context->tsField != nullptr)
+    {
+        helpers.top().sampleTimestamp = bindIdentifier(context->tsField);
+    }
+    helpers.top().sampleSize = std::stoi(context->sampleSize->getText());
+    helpers.top().sampleTimeUnitToken = context->sampleUnit->getStop()->getType();
+    if (context->strategy != nullptr)
+    {
+        helpers.top().sampleStrategy = context->strategy->getText();
+    }
+    if (context->maxRuntimeMs != nullptr)
+    {
+        helpers.top().sampleMaxRuntimeMs = std::stoi(context->maxRuntimeMs->getText());
+    }
+    if (context->maxTicks != nullptr)
+    {
+        helpers.top().sampleMaxTicks = std::stoll(context->maxTicks->getText());
+    }
+    AntlrSQLBaseListener::exitSampleClause(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)

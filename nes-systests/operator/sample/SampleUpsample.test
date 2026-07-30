@@ -1,0 +1,36 @@
+# name: sample/SampleUpsample.test
+# description: Tests carry-forward upsampling behaviour of the SAMPLE operator
+# groups: [Sample]
+
+# Two records separated by 400ms with 100ms slots.
+# Slot 0 (0-99ms): record 1 (id=1, ts=50)
+# Slots 1, 2, 3: empty
+# Slot 4 (400-499ms): record 2 (id=2, ts=450)
+
+CREATE LOGICAL SOURCE sparse(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR sparse TYPE File;
+ATTACH INLINE
+1,100,50
+2,200,450
+
+CREATE SINK sink(id UINT64, value UINT64, ts UINT64) TYPE File;
+
+# V3 status: this is not yet real carry-forward (repeating the last-known value into empty slots) -
+# that is still Phase 3 (see docs/design/sample-operator.md). What's implemented now is per-slot "last
+# record wins, empty slot emits NULL for id/value with ts set to the slot's own start" - so this test
+# currently exercises the empty-slot fallback path for slots 1-3, not upsampling. See Sample.test for
+# the trigger-timing explanation. MAX_TICKS=10 means windows j=0..8 get triggered via the tick
+# watermark; window j=9 is still open when the source ends and is emitted by terminate()'s flush - 10
+# output rows.
+SELECT * FROM sparse SAMPLE(SIZE 100 MS, MAX_TICKS 10) INTO sink;
+----
+1,100,50
+NULL,NULL,100
+NULL,NULL,200
+NULL,NULL,300
+2,200,450
+NULL,NULL,500
+NULL,NULL,600
+NULL,NULL,700
+NULL,NULL,800
+NULL,NULL,900

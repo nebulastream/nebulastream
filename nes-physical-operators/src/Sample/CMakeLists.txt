@@ -10,13 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        AnonymousSinkBindingRule.cpp
-        AnonymousSourceBindingRule.cpp
-        SampleTickSourceBindingRule.cpp
-        LogicalSourceExpansionRule.cpp
-        TypeInferenceRule.cpp
-        SinkBindingRule.cpp
-        InferModelResolutionRule.cpp
-        CalcTargetOrderRule.cpp
-)
+add_plugin(Last SampleAggregationPhysicalFunction LastSampleAggregationPhysicalFunction.cpp)
+
+add_source_files(nes-physical-operators
+        SampleOperatorHandler.cpp
+        SampleIngestPhysicalOperator.cpp
+        SampleTriggerPhysicalOperator.cpp
+        SampleProbePhysicalOperator.cpp
+        SampleAggregationPhysicalFunction.cpp)
