@@ -85,20 +85,20 @@ private:
 struct ConfigParametersMatrix
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> IPADDRESS{
-        "ip_address",
+        "IP_ADDRESS",
         "localhost",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(IPADDRESS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> PORT{
-        "port", "3000", [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PORT, config); }};
+        "PORT", "3000", [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PORT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> ENDPOINT{
-        "endpoint",
+        "ENDPOINT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ENDPOINT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> LOG_FILE_PATH{
-        "log_file_path",
+        "LOG_FILE_PATH",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LOG_FILE_PATH, config); }};
 

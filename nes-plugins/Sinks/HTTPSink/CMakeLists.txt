@@ -13,16 +13,14 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 find_package(CURL REQUIRED)
 
-add_plugin_as_library(HTTP Sink nes-sinks-registry http_sink_plugin HTTPSink.cpp)
-add_plugin_as_library(HTTP SinkValidation nes-sinks-registry http_sink_validation_plugin HTTPSink.cpp)
+add_plugin_as_library(HTTP Sink http_sink_plugin HTTPSink.cpp)
+add_plugin_as_library(HTTP SinkValidation http_sink_validation_plugin HTTPSink.cpp)
 
-target_include_directories(http_sink_plugin
-        PUBLIC include
-        PRIVATE .
-)
-target_include_directories(http_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_link_libraries(http_sink_plugin PRIVATE CURL::libcurl)
+# Both libraries compile HTTPSink.cpp, so both pull in libcurl symbols.
+foreach (_lib http_sink_plugin http_sink_validation_plugin)
+    target_include_directories(${_lib}
+            PUBLIC include
+            PRIVATE .
+    )
+    target_link_libraries(${_lib} PRIVATE CURL::libcurl)
+endforeach ()
