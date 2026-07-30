@@ -188,6 +188,11 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
         ConfigFieldDefault{"TCP_SOURCE.SOCKET_HOST", [] { return std::monostate{}; }},
         ConfigFieldDefault{"TCP_SOURCE.SOCKET_PORT", [] { return std::monostate{}; }},
         ConfigFieldDefault{"TCP_SOURCE.OVERWRITEABLE_HOST_AND_PORT", [] { return true; }},
+        /// Sink defaults only make `CREATE SINK` statements without options bindable; systest
+        /// replaces every sink's config with a per-query result file anyway (see SLTSinkFactory).
+        ConfigFieldDefault{"OUTPUT_FORMATTER.TYPE", [] { return "CSV"; }},
+        ConfigFieldDefault{"FILE_SINK.FILE_PATH", [] { return "/tmp/none.txt"; }},
+        ConfigFieldDefault{"CHECKSUM_SINK.FILE_PATH", [] { return "/tmp/none.txt"; }},
     };
 }
 

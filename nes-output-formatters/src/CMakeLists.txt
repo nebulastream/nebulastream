@@ -15,11 +15,12 @@ add_source_files(nes-output-formatters
         OutputFormatterProvider.cpp
         OutputFormatterDescriptor.cpp
         OutputFormatterRegistry.cpp
-        OutputFormatterValidationRegistry.cpp
-        OutputFormatterValidationProvider.cpp
+        OutputFormatterConfigRegistry.cpp
+        OutputFormatterConfigSchemaRegistry.cpp
         CSVOutputFormatter.cpp
 )
 
 # Runtime registry entries for the built-in CSV formatter
 add_registry_entry(OutputFormatter CSV)
-add_registry_entry(OutputFormatterValidation CSV)
+add_registry_entry(OutputFormatterConfigSchema CSV)
+add_registry_entry(OutputFormatterConfig CSV)

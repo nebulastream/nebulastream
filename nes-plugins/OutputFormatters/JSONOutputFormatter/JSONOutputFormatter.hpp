@@ -19,9 +19,10 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
@@ -37,9 +38,20 @@
 
 namespace NES
 {
+
+/// Formatter-defined config struct: the JSON output formatter declares no config parameters, but
+/// the (empty) struct still travels through the OutputFormatterDescriptor and its registry entry
+/// so that descriptors are handled uniformly.
+struct JSONOutputFormatterConfig
+{
+    static std::expected<JSONOutputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
+
 class JSONOutputFormatter : public OutputFormatter
 {
 public:
+    static constexpr std::string_view NAME = "JSON";
+
     explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
@@ -51,7 +63,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     /// Registry entry (see OutputFormatterRegistry.hpp).
     static std::unique_ptr<OutputFormatter> provideFormatter(OutputFormatterRegistryArguments arguments);
@@ -64,15 +76,6 @@ private:
     std::vector<std::string> canonicalFieldNames;
 };
 
-}
-
-namespace NES::OutputFormatterConfig
-{
-struct ConfigParametersJSON
-{
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
-};
 }
 
 FMT_OSTREAM(NES::OutputFormatter);

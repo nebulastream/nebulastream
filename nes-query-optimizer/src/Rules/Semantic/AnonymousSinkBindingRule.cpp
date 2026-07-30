@@ -18,9 +18,11 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -64,29 +66,30 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
     {
         if (auto sink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); sink.has_value())
         {
-            const auto schema = sink.value()->getTargetSchema();
             const auto type = sink.value()->getSinkType();
-            auto config = sink.value()->getSinkConfig();
-            const auto formatConfig = sink.value()->getFormatConfig();
+            const auto config = sink.value()->getSinkConfig();
 
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because AnonymousSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find(Identifier::parse("host"));
-            if (hostIt == config.end())
+            auto resolved = SinkCatalog::resolveSinkConfig(type, config);
+            if (not resolved.has_value())
+            {
+                throw std::move(resolved).error();
+            }
+            auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = std::move(resolved).value();
+
+            /// SINK.HOST determines placement, not sink behavior; anonymous sinks must state it explicitly.
+            if (not generalConfig.host.has_value())
             {
                 throw InvalidConfigParameter("'host'");
             }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
 
-            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(schema, type, host, config, formatConfig);
+            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(
+                generalConfig.schema,
+                generalConfig.host.value(),
+                std::move(pluginSinkConfig),
+                std::move(outputFormatterDescriptor),
+                generalConfig);
 
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
-            }
-
-            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

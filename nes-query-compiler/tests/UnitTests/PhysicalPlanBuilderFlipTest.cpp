@@ -92,10 +92,14 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getAnonymousSink(
-            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), "CSV"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+              Identifier::parse("Print"),
+              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+        auto descriptor
+            = sinkCatalog.getAnonymousSink(schema, Host("localhost"), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
+        auto sinkOp = SinkPhysicalOperator(descriptor);
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }

@@ -37,6 +37,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -76,11 +78,10 @@ struct CreatePhysicalSourceStatement
 struct CreateSinkStatement
 {
     Identifier name;
-    Identifier sinkType;
     Schema<UnqualifiedUnboundField, Ordered> schema;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    GeneralSinkConfig generalSinkConfig;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,

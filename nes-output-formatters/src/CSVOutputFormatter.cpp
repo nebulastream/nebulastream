@@ -20,11 +20,11 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
@@ -136,12 +136,46 @@ void writeValue(
 }
 }
 
-CSVOutputFormatter::CSVOutputFormatter(
-    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
+namespace
+{
+
+/// Config fields of the CSV output formatter, shared by getConfigSchema (declaration) and
+/// CSVOutputFormatterConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<bool> QUOTE_STRINGS{
+    "QUOTE_STRINGS", [](const ConfigLiteral& literal) { return tryGetOr<bool>(literal, expectedType<bool>()); }, false};
+
+const ConfigField<std::string> FIELD_DELIMITER{
+    "FIELD_DELIMITER",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{","}};
+
+const ConfigField<std::string> TUPLE_DELIMITER{
+    "TUPLE_DELIMITER",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{"\n"}};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> CSVOutputFormatter::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("CSV_OUTPUT_FORMATTER"), QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
+}
+
+std::expected<CSVOutputFormatterConfig, Exception> CSVOutputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return CSVOutputFormatterConfig{
+        .quoteStrings = config.get(QUOTE_STRINGS),
+        .fieldDelimiter = config.get(FIELD_DELIMITER),
+        .tupleDelimiter = config.get(TUPLE_DELIMITER)};
+}
+
+CSVOutputFormatter::CSVOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const CSVOutputFormatterConfig& config)
     : OutputFormatter(fieldNames)
-    , quoteStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::QUOTE_STRINGS))
-    , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
-    , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
+    , quoteStrings(config.quoteStrings)
+    , fieldDelimiter(config.fieldDelimiter)
+    , tupleDelimiter(config.tupleDelimiter)
 {
 }
 
@@ -203,15 +237,10 @@ std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
                format.tupleDelimiter);
 }
 
-DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
-}
-
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 std::unique_ptr<OutputFormatter> CSVOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
-    return std::make_unique<CSVOutputFormatter>(std::move(arguments.fieldNames), std::move(arguments.descriptor));
+    return std::make_unique<CSVOutputFormatter>(arguments.fieldNames, arguments.descriptor.getConfig().getAs<CSVOutputFormatterConfig>());
 }
 
 }

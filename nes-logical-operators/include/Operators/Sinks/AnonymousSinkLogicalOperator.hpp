@@ -18,9 +18,9 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -42,18 +42,10 @@ namespace NES
 class AnonymousSinkLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit AnonymousSinkLogicalOperator(
-        WeakLogicalOperator self,
-        Identifier sinkType,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> config,
-        std::unordered_map<Identifier, std::string> formatConfig);
+    explicit AnonymousSinkLogicalOperator(WeakLogicalOperator self, Identifier sinkType, Schema<LiteralConfigValue, Ordered> config);
 
-    static TypedLogicalOperator<AnonymousSinkLogicalOperator> create(
-        Identifier sinkType,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> config,
-        std::unordered_map<Identifier, std::string> formatConfig);
+    static TypedLogicalOperator<AnonymousSinkLogicalOperator>
+    create(Identifier sinkType, Schema<LiteralConfigValue, Ordered> config);
 
     [[nodiscard]] bool operator==(const AnonymousSinkLogicalOperator& rhs) const;
 
@@ -72,9 +64,9 @@ public:
     [[nodiscard]] static AnonymousSinkLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSinkType() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getSinkConfig() const;
-    [[nodiscard]] std::optional<Schema<UnqualifiedUnboundField, Ordered>> getTargetSchema() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getFormatConfig() const;
+    /// The user-passed config literals (SINK.*, OUTPUT_FORMATTER.*, formatter-specific fields),
+    /// resolved against the sink's config schema by the AnonymousSinkBindingRule.
+    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getSinkConfig() const;
 
 private:
     static constexpr std::string_view NAME = "AnonymousSink";
@@ -82,10 +74,8 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
 
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> targetSchema;
     Identifier sinkType;
-    std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    Schema<LiteralConfigValue, Ordered> sinkConfig;
 
     friend Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>;
 };

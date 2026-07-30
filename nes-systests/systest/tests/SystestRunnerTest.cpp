@@ -123,15 +123,22 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}
-                                             .addSinkDescriptor(
-                                                 Identifier::parse("dummySink"),
-                                                 Schema<UnqualifiedUnboundField, Ordered>{},
-                                                 Identifier::parse("Print"),
-                                                 Host("localhost"),
-                                                 {{Identifier::parse("output_format"), "CSV"}},
-                                                 {})
-                                             .value();
+    SinkDescriptor dummySinkDescriptor = [&]
+    {
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+              Identifier::parse("Print"),
+              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+        return SinkCatalog{}
+            .addSinkDescriptor(
+                Identifier::parse("dummySink"),
+                Schema<UnqualifiedUnboundField, Ordered>{},
+                Host("localhost"),
+                std::move(pluginSinkConfig),
+                std::move(outputFormatterDescriptor))
+            .value();
+    }();
     SystestQueryId dummyQueryId = NES::INVALID<SystestQueryId>;
 };
 

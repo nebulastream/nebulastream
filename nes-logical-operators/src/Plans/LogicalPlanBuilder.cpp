@@ -207,15 +207,9 @@ LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& 
     return promoteOperatorToRoot(queryPlan, SinkLogicalOperator::create(std::move(sinkName)));
 }
 
-LogicalPlan LogicalPlanBuilder::addAnonymousSink(
-    Identifier type,
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-    std::unordered_map<Identifier, std::string> sinkConfig,
-    std::unordered_map<Identifier, std::string> formatConfig,
-    const LogicalPlan& queryPlan)
+LogicalPlan LogicalPlanBuilder::addAnonymousSink(Identifier type, Schema<LiteralConfigValue, Ordered> sinkConfig, const LogicalPlan& queryPlan)
 {
-    return promoteOperatorToRoot(
-        queryPlan, AnonymousSinkLogicalOperator::create(std::move(type), std::move(schema), std::move(sinkConfig), std::move(formatConfig)));
+    return promoteOperatorToRoot(queryPlan, AnonymousSinkLogicalOperator::create(std::move(type), std::move(sinkConfig)));
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

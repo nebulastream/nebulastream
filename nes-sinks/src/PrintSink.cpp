@@ -24,7 +24,8 @@
 #include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
@@ -37,10 +38,33 @@
 namespace NES
 {
 
-PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , outputStream(&std::cout)
-    , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
+namespace
+{
+
+/// Config fields of the print sink, shared by getConfigSchema (declaration) and
+/// PrintSinkConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<uint32_t> INGESTION{
+    "INGESTION",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(downcastConfigValue<int64_t, uint32_t>); },
+    uint32_t{0}};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> PrintSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("PRINT_SINK"), INGESTION);
+}
+
+std::expected<PrintSinkConfig, Exception> PrintSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return PrintSinkConfig{.ingestion = config.get(INGESTION)};
+}
+
+PrintSink::PrintSink(BackpressureController backpressureController, const PrintSinkConfig& config)
+    : Sink(std::move(backpressureController)), outputStream(&std::cout), ingestion(config.ingestion)
 {
 }
 
@@ -77,11 +101,6 @@ std::ostream& PrintSink::toString(std::ostream& str) const
 {
     str << fmt::format("PRINT_SINK");
     return str;
-}
-
-DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 }

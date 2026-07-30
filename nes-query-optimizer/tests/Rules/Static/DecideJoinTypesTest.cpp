@@ -104,9 +104,14 @@ public:
     static SinkDescriptor
     createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const std::unordered_map<Identifier, std::string> sinkConfig{
-            {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {}).value();
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+              Identifier::parse("file"),
+              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+        return sinkCatalog.addSinkDescriptor(sinkName, schema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+            .value();
     }
 
     /// Build the expected join output schema for a left/right (prefix "left"/"right") join. For outer joins the fields of the side that may

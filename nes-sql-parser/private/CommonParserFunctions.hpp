@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "SQLQueryParser/StatementBinder.hpp"
+#include "Sinks/SinkCatalog.hpp"
 #include "Sources/SourceCatalog.hpp"
 
 #include <AntlrSQLParser.h>
@@ -55,9 +56,13 @@ std::
         const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions,
         const Schema<ConfigFieldDefault, Ordered>& defaultValues,
         const Schema<ConfigFieldTransformation, Unordered>& transformations);
+std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
+    const Identifier& sinkType,
+    const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions,
+    const Schema<ConfigFieldDefault, Ordered>& defaultValues,
+    const Schema<ConfigFieldTransformation, Unordered>& transformations);
 ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
-std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);
 /// The literal config values of the SOURCE block, preserving the parsed literals instead of
 /// rendering them to strings, so config resolution sees exactly what the parser produced.
 /// Unsigned integer literals are lowered to int64_t (integers are always passed down signed);
@@ -66,9 +71,7 @@ std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const Con
 Schema<LiteralConfigValue, Ordered> getSourceConfigLiterals(const ConfigMap& configOptions);
 /// The literal config values of the INPUT_FORMATTER block, including its TYPE entry.
 Schema<LiteralConfigValue, Ordered> getInputFormatterConfigLiterals(const ConfigMap& configOptions);
-std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions);
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);

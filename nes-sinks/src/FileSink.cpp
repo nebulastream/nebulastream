@@ -29,7 +29,8 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
@@ -46,10 +47,40 @@
 namespace NES
 {
 
-FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+namespace
+{
+
+/// Config fields of the file sink, shared by getConfigSchema (declaration) and
+/// FileSinkConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::filesystem::path> FILE_PATH{
+    "FILE_PATH",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const auto& val) { return std::filesystem::path{val}; });
+    }};
+
+const ConfigField<bool> APPEND{
+    "APPEND", [](const ConfigLiteral& literal) { return tryGetOr<bool>(literal, expectedType<bool>()); }, false};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> FileSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("FILE_SINK"), FILE_PATH, APPEND);
+}
+
+std::expected<FileSinkConfig, Exception> FileSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return FileSinkConfig{.filePath = config.get(FILE_PATH), .append = config.get(APPEND)};
+}
+
+FileSink::FileSink(BackpressureController backpressureController, const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
-    , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
+    , outputFilePath(config.filePath)
+    , isAppend(config.append)
     , isOpen(false)
     , schemaFormatter(
           SchemaFormatter(NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
@@ -127,11 +158,6 @@ void FileSink::stop(PipelineExecutionContext&)
     const auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
-}
-
-DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 }

@@ -214,51 +214,26 @@ public:
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
+        /// TODO #764 use normal identifiers for types
         const Identifier sinkType = bindIdentifier(sinkDefAST->type);
-        const auto configOptions = [&]()
+        const auto configAST = [&]
         {
             if (sinkDefAST->optionsClause() != nullptr)
             {
-                return bindConfigOptions(sinkDefAST->optionsClause()->options->namedConfigExpression());
+                return sinkDefAST->optionsClause()->options->namedConfigExpression();
             }
-            return ConfigMap{};
+            return std::vector<AntlrSQLParser::NamedConfigExpressionContext*>{};
         }();
-        std::unordered_map<Identifier, std::string> sinkOptions{};
-        static const auto SinkIdentifier = Identifier::parse("SINK");
-        if (const auto sinkConfigIter = configOptions.find(SinkIdentifier); sinkConfigIter != configOptions.end())
-        {
-            sinkOptions = sinkConfigIter->second
-                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-                | std::views::transform([](auto& pair)
-                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
-        }
-        std::unordered_map<Identifier, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find(Identifier::parse("OUTPUT_FORMATTER"));
-            formatConfigIter != configOptions.end())
-        {
-            formatOptions = formatConfigIter->second
-                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-                | std::views::transform([](auto& pair)
-                                        { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
-        }
-        /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
-        std::optional<Host> host;
-        if (auto it = sinkOptions.find(Identifier::parse("host")); it != sinkOptions.end())
-        {
-            host = Host(it->second);
-            sinkOptions.erase(it);
-        }
+        auto [generalConfig, pluginConfig, outputFormatterDescriptor]
+            = bindSinkConfig(sinkType, configAST, defaultConfigValues, configTransformations);
 
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
         return CreateSinkStatement{
             .name = sinkName,
-            .sinkType = sinkType,
             .schema = schema,
-            .host = host,
-            .sinkConfig = sinkOptions,
-            .formatConfig = formatOptions};
+            .generalSinkConfig = std::move(generalConfig),
+            .pluginSinkConfig = std::move(pluginConfig),
+            .outputFormatterDescriptor = std::move(outputFormatterDescriptor)};
     }
 
     CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const

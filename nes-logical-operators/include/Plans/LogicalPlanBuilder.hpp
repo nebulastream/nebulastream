@@ -100,12 +100,7 @@ public:
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
-    static LogicalPlan addAnonymousSink(
-        Identifier type,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> sinkConfig,
-        std::unordered_map<Identifier, std::string> formatConfig,
-        const LogicalPlan& queryPlan);
+    static LogicalPlan addAnonymousSink(Identifier type, Schema<LiteralConfigValue, Ordered> sinkConfig, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

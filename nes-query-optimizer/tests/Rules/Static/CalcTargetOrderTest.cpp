@@ -75,10 +75,13 @@ SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const 
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-
-    return sinkCatalog.getAnonymousSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+              Identifier::parse("file"),
+              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+    return sinkCatalog.getAnonymousSink(std::nullopt, Host("localhost"), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
 }
 }
 

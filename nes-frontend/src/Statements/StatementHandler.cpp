@@ -180,9 +180,9 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
 {
     const auto host = [&]
     {
-        if (statement.host)
+        if (statement.generalSinkConfig.host)
         {
-            return *statement.host;
+            return *statement.generalSinkConfig.host;
         }
         return std::visit(
             Overloaded{
@@ -193,7 +193,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
     }();
 
     auto created = sinkCatalog->addSinkDescriptor(
-        statement.name, statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig);
+        statement.name, statement.schema, host, statement.pluginSinkConfig, statement.outputFormatterDescriptor, statement.generalSinkConfig);
     if (created)
     {
         return CreateSinkStatementResult{created.value()};

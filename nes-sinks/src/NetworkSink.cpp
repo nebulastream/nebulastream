@@ -25,7 +25,8 @@
 #include <utility>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -47,17 +48,64 @@
 namespace NES
 {
 
-NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+namespace
+{
+
+/// Config fields of the network sink, shared by getConfigSchema (declaration) and
+/// NetworkSinkConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::string> DATA_ENDPOINT{
+    "DATA_ENDPOINT", [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); }};
+
+const ConfigField<std::string> BIND{
+    "BIND", [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); }};
+
+const ConfigField<std::string> CHANNEL{
+    "CHANNEL", [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); }};
+
+/// Per-channel sender queue size override. 0 means use the worker-level default.
+const ConfigField<size_t> SENDER_QUEUE_SIZE{
+    "SENDER_QUEUE_SIZE",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>); },
+    size_t{0}};
+
+/// Per-channel max pending acks override. 0 means use the worker-level default.
+const ConfigField<size_t> MAX_PENDING_ACKS{
+    "MAX_PENDING_ACKS",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<size_t>()).and_then(downcastConfigValue<int64_t, size_t>); },
+    size_t{0}};
+
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> NetworkSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("NETWORK_SINK"), DATA_ENDPOINT, BIND, CHANNEL, SENDER_QUEUE_SIZE, MAX_PENDING_ACKS);
+}
+
+std::expected<NetworkSinkConfig, Exception> NetworkSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return NetworkSinkConfig{
+        .dataEndpoint = config.get(DATA_ENDPOINT),
+        .bind = config.get(BIND),
+        .channel = config.get(CHANNEL),
+        .senderQueueSize = config.get(SENDER_QUEUE_SIZE),
+        .maxPendingAcks = config.get(MAX_PENDING_ACKS)};
+}
+
+NetworkSink::NetworkSink(
+    BackpressureController backpressureController, const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , tupleSize(NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())->getAggregate().sizeWithNull)
-    , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
-    , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
-    , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::DATA_ENDPOINT))
-    , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
-    , senderQueueSize(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::SENDER_QUEUE_SIZE))
-    , maxPendingAcks(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::MAX_PENDING_ACKS))
+    , backpressureHandler(sinkDescriptor.getBackpressureUpperThreshold(), sinkDescriptor.getBackpressureLowerThreshold())
+    , channelId(config.channel)
+    , connectionAddr(config.dataEndpoint)
+    , thisConnection(config.bind)
+    , senderQueueSize(config.senderQueueSize)
+    , maxPendingAcks(config.maxPendingAcks)
 {
 }
 
@@ -163,11 +211,6 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
 std::ostream& NetworkSink::toString(std::ostream& str) const
 {
     return str << fmt::format("NetworkSink(connectionId: {}, channelId: {})", connectionAddr, channelId);
-}
-
-DescriptorConfig::Config NetworkSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSink>(std::move(config), name());
 }
 
 }

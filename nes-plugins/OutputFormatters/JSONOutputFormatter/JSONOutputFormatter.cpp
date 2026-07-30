@@ -36,7 +36,8 @@
 #include <fmt/format.h>
 #include <std/cstring.h>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
@@ -234,9 +235,15 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     return written;
 }
 
-DescriptorConfig::Config JSONOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+Schema<QualifiedErasedConfigField, Ordered> JSONOutputFormatter::getConfigSchema()
 {
-    return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersJSON>(std::move(config), "JSON");
+    /// The JSON output formatter declares no config parameters.
+    return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+}
+
+std::expected<JSONOutputFormatterConfig, Exception> JSONOutputFormatterConfig::fromConfig(const InstantiatedConfig&)
+{
+    return JSONOutputFormatterConfig{};
 }
 
 std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
@@ -247,6 +254,8 @@ std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
+    /// The config struct is empty, but the getAs still validates that the descriptor was built for this formatter.
+    std::ignore = arguments.descriptor.getConfig().getAs<JSONOutputFormatterConfig>();
     return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames));
 }
 }

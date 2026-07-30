@@ -51,6 +51,7 @@
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 #include "Configurations/ConfigValue.hpp"
+#include "Sinks/NetworkSink.hpp"
 #include "Sources/NetworkSource.hpp"
 
 #include "GeneratorSource.hpp"
@@ -112,31 +113,37 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sourceConfig, NetworkSource::getConfigSchema())))}));
     auto inputFormatterConfig = InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}};
 
-    auto sinkConfig = std::unordered_map<Identifier, std::string>{
-        {Identifier::parse("channel"), channel.id.getRawValue()},
-        {Identifier::parse("bind"), upstreamData},
-        {Identifier::parse("data_endpoint"), downstreamData},
-        {Identifier::parse("output_format"), "NATIVE"}};
-
+    auto sinkConfigValues = std::vector<LiteralConfigValue>{
+        {QualifiedIdentifier::create(Identifier::parse("channel")), channel.id.getRawValue()},
+        {QualifiedIdentifier::create(Identifier::parse("bind")), upstreamData},
+        {QualifiedIdentifier::create(Identifier::parse("data_endpoint")), downstreamData}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
-        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string(context.config.maxPendingAcks.getValue()));
+        sinkConfigValues.emplace_back(
+            QualifiedIdentifier::create(Identifier::parse("max_pending_acks")),
+            static_cast<int64_t>(context.config.maxPendingAcks.getValue()));
     }
     if (context.config.senderQueueSize.isExplicitlySet())
     {
-        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string(context.config.senderQueueSize.getValue()));
+        sinkConfigValues.emplace_back(
+            QualifiedIdentifier::create(Identifier::parse("sender_queue_size")),
+            static_cast<int64_t>(context.config.senderQueueSize.getValue()));
     }
+    const auto sinkConfig = Schema<LiteralConfigValue, Ordered>{std::move(sinkConfigValues)};
+
+    /// The backpressure thresholds are general sink settings, applied directly to the descriptor.
+    GeneralSinkConfig generalSinkConfig{};
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(
-            Identifier::parse("backpressure_upper_threshold"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        generalSinkConfig.backpressureUpperThreshold = context.config.backpressureUpperThreshold.getValue();
     }
     if (context.config.backpressureLowerThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(
-            Identifier::parse("backpressure_lower_threshold"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        generalSinkConfig.backpressureLowerThreshold = context.config.backpressureLowerThreshold.getValue();
     }
+    auto networkSinkConfig = unwrapOrAbort(NetworkSinkConfig::fromConfig(
+        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sinkConfig, NetworkSink::getConfigSchema())))}));
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto networkSourceDescriptorExp = PhysicalSourceBuilder{
@@ -149,8 +156,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& networkSourceDescriptor = networkSourceDescriptorExp.value();
 
     auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
-        orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
-    INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
+        orderedUpstreamSchema,
+        Host(channel.upstreamNode.getRawValue()),
+        PluginSinkConfiguration{Identifier::parse("Network"), ExplicitAny{std::any{std::move(networkSinkConfig)}}},
+        OutputFormatterDescriptor::native(),
+        generalSinkConfig);
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
@@ -164,7 +174,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
-        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
+        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor)->withTraitSet(upstreamTs).withInferredSchema()};
 }
 
 LogicalOperator createNetworkChannel(
