@@ -171,6 +171,42 @@ NAUTILUS_INLINE bool jsonSpanNeedsEscape(const int8_t* content, const uint64_t c
     return false;
 }
 
+#ifndef NDEBUG
+/// DEBUG-only invariant (representation-gate decision 5): the bytes about to be forwarded VERBATIM into a JSON
+/// string field -- because the value asserted the JSON_ESCAPED characteristic -- must actually be a valid JSON
+/// string body, or the emitted JSON is corrupt. Traps on a violation so a mislabelled / dirty-data source is
+/// caught in tests + CI rather than silently emitting bad output. Checks the two things that unconditionally
+/// break a JSON string body: an UNescaped `"` and a raw control byte (< 0x20); a `\` consumes the next byte
+/// (so valid escape sequences `\"`, `\\`, `\n`, `\uXXXX` pass). NEVER emitted in release (guarded by NDEBUG),
+/// so the passthrough fast path pays nothing. Reads its span, writes nothing.
+void assertValidJsonStringBodyProxy(const int8_t* content, const uint64_t contentSize)
+{
+    const char* const data = reinterpret_cast<const char*>(content);
+    bool escaped = false;
+    for (uint64_t i = 0; i < contentSize; ++i)
+    {
+        const unsigned char character = static_cast<unsigned char>(data[i]);
+        if (escaped)
+        {
+            escaped = false;
+            continue;
+        }
+        if (character == '\\')
+        {
+            escaped = true;
+            continue;
+        }
+        INVARIANT(
+            character != '"' && character >= 0x20,
+            "A lazy value forwarded verbatim as JSON_ESCAPED is not a valid JSON string body (offending byte "
+            "0x{:02x} at index {}); its input characteristic does not match this data.",
+            static_cast<unsigned>(character),
+            i);
+    }
+    INVARIANT(not escaped, "A lazy value forwarded verbatim as JSON_ESCAPED ends with a dangling backslash.");
+}
+#endif
+
 /// Write a JSON string value: `"` + content + `"`, escaping where required. Fast path: even the
 /// worst-case escape expansion (6x, \u00XX) fits the remaining main-buffer space -- virtually
 /// always mid-buffer -- so escape straight into the output buffer in clean-run chunks (no
@@ -561,10 +597,18 @@ void writeValue(
                 /// Ask the value to write itself, one contiguous run at a time. We never learn whether it is a
                 /// single passthrough span or a many-segment concat rope -- writeEachChunk drives the walk and
                 /// hides it. Each run goes straight into the JSON output buffer (input->output, one copy, no
-                /// arena round-trip): `"` + escaped(run0) + ... + escaped(runN-1) + `"`. jsonSpanNeedsEscape is
-                /// spliced inline (NAUTILUS_INLINE), so a constant-literal run (constant global + fixed length)
-                /// folds its scan away at compile time to the scan-free literal writer; a runtime column run scans.
+                /// arena round-trip): `"` + escaped(run0) + ... + escaped(runN-1) + `"`.
                 const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+
+                /// Representation-compatibility gate (host-time): a JSON string field REQUIRES its bytes be a
+                /// valid JSON string body (the JSON_ESCAPED characteristic). If the value asserts that -- a
+                /// parsed JSON string body forwarded raw (SchemaJSON) satisfies it -- forward every run VERBATIM
+                /// with NO per-row escape scan (the json->json passthrough win). Otherwise (characteristic not
+                /// asserted, e.g. a raw CSV field that may hold a `"`, or a concat rope) keep the escaping path:
+                /// jsonSpanNeedsEscape is spliced inline (NAUTILUS_INLINE) so a constant-literal run folds its
+                /// scan away at compile time while a runtime column run scans. `jsonPassthrough` is a host
+                /// constant, so the per-run branch below is compile-time control flow -- one path is emitted.
+                const bool jsonPassthrough = satisfies(Characteristic::JSON_ESCAPED, lazyValue->getCharacteristics());
                 lazyValue->writeEachChunk(
                     [&](const nautilus::val<int8_t*>& chunkPtr,
                         const nautilus::val<uint64_t>& chunkLen,
@@ -573,12 +617,17 @@ void writeValue(
                     {
                         const auto openQuote = nautilus::val<bool>{isFirst};
                         const auto closeQuote = nautilus::val<bool>{isLast};
-                        const auto needsEscape = nautilus::invoke(jsonSpanNeedsEscape, chunkPtr, chunkLen);
                         nautilus::val<uint64_t> amountWritten{0};
-                        if (needsEscape)
+                        if (jsonPassthrough)
                         {
+#ifndef NDEBUG
+                            /// Debug-only: prove the bytes we forward really are a valid JSON string body, so a
+                            /// mislabelled source trips here in tests instead of emitting corrupt JSON. Compiled
+                            /// out in release (see assertValidJsonStringBodyProxy) -- the fast path pays nothing.
+                            nautilus::invoke(assertValidJsonStringBodyProxy, chunkPtr, chunkLen);
+#endif
                             amountWritten = nautilus::invoke(
-                                writeJsonStringSpan,
+                                writeJsonStringLiteralSpanInline,
                                 fieldPointer + written,
                                 currentRemainingSize,
                                 chunkPtr,
@@ -590,16 +639,33 @@ void writeValue(
                         }
                         else
                         {
-                            amountWritten = nautilus::invoke(
-                                writeJsonStringLiteralSpanInline,
-                                fieldPointer + written,
-                                currentRemainingSize,
-                                chunkPtr,
-                                chunkLen,
-                                openQuote,
-                                closeQuote,
-                                recordBuffer.getReference(),
-                                bufferProvider);
+                            const auto needsEscape = nautilus::invoke(jsonSpanNeedsEscape, chunkPtr, chunkLen);
+                            if (needsEscape)
+                            {
+                                amountWritten = nautilus::invoke(
+                                    writeJsonStringSpan,
+                                    fieldPointer + written,
+                                    currentRemainingSize,
+                                    chunkPtr,
+                                    chunkLen,
+                                    openQuote,
+                                    closeQuote,
+                                    recordBuffer.getReference(),
+                                    bufferProvider);
+                            }
+                            else
+                            {
+                                amountWritten = nautilus::invoke(
+                                    writeJsonStringLiteralSpanInline,
+                                    fieldPointer + written,
+                                    currentRemainingSize,
+                                    chunkPtr,
+                                    chunkLen,
+                                    openQuote,
+                                    closeQuote,
+                                    recordBuffer.getReference(),
+                                    bufferProvider);
+                            }
                         }
                         written += amountWritten;
                         currentRemainingSize -= amountWritten;

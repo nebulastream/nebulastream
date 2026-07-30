@@ -117,7 +117,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 metaData.getNullValues(),
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
-                lazyOverloads.at(fieldDataType.type));
+                lazyOverloads.at(fieldDataType.type),
+                varSizedCharacteristicsOf(metaData));
         }
         return record;
     }
@@ -164,7 +165,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 metaData.getNullValues(),
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
-                lazyOverloads.at(fieldDataType.type));
+                lazyOverloads.at(fieldDataType.type),
+                varSizedCharacteristicsOf(metaData));
         }
         return record;
     }

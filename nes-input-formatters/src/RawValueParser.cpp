@@ -76,7 +76,8 @@ void parseRawValueIntoRecord(
     const std::vector<std::string>& nullValues,
     const QuotationType quotationType,
     const std::string& parserType,
-    const bool& lazyOverload)
+    const bool& lazyOverload,
+    const Characteristic varSizedCharacteristics)
 {
     /// Raw values will be transformed into a lazy representation of pointer, size and underlying datatype instead of being parsed immediatly.
     /// Should a field be needed in its parsed form for the execution of a logical function, it will be parsed in the overridden function in LazyValueRepresentation
@@ -119,6 +120,12 @@ void parseRawValueIntoRecord(
                 const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize);
                 const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
                     std::string(magic_enum::enum_name(dataType.type)), ptr, size, dataType, isNull, parserType);
+                /// Byte-property characteristics asserted by the input formatter (see Characteristic /
+                /// varSizedCharacteristicsOf). Unquoted CSV text carries CLEAN|JSON_ESCAPED when its source
+                /// asserts `assume_clean_strings` (default) -- turning on csv->json string passthrough -- or NONE
+                /// when opted down (a source with real `"`/`\`, cf. formatter/SpecialCharactersJSON), which keeps
+                /// the safe escaping path. Native raw text passes NONE.
+                lazyVal->setCharacteristics(varSizedCharacteristics);
                 record.write(fieldName, {lazyVal, dataType.nullable, isNull});
                 return;
             }
@@ -127,6 +134,11 @@ void parseRawValueIntoRecord(
                 const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize - nautilus::val<uint64_t>(2));
                 const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
                     std::string(magic_enum::enum_name(dataType.type)), ptr, size, dataType, isNull, parserType);
+                /// JSON string body (the bytes between the quotes, e.g. from SchemaJSON's raw-span path): the
+                /// caller passes JSON_ESCAPED (varSizedCharacteristicsOf's DOUBLE_QUOTE default) -- already a
+                /// valid JSON string body, so it forwards VERBATIM into a JSON string field with NO per-row
+                /// escape scan (the json->json string passthrough win).
+                lazyVal->setCharacteristics(varSizedCharacteristics);
                 record.write(fieldName, {lazyVal, dataType.nullable, isNull});
                 return;
             }

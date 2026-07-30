@@ -1,0 +1,22 @@
+# name: formatter/SchemaJSON/SchemaJSONToJSON.test
+# description: SchemaJSON varsized -> JSON output exercises the representation-compatibility passthrough gate.
+#   A parsed JSON string body carries the JSON_ESCAPED characteristic, so the JSON output formatter forwards it
+#   VERBATIM (no per-row escape scan) instead of re-escaping -- this is the json->json string passthrough win.
+#   Numeric fields raw-forward as before. Escape-free by construction (see the note in SchemaJSONValues: string
+#   values pass through as RAW bytes, no JSON unescaping), so the fused pipeline (verbatim forward) and the split
+#   pipeline (materialise then re-serialize at the pipeline boundary) agree byte-for-byte. Commas / colons inside
+#   a string are masked by simdjson stage 1 and survive verbatim; multi-byte UTF-8 is preserved.
+# groups: [Formatter, SchemaJSON]
+
+CREATE LOGICAL SOURCE vals(i INT32 NOT NULL, s VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR vals TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"I":1, "S":"hello world"}
+{"I":2, "S":"a,b:c"}
+{"I":-3, "S":"héllo"}
+
+SELECT * FROM vals INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"VALS$I":1,"VALS$S":"hello world"}
+{"VALS$I":2,"VALS$S":"a,b:c"}
+{"VALS$I":-3,"VALS$S":"héllo"}

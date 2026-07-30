@@ -115,7 +115,8 @@ class FieldBand final : public FieldIndexFunction<FieldBand>
                 metaData.getNullValues(),
                 metaData.getQuotationType(),
                 parserTypes.at(fieldDataType.type),
-                lazyOverloads.at(fieldDataType.type));
+                lazyOverloads.at(fieldDataType.type),
+                varSizedCharacteristicsOf(metaData));
         }
         return record;
     }

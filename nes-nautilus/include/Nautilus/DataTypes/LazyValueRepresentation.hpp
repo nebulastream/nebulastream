@@ -62,6 +62,46 @@ VarVal operator^(const VarVal& other, const std::shared_ptr<LazyValueRepresentat
 VarVal operator<<(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
 VarVal operator>>(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
 
+/// Host-time (trace-time) properties ASSERTED about a lazy value's raw bytes. An output formatter uses them to
+/// decide, per field, whether the bytes can be forwarded to the sink VERBATIM (passthrough: no parse, no
+/// re-serialize, no escape scan) or must take the escaping / serializing path. The set is a bitset and the
+/// output side tests `satisfies(requirement, characteristics)` -- a subset check whose BOTH operands are
+/// host-time constants, so it folds at trace to compile-time control flow (zero per-row branch). Properties
+/// record their IMPLICATIONS at creation: CLEAN bytes (no special byte at all) are valid verbatim in every text
+/// format, so a value flagged CLEAN is ALSO flagged with the weaker format-specific properties CLEAN satisfies
+/// (e.g. JSON_ESCAPED). That lets each output requirement be a SINGLE bit tested by a plain subset relation --
+/// "a CSV string asserted CLEAN satisfies a JSON string field's JSON_ESCAPED requirement" without an equality
+/// special-case. The default NONE asserts nothing, so a value keeps the (correct, slower) escaping path until a
+/// creation site that knows the input format opts it up.
+enum class Characteristic : std::uint8_t
+{
+    NONE = 0,
+    /// No `"`, no `\`, no control byte (< 0x20), no output-format delimiter. Valid verbatim in ANY text format.
+    CLEAN = 1U << 0U,
+    /// A valid JSON string body (any backslash escapes present as proper sequences). Valid verbatim inside a
+    /// JSON string field's quotes; NOT sufficient for CSV/native (its `\"` sequences would be literal there).
+    /// Implied by (and always co-set with) CLEAN.
+    JSON_ESCAPED = 1U << 1U,
+};
+
+[[nodiscard]] constexpr Characteristic operator|(const Characteristic lhs, const Characteristic rhs)
+{
+    return static_cast<Characteristic>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+}
+
+[[nodiscard]] constexpr Characteristic operator&(const Characteristic lhs, const Characteristic rhs)
+{
+    return static_cast<Characteristic>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs));
+}
+
+/// Does `characteristics` carry every property in `requirement` (subset test)? Host-time only; the output side
+/// calls this with a host-constant requirement against the value's host-constant characteristics, so the
+/// result is known at trace and selects the passthrough vs escaping path with no runtime branch.
+[[nodiscard]] constexpr bool satisfies(const Characteristic requirement, const Characteristic characteristics)
+{
+    return (static_cast<std::uint8_t>(requirement) & static_cast<std::uint8_t>(characteristics)) == static_cast<std::uint8_t>(requirement);
+}
+
 /// A lazy value is an ordered list of byte SPANS plus a type that says how to read them. It is the single
 /// abstraction behind both "a field's raw text, not yet parsed" and "a rope" (a VARSIZED value assembled from
 /// several byte views without copying) -- the two used to be separate classes; they are now the span count:
@@ -117,7 +157,12 @@ public:
     virtual ~LazyValueRepresentation() = default;
 
     LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
-        : spans(std::move(other.spans)), size(other.size), type(other.type), isNull(other.isNull), parserType(std::move(other.parserType))
+        : spans(std::move(other.spans))
+        , size(other.size)
+        , type(other.type)
+        , isNull(other.isNull)
+        , parserType(std::move(other.parserType))
+        , characteristics(other.characteristics)
     {
     }
 
@@ -132,6 +177,7 @@ public:
         size = other.size;
         isNull = other.isNull;
         parserType = other.parserType;
+        characteristics = other.characteristics;
         return *this;
     }
 
@@ -183,6 +229,15 @@ public:
 
     [[nodiscard]] DataType getType() const { return type; }
 
+    /// Host-time properties asserted about this value's raw bytes (see Characteristic). Read by the output
+    /// formatter at the write site to choose passthrough vs escaping; both operands are host constants so the
+    /// decision folds at trace. Defaults to NONE (nothing asserted -> the value keeps the escaping path).
+    [[nodiscard]] Characteristic getCharacteristics() const { return characteristics; }
+
+    /// Assert host-time byte properties on this value. Set once at creation by the input side, which knows its
+    /// format + quotation + escaping. Host-time metadata only; carries no runtime effect by itself.
+    void setCharacteristics(const Characteristic value) { characteristics = value; }
+
     /// Method to check if the lazy value has any text behind it.
     /// Usable for some bool function overrides
     [[nodiscard]] nautilus::val<bool> isValid() const { return size > 0 && spans.front().ptr != nullptr; }
@@ -209,6 +264,7 @@ public:
         size = other.size;
         isNull = other.isNull;
         parserType = std::move(other.parserType);
+        characteristics = other.characteristics;
         return *this;
     }
 
@@ -272,5 +328,9 @@ protected:
     nautilus::val<bool> isNull;
     /// The input parser that has to be created if the lazy value is eventually parsed (single-span scalars only).
     std::string parserType;
+    /// Host-time byte properties asserted by the input side (see Characteristic / satisfies). NONE by default
+    /// (asserts nothing); an input formatter that knows its format opts it up so the output side may forward
+    /// the bytes verbatim. Trace-time scaffolding, like parserType -- never read at runtime.
+    Characteristic characteristics{Characteristic::NONE};
 };
 }

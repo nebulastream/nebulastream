@@ -1,0 +1,21 @@
+# name: CleanCsvToJson.test
+# description: csv->json varsized passthrough via the representation-compatibility gate. With the CSV
+#   `assume_clean_strings` default (true), a CSV string column is asserted CLEAN, which satisfies a JSON string
+#   field's JSON_ESCAPED requirement -- so the JSON output formatter forwards the raw bytes VERBATIM (no per-row
+#   escape scan). Numeric fields raw-forward as before. The data is escape-free, so the fused pipeline (verbatim
+#   forward) and the split pipeline (materialise then re-serialize at the boundary) produce byte-identical JSON.
+#   (SpecialCharactersJSON is the opted-DOWN counterpart that keeps escaping for genuinely dirty data.)
+# groups: [JSON]
+
+CREATE LOGICAL SOURCE cleancsv(id INT32, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR cleancsv TYPE File;
+ATTACH INLINE
+1,alice
+2,bob smith
+3,carol
+
+SELECT * FROM cleancsv INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
+----
+{"CLEANCSV$ID":1,"CLEANCSV$NAME":"alice"}
+{"CLEANCSV$ID":2,"CLEANCSV$NAME":"bob smith"}
+{"CLEANCSV$ID":3,"CLEANCSV$NAME":"carol"}

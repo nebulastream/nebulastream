@@ -1,9 +1,12 @@
 # name: SpecialCharactersJSON.test
-# description: Checks if the JSONOutputFormatter delimits special characters in chars and strings properly
+# description: Checks if the JSONOutputFormatter delimits special characters in chars and strings properly.
+#   This source's string field genuinely carries `"`/`\`, so it opts OUT of the CSV `assume_clean_strings`
+#   passthrough (assume_clean_strings=false) -- the representation gate then keeps the escaping path and the
+#   special characters are escaped into valid JSON (rather than raw-forwarded, which would emit corrupt JSON).
 # groups: [JSON]
 
 CREATE LOGICAL SOURCE jsonSource(firstField VARSIZED, secondField CHAR);
-CREATE PHYSICAL SOURCE FOR jsonSource TYPE File;
+CREATE PHYSICAL SOURCE FOR jsonSource TYPE File SET("CSV" AS INPUT_FORMATTER.`TYPE`, "false" AS INPUT_FORMATTER.`assume_clean_strings`);
 ATTACH INLINE;
 This sentence has "special" characters\,"
 

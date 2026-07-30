@@ -212,7 +212,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                     SIMDJSONMetaData::getNullValues(),
                     QuotationType::DOUBLE_QUOTE,
                     parserType,
-                    lazyOverload);
+                    lazyOverload,
+                    Characteristic::JSON_ESCAPED);
             }
             return;
         }
@@ -229,7 +230,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             SIMDJSONMetaData::getNullValues(),
             QuotationType::DOUBLE_QUOTE,
             parserType,
-            lazyOverload);
+            lazyOverload,
+            Characteristic::JSON_ESCAPED);
     }
 
     static VarVal parseJsonVarSized(

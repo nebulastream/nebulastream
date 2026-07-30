@@ -49,6 +49,18 @@ struct ConfigParametersCSVInputFormatIndexer
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
 
+    /// Defaults TRUE: this source's string fields are assumed CLEAN -- no `"`, `\`, control byte or delimiter --
+    /// which lets the output formatter forward them VERBATIM into any text sink (the csv->json string
+    /// passthrough win: no per-row JSON escape scan). It is the string analogue of the "assume valid digits"
+    /// numeric contract. A source whose strings really can carry those bytes (e.g. embedded quotes that must be
+    /// escaped into JSON, cf. formatter/SpecialCharactersJSON) must opt OUT with `assume_clean_strings: false`,
+    /// which restores the safe escaping path. A DEBUG-build invariant traps if a raw-forwarded value violates
+    /// the claim, so a mislabelled source is caught in tests/CI rather than emitting corrupt output.
+    static inline const DescriptorConfig::ConfigParameter<bool> ASSUME_CLEAN_STRINGS{
+        "assume_clean_strings",
+        true,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ASSUME_CLEAN_STRINGS, config); }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
         "tuple_delimiter",
         "\n",
@@ -61,7 +73,7 @@ struct ConfigParametersCSVInputFormatIndexer
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+            InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, ASSUME_CLEAN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
 };
 
 constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
@@ -74,6 +86,7 @@ struct CSVMetaData
     explicit CSVMetaData(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
         : tupleDelimiter(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER).front())
         , fieldDelimiter(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER).front())
+        , assumeCleanStrings(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ASSUME_CLEAN_STRINGS))
         , fieldNames(tupleBufferRef.getAllFieldNames())
         , fieldDataTypes(tupleBufferRef.getAllDataTypes())
         , nullValues({""})
@@ -100,6 +113,15 @@ struct CSVMetaData
 
     static QuotationType getQuotationType() { return QuotationType::NONE; }
 
+    /// Host-time byte-property characteristics for this source's VARSIZED/CHAR passthrough values. When the
+    /// source asserts clean strings (the `assume_clean_strings` default), they are CLEAN -- valid verbatim in
+    /// every text sink, so CLEAN also satisfies a JSON string field's JSON_ESCAPED requirement -> csv->json
+    /// string passthrough. Opted down, they assert nothing (NONE) and take the safe escaping path.
+    [[nodiscard]] Characteristic getVarSizedCharacteristics() const
+    {
+        return assumeCleanStrings ? (Characteristic::CLEAN | Characteristic::JSON_ESCAPED) : Characteristic::NONE;
+    }
+
     [[nodiscard]] const std::vector<std::string>& getNullValues() const { return nullValues; }
 
     [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
@@ -124,6 +146,7 @@ struct CSVMetaData
 private:
     char tupleDelimiter;
     char fieldDelimiter;
+    bool assumeCleanStrings;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
     std::vector<DataType> fieldDataTypes;
     std::vector<std::string> nullValues;

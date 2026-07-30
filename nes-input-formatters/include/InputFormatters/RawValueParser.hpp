@@ -22,6 +22,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -52,7 +53,27 @@ void parseRawValueIntoRecord(
     const std::vector<std::string>& nullValues,
     QuotationType quotationType,
     const std::string& parserType,
-    const bool& lazyOverload);
+    const bool& lazyOverload,
+    Characteristic varSizedCharacteristics);
+
+/// Host-time: the byte-property characteristics an input formatter asserts for its VARSIZED/CHAR passthrough
+/// values (see Characteristic). A formatter's metadata may state it explicitly by exposing
+/// `getVarSizedCharacteristics()` (the CSV family does -- driven by its `assume_clean_strings` config); otherwise
+/// this derives a safe default from the quotation style: a JSON string body (DOUBLE_QUOTE) is a valid JSON string
+/// body (JSON_ESCAPED), while any other raw field (NONE) asserts nothing and keeps the escaping path. The result
+/// is a host constant, so the output formatter's passthrough gate folds it at trace (zero per-row cost).
+template <typename IndexerMetaData>
+[[nodiscard]] Characteristic varSizedCharacteristicsOf(const IndexerMetaData& metaData)
+{
+    if constexpr (requires { metaData.getVarSizedCharacteristics(); })
+    {
+        return metaData.getVarSizedCharacteristics();
+    }
+    else
+    {
+        return metaData.getQuotationType() == QuotationType::DOUBLE_QUOTE ? Characteristic::JSON_ESCAPED : Characteristic::NONE;
+    }
+}
 
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
