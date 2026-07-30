@@ -1,0 +1,8 @@
+SELECT
+  CASTTOUNIXTS("ts") AS "ts",
+  "data"
+FROM
+  CAM
+INTO
+  CAM_SINK
+;

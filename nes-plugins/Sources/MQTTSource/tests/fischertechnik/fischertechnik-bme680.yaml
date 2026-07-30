@@ -1,0 +1,117 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# BME680 = Bosch BME680 environmental sensor, physically mounted on the
+# HBW (High-Bay Warehouse) base plate, wired electrically to the TXT 4.0
+# controller (not Node-RED-sourced, works standalone). Split out of
+# fischertechnik-run_all.yaml (still present there too) into its own
+# standalone topology.
+#
+# Facts below (topics/payload shapes) cross-checked against the reference
+# docs in Dropbox "TU Berlin/FischerTechnik/": CLAUDE.md (station table +
+# topic cheat-sheet) and "FischerTechnik MQTT Guide.docx" (read directly
+# from the shipped GatewayPLC.ft source, the more carefully-sourced of
+# the two). Where they disagree, the MQTT Guide is treated as authoritative
+# since it flags its own confidence per topic.
+#
+#   ┌──────────────────────────┐         ┌─────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  worker-1  (cap: 10000)│
+#   │ 192.168.0.10:1883        │ subscribe  S: MQTT_SOURCE x1       │
+#   │ topic: i/bme680          │         │  K: FILE_SINK x1        │
+#   │ (BME680 env sensor,      │         │  → factory_bme680.csv   │
+#   │  HBW base plate)         │         └─────────────────────────┘
+#   └──────────────────────────┘
+
+sinks:
+  - name: BME680_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, t=temperature(°C), rt=raw temperature,
+      # h=humidity(%), rh=raw humidity, p=pressure,
+      # iaq=indoor air quality index, aq=IAQ accuracy, gr=gas resistance.
+      - name: '"ts"'
+        type: UINT64
+      - name: '"t"'
+        type: FLOAT64
+      - name: '"rt"'
+        type: FLOAT64
+      - name: '"h"'
+        type: FLOAT64
+      - name: '"rh"'
+        type: FLOAT64
+      - name: '"p"'
+        type: FLOAT64
+      - name: '"iaq"'
+        type: FLOAT64
+      - name: '"aq"'
+        type: UINT64
+      - name: '"gr"'
+        type: FLOAT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_bme680.csv
+
+logical:
+  - name: BME680
+    # BME680 = Bosch BME680 environmental sensor, physically mounted on the
+    # HBW (High-Bay Warehouse) base plate, wired electrically to the TXT 4.0
+    # controller (not Node-RED-sourced, works standalone). Per "FischerTechnik
+    # MQTT Guide.docx": rt (raw temperature), rh (raw humidity) and gr (gas
+    # resistance) are hardcoded to 0 in the shipped firmware — they are not
+    # real raw sensor values, don't rely on them. Only t (temperature, °C),
+    # h (humidity, %), p (pressure) and iaq/aq (air quality index/accuracy)
+    # carry real data.
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-bme680.sql),
+      # t=temperature(°C), rt=raw temperature (always 0),
+      # h=humidity(%), rh=raw humidity (always 0), p=pressure,
+      # iaq=indoor air quality index, aq=IAQ accuracy, gr=gas resistance (always 0).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"t"'
+        type: FLOAT64
+      - name: '"rt"'
+        type: FLOAT64
+      - name: '"h"'
+        type: FLOAT64
+      - name: '"rh"'
+        type: FLOAT64
+      - name: '"p"'
+        type: FLOAT64
+      - name: '"iaq"'
+        type: FLOAT64
+      - name: '"aq"'
+        type: UINT64
+      - name: '"gr"'
+        type: FLOAT64
+
+physical:
+  - logical: BME680
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/bme680
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

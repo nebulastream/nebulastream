@@ -1,0 +1,489 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Combined topology: all fischertechnik source streams on one worker.
+#
+# Facts below (topics/payload shapes) cross-checked against the reference
+# docs in Dropbox "TU Berlin/FischerTechnik/": CLAUDE.md (station table +
+# topic cheat-sheet) and "FischerTechnik MQTT Guide.docx" (read directly
+# from the shipped GatewayPLC.ft source, the more carefully-sourced of
+# the two). Where they disagree, the MQTT Guide is treated as authoritative
+# since it flags its own confidence per topic.
+#
+# NOTE: each per-source yaml originally declared its own sink named
+# "FACTORY_SINK" (with its own schema). Merged into one topology those
+# would collide, so sinks here are renamed uniquely as <LOGICAL_NAME>_SINK.
+# Queries paired with this file must target the renamed sink names
+# (e.g. "INTO BME680_SINK" instead of "INTO FACTORY_SINK").
+#
+# CAM (the SSC pan/tilt camera) has been split out into its own topology,
+# see fischertechnik-cam.yaml / fischertechnik-cam.sql.
+#
+#   ┌──────────────────────────┐         ┌─────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  worker-1  (cap: 10000)│
+#   │ 192.168.0.10:1883        │ subscribe  S: MQTT_SOURCE x7       │
+#   │ topics: i/bme680, i/ldr, │         │  K: FILE_SINK x7        │
+#   │   i/broadcast, i/ptu/pos,│         │  → factory_*.csv        │
+#   │   f/i/order,             │         └─────────────────────────┘
+#   │   f/i/state/+, f/i/stock │
+#   │ (TXT-native + Node-RED/  │
+#   │  Raspberry Pi bridged)   │
+#   └──────────────────────────┘
+#
+# Station abbreviations used below (full names, from CLAUDE.md's station
+# reference table):
+#   HBW = High-Bay Warehouse    — 9-slot rack (rows A/B/C x 1-3), storage/retrieval
+#   VGR = Vacuum Gripper Robot  — 3-axis robot moving workpieces between stations
+#   MPO = Multi-Processing station — kiln/oven, rotary table/milling, ejector
+#   SLD = Sorting Line          — sorts workpieces by color into 3 chutes
+#   DPS = Input/Output station  — entry point, NFC reader; its color sensor is
+#                                  called "DSI" in the calibration dashboard
+#                                  (Training_Factory_Industry_40_24V-Calibration.pdf,
+#                                  p.1: "DSI stands for the color sensor in the
+#                                  input/output station"). "DSO" is not documented
+#                                  in any manual; presumed to be the same DPS
+#                                  station's output side — unconfirmed.
+#   SSC = Sensor/Surveillance Camera — pan/tilt USB camera mounted atop MPO
+
+sinks:
+  - name: BME680_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, t=temperature(°C), rt=raw temperature,
+      # h=humidity(%), rh=raw humidity, p=pressure,
+      # iaq=indoor air quality index, aq=IAQ accuracy, gr=gas resistance.
+      - name: '"ts"'
+        type: UINT64
+      - name: '"t"'
+        type: FLOAT64
+      - name: '"rt"'
+        type: FLOAT64
+      - name: '"h"'
+        type: FLOAT64
+      - name: '"rh"'
+        type: FLOAT64
+      - name: '"p"'
+        type: FLOAT64
+      - name: '"iaq"'
+        type: FLOAT64
+      - name: '"aq"'
+        type: UINT64
+      - name: '"gr"'
+        type: FLOAT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_bme680.csv
+
+  - name: BROADCAST_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, hardwareId/hardwareModel=TXT controller identity,
+      # softwareName/softwareVersion=firmware identity,
+      # message="init" on connect, otherwise a keep-alive payload.
+      - name: '"ts"'
+        type: UINT64
+      - name: '"hardwareId"'
+        type: VARSIZED
+      - name: '"hardwareModel"'
+        type: VARSIZED
+      - name: '"softwareName"'
+        type: VARSIZED
+      - name: '"softwareVersion"'
+        type: VARSIZED
+      - name: '"message"'
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_broadcast.csv
+
+  - name: LDR_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, br=derived brightness, ldr=raw photoresistor resistance.
+      - name: '"ts"'
+        type: UINT64
+      - name: '"br"'
+        type: FLOAT64
+      - name: '"ldr"'
+        type: FLOAT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_ldr.csv
+
+  - name: PTU_POS_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, pan/tilt=pan-tilt camera position feedback (floats).
+      - name: '"ts"'
+        type: UINT64
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_ptu_pos.csv
+
+  - name: ORDER_STATE_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms, state=order state (unconfirmed value set/type),
+      # type=order type (unconfirmed value set/type).
+      - name: '"ts"'
+        type: UINT64
+      - name: '"state"'
+        type: VARSIZED
+      - name: '"type"'
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_order.csv
+
+  - name: STATION_STATE_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms,
+      # station=which station this update is for: hbw, vgr, mpo, sld, dsi, dso
+      #   (see the station abbreviation table above for full names),
+      # code=status/error code (type inferred, unconfirmed),
+      # description=human-readable status text,
+      # active=whether the station is currently active (type inferred, unconfirmed),
+      # target=target position/state (type inferred, unconfirmed).
+      - name: '"ts"'
+        type: UINT64
+      - name: '"station"'
+        type: VARSIZED
+      - name: '"code"'
+        type: UINT64
+      - name: '"description"'
+        type: VARSIZED
+      - name: '"active"'
+        type: BOOLEAN
+      - name: '"target"'
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_station_state.csv
+
+  - name: STOCK_SINK
+    host: localhost:8080
+    schema:
+      # ts=timestamp ms. stockItems intentionally omitted, see STOCK
+      # logical source note below.
+      - name: '"ts"'
+        type: UINT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_stock.csv
+
+# f/i/nfc/ds (NFC read events from the DPS station) has deliberately been
+# left out of this topology entirely — not even a ts-only stub like STOCK
+# above. A live MQTT Explorer snapshot against 192.168.0.10 (2026-07-30,
+# see /home/thanasis/Documents/FischerTechnik-Datasets/MQTTExplorer-snapshot.docx)
+# shows its payload as {"workpiece":{"id","state","type"},"history":[...]}
+# with NO top-level scalar field visible (no "ts" precedes "workpiece" in
+# the observed payload) — both top-level keys are a nested object and an
+# array. NES's JSON formatter only reads flat top-level keys (see
+# SIMDJSONParsingUtil.hpp's accessSIMDJsonFieldOrThrow / the trailing-
+# identifier-only field lookup in SIMDJSONInputFormatIndexer.hpp — there is
+# no dot-path/JSON-pointer support to reach into "workpiece"), so there is
+# nothing in this payload a schema field could point at without inventing
+# one. Confirm with a full live capture first:
+#   mosquitto_sub -h 192.168.0.10 -t f/i/nfc/ds -v
+# If a top-level "ts" does turn out to exist, this can get a STOCK-style
+# ts-only stub; extracting workpiece/history contents needs the same
+# ARRAY/STRUCT-type (or external flattening relay) design work as STOCK.
+
+logical:
+  - name: BME680
+    # BME680 = Bosch BME680 environmental sensor, physically mounted on the
+    # HBW (High-Bay Warehouse) base plate, wired electrically to the TXT 4.0
+    # controller (not Node-RED-sourced, works standalone). Per "FischerTechnik
+    # MQTT Guide.docx": rt (raw temperature), rh (raw humidity) and gr (gas
+    # resistance) are hardcoded to 0 in the shipped firmware — they are not
+    # real raw sensor values, don't rely on them. Only t (temperature, °C),
+    # h (humidity, %), p (pressure) and iaq/aq (air quality index/accuracy)
+    # carry real data.
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # t=temperature(°C), rt=raw temperature (always 0),
+      # h=humidity(%), rh=raw humidity (always 0), p=pressure,
+      # iaq=indoor air quality index, aq=IAQ accuracy, gr=gas resistance (always 0).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"t"'
+        type: FLOAT64
+      - name: '"rt"'
+        type: FLOAT64
+      - name: '"h"'
+        type: FLOAT64
+      - name: '"rh"'
+        type: FLOAT64
+      - name: '"p"'
+        type: FLOAT64
+      - name: '"iaq"'
+        type: FLOAT64
+      - name: '"aq"'
+        type: UINT64
+      - name: '"gr"'
+        type: FLOAT64
+
+  - name: BROADCAST
+    # BROADCAST = TXT 4.0 controller identity + keep-alive heartbeat.
+    # Published by the TXT 4.0 itself (not tied to a specific station);
+    # fires once on connect (message="init") plus sparse periodic pings.
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # hardwareId/hardwareModel=TXT controller identity,
+      # softwareName/softwareVersion=firmware identity,
+      # message="init" on connect, otherwise a keep-alive payload.
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"hardwareId"'
+        type: VARSIZED
+      - name: '"hardwareModel"'
+        type: VARSIZED
+      - name: '"softwareName"'
+        type: VARSIZED
+      - name: '"softwareVersion"'
+        type: VARSIZED
+      - name: '"message"'
+        type: VARSIZED
+
+  - name: LDR
+    # LDR = Light-Dependent Resistor (photoresistor), wired to the TXT 4.0
+    # controller. Exact physical placement on the factory is unconfirmed
+    # even in the user's own notes (per CLAUDE.md's sensor cheat-sheet).
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # br=derived brightness, ldr=raw photoresistor resistance.
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"br"'
+        type: FLOAT64
+      - name: '"ldr"'
+        type: FLOAT64
+
+  - name: PTU_POS
+    # i/ptu/pos = pan/tilt camera position feedback for the SSC (mounted atop
+    # MPO). Not published by the TXT's own GatewayPLC.ft code (per the MQTT
+    # Guide, MQTT_Bridge.py only subscribes to i/ptu/# to relay to the
+    # cloud); field names were undocumented in both reference docs until a
+    # live MQTT Explorer snapshot against 192.168.0.10 on 2026-07-30 showed
+    # the real payload shape below.
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # pan/tilt=pan-tilt camera position (floats, e.g. observed
+      # pan=0.9849541187286377, tilt=-0.25).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+  - name: ORDER_STATE
+    # f/i/order = order state. Node-RED/PLC-sourced (not TXT-native), lower
+    # confidence: "FischerTechnik MQTT Guide.docx" only confirms the shape
+    # as {ts, state, ...} (its own ellipsis — i.e. the field list may be
+    # incomplete). The "type" field below comes only from the CLAUDE.md
+    # cheat-sheet, not independently confirmed against source; the TXT's
+    # own Order_interface.py only *subscribes* to this topic, it doesn't
+    # publish it. Sniff live before trusting:
+    #   mosquitto_sub -h 192.168.0.10 -p 1883 -t 'f/i/order' -v
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # state=order state (unconfirmed value set/type),
+      # type=order type (unconfirmed value set/type).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"state"'
+        type: VARSIZED
+      - name: '"type"'
+        type: VARSIZED
+
+  - name: STATION_STATE
+    # f/i/state/+ = per-station status, one topic per station:
+    # f/i/state/hbw, f/i/state/vgr, f/i/state/mpo, f/i/state/sld,
+    # f/i/state/dsi, f/i/state/dso (see the station abbreviation table in
+    # the file header for what each code means). Node-RED/PLC-sourced (not
+    # TXT-native) — only exists on the broker while Node-RED is running;
+    # reachability from wherever NES runs is unconfirmed. Field *names*
+    # (ts, station, code, description, active, target) come from the
+    # CLAUDE.md reference; the value *types* of code/active/target are
+    # inferred, not confirmed against a live payload. Sniff live first:
+    #   mosquitto_sub -h 192.168.0.10 -p 1883 -t 'f/i/#' -v
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-run_all.sql),
+      # station=which station this update is for: hbw, vgr, mpo, sld, dsi, dso,
+      # code=status/error code (type inferred, unconfirmed),
+      # description=human-readable status text,
+      # active=whether the station is currently active (type inferred, unconfirmed),
+      # target=target position/state (type inferred, unconfirmed).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"station"'
+        type: VARSIZED
+      - name: '"code"'
+        type: UINT64
+      - name: '"description"'
+        type: VARSIZED
+      - name: '"active"'
+        type: BOOLEAN
+      - name: '"target"'
+        type: VARSIZED
+
+  - name: STOCK
+    # f/i/stock = HBW (High-Bay Warehouse) 9-slot inventory contents.
+    # Node-RED/PLC-sourced. Per "FischerTechnik MQTT Guide.docx" the real
+    # payload is {ts, stockItems: [{workpiece: {id, type, state}, location} x 9]}
+    # — a nested JSON array of 9 structs (one per HBW slot: rows A/B/C x
+    # 1-3), each containing a further-nested "workpiece" object. This is
+    # why this source only extracts "ts" below: NES's DataType enum has no
+    # ARRAY/LIST/STRUCT type (only scalars + VARSIZED), and the JSON
+    # indexer's VARSIZED path (parseJsonVarSized -> accessSIMDJsonFieldOrThrow,
+    # see nes-plugins/InputFormatters/JSONInputFormatter/SIMDJSONParsingUtil.hpp)
+    # converts a field via simdjson's string accessor, which expects the
+    # field to actually be a JSON string, not an array/object. Pointing a
+    # VARSIZED field at "stockItems" directly would very likely throw a
+    # parse error per tuple, not silently degrade. So every message's
+    # actual stock contents are dropped here — this source is only useful
+    # for observing *that* a stock update happened, not *what* changed.
+    # Representing stockItems would need either (a) a NES-side
+    # ARRAY/STRUCT type (doesn't exist today), or (b) a relay that
+    # flattens each stock update into 9 separate one-slot-per-tuple
+    # messages before NES ever sees them. Open design question, not a
+    # simple config fix. Sniff live before trusting field names:
+    #   mosquitto_sub -h 192.168.0.10 -p 1883 -t 'f/i/stock' -v
+    #
+    # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+    # query via CASTTOUNIXTS, see fischertechnik-run_all.sql).
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+
+physical:
+  - logical: BME680
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/bme680
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik
+      qos: 0
+      log_messages: true
+
+  - logical: BROADCAST
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/broadcast
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-broadcast
+      qos: 2
+      log_messages: true
+
+  - logical: LDR
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ldr
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-ldr
+      qos: 0
+      log_messages: true
+
+  - logical: PTU_POS
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-ptu-pos
+      qos: 0
+      log_messages: true
+
+  - logical: ORDER_STATE
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: f/i/order
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-order
+      qos: 0
+      log_messages: true
+
+  - logical: STATION_STATE
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: f/i/state/+
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-station-state
+      qos: 0
+      log_messages: true
+
+  - logical: STOCK
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: f/i/stock
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-stock
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

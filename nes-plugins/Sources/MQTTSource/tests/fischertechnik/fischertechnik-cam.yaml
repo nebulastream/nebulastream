@@ -1,0 +1,81 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CAM = images from the SSC (Sensor/Surveillance Camera), a pan/tilt USB
+# camera mounted atop the MPO (Multi-Processing station). Split out of
+# fischertechnik-run_all.yaml (where it is disabled by default) into its
+# own topology: each tuple's "data" field is a full base64 data-URI
+# (320x240 JPEG @ quality 30, ~1fps), several KB per tuple, which needs
+# a large enough worker.default_query_execution.operator_buffer_size to
+# avoid silently using unpooled buffers.
+#
+# Facts below (topics/payload shapes) cross-checked against the reference
+# docs in Dropbox "TU Berlin/FischerTechnik/": CLAUDE.md (station table +
+# topic cheat-sheet) and "FischerTechnik MQTT Guide.docx" (read directly
+# from the shipped GatewayPLC.ft source, the more carefully-sourced of
+# the two). Where they disagree, the MQTT Guide is treated as authoritative
+# since it flags its own confidence per topic.
+#
+#   ┌──────────────────────────┐         ┌─────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  worker-1  (cap: 10000)│
+#   │ 192.168.0.10:1883        │ subscribe  S: MQTT_SOURCE x1       │
+#   │ topic: i/cam             │         │  K: FILE_SINK x1        │
+#   │ (SSC, pan/tilt USB cam   │         │  → factory_cam.csv      │
+#   │  atop MPO)               │         └─────────────────────────┘
+#   └──────────────────────────┘
+#
+# SSC = Sensor/Surveillance Camera — pan/tilt USB camera mounted atop MPO
+# (Multi-Processing station; see fischertechnik-run_all.yaml's header for
+# the full station abbreviation table).
+
+sinks:
+  - name: CAM_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"data"'
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: factory_cam.csv
+
+logical:
+  - name: CAM
+    schema:
+      # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms in the paired
+      # query via CASTTOUNIXTS, see fischertechnik-cam.sql).
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+
+physical:
+  - logical: CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-cam
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000
