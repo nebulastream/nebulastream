@@ -449,6 +449,15 @@ namespace
 {
 NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& parser)
 {
+    /// A single-node deployment has no topology to resolve, but `status`/`stop` still need to
+    /// reach the worker. --no-topology yields an empty config so those subcommands run without
+    /// one. Checked before -t so the flag wins if both are given.
+    if (parser.get<bool>("--no-topology"))
+    {
+        NES_DEBUG("--no-topology given: proceeding without a topology file");
+        return NES::CLI::QueryConfig{};
+    }
+
     /// Check -t flag first
     if (parser.is_used("-t"))
     {
@@ -719,6 +728,26 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     const auto queries = state | std::views::keys | std::ranges::to<std::vector>();
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
+
+    /// Without a topology there is nothing to register workers from, but status/stop still need
+    /// a submission backend for every host the persisted queries live on — QueryManager asserts
+    /// `backends.contains(host)` before reaching one. Derive that set from the queries
+    /// themselves: the state backend already records which worker each local query runs on.
+    /// Placement never runs on this path, so capacity, downstream edges and the data-plane
+    /// address are irrelevant here; only the gRPC management endpoint (the Host) matters.
+    if (program.get<bool>("--no-topology"))
+    {
+        for (const auto& distributedQuery : state | std::views::values)
+        {
+            for (const auto& host : distributedQuery.iterate() | std::views::keys)
+            {
+                /// addWorker returns false for a duplicate host, which is expected when several
+                /// queries share a worker.
+                std::ignore = workerCatalog->addWorker(host, {}, NES::Capacity(NES::CapacityKind::Unlimited{}), {});
+            }
+        }
+    }
+
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
@@ -830,6 +859,9 @@ int main(int argc, char** argv)
         program.add_argument("-t").help(
             "Path to the topology file, or '-' to read from stdin. "
             "Resolution order: 1) -t flag, 2) NES_TOPOLOGY_FILE env, 3) topology.yaml/topology.yml in working directory");
+        program.add_argument("--no-topology")
+            .flag()
+            .help("Skip topology resolution entirely. For single-node deployments, where status/stop need no topology.");
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
