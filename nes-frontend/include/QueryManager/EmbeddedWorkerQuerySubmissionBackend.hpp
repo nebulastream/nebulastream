@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <memory>
+#include <stop_token>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -42,9 +43,15 @@ public:
     ~EmbeddedWorkerQuerySubmissionBackend() override;
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
+    [[nodiscard]] std::expected<QueryId, Exception>
+    start(LogicalPlan, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken) override;
     std::expected<void, Exception> stop(QueryId) override;
+    std::expected<void, Exception> stop(QueryId, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
+    [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception>
+    status(QueryId, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
+    void shutdown(std::chrono::steady_clock::time_point deadline) override;
 
 private:
     std::unique_ptr<detail::Channel> channel;

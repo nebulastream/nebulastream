@@ -131,6 +131,14 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
             auto result = delegate.startQuery(std::move(queryPlan));
             if (result.has_value())
             {
+                if (context->IsCancelled())
+                {
+                    if (auto stopped = delegate.stopQuery(*result); !stopped)
+                    {
+                        return handleError(stopped.error(), context);
+                    }
+                    return grpc::Status{grpc::StatusCode::CANCELLED, "Query start was cancelled"};
+                }
                 *response->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(*result);
                 return grpc::Status::OK;
             }

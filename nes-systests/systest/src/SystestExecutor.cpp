@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -53,9 +54,15 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestCoordinator.hpp>
+#include <SystestExecutionBackend.hpp>
 #include <SystestProgressTracker.hpp>
+#include <SystestReporter.hpp>
+#include <SystestResolver.hpp>
+#include <SystestRun.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
+#include <SystestValidation.hpp>
 #include <WorkerCatalog.hpp>
 
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.
@@ -292,12 +299,6 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .errorCode = ErrorCode::TestException};
         }
 
-        if (!config.remoteWorker.getValue())
-        {
-            /// Enable in-memory communication between workers
-            enable_memcom();
-        }
-
         if (queries.empty())
         {
             return {
@@ -306,123 +307,144 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .errorCode = ErrorCode::TestException};
         }
 
-        progressTracker.reset();
-
-        if (config.endlessMode)
+        auto resolved = Systest::resolveSystestQueries(std::move(queries), config.testsDiscoverDir.getValue(), config.clusterConfig);
+        if (!resolved)
         {
-            runEndlessMode(queries);
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
-                .outputMessage = "Endless mode should not stop.",
-                .errorCode = ErrorCode::TestException};
+                .outputMessage = resolved.error().what(),
+                .errorCode = resolved.error().code()};
         }
 
-        if (config.randomQueryOrder)
+        if (!config.remoteWorker.getValue())
         {
-            std::mt19937 rng(std::random_device{}());
-            std::ranges::shuffle(queries, rng);
+            enable_memcom();
         }
-        const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-        std::vector<Systest::RunningQuery> failedQueries;
+
+        auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
+        if (not config.workerConfig.getValue().empty())
+        {
+            singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+        }
+
+        std::unique_ptr<Systest::ExecutionBackend> backend;
         if (config.remoteWorker.getValue())
         {
-            progressTracker.reset();
-            progressTracker.setTotalQueries(queries.size());
-            const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
-            auto failed
-                = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage);
-            failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
+            backend = std::make_unique<Systest::RemoteExecutionBackend>(resolved->preparedCases);
         }
         else
         {
-            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-            if (not config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-            }
-            else if (config.singleNodeWorkerConfig.has_value())
-            {
-                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-            }
-            if (config.benchmark)
-            {
-                std::vector<Systest::BenchmarkResult> benchmarkResults;
-                std::vector<Systest::SystestQuery> benchmarkQueries;
-                benchmarkQueries.reserve(queries.size());
+            backend = std::make_unique<Systest::EmbeddedExecutionBackend>(resolved->preparedCases, singleNodeWorkerConfiguration);
+        }
 
-                for (const auto& query : queries)
+        if (config.benchmark.getValue() && config.endlessMode.getValue())
+        {
+            return {
+                .returnType = SystestExecutorResult::ReturnType::FAILED,
+                .outputMessage = "Benchmark and endless execution modes cannot be combined.",
+                .errorCode = ErrorCode::InvalidConfigParameter};
+        }
+
+        Systest::RunSetup runSetup{
+            .selection = Systest::TestSelection{.includeAll = false, .cases = resolved->preparedCases->ids()},
+            .ordering = Systest::
+                OrderingPolicy{.kind = config.randomQueryOrder.getValue() ? Systest::OrderingKind::Shuffled : Systest::OrderingKind::SourceOrder, .seed = std::nullopt},
+            .concurrency = Systest::ConcurrencyPolicy{.maximumActiveCases = static_cast<size_t>(config.numberConcurrentQueries.getValue())},
+            .repetition = config.endlessMode.getValue() ? Systest::RepetitionPolicy{Systest::UntilCancelled{}}
+                                                        : Systest::RepetitionPolicy{Systest::Once{}},
+            .failurePolicy
+            = config.endlessMode.getValue() ? Systest::IndependentFailurePolicy::FailFast : Systest::IndependentFailurePolicy::Continue,
+            .deadlines = {},
+            .validation = {},
+            .metrics = Systest::MetricsPolicy{
+                .collect = config.benchmark.getValue() || config.showQueryPerformance.getValue(),
+                .report = config.benchmark.getValue() || config.showQueryPerformance.getValue()}};
+
+        if (config.benchmark.getValue())
+        {
+            runSetup.concurrency.maximumActiveCases = 1;
+            runSetup.selection.cases.clear();
+            for (const auto& id : resolved->preparedCases->ids())
+            {
+                const auto& preparedCase = resolved->preparedCases->at(id);
+                const auto& query = preparedCase.query;
+                if (const auto* action = std::get_if<Systest::QueryAction>(&preparedCase.definition->action);
+                    action && action->kind == Systest::QueryKind::Explain)
                 {
-                    if (query.differentialQueryPlan.has_value())
-                    {
-                        std::cout << "Skipping differential query for benchmarking: " << query.testName << ":"
-                                  << query.queryIdInFile.toString() << "\n";
-                        continue;
-                    }
-
-                    if (std::holds_alternative<Systest::ExpectedError>(query.expectedResultsOrExpectedError))
-                    {
-                        std::cout << "Skipping query expecting error for benchmarking: " << query.testName << ":"
-                                  << query.queryIdInFile.toString() << "\n";
-                        continue;
-                    }
-
-                    benchmarkQueries.push_back(query);
+                    std::cout << "Skipping EXPLAIN query for benchmarking: " << query.testName << ":" << query.queryIdInFile.toString()
+                              << "\n";
+                    continue;
                 }
+                if (query.differentialQueryPlan)
+                {
+                    std::cout << "Skipping differential query for benchmarking: " << query.testName << ":" << query.queryIdInFile.toString()
+                              << "\n";
+                    continue;
+                }
+                if (std::holds_alternative<Systest::ExpectedError>(query.expectedResultsOrExpectedError))
+                {
+                    std::cout << "Skipping query expecting error for benchmarking: " << query.testName << ":"
+                              << query.queryIdInFile.toString() << "\n";
+                    continue;
+                }
+                runSetup.selection.cases.push_back(id);
+            }
+        }
 
-                progressTracker.reset();
-                progressTracker.setTotalQueries(benchmarkQueries.size());
-                auto failed = runQueriesAndBenchmark(
-                    benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, config.clusterConfig, progressTracker);
-                failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
-                const auto serializedResults = rfl::json::write(benchmarkResults, rfl::json::pretty);
-                std::cout << serializedResults;
-                const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
-                std::ofstream outputFile(outputPath);
-                outputFile << serializedResults;
-                outputFile.close();
+        Systest::FileResultDecoder decoder;
+        Systest::ResultComparator resultComparator;
+        Systest::TextComparator textComparator;
+        Systest::CaseValidator validator(decoder, resultComparator, textComparator);
+        Systest::ConsoleRunReporter consoleReporter(*resolved, config.showQueryPerformance.getValue() || config.benchmark.getValue());
+        std::vector<std::reference_wrapper<Systest::RunReporter>> reporters{consoleReporter};
+        std::unique_ptr<Systest::BenchmarkRunReporter> benchmarkReporter;
+        if (config.benchmark.getValue())
+        {
+            benchmarkReporter = std::make_unique<Systest::BenchmarkRunReporter>(
+                *resolved, std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json");
+            reporters.emplace_back(*benchmarkReporter);
+        }
+        Systest::CompositeRunReporter reporter(std::move(reporters));
+        const auto summary = Systest::RunCoordinator{}.run(*resolved, std::move(runSetup), *backend, validator, reporter);
+
+        const auto fatalDiagnostic = std::ranges::find_if(
+            summary.diagnostics,
+            [](const Systest::Diagnostic& diagnostic)
+            {
+                return diagnostic.kind == Systest::DiagnosticKind::Execution || diagnostic.kind == Systest::DiagnosticKind::Reporting
+                    || diagnostic.kind == Systest::DiagnosticKind::Scheduling;
+            });
+        if (summary.failed != 0 || summary.cancelled || fatalDiagnostic != summary.diagnostics.end())
+        {
+            std::vector<std::string> failedQueries;
+            for (const auto& result : summary.results)
+            {
+                if (result.verdict != Systest::Verdict::Failed)
+                {
+                    continue;
+                }
+                const auto& query = resolved->preparedCases->at(result.id).query;
+                failedQueries.push_back(fmt::format("[{}, systest -t {}:{}]", query.testName, query.testFilePath, query.queryIdInFile));
+            }
+            std::string outputMessage;
+            if (!failedQueries.empty())
+            {
+                outputMessage = fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
+            }
+            else if (summary.cancelled)
+            {
+                outputMessage = "The systest run was cancelled before completion.";
             }
             else
             {
-                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
-                for (const auto& query : queries)
-                {
-                    queriesByOverride[query.configurationOverride].push_back(query);
-                }
-
-                progressTracker.reset();
-                progressTracker.setTotalQueries(queries.size());
-                for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
-                {
-                    auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig.overrideParameters)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
-                    const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                        ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                        : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
-                    auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
-                    failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
-                }
+                outputMessage = fmt::format("The systest run failed: {}", fatalDiagnostic->message);
             }
-        }
-        if (not failedQueries.empty())
-        {
-            std::stringstream outputMessage;
-            outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
-                .outputMessage = outputMessage.str(),
+                .outputMessage = std::move(outputMessage),
                 .errorCode = ErrorCode::QueryStatusFailed};
         }
-        std::stringstream outputMessage;
-        outputMessage << '\n' << "All queries passed.";
-        return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};
+        return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = "\nAll queries passed."};
     }
     CPPTRACE_CATCH(Exception & e)
     {

@@ -46,6 +46,8 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestIdentifiers.hpp>
+#include <SystestQueryModel.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
 
@@ -101,13 +103,6 @@ namespace NES::Systest
 
 
 class SystestRunner;
-
-using TestName = std::string;
-using TestGroup = std::string;
-
-using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
-static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
-static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 
 struct ExpectedError
 {
@@ -209,6 +204,8 @@ struct SystestQuery
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     std::optional<std::string> actualExplainOutput;
+    std::optional<ParsedCase> parsedCase;
+    std::shared_ptr<const std::vector<FixtureStatement>> fixtureStatements;
 };
 
 struct RunningQuery

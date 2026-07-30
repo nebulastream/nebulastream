@@ -236,6 +236,13 @@ public:
 
     void setRunAfter(std::pair<TestName, SystestQueryId> runAfter) { this->runAfter = runAfter; }
 
+    void setParsedCase(ParsedCase parsedCase) { this->parsedCase = std::move(parsedCase); }
+
+    void setFixtureStatements(std::shared_ptr<const std::vector<FixtureStatement>> fixtureStatements)
+    {
+        this->fixtureStatements = std::move(fixtureStatements);
+    }
+
     std::expected<LogicalPlan, Exception> getBoundPlan() const
     {
         if (boundPlan.has_value())
@@ -387,7 +394,9 @@ public:
                  .configurationOverride = ConfigurationOverride{},
                  .differentialQueryPlan = std::nullopt,
                  .runAfter = runAfter,
-                 .actualExplainOutput = exception.has_value() ? std::nullopt : actualExplainOutput}};
+                 .actualExplainOutput = exception.has_value() ? std::nullopt : actualExplainOutput,
+                 .parsedCase = parsedCase,
+                 .fixtureStatements = fixtureStatements}};
         }
 
         const auto createPlanInfoOrException = [this]() -> std::expected<SystestQuery::PlanInfo, Exception>
@@ -424,7 +433,9 @@ public:
                  .configurationOverride = std::move(configurationOverride),
                  .differentialQueryPlan = optimizedDifferentialQueryPlan,
                  .runAfter = runAfter,
-                 .actualExplainOutput = std::nullopt});
+                 .actualExplainOutput = std::nullopt,
+                 .parsedCase = parsedCase,
+                 .fixtureStatements = fixtureStatements});
         }
         return queries;
     }
@@ -451,6 +462,8 @@ private:
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     std::optional<ExplainQueryStatement> explainStatement;
     std::optional<std::string> actualExplainOutput;
+    std::optional<ParsedCase> parsedCase;
+    std::shared_ptr<const std::vector<FixtureStatement>> fixtureStatements;
     bool built = false;
 };
 
@@ -1179,13 +1192,21 @@ struct SystestBinder::Impl
             exception.what() += fmt::format("Could not successfully parse and bind test file://{}", testFilePath.string());
             throw;
         }
+
+        for (const auto& parsedCase : parser.parsedCases())
+        {
+            plans.at(parsedCase.key.queryNumber).setParsedCase(parsedCase);
+        }
+        auto fixtureStatements = std::make_shared<const std::vector<FixtureStatement>>(parser.fixtureStatements());
+
         return plans
             | std::ranges::views::transform(
-                   [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
+                   [&testFilePath, this, testFileName, &sourceThreads, &fixtureStatements](auto& pair)
                    {
                        pair.second.setPaths(testFilePath, workingDir);
                        pair.second.setName(std::string{testFileName});
                        pair.second.setAdditionalSourceThreads(sourceThreads);
+                       pair.second.setFixtureStatements(fixtureStatements);
                        return pair.second;
                    })
             | std::ranges::to<std::vector>();

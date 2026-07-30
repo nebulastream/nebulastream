@@ -29,6 +29,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <SystestQueryModel.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -131,7 +132,12 @@ public:
 
     /// Loading overrides existing parse content
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
+    [[nodiscard]] bool loadFile(const std::filesystem::path& filePath, const std::filesystem::path& relativeTestFile);
     [[nodiscard]] bool loadString(const std::string& str);
+
+    [[nodiscard]] const std::vector<ParsedCase>& parsedCases() const { return parsedCaseDefinitions; }
+
+    [[nodiscard]] const std::vector<FixtureStatement>& fixtureStatements() const { return parsedFixtureStatements; }
 
     using SystestSchema = std::vector<SystestField>;
 
@@ -222,6 +228,14 @@ private:
     bool shouldRevisitCurrentLine = false;
     size_t currentLine = 0;
     std::vector<std::string> lines;
+    std::vector<size_t> sourceLineNumbers;
+    std::filesystem::path sourceFile;
+    std::filesystem::path relativeTestFile;
+    std::vector<ParsedCase> parsedCaseDefinitions;
+    std::vector<FixtureStatement> parsedFixtureStatements;
+    std::vector<ConfigurationDirective> localConfiguration;
+    std::vector<ConfigurationDirective> globalConfiguration;
+    std::optional<size_t> lastParsedCaseIndex;
 };
 }
 

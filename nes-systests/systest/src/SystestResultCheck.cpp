@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -53,6 +54,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include <SystestValidation.hpp>
 
 namespace
 {
@@ -1106,4 +1108,338 @@ std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runni
         fmt::join(expected, "\n"),
         fmt::join(actual, "\n"));
 }
+}
+
+namespace
+{
+NES::Systest::ComparisonResult comparisonResult(const QueryCheckResult& result, const bool differential)
+{
+    static constexpr std::string_view SchemaMismatchMessage = "\n\n"
+                                                              "Schema Mismatch\n"
+                                                              "---------------";
+    static constexpr std::string_view ResultMismatchMessage = "\n\n"
+                                                              "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
+                                                              "-------------------------------------------------";
+
+    std::string message;
+    switch (result.type)
+    {
+        case QueryCheckResult::Type::QUERY_NOT_FOUND:
+            message = result.queryError;
+            break;
+        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MATCH:
+            return NES::Systest::ComparisonResult{.matches = true, .diagnostics = {}};
+        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MISMATCH:
+            message = fmt::format("{}{}", ResultMismatchMessage, result.resultErrorStream);
+            break;
+        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MATCH:
+            message = fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, result.schemaErrorStream);
+            break;
+        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH:
+            message
+                = fmt::format("{}{}{}{}", SchemaMismatchMessage, result.schemaErrorStream, ResultMismatchMessage, result.resultErrorStream);
+            break;
+    }
+    if (differential)
+    {
+        if (!message.empty())
+        {
+            message.push_back('\n');
+        }
+        message.append("\nThis error happend during differential query execution.");
+    }
+    return NES::Systest::ComparisonResult{
+        .matches = false,
+        .diagnostics = {{.kind = NES::Systest::DiagnosticKind::Validation, .message = std::move(message), .source = std::nullopt}}};
+}
+
+NES::Systest::ComparisonResult compareDecodedTables(
+    const NES::Systest::DecodedInputStream& expected, const NES::Systest::DecodedInputStream& actual, const bool differential)
+{
+    const QuerySchemasAndResults querySchemasAndResults(
+        ExpectedResultSchema(expected.schema), ActualResultSchema(actual.schema), expected.rows, actual.rows);
+    const auto resultComparisonErrorStream = compareResults(
+        querySchemasAndResults.getExpectedResultTuples(),
+        querySchemasAndResults.getActualResultTuples(),
+        querySchemasAndResults.getExpectedToActualResultMap());
+    return comparisonResult(QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream}, differential);
+}
+
+std::vector<std::string> normalizeTextLines(auto&& inputLines)
+{
+    std::vector<std::string> normalized;
+    for (auto&& line : inputLines)
+    {
+        const auto lineView = std::string_view{line};
+        const auto end = lineView.find_last_not_of(" \t\r");
+        auto trimmed = std::string{lineView.substr(0, end == std::string_view::npos ? 0 : end + 1)};
+        if (!trimmed.empty())
+        {
+            normalized.push_back(std::move(trimmed));
+        }
+    }
+    return normalized;
+}
+}
+
+namespace NES::Systest
+{
+std::expected<DecodedTable, ValidationDiagnostic> FileResultDecoder::decode(const TableArtifact& artifact) const
+{
+    auto result = loadQueryResult(artifact.file);
+    if (!result)
+    {
+        return std::unexpected(ValidationDiagnostic{
+            .kind = DiagnosticKind::Validation,
+            .message = fmt::format("Failed to load query result from {}", artifact.file),
+            .source = std::nullopt});
+    }
+    return DecodedTable{.schema = std::move(result->schema), .rows = std::move(result->result)};
+}
+
+ComparisonResult ResultComparator::compare(const RowsExpectation& expected, const DecodedInputStream& actual) const
+{
+    if (!expected.schema)
+    {
+        return ComparisonResult{
+            .matches = false,
+            .diagnostics
+            = {{.kind = DiagnosticKind::Validation, .message = "Expected result schema is unavailable", .source = std::nullopt}}};
+    }
+    return compareDecodedTables(DecodedInputStream{.schema = *expected.schema, .rows = expected.rows}, actual, false);
+}
+
+ComparisonResult ResultComparator::compare(const DecodedInputStream& expected, const DecodedInputStream& actual) const
+{
+    return compareDecodedTables(expected, actual, true);
+}
+
+ComparisonResult TextComparator::compare(const TextExpectation& expectedText, const std::string_view actualText) const
+{
+    const auto expected = normalizeTextLines(expectedText.lines);
+    const auto actual = normalizeTextLines(
+        actualText | std::views::split('\n')
+        | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
+    const auto actualOutput = fmt::format("{}", fmt::join(actual, "\n"));
+    const auto useRegex = expectedText.matching == TextMatchPolicy::RegexAssertions
+        || (expectedText.matching == TextMatchPolicy::Automatic
+            && std::ranges::any_of(expected, [](const auto& line) { return containsExplainRegexTag(line); }));
+    if (useRegex)
+    {
+        auto assertions = parseExplainRegexAssertions(expected);
+        if (!assertions)
+        {
+            return ComparisonResult{
+                .matches = false,
+                .diagnostics = {{.kind = DiagnosticKind::Validation, .message = std::move(assertions).error(), .source = std::nullopt}}};
+        }
+        if (auto error = checkExplainRegexAssertions(*assertions, actualOutput))
+        {
+            return ComparisonResult{
+                .matches = false,
+                .diagnostics = {{.kind = DiagnosticKind::Validation, .message = std::move(*error), .source = std::nullopt}}};
+        }
+        return ComparisonResult{.matches = true, .diagnostics = {}};
+    }
+    if (expected == actual)
+    {
+        return ComparisonResult{.matches = true, .diagnostics = {}};
+    }
+
+    const auto firstDifferingLine = static_cast<size_t>(std::ranges::mismatch(expected, actual).in1 - expected.begin());
+    static constexpr std::string_view EndOfOutput = "<end of output>";
+    return ComparisonResult{
+        .matches = false,
+        .diagnostics
+        = {{.kind = DiagnosticKind::Validation,
+            .message = fmt::format(
+                "\n\n"
+                "Explain Output Mismatch (first difference at line {}, expected \"{}\" but got \"{}\")\n"
+                "----------------------\n"
+                "Expected:\n{}\n\n"
+                "Actual:\n{}",
+                firstDifferingLine + 1,
+                std::cmp_less(firstDifferingLine, expected.size()) ? std::string_view{expected[firstDifferingLine]} : EndOfOutput,
+                std::cmp_less(firstDifferingLine, actual.size()) ? std::string_view{actual[firstDifferingLine]} : EndOfOutput,
+                fmt::join(expected, "\n"),
+                actualOutput),
+            .source = std::nullopt}}};
+}
+
+CaseValidator::CaseValidator(const ResultDecoder& decoder, const ResultComparator& resultComparator, const TextComparator& textComparator)
+    : decoder(decoder), resultComparator(resultComparator), textComparator(textComparator)
+{
+}
+
+ValidatedResult CaseValidator::validate(const ResolvedCase& testCase, const ExecutionOutcome& outcome) const
+try
+{
+    ValidatedResult result{.id = testCase.id, .verdict = Verdict::Failed, .diagnostics = {}, .metrics = {}, .artifacts = {}};
+    const auto fail = [&](std::string message, const DiagnosticKind kind = DiagnosticKind::Validation)
+    {
+        result.verdict = Verdict::Failed;
+        result.diagnostics.push_back(Diagnostic{.kind = kind, .message = std::move(message), .source = testCase.source});
+    };
+    const auto applyComparison = [&](ComparisonResult comparison)
+    {
+        result.verdict = comparison.matches ? Verdict::Passed : Verdict::Failed;
+        for (auto& diagnostic : comparison.diagnostics)
+        {
+            diagnostic.source = testCase.source;
+            result.diagnostics.push_back(std::move(diagnostic));
+        }
+    };
+
+    if (const auto* skipped = std::get_if<SkippedExecution>(&outcome))
+    {
+        result.verdict = Verdict::Skipped;
+        result.artifacts = {};
+        if (!skipped->failedDependencies.empty())
+        {
+            result.diagnostics.push_back(Diagnostic{
+                .kind = DiagnosticKind::Scheduling, .message = "Skipped because a dependency did not pass", .source = testCase.source});
+        }
+        return result;
+    }
+    if (const auto* timedOut = std::get_if<TimedOutExecution>(&outcome))
+    {
+        result.artifacts = timedOut->artifacts;
+        fail(fmt::format("Case timed out after {} ms", timedOut->elapsed.count()), DiagnosticKind::Execution);
+        return result;
+    }
+    if (const auto* failed = std::get_if<FailedExecution>(&outcome))
+    {
+        result.artifacts = failed->artifacts;
+        if (const auto* expectedError = std::get_if<ErrorExpectation>(&testCase.expectation);
+            expectedError && failed->error.kind == ExecutionErrorKind::Statement)
+        {
+            if (failed->error.contains(expectedError->code))
+            {
+                result.verdict = Verdict::Passed;
+                return result;
+            }
+            fail(fmt::format(
+                "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
+                expectedError->message,
+                expectedError->code,
+                failed->error.message()));
+            return result;
+        }
+        fail(fmt::format("Query Failed with unexpected error: {}", failed->error.message()), DiagnosticKind::Execution);
+        return result;
+    }
+
+    const auto& completed = std::get<CompletedExecution>(outcome);
+    result.metrics = completed.metrics;
+    result.artifacts = completed.artifacts;
+    if (const auto* expectedError = std::get_if<ErrorExpectation>(&testCase.expectation))
+    {
+        fail(fmt::format("expected error {} but query succeeded", expectedError->code));
+        return result;
+    }
+    if (const auto* rows = std::get_if<RowsExpectation>(&testCase.expectation))
+    {
+        if (rows->outputDiscarded)
+        {
+            result.verdict = Verdict::Passed;
+            return result;
+        }
+        const auto output = std::ranges::find_if(
+            completed.outputs,
+            [](const StatementOutput& statementOutput) { return std::holds_alternative<TableArtifact>(statementOutput); });
+        if (output == completed.outputs.end())
+        {
+            fail("Completed query did not produce a table artifact");
+            return result;
+        }
+        auto decoded = decoder.decode(std::get<TableArtifact>(*output));
+        if (!decoded)
+        {
+            fail(decoded.error().message);
+            return result;
+        }
+        applyComparison(resultComparator.compare(*rows, *decoded));
+        return result;
+    }
+    if (std::holds_alternative<DifferentialExpectation>(testCase.expectation))
+    {
+        std::vector<TableArtifact> tables;
+        for (const auto& output : completed.outputs)
+        {
+            if (const auto* table = std::get_if<TableArtifact>(&output))
+            {
+                tables.push_back(*table);
+            }
+        }
+        if (tables.size() != 2)
+        {
+            fail("Differential execution did not produce two table artifacts");
+            return result;
+        }
+        auto left = decoder.decode(tables[0]);
+        if (!left)
+        {
+            fail(fmt::format(
+                "Failed to load first result file for differential query comparison: {}\n\nThis error happend during differential query "
+                "execution.",
+                tables[0].file));
+            return result;
+        }
+        auto right = decoder.decode(tables[1]);
+        if (!right)
+        {
+            fail(fmt::format(
+                "Failed to load second result file for differential query comparison: {}\n\nThis error happend during differential query "
+                "execution.",
+                tables[1].file));
+            return result;
+        }
+        if (left->schema.size() == 0)
+        {
+            fail(fmt::format(
+                "First result file is empty or has no schema: {}\n\nThis error happend during differential query execution.",
+                tables[0].file));
+            return result;
+        }
+        if (right->schema.size() == 0)
+        {
+            fail(fmt::format(
+                "Second result file is empty or has no schema: {}\n\nThis error happend during differential query execution.",
+                tables[1].file));
+            return result;
+        }
+        applyComparison(resultComparator.compare(*left, *right));
+        return result;
+    }
+
+    const auto& text = std::get<TextExpectation>(testCase.expectation);
+    const auto output = std::ranges::find_if(
+        completed.outputs, [](const StatementOutput& statementOutput) { return std::holds_alternative<TextArtifact>(statementOutput); });
+    if (output == completed.outputs.end())
+    {
+        fail("Completed EXPLAIN statement did not produce text output");
+        return result;
+    }
+    applyComparison(textComparator.compare(text, std::get<TextArtifact>(*output).text));
+    return result;
+}
+catch (const Exception& exception)
+{
+    return ValidatedResult{
+        .id = testCase.id,
+        .verdict = Verdict::Failed,
+        .diagnostics = {{.kind = DiagnosticKind::Validation, .message = exception.what(), .source = testCase.source}},
+        .metrics = {},
+        .artifacts = {}};
+}
+catch (const std::exception& exception)
+{
+    return ValidatedResult{
+        .id = testCase.id,
+        .verdict = Verdict::Failed,
+        .diagnostics = {{.kind = DiagnosticKind::Validation, .message = exception.what(), .source = testCase.source}},
+        .metrics = {},
+        .artifacts = {}};
+}
+
 }

@@ -110,6 +110,10 @@ public:
 
     bool requestStop() { return thread.request_stop(); }
 
+    void join() { thread.join(); }
+
+    void detach() { thread.detach(); }
+
     static void initializeThread(Host worker_id, std::string name)
     {
         WorkerNodeId = std::move(worker_id);

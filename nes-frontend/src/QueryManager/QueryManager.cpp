@@ -109,6 +109,25 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
 [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(const DistributedLogicalPlan& plan)
 {
+    return start(plan, std::chrono::steady_clock::time_point::max(), {});
+}
+
+[[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> QueryManager::start(
+    const DistributedLogicalPlan& plan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
+    if (stopToken.stop_requested() || std::chrono::steady_clock::now() >= deadline)
+    {
+        return std::unexpected(std::vector{QueryStartFailed("Query start was cancelled or reached its deadline")});
+    }
+    for (const auto& [host, localPlans] : plan)
+    {
+        static_cast<void>(localPlans);
+        if (!backends.contains(host))
+        {
+            return std::unexpected(std::vector{QueryStartFailed("Plan was assigned to node {} which is not part of the cluster", host)});
+        }
+    }
+
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
     auto id = plan.getQueryId();
@@ -129,15 +148,24 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
         for (auto localPlan : localPlans)
         {
+            if (stopToken.stop_requested() || std::chrono::steady_clock::now() >= deadline)
+            {
+                exceptions.emplace_back(QueryStartFailed("Query start was cancelled or reached its deadline"));
+                break;
+            }
             try
             {
-                /// Set the distributed query ID on the local plan before sending to worker
-                localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto result = backends.at(host).start(localPlan);
+                const auto localQueryId = QueryId::create(LocalQueryId(generateUUID()), id);
+                localPlan.setQueryId(localQueryId);
+                localQueries[host].emplace_back(localQueryId);
+                const auto result = backends.at(host).start(std::move(localPlan), deadline, stopToken);
                 if (result)
                 {
+                    if (*result != localQueryId)
+                    {
+                        localQueries[host].back() = *result;
+                    }
                     NES_DEBUG("Starting query on node {} was successful.", host);
-                    localQueries[host].emplace_back(*result);
                     continue;
                 }
                 exceptions.emplace_back(result.error());
@@ -151,6 +179,11 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
     if (!exceptions.empty())
     {
+        if (!localQueries.empty())
+        {
+            state.queries.emplace(id, std::move(localQueries));
+            pendingCleanupQueries.insert(id);
+        }
         return std::unexpected(exceptions);
     }
 
@@ -168,7 +201,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     constexpr auto initialStatusPollInterval = std::chrono::milliseconds(10);
     constexpr auto maxStatusPollInterval = std::chrono::milliseconds(500);
     constexpr auto statusPollTimeout = std::chrono::seconds(1000);
-    const auto statusPollDeadline = std::chrono::steady_clock::now() + statusPollTimeout;
+    const auto statusPollDeadline = std::min(deadline, std::chrono::steady_clock::now() + statusPollTimeout);
     for (auto pollInterval = initialStatusPollInterval;; pollInterval = std::min(pollInterval * 2, maxStatusPollInterval))
     {
         std::erase_if(
@@ -176,7 +209,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
             [&](const auto& pair)
             {
                 auto [wId, localQueryId] = pair;
-                const auto result = backends.at(wId).status(localQueryId);
+                const auto result = backends.at(wId).status(localQueryId, statusPollDeadline, stopToken);
                 if (!result)
                 {
                     exceptions.emplace_back(QueryStartFailed("Waiting for query state to change: {}", result.error()));
@@ -185,11 +218,12 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 return result->state != QueryStatus::Registered;
             });
 
-        if (waitForStatusChange.empty() or std::chrono::steady_clock::now() >= statusPollDeadline)
+        if (waitForStatusChange.empty() || stopToken.stop_requested() || std::chrono::steady_clock::now() >= statusPollDeadline)
         {
             break;
         }
-        std::this_thread::sleep_for(pollInterval);
+        std::this_thread::sleep_for(std::min(
+            pollInterval, std::chrono::duration_cast<std::chrono::milliseconds>(statusPollDeadline - std::chrono::steady_clock::now())));
     }
 
     if (!waitForStatusChange.empty())
@@ -205,6 +239,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
     if (not exceptions.empty())
     {
+        pendingCleanupQueries.insert(id);
         return std::unexpected{exceptions};
     }
 
@@ -217,6 +252,16 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
 std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const
 {
+    return status(queryId, std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(
+    const DistributedQueryId& queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken) const
+{
+    if (stopToken.stop_requested() || std::chrono::steady_clock::now() >= deadline)
+    {
+        return std::unexpected(std::vector{QueryStatusFailed("Query status request was cancelled or reached its deadline")});
+    }
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
@@ -231,7 +276,7 @@ std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManag
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            const auto result = backends.at(host).status(localQueryId);
+            const auto result = backends.at(host).status(localQueryId, deadline, stopToken);
             localStatusResults[host].emplace(localQueryId, result);
         }
         /// Worker backends return std::expected for normal errors; this catch is defensive
@@ -279,9 +324,80 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
+std::expected<void, std::vector<Exception>> QueryManager::cleanup(DistributedQueryId queryId)
+{
+    return cleanup(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<void, std::vector<Exception>>
+QueryManager::cleanup(DistributedQueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
+    auto queryResult = getQuery(queryId);
+    if (!queryResult)
+    {
+        return std::unexpected(std::vector{queryResult.error()});
+    }
+
+    std::vector<Exception> exceptions;
+    for (const auto& [host, localQueryId] : queryResult->iterate())
+    {
+        try
+        {
+            INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
+            const auto statusResult = backends.at(host).status(localQueryId, deadline, stopToken);
+            if ((statusResult && (statusResult->state == QueryStatus::Stopped || statusResult->state == QueryStatus::Failed))
+                || (!statusResult && statusResult.error().code() == ErrorCode::QueryNotFound))
+            {
+                continue;
+            }
+            if (auto stopped = backends.at(host).stop(localQueryId, deadline, stopToken);
+                !stopped && stopped.error().code() != ErrorCode::QueryNotFound)
+            {
+                exceptions.push_back(stopped.error());
+            }
+        }
+        catch (const std::exception& e)
+        {
+            exceptions.push_back(QueryStopFailed("Message from external exception: {} ", e.what()));
+        }
+    }
+
+    if (!exceptions.empty())
+    {
+        return std::unexpected(std::move(exceptions));
+    }
+    pendingCleanupQueries.erase(queryId);
+    state.queries.erase(queryId);
+    return {};
+}
+
+std::expected<void, std::vector<Exception>> QueryManager::cleanupPending(const std::chrono::steady_clock::time_point deadline)
+{
+    std::vector<Exception> exceptions;
+    const auto queriesToClean = pendingCleanupQueries | std::ranges::to<std::vector>();
+    for (const auto& queryId : queriesToClean)
+    {
+        if (auto cleaned = cleanup(queryId, deadline, {}); !cleaned)
+        {
+            exceptions.insert(exceptions.end(), cleaned.error().begin(), cleaned.error().end());
+        }
+    }
+    if (!exceptions.empty())
+    {
+        return std::unexpected(std::move(exceptions));
+    }
+    return {};
+}
+
 std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    return stop(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<void, std::vector<Exception>>
+QueryManager::stop(DistributedQueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
@@ -295,7 +411,7 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
         try
         {
             INVARIANT(backends.contains(host), "Local query references node ({}) that is not part of the cluster", host);
-            auto result = backends.at(host).stop(localQueryId);
+            auto result = backends.at(host).stop(localQueryId, deadline, stopToken);
             if (result)
             {
                 NES_DEBUG("Stopping query {} on node {} was successful.", localQueryId, host);
@@ -316,8 +432,24 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
         return std::unexpected{exceptions};
     }
     NES_DEBUG("Stopping query {} was successful.", queryId);
+    pendingCleanupQueries.erase(queryId);
     state.queries.erase(queryId);
     return {};
+}
+
+void QueryManager::release(const DistributedQueryId queryId)
+{
+    pendingCleanupQueries.erase(queryId);
+    state.queries.erase(queryId);
+}
+
+void QueryManager::shutdown(const std::chrono::steady_clock::time_point deadline)
+{
+    for (auto& [host, backend] : backends)
+    {
+        static_cast<void>(host);
+        backend->shutdown(deadline);
+    }
 }
 
 }

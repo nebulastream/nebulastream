@@ -105,7 +105,9 @@ NES::Systest::SystestQuery makeQuery(
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::move(runAfter),
-        .actualExplainOutput = std::nullopt};
+        .actualExplainOutput = std::nullopt,
+        .parsedCase = std::nullopt,
+        .fixtureStatements = {}};
 }
 }
 

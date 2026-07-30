@@ -16,8 +16,11 @@
 
 #include <chrono>
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <optional>
+#include <stop_token>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -41,6 +44,40 @@
 
 namespace NES
 {
+namespace
+{
+void setDeadline(grpc::ClientContext& context, const std::chrono::steady_clock::time_point deadline)
+{
+    if (deadline != std::chrono::steady_clock::time_point::max())
+    {
+        context.set_deadline(std::chrono::system_clock::now() + (deadline - std::chrono::steady_clock::now()));
+    }
+}
+
+std::optional<Exception> serverException(const grpc::ClientContext& context, const grpc::Status& status)
+{
+    const auto& metadata = context.GetServerTrailingMetadata();
+    const auto codeMetadata = metadata.find("code");
+    if (codeMetadata == metadata.end())
+    {
+        return std::nullopt;
+    }
+    try
+    {
+        const auto serializedCode = std::string{codeMetadata->second.data(), codeMetadata->second.size()};
+        const auto messageMetadata = metadata.find("what");
+        const auto message = messageMetadata == metadata.end()
+            ? status.error_message()
+            : std::string{messageMetadata->second.data(), messageMetadata->second.size()};
+        return Exception{message, static_cast<ErrorCode>(std::stoull(serializedCode))};
+    }
+    catch (const std::exception&)
+    {
+        return std::nullopt;
+    }
+}
+}
+
 GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
     : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.host.getRawValue(), grpc::InsecureChannelCredentials()))}
     , workerConfig{std::move(config)}
@@ -56,7 +93,15 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
 
 std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan localPlan)
 {
+    return start(std::move(localPlan), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(
+    LogicalPlan localPlan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
     grpc::ClientContext context;
+    setDeadline(context, deadline);
+    const std::stop_callback cancellation(stopToken, [&context] { context.TryCancel(); });
     StartQueryReply reply;
     StartQueryRequest request;
     request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
@@ -73,13 +118,25 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::start(LogicalPlan 
         }
         return workerQueryId;
     }
+    if (auto exception = serverException(context, status))
+    {
+        return std::unexpected{std::move(*exception)};
+    }
     return std::unexpected{QueryStartFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const
 {
+    return status(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::status(
+    QueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken) const
+{
     grpc::ClientContext context;
+    setDeadline(context, deadline);
+    const std::stop_callback cancellation(stopToken, [&context] { context.TryCancel(); });
     QueryStatusRequest request;
     *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
     QueryStatusReply response;
@@ -90,9 +147,12 @@ std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::s
     }
     else
     {
+        if (auto exception = serverException(context, status))
+        {
+            return std::unexpected{std::move(*exception)};
+        }
         if (status.error_code() == grpc::StatusCode::NOT_FOUND)
         {
-            /// separate exception so that the embedded worker query manager can give back the same exception
             return std::unexpected{QueryNotFound("{}", queryId)};
         }
         return std::unexpected{QueryStatusFailed(
@@ -153,7 +213,15 @@ std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(
 
 std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
 {
+    return stop(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<void, Exception>
+GRPCQuerySubmissionBackend::stop(QueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
     grpc::ClientContext context;
+    setDeadline(context, deadline);
+    const std::stop_callback cancellation(stopToken, [&context] { context.TryCancel(); });
     StopQueryRequest request;
     *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
     google::protobuf::Empty response;
@@ -165,6 +233,10 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
         return {};
     }
 
+    if (auto exception = serverException(context, status))
+    {
+        return std::unexpected{std::move(*exception)};
+    }
     return std::unexpected{NES::QueryStopFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }

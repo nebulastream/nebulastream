@@ -48,7 +48,9 @@ NES::Systest::RunningQuery makeExplainRunningQuery(std::vector<std::string> expe
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::nullopt,
-        .actualExplainOutput = std::move(actualExplainOutput)};
+        .actualExplainOutput = std::move(actualExplainOutput),
+        .parsedCase = std::nullopt,
+        .fixtureStatements = {}};
     return NES::Systest::RunningQuery{
         .systestQuery = std::move(query),
         .queryId = NES::DistributedQueryId(NES::DistributedQueryId::INVALID),

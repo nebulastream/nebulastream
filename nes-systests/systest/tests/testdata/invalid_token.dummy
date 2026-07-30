@@ -19,8 +19,9 @@ SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink;
 CREATE LOGICAL SOURCE streamBad(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR streamBad TYPE File;
 ATTACH INLINE
-THISISANINVALIDTOKEN
 1,1,1000
+
+THISISANINVALIDTOKEN
 
 CREATE SINK streamSink(streamBad.id UINT64, streamBad.value UINT64, streamBad.timestamp UINT64)  TYPE File;
 

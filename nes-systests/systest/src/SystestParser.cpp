@@ -163,6 +163,11 @@ void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 /// We do not load the file in a constructor, as we want to be able to handle errors
 bool SystestParser::loadFile(const std::filesystem::path& filePath)
 {
+    return loadFile(filePath, filePath.filename());
+}
+
+bool SystestParser::loadFile(const std::filesystem::path& filePath, const std::filesystem::path& relativeTestFile)
+{
     std::ifstream infile(filePath);
     if (!infile.is_open() || infile.bad())
     {
@@ -170,18 +175,39 @@ bool SystestParser::loadFile(const std::filesystem::path& filePath)
     }
     std::stringstream buffer;
     buffer << infile.rdbuf();
-    return loadString(buffer.str());
+    if (!loadString(buffer.str()))
+    {
+        return false;
+    }
+    sourceFile = std::filesystem::weakly_canonical(filePath);
+    this->relativeTestFile = relativeTestFile;
+    return true;
 }
 
 bool SystestParser::loadString(const std::string& str)
 {
     currentLine = 0;
+    firstToken = true;
+    shouldRevisitCurrentLine = false;
+    lastParsedQuery.reset();
+    lastParsedQueryId.reset();
+    expectedResultType = ResultType::TUPLES;
     lines.clear();
+    sourceLineNumbers.clear();
+    sourceFile.clear();
+    relativeTestFile.clear();
+    parsedCaseDefinitions.clear();
+    parsedFixtureStatements.clear();
+    localConfiguration.clear();
+    globalConfiguration.clear();
+    lastParsedCaseIndex.reset();
 
     std::istringstream stream(str);
     std::string line;
+    size_t sourceLine = 0;
     while (std::getline(stream, line))
     {
+        ++sourceLine;
         /// Remove commented code
         const size_t commentPos = line.find('#');
         if (commentPos != std::string::npos)
@@ -194,6 +220,7 @@ bool SystestParser::loadString(const std::string& str)
             applySubstitutionRules(line);
             /// Add to parsing lines
             lines.push_back(line);
+            sourceLineNumbers.push_back(sourceLine);
         }
     }
     return true;
@@ -244,86 +271,198 @@ void SystestParser::parse()
 {
     static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
 
+    const auto physicalLine = [&](const size_t index) -> size_t
+    {
+        if (sourceLineNumbers.empty())
+        {
+            return 0;
+        }
+        return sourceLineNumbers.at(std::min(index, sourceLineNumbers.size() - 1));
+    };
+    const auto findParsedCase = [&](const SystestQueryId id) -> ParsedCase&
+    {
+        auto parsedCase
+            = std::ranges::find_if(parsedCaseDefinitions, [&](const ParsedCase& candidate) { return candidate.key.queryNumber == id; });
+        INVARIANT(parsedCase != parsedCaseDefinitions.end(), "Parsed case {} must exist before its expectation", id);
+        return *parsedCase;
+    };
+    const auto activeConfiguration = [&]
+    {
+        auto configuration = globalConfiguration;
+        configuration.insert(configuration.end(), localConfiguration.begin(), localConfiguration.end());
+        return configuration;
+    };
+    const auto makeDirective = [&](const std::vector<ConfigurationOverride>& overrides, const bool global)
+    {
+        INVARIANT(!overrides.empty(), "Configuration directive must contain at least one value");
+        INVARIANT(overrides.front().overrideParameters.size() == 1, "Configuration directive must contain exactly one key");
+        ConfigurationDirective directive;
+        directive.global = global;
+        directive.source = Origin{.file = sourceFile, .firstLine = physicalLine(currentLine), .lastLine = physicalLine(currentLine)};
+        directive.key = overrides.front().overrideParameters.begin()->first;
+        directive.values.reserve(overrides.size());
+        for (const auto& override : overrides)
+        {
+            directive.values.push_back(override.overrideParameters.at(directive.key));
+        }
+        return directive;
+    };
+
     SystestQueryIdAssigner queryIdAssigner{};
+    std::optional<SystestQueryId> previousCaseId;
     bool sequentialExecution = false;
     while (auto token = getNextToken())
     {
         switch (token.value())
         {
             case TokenType::CREATE: {
+                const auto firstLine = physicalLine(currentLine);
                 auto [query, testData] = expectCreateStatement();
-                onCreateCallback(query, testData);
+                std::optional<SourceDataSpec> attachment;
+                if (testData)
+                {
+                    if (testData->first == TestDataIngestionType::INLINE)
+                    {
+                        attachment = InlineSourceData{.rows = testData->second};
+                    }
+                    else
+                    {
+                        INVARIANT(testData->second.size() == 1, "File attachment must contain exactly one path");
+                        attachment = FileSourceData{.file = testData->second.front()};
+                    }
+                }
+                parsedFixtureStatements.push_back(FixtureStatement{
+                    .sql = query,
+                    .attachment = std::move(attachment),
+                    .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = physicalLine(currentLine)}});
+                if (onCreateCallback)
+                {
+                    onCreateCallback(query, testData);
+                }
                 break;
             }
             case TokenType::QUERY: {
+                const auto firstLine = physicalLine(currentLine);
                 auto query = expectQuery(DefaultQueryStopTokens);
+                const auto lastLine = physicalLine(currentLine == 0 ? 0 : currentLine - 1);
                 expectedResultType = ResultType::TUPLES;
                 lastParsedQuery = query;
                 auto queryId = queryIdAssigner.getNextQueryNumber();
                 lastParsedQueryId = queryId;
+                std::optional<CaseKey> runAfter;
+                if (sequentialExecution && previousCaseId)
+                {
+                    runAfter = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = *previousCaseId};
+                }
+                parsedCaseDefinitions.push_back(ParsedCase{
+                    .key = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = queryId},
+                    .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = lastLine},
+                    .action = QueryAction{.sql = query, .kind = QueryKind::Execute},
+                    .expectation = RowsExpectation{},
+                    .runAfter = std::move(runAfter),
+                    .configuration = activeConfiguration()});
+                lastParsedCaseIndex = parsedCaseDefinitions.size() - 1;
+                previousCaseId = queryId;
                 if (onQueryCallback)
                 {
                     onQueryCallback(query, queryId, sequentialExecution);
                 }
+                localConfiguration.clear();
                 break;
             }
             case TokenType::EXPLAIN: {
+                const auto firstLine = physicalLine(currentLine);
                 auto statement = expectQuery(DefaultQueryStopTokens);
+                const auto lastLine = physicalLine(currentLine == 0 ? 0 : currentLine - 1);
                 expectedResultType = ResultType::VERBATIM;
-                /// EXPLAIN statements cannot be part of a differential block
                 lastParsedQuery.reset();
                 lastParsedQueryId.reset();
                 auto queryId = queryIdAssigner.getNextQueryNumber();
+                std::optional<CaseKey> runAfter;
+                if (sequentialExecution && previousCaseId)
+                {
+                    runAfter = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = *previousCaseId};
+                }
+                parsedCaseDefinitions.push_back(ParsedCase{
+                    .key = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = queryId},
+                    .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = lastLine},
+                    .action = QueryAction{.sql = statement, .kind = QueryKind::Explain},
+                    .expectation = TextExpectation{},
+                    .runAfter = std::move(runAfter),
+                    .configuration = {}});
+                lastParsedCaseIndex = parsedCaseDefinitions.size() - 1;
+                previousCaseId = queryId;
                 if (onExplainQueryCallback)
                 {
                     onExplainQueryCallback(statement, queryId);
                 }
+                localConfiguration.clear();
                 break;
             }
             case TokenType::RESULT_DELIMITER: {
+                const auto delimiterLine = physicalLine(currentLine);
                 const auto optionalToken = peekToken();
                 if (optionalToken == TokenType::ERROR_EXPECTATION)
                 {
                     expectedResultType = ResultType::TUPLES;
                     ++currentLine;
                     auto expectation = expectError();
+                    const auto queryId = queryIdAssigner.getNextQueryResultNumber();
+                    auto& parsedCase = findParsedCase(queryId);
+                    parsedCase.expectation = ::NES::Systest::ErrorExpectation{.code = expectation.code, .message = expectation.message};
+                    parsedCase.source.lastLine = physicalLine(currentLine);
                     if (onErrorExpectationCallback)
                     {
-                        onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
+                        onErrorExpectationCallback(expectation, queryId);
                     }
                 }
                 else if (expectedResultType == ResultType::VERBATIM)
                 {
                     expectedResultType = ResultType::TUPLES;
-                    /// EXPLAIN output is free-form plan text, so it is read verbatim instead of as result tuples
                     auto verbatimResultLines = expectVerbatimResultLines();
+                    const auto queryId = queryIdAssigner.getNextQueryResultNumber();
+                    auto& parsedCase = findParsedCase(queryId);
+                    parsedCase.expectation = TextExpectation{.lines = verbatimResultLines, .matching = TextMatchPolicy::Automatic};
+                    parsedCase.source.lastLine
+                        = currentLine < sourceLineNumbers.size() ? physicalLine(currentLine) : physicalLine(currentLine - 1);
                     if (onResultTuplesCallback)
                     {
-                        onResultTuplesCallback(std::move(verbatimResultLines), queryIdAssigner.getNextQueryResultNumber());
+                        onResultTuplesCallback(std::move(verbatimResultLines), queryId);
                     }
                 }
                 else
                 {
+                    auto tuples = expectTuples(false);
+                    const auto queryId = queryIdAssigner.getNextQueryResultNumber();
+                    auto& parsedCase = findParsedCase(queryId);
+                    parsedCase.expectation = RowsExpectation{
+                        .rows = tuples,
+                        .comparison = ComparisonPolicy::UnorderedTypedRows,
+                        .schema = std::nullopt,
+                        .outputDiscarded = false};
+                    parsedCase.source.lastLine = tuples.empty() ? delimiterLine : physicalLine(currentLine - 1);
                     if (onResultTuplesCallback)
                     {
-                        onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
+                        onResultTuplesCallback(std::move(tuples), queryId);
                     }
                 }
                 break;
             }
             case TokenType::CONFIGURATION: {
                 auto overrides = expectConfiguration();
+                localConfiguration.push_back(makeDirective(overrides, false));
                 if (onConfigurationCallback)
                 {
-                    onConfigurationCallback(std::move(overrides));
+                    onConfigurationCallback(overrides);
                 }
                 break;
             }
             case TokenType::GLOBAL_CONFIGURATION: {
                 auto overrides = expectGlobalConfiguration();
+                globalConfiguration.push_back(makeDirective(overrides, true));
                 if (onGlobalConfigurationCallback)
                 {
-                    onGlobalConfigurationCallback(std::move(overrides));
+                    onGlobalConfigurationCallback(overrides);
                 }
                 break;
             }
@@ -336,6 +475,10 @@ void SystestParser::parse()
                 auto [leftQuery, rightQuery] = expectDifferentialBlock();
                 const auto mainQueryId = lastParsedQueryId.value();
                 auto differentialQueryId = queryIdAssigner.getNextQueryResultNumber();
+                auto& parsedCase = findParsedCase(mainQueryId);
+                parsedCase.action = DifferentialAction{.leftSql = leftQuery, .rightSql = rightQuery};
+                parsedCase.expectation = DifferentialExpectation{};
+                parsedCase.source.lastLine = physicalLine(currentLine == 0 ? 0 : currentLine - 1);
 
                 lastParsedQuery = rightQuery;
                 lastParsedQueryId = differentialQueryId;

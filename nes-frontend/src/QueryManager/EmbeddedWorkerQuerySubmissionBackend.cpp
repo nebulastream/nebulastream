@@ -14,7 +14,11 @@
 
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 
+#include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <cstdint>
+#include <future>
 #include <memory>
 #include <mutex>
 #include <stop_token>
@@ -42,50 +46,50 @@ struct Stop
 {
 };
 
+enum class ReplyStateStatus : uint8_t
+{
+    Waiting,
+    Abandoned,
+    Completed
+};
+
+template <typename Result>
+struct ReplyState
+{
+    std::promise<Result> promise;
+    std::atomic<ReplyStateStatus> status = ReplyStateStatus::Waiting;
+};
+
+using StartQueryResult = std::expected<QueryId, Exception>;
+using StopQueryResult = std::expected<void, Exception>;
+using QueryStatusResult = std::expected<LocalQueryStatusSnapshot, Exception>;
+using WorkerStatusResult = std::expected<WorkerStatus, Exception>;
+
 struct StartQuery
 {
     LogicalPlan plan;
+    std::shared_ptr<ReplyState<StartQueryResult>> reply;
 };
 
 struct StopQuery
 {
     QueryId id;
+    std::shared_ptr<ReplyState<StopQueryResult>> reply;
 };
 
 struct QueryStatusQuery
 {
     QueryId id;
+    std::shared_ptr<ReplyState<QueryStatusResult>> reply;
 };
 
 struct WorkerStatusQuery
 {
     std::chrono::system_clock::time_point after;
-};
-
-struct StartQueryReply
-{
-    std::expected<QueryId, Exception> reply;
-};
-
-struct StopQueryReply
-{
-    std::expected<void, Exception> reply;
-};
-
-struct QueryStatusReply
-{
-    std::expected<LocalQueryStatusSnapshot, Exception> reply;
-};
-
-struct WorkerStatusReply
-{
-    std::expected<WorkerStatus, Exception> reply;
+    std::shared_ptr<ReplyState<WorkerStatusResult>> reply;
 };
 
 using Request = std::variant<Stop, StartQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
-/// `std::monostate` first so the variant is default-constructible — needed because
-/// folly's `dequeue(T&)` writes into an existing slot. It is never actually pushed.
-using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
 }
 
 /// All shared state between callers and the single worker thread lives here:
@@ -94,51 +98,114 @@ using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, Quer
 /// backend is a thin pimpl wrapper.
 class Channel
 {
+    using RequestQueue = folly::UMPSCQueue<Request, /*MayBlock*/ true>;
+
 public:
-    Channel(WorkerConfig cfg, const SingleNodeWorkerConfiguration& workerConfiguration)
-        : config(std::move(cfg))
+    Channel(WorkerConfig config, const SingleNodeWorkerConfiguration& workerConfiguration)
+        : requests(std::make_shared<RequestQueue>())
+        , completion(std::make_shared<std::promise<void>>())
+        , completed(completion->get_future().share())
         , thread(
               "main",
-              this->config.host,
-              [&requests = this->requests, &replies = this->replies, config = this->config, workerConfiguration](
-                  const std::stop_token& stopToken) { runWorker(stopToken, requests, replies, config, workerConfiguration); })
+              config.host,
+              [requests = requests, completion = completion, config = std::move(config), workerConfiguration](
+                  const std::stop_token& stopToken)
+              {
+                  runWorker(stopToken, *requests, config, workerConfiguration);
+                  completion->set_value();
+              })
     {
     }
 
-    std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
+    ~Channel() { shutdown(std::chrono::steady_clock::now()); }
 
-    std::expected<void, Exception> stop(QueryId id) { return submit<StopQueryReply>(StopQuery{.id = std::move(id)}); }
-
-    std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId id) const
+    void shutdown(const std::chrono::steady_clock::time_point deadline)
     {
-        return submit<QueryStatusReply>(QueryStatusQuery{.id = std::move(id)});
+        if (!thread.joinable())
+        {
+            return;
+        }
+        thread.requestStop();
+        const auto finished = deadline == std::chrono::steady_clock::time_point::max()
+            ? (completed.wait(), true)
+            : completed.wait_until(deadline) == std::future_status::ready;
+        if (finished)
+        {
+            thread.join();
+        }
+        else
+        {
+            thread.detach();
+        }
     }
 
-    std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const
+    StartQueryResult start(LogicalPlan plan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
     {
-        return submit<WorkerStatusReply>(WorkerStatusQuery{.after = after});
+        auto reply = std::make_shared<ReplyState<StartQueryResult>>();
+        return submit(
+            StartQuery{.plan = std::move(plan), .reply = reply},
+            reply,
+            deadline,
+            stopToken,
+            [] { return QueryStartFailed("Embedded query start was cancelled or reached its deadline"); });
+    }
+
+    StopQueryResult stop(QueryId id, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+    {
+        auto reply = std::make_shared<ReplyState<StopQueryResult>>();
+        return submit(
+            StopQuery{.id = std::move(id), .reply = reply},
+            reply,
+            deadline,
+            stopToken,
+            [] { return QueryStopFailed("Embedded query stop was cancelled or reached its deadline"); });
+    }
+
+    QueryStatusResult status(QueryId id, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken) const
+    {
+        auto reply = std::make_shared<ReplyState<QueryStatusResult>>();
+        return submit(
+            QueryStatusQuery{.id = std::move(id), .reply = reply},
+            reply,
+            deadline,
+            stopToken,
+            [] { return QueryStatusFailed("Embedded query status was cancelled or reached its deadline"); });
+    }
+
+    WorkerStatusResult workerStatus(std::chrono::system_clock::time_point after) const
+    {
+        auto reply = std::make_shared<ReplyState<WorkerStatusResult>>();
+        return submit(
+            WorkerStatusQuery{.after = after, .reply = reply},
+            reply,
+            std::chrono::steady_clock::time_point::max(),
+            {},
+            [] { return UnknownException("Embedded worker status request was cancelled"); });
     }
 
 private:
+    template <typename Result, typename Cleanup>
+    static void complete(const std::shared_ptr<ReplyState<Result>>& reply, Result result, Cleanup&& cleanup)
+    {
+        const auto previous = reply->status.exchange(ReplyStateStatus::Completed);
+        if (previous == ReplyStateStatus::Abandoned)
+        {
+            std::forward<Cleanup>(cleanup)(result);
+        }
+        reply->promise.set_value(std::move(result));
+    }
+
     static void runWorker(
         const std::stop_token& stopToken,
-        folly::UMPSCQueue<Request, /*MayBlock*/ true>& requests,
-        folly::USPSCQueue<Reply, /*MayBlock*/ true>& replies,
+        RequestQueue& requests,
         const WorkerConfig& config,
         const SingleNodeWorkerConfiguration& workerConfiguration)
     {
-        /// Start with the per-worker topology config, then overlay only
-        /// explicitly-set CLI values so that CLI args take highest priority
-        /// but topology values aren't clobbered by CLI defaults.
         SingleNodeWorkerConfiguration mergedConfig = config.config;
         mergedConfig.applyExplicitlySetFrom(workerConfiguration);
-
-        /// Set grpc/data from topology (these always come from cluster config)
         mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
         mergedConfig.dataAddress.setValue(config.dataAddress);
         SingleNodeWorker worker(mergedConfig, config.host);
-
-        /// On stop, push a poison `Stop` request so the blocking dequeue below wakes up.
         const std::stop_callback poison(stopToken, [&]() { requests.enqueue(Request{Stop{}}); });
 
         while (!stopToken.stop_requested())
@@ -149,42 +216,83 @@ private:
             {
                 break;
             }
-            Reply reply = std::visit(
+            std::visit(
                 Overloaded{
-                    [](Stop) -> Reply { std::unreachable(); },
-                    [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
-                    [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id)}; },
-                    [&](const QueryStatusQuery& request) -> Reply { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; },
-                    [&](const WorkerStatusQuery& request) -> Reply
-                    { return WorkerStatusReply{.reply = worker.getWorkerStatus(request.after)}; },
+                    [](Stop) { std::unreachable(); },
+                    [&](StartQuery& request)
+                    {
+                        auto result = worker.startQuery(std::move(request.plan));
+                        complete(
+                            request.reply,
+                            std::move(result),
+                            [&](const StartQueryResult& abandoned)
+                            {
+                                if (abandoned)
+                                {
+                                    static_cast<void>(worker.stopQuery(*abandoned));
+                                }
+                            });
+                    },
+                    [&](const StopQuery& request)
+                    { complete(request.reply, worker.stopQuery(request.id), [](const StopQueryResult&) { }); },
+                    [&](const QueryStatusQuery& request)
+                    { complete(request.reply, worker.getQueryStatus(request.id), [](const QueryStatusResult&) { }); },
+                    [&](const WorkerStatusQuery& request)
+                    {
+                        complete(
+                            request.reply, WorkerStatusResult{worker.getWorkerStatus(request.after)}, [](const WorkerStatusResult&) { });
+                    },
                 },
                 request);
-            replies.enqueue(std::move(reply));
         }
-        /// `worker` is destroyed here, on the same thread it was constructed on.
     }
 
-    /// Send a request to the worker thread, block until its reply lands, and
-    /// extract the alternative the caller expects. The mutex guarantees only
-    /// one (request, reply) pair is in flight at a time, so the reply we pop
-    /// here is the one for the request we just enqueued.
-    template <typename ReplyT, typename RequestT>
-    decltype(ReplyT::reply) submit(RequestT request) const
+    template <typename RequestT, typename Result, typename ErrorFactory>
+    Result submit(
+        RequestT request,
+        const std::shared_ptr<ReplyState<Result>>& reply,
+        const std::chrono::steady_clock::time_point deadline,
+        const std::stop_token stopToken,
+        ErrorFactory&& errorFactory) const
     {
         const std::lock_guard lock(submitMutex);
-        requests.enqueue(Request{std::move(request)});
-        Reply reply;
-        replies.dequeue(reply);
-        return std::move(std::get<ReplyT>(reply).reply);
+        if (stopToken.stop_requested() || std::chrono::steady_clock::now() >= deadline)
+        {
+            return std::unexpected(std::forward<ErrorFactory>(errorFactory)());
+        }
+
+        auto future = reply->promise.get_future();
+        requests->enqueue(Request{std::move(request)});
+        while (true)
+        {
+            auto waitDuration = std::chrono::milliseconds(25);
+            if (deadline != std::chrono::steady_clock::time_point::max())
+            {
+                waitDuration = std::min(
+                    waitDuration, std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()));
+            }
+            if (future.wait_for(waitDuration) == std::future_status::ready)
+            {
+                return future.get();
+            }
+            if (!stopToken.stop_requested() && std::chrono::steady_clock::now() < deadline)
+            {
+                continue;
+            }
+
+            auto expected = ReplyStateStatus::Waiting;
+            if (reply->status.compare_exchange_strong(expected, ReplyStateStatus::Abandoned))
+            {
+                return std::unexpected(std::forward<ErrorFactory>(errorFactory)());
+            }
+            return future.get();
+        }
     }
 
-    /// `mutable` so const observers (`status`, `workerStatus`) can post requests.
-    mutable folly::UMPSCQueue<Request, /*MayBlock*/ true> requests;
-    mutable folly::USPSCQueue<Reply, /*MayBlock*/ true> replies;
+    std::shared_ptr<RequestQueue> requests;
+    std::shared_ptr<std::promise<void>> completion;
+    std::shared_future<void> completed;
     mutable std::mutex submitMutex;
-    WorkerConfig config;
-    /// Must be declared last: its body references the queues above, and on
-    /// destruction the jthread requests stop and joins before earlier members go.
     Thread thread;
 };
 }
@@ -202,22 +310,45 @@ EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend() = 
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LogicalPlan plan)
 {
-    return channel->start(std::move(plan));
+    return start(std::move(plan), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(
+    LogicalPlan plan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
+    return channel->start(std::move(plan), deadline, stopToken);
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
-    return channel->stop(queryId);
+    return stop(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(
+    QueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
+{
+    return channel->stop(std::move(queryId), deadline, stopToken);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
 {
-    return channel->status(queryId);
+    return status(std::move(queryId), std::chrono::steady_clock::time_point::max(), {});
+}
+
+std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(
+    QueryId queryId, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken) const
+{
+    return channel->status(std::move(queryId), deadline, stopToken);
 }
 
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
     return channel->workerStatus(after);
+}
+
+void EmbeddedWorkerQuerySubmissionBackend::shutdown(const std::chrono::steady_clock::time_point deadline)
+{
+    channel->shutdown(deadline);
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

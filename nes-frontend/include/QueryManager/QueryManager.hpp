@@ -17,7 +17,10 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <stop_token>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -41,9 +44,43 @@ class QuerySubmissionBackend
 public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
+
+    [[nodiscard]] virtual std::expected<QueryId, Exception>
+    start(LogicalPlan plan, std::chrono::steady_clock::time_point, std::stop_token stopToken)
+    {
+        if (stopToken.stop_requested())
+        {
+            return std::unexpected(QueryStartFailed("Query start was cancelled"));
+        }
+        return start(std::move(plan));
+    }
+
     virtual std::expected<void, Exception> stop(QueryId) = 0;
+
+    virtual std::expected<void, Exception> stop(QueryId queryId, std::chrono::steady_clock::time_point, std::stop_token stopToken)
+    {
+        if (stopToken.stop_requested())
+        {
+            return std::unexpected(QueryStopFailed("Query stop was cancelled"));
+        }
+        return stop(std::move(queryId));
+    }
+
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
+
+    [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception>
+    status(QueryId queryId, std::chrono::steady_clock::time_point, std::stop_token stopToken) const
+    {
+        if (stopToken.stop_requested())
+        {
+            return std::unexpected(QueryStatusFailed("Query status request was cancelled"));
+        }
+        return status(std::move(queryId));
+    }
+
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
+
+    virtual void shutdown(std::chrono::steady_clock::time_point) { }
 };
 
 /// std::move_only_function is the C++23 equivalent but is not yet available in libc++19.
@@ -103,18 +140,31 @@ class QueryManager
 
     QueryManagerState state;
     QueryManagerBackends backends;
+    std::unordered_set<DistributedQueryId> pendingCleanupQueries;
 
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
+    [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>>
+    start(const DistributedLogicalPlan& plan, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>>
+    stop(DistributedQueryId query, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken);
+    std::expected<void, std::vector<Exception>> cleanup(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>>
+    cleanup(DistributedQueryId query, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken);
+    std::expected<void, std::vector<Exception>> cleanupPending(std::chrono::steady_clock::time_point deadline);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
+    [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>>
+    status(const DistributedQueryId& query, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken) const;
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    void release(DistributedQueryId query);
+    void shutdown(std::chrono::steady_clock::time_point deadline);
 };
 
 }

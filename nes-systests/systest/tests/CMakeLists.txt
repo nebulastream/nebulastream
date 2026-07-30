@@ -25,7 +25,8 @@ add_nes_test_systest(slt-parser-test
         "SystestParserValidTestFilesTests.cpp"
         "SystestResultCheckTests.cpp"
         "SystestRunnerTest.cpp"
-        "SystestStateTests.cpp")
+        "SystestStateTests.cpp"
+        "SystestRedesignTests.cpp")
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
