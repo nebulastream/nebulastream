@@ -278,24 +278,15 @@ struct TypedLogicalOperator
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
+    /// Identity comparison: two wrappers are equal if they refer to the same underlying operator instance,
+    /// analogous to comparing pointers. Compare dereferenced operators (`*lhs == *rhs`) for structural equality.
     [[nodiscard]] bool operator==(const TypedLogicalOperator& other) const
     requires(!std::is_same_v<Checked, NES::detail::ErasedLogicalOperator>)
     {
-        if (self == other.self)
-        {
-            return true;
-        }
-        return self->equals(*other.self);
+        return self == other.self;
     }
 
-    [[nodiscard]] bool operator==(const LogicalOperator& other) const
-    {
-        if (self == other.self)
-        {
-            return true;
-        }
-        return self->equals(*other.self);
-    }
+    [[nodiscard]] bool operator==(const LogicalOperator& other) const { return self == other.self; }
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
@@ -567,9 +558,23 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
     return os << op.explain(ExplainVerbosity::Short);
 }
 
+/// Hash/equality functors that defer to the dereferenced operator, like hashing/comparing through a pointer.
+/// Structural comparison is single-node: it considers the operator's own state, not its id or its children.
+/// Use these for containers that should deduplicate structurally-identical operators regardless of instance identity.
+struct StructuralOperatorHash
+{
+    std::size_t operator()(const LogicalOperator& op) const { return op->hash(); }
+};
+
+struct StructuralOperatorEqual
+{
+    bool operator()(const LogicalOperator& lhs, const LogicalOperator& rhs) const { return *lhs == *rhs; }
+};
+
 }
 
-/// Hash is based solely on unique identifier (needed for e.g. unordered_set)
+/// Hash is identity-based (the wrapped instance), consistent with the identity operator==.
+/// Use StructuralOperatorHash/StructuralOperatorEqual for structural container semantics.
 namespace std
 {
 /// NOLINTBEGIN(cert-dcl58-cpp)
@@ -577,7 +582,10 @@ template <typename T>
 requires(NES::LogicalOperatorConcept<T> && !std::is_same_v<T, NES::detail::ErasedLogicalOperator>)
 struct hash<NES::TypedLogicalOperator<T>>
 {
-    std::size_t operator()(const NES::TypedLogicalOperator<T>& op) const noexcept { return std::hash<T>{}(op.get()); }
+    std::size_t operator()(const NES::TypedLogicalOperator<T>& op) const noexcept
+    {
+        return std::hash<std::shared_ptr<const NES::detail::ErasedLogicalOperator>>{}(op.self);
+    }
 };
 
 /// NOLINTEND(cert-dcl58-cpp)
@@ -585,7 +593,10 @@ struct hash<NES::TypedLogicalOperator<T>>
 template <>
 struct hash<NES::LogicalOperator>
 {
-    std::size_t operator()(const NES::LogicalOperator& op) const noexcept { return op.self->hash(); }
+    std::size_t operator()(const NES::LogicalOperator& op) const noexcept
+    {
+        return std::hash<std::shared_ptr<const NES::detail::ErasedLogicalOperator>>{}(op.self);
+    }
 };
 }
 
