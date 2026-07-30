@@ -49,6 +49,12 @@ ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 #   1. S3 credentials provided: authenticated readwrite cache
 #   2. Only VCPKG_CACHE_PUBLIC_URL provided: read-only HTTP cache (public bucket)
 #   3. Nothing provided: no cloud cache, local build only
+#
+# The vcpkg checkout is pinned to the builtin-baseline from vcpkg/vcpkg.json. Cloning HEAD
+# leaves the build non-reproducible — vcpkg.json pins port versions, but the tool and its
+# scripts/ tree would still float — and currently breaks outright: HEAD's z_vcpkg_spdx.cmake
+# calls string(JSON ... STRING_ENCODE), a mode newer than the CMake this image ships, so every
+# port going through vcpkg_from_sourceforge (e.g. libuuid) fails to configure.
 RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_SECRET_KEY \
     --mount=type=secret,id=VCPKG_CACHE_ENDPOINT \
@@ -76,6 +82,10 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     \
     cd /vcpkg_input; \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
+    BASELINE=$(sed -n "s/.*\"builtin-baseline\"[[:space:]]*:[[:space:]]*\"\([0-9a-f]*\)\".*/\1/p" vcpkg.json); \
+    if [ -z "${BASELINE}" ]; then echo "could not read builtin-baseline from vcpkg.json"; exit 1; fi; \
+    echo "Checking out vcpkg at manifest builtin-baseline ${BASELINE}"; \
+    git -C vcpkg_repository checkout --detach "${BASELINE}"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
     ./vcpkg_repository/vcpkg install \
         --overlay-triplets=custom-triplets \
