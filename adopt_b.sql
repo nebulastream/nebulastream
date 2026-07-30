@@ -1,0 +1,2 @@
+CREATE WORKER 'localhost:8080';
+SHOW QUERIES;

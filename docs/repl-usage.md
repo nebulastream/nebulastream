@@ -92,6 +92,30 @@ nes-cli -t topology.yaml stop swift_appaloosa_4121
 
 After `stop`, `query_status` becomes `Stopped` and a `stopped` timestamp appears.
 
+### Choosing the query id
+
+Scraping the generated name off stdout is only necessary if you let it be generated. As in
+the repl, a query can name itself, and `nes-cli` now deploys it under that id:
+
+```bash
+nes-cli -t topology.yaml start \
+  'SELECT ts FROM GEN INTO OUT SET ('"'"'nightly-rollup'"'"' AS "QUERY"."ID")'
+# -> nightly-rollup
+```
+
+That works for the `query:` block of the topology file too. For a query you do not want to
+edit — an ad-hoc one, or the one in the topology file — `--query-id` sets the id from
+outside and overrides an id the query carries:
+
+```bash
+nes-cli -t topology.yaml start --query-id nightly-rollup
+nes-cli -t topology.yaml status nightly-rollup
+nes-cli -t topology.yaml stop   nightly-rollup
+```
+
+An id names one query in the cluster, so `--query-id` is rejected when the invocation
+submits more than one query — give those their ids in the queries themselves.
+
 For a single-node deployment you can drop the topology file for `status` and `stop`, since
 neither performs placement:
 

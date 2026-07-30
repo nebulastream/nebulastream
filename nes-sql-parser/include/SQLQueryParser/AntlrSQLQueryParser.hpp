@@ -27,12 +27,17 @@
 #include <CommonTokenStream.h>
 #include <ParserRuleContext.h>
 #include <Plans/LogicalPlan.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
 LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
+/// Same as createLogicalQueryPlanFromSQLString, but also binds the options of the query statement, e.g. the user
+/// supplied query id in SET ('my-query' AS "QUERY"."ID"). Frontends that submit queries should prefer this overload,
+/// as the plain plan drops the options.
+QueryStatement createQueryStatementFromSQLString(std::string_view queryString);
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.
 class ManagedAntlrParser : public std::enable_shared_from_this<ManagedAntlrParser>
