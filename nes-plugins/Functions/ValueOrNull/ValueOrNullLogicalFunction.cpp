@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "ValueOrNullLogicalFunction.hpp"
+#include <ValueOrNullLogicalFunction.hpp>
 
 #include <ranges>
 #include <string>
@@ -53,7 +53,7 @@ ValueOrNullLogicalFunction ValueOrNullLogicalFunction::withDataType(const DataTy
     return copy;
 }
 
-LogicalFunction ValueOrNullLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ValueOrNullLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();
@@ -61,8 +61,7 @@ LogicalFunction ValueOrNullLogicalFunction::withInferredDataType(const Schema& s
     if (not newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN))
     {
         throw CannotDeserialize(
-            "the dataType of the predicate (first argument) of value_or_null must be boolean, but was: {}",
-            newChildren[0].getDataType());
+            "the dataType of the predicate (first argument) of value_or_null must be boolean, but was: {}", newChildren[0].getDataType());
     }
 
     auto newDataType = newChildren.at(1).getDataType();
@@ -103,14 +102,16 @@ std::string ValueOrNullLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("value_or_null({}, {})", predicate.explain(verbosity), value.explain(verbosity));
 }
 
-Reflected Reflector<ValueOrNullLogicalFunction>::operator()(const ValueOrNullLogicalFunction& function) const
+Reflected
+Reflector<ValueOrNullLogicalFunction>::operator()(const ValueOrNullLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedValueOrNullLogicalFunction{.predicate = function.predicate, .value = function.value});
+    return context.reflect(detail::ReflectedValueOrNullLogicalFunction{.predicate = function.predicate, .value = function.value});
 }
 
-ValueOrNullLogicalFunction Unreflector<ValueOrNullLogicalFunction>::operator()(const Reflected& reflected) const
+ValueOrNullLogicalFunction
+Unreflector<ValueOrNullLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [predicate, value] = unreflect<detail::ReflectedValueOrNullLogicalFunction>(reflected);
+    auto [predicate, value] = context.unreflect<detail::ReflectedValueOrNullLogicalFunction>(reflected);
     if (!predicate.has_value() || !value.has_value())
     {
         throw CannotDeserialize("ValueOrNullLogicalFunction is missing a child");
@@ -121,14 +122,9 @@ ValueOrNullLogicalFunction Unreflector<ValueOrNullLogicalFunction>::operator()(c
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::Registervalue_or_nullLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<ValueOrNullLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize(
-            "ValueOrNullLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw CannotDeserialize("ValueOrNullLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return ValueOrNullLogicalFunction(arguments.children[0], arguments.children[1]);
 }

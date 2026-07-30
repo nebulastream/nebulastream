@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include "ValueOrNullPhysicalFunction.hpp"
+#include <ValueOrNullPhysicalFunction.hpp>
 
 #include <utility>
 
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>

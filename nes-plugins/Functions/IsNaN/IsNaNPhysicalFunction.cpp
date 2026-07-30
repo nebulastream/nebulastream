@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "IsNaNPhysicalFunction.hpp"
+#include <IsNaNPhysicalFunction.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -20,10 +20,10 @@
 #include <string_view>
 #include <utility>
 
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
@@ -41,19 +41,16 @@ IsNaNPhysicalFunction::IsNaNPhysicalFunction(PhysicalFunction child) : child(std
 
 VarVal IsNaNPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    // const nautilus::val<double> nanValue = std::numeric_limits<double>::quiet_NaN();
+    /// NaN is the only value that compares unequal to itself, so this needs no NaN constant
+    /// and works for both quiet and signalling NaN.
     const auto leftValue = child.execute(record, arena).getRawValueAs<nautilus::val<double>>();
     return leftValue != leftValue;
-    // const auto leftValue = child.execute(record, arena).getRawValueAs<nautilus::val<uint64_t>>();
-    // const nautilus::val<bool> isNaN = (leftValue  nanValue) == 0;
-    // return isNaN;
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterIsNaNPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterIsNaNPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNaN function must have exactly one child function");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNaN function must have exactly one child function");
     return IsNaNPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 }

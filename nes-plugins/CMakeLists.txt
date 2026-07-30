@@ -26,6 +26,9 @@ add_plugin("OutputFormatters/JSONOutputFormatter")
 add_plugin("Rules/RedundantUnionRemovalRule")
 add_plugin("Sources/ODBCSource")
 add_plugin("Sinks/HTTPSink")
+add_plugin("Functions/IsNaN")
+add_plugin("Functions/ValueOrNull")
+add_plugin("Functions/Fmt")
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

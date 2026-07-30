@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "IsNaNLogicalFunction.hpp"
+#include <IsNaNLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -30,12 +30,12 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
 
-IsNaNLogicalFunction::IsNaNLogicalFunction(const LogicalFunction& child) : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(child)
+IsNaNLogicalFunction::IsNaNLogicalFunction(const LogicalFunction& child)
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(child)
 {
 }
 
@@ -44,15 +44,16 @@ DataType IsNaNLogicalFunction::getDataType() const
     return dataType;
 };
 
+/// Deliberately ignores the requested type. IsNaN is a predicate: its result is always the
+/// BOOLEAN set in the constructor, never the child's type. withInferredDataType calls this with
+/// the child's type, so honouring the argument here would overwrite BOOLEAN with (say) FLOAT64.
 IsNaNLogicalFunction IsNaNLogicalFunction::withDataType(const DataType&) const
 {
     auto copy = *this;
-    // copy.dataType = dataType;
-    // copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction IsNaNLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChild = child.withInferredDataType(schema);
     return withDataType(newChild.getDataType()).withChildren({newChild});
@@ -90,14 +91,14 @@ std::string IsNaNLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ISNAN({})", child.explain(verbosity));
 }
 
-Reflected Reflector<IsNaNLogicalFunction>::operator()(const IsNaNLogicalFunction& function) const
+Reflected Reflector<IsNaNLogicalFunction>::operator()(const IsNaNLogicalFunction& function, const ReflectionContext& context) const
 {
-    return reflect(detail::ReflectedIsNaNLogicalFunction{.child = function.child});
+    return context.reflect(detail::ReflectedIsNaNLogicalFunction{.child = function.child});
 }
 
-IsNaNLogicalFunction Unreflector<IsNaNLogicalFunction>::operator()(const Reflected& reflected) const
+IsNaNLogicalFunction Unreflector<IsNaNLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedIsNaNLogicalFunction>(reflected);
+    auto [child] = context.unreflect<detail::ReflectedIsNaNLogicalFunction>(reflected);
     if (!child.has_value())
     {
         throw CannotDeserialize("IsNaNLogicalFunction is missing its child");
@@ -105,12 +106,11 @@ IsNaNLogicalFunction Unreflector<IsNaNLogicalFunction>::operator()(const Reflect
     return IsNaNLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterIsNaNLogicalFunction(LogicalFunctionRegistryArguments arguments)
+/// Deserialization goes through the unreflection registry (see CMakeLists.txt), so this
+/// factory entry point only handles construction from parsed children.
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterIsNaNLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<IsNaNLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("IsNaNLogicalFunction requires exactly one child, but got {}", arguments.children.size());

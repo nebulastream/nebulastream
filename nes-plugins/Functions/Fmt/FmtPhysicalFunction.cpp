@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "FmtPhysicalFunction.hpp"
+#include <FmtPhysicalFunction.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -22,11 +22,11 @@
 #include <variant>
 #include <vector>
 
+#include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -90,8 +90,7 @@ VarVal FmtPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
     return result;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterFMTPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterFMTPhysicalFunction(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(!args.childFunctions.empty(), "FMT requires at least the format string as its first argument");
 
@@ -117,8 +116,8 @@ PhysicalFunctionGeneratedRegistrar::RegisterFMTPhysicalFunction(PhysicalFunction
                 const auto length = i - literalStart;
                 auto buffer = std::make_unique<std::byte[]>(length);
                 std::memcpy(buffer.get(), formatBytes.data() + literalStart, length);
-                fragments.emplace_back(FmtPhysicalFunction::LiteralFragment{
-                    .bytes = std::shared_ptr<const std::byte[]>(buffer.release()), .size = length});
+                fragments.emplace_back(
+                    FmtPhysicalFunction::LiteralFragment{.bytes = std::shared_ptr<const std::byte[]>(buffer.release()), .size = length});
             }
             inPlaceholder = true;
         }
@@ -136,8 +135,8 @@ PhysicalFunctionGeneratedRegistrar::RegisterFMTPhysicalFunction(PhysicalFunction
         const auto length = formatBytes.size() - literalStart;
         auto buffer = std::make_unique<std::byte[]>(length);
         std::memcpy(buffer.get(), formatBytes.data() + literalStart, length);
-        fragments.emplace_back(FmtPhysicalFunction::LiteralFragment{
-            .bytes = std::shared_ptr<const std::byte[]>(buffer.release()), .size = length});
+        fragments.emplace_back(
+            FmtPhysicalFunction::LiteralFragment{.bytes = std::shared_ptr<const std::byte[]>(buffer.release()), .size = length});
     }
 
     return FmtPhysicalFunction(std::move(fragments));

@@ -20,7 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -39,7 +41,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] IsNaNLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] IsNaNLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
@@ -57,13 +59,13 @@ private:
 template <>
 struct Reflector<IsNaNLogicalFunction>
 {
-    Reflected operator()(const IsNaNLogicalFunction& function) const;
+    Reflected operator()(const IsNaNLogicalFunction& function, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<IsNaNLogicalFunction>
 {
-    IsNaNLogicalFunction operator()(const Reflected& reflected) const;
+    IsNaNLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<IsNaNLogicalFunction>);
