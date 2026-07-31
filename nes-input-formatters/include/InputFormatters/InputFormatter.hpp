@@ -615,9 +615,20 @@ private:
             /// Get leading field index function and a pointer to the spanning tuple 'record'
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
 
-            auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, parserTypes, lazyValueOverloads);
-            executeChild(executionCtx, record);
+            /// A leading spanning tuple normally holds exactly one record, but a MULTI-BYTE tuple
+            /// delimiter split across two raw buffers is only reunited inside the assembled spanning
+            /// tuple, which then indexes as more than one record (e.g. HL7's "\x1C\r" with \x1C ending
+            /// buffer k and \r starting buffer k+1). Loop like parseRecordsInRawBuffer instead of
+            /// reading only record 0, so no reassembled record is lost (single-byte-delimiter
+            /// formatters always index exactly one record here -- the loop runs once).
+            nautilus::val<uint64_t> spanningRecordIdx = 0;
+            while (typename FormatterType::FieldIndexFunctionType{}.hasNext(spanningRecordIdx, leadingFIF))
+            {
+                auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                    projections, spanningRecordPtr, spanningRecordIdx, indexerMetaData, leadingFIF, parserTypes, lazyValueOverloads);
+                executeChild(executionCtx, record);
+                spanningRecordIdx += 1;
+            }
         }
     }
 
@@ -666,9 +677,16 @@ private:
 
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
 
-            auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, parserTypes, lazyValueOverloads);
-            executeChild(executionCtx, record);
+            /// Same multi-byte-delimiter-split reassembly as in parseLeadingRecord: loop over all
+            /// records the assembled spanning tuple indexed instead of reading only record 0.
+            nautilus::val<uint64_t> spanningRecordIdx = 0;
+            while (typename FormatterType::FieldIndexFunctionType{}.hasNext(spanningRecordIdx, trailingFIF))
+            {
+                auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                    projections, spanningRecordPtr, spanningRecordIdx, indexerMetaData, trailingFIF, parserTypes, lazyValueOverloads);
+                executeChild(executionCtx, record);
+                spanningRecordIdx += 1;
+            }
         }
     }
 };
