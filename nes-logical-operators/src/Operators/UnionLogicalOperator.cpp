@@ -39,9 +39,10 @@
 #include <Schema/Field.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -231,4 +232,15 @@ Unreflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const Reflec
 uint64_t std::hash<NES::UnionLogicalOperator>::operator()(const NES::UnionLogicalOperator&) const noexcept
 {
     return 1214827; /// NOLINT(readability-magic-numbers)
+}
+
+namespace NES
+{
+ADD_PLUGIN("Union")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "Union",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<UnionLogicalOperator>>(arguments.data); });
+}
 }

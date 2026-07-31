@@ -19,6 +19,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -38,11 +39,18 @@ VarVal OctetLengthPhysicalFunction::execute(const Record& record, ArenaRef& aren
     return VarVal{variableSizedData.getSize(), inputValue.isNullable(), inputValue.isNull()};
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterOCTET_LENGTHPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterOCTET_LENGTHPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "OCTET_LENGTH function must have exactly one child function");
     return OctetLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("OCTET_LENGTH")
+{
+    PhysicalFunctionRegistry::registerPlugin("OCTET_LENGTH", RegisterOCTET_LENGTHPhysicalFunction);
 }
 }

@@ -36,12 +36,8 @@ struct InlineDataRegistryArguments
     std::filesystem::path testFilePath;
 };
 
-class InlineDataRegistry : public BaseRegistry<InlineDataRegistry, std::string, PhysicalSourceConfig, InlineDataRegistryArguments>
+class InlineDataRegistry : public Registry<InlineDataRegistry, std::string, PhysicalSourceConfig, InlineDataRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY
-#include <InlineDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY

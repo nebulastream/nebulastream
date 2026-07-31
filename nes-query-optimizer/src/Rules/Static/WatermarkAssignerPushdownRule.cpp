@@ -38,6 +38,7 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -282,9 +283,17 @@ std::set<std::type_index> WatermarkAssignerPushdownRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterWatermarkAssignerPushdownPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterWatermarkAssignerPushdownPlanRule(PlanRuleRegistryArguments)
 {
     return WatermarkAssignerPushdownRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("WatermarkAssignerPushdown")
+{
+    PlanRuleRegistry::registerPlugin("WatermarkAssignerPushdown", RegisterWatermarkAssignerPushdownPlanRule);
+}
 }

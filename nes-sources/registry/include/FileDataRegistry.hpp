@@ -35,12 +35,8 @@ struct FileDataRegistryArguments
     std::filesystem::path testFilePath;
 };
 
-class FileDataRegistry : public BaseRegistry<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>
+class FileDataRegistry : public Registry<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY
-#include <FileDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY

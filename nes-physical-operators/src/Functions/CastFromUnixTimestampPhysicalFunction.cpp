@@ -24,6 +24,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -68,12 +69,19 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
     return VarVal{timestampAsIso8601, value.isNullable(), false};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType RegisterCastFromUnixTsPhysicalFunction(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "CastFromUnixTimestampPhysicalFunction must have exactly one child function");
 
     return CastFromUnixTimestampPhysicalFunction(args.childFunctions[0], args.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("CastFromUnixTs")
+{
+    PhysicalFunctionRegistry::registerPlugin("CastFromUnixTs", RegisterCastFromUnixTsPhysicalFunction);
+}
 }

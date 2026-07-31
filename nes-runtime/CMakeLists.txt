@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 include_directories(tests/include)
 
 # Add interface library

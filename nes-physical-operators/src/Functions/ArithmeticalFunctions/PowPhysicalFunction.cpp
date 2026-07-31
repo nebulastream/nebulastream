@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -42,13 +43,20 @@ VarVal PowPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
         .castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterPowPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterPowPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Pow function must have exactly two child functions");
     return PowPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.childFunctions[1],
         physicalFunctionRegistryArguments.outputType);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Pow")
+{
+    PhysicalFunctionRegistry::registerPlugin("Pow", RegisterPowPhysicalFunction);
 }
 }

@@ -21,6 +21,7 @@
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -51,9 +52,16 @@ LoweringRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(
     return {.root = wrapper, .leaves = {leaves}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterIngestionTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalIngestionTimeWatermarkAssigner>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("IngestionTimeWatermarkAssigner")
+{
+    LoweringRuleRegistry::registerPlugin("IngestionTimeWatermarkAssigner", RegisterIngestionTimeWatermarkAssignerLoweringRule);
 }
 }

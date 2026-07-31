@@ -10,11 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+target_sources(nes-query-optimizer PRIVATE RedundantUnionRemovalRule.cpp)
 
-add_plugin_as_library(RedundantUnionRemoval PlanRule RedundantUnionRemovalRulePlugin RedundantUnionRemovalRule.cpp)
-
-target_include_directories(RedundantUnionRemovalRulePlugin
+target_include_directories(nes-query-optimizer
         PUBLIC include
         PRIVATE .
 )

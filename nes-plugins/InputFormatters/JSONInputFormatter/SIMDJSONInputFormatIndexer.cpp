@@ -22,6 +22,7 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/format.h>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterValidationRegistry.hpp>
@@ -74,9 +75,19 @@ InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatI
         SIMDJSONInputFormatIndexer::create(arguments.getInputFormatterConfig(), arguments.getInputMemoryProvider()));
 }
 
-InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterJSONInputFormatterValidation(
-    InputFormatterValidationRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
+InputFormatterValidationRegistryReturnType
+RegisterJSONInputFormatterValidation(InputFormatterValidationRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return SIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
 }
+}
+
+namespace NES
+{
+ADD_PLUGIN("JSON")
+{
+    InputFormatIndexerRegistry::registerPlugin("JSON", RegisterJSONInputFormatIndexer);
+    InputFormatterValidationRegistry::registerPlugin("JSON", RegisterJSONInputFormatterValidation);
+}
+
 }

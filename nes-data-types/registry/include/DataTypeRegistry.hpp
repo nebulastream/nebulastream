@@ -29,12 +29,8 @@ struct DataTypeRegistryArguments
     DataType::NULLABLE nullable{DataType::NULLABLE::IS_NULLABLE};
 };
 
-class DataTypeRegistry : public BaseRegistry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>
+class DataTypeRegistry : public Registry<DataTypeRegistry, std::string, DataTypeRegistryReturnType, DataTypeRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_DATA_TYPE_REGISTRY
-#include <DataTypeGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_DATA_TYPE_REGISTRY

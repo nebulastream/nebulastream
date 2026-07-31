@@ -23,12 +23,9 @@ add_source_files(nes-sources
 )
 
 # Register plugins
-add_plugin(File Source FileSource.cpp)
-add_plugin(File SourceValidation FileSource.cpp)
+add_source_files(nes-sources
+        FileSource.cpp
+        NetworkSource.cpp
+)
 
 # Systest adaptors
-add_plugin(File InlineData FileSource.cpp)
-add_plugin(File FileData FileSource.cpp)
-
-add_plugin(Network Source NetworkSource.cpp)
-add_plugin(Network SourceValidation NetworkSource.cpp)

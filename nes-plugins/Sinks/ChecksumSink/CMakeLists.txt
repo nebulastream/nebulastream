@@ -10,18 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(Checksum Sink checksum_sink_plugin ChecksumSink.cpp)
-add_plugin_as_library(Checksum SinkValidation checksum_sink_validation_plugin ChecksumSink.cpp)
+target_sources(nes-sinks PRIVATE ChecksumSink.cpp)
 
-target_include_directories(checksum_sink_plugin
+target_include_directories(nes-sinks
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(checksum_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
-target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
+target_link_libraries(nes-sinks PRIVATE systest-checksum)

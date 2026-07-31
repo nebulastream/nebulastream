@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -103,13 +105,26 @@ CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected
     return CeilLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
     return CeilLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Ceil")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Ceil",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<CeilLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Ceil", RegisterCeilLogicalFunction);
 }
 
 }

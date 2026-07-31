@@ -22,10 +22,12 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -73,4 +75,15 @@ Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected,
     return JoinImplementationTypeTrait{joinImplementationType};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("JoinImplementationType")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "JoinImplementationType",
+        [](TraitUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<JoinImplementationTypeTrait>(arguments.data); });
+}
 }

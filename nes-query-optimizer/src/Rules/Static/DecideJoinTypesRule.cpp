@@ -36,6 +36,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -138,8 +139,16 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideJoinTypesPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType RegisterDecideJoinTypesPlanRule(PlanRuleRegistryArguments arguments)
 {
     return DecideJoinTypesRule{arguments.defaultQueryOptimization.joinStrategy};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("DecideJoinTypes")
+{
+    PlanRuleRegistry::registerPlugin("DecideJoinTypes", RegisterDecideJoinTypesPlanRule);
 }
 }

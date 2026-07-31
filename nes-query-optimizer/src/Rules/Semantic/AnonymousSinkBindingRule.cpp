@@ -27,6 +27,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -82,8 +83,16 @@ std::set<std::type_index> AnonymousSinkBindingRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSinkBindingPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType RegisterAnonymousSinkBindingPlanRule(PlanRuleRegistryArguments arguments)
 {
     return AnonymousSinkBindingRule{arguments.sinkCatalog};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("AnonymousSinkBinding")
+{
+    PlanRuleRegistry::registerPlugin("AnonymousSinkBinding", RegisterAnonymousSinkBindingPlanRule);
 }
 }

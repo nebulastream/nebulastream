@@ -26,10 +26,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -133,8 +135,7 @@ Unreflector<ExtractFromTimestampLogicalFunction>::operator()(const Reflected& re
     return ExtractFromTimestampLogicalFunction{unit, std::move(child)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterDay_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterDay_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -144,8 +145,7 @@ LogicalFunctionGeneratedRegistrar::RegisterDay_OfLogicalFunction(LogicalFunction
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Day, arguments.children[0]};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterMonth_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterMonth_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -155,8 +155,7 @@ LogicalFunctionGeneratedRegistrar::RegisterMonth_OfLogicalFunction(LogicalFuncti
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Month, arguments.children[0]};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterYear_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterYear_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -165,5 +164,37 @@ LogicalFunctionGeneratedRegistrar::RegisterYear_OfLogicalFunction(LogicalFunctio
     }
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Year, arguments.children[0]};
 }
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Year_Of")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Year_Of",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ExtractFromTimestampLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Year_Of", RegisterYear_OfLogicalFunction);
+}
+
+ADD_PLUGIN("Month_Of")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Month_Of",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ExtractFromTimestampLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Month_Of", RegisterMonth_OfLogicalFunction);
+}
+
+ADD_PLUGIN("Day_Of")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Day_Of",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ExtractFromTimestampLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Day_Of", RegisterDay_OfLogicalFunction);
+}
+
 
 }

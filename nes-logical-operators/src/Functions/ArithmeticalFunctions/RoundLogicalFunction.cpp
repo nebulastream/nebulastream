@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -104,14 +106,26 @@ RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflect
     return RoundLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
     return RoundLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Round")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Round",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<RoundLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Round", RegisterRoundLogicalFunction);
 }
 
 }

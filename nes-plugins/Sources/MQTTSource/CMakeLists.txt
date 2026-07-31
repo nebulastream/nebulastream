@@ -10,21 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(MQTT Source mqtt_source_plugin_library MQTTSource.cpp)
-add_plugin_as_library(MQTT SourceValidation mqtt_source_validation_plugin_library MQTTSource.cpp)
+target_sources(nes-sources PRIVATE MQTTSource.cpp)
 
-target_include_directories(mqtt_source_plugin_library
+target_include_directories(nes-sources
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(mqtt_source_validation_plugin_library
-        PUBLIC include
-        PRIVATE .
-)
-
 find_package(PahoMqttCpp CONFIG REQUIRED)
-target_link_libraries(mqtt_source_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
-target_link_libraries(mqtt_source_validation_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
+target_link_libraries(nes-sources PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(
     NAME mqtt-source-test

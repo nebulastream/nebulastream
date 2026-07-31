@@ -30,10 +30,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -105,8 +107,7 @@ Unreflector<MinAggregationLogicalFunction>::operator()(const Reflected& reflecte
     return MinAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterMinAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterMinAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -120,4 +121,17 @@ size_t
 std::hash<NES::MinAggregationLogicalFunction>::operator()(const NES::MinAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Min")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Min",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<MinAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Min", RegisterMinAggregationLogicalFunction);
+}
+
 }

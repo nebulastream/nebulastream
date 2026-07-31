@@ -22,6 +22,7 @@
 #include <Functions/ExtractFromTimestampLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -92,25 +93,40 @@ VarVal ExtractFromTimestampPhysicalFunction::execute(const Record& record, Arena
     return VarVal{extracted, value.isNullable(), false};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterDay_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType RegisterDay_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Day_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Day, args.childFunctions[0], args.outputType};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterMonth_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType RegisterMonth_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Month_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Month, args.childFunctions[0], args.outputType};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterYear_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType RegisterYear_OfPhysicalFunction(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "ExtractFromTimestampPhysicalFunction (Year_Of) must have exactly one child function");
     return ExtractFromTimestampPhysicalFunction{TimestampUnit::Year, args.childFunctions[0], args.outputType};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Day_Of")
+{
+    PhysicalFunctionRegistry::registerPlugin("Day_Of", RegisterDay_OfPhysicalFunction);
+}
+
+ADD_PLUGIN("Month_Of")
+{
+    PhysicalFunctionRegistry::registerPlugin("Month_Of", RegisterMonth_OfPhysicalFunction);
+}
+
+ADD_PLUGIN("Year_Of")
+{
+    PhysicalFunctionRegistry::registerPlugin("Year_Of", RegisterYear_OfPhysicalFunction);
+}
 }

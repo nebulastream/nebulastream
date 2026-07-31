@@ -16,15 +16,21 @@
 
 #include <string>
 #include <Operators/LogicalOperatorFwd.hpp>
-#include <Util/UnreflectionRegistry.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES
 {
 
 using LogicalOperatorUnreflectionRegistryReturnType = LogicalOperator;
+using LogicalOperatorUnreflectionRegistryArguments = UnreflectionArguments;
 
-class LogicalOperatorUnreflectionRegistry
-    : public UnreflectionRegistry<LogicalOperatorUnreflectionRegistry, std::string, LogicalOperatorUnreflectionRegistryReturnType>
+class LogicalOperatorUnreflectionRegistry : public Registry<
+                                                LogicalOperatorUnreflectionRegistry,
+                                                std::string,
+                                                LogicalOperatorUnreflectionRegistryReturnType,
+                                                LogicalOperatorUnreflectionRegistryArguments,
+                                                true>
 {
 };
 

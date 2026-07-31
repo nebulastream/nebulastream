@@ -31,6 +31,7 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -93,8 +94,16 @@ std::set<std::type_index> LogicalSourceExpansionRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterLogicalSourceExpansionPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType RegisterLogicalSourceExpansionPlanRule(PlanRuleRegistryArguments arguments)
 {
     return LogicalSourceExpansionRule{arguments.sourceCatalog};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("LogicalSourceExpansion")
+{
+    PlanRuleRegistry::registerPlugin("LogicalSourceExpansion", RegisterLogicalSourceExpansionPlanRule);
 }
 }

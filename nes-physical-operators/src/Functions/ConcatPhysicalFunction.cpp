@@ -20,6 +20,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -63,10 +64,17 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return VarVal{newVarSizeData, leftValue.isNullable() or rightValue.isNullable(), newNull};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterConcatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two child functions");
     return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Concat")
+{
+    PhysicalFunctionRegistry::registerPlugin("Concat", RegisterConcatPhysicalFunction);
 }
 }

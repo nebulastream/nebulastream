@@ -33,6 +33,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -90,12 +91,12 @@ SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidation
     return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
@@ -119,7 +120,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineDat
     throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
     {
@@ -130,6 +131,19 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(File
         SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
 
     return systestAdaptorArguments.physicalSourceConfig;
+}
+
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("File")
+{
+    SourceValidationRegistry::registerPlugin("File", RegisterFileSourceValidation);
+    SourceRegistry::registerPlugin("File", RegisterFileSource);
+    InlineDataRegistry::registerPlugin("File", RegisterFileInlineData);
+    FileDataRegistry::registerPlugin("File", RegisterFileFileData);
 }
 
 

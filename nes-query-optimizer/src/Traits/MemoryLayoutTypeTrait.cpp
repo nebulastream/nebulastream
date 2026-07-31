@@ -24,11 +24,13 @@
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -71,5 +73,15 @@ MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Refle
 {
     auto [memoryLayout] = context.unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
     return MemoryLayoutTypeTrait{memoryLayout};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("MemoryLayoutType")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "MemoryLayoutType",
+        [](TraitUnreflectionRegistryArguments arguments) { return arguments.context.unreflect<MemoryLayoutTypeTrait>(arguments.data); });
 }
 }

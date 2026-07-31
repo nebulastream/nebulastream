@@ -45,6 +45,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
@@ -133,6 +134,7 @@ int main(int argc, char** argv)
 #endif
         return 0;
     }
+    NES::initializePlugins();
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
@@ -173,7 +175,6 @@ int main(int argc, char** argv)
             .append()
             .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
 
-
 #ifdef EMBED_ENGINE
         /// single node worker config
         program.add_argument("--")
@@ -205,7 +206,6 @@ int main(int argc, char** argv)
             return 1;
         }
         const auto defaultOutputFormat = defaultOutputFormatOpt.value();
-
 
         const NES::ErrorBehaviour errorBehaviour = [&]
         {
@@ -243,7 +243,6 @@ int main(int argc, char** argv)
             }
             queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
         }
-
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();

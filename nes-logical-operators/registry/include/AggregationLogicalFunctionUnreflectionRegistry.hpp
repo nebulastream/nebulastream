@@ -16,17 +16,21 @@
 
 #include <string>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/UnreflectionRegistry.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES
 {
 
 using AggregationLogicalFunctionUnreflectionRegistryReturnType = WindowAggregationLogicalFunction;
+using AggregationLogicalFunctionUnreflectionRegistryArguments = UnreflectionArguments;
 
-class AggregationLogicalFunctionUnreflectionRegistry : public UnreflectionRegistry<
+class AggregationLogicalFunctionUnreflectionRegistry : public Registry<
                                                            AggregationLogicalFunctionUnreflectionRegistry,
                                                            std::string,
-                                                           AggregationLogicalFunctionUnreflectionRegistryReturnType>
+                                                           AggregationLogicalFunctionUnreflectionRegistryReturnType,
+                                                           AggregationLogicalFunctionUnreflectionRegistryArguments,
+                                                           true>
 {
 };
 

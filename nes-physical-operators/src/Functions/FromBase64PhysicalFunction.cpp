@@ -20,6 +20,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/function.hpp>
 #include <openssl/evp.h>
 #include <Arena.hpp>
@@ -83,10 +84,17 @@ VarVal FromBase64PhysicalFunction::execute(const Record& record, ArenaRef& arena
     return VariableSizedData(output.getContent(), actualSize);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterFROM_BASE64PhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterFROM_BASE64PhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "FROM_BASE64 function must have exactly one child function");
     return FromBase64PhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("FROM_BASE64")
+{
+    PhysicalFunctionRegistry::registerPlugin("FROM_BASE64", RegisterFROM_BASE64PhysicalFunction);
 }
 }

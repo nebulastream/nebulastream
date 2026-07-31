@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -106,14 +108,26 @@ Unreflector<LessEqualsLogicalFunction>::operator()(const Reflected& reflected, c
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return LessEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("LessEquals")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "LessEquals",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<LessEqualsLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("LessEquals", RegisterLessEqualsLogicalFunction);
 }
 
 }

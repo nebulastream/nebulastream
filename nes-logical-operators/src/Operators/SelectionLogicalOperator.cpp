@@ -39,9 +39,10 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -188,4 +189,15 @@ Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Re
 uint64_t std::hash<NES::SelectionLogicalOperator>::operator()(const NES::SelectionLogicalOperator& op) const noexcept
 {
     return std::hash<NES::LogicalFunction>{}(op.getPredicate());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Selection")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "Selection",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<SelectionLogicalOperator>>(arguments.data); });
+}
 }

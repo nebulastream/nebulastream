@@ -26,10 +26,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -97,14 +99,26 @@ Unreflector<OctetLengthLogicalFunction>::operator()(const Reflected& reflected, 
     return OctetLengthLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterOCTET_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterOCTET_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("OCTET_LENGTH requires exactly one argument, but got {}", arguments.children.size());
     }
     return OctetLengthLogicalFunction(arguments.children.back());
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("OCTET_LENGTH")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "OCTET_LENGTH",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<OctetLengthLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("OCTET_LENGTH", RegisterOCTET_LENGTHLogicalFunction);
 }
 
 }

@@ -36,12 +36,8 @@ struct OutputFormatterRegistryArguments
 };
 
 class OutputFormatterRegistry
-    : public BaseRegistry<OutputFormatterRegistry, std::string, OutputFormatterRegistryReturnType, OutputFormatterRegistryArguments>
+    : public Registry<OutputFormatterRegistry, std::string, OutputFormatterRegistryReturnType, OutputFormatterRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY
-#include <OutputFormatterGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUTFORMATTER_REGISTRY

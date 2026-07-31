@@ -27,10 +27,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -96,8 +98,7 @@ NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Refle
     return NegateLogicalFunction(std::move(function));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -108,6 +109,19 @@ LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunction
         throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
     }
     return NegateLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Negate")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Negate",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<NegateLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Negate", RegisterNegateLogicalFunction);
 }
 
 }

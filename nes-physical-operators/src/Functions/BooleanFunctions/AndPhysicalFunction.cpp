@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -48,11 +49,18 @@ AndPhysicalFunction::AndPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterAndPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterAndPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two child functions");
     return AndPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("And")
+{
+    PhysicalFunctionRegistry::registerPlugin("And", RegisterAndPhysicalFunction);
+}
 }

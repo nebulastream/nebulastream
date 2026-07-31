@@ -17,20 +17,10 @@ add_library(nes-query-optimizer-interface INTERFACE)
 target_include_directories(nes-query-optimizer-interface INTERFACE interface)
 target_link_libraries(nes-query-optimizer-interface INTERFACE nes-configurations nes-network-interface)
 
-include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
-
-# Declare the library up front so create_unreflection_registry can attach the
-# WHOLE_ARCHIVE INTERFACE link, and so add_subdirectory(src) can add to its
-# target_sources.
 add_library(nes-query-optimizer STATIC)
 set_target_properties(nes-query-optimizer PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-
-# Trait is unreflection-only — no factory registry on this side.
-create_unreflection_registry(Trait nes-query-optimizer
-        "\${PLUGIN_NAME}Trait"
-        "\${PLUGIN_NAME}Trait.hpp")
 
 # Set Sources and Headers
 add_subdirectory(src)
@@ -47,5 +37,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
-create_registries_for_component(PlanRule)
+enable_plugin_component()
 add_tests_if_enabled(tests)

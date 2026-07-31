@@ -27,6 +27,12 @@ struct Reflected;
 /// Context object for context-aware deserialization
 class ReflectionContext;
 
+struct UnreflectionArguments
+{
+    const Reflected& data;
+    const ReflectionContext& context;
+};
+
 /// Template for reflection (serialization) logic
 template <typename T>
 struct Reflector;

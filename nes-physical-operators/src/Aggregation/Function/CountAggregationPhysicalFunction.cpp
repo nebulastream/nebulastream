@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -110,8 +111,8 @@ size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return resultType.getSizeInBytesWithoutNull();
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterCountAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType
+RegisterCountAggregationPhysicalFunction(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<CountAggregationPhysicalFunction>(
         std::move(arguments.inputType),
@@ -121,4 +122,12 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
         arguments.includeNullValues);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Count")
+{
+    AggregationPhysicalFunctionRegistry::registerPlugin("Count", RegisterCountAggregationPhysicalFunction);
+}
 }

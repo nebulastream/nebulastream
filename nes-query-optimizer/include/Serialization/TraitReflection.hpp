@@ -64,7 +64,7 @@ struct Unreflector<TypedTrait<>>
     {
         auto [name, data] = context.unreflect<detail::ReflectedTrait>(rfl);
 
-        auto trait = TraitUnreflectionRegistry::instance().unreflect(name, data, context);
+        auto trait = TraitUnreflectionRegistry::instance().create(name, TraitUnreflectionRegistryArguments{data, context});
         if (!trait.has_value())
         {
             throw CannotDeserialize("Failed to unreflect trait of type {}", name);

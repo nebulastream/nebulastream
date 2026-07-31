@@ -63,6 +63,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Util/Plugin.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
@@ -252,9 +253,16 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     return {.root = probeWrapper, .leaves = {leaves}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterWindowedAggregationLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterWindowedAggregationLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalWindowedAggregation>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("WindowedAggregation")
+{
+    LoweringRuleRegistry::registerPlugin("WindowedAggregation", RegisterWindowedAggregationLoweringRule);
 }
 }

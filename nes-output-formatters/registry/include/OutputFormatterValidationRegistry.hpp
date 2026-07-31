@@ -30,7 +30,7 @@ struct OutputFormatterValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class OutputFormatterValidationRegistry final : public BaseRegistry<
+class OutputFormatterValidationRegistry final : public Registry<
                                                     OutputFormatterValidationRegistry,
                                                     std::string,
                                                     OutputFormatterValidationRegistryReturnType,
@@ -38,7 +38,3 @@ class OutputFormatterValidationRegistry final : public BaseRegistry<
 {
 };
 }
-
-#define INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY
-#include <OutputFormatterValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_OUTPUT_FORMATTER_VALIDATION_REGISTRY

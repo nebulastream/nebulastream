@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -32,6 +31,7 @@
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Schema/Binder.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -99,9 +99,17 @@ LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantProjectionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterRedundantProjectionRemovalPlanRule(PlanRuleRegistryArguments)
 {
     return RedundantProjectionRemovalRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("RedundantProjectionRemoval")
+{
+    PlanRuleRegistry::registerPlugin("RedundantProjectionRemoval", RegisterRedundantProjectionRemovalPlanRule);
+}
 }

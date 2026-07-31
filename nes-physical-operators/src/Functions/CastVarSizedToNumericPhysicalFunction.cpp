@@ -24,6 +24,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -122,8 +123,8 @@ CastVarSizedToNumericPhysicalFunction::CastVarSizedToNumericPhysicalFunction(Phy
 {
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+RegisterVarSizedToNumericPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToNumeric function must have exactly one child function");
@@ -132,4 +133,12 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterV
         physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("VarSizedToNumeric")
+{
+    PhysicalFunctionRegistry::registerPlugin("VarSizedToNumeric", RegisterVarSizedToNumericPhysicalFunction);
+}
 }

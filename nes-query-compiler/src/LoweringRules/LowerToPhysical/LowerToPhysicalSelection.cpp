@@ -23,6 +23,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -60,9 +61,16 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     return {.root = wrapper, .leaves = {leaves}};
 };
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterSelectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterSelectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSelection>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Selection")
+{
+    LoweringRuleRegistry::registerPlugin("Selection", RegisterSelectionLoweringRule);
 }
 }

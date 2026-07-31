@@ -31,6 +31,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorRate.hpp>
@@ -198,8 +199,18 @@ RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig
 }
 
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterGeneratorSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType RegisterGeneratorSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<GeneratorSource>(sourceRegistryArguments.sourceDescriptor);
 }
+}
+
+namespace NES
+{
+ADD_PLUGIN("Generator")
+{
+    SourceValidationRegistry::registerPlugin("Generator", RegisterGeneratorSourceValidation);
+    SourceRegistry::registerPlugin("Generator", RegisterGeneratorSource);
+}
+
 }

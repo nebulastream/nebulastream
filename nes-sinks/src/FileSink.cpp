@@ -39,6 +39,7 @@
 #include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -144,6 +145,16 @@ SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegist
 SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<FileSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("File")
+{
+    SinkValidationRegistry::registerPlugin("File", RegisterFileSinkValidation);
+    SinkRegistry::registerPlugin("File", RegisterFileSink);
 }
 
 }

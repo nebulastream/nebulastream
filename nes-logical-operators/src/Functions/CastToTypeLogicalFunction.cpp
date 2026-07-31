@@ -27,10 +27,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -96,8 +98,7 @@ std::string CastToTypeLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("Cast to {})", castToType);
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterCastToTypeLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
@@ -121,6 +122,19 @@ Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected& reflected, c
 {
     auto [childFunction, castToType] = context.unreflect<detail::ReflectedCastToTypeLogicalFunction>(reflected);
     return CastToTypeLogicalFunction{castToType, childFunction};
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("CastToType")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "CastToType",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<CastToTypeLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("CastToType", RegisterCastToTypeLogicalFunction);
 }
 
 }

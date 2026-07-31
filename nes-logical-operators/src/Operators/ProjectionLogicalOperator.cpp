@@ -50,10 +50,11 @@
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -354,4 +355,15 @@ std::size_t std::hash<NES::ProjectionLogicalOperator>::operator()(const NES::Pro
     return folly::hash::commutative_hash_combine_range_generic(
         13, folly::hash::StdHasher{}, projectionOperator.projections.begin(), projectionOperator.projections.end());
     /// NOLINTEND(readability-magic-numbers)
+}
+
+namespace NES
+{
+ADD_PLUGIN("Projection")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "Projection",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(arguments.data); });
+}
 }

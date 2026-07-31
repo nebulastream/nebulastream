@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -85,8 +86,16 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
     return {.root = wrapper, .leaves = renames};
 }
 
-LoweringRuleRegistryReturnType LoweringRuleGeneratedRegistrar::RegisterUnionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+LoweringRuleRegistryReturnType RegisterUnionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalUnion>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Union")
+{
+    LoweringRuleRegistry::registerPlugin("Union", RegisterUnionLoweringRule);
 }
 }

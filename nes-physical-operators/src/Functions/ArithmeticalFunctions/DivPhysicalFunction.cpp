@@ -16,6 +16,7 @@
 #include <utility>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -35,11 +36,18 @@ DivPhysicalFunction::DivPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterDivPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterDivPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two child functions");
     return DivPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Div")
+{
+    PhysicalFunctionRegistry::registerPlugin("Div", RegisterDivPhysicalFunction);
+}
 }

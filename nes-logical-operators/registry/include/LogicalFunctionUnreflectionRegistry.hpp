@@ -16,15 +16,21 @@
 
 #include <string>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/UnreflectionRegistry.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES
 {
 
 using LogicalFunctionUnreflectionRegistryReturnType = LogicalFunction;
+using LogicalFunctionUnreflectionRegistryArguments = UnreflectionArguments;
 
-class LogicalFunctionUnreflectionRegistry
-    : public UnreflectionRegistry<LogicalFunctionUnreflectionRegistry, std::string, LogicalFunctionUnreflectionRegistryReturnType>
+class LogicalFunctionUnreflectionRegistry : public Registry<
+                                                LogicalFunctionUnreflectionRegistry,
+                                                std::string,
+                                                LogicalFunctionUnreflectionRegistryReturnType,
+                                                LogicalFunctionUnreflectionRegistryArguments,
+                                                true>
 {
 };
 

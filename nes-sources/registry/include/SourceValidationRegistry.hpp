@@ -30,12 +30,8 @@ struct SourceValidationRegistryArguments
 };
 
 class SourceValidationRegistry final
-    : public BaseRegistry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
+    : public Registry<SourceValidationRegistry, std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
-#include <SourceValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY

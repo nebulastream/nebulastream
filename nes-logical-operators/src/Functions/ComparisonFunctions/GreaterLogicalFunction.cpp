@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -101,14 +103,26 @@ GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Ref
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Greater")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Greater",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<GreaterLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Greater", RegisterGreaterLogicalFunction);
 }
 
 }

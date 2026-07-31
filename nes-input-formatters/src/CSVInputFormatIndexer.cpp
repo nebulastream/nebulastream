@@ -24,6 +24,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
@@ -154,8 +155,7 @@ DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered
     return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
 }
 
-InputFormatterValidationRegistryReturnType
-InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+InputFormatterValidationRegistryReturnType RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
 {
     return CSVInputFormatIndexer::validateAndFormat(arguments.config);
 }
@@ -171,4 +171,14 @@ std::ostream& CSVInputFormatIndexer::toString(std::ostream& str) const
 {
     return str << fmt::format("CSVInputFormatIndexer()");
 }
+}
+
+namespace NES
+{
+ADD_PLUGIN("CSV")
+{
+    InputFormatIndexerRegistry::registerPlugin("CSV", RegisterCSVInputFormatIndexer);
+    InputFormatterValidationRegistry::registerPlugin("CSV", RegisterCSVInputFormatterValidation);
+}
+
 }

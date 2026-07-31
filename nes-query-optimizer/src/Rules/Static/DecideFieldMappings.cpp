@@ -39,6 +39,7 @@
 #include <Schema/Field.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -224,9 +225,17 @@ std::set<std::type_index> DecideFieldMappings::needs() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldMappingsPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterDecideFieldMappingsPlanRule(PlanRuleRegistryArguments)
 {
     return DecideFieldMappings{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("DecideFieldMappings")
+{
+    PlanRuleRegistry::registerPlugin("DecideFieldMappings", RegisterDecideFieldMappingsPlanRule);
+}
 }

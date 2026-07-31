@@ -35,8 +35,10 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -145,4 +147,15 @@ Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const R
 std::size_t std::hash<NES::SourceNameLogicalOperator>::operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const
 {
     return std::hash<NES::Identifier>{}(sourceNameLogicalOperator.getLogicalSourceName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("SourceName")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "SourceName",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<SourceNameLogicalOperator>>(arguments.data); });
+}
 }

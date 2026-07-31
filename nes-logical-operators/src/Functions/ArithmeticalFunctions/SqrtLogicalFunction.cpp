@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -101,13 +103,26 @@ SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected
     return SqrtLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
     }
     return SqrtLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sqrt")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Sqrt",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<SqrtLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Sqrt", RegisterSqrtLogicalFunction);
 }
 
 }

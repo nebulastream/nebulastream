@@ -31,12 +31,8 @@ struct SinkRegistryArguments
     SinkDescriptor sinkDescriptor;
 };
 
-class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
+class SinkRegistry : public Registry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SINK_REGISTRY
-#include <SinkGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_REGISTRY

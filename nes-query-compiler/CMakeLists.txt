@@ -21,7 +21,7 @@ target_link_libraries(nes-query-compiler-interface INTERFACE nes-configurations)
 
 # Add Library
 add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES})
-target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-physical-operators-registry nes-runtime nes-input-formatter-provider)
+target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-runtime nes-input-formatter-provider)
 target_include_directories(nes-query-compiler PUBLIC
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
@@ -32,6 +32,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-compiler PUBLIC "-fPIC")
 endif ()
 
-create_registries_for_component(LoweringRule)
+enable_plugin_component()
 
 add_tests_if_enabled(tests)

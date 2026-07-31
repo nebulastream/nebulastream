@@ -28,6 +28,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -90,9 +91,17 @@ std::set<std::type_index> AnonymousSourceBindingRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterAnonymousSourceBindingPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType RegisterAnonymousSourceBindingPlanRule(PlanRuleRegistryArguments arguments)
 {
     return AnonymousSourceBindingRule{arguments.sourceCatalog};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("AnonymousSourceBinding")
+{
+    PlanRuleRegistry::registerPlugin("AnonymousSourceBinding", RegisterAnonymousSourceBindingPlanRule);
+}
 }

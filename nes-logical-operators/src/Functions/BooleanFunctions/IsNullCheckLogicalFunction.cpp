@@ -26,10 +26,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -104,14 +106,26 @@ Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, 
     return IsNullCheckLogicalFunction(std::move(function.value()));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterIsNullLogicalFunction(const LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterIsNullLogicalFunction(const LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("IsNullCheckLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return IsNullCheckLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("IsNull")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "IsNull",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<IsNullCheckLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("IsNull", RegisterIsNullLogicalFunction);
 }
 
 }

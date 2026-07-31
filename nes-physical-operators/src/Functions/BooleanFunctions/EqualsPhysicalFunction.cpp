@@ -17,6 +17,7 @@
 #include <utility>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -37,11 +38,18 @@ EqualsPhysicalFunction::EqualsPhysicalFunction(PhysicalFunction leftPhysicalFunc
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two child functions");
     return EqualsPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Equals")
+{
+    PhysicalFunctionRegistry::registerPlugin("Equals", RegisterEqualsPhysicalFunction);
+}
 }

@@ -32,7 +32,8 @@ Unreflector<TypedWindowAggregationLogicalFunction<>>::operator()(const Reflected
 {
     auto [name, data] = context.unreflect<detail::ReflectedWindowAggregationLogicalFunction>(rfl);
 
-    auto aggregationFunction = AggregationLogicalFunctionUnreflectionRegistry::instance().unreflect(name, data, context);
+    auto aggregationFunction = AggregationLogicalFunctionUnreflectionRegistry::instance().create(
+        name, AggregationLogicalFunctionUnreflectionRegistryArguments{data, context});
     if (!aggregationFunction.has_value())
     {
         throw CannotDeserialize("Failed to unreflect window aggregation logical function of type {}", name);

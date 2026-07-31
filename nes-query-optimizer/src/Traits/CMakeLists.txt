@@ -19,10 +19,3 @@ add_source_files(nes-query-optimizer
         FieldMappingTrait.cpp
         FieldOrderingTrait.cpp
         PlacementTrait.cpp)
-
-add_unreflection_plugin(Trait JoinImplementationType)
-add_unreflection_plugin(Trait MemoryLayoutType)
-add_unreflection_plugin(Trait OutputOriginIds)
-add_unreflection_plugin(Trait Placement)
-add_unreflection_plugin(Trait FieldMapping)
-add_unreflection_plugin(Trait FieldOrdering)

@@ -16,6 +16,7 @@
 #include <utility>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -35,11 +36,18 @@ AddPhysicalFunction::AddPhysicalFunction(PhysicalFunction leftPhysicalFunction, 
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterAddPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterAddPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two child functions");
     return AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Add")
+{
+    PhysicalFunctionRegistry::registerPlugin("Add", RegisterAddPhysicalFunction);
+}
 }

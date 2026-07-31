@@ -32,10 +32,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -134,8 +136,7 @@ Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflecte
     return SumAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -149,4 +150,17 @@ size_t
 std::hash<NES::SumAggregationLogicalFunction>::operator()(const NES::SumAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sum")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Sum",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<SumAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Sum", RegisterSumAggregationLogicalFunction);
+}
+
 }

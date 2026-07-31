@@ -87,6 +87,7 @@ endif ()
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
+include(cmake/PluginRegistrationUtil.cmake)
 include(cmake/ClangTidyDiff.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
@@ -266,17 +267,20 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-add_custom_target(build_all_plugins)
-
 # Adds sub-directories
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 set(NES_DIRECTORIES)
 foreach (NES_DIR ${NES_DIRECTORIES_ALL})
     if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR}/CMakeLists.txt)
         list(APPEND NES_DIRECTORIES ${NES_DIR})
-        add_subdirectory(${NES_DIR})
+        if (NOT NES_DIR STREQUAL "nes-plugins")
+            add_subdirectory(${NES_DIR})
+        endif ()
     endif ()
 endforeach ()
+# Plugin directories add sources and dependencies to the component targets above.
+add_subdirectory(nes-plugins)
+finalize_plugin_hooks()
 
 # Other configurations
 project_enable_format()

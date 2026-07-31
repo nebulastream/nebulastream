@@ -31,10 +31,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -106,14 +108,26 @@ EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Refle
     return EqualsLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Equals")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Equals",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<EqualsLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Equals", RegisterEqualsLogicalFunction);
 }
 
 }

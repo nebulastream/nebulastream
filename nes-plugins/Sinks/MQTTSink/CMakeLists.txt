@@ -10,23 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+target_sources(nes-sinks PRIVATE MQTTSink.cpp)
 
-add_plugin_as_library(MQTT Sink mqtt_sink_plugin_library MQTTSink.cpp)
-add_plugin_as_library(MQTT SinkValidation mqtt_sink_validation_plugin_library MQTTSink.cpp)
-
-target_include_directories(mqtt_sink_plugin_library
+target_include_directories(nes-sinks
         PUBLIC include
         PRIVATE .
 )
-target_include_directories(mqtt_sink_validation_plugin_library
-        PUBLIC include
-        PRIVATE .
-)
-
 find_package(PahoMqttCpp CONFIG REQUIRED)
-target_link_libraries(mqtt_sink_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
-target_link_libraries(mqtt_sink_validation_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
+target_link_libraries(nes-sinks PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(

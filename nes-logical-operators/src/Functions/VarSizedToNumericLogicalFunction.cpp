@@ -26,10 +26,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -140,13 +142,25 @@ Unreflector<VarSizedToNumericLogicalFunction>::operator()(const Reflected& refle
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType RegisterVarSizedToNumericLogicalFunction(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "Function is only built directly via parser or via reflection, not using the registry");
     std::unreachable();
 }
 
 /// NOLINTEND(performance-unnecessary-value-param)
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("VarSizedToNumeric")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "VarSizedToNumeric",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<VarSizedToNumericLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("VarSizedToNumeric", RegisterVarSizedToNumericLogicalFunction);
+}
 
 }

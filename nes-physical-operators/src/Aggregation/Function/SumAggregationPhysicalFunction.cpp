@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -159,11 +160,18 @@ size_t SumAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return (inputType.nullable ? sizeof(bool) : 0) + resultType.getSizeInBytesWithoutNull();
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterSumAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType RegisterSumAggregationPhysicalFunction(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<SumAggregationPhysicalFunction>(
         std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sum")
+{
+    AggregationPhysicalFunctionRegistry::registerPlugin("Sum", RegisterSumAggregationPhysicalFunction);
+}
 }

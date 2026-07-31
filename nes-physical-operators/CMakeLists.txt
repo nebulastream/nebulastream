@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
@@ -25,6 +22,6 @@ target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-create_registries_for_component(PhysicalFunction AggregationPhysicalFunction)
+enable_plugin_component()
 
 add_tests_if_enabled(tests)

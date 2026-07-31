@@ -10,28 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Abs LogicalFunction AbsoluteLogicalFunction.cpp)
-add_plugin(Add LogicalFunction AddLogicalFunction.cpp)
-add_plugin(Ceil LogicalFunction CeilLogicalFunction.cpp)
-add_plugin(Div LogicalFunction DivLogicalFunction.cpp)
-add_plugin(Exp LogicalFunction ExpLogicalFunction.cpp)
-add_plugin(Floor LogicalFunction FloorLogicalFunction.cpp)
-add_plugin(Mod LogicalFunction ModuloLogicalFunction.cpp)
-add_plugin(Mul LogicalFunction MulLogicalFunction.cpp)
-add_plugin(Pow LogicalFunction PowLogicalFunction.cpp)
-add_plugin(Round LogicalFunction RoundLogicalFunction.cpp)
-add_plugin(Sqrt LogicalFunction SqrtLogicalFunction.cpp)
-add_plugin(Sub LogicalFunction SubLogicalFunction.cpp)
-
-add_unreflection_plugin(LogicalFunction Absolute KEY Abs)
-add_unreflection_plugin(LogicalFunction Add)
-add_unreflection_plugin(LogicalFunction Ceil)
-add_unreflection_plugin(LogicalFunction Div)
-add_unreflection_plugin(LogicalFunction Exp)
-add_unreflection_plugin(LogicalFunction Floor)
-add_unreflection_plugin(LogicalFunction Modulo KEY Mod)
-add_unreflection_plugin(LogicalFunction Mul)
-add_unreflection_plugin(LogicalFunction Pow)
-add_unreflection_plugin(LogicalFunction Round)
-add_unreflection_plugin(LogicalFunction Sqrt)
-add_unreflection_plugin(LogicalFunction Sub)
+add_source_files(nes-logical-operators
+        AbsoluteLogicalFunction.cpp
+        AddLogicalFunction.cpp
+        CeilLogicalFunction.cpp
+        DivLogicalFunction.cpp
+        ExpLogicalFunction.cpp
+        FloorLogicalFunction.cpp
+        ModuloLogicalFunction.cpp
+        MulLogicalFunction.cpp
+        PowLogicalFunction.cpp
+        RoundLogicalFunction.cpp
+        SqrtLogicalFunction.cpp
+        SubLogicalFunction.cpp
+)

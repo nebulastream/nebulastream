@@ -30,7 +30,6 @@
 namespace NES
 {
 
-
 using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatter>;
 
 /// Argument bundle handed to `InputFormatIndexerRegistry`-resolved factories. Owns the `ParserConfig` + memory provider and
@@ -61,16 +60,9 @@ private:
     std::shared_ptr<TupleBufferRef> memoryProvider;
 };
 
-class InputFormatIndexerRegistry : public BaseRegistry<
-                                       InputFormatIndexerRegistry,
-                                       std::string,
-                                       InputFormatIndexerRegistryReturnType,
-                                       InputFormatIndexerRegistryArguments>
+class InputFormatIndexerRegistry
+    : public Registry<InputFormatIndexerRegistry, std::string, InputFormatIndexerRegistryReturnType, InputFormatIndexerRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY
-#include <InputFormatIndexerGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUT_FORMAT_INDEXER_REGISTRY

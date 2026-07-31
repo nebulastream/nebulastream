@@ -32,6 +32,7 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -82,9 +83,17 @@ std::set<std::type_index> InferModelResolutionRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterInferModelResolutionPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType RegisterInferModelResolutionPlanRule(PlanRuleRegistryArguments arguments)
 {
     return InferModelResolutionRule{arguments.modelCatalog};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("InferModelResolution")
+{
+    PlanRuleRegistry::registerPlugin("InferModelResolution", RegisterInferModelResolutionPlanRule);
+}
 }

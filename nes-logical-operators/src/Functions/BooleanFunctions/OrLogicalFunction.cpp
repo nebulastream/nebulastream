@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -101,13 +103,26 @@ OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& re
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return OrLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Or")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Or",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<OrLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Or", RegisterOrLogicalFunction);
 }
 
 }

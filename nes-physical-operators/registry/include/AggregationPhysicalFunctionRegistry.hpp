@@ -40,7 +40,7 @@ struct AggregationPhysicalFunctionRegistryArguments
     bool includeNullValues;
 };
 
-class AggregationPhysicalFunctionRegistry : public BaseRegistry<
+class AggregationPhysicalFunctionRegistry : public Registry<
                                                 AggregationPhysicalFunctionRegistry,
                                                 std::string,
                                                 AggregationPhysicalFunctionRegistryReturnType,
@@ -48,7 +48,3 @@ class AggregationPhysicalFunctionRegistry : public BaseRegistry<
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION
-#include <AggregationPhysicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_AGGREGATION_PHYSICAL_FUNCTION

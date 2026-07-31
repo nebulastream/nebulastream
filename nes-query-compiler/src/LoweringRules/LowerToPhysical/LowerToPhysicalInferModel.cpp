@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <InferModelPhysicalOperator.hpp>
@@ -98,10 +99,17 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     return {.root = wrapper, .leaves = {leaves}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterInferModelLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterInferModelLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalInferModel>(argument.conf);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("InferModel")
+{
+    LoweringRuleRegistry::registerPlugin("InferModel", RegisterInferModelLoweringRule);
+}
 }

@@ -52,6 +52,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Signal.hpp>
 #include <Util/Strings.hpp>
@@ -819,6 +820,7 @@ int main(int argc, char** argv)
         NES::printVersion("nes-cli");
         return 0;
     }
+    NES::initializePlugins();
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();

@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -55,9 +56,16 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
     return {.root = wrapper, .leaves = {leaves}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterEventTimeWatermarkAssignerLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("EventTimeWatermarkAssigner")
+{
+    LoweringRuleRegistry::registerPlugin("EventTimeWatermarkAssigner", RegisterEventTimeWatermarkAssignerLoweringRule);
 }
 }

@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <Util.hpp>
@@ -160,11 +161,18 @@ size_t MinAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return inputType.getSizeInBytesWithNull();
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMinAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType RegisterMinAggregationPhysicalFunction(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<MinAggregationPhysicalFunction>(
         std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Min")
+{
+    AggregationPhysicalFunctionRegistry::registerPlugin("Min", RegisterMinAggregationPhysicalFunction);
+}
 }

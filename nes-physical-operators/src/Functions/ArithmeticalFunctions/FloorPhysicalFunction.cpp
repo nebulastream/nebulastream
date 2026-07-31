@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -46,8 +47,7 @@ VarVal FloorPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     return value;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterFloorPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterFloorPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Floor function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Floor function must have exactly one input type");
@@ -57,4 +57,12 @@ PhysicalFunctionGeneratedRegistrar::RegisterFloorPhysicalFunction(PhysicalFuncti
         physicalFunctionRegistryArguments.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Floor")
+{
+    PhysicalFunctionRegistry::registerPlugin("Floor", RegisterFloorPhysicalFunction);
+}
 }

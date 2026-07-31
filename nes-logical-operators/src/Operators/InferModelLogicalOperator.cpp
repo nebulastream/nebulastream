@@ -39,9 +39,10 @@
 #include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 #include <ModelCatalog.hpp>
 
 namespace NES
@@ -230,4 +231,15 @@ Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const R
 std::size_t std::hash<NES::InferModelLogicalOperator>::operator()(const NES::InferModelLogicalOperator& op) const noexcept
 {
     return std::hash<std::string>{}(op.getModel().getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("InferModel")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "InferModel",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<InferModelLogicalOperator>>(arguments.data); });
+}
 }

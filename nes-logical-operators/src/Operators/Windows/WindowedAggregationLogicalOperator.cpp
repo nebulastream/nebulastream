@@ -50,6 +50,7 @@
 #include <Util/DynamicBase.hpp>
 #include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -60,7 +61,7 @@
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -465,4 +466,15 @@ std::size_t std::hash<NES::WindowedAggregationLogicalOperator::ProjectedAggregat
     const NES::WindowedAggregationLogicalOperator::ProjectedAggregation& aggregation) const noexcept
 {
     return folly::hash::hash_combine(aggregation.function, aggregation.name);
+}
+
+namespace NES
+{
+ADD_PLUGIN("WindowedAggregation")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "WindowedAggregation",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<WindowedAggregationLogicalOperator>>(arguments.data); });
+}
 }

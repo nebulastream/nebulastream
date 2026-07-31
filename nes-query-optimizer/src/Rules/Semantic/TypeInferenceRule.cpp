@@ -26,7 +26,7 @@
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
-
+#include <Util/Plugin.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -58,9 +58,17 @@ std::set<std::type_index> TypeInferenceRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterTypeInferencePlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterTypeInferencePlanRule(PlanRuleRegistryArguments)
 {
     return TypeInferenceRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("TypeInference")
+{
+    PlanRuleRegistry::registerPlugin("TypeInference", RegisterTypeInferencePlanRule);
+}
 }

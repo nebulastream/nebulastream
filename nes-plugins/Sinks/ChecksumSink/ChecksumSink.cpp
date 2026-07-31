@@ -30,6 +30,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -117,6 +118,16 @@ SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRe
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<ChecksumSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Checksum")
+{
+    SinkValidationRegistry::registerPlugin("Checksum", RegisterChecksumSinkValidation);
+    SinkRegistry::registerPlugin("Checksum", RegisterChecksumSink);
 }
 
 }

@@ -14,8 +14,8 @@
 
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 
-
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Plugin.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -28,8 +28,16 @@ LogicalPlan SemanticAnalysisBarrier::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSemanticAnalysisBarrierPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterSemanticAnalysisBarrierPlanRule(PlanRuleRegistryArguments)
 {
     return SemanticAnalysisBarrier{};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("SemanticAnalysisBarrier")
+{
+    PlanRuleRegistry::registerPlugin("SemanticAnalysisBarrier", RegisterSemanticAnalysisBarrierPlanRule);
 }
 }

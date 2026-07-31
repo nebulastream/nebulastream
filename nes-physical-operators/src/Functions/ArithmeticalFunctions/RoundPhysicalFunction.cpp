@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -47,8 +48,7 @@ VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     return value;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterRoundPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterRoundPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Round function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Round function must have exactly one input type");
@@ -58,4 +58,12 @@ PhysicalFunctionGeneratedRegistrar::RegisterRoundPhysicalFunction(PhysicalFuncti
         physicalFunctionRegistryArguments.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Round")
+{
+    PhysicalFunctionRegistry::registerPlugin("Round", RegisterRoundPhysicalFunction);
+}
 }

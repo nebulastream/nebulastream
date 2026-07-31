@@ -21,6 +21,7 @@
 
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
@@ -174,72 +175,72 @@ bool DataType::isType(const Type type) const
     return this->type == type;
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterCHARDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::CHAR, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterBOOLEANDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::BOOLEAN, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterFLOAT32DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::FLOAT32, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterFLOAT64DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::FLOAT64, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterINT8DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::INT8, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterINT16DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::INT16, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterINT32DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::INT32, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterINT64DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::INT64, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterUINT8DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::UINT8, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterUINT16DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::UINT16, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterUINT32DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::UINT32, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterUINT64DataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::UINT64, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterUNDEFINEDDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::UNDEFINED, args.nullable};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(const DataTypeRegistryArguments args)
+DataTypeRegistryReturnType RegisterVARSIZEDDataType(const DataTypeRegistryArguments args)
 {
     return DataType{DataType::Type::VARSIZED, args.nullable};
 }
@@ -343,4 +344,77 @@ std::ostream& operator<<(std::ostream& os, const DataType& dataType)
     return os << fmt::format("DataType(type: {} nullable: {})", magic_enum::enum_name(dataType.type), dataType.nullable);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("CHAR")
+{
+    DataTypeRegistry::registerPlugin("CHAR", RegisterCHARDataType);
+}
+
+ADD_PLUGIN("BOOLEAN")
+{
+    DataTypeRegistry::registerPlugin("BOOLEAN", RegisterBOOLEANDataType);
+}
+
+ADD_PLUGIN("FLOAT32")
+{
+    DataTypeRegistry::registerPlugin("FLOAT32", RegisterFLOAT32DataType);
+}
+
+ADD_PLUGIN("FLOAT64")
+{
+    DataTypeRegistry::registerPlugin("FLOAT64", RegisterFLOAT64DataType);
+}
+
+ADD_PLUGIN("INT8")
+{
+    DataTypeRegistry::registerPlugin("INT8", RegisterINT8DataType);
+}
+
+ADD_PLUGIN("INT16")
+{
+    DataTypeRegistry::registerPlugin("INT16", RegisterINT16DataType);
+}
+
+ADD_PLUGIN("INT32")
+{
+    DataTypeRegistry::registerPlugin("INT32", RegisterINT32DataType);
+}
+
+ADD_PLUGIN("INT64")
+{
+    DataTypeRegistry::registerPlugin("INT64", RegisterINT64DataType);
+}
+
+ADD_PLUGIN("UINT8")
+{
+    DataTypeRegistry::registerPlugin("UINT8", RegisterUINT8DataType);
+}
+
+ADD_PLUGIN("UINT16")
+{
+    DataTypeRegistry::registerPlugin("UINT16", RegisterUINT16DataType);
+}
+
+ADD_PLUGIN("UINT32")
+{
+    DataTypeRegistry::registerPlugin("UINT32", RegisterUINT32DataType);
+}
+
+ADD_PLUGIN("UINT64")
+{
+    DataTypeRegistry::registerPlugin("UINT64", RegisterUINT64DataType);
+}
+
+ADD_PLUGIN("UNDEFINED")
+{
+    DataTypeRegistry::registerPlugin("UNDEFINED", RegisterUNDEFINEDDataType);
+}
+
+ADD_PLUGIN("VARSIZED")
+{
+    DataTypeRegistry::registerPlugin("VARSIZED", RegisterVARSIZEDDataType);
+}
 }

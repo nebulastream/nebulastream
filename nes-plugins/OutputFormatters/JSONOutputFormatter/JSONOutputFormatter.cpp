@@ -39,6 +39,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Plugin.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -245,14 +246,23 @@ std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
     return out << fmt::format("JSONOutputFormatter()");
 }
 
-OutputFormatterValidationRegistryReturnType
-OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+OutputFormatterValidationRegistryReturnType RegisterJSONOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
 {
     return JSONOutputFormatter::validateAndFormat(std::move(args.config));
 }
 
-OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
+OutputFormatterRegistryReturnType RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
     return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
 }
+}
+
+namespace NES
+{
+ADD_PLUGIN("JSON")
+{
+    OutputFormatterValidationRegistry::registerPlugin("JSON", RegisterJSONOutputFormatterValidation);
+    OutputFormatterRegistry::registerPlugin("JSON", RegisterJSONOutputFormatter);
+}
+
 }

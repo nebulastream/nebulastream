@@ -29,6 +29,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Strings.hpp>
 #include <date/date.h>
 #include <Arena.hpp>
@@ -151,8 +152,7 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     return VarVal{parsedMilliSeconds, value.isNullable(), false}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(
-    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterCastToUnixTsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
         physicalFunctionRegistryArguments.childFunctions.size() == 1,
@@ -162,4 +162,12 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterC
         physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("CastToUnixTs")
+{
+    PhysicalFunctionRegistry::registerPlugin("CastToUnixTs", RegisterCastToUnixTsPhysicalFunction);
+}
 }

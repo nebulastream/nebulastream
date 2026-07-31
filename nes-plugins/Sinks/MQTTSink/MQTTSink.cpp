@@ -29,6 +29,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/UUID.hpp>
 #include <mqtt/async_client.h>
 #include <mqtt/buffer_ref.h>
@@ -219,6 +220,16 @@ SinkValidationRegistryReturnType RegisterMQTTSinkValidation(SinkValidationRegist
 SinkRegistryReturnType RegisterMQTTSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<MQTTSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("MQTT")
+{
+    SinkValidationRegistry::registerPlugin("MQTT", RegisterMQTTSinkValidation);
+    SinkRegistry::registerPlugin("MQTT", RegisterMQTTSink);
 }
 
 }

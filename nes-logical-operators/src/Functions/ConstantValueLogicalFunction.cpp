@@ -30,11 +30,13 @@
 #include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -190,12 +192,25 @@ Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
     std::unreachable();
 }
 
 /// NOLINTEND(performance-unnecessary-value-param)
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("ConstantValue")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "ConstantValue",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ConstantValueLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("ConstantValue", RegisterConstantValueLogicalFunction);
+}
 
 }

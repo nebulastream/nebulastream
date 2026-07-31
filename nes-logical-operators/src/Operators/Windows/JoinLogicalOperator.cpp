@@ -53,6 +53,7 @@
 #include <Util/Hash.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -60,7 +61,7 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -376,4 +377,15 @@ std::size_t std::hash<NES::JoinLogicalOperator>::operator()(const NES::JoinLogic
         joinLogicalOperator.windowType,
         joinLogicalOperator.timestampFields,
         joinLogicalOperator.startEndFields);
+}
+
+namespace NES
+{
+ADD_PLUGIN("Join")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "Join",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<JoinLogicalOperator>>(arguments.data); });
+}
 }

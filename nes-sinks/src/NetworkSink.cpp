@@ -40,6 +40,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Util/Plugin.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -180,6 +181,16 @@ SinkValidationRegistryReturnType RegisterNetworkSinkValidation(SinkValidationReg
 SinkRegistryReturnType RegisterNetworkSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<NetworkSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Network")
+{
+    SinkValidationRegistry::registerPlugin("Network", RegisterNetworkSinkValidation);
+    SinkRegistry::registerPlugin("Network", RegisterNetworkSink);
 }
 
 }

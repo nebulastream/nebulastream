@@ -22,8 +22,10 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -62,4 +64,14 @@ PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflecte
     return PlacementTrait{onNode};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Placement")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "Placement",
+        [](TraitUnreflectionRegistryArguments arguments) { return arguments.context.unreflect<PlacementTrait>(arguments.data); });
+}
 }

@@ -21,6 +21,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -70,8 +71,7 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     return widenedValue;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterAbsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterAbsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Absolute function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Absolute function must have exactly one input type");
@@ -82,4 +82,12 @@ PhysicalFunctionGeneratedRegistrar::RegisterAbsPhysicalFunction(PhysicalFunction
 }
 
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Abs")
+{
+    PhysicalFunctionRegistry::registerPlugin("Abs", RegisterAbsPhysicalFunction);
+}
 }

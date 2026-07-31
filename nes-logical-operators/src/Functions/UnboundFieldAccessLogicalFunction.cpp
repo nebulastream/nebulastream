@@ -35,6 +35,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Util/Plugin.hpp>
 #include <folly/hash/Hash.h>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -107,8 +108,7 @@ Reflected Reflector<UnboundFieldAccessLogicalFunction>::operator()(const Unbound
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterUnboundFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType RegisterUnboundFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "UnboundFieldAccessLogicalFunction cannot be created via registry, instantiate it directly");
     std::unreachable();
@@ -127,4 +127,12 @@ std::size_t
 std::hash<NES::UnboundFieldAccessLogicalFunction>::operator()(const NES::UnboundFieldAccessLogicalFunction& function) const noexcept
 {
     return folly::hash::hash_combine(function.getFieldName(), function.dataType);
+}
+
+namespace NES
+{
+ADD_PLUGIN("UnboundFieldAccess")
+{
+    LogicalFunctionRegistry::registerPlugin("UnboundFieldAccess", RegisterUnboundFieldAccessLogicalFunction);
+}
 }

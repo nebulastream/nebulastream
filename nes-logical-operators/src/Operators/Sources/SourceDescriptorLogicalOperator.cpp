@@ -39,8 +39,10 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -169,4 +171,15 @@ std::size_t std::hash<NES::SourceDescriptorLogicalOperator>::operator()(
     const NES::SourceDescriptorLogicalOperator& sourceDescriptorLogicalOperator) const
 {
     return std::hash<NES::SourceDescriptor>{}(sourceDescriptorLogicalOperator.getSourceDescriptor());
+}
+
+namespace NES
+{
+ADD_PLUGIN("SourceDescriptor")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "SourceDescriptor",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<SourceDescriptorLogicalOperator>>(arguments.data); });
+}
 }

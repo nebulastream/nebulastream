@@ -33,6 +33,9 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h> /// NOLINT(misc-include-cleaner)
 
+#include <Util/Plugin.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
+
 namespace NES
 {
 
@@ -115,14 +118,26 @@ ToBase64LogicalFunction Unreflector<ToBase64LogicalFunction>::operator()(const R
     return ToBase64LogicalFunction{child.value()};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterTO_BASE64LogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterTO_BASE64LogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.empty())
     {
         throw CannotDeserialize("TO_BASE64 requires one argument");
     }
     return ToBase64LogicalFunction(arguments.children.back());
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("TO_BASE64")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "TO_BASE64",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ToBase64LogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("TO_BASE64", RegisterTO_BASE64LogicalFunction);
 }
 
 }

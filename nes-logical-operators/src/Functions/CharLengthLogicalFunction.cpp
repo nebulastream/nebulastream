@@ -26,10 +26,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -97,14 +99,26 @@ Unreflector<CharLengthLogicalFunction>::operator()(const Reflected& reflected, c
     return CharLengthLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCHAR_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterCHAR_LENGTHLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CHAR_LENGTH requires exactly one argument, but got {}", arguments.children.size());
     }
     return CharLengthLogicalFunction(arguments.children.back());
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("CHAR_LENGTH")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "CHAR_LENGTH",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<CharLengthLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("CHAR_LENGTH", RegisterCHAR_LENGTHLogicalFunction);
 }
 
 }

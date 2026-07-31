@@ -38,6 +38,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Plugin.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -209,15 +210,24 @@ DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_ma
     return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
 }
 
-OutputFormatterValidationRegistryReturnType
-OutputFormatterValidationGeneratedRegistrar::RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
+OutputFormatterValidationRegistryReturnType RegisterCSVOutputFormatterValidation(OutputFormatterValidationRegistryArguments args)
 {
     return CSVOutputFormatter::validateAndFormat(args.config);
 }
 
-OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterCSVOutputFormatter(OutputFormatterRegistryArguments args)
+OutputFormatterRegistryReturnType RegisterCSVOutputFormatter(OutputFormatterRegistryArguments args)
 {
     return std::make_unique<CSVOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("CSV")
+{
+    OutputFormatterValidationRegistry::registerPlugin("CSV", RegisterCSVOutputFormatterValidation);
+    OutputFormatterRegistry::registerPlugin("CSV", RegisterCSVOutputFormatter);
 }
 
 }

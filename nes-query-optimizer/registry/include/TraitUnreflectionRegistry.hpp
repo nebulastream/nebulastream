@@ -16,14 +16,17 @@
 
 #include <string>
 #include <Traits/Trait.hpp>
-#include <Util/UnreflectionRegistry.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES
 {
 
 using TraitUnreflectionRegistryReturnType = Trait;
+using TraitUnreflectionRegistryArguments = UnreflectionArguments;
 
-class TraitUnreflectionRegistry : public UnreflectionRegistry<TraitUnreflectionRegistry, std::string, TraitUnreflectionRegistryReturnType>
+class TraitUnreflectionRegistry
+    : public Registry<TraitUnreflectionRegistry, std::string, TraitUnreflectionRegistryReturnType, TraitUnreflectionRegistryArguments, true>
 {
 };
 

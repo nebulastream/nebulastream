@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -38,11 +39,18 @@ VarVal SqrtPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     return VarVal{nautilus::sqrt(value.getRawValueAs<nautilus::val<double>>())}.castToType(outputType.type);
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterSqrtPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterSqrtPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Sqrt function must have exactly one child function");
     return SqrtPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sqrt")
+{
+    PhysicalFunctionRegistry::registerPlugin("Sqrt", RegisterSqrtPhysicalFunction);
+}
 }

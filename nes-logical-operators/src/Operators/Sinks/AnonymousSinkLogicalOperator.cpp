@@ -25,7 +25,6 @@
 
 #include <fmt/format.h>
 
-
 #include <DataTypes/Schema.hpp> /// NOLINT(misc-include-cleaner)
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -37,9 +36,11 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -172,4 +173,15 @@ Unreflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(cons
 uint64_t std::hash<NES::AnonymousSinkLogicalOperator>::operator()(const NES::AnonymousSinkLogicalOperator& op) const noexcept
 {
     return folly::hash::hash_combine_generic(NES::Hash{}, op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
+}
+
+namespace NES
+{
+ADD_PLUGIN("AnonymousSink")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "AnonymousSink",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<AnonymousSinkLogicalOperator>>(arguments.data); });
+}
 }

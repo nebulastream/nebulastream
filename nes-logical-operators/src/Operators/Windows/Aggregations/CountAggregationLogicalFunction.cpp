@@ -31,10 +31,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -118,8 +120,7 @@ Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflec
     return CountAggregationLogicalFunction{std::move(inputFunction), includeNullValues};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -134,4 +135,17 @@ std::hash<NES::CountAggregationLogicalFunction>::operator()(const NES::CountAggr
 {
     return folly::hash::hash_combine(
         aggregationFunction.getInputFunction(), aggregationFunction.getName(), aggregationFunction.shallIncludeNullValues());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Count")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Count",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<CountAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Count", RegisterCountAggregationLogicalFunction);
+}
+
 }

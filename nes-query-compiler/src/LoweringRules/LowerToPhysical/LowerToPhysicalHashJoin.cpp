@@ -71,6 +71,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -485,10 +486,17 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     return {.root = {probeWrapper}, .leaves = {leftLeaf, rightLeaf}};
 };
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterHashJoinLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterHashJoinLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalHashJoin>(argument.conf);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("HashJoin")
+{
+    LoweringRuleRegistry::registerPlugin("HashJoin", RegisterHashJoinLoweringRule);
+}
 }

@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -101,13 +103,26 @@ LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return LessLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Less")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Less",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<LessLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Less", RegisterLessLogicalFunction);
 }
 
 }

@@ -31,11 +31,7 @@ struct LoweringRuleRegistryArguments
 };
 
 class LoweringRuleRegistry
-    : public BaseRegistry<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>
+    : public Registry<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_LOWERING_RULE
-#include <LoweringRuleGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOWERING_RULE

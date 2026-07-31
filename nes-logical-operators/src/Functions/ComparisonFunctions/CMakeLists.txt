@@ -10,12 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater LogicalFunction GreaterLogicalFunction.cpp)
-add_plugin(GreaterEquals LogicalFunction GreaterEqualsLogicalFunction.cpp)
-add_plugin(Less LogicalFunction LessLogicalFunction.cpp)
-add_plugin(LessEquals LogicalFunction LessEqualsLogicalFunction.cpp)
-
-add_unreflection_plugin(LogicalFunction Greater)
-add_unreflection_plugin(LogicalFunction GreaterEquals)
-add_unreflection_plugin(LogicalFunction Less)
-add_unreflection_plugin(LogicalFunction LessEquals)
+add_source_files(nes-logical-operators
+        GreaterLogicalFunction.cpp
+        GreaterEqualsLogicalFunction.cpp
+        LessLogicalFunction.cpp
+        LessEqualsLogicalFunction.cpp
+)

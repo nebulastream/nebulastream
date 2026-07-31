@@ -30,10 +30,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -106,8 +108,7 @@ Unreflector<MaxAggregationLogicalFunction>::operator()(const Reflected& reflecte
     return MaxAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterMaxAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -121,4 +122,17 @@ size_t
 std::hash<NES::MaxAggregationLogicalFunction>::operator()(const NES::MaxAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::MaxAggregationLogicalFunction::getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Max")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Max",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<MaxAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Max", RegisterMaxAggregationLogicalFunction);
+}
+
 }

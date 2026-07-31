@@ -28,7 +28,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
-
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -71,9 +71,17 @@ std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
 {
     return RedundantUnionRemovalRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("RedundantUnionRemoval")
+{
+    PlanRuleRegistry::registerPlugin("RedundantUnionRemoval", RegisterRedundantUnionRemovalPlanRule);
+}
 }

@@ -20,11 +20,12 @@ add_source_files(nes-query-optimizer
         CalcTargetOrderRule.cpp
 )
 
-add_plugin(AnonymousSinkBinding PlanRule AnonymousSinkBindingRule.cpp)
-add_plugin(AnonymousSourceBinding PlanRule AnonymousSourceBindingRule.cpp)
-add_plugin(LogicalSourceExpansion PlanRule LogicalSourceExpansionRule.cpp)
-add_plugin(TypeInference PlanRule TypeInferenceRule.cpp)
-add_plugin(SinkBinding PlanRule SinkBindingRule.cpp)
-add_plugin(InferModelResolution PlanRule InferModelResolutionRule.cpp)
-add_plugin(CalcTargetOrder PlanRule CalcTargetOrderRule.cpp)
-
+add_source_files(nes-query-optimizer
+        AnonymousSinkBindingRule.cpp
+        AnonymousSourceBindingRule.cpp
+        LogicalSourceExpansionRule.cpp
+        TypeInferenceRule.cpp
+        SinkBindingRule.cpp
+        InferModelResolutionRule.cpp
+        CalcTargetOrderRule.cpp
+)

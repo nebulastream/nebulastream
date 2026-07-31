@@ -34,9 +34,10 @@
 #include <Schema/Field.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -180,4 +181,15 @@ uint64_t std::hash<NES::IngestionTimeWatermarkAssignerLogicalOperator>::operator
     const NES::IngestionTimeWatermarkAssignerLogicalOperator&) const noexcept
 {
     return 35890319; /// NOLINT(readability-magic-numbers)
+}
+
+namespace NES
+{
+ADD_PLUGIN("IngestionTimeWatermarkAssigner")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "IngestionTimeWatermarkAssigner",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>(arguments.data); });
+}
 }

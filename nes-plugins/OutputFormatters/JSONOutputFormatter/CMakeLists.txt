@@ -10,20 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(JSON OutputFormatter json_output_formatter_plugin JSONOutputFormatter.cpp)
-add_plugin_as_library(JSON OutputFormatterValidation json_output_formatter_validation_plugin JSONOutputFormatter.cpp)
+target_sources(nes-output-formatters PRIVATE JSONOutputFormatter.cpp)
 
-target_include_directories(json_output_formatter_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_include_directories(json_output_formatter_validation_plugin
+target_include_directories(nes-output-formatters
         PUBLIC include
         PRIVATE .
 )
 
 find_package(simdjson CONFIG REQUIRED)
-target_link_libraries(json_output_formatter_plugin PRIVATE simdjson::simdjson)
-target_link_libraries(json_output_formatter_validation_plugin PRIVATE simdjson::simdjson)
+target_link_libraries(nes-output-formatters PRIVATE simdjson::simdjson)

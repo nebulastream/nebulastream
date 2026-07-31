@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -109,13 +111,26 @@ MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& 
     return MulLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return MulLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Mul")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Mul",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<MulLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Mul", RegisterMulLogicalFunction);
 }
 
 }

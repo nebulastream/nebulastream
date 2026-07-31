@@ -31,11 +31,7 @@ struct PhysicalFunctionRegistryArguments
 };
 
 class PhysicalFunctionRegistry
-    : public BaseRegistry<PhysicalFunctionRegistry, std::string, PhysicalFunctionRegistryReturnType, PhysicalFunctionRegistryArguments>
+    : public Registry<PhysicalFunctionRegistry, std::string, PhysicalFunctionRegistryReturnType, PhysicalFunctionRegistryArguments>
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
-#include <PhysicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION

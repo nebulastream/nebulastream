@@ -23,6 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -209,8 +210,7 @@ size_t AvgAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return (inputType.nullable ? sizeof(bool) : 0) + sumSize + countTypeSize;
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterAvgAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType RegisterAvgAggregationPhysicalFunction(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<AvgAggregationPhysicalFunction>(
         std::move(arguments.inputType),
@@ -220,4 +220,12 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
         arguments.includeNullValues);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Avg")
+{
+    AggregationPhysicalFunctionRegistry::registerPlugin("Avg", RegisterAvgAggregationPhysicalFunction);
+}
 }

@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -60,6 +61,16 @@ SinkValidationRegistryReturnType RegisterVoidSinkValidation(SinkValidationRegist
 SinkRegistryReturnType RegisterVoidSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<VoidSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Void")
+{
+    SinkValidationRegistry::registerPlugin("Void", RegisterVoidSinkValidation);
+    SinkRegistry::registerPlugin("Void", RegisterVoidSink);
 }
 
 }

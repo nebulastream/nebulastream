@@ -41,6 +41,7 @@
 #include <Schema/Field.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -151,8 +152,16 @@ std::set<std::type_index> CalcTargetOrderRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterCalcTargetOrderPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterCalcTargetOrderPlanRule(PlanRuleRegistryArguments)
 {
     return CalcTargetOrderRule{};
 }
 };
+
+namespace NES
+{
+ADD_PLUGIN("CalcTargetOrder")
+{
+    PlanRuleRegistry::registerPlugin("CalcTargetOrder", RegisterCalcTargetOrderPlanRule);
+}
+}

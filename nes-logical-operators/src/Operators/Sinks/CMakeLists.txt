@@ -14,9 +14,3 @@ add_source_files(nes-logical-operators
         AnonymousSinkLogicalOperator.cpp
         SinkLogicalOperator.cpp
 )
-
-add_plugin(AnonymousSink LogicalOperator AnonymousSinkLogicalOperator.cpp)
-add_plugin(Sink LogicalOperator SinkLogicalOperator.cpp)
-
-add_unreflection_plugin(LogicalOperator AnonymousSink)
-add_unreflection_plugin(LogicalOperator Sink)

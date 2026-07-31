@@ -31,6 +31,8 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -79,5 +81,15 @@ std::string FieldOrderingTrait::explain(ExplainVerbosity) const
 size_t FieldOrderingTrait::hash() const
 {
     return folly::hash::hash_range(orderedFields.begin(), orderedFields.end());
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("FieldOrdering")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "FieldOrdering",
+        [](TraitUnreflectionRegistryArguments arguments) { return arguments.context.unreflect<FieldOrderingTrait>(arguments.data); });
 }
 }

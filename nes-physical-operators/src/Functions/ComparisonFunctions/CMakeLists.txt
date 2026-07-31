@@ -10,7 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater PhysicalFunction GreaterPhysicalFunction.cpp)
-add_plugin(GreaterEquals PhysicalFunction GreaterEqualsPhysicalFunction.cpp)
-add_plugin(Less PhysicalFunction LessPhysicalFunction.cpp)
-add_plugin(LessEquals PhysicalFunction LessEqualsPhysicalFunction.cpp)
+add_source_files(nes-physical-operators
+        GreaterPhysicalFunction.cpp
+        GreaterEqualsPhysicalFunction.cpp
+        LessPhysicalFunction.cpp
+        LessEqualsPhysicalFunction.cpp
+)

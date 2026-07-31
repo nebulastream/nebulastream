@@ -17,19 +17,6 @@ add_source_files(nes-data-types
         )
 
 # Register plugins
-add_plugin(BOOLEAN DataType DataType.cpp)
-add_plugin(CHAR DataType DataType.cpp)
-add_plugin(FLOAT32 DataType DataType.cpp)
-add_plugin(FLOAT64 DataType DataType.cpp)
-add_plugin(INT8 DataType DataType.cpp)
-add_plugin(INT16 DataType DataType.cpp)
-add_plugin(INT32 DataType DataType.cpp)
-add_plugin(INT64 DataType DataType.cpp)
-add_plugin(UINT8 DataType DataType.cpp)
-add_plugin(UINT16 DataType DataType.cpp)
-add_plugin(UINT32 DataType DataType.cpp)
-add_plugin(UINT64 DataType DataType.cpp)
-add_plugin(UNDEFINED DataType DataType.cpp)
-add_plugin(VARSIZED DataType DataType.cpp)
-
-
+add_source_files(nes-data-types
+        DataType.cpp
+)

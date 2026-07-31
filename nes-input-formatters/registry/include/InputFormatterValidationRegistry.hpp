@@ -30,7 +30,7 @@ struct InputFormatterValidationRegistryArguments
     std::unordered_map<std::string, std::string> config;
 };
 
-class InputFormatterValidationRegistry final : public BaseRegistry<
+class InputFormatterValidationRegistry final : public Registry<
                                                    InputFormatterValidationRegistry,
                                                    std::string,
                                                    InputFormatterValidationRegistryReturnType,
@@ -38,7 +38,3 @@ class InputFormatterValidationRegistry final : public BaseRegistry<
 {
 };
 }
-
-#define INCLUDED_FROM_INPUT_FORMATTER_VALIDATION_REGISTRY
-#include <InputFormatterValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_INPUT_FORMATTER_VALIDATION_REGISTRY

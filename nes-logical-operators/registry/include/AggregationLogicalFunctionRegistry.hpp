@@ -33,7 +33,7 @@ struct AggregationLogicalFunctionRegistryArguments
     bool includeNullValues;
 };
 
-class AggregationLogicalFunctionRegistry : public BaseRegistry<
+class AggregationLogicalFunctionRegistry : public Registry<
                                                AggregationLogicalFunctionRegistry,
                                                std::string,
                                                AggregationLogicalFunctionRegistryReturnType,
@@ -41,7 +41,3 @@ class AggregationLogicalFunctionRegistry : public BaseRegistry<
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
-#include <AggregationLogicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION

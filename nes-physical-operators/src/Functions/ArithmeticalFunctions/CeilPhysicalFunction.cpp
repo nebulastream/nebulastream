@@ -19,6 +19,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <std/cmath.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -46,8 +47,7 @@ VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     return value;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterCeilPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Ceil function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Ceil function must have exactly one input type");
@@ -55,5 +55,13 @@ PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctio
         physicalFunctionRegistryArguments.childFunctions[0],
         physicalFunctionRegistryArguments.inputTypes[0],
         physicalFunctionRegistryArguments.outputType);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Ceil")
+{
+    PhysicalFunctionRegistry::registerPlugin("Ceil", RegisterCeilPhysicalFunction);
 }
 }

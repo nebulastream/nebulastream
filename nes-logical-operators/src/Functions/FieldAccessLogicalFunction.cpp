@@ -31,10 +31,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -117,7 +119,7 @@ Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected, 
 }
 
 /// NOLINTBEGIN(performance-unnecessary-value-param)
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionRegistryReturnType RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
     std::unreachable();
@@ -130,4 +132,17 @@ std::size_t
 std::hash<NES::FieldAccessLogicalFunction>::operator()(const NES::FieldAccessLogicalFunction& fieldAccessFunction) const noexcept
 {
     return std::hash<NES::Field>()(fieldAccessFunction.getField());
+}
+
+namespace NES
+{
+ADD_PLUGIN("FieldAccess")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "FieldAccess",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<FieldAccessLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("FieldAccess", RegisterFieldAccessLogicalFunction);
+}
+
 }

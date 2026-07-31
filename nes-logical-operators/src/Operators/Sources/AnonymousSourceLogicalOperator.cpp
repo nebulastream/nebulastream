@@ -37,8 +37,10 @@
 #include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -175,4 +177,15 @@ uint64_t std::hash<NES::AnonymousSourceLogicalOperator>::operator()(const NES::A
 {
     return folly::hash::hash_combine_generic(
         NES::Hash{}, op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());
+}
+
+namespace NES
+{
+ADD_PLUGIN("AnonymousSource")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "AnonymousSource",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<AnonymousSourceLogicalOperator>>(arguments.data); });
+}
 }

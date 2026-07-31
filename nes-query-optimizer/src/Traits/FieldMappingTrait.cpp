@@ -26,9 +26,11 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -101,4 +103,14 @@ size_t FieldMappingTrait::hash() const
     /// NOLINTEND(readability-magic-numbers)
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("FieldMapping")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "FieldMapping",
+        [](TraitUnreflectionRegistryArguments arguments) { return arguments.context.unreflect<FieldMappingTrait>(arguments.data); });
+}
 }

@@ -29,10 +29,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -104,13 +106,26 @@ AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& 
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("And")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "And",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<AndLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("And", RegisterAndLogicalFunction);
 }
 
 }

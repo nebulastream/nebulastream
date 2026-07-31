@@ -37,11 +37,7 @@ struct PlanRuleRegistryArguments
     std::shared_ptr<const ModelCatalog> modelCatalog;
 };
 
-class PlanRuleRegistry : public BaseRegistry<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>
+class PlanRuleRegistry : public Registry<PlanRuleRegistry, std::string, PlanRuleRegistryReturnType, PlanRuleRegistryArguments>
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_PLAN_RULE
-#include <PlanRuleGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_PLAN_RULE

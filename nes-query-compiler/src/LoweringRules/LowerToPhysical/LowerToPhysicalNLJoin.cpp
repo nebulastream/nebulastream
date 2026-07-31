@@ -62,6 +62,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -272,10 +273,17 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     return {.root = {probeWrapper}, .leaves = {leftBuildWrapper, rightBuildWrapper}};
 };
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterNLJoinLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterNLJoinLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalNLJoin>(argument.conf);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("NLJoin")
+{
+    LoweringRuleRegistry::registerPlugin("NLJoin", RegisterNLJoinLoweringRule);
+}
 }

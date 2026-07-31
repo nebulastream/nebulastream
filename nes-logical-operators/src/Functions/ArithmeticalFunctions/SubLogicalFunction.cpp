@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -106,13 +108,26 @@ SubLogicalFunction Unreflector<SubLogicalFunction>::operator()(const Reflected& 
     return SubLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());
     }
     return SubLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sub")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Sub",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<SubLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Sub", RegisterSubLogicalFunction);
 }
 
 }

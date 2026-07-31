@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -111,7 +113,7 @@ DivLogicalFunction Unreflector<DivLogicalFunction>::operator()(const Reflected& 
     return DivLogicalFunction{std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {
@@ -120,5 +122,18 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDiv
     return DivLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Div")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Div",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<DivLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Div", RegisterDivLogicalFunction);
+}
 
 }

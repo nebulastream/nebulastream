@@ -30,10 +30,12 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -107,14 +109,26 @@ ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Refle
     return ConcatLogicalFunction{left, right};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() < 2)
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
     }
     return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1));
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Concat")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Concat",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<ConcatLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Concat", RegisterConcatLogicalFunction);
 }
 
 }

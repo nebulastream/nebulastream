@@ -30,12 +30,8 @@ struct SinkValidationRegistryArguments
 };
 
 class SinkValidationRegistry final
-    : public BaseRegistry<SinkValidationRegistry, std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>
+    : public Registry<SinkValidationRegistry, std::string, SinkValidationRegistryReturnType, SinkValidationRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SINK_VALIDATION_REGISTRY
-#include <SinkValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_VALIDATION_REGISTRY

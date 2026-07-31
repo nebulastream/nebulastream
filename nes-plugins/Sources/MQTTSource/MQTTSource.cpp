@@ -34,6 +34,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/UUID.hpp>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -233,9 +234,19 @@ SourceValidationRegistryReturnType RegisterMQTTSourceValidation(SourceValidation
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param): registry signature fixed by framework.
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType RegisterMQTTSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<MQTTSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("MQTT")
+{
+    SourceValidationRegistry::registerPlugin("MQTT", RegisterMQTTSourceValidation);
+    SourceRegistry::registerPlugin("MQTT", RegisterMQTTSource);
 }
 
 }

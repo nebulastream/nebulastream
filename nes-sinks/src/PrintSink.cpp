@@ -28,6 +28,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -94,6 +95,16 @@ SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegis
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Print")
+{
+    SinkValidationRegistry::registerPlugin("Print", RegisterPrintSinkValidation);
+    SinkRegistry::registerPlugin("Print", RegisterPrintSink);
 }
 
 }

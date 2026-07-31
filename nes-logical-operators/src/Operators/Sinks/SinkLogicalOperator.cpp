@@ -49,6 +49,8 @@
 #include <ErrorHandling.hpp>
 ///NOLINTNEXTLINE(misc-include-cleaner)
 #include <DataTypes/UnboundSchema.hpp>
+#include <Util/Plugin.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -302,4 +304,15 @@ Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflect
 std::size_t std::hash<NES::SinkLogicalOperator>::operator()(const NES::SinkLogicalOperator& sinkLogicalOperator) const noexcept
 {
     return folly::hash::hash_combine(sinkLogicalOperator.sinkName, sinkLogicalOperator.sinkDescriptor);
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sink")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "Sink",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<SinkLogicalOperator>>(arguments.data); });
+}
 }

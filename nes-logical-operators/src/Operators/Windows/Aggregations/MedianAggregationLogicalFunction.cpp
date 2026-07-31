@@ -34,9 +34,11 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -105,8 +107,7 @@ Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& refle
     return MedianAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMedianAggregationLogicalFunction(
-    AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterMedianAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -120,4 +121,17 @@ size_t std::hash<NES::MedianAggregationLogicalFunction>::operator()(
     const NES::MedianAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::MedianAggregationLogicalFunction::getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Median")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Median",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<MedianAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Median", RegisterMedianAggregationLogicalFunction);
+}
+
 }

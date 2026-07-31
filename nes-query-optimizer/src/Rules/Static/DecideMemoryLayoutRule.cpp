@@ -25,6 +25,7 @@
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -55,9 +56,17 @@ LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOper
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideMemoryLayoutPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterDecideMemoryLayoutPlanRule(PlanRuleRegistryArguments)
 {
     return DecideMemoryLayoutRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("DecideMemoryLayout")
+{
+    PlanRuleRegistry::registerPlugin("DecideMemoryLayout", RegisterDecideMemoryLayoutPlanRule);
+}
 }

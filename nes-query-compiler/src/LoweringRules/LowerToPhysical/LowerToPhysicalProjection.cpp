@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -37,6 +36,7 @@
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -134,9 +134,16 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     return {.root = child, .leaves = {scanWrapper}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterProjectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterProjectionLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalProjection>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Projection")
+{
+    LoweringRuleRegistry::registerPlugin("Projection", RegisterProjectionLoweringRule);
 }
 }

@@ -36,18 +36,10 @@ Registering a rule plugin consists of:
 The following is the commented `CMakeLists.txt` file for the RedundantUnionRemovalRule plugin. 
 
 ```cmake
-# Load Plugin Registry Utils
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+# 1) Add the implementation to its component
+target_sources(nes-query-optimizer PRIVATE RedundantUnionRemovalRule.cpp)
 
-# 1) Register Plugin 
-add_plugin_as_library(
-        RedundantUnionRemoval               # Plugin Name 
-        PlanRule                            # Registry Name
-        RedundantUnionRemovalRulePlugin     # Plugin library Name
-        RedundantUnionRemovalRule.cpp)      # List of source files
-
-
-target_include_directories(RedundantUnionRemovalRulePlugin
+target_include_directories(nes-query-optimizer
         PUBLIC include
         PRIVATE .
 )
@@ -60,7 +52,7 @@ if (NES_ENABLES_TESTS)
 endif ()
 ```
 
-To activate the plugin, you must add the line `activate_optional_plugin("Rules/RedundantUnionRemovalRule" ON)` to `nes-plugins/CMakeLists.txt`.  
+To activate the plugin, add `add_subdirectory(Rules/RedundantUnionRemovalRule)` to `nes-plugins/CMakeLists.txt`. Remove that line to disable it.
 
 
 For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
@@ -230,18 +222,16 @@ std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
 }
 ```
 
-To ensure that the NebulaStream optimizer is able to instantiate the newly created rule, we define the registration function.
+To ensure that the NebulaStream optimizer is able to instantiate the newly created rule, define its construction function and register it in the plugin hook.
 While the `PlanRuleRegistryArguments` gives us access to multiple catalogs and also the optimizer configuration, 
 we do not need either for the given rule, and thus can safely ignore it. 
-The name of the registration must follow the pattern
-`PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::Register<PLUGIN_NAME>PlanRule(PlanRuleRegistryArguments)`, 
-where `<PLUGIN_NAME>` is equal to the plugin name defined in the plugin's CMakeLists.txt file. 
-
 ```cpp
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
 {
     return RedundantUnionRemovalRule{};
 }
+
+ADD_PLUGIN(PlanRuleRegistry, "RedundantUnionRemoval", RegisterRedundantUnionRemovalPlanRule);
 ```
 
 Last, it is good practice to define unit tests for the rule to ensure it works as expected. 

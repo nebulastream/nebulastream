@@ -33,11 +33,7 @@ struct LogicalFunctionRegistryArguments
 };
 
 class LogicalFunctionRegistry
-    : public BaseRegistry<LogicalFunctionRegistry, std::string, LogicalFunctionRegistryReturnType, LogicalFunctionRegistryArguments>
+    : public Registry<LogicalFunctionRegistry, std::string, LogicalFunctionRegistryReturnType, LogicalFunctionRegistryArguments>
 {
 };
 }
-
-#define INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION
-#include <LogicalFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_LOGICAL_FUNCTION

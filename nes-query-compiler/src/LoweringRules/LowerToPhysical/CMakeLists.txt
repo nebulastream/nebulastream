@@ -10,14 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
-add_plugin(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
-add_plugin(Selection LoweringRule LowerToPhysicalSelection.cpp)
-add_plugin(Projection LoweringRule LowerToPhysicalProjection.cpp)
-add_plugin(WindowedAggregation LoweringRule LowerToPhysicalWindowedAggregation.cpp)
-add_plugin(Union LoweringRule LowerToPhysicalUnion.cpp)
-add_plugin(Sink LoweringRule LowerToPhysicalSink.cpp)
-add_plugin(SourceDescriptor LoweringRule LowerToPhysicalSource.cpp)
-add_plugin(IngestionTimeWatermarkAssigner LoweringRule LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
-add_plugin(EventTimeWatermarkAssigner LoweringRule LowerToPhysicalEventTimeWatermarkAssigner.cpp)
-add_plugin(InferModel LoweringRule LowerToPhysicalInferModel.cpp)
+add_source_files(nes-query-compiler
+        LowerToPhysicalNLJoin.cpp
+        LowerToPhysicalHashJoin.cpp
+        LowerToPhysicalSelection.cpp
+        LowerToPhysicalProjection.cpp
+        LowerToPhysicalWindowedAggregation.cpp
+        LowerToPhysicalUnion.cpp
+        LowerToPhysicalSink.cpp
+        LowerToPhysicalSource.cpp
+        LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
+        LowerToPhysicalEventTimeWatermarkAssigner.cpp
+        LowerToPhysicalInferModel.cpp
+)

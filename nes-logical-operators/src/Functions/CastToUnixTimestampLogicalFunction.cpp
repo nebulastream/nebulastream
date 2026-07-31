@@ -29,10 +29,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -113,14 +115,26 @@ Unreflector<CastToUnixTimestampLogicalFunction>::operator()(const Reflected& ref
     return CastToUnixTimestampLogicalFunction{std::move(function)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return CastToUnixTimestampLogicalFunction{arguments.children[0]};
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("CastToUnixTs")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "CastToUnixTs",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<CastToUnixTimestampLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("CastToUnixTs", RegisterCastToUnixTsLogicalFunction);
 }
 
 }

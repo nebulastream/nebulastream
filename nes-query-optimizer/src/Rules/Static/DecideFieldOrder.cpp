@@ -38,6 +38,7 @@
 #include <Schema/Field.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -178,8 +179,16 @@ LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideFieldOrderPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterDecideFieldOrderPlanRule(PlanRuleRegistryArguments)
 {
     return DecideFieldOrder{};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("DecideFieldOrder")
+{
+    PlanRuleRegistry::registerPlugin("DecideFieldOrder", RegisterDecideFieldOrderPlanRule);
 }
 }

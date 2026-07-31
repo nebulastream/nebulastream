@@ -19,6 +19,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Signal.hpp>
 #include <cpptrace/from_current.hpp>
 #include <grpcpp/security/server_credentials.h>
@@ -64,6 +65,7 @@ int main(const int argc, const char* argv[])
         NES::printVersion("nes-single-node-worker");
         return 0;
     }
+    NES::initializePlugins();
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();

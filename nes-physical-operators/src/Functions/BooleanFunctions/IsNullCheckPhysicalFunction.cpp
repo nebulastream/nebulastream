@@ -17,6 +17,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -34,11 +35,18 @@ IsNullCheckPhysicalFunction::IsNullCheckPhysicalFunction(PhysicalFunction childF
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterIsNullPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterIsNullPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNull function must have exactly one sub-function");
     return IsNullCheckPhysicalFunction{physicalFunctionRegistryArguments.childFunctions[0]};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("IsNull")
+{
+    PhysicalFunctionRegistry::registerPlugin("IsNull", RegisterIsNullPhysicalFunction);
+}
 }

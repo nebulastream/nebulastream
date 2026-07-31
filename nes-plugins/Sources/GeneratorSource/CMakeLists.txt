@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(Generator Source generator_source_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
-add_plugin_as_library(Generator SourceValidation generator_validation_plugin_library GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
+target_sources(nes-sources PRIVATE GeneratorSource.cpp Generator.cpp GeneratorFields.cpp FixedGeneratorRate.cpp SinusGeneratorRate.cpp)
 
-target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
-target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
-target_compile_definitions(generator_validation_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
+target_include_directories(nes-sources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+target_compile_definitions(nes-sources PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")

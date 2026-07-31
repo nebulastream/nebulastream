@@ -40,10 +40,11 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -206,4 +207,15 @@ uint64_t std::hash<NES::EventTimeWatermarkAssignerLogicalOperator>::operator()(
     const NES::EventTimeWatermarkAssignerLogicalOperator& eventTimeWatermarkAssignerOperator) const noexcept
 {
     return folly::hash::hash_combine(eventTimeWatermarkAssignerOperator.unit, eventTimeWatermarkAssignerOperator.onField);
+}
+
+namespace NES
+{
+ADD_PLUGIN("EventTimeWatermarkAssigner")
+{
+    LogicalOperatorUnreflectionRegistry::registerPlugin(
+        "EventTimeWatermarkAssigner",
+        [](LogicalOperatorUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>(arguments.data); });
+}
 }

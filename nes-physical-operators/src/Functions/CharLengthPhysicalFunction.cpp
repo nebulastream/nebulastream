@@ -20,6 +20,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -55,10 +56,17 @@ VarVal CharLengthPhysicalFunction::execute(const Record& record, ArenaRef& arena
     return VarVal{count, inputValue.isNullable(), inputValue.isNull()};
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCHAR_LENGTHPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterCHAR_LENGTHPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "CHAR_LENGTH function must have exactly one child function");
     return CharLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("CHAR_LENGTH")
+{
+    PhysicalFunctionRegistry::registerPlugin("CHAR_LENGTH", RegisterCHAR_LENGTHPhysicalFunction);
 }
 }

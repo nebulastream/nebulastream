@@ -27,6 +27,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
@@ -98,10 +99,20 @@ SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidat
     return NetworkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(
-    SourceRegistryArguments sourceRegistryArguments) /// NOLINT(performance-unnecessary-value-param)
+SourceRegistryReturnType
+RegisterNetworkSource(SourceRegistryArguments sourceRegistryArguments) /// NOLINT(performance-unnecessary-value-param)
 {
     return std::make_unique<NetworkSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Network")
+{
+    SourceValidationRegistry::registerPlugin("Network", RegisterNetworkSourceValidation);
+    SourceRegistry::registerPlugin("Network", RegisterNetworkSource);
 }
 
 }

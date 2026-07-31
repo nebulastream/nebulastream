@@ -38,6 +38,7 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Util/Plugin.hpp>
 #include <MapPhysicalOperator.hpp>
 
 namespace NES
@@ -141,9 +142,16 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
     return {.root = wrapper, .leaves = {leaves}};
 }
 
-std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterSinkLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule> RegisterSinkLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSink>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("Sink")
+{
+    LoweringRuleRegistry::registerPlugin("Sink", RegisterSinkLoweringRule);
 }
 }

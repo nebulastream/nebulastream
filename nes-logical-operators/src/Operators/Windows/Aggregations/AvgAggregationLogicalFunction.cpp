@@ -31,10 +31,12 @@
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionUnreflectionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -104,8 +106,7 @@ Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflecte
     return AvgAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType
-AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+AggregationLogicalFunctionRegistryReturnType RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
     {
@@ -119,4 +120,17 @@ size_t
 std::hash<NES::AvgAggregationLogicalFunction>::operator()(const NES::AvgAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::AvgAggregationLogicalFunction::getName());
+}
+
+namespace NES
+{
+ADD_PLUGIN("Avg")
+{
+    AggregationLogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Avg",
+        [](AggregationLogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<AvgAggregationLogicalFunction>(arguments.data); });
+    AggregationLogicalFunctionRegistry::registerPlugin("Avg", RegisterAvgAggregationLogicalFunction);
+}
+
 }

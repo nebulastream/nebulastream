@@ -30,6 +30,7 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Plugin.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -268,8 +269,8 @@ size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return static_cast<uint64_t>(inputType.nullable) + sizeof(TupleBuffer);
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType
+RegisterMedianAggregationPhysicalFunction(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     INVARIANT(arguments.tupleLayout.has_value(), "Tuple layout paged vector not set");
     return std::make_shared<MedianAggregationPhysicalFunction>(
@@ -280,4 +281,12 @@ AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGenerat
         arguments.tupleLayout.value());
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Median")
+{
+    AggregationPhysicalFunctionRegistry::registerPlugin("Median", RegisterMedianAggregationPhysicalFunction);
+}
 }

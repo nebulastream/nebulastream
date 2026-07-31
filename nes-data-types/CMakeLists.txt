@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 # Set Sources and Headers
 add_subdirectory(src)
 
@@ -32,4 +29,4 @@ endif ()
 
 add_tests_if_enabled(tests)
 
-create_registries_for_component(DataType)
+enable_plugin_component()

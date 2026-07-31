@@ -58,8 +58,8 @@ std::optional<LogicalOperator> ReflectedPlan::getOperator(OperatorId operatorId,
     }
     if (const auto& foundReflected = reflectedOperators.find(operatorId); foundReflected != reflectedOperators.end())
     {
-        auto createdOpt = LogicalOperatorUnreflectionRegistry::instance().unreflect(
-            foundReflected->second.type, foundReflected->second.config, context);
+        auto createdOpt = LogicalOperatorUnreflectionRegistry::instance().create(
+            foundReflected->second.type, LogicalOperatorUnreflectionRegistryArguments{foundReflected->second.config, context});
         if (!createdOpt.has_value())
         {
             throw CannotDeserialize("Could not create operator of type {}", foundReflected->second.type);

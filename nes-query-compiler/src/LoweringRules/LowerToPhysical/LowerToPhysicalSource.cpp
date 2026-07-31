@@ -29,6 +29,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -72,9 +73,16 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
     return {.root = wrapper, .leaves = {}};
 }
 
-LoweringRuleRegistryReturnType
-LoweringRuleGeneratedRegistrar::RegisterSourceDescriptorLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+LoweringRuleRegistryReturnType RegisterSourceDescriptorLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSource>(argument.conf);
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("SourceDescriptor")
+{
+    LoweringRuleRegistry::registerPlugin("SourceDescriptor", RegisterSourceDescriptorLoweringRule);
 }
 }

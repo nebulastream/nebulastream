@@ -48,10 +48,10 @@
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Schema/Field.hpp>
+#include <Util/Plugin.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -502,9 +502,17 @@ std::set<std::type_index> ProjectionPushdownRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterProjectionPushdownPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterProjectionPushdownPlanRule(PlanRuleRegistryArguments)
 {
     return ProjectionPushdownRule{};
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("ProjectionPushdown")
+{
+    PlanRuleRegistry::registerPlugin("ProjectionPushdown", RegisterProjectionPushdownPlanRule);
+}
 }

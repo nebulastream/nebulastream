@@ -14,8 +14,8 @@
 
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 
-
 #include <Plans/LogicalPlan.hpp>
+#include <Util/Plugin.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -28,8 +28,16 @@ LogicalPlan FixedPlanStructureBarrier::apply(LogicalPlan queryPlan) const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterFixedPlanStructureBarrierPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RegisterFixedPlanStructureBarrierPlanRule(PlanRuleRegistryArguments)
 {
     return FixedPlanStructureBarrier{};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("FixedPlanStructureBarrier")
+{
+    PlanRuleRegistry::registerPlugin("FixedPlanStructureBarrier", RegisterFixedPlanStructureBarrierPlanRule);
 }
 }

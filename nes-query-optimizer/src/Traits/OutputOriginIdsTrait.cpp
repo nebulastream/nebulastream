@@ -26,11 +26,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
+#include <TraitUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -114,5 +116,15 @@ OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflect
         originIds.emplace_back(id);
     }
     return OutputOriginIdsTrait{originIds};
+}
+}
+
+namespace NES
+{
+ADD_PLUGIN("OutputOriginIds")
+{
+    TraitUnreflectionRegistry::registerPlugin(
+        "OutputOriginIds",
+        [](TraitUnreflectionRegistryArguments arguments) { return arguments.context.unreflect<OutputOriginIdsTrait>(arguments.data); });
 }
 }

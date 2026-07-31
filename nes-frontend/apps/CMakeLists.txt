@@ -16,6 +16,7 @@
 # nes-repl-embedded
 add_executable(nes-repl-embedded repl/ReplStarter.cpp repl/Repl.cpp)
 target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-embedded-lib argparse::argparse replxx::replxx)
+retain_plugin_hooks(nes-repl-embedded)
 target_include_directories(nes-repl-embedded
         PUBLIC repl
 )
@@ -23,6 +24,7 @@ target_include_directories(nes-repl-embedded
 # nes-repl
 add_executable(nes-repl repl/ReplStarter.cpp repl/Repl.cpp)
 target_link_libraries(nes-repl PUBLIC nes-frontend-lib argparse::argparse replxx::replxx)
+retain_plugin_hooks(nes-repl)
 
 target_include_directories(nes-repl
         PUBLIC repl
@@ -34,6 +36,7 @@ target_include_directories(nes-repl
 
 add_executable(nes-cli cli/CLIStarter.cpp cli/QueryStateBackend.cpp)
 target_link_libraries(nes-cli PUBLIC nes-frontend-lib argparse::argparse yaml-cpp::yaml-cpp)
+retain_plugin_hooks(nes-cli)
 
 target_include_directories(nes-cli
         PRIVATE cli

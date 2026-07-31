@@ -30,6 +30,7 @@
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
@@ -505,6 +506,7 @@ int main(int argc, const char** argv)
         NES::printVersion("systest");
         return 0;
     }
+    NES::initializePlugins();
     NES::setupSignalHandlers();
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");

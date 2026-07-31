@@ -10,22 +10,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 # NOTE: Since these plugins are part of the main NebulaStream repo,
 #       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
 
-# activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/TCPSource" ON)
-activate_optional_plugin("Sources/MQTTSource" ON)
-activate_optional_plugin("Sources/GeneratorSource" ON)
-activate_optional_plugin("Sinks/VoidSink" ON)
-activate_optional_plugin("Sinks/MQTTSink" ON)
-activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
-activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
-activate_optional_plugin("Rules/RedundantUnionRemovalRule" ON)
+add_subdirectory(Sources/TCPSource)
+add_subdirectory(Sources/MQTTSource)
+add_subdirectory(Sources/GeneratorSource)
+add_subdirectory(Sinks/VoidSink)
+add_subdirectory(Sinks/MQTTSink)
+add_subdirectory(InputFormatters/JSONInputFormatter)
+add_subdirectory(OutputFormatters/JSONOutputFormatter)
+add_subdirectory(Rules/RedundantUnionRemovalRule)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
-  activate_optional_plugin("Sinks/ChecksumSink" ON)
+  add_subdirectory(Sinks/ChecksumSink)
 endif()

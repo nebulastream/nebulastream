@@ -58,6 +58,7 @@ find_package(argparse CONFIG REQUIRED)
 add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
+retain_plugin_hooks(systest)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.

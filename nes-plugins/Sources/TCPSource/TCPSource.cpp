@@ -39,6 +39,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Plugin.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
 #include <cpptrace/from_current.hpp>
@@ -292,12 +293,12 @@ SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationR
     return TCPSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     std::unordered_map<Identifier, std::string> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
@@ -323,7 +324,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     return systestAdaptorArguments.physicalSourceConfig;
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     std::unordered_map<Identifier, std::string> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
@@ -349,4 +350,17 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
 
     return systestAdaptorArguments.physicalSourceConfig;
 }
+}
+
+namespace NES
+{
+ADD_PLUGIN("TCP")
+{
+    SourceValidationRegistry::registerPlugin("TCP", RegisterTCPSourceValidation);
+    SourceRegistry::registerPlugin("TCP", RegisterTCPSource);
+    InlineDataRegistry::registerPlugin("TCP", RegisterTCPInlineData);
+    FileDataRegistry::registerPlugin("TCP", RegisterTCPFileData);
+}
+
+
 }

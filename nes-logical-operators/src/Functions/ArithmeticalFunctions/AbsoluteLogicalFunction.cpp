@@ -29,11 +29,13 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Plugin.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <LogicalFunctionUnreflectionRegistry.hpp>
 
 namespace NES
 {
@@ -139,13 +141,26 @@ AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const R
     return AbsoluteLogicalFunction(std::move(child));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return AbsoluteLogicalFunction(arguments.children[0]);
+}
+
+}
+
+namespace NES
+{
+ADD_PLUGIN("Abs")
+{
+    LogicalFunctionUnreflectionRegistry::registerPlugin(
+        "Abs",
+        [](LogicalFunctionUnreflectionRegistryArguments arguments)
+        { return arguments.context.unreflect<AbsoluteLogicalFunction>(arguments.data); });
+    LogicalFunctionRegistry::registerPlugin("Abs", RegisterAbsLogicalFunction);
 }
 
 }

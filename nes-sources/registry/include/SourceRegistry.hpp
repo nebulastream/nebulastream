@@ -31,12 +31,8 @@ struct SourceRegistryArguments
     SourceDescriptor sourceDescriptor;
 };
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>
+class SourceRegistry : public Registry<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryArguments>
 {
 };
 
 }
-
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <SourceGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCE_REGISTRY

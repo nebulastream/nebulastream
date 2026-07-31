@@ -17,6 +17,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <Util/Plugin.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -34,11 +35,18 @@ NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) :
 {
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one child function");
     return NegatePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 
+}
+
+namespace NES
+{
+ADD_PLUGIN("Negate")
+{
+    PhysicalFunctionRegistry::registerPlugin("Negate", RegisterNegatePhysicalFunction);
+}
 }
