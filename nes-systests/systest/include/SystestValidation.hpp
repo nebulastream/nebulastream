@@ -17,6 +17,7 @@
 #include <expected>
 #include <string_view>
 
+#include <SystestPreparation.hpp>
 #include <SystestQueryModel.hpp>
 
 namespace NES::Systest
@@ -39,7 +40,7 @@ public:
 class ResultComparator
 {
 public:
-    ComparisonResult compare(const RowsExpectation& expected, const DecodedInputStream& actual) const;
+    ComparisonResult compare(const RowsExpectation& expected, const ResultSchema& schema, const DecodedInputStream& actual) const;
     ComparisonResult compare(const DecodedInputStream& expected, const DecodedInputStream& actual) const;
 };
 
@@ -52,7 +53,11 @@ public:
 class CaseValidator
 {
 public:
-    CaseValidator(const ResultDecoder& decoder, const ResultComparator& resultComparator, const TextComparator& textComparator);
+    CaseValidator(
+        const ResultDecoder& decoder,
+        const ResultComparator& resultComparator,
+        const TextComparator& textComparator,
+        const PreparedExecutionCatalog& preparedExecutions);
 
     ValidatedResult validate(const ResolvedCase& testCase, const ExecutionOutcome& outcome) const;
 
@@ -60,6 +65,7 @@ private:
     const ResultDecoder& decoder;
     const ResultComparator& resultComparator;
     const TextComparator& textComparator;
+    const PreparedExecutionCatalog& preparedExecutions;
 };
 
 }

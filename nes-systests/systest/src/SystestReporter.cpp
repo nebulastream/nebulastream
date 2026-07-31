@@ -15,6 +15,7 @@
 #include <SystestReporter.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
@@ -33,14 +34,56 @@
 #include <rfl/json/write.hpp>
 #include <SystestResolver.hpp>
 #include <SystestRun.hpp>
-#include <SystestRunner.hpp>
 
 namespace NES::Systest
 {
+namespace
+{
+
+std::string_view primarySql(const CaseAction& action)
+{
+    if (const auto* query = std::get_if<QueryAction>(&action))
+    {
+        return query->sql;
+    }
+    return std::get<DifferentialAction>(action).leftSql;
+}
+
+std::string formatThroughput(const ExecutionMetrics& metrics)
+{
+    double bytesPerSecond = NAN;
+    double tuplesPerSecond = NAN;
+    const auto elapsed = metrics.elapsed().count();
+    if (elapsed > 0 && metrics.bytesProcessed > 0 && metrics.tuplesProcessed > 0)
+    {
+        bytesPerSecond = static_cast<double>(metrics.bytesProcessed) / elapsed;
+        tuplesPerSecond = static_cast<double>(metrics.tuplesProcessed) / elapsed;
+    }
+    const auto formatUnits = [](double throughput)
+    {
+        static constexpr std::array<std::string_view, 5> Units{"", "k", "M", "G", "T"};
+        size_t unit = 0;
+        while (throughput >= 1000 && unit < Units.size() - 1)
+        {
+            throughput /= 1000;
+            ++unit;
+        }
+        return fmt::format("{:.3f} {}", throughput, Units[unit]);
+    };
+    return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+}
+
+}
 
 bool TestSelection::contains(const TestCaseId& id) const
 {
     return includeAll || std::ranges::find(cases, id) != cases.end();
+}
+
+std::optional<std::string_view> TestSelection::skipReason(const TestCaseId& id) const
+{
+    const auto skip = std::ranges::find(intentionalSkips, id, &IntentionalCaseSkip::id);
+    return skip == intentionalSkips.end() ? std::nullopt : std::optional<std::string_view>{skip->reason};
 }
 
 ConsoleRunReporter::ConsoleRunReporter(const ResolvedRun& run, const bool showPerformance) : run(run), showPerformance(showPerformance)
@@ -52,7 +95,8 @@ std::expected<void, ReportingDiagnostic> ConsoleRunReporter::publish(const RunEv
     if (const auto* started = std::get_if<RunStarted>(&event))
     {
         completed = 0;
-        total = started->plan.selection.cases.size();
+        unbounded = std::holds_alternative<UntilCancelled>(started->plan.repetition);
+        total = started->plan.selection.includeAll ? run.cases.size() : started->plan.selection.cases.size();
         if (const auto* repetitions = std::get_if<FixedRepetitions>(&started->plan.repetition))
         {
             total *= repetitions->count;
@@ -62,15 +106,19 @@ std::expected<void, ReportingDiagnostic> ConsoleRunReporter::publish(const RunEv
     if (const auto* finishedCase = std::get_if<CaseFinished>(&event))
     {
         ++completed;
+        if (unbounded)
+        {
+            total = completed;
+        }
         const auto& result = finishedCase->result;
-        const auto& query = run.preparedCases->at(result.id).query;
+        const auto& testCase = run.testCase(result.id);
+        const auto testName = result.id.source.relativeTestFile.generic_string();
         const auto queryNumber = result.id.source.queryNumber.toString();
         const auto counter = std::to_string(completed);
         const auto progress
             = total == 0 ? 100.0 : std::clamp(static_cast<double>(completed) / static_cast<double>(total) * 100.0, 0.0, 100.0);
 
-        std::vector<std::pair<std::string, std::string>> overrides(
-            query.configurationOverride.overrideParameters.begin(), query.configurationOverride.overrideParameters.end());
+        auto overrides = run.environment(testCase.environment).configuration.values;
         std::ranges::sort(overrides);
         std::string overrideText;
         if (!overrides.empty())
@@ -87,16 +135,16 @@ std::expected<void, ReportingDiagnostic> ConsoleRunReporter::publish(const RunEv
         static constexpr size_t StatusColumn = 120;
         std::cout << std::string(CounterWidth > counter.size() ? CounterWidth - counter.size() : 0, ' ');
         std::cout << counter << "/" << total << fmt::format(" ({:5.1f}%) ", progress);
-        std::cout << query.testName << ":";
+        std::cout << testName << ":";
         std::cout << std::string(QueryNumberWidth > queryNumber.size() ? QueryNumberWidth - queryNumber.size() : 0, '0');
         std::cout << queryNumber << overrideText;
-        const auto used = query.testName.size() + QueryNumberWidth + overrideText.size();
+        const auto used = testName.size() + QueryNumberWidth + overrideText.size();
         std::cout << std::string(used < StatusColumn ? StatusColumn - used : 0, '.');
 
         std::string performance;
         if (showPerformance && result.metrics.started && result.metrics.finished)
         {
-            performance = fmt::format(" in {}", result.metrics.elapsed());
+            performance = fmt::format(" in {} ({})", result.metrics.elapsed(), formatThroughput(result.metrics));
         }
         switch (result.verdict)
         {
@@ -106,7 +154,7 @@ std::expected<void, ReportingDiagnostic> ConsoleRunReporter::publish(const RunEv
             case Verdict::Failed:
                 fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "FAILED {}\n", performance);
                 std::cout << "===================================================================\n";
-                std::cout << query.queryDefinition << '\n';
+                std::cout << primarySql(testCase.action) << '\n';
                 std::cout << "===================================================================\n";
                 fmt::print(
                     fmt::emphasis::bold | fg(fmt::color::red),
@@ -115,7 +163,12 @@ std::expected<void, ReportingDiagnostic> ConsoleRunReporter::publish(const RunEv
                 std::cout << "===================================================================\n";
                 break;
             case Verdict::Skipped:
-                fmt::print(fmt::emphasis::bold | fg(fmt::color::yellow), "SKIPPED\n");
+                fmt::print(
+                    fmt::emphasis::bold | fg(fmt::color::yellow),
+                    "SKIPPED{}\n",
+                    result.diagnostics.empty()
+                        ? std::string{}
+                        : fmt::format(" ({})", fmt::join(result.diagnostics | std::views::transform(&Diagnostic::message), "; ")));
                 break;
         }
         return {};
@@ -137,7 +190,7 @@ std::expected<void, ReportingDiagnostic> BenchmarkRunReporter::publish(const Run
     }
     if (const auto* finishedCase = std::get_if<CaseFinished>(&event))
     {
-        if (finishedCase->result.verdict != Verdict::Skipped)
+        if (finishedCase->result.verdict == Verdict::Passed)
         {
             results.push_back(finishedCase->result);
         }
@@ -153,8 +206,24 @@ std::expected<void, ReportingDiagnostic> BenchmarkRunReporter::publish(const Run
     for (const auto& result : results)
     {
         const auto elapsed = result.metrics.elapsed().count();
+        const auto& testCase = run.testCase(result.id);
+        auto configuration = run.environment(testCase.environment).configuration.values;
+        std::ranges::sort(configuration);
+        const auto configurationLabel = configuration.empty()
+            ? std::string{}
+            : fmt::format(
+                  " [{}]",
+                  fmt::join(
+                      configuration
+                          | std::views::transform([](const auto& entry) { return fmt::format("{}={}", entry.first, entry.second); }),
+                      ", "));
         benchmarkResults.push_back(BenchmarkResult{
-            .queryName = run.preparedCases->at(result.id).query.testName,
+            .queryName = fmt::format(
+                "{}:{}:variant={}{}",
+                result.id.source.relativeTestFile.generic_string(),
+                result.id.source.queryNumber,
+                result.id.configurationVariant,
+                configurationLabel),
             .time = elapsed,
             .bytesPerSecond = elapsed > 0 ? static_cast<double>(result.metrics.bytesProcessed) / elapsed : NAN,
             .tuplesPerSecond = elapsed > 0 ? static_cast<double>(result.metrics.tuplesProcessed) / elapsed : NAN});
@@ -167,9 +236,16 @@ std::expected<void, ReportingDiagnostic> BenchmarkRunReporter::publish(const Run
         return std::unexpected(ReportingDiagnostic{.message = fmt::format("Failed to open benchmark output {}", outputFile)});
     }
     output << serialized;
-    if (!output)
+    output.flush();
+    const auto writeFailed = !output;
+    output.close();
+    if (writeFailed)
     {
         return std::unexpected(ReportingDiagnostic{.message = fmt::format("Failed to write benchmark output {}", outputFile)});
+    }
+    if (!output)
+    {
+        return std::unexpected(ReportingDiagnostic{.message = fmt::format("Failed to close benchmark output {}", outputFile)});
     }
     return {};
 }

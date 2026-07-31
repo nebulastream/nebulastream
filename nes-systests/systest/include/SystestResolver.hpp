@@ -15,48 +15,26 @@
 #pragma once
 
 #include <expected>
-#include <filesystem>
-#include <map>
 #include <memory>
-#include <optional>
 #include <vector>
 
 #include <ErrorHandling.hpp>
 #include <SystestQueryModel.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {
-
-struct PreparedCase
-{
-    std::shared_ptr<const ResolvedCase> definition;
-    SystestQuery query;
-};
-
-class PreparedCaseCatalog
-{
-public:
-    [[nodiscard]] const PreparedCase& at(const TestCaseId& id) const;
-    [[nodiscard]] const PreparedCase* find(const TestCaseId& id) const;
-    [[nodiscard]] std::vector<TestCaseId> ids() const;
-    void insert(TestCaseId id, PreparedCase preparedCase);
-
-private:
-    std::map<TestCaseId, PreparedCase> cases;
-};
 
 struct ResolvedRun
 {
     std::vector<EnvironmentSpec> environments;
     std::vector<std::shared_ptr<const ResolvedCase>> cases;
-    std::shared_ptr<const PreparedCaseCatalog> preparedCases;
 
     [[nodiscard]] const EnvironmentSpec& environment(EnvironmentId id) const;
     [[nodiscard]] const ResolvedCase& testCase(const TestCaseId& id) const;
+    [[nodiscard]] std::vector<TestCaseId> ids() const;
 };
 
-std::expected<ResolvedRun, Exception> resolveSystestQueries(
-    std::vector<SystestQuery> queries, const std::filesystem::path& discoveryRoot, const SystestClusterConfiguration& clusterConfiguration);
+std::expected<ResolvedRun, Exception>
+resolveSystestFiles(std::vector<ParsedTestFile> files, const SystestClusterConfiguration& clusterConfiguration);
 
 }

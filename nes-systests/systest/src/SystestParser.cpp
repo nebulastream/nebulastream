@@ -17,12 +17,12 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <charconv>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <functional>
-#include <iterator>
 #include <optional>
 #include <ranges>
 #include <regex>
@@ -33,15 +33,8 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Sources/SourceProvider.hpp>
 #include <Util/Strings.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
 namespace
 {
@@ -53,7 +46,7 @@ bool emptyOrComment(const std::string& line)
         || line.starts_with('#'); /// slt comment
 }
 
-std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
+std::pair<std::string, std::vector<std::string>> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
 {
     std::istringstream stream(line);
 
@@ -106,7 +99,6 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         values = {valueList};
     }
 
-    std::vector<NES::Systest::ConfigurationOverride> result;
     for (auto& value : values)
     {
         value = NES::trimWhiteSpaces(value);
@@ -114,11 +106,8 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         {
             throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
         }
-        NES::Systest::ConfigurationOverride override;
-        override.overrideParameters[key] = value;
-        result.emplace_back(std::move(override));
     }
-    return result;
+    return {std::move(key), std::move(values)};
 }
 
 }
@@ -149,8 +138,35 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {DifferentialToken, TokenType::DIFFERENTIAL},
      {SequentialExecutionToken, TokenType::SEQUENTIAL_EXECUTION}});
 
+SystestQueryId SystestQueryIdAssigner::getNextQueryNumber()
+{
+    verifyComplete();
+    return SystestQueryId(currentQueryNumber++);
+}
+
+SystestQueryId SystestQueryIdAssigner::getNextQueryResultNumber()
+{
+    if (currentQueryNumber != (currentQueryResultNumber + 1))
+    {
+        throw SLTUnexpectedToken(
+            "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+    }
+
+    return SystestQueryId(currentQueryResultNumber++);
+}
+
+void SystestQueryIdAssigner::verifyComplete() const
+{
+    if (currentQueryNumber != currentQueryResultNumber)
+    {
+        throw SLTUnexpectedToken(
+            "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+    }
+}
+
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
+    PRECONDITION(!rule.keyword.empty(), "substitution rule keywords must not be empty");
     auto found
         = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& existing) { return existing.keyword == rule.keyword; });
     PRECONDITION(
@@ -196,11 +212,6 @@ bool SystestParser::loadString(const std::string& str)
     sourceLineNumbers.clear();
     sourceFile.clear();
     relativeTestFile.clear();
-    parsedCaseDefinitions.clear();
-    parsedFixtureStatements.clear();
-    localConfiguration.clear();
-    globalConfiguration.clear();
-    lastParsedCaseIndex.reset();
 
     std::istringstream stream(str);
     std::string line;
@@ -226,48 +237,8 @@ bool SystestParser::loadString(const std::string& str)
     return true;
 }
 
-void SystestParser::registerOnQueryCallback(QueryCallback callback)
-{
-    this->onQueryCallback = std::move(callback);
-}
-
-void SystestParser::registerOnExplainQueryCallback(ExplainQueryCallback callback)
-{
-    this->onExplainQueryCallback = std::move(callback);
-}
-
-void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
-{
-    this->onResultTuplesCallback = std::move(callback);
-}
-
-void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback callback)
-{
-    this->onErrorExpectationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnCreateCallback(CreateCallback callback)
-{
-    this->onCreateCallback = std::move(callback);
-}
-
-void SystestParser::registerOnConfigurationCallback(ConfigurationCallback callback)
-{
-    this->onConfigurationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback)
-{
-    this->onGlobalConfigurationCallback = std::move(callback);
-}
-
-void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback)
-{
-    this->onDifferentialQueryBlockCallback = std::move(callback);
-}
-
 /// Here we model the structure of the test file by what we `expect` to see.
-void SystestParser::parse()
+ParsedTestFile SystestParser::parse()
 {
     static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
 
@@ -279,11 +250,14 @@ void SystestParser::parse()
         }
         return sourceLineNumbers.at(std::min(index, sourceLineNumbers.size() - 1));
     };
+    ParsedTestFile parsedTestFile{.file = sourceFile, .relativeTestFile = relativeTestFile, .fixtures = {}, .cases = {}};
+    std::vector<ConfigurationDirective> localConfiguration;
+    std::vector<ConfigurationDirective> globalConfiguration;
     const auto findParsedCase = [&](const SystestQueryId id) -> ParsedCase&
     {
         auto parsedCase
-            = std::ranges::find_if(parsedCaseDefinitions, [&](const ParsedCase& candidate) { return candidate.key.queryNumber == id; });
-        INVARIANT(parsedCase != parsedCaseDefinitions.end(), "Parsed case {} must exist before its expectation", id);
+            = std::ranges::find_if(parsedTestFile.cases, [&](const ParsedCase& candidate) { return candidate.key.queryNumber == id; });
+        INVARIANT(parsedCase != parsedTestFile.cases.end(), "Parsed case {} must exist before its expectation", id);
         return *parsedCase;
     };
     const auto activeConfiguration = [&]
@@ -291,21 +265,6 @@ void SystestParser::parse()
         auto configuration = globalConfiguration;
         configuration.insert(configuration.end(), localConfiguration.begin(), localConfiguration.end());
         return configuration;
-    };
-    const auto makeDirective = [&](const std::vector<ConfigurationOverride>& overrides, const bool global)
-    {
-        INVARIANT(!overrides.empty(), "Configuration directive must contain at least one value");
-        INVARIANT(overrides.front().overrideParameters.size() == 1, "Configuration directive must contain exactly one key");
-        ConfigurationDirective directive;
-        directive.global = global;
-        directive.source = Origin{.file = sourceFile, .firstLine = physicalLine(currentLine), .lastLine = physicalLine(currentLine)};
-        directive.key = overrides.front().overrideParameters.begin()->first;
-        directive.values.reserve(overrides.size());
-        for (const auto& override : overrides)
-        {
-            directive.values.push_back(override.overrideParameters.at(directive.key));
-        }
-        return directive;
     };
 
     SystestQueryIdAssigner queryIdAssigner{};
@@ -317,28 +276,11 @@ void SystestParser::parse()
         {
             case TokenType::CREATE: {
                 const auto firstLine = physicalLine(currentLine);
-                auto [query, testData] = expectCreateStatement();
-                std::optional<SourceDataSpec> attachment;
-                if (testData)
-                {
-                    if (testData->first == TestDataIngestionType::INLINE)
-                    {
-                        attachment = InlineSourceData{.rows = testData->second};
-                    }
-                    else
-                    {
-                        INVARIANT(testData->second.size() == 1, "File attachment must contain exactly one path");
-                        attachment = FileSourceData{.file = testData->second.front()};
-                    }
-                }
-                parsedFixtureStatements.push_back(FixtureStatement{
-                    .sql = query,
+                auto [query, attachment] = expectCreateStatement();
+                parsedTestFile.fixtures.push_back(FixtureStatement{
+                    .sql = std::move(query),
                     .attachment = std::move(attachment),
                     .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = physicalLine(currentLine)}});
-                if (onCreateCallback)
-                {
-                    onCreateCallback(query, testData);
-                }
                 break;
             }
             case TokenType::QUERY: {
@@ -354,19 +296,14 @@ void SystestParser::parse()
                 {
                     runAfter = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = *previousCaseId};
                 }
-                parsedCaseDefinitions.push_back(ParsedCase{
+                parsedTestFile.cases.push_back(ParsedCase{
                     .key = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = queryId},
                     .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = lastLine},
-                    .action = QueryAction{.sql = query, .kind = QueryKind::Execute},
+                    .action = QueryAction{.sql = std::move(query), .kind = QueryKind::Execute},
                     .expectation = RowsExpectation{},
                     .runAfter = std::move(runAfter),
                     .configuration = activeConfiguration()});
-                lastParsedCaseIndex = parsedCaseDefinitions.size() - 1;
                 previousCaseId = queryId;
-                if (onQueryCallback)
-                {
-                    onQueryCallback(query, queryId, sequentialExecution);
-                }
                 localConfiguration.clear();
                 break;
             }
@@ -383,19 +320,14 @@ void SystestParser::parse()
                 {
                     runAfter = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = *previousCaseId};
                 }
-                parsedCaseDefinitions.push_back(ParsedCase{
+                parsedTestFile.cases.push_back(ParsedCase{
                     .key = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = queryId},
                     .source = Origin{.file = sourceFile, .firstLine = firstLine, .lastLine = lastLine},
-                    .action = QueryAction{.sql = statement, .kind = QueryKind::Explain},
+                    .action = QueryAction{.sql = std::move(statement), .kind = QueryKind::Explain},
                     .expectation = TextExpectation{},
                     .runAfter = std::move(runAfter),
                     .configuration = {}});
-                lastParsedCaseIndex = parsedCaseDefinitions.size() - 1;
                 previousCaseId = queryId;
-                if (onExplainQueryCallback)
-                {
-                    onExplainQueryCallback(statement, queryId);
-                }
                 localConfiguration.clear();
                 break;
             }
@@ -409,12 +341,8 @@ void SystestParser::parse()
                     auto expectation = expectError();
                     const auto queryId = queryIdAssigner.getNextQueryResultNumber();
                     auto& parsedCase = findParsedCase(queryId);
-                    parsedCase.expectation = ::NES::Systest::ErrorExpectation{.code = expectation.code, .message = expectation.message};
+                    parsedCase.expectation = std::move(expectation);
                     parsedCase.source.lastLine = physicalLine(currentLine);
-                    if (onErrorExpectationCallback)
-                    {
-                        onErrorExpectationCallback(expectation, queryId);
-                    }
                 }
                 else if (expectedResultType == ResultType::VERBATIM)
                 {
@@ -422,48 +350,28 @@ void SystestParser::parse()
                     auto verbatimResultLines = expectVerbatimResultLines();
                     const auto queryId = queryIdAssigner.getNextQueryResultNumber();
                     auto& parsedCase = findParsedCase(queryId);
-                    parsedCase.expectation = TextExpectation{.lines = verbatimResultLines, .matching = TextMatchPolicy::Automatic};
+                    parsedCase.expectation
+                        = TextExpectation{.lines = std::move(verbatimResultLines), .matching = TextMatchPolicy::Automatic};
                     parsedCase.source.lastLine
                         = currentLine < sourceLineNumbers.size() ? physicalLine(currentLine) : physicalLine(currentLine - 1);
-                    if (onResultTuplesCallback)
-                    {
-                        onResultTuplesCallback(std::move(verbatimResultLines), queryId);
-                    }
                 }
                 else
                 {
                     auto tuples = expectTuples(false);
+                    const auto tuplesEmpty = tuples.empty();
                     const auto queryId = queryIdAssigner.getNextQueryResultNumber();
                     auto& parsedCase = findParsedCase(queryId);
-                    parsedCase.expectation = RowsExpectation{
-                        .rows = tuples,
-                        .comparison = ComparisonPolicy::UnorderedTypedRows,
-                        .schema = std::nullopt,
-                        .outputDiscarded = false};
-                    parsedCase.source.lastLine = tuples.empty() ? delimiterLine : physicalLine(currentLine - 1);
-                    if (onResultTuplesCallback)
-                    {
-                        onResultTuplesCallback(std::move(tuples), queryId);
-                    }
+                    parsedCase.expectation = RowsExpectation{.rows = std::move(tuples), .comparison = ComparisonPolicy::UnorderedTypedRows};
+                    parsedCase.source.lastLine = tuplesEmpty ? delimiterLine : physicalLine(currentLine - 1);
                 }
                 break;
             }
             case TokenType::CONFIGURATION: {
-                auto overrides = expectConfiguration();
-                localConfiguration.push_back(makeDirective(overrides, false));
-                if (onConfigurationCallback)
-                {
-                    onConfigurationCallback(overrides);
-                }
+                localConfiguration.push_back(expectConfiguration(false));
                 break;
             }
             case TokenType::GLOBAL_CONFIGURATION: {
-                auto overrides = expectGlobalConfiguration();
-                globalConfiguration.push_back(makeDirective(overrides, true));
-                if (onGlobalConfigurationCallback)
-                {
-                    onGlobalConfigurationCallback(overrides);
-                }
+                globalConfiguration.push_back(expectConfiguration(true));
                 break;
             }
             case TokenType::DIFFERENTIAL: {
@@ -480,13 +388,8 @@ void SystestParser::parse()
                 parsedCase.expectation = DifferentialExpectation{};
                 parsedCase.source.lastLine = physicalLine(currentLine == 0 ? 0 : currentLine - 1);
 
-                lastParsedQuery = rightQuery;
+                lastParsedQuery = std::move(rightQuery);
                 lastParsedQueryId = differentialQueryId;
-
-                if (onDifferentialQueryBlockCallback)
-                {
-                    onDifferentialQueryBlockCallback(std::move(leftQuery), std::move(rightQuery), mainQueryId, differentialQueryId);
-                }
                 break;
             }
             case TokenType::SEQUENTIAL_EXECUTION: {
@@ -498,6 +401,8 @@ void SystestParser::parse()
                     "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);
         }
     }
+    queryIdAssigner.verifyComplete();
+    return parsedTestFile;
 }
 
 void SystestParser::applySubstitutionRules(std::string& line)
@@ -508,13 +413,13 @@ void SystestParser::applySubstitutionRules(std::string& line)
         const std::string& keyword = rule.keyword;
         while ((pos = line.find(keyword, pos)) != std::string::npos)
         {
-            /// Check word boundaries: the character immediately before and after the keyword
-            /// must not be alphanumeric or underscore. This prevents replacing substrings of
-            /// longer identifiers (e.g., replacing "we" inside "producedPower").
-            const bool leftBoundary = pos == 0 || (std::isalnum(static_cast<unsigned char>(line[pos - 1])) == 0 && line[pos - 1] != '_');
+            const auto isIdentifierCharacter
+                = [](const char character) { return std::isalnum(static_cast<unsigned char>(character)) != 0 || character == '_'; };
+            const bool leftBoundary
+                = !isIdentifierCharacter(keyword.front()) || pos == 0 || !isIdentifierCharacter(line[pos - 1]);
             const auto endPos = pos + keyword.length();
             const bool rightBoundary
-                = endPos >= line.size() || (std::isalnum(static_cast<unsigned char>(line[endPos])) == 0 && line[endPos] != '_');
+                = !isIdentifierCharacter(keyword.back()) || endPos >= line.size() || !isIdentifierCharacter(line[endPos]);
 
             if (leftBoundary && rightBoundary)
             {
@@ -667,10 +572,10 @@ std::vector<std::string> SystestParser::expectVerbatimResultLines()
     return resultLines;
 }
 
-std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> SystestParser::expectCreateStatement()
+std::pair<std::string, std::optional<SourceDataSpec>> SystestParser::expectCreateStatement()
 {
     std::string createQuery;
-    std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData = std::nullopt;
+    std::optional<SourceDataSpec> testData;
 
     while (currentLine < lines.size())
     {
@@ -695,19 +600,19 @@ std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vecto
 
     if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH INLINE"))
     {
-        testData = std::make_pair(TestDataIngestionType::INLINE, std::vector<std::string>{});
+        InlineSourceData inlineData;
         currentLine++;
-        while (currentLine < lines.size() && !lines[currentLine].empty())
+        while (currentLine < lines.size() && !emptyOrComment(lines[currentLine]))
         {
-            testData.value().second.push_back(lines[currentLine]);
+            inlineData.rows.push_back(lines[currentLine]);
             currentLine++;
         }
+        testData = std::move(inlineData);
         currentLine--;
     }
     else if (currentLine < lines.size() && lines[currentLine].starts_with("ATTACH FILE"))
     {
-        testData = std::make_pair(TestDataIngestionType::FILE, std::vector<std::string>{});
-        testData->second.push_back(lines[currentLine].substr(std::strlen("ATTACH FILE") + 1));
+        testData = FileSourceData{.file = lines[currentLine].substr(std::strlen("ATTACH FILE") + 1)};
     }
     else
     {
@@ -715,11 +620,6 @@ std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vecto
     }
 
     return std::make_pair(createQuery, testData);
-}
-
-std::string SystestParser::expectQuery()
-{
-    return expectQuery({TokenType::RESULT_DELIMITER});
 }
 
 std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stopTokens)
@@ -754,7 +654,10 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
                 if (stopTokens.contains(tokenType.value()))
                 {
                     const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
-
+                    if (trimmedQuerySoFar.empty())
+                    {
+                        throw SLTUnexpectedToken("Expected query but got empty query string");
+                    }
                     if (trimmedQuerySoFar.back() != ';')
                     {
                         throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
@@ -827,19 +730,20 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
     return {leftQuery, std::move(rightQuery)};
 }
 
-std::vector<ConfigurationOverride> SystestParser::expectConfiguration()
+ConfigurationDirective SystestParser::expectConfiguration(const bool global) const
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    return parseConfigurationLine(lines[currentLine], "configuration");
+    const auto kindLabel = global ? "global configuration" : "configuration";
+    auto [key, values] = parseConfigurationLine(lines[currentLine], kindLabel);
+    const auto physicalLine = sourceLineNumbers.empty() ? 0 : sourceLineNumbers.at(currentLine);
+    return ConfigurationDirective{
+        .key = std::move(key),
+        .values = std::move(values),
+        .global = global,
+        .source = Origin{.file = sourceFile, .firstLine = physicalLine, .lastLine = physicalLine}};
 }
 
-std::vector<ConfigurationOverride> SystestParser::expectGlobalConfiguration()
-{
-    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
-    return parseConfigurationLine(lines[currentLine], "global configuration");
-}
-
-SystestParser::ErrorExpectation SystestParser::expectError() const
+ErrorExpectation SystestParser::expectError() const
 {
     /// Expects the form:
     /// ERROR <CODE> "optional error message to check"
@@ -864,13 +768,14 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     const std::regex numberRegex("^\\d+$");
     if (std::regex_match(errorStr, numberRegex))
     {
-        /// String is a valid integer
-        auto code = std::stoul(errorStr);
-        if (!errorCodeExists(code))
+        uint64_t code = 0;
+        const auto [end, error] = std::from_chars(errorStr.data(), errorStr.data() + errorStr.size(), code);
+        const auto existingCode = error == std::errc{} && end == errorStr.data() + errorStr.size() ? errorCodeExists(code) : std::nullopt;
+        if (!existingCode)
         {
             throw SLTUnexpectedToken("invalid error code: {} is not defined in ErrorDefinitions.inc", errorStr);
         }
-        expectation.code = static_cast<ErrorCode>(code);
+        expectation.code = *existingCode;
     }
     else if (auto codeOpt = errorTypeExists(errorStr))
     {

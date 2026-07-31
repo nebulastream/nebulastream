@@ -117,26 +117,46 @@ public:
     {
     }
 
-    ~Channel() { shutdown(std::chrono::steady_clock::now()); }
+    ~Channel() noexcept
+    {
+        try
+        {
+            static_cast<void>(shutdown(std::chrono::steady_clock::now()));
+        }
+        catch (...)
+        {
+        }
+    }
 
-    void shutdown(const std::chrono::steady_clock::time_point deadline)
+    bool shutdown(const std::chrono::steady_clock::time_point deadline)
     {
         if (!thread.joinable())
         {
-            return;
+            return !shutdownTimedOut;
+        }
+        if (completed.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready)
+        {
+            thread.join();
+            return true;
         }
         thread.requestStop();
+        if (deadline != std::chrono::steady_clock::time_point::max() && std::chrono::steady_clock::now() >= deadline)
+        {
+            shutdownTimedOut = true;
+            thread.detach();
+            return false;
+        }
         const auto finished = deadline == std::chrono::steady_clock::time_point::max()
             ? (completed.wait(), true)
             : completed.wait_until(deadline) == std::future_status::ready;
         if (finished)
         {
             thread.join();
+            return true;
         }
-        else
-        {
-            thread.detach();
-        }
+        shutdownTimedOut = true;
+        thread.detach();
+        return false;
     }
 
     StartQueryResult start(LogicalPlan plan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
@@ -294,6 +314,7 @@ private:
     std::shared_future<void> completed;
     mutable std::mutex submitMutex;
     Thread thread;
+    bool shutdownTimedOut = false;
 };
 }
 
@@ -348,7 +369,10 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
 
 void EmbeddedWorkerQuerySubmissionBackend::shutdown(const std::chrono::steady_clock::time_point deadline)
 {
-    channel->shutdown(deadline);
+    if (!channel->shutdown(deadline))
+    {
+        throw QueryStopFailed("Embedded worker shutdown reached its deadline");
+    }
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

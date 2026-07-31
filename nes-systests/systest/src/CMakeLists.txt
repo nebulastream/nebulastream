@@ -13,15 +13,13 @@
 add_source_files(nes-systest-lib
         SystestExecutor.cpp
         SystestParser.cpp
-        SystestRunner.cpp
-        SystestProgressTracker.cpp
         SystestState.cpp
-        SystestResultCheck.cpp
         SystestConfiguration.cpp
         QuerySubmitter.cpp
-        SystestBinder.cpp
         SystestResolver.cpp
+        SystestPreparation.cpp
         SystestExecutionBackend.cpp
         SystestCoordinator.cpp
+        SystestValidation.cpp
         SystestReporter.cpp
 )

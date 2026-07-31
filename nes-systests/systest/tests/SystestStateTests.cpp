@@ -14,15 +14,19 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
@@ -83,6 +87,32 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestStateTest test class."); }
 };
+
+TEST_F(SystestStateTest, ParsesStrictQueryNumberSelectionsWithoutExpandingRanges)
+{
+    const auto ranges = parseTestQueryNumbers("1,3-5,7");
+    ASSERT_EQ(ranges.size(), 3);
+    EXPECT_EQ(ranges[0], (QueryNumberRange{.first = SystestQueryId{1}, .last = SystestQueryId{1}}));
+    EXPECT_EQ(ranges[1], (QueryNumberRange{.first = SystestQueryId{3}, .last = SystestQueryId{5}}));
+    EXPECT_EQ(ranges[2], (QueryNumberRange{.first = SystestQueryId{7}, .last = SystestQueryId{7}}));
+    EXPECT_TRUE(ranges[1].contains(SystestQueryId{4}));
+    EXPECT_FALSE(ranges[1].contains(SystestQueryId{6}));
+
+    const auto maximumRange = parseTestQueryNumbers("1-18446744073709551615");
+    ASSERT_EQ(maximumRange.size(), 1);
+    EXPECT_EQ(maximumRange.front().first, SystestQueryId{1});
+    EXPECT_EQ(maximumRange.front().last.getRawValue(), std::numeric_limits<uint64_t>::max());
+}
+
+TEST_F(SystestStateTest, RejectsInvalidQueryNumberSelections)
+{
+    for (const auto selection :
+         std::vector<std::string_view>{"", "0", "2-1", "2-", "-2", "2--3", "2x", "2-3x", "1,,2", "1,", "18446744073709551616"})
+    {
+        SCOPED_TRACE(selection);
+        EXPECT_THROW(static_cast<void>(parseTestQueryNumbers(selection)), Exception);
+    }
+}
 
 TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigExclusion)
 {

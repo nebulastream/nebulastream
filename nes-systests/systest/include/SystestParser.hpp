@@ -18,25 +18,16 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
 #include <SystestQueryModel.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {
-using namespace std::literals;
 
-/// Tokens ///
 enum class TokenType : uint8_t
 {
     QUERY,
@@ -50,177 +41,59 @@ enum class TokenType : uint8_t
     SEQUENTIAL_EXECUTION,
 };
 
-enum class TestDataIngestionType : uint8_t
-{
-    INLINE,
-    FILE
-};
-
 enum class ResultType : uint8_t
 {
     TUPLES,
     VERBATIM
 };
 
-/// Assures that the number of parsed queries matches the number of parsed results
 class SystestQueryIdAssigner
 {
     static constexpr SystestQueryId::Underlying INITIAL_QUERY_NUMBER = SystestQueryId::INITIAL;
 
 public:
-    explicit SystestQueryIdAssigner() = default;
-
-    [[nodiscard]] SystestQueryId getNextQueryNumber()
-    {
-        if (currentQueryNumber != currentQueryResultNumber)
-        {
-            throw SLTUnexpectedToken(
-                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
-        }
-
-        return SystestQueryId(currentQueryNumber++);
-    }
-
-    [[nodiscard]] SystestQueryId getNextQueryResultNumber()
-    {
-        if (currentQueryNumber != (currentQueryResultNumber + 1))
-        {
-            throw SLTUnexpectedToken(
-                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
-        }
-
-        return SystestQueryId(currentQueryResultNumber++);
-    }
+    [[nodiscard]] SystestQueryId getNextQueryNumber();
+    [[nodiscard]] SystestQueryId getNextQueryResultNumber();
+    void verifyComplete() const;
 
 private:
-    SystestQueryId::Underlying currentQueryNumber = SystestQueryId::INITIAL;
-    SystestQueryId::Underlying currentQueryResultNumber = SystestQueryId::INITIAL;
+    SystestQueryId::Underlying currentQueryNumber = INITIAL_QUERY_NUMBER;
+    SystestQueryId::Underlying currentQueryResultNumber = INITIAL_QUERY_NUMBER;
 };
 
-struct SystestField
-{
-    DataType type;
-    std::string name;
-
-    friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
-    {
-        os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
-        return os;
-    }
-
-    bool operator==(const SystestField& other) const = default;
-    bool operator!=(const SystestField& other) const = default;
-};
-
-/// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
-/// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
-///
-/// NOTE: register substitution rules before calling `loadFile`
-/// NOTE: register callbacks before calling `parse`
 class SystestParser
 {
 public:
     struct SubstitutionRule
     {
         std::string keyword;
-        /// Takes the keyword by reference and modifies it according to the rule
         std::function<void(std::string&)> ruleFunction;
     };
 
-    /// Register a substitution rule to be applied before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
-    /// Loading overrides existing parse content
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath, const std::filesystem::path& relativeTestFile);
     [[nodiscard]] bool loadString(const std::string& str);
-
-    [[nodiscard]] const std::vector<ParsedCase>& parsedCases() const { return parsedCaseDefinitions; }
-
-    [[nodiscard]] const std::vector<FixtureStatement>& fixtureStatements() const { return parsedFixtureStatements; }
-
-    using SystestSchema = std::vector<SystestField>;
-
-    /// Type definitions ///
-    struct SystestLogicalSource
-    {
-        std::string name;
-        SystestSchema fields;
-        bool operator==(const SystestLogicalSource& other) const = default;
-    };
-
-    struct SystestSink
-    {
-        std::string name;
-        std::string type;
-        SystestSchema fields;
-        bool operator==(const SystestSink& other) const = default;
-    };
-
-    struct ErrorExpectation
-    {
-        ErrorCode code;
-        std::optional<std::string> message;
-        bool operator==(const ErrorExpectation& other) const = default;
-    };
-
-    using QueryCallback = std::function<void(std::string, SystestQueryId, bool)>;
-    using ExplainQueryCallback = std::function<void(std::string, SystestQueryId)>;
-    using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
-    using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
-    using DifferentialQueryBlockCallback
-        = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
-    using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
-    using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
-    using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
-
-    /// Register callbacks to be called when the respective section is parsed
-    void registerOnQueryCallback(QueryCallback callback);
-    void registerOnExplainQueryCallback(ExplainQueryCallback callback);
-    void registerOnResultTuplesCallback(ResultTuplesCallback callback);
-    void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
-    void registerOnCreateCallback(CreateCallback callback);
-    void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
-    void registerOnConfigurationCallback(ConfigurationCallback callback);
-    void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
-
-    void parse();
-    void parseResultLines();
+    [[nodiscard]] ParsedTestFile parse();
 
 private:
-    /// Parsing utils ///
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(const std::string& line);
-    /// Parse the next token and return its type.
     [[nodiscard]] std::optional<TokenType> getNextToken();
-    /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
-    /// Look ahead at the next token without consuming it
     [[nodiscard]] std::optional<TokenType> peekToken() const;
 
-    /// Apply registered substitutions to line
     void applySubstitutionRules(std::string& line);
 
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::vector<std::string> expectVerbatimResultLines();
-    [[nodiscard]] std::filesystem::path expectFilePath();
-    [[nodiscard]] std::string expectQuery();
-    [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
+    [[nodiscard]] std::pair<std::string, std::optional<SourceDataSpec>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
     [[nodiscard]] std::pair<std::string, std::string> expectDifferentialBlock();
     [[nodiscard]] ErrorExpectation expectError() const;
-    [[nodiscard]] std::vector<ConfigurationOverride> expectConfiguration();
-    [[nodiscard]] std::vector<ConfigurationOverride> expectGlobalConfiguration();
+    [[nodiscard]] ConfigurationDirective expectConfiguration(bool global) const;
 
     std::vector<SubstitutionRule> substitutionRules;
-    QueryCallback onQueryCallback;
-    ExplainQueryCallback onExplainQueryCallback;
-    ResultTuplesCallback onResultTuplesCallback;
-    ErrorExpectationCallback onErrorExpectationCallback;
-    CreateCallback onCreateCallback;
-    DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;
-    ConfigurationCallback onConfigurationCallback;
-    GlobalConfigurationCallback onGlobalConfigurationCallback;
-
     std::optional<std::string> lastParsedQuery;
     std::optional<SystestQueryId> lastParsedQueryId;
     ResultType expectedResultType = ResultType::TUPLES;
@@ -231,12 +104,6 @@ private:
     std::vector<size_t> sourceLineNumbers;
     std::filesystem::path sourceFile;
     std::filesystem::path relativeTestFile;
-    std::vector<ParsedCase> parsedCaseDefinitions;
-    std::vector<FixtureStatement> parsedFixtureStatements;
-    std::vector<ConfigurationDirective> localConfiguration;
-    std::vector<ConfigurationDirective> globalConfiguration;
-    std::optional<size_t> lastParsedCaseIndex;
 };
-}
 
-FMT_OSTREAM(NES::Systest::SystestField);
+}

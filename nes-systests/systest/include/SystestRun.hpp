@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <expected>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -27,12 +29,20 @@
 namespace NES::Systest
 {
 
+struct IntentionalCaseSkip
+{
+    TestCaseId id;
+    std::string reason;
+};
+
 struct TestSelection
 {
     bool includeAll = true;
     std::vector<TestCaseId> cases;
+    std::vector<IntentionalCaseSkip> intentionalSkips;
 
     [[nodiscard]] bool contains(const TestCaseId& id) const;
+    [[nodiscard]] std::optional<std::string_view> skipReason(const TestCaseId& id) const;
 };
 
 enum class OrderingKind : uint8_t

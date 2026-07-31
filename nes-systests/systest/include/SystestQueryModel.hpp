@@ -80,8 +80,6 @@ struct RowsExpectation
 {
     std::vector<std::string> rows;
     ComparisonPolicy comparison = ComparisonPolicy::UnorderedTypedRows;
-    std::optional<ResultSchema> schema;
-    bool outputDiscarded = false;
 };
 
 struct ErrorExpectation
@@ -146,6 +144,14 @@ struct ParsedCase
     std::vector<ConfigurationDirective> configuration;
 };
 
+struct ParsedTestFile
+{
+    std::filesystem::path file;
+    std::filesystem::path relativeTestFile;
+    std::vector<FixtureStatement> fixtures;
+    std::vector<ParsedCase> cases;
+};
+
 struct EffectiveConfiguration
 {
     std::vector<std::pair<std::string, std::string>> values;
@@ -156,6 +162,7 @@ struct EffectiveConfiguration
 struct EnvironmentSpec
 {
     EnvironmentId id;
+    std::filesystem::path relativeTestFile;
     std::vector<FixtureStatement> setupStatements;
     EffectiveConfiguration configuration;
     SystestClusterConfiguration cluster;
@@ -188,6 +195,8 @@ struct OutputTarget
 {
     OutputTargetKind kind = OutputTargetKind::Table;
     std::filesystem::path file;
+
+    bool operator==(const OutputTarget&) const = default;
 };
 
 struct TableArtifact
@@ -297,6 +306,7 @@ struct SkippedExecution
 {
     TestCaseId id;
     std::vector<TestCaseId> failedDependencies;
+    std::optional<std::string> reason;
 };
 
 using ExecutionOutcome = std::variant<CompletedExecution, FailedExecution, TimedOutExecution, SkippedExecution>;

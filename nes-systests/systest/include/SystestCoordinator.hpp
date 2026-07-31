@@ -28,7 +28,7 @@ class RunCoordinator
 {
 public:
     RunSummary
-    run(const ResolvedRun& resolvedRun,
+    run(const PreparedRun& preparedRun,
         RunSetup setup,
         ExecutionBackend& backend,
         const CaseValidator& validator,

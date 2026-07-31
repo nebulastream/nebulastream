@@ -31,6 +31,16 @@ using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 
+struct QueryNumberRange
+{
+    SystestQueryId first = INVALID_SYSTEST_QUERY_ID;
+    SystestQueryId last = INVALID_SYSTEST_QUERY_ID;
+
+    [[nodiscard]] bool contains(const SystestQueryId queryNumber) const { return first <= queryNumber && queryNumber <= last; }
+
+    auto operator<=>(const QueryNumberRange&) const = default;
+};
+
 struct CaseKey
 {
     std::filesystem::path relativeTestFile;

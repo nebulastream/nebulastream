@@ -12,574 +12,373 @@
     limitations under the License.
 */
 
+#include <atomic>
 #include <chrono>
-#include <expected>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <memory>
+#include <initializer_list>
 #include <optional>
-#include <ranges>
-#include <span>
-#include <stop_token>
 #include <string>
-#include <thread>
+#include <string_view>
+#include <system_error>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
-#include <SystestCoordinator.hpp>
-#include <SystestExecutionBackend.hpp>
 #include <SystestParser.hpp>
 #include <SystestQueryModel.hpp>
 #include <SystestResolver.hpp>
-#include <SystestRun.hpp>
-#include <SystestState.hpp>
-#include <SystestValidation.hpp>
 
 namespace NES::Systest
 {
 namespace
 {
 
-std::filesystem::path temporaryPath(const std::string_view name)
-{
-    return std::filesystem::temp_directory_path() / fmt::format("{}-{}", name, std::chrono::steady_clock::now().time_since_epoch().count());
-}
-
-SystestQuery preparedQuery(
-    const std::filesystem::path& testFile,
-    const std::filesystem::path& workingDirectory,
-    const SystestQueryId queryId,
-    ParsedCase parsedCase,
-    std::variant<std::vector<std::string>, ExpectedError> expectation)
-{
-    return SystestQuery{
-        .testName = testFile.stem().string(),
-        .queryIdInFile = queryId,
-        .testFilePath = testFile,
-        .workingDir = workingDirectory,
-        .queryDefinition = std::get<QueryAction>(parsedCase.action).sql,
-        .planInfoOrException = std::unexpected<Exception>{TestException("not used by the fake backend")},
-        .expectedResultsOrExpectedError = std::move(expectation),
-        .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
-        .configurationOverride = ConfigurationOverride{},
-        .differentialQueryPlan = std::nullopt,
-        .runAfter = std::nullopt,
-        .actualExplainOutput = std::nullopt,
-        .parsedCase = std::move(parsedCase),
-        .fixtureStatements = {}};
-}
-
-class CollectingReporter final : public RunReporter
+class TemporaryDirectory
 {
 public:
-    std::expected<void, ReportingDiagnostic> publish(const RunEvent& event) override
+    explicit TemporaryDirectory(const std::string_view name)
     {
-        events.push_back(event);
-        return {};
+        static std::atomic<uint64_t> sequence = 0;
+        directory = std::filesystem::temp_directory_path()
+            / (std::string{name} + "-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-"
+               + std::to_string(sequence.fetch_add(1)));
+        std::filesystem::create_directories(directory);
     }
 
-    std::vector<RunEvent> events;
-};
-
-class FakeExecutionSession final : public ExecutionSession
-{
-public:
-    explicit FakeExecutionSession(std::vector<TestCaseId>& starts) : starts(starts) { }
-
-    std::expected<std::variant<ExecutionHandle, StatementFailure>, BackendFault>
-    start(const ExecutionRequest& request, std::stop_token) override
+    ~TemporaryDirectory()
     {
-        starts.push_back(request.testCase);
-        if (request.testCase.source.queryNumber == SystestQueryId{1})
-        {
-            return std::variant<ExecutionHandle, StatementFailure>{StatementFailure{
-                .stage = ExecutionStage::Planning,
-                .error
-                = ExecutionError{.kind = ExecutionErrorKind::Statement, .details = {{.code = ErrorCode::TestException, .message = "expected planning failure"}}},
-                .artifacts = {}}};
-        }
-        const auto handle = ExecutionHandle{.value = nextHandle++};
-        completions.push_back(StatementCompletion{.handle = handle, .result = TextArtifact{.text = "ok"}, .metrics = {}, .artifacts = {}});
-        return std::variant<ExecutionHandle, StatementFailure>{handle};
+        std::error_code error;
+        std::filesystem::remove_all(directory, error);
     }
 
-    std::expected<StatementCompletion, BackendFault>
-    waitAny(std::span<const ExecutionHandle> active, std::chrono::steady_clock::time_point, std::stop_token) override
-    {
-        for (auto completion = completions.begin(); completion != completions.end(); ++completion)
-        {
-            if (std::ranges::find(active, completion->handle) != active.end())
-            {
-                auto result = std::move(*completion);
-                completions.erase(completion);
-                return result;
-            }
-        }
-        return std::unexpected(
-            BackendFault{.kind = BackendFaultKind::DeadlineReached, .code = ErrorCode::QueryStatusFailed, .message = "no completion"});
-    }
+    TemporaryDirectory(const TemporaryDirectory&) = delete;
+    TemporaryDirectory& operator=(const TemporaryDirectory&) = delete;
 
-    std::expected<void, BackendFault> cancel(ExecutionHandle, std::chrono::steady_clock::time_point) override { return {}; }
-
-    std::expected<void, BackendFault> close(std::chrono::steady_clock::time_point) override { return {}; }
+    [[nodiscard]] const std::filesystem::path& path() const { return directory; }
 
 private:
-    std::vector<TestCaseId>& starts;
-    uint64_t nextHandle = 1;
-    std::vector<StatementCompletion> completions;
+    std::filesystem::path directory;
 };
 
-class FakeExecutionBackend final : public ExecutionBackend
+ParsedTestFile
+parseTestFile(const std::filesystem::path& root, const std::filesystem::path& relativeTestFile, const std::string_view contents)
 {
-public:
-    BackendCapabilities capabilities() const override
+    const auto file = root / relativeTestFile;
+    std::filesystem::create_directories(file.parent_path());
+    std::ofstream(file) << contents;
+
+    SystestParser parser;
+    if (!parser.loadFile(file, relativeTestFile))
     {
-        return BackendCapabilities{
-            .supportsConfigurationOverrides = true, .supportsRemoteFixtures = true, .supportsExplain = true, .maximumConcurrency = 4};
+        throw TestException("Could not load test input {}", file);
     }
-
-    std::expected<std::unique_ptr<ExecutionSession>, BackendFault> open(const EnvironmentSpec&) override
-    {
-        return std::unique_ptr<ExecutionSession>{std::make_unique<FakeExecutionSession>(starts)};
-    }
-
-    std::vector<TestCaseId> starts;
-};
-
-class FaultExecutionSession final : public ExecutionSession
-{
-public:
-    FaultExecutionSession(const BackendFaultKind kind, const bool cancellationFails) : kind(kind), cancellationFails(cancellationFails) { }
-
-    std::expected<std::variant<ExecutionHandle, StatementFailure>, BackendFault> start(const ExecutionRequest&, std::stop_token) override
-    {
-        if (kind == BackendFaultKind::Failure)
-        {
-            return std::unexpected(
-                BackendFault{.kind = kind, .code = ErrorCode::TestException, .message = "backend infrastructure failure"});
-        }
-        return std::variant<ExecutionHandle, StatementFailure>{ExecutionHandle{.value = 1}};
-    }
-
-    std::expected<StatementCompletion, BackendFault>
-    waitAny(std::span<const ExecutionHandle>, std::chrono::steady_clock::time_point, std::stop_token) override
-    {
-        return std::unexpected(BackendFault{.kind = kind, .code = ErrorCode::TestException, .message = "backend wait failure"});
-    }
-
-    std::expected<void, BackendFault> cancel(ExecutionHandle, std::chrono::steady_clock::time_point) override
-    {
-        if (cancellationFails)
-        {
-            return std::unexpected(
-                BackendFault{.kind = BackendFaultKind::Failure, .code = ErrorCode::QueryStopFailed, .message = "cancellation failed"});
-        }
-        return {};
-    }
-
-    std::expected<void, BackendFault> close(std::chrono::steady_clock::time_point) override { return {}; }
-
-private:
-    BackendFaultKind kind;
-    bool cancellationFails;
-};
-
-class FaultExecutionBackend final : public ExecutionBackend
-{
-public:
-    explicit FaultExecutionBackend(const BackendFaultKind kind, const bool cancellationFails = false)
-        : kind(kind), cancellationFails(cancellationFails)
-    {
-    }
-
-    BackendCapabilities capabilities() const override
-    {
-        return BackendCapabilities{
-            .supportsConfigurationOverrides = true, .supportsRemoteFixtures = true, .supportsExplain = true, .maximumConcurrency = 1};
-    }
-
-    std::expected<std::unique_ptr<ExecutionSession>, BackendFault> open(const EnvironmentSpec&) override
-    {
-        return std::unique_ptr<ExecutionSession>{std::make_unique<FaultExecutionSession>(kind, cancellationFails)};
-    }
-
-private:
-    BackendFaultKind kind;
-    bool cancellationFails;
-};
-
-ResolvedRun coordinatorRun(const bool expectedFirstFailure)
-{
-    const auto testFile = std::filesystem::path{"suite/model.test"};
-    const auto workingDirectory = temporaryPath("systest-coordinator");
-    const auto firstId
-        = TestCaseId{.source = CaseKey{.relativeTestFile = testFile, .queryNumber = SystestQueryId{1}}, .configurationVariant = 0};
-    const auto secondId
-        = TestCaseId{.source = CaseKey{.relativeTestFile = testFile, .queryNumber = SystestQueryId{2}}, .configurationVariant = 0};
-    auto first = std::make_shared<ResolvedCase>(ResolvedCase{
-        .id = firstId,
-        .environment = EnvironmentId{.value = 1},
-        .source = Origin{.file = testFile, .firstLine = 1, .lastLine = 2},
-        .action = QueryAction{.sql = "SELECT first;", .kind = QueryKind::Execute},
-        .expectation = expectedFirstFailure
-            ? CaseExpectation{ErrorExpectation{.code = ErrorCode::TestException, .message = std::nullopt}}
-            : CaseExpectation{RowsExpectation{
-                  .rows = {}, .comparison = ComparisonPolicy::UnorderedTypedRows, .schema = std::nullopt, .outputDiscarded = false}},
-        .dependencies = {}});
-    auto second = std::make_shared<ResolvedCase>(ResolvedCase{
-        .id = secondId,
-        .environment = EnvironmentId{.value = 1},
-        .source = Origin{.file = testFile, .firstLine = 3, .lastLine = 4},
-        .action = QueryAction{.sql = "EXPLAIN SELECT second;", .kind = QueryKind::Explain},
-        .expectation = TextExpectation{.lines = {"ok"}, .matching = TextMatchPolicy::Exact},
-        .dependencies = {firstId}});
-
-    auto catalog = std::make_shared<PreparedCaseCatalog>();
-    std::variant<std::vector<std::string>, ExpectedError> firstExpectation = expectedFirstFailure
-        ? std::variant<std::vector<std::string>, ExpectedError>{ExpectedError{.code = ErrorCode::TestException, .message = std::nullopt}}
-        : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}};
-    catalog->insert(
-        firstId,
-        PreparedCase{
-            .definition = first,
-            .query = preparedQuery(
-                testFile,
-                workingDirectory,
-                SystestQueryId{1},
-                ParsedCase{
-                    .key = firstId.source,
-                    .source = first->source,
-                    .action = first->action,
-                    .expectation = first->expectation,
-                    .runAfter = std::nullopt,
-                    .configuration = {}},
-                std::move(firstExpectation))});
-    catalog->insert(
-        secondId,
-        PreparedCase{
-            .definition = second,
-            .query = preparedQuery(
-                testFile,
-                workingDirectory,
-                SystestQueryId{2},
-                ParsedCase{
-                    .key = secondId.source,
-                    .source = second->source,
-                    .action = second->action,
-                    .expectation = second->expectation,
-                    .runAfter = firstId.source,
-                    .configuration = {}},
-                std::vector<std::string>{"ok"})});
-
-    return ResolvedRun{
-        .environments = {EnvironmentSpec{.id = EnvironmentId{.value = 1}, .setupStatements = {}, .configuration = {}, .cluster = {}}},
-        .cases = {first, second},
-        .preparedCases = std::move(catalog)};
+    return parser.parse();
 }
 
-RunSetup runSetup(const ResolvedRun& run)
+ConfigurationDirective configuration(const std::filesystem::path& file, std::string key, std::vector<std::string> values, const bool global)
 {
-    return RunSetup{
-        .selection = TestSelection{.includeAll = false, .cases = run.preparedCases->ids()},
-        .ordering = OrderingPolicy{.kind = OrderingKind::SourceOrder, .seed = std::nullopt},
-        .concurrency = ConcurrencyPolicy{.maximumActiveCases = 2},
-        .repetition = Once{},
-        .failurePolicy = IndependentFailurePolicy::Continue,
-        .deadlines
-        = DeadlinePolicy{.caseTimeout = std::chrono::milliseconds::max(), .runTimeout = std::nullopt, .cancellationGracePeriod = std::chrono::milliseconds{10}},
-        .validation = ValidationPolicy{.enabled = true},
-        .metrics = MetricsPolicy{.collect = false, .report = false}};
+    return ConfigurationDirective{
+        .key = std::move(key),
+        .values = std::move(values),
+        .global = global,
+        .source = Origin{.file = file, .firstLine = 1, .lastLine = 1}};
+}
+
+ParsedCase parsedCase(
+    const std::filesystem::path& relativeTestFile,
+    const uint64_t queryNumber,
+    std::vector<ConfigurationDirective> configurations = {},
+    const std::optional<uint64_t> dependency = std::nullopt)
+{
+    const auto key = CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = SystestQueryId{queryNumber}};
+    return ParsedCase{
+        .key = key,
+        .source = Origin{.file = relativeTestFile, .firstLine = queryNumber, .lastLine = queryNumber},
+        .action = QueryAction{.sql = "SELECT 1 INTO File();", .kind = QueryKind::Execute},
+        .expectation = RowsExpectation{.rows = {"1"}, .comparison = ComparisonPolicy::UnorderedTypedRows},
+        .runAfter
+        = dependency.transform([&](const uint64_t predecessor)
+                               { return CaseKey{.relativeTestFile = relativeTestFile, .queryNumber = SystestQueryId{predecessor}}; }),
+        .configuration = std::move(configurations)};
+}
+
+ParsedTestFile parsedFile(std::filesystem::path relativeTestFile, std::vector<ParsedCase> cases)
+{
+    const auto sourceFile = std::filesystem::path{"/resolved-input"} / relativeTestFile;
+    return ParsedTestFile{.file = sourceFile, .relativeTestFile = std::move(relativeTestFile), .fixtures = {}, .cases = std::move(cases)};
+}
+
+EffectiveConfiguration effectiveConfiguration(std::initializer_list<std::pair<std::string, std::string>> values)
+{
+    return EffectiveConfiguration{.values = values};
+}
+
+TestCaseId id(const std::filesystem::path& file, const uint64_t queryNumber, const uint32_t variant)
+{
+    return TestCaseId{
+        .source = CaseKey{.relativeTestFile = file, .queryNumber = SystestQueryId{queryNumber}}, .configurationVariant = variant};
 }
 
 }
 
-TEST(SystestRedesignTest, ParserProducesCasesFixturesOriginsAndDependencies)
+TEST(SystestRedesignTest, ParserProducesAuthoritativeFileModel)
 {
-    const auto file = temporaryPath("systest-parser-model");
-    std::ofstream(file) << R"(
-# ignored
-GlobalConfiguration worker.mode: [A, B]
-CREATE LOGICAL SOURCE input(id UINT64);
+    const TemporaryDirectory temporary{"systest-parser-authoritative"};
+    const auto parsed = parseTestFile(
+        temporary.path(),
+        "suite/model.test",
+        R"(# ignored
+GLOBALCONFIGURATION worker.mode: [B, A]
+CREATE LOGICAL SOURCE input(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1
+2
 
 SELECT id FROM input INTO File();
 ----
 1
+2
 
 SEQUENTIAL_EXECUTION
-Configuration worker.size: 8
+CONFIGURATION worker.size: 8
 SELECT id FROM input INTO File();
 ====
-SELECT id + UINT64(0) FROM input INTO File();
+SELECT id + UINT64(0) AS id FROM input INTO File();
 
 SEQUENTIAL_EXECUTION
-
 EXPLAIN (LOGICAL) FORMAT TEXT SELECT id FROM input INTO File();
 ----
-<REGEX>SOURCE</REGEX>
+<REGEX>SOURCE\(INPUT\)</REGEX>
 ==END==
-)";
+)");
 
-    SystestParser parser;
-    parser.registerOnCreateCallback([](std::string, auto) { });
-    parser.registerOnQueryCallback([](std::string, SystestQueryId, bool) { });
-    parser.registerOnExplainQueryCallback([](std::string, SystestQueryId) { });
-    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId) { });
-    parser.registerOnDifferentialQueryBlockCallback([](std::string, std::string, SystestQueryId, SystestQueryId) { });
-    parser.registerOnConfigurationCallback([](const auto&) { });
-    parser.registerOnGlobalConfigurationCallback([](const auto&) { });
+    ASSERT_EQ(parsed.file, std::filesystem::weakly_canonical(temporary.path() / "suite/model.test"));
+    EXPECT_EQ(parsed.relativeTestFile, "suite/model.test");
+    ASSERT_EQ(parsed.fixtures.size(), 2);
+    EXPECT_EQ(parsed.fixtures[0].sql, "CREATE LOGICAL SOURCE input(id UINT64 NOT NULL);");
+    ASSERT_TRUE(parsed.fixtures[1].attachment);
+    const auto* inlineData = std::get_if<InlineSourceData>(&*parsed.fixtures[1].attachment);
+    ASSERT_NE(inlineData, nullptr);
+    EXPECT_EQ(inlineData->rows, (std::vector<std::string>{"1", "2"}));
+    EXPECT_EQ(parsed.fixtures[0].source.firstLine, 3);
+    EXPECT_EQ(parsed.fixtures[1].source.firstLine, 4);
+    EXPECT_EQ(parsed.fixtures[1].source.lastLine, 7);
 
-    ASSERT_TRUE(parser.loadFile(file, "parser/model.test"));
-    parser.parse();
+    ASSERT_EQ(parsed.cases.size(), 3);
+    const auto& normal = parsed.cases[0];
+    const auto& differential = parsed.cases[1];
+    const auto& explain = parsed.cases[2];
 
-    ASSERT_EQ(parser.fixtureStatements().size(), 1);
-    ASSERT_EQ(parser.parsedCases().size(), 3);
-    const auto& first = parser.parsedCases()[0];
-    const auto& differential = parser.parsedCases()[1];
-    const auto& explain = parser.parsedCases()[2];
-    EXPECT_EQ(first.key.relativeTestFile, "parser/model.test");
-    EXPECT_EQ(first.key.queryNumber, SystestQueryId{1});
-    EXPECT_EQ(first.source.file, std::filesystem::weakly_canonical(file));
-    EXPECT_LT(first.source.firstLine, first.source.lastLine);
-    ASSERT_EQ(first.configuration.size(), 1);
-    EXPECT_TRUE(first.configuration.front().global);
+    EXPECT_EQ(normal.key, (CaseKey{.relativeTestFile = "suite/model.test", .queryNumber = SystestQueryId{1}}));
+    EXPECT_EQ(normal.source.file, parsed.file);
+    EXPECT_EQ(normal.source.firstLine, 9);
+    EXPECT_EQ(normal.source.lastLine, 12);
+    ASSERT_EQ(normal.configuration.size(), 1);
+    EXPECT_TRUE(normal.configuration.front().global);
+    EXPECT_EQ(normal.configuration.front().values, (std::vector<std::string>{"B", "A"}));
+    EXPECT_TRUE(std::holds_alternative<QueryAction>(normal.action));
+    EXPECT_EQ(std::get<QueryAction>(normal.action).kind, QueryKind::Execute);
+    EXPECT_EQ(std::get<RowsExpectation>(normal.expectation).rows, (std::vector<std::string>{"1", "2"}));
+
     ASSERT_TRUE(differential.runAfter);
-    EXPECT_EQ(differential.runAfter->queryNumber, SystestQueryId{1});
-    EXPECT_TRUE(std::holds_alternative<DifferentialAction>(differential.action));
+    EXPECT_EQ(*differential.runAfter, normal.key);
+    ASSERT_TRUE(std::holds_alternative<DifferentialAction>(differential.action));
+    EXPECT_EQ(std::get<DifferentialAction>(differential.action).leftSql, "SELECT id FROM input INTO File();");
+    EXPECT_EQ(std::get<DifferentialAction>(differential.action).rightSql, "SELECT id + UINT64(0) AS id FROM input INTO File();");
     EXPECT_TRUE(std::holds_alternative<DifferentialExpectation>(differential.expectation));
     ASSERT_EQ(differential.configuration.size(), 2);
-    EXPECT_TRUE(std::holds_alternative<QueryAction>(explain.action));
+    EXPECT_TRUE(differential.configuration[0].global);
+    EXPECT_FALSE(differential.configuration[1].global);
+    EXPECT_EQ(differential.configuration[1].key, "worker.size");
+
+    EXPECT_FALSE(explain.runAfter);
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(explain.action));
     EXPECT_EQ(std::get<QueryAction>(explain.action).kind, QueryKind::Explain);
-    EXPECT_TRUE(std::holds_alternative<TextExpectation>(explain.expectation));
+    ASSERT_TRUE(std::holds_alternative<TextExpectation>(explain.expectation));
+    EXPECT_EQ(std::get<TextExpectation>(explain.expectation).matching, TextMatchPolicy::Automatic);
     EXPECT_TRUE(explain.configuration.empty());
-    std::filesystem::remove(file);
 }
 
-TEST(SystestRedesignTest, ResolverPreservesSequentialConfigurationEpochs)
+TEST(SystestRedesignTest, ResolverCreatesDeterministicProductsPrecedenceAndStableIds)
 {
-    const auto root = temporaryPath("systest-resolver-epochs");
-    std::filesystem::create_directories(root);
-    const auto testFile = root / "epochs.test";
-    const auto workingDirectory = root / "working";
-    const auto makeQuery
-        = [&](const SystestQueryId queryId, ConfigurationOverride configuration, const std::optional<SystestQueryId> dependency)
+    const auto alpha = std::filesystem::path{"alpha/variants.test"};
+    const auto zeta = std::filesystem::path{"zeta/single.test"};
+    const auto alphaSource = std::filesystem::path{"/resolved-input"} / alpha;
+
+    const auto makeAlpha = [&](std::vector<std::string> modes, std::vector<std::string> threads)
     {
-        const auto key = CaseKey{.relativeTestFile = "epochs.test", .queryNumber = queryId};
-        auto query = preparedQuery(
-            testFile,
-            workingDirectory,
-            queryId,
-            ParsedCase{
-                .key = key,
-                .source = Origin{.file = testFile, .firstLine = queryId.getRawValue(), .lastLine = queryId.getRawValue()},
-                .action = QueryAction{.sql = "SELECT 1 INTO File();", .kind = QueryKind::Execute},
-                .expectation
-                = RowsExpectation{.rows = {"1"}, .comparison = ComparisonPolicy::UnorderedTypedRows, .schema = std::nullopt, .outputDiscarded = false},
-                .runAfter = dependency.transform([&](const SystestQueryId predecessor)
-                                                 { return CaseKey{.relativeTestFile = "epochs.test", .queryNumber = predecessor}; }),
-                .configuration = {}},
-            std::vector<std::string>{"1"});
-        query.configurationOverride = std::move(configuration);
-        return query;
+        std::vector<ParsedCase> cases;
+        cases.push_back(parsedCase(
+            alpha,
+            1,
+            {configuration(alphaSource, "worker.mode", std::move(modes), true),
+             configuration(alphaSource, "worker.threads", std::move(threads), false)}));
+        cases.push_back(parsedCase(
+            alpha,
+            2,
+            {configuration(alphaSource, "worker.mode", {"B", "A"}, true),
+             configuration(alphaSource, "worker.mode", {"local", "local"}, false)}));
+        return parsedFile(alpha, std::move(cases));
+    };
+    const auto makeZeta = [&] { return parsedFile(zeta, {parsedCase(zeta, 1)}); };
+
+    auto first = resolveSystestFiles({makeZeta(), makeAlpha({"B", "A"}, {"2", "1"})}, {});
+    auto second = resolveSystestFiles({makeAlpha({"A", "B"}, {"1", "2"}), makeZeta()}, {});
+
+    ASSERT_TRUE(first) << first.error().what();
+    ASSERT_TRUE(second) << second.error().what();
+    ASSERT_EQ(first->cases.size(), 6);
+    ASSERT_EQ(first->environments.size(), 6);
+    ASSERT_EQ(second->cases.size(), 6);
+    ASSERT_EQ(second->environments.size(), 6);
+    ASSERT_EQ(first->ids(), second->ids());
+
+    const std::vector<EffectiveConfiguration> expectedConfigurations{
+        effectiveConfiguration({{"worker.mode", "A"}, {"worker.threads", "1"}}),
+        effectiveConfiguration({{"worker.mode", "A"}, {"worker.threads", "2"}}),
+        effectiveConfiguration({{"worker.mode", "B"}, {"worker.threads", "1"}}),
+        effectiveConfiguration({{"worker.mode", "B"}, {"worker.threads", "2"}}),
+        effectiveConfiguration({{"worker.mode", "local"}}),
+        effectiveConfiguration({})};
+
+    for (size_t index = 0; index < first->cases.size(); ++index)
+    {
+        EXPECT_EQ(first->environment(first->cases[index]->environment).configuration, expectedConfigurations[index]);
+        EXPECT_EQ(second->environment(second->cases[index]->environment).configuration, expectedConfigurations[index]);
+        EXPECT_EQ(first->cases[index]->environment, second->cases[index]->environment);
+    }
+    for (uint32_t variant = 0; variant < 4; ++variant)
+    {
+        EXPECT_EQ(first->cases[variant]->id, id(alpha, 1, variant));
+    }
+    EXPECT_EQ(first->cases[4]->id, id(alpha, 2, 0));
+    EXPECT_EQ(first->cases[5]->id, id(zeta, 1, 0));
+}
+
+TEST(SystestRedesignTest, ResolverUsesExactThenGlobalLineageDependencyMatching)
+{
+    const auto file = std::filesystem::path{"dependencies/matching.test"};
+    const auto source = std::filesystem::path{"/resolved-input"} / file;
+    const auto productConfiguration = [&]
+    {
+        return std::vector{configuration(source, "worker.mode", {"B", "A"}, true), configuration(source, "worker.size", {"2", "1"}, false)};
     };
 
-    ConfigurationOverride base;
-    base.overrideParameters.emplace("worker.mode", "A");
-    ConfigurationOverride local = base;
-    local.overrideParameters.emplace("worker.size", "8");
+    std::vector<ParsedCase> cases;
+    cases.push_back(parsedCase(file, 1, productConfiguration()));
+    cases.push_back(parsedCase(file, 2, productConfiguration(), 1));
+    cases.push_back(parsedCase(file, 3, {configuration(source, "worker.mode", {"B", "A"}, true)}, 2));
 
-    std::vector<SystestQuery> queries;
-    queries.push_back(makeQuery(SystestQueryId{1}, base, std::nullopt));
-    queries.push_back(makeQuery(SystestQueryId{2}, local, SystestQueryId{1}));
-    queries.push_back(makeQuery(SystestQueryId{3}, base, SystestQueryId{2}));
+    auto resolved = resolveSystestFiles({parsedFile(file, std::move(cases))}, {});
 
-    auto resolved = resolveSystestQueries(std::move(queries), root, SystestClusterConfiguration{});
+    ASSERT_TRUE(resolved) << resolved.error().what();
+    ASSERT_EQ(resolved->cases.size(), 10);
+    for (uint32_t variant = 0; variant < 4; ++variant)
+    {
+        const auto& predecessor = resolved->testCase(id(file, 1, variant));
+        const auto& exact = resolved->testCase(id(file, 2, variant));
+        EXPECT_EQ(exact.dependencies, (std::vector<TestCaseId>{predecessor.id}));
+        EXPECT_EQ(exact.environment, predecessor.environment);
+    }
+
+    const auto& globalA = resolved->testCase(id(file, 3, 0));
+    const auto& globalB = resolved->testCase(id(file, 3, 1));
+    EXPECT_EQ(globalA.dependencies, (std::vector<TestCaseId>{id(file, 2, 0), id(file, 2, 1)}));
+    EXPECT_EQ(globalB.dependencies, (std::vector<TestCaseId>{id(file, 2, 2), id(file, 2, 3)}));
+}
+
+TEST(SystestRedesignTest, ResolverPreservesGlobalLineageWhenLocalConfigurationOverridesTheSameKey)
+{
+    const auto file = std::filesystem::path{"dependencies/local-override.test"};
+    const auto source = std::filesystem::path{"/resolved-input"} / file;
+    const auto global = [&] { return configuration(source, "worker.mode", {"B", "A"}, true); };
+
+    std::vector<ParsedCase> cases;
+    cases.push_back(parsedCase(file, 1, {global()}));
+    cases.push_back(parsedCase(file, 2, {global(), configuration(source, "worker.mode", {"local"}, false)}, 1));
+    cases.push_back(parsedCase(file, 3, {global()}, 2));
+
+    auto resolved = resolveSystestFiles({parsedFile(file, std::move(cases))}, {});
+
+    ASSERT_TRUE(resolved) << resolved.error().what();
+    ASSERT_EQ(resolved->cases.size(), 5);
+    EXPECT_EQ(resolved->testCase(id(file, 2, 0)).dependencies, (std::vector<TestCaseId>{id(file, 1, 0), id(file, 1, 1)}));
+    EXPECT_EQ(resolved->testCase(id(file, 3, 0)).dependencies, (std::vector<TestCaseId>{id(file, 2, 0)}));
+    EXPECT_EQ(resolved->testCase(id(file, 3, 1)).dependencies, (std::vector<TestCaseId>{id(file, 2, 0)}));
+}
+
+TEST(SystestRedesignTest, ResolverMatchesUnconfiguredSequentialExplainToConfiguredPredecessors)
+{
+    const auto file = std::filesystem::path{"dependencies/explain.test"};
+    const auto source = std::filesystem::path{"/resolved-input"} / file;
+    auto explain = parsedCase(file, 2, {}, 1);
+    explain.action = QueryAction{.sql = "EXPLAIN (LOGICAL) SELECT 1 INTO File();", .kind = QueryKind::Explain};
+    explain.expectation = TextExpectation{};
+
+    auto resolved = resolveSystestFiles(
+        {parsedFile(file, {parsedCase(file, 1, {configuration(source, "worker.mode", {"B", "A"}, true)}), std::move(explain)})}, {});
+
+    ASSERT_TRUE(resolved) << resolved.error().what();
+    EXPECT_EQ(resolved->testCase(id(file, 2, 0)).dependencies, (std::vector<TestCaseId>{id(file, 1, 0), id(file, 1, 1)}));
+}
+
+TEST(SystestRedesignTest, ResolverAdvancesEnvironmentEpochAcrossConfigurationChanges)
+{
+    const auto file = std::filesystem::path{"dependencies/epochs.test"};
+    const auto source = std::filesystem::path{"/resolved-input"} / file;
+    const auto base = [&] { return configuration(source, "worker.mode", {"A"}, true); };
+
+    std::vector<ParsedCase> cases;
+    cases.push_back(parsedCase(file, 1, {base()}));
+    cases.push_back(parsedCase(file, 2, {base(), configuration(source, "worker.size", {"8"}, false)}, 1));
+    cases.push_back(parsedCase(file, 3, {base()}, 2));
+
+    auto resolved = resolveSystestFiles({parsedFile(file, std::move(cases))}, {});
+
     ASSERT_TRUE(resolved) << resolved.error().what();
     ASSERT_EQ(resolved->cases.size(), 3);
     ASSERT_EQ(resolved->environments.size(), 3);
-    EXPECT_EQ(resolved->cases[1]->dependencies, std::vector<TestCaseId>{resolved->cases[0]->id});
-    EXPECT_EQ(resolved->cases[2]->dependencies, std::vector<TestCaseId>{resolved->cases[1]->id});
-    EXPECT_NE(resolved->cases[0]->environment, resolved->cases[2]->environment);
+    EXPECT_EQ(resolved->cases[1]->dependencies, (std::vector<TestCaseId>{resolved->cases[0]->id}));
+    EXPECT_EQ(resolved->cases[2]->dependencies, (std::vector<TestCaseId>{resolved->cases[1]->id}));
+    EXPECT_EQ(resolved->cases[0]->environment, EnvironmentId{.value = 1});
+    EXPECT_EQ(resolved->cases[1]->environment, EnvironmentId{.value = 2});
+    EXPECT_EQ(resolved->cases[2]->environment, EnvironmentId{.value = 3});
+    EXPECT_EQ(resolved->environments[0].configuration, resolved->environments[2].configuration);
 }
 
-TEST(SystestRedesignTest, ResolverKeepsGlobalConfigurationLineagesIndependent)
+TEST(SystestRedesignTest, ResolverRejectsDuplicateCaseKeysWithDisjointConfigurations)
 {
-    const auto root = temporaryPath("systest-resolver-lineages");
-    std::filesystem::create_directories(root);
-    const auto testFile = root / "lineages.test";
-    const auto workingDirectory = root / "working";
-    const auto makeQuery = [&](const SystestQueryId queryId,
-                               const std::string& globalValue,
-                               const bool hasLocalConfiguration,
-                               const std::optional<SystestQueryId> dependency)
-    {
-        const auto key = CaseKey{.relativeTestFile = "lineages.test", .queryNumber = queryId};
-        auto query = preparedQuery(
-            testFile,
-            workingDirectory,
-            queryId,
-            ParsedCase{
-                .key = key,
-                .source = Origin{.file = testFile, .firstLine = queryId.getRawValue(), .lastLine = queryId.getRawValue()},
-                .action = QueryAction{.sql = "SELECT 1 INTO File();", .kind = QueryKind::Execute},
-                .expectation
-                = RowsExpectation{.rows = {"1"}, .comparison = ComparisonPolicy::UnorderedTypedRows, .schema = std::nullopt, .outputDiscarded = false},
-                .runAfter = dependency.transform([&](const SystestQueryId predecessor)
-                                                 { return CaseKey{.relativeTestFile = "lineages.test", .queryNumber = predecessor}; }),
-                .configuration
-                = {ConfigurationDirective{.key = "worker.mode", .values = {"A", "B"}, .global = true, .source = Origin{.file = testFile}}}},
-            std::vector<std::string>{"1"});
-        query.configurationOverride.overrideParameters.emplace("worker.mode", globalValue);
-        if (hasLocalConfiguration)
-        {
-            query.configurationOverride.overrideParameters.emplace("worker.size", "8");
-        }
-        return query;
-    };
+    const auto file = std::filesystem::path{"dependencies/duplicate.test"};
+    const auto source = std::filesystem::path{"/resolved-input"} / file;
+    auto resolved = resolveSystestFiles(
+        {parsedFile(
+            file,
+            {parsedCase(file, 1, {configuration(source, "worker.mode", {"A"}, false)}),
+             parsedCase(file, 1, {configuration(source, "worker.mode", {"B"}, false)})})},
+        {});
 
-    std::vector<SystestQuery> queries;
-    queries.push_back(makeQuery(SystestQueryId{1}, "A", true, std::nullopt));
-    queries.push_back(makeQuery(SystestQueryId{1}, "B", true, std::nullopt));
-    queries.push_back(makeQuery(SystestQueryId{2}, "A", false, SystestQueryId{1}));
-    queries.push_back(makeQuery(SystestQueryId{2}, "B", false, SystestQueryId{1}));
-
-    auto resolved = resolveSystestQueries(std::move(queries), root, SystestClusterConfiguration{});
-    ASSERT_TRUE(resolved) << resolved.error().what();
-    ASSERT_EQ(resolved->cases.size(), 4);
-    EXPECT_EQ(resolved->cases[2]->dependencies, std::vector<TestCaseId>{resolved->cases[0]->id});
-    EXPECT_EQ(resolved->cases[3]->dependencies, std::vector<TestCaseId>{resolved->cases[1]->id});
+    ASSERT_FALSE(resolved);
+    EXPECT_TRUE(std::string{resolved.error().what()}.contains("Duplicate systest case"));
 }
 
-TEST(SystestRedesignTest, ResolverAssignsStableCaseVariantsAndEnvironments)
+TEST(SystestRedesignTest, ResolverRejectsMissingAndCyclicDependencies)
 {
-    const auto root = temporaryPath("systest-resolver");
-    const auto testFile = root / "suite" / "variants.test";
-    std::filesystem::create_directories(testFile.parent_path());
-    std::ofstream(testFile) << "";
-    const auto origin = Origin{.file = testFile, .firstLine = 1, .lastLine = 2};
-    const auto parsed = ParsedCase{
-        .key = CaseKey{.relativeTestFile = "variants.test", .queryNumber = SystestQueryId{1}},
-        .source = origin,
-        .action = QueryAction{.sql = "SELECT value;", .kind = QueryKind::Execute},
-        .expectation = ErrorExpectation{.code = ErrorCode::TestException, .message = std::nullopt},
-        .runAfter = std::nullopt,
-        .configuration = {}};
-    auto first = preparedQuery(
-        testFile, root / "work", SystestQueryId{1}, parsed, ExpectedError{.code = ErrorCode::TestException, .message = std::nullopt});
-    auto second = preparedQuery(
-        testFile, root / "work", SystestQueryId{1}, parsed, ExpectedError{.code = ErrorCode::TestException, .message = std::nullopt});
-    first.configurationOverride["worker.mode"] = "A";
-    second.configurationOverride["worker.mode"] = "B";
+    const auto file = std::filesystem::path{"dependencies/invalid.test"};
 
-    auto resolved = resolveSystestQueries({std::move(first), std::move(second)}, root, {});
+    auto missing = resolveSystestFiles({parsedFile(file, {parsedCase(file, 1, {}, 9)})}, {});
+    ASSERT_FALSE(missing);
+    EXPECT_TRUE(std::string{missing.error().what()}.contains("nonexistent dependency"));
 
-    ASSERT_TRUE(resolved);
-    ASSERT_EQ(resolved->cases.size(), 2);
-    ASSERT_EQ(resolved->environments.size(), 2);
-    EXPECT_EQ(resolved->cases[0]->id.source.relativeTestFile, "suite/variants.test");
-    EXPECT_EQ(resolved->cases[0]->id.configurationVariant, 0);
-    EXPECT_EQ(resolved->cases[1]->id.configurationVariant, 1);
-    EXPECT_NE(resolved->cases[0]->environment, resolved->cases[1]->environment);
-    std::filesystem::remove_all(root);
-}
-
-TEST(SystestRedesignTest, ExpectedFailureVerdictReleasesDependency)
-{
-    auto run = coordinatorRun(true);
-    FakeExecutionBackend backend;
-    FileResultDecoder decoder;
-    ResultComparator resultComparator;
-    TextComparator textComparator;
-    CaseValidator validator(decoder, resultComparator, textComparator);
-    CollectingReporter reporter;
-
-    const auto summary = RunCoordinator{}.run(run, runSetup(run), backend, validator, reporter);
-
-    EXPECT_EQ(summary.passed, 2);
-    EXPECT_EQ(summary.failed, 0);
-    EXPECT_EQ(summary.skipped, 0);
-    ASSERT_EQ(backend.starts.size(), 2);
-    EXPECT_EQ(backend.starts[0].source.queryNumber, SystestQueryId{1});
-    EXPECT_EQ(backend.starts[1].source.queryNumber, SystestQueryId{2});
-}
-
-TEST(SystestRedesignTest, BackendFaultDoesNotSatisfyErrorExpectation)
-{
-    auto run = coordinatorRun(true);
-    FaultExecutionBackend backend(BackendFaultKind::Failure);
-    FileResultDecoder decoder;
-    ResultComparator resultComparator;
-    TextComparator textComparator;
-    CaseValidator validator(decoder, resultComparator, textComparator);
-    CollectingReporter reporter;
-
-    const auto summary = RunCoordinator{}.run(run, runSetup(run), backend, validator, reporter);
-
-    EXPECT_EQ(summary.passed, 0);
-    EXPECT_EQ(summary.failed, 2);
-    EXPECT_EQ(summary.skipped, 0);
-}
-
-TEST(SystestRedesignTest, DeadlineProducesTimedOutVerdict)
-{
-    auto run = coordinatorRun(true);
-    FaultExecutionBackend backend(BackendFaultKind::DeadlineReached);
-    FileResultDecoder decoder;
-    ResultComparator resultComparator;
-    TextComparator textComparator;
-    CaseValidator validator(decoder, resultComparator, textComparator);
-    CollectingReporter reporter;
-    auto setup = runSetup(run);
-    setup.deadlines.caseTimeout = std::chrono::milliseconds{1};
-
-    const auto summary = RunCoordinator{}.run(run, std::move(setup), backend, validator, reporter);
-
-    EXPECT_EQ(summary.passed, 0);
-    EXPECT_EQ(summary.failed, 2);
-    EXPECT_EQ(summary.skipped, 0);
-    ASSERT_FALSE(summary.results.empty());
-    EXPECT_TRUE(summary.results.front().diagnostics.front().message.contains("timed out"));
-}
-
-TEST(SystestRedesignTest, FailedCancellationStopsTheSession)
-{
-    auto run = coordinatorRun(true);
-    FaultExecutionBackend backend(BackendFaultKind::DeadlineReached, true);
-    FileResultDecoder decoder;
-    ResultComparator resultComparator;
-    TextComparator textComparator;
-    CaseValidator validator(decoder, resultComparator, textComparator);
-    CollectingReporter reporter;
-    auto setup = runSetup(run);
-    setup.deadlines.caseTimeout = std::chrono::milliseconds{1};
-
-    const auto summary = RunCoordinator{}.run(run, std::move(setup), backend, validator, reporter);
-
-    EXPECT_EQ(summary.failed, 1);
-    EXPECT_EQ(summary.skipped, 1);
-    EXPECT_TRUE(summary.cancelled);
-}
-
-TEST(SystestRedesignTest, FailedDependencyStillReleasesSuccessor)
-{
-    auto run = coordinatorRun(false);
-    FakeExecutionBackend backend;
-    FileResultDecoder decoder;
-    ResultComparator resultComparator;
-    TextComparator textComparator;
-    CaseValidator validator(decoder, resultComparator, textComparator);
-    CollectingReporter reporter;
-
-    const auto summary = RunCoordinator{}.run(run, runSetup(run), backend, validator, reporter);
-
-    EXPECT_EQ(summary.passed, 1);
-    EXPECT_EQ(summary.failed, 1);
-    EXPECT_EQ(summary.skipped, 0);
-    ASSERT_EQ(backend.starts.size(), 2);
-    EXPECT_EQ(backend.starts.front().source.queryNumber, SystestQueryId{1});
+    auto first = parsedCase(file, 1, {}, 2);
+    auto second = parsedCase(file, 2, {}, 1);
+    auto cyclic = resolveSystestFiles({parsedFile(file, {std::move(first), std::move(second)})}, {});
+    ASSERT_FALSE(cyclic);
+    EXPECT_TRUE(std::string{cyclic.error().what()}.contains("Dependency cycle includes"));
 }
 
 }

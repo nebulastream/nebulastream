@@ -13,15 +13,17 @@
 */
 
 #include <chrono>
+#include <csignal>
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
 #include <ranges>
-#include <sstream>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,6 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
+#include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
@@ -48,6 +51,13 @@
 namespace
 {
 using argparse::ArgumentParser;
+
+volatile std::sig_atomic_t cancellationSignal = 0;
+
+void cancellationSignalHandler(const int signal)
+{
+    cancellationSignal = signal;
+}
 
 void parseArgumentsOrExit(ArgumentParser& program, const int argc, const char** argv) /// NOLINT(readability-function-cognitive-complexity)
 {
@@ -200,23 +210,14 @@ void applyInputLocations(const ArgumentParser& program, NES::SystestConfiguratio
 
 void addTestQueryNumbers(NES::SystestConfiguration& config, const std::string& testNumberStr)
 {
-    std::stringstream ss(testNumberStr);
-    std::string item;
-    while (std::getline(ss, item, ','))
+    try
     {
-        const size_t dashPos = item.find('-');
-        if (dashPos != std::string::npos)
-        {
-            const int start = std::stoi(item.substr(0, dashPos));
-            const int end = std::stoi(item.substr(dashPos + 1));
-            for (int i = start; i <= end; ++i)
-            {
-                config.testQueryNumbers.add(i);
-            }
-            continue;
-        }
-
-        config.testQueryNumbers.add(std::stoi(item));
+        config.testQueryNumberRanges = NES::Systest::parseTestQueryNumbers(testNumberStr);
+    }
+    catch (const NES::Exception& exception)
+    {
+        std::cerr << exception.what();
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 }
 
@@ -375,7 +376,13 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
 
     if (program.is_used("-n"))
     {
-        config.numberConcurrentQueries = program.get<int>("-n");
+        const auto concurrency = program.get<int>("-n");
+        if (concurrency <= 0)
+        {
+            std::cerr << "Number of concurrent queries must be greater than zero\n";
+            std::exit(EXIT_FAILURE);
+        }
+        config.numberConcurrentQueries = concurrency;
     }
 
     if (program.is_used("--sequential"))
@@ -506,14 +513,34 @@ int main(int argc, const char** argv)
         return 0;
     }
     NES::setupSignalHandlers();
+    cancellationSignal = 0;
+    if (std::signal(SIGINT, cancellationSignalHandler) == SIG_ERR || std::signal(SIGTERM, cancellationSignalHandler) == SIG_ERR)
+    {
+        std::cerr << "Failed to install systest cancellation signal handlers\n";
+        return EXIT_FAILURE;
+    }
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");
 
     CPPTRACE_TRY
     {
         auto config = parseConfiguration(argc, argv);
+        std::stop_source stopSource;
+        std::jthread cancellationMonitor(
+            [&](const std::stop_token monitorStopToken)
+            {
+                while (!monitorStopToken.stop_requested() && cancellationSignal == 0)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+                }
+                if (cancellationSignal != 0)
+                {
+                    stopSource.request_stop();
+                }
+            });
         NES::SystestExecutor executor(std::move(config));
-        const auto result = executor.executeSystests();
+        const auto result = executor.executeSystests(stopSource.get_token());
+        cancellationMonitor.request_stop();
 
         switch (result.returnType)
         {

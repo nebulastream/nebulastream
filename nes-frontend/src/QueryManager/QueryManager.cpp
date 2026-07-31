@@ -445,10 +445,25 @@ void QueryManager::release(const DistributedQueryId queryId)
 
 void QueryManager::shutdown(const std::chrono::steady_clock::time_point deadline)
 {
+    std::exception_ptr firstFailure;
     for (auto& [host, backend] : backends)
     {
         static_cast<void>(host);
-        backend->shutdown(deadline);
+        try
+        {
+            backend->shutdown(deadline);
+        }
+        catch (...)
+        {
+            if (!firstFailure)
+            {
+                firstFailure = std::current_exception();
+            }
+        }
+    }
+    if (firstFailure)
+    {
+        std::rethrow_exception(firstFailure);
     }
 }
 

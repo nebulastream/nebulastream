@@ -17,13 +17,23 @@
 #include <cstddef>
 #include <filesystem>
 #include <functional>
+#include <string>
 #include <vector>
 
+#include <rfl/Rename.hpp>
 #include <SystestResolver.hpp>
 #include <SystestRun.hpp>
 
 namespace NES::Systest
 {
+
+struct BenchmarkResult
+{
+    rfl::Rename<"query name", std::string> queryName;
+    double time;
+    double bytesPerSecond;
+    double tuplesPerSecond;
+};
 
 class ConsoleRunReporter final : public RunReporter
 {
@@ -35,6 +45,7 @@ public:
 private:
     const ResolvedRun& run;
     bool showPerformance;
+    bool unbounded = false;
     size_t completed = 0;
     size_t total = 0;
 };

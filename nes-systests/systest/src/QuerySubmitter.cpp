@@ -15,10 +15,10 @@
 #include <QuerySubmitter.hpp>
 
 #include <chrono>
+#include <iterator>
 #include <memory>
 #include <ranges>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -40,7 +40,8 @@ namespace
 bool isBackendError(const ErrorCode code)
 {
     return code == ErrorCode::QueryStartFailed || code == ErrorCode::QueryStopFailed || code == ErrorCode::QueryStatusFailed
-        || code == ErrorCode::QueryNotFound || code == ErrorCode::CannotSerialize || code == ErrorCode::UnknownException;
+        || code == ErrorCode::QueryNotFound || code == ErrorCode::CannotSerialize || code == ErrorCode::CannotDeserialize
+        || code == ErrorCode::UnknownException;
 }
 
 Exception combineErrors(std::vector<Exception> errors)
@@ -82,17 +83,6 @@ std::vector<Exception> queryStatusErrors(const DistributedQueryId& queryId, std:
 
 QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
 {
-}
-
-std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const DistributedLogicalPlan& plan)
-{
-    return startQuery(plan, std::chrono::steady_clock::time_point::max(), {}, std::chrono::seconds(5));
-}
-
-std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(
-    const DistributedLogicalPlan& plan, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
-{
-    return startQuery(plan, deadline, stopToken, std::chrono::seconds(5));
 }
 
 std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(
@@ -144,26 +134,6 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(
     return result.value();
 }
 
-void QuerySubmitter::stopQuery(const DistributedQueryId& query)
-{
-    stopQuery(query, std::chrono::steady_clock::time_point::max(), {});
-}
-
-void QuerySubmitter::stopQuery(
-    const DistributedQueryId& query, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
-{
-    if (auto stopped = queryManager->stop(query, deadline, stopToken); !stopped.has_value())
-    {
-        throw combineErrors(std::move(stopped.error()));
-    }
-    ids.erase(query);
-}
-
-void QuerySubmitter::cleanupQuery(const DistributedQueryId& query)
-{
-    cleanupQuery(query, std::chrono::steady_clock::time_point::max(), {});
-}
-
 void QuerySubmitter::cleanupQuery(
     const DistributedQueryId& query, const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
 {
@@ -201,78 +171,36 @@ std::optional<std::chrono::steady_clock::time_point> QuerySubmitter::failedTeard
     return failedCleanupDeadline;
 }
 
-DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const DistributedQueryId& query)
-{
-    while (true)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        auto queryStatus = queryManager->status(query);
-        if (!queryStatus.has_value())
-        {
-            throw combineErrors(queryStatusErrors(query, std::move(queryStatus.error())));
-        }
-        if (auto errors = statusRetrievalErrors(*queryStatus); !errors.empty())
-        {
-            throw combineErrors(std::move(errors));
-        }
-        if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
-            || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
-        {
-            return *queryStatus;
-        }
-    }
-}
-
-std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::pollFinishedQueries()
-{
-    return pollFinishedQueries(std::chrono::steady_clock::time_point::max(), {});
-}
-
-std::vector<DistributedQueryStatusSnapshot>
-QuerySubmitter::pollFinishedQueries(const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
-{
-    auto results = pollFinishedQueriesRetained(deadline, stopToken);
-    for (const auto& result : results)
-    {
-        ids.erase(result.queryId);
-    }
-    return results;
-}
-
-std::vector<DistributedQueryStatusSnapshot>
+FinishedQueryPoll
 QuerySubmitter::pollFinishedQueriesRetained(const std::chrono::steady_clock::time_point deadline, const std::stop_token stopToken)
 {
-    std::vector<DistributedQueryStatusSnapshot> results;
+    FinishedQueryPoll result;
+    std::vector<Exception> errors;
     for (const auto& id : ids)
     {
         auto queryStatus = queryManager->status(id, deadline, stopToken);
         if (!queryStatus.has_value())
         {
-            throw combineErrors(queryStatusErrors(id, std::move(queryStatus.error())));
+            auto statusErrors = queryStatusErrors(id, std::move(queryStatus.error()));
+            errors.insert(errors.end(), std::make_move_iterator(statusErrors.begin()), std::make_move_iterator(statusErrors.end()));
+            continue;
         }
-        if (auto errors = statusRetrievalErrors(*queryStatus); !errors.empty())
+        if (auto statusErrors = statusRetrievalErrors(*queryStatus); !statusErrors.empty())
         {
-            throw combineErrors(std::move(errors));
+            errors.insert(errors.end(), std::make_move_iterator(statusErrors.begin()), std::make_move_iterator(statusErrors.end()));
+            continue;
         }
         if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
             || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
         {
-            results.push_back(std::move(*queryStatus));
+            result.completions.push_back(std::move(*queryStatus));
         }
     }
-    return results;
+    if (!errors.empty())
+    {
+        result.error = combineErrors(std::move(errors));
+    }
+    return result;
 }
 
-std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
-{
-    while (true)
-    {
-        auto results = pollFinishedQueries();
-        if (!results.empty())
-        {
-            return results;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-    }
-}
 }

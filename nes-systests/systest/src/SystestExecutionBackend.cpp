@@ -23,6 +23,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <stop_token>
@@ -49,33 +50,46 @@ namespace NES::Systest
 namespace
 {
 
-ExecutionError executionError(const Exception& exception)
+bool isBackendError(const ErrorCode code)
 {
-    return ExecutionError{.kind = ExecutionErrorKind::Statement, .details = {{.code = exception.code(), .message = exception.what()}}};
+    return code == ErrorCode::QueryStartFailed || code == ErrorCode::QueryStopFailed || code == ErrorCode::QueryStatusFailed
+        || code == ErrorCode::QueryNotFound || code == ErrorCode::CannotSerialize || code == ErrorCode::CannotDeserialize
+        || code == ErrorCode::UnknownException;
 }
 
-ExecutionError executionError(const DistributedException& exception)
+}
+
+ExecutionError runtimeExecutionError(const Exception& exception)
+{
+    return ExecutionError{
+        .kind = isBackendError(exception.code()) ? ExecutionErrorKind::Backend : ExecutionErrorKind::Statement,
+        .details = {{.code = exception.code(), .message = exception.what()}}};
+}
+
+ExecutionError runtimeExecutionError(const DistributedException& exception)
 {
     ExecutionError result{.kind = ExecutionErrorKind::Statement, .details = {}};
     for (const auto& [host, exceptions] : exception.details())
     {
         for (const auto& detail : exceptions)
         {
+            if (isBackendError(detail.code()))
+            {
+                result.kind = ExecutionErrorKind::Backend;
+            }
             result.details.push_back(ExecutionErrorDetail{.code = detail.code(), .message = fmt::format("{}: {}", host, detail.what())});
         }
     }
     if (result.details.empty())
     {
+        result.kind = ExecutionErrorKind::Backend;
         result.details.push_back(ExecutionErrorDetail{.code = ErrorCode::QueryStatusFailed, .message = exception.what()});
     }
     return result;
 }
 
-bool isBackendError(const ErrorCode code)
+namespace
 {
-    return code == ErrorCode::QueryStartFailed || code == ErrorCode::QueryStopFailed || code == ErrorCode::QueryStatusFailed
-        || code == ErrorCode::QueryNotFound || code == ErrorCode::CannotSerialize || code == ErrorCode::UnknownException;
-}
 
 BackendFault backendFault(const Exception& exception)
 {
@@ -87,38 +101,22 @@ BackendFault backendFault(const std::exception& exception)
     return BackendFault{.kind = BackendFaultKind::Failure, .code = ErrorCode::UnknownException, .message = exception.what()};
 }
 
-std::string_view expectedSql(const ResolvedCase& testCase, const ExecutionRole role)
+const PreparedStatement* preparedStatement(const PreparedAction& action, const ExecutionRole role)
 {
-    if (const auto* query = std::get_if<QueryAction>(&testCase.action))
+    if (const auto* query = std::get_if<PreparedQuery>(&action))
     {
-        return role == ExecutionRole::Primary ? std::string_view{query->sql} : std::string_view{};
+        return role == ExecutionRole::Primary ? &query->statement : nullptr;
     }
-    const auto& differential = std::get<DifferentialAction>(testCase.action);
-    return role == ExecutionRole::Primary ? std::string_view{differential.leftSql} : std::string_view{differential.rightSql};
-}
-
-OutputTarget expectedOutput(const PreparedCase& prepared, const ExecutionRole role)
-{
-    if (const auto* action = std::get_if<QueryAction>(&prepared.definition->action))
+    if (const auto* differential = std::get_if<PreparedDifferential>(&action))
     {
-        if (action->kind == QueryKind::Explain)
-        {
-            return OutputTarget{.kind = OutputTargetKind::Text, .file = {}};
-        }
-        if (const auto* rows = std::get_if<RowsExpectation>(&prepared.definition->expectation); rows && rows->outputDiscarded)
-        {
-            return OutputTarget{.kind = OutputTargetKind::Discard, .file = {}};
-        }
-        return OutputTarget{.kind = OutputTargetKind::Table, .file = prepared.query.resultFile()};
+        return role == ExecutionRole::Primary ? &differential->primary : &differential->differential;
     }
-    return OutputTarget{
-        .kind = OutputTargetKind::Table,
-        .file = role == ExecutionRole::Primary ? prepared.query.resultFile() : prepared.query.resultFileForDifferentialQuery()};
+    return nullptr;
 }
 
 ExecutionMetrics executionMetrics(
     const DistributedQueryStatusSnapshot& status,
-    const SystestQuery& query,
+    const PreparedStatement& statement,
     const std::chrono::system_clock::time_point fallbackStart,
     const bool collectInputMetrics)
 {
@@ -135,28 +133,27 @@ ExecutionMetrics executionMetrics(
         result.finished = std::chrono::system_clock::now();
     }
 
-    if (!collectInputMetrics || !query.planInfoOrException)
+    if (!collectInputMetrics)
     {
         return result;
     }
-    for (const auto& [source, occurrences] : query.planInfoOrException->sourcesToFilePathsAndCounts | std::views::values)
+    for (const auto& source : statement.sourceMetrics)
     {
-        const auto path = source.getRawValue();
         std::error_code error;
-        if (!std::filesystem::is_regular_file(path, error) || error)
+        if (!std::filesystem::is_regular_file(source.file, error) || error)
         {
             continue;
         }
-        result.bytesProcessed += std::filesystem::file_size(path, error) * occurrences;
+        result.bytesProcessed += std::filesystem::file_size(source.file, error) * source.occurrences;
         if (error)
         {
             result.bytesProcessed = 0;
             continue;
         }
-        std::ifstream input(path);
+        std::ifstream input(source.file);
         result.tuplesProcessed
             += static_cast<uint64_t>(std::count(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>(), '\n'))
-            * occurrences;
+            * source.occurrences;
     }
     return result;
 }
@@ -189,9 +186,9 @@ class QueryManagerExecutionSession final : public ExecutionSession
 public:
     QueryManagerExecutionSession(
         std::unique_ptr<QueryManager> queryManager,
-        std::shared_ptr<const PreparedCaseCatalog> preparedCases,
+        std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions,
         const EnvironmentId environment)
-        : submitter(std::move(queryManager)), preparedCases(std::move(preparedCases)), environment(environment)
+        : submitter(std::move(queryManager)), preparedExecutions(std::move(preparedExecutions)), environment(environment)
     {
     }
 
@@ -205,9 +202,16 @@ public:
                 .code = ErrorCode::QueryStatusFailed,
                 .message = "Execution was cancelled before the statement started"});
         }
+        if (std::chrono::steady_clock::now() >= request.deadline)
+        {
+            return std::unexpected(BackendFault{
+                .kind = BackendFaultKind::DeadlineReached,
+                .code = ErrorCode::QueryStatusFailed,
+                .message = "Execution deadline was reached before the statement started"});
+        }
 
-        const auto* prepared = preparedCases->find(request.testCase);
-        if (prepared == nullptr)
+        const auto* execution = preparedExecutions->find(request.testCase);
+        if (execution == nullptr)
         {
             return std::unexpected(BackendFault{
                 .kind = BackendFaultKind::Failure,
@@ -218,80 +222,69 @@ public:
                     request.testCase.source.queryNumber,
                     request.testCase.configurationVariant)});
         }
-        if (prepared->definition->environment != environment)
+        if (execution->environment != environment)
         {
             return std::unexpected(BackendFault{
                 .kind = BackendFaultKind::Failure,
                 .code = ErrorCode::TestException,
-                .message = "Prepared case belongs to a different execution environment"});
+                .message = "Prepared execution belongs to a different execution environment"});
         }
-        const auto expectedStatement = expectedSql(*prepared->definition, request.role);
-        if (!expectedStatement.empty() && request.sql != expectedStatement)
-        {
-            return std::unexpected(BackendFault{
-                .kind = BackendFaultKind::Failure,
-                .code = ErrorCode::TestException,
-                .message = "Execution request SQL does not match its resolved case"});
-        }
-        const auto output = expectedOutput(*prepared, request.role);
-        if (request.output.kind != output.kind || request.output.file != output.file)
-        {
-            return std::unexpected(BackendFault{
-                .kind = BackendFaultKind::Failure,
-                .code = ErrorCode::TestException,
-                .message = "Execution request output does not match its prepared plan"});
-        }
-
-        const auto handle = ExecutionHandle{.value = nextHandle++};
-        if (const auto* queryAction = std::get_if<QueryAction>(&prepared->definition->action);
-            queryAction && queryAction->kind == QueryKind::Explain)
-        {
-            if (prepared->query.actualExplainOutput)
-            {
-                syntheticCompletions.push_back(StatementCompletion{
-                    .handle = handle,
-                    .result = TextArtifact{.text = *prepared->query.actualExplainOutput},
-                    .metrics = {},
-                    .artifacts = {}});
-                return std::variant<ExecutionHandle, StatementFailure>{handle};
-            }
-            const auto error = prepared->query.planInfoOrException ? executionError(TestException("EXPLAIN statement produced no output"))
-                                                                   : executionError(prepared->query.planInfoOrException.error());
-            return std::variant<ExecutionHandle, StatementFailure>{
-                StatementFailure{.stage = ExecutionStage::Planning, .error = error, .artifacts = {}}};
-        }
-
-        if (!prepared->query.planInfoOrException)
+        if (const auto* failure = std::get_if<PlanningFailure>(&execution->prepared))
         {
             return std::variant<ExecutionHandle, StatementFailure>{StatementFailure{
                 .stage = ExecutionStage::Planning,
-                .error = executionError(prepared->query.planInfoOrException.error()),
-                .artifacts = artifactsFor(request.output)}};
+                .error
+                = ExecutionError{.kind = ExecutionErrorKind::Statement, .details = {{.code = failure->code, .message = failure->message}}},
+                .artifacts = {}}};
         }
 
-        std::optional<DistributedLogicalPlan> plan;
-        if (request.role == ExecutionRole::Primary)
+        const auto& action = **std::get_if<std::shared_ptr<const PreparedAction>>(&execution->prepared);
+        const auto handle = ExecutionHandle{.value = nextHandle++};
+        if (const auto* explain = std::get_if<PreparedExplain>(&action))
         {
-            plan = prepared->query.planInfoOrException->queryPlan;
+            if (request.role != ExecutionRole::Primary || request.output.kind != OutputTargetKind::Text || !request.output.file.empty()
+                || request.sql != explain->sql)
+            {
+                return std::unexpected(BackendFault{
+                    .kind = BackendFaultKind::Failure,
+                    .code = ErrorCode::TestException,
+                    .message = "Execution request does not match its prepared EXPLAIN action"});
+            }
+            observedCompletions.push_back(
+                StatementCompletion{.handle = handle, .result = TextArtifact{.text = explain->output}, .metrics = {}, .artifacts = {}});
+            return std::variant<ExecutionHandle, StatementFailure>{handle};
         }
-        else if (prepared->query.differentialQueryPlan)
-        {
-            plan = *prepared->query.differentialQueryPlan;
-        }
-        else
+
+        const auto* statement = preparedStatement(action, request.role);
+        if (statement == nullptr)
         {
             return std::unexpected(BackendFault{
                 .kind = BackendFaultKind::Failure,
                 .code = ErrorCode::TestException,
-                .message = "Differential execution requested for a non-differential case"});
+                .message = "Execution role does not match its prepared action"});
         }
-        plan->setQueryId(DistributedQueryId(DistributedQueryId::INVALID));
+        if (request.output != statement->output || request.sql != statement->sql)
+        {
+            return std::unexpected(BackendFault{
+                .kind = BackendFaultKind::Failure,
+                .code = ErrorCode::TestException,
+                .message = "Execution request SQL or output does not match its prepared plan"});
+        }
+
+        auto plan = statement->plan;
+        plan.setQueryId(DistributedQueryId(DistributedQueryId::INVALID));
 
         try
         {
-            auto started = submitter.startQuery(*plan, request.deadline, stopToken, request.cancellationGracePeriod);
+            auto started = submitter.startQuery(plan, request.deadline, stopToken, request.cancellationGracePeriod);
             if (!started)
             {
+                if (submitter.failedTeardownDeadline())
+                {
+                    auto fault = backendFault(started.error());
+                    fault.kind = BackendFaultKind::TeardownFailed;
+                    return std::unexpected(std::move(fault));
+                }
                 if (stopToken.stop_requested())
                 {
                     return std::unexpected(BackendFault{
@@ -304,16 +297,11 @@ public:
                 }
                 if (isBackendError(started.error().code()))
                 {
-                    auto fault = backendFault(started.error());
-                    if (submitter.failedTeardownDeadline())
-                    {
-                        fault.kind = BackendFaultKind::TeardownFailed;
-                    }
-                    return std::unexpected(std::move(fault));
+                    return std::unexpected(backendFault(started.error()));
                 }
                 return std::variant<ExecutionHandle, StatementFailure>{StatementFailure{
                     .stage = ExecutionStage::Starting,
-                    .error = executionError(started.error()),
+                    .error = runtimeExecutionError(started.error()),
                     .artifacts = artifactsFor(request.output)}};
             }
             active.emplace(handle, ActiveStatement{.request = request, .queryId = *started, .started = std::chrono::system_clock::now()});
@@ -327,7 +315,7 @@ public:
                 return std::unexpected(backendFault(exception));
             }
             return std::variant<ExecutionHandle, StatementFailure>{StatementFailure{
-                .stage = ExecutionStage::Starting, .error = executionError(exception), .artifacts = artifactsFor(request.output)}};
+                .stage = ExecutionStage::Starting, .error = runtimeExecutionError(exception), .artifacts = artifactsFor(request.output)}};
         }
         catch (const std::exception& exception)
         {
@@ -341,17 +329,82 @@ public:
         const std::stop_token stopToken) override
     {
         const auto isRequested = [&](const ExecutionHandle handle) { return std::ranges::find(requested, handle) != requested.end(); };
+        const auto takeObservedCompletion = [&]() -> std::optional<StatementCompletion>
+        {
+            const auto completion = std::ranges::find_if(observedCompletions, [&](const auto& item) { return isRequested(item.handle); });
+            if (completion == observedCompletions.end())
+            {
+                return std::nullopt;
+            }
+            auto result = std::move(*completion);
+            observedCompletions.erase(completion);
+            return result;
+        };
+        const auto rememberFault = [&](BackendFault fault)
+        {
+            if (!pendingWaitFault)
+            {
+                pendingWaitFault = std::move(fault);
+            }
+        };
+        const auto rememberException = [&](const Exception& exception)
+        {
+            if (stopToken.stop_requested())
+            {
+                rememberFault(BackendFault{.kind = BackendFaultKind::Cancelled, .code = exception.code(), .message = exception.what()});
+                return;
+            }
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
+                rememberFault(
+                    BackendFault{.kind = BackendFaultKind::DeadlineReached, .code = exception.code(), .message = exception.what()});
+                return;
+            }
+            auto fault = backendFault(exception);
+            if (submitter.failedTeardownDeadline())
+            {
+                fault.kind = BackendFaultKind::TeardownFailed;
+            }
+            rememberFault(std::move(fault));
+        };
+        const auto rememberStandardException = [&](const std::exception& exception)
+        {
+            if (stopToken.stop_requested())
+            {
+                rememberFault(
+                    BackendFault{.kind = BackendFaultKind::Cancelled, .code = ErrorCode::UnknownException, .message = exception.what()});
+                return;
+            }
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
+                rememberFault(BackendFault{
+                    .kind = BackendFaultKind::DeadlineReached, .code = ErrorCode::UnknownException, .message = exception.what()});
+                return;
+            }
+            auto fault = backendFault(exception);
+            if (submitter.failedTeardownDeadline())
+            {
+                fault.kind = BackendFaultKind::TeardownFailed;
+            }
+            rememberFault(std::move(fault));
+        };
+        const auto returnPendingFault = [&]() -> std::expected<StatementCompletion, BackendFault>
+        {
+            auto fault = std::move(*pendingWaitFault);
+            pendingWaitFault.reset();
+            return std::unexpected(std::move(fault));
+        };
+
         while (true)
         {
-            if (const auto completion
-                = std::ranges::find_if(syntheticCompletions, [&](const auto& item) { return isRequested(item.handle); });
-                completion != syntheticCompletions.end())
+            if (auto completion = takeObservedCompletion())
             {
-                auto result = std::move(*completion);
-                syntheticCompletions.erase(completion);
-                return result;
+                return std::move(*completion);
             }
-
+            if (pendingWaitFault)
+            {
+                return returnPendingFault();
+            }
             if (stopToken.stop_requested())
             {
                 return std::unexpected(BackendFault{
@@ -367,94 +420,81 @@ public:
 
             try
             {
-                for (auto& status : submitter.pollFinishedQueriesRetained(deadline, stopToken))
+                auto poll = submitter.pollFinishedQueriesRetained(deadline, stopToken);
+                for (auto& status : poll.completions)
                 {
-                    const auto handle = handlesByQuery.at(status.queryId);
-                    const auto statementIterator = active.find(handle);
-                    INVARIANT(statementIterator != active.end(), "Missing active statement for query {}", status.queryId);
-                    if (status.getGlobalQueryStatus() == DistributedQueryStatus::Stopped)
+                    try
                     {
-                        submitter.releaseQuery(status.queryId);
-                    }
-                    else
-                    {
-                        submitter.cleanupQuery(
-                            status.queryId,
-                            std::chrono::steady_clock::now() + statementIterator->second.request.cancellationGracePeriod,
-                            {});
-                    }
-                    auto statement = active.extract(statementIterator);
-                    handlesByQuery.erase(status.queryId);
-                    const auto artifacts = artifactsFor(statement.mapped().request.output);
-                    const auto metrics = executionMetrics(
-                        status,
-                        preparedCases->at(statement.mapped().request.testCase).query,
-                        statement.mapped().started,
-                        statement.mapped().request.collectMetrics);
+                        const auto handle = handlesByQuery.at(status.queryId);
+                        const auto statementIterator = active.find(handle);
+                        INVARIANT(statementIterator != active.end(), "Missing active statement for query {}", status.queryId);
+                        if (status.getGlobalQueryStatus() == DistributedQueryStatus::Stopped)
+                        {
+                            submitter.releaseQuery(status.queryId);
+                        }
+                        else
+                        {
+                            submitter.cleanupQuery(
+                                status.queryId,
+                                std::chrono::steady_clock::now() + statementIterator->second.request.cancellationGracePeriod,
+                                {});
+                        }
+                        auto statement = active.extract(statementIterator);
+                        handlesByQuery.erase(status.queryId);
+                        const auto artifacts = artifactsFor(statement.mapped().request.output);
+                        const auto& execution = preparedExecutions->at(statement.mapped().request.testCase);
+                        const auto& action = **std::get_if<std::shared_ptr<const PreparedAction>>(&execution.prepared);
+                        const auto* prepared = preparedStatement(action, statement.mapped().request.role);
+                        INVARIANT(prepared != nullptr, "Active execution must have a prepared statement");
+                        const auto metrics
+                            = executionMetrics(status, *prepared, statement.mapped().started, statement.mapped().request.collectMetrics);
 
-                    StatementCompletion completion{
-                        .handle = handle,
-                        .result = outputFor(statement.mapped().request.output),
-                        .metrics = metrics,
-                        .artifacts = artifacts};
-                    if (status.getGlobalQueryStatus() != DistributedQueryStatus::Stopped)
-                    {
-                        const auto exception = status.coalesceException();
-                        completion.result = StatementFailure{
-                            .stage = ExecutionStage::Running,
-                            .error = exception ? executionError(*exception)
-                                               : executionError(QueryStatusFailed("Query failed without an exception")),
+                        StatementCompletion completion{
+                            .handle = handle,
+                            .result = outputFor(statement.mapped().request.output),
+                            .metrics = metrics,
                             .artifacts = artifacts};
+                        if (status.getGlobalQueryStatus() != DistributedQueryStatus::Stopped)
+                        {
+                            const auto exception = status.coalesceException();
+                            completion.result = StatementFailure{
+                                .stage = ExecutionStage::Running,
+                                .error = exception ? runtimeExecutionError(*exception)
+                                                   : runtimeExecutionError(QueryStatusFailed("Query failed without an exception")),
+                                .artifacts = artifacts};
+                        }
+                        observedCompletions.push_back(std::move(completion));
                     }
-                    pendingCompletions.push_back(std::move(completion));
+                    catch (const Exception& exception)
+                    {
+                        rememberException(exception);
+                    }
+                    catch (const std::exception& exception)
+                    {
+                        rememberStandardException(exception);
+                    }
+                }
+                if (poll.error)
+                {
+                    rememberException(*poll.error);
                 }
             }
             catch (const Exception& exception)
             {
-                if (stopToken.stop_requested())
-                {
-                    return std::unexpected(
-                        BackendFault{.kind = BackendFaultKind::Cancelled, .code = exception.code(), .message = exception.what()});
-                }
-                if (std::chrono::steady_clock::now() >= deadline)
-                {
-                    return std::unexpected(
-                        BackendFault{.kind = BackendFaultKind::DeadlineReached, .code = exception.code(), .message = exception.what()});
-                }
-                auto fault = backendFault(exception);
-                if (submitter.failedTeardownDeadline())
-                {
-                    fault.kind = BackendFaultKind::TeardownFailed;
-                }
-                return std::unexpected(std::move(fault));
+                rememberException(exception);
             }
             catch (const std::exception& exception)
             {
-                if (stopToken.stop_requested())
-                {
-                    return std::unexpected(BackendFault{
-                        .kind = BackendFaultKind::Cancelled, .code = ErrorCode::UnknownException, .message = exception.what()});
-                }
-                if (std::chrono::steady_clock::now() >= deadline)
-                {
-                    return std::unexpected(BackendFault{
-                        .kind = BackendFaultKind::DeadlineReached, .code = ErrorCode::UnknownException, .message = exception.what()});
-                }
-                auto fault = backendFault(exception);
-                if (submitter.failedTeardownDeadline())
-                {
-                    fault.kind = BackendFaultKind::TeardownFailed;
-                }
-                return std::unexpected(std::move(fault));
+                rememberStandardException(exception);
             }
 
-            if (const auto completion
-                = std::ranges::find_if(pendingCompletions, [&](const auto& item) { return isRequested(item.handle); });
-                completion != pendingCompletions.end())
+            if (auto completion = takeObservedCompletion())
             {
-                auto result = std::move(*completion);
-                pendingCompletions.erase(completion);
-                return result;
+                return std::move(*completion);
+            }
+            if (pendingWaitFault)
+            {
+                return returnPendingFault();
             }
             if (stopToken.stop_requested())
             {
@@ -476,12 +516,7 @@ public:
 
     std::expected<void, BackendFault> cancel(const ExecutionHandle handle, const std::chrono::steady_clock::time_point deadline) override
     {
-        if (const auto synthetic = std::ranges::find(syntheticCompletions, handle, &StatementCompletion::handle);
-            synthetic != syntheticCompletions.end())
-        {
-            syntheticCompletions.erase(synthetic);
-            return {};
-        }
+        std::erase_if(observedCompletions, [&](const StatementCompletion& completion) { return completion.handle == handle; });
         const auto statement = active.find(handle);
         if (statement == active.end())
         {
@@ -517,8 +552,8 @@ public:
                 firstFailure = cancelled.error();
             }
         }
-        syntheticCompletions.clear();
-        pendingCompletions.clear();
+        observedCompletions.clear();
+        pendingWaitFault.reset();
         try
         {
             submitter.cleanup(effectiveDeadline);
@@ -537,7 +572,28 @@ public:
                 firstFailure = backendFault(exception);
             }
         }
-        submitter.shutdown(effectiveDeadline);
+        try
+        {
+            submitter.shutdown(effectiveDeadline);
+        }
+        catch (const Exception& exception)
+        {
+            if (!firstFailure)
+            {
+                auto failure = backendFault(exception);
+                failure.kind = BackendFaultKind::TeardownFailed;
+                firstFailure = std::move(failure);
+            }
+        }
+        catch (const std::exception& exception)
+        {
+            if (!firstFailure)
+            {
+                auto failure = backendFault(exception);
+                failure.kind = BackendFaultKind::TeardownFailed;
+                firstFailure = std::move(failure);
+            }
+        }
         if (firstFailure)
         {
             return std::unexpected(std::move(*firstFailure));
@@ -554,13 +610,13 @@ private:
     };
 
     QuerySubmitter submitter;
-    std::shared_ptr<const PreparedCaseCatalog> preparedCases;
+    std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions;
     EnvironmentId environment;
     uint64_t nextHandle = 1;
     std::map<ExecutionHandle, ActiveStatement> active;
     std::map<DistributedQueryId, ExecutionHandle> handlesByQuery;
-    std::vector<StatementCompletion> syntheticCompletions;
-    std::vector<StatementCompletion> pendingCompletions;
+    std::vector<StatementCompletion> observedCompletions;
+    std::optional<BackendFault> pendingWaitFault;
 };
 
 }
@@ -571,8 +627,8 @@ std::string ExecutionError::message() const
 }
 
 EmbeddedExecutionBackend::EmbeddedExecutionBackend(
-    std::shared_ptr<const PreparedCaseCatalog> preparedCases, SingleNodeWorkerConfiguration baseConfiguration)
-    : preparedCases(std::move(preparedCases)), baseConfiguration(std::move(baseConfiguration))
+    std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions, SingleNodeWorkerConfiguration baseConfiguration)
+    : preparedExecutions(std::move(preparedExecutions)), baseConfiguration(std::move(baseConfiguration))
 {
 }
 
@@ -580,7 +636,7 @@ BackendCapabilities EmbeddedExecutionBackend::capabilities() const
 {
     return BackendCapabilities{
         .supportsConfigurationOverrides = true,
-        .supportsRemoteFixtures = false,
+        .supportsRemoteFixtures = true,
         .supportsExplain = true,
         .maximumConcurrency = std::numeric_limits<size_t>::max()};
 }
@@ -597,7 +653,7 @@ std::expected<std::unique_ptr<ExecutionSession>, BackendFault> EmbeddedExecution
         auto workerCatalog = std::make_shared<WorkerCatalog>(environment.cluster.workers);
         auto queryManager = std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configuration));
         return std::unique_ptr<ExecutionSession>{
-            std::make_unique<QueryManagerExecutionSession>(std::move(queryManager), preparedCases, environment.id)};
+            std::make_unique<QueryManagerExecutionSession>(std::move(queryManager), preparedExecutions, environment.id)};
     }
     catch (const Exception& exception)
     {
@@ -609,8 +665,8 @@ std::expected<std::unique_ptr<ExecutionSession>, BackendFault> EmbeddedExecution
     }
 }
 
-RemoteExecutionBackend::RemoteExecutionBackend(std::shared_ptr<const PreparedCaseCatalog> preparedCases)
-    : preparedCases(std::move(preparedCases))
+RemoteExecutionBackend::RemoteExecutionBackend(std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions)
+    : preparedExecutions(std::move(preparedExecutions))
 {
 }
 
@@ -637,7 +693,7 @@ std::expected<std::unique_ptr<ExecutionSession>, BackendFault> RemoteExecutionBa
         auto workerCatalog = std::make_shared<WorkerCatalog>(environment.cluster.workers);
         auto queryManager = std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend());
         return std::unique_ptr<ExecutionSession>{
-            std::make_unique<QueryManagerExecutionSession>(std::move(queryManager), preparedCases, environment.id)};
+            std::make_unique<QueryManagerExecutionSession>(std::move(queryManager), preparedExecutions, environment.id)};
     }
     catch (const Exception& exception)
     {

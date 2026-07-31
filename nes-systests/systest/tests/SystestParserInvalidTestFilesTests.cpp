@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <optional>
 #include <string>
-#include <utility>
-#include <vector>
+#include <string_view>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -23,11 +21,28 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {
-/// Tests if SLT Parser rejects invalid .test files correctly
+namespace
+{
+
+void expectParseFailure(SystestParser& parser, const std::string_view expectedMessage)
+{
+    try
+    {
+        (void)parser.parse();
+        FAIL() << "Expected parser failure";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::SLTUnexpectedToken);
+        EXPECT_EQ(std::string_view(exception.what()), expectedMessage);
+    }
+}
+
+}
+
 class SystestParserInvalidTestFilesTest : public Testing::BaseUnitTest
 {
 public:
@@ -43,77 +58,48 @@ public:
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadFile(SYSTEST_DATA_DIR "invalid.dummy"));
+    expectParseFailure(
+        parser,
+        "unexpected token in sql logic test file; Should never run into the INVALID token during systest file parsing, but got line: "
+        "Attach File InlineData CONFIG/sources/tcp_inline_default.yaml.\n");
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_error.dummy";
-
-    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
-
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, const SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });
-
-    parser.registerOnErrorExpectationCallback(
-        [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
-        {
-            /// nop, ensure parsing
-        });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadFile(SYSTEST_DATA_DIR "invalid_error.dummy"));
+    expectParseFailure(
+        parser, "unexpected token in sql logic test file; invalid error code: 9999000 is not defined in ErrorDefinitions.inc\n");
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_error_message.dummy";
-
-    const auto* const expectQuery = R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)";
-
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, SystestQueryId, bool) { ASSERT_EQ(query, expectQuery); });
-
-    parser.registerOnErrorExpectationCallback(
-        [&](const SystestParser::ErrorExpectation&, const SystestQueryId)
-        {
-            /// nop, ensure parsing
-        });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadFile(SYSTEST_DATA_DIR "invalid_error_message.dummy"));
+    expectParseFailure(
+        parser, "unexpected token in sql logic test file; invalid error type: InvalidErrorCode is not defined in ErrorDefinitions.inc\n");
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_token.dummy";
-
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { /* nop, ensure parsing*/ });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadFile(SYSTEST_DATA_DIR "invalid_token.dummy"));
+    expectParseFailure(
+        parser,
+        "unexpected token in sql logic test file; Should never run into the INVALID token during systest file parsing, but got line: "
+        "THISISANINVALIDTOKEN.\n");
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
 {
-    const auto* const filename = SYSTEST_DATA_DIR "invalid_differential.dummy";
-
     SystestParser parser{};
-    parser.registerOnCreateCallback(
-        [&](const std::string&,
-            const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { /* nop, ensure parsing*/ });
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { /* nop, ensure parsing*/ });
-    parser.registerOnDifferentialQueryBlockCallback(
-        [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
-
-    ASSERT_TRUE(parser.loadFile(filename));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadFile(SYSTEST_DATA_DIR "invalid_differential.dummy"));
+    expectParseFailure(
+        parser,
+        "unexpected token in sql logic test file; Expected differential delimiter '====' but encountered legacy keyword "
+        "'DIFFERENTIAL'\n");
 }
 
 }

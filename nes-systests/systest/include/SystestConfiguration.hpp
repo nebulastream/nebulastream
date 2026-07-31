@@ -24,6 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestIdentifiers.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -73,6 +74,7 @@ public:
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;
     std::vector<std::string> globalExcludedGroups;
+    std::vector<Systest::QueryNumberRange> testQueryNumberRanges;
 
     SystestClusterConfiguration clusterConfig;
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

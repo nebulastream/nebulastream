@@ -21,15 +21,21 @@
 #include <memory>
 #include <span>
 #include <stop_token>
+#include <string>
 #include <variant>
 
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestPreparation.hpp>
 #include <SystestQueryModel.hpp>
+
+namespace NES
+{
+class DistributedException;
+class Exception;
+}
 
 namespace NES::Systest
 {
-
-class PreparedCaseCatalog;
 
 enum class ExecutionRole : uint8_t
 {
@@ -40,6 +46,7 @@ enum class ExecutionRole : uint8_t
 struct ExecutionRequest
 {
     TestCaseId testCase;
+    uint64_t sequenceNumber = 0;
     ExecutionRole role = ExecutionRole::Primary;
     std::string sql;
     OutputTarget output;
@@ -69,6 +76,9 @@ struct StatementFailure
     ExecutionError error;
     ArtifactSet artifacts;
 };
+
+ExecutionError runtimeExecutionError(const Exception& exception);
+ExecutionError runtimeExecutionError(const DistributedException& exception);
 
 enum class BackendFaultKind : uint8_t
 {
@@ -105,7 +115,6 @@ public:
     waitAny(std::span<const ExecutionHandle> active, std::chrono::steady_clock::time_point deadline, std::stop_token stopToken) = 0;
 
     virtual std::expected<void, BackendFault> cancel(ExecutionHandle, std::chrono::steady_clock::time_point deadline) = 0;
-
     virtual std::expected<void, BackendFault> close(std::chrono::steady_clock::time_point deadline) = 0;
 };
 
@@ -115,33 +124,33 @@ public:
     virtual ~ExecutionBackend() = default;
 
     virtual BackendCapabilities capabilities() const = 0;
-
     virtual std::expected<std::unique_ptr<ExecutionSession>, BackendFault> open(const EnvironmentSpec&) = 0;
 };
 
 class EmbeddedExecutionBackend final : public ExecutionBackend
 {
 public:
-    EmbeddedExecutionBackend(std::shared_ptr<const PreparedCaseCatalog> preparedCases, SingleNodeWorkerConfiguration baseConfiguration);
+    EmbeddedExecutionBackend(
+        std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions, SingleNodeWorkerConfiguration baseConfiguration);
 
     BackendCapabilities capabilities() const override;
     std::expected<std::unique_ptr<ExecutionSession>, BackendFault> open(const EnvironmentSpec&) override;
 
 private:
-    std::shared_ptr<const PreparedCaseCatalog> preparedCases;
+    std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions;
     SingleNodeWorkerConfiguration baseConfiguration;
 };
 
 class RemoteExecutionBackend final : public ExecutionBackend
 {
 public:
-    explicit RemoteExecutionBackend(std::shared_ptr<const PreparedCaseCatalog> preparedCases);
+    explicit RemoteExecutionBackend(std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions);
 
     BackendCapabilities capabilities() const override;
     std::expected<std::unique_ptr<ExecutionSession>, BackendFault> open(const EnvironmentSpec&) override;
 
 private:
-    std::shared_ptr<const PreparedCaseCatalog> preparedCases;
+    std::shared_ptr<const PreparedExecutionCatalog> preparedExecutions;
 };
 
 }

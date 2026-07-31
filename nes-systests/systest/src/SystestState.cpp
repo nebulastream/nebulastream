@@ -15,40 +15,29 @@
 #include <SystestState.hpp>
 
 #include <algorithm>
-#include <array>
-#include <chrono>
+#include <cctype>
+#include <charconv>
 #include <cstdint>
-#include <expected> /// NOLINT(misc-include-cleaner)
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
-#include <regex>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
-#include <fmt/ranges.h> ///NOLINT: required by fmt
+#include <fmt/ranges.h>
 #include <SystestConfiguration.hpp>
-
-#include <Sources/SourceDescriptor.hpp>
-#include <DistributedQuery.hpp>
-#include <ErrorHandling.hpp>
-#include <SystestRunner.hpp>
 
 namespace
 {
@@ -159,116 +148,33 @@ std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile,
     }
     return std::nullopt;
 }
-}
 
-namespace NES::Systest
+std::vector<NES::Systest::TestGroup> readGroups(const NES::Systest::TestFile& testfile)
 {
-
-std::filesystem::path
-SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
-{
-    auto resultDir = workingDir / "results";
-    if (not is_directory(resultDir))
-    {
-        create_directories(resultDir);
-        std::cout << "Created working directory: file://" << resultDir.string() << "\n";
-    }
-
-    return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
-}
-
-std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
-{
-    auto sourceDir = workingDir / "sources";
-    if (not is_directory(sourceDir))
-    {
-        create_directories(sourceDir);
-        std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
-    }
-
-    return sourceDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
-}
-
-std::filesystem::path SystestQuery::resultFile() const
-{
-    return resultFile(workingDir, testName, queryIdInFile);
-}
-
-std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
-{
-    return resultFile(workingDir, testName + "differential", queryIdInFile);
-}
-
-TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
-{
-    TestFileMap testFiles;
-
-    auto toLowerCopy = [](const std::string& str)
-    {
-        std::string lowerStr = str;
-        std::ranges::transform(lowerStr, lowerStr.begin(), ::tolower);
-        return lowerStr;
-    };
-
-    const auto desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
-
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
-             | std::views::filter([](auto entry) { return entry.is_regular_file(); }))
-    {
-        const std::string entryExt = toLowerCopy(entry.path().extension().string());
-        if (!fileExtension || entryExt == desiredExtension)
-        {
-            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            testFiles.insert({testfile.file, testfile});
-        }
-    }
-    return testFiles;
-}
-
-std::vector<TestGroup> readGroups(const TestFile& testfile)
-{
-    std::vector<TestGroup> groups;
-    if (std::ifstream ifstream(testfile.file); ifstream.is_open())
+    std::vector<NES::Systest::TestGroup> groups;
+    if (std::ifstream input(testfile.file); input.is_open())
     {
         std::string line;
-        while (std::getline(ifstream, line))
+        while (std::getline(input, line))
         {
             if (line.starts_with("# groups:"))
             {
                 auto content = std::string_view(line).substr(9);
-                auto open = content.find('[');
-                auto close = content.find(']');
-                auto inner = content.substr(open + 1, close - open - 1);
-                for (auto part : inner | std::views::split(',') | std::views::transform([](auto r) { return std::string_view(r); })
-                         | std::views::transform([](auto sv) { return sv | std::views::filter([](char c) { return !std::isspace(c); }); }))
+                const auto open = content.find('[');
+                const auto close = content.find(']');
+                const auto inner = content.substr(open + 1, close - open - 1);
+                for (auto part : inner | std::views::split(',') | std::views::transform([](auto range) { return std::string_view(range); })
+                         | std::views::transform([](auto value)
+                                                 { return value | std::views::filter([](char c) { return !std::isspace(c); }); }))
                 {
                     groups.emplace_back(std::ranges::to<std::string>(part));
                 }
                 break;
             }
         }
-        ifstream.close();
     }
     return groups;
 }
-
-TestFile::TestFile(
-    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-    : file(weakly_canonical(file))
-    , groups(readGroups(*this))
-    , sourceCatalog(std::move(sourceCatalog))
-    , sinkCatalog(std::move(sinkCatalog)) { };
-
-TestFile::TestFile(
-    const std::filesystem::path& file,
-    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-    std::shared_ptr<SourceCatalog> sourceCatalog,
-    std::shared_ptr<SinkCatalog> sinkCatalog)
-    : file(weakly_canonical(file))
-    , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
-    , groups(readGroups(*this))
-    , sourceCatalog(std::move(sourceCatalog))
-    , sinkCatalog(std::move(sinkCatalog)) { };
 
 struct TestGroupFiles
 {
@@ -276,11 +182,10 @@ struct TestGroupFiles
     std::vector<std::filesystem::path> files;
 };
 
-std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
+std::vector<TestGroupFiles> collectTestGroups(const NES::Systest::TestFileMap& testMap)
 {
     std::unordered_map<std::string, std::vector<std::filesystem::path>> groupFilesMap;
-
-    for (const auto& [testName, testFile] : testMap)
+    for (const auto& testFile : testMap | std::views::values)
     {
         for (const auto& groupName : testFile.groups)
         {
@@ -290,45 +195,157 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 
     std::vector<TestGroupFiles> testGroups;
     testGroups.reserve(groupFilesMap.size());
-    for (const auto& [groupName, files] : groupFilesMap)
+    for (auto& [groupName, files] : groupFilesMap)
     {
-        testGroups.push_back(TestGroupFiles{.name = groupName, .files = files});
+        testGroups.push_back(TestGroupFiles{.name = std::move(groupName), .files = std::move(files)});
     }
     return testGroups;
+}
+
+NES::Systest::TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
+{
+    NES::Systest::TestFileMap testFiles;
+    auto toLowerCopy = [](std::string value)
+    {
+        std::ranges::transform(
+            value, value.begin(), [](const unsigned char character) { return static_cast<char>(std::tolower(character)); });
+        return value;
+    };
+    const auto desiredExtension = fileExtension ? toLowerCopy(*fileExtension) : std::string{};
+
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
+             | std::views::filter([](const auto& candidate) { return candidate.is_regular_file(); }))
+    {
+        if (!fileExtension || toLowerCopy(entry.path().extension().string()) == desiredExtension)
+        {
+            NES::Systest::TestFile testFile(entry.path());
+            testFiles.emplace(testFile.file, std::move(testFile));
+        }
+    }
+    return testFiles;
+}
+}
+
+namespace NES::Systest
+{
+
+std::vector<QueryNumberRange> parseTestQueryNumbers(const std::string_view selection)
+{
+    const auto reject = [&]() -> void
+    {
+        throw InvalidConfigParameter(
+            "Invalid test query selection '{}'. Expected a comma-separated list of positive query numbers or ascending ranges", selection);
+    };
+    const auto parseNumber = [&](const std::string_view value)
+    {
+        uint64_t number = 0;
+        const auto [end, error] = std::from_chars(value.data(), value.data() + value.size(), number);
+        if (value.empty() || error != std::errc{} || end != value.data() + value.size() || number == 0)
+        {
+            reject();
+        }
+        return number;
+    };
+
+    if (selection.empty())
+    {
+        reject();
+    }
+    std::vector<QueryNumberRange> result;
+    size_t position = 0;
+    while (position <= selection.size())
+    {
+        const auto comma = selection.find(',', position);
+        const auto item = selection.substr(position, comma == std::string_view::npos ? selection.size() - position : comma - position);
+        if (item.empty())
+        {
+            reject();
+        }
+        const auto dash = item.find('-');
+        if (dash == std::string_view::npos)
+        {
+            const auto queryNumber = SystestQueryId{parseNumber(item)};
+            result.push_back(QueryNumberRange{.first = queryNumber, .last = queryNumber});
+        }
+        else
+        {
+            if (item.find('-', dash + 1) != std::string_view::npos)
+            {
+                reject();
+            }
+            const auto first = SystestQueryId{parseNumber(item.substr(0, dash))};
+            const auto last = SystestQueryId{parseNumber(item.substr(dash + 1))};
+            if (first > last)
+            {
+                reject();
+            }
+            result.push_back(QueryNumberRange{.first = first, .last = last});
+        }
+        if (comma == std::string_view::npos)
+        {
+            break;
+        }
+        position = comma + 1;
+    }
+    return result;
+}
+
+TestFile::TestFile(const std::filesystem::path& file) : file(weakly_canonical(file)), groups(readGroups(*this))
+{
+}
+
+TestFile::TestFile(
+    const std::filesystem::path& file,
+    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
+    std::vector<QueryNumberRange> queryNumberRanges)
+    : file(weakly_canonical(file))
+    , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
+    , queryNumberRanges(std::move(queryNumberRanges))
+    , groups(readGroups(*this))
+{
+}
+
+bool TestFile::hasQueryNumberSelection() const
+{
+    return !onlyEnableQueriesWithTestQueryNumber.empty() || !queryNumberRanges.empty();
+}
+
+bool TestFile::isQueryNumberSelected(const SystestQueryId queryNumber) const
+{
+    return onlyEnableQueriesWithTestQueryNumber.contains(queryNumber)
+        || std::ranges::any_of(queryNumberRanges, [&](const QueryNumberRange& range) { return range.contains(queryNumber); });
 }
 
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
 
-    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    if (!config.directlySpecifiedTestFiles.getValue().empty())
     {
         const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
-
-        if (config.testQueryNumbers.empty())
+        if (config.testQueryNumbers.empty() && config.testQueryNumberRanges.empty())
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
+            TestFile testFile(directlySpecifiedTestFiles);
+            if (matchesDisabledTestFile(testFile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
                     "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
-                    testfile.getLogFilePath());
+                    testFile.getLogFilePath());
             }
-            return TestFileMap{{testfile.file, testfile}};
+            return TestFileMap{{testFile.file, std::move(testFile)}};
         }
 
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             config.testQueryNumbers.getValues()
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
-        const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-        if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
+        TestFile testFile(directlySpecifiedTestFiles, testNumbers, config.testQueryNumberRanges);
+        if (matchesDisabledTestFile(testFile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
                 "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
-                testfile.getLogFilePath());
+                testFile.getLogFilePath());
         }
-        return TestFileMap{{testfile.file, testfile}};
+        return TestFileMap{{testFile.file, std::move(testFile)}};
     }
 
     auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
@@ -336,15 +353,13 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         testMap,
         [&](const auto& nameAndFile)
         {
-            const auto& [name, testFile] = nameAndFile;
-            if (const auto skipReason = getSkipReason(testFile, filters))
+            if (const auto skipReason = getSkipReason(nameAndFile.second, filters))
             {
                 std::cout << *skipReason;
                 return true;
             }
             return false;
         });
-
     return testMap;
 }
 
@@ -353,87 +368,36 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
     if (testMap.empty())
     {
         os << "No matching test files found\n";
+        return os;
     }
-    else
-    {
-        os << "Discovered Test Files:\n";
-        for (const auto& testFile : testMap)
-        {
-            os << "\t" << testFile.first << "\tfile://" << testFile.second.file.c_str() << "\n";
-        }
 
-        auto testGroups = collectTestGroups(testMap);
-        if (not testGroups.empty())
+    os << "Discovered Test Files:\n";
+    for (const auto& [path, testFile] : testMap)
+    {
+        os << "\t" << path << "\tfile://" << testFile.file.c_str() << "\n";
+    }
+
+    const auto testGroups = collectTestGroups(testMap);
+    if (!testGroups.empty())
+    {
+        os << "\nDiscovered Test Groups:\n";
+        for (const auto& [name, files] : testGroups)
         {
-            os << "\nDiscovered Test Groups:\n";
-            for (const auto& [name, files] : testGroups)
+            os << "\t" << name << "\n";
+            for (const auto& filename : files)
             {
-                os << "\t" << name << "\n";
-                for (const auto& filename : files)
-                {
-                    os << "\t\tfile://" << filename.c_str() << "\n";
-                }
+                os << "\t\tfile://" << filename.c_str() << "\n";
             }
         }
     }
     return os;
 }
 
-std::chrono::duration<double> RunningQuery::getElapsedTime() const
-{
-    INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
-    INVARIANT(queryStatus.has_value(), "Query should have a status, otherwise it failed during registration already.");
-    const auto metrics = queryStatus.value().coalesceQueryMetrics();
-    const auto stop = metrics.stop;
-    const auto running = metrics.running;
-    INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
-    return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
-}
-
-std::string RunningQuery::getThroughput() const
-{
-    INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
-    INVARIANT(queryStatus.has_value(), "Query should have a status, otherwise it failed during registration already.");
-    const auto metrics = queryStatus.value().coalesceQueryMetrics();
-
-    const auto stop = metrics.stop;
-    const auto running = metrics.running;
-    INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps timestamps attached", queryId);
-    if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
-    {
-        return "";
-    }
-
-    double bytesPerSecond = NAN;
-    double tuplesPerSecond = NAN;
-    if (bytesProcessed.value() > 0 and tuplesProcessed.value() > 0)
-    {
-        const std::chrono::duration<double> duration = stop.value() - running.value();
-        bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
-        tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
-    }
-
-    auto formatUnits = [](double throughput)
-    {
-        const std::array<std::string, 5> units = {"", "k", "M", "G", "T"};
-        uint64_t unitIndex = 0;
-        constexpr auto nextUnit = 1000;
-        while (throughput >= nextUnit && unitIndex < units.size() - 1)
-        {
-            throughput /= nextUnit;
-            unitIndex++;
-        }
-        return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
-    };
-    return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
-}
-
 std::string TestFile::getLogFilePath() const
 {
     if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
     {
-        auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
-
+        const auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
         auto filePathIter = file.begin();
         if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
         {
@@ -445,10 +409,9 @@ std::string TestFile::getLogFilePath() const
         {
             resultPath /= *filePathIter;
         }
-
         return resultPath.string();
     }
-
-    return std::filesystem::path(file);
+    return file;
 }
+
 }

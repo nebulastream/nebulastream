@@ -15,16 +15,12 @@
 #pragma once
 
 #include <cstdint>
-#include <filesystem>
 #include <optional>
+#include <stop_token>
 #include <string>
-#include <vector>
 
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
-#include <SystestProgressTracker.hpp>
-#include <SystestRunner.hpp>
-#include <SystestState.hpp>
 
 struct SystestExecutorResult
 {
@@ -45,12 +41,10 @@ class SystestExecutor
 {
 public:
     explicit SystestExecutor(SystestConfiguration config);
-    SystestExecutorResult executeSystests();
+    SystestExecutorResult executeSystests(std::stop_token stopToken = {});
 
 private:
-    void runEndlessMode(const std::vector<Systest::SystestQuery>& queries);
-
     SystestConfiguration config;
-    Systest::SystestProgressTracker progressTracker;
 };
+
 }

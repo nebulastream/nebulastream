@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#include <optional>
+#include <filesystem>
 #include <string>
 #include <string_view>
-#include <utility>
+#include <variant>
 #include <vector>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {
@@ -49,186 +46,128 @@ TEST_F(SystestParserTest, testEmptyFile)
     SystestParser parser{};
     const std::string str;
 
-    ASSERT_EQ(true, parser.loadString(str));
-    EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(parser.loadString(str));
+    ParsedTestFile parsed;
+    ASSERT_NO_THROW(parsed = parser.parse());
+    EXPECT_TRUE(parsed.file.empty());
+    EXPECT_TRUE(parsed.relativeTestFile.empty());
+    EXPECT_TRUE(parsed.fixtures.empty());
+    EXPECT_TRUE(parsed.cases.empty());
 }
 
 TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 {
     SystestParser parser{};
-    /// Comment, new line in Unix/Linux, Windows, Older Mac systems
     const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
     ASSERT_TRUE(parser.loadString(str));
-    EXPECT_NO_THROW(parser.parse());
+    ParsedTestFile parsed;
+    ASSERT_NO_THROW(parsed = parser.parse());
+    EXPECT_TRUE(parsed.fixtures.empty());
+    EXPECT_TRUE(parsed.cases.empty());
 }
 
-TEST_F(SystestParserTest, testAttachSourceCallbackSource)
+TEST_F(SystestParserTest, testCreateStatementsWithoutAttachments)
 {
     SystestParser parser{};
-    const std::string sourceIn = "CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64 timestamp);\n"
-                                 "CREATE PHYSICAL SOURCE FOR window TYPE File";
-
-    bool isCreateCallbackCalled = false;
-
-    const std::string str = sourceIn + "\n";
-
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
-        {
-            isCreateCallbackCalled = true;
-            ASSERT_FALSE(testData.has_value());
-        });
-
-    ASSERT_TRUE(parser.loadString(str));
-    EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(isCreateCallbackCalled);
-}
-
-TEST_F(SystestParserTest, testCallbackQuery)
-{
-    SystestParser parser{};
-
-    static constexpr std::string_view TestFileName = "testCallbackQuery";
-    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK;";
-    const std::string delimiter = "----";
-    const std::string tpl1 = "1,1,1";
-    const std::string tpl2 = "2,2,2";
-
-    bool queryCallbackCalled = false;
-
-    const std::string testFileString = fmt::format("{}\n{}\n{}\n{}\n", queryIn, delimiter, tpl1, tpl2);
-    std::vector<std::string> receivedResultTuples;
-
-    parser.registerOnQueryCallback(
-        [&](const std::string& queryOut, SystestQueryId, bool)
-        {
-            ASSERT_EQ(queryIn, queryOut);
-            queryCallbackCalled = true;
-        });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
-                                          { receivedResultTuples = std::move(resultTuples); });
+    const std::string testFileString = "CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64 timestamp);\n"
+                                       "CREATE PHYSICAL SOURCE FOR window TYPE File\n";
 
     ASSERT_TRUE(parser.loadString(testFileString));
-    EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(queryCallbackCalled);
-    /// Check that the queryResult map contains the expected two results for the query defined above
-    ASSERT_EQ(receivedResultTuples.size(), 2);
-    ASSERT_EQ(receivedResultTuples.at(0), tpl1);
-    ASSERT_EQ(receivedResultTuples.at(1), tpl2);
+    const auto parsed = parser.parse();
+
+    ASSERT_EQ(parsed.fixtures.size(), 2);
+    EXPECT_EQ(parsed.fixtures[0].sql, "CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64 timestamp);");
+    EXPECT_FALSE(parsed.fixtures[0].attachment.has_value());
+    EXPECT_EQ(parsed.fixtures[0].source, (Origin{.file = {}, .firstLine = 1, .lastLine = 1}));
+    EXPECT_EQ(parsed.fixtures[1].sql, "CREATE PHYSICAL SOURCE FOR window TYPE File\n");
+    EXPECT_FALSE(parsed.fixtures[1].attachment.has_value());
+    EXPECT_EQ(parsed.fixtures[1].source, (Origin{.file = {}, .firstLine = 2, .lastLine = 2}));
+    EXPECT_TRUE(parsed.cases.empty());
+}
+
+TEST_F(SystestParserTest, testQueryAndResultTuples)
+{
+    SystestParser parser{};
+
+    const std::string query = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK;";
+    const std::string firstTuple = "1,1,1";
+    const std::string secondTuple = "2,2,2";
+    const std::string testFileString = query + "\n----\n" + firstTuple + "\n" + secondTuple + "\n";
+
+    ASSERT_TRUE(parser.loadString(testFileString));
+    const auto parsed = parser.parse();
+
+    EXPECT_TRUE(parsed.fixtures.empty());
+    ASSERT_EQ(parsed.cases.size(), 1);
+    const auto& parsedCase = parsed.cases.front();
+    EXPECT_EQ(parsedCase.key.queryNumber, SystestQueryId{1});
+    EXPECT_EQ(parsedCase.source, (Origin{.file = {}, .firstLine = 1, .lastLine = 4}));
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(parsedCase.action));
+    EXPECT_EQ(std::get<QueryAction>(parsedCase.action), (QueryAction{.sql = query, .kind = QueryKind::Execute}));
+    ASSERT_TRUE(std::holds_alternative<RowsExpectation>(parsedCase.expectation));
+    EXPECT_EQ(std::get<RowsExpectation>(parsedCase.expectation).rows, (std::vector<std::string>{firstTuple, secondTuple}));
 }
 
 TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 {
     SystestParser parser{};
-    const std::string delimiter = "----";
-    const std::string tpl1 = "1,1,1";
-    const std::string tpl2 = "2,2,2";
+    const std::string testFileString = "----\n1,1,1\n2,2,2\n";
 
-    const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
-
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { FAIL(); });
-    parser.registerOnResultTuplesCallback(
-        [&](const std::vector<std::string>&, const SystestQueryId)
-        {
-            /// nop
-        });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
-
-    ASSERT_TRUE(parser.loadString(str));
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+    ASSERT_TRUE(parser.loadString(testFileString));
+    ASSERT_EXCEPTION_ERRORCODE({ (void)parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
-TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
+TEST_F(SystestParserTest, testQueryWithoutResultDelimiter)
 {
     SystestParser parser{};
+    ASSERT_TRUE(parser.loadString("SELECT 1 INTO File();\n"));
 
+    ASSERT_EXCEPTION_ERRORCODE({ (void)parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserTest, testOversizedNumericErrorCode)
+{
+    SystestParser parser{};
+    ASSERT_TRUE(parser.loadString("SELECT 1 INTO File();\n----\nERROR 999999999999999999999999999999999999999999999999\n"));
+
+    ASSERT_EXCEPTION_ERRORCODE({ (void)parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
+
+TEST_F(SystestParserTest, testDifferentialQueryFromFile)
+{
+    SystestParser parser{};
     const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
     const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
-
-    bool mainQueryCallbackCalled = false;
-    bool differentialQueryCallbackCalled = false;
-
-    parser.registerOnQueryCallback(
-        [&](const std::string& queryOut, SystestQueryId, bool)
-        {
-            ASSERT_FALSE(differentialQueryCallbackCalled) << "Main query callback was called after the differential one.";
-            ASSERT_FALSE(mainQueryCallbackCalled) << "Main query callback should only be called once.";
-            ASSERT_EQ(expectedMainQuery, queryOut);
-            mainQueryCallbackCalled = true;
-        });
-
-    parser.registerOnDifferentialQueryBlockCallback(
-        [&](std::string leftQuery, std::string rightQuery, SystestQueryId mainId, SystestQueryId differentialId)
-        {
-            ASSERT_EQ(mainId, differentialId) << "Differential block should reuse the last parsed query id.";
-            ASSERT_TRUE(mainQueryCallbackCalled) << "Differential callback was called before the main query callback.";
-            ASSERT_FALSE(differentialQueryCallbackCalled) << "Differential query callback should only be called once.";
-            ASSERT_EQ(expectedMainQuery, leftQuery);
-            ASSERT_EQ(expectedDifferentialQuery, rightQuery);
-            differentialQueryCallbackCalled = true;
-        });
-
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
-
-    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
-                                          { FAIL() << "Result tuple callback should not be called for a differential query test."; });
-    parser.registerOnErrorExpectationCallback(
-        [](const SystestParser::ErrorExpectation&, SystestQueryId)
-        { FAIL() << "Error expectation callback should not be called for a differential query test."; });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "differential.dummy";
     ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
+    const auto parsed = parser.parse();
 
-    EXPECT_NO_THROW(parser.parse());
-
-    ASSERT_TRUE(mainQueryCallbackCalled) << "The main query callback was never called.";
-    ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
+    EXPECT_EQ(parsed.file, std::filesystem::weakly_canonical(Filename));
+    EXPECT_EQ(parsed.relativeTestFile, "differential.dummy");
+    ASSERT_EQ(parsed.fixtures.size(), 3);
+    ASSERT_TRUE(parsed.fixtures[1].attachment.has_value());
+    ASSERT_TRUE(std::holds_alternative<InlineSourceData>(*parsed.fixtures[1].attachment));
+    EXPECT_EQ(
+        std::get<InlineSourceData>(*parsed.fixtures[1].attachment).rows,
+        (std::vector<std::string>{"5,1,1000", "10,1,1001", "15,1,1002", "20,2,2000", "25,19,19000", "30,20,20000", "35,21,21000"}));
+    ASSERT_EQ(parsed.cases.size(), 1);
+    const auto& parsedCase = parsed.cases.front();
+    EXPECT_EQ(parsedCase.key, (CaseKey{.relativeTestFile = "differential.dummy", .queryNumber = SystestQueryId{1}}));
+    EXPECT_EQ(parsedCase.source, (Origin{.file = std::filesystem::weakly_canonical(Filename), .firstLine = 22, .lastLine = 24}));
+    ASSERT_TRUE(std::holds_alternative<DifferentialAction>(parsedCase.action));
+    EXPECT_EQ(
+        std::get<DifferentialAction>(parsedCase.action),
+        (DifferentialAction{.leftSql = expectedMainQuery, .rightSql = expectedDifferentialQuery}));
+    EXPECT_TRUE(std::holds_alternative<DifferentialExpectation>(parsedCase.expectation));
 }
 
-TEST_F(SystestParserTest, testDifferentialQueryCallbackInlineSyntax)
+TEST_F(SystestParserTest, testDifferentialQueryInlineSyntax)
 {
     SystestParser parser{};
-
     const std::string expectedMainQuery = "SELECT id * UINT32(10) AS id, value, timestamp FROM stream INTO streamSink;";
     const std::string expectedDifferentialQuery = "SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO streamSink;";
-
-    bool mainQueryCallbackCalled = false;
-    bool differentialQueryCallbackCalled = false;
-
-    parser.registerOnQueryCallback(
-        [&](const std::string& queryOut, SystestQueryId, bool)
-        {
-            ASSERT_FALSE(differentialQueryCallbackCalled) << "Main query callback was called after the differential one.";
-            ASSERT_FALSE(mainQueryCallbackCalled) << "Main query callback should only be called once.";
-            ASSERT_EQ(expectedMainQuery, queryOut);
-            mainQueryCallbackCalled = true;
-        });
-
-    parser.registerOnDifferentialQueryBlockCallback(
-        [&](std::string leftQuery, std::string rightQuery, SystestQueryId mainId, SystestQueryId differentialId)
-        {
-            ASSERT_EQ(mainId, differentialId) << "Differential block should reuse the last parsed query id.";
-            ASSERT_TRUE(mainQueryCallbackCalled) << "Differential callback was called before the main query callback.";
-            ASSERT_FALSE(differentialQueryCallbackCalled) << "Differential query callback should only be called once.";
-            ASSERT_EQ(expectedMainQuery, leftQuery);
-            ASSERT_EQ(expectedDifferentialQuery, rightQuery);
-            differentialQueryCallbackCalled = true;
-        });
-
-    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId)
-                                          { FAIL() << "Result tuple callback should not be called for a differential query test."; });
-
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
-
-    parser.registerOnErrorExpectationCallback(
-        [](const SystestParser::ErrorExpectation&, SystestQueryId)
-        { FAIL() << "Error expectation callback should not be called for a differential query test."; });
 
     static constexpr std::string_view TestContent = R"(
 CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp INT64);
@@ -244,23 +183,32 @@ SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO strea
 )";
 
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    const auto parsed = parser.parse();
 
-    EXPECT_NO_THROW(parser.parse());
-
-    ASSERT_TRUE(mainQueryCallbackCalled) << "The main query callback was never called.";
-    ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
+    ASSERT_EQ(parsed.fixtures.size(), 3);
+    ASSERT_TRUE(parsed.fixtures[1].attachment.has_value());
+    EXPECT_EQ(std::get<InlineSourceData>(*parsed.fixtures[1].attachment).rows, (std::vector<std::string>{"5,1,1000"}));
+    ASSERT_EQ(parsed.cases.size(), 1);
+    ASSERT_TRUE(std::holds_alternative<DifferentialAction>(parsed.cases.front().action));
+    EXPECT_EQ(
+        std::get<DifferentialAction>(parsed.cases.front().action),
+        (DifferentialAction{.leftSql = expectedMainQuery, .rightSql = expectedDifferentialQuery}));
+    EXPECT_TRUE(std::holds_alternative<DifferentialExpectation>(parsed.cases.front().expectation));
 }
 
-/// NOLINTBEGIN(bugprone-unchecked-optional-access)
-TEST_F(SystestParserTest, testExplainCallbackWithVerbatimResultBlock)
+TEST_F(SystestParserTest, testEmptyDifferentialQueryIsRejected)
 {
     SystestParser parser{};
+    ASSERT_TRUE(parser.loadString("SELECT 1 INTO File();\n====\n----\n"));
 
-    const std::string explainIn = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;";
-    const std::string queryIn = "SELECT id FROM stream INTO sink;";
+    ASSERT_EXCEPTION_ERRORCODE({ (void)parser.parse(); }, ErrorCode::SLTUnexpectedToken)
+}
 
-    /// The expected explain output contains lines that look like parser tokens: a line starting with `----`,
-    /// a section header, and an indented line starting with `SELECT`. All must be delivered verbatim.
+TEST_F(SystestParserTest, testExplainWithVerbatimResultBlock)
+{
+    SystestParser parser{};
+    const std::string explain = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;";
+    const std::string query = "SELECT id FROM stream INTO sink;";
     static constexpr std::string_view TestContent
         = R"(EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > UINT64(4) INTO sink;
 ----
@@ -275,77 +223,49 @@ SELECT id FROM stream INTO sink;
 1
 )";
 
-    std::optional<SystestQueryId> explainQueryId;
-    std::optional<SystestQueryId> selectQueryId;
-    std::string receivedExplainStatement;
-    std::vector<std::vector<std::string>> receivedResultBlocks;
-
-    parser.registerOnExplainQueryCallback(
-        [&](const std::string& statement, SystestQueryId queryId)
-        {
-            receivedExplainStatement = statement;
-            explainQueryId = queryId;
-        });
-    parser.registerOnQueryCallback(
-        [&](const std::string& queryOut, SystestQueryId queryId, bool)
-        {
-            ASSERT_EQ(queryIn, queryOut);
-            selectQueryId = queryId;
-        });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
-                                          { receivedResultBlocks.push_back(std::move(resultTuples)); });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
-
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
-    EXPECT_NO_THROW(parser.parse());
+    const auto parsed = parser.parse();
 
-    ASSERT_EQ(receivedExplainStatement, explainIn);
-    ASSERT_TRUE(explainQueryId.has_value());
-    ASSERT_TRUE(selectQueryId.has_value());
-    EXPECT_EQ(explainQueryId->getRawValue() + 1, selectQueryId->getRawValue()) << "EXPLAIN must participate in query id accounting.";
-
-    ASSERT_EQ(receivedResultBlocks.size(), 2);
-    const std::vector<std::string> expectedExplainBlock{
-        "== Global Optimized Plan ==", "SINK(SINK1)", "  SELECTION(predicate: value > 4)", "    SOURCE(stream)"};
-    EXPECT_EQ(receivedResultBlocks.at(0), expectedExplainBlock);
-    EXPECT_EQ(receivedResultBlocks.at(1), std::vector<std::string>{"1"});
+    ASSERT_EQ(parsed.cases.size(), 2);
+    EXPECT_EQ(parsed.cases[0].key.queryNumber, SystestQueryId{1});
+    EXPECT_EQ(parsed.cases[1].key.queryNumber, SystestQueryId{2});
+    EXPECT_EQ(parsed.cases[0].source, (Origin{.file = {}, .firstLine = 1, .lastLine = 7}));
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(parsed.cases[0].action));
+    EXPECT_EQ(std::get<QueryAction>(parsed.cases[0].action), (QueryAction{.sql = explain, .kind = QueryKind::Explain}));
+    ASSERT_TRUE(std::holds_alternative<TextExpectation>(parsed.cases[0].expectation));
+    EXPECT_EQ(
+        std::get<TextExpectation>(parsed.cases[0].expectation).lines,
+        (std::vector<std::string>{
+            "== Global Optimized Plan ==", "SINK(SINK1)", "  SELECTION(predicate: value > 4)", "    SOURCE(stream)"}));
+    EXPECT_EQ(std::get<TextExpectation>(parsed.cases[0].expectation).matching, TextMatchPolicy::Automatic);
+    EXPECT_EQ(std::get<QueryAction>(parsed.cases[1].action), (QueryAction{.sql = query, .kind = QueryKind::Execute}));
+    ASSERT_TRUE(std::holds_alternative<RowsExpectation>(parsed.cases[1].expectation));
+    EXPECT_EQ(std::get<RowsExpectation>(parsed.cases[1].expectation).rows, (std::vector<std::string>{"1"}));
 }
 
 TEST_F(SystestParserTest, testExplainWithErrorExpectation)
 {
     SystestParser parser{};
-
     static constexpr std::string_view TestContent = R"(EXPLAIN (LOGICAL) SELECT id FROM unknownStream INTO sink;
 ----
 ERROR 3000
 )";
 
-    bool explainCallbackCalled = false;
-    bool errorExpectationCallbackCalled = false;
-
-    parser.registerOnExplainQueryCallback([&](const std::string&, SystestQueryId) { explainCallbackCalled = true; });
-    parser.registerOnErrorExpectationCallback(
-        [&](const SystestParser::ErrorExpectation& expectation, SystestQueryId)
-        {
-            errorExpectationCallbackCalled = true;
-            EXPECT_EQ(expectation.code, 3000);
-        });
-    parser.registerOnResultTuplesCallback(
-        [](std::vector<std::string>&&, SystestQueryId) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
-        { FAIL() << "Result tuple callback should not be called for an error expectation."; });
-
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
-    EXPECT_NO_THROW(parser.parse());
+    const auto parsed = parser.parse();
 
-    ASSERT_TRUE(explainCallbackCalled);
-    ASSERT_TRUE(errorExpectationCallbackCalled);
+    ASSERT_EQ(parsed.cases.size(), 1);
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(parsed.cases.front().action));
+    EXPECT_EQ(std::get<QueryAction>(parsed.cases.front().action).kind, QueryKind::Explain);
+    ASSERT_TRUE(std::holds_alternative<ErrorExpectation>(parsed.cases.front().expectation));
+    const auto& expectation = std::get<ErrorExpectation>(parsed.cases.front().expectation);
+    EXPECT_EQ(expectation.code, ErrorCode::BufferAllocationFailure);
+    EXPECT_FALSE(expectation.message.has_value());
 }
 
 TEST_F(SystestParserTest, testMultiLineExplainStatement)
 {
     SystestParser parser{};
-
     static constexpr std::string_view TestContent = R"(EXPLAIN (ALL, FORMAT TEXT)
 SELECT id FROM stream
 INTO sink;
@@ -354,53 +274,132 @@ INTO sink;
 SINK(SINK1)
 )";
 
-    std::string receivedExplainStatement;
-    std::vector<std::string> receivedResultLines;
-
-    parser.registerOnExplainQueryCallback([&](const std::string& statement, SystestQueryId) { receivedExplainStatement = statement; });
-    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
-                                          { receivedResultLines = std::move(resultTuples); });
-
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
-    EXPECT_NO_THROW(parser.parse());
+    const auto parsed = parser.parse();
 
-    EXPECT_EQ(receivedExplainStatement, "EXPLAIN (ALL, FORMAT TEXT)\nSELECT id FROM stream\nINTO sink;");
-    const std::vector<std::string> expectedResultLines{"== Initial Logical Plan ==", "SINK(SINK1)"};
-    EXPECT_EQ(receivedResultLines, expectedResultLines);
+    ASSERT_EQ(parsed.cases.size(), 1);
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(parsed.cases.front().action));
+    EXPECT_EQ(
+        std::get<QueryAction>(parsed.cases.front().action),
+        (QueryAction{.sql = "EXPLAIN (ALL, FORMAT TEXT)\nSELECT id FROM stream\nINTO sink;", .kind = QueryKind::Explain}));
+    ASSERT_TRUE(std::holds_alternative<TextExpectation>(parsed.cases.front().expectation));
+    EXPECT_EQ(
+        std::get<TextExpectation>(parsed.cases.front().expectation).lines,
+        (std::vector<std::string>{"== Initial Logical Plan ==", "SINK(SINK1)"}));
 }
 
-/// NOLINTEND(bugprone-unchecked-optional-access)
-
-/// Regression test for issue #945: substitution rules must not replace substrings inside longer identifiers.
-/// For example, a substitution rule for keyword "we" must not modify "producedPower" to "producedPowe<replaced>r".
 TEST_F(SystestParserTest, testSubstitutionRuleRespectsWordBoundaries)
 {
     SystestParser parser{};
-
-    /// Register a substitution rule for the short keyword "we"
     parser.registerSubstitutionRule({.keyword = "we", .ruleFunction = [](std::string& substitute) { substitute = "REPLACED"; }});
-
-    /// The query contains "producedPower" which has "we" as a substring, and also "INTO we" which is an exact word match.
     static constexpr std::string_view TestContent = R"(
 SELECT producedPower, timestamp FROM source INTO we;
 ----
 100,1000
 )";
 
-    std::string receivedQuery;
-    parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId, bool) { receivedQuery = queryOut; });
-    parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
-    parser.registerOnResultTuplesCallback([](std::vector<std::string>&& tuples, SystestQueryId) { (void)std::move(tuples); });
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    const auto parsed = parser.parse();
+
+    ASSERT_EQ(parsed.cases.size(), 1);
+    ASSERT_TRUE(std::holds_alternative<QueryAction>(parsed.cases.front().action));
+    const auto& receivedQuery = std::get<QueryAction>(parsed.cases.front().action).sql;
+    EXPECT_NE(receivedQuery.find("producedPower"), std::string::npos);
+    EXPECT_NE(receivedQuery.find("INTO REPLACED"), std::string::npos);
+    EXPECT_EQ(receivedQuery.find("INTO we"), std::string::npos);
+}
+
+TEST_F(SystestParserTest, testPunctuationTerminatedSubstitutionRule)
+{
+    SystestParser parser{};
+    parser.registerSubstitutionRule(
+        {.keyword = "CONFIG/", .ruleFunction = [](std::string& substitute) { substitute = "/resolved/config/"; }});
+    static constexpr std::string_view TestContent = R"(
+CREATE MODEL model TYPE ONNX FROM 'CONFIG/models/model.onnx';
+CREATE MODEL untouched TYPE ONNX FROM 'MYCONFIG/models/model.onnx';
+)";
 
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
-    EXPECT_NO_THROW(parser.parse());
+    const auto parsed = parser.parse();
 
-    /// "producedPower" must NOT be modified, but "we" as a standalone word must be replaced
-    EXPECT_NE(receivedQuery.find("producedPower"), std::string::npos)
-        << "producedPower was incorrectly modified by substitution rule. Query: " << receivedQuery;
-    EXPECT_NE(receivedQuery.find("INTO REPLACED"), std::string::npos) << "Standalone 'we' was not replaced. Query: " << receivedQuery;
-    EXPECT_EQ(receivedQuery.find("INTO we"), std::string::npos) << "Standalone 'we' should have been replaced. Query: " << receivedQuery;
+    ASSERT_EQ(parsed.fixtures.size(), 2);
+    EXPECT_EQ(parsed.fixtures[0].sql, "CREATE MODEL model TYPE ONNX FROM '/resolved/config/models/model.onnx';");
+    EXPECT_EQ(parsed.fixtures[1].sql, "CREATE MODEL untouched TYPE ONNX FROM 'MYCONFIG/models/model.onnx';");
+}
+
+TEST_F(SystestParserTest, testWhitespaceOnlyLineTerminatesInlineAttachment)
+{
+    SystestParser parser{};
+    const std::string testContent = "CREATE LOGICAL SOURCE input(value UINT64);\n"
+                                    "CREATE PHYSICAL SOURCE FOR input TYPE File;\n"
+                                    "ATTACH INLINE\n"
+                                    "\x20\x20value with spaces\x20\x20\n"
+                                    "\x20\x20\x20\t\n"
+                                    "SELECT value FROM input INTO File();\n"
+                                    "----\n"
+                                    "1\n";
+
+    ASSERT_TRUE(parser.loadString(testContent));
+    const auto parsed = parser.parse();
+
+    ASSERT_EQ(parsed.fixtures.size(), 2);
+    ASSERT_TRUE(parsed.fixtures[1].attachment.has_value());
+    ASSERT_TRUE(std::holds_alternative<InlineSourceData>(*parsed.fixtures[1].attachment));
+    EXPECT_EQ(std::get<InlineSourceData>(*parsed.fixtures[1].attachment).rows, (std::vector<std::string>{"  value with spaces  "}));
+    ASSERT_EQ(parsed.cases.size(), 1);
+}
+
+TEST_F(SystestParserTest, testAttachmentsConfigurationsDependenciesAndPhysicalLines)
+{
+    SystestParser parser{};
+    static constexpr std::string_view TestContent = R"(# ignored
+GLOBALCONFIGURATION worker.mode: [A, B]
+CREATE LOGICAL SOURCE input(id UINT64);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH FILE input.csv
+CONFIGURATION worker.size: 8
+SELECT id FROM input INTO sink;
+----
+1
+
+SEQUENTIAL_EXECUTION
+SELECT id FROM input INTO sink;
+----
+2
+)";
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    const auto parsed = parser.parse();
+
+    ASSERT_EQ(parsed.fixtures.size(), 2);
+    EXPECT_EQ(parsed.fixtures[0].source, (Origin{.file = {}, .firstLine = 3, .lastLine = 3}));
+    EXPECT_EQ(parsed.fixtures[1].source, (Origin{.file = {}, .firstLine = 4, .lastLine = 5}));
+    ASSERT_TRUE(parsed.fixtures[1].attachment.has_value());
+    ASSERT_TRUE(std::holds_alternative<FileSourceData>(*parsed.fixtures[1].attachment));
+    EXPECT_EQ(std::get<FileSourceData>(*parsed.fixtures[1].attachment).file, "input.csv");
+
+    ASSERT_EQ(parsed.cases.size(), 2);
+    EXPECT_EQ(parsed.cases[0].source, (Origin{.file = {}, .firstLine = 7, .lastLine = 9}));
+    EXPECT_EQ(parsed.cases[1].source, (Origin{.file = {}, .firstLine = 12, .lastLine = 14}));
+    ASSERT_EQ(parsed.cases[0].configuration.size(), 2);
+    const auto& globalConfiguration = parsed.cases[0].configuration[0];
+    EXPECT_EQ(globalConfiguration.key, "worker.mode");
+    EXPECT_EQ(globalConfiguration.values, (std::vector<std::string>{"A", "B"}));
+    EXPECT_TRUE(globalConfiguration.global);
+    EXPECT_EQ(globalConfiguration.source, (Origin{.file = {}, .firstLine = 2, .lastLine = 2}));
+    const auto& localConfiguration = parsed.cases[0].configuration[1];
+    EXPECT_EQ(localConfiguration.key, "worker.size");
+    EXPECT_EQ(localConfiguration.values, (std::vector<std::string>{"8"}));
+    EXPECT_FALSE(localConfiguration.global);
+    EXPECT_EQ(localConfiguration.source, (Origin{.file = {}, .firstLine = 6, .lastLine = 6}));
+    ASSERT_EQ(parsed.cases[1].configuration.size(), 1);
+    EXPECT_EQ(parsed.cases[1].configuration.front().key, globalConfiguration.key);
+    EXPECT_EQ(parsed.cases[1].configuration.front().values, globalConfiguration.values);
+    EXPECT_EQ(parsed.cases[1].configuration.front().global, globalConfiguration.global);
+    EXPECT_EQ(parsed.cases[1].configuration.front().source, globalConfiguration.source);
+    EXPECT_FALSE(parsed.cases[0].runAfter.has_value());
+    ASSERT_TRUE(parsed.cases[1].runAfter.has_value());
+    EXPECT_EQ(*parsed.cases[1].runAfter, (CaseKey{.relativeTestFile = {}, .queryNumber = parsed.cases[0].key.queryNumber}));
 }
 
 }

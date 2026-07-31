@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <SystestResultCheck.hpp>
+#include <SystestValidation.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -22,6 +23,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
@@ -42,7 +45,6 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -52,9 +54,6 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
-#include <SystestState.hpp>
-#include <SystestValidation.hpp>
 
 namespace
 {
@@ -108,14 +107,29 @@ private:
 
 void sortOnFields(std::vector<std::string>& results, const std::vector<size_t>& fieldIdxs)
 {
+    const auto fieldAt = [](const std::string& row, const size_t fieldIdx) -> std::optional<std::string_view>
+    {
+        auto fields = row | std::views::split(' ');
+        auto field = fields.begin();
+        for (size_t index = 0; index < fieldIdx && field != fields.end(); ++index)
+        {
+            ++field;
+        }
+        if (field == fields.end())
+        {
+            return std::nullopt;
+        }
+        const auto range = *field;
+        return std::string_view{range.begin(), range.end()};
+    };
     std::ranges::sort(
         results,
-        [&fieldIdxs](const std::string& lhs, const std::string& rhs)
+        [&fieldIdxs, &fieldAt](const std::string& lhs, const std::string& rhs)
         {
             for (const size_t fieldIdx : fieldIdxs)
             {
-                const auto lhsField = std::string_view((lhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
-                const auto rhsField = std::string_view((rhs | std::views::split(' ') | std::views::drop(fieldIdx)).front());
+                const auto lhsField = fieldAt(lhs, fieldIdx);
+                const auto rhsField = fieldAt(rhs, fieldIdx);
 
                 if (lhsField == rhsField)
                 {
@@ -123,7 +137,6 @@ void sortOnFields(std::vector<std::string>& results, const std::vector<size_t>& 
                 }
                 return lhsField < rhsField;
             }
-            /// All fields are equal
             return false;
         });
 }
@@ -135,7 +148,6 @@ public:
     explicit ResultTuples(std::vector<std::string> results, const std::vector<size_t>& expectedResultsFieldSortIdxs)
         : results(std::move(results))
     {
-        /// We need to add NULL into each column that has no values to be able to compare it later on
         for (auto& line : this->results)
         {
             auto tokens = line | std::views::split(',')
@@ -148,7 +160,6 @@ public:
             std::ostringstream oss;
             std::ranges::copy(tokens, std::ostream_iterator<std::string>(oss, ","));
             std::string s = oss.str();
-            /// Removing trailing comma
             if (not s.empty() and s.back() == ',')
             {
                 s.pop_back();
@@ -156,8 +167,6 @@ public:
             line = s;
         }
 
-        /// We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
-        /// Additionally, we remove double spaces, as we expect a single space between the fields
         std::ranges::for_each(this->results, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
         std::ranges::for_each(this->results, NES::removeDoubleSpaces);
 
@@ -225,7 +234,46 @@ FMT_OSTREAM(::ResultErrorString);
 
 namespace
 {
-/// We support bool being an integer (anything else than 0 is true) or "true" / "false"
+template <typename T>
+bool compareFloatingPointStrings(const std::string& left, const std::string& right)
+{
+    static constexpr auto EPSILON = 1e-5;
+    size_t parsedLeft = 0;
+    size_t parsedRight = 0;
+    const auto doubleLeft = std::stod(left, &parsedLeft);
+    const auto doubleRight = std::stod(right, &parsedRight);
+    if (parsedLeft != left.size() || parsedRight != right.size())
+    {
+        return false;
+    }
+    const auto absDoubleLeft = std::abs(doubleLeft);
+    const auto absDoubleRight = std::abs(doubleRight);
+    const auto absDiff = std::abs(doubleLeft - doubleRight);
+
+    if (doubleLeft == doubleRight)
+    {
+        return true;
+    }
+
+    if (doubleLeft == 0.0 || doubleRight == 0.0 || (absDoubleLeft + absDoubleRight < std::numeric_limits<double>::min()))
+    {
+        return absDiff < (EPSILON * std::numeric_limits<double>::min());
+    }
+
+    const auto relativeErrorCalculated = absDiff / (std::min(absDoubleLeft + absDoubleRight, std::numeric_limits<double>::max()));
+    const auto allowedError = relativeErrorCalculated < EPSILON;
+    if (not allowedError)
+    {
+        NES_TRACE(
+            "Relative error {} is greater than allowed error {} for values {} and {}",
+            relativeErrorCalculated,
+            EPSILON,
+            doubleLeft,
+            doubleRight);
+    }
+    return allowedError;
+}
+
 bool convertToBool(const std::string& str)
 {
     const auto lower = NES::toLowerCase(str);
@@ -246,7 +294,6 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
 {
     const auto leftLower = NES::toLowerCase(left.getRawValue());
     const auto rightLower = NES::toLowerCase(right.getRawValue());
-    /// If both string values are NULL, they are equal
     if (leftLower == "null" and rightLower == "null")
     {
         return true;
@@ -275,9 +322,9 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
             return leftBool == rightBool;
         }
         case NES::DataType::Type::FLOAT32:
-            return NES::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
+            return compareFloatingPointStrings<float>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FLOAT64:
-            return NES::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
+            return compareFloatingPointStrings<double>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::UNDEFINED:
             throw NES::UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }
@@ -286,8 +333,6 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
 
 NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const std::string_view fieldNamesRawLine)
 {
-    /// Assumes the field and type to be similar to
-    /// window$val_i8_i8:INT32:IS_NULLABLE, window$val_i8_i8_plus_1:INT16:NOT_NULLABLE
     auto fields
         = std::ranges::split_view(fieldNamesRawLine, ',')
         | std::views::transform([](auto splitNameAndType) { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
@@ -295,10 +340,6 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const st
         | std::views::transform(
               [](const auto& field)
               {
-                  /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
-                  /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
-                  /// After that, we can trim the field name and type and store it in the fields vector.
-                  /// "window$val_i8_i8:INT32:IS_NULLABLE " -> ["window$val_i8_i8", "INT32 ", " IS_NULLABLE"] -> {"window$val_i8_i8", INT32, NOT_NULLABLE}
                   const auto [nameTrimmed, typeTrimmed, isNullable]
                       = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
                   {
@@ -369,12 +410,6 @@ std::optional<QueryResult> loadQueryResult(const std::filesystem::path& resultFi
     return result;
 }
 
-[[maybe_unused]] std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
-{
-    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
-    return loadQueryResult(query.resultFile());
-}
-
 struct ExpectedToActualFieldMap
 {
     struct TypeIndexPair
@@ -436,8 +471,7 @@ private:
 ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResultSchema, const ActualResultSchema& actualResultSchema)
 {
     ExpectedToActualFieldMap expectedToActualFieldMap{};
-    /// Check if schemas are equal. If not populate the error stream
-    if (/* hasMatchingSchema */ expectedResultSchema.getRawValue() != actualResultSchema.getRawValue())
+    if (expectedResultSchema.getRawValue() != actualResultSchema.getRawValue())
     {
         expectedToActualFieldMap.schemaErrorStream << fmt::format(
             "\n{} != {}", fmt::join(expectedResultSchema.getRawValue(), ", "), fmt::join(actualResultSchema.getRawValue(), ", "));
@@ -445,8 +479,6 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        /// Find a matching actual field that has not already been matched. This handles duplicate field names
-        /// by matching each expected field to a distinct actual field in order.
         const auto& actualSchema = actualResultSchema.getRawValue();
         const auto begin = actualSchema.begin();
         const auto end = actualSchema.end();
@@ -493,9 +525,6 @@ enum class FieldMatchResult : uint8_t
     AT_LEAST_ONE_FIELD_MISMATCHED,
 };
 
-/// Compares expected and actual result fields.
-/// Returns 'ALL_EXISTING_FIELD_MATCHED' there was a one-to-one mapping between result and expected fields and all fields matched.
-/// Returns 'ALL_EXISTING_FIELD_MATCHED' if there
 FieldMatchResult compareMatchableExpectedFields(
     const ExpectedToActualFieldMap& expectedToActualFieldMap,
     const std::vector<ExpectedResultField>& splitExpectedResult,
@@ -561,18 +590,7 @@ bool compareTuples(
     const ExpectedToActualFieldMap& expectedToActualFieldMap,
     LineIndexIterator& lineIdxIt)
 {
-    if (expectedResultLine.getRawValue() == actualResultLine.getRawValue())
-    {
-        resultErrorStream << fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
-        lineIdxIt.advanceExpected();
-        lineIdxIt.advanceActual();
-        return true;
-    }
-
-    /// The lines don't string-match, but they might still be equal
     const auto splitExpected = expectedResultLine.getFields();
-    const auto splitActualResult = actualResultLine.getFields();
-
     if (splitExpected.size() != expectedToActualFieldMap.expectedToActualFieldMap.size())
     {
         lineIdxIt.advanceExpected();
@@ -588,6 +606,15 @@ bool compareTuples(
         return false;
     }
 
+    if (expectedResultLine.getRawValue() == actualResultLine.getRawValue())
+    {
+        resultErrorStream << fmt::format("\n{} | {}", expectedResultLine, actualResultLine);
+        lineIdxIt.advanceExpected();
+        lineIdxIt.advanceActual();
+        return true;
+    }
+
+    const auto splitActualResult = actualResultLine.getFields();
     const bool hasSameNumberOfFields = (splitExpected.size() == splitActualResult.size());
     switch (compareMatchableExpectedFields(expectedToActualFieldMap, splitExpected, splitActualResult))
     {
@@ -650,7 +677,6 @@ ResultErrorStream compareResults(
             allResultTuplesMatch = false;
             continue;
         }
-        /// Both sets still have lines check if the lines are equal
         allResultTuplesMatch &= compareTuples(
             resultErrorStream,
             formattedExpectedResultLines.getTuple(lineIdxIt.getExpected()),
@@ -738,39 +764,6 @@ private:
     ExpectedResultTuples expectedResults;
     ActualResultTuples actualResults;
 };
-
-QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
-{
-    /// Get result for running query
-    const auto queryResult = loadQueryResult(runningQuery.systestQuery);
-    if (not queryResult.has_value())
-    {
-        return QueryCheckResult{fmt::format("Failed to load query result for query: {}", runningQuery.systestQuery.queryDefinition)};
-    }
-
-    const QuerySchemasAndResults querySchemasAndResults = [&]()
-    {
-        auto [actualSchemaResult, actualQueryResult] = queryResult.value();
-
-        /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-        auto expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
-        INVARIANT(std::holds_alternative<std::vector<std::string>>(expectedQueryResult), "Systest was expected to have an expected result");
-
-        return QuerySchemasAndResults(
-            ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchema),
-            ActualResultSchema(actualSchemaResult),
-            std::get<std::vector<std::string>>(expectedQueryResult),
-            std::move(actualQueryResult));
-    }();
-
-    /// Compare the expected and actual result schema and the expected and actual result lines/tuples
-    const auto resultComparisonErrorStream = compareResults(
-        querySchemasAndResults.getExpectedResultTuples(),
-        querySchemasAndResults.getActualResultTuples(),
-        querySchemasAndResults.getExpectedToActualResultMap());
-
-    return QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
-}
 
 constexpr std::string_view RegexOpen = "<REGEX>";
 constexpr std::string_view RegexClose = "</REGEX>";
@@ -920,196 +913,6 @@ checkExplainRegexAssertions(const std::vector<ExplainRegexAssertion>& assertions
 }
 }
 
-namespace NES
-{
-std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery)
-{
-    /// Void sinks discard all tuples and produce no result file, so there is nothing to check.
-    if (runningQuery.systestQuery.planInfoOrException.has_value())
-    {
-        const auto sinkOperators
-            = getOperatorByType<SinkLogicalOperator>(runningQuery.systestQuery.planInfoOrException.value().queryPlan.getGlobalPlan());
-        if (not sinkOperators.empty())
-        {
-            if (const auto sinkOp = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>(); sinkOp.has_value()
-                and sinkOp.value()->getSinkDescriptor().has_value()
-                and toUpperCase(sinkOp.value()->getSinkDescriptor().value().getSinkType()) == "VOID")
-            {
-                NES_INFO(
-                    "Skipping result check for {}:{} because it writes to a Void sink.",
-                    runningQuery.systestQuery.testName,
-                    runningQuery.systestQuery.queryIdInFile);
-                return std::nullopt;
-            }
-        }
-    }
-
-    static constexpr std::string_view SchemaMismatchMessage = "\n\n"
-                                                              "Schema Mismatch\n"
-                                                              "---------------";
-    static constexpr std::string_view ResultMismatchMessage = "\n\n"
-                                                              "Result Mismatch\nExpected Results(Sorted) | Actual Results(Sorted)\n"
-                                                              "-------------------------------------------------";
-
-    const auto annotateDifferentialError = [&](std::string message) -> std::string
-    {
-        if (runningQuery.systestQuery.differentialQueryPlan.has_value())
-        {
-            if (not message.empty())
-            {
-                message.append("\n");
-            }
-            message.append("\nThis error happend during differential query execution.");
-        }
-        return message;
-    };
-
-    QueryCheckResult checkQueryResult{""};
-
-    if (runningQuery.systestQuery.differentialQueryPlan.has_value())
-    {
-        const auto result1 = loadQueryResult(runningQuery.systestQuery.resultFile());
-        const auto result2 = loadQueryResult(runningQuery.systestQuery.resultFileForDifferentialQuery());
-
-        if (not result1)
-        {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
-        }
-
-        if (not result2)
-        {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load second result file for differential query comparison: {}",
-                runningQuery.systestQuery.resultFileForDifferentialQuery()));
-        }
-
-        if (std::ranges::size(result1->schema) == 0)
-        {
-            return annotateDifferentialError(
-                fmt::format("First result file is empty or has no schema: {}", runningQuery.systestQuery.resultFile()));
-        }
-
-        if (std::ranges::size(result2->schema) == 0)
-        {
-            return annotateDifferentialError(fmt::format(
-                "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
-        }
-
-        const QuerySchemasAndResults querySchemasAndResults = [&]()
-        {
-            auto [schema1, result1Data] = result1.value();
-            auto [schema2, result2Data] = result2.value();
-
-            return QuerySchemasAndResults(
-                ExpectedResultSchema(schema1), ActualResultSchema(schema2), std::move(result1Data), std::move(result2Data));
-        }();
-
-        /// Compare the schemas and results using the normal result check logic
-        const auto resultComparisonErrorStream = compareResults(
-            querySchemasAndResults.getExpectedResultTuples(),
-            querySchemasAndResults.getActualResultTuples(),
-            querySchemasAndResults.getExpectedToActualResultMap());
-
-        checkQueryResult = QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
-    }
-    else
-    {
-        checkQueryResult = checkQuery(runningQuery);
-    }
-
-    switch (checkQueryResult.type)
-    {
-        case QueryCheckResult::Type::QUERY_NOT_FOUND: {
-            return annotateDifferentialError(checkQueryResult.queryError);
-        }
-        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MATCH: {
-            return std::nullopt;
-        }
-        case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format("{}{}", ResultMismatchMessage, checkQueryResult.resultErrorStream));
-        }
-        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MATCH: {
-            return annotateDifferentialError(
-                fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
-        }
-        case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format(
-                "{}{}{}{}",
-                SchemaMismatchMessage,
-                checkQueryResult.schemaErrorStream,
-                ResultMismatchMessage,
-                checkQueryResult.resultErrorStream));
-        }
-    }
-    std::unreachable();
-}
-
-std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runningQuery)
-{
-    INVARIANT(runningQuery.systestQuery.actualExplainOutput.has_value(), "checkExplainResult requires a computed explain output");
-
-    const auto rightTrim = [](const std::string_view line) -> std::string
-    {
-        const auto end = line.find_last_not_of(" \t\r");
-        return std::string{line.substr(0, end == std::string_view::npos ? 0 : end + 1)};
-    };
-
-    /// Right-trim every line and drop empty lines on both sides: indentation is significant, but expected blocks in
-    /// test files cannot contain empty lines (an empty line terminates the block).
-    const auto normalize = [&rightTrim](auto&& inputLines) -> std::vector<std::string>
-    {
-        std::vector<std::string> normalized;
-        for (auto&& line : inputLines)
-        {
-            if (auto trimmed = rightTrim(line); not trimmed.empty())
-            {
-                normalized.push_back(std::move(trimmed));
-            }
-        }
-        return normalized;
-    };
-
-    const auto* expectedResultLines = std::get_if<std::vector<std::string>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
-    INVARIANT(expectedResultLines != nullptr, "EXPLAIN statements must have expected result lines");
-
-    const auto expected = normalize(*expectedResultLines);
-    const auto actual = normalize(
-        runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
-        | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
-
-    if (std::ranges::any_of(expected, [](const auto& line) { return containsExplainRegexTag(line); }))
-    {
-        auto assertions = parseExplainRegexAssertions(expected);
-        if (!assertions)
-        {
-            return std::move(assertions).error();
-        }
-        return checkExplainRegexAssertions(assertions.value(), fmt::format("{}", fmt::join(actual, "\n")));
-    }
-
-    if (expected == actual)
-    {
-        return std::nullopt;
-    }
-
-    auto firstDifferingLine = std::ranges::mismatch(expected, actual).in1 - expected.begin();
-
-    static constexpr std::string_view EndOfOutput = "<end of output>";
-    return fmt::format(
-        "\n\n"
-        "Explain Output Mismatch (first difference at line {}, expected \"{}\" but got \"{}\")\n"
-        "----------------------\n"
-        "Expected:\n{}\n\n"
-        "Actual:\n{}",
-        firstDifferingLine + 1,
-        std::cmp_less(firstDifferingLine, expected.size()) ? std::string_view{expected[firstDifferingLine]} : EndOfOutput,
-        std::cmp_less(firstDifferingLine, actual.size()) ? std::string_view{actual[firstDifferingLine]} : EndOfOutput,
-        fmt::join(expected, "\n"),
-        fmt::join(actual, "\n"));
-}
-}
-
 namespace
 {
 NES::Systest::ComparisonResult comparisonResult(const QueryCheckResult& result, const bool differential)
@@ -1197,16 +1000,20 @@ std::expected<DecodedTable, ValidationDiagnostic> FileResultDecoder::decode(cons
     return DecodedTable{.schema = std::move(result->schema), .rows = std::move(result->result)};
 }
 
-ComparisonResult ResultComparator::compare(const RowsExpectation& expected, const DecodedInputStream& actual) const
+ComparisonResult
+ResultComparator::compare(const RowsExpectation& expected, const ResultSchema& schema, const DecodedInputStream& actual) const
 {
-    if (!expected.schema)
+    switch (expected.comparison)
     {
-        return ComparisonResult{
-            .matches = false,
-            .diagnostics
-            = {{.kind = DiagnosticKind::Validation, .message = "Expected result schema is unavailable", .source = std::nullopt}}};
+        case ComparisonPolicy::UnorderedTypedRows:
+            return compareDecodedTables(DecodedInputStream{.schema = schema, .rows = expected.rows}, actual, false);
     }
-    return compareDecodedTables(DecodedInputStream{.schema = *expected.schema, .rows = expected.rows}, actual, false);
+    return ComparisonResult{
+        .matches = false,
+        .diagnostics
+        = {{.kind = DiagnosticKind::Validation,
+            .message = fmt::format("Unsupported row comparison policy {}", static_cast<uint8_t>(expected.comparison)),
+            .source = std::nullopt}}};
 }
 
 ComparisonResult ResultComparator::compare(const DecodedInputStream& expected, const DecodedInputStream& actual) const
@@ -1266,15 +1073,53 @@ ComparisonResult TextComparator::compare(const TextExpectation& expectedText, co
             .source = std::nullopt}}};
 }
 
-CaseValidator::CaseValidator(const ResultDecoder& decoder, const ResultComparator& resultComparator, const TextComparator& textComparator)
-    : decoder(decoder), resultComparator(resultComparator), textComparator(textComparator)
+namespace
+{
+ExecutionMetrics metricsFrom(const ExecutionOutcome& outcome)
+{
+    if (const auto* completed = std::get_if<CompletedExecution>(&outcome))
+    {
+        return completed->metrics;
+    }
+    return {};
+}
+
+ArtifactSet artifactsFrom(const ExecutionOutcome& outcome)
+{
+    if (const auto* completed = std::get_if<CompletedExecution>(&outcome))
+    {
+        return completed->artifacts;
+    }
+    if (const auto* failed = std::get_if<FailedExecution>(&outcome))
+    {
+        return failed->artifacts;
+    }
+    if (const auto* timedOut = std::get_if<TimedOutExecution>(&outcome))
+    {
+        return timedOut->artifacts;
+    }
+    return {};
+}
+}
+
+CaseValidator::CaseValidator(
+    const ResultDecoder& decoder,
+    const ResultComparator& resultComparator,
+    const TextComparator& textComparator,
+    const PreparedExecutionCatalog& preparedExecutions)
+    : decoder(decoder), resultComparator(resultComparator), textComparator(textComparator), preparedExecutions(preparedExecutions)
 {
 }
 
 ValidatedResult CaseValidator::validate(const ResolvedCase& testCase, const ExecutionOutcome& outcome) const
 try
 {
-    ValidatedResult result{.id = testCase.id, .verdict = Verdict::Failed, .diagnostics = {}, .metrics = {}, .artifacts = {}};
+    ValidatedResult result{
+        .id = testCase.id,
+        .verdict = Verdict::Failed,
+        .diagnostics = {},
+        .metrics = metricsFrom(outcome),
+        .artifacts = artifactsFrom(outcome)};
     const auto fail = [&](std::string message, const DiagnosticKind kind = DiagnosticKind::Validation)
     {
         result.verdict = Verdict::Failed;
@@ -1294,7 +1139,12 @@ try
     {
         result.verdict = Verdict::Skipped;
         result.artifacts = {};
-        if (!skipped->failedDependencies.empty())
+        if (skipped->reason)
+        {
+            result.diagnostics.push_back(
+                Diagnostic{.kind = DiagnosticKind::Scheduling, .message = *skipped->reason, .source = testCase.source});
+        }
+        else if (!skipped->failedDependencies.empty())
         {
             result.diagnostics.push_back(Diagnostic{
                 .kind = DiagnosticKind::Scheduling, .message = "Skipped because a dependency did not pass", .source = testCase.source});
@@ -1313,16 +1163,29 @@ try
         if (const auto* expectedError = std::get_if<ErrorExpectation>(&testCase.expectation);
             expectedError && failed->error.kind == ExecutionErrorKind::Statement)
         {
-            if (failed->error.contains(expectedError->code))
+            const auto matchingDetail = std::ranges::find_if(
+                failed->error.details,
+                [&](const ExecutionErrorDetail& detail)
+                {
+                    return detail.code == expectedError->code
+                        && (!expectedError->message || detail.message.contains(*expectedError->message));
+                });
+            if (matchingDetail != failed->error.details.end())
             {
                 result.verdict = Verdict::Passed;
                 return result;
             }
-            fail(fmt::format(
-                "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
-                expectedError->message,
-                expectedError->code,
-                failed->error.message()));
+            const auto expected = expectedError->message
+                ? fmt::format("{} containing message \"{}\"", expectedError->code, *expectedError->message)
+                : fmt::format("{}", expectedError->code);
+            const auto actual = fmt::format(
+                "{}",
+                fmt::join(
+                    failed->error.details
+                        | std::views::transform(
+                            [](const ExecutionErrorDetail& detail) { return fmt::format("{}: {}", detail.code, detail.message); }),
+                    "; "));
+            fail(fmt::format("Expected statement error {}. Actual details: {}", expected, actual));
             return result;
         }
         fail(fmt::format("Query Failed with unexpected error: {}", failed->error.message()), DiagnosticKind::Execution);
@@ -1339,7 +1202,10 @@ try
     }
     if (const auto* rows = std::get_if<RowsExpectation>(&testCase.expectation))
     {
-        if (rows->outputDiscarded)
+        const auto& execution = preparedExecutions.at(testCase.id);
+        const auto& prepared = *std::get<std::shared_ptr<const PreparedAction>>(execution.prepared);
+        const auto& statement = std::get<PreparedQuery>(prepared).statement;
+        if (statement.output.kind == OutputTargetKind::Discard)
         {
             result.verdict = Verdict::Passed;
             return result;
@@ -1358,7 +1224,7 @@ try
             fail(decoded.error().message);
             return result;
         }
-        applyComparison(resultComparator.compare(*rows, *decoded));
+        applyComparison(resultComparator.compare(*rows, statement.outputSchema, *decoded));
         return result;
     }
     if (std::holds_alternative<DifferentialExpectation>(testCase.expectation))
@@ -1380,7 +1246,8 @@ try
         if (!left)
         {
             fail(fmt::format(
-                "Failed to load first result file for differential query comparison: {}\n\nThis error happend during differential query "
+                "Failed to load first result file for differential query comparison: {}\n\nThis error happend during differential "
+                "query "
                 "execution.",
                 tables[0].file));
             return result;
@@ -1389,7 +1256,8 @@ try
         if (!right)
         {
             fail(fmt::format(
-                "Failed to load second result file for differential query comparison: {}\n\nThis error happend during differential query "
+                "Failed to load second result file for differential query comparison: {}\n\nThis error happend during differential "
+                "query "
                 "execution.",
                 tables[1].file));
             return result;
@@ -1429,8 +1297,8 @@ catch (const Exception& exception)
         .id = testCase.id,
         .verdict = Verdict::Failed,
         .diagnostics = {{.kind = DiagnosticKind::Validation, .message = exception.what(), .source = testCase.source}},
-        .metrics = {},
-        .artifacts = {}};
+        .metrics = metricsFrom(outcome),
+        .artifacts = artifactsFrom(outcome)};
 }
 catch (const std::exception& exception)
 {
@@ -1438,8 +1306,8 @@ catch (const std::exception& exception)
         .id = testCase.id,
         .verdict = Verdict::Failed,
         .diagnostics = {{.kind = DiagnosticKind::Validation, .message = exception.what(), .source = testCase.source}},
-        .metrics = {},
-        .artifacts = {}};
+        .metrics = metricsFrom(outcome),
+        .artifacts = artifactsFrom(outcome)};
 }
 
 }
