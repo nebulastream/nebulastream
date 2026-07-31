@@ -28,7 +28,9 @@
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -51,11 +53,17 @@ struct ParseResult
     bool isNull;
 };
 
+/// Parses the field at the given offset index of the field-offset index buffer into the record. The offset loads and
+/// field address/size computation happen in the proxy behind the shared per-type nautilus function, so the per-field
+/// code at the call site collapses to computing the offset index and one call (see RawValueParser.cpp).
 void parseRawValueIntoRecord(
+    CompilationContext& compilationContext,
     DataType dataType,
     Record& record,
-    const nautilus::val<int8_t*>& fieldAddress,
-    const nautilus::val<uint64_t>& fieldSize,
+    const nautilus::val<int8_t*>& recordBufferPtr,
+    const nautilus::val<const FieldIndex*>& indexBufferPtr,
+    const nautilus::val<uint64_t>& offsetIdx,
+    uint64_t sizeOfDelimiter,
     const QualifiedIdentifier& fieldName,
     const std::vector<std::string>& nullValues,
     QuotationType quotationType);
@@ -104,27 +112,5 @@ ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldS
         result.value = T{0};
     }
     return &result;
-}
-
-template <typename T>
-VarVal parseFixedSizeIntoVarVal(
-    const bool nullable,
-    const nautilus::val<int8_t*>& fieldAddress,
-    const nautilus::val<uint64_t>& fieldSize,
-    const std::vector<std::string>& nullValues)
-{
-    /// As this is a C++ variable, this branch does not impact our tracing or the execution.
-    if (nullable)
-    {
-        const auto parseResult = nautilus::invoke(
-            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
-        return VarVal{nautilusValue, nullable, isNull};
-    }
-    const auto parseResult = nautilus::invoke(
-        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-    return VarVal{nautilusValue, nullable, false};
 }
 }

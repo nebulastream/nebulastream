@@ -29,7 +29,9 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
@@ -96,6 +98,7 @@ navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference
 }
 
 VarVal parseJsonVarSized(
+    CompilationContext& compilationContext,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer,
@@ -103,6 +106,7 @@ VarVal parseJsonVarSized(
 
 
 void writeValueToRecord(
+    CompilationContext& compilationContext,
     DataType dataType,
     Record& record,
     const QualifiedIdentifier& fieldName,
@@ -135,25 +139,32 @@ static std::optional<T> parseSIMDJsonValueOrThrow(
     return simdJsonValue.value();
 }
 
+/// Parses a fixed-size JSON field. The parse is traced once into a nautilus function shared by all like-typed fields, reducing tracing time
 template <typename T>
 [[nodiscard]] VarVal parseJsonFixedSizeIntoVarVal(
+    CompilationContext& compilationContext,
     const bool nullable,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer)
 {
+    /// Both registrations have the same signature and hence the same type, so the ternary picks one of the two.
+    auto& parseFunction = nullable ? compilationContext.registerTracedInvoke(
+                                         fmt::format("ParseJsonValueNullable_{}", NAMEOF_TYPE(T)),
+                                         parseJsonFixedSizeIntoVarValProxy<T, true>,
+                                         nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref})
+                                   : compilationContext.registerTracedInvoke(
+                                         fmt::format("ParseJsonValue_{}", NAMEOF_TYPE(T)),
+                                         parseJsonFixedSizeIntoVarValProxy<T, false>,
+                                         nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref});
+    const auto parseResult = parseFunction(fieldIndex, rawBufferIndex, indexer);
+    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
+    nautilus::val<bool> isNull{false};
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, true>, fieldIndex, rawBufferIndex, indexer);
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
-        return VarVal{nautilusValue, nullable, isNull};
+        isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
     }
-    const auto parseResult
-        = nautilus::invoke({nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, false>, fieldIndex, rawBufferIndex, indexer);
-    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-    return VarVal{nautilusValue, nullable, false};
+    return VarVal{nautilusValue, nullable, isNull};
 }
 
 /// (Proxy) functions being called via nautilus::invoke() can not be member functions. Thus, we need to implement them outside of the class
@@ -296,28 +307,29 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
 }
 
 inline VarVal parseJsonVarSized(
+    CompilationContext& compilationContext,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer,
     const bool nullable)
 {
-    if (nullable)
-    {
-        const auto varSizedResult = nautilus::invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<true>, fieldIndex, rawBufferIndex, indexer);
-        const VariableSizedData varSizedString{
-            *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
-            *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(varSizedResult, offsetof(ParsedResultVariableSized, isNull));
-        return VarVal{VariableSizedData{varSizedString}, nullable, isNull};
-    }
-
-    const auto varSizedResult
-        = nautilus::invoke({.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<false>, fieldIndex, rawBufferIndex, indexer);
+    auto& parseFunction = nullable
+        ? compilationContext.registerTracedInvoke(
+              "ParseJsonVarSizedNullable",
+              parseJsonVarSizedProxy<true>,
+              nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref})
+        : compilationContext.registerTracedInvoke(
+              "ParseJsonVarSized", parseJsonVarSizedProxy<false>, nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref});
+    const auto varSizedResult = parseFunction(fieldIndex, rawBufferIndex, indexer);
     const VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
         *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
-    return VarVal{VariableSizedData{varSizedString}, nullable, false};
+    nautilus::val<bool> isNull{false};
+    if (nullable)
+    {
+        isNull = *getMemberWithOffset<bool>(varSizedResult, offsetof(ParsedResultVariableSized, isNull));
+    }
+    return VarVal{varSizedString, nullable, isNull};
 }
 
 }

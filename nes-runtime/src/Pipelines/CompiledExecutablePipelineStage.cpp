@@ -57,7 +57,8 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
     (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
+void CompiledExecutablePipelineStage::registerPipelineFunction(
+    nautilus::engine::NautilusModule& module, CompilationContext& compilationContext) const
 {
     /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
     /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
@@ -67,12 +68,15 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
-        compiledFunction = [this](
+        compiledFunction = [this, &compilationContext](
                                nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
                                nautilus::val<const TupleBuffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        /// The compilation context is a member of the stage, so it stays valid for every invocation of this
+        /// lambda: in interpreted mode that is not only the tracing run inside compile(), but every execute().
+        ctx.compilationContext = std::addressof(compilationContext);
         RecordBuffer recordBuffer(recordBufferRef);
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
@@ -119,11 +123,12 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
     CPPTRACE_TRY
     {
-        auto module = engine.createModule();
-        CompilationContext compilationCtx{module};
+        auto& newModule = module.emplace(engine.createModule());
+        auto& compilationCtx = compilationContext.emplace(newModule);
+        ctx.compilationContext = std::addressof(compilationCtx);
         pipeline->getRootOperator().setup(ctx, compilationCtx);
-        registerPipelineFunction(module);
-        compiledModule = module.compile();
+        registerPipelineFunction(newModule, compilationCtx);
+        compiledModule = newModule.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
 

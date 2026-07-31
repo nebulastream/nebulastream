@@ -39,6 +39,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -174,6 +175,7 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
+    CompilationContext& /*compilationContext*/,
     const VarVal& value,
     const DataType& fieldType,
     uint64_t fieldIndex,

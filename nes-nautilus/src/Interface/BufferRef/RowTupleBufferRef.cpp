@@ -100,6 +100,16 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
+TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
+    CompilationContext&,
+    nautilus::val<uint64_t>& recordIndex,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    return writeRecord(recordIndex, recordBuffer, rec, bufferProvider);
+}
+
 std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const
 {
     return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
