@@ -20,6 +20,7 @@
 #include <expected>
 #include <optional>
 #include <ranges>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -44,6 +45,8 @@
 #include <OutputFormatterConfigSchemaRegistry.hpp>
 #include <SinkConfigRegistry.hpp>
 #include <SinkConfigSchemaRegistry.hpp>
+
+#include "OutputFormatterRegistry.hpp"
 
 namespace NES
 {
@@ -78,57 +81,44 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
     {
         return std::unexpected{InvalidConfigParameter("{}", combinedErrors)};
     }
+    InstantiatedConfig config{std::move(transformedConfig)};
 
-    const InstantiatedConfig config{std::move(transformedConfig)};
-    const auto sinkRegistryEntry = SinkConfigRegistry::instance().find(sinkType.asCanonicalString());
-    if (not sinkRegistryEntry.has_value())
+    auto sinkRegistryEntry = SinkConfigRegistry::instance().find(sinkType.asCanonicalString());
+    if (not sinkRegistryEntry)
     {
-        return std::unexpected{
-            UnknownSinkType("The sink type '{}' is not registered. If it is a plugin, make sure you activated it.", sinkType)};
+        return std::unexpected{UnknownSinkType(sinkType.asCanonicalString())};
     }
-    auto instantiatedPluginConfig = sinkRegistryEntry->instantiate(config);
-    if (not instantiatedPluginConfig.has_value())
+    auto outputFormatterEntry = OutputFormatterRegistry::instance().find(outputFormatterType.asCanonicalString());
+    if (not outputFormatterEntry)
     {
-        return std::unexpected{instantiatedPluginConfig.error()};
+        return std::unexpected{UnknownOutputFormatterType(outputFormatterType.asCanonicalString())};
     }
-    auto pluginSinkConfig = PluginSinkConfiguration{this->sinkType, std::move(instantiatedPluginConfig).value()};
 
-    auto outputFormatterDescriptor = [&]() -> std::expected<OutputFormatterDescriptor, Exception>
+    auto sinkPluginConfigExp = sinkRegistryEntry->instantiate(config);
+    if (not sinkPluginConfigExp)
     {
-        if (outputFormatterType == Identifier::parse("NATIVE"))
-        {
-            return OutputFormatterDescriptor::native();
-        }
-        const auto formatterRegistryEntry = OutputFormatterConfigRegistry::instance().find(outputFormatterType.asCanonicalString());
-        if (not formatterRegistryEntry.has_value())
-        {
-            return std::unexpected{UnknownOutputFormatterType(
-                "The output formatter type '{}' is not registered. If it is a plugin, make sure you activated it.", outputFormatterType)};
-        }
-        return formatterRegistryEntry->instantiate(config).transform(
-            [&](ExplicitAny instantiatedConfig)
-            { return OutputFormatterDescriptor{this->outputFormatterType, std::move(instantiatedConfig)}; });
-    }();
+        return std::unexpected{sinkPluginConfigExp.error()};
+    }
+    PluginSinkConfiguration pluginSinkConfig{sinkType, std::move(sinkPluginConfigExp).value()};
+    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move(out)};
+
+
+
+    const auto& config = instantiatedConfig.value();
+
+    auto pluginSinkConfig = instantiatePluginConfig(config);
+    if (not pluginSinkConfig.has_value())
+    {
+        return std::unexpected{pluginSinkConfig.error()};
+    }
+    auto outputFormatterDescriptor = instantiateOutputFormatterDescriptor(config);
     if (not outputFormatterDescriptor.has_value())
     {
         return std::unexpected{outputFormatterDescriptor.error()};
     }
 
-    auto host = config.get(SinkDescriptor::HOST);
-    auto schema = config.get(SinkDescriptor::SCHEMA);
-    const auto addTimestamp = config.get(SinkDescriptor::ADD_TIMESTAMP);
-    const auto backpressureUpperThreshold = config.get(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD);
-    const auto backpressureLowerThreshold = config.get(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD);
-
     return std::make_tuple(
-        GeneralSinkConfig{
-            .host = std::move(host),
-            .schema = std::move(schema),
-            .addTimestamp = addTimestamp,
-            .backpressureUpperThreshold = backpressureUpperThreshold,
-            .backpressureLowerThreshold = backpressureLowerThreshold},
-        std::move(pluginSinkConfig),
-        std::move(outputFormatterDescriptor).value());
+        extractGeneralSinkConfig(config), std::move(pluginSinkConfig).value(), std::move(outputFormatterDescriptor).value());
 }
 
 std::expected<SinkConfigSchema, Exception>
@@ -168,56 +158,26 @@ SinkCatalog::getConfigSchema(const Identifier& sinkType, const Identifier& outpu
     return SinkConfigSchema{sinkType, outputFormatterType, std::move(targetSchema)};
 }
 
-std::expected<Identifier, Exception> SinkCatalog::peekOutputFormatterType(
-    const Schema<LiteralConfigValue, Ordered>& values, const Schema<ConfigFieldDefault, Ordered>& configDefaults)
-{
-    const auto typeLiteral = values.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
-                                 .or_else(
-                                     [&]
-                                     {
-                                         return configDefaults.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
-                                             .transform([](const ConfigFieldDefault& defaultFormatter)
-                                                        { return defaultFormatter.toLiteralConfigValue(); });
-                                     });
-    if (not typeLiteral.has_value())
-    {
-        return Identifier::parse("NATIVE");
-    }
-    return tryGetOr<std::string>(typeLiteral->getValue(), expectedType<std::string>()).and_then(Identifier::tryParse);
-}
-
-std::expected<std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
-SinkCatalog::resolveSinkConfig(
-    const Identifier& sinkType,
-    const Schema<LiteralConfigValue, Ordered>& values,
-    const Schema<ConfigFieldDefault, Ordered>& configDefaults,
-    const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
-{
-    return peekOutputFormatterType(values, configDefaults)
-        .and_then([&](const Identifier& outputFormatterType) { return getConfigSchema(sinkType, outputFormatterType); })
-        .transform([&](SinkConfigSchema configSchema)
-                   { return configSchema.withConfigDefaults(configDefaults).withConfigTransformations(configTransformations); })
-        .and_then([&](const SinkConfigSchema& configSchema) { return configSchema.resolveConfigs(values); });
-}
 
 std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
     Identifier sinkName,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
-    Host host,
+    GeneralSinkConfig generalSinkConfig,
     PluginSinkConfiguration pluginSinkConfig,
-    OutputFormatterDescriptor outputFormatterDescriptor,
-    const GeneralSinkConfig& generalSinkConfig)
+    OutputFormatterDescriptor outputFormatterDescriptor)
 {
     if (std::ranges::all_of(fmt::format("{}", sinkName), [](const char character) { return std::isdigit(character); }))
     {
         return std::unexpected{InvalidConfigParameter("Sink name '{}' is invalid: only-digit names are reserved", sinkName)};
     }
+    PRECONDITION(
+        generalSinkConfig.host != Host{Host::INVALID}, "A valid host must be set before creating a sink descriptor (see host policy)");
 
     const auto lockedSinks = sinks.wlock();
     auto sinkDescriptor = SinkDescriptor{NamedSinkDescriptor{
         sinkName,
         schema,
-        std::move(host),
+        std::move(generalSinkConfig.host),
         generalSinkConfig.addTimestamp,
         generalSinkConfig.backpressureUpperThreshold,
         generalSinkConfig.backpressureLowerThreshold,
@@ -240,24 +200,20 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const Identifier& s
     return sinkDescriptorOpt->second;
 }
 
-SinkDescriptor SinkCatalog::getAnonymousSink(
-    const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-    Host host,
+SinkDescriptor SinkCatalog::createAnonymousSinkDescriptor(
+    AnonymousSinkSchema sinkSchema,
+    GeneralSinkConfig generalSinkConfig,
     PluginSinkConfiguration pluginSinkConfig,
-    OutputFormatterDescriptor outputFormatterDescriptor,
-    const GeneralSinkConfig& generalSinkConfig) const
+    OutputFormatterDescriptor outputFormatterDescriptor) const
 {
+    PRECONDITION(
+        generalSinkConfig.host != Host{Host::INVALID}, "A valid host must be set before creating a sink descriptor (see host policy)");
     const auto anonymousSinkId = AnonymousSinkId{nextAnonymousSinkId.fetch_add(1)};
-
-    const std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schemaVar
-        = schema.has_value()
-        ? std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>>{schema.value()}
-        : std::monostate{};
 
     return SinkDescriptor{AnonymousSinkDescriptor{
         anonymousSinkId.getRawValue(),
-        schemaVar,
-        std::move(host),
+        std::move(sinkSchema),
+        std::move(generalSinkConfig.host),
         generalSinkConfig.addTimestamp,
         generalSinkConfig.backpressureUpperThreshold,
         generalSinkConfig.backpressureLowerThreshold,
@@ -299,9 +255,8 @@ std::vector<SinkDescriptor> SinkCatalog::getAllSinkDescriptors() const
 std::ostream& operator<<(std::ostream& os, const GeneralSinkConfig& config)
 {
     return os << fmt::format(
-               "GeneralSinkConfig(host: {}, schema set: {}, addTimestamp: {}, backpressure: [{}, {}])",
+               "GeneralSinkConfig(host: {}, addTimestamp: {}, backpressure: [{}, {}])",
                config.host,
-               config.schema.has_value(),
                config.addTimestamp,
                config.backpressureLowerThreshold,
                config.backpressureUpperThreshold);

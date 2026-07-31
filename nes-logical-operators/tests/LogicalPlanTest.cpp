@@ -68,15 +68,25 @@ public:
                     {
                         const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
                             UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
-                        auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
-                        const Schema<LiteralConfigValue, Ordered> dummyParserConfig{
-                            {"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", ","}};
+                        auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
+                        const Schema<LiteralConfigValue, Ordered> values{
+                            {"file_path", "/dev/null"},
+                            {"host", "localhost"},
+                            {"type", "CSV"},
+                            {"tuple_delimiter", "\n"},
+                            {"field_delimiter", ","}};
+                        auto configSchema
+                            = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+                        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema]
+                            = configSchema.resolveConfigs(values).value();
                         return sourceCatalog /// NOLINT
-                            .addPhysicalSource(
-                                logicalSource,
-                                Identifier::parse("File"),
-                                Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}, {"host", "localhost"}},
-                                dummyParserConfig)
+                            ->registerWithLogicalSource(
+                                PhysicalSourceBuilder{
+                                    std::move(generalConfig),
+                                    std::move(pluginConfig),
+                                    std::move(inputFormatterDescriptor),
+                                    copyPtr(sourceCatalog)},
+                                logicalSource.getLogicalSourceName())
                             .value();
                     }()}
         , selectionOp{UnboundFieldAccessLogicalFunction{testFieldIdentifier}}
@@ -88,7 +98,7 @@ protected:
     void SetUp() override { }
 
     Identifier testFieldIdentifier;
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     TypedLogicalOperator<SourceNameLogicalOperator> sourceOp;
     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp2;
     TypedLogicalOperator<SelectionLogicalOperator> selectionOp;

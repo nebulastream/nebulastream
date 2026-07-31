@@ -31,7 +31,10 @@ namespace NES::Parsers
 class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
-    std::vector<std::variant<Identifier, std::pair<Identifier, Schema<LiteralConfigValue, Ordered>>>> sinks;
+    std::vector<std::variant<
+        Identifier,
+        std::tuple<Identifier, AnonymousSinkSchema, GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>>>
+        sinks;
     std::stack<LogicalPlan> queryPlans;
     Schema<ConfigFieldDefault, Ordered> defaultConfigValues;
     Schema<ConfigFieldTransformation, Unordered> configTransformations;

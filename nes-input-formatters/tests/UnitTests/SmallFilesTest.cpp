@@ -50,7 +50,6 @@
 #include <ErrorHandling.hpp>
 #include <FileUtil.hpp>
 #include <InputFormatterTestUtil.hpp>
-#include <InputFormatterValidationProvider.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace
@@ -125,7 +124,7 @@ class SmallFilesTest : public Testing::BaseUnitTest
                 "radiation_level",
                 "orbital_velocity"}}}};
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
 
 public:
     static void SetUpTestCase()
@@ -315,10 +314,8 @@ public:
             {
                 inputFormatterConfig.emplace_back("FIELD_DELIMITER", "|");
             }
-            const auto parserConfiguration
-                = InputFormatterValidationProvider::provide(
-                      testConfig.formatterType, Schema<LiteralConfigValue, Ordered>{std::move(inputFormatterConfig)})
-                      .value();
+            const auto parserConfiguration = InputFormatterTestUtil::provideInputFormatterDescriptor(
+                testConfig.formatterType, Schema<LiteralConfigValue, Ordered>{std::move(inputFormatterConfig)});
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,

@@ -32,6 +32,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "Sinks/SinkCatalog.hpp"
 
 namespace NES
 {
@@ -42,10 +43,20 @@ namespace NES
 class AnonymousSinkLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit AnonymousSinkLogicalOperator(WeakLogicalOperator self, Identifier sinkType, Schema<LiteralConfigValue, Ordered> config);
+    explicit AnonymousSinkLogicalOperator(
+        WeakLogicalOperator self,
+        Identifier sinkType,
+        AnonymousSinkSchema schema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfiguration,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
-    static TypedLogicalOperator<AnonymousSinkLogicalOperator>
-    create(Identifier sinkType, Schema<LiteralConfigValue, Ordered> config);
+    static TypedLogicalOperator<AnonymousSinkLogicalOperator> create(
+        Identifier sinkType,
+        AnonymousSinkSchema schema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfiguration,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
     [[nodiscard]] bool operator==(const AnonymousSinkLogicalOperator& rhs) const;
 
@@ -64,9 +75,10 @@ public:
     [[nodiscard]] static AnonymousSinkLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSinkType() const;
-    /// The user-passed config literals (SINK.*, OUTPUT_FORMATTER.*, formatter-specific fields),
-    /// resolved against the sink's config schema by the AnonymousSinkBindingRule.
-    [[nodiscard]] Schema<LiteralConfigValue, Ordered> getSinkConfig() const;
+    [[nodiscard]] AnonymousSinkSchema getSinkSchema() const;
+    [[nodiscard]] GeneralSinkConfig getGeneralSinkConfig() const;
+    [[nodiscard]] PluginSinkConfiguration getPluginSinkConfiguration() const;
+    [[nodiscard]] OutputFormatterDescriptor getOutputFormatterDescriptor() const;
 
 private:
     static constexpr std::string_view NAME = "AnonymousSink";
@@ -75,7 +87,10 @@ private:
     TraitSet traitSet;
 
     Identifier sinkType;
-    Schema<LiteralConfigValue, Ordered> sinkConfig;
+    AnonymousSinkSchema targetSchema;
+    GeneralSinkConfig generalSinkConfig;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 
     friend Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>;
 };

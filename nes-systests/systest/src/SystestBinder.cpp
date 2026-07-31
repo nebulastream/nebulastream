@@ -153,19 +153,21 @@ public:
         PRECONDITION(
             not possibleSinkPlacements.empty(),
             "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
-        return SinkCatalog::resolveSinkConfig(sinkType, Schema<LiteralConfigValue, Ordered>{makeSinkConfigValues(sinkType, filePath)})
+        return SinkCatalog::resolveNamedSinkConfig(sinkType, Schema<LiteralConfigValue, Ordered>{makeSinkConfigValues(sinkType, filePath)})
             .and_then(
                 [&](auto resolved)
                 {
                     auto& [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = resolved;
-                    auto host = generalConfig.host.value_or(Host(possibleSinkPlacements.at(0).getRawValue()));
+                    if (generalConfig.host == Host{Host::INVALID})
+                    {
+                        generalConfig.host = Host(possibleSinkPlacements.at(0).getRawValue());
+                    }
                     return sinkCatalog->addSinkDescriptor(
                         assignedSinkName,
                         schema,
-                        std::move(host),
+                        std::move(generalConfig),
                         std::move(pluginSinkConfig),
-                        std::move(outputFormatterDescriptor),
-                        generalConfig);
+                        std::move(outputFormatterDescriptor));
                 });
     }
 
@@ -190,16 +192,19 @@ public:
         PRECONDITION(
             not possibleSinkPlacements.empty(),
             "Topology must list at least one worker in allow_sink_placement to assign a default anonymous sink host");
-        auto resolved = SinkCatalog::resolveSinkConfig(sinkType, config);
+        auto resolved = SinkCatalog::resolveAnonymousSinkConfig(sinkType, config);
         if (not resolved.has_value())
         {
             NES_ERROR("Failed to resolve anonymous sink config for type {}: {}", sinkType, resolved.error().what());
             return std::nullopt;
         }
-        auto& [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = resolved.value();
-        auto host = generalConfig.host.value_or(Host(possibleSinkPlacements.at(0).getRawValue()));
-        return sinkCatalog->getAnonymousSink(
-            generalConfig.schema, std::move(host), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor), generalConfig);
+        auto& [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = resolved.value();
+        if (generalConfig.host == Host{Host::INVALID})
+        {
+            generalConfig.host = Host(possibleSinkPlacements.at(0).getRawValue());
+        }
+        return sinkCatalog->createAnonymousSinkDescriptor(
+            std::move(sinkSchema), std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
     }
 
     std::expected<SinkDescriptor, Exception>

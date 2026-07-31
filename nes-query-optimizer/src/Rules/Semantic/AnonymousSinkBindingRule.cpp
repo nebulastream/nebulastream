@@ -69,25 +69,21 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             const auto type = sink.value()->getSinkType();
             const auto config = sink.value()->getSinkConfig();
 
-            auto resolved = SinkCatalog::resolveSinkConfig(type, config);
+            auto resolved = SinkCatalog::resolveAnonymousSinkConfig(type, config);
             if (not resolved.has_value())
             {
                 throw std::move(resolved).error();
             }
-            auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = std::move(resolved).value();
+            auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = std::move(resolved).value();
 
             /// SINK.HOST determines placement, not sink behavior; anonymous sinks must state it explicitly.
-            if (not generalConfig.host.has_value())
+            if (generalConfig.host == Host{Host::INVALID})
             {
                 throw InvalidConfigParameter("'host'");
             }
 
-            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(
-                generalConfig.schema,
-                generalConfig.host.value(),
-                std::move(pluginSinkConfig),
-                std::move(outputFormatterDescriptor),
-                generalConfig);
+            const auto sinkDescriptor = sinkCatalog->createAnonymousSinkDescriptor(
+                std::move(sinkSchema), std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
 
             TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());

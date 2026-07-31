@@ -117,14 +117,39 @@ std::
         configSchema.and_then([&](const SourceConfigSchema& configSchema) { return configSchema.resolveConfigs(configOptions); }));
 }
 
-std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
+std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
     const Identifier& sinkType,
     const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptionsAst,
     const Schema<ConfigFieldDefault, Ordered>& configDefaults,
     const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
 {
     const auto configOptions = bindConfigValues(configOptionsAst);
-    return unwrapOrThrow(SinkCatalog::resolveSinkConfig(sinkType, configOptions, configDefaults, configTransformations));
+    if (configOptions.getFieldByName(QualifiedIdentifier::parse("SINK.SCHEMA")).has_value())
+    {
+        throw InvalidQuerySyntax("SINK.SCHEMA cannot be specified for a named sink; the schema is declared in the CREATE SINK statement");
+    }
+
+    const auto outputFormatterType = [&]
+    {
+        const auto typeLiteral = configOptions.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+                                     .or_else(
+                                         [&]
+                                         {
+                                             return configDefaults.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"))
+                                                 .transform([](const ConfigFieldDefault& defaultFormatter)
+                                                            { return defaultFormatter.toLiteralConfigValue(); });
+                                         });
+        if (not typeLiteral.has_value())
+        {
+            return Identifier::parse("NATIVE");
+        }
+        return unwrapOrThrow(tryGetOr<std::string>(typeLiteral->getValue(), expectedType<std::string>()).and_then(Identifier::tryParse));
+    }();
+    auto configSchema
+        = SinkCatalog::getConfigSchema(sinkType, outputFormatterType)
+              .transform([&](const SinkConfigSchema& schema)
+                         { return schema.withConfigDefaults(configDefaults).withConfigTransformations(configTransformations); });
+    return unwrapOrThrow(configSchema.and_then([&](const SinkConfigSchema& schema) { return schema.resolveConfigs(configOptions); }));
 }
 
 QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::IdentifierChainContext* identifierList)

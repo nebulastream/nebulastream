@@ -133,7 +133,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto sinkConfig = Schema<LiteralConfigValue, Ordered>{std::move(sinkConfigValues)};
 
     /// The backpressure thresholds are general sink settings, applied directly to the descriptor.
-    GeneralSinkConfig generalSinkConfig{};
+    GeneralSinkConfig generalSinkConfig{.host = Host(channel.upstreamNode.getRawValue())};
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
         generalSinkConfig.backpressureUpperThreshold = context.config.backpressureUpperThreshold.getValue();
@@ -155,12 +155,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(networkSourceDescriptorExp.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorExp.value();
 
-    auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
-        orderedUpstreamSchema,
-        Host(channel.upstreamNode.getRawValue()),
+    auto networkSinkDescriptor = context.sinkCatalog->createAnonymousSinkDescriptor(
+        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(orderedUpstreamSchema),
+        generalSinkConfig,
         PluginSinkConfiguration{Identifier::parse("Network"), ExplicitAny{std::any{std::move(networkSinkConfig)}}},
-        OutputFormatterDescriptor::native(),
-        generalSinkConfig);
+        OutputFormatterDescriptor::native());
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();

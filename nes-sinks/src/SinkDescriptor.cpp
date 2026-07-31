@@ -126,7 +126,7 @@ size_t NamedSinkDescriptor::getBackpressureLowerThreshold() const
 
 AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     uint64_t sinkId,
-    std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
+    AnonymousSinkSchema schema,
     Host host,
     const bool addTimestamp,
     const size_t backpressureUpperThreshold,
@@ -134,23 +134,7 @@ AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     PluginSinkConfiguration pluginSinkConfig,
     OutputFormatterDescriptor outputFormatterDescriptor)
     : sinkId(sinkId)
-    , schema(std::visit(
-          [](auto&& arg) -> std::variant<
-                             std::monostate,
-                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-          {
-              using T = std::decay_t<decltype(arg)>;
-              if constexpr (std::is_same_v<T, std::monostate>)
-              {
-                  return std::monostate{};
-              }
-              else
-              {
-                  return std::make_shared<const T>(std::forward<decltype(arg)>(arg));
-              }
-          },
-          std::move(schema)))
+    , schema(std::move(schema))
     , host(std::move(host))
     , addTimestamp(addTimestamp)
     , backpressureUpperThreshold(backpressureUpperThreshold)
@@ -201,11 +185,7 @@ std::string AnonymousSinkDescriptor::getSinkType() const
     return pluginSinkConfig.getType().asCanonicalString();
 }
 
-std::variant<
-    std::monostate,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-AnonymousSinkDescriptor::getSchema() const
+AnonymousSinkSchema AnonymousSinkDescriptor::getSchema() const
 {
     return schema;
 }
@@ -234,21 +214,11 @@ SinkDescriptor::SinkDescriptor(std::variant<NamedSinkDescriptor, AnonymousSinkDe
 {
 }
 
-std::variant<
-    std::monostate,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-SinkDescriptor::getSchema() const
+AnonymousSinkSchema SinkDescriptor::getSchema() const
 {
     return std::visit(
         Overloaded{
-            [](const NamedSinkDescriptor& named)
-            {
-                return std::variant<
-                    std::monostate,
-                    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-                    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>{named.getSchema()};
-            },
+            [](const NamedSinkDescriptor& named) { return AnonymousSinkSchema{named.getSchema()}; },
             [](const AnonymousSinkDescriptor& anonymous) { return anonymous.getSchema(); }},
         underlying);
 }
@@ -425,9 +395,23 @@ AnonymousSinkDescriptor Unreflector<AnonymousSinkDescriptor>::operator()(const R
 {
     auto [sinkId, schema, host, addTimestamp, backpressureUpperThreshold, backpressureLowerThreshold, pluginSinkConfig, outputFormatterDescriptor]
         = context.unreflect<detail::ReflectedAnonymousSinkDescriptor>(reflected);
+    auto sinkSchema = std::visit(
+        [](auto&& arg) -> AnonymousSinkSchema
+        {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::monostate>)
+            {
+                return std::monostate{};
+            }
+            else
+            {
+                return std::make_shared<const T>(std::forward<decltype(arg)>(arg));
+            }
+        },
+        std::move(schema));
     return AnonymousSinkDescriptor{
         sinkId,
-        std::move(schema),
+        std::move(sinkSchema),
         std::move(host),
         addTimestamp,
         backpressureUpperThreshold,

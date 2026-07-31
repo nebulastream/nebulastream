@@ -73,13 +73,12 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getAnonymousSource(
-            Identifier::parse("File"),
-            schema,
-            Host("localhost"),
-            std::nullopt,
-            Schema<LiteralConfigValue, Ordered>{{InputFormatterDescriptor::getTypeString(), "CSV"}},
-            Schema<LiteralConfigValue, Ordered>{{"file_path", "/dev/null"}});
+        const Schema<LiteralConfigValue, Ordered> values{{"file_path", "/dev/null"}, {"host", "localhost"}, {"type", "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        auto descriptor = PhysicalSourceBuilder{
+            std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)}
+                              .build(schema, std::nullopt);
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourceDescriptorPhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
@@ -92,13 +91,17 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("Print"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
-        auto descriptor
-            = sinkCatalog.getAnonymousSink(schema, Host("localhost"), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
+        generalConfig.host = Host{"localhost"};
+        auto descriptor = sinkCatalog.createAnonymousSinkDescriptor(
+            std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(schema),
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor));
         auto sinkOp = SinkPhysicalOperator(descriptor);
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
@@ -170,7 +173,7 @@ public:
         return visited.size();
     }
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
     uint64_t nextOriginId = 1;
 };

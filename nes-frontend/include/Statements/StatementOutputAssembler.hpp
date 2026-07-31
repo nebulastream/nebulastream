@@ -79,9 +79,10 @@ constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_nam
 
 using SourceDescriptorOutputRowType = std::tuple<
     PhysicalSourceId,
-    Identifier,
+    /// Unset for physical sources not attached to a logical source.
+    std::optional<Identifier>,
     Schema<UnqualifiedUnboundField, Ordered>,
-    std::string,
+    Identifier,
     InputFormatterDescriptor,
     /// The source-defined config struct, rendered to JSON via the source's SourceConfigRegistry entry.
     std::string,
@@ -172,8 +173,8 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
             sourceDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.created.getPhysicalSourceId(),
-                result.created.getLogicalSource().getLogicalSourceName(),
-                *result.created.getLogicalSource().getSchema(),
+                result.created.getLogicalSourceName(),
+                result.created.getSchema(),
                 result.created.getSourceType(),
                 result.created.getInputFormatterDescriptor(),
                 renderSourceConfig(result.created),
@@ -230,8 +231,8 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
         {
             output.emplace_back(
                 source.getPhysicalSourceId(),
-                source.getLogicalSource().getLogicalSourceName(),
-                *source.getLogicalSource().getSchema(),
+                source.getLogicalSourceName(),
+                source.getSchema(),
                 source.getSourceType(),
                 source.getInputFormatterDescriptor(),
                 renderSourceConfig(source),
@@ -286,8 +287,8 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
             sourceDescriptorOutputColumns,
             std::vector{std::make_tuple(
                 result.dropped.getPhysicalSourceId(),
-                result.dropped.getLogicalSource().getLogicalSourceName(),
-                *result.dropped.getLogicalSource().getSchema(),
+                result.dropped.getLogicalSourceName(),
+                result.dropped.getSchema(),
                 result.dropped.getSourceType(),
                 result.dropped.getInputFormatterDescriptor(),
                 renderSourceConfig(result.dropped),

@@ -81,13 +81,19 @@ RegisteredModel defaultModel()
 /// child in schema-inference tests so the resulting Field-typed schema is fully bound to a
 /// real producing operator.
 TypedLogicalOperator<SourceDescriptorLogicalOperator>
-makeSourceWithSchema(SourceCatalog& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+makeSourceWithSchema(SharedPtr<SourceCatalog>& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
-    const Schema<LiteralConfigValue, Ordered> sourceConfig{{"file_path", "/dev/null"}, {"host", "localhost"}};
-    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
+    const auto logical = catalog->addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
+    const Schema<LiteralConfigValue, Ordered> values{{"file_path", "/dev/null"}, {"host", "localhost"}, {"type", "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
     const auto descriptor
-        = catalog.addPhysicalSource(logical, Identifier::parse("file"), sourceConfig, parserConfig).value();
+        = catalog
+              ->registerWithLogicalSource(
+                  PhysicalSourceBuilder{
+                      std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(catalog)},
+                  logical.getLogicalSourceName())
+              .value();
     return SourceDescriptorLogicalOperator::create(descriptor);
 }
 
@@ -123,7 +129,7 @@ TEST_F(InferModelLogicalOperatorTest, BasicProperties)
 /// Happy path: model input field is present in the child's schema; output is child fields ∪ model outputs.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceHappyPath)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -149,7 +155,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceHappyPath)
 /// Model input field missing in child's schema throws CannotInferSchema.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceMissingField)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -164,7 +170,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceTypeMismatch)
 {
     auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
-        *catalog,
+        catalog,
         "src",
         Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::INT32}});
 
@@ -175,7 +181,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceTypeMismatch)
 /// Nullable model input field is rejected; model inputs must be non-nullable.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNullableInput)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -190,7 +196,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNullableInput)
 /// (consistent with the join operator's behavior — output schema is the strict union).
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNameCollision)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -210,7 +216,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceVarsizedInputAccepted)
         ModelFieldList{UnqualifiedUnboundField{Identifier::parse("text"), DataType::Type::VARSIZED}},
         ModelFieldList{UnqualifiedUnboundField{Identifier::parse("embedding"), DataType::Type::FLOAT32}});
 
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",

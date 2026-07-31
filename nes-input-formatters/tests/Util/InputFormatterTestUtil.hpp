@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
+#include <Util/Pointers.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -165,11 +166,15 @@ createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
-    SourceCatalog& sourceCatalog,
+    SharedPtr<SourceCatalog>& sourceCatalog,
     const std::string& filePath,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     size_t numberOfRequiredSourceBuffers);
+
+/// Resolves the literal values against the formatter's declared config schema and instantiates
+/// the formatter-defined config struct via the config registries.
+InputFormatterDescriptor provideInputFormatterDescriptor(const std::string& type, const Schema<LiteralConfigValue, Ordered>& values);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, size_t numExpectedBuffers);

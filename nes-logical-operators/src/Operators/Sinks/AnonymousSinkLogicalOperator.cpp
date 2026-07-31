@@ -46,15 +46,33 @@ namespace NES
 {
 
 AnonymousSinkLogicalOperator::AnonymousSinkLogicalOperator(
-    WeakLogicalOperator self, Identifier sinkType, Schema<LiteralConfigValue, Ordered> config)
-    : ManagedByOperator(std::move(self)), sinkType(std::move(sinkType)), sinkConfig(std::move(config))
+    WeakLogicalOperator,
+    Identifier sinkType,
+    AnonymousSinkSchema schema,
+    GeneralSinkConfig generalSinkConfig,
+    PluginSinkConfiguration pluginSinkConfiguration,
+    OutputFormatterDescriptor outputFormatterDescriptor)
+    : sinkType(std::move(sinkType))
+    , targetSchema(std::move(schema))
+    , generalSinkConfig(std::move(generalSinkConfig))
+    , pluginSinkConfig(std::move(pluginSinkConfiguration))
+    , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
 }
 
-TypedLogicalOperator<AnonymousSinkLogicalOperator>
-AnonymousSinkLogicalOperator::create(Identifier sinkType, Schema<LiteralConfigValue, Ordered> config)
+TypedLogicalOperator<AnonymousSinkLogicalOperator> AnonymousSinkLogicalOperator::create(
+    Identifier sinkType,
+    AnonymousSinkSchema schema,
+    GeneralSinkConfig generalSinkConfig,
+    PluginSinkConfiguration pluginSinkConfiguration,
+    OutputFormatterDescriptor outputFormatterDescriptor)
 {
-    return TypedLogicalOperator<AnonymousSinkLogicalOperator>{std::move(sinkType), std::move(config)};
+    return TypedLogicalOperator<AnonymousSinkLogicalOperator>{
+        std::move(sinkType),
+        std::move(schema),
+        std::move(generalSinkConfig),
+        std::move(pluginSinkConfiguration),
+        std::move(outputFormatterDescriptor)};
 }
 
 AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withInferredSchema()
@@ -68,14 +86,9 @@ Identifier AnonymousSinkLogicalOperator::getSinkType() const
     return sinkType;
 }
 
-Schema<LiteralConfigValue, Ordered> AnonymousSinkLogicalOperator::getSinkConfig() const
-{
-    return sinkConfig;
-}
-
 bool AnonymousSinkLogicalOperator::operator==(const AnonymousSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->sinkConfig == rhs.sinkConfig;
+    return this == &rhs;
 }
 
 std::string AnonymousSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -129,6 +142,26 @@ Schema<Field, Unordered> AnonymousSinkLogicalOperator::getOutputSchema()
 std::vector<LogicalOperator> AnonymousSinkLogicalOperator::getChildren() const
 {
     return children;
+}
+
+AnonymousSinkSchema AnonymousSinkLogicalOperator::getSinkSchema() const
+{
+    return targetSchema;
+}
+
+GeneralSinkConfig AnonymousSinkLogicalOperator::getGeneralSinkConfig() const
+{
+    return generalSinkConfig;
+}
+
+PluginSinkConfiguration AnonymousSinkLogicalOperator::getPluginSinkConfiguration() const
+{
+    return pluginSinkConfig;
+}
+
+OutputFormatterDescriptor AnonymousSinkLogicalOperator::getOutputFormatterDescriptor() const
+{
+    return outputFormatterDescriptor;
 }
 
 Reflected Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(

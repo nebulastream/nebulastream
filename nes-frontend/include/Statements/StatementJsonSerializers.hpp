@@ -106,7 +106,7 @@ inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor
 {
     rfl::Object<rfl::Generic> obj;
     obj["type"] = context.reflect(descriptor.getInputFormatterType());
-    if (descriptor.getConfig().has_value())
+    if (descriptor.getConfig().getValue().has_value())
     {
         if (const auto configEntry = InputFormatterConfigRegistry::instance().find(descriptor.getInputFormatterType().asCanonicalString()))
         {

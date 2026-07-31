@@ -14,6 +14,9 @@
 
 #include <InputFormatterTestUtil.hpp>
 
+#include <InputFormatterConfigRegistry.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -32,7 +35,8 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -124,7 +128,7 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
 }
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
-    SourceCatalog& sourceCatalog,
+    SharedPtr<SourceCatalog>& sourceCatalog,
     const std::string& filePath,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
@@ -133,15 +137,36 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     const Schema<LiteralConfigValue, Ordered> fileSourceConfiguration{
         {"file_path", filePath},
         {"max_inflight_buffers", static_cast<int64_t>(numberOfRequiredSourceBuffers)},
-        {"host", "localhost"}};
-    const auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("TestSource"), schema);
+        {"host", "localhost"},
+        {"type", "CSV"}};
+    const auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("TestSource"), schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(), Identifier::parse("File"), fileSourceConfiguration, Schema<LiteralConfigValue, Ordered>{{"type", "CSV"}});
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV"));
+    INVARIANT(configSchema.has_value(), "File source or CSV input formatter not registered");
+    auto resolved = configSchema->resolveConfigs(fileSourceConfiguration);
+    INVARIANT(resolved.has_value(), "Test File Source config couldn't be resolved: {}", resolved.error().what());
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = std::move(resolved).value();
+    const auto sourceDescriptor = sourceCatalog->registerWithLogicalSource(
+        PhysicalSourceBuilder{
+            std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+        logicalSource->getLogicalSourceName());
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
     return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+}
+
+InputFormatterDescriptor provideInputFormatterDescriptor(const std::string& type, const Schema<LiteralConfigValue, Ordered>& values)
+{
+    const auto declaredSchema = InputFormatterConfigSchemaRegistry::instance().getSchema(type);
+    INVARIANT(declaredSchema.has_value(), "Input formatter type {} is not registered", type);
+    auto resolvedConfig = toExpected(resolveConfig(values, *declaredSchema));
+    INVARIANT(resolvedConfig.has_value(), "Invalid config for input formatter type {}: {}", type, resolvedConfig.error());
+    const auto configEntry = InputFormatterConfigRegistry::instance().find(type);
+    INVARIANT(configEntry.has_value(), "Input formatter type {} has no InputFormatterConfig registry entry", type);
+    auto instantiatedConfig = configEntry->instantiate(InstantiatedConfig{std::move(resolvedConfig).value()});
+    INVARIANT(instantiatedConfig.has_value(), "Could not instantiate config for input formatter type {}", type);
+    return InputFormatterDescriptor{Identifier::parse(type), std::move(instantiatedConfig).value()};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

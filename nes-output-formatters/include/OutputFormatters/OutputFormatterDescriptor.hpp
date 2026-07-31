@@ -59,10 +59,12 @@ public:
 
     [[nodiscard]] const ExplicitAny& getConfig() const;
 
+    /// Defaults to NATIVE: a sink without an output formatter forwards buffers unformatted.
     static inline auto TYPE_FIELD = ConfigField<Identifier>{
         "TYPE",
         [](const ConfigLiteral& literal)
-        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); }};
+        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); },
+        Identifier::parse("NATIVE")};
 
     static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
         = createConfigSchema(Identifier::parse("OUTPUT_FORMATTER"), TYPE_FIELD);

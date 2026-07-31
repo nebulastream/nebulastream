@@ -36,6 +36,8 @@
 #include <Schema/SchemaFwd.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include "Sinks/SinkCatalog.hpp"
+#include "Sinks/SinkDescriptor.hpp"
 #include "Sources/SourceCatalog.hpp"
 
 namespace NES
@@ -100,7 +102,13 @@ public:
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
-    static LogicalPlan addAnonymousSink(Identifier type, Schema<LiteralConfigValue, Ordered> sinkConfig, const LogicalPlan& queryPlan);
+    static LogicalPlan addAnonymousSink(
+        Identifier type,
+        AnonymousSinkSchema sinkSchema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfig,
+        OutputFormatterDescriptor outputFormatterDescriptor,
+        const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

@@ -27,6 +27,7 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
@@ -54,7 +55,7 @@ public:
     SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
 
 private:
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 };
 }

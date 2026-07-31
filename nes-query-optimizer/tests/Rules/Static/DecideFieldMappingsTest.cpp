@@ -61,20 +61,26 @@ namespace
 {
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
-LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog)
+LogicalSource createLogicalTestSource(SharedPtr<SourceCatalog>& sourceCatalog)
 {
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    return sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema).value();
+    return sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema).value();
 }
 
-SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+SourceDescriptor createTestSourceDescriptor(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource)
 {
-    const Schema<LiteralConfigValue, Ordered> sourceConfig{{"file_path", "/dev/null"}, {"host", "localhost"}};
-    const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), sourceConfig, parserConfig).value();
+    const Schema<LiteralConfigValue, Ordered> values{{"file_path", "/dev/null"}, {"host", "localhost"}, {"type", "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    return sourceCatalog
+        ->registerWithLogicalSource(
+            PhysicalSourceBuilder{
+                std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+            logicalSource.getLogicalSourceName())
+        .value();
 }
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
@@ -84,14 +90,16 @@ SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
 
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("file"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
+    generalConfig.host = Host{"localhost"};
     return sinkCatalog
-        .addSinkDescriptor(Identifier::parse("testSink"), schema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+        .addSinkDescriptor(
+            Identifier::parse("testSink"), schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
         .value();
 }
 
@@ -103,14 +111,20 @@ SinkDescriptor createTestSinkDescriptorWithNewField(SinkCatalog& sinkCatalog)
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("new_field"), DataType::Type::INT64}};
 
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("file"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
+    generalConfig.host = Host{"localhost"};
     return sinkCatalog
-        .addSinkDescriptor(Identifier::parse("testSinkWithNew"), schema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+        .addSinkDescriptor(
+            Identifier::parse("testSinkWithNew"),
+            schema,
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor))
         .value();
 }
 
@@ -127,7 +141,7 @@ public:
 protected:
     void SetUp() override { }
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
     LogicalSource logicalSource;
     SourceDescriptor sourceDescriptor;
@@ -345,16 +359,21 @@ TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
         UnqualifiedUnboundField{Identifier::parse("renamed_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("file"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
+    generalConfig.host = Host{"localhost"};
     const auto renamedSink
         = sinkCatalog
               .addSinkDescriptor(
-                  Identifier::parse("renamedSink"), renamedSinkSchema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+                  Identifier::parse("renamedSink"),
+                  renamedSinkSchema,
+                  std::move(generalConfig),
+                  std::move(pluginSinkConfig),
+                  std::move(outputFormatterDescriptor))
               .value();
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
     const std::vector<std::pair<Identifier, LogicalFunction>> projections{

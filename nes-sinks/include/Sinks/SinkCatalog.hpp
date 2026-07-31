@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -38,8 +39,9 @@ namespace NES
 
 struct GeneralSinkConfig
 {
-    Host host;
-    //Schema<UnqualifiedUnboundField, Ordered> schema;
+    /// Host determines worker placement. Resolution leaves the INVALID sentinel if SINK.HOST was
+    /// not passed; frontends then apply their host policy (or reject) before creating a descriptor.
+    Host host = Host{Host::INVALID};
     bool addTimestamp = false;
     size_t backpressureUpperThreshold = 1000;
     size_t backpressureLowerThreshold = 200;
@@ -50,7 +52,7 @@ struct GeneralSinkConfig
 class SinkConfigSchema
 {
 public:
-    std::expected<std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
+    std::expected<std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
     resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const;
     SinkConfigSchema withConfigDefaults(Schema<ConfigFieldDefault, Ordered> configDefaults) const;
     SinkConfigSchema withConfigTransformations(Schema<ConfigFieldTransformation, Unordered> configTransformations) const;
@@ -73,22 +75,6 @@ public:
     [[nodiscard]] static std::expected<SinkConfigSchema, Exception>
     getConfigSchema(const Identifier& sinkType, const Identifier& outputFormatterType);
 
-    /// Peek into the passed values (or the caller defaults) for OUTPUT_FORMATTER.TYPE — the config
-    /// schema to resolve against depends on it. An absent type means NATIVE (no formatting).
-    [[nodiscard]] static std::expected<Identifier, Exception>
-    peekOutputFormatterType(const Schema<LiteralConfigValue, Ordered>& values, const Schema<ConfigFieldDefault, Ordered>& configDefaults);
-
-    /// Convenience for the full resolution pipeline: peek the formatter type, build the combined
-    /// config schema, and resolve the passed values against it.
-    [[nodiscard]] static std::expected<std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
-        resolveAnonymousSinkConfig(const Identifier& sinkType, const Schema<LiteralConfigValue, Ordered>& values);
-
-    [[nodiscard]] static std::expected<std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
-    resolveNamedSinkConfig(const Identifier& sinkType, const Schema<LiteralConfigValue, Ordered>& values);
-
-
-    /// The host and schema in generalSinkConfig are ignored — the explicit host (frontends apply
-    /// their host policy first) and the sink-declared schema are authoritative.
     [[nodiscard]] std::expected<SinkDescriptor, Exception> addSinkDescriptor(
         Identifier sinkName,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
@@ -96,13 +82,14 @@ public:
         PluginSinkConfiguration pluginSinkConfig,
         OutputFormatterDescriptor outputFormatterDescriptor);
 
-    std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
-
     [[nodiscard]] SinkDescriptor createAnonymousSinkDescriptor(
         AnonymousSinkSchema sinkSchema,
         GeneralSinkConfig generalSinkConfig,
         PluginSinkConfiguration pluginSinkConfig,
         OutputFormatterDescriptor outputFormatterDescriptor) const;
+
+    std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
+
 
     bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);

@@ -73,5 +73,4 @@ struct std::hash<NES::LiteralConfigValue>
     }
 };
 
-FMT_OSTREAM(NES::LiteralConfigValue);
 FMT_OSTREAM(NES::InvalidConfigSpecification);

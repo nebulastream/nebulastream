@@ -84,19 +84,25 @@ public:
     static std::vector<Identifier> rightFieldNames() { return {Identifier::parse("right_id"), Identifier::parse("right_value")}; }
 
     static TypedLogicalOperator<SourceDescriptorLogicalOperator>
-    makeSource(SourceCatalog& catalog, std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    makeSource(SharedPtr<SourceCatalog>& catalog, std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{name}), schema).value();
-        const Schema<LiteralConfigValue, Ordered> sourceConfig{{"file_path", "/dev/null"}, {"host", "localhost"}};
-        const Schema<LiteralConfigValue, Ordered> parserConfig{{"type", "CSV"}};
+        const auto logical = catalog->addLogicalSource(Identifier::parse(std::string{name}), schema).value();
+        const Schema<LiteralConfigValue, Ordered> values{{"file_path", "/dev/null"}, {"host", "localhost"}, {"type", "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
         const auto descriptor
-            = catalog.addPhysicalSource(logical, Identifier::parse("file"), sourceConfig, parserConfig).value();
+            = catalog
+                  ->registerWithLogicalSource(
+                      PhysicalSourceBuilder{
+                          std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(catalog)},
+                      logical.getLogicalSourceName())
+                  .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
     /// Build a left_id = right_id equi-join over two file sources. Schema inference happens in the children-ctor, so the returned
     /// operator already has its output schema bound. The catalog must outlive the returned operator.
-    static TypedLogicalOperator<JoinLogicalOperator> buildInferredJoin(SourceCatalog& catalog, JoinLogicalOperator::JoinType joinType)
+    static TypedLogicalOperator<JoinLogicalOperator> buildInferredJoin(SharedPtr<SourceCatalog>& catalog, JoinLogicalOperator::JoinType joinType)
     {
         const auto leftSource = makeSource(catalog, "left_src", createLeftSchema());
         const auto rightSource = makeSource(catalog, "right_src", createRightSchema());
@@ -138,13 +144,15 @@ public:
     static SinkDescriptor
     createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("file"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+        generalConfig.host = Host{"localhost"};
+        return sinkCatalog
+            .addSinkDescriptor(sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
             .value();
     }
 };
@@ -166,7 +174,7 @@ TEST_F(JoinLogicalOperatorTest, GetJoinType)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         const auto join = buildInferredJoin(catalog, joinType);
         EXPECT_EQ(join->getJoinType(), joinType);
     }
@@ -174,7 +182,7 @@ TEST_F(JoinLogicalOperatorTest, GetJoinType)
 
 TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreservesLeft)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -195,7 +203,7 @@ TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreservesRight)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -216,7 +224,7 @@ TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -237,7 +245,7 @@ TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 
 TEST_F(JoinLogicalOperatorTest, InnerJoinDoesNotMarkAnyFieldsNullable)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::INNER_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -263,7 +271,7 @@ TEST_F(JoinLogicalOperatorTest, WindowStartEndFieldsAreNotNullableForOuterJoins)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         const auto join = buildInferredJoin(catalog, joinType);
         const auto outputSchema = join->getOutputSchema();
 
@@ -284,7 +292,7 @@ TEST_F(JoinLogicalOperatorTest, ReflectionRoundTripPreservesOuterJoinTypes)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         SinkCatalog sinkCatalog;
         const auto join = buildInferredJoin(catalog, joinType);
 

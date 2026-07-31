@@ -87,30 +87,37 @@ public:
         return Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS)}};
     }
 
-    static LogicalSource
-    createLogicalSource(SourceCatalog& sourceCatalog, const Identifier& sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    static LogicalSource createLogicalSource(
+        SharedPtr<SourceCatalog>& sourceCatalog, const Identifier& sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        return sourceCatalog.addLogicalSource(sourceName, schema).value();
+        return sourceCatalog->addLogicalSource(sourceName, schema).value();
     }
 
-    static SourceDescriptor createSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+    static SourceDescriptor createSourceDescriptor(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource)
     {
-        const Schema<LiteralConfigValue, Ordered> sourceConfig{{"FILE_PATH", "/dev/null"}, {"HOST", "localhost"}};
-        const Schema<LiteralConfigValue, Ordered> parserConfig{{"TYPE", "CSV"}};
-        return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), sourceConfig, parserConfig)
+        const Schema<LiteralConfigValue, Ordered> values{{"FILE_PATH", "/dev/null"}, {"HOST", "localhost"}, {"TYPE", "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        return sourceCatalog
+            ->registerWithLogicalSource(
+                PhysicalSourceBuilder{
+                    std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+                logicalSource.getLogicalSourceName())
             .value();
     }
 
     static SinkDescriptor
     createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveSinkConfig(
+        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
               Identifier::parse("file"),
               Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Host{"localhost"}, std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+        generalConfig.host = Host{"localhost"};
+        return sinkCatalog
+            .addSinkDescriptor(sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
             .value();
     }
 
@@ -138,7 +145,7 @@ public:
 /// A simple Selection → AnonymousSource plan. Verify all operators get CHOICELESS.
 TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto schema = createSchema("src");
@@ -170,7 +177,7 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 /// Build a join with Equals(FieldAccess, FieldAccess). Verify HASH_JOIN trait.
 TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -227,7 +234,7 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 /// Same join but with NESTED_LOOP_JOIN strategy. Verify NLJ trait.
 TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -283,7 +290,7 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 /// Join with a non-field-access leaf in condition + HASH_JOIN strategy. Verify fallback to NLJ.
 TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -343,7 +350,7 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 /// Equals(field, field) AND Equals(field, field). Verify HASH_JOIN.
 TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -405,7 +412,7 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 /// LEFT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -451,7 +458,7 @@ TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
 /// RIGHT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -497,7 +504,7 @@ TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
 /// FULL outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
 TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -543,7 +550,7 @@ TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
 /// Outer joins under a forced NESTED_LOOP_JOIN strategy still receive the NLJ trait (the strategy is honored verbatim).
 TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");
@@ -589,7 +596,7 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
 /// Outer join with non-equi predicate must be a NLJ, as the hash join does not support non-equi predicates
 TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
 {
-    SourceCatalog sourceCatalog;
+    auto sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
 
     auto leftSchema = createSchema("left");

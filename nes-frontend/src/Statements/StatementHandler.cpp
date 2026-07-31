@@ -178,22 +178,19 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    const auto host = [&]
+    auto generalSinkConfig = statement.generalSinkConfig;
+    if (generalSinkConfig.host == Host{Host::INVALID})
     {
-        if (statement.generalSinkConfig.host)
-        {
-            return *statement.generalSinkConfig.host;
-        }
-        return std::visit(
+        generalSinkConfig.host = std::visit(
             Overloaded{
                 [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
                 [](const RequireHostConfig&) -> Host
                 { throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set"); }},
             hostPolicy);
-    }();
+    }
 
     auto created = sinkCatalog->addSinkDescriptor(
-        statement.name, statement.schema, host, statement.pluginSinkConfig, statement.outputFormatterDescriptor, statement.generalSinkConfig);
+        statement.name, statement.schema, std::move(generalSinkConfig), statement.pluginSinkConfig, statement.outputFormatterDescriptor);
     if (created)
     {
         return CreateSinkStatementResult{created.value()};

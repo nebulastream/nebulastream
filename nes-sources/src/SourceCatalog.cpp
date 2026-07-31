@@ -215,13 +215,14 @@ SourceCatalog::registerWithLogicalSource(PhysicalSourceBuilder builder, const Id
     return std::move(builder)
         .build(*logicalSourceIter->second.getSchema(), logicalSourceName)
         .transform(
-            [&logicalPhysicalIter](SourceDescriptor descriptor)
+            [this, &logicalPhysicalIter](SourceDescriptor descriptor)
             {
                 auto [iter, success] = logicalPhysicalIter->second.insert(descriptor);
                 PRECONDITION(
                     success,
                     "Couldn't insert new source descriptor into logical source mapping, the uniqueness of physical source IDs must have "
                     "been violated");
+                idsToPhysicalSources.emplace(descriptor.getPhysicalSourceId(), descriptor);
                 return descriptor;
             });
 }

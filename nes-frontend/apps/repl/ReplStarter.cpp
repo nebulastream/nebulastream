@@ -237,13 +237,18 @@ int main(int argc, char** argv)
         }
 
 
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto sourceCatalogHandle = NES::SourceCatalog::create();
+        auto sourceCatalog = NES::copyPtr(sourceCatalogHandle);
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            {},
+            {},
+            sourceCatalog,
+            [](auto&& pH1)
+            { return NES::AntlrSQLQueryParser::QueryBinder{{}, {}}.bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -274,11 +279,11 @@ int main(int argc, char** argv)
         };
         workerCatalog->addWorker(workerConfig.host, workerConfig.dataAddress, workerConfig.maxOperators, workerConfig.downstream);
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};

@@ -101,10 +101,12 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     return std::visit(
         Overloaded{
             [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::pair<Identifier, Schema<LiteralConfigValue, Ordered>>& anonymousSink)
+            [&](const std::tuple<Identifier, AnonymousSinkSchema, GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>&
+                    anonymousSink)
             {
-                const auto& [type, configOptions] = anonymousSink;
-                return LogicalPlanBuilder::addAnonymousSink(type, configOptions, queryPlans.top());
+                const auto& [type, sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor] = anonymousSink;
+                return LogicalPlanBuilder::addAnonymousSink(
+                    type, sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor, queryPlans.top());
             }},
         sinks.front());
 }

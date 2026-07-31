@@ -334,6 +334,7 @@ struct std::hash<NES::ConfigFieldAddress>
     }
 };
 
+FMT_OSTREAM(NES::LiteralConfigValue);
 FMT_OSTREAM(NES::ConfigFieldAddress);
 FMT_OSTREAM(NES::ConfigFieldDefault);
 FMT_OSTREAM(NES::ConfigFieldTransformation);

@@ -56,7 +56,7 @@ std::
         const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions,
         const Schema<ConfigFieldDefault, Ordered>& defaultValues,
         const Schema<ConfigFieldTransformation, Unordered>& transformations);
-std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
+std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
     const Identifier& sinkType,
     const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions,
     const Schema<ConfigFieldDefault, Ordered>& defaultValues,
