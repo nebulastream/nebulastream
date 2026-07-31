@@ -61,3 +61,4 @@ jobs:
       buffer_size: ${{ needs.create_random_worker_config.outputs.buffer_size }}
       page_size: ${{ needs.create_random_worker_config.outputs.page_size }}
       number_of_partitions: ${{ needs.create_random_worker_config.outputs.number_of_partitions }}
+      total_memory_in_bytes: "214748364800"
