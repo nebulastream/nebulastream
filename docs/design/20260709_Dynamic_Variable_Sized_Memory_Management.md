@@ -155,11 +155,15 @@ allocation from unpooled to pooled is not expected to change correctness — it 
 14 classes are used** and peak *live* pooled memory is ~1 MB. *Reserved* capacity depends entirely on the
 policy:
 
-| provisioning | reserved capacity | of which default 4 KiB pool | peak live |
-|---|--:|--:|--:|
-| `EagerPerClass` | **1134 MB** | 128 MB | ~1 MB |
-| `TotalBudgetSplit` | 311 MB | 128 MB | ~1 MB |
-| `LazyElastic` (default) | 176 MB | 128 MB | ~1 MB |
+| provisioning | reserved capacity | of which default 4 KiB pool | peak live | YSB-50M wall |
+|---|--:|--:|--:|--:|
+| `EagerPerClass` | **1134 MB** | 128 MB | ~1 MB | 30.9 s |
+| `TotalBudgetSplit` | 311 MB | 128 MB | ~1 MB | 30.4 s |
+| `LazyElastic` (default) | 176 MB | 128 MB | ~1 MB | 30.4 s |
+
+All three pass identical results and are throughput-equivalent (30.4–30.9 s, within the fixed-pool
+baseline's ~4.8 % run-to-run spread): provisioning is a memory knob, not a speed knob. Only 3 of the 14
+classes are used on this workload.
 
 The 128 MB default-class pool is the *same* the fixed-pool engine reserves today. Above it, `EagerPerClass`
 reserves ~1 GB of mostly-unused classes — unacceptable; `LazyElastic` reserves ~48 MB of auxiliary-class
