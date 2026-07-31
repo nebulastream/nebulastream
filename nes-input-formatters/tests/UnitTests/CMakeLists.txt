@@ -19,3 +19,6 @@ add_nes_input_formatter_test(input-formatter-test-specific-sequence "SpecificSeq
 add_nes_input_formatter_test(input-formatter-test-small-files "SmallFilesTest.cpp")
 add_nes_input_formatter_test(input-formatter-test-concurrent-synchronization "ConcurrentSynchronizationTest.cpp")
 add_nes_input_formatter_test(input-formatter-test-simd-csv "SIMDCSVInputFormatIndexerTest.cpp")
+add_nes_input_formatter_test(input-formatter-test-hl7-simd "HL7SimdScanTest.cpp")
+# The HL7 scan/kernel headers live in the plugin directory (PUBLIC include dir of the plugin library).
+target_link_libraries(input-formatter-test-hl7-simd simd_hl7_input_format_indexer_plugin_library)

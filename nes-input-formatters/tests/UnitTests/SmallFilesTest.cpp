@@ -110,13 +110,53 @@ class SmallFilesTest : public Testing::BaseUnitTest
              .fileName = "Spacecraft_Telemetry",
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64},
              .schemaFieldNames
-             = {"temperature_delta",
-                "power_level",
-                "is_sunlit",
-                "status_code",
-                "operation_state",
-                "radiation_level",
-                "orbital_velocity"}}}};
+             = {"temperature_delta", "power_level", "is_sunlit", "status_code", "operation_state", "radiation_level", "orbital_velocity"}}},
+        {"TwoIntegerColumnsHL7", /// generated: the TwoIntegerColumns rows as MLLP-framed HL7 messages
+         /// (one message per row). The HL7 schema covers ALL leaves of a message: 15 MSH-header
+         /// leaves (h01 = "\x0BMSH", the `^~\&` splits, ...), the segment name, the data fields at
+         /// their leaf positions, and the empty pad leaf after the final <CR>.
+         TestFile{
+             .fileName = "TwoIntegerColumnsHL7",
+             .schemaFieldTypes
+             = {VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                VARSIZED,
+                INT32,
+                INT32,
+                VARSIZED},
+             .schemaFieldNames
+             = {"h01",
+                "h02",
+                "h03",
+                "h04",
+                "h05",
+                "h06",
+                "h07",
+                "h08",
+                "h09",
+                "h10",
+                "h11",
+                "h12",
+                "h13",
+                "h14",
+                "h15",
+                "seg",
+                "id",
+                "value",
+                "pad"}}}};
 
     SourceCatalog sourceCatalog;
 
@@ -162,6 +202,9 @@ public:
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
         bool isCompiled;
+        /// Per-test input-formatter config (validated via InputFormatterValidationProvider); the
+        /// default matches the historical hardcoded CSV/JSON delimiters.
+        std::unordered_map<std::string, std::string> indexerConfig{{"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
     };
 
     struct SetupResult
@@ -290,9 +333,10 @@ public:
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
 
+            auto indexerConfig = testConfig.indexerConfig;
+            indexerConfig.try_emplace("type", testConfig.formatterType);
             const auto parserConfiguration
-                = InputFormatterValidationProvider::provide(testConfig.formatterType, {{"tuple_delimiter", "\n"}, {"field_delimiter", "|"}})
-                      .value();
+                = InputFormatterValidationProvider::provide(testConfig.formatterType, std::move(indexerConfig)).value();
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,
@@ -437,6 +481,40 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 2,
          .isCompiled = true});
+}
+
+TEST_F(SmallFilesTest, testTwoIntegerColumnsHL7)
+{
+    /// 16-byte raw buffers deterministically split the 2-byte "\x1C\r" message delimiter across
+    /// buffer boundaries (FS as a buffer's last byte, CR as the next one's first), regression-testing
+    /// the multi-record spanning-tuple reassembly loop in InputFormatter::parseLeadingRecord.
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumnsHL7",
+        .formatterType = "HL7",
+        .fileEnding = "HL7",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true,
+        .indexerConfig = {}});
+}
+
+TEST_F(SmallFilesTest, testTwoIntegerColumnsSIMDHL7)
+{
+    /// The SIMD variant against the same golden (16-byte buffers keep every indexRawBuffer call in
+    /// the SIMD walk's scalar tail; the SIMD-region block/carry coverage lives in HL7SimdScanTest
+    /// and the 4096-byte-buffer HL7 systests).
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumnsHL7",
+        .formatterType = "SIMDHL7",
+        .fileEnding = "HL7",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true,
+        .indexerConfig = {}});
 }
 
 }

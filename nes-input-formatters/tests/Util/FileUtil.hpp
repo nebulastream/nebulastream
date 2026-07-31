@@ -301,7 +301,11 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
                     const auto childBufferOffset = (tupleIdx * sizeOfSchemaInBytes) + varSizedOffset;
                     const auto varSizedAccess
                         = reinterpret_cast<VariableSizedAccess*>(parentBuffer.getAvailableMemoryArea().data() + childBufferOffset);
-                    if (auto nextChildBuffer = bufferProvider.getUnpooledBuffer(varSizedAccess->getSize().getRawSize()))
+                    /// max(1, size): a ZERO-length varsized value (e.g. an empty HL7 leaf) still needs a child
+                    /// buffer to point at, but a MemorySegment of size 0 is invalid -- allocate one byte and
+                    /// read/store the actual (zero) size.
+                    if (auto nextChildBuffer
+                        = bufferProvider.getUnpooledBuffer(std::max<size_t>(1, varSizedAccess->getSize().getRawSize())))
                     {
                         file.read(nextChildBuffer.value().getAvailableMemoryArea<char>().data(), varSizedAccess->getSize().getRawSize());
 

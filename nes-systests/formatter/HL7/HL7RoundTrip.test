@@ -1,0 +1,25 @@
+# name: formatter/HL7/HL7RoundTrip.test
+# description: HL7 -> HL7 loop closure. Reading the two_ints_10.hl7 fixture with the HL7 input
+#   indexer and re-serializing the data fields with the HL7 output formatter (same default message
+#   header, same OBX segment) must reproduce the fixture BYTE-FOR-BYTE. The expected checksum
+#   (0 53608) is therefore not seeded from a run: it is the byte sum of the fixture file itself
+#   (python3 -c "print(sum(open('two_ints_10.hl7','rb').read()))"), independently anchoring both
+#   the indexer's leaf offsets and the serializer's glue in one test.
+# groups: [Formatter, HL7]
+
+CREATE LOGICAL SOURCE hl7Stream(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, val UINT64 NOT NULL, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7Stream TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE small/hl7/two_ints_10.hl7
+
+SELECT id, val FROM hl7Stream INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'OBX' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 53608
+
+# The same byte-identity through the SIMD indexer.
+CREATE LOGICAL SOURCE hl7StreamSimd(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, val UINT64 NOT NULL, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7StreamSimd TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE small/hl7/two_ints_10.hl7
+
+SELECT id, val FROM hl7StreamSimd INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'OBX' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 53608

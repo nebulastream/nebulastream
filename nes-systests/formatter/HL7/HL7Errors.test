@@ -1,0 +1,14 @@
+# name: formatter/HL7/HL7Errors.test
+# description: HL7 input indexer arity validation -- a message whose leaf count does not match the
+#   schema (a missing field in testdata/small/hl7/arity_bad.hl7's fourth message) is rejected with
+#   CannotFormatSourceData (4000). This is also the mechanism that catches values containing
+#   structural delimiter bytes (the indexer implements no HL7 escape sequences).
+# groups: [Formatter, HL7]
+
+CREATE LOGICAL SOURCE hl7Bad(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, val UINT64 NOT NULL, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7Bad TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE small/hl7/arity_bad.hl7
+
+SELECT id, val FROM hl7Bad INTO FILE();
+----
+Error 4000

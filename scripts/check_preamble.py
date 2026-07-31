@@ -77,7 +77,8 @@ INGORED_ENDINGS = {
     "nix",
     "lock",
     "nes",
-    "jsonl"
+    "jsonl",
+    "hl7"
 }
 
 VENDORED_FILES = {

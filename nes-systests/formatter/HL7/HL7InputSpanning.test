@@ -1,0 +1,129 @@
+# name: formatter/HL7/HL7InputSpanning.test
+# description: HL7 input indexer with messages spanning raw-buffer boundaries. The fixture
+#   (testdata/small/hl7/mixed_types_50.hl7, ~287 bytes/message, 50 messages) is read with 4096-byte
+#   buffers, so message bodies regularly straddle buffers and the "\x1C\r" message delimiter itself
+#   is occasionally split (FS as a buffer's last byte, CR as the next buffer's first) -- exercising
+#   the multi-record spanning-tuple reassembly in parseLeadingRecord. The result checker sorts rows,
+#   so multi-threaded buffer order is irrelevant.
+#   Fixture leaf layout (22): h01..h15 header leaves, seg, then data (id INT32, price FLOAT64,
+#   name VARSIZED, url VARSIZED, opt UINT64 nullable -- empty on every third message), pad.
+# groups: [Formatter, HL7]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+
+CREATE LOGICAL SOURCE hl7Mixed(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, price FLOAT64 NOT NULL, name VARSIZED NOT NULL, url VARSIZED NOT NULL, opt UINT64, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7Mixed TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE small/hl7/mixed_types_50.hl7
+
+CREATE LOGICAL SOURCE hl7MixedSimd(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, price FLOAT64 NOT NULL, name VARSIZED NOT NULL, url VARSIZED NOT NULL, opt UINT64, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7MixedSimd TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`);
+ATTACH FILE small/hl7/mixed_types_50.hl7
+
+CREATE SINK dataSink(hl7Mixed.id INT32 NOT NULL, hl7Mixed.price FLOAT64 NOT NULL, hl7Mixed.name VARSIZED NOT NULL, hl7Mixed.opt UINT64) TYPE File;
+CREATE SINK dataSinkSimd(hl7MixedSimd.id INT32 NOT NULL, hl7MixedSimd.price FLOAT64 NOT NULL, hl7MixedSimd.name VARSIZED NOT NULL, hl7MixedSimd.opt UINT64) TYPE File;
+
+SELECT id, price, name, opt FROM hl7Mixed INTO dataSink;
+----
+1,1.07,bob,1000
+2,2.14,carol,2000
+3,3.21,dave,NULL
+4,4.28,eve,4000
+5,5.35,alice,5000
+6,6.42,bob,NULL
+7,7.49,carol,7000
+8,8.56,dave,8000
+9,9.63,eve,NULL
+10,10.70,alice,10000
+11,11.77,bob,11000
+12,12.84,carol,NULL
+13,13.91,dave,13000
+14,14.98,eve,14000
+15,15.05,alice,NULL
+16,16.12,bob,16000
+17,17.19,carol,17000
+18,18.26,dave,NULL
+19,19.33,eve,19000
+20,20.40,alice,20000
+21,21.47,bob,NULL
+22,22.54,carol,22000
+23,23.61,dave,23000
+24,24.68,eve,NULL
+25,25.75,alice,25000
+26,26.82,bob,26000
+27,27.89,carol,NULL
+28,28.96,dave,28000
+29,29.03,eve,29000
+30,30.10,alice,NULL
+31,31.17,bob,31000
+32,32.24,carol,32000
+33,33.31,dave,NULL
+34,34.38,eve,34000
+35,35.45,alice,35000
+36,36.52,bob,NULL
+37,37.59,carol,37000
+38,38.66,dave,38000
+39,39.73,eve,NULL
+40,40.80,alice,40000
+41,41.87,bob,41000
+42,42.94,carol,NULL
+43,43.01,dave,43000
+44,44.08,eve,44000
+45,45.15,alice,NULL
+46,46.22,bob,46000
+47,47.29,carol,47000
+48,48.36,dave,NULL
+49,49.43,eve,49000
+50,50.50,alice,50000
+
+SELECT id, price, name, opt FROM hl7MixedSimd INTO dataSinkSimd;
+----
+1,1.07,bob,1000
+2,2.14,carol,2000
+3,3.21,dave,NULL
+4,4.28,eve,4000
+5,5.35,alice,5000
+6,6.42,bob,NULL
+7,7.49,carol,7000
+8,8.56,dave,8000
+9,9.63,eve,NULL
+10,10.70,alice,10000
+11,11.77,bob,11000
+12,12.84,carol,NULL
+13,13.91,dave,13000
+14,14.98,eve,14000
+15,15.05,alice,NULL
+16,16.12,bob,16000
+17,17.19,carol,17000
+18,18.26,dave,NULL
+19,19.33,eve,19000
+20,20.40,alice,20000
+21,21.47,bob,NULL
+22,22.54,carol,22000
+23,23.61,dave,23000
+24,24.68,eve,NULL
+25,25.75,alice,25000
+26,26.82,bob,26000
+27,27.89,carol,NULL
+28,28.96,dave,28000
+29,29.03,eve,29000
+30,30.10,alice,NULL
+31,31.17,bob,31000
+32,32.24,carol,32000
+33,33.31,dave,NULL
+34,34.38,eve,34000
+35,35.45,alice,35000
+36,36.52,bob,NULL
+37,37.59,carol,37000
+38,38.66,dave,38000
+39,39.73,eve,NULL
+40,40.80,alice,40000
+41,41.87,bob,41000
+42,42.94,carol,NULL
+43,43.01,dave,43000
+44,44.08,eve,44000
+45,45.15,alice,NULL
+46,46.22,bob,46000
+47,47.29,carol,47000
+48,48.36,dave,NULL
+49,49.43,eve,49000
+50,50.50,alice,50000
