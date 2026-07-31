@@ -548,6 +548,19 @@ TEST(UnescapeSpecialCharactersTest, InvalidEscapeSequence)
     EXPECT_EQ("test\\qmore", unescapeSpecialCharacters("test\\qmore"));
 }
 
+TEST(UnescapeSpecialCharactersTest, HexEscapes)
+{
+    /// Two-digit hex escapes (\xNN), both hex-digit cases; the MLLP frame bytes are the motivating use
+    EXPECT_EQ("\x1c", unescapeSpecialCharacters("\\x1C"));
+    EXPECT_EQ("\x0b", unescapeSpecialCharacters("\\x0b"));
+    EXPECT_EQ("\x1c\r", unescapeSpecialCharacters("\\x1C\\r"));
+    EXPECT_EQ("A\x7fZ", unescapeSpecialCharacters("A\\x7fZ"));
+    /// Not exactly two hex digits: pass through like any unknown escape
+    EXPECT_EQ("\\xZZ", unescapeSpecialCharacters("\\xZZ"));
+    EXPECT_EQ("\\x1", unescapeSpecialCharacters("\\x1"));
+    EXPECT_EQ("\\x1Gtail", unescapeSpecialCharacters("\\x1Gtail"));
+}
+
 TEST(UnescapeSpecialCharactersTest, UnicodeAndEscapedMixed)
 {
     EXPECT_EQ("Unicode: 😀\nNext line", unescapeSpecialCharacters("Unicode: 😀\\nNext line"));

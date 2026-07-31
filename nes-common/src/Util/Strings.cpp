@@ -282,6 +282,41 @@ std::string unescapeSpecialCharacters(std::string_view input)
                     result.push_back('\\');
                     ++i;
                     break;
+                case 'x': {
+                    /// Two-digit hex escape (\xNN), e.g. \x1C: required for bytes that have no
+                    /// single-letter escape (the MLLP frame bytes 0x0B / 0x1C 0x0D). Anything but
+                    /// exactly two hex digits after \x keeps the pass-through behavior of unknown
+                    /// escapes (so a literal "\x" stays "\x").
+                    const auto hexDigitValue = [](const char digit) -> int
+                    {
+                        if (digit >= '0' && digit <= '9')
+                        {
+                            return digit - '0';
+                        }
+                        if (digit >= 'a' && digit <= 'f')
+                        {
+                            return digit - 'a' + 10;
+                        }
+                        if (digit >= 'A' && digit <= 'F')
+                        {
+                            return digit - 'A' + 10;
+                        }
+                        return -1;
+                    };
+                    if (i + 3 < input.size())
+                    {
+                        const int high = hexDigitValue(input[i + 2]);
+                        const int low = hexDigitValue(input[i + 3]);
+                        if (high >= 0 && low >= 0)
+                        {
+                            result.push_back(static_cast<char>((high << 4U) | low));
+                            i += 3;
+                            break;
+                        }
+                    }
+                    result.push_back(input[i]);
+                    break;
+                }
                 default:
                     result.push_back(input[i]);
                     break;

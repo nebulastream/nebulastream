@@ -63,9 +63,14 @@ private:
 
 struct ConfigParametersChecksum
 {
+    /// Defaults to CSV (the format-invariant row checksum), but an explicitly configured
+    /// OUTPUT_FORMAT is respected so a checksum can pin the exact bytes of any compiled output
+    /// formatter (e.g. HL7, whose control bytes are not representable in an expected block).
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+        "output_format",
+        "CSV",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> LEGACY_OUTPUT_FORMAT{
         "legacy_output_format",

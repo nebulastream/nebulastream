@@ -1,0 +1,48 @@
+# name: HL7Output.test
+# description: HL7 output formatter -- serializes each record as one MLLP-framed HL7 message:
+#              <VT=0x0B> MSH-header <CR> SEGNAME|f1|...|fn <CR> <FS=0x1C><CR>
+#              Expected values are CHECKSUM sinks (count + commutative byte-sum) because the raw
+#              message bytes contain control characters not representable in an expected block.
+#              NOTE: the checksum 'count' counts '\n' bytes -- HL7 output contains none, so the
+#              count column is always 0; the byte-sum still pins the exact output bytes.
+# groups: [Formatter, HL7]
+
+CREATE LOGICAL SOURCE intSource(id INT32 NOT NULL, val UINT64 NOT NULL);
+CREATE LOGICAL SOURCE nullSource(id INT32 NOT NULL, val UINT64);
+CREATE LOGICAL SOURCE stringSource(name VARSIZED NOT NULL, price FLOAT64 NOT NULL);
+
+CREATE PHYSICAL SOURCE FOR intSource TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+1,100
+2,200
+
+CREATE PHYSICAL SOURCE FOR nullSource TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+1,100
+2,
+
+CREATE PHYSICAL SOURCE FOR stringSource TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+alice,3.5
+bob,120.25
+
+# Default MSH header, custom segment name. Byte-exact output (verified via a File sink):
+# \x0BMSH|^~\&|NES|NES|BENCH|BENCH|20260101000000||ORU^R01|1|P|2.5\rOBX|1|100\r\x1C\r (per record)
+SELECT * FROM intSource INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'OBX' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 10690
+
+# Custom message header (checks the prologue glue is config-driven, not hardcoded).
+SELECT * FROM intSource INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'MSH|^~\&|TESTAPP|TESTFAC|20250101000000||ORU^R01|42|P|2.5' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, 'ZZZ' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 10178
+
+# NULL field (empty CSV field -> null) emits zero bytes: HL7's empty-field convention `...|`.
+SELECT * FROM nullSource INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'OBX' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 10544
+
+# Varsized passthrough + float raw-forward.
+SELECT * FROM stringSource INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'PID' as `OUTPUT_FORMATTER`.SEGMENT_NAME);
+----
+0 11539

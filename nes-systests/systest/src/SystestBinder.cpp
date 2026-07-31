@@ -722,7 +722,14 @@ struct SystestBinder::Impl
         }
         if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM" && std::getenv("NES_BENCH_NO_QUOTE") == nullptr)
         {
-            formatConfig["quote_strings"] = "true";
+            /// quote_strings is a CSV-formatter option; only inject it when the checksum actually runs
+            /// the (default) CSV output formatter -- an explicitly configured non-CSV OUTPUT_FORMAT
+            /// (e.g. HL7) has its own config keys and rejects unknown ones.
+            const auto outputFormat = sinkConfig.find("output_format");
+            if (outputFormat == sinkConfig.end() || toUpperCase(outputFormat->second) == "CSV")
+            {
+                formatConfig["quote_strings"] = "true";
+            }
         }
 
         auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
