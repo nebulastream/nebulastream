@@ -10,13 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Sequencing)
-add_subdirectory(Util)
-add_subdirectory(Identifiers)
-
-add_source_files(nes-common
-        Thread.cpp
-        ErrorHandling.cpp
-        Plugin.cpp
-        QueryId.cpp
-        Version.cpp)
+add_library(dynamic-function-plugin MODULE DynamicFunctionPlugin.cpp)
+target_link_libraries(dynamic-function-plugin PRIVATE nes-logical-operators)
+set_target_properties(dynamic-function-plugin PROPERTIES PREFIX "")

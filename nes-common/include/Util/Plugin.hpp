@@ -28,18 +28,7 @@ extern const PluginInit __start_nes_plugin_init[] __attribute__((weak));
 extern const PluginInit __stop_nes_plugin_init[] __attribute__((weak));
 }
 
-inline void initializePlugins()
-{
-    static const bool initialized = []
-    {
-        for (auto plugin = __start_nes_plugin_init; plugin != __stop_nes_plugin_init; ++plugin)
-        {
-            plugin->init();
-        }
-        return true;
-    }();
-    static_cast<void>(initialized);
-}
+void initializePlugins();
 
 }
 

@@ -12,6 +12,7 @@
 
 function(retain_plugin_hooks target)
     set_property(GLOBAL APPEND PROPERTY plugin_startup_targets ${target})
+    set_property(TARGET ${target} PROPERTY ENABLE_EXPORTS ON)
 endfunction()
 
 function(finalize_plugin_hooks)

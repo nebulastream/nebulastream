@@ -21,6 +21,7 @@ add_subdirectory(Sinks/MQTTSink)
 add_subdirectory(InputFormatters/JSONInputFormatter)
 add_subdirectory(OutputFormatters/JSONOutputFormatter)
 add_subdirectory(Rules/RedundantUnionRemovalRule)
+add_subdirectory(Examples/DynamicFunction EXCLUDE_FROM_ALL)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
