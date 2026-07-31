@@ -156,7 +156,17 @@ class SmallFilesTest : public Testing::BaseUnitTest
                 "seg",
                 "id",
                 "value",
-                "pad"}}}};
+                "pad"}}},
+        {"TwoIntegerColumnsXML", /// generated: the TwoIntegerColumns rows as packed record-per-line
+         /// XML (<rec><id>..</id><val>..</val></rec>), parsed by the UNMODIFIED HL7 indexers
+         /// configured for XML (structural class {<,>}, 1-byte '\n' delimiter). Splitting at every
+         /// structural byte yields arity 4F+5 = 13 leaves for F=2: the values standalone at slots 4
+         /// and 8, tag names/close tags/empties as junk leaves around them.
+         TestFile{
+             .fileName = "TwoIntegerColumnsXML",
+             .schemaFieldTypes
+             = {VARSIZED, VARSIZED, VARSIZED, VARSIZED, INT32, VARSIZED, VARSIZED, VARSIZED, INT32, VARSIZED, VARSIZED, VARSIZED, VARSIZED},
+             .schemaFieldNames = {"x01", "x02", "x03", "x04", "id", "x05", "x06", "x07", "value", "x08", "x09", "x10", "x11"}}}};
 
     SourceCatalog sourceCatalog;
 
@@ -515,6 +525,48 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsSIMDHL7)
         .sizeOfRawBuffers = 16,
         .isCompiled = true,
         .indexerConfig = {}});
+}
+
+/// The packed-XML config of the HL7 indexer (pure configuration, no XML-specific code): 16-byte raw
+/// buffers split every ~35-byte record across buffers, exercising the spanning reassembly with the
+/// 1-byte '\n' message delimiter (which, unlike the MLLP FS|CR pair, can never itself be split).
+TEST_F(SmallFilesTest, testTwoIntegerColumnsXML)
+{
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumnsXML",
+        .formatterType = "HL7",
+        .fileEnding = "XML",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true,
+        .indexerConfig
+        = {{"message_delimiter", "\n"},
+           {"segment_delimiter", "<"},
+           {"field_delimiter", ">"},
+           {"component_delimiter", ""},
+           {"subcomponent_delimiter", ""}}});
+}
+
+TEST_F(SmallFilesTest, testTwoIntegerColumnsSIMDXML)
+{
+    /// The SIMD variant (1-byte-delimiter flatten mode) against the same golden.
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumnsXML",
+        .formatterType = "SIMDHL7",
+        .fileEnding = "XML",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true,
+        .indexerConfig
+        = {{"message_delimiter", "\n"},
+           {"segment_delimiter", "<"},
+           {"field_delimiter", ">"},
+           {"component_delimiter", ""},
+           {"subcomponent_delimiter", ""}}});
 }
 
 }

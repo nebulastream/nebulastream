@@ -34,9 +34,9 @@ namespace NES
 /// into one raw position band (Hl7Scan.hpp) that the custom Hl7FieldIndex reads in place with a
 /// fixed stride -- no per-message group framing, no FieldOffsets emission (the SchemaJSON
 /// single-band design). Shares HL7MetaData and the config surface with the scalar indexer.
-/// Additional requirement: the message delimiter must be exactly the two-byte MLLP trailer shape
-/// (first byte not in the structural class) -- streams with other delimiters use the scalar "HL7"
-/// indexer.
+/// Additional requirement: the message delimiter must be one byte (e.g. the packed-XML '\n'
+/// config) or the two-byte MLLP trailer shape, with its first byte not in the structural class --
+/// streams with longer delimiters use the scalar "HL7" indexer.
 class SIMDHL7InputFormatIndexer final : public InputFormatIndexer<SIMDHL7InputFormatIndexer>
 {
 public:
@@ -47,6 +47,7 @@ public:
     using FieldIndexFunctionType = Hl7FieldIndex;
 
     SIMDHL7InputFormatIndexer() : computeBlocks(SimdHl7::selectComputeBlocks()) { }
+
     ~SIMDHL7InputFormatIndexer() = default;
 
     void indexRawBuffer(Hl7FieldIndex& fieldIndex, const RawTupleBuffer& rawBuffer, const HL7MetaData& metaData) const;

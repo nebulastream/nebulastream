@@ -33,19 +33,35 @@
 /// EXACTLY the emission of the production scalar walk (SimdHl7::indexHl7ScalarInto): same offsets,
 /// same spanning-fragment marks, same in-order arity throws (including the scalar's
 /// partial-emission-before-throw). The reconstruction in runSimd IS the read-side contract, so the
-/// differential covers both the flatten and the stride addressing. The interesting corners are all
-/// delimiter-pair placements relative to 64-byte SIMD blocks and the 16-block chunk: "\x1C\r"
-/// straddling a block boundary (the carry), the matched <CR>'s suppression from the structural mask
-/// across that boundary, and a lone trailing <FS>.
+/// differential covers both the flatten and the stride addressing.
+///
+/// Both production delimiter modes run under the same harness (ScanConfig):
+/// - HL7/MLLP (2-byte "\x1C\r" delimiter): the interesting corners are all delimiter-pair
+///   placements relative to 64-byte SIMD blocks and the 16-block chunk -- "\x1C\r" straddling a
+///   block boundary (the carry), the matched <CR>'s suppression from the structural mask across
+///   that boundary, and a lone trailing <FS>.
+/// - packed XML (1-byte '\n' delimiter, class {<,>}): no pair logic exists to go wrong, so the
+///   sweeps instead exercise the delimiter byte AT the boundary and the delete-only flatten path.
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
 namespace
 {
 
-constexpr std::array<char, 4> kStructuralChars{'\r', '|', '^', '&'};
-constexpr std::string_view kStructuralBytes = "\r|^&";
-constexpr std::string_view kMessageDelimiter = "\x1C\r";
+/// One production scan shape: the structural class (as both the kernel's fixed 4-char array --
+/// disabled slots duplicate an enabled char, mirroring HL7MetaData::getStructuralChars -- and the
+/// scalar walk's byte string) plus the message delimiter.
+struct ScanConfig
+{
+    std::array<char, 4> structuralChars;
+    std::string_view structuralBytes;
+    std::string_view messageDelimiter;
+};
+
+constexpr ScanConfig kHl7Config{.structuralChars = {'\r', '|', '^', '&'}, .structuralBytes = "\r|^&", .messageDelimiter = "\x1C\r"};
+/// The packed-XML config of the XML plan: splitting at every '<' and '>' makes tags/close-tags
+/// junk leaves and element values standalone leaves; records are '\n'-terminated lines.
+constexpr ScanConfig kXmlConfig{.structuralChars = {'<', '>', '<', '<'}, .structuralBytes = "<>", .messageDelimiter = "\n"};
 
 /// Captures every call the scan drivers make, so the SIMD path can be compared to the scalar walk.
 struct RecordingSink
@@ -88,12 +104,12 @@ struct Outcome
     bool operator==(const Outcome&) const = default;
 };
 
-Outcome runScalar(const std::string_view view, const uint64_t numFields)
+Outcome runScalar(const ScanConfig& config, const std::string_view view, const uint64_t numFields)
 {
     Outcome outcome;
     try
     {
-        SimdHl7::indexHl7ScalarInto(outcome.sink, view, kMessageDelimiter, kStructuralBytes, numFields);
+        SimdHl7::indexHl7ScalarInto(outcome.sink, view, config.messageDelimiter, config.structuralBytes, numFields);
     }
     catch (const Exception&)
     {
@@ -102,15 +118,20 @@ Outcome runScalar(const std::string_view view, const uint64_t numFields)
     return outcome;
 }
 
-Outcome runSimd(const SimdHl7::ComputeBlocksFn fn, const std::string_view view, const uint64_t numFields)
+Outcome runSimd(const ScanConfig& config, const SimdHl7::ComputeBlocksFn fn, const std::string_view view, const uint64_t numFields)
 {
     Outcome outcome;
     outcome.sink.startSetup(numFields, /*sizeOfFieldDelimiter*/ 1);
 
+    const auto delimiterSize = config.messageDelimiter.size();
     std::vector<uint32_t> band(view.size() + 16);
     std::vector<uint32_t> pairBandIdx((view.size() / 2) + 2);
-    const auto flattened
-        = SimdHl7::flattenHl7SimdInto(band.data(), pairBandIdx.data(), view, kStructuralChars, kMessageDelimiter[0], kMessageDelimiter[1], fn);
+    /// 1-byte mode ignores msgSecond; pass the duplicate exactly like the production indexer does.
+    const auto flattened = delimiterSize == 2
+        ? SimdHl7::flattenHl7SimdInto<2>(
+              band.data(), pairBandIdx.data(), view, config.structuralChars, config.messageDelimiter[0], config.messageDelimiter[1], fn)
+        : SimdHl7::flattenHl7SimdInto<1>(
+              band.data(), pairBandIdx.data(), view, config.structuralChars, config.messageDelimiter[0], config.messageDelimiter[0], fn);
     if (flattened.numPairs == 0)
     {
         outcome.sink.markNoTupleDelimiters();
@@ -128,16 +149,17 @@ Outcome runSimd(const SimdHl7::ComputeBlocksFn fn, const std::string_view view, 
         productionValidatorThrew = true;
     }
 
-    /// Reconstruct the scalar walk's group emission from the band; message k spans pairs k and k+1.
-    /// The offset math here mirrors the Hl7FieldIndex read side (first leaf skips the 2-byte
-    /// delimiter, later leaves their 1-byte structural delimiter, the closing offset is the <FS>).
+    /// Reconstruct the scalar walk's group emission from the band; message k spans delimiters k and
+    /// k+1. The offset math here mirrors the Hl7FieldIndex read side (the first leaf skips the
+    /// message delimiter's bytes, later leaves their 1-byte structural delimiter, the closing
+    /// offset is the terminating delimiter's first byte).
     try
     {
         for (size_t k = 0; k + 1 < flattened.numPairs; ++k)
         {
             const size_t groupBegin = pairBandIdx[k];
             const size_t groupEnd = pairBandIdx[k + 1];
-            outcome.sink.emplaceFieldOffset(band[groupBegin] + 2);
+            outcome.sink.emplaceFieldOffset(band[groupBegin] + static_cast<uint32_t>(delimiterSize));
             for (size_t event = groupBegin + 1; event < groupEnd; ++event)
             {
                 outcome.sink.emplaceFieldOffset(band[event] + 1);
@@ -163,16 +185,16 @@ Outcome runSimd(const SimdHl7::ComputeBlocksFn fn, const std::string_view view, 
     return outcome;
 }
 
-/// One well-formed message body with `leaves` leaves ("a|b|c" style, first leaf may be empty).
-std::string makeMessage(std::mt19937& rng, const uint64_t leaves)
+/// One well-formed message body with `leaves` leaves ("a|b|c" style, first leaf may be empty),
+/// joined by random bytes from the config's structural class.
+std::string makeMessage(std::mt19937& rng, const ScanConfig& config, const uint64_t leaves)
 {
     std::string body;
     for (uint64_t leaf = 0; leaf < leaves; ++leaf)
     {
         if (leaf > 0)
         {
-            constexpr std::string_view splits = "\r|^&";
-            body += splits[rng() % splits.size()];
+            body += config.structuralBytes[rng() % config.structuralBytes.size()];
         }
         const auto len = rng() % 4;
         for (size_t i = 0; i < len; ++i)
@@ -181,6 +203,63 @@ std::string makeMessage(std::mt19937& rng, const uint64_t leaves)
         }
     }
     return body;
+}
+
+/// Randomized adversarial bytes (lone/doubled delimiter bytes, empty leaves, arity mismatches):
+/// scalar and SIMD must agree byte-for-byte on the emitted offsets AND on whether they reject.
+void differentialFuzzAdversarialOver(const ScanConfig& config, const std::string_view alphabet, const uint32_t seed)
+{
+    const auto kernels = SimdHl7::availableKernels();
+    std::mt19937 rng(seed);
+    constexpr int iterations = 2000;
+    for (int iter = 0; iter < iterations; ++iter)
+    {
+        const size_t len = rng() % 1200;
+        std::string view;
+        view.reserve(len);
+        for (size_t i = 0; i < len; ++i)
+        {
+            view += alphabet[rng() % alphabet.size()];
+        }
+        const uint64_t numFields = 1 + (rng() % 6);
+
+        const auto scalar = runScalar(config, view, numFields);
+        for (const auto& kernel : kernels)
+        {
+            const auto simd = runSimd(config, kernel.fn, view, numFields);
+            ASSERT_EQ(scalar, simd) << kernel.name << " iter=" << iter << " len=" << len;
+        }
+    }
+}
+
+/// Well-formed randomized streams (fixed leaf count, random leaf lengths/splits, random leading and
+/// trailing fragments): success-path differential across all kernels.
+void differentialFuzzWellFormedOver(const ScanConfig& config, const uint32_t seed)
+{
+    const auto kernels = SimdHl7::availableKernels();
+    std::mt19937 rng(seed);
+    constexpr int iterations = 1500;
+    for (int iter = 0; iter < iterations; ++iter)
+    {
+        const uint64_t leaves = 1 + (rng() % 8);
+        const auto messages = rng() % 12;
+        std::string view = makeMessage(rng, config, leaves); /// leading fragment (cut-off message)
+        view += config.messageDelimiter;
+        for (unsigned m = 0; m < messages; ++m)
+        {
+            view += makeMessage(rng, config, leaves);
+            view += config.messageDelimiter;
+        }
+        view.append(rng() % 40, 'a'); /// trailing fragment
+
+        const auto scalar = runScalar(config, view, leaves);
+        ASSERT_FALSE(scalar.threw);
+        for (const auto& kernel : kernels)
+        {
+            const auto simd = runSimd(config, kernel.fn, view, leaves);
+            ASSERT_EQ(scalar, simd) << kernel.name << " iter=" << iter;
+        }
+    }
 }
 
 }
@@ -210,7 +289,7 @@ TEST_F(HL7SimdScanTest, handCheckedEmissionMatchesContract)
     for (const auto& kernel : SimdHl7::availableKernels())
     {
         /// "x\x1C\r" leading fragment; one complete message "a|b" at [3,5,6]; delimiters at 1 and 6.
-        const auto outcome = runSimd(kernel.fn, "x\x1C\ra|b\x1C\r", 2);
+        const auto outcome = runSimd(kHl7Config, kernel.fn, "x\x1C\ra|b\x1C\r", 2);
         EXPECT_FALSE(outcome.threw) << kernel.name;
         EXPECT_TRUE(outcome.sink.marked) << kernel.name;
         EXPECT_EQ(outcome.sink.firstTuple, 1U) << kernel.name;
@@ -218,16 +297,48 @@ TEST_F(HL7SimdScanTest, handCheckedEmissionMatchesContract)
         EXPECT_EQ(outcome.sink.offsets, (std::vector<uint32_t>{3, 5, 6})) << kernel.name;
 
         /// A single delimiter => no complete message, first == last.
-        const auto single = runSimd(kernel.fn, "x\x1C\ry", 2);
+        const auto single = runSimd(kHl7Config, kernel.fn, "x\x1C\ry", 2);
         EXPECT_TRUE(single.sink.marked) << kernel.name;
         EXPECT_EQ(single.sink.firstTuple, 1U) << kernel.name;
         EXPECT_EQ(single.sink.lastTuple, 1U) << kernel.name;
         EXPECT_TRUE(single.sink.offsets.empty()) << kernel.name;
 
         /// No delimiter at all => one spanning fragment. A lone <FS> (no <CR>) is NOT a delimiter.
-        const auto none = runSimd(kernel.fn, "no|delimiter\x1Chere", 2);
+        const auto none = runSimd(kHl7Config, kernel.fn, "no|delimiter\x1Chere", 2);
         EXPECT_TRUE(none.sink.noTupleDelimiters) << kernel.name;
         EXPECT_FALSE(none.sink.marked) << kernel.name;
+    }
+}
+
+/// XML-config hand-checked emission (1-byte '\n' delimiter, class {<,>}): the complete message
+/// "<a>v</a>" between the delimiters at 1 and 10 splits into 5 leaves ("", "a", "v", "/a", "") --
+/// element value standalone at slot 2 (the 4f+4 pattern for F=1 without a root element).
+TEST_F(HL7SimdScanTest, xmlHandCheckedEmissionMatchesContract)
+{
+    for (const auto& kernel : SimdHl7::availableKernels())
+    {
+        /// "x" leading fragment; structural bytes at 2,4,6,9; leaf starts 2,3,5,7,10; body end 10.
+        const auto outcome = runSimd(kXmlConfig, kernel.fn, "x\n<a>v</a>\n", 5);
+        EXPECT_FALSE(outcome.threw) << kernel.name;
+        EXPECT_TRUE(outcome.sink.marked) << kernel.name;
+        EXPECT_EQ(outcome.sink.firstTuple, 1U) << kernel.name;
+        EXPECT_EQ(outcome.sink.lastTuple, 10U) << kernel.name;
+        EXPECT_EQ(outcome.sink.offsets, (std::vector<uint32_t>{2, 3, 5, 7, 10, 10})) << kernel.name;
+
+        /// A single delimiter => no complete message, first == last.
+        const auto single = runSimd(kXmlConfig, kernel.fn, "x\ny", 5);
+        EXPECT_TRUE(single.sink.marked) << kernel.name;
+        EXPECT_EQ(single.sink.firstTuple, 1U) << kernel.name;
+        EXPECT_EQ(single.sink.lastTuple, 1U) << kernel.name;
+        EXPECT_TRUE(single.sink.offsets.empty()) << kernel.name;
+
+        /// No delimiter at all => one spanning fragment (structural bytes alone frame nothing).
+        const auto none = runSimd(kXmlConfig, kernel.fn, "<no>delimiter</no>", 5);
+        EXPECT_TRUE(none.sink.noTupleDelimiters) << kernel.name;
+        EXPECT_FALSE(none.sink.marked) << kernel.name;
+
+        /// The scalar walk agrees on all three (the differential in miniature).
+        EXPECT_EQ(runScalar(kXmlConfig, "x\n<a>v</a>\n", 5), outcome) << kernel.name;
     }
 }
 
@@ -245,18 +356,48 @@ TEST_F(HL7SimdScanTest, delimiterAtEveryBoundaryAlignment)
             /// fully before, straddling, and fully after the boundary.
             const size_t fsPos = boundary - 3 + shift;
             std::string view(fsPos, 'a');
-            view += kMessageDelimiter;
+            view += kHl7Config.messageDelimiter;
             view += "x|y";
-            view += kMessageDelimiter;
+            view += kHl7Config.messageDelimiter;
             view += "u|v";
-            view += kMessageDelimiter;
+            view += kHl7Config.messageDelimiter;
             for (const auto& kernel : kernels)
             {
-                const auto scalar = runScalar(view, 2);
-                const auto simd = runSimd(kernel.fn, view, 2);
+                const auto scalar = runScalar(kHl7Config, view, 2);
+                const auto simd = runSimd(kHl7Config, kernel.fn, view, 2);
                 EXPECT_EQ(scalar, simd) << kernel.name << " boundary=" << boundary << " shift=" << shift;
                 EXPECT_FALSE(simd.threw) << kernel.name;
                 EXPECT_EQ(simd.sink.offsets.size(), 6U) << kernel.name; /// two complete 2-leaf messages
+            }
+        }
+    }
+}
+
+/// XML twin of the boundary sweep: a 1-byte delimiter cannot straddle a block boundary, so the
+/// corner is simply the delimiter (and the structural bytes around it) landing on either side of
+/// the 64-byte block and 16-block chunk edges through the delete-only flatten path.
+TEST_F(HL7SimdScanTest, xmlDelimiterAtEveryBoundaryAlignment)
+{
+    const auto kernels = SimdHl7::availableKernels();
+    for (const size_t boundary : {size_t{64}, size_t{128}, size_t{1024}})
+    {
+        for (size_t shift = 0; shift < 5; ++shift)
+        {
+            /// Place the first delimiter at (boundary - 2 + shift): fully before, at, and after.
+            const size_t delimiterPos = boundary - 2 + shift;
+            std::string view(delimiterPos, 'a');
+            view += kXmlConfig.messageDelimiter;
+            view += "<a>v</a>";
+            view += kXmlConfig.messageDelimiter;
+            view += "<b>u</b>";
+            view += kXmlConfig.messageDelimiter;
+            for (const auto& kernel : kernels)
+            {
+                const auto scalar = runScalar(kXmlConfig, view, 5);
+                const auto simd = runSimd(kXmlConfig, kernel.fn, view, 5);
+                EXPECT_EQ(scalar, simd) << kernel.name << " boundary=" << boundary << " shift=" << shift;
+                EXPECT_FALSE(simd.threw) << kernel.name;
+                EXPECT_EQ(simd.sink.offsets.size(), 12U) << kernel.name; /// two complete 5-leaf messages
             }
         }
     }
@@ -266,30 +407,12 @@ TEST_F(HL7SimdScanTest, delimiterAtEveryBoundaryAlignment)
 /// trailing fragments): success-path differential across all kernels.
 TEST_F(HL7SimdScanTest, differentialFuzzWellFormed)
 {
-    const auto kernels = SimdHl7::availableKernels();
-    std::mt19937 rng(0x48'4C'37'01U);
-    constexpr int iterations = 1500;
-    for (int iter = 0; iter < iterations; ++iter)
-    {
-        const uint64_t leaves = 1 + (rng() % 8);
-        const auto messages = rng() % 12;
-        std::string view = makeMessage(rng, leaves); /// leading fragment (cut-off message)
-        view += kMessageDelimiter;
-        for (unsigned m = 0; m < messages; ++m)
-        {
-            view += makeMessage(rng, leaves);
-            view += kMessageDelimiter;
-        }
-        view.append(rng() % 40, 'a'); /// trailing fragment
+    differentialFuzzWellFormedOver(kHl7Config, 0x48'4C'37'01U);
+}
 
-        const auto scalar = runScalar(view, leaves);
-        ASSERT_FALSE(scalar.threw);
-        for (const auto& kernel : kernels)
-        {
-            const auto simd = runSimd(kernel.fn, view, leaves);
-            ASSERT_EQ(scalar, simd) << kernel.name << " iter=" << iter;
-        }
-    }
+TEST_F(HL7SimdScanTest, xmlDifferentialFuzzWellFormed)
+{
+    differentialFuzzWellFormedOver(kXmlConfig, 0x58'4D'4C'01U);
 }
 
 /// Adversarial randomized bytes from the delimiter-heavy alphabet (lone <FS>, lone <CR>, doubled
@@ -297,28 +420,14 @@ TEST_F(HL7SimdScanTest, differentialFuzzWellFormed)
 /// emitted offsets AND on whether they reject the buffer.
 TEST_F(HL7SimdScanTest, differentialFuzzAdversarial)
 {
-    const auto kernels = SimdHl7::availableKernels();
-    constexpr std::string_view alphabet = "a|^&\r\x1C\x0B";
-    std::mt19937 rng(0x48'4C'37'02U);
-    constexpr int iterations = 2000;
-    for (int iter = 0; iter < iterations; ++iter)
-    {
-        const size_t len = rng() % 1200;
-        std::string view;
-        view.reserve(len);
-        for (size_t i = 0; i < len; ++i)
-        {
-            view += alphabet[rng() % alphabet.size()];
-        }
-        const uint64_t numFields = 1 + (rng() % 6);
+    differentialFuzzAdversarialOver(kHl7Config, "a|^&\r\x1C\x0B", 0x48'4C'37'02U);
+}
 
-        const auto scalar = runScalar(view, numFields);
-        for (const auto& kernel : kernels)
-        {
-            const auto simd = runSimd(kernel.fn, view, numFields);
-            ASSERT_EQ(scalar, simd) << kernel.name << " iter=" << iter << " len=" << len;
-        }
-    }
+/// XML alphabet: structural '<'/'>', the '\n' delimiter, plus '&' and '\x0B' as non-structural
+/// noise (no entity processing -- '&' must index as ordinary value bytes in this mode).
+TEST_F(HL7SimdScanTest, xmlDifferentialFuzzAdversarial)
+{
+    differentialFuzzAdversarialOver(kXmlConfig, "a<>&\n\x0B", 0x58'4D'4C'02U);
 }
 
 }

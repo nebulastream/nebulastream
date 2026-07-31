@@ -80,13 +80,14 @@ BandSlot& acquireSlotFor(const void* const owner)
 }
 }
 
-void SIMDHL7InputFormatIndexer::indexRawBuffer(Hl7FieldIndex& fieldIndex, const RawTupleBuffer& rawBuffer, const HL7MetaData& metaData) const
+void SIMDHL7InputFormatIndexer::indexRawBuffer(
+    Hl7FieldIndex& fieldIndex, const RawTupleBuffer& rawBuffer, const HL7MetaData& metaData) const
 {
     const auto messageDelimiter = metaData.getTupleDelimitingBytes();
     PRECONDITION(
-        messageDelimiter.size() == 2,
-        "SIMDHL7 requires a two-byte message delimiter (the MLLP <FS><CR> trailer), but got {} bytes; use the scalar "
-        "HL7 indexer for other delimiters",
+        messageDelimiter.size() == 1 || messageDelimiter.size() == 2,
+        "SIMDHL7 requires a one-byte (e.g. packed-XML '\\n') or two-byte (the MLLP <FS><CR> trailer) message delimiter, "
+        "but got {} bytes; use the scalar HL7 indexer for longer delimiters",
         messageDelimiter.size());
     PRECONDITION(
         metaData.getStructuralBytes().find(messageDelimiter[0]) == std::string_view::npos,
@@ -107,8 +108,23 @@ void SIMDHL7InputFormatIndexer::indexRawBuffer(Hl7FieldIndex& fieldIndex, const 
         slot.pairBandIdx.resize((view.size() / 2) + 2);
     }
 
-    const auto flattened = SimdHl7::flattenHl7SimdInto(
-        slot.band.data(), slot.pairBandIdx.data(), view, metaData.getStructuralChars(), messageDelimiter[0], messageDelimiter[1], computeBlocks);
+    /// 1-byte mode passes msgFirst twice: the flatten ignores msgSecond, the kernel's compare needs A byte.
+    const auto flattened = messageDelimiter.size() == 2 ? SimdHl7::flattenHl7SimdInto<2>(
+                                                              slot.band.data(),
+                                                              slot.pairBandIdx.data(),
+                                                              view,
+                                                              metaData.getStructuralChars(),
+                                                              messageDelimiter[0],
+                                                              messageDelimiter[1],
+                                                              computeBlocks)
+                                                        : SimdHl7::flattenHl7SimdInto<1>(
+                                                              slot.band.data(),
+                                                              slot.pairBandIdx.data(),
+                                                              view,
+                                                              metaData.getStructuralChars(),
+                                                              messageDelimiter[0],
+                                                              messageDelimiter[0],
+                                                              computeBlocks);
 
     /// No delimiter pair in the buffer: the whole buffer is a spanning-tuple fragment.
     if (flattened.numPairs == 0)
@@ -126,7 +142,8 @@ void SIMDHL7InputFormatIndexer::indexRawBuffer(Hl7FieldIndex& fieldIndex, const 
 DescriptorConfig::Config SIMDHL7InputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     /// Same config surface and escape handling as the scalar HL7 indexer.
-    for (const auto* const key : {"message_delimiter", "segment_delimiter", "field_delimiter", "component_delimiter", "subcomponent_delimiter"})
+    for (const auto* const key :
+         {"message_delimiter", "segment_delimiter", "field_delimiter", "component_delimiter", "subcomponent_delimiter"})
     {
         if (const auto entry = config.find(key); entry != config.end())
         {

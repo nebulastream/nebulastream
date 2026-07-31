@@ -1,0 +1,40 @@
+# name: formatter/XML/XMLErrors.test
+# description: Arity validation under the packed-XML config of the HL7 indexers -- ERROR 4000
+#   (CannotFormatSourceData) on shape violations, through BOTH indexers. Two violation kinds:
+#   a record with a MISSING element (small/xml/arity_bad.xml: 9 leaves vs the schema's 13), and a
+#   value containing a raw '<' (small/xml/structural_in_value.xml: no escaping/entity processing in
+#   this mode, so the extra structural byte splits an extra leaf, 14 vs 13). The arity check is the
+#   whole shape defense -- exactly like SchemaJSON's 4F+1 structural-count check.
+# groups: [Formatter, XML]
+
+CREATE LOGICAL SOURCE xmlBad(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, id INT32 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, val UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, x11 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlBad TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/arity_bad.xml
+
+SELECT id, val FROM xmlBad INTO FILE();
+----
+Error 4000
+
+CREATE LOGICAL SOURCE xmlBadSimd(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, id INT32 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, val UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, x11 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlBadSimd TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/arity_bad.xml
+
+SELECT id, val FROM xmlBadSimd INTO FILE();
+----
+Error 4000
+
+CREATE LOGICAL SOURCE xmlDirty(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, id INT32 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, val UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, x11 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlDirty TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/structural_in_value.xml
+
+SELECT id, val FROM xmlDirty INTO FILE();
+----
+Error 4000
+
+CREATE LOGICAL SOURCE xmlDirtySimd(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, id INT32 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, val UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, x11 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlDirtySimd TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/structural_in_value.xml
+
+SELECT id, val FROM xmlDirtySimd INTO FILE();
+----
+Error 4000
