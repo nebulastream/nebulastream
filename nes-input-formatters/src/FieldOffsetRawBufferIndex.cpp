@@ -61,6 +61,7 @@ const FieldIndex* FieldOffsetRawBufferIndex::getIndexValuesProxy(const RawBuffer
 }
 
 Record FieldOffsetRawBufferIndex::readSpanningRecord(
+    CompilationContext& compilationContext,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>& recordBufferPtr,
     const nautilus::val<uint64_t>& recordIndex,
@@ -70,27 +71,36 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters return by value, so hoist them out of the loop: on a wide schema they would otherwise rebuild
+    /// the whole vector once per field while tracing.
+    const auto fieldNames = bufferRef.getAllFieldNames();
+    const auto fieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = fieldDataTypes.size();
+    /// Identical for every field of the record, so it is computed once instead of per field.
+    const auto numPriorFields = recordIndex * (numberOfFields + 1);
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto& fieldName = fieldNames.at(i);
+        const auto fieldDataType = fieldDataTypes.at(i);
         if (not includesField(projections, fieldName))
         {
             continue;
         }
 
-        const auto numPriorFields = recordIndex * (numberOfFields + 1);
-        const auto fieldOffsetAddress = indexBufferPtr + (numPriorFields + i);
-        const auto fieldOffsetEndAddress = indexBufferPtr + (numPriorFields + i + 1);
-        const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(fieldOffsetAddress);
-        const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(fieldOffsetEndAddress);
-
-        const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
-        const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
-        const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
+        /// The offset loads and the field address/size computation happen inside the shared per-type function that
+        /// parseRawValueIntoRecord() calls, so only the offset index and the delimiter size remain here.
+        const uint64_t sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+            compilationContext,
+            fieldDataType,
+            record,
+            recordBufferPtr,
+            indexBufferPtr,
+            numPriorFields + i,
+            sizeOfDelimiter,
+            fieldName,
+            indexer.getNullValues(),
+            indexer.getQuotationType());
     }
     return record;
 }

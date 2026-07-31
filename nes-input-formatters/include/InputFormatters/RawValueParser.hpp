@@ -28,7 +28,9 @@
 #include <Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <RawTupleBuffer.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -51,11 +53,17 @@ struct ParseResult
     bool isNull;
 };
 
+/// Parses the field at the given offset index of the field-offset index buffer into the record. The offset loads and
+/// field address/size computation happen *inside* the shared per-type nautilus function, so the per-field code at the
+/// call site collapses to computing the offset index and one call (see writeFixedSizeField in RawValueParser.cpp).
 void parseRawValueIntoRecord(
+    CompilationContext& compilationContext,
     DataType dataType,
     Record& record,
-    const nautilus::val<int8_t*>& fieldAddress,
-    const nautilus::val<uint64_t>& fieldSize,
+    const nautilus::val<int8_t*>& recordBufferPtr,
+    const nautilus::val<const FieldIndex*>& indexBufferPtr,
+    const nautilus::val<uint64_t>& offsetIdx,
+    uint64_t sizeOfDelimiter,
     const QualifiedIdentifier& fieldName,
     const std::vector<std::string>& nullValues,
     QuotationType quotationType);

@@ -90,6 +90,31 @@ inline uint64_t writeValueToBuffer(
     return writtenToMainMemory;
 }
 
+/// Convert val to a string
+/// Depending on the type, we need to perform additional transformations besides the direct conversion to string
+/// In the future, we could introduce customizable parsing functions for every data type via a registry
+template <typename T>
+std::string formatValueAsString(const T val)
+{
+    using removedCVRefT = std::remove_cvref_t<T>;
+    if constexpr (std::is_same_v<removedCVRefT, float> || std::is_same_v<removedCVRefT, double>)
+    {
+        return formatFloat(val);
+    }
+    else if constexpr (std::is_same_v<removedCVRefT, bool>)
+    {
+        return val ? "true" : "false";
+    }
+    else if constexpr (std::is_same_v<removedCVRefT, char>)
+    {
+        return std::string{val};
+    }
+    else
+    {
+        return std::to_string(val);
+    }
+}
+
 template <typename T>
 static uint64_t writeValAsString(
     const T val,
@@ -98,29 +123,8 @@ static uint64_t writeValAsString(
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
-    /// Convert val to a string
-    /// Depending on the type, we need to perform additional transformations besides the direct conversion to string
-    /// In the future, we could introduce customizable parsing functions for every data type via a registry
-    using removedCVRefT = std::remove_cvref_t<T>;
-    std::string stringFormattedValue;
-    if constexpr (std::is_same_v<removedCVRefT, float> || std::is_same_v<removedCVRefT, double>)
-    {
-        stringFormattedValue = formatFloat(val);
-    }
-    else if constexpr (std::is_same_v<removedCVRefT, bool>)
-    {
-        stringFormattedValue = val ? "true" : "false";
-    }
-    else if constexpr (std::is_same_v<removedCVRefT, char>)
-    {
-        stringFormattedValue = std::string{val};
-    }
-    else
-    {
-        stringFormattedValue = std::to_string(val);
-    }
-
     /// Write string into the memory at starting address
+    const std::string stringFormattedValue = formatValueAsString(val);
     return writeValueToBuffer(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 

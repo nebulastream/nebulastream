@@ -81,6 +81,15 @@ public:
     WriteRecordResult
     writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
 
+    /// The input formatter registers no shared nautilus functions via writeRecord; fall through to the plain overload.
+    /// With TODO #1831, we will get rid of this method here
+    WriteRecordResult writeRecord(
+        CompilationContext&,
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific

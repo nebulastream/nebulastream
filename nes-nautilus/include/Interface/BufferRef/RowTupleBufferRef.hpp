@@ -71,6 +71,15 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    /// The row layout registers no shared nautilus functions; fall through to the plain overload.
+    /// With TODO #1831, we will get rid of this method here
+    WriteRecordResult writeRecord(
+        CompilationContext&,
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };
 
 }

@@ -28,6 +28,8 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <CompilationContext.hpp>
+#include <static.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -40,6 +42,7 @@ public:
     explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
+        CompilationContext& compilationContext,
         const VarVal& value,
         const DataType& fieldType,
         uint64_t fieldIndex,
