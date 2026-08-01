@@ -89,6 +89,31 @@ refer to another, possibly-spilled buffer through a central table of swizzled po
 tree-like today (parent→child child-buffers), so swizzling is not yet forced; if we move to DAG ownership
 we cannot avoid it.
 
+**Measured comparison.** All three are implemented as an allocator microbenchmark
+(`nes-memory/benchmarks/BufferManagerBenchmark.cpp`) and run on `sr630-wn-a-11` (Benchmark build, 1M
+`alloc + touch-every-byte + free` per thread). Two request sizes bracket the design: 1 KiB (fits one
+class/block) and 48 KiB (spans many). Latency is ns/op at 8 threads (lower is better); memory is physical
+bytes reserved per allocation ÷ bytes requested.
+
+| approach | 1 KiB ns/op | 48 KiB ns/op | mem 1 KiB | mem 48 KiB |
+|---|--:|--:|--:|--:|
+| **A1** size classes | 701 | **1741** | **1.00×** | 1.33× |
+| **A2** compose-fixed | 676 | 9622 | 4.00× | 1.00× |
+| **A3** vmcache (reuse) | 152 | 1724 | 4.00× | 1.00× |
+| **A3** vmcache (reclaim) | 1819 | 5771 | 4.00× | 1.00× |
+| unpooled (baseline) | 1157 | 1143 | ~1× | ~1× |
+
+The numbers sharpen the trade-off the prose describes. **A2** carries *both* 4× internal waste on a small
+buffer *and* 5.5× the latency on a large one, because a 48 KiB request becomes twelve 4 KiB block-pops —
+the composition cost is real and lands on the hot path. **A3** splits on its own budget knob: in *reuse*
+mode (freed slices kept resident) it matches A1's latency, but that discards the resident-budget benefit
+that motivates it; the mode that actually bounds resident memory (`madvise(DONTNEED)` on every free) puts a
+syscall on the allocation path and costs 3–10×. **A1** pays only a bounded ≤1.33× round-up and a single
+O(1) pop, and is the only pooled path with no per-op syscall. This is an allocator microbenchmark, not the
+integrated engine: at 48 KiB a memory-bandwidth-bound `memset` dominates every pooled path (so unpooled
+looks competitive there), and A1's single-class queue shows contention under the zero-work alloc/free loop
+that real per-buffer work would mask. It measures the intrinsic allocation cost, not end-to-end throughput.
+
 We propose **A1 now** because it is the smallest step that satisfies G1 while reusing the hot path (G2),
 and because it does not commit us to composition-everywhere (A2) or fault-handling and swizzling (A3)
 before we need them. We do not claim A1 dominates: A2 is the right call if we accept composition across
