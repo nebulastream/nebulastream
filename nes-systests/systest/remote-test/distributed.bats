@@ -47,7 +47,7 @@ setup_file() {
   #                      This reconstructs the expected path $NES_DIR/nes-systests/* inside containers
   #   TESTDATA_VOLUME:   contains test input data, mounted at /data in containers
 
-  volume_host_container=$(docker run -d --rm -v $TESTCONFIG_VOLUME:/config -v $TESTDATA_VOLUME:/data alpine sleep infinite)
+  volume_host_container=$(docker run -d --rm -v $TESTCONFIG_VOLUME:/config -v $TESTDATA_VOLUME:/data "$NES_RUNTIME_BASE_IMAGE" sleep infinite)
   docker exec $volume_host_container sh -c "mkdir -p /config/nes-systests"
   # Dereference symlinks via tar and pipe directly into the volume container
   tar -chf - -C "${DATADIR}" . \
@@ -83,7 +83,7 @@ setup() {
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 
   volume=$(docker volume create)
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
+  volume_host_container=$(docker run -d --rm -v $volume:/data "$NES_RUNTIME_BASE_IMAGE" sleep infinite)
   docker stop -t0 $volume_host_container
   export TEST_VOLUME=$volume
   echo "Using test volume: $TEST_VOLUME" >&3
@@ -129,7 +129,7 @@ function setup_distributed() {
 
   # Copy config files into the test volume
   if [ -n "$(ls -A "$config_dir")" ]; then
-    local volume_host=$(docker run -d --rm -v $TEST_VOLUME:/vol alpine sleep infinite)
+    local volume_host=$(docker run -d --rm -v $TEST_VOLUME:/vol "$NES_RUNTIME_BASE_IMAGE" sleep infinite)
     docker exec $volume_host mkdir -p /vol/configs
     tar -cf - -C "$config_dir" . | docker exec -i $volume_host tar -xf - -C /vol/configs
     docker stop -t0 $volume_host

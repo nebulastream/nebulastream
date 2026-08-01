@@ -304,7 +304,7 @@ nes_distributed_setup() {
   local volume
   volume=$(docker volume create)
   local volume_host_container
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
+  volume_host_container=$(docker run -d --rm -v $volume:/data "$NES_RUNTIME_BASE_IMAGE" sleep infinite)
   docker cp . $volume_host_container:/data
   docker stop -t0 $volume_host_container
   export TEST_VOLUME=$volume
@@ -313,7 +313,7 @@ nes_distributed_setup() {
 
 sync_workdir() {
   local volume_host_container
-  volume_host_container=$(docker run -d --rm -v $TEST_VOLUME:/data alpine sleep infinite)
+  volume_host_container=$(docker run -d --rm -v $TEST_VOLUME:/data "$NES_RUNTIME_BASE_IMAGE" sleep infinite)
   docker cp $volume_host_container:/data/. .
   docker stop -t0 $volume_host_container
 }
