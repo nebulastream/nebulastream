@@ -63,14 +63,14 @@ struct SystestQuery
     struct PlanInfo
     {
         DistributedLogicalPlan queryPlan;
-        /// The schema of the data written to a CSV file.
+        /// The schema of the data each sink writes to its CSV file, one per sink in the order the query lists them.
         /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
-        Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
+        std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchemas;
 
         PlanInfo() = delete;
 
-        PlanInfo(DistributedLogicalPlan plan, Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
-            : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema))
+        PlanInfo(DistributedLogicalPlan plan, std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkSchemas)
+            : queryPlan(std::move(plan)), sinkOutputSchemas(std::move(sinkSchemas))
         {
         }
     };
@@ -81,8 +81,9 @@ struct SystestQuery
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::string> actualExplainOutput;
-    /// Chosen by the rewriter when it inlined the sink. Absent when the sink writes no file, as for a discarding sink.
-    std::optional<std::filesystem::path> resultFile;
+    /// Chosen by the rewriter when it inlined the sinks, one per sink in the order the query lists them.
+    /// An entry is absent when its sink writes no file, as for a discarding sink.
+    std::vector<std::optional<std::filesystem::path>> resultFiles;
     std::optional<std::filesystem::path> differentialResultFile;
     /// The EXPLAIN check restores these in the printed plan, so the plan reads as the test wrote it.
     std::shared_ptr<const OriginalNames> originalNames;
