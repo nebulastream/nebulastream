@@ -101,6 +101,7 @@ Code style and static analysis are available as CMake targets, so you do not nee
 - `format` / `check-format` — run clang-format (apply in place / check only).
 - `tidy-diff` / `tidy-diff-fix` — run clang-tidy over your diff (base `NES_TIDY_DIFF_BASE`, default `HEAD`).
 - `tidy-diff-to-main` / `tidy-diff-to-main-fix` — run clang-tidy over your whole branch relative to `origin/main`.
+- `tidy-full` — run clang-tidy over every translation unit (what nightly CI runs).
 
 For example, to fix clang-tidy findings on your branch inside the container:
 

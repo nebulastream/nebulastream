@@ -29,16 +29,12 @@ jobs:
           ref: ${{ inputs.head_sha }}
       - name: Configure CMake
         run: cmake -B build
-      - name: Build to generate required code (e.g. grpc, ANTLR headers)
-        run: cmake --build build
       - name: Run clang-tidy
         id: run-clang-tidy
-        # we explicitely set bash to have pipefail
-        # (c.f. https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#exit-codes-and-error-action-preference)
-        shell: bash
-        # do not run clang-tidy on generated files, i.e. files from dirs matching .*_generated_src/, or on nes-rust-bindings
-        # (c.f. https://stackoverflow.com/a/1240365 for regex explanation)
-        run: run-clang-tidy-19 -p build -header-filter='^(?!.*nes-rust-bindings/).*' '^(?!.*_generated_src/)(?!.*nes-rust-bindings/).+$' 2> /dev/null | tee clang-tidy.log
+        # The target generates the code clang-tidy needs (nes-codegen), runs run-clang-tidy over every
+        # translation unit and writes build/clang-tidy.log. Path exclusions (generated sources and
+        # nes-rust-bindings) live in scripts/tidy.sh, shared with the local tidy-full target.
+        run: cmake --build build --target tidy-full
       - name: show errors
         if: ${{ failure() && steps.run-clang-tidy.conclusion == 'failure' }}
         run: |
@@ -46,16 +42,16 @@ jobs:
           echo       >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          cat clang-tidy.log | grep ": error:" | sort | uniq >> $GITHUB_STEP_SUMMARY
+          cat build/clang-tidy.log | grep ": error:" | sort | uniq >> $GITHUB_STEP_SUMMARY
 
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: summarize
         if: ${{ !cancelled() }}
         run: |
-          python3 scripts/clang-tidy-summary.py .clang-tidy clang-tidy.log --summary-json clang-tidy-summary.json >> $GITHUB_STEP_SUMMARY
+          python3 scripts/clang-tidy-summary.py .clang-tidy build/clang-tidy.log --summary-json build/clang-tidy-summary.json >> $GITHUB_STEP_SUMMARY
       - name: Upload Test Summary
         uses: actions/upload-artifact@v5
         if: ${{ failure() && !cancelled() }}
         with:
           name: clang-tidy-logs
-          path: clang-tidy*
+          path: build/clang-tidy*

@@ -9,14 +9,15 @@ As every setup is different, it might be necessary to adjust the commands to you
 # Running clang-tidy via CMake targets (recommended)
 Just like `clang-format` is available as the `format` / `check-format` CMake targets, clang-tidy on your diff is
 available as CMake targets. These wrap `clang-tidy-diff.py` so you no longer need the hand-written `git diff | clang-tidy-diff-19.py ...`
-command below. There are four targets:
+command below. There are five targets:
 
-| Target | Diff base | Mode |
+| Target | Scope | Mode |
 | --- | --- | --- |
 | `tidy-diff` | `NES_TIDY_DIFF_BASE` (default `HEAD`, i.e. all uncommitted changes) | check |
 | `tidy-diff-fix` | same as above | applies `-fix` |
 | `tidy-diff-to-main` | `origin/main` (whole branch) | check |
 | `tidy-diff-to-main-fix` | `origin/main` (whole branch) | applies `-fix` |
+| `tidy-full` | every translation unit (what nightly CI runs) | check |
 
 For reviewing a PR, the usual command is to fix everything on your branch relative to `origin/main`:
 ```bash
@@ -35,10 +36,13 @@ In CLion these appear in the target dropdown, so you can run them like any other
 Docker toolchain environment.
 
 Notes:
-- **Build first.** Some headers (gRPC/protobuf stubs, config headers) are generated during the build; without them
-  clang-tidy reports spurious `file not found` errors. The targets print a hint when this happens.
-- The targets are only registered when `CMAKE_EXPORT_COMPILE_COMMANDS=ON` (on by default) — clang-tidy-diff needs the
+- Some headers (gRPC/protobuf stubs, ANTLR, cxxbridge) only exist once they have been generated; without them
+  clang-tidy reports spurious `file not found` errors. The targets depend on `nes-codegen`, which produces exactly
+  those files without compiling or linking anything, so a configured build tree is enough — no full build needed.
+- The targets are only registered when `CMAKE_EXPORT_COMPILE_COMMANDS=ON` (on by default) — clang-tidy needs the
   `compile_commands.json`.
+- `tidy-full` writes its report to `<build-dir>/clang-tidy.log`; the diff targets write to
+  `<build-dir>/clang-tidy-diff-report.txt`.
 - To compare against an arbitrary base (a branch or commit other than `origin/main`), set `NES_TIDY_DIFF_BASE` and use
   the plain `tidy-diff` / `tidy-diff-fix` targets, e.g. `NES_TIDY_DIFF_BASE=origin/some-branch cmake --build build --target tidy-diff-fix`.
 
