@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <cstddef>
+
 #include <cstdint>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -33,31 +33,32 @@ class LowerSchemaProvider;
 namespace NES
 {
 
-/// Implements BufferRef. Provides columnar memory access.
-class ColumnTupleBufferRef final : public TupleBufferRef
+/// Implements MemoryLayout. Provides row-wise memory access.
+class RowLayout final : public MemoryLayout
 {
     struct Field
     {
         Record::RecordFieldIdentifier name;
         DataType type;
-        size_t dataTypeSize;
-        uint64_t columnOffset;
+        uint64_t fieldOffset;
     };
 
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
+    explicit RowLayout(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
 
 public:
-    ColumnTupleBufferRef(const ColumnTupleBufferRef&) = default;
-    ColumnTupleBufferRef(ColumnTupleBufferRef&&) = default;
-    ~ColumnTupleBufferRef() override = default;
+    RowLayout(const RowLayout&) = default;
+    RowLayout(RowLayout&&) = default;
+
+    ~RowLayout() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
