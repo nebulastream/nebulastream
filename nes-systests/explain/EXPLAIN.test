@@ -15,6 +15,7 @@ ATTACH INLINE
 2,4,2000
 
 CREATE SINK sinkFilter(id UINT64 NOT NULL, value UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkFilter2(id UINT64 NOT NULL, value UINT64 NOT NULL) TYPE File;
 CREATE SINK sinkJoin(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
 
 CREATE MODEL iris ('model/iris.onnx')
@@ -118,4 +119,27 @@ SINK(FILE)
   PROJECTION(fields: [*])
     INFER_MODEL_NAME(model: IRIS)
       SOURCE(STREAM_INFERENCE)
+==END==
+
+# Covering: Multiple sinks. The shared sub-plan is rendered under the first sink and marked as shared under the others.
+EXPLAIN (LOGICAL) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter, sinkFilter2;
+----
+== Initial Logical Plan ==
+SINK(SINKFILTER)
+  PROJECTION(fields: [ID, VALUE])
+    SELECTION(VALUE > 2)
+      SOURCE(STREAM)
+SINK(SINKFILTER2)
+  PROJECTION(fields: [ID, VALUE]) [shared]
+==END==
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter, sinkFilter2;
+----
+== Optimized Global Plan ==
+SINK(SINKFILTER)
+  SELECTION(VALUE > 2)
+    PROJECTION(fields: [ID, VALUE])
+      SOURCE(STREAM)
+SINK(SINKFILTER2)
+  SELECTION(VALUE > 2) [shared]
 ==END==

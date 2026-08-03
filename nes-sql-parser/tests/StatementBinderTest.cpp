@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -425,6 +426,33 @@ TEST_F(StatementBinderTest, AnonymousSourceQuery)
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
     ASSERT_EQ(schema, anonymousSourceOperator->getSourceSchema());
+}
+
+TEST_F(StatementBinderTest, MultiSinkQuery)
+{
+    const std::string query = "SELECT a FROM inputStream INTO outputStreamA, outputStreamB";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto roots = plan.getRootOperators();
+    ASSERT_EQ(2, roots.size());
+    ASSERT_EQ(Identifier::parse("outputStreamA"), roots.at(0).getAs<SinkLogicalOperator>()->getSinkName());
+    ASSERT_EQ(Identifier::parse("outputStreamB"), roots.at(1).getAs<SinkLogicalOperator>()->getSinkName());
+
+    /// Both sinks must read one instance of the sub-plan, or the sources below it are read once per sink.
+    ASSERT_EQ(1, roots.at(0).getChildren().size());
+    ASSERT_EQ(1, roots.at(1).getChildren().size());
+    ASSERT_EQ(roots.at(0).getChildren().at(0).getId(), roots.at(1).getChildren().at(0).getId());
+}
+
+TEST_F(StatementBinderTest, MultiSinkQueryWithRepeatedSink)
+{
+    const std::string query = "SELECT a FROM inputStream INTO outputStream, outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
