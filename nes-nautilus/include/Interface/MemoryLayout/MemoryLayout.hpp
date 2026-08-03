@@ -35,10 +35,10 @@ namespace NES
 
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
-/// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
+/// A MemoryLayout is closely coupled with a memory layout, and we support row and column layouts, currently.
 /// We store multiple variable sized datas in one pooled buffer. If the pooled buffer is not large enough or there are no pooled buffer
 /// available, we fall back to an unpooled buffer.
-class TupleBufferRef
+class MemoryLayout
 {
 protected:
     uint64_t capacity;
@@ -46,8 +46,8 @@ protected:
     uint64_t tupleSize;
 
 public:
-    TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
-    virtual ~TupleBufferRef();
+    MemoryLayout(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
+    virtual ~MemoryLayout();
 
     /// @brief Writes the variable sized data to the buffer
     static VariableSizedAccess
@@ -70,7 +70,7 @@ public:
 
     /// Returned by writeRecord
     /// Will give information on whether the write operation was successful (record index was inbounds)
-    /// and the number of records (or bytes, in case of OutputFormatterBufferRef) that were written
+    /// and the number of records (or bytes, in case of OutputFormatterLayout) that were written
     struct WriteRecordResult
     {
         nautilus::val<bool> successful;

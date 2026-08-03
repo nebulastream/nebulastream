@@ -44,7 +44,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>

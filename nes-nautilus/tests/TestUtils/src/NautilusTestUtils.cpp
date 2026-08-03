@@ -34,8 +34,8 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/Record.hpp>
@@ -186,7 +186,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema<QualifiedUnboundField, Ordered>& schema,
-    const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
+    const std::shared_ptr<MemoryLayout>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -231,8 +231,8 @@ void NautilusTestUtils::compileFillBufferFunction(
 
                             /// Adding the random string to the buffer and returning the pointer to the data
                             const auto varSizedAccess
-                                = TupleBufferRef::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
-                            return TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
+                                = MemoryLayout::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
+                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,

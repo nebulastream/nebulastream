@@ -33,7 +33,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

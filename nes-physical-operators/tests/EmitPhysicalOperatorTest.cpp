@@ -34,8 +34,8 @@
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/RowLayout.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>

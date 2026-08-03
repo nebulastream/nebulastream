@@ -30,7 +30,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TypeTraits.hpp>
@@ -148,7 +148,7 @@ private:
         TupleBuffer&
             buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
         AbstractBufferProvider* bufferProvider;
-        std::shared_ptr<TupleBufferRef> bufRef;
+        std::shared_ptr<MemoryLayout> bufRef;
     };
 
     std::shared_ptr<Impl> impl;

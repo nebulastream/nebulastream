@@ -30,7 +30,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -330,7 +330,7 @@ void parseLeadingRecord(
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
     {
@@ -352,7 +352,7 @@ void parseRecordsInRawBuffer(
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     nautilus::val<uint64_t> bufferRecordIdx = 0;
     auto rawBufferIndexVal = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, rawBufferIndex));
@@ -373,7 +373,7 @@ void parseTrailingRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     InputFormatIndexer& indexer,
     SequenceShredder& sequenceShredder,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
         indexTrailingSpanningTupleProxy,
@@ -408,7 +408,7 @@ Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifie
     std::unreachable();
 }
 
-TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
+MemoryLayout::WriteRecordResult InputFormatter::writeRecord(
     nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
 {
     INVARIANT(false, "unsupported operation on InputFormatter");

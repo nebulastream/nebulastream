@@ -28,8 +28,8 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/Record.hpp>
@@ -197,7 +197,7 @@ public:
         ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema<QualifiedUnboundField, Ordered>& schema,
-        const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
+        const std::shared_ptr<MemoryLayout>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::optional<std::string>
@@ -217,8 +217,8 @@ public:
     static std::string compareRecordBuffers(
         const std::vector<TupleBuffer>& actualRecords,
         const std::vector<TupleBuffer>& expectedRecords,
-        const TupleBufferRef& memoryProviderActualBuffer,
-        const TupleBufferRef& memoryProviderInputBuffer);
+        const MemoryLayout& memoryProviderActualBuffer,
+        const MemoryLayout& memoryProviderInputBuffer);
 
 
 protected:

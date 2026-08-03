@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -34,7 +34,7 @@ namespace NES
 class EmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
+    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> bufferRef);
 
     void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
 
@@ -56,7 +56,7 @@ private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
 
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::shared_ptr<MemoryLayout> bufferRef;
     OperatorHandlerId operatorHandlerId;
 };
 

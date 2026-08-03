@@ -16,13 +16,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
-#include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -34,29 +32,32 @@ class LowerSchemaProvider;
 
 namespace NES
 {
-class OutputFormatterBufferRef final : public TupleBufferRef
+
+/// Implements MemoryLayout. Provides columnar memory access.
+class ColumnLayout final : public MemoryLayout
 {
     struct Field
     {
         Record::RecordFieldIdentifier name;
         DataType type;
+        size_t dataTypeSize;
+        uint64_t columnOffset;
     };
 
     std::vector<Field> fields;
-    std::shared_ptr<OutputFormatter> formatter;
 
-    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t bufferSize);
+    /// Private constructor to prevent direct instantiation
+    explicit ColumnLayout(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
+    /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
 
 public:
-    OutputFormatterBufferRef(const OutputFormatterBufferRef&) = default;
-    OutputFormatterBufferRef(OutputFormatterBufferRef&&) = default;
-
-    ~OutputFormatterBufferRef() override = default;
+    ColumnLayout(const ColumnLayout&) = default;
+    ColumnLayout(ColumnLayout&&) = default;
+    ~ColumnLayout() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
-
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
@@ -65,9 +66,10 @@ public:
         nautilus::val<uint64_t>& recordIndex) const override;
 
     WriteRecordResult writeRecord(
-        nautilus::val<uint64_t>& bytesWritten,
+        nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };
+
 }

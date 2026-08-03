@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 
 #include <algorithm>
 #include <array>
@@ -84,7 +84,7 @@ void copyVarSizedAndIncrementMetaData(
 }
 }
 
-VariableSizedAccess TupleBufferRef::writeVarSized(
+VariableSizedAccess MemoryLayout::writeVarSized(
     TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
     const auto totalVarSizedLength = varSizedValue.size();
@@ -120,7 +120,7 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
 }
 
 std::span<std::byte>
-TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
+MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
     /// Loading the childbuffer containing the variable sized data.
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
@@ -133,7 +133,7 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
 }
 
 VarVal
-TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+MemoryLayout::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     /// For now, we store the null byte before the actual VarVal
     nautilus::val<bool> null = false;
@@ -166,7 +166,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
 }
 
-VarVal TupleBufferRef::storeValue(
+VarVal MemoryLayout::storeValue(
     const DataType& physicalType,
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
@@ -217,31 +217,31 @@ VarVal TupleBufferRef::storeValue(
     return value;
 }
 
-bool TupleBufferRef::includesField(
+bool MemoryLayout::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
     return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
-uint64_t TupleBufferRef::getCapacity() const
+uint64_t MemoryLayout::getCapacity() const
 {
     return capacity;
 }
 
-uint64_t TupleBufferRef::getBufferSize() const
+uint64_t MemoryLayout::getBufferSize() const
 {
     return bufferSize;
 }
 
-uint64_t TupleBufferRef::getTupleSize() const
+uint64_t MemoryLayout::getTupleSize() const
 {
     return tupleSize;
 }
 
-TupleBufferRef::TupleBufferRef(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
+MemoryLayout::MemoryLayout(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
     : capacity(capacity), bufferSize(bufferSize), tupleSize(tupleSize)
 {
 }
 
-TupleBufferRef::~TupleBufferRef() = default;
+MemoryLayout::~MemoryLayout() = default;
 }

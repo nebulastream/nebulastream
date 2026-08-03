@@ -34,8 +34,8 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
@@ -259,7 +259,7 @@ private:
     nautilus::val<uint64_t> currentTupleIdx = 0;
     Schema<QualifiedUnboundField, Ordered> schema;
     std::vector<TupleBuffer> buffers;
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::shared_ptr<MemoryLayout> bufferRef;
 };
 
 /// Expects tuple buffers with matching sequence numbers contain the same tuples in the same order
@@ -346,7 +346,7 @@ void writeFieldToBuffer(
     const T& fieldValue,
     const size_t fieldIndex,
     NES::TupleBuffer& tupleBuffer,
-    TupleBufferRef& tupleBufferRef,
+    MemoryLayout& tupleBufferRef,
     AbstractBufferProvider& bufferProvider)
 {
     Record record;
@@ -370,7 +370,7 @@ void writeFieldToBuffer(
     tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
 }
 
-inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const TupleBufferRef& tupleBufferRef)
+inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const MemoryLayout& tupleBufferRef)
 {
     /// NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage) is fine as we are passing it ot a nautilus::val<>
     const nautilus::val<const char*> messageVal{message.data()};

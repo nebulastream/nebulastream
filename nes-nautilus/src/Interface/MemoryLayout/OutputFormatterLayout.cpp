@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Interface/BufferRef/OutputFormatterBufferRef.hpp>
+#include <Interface/MemoryLayout/OutputFormatterLayout.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
@@ -36,20 +36,20 @@
 namespace NES
 {
 /// There is no predetermined tuple size for output-formatted tuples, we pass 0 as placeholder
-OutputFormatterBufferRef::OutputFormatterBufferRef(
+OutputFormatterLayout::OutputFormatterLayout(
     std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize, bufferSize, 0), fields(std::move(fields)), formatter(std::move(formatter))
+    : MemoryLayout(bufferSize, bufferSize, 0), fields(std::move(fields)), formatter(std::move(formatter))
 {
 }
 
 Record
-OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
+OutputFormatterLayout::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
 {
-    INVARIANT(false, "OutputFormatterBufferRef should not be able to read records.");
+    INVARIANT(false, "OutputFormatterLayout should not be able to read records.");
     std::unreachable();
 }
 
-TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
+MemoryLayout::WriteRecordResult OutputFormatterLayout::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -82,12 +82,12 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenForThisRecord};
 }
 
-std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllFieldNames() const
+std::vector<Record::RecordFieldIdentifier> OutputFormatterLayout::getAllFieldNames() const
 {
     return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
 }
 
-std::vector<DataType> OutputFormatterBufferRef::getAllDataTypes() const
+std::vector<DataType> OutputFormatterLayout::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
 }

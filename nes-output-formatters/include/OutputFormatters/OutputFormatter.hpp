@@ -36,7 +36,7 @@ namespace NES
 
 /// The output formatter is responsible for converting a Record into a string of a given Output Format like CSV or JSON
 /// Output formatters are stateless, meaning that they must be able to produce valid output in a streaming fashion.
-/// Output formatters are used by the OutputFormatterBufferRef during the last emit before a sink.
+/// Output formatters are used by the OutputFormatterLayout during the last emit before a sink.
 class OutputFormatter
 {
 public:

@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -57,11 +57,11 @@ struct IndexPhaseResult;
 /// raw buffer and its successor (the InputFormatter) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatters. Thus, even if the source writes the InputFormatters to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-class InputFormatter : public TupleBufferRef
+class InputFormatter : public MemoryLayout
 {
 public:
-    explicit InputFormatter(std::unique_ptr<InputFormatIndexer> inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider)
-        : TupleBufferRef(*memoryProvider)
+    explicit InputFormatter(std::unique_ptr<InputFormatIndexer> inputFormatIndexer, std::shared_ptr<MemoryLayout> memoryProvider)
+        : MemoryLayout(*memoryProvider)
         , inputFormatIndexer(std::move(inputFormatIndexer))
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
@@ -101,7 +101,7 @@ public:
 private:
     std::unique_ptr<InputFormatIndexer> inputFormatIndexer;
     std::vector<Record::RecordFieldIdentifier> projections;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
+    std::shared_ptr<MemoryLayout> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder;
 };
 
