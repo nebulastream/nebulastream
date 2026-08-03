@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <stop_token>
 #include <utility>
+#include <vector>
 
 struct Channel;
 class BackpressureListener;
@@ -24,24 +26,29 @@ class BackpressureController;
 
 /// This is the entrypoint to a backpressure channel. It creates a pair of connected Backpressure Controller and BackpressureListener.
 /// A Backpressure Controller controls the Backpressure, and a BackpressureListener only allows further progress if there is no backpressure.
-/// In NebulaStream a Backpressure Controller is owned by exactly one sink, which controls all the BackpressureListener of all sources within the same query plan.
-/// Currently, the Backpressure channel enforces the invariant that sinks always outlive sources. Thus, if a Backpressure Controller is destroyed, all
-/// connected BackpressureListeners that are still alive and in use will report an assertion failure.
+/// In NebulaStream a Backpressure Controller is owned by a sink, which controls all the BackpressureListener of all sources within the same query plan.
+/// Sinks must outlive sources: once the last Backpressure Controller is destroyed, every listener still in use reports an assertion failure.
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
 
-/// A Backpressure Controller is the exclusive controller of a backpressure channel. It allows the user to apply and release backpressure, which blocks
-/// or unblocks all connected Ingestions.
+/// Creates one channel with a controller per sink of a query. It applies backpressure while at least one of them does.
+std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t numberOfControllers);
+
+/// A Backpressure Controller controls a backpressure channel. It allows the user to apply and release backpressure, which blocks
+/// or unblocks all connected Ingestions. With more than one controller, Ingestions are blocked while any one of them applies it.
 class BackpressureController
 {
     explicit BackpressureController(std::shared_ptr<Channel> channel);
 
     std::shared_ptr<Channel> channel;
+    /// Applying twice from the same controller is a no-op, as it was when a channel had a single controller.
+    bool applyingPressure = false;
     friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    friend std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t numberOfControllers);
 
 public:
     ~BackpressureController();
 
-    /// Currently, a Backpressure Controller represents unique ownership over the backpressure channel, thus copying is not enabled.
+    /// A Backpressure Controller owns its own share of the channel, thus copying is not enabled.
     BackpressureController(const BackpressureController& other) = delete;
     BackpressureController& operator=(const BackpressureController& other) = delete;
 
@@ -62,6 +69,7 @@ class BackpressureListener
     explicit BackpressureListener(std::shared_ptr<Channel> channel) : channel(std::move(channel)) { }
 
     friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
+    friend std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t numberOfControllers);
     std::shared_ptr<Channel> channel;
 
 public:
