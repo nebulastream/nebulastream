@@ -41,6 +41,9 @@ endif ()
 # generate BOTH parser and lexer, and additionaly listener
 antlr4_generate(NES_SQL_PARSER ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 BOTH -listener)
 
+add_custom_target(nes-sql-parser-codegen DEPENDS ${ANTLR4_SRC_FILES_NES_SQL_PARSER})
+add_dependencies(nes-codegen nes-sql-parser-codegen)
+
 # The VCPKG port is called 'antlr4', finding the package requires to look for 'antlr4-runtime' and
 # adding antlr library as a dependency to another library, requires to link against 'antlr-static'.
 find_package(antlr4-runtime CONFIG REQUIRED)

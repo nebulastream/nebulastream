@@ -268,6 +268,12 @@ endif ()
 
 add_custom_target(build_all_plugins)
 
+# Produces every source and header that only exists after a build (gRPC, ANTLR, cxxbridge) without
+# compiling or linking anything, which is all static analysis needs on top of a configured tree.
+# A new code generator has to register itself here via add_dependencies(nes-codegen ...): CMake only
+# resolves file-level DEPENDS within the generating directory, so this target cannot collect them.
+add_custom_target(nes-codegen)
+
 # Adds sub-directories
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 set(NES_DIRECTORIES)
@@ -297,3 +303,4 @@ if (CODE_COVERAGE)
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
 endif ()
+
