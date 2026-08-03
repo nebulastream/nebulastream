@@ -29,7 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -75,7 +75,7 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
-        std::vector<TupleBuffer> allHashMapBuffers;
+        std::vector<Buffer> allHashMapBuffers;
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
@@ -85,7 +85,7 @@ void AggregationOperatorHandler::triggerSlices(
                 /// Read-only: a hash map no build worker ever touched for this slice is simply skipped rather than
                 /// lazily created here. Trigger-time must never allocate, since that would race with a build worker
                 /// concurrently first-touching the same slot (see HashMapSlice::getOrCreateHashMapBufferRef).
-                const TupleBuffer* hashMapBuffer = aggregationSlice->getHashMapBufferRefForWorker(WorkerThreadId(hashMapIdx));
+                const Buffer* hashMapBuffer = aggregationSlice->getHashMapBufferRefForWorker(WorkerThreadId(hashMapIdx));
                 if (hashMapBuffer == nullptr)
                 {
                     continue;

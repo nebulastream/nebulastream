@@ -27,7 +27,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -46,7 +46,7 @@ namespace NES
 inline uint64_t writeValueToBuffer(
     const char* value,
     const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
+    Buffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider,
     int8_t* bufferStartingAddress)
 {
@@ -92,11 +92,7 @@ inline uint64_t writeValueToBuffer(
 
 template <typename T>
 static uint64_t writeValAsString(
-    const T val,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
+    const T val, int8_t* bufferStartingAddress, const uint64_t remainingSpace, Buffer* tupleBuffer, AbstractBufferProvider* bufferProvider)
 {
     /// Convert val to a string
     /// Depending on the type, we need to perform additional transformations besides the direct conversion to string

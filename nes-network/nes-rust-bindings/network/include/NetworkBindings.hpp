@@ -18,18 +18,18 @@
 #include <rust/cxx.h>
 
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 struct SerializedTupleBufferHeader;
 
 /// The TupleBufferBuilder is a wrapper around a tuple buffer with methods exposed to rust.
-/// This allows the rust code to set metadata on a tuple buffer without directly exposing the TupleBuffer and its control block
+/// This allows the rust code to set metadata on a tuple buffer without directly exposing the Buffer and its control block
 /// to rust.
-/// It is important that the underlying TupleBuffer outlives the TupleBufferBuilder
+/// It is important that the underlying Buffer outlives the TupleBufferBuilder
 class TupleBufferBuilder
 {
 public:
-    explicit TupleBufferBuilder(NES::TupleBuffer& buffer, NES::AbstractBufferProvider& bufferProvider)
+    explicit TupleBufferBuilder(NES::Buffer& buffer, NES::AbstractBufferProvider& bufferProvider)
         : buffer(buffer), bufferProvider(bufferProvider)
     {
     }
@@ -40,7 +40,7 @@ public:
 
 private:
     /// The wrapper is only a temporary object and thus does not store anything by value.
-    NES::TupleBuffer& buffer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    NES::Buffer& buffer; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     NES::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 };
 

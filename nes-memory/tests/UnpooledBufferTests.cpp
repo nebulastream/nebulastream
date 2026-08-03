@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 
@@ -38,7 +38,7 @@ struct TestData
     explicit TestData(const size_t neededSize) : neededSize(neededSize) { }
 
     size_t neededSize;
-    std::optional<TupleBuffer> buffer;
+    std::optional<Buffer> buffer;
 };
 
 std::vector<TestData> createRandomSizeAllocations(const size_t numberOfRandomAllocationSizes, const size_t min, const size_t max)
@@ -177,7 +177,7 @@ TEST(UnpooledBufferTests, UnpooledMemoryBudgetIsEnforcedAndReleased)
     constexpr size_t allocationSize = 64 * 1024; /// 64 KiB
     constexpr size_t maxAllocations = 100 * 1000; /// generous upper bound; we expect rejection well before this
 
-    std::vector<TupleBuffer> heldBuffers;
+    std::vector<Buffer> heldBuffers;
     bool sawRejection = false;
     for (size_t i = 0; i < maxAllocations; ++i)
     {

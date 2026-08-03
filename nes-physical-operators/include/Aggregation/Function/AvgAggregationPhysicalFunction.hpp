@@ -21,7 +21,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -39,23 +39,19 @@ public:
         bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        nautilus::val<TupleBuffer*>,
+        nautilus::val<Buffer*>,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
-        nautilus::val<TupleBuffer*>,
+        nautilus::val<Buffer*>,
         nautilus::val<AggregationState*> aggregationState2,
-        nautilus::val<TupleBuffer*>,
+        nautilus::val<Buffer*>,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
     Record lower(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
+        nautilus::val<AggregationState*> aggregationState, nautilus::val<Buffer*>, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
+        nautilus::val<AggregationState*> aggregationState, nautilus::val<Buffer*>, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~AvgAggregationPhysicalFunction() override = default;

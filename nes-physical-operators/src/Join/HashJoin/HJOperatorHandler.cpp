@@ -31,7 +31,7 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -48,9 +48,9 @@ namespace
 /// build worker ever touched for this slice is simply skipped, exactly as an untouched slot would be, rather
 /// than being lazily created here. Trigger-time must never allocate, since that would race with a build worker
 /// concurrently first-touching the same slot (see HashMapSlice::getOrCreateHashMapBufferRef).
-std::vector<TupleBuffer> getHashMapsFromSlice(const Slice& slice, JoinBuildSideType side)
+std::vector<Buffer> getHashMapsFromSlice(const Slice& slice, JoinBuildSideType side)
 {
-    std::vector<TupleBuffer> buffers;
+    std::vector<Buffer> buffers;
     const auto* hjSlice = dynamic_cast<const HJSlice*>(&slice);
     INVARIANT(hjSlice != nullptr, "Slice must be of type HJSlice!");
     for (uint64_t i = 0; i < hjSlice->getNumberOfHashMapsForSide(); ++i)
@@ -65,9 +65,9 @@ std::vector<TupleBuffer> getHashMapsFromSlice(const Slice& slice, JoinBuildSideT
 }
 
 /// Collects non-empty hash map buffers from multiple slices for one build side
-std::vector<TupleBuffer> getHashMapsFromSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side)
+std::vector<Buffer> getHashMapsFromSlices(const std::vector<std::shared_ptr<Slice>>& slices, JoinBuildSideType side)
 {
-    std::vector<TupleBuffer> allBuffers;
+    std::vector<Buffer> allBuffers;
     for (const auto& slice : slices)
     {
         for (auto& buffer : getHashMapsFromSlice(*slice, side))

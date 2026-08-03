@@ -23,7 +23,7 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -61,7 +61,7 @@ void NetworkSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     NES_DEBUG("Receiver channel registered: {}", channelId);
 }
 
-Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     PRECONDITION(channel, "Network Source was opened multiple times");
     PRECONDITION(bufferProvider, "Network Source was opened without a buffer provider");

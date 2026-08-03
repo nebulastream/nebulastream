@@ -21,7 +21,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES
@@ -58,16 +58,16 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
 
     /// Returns the pointer to the PagedVector on either side.
-    [[nodiscard]] const TupleBuffer* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] const TupleBuffer* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] const TupleBuffer* getPagedVectorTupleBufferRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] const Buffer* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] const Buffer* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] const Buffer* getPagedVectorTupleBufferRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
 private:
-    std::vector<TupleBuffer> leftPagedVectorBuffers;
-    std::vector<TupleBuffer> rightPagedVectorBuffers;
+    std::vector<Buffer> leftPagedVectorBuffers;
+    std::vector<Buffer> rightPagedVectorBuffers;
     std::mutex combinePagedVectorsMutex;
 };
 }

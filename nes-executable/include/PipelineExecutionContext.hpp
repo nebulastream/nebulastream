@@ -20,15 +20,15 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES
 {
 class PipelineExecutionContext
 {
 public:
-    /// Policy whether an emitted TupleBuffer is able to process immediately or
+    /// Policy whether an emitted Buffer is able to process immediately or
     /// needs to be dispatched as a new Task.
     enum class ContinuationPolicy : uint8_t
     {
@@ -39,21 +39,21 @@ public:
     virtual ~PipelineExecutionContext() = default;
 
     /// Returns success, if the buffer was emitted successfully.
-    bool emitBuffer(const TupleBuffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
+    bool emitBuffer(const Buffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
 
     /// Please be aware of how you are setting the continuation policy, as this will/can lead to deadlocks and no progress in our system.
     /// We advise to use ContinuationPolicy::POSSIBLE, as this will ensure no deadlock arising.
     /// Returns success, if the buffer was emitted successfully.
 
-    virtual bool emitBuffer(const TupleBuffer&, ContinuationPolicy) = 0;
+    virtual bool emitBuffer(const Buffer&, ContinuationPolicy) = 0;
 
     /// This method can only be called once per pipeline execution! The Pipeline should immediately finish its execution as the exact same task could be executed
     /// immediately.
-    virtual void repeatTask(const TupleBuffer&, std::chrono::milliseconds) = 0;
+    virtual void repeatTask(const Buffer&, std::chrono::milliseconds) = 0;
 
-    virtual TupleBuffer allocateTupleBuffer() = 0;
+    virtual Buffer allocateTupleBuffer() = 0;
     /// Pins a buffer, meaning the returned reference should be valid throughout the lifetime of the pipeline execution context
-    virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
+    virtual Buffer& pinBuffer(Buffer&& tupleBuffer) = 0;
     [[nodiscard]] virtual WorkerThreadId getWorkerThreadId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<AbstractBufferProvider> getBufferManager() const = 0;

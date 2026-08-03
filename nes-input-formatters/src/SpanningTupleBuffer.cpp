@@ -25,7 +25,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <RawTupleBuffer.hpp>

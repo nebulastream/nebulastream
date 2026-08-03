@@ -24,7 +24,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -32,7 +32,7 @@
 
 namespace NES
 {
-bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
+bool TestPipelineExecutionContext::emitBuffer(const Buffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
     if (resultBuffer.getNumberOfTuples() == 0)
     {
@@ -50,13 +50,13 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
     return true;
 }
 
-TupleBuffer& TestPipelineExecutionContext::pinBuffer(TupleBuffer&& tupleBuffer)
+Buffer& TestPipelineExecutionContext::pinBuffer(Buffer&& tupleBuffer)
 {
-    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+    pinnedBuffers.emplace_back(std::make_unique<Buffer>(tupleBuffer));
     return *pinnedBuffers.back();
 }
 
-TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
+Buffer TestPipelineExecutionContext::allocateTupleBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
     {
@@ -65,13 +65,13 @@ TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
     throw BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestPipelineExecutionContext::repeatTask(const TupleBuffer&, std::chrono::milliseconds)
+void TestPipelineExecutionContext::repeatTask(const Buffer&, std::chrono::milliseconds)
 {
     PRECONDITION(repeatTaskCallback != nullptr, "Cannot repeat a task without a valid repeatTaskCallback function");
     repeatTaskCallback();
 }
 
-void TestPipelineStage::execute(const TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)
+void TestPipelineStage::execute(const Buffer& tupleBuffer, PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)
     {
@@ -95,7 +95,7 @@ std::ostream& TestPipelineStage::toString(std::ostream& os) const
 }
 
 SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
-    std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
+    std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<Buffer>>> resultBuffers)
     : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
 {
 }
@@ -149,7 +149,7 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestPipelineTask>& testTasks,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
+    std::shared_ptr<std::vector<std::vector<Buffer>>> resultBuffers)
     : threadTasks(testTasks.size())
     , numberOfWorkerThreads(numberOfThreads)
     , completionLatch(numberOfThreads)

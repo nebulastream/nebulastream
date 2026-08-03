@@ -26,7 +26,7 @@
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,7 +53,7 @@ public:
     /// Open connection to MQTT broker.
     void open(std::shared_ptr<AbstractBufferProvider>) override;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Close connection to MQTT broker.
     void close() override;
@@ -75,7 +75,7 @@ private:
 
     PayloadStash payloadStash;
 
-    void writePayloadToBuffer(std::string_view payload, TupleBuffer& tb, size_t& tbOffset);
+    void writePayloadToBuffer(std::string_view payload, Buffer& tb, size_t& tbOffset);
 };
 
 constexpr std::string_view GENERATE_CLIENT_ID_TOKEN = "HACK_GENERATED_TOKEN_SENTINEL_VALUE";

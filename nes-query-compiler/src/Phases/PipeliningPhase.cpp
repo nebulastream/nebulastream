@@ -32,8 +32,8 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
-#include <Interface/MemoryLayout/RowLayout.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
+#include <Interface/MemoryLayout/RowLayout.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>

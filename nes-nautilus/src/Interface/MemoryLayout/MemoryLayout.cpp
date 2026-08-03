@@ -35,7 +35,7 @@
 #include <Interface/VariableSizedAccess.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -50,7 +50,7 @@ namespace NES
 
 namespace
 {
-TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
+Buffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
     if (tupleBufferProvider.getBufferSize() > newBufferSize)
@@ -72,7 +72,7 @@ TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider,
 /// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
 /// @return the new childBufferOffset
 void copyVarSizedAndIncrementMetaData(
-    TupleBuffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
+    Buffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
 {
     const auto spaceInChildBuffer = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset.getRawOffset());
     PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size(), "SpaceInChildBuffer must be larger than varSizedValue");
@@ -84,8 +84,8 @@ void copyVarSizedAndIncrementMetaData(
 }
 }
 
-VariableSizedAccess MemoryLayout::writeVarSized(
-    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
+VariableSizedAccess
+MemoryLayout::writeVarSized(Buffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
     const auto totalVarSizedLength = varSizedValue.size();
 
@@ -120,7 +120,7 @@ VariableSizedAccess MemoryLayout::writeVarSized(
 }
 
 std::span<std::byte>
-MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
+MemoryLayout::loadAssociatedVarSizedValue(const Buffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
     /// Loading the childbuffer containing the variable sized data.
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
@@ -153,7 +153,7 @@ MemoryLayout::loadValue(const DataType& physicalType, const TaskBufferRef& recor
     auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
     const auto varSizedPtr = invoke(
         {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+        +[](const Buffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
@@ -196,7 +196,7 @@ VarVal MemoryLayout::storeValue(
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
 
     invoke(
-        +[](TupleBuffer* tupleBuffer,
+        +[](Buffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t* varSizedPtr,
             const uint64_t varSizedValueLength,

@@ -26,7 +26,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 
@@ -88,7 +88,7 @@ private:
     uint64_t entrySize{0};
     uint64_t probeEntrySize{0};
     uint64_t entriesPerPage{0};
-    TupleBuffer chainedHashMapBuffer;
+    Buffer chainedHashMapBuffer;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;
     /// Sizing for the optional in-map BloomFilter. Defaults to nullopt, so the CHM behaves exactly as
@@ -96,9 +96,9 @@ private:
     std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
-    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> insertFn;
-    std::optional<nautilus::engine::CompiledFunction<bool(TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, AnyVec*, AnyVec*)>> lookupFn;
-    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAllFn;
+    std::optional<nautilus::engine::CompiledFunction<void(Buffer*, AbstractBufferProvider*, AnyVec*)>> insertFn;
+    std::optional<nautilus::engine::CompiledFunction<bool(Buffer*, Buffer*, AbstractBufferProvider*, AnyVec*, AnyVec*)>> lookupFn;
+    std::optional<nautilus::engine::CompiledFunction<void(Buffer*, std::vector<AnyVec>*)>> readAllFn;
 
     struct FieldOffsets
     {

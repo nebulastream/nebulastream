@@ -25,7 +25,7 @@
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TaskBufferRef.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -78,8 +78,8 @@ public:
 
     Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const TaskBufferRef&, nautilus::val<uint64_t>&) const override;
 
-    WriteRecordResult
-    writeRecord(nautilus::val<uint64_t>&, const TaskBufferRef&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
+    WriteRecordResult writeRecord(
+        nautilus::val<uint64_t>&, const TaskBufferRef&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 

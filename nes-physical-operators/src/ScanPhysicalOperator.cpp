@@ -33,8 +33,7 @@
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<MemoryLayout> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
+ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<MemoryLayout> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)

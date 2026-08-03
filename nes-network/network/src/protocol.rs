@@ -100,7 +100,7 @@ pub enum ControlChannelResponse {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataChannelRequest {
-    Data(TupleBuffer),
+    Data(Buffer),
     Close,
 }
 
@@ -117,7 +117,7 @@ pub enum DataChannelResponse {
 }
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
-pub struct TupleBuffer {
+pub struct Buffer {
     pub sequence_number: u64,
     pub origin_id: u64,
     pub watermark: u64,
@@ -128,15 +128,15 @@ pub struct TupleBuffer {
     pub child_buffers: Vec<Vec<u8>>,
 }
 
-impl TupleBuffer {
+impl Buffer {
     pub fn sequence(&self) -> OriginSequenceNumber {
         (self.origin_id, self.sequence_number, self.chunk_number)
     }
 }
 
-impl Debug for TupleBuffer {
+impl Debug for Buffer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
+        f.write_fmt(format_args!("Buffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
     }
 }
 

@@ -25,8 +25,8 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
@@ -64,7 +64,7 @@ private:
     /// `outerOffset`/`innerOffset` are the absolute child-buffer indices (on the record buffer) at which the outer's
     /// resp. inner's hash map buffers start; left hash maps are stored before right ones.
     void performNullFillProbe(
-        const nautilus::val<TupleBuffer*>& recordBufferRef,
+        const nautilus::val<Buffer*>& recordBufferRef,
         nautilus::val<uint64_t> outerOffset,
         nautilus::val<uint64_t> outerNumberOfHashMaps,
         nautilus::val<uint64_t> innerOffset,

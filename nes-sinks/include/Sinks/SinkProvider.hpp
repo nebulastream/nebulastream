@@ -21,7 +21,7 @@
 namespace NES
 {
 
-/// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
+/// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a Buffer).
 std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
 
 }

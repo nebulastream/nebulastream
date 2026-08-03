@@ -20,7 +20,7 @@
 #include <utility>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -29,14 +29,14 @@ namespace NES
 using FieldIndex = uint32_t;
 using SequenceNumberType = SequenceNumber::Underlying;
 
-/// Wraps a TupleBuffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
-/// the underlying TupleBuffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
+/// Wraps a Buffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
+/// the underlying Buffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
 class RawTupleBuffer
 {
 public:
     RawTupleBuffer() = default;
     ~RawTupleBuffer() = default;
-    explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
+    explicit RawTupleBuffer(Buffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer))
         , bufferView(rawBuffer.getAvailableMemoryArea<char>().data(), rawBuffer.getNumberOfTuples()) { };
 
@@ -51,10 +51,10 @@ public:
 
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
-    [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+    [[nodiscard]] const Buffer& getRawBuffer() const noexcept { return rawBuffer; }
 
 private:
-    TupleBuffer rawBuffer;
+    Buffer rawBuffer;
     std::string_view bufferView;
 };
 

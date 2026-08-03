@@ -38,7 +38,7 @@ enum ChannelHandlerStatus {
     /// NetworkService shutdown or the control connection stopped.
     Cancelled,
 }
-pub(super) type DataQueue = async_channel::Sender<TupleBuffer>;
+pub(super) type DataQueue = async_channel::Sender<Buffer>;
 
 async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     cancellation_token: CancellationToken,
@@ -46,7 +46,7 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
     mut connection_reader: DataChannelReceiverReader<R>,
     mut connection_writer: DataChannelReceiverWriter<W>,
 ) -> Result<ChannelHandlerStatus> {
-    let mut pending_buffer: Option<TupleBuffer> = None;
+    let mut pending_buffer: Option<Buffer> = None;
     loop {
         // First: Push received data to the registered channel. The channel handler will not receive
         // further data from the network if the registered channel cannot accept it. This implements

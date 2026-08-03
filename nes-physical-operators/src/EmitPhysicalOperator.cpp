@@ -97,14 +97,10 @@ void setChunkNumber(
     const nautilus::val<bool>& closesChunk,
     const nautilus::val<ChunkNumber>& currentChunkNumber,
     const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
+    const nautilus::val<Buffer*>& newBuffer)
 {
     nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
+        +[](OperatorHandler* handler, bool closesChunk, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, Buffer* newBuffer)
         {
             PRECONDITION(handler != nullptr, "Expects a valid handler");
             PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");

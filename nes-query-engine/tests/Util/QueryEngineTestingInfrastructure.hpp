@@ -42,11 +42,11 @@
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -82,9 +82,9 @@ static constexpr size_t LARGE_NUMBER_OF_THREADS = 8;
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::milliseconds(10000);
 
-/// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
+/// Creates raw Buffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
 std::vector<std::byte> identifiableData(size_t identifier);
-bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier);
+bool verifyIdentifier(const Buffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
@@ -176,7 +176,7 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(
         bool,
         emitWork,
-        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TupleBuffer, TaskCallback, PipelineExecutionContext::ContinuationPolicy),
+        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, Buffer, TaskCallback, PipelineExecutionContext::ContinuationPolicy),
         (override));
     MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
     MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
@@ -310,11 +310,11 @@ struct TestPipeline final : ExecutablePipelineStage
         }
         else /*if (stopCalls < repeatsDuringStop)*/
         {
-            pec.repeatTask(TupleBuffer(), std::chrono::milliseconds(10));
+            pec.repeatTask(Buffer(), std::chrono::milliseconds(10));
         }
     }
 
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
+    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
@@ -354,9 +354,9 @@ struct TestSinkController
     /// Waits for *at least* `numberOfExpectedBuffers`
     testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
 
-    void insertBuffer(TupleBuffer&& buffer);
+    void insertBuffer(Buffer&& buffer);
 
-    std::vector<TupleBuffer> takeBuffers();
+    std::vector<Buffer> takeBuffers();
 
     testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
 
@@ -382,7 +382,7 @@ struct TestSinkController
     BackpressureController backpressureController;
 
 private:
-    folly::Synchronized<std::vector<TupleBuffer>, std::mutex> receivedBuffers;
+    folly::Synchronized<std::vector<Buffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;
     std::promise<void> start;
     std::promise<void> stop;
@@ -398,7 +398,7 @@ class TestSink final : public ExecutablePipelineStage
 public:
     void start(PipelineExecutionContext&) override { controller->start.set_value(); }
 
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         controller->insertBuffer(deepCopyBuffer(inputBuffer, *bufferProvider));
 
@@ -433,7 +433,7 @@ public:
         }
         else /*if (stopCalls < repeatsDuringStop)*/
         {
-            pec.repeatTask(TupleBuffer(), std::chrono::milliseconds(10));
+            pec.repeatTask(Buffer(), std::chrono::milliseconds(10));
         }
     }
 

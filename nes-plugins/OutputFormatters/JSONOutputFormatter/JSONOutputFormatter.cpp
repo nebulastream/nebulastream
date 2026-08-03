@@ -38,7 +38,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -66,7 +66,7 @@ uint64_t writePreValueContents(
     const bool isFirstField,
     const char* fieldIdentifier,
     const uint64_t remainingSpace,
-    TupleBuffer* buffer,
+    Buffer* buffer,
     AbstractBufferProvider* bufferProvider,
     int8_t* bufferAddress)
 {
@@ -82,7 +82,7 @@ uint64_t writeChar(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
     const char content,
-    TupleBuffer* tupleBuffer,
+    Buffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
     /// Chars are treated as strings in JSON
@@ -95,7 +95,7 @@ uint64_t writeVarsized(
     const uint64_t remainingSpace,
     const int8_t* varSizedContent,
     const uint64_t contentSize,
-    TupleBuffer* tupleBuffer,
+    Buffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- int8_t buffer reinterpreted as char* for string_view

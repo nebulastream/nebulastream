@@ -18,7 +18,7 @@
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Interface/TupleBufferProxyFunctions.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
 #include <val.hpp>
@@ -27,7 +27,7 @@
 namespace NES
 {
 
-TaskBufferRef::TaskBufferRef(const nautilus::val<TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)
+TaskBufferRef::TaskBufferRef(const nautilus::val<Buffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)
 {
 }
 
@@ -46,7 +46,7 @@ nautilus::val<int8_t*> TaskBufferRef::getMemArea() const
     return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getMemArea, tupleBufferRef);
 }
 
-const nautilus::val<TupleBuffer*>& TaskBufferRef::getReference() const
+const nautilus::val<Buffer*>& TaskBufferRef::getReference() const
 {
     return tupleBufferRef;
 }

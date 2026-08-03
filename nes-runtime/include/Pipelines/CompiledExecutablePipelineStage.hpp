@@ -19,8 +19,8 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -42,14 +42,14 @@ public:
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
+    using PipelineSignature = void(PipelineExecutionContext*, const Buffer*, const Arena*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
 
     /// Registers the pipeline's main traced function in the pipeline's module.

@@ -26,7 +26,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
@@ -55,7 +55,7 @@ SourceThread::SourceThread(
 
 namespace
 {
-void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
+void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Buffer& buffer)
 {
     /// set the origin id for this source
     buffer.setOriginId(originId);
@@ -76,7 +76,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Buffer&&, bool addBufferMetadata)>;
 
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
@@ -112,7 +112,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        std::optional<TupleBuffer> emptyBuffer;
+        std::optional<Buffer> emptyBuffer;
         while (!emptyBuffer && !stopToken.stop_requested())
         {
             emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
@@ -155,7 +155,7 @@ void dataSourceThread(
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
+    const EmitFn dataEmit = [&](Buffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {

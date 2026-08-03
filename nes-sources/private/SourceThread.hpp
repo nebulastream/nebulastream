@@ -24,7 +24,7 @@
 #include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -103,7 +103,7 @@ protected:
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
-    void emitWork(TupleBuffer& buffer, bool addBufferMetaData = true);
+    void emitWork(Buffer& buffer, bool addBufferMetaData = true);
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 };
 

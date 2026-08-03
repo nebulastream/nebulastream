@@ -18,7 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 
@@ -34,9 +34,8 @@ public:
     AggregationSlice(
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
 
-    [[nodiscard]] const TupleBuffer* getHashMapBufferRefForWorker(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] const TupleBuffer*
-    getOrCreateHashMapBufferRefForWorker(AbstractBufferProvider& bufferProvider, WorkerThreadId workerThreadId);
+    [[nodiscard]] const Buffer* getHashMapBufferRefForWorker(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] const Buffer* getOrCreateHashMapBufferRefForWorker(AbstractBufferProvider& bufferProvider, WorkerThreadId workerThreadId);
 };
 
 }

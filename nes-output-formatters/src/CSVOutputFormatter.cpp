@@ -37,7 +37,7 @@
 
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
@@ -58,7 +58,7 @@ uint64_t writeVarsized(
     const bool quoteStrings,
     const int8_t* varSizedContent,
     const uint64_t contentSize,
-    TupleBuffer* tupleBuffer,
+    Buffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider)
 {
     std::string stringFormattedValue{reinterpret_cast<const char*>(varSizedContent), contentSize};

@@ -43,11 +43,11 @@ using BufferAlignment = NESStrongType<uint32_t, struct BufferAlignment_, 0, 0>;
  * 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly. They are also subject to reference
  * counting.
  *
- * The reference counting mechanism of the TupleBuffer is explained in TupleBuffer.hpp
+ * The reference counting mechanism of the Buffer is explained in Buffer.hpp
  *
  * The BufferManager stores the pooled buffers as MemorySegment-s. When a component asks for a Pooled buffer,
  * then the BufferManager retrieves an available buffer (it blocks the calling thread, if no buffer is available).
- * It then hands out a TupleBuffer that is constructed through the pointer stored inside a MemorySegment.
+ * It then hands out a Buffer that is constructed through the pointer stored inside a MemorySegment.
  * This is necessary because the BufferManager must keep all buffers stored to ensure that when its
  * destructor is called, all buffers that it has ever created are deallocated. Note the BufferManager will check also
  * that no reference counter is non-zero and will throw a fatal exception, if a component hasnt returned every buffers.
@@ -64,7 +64,7 @@ using BufferAlignment = NESStrongType<uint32_t, struct BufferAlignment_, 0, 0>;
  */
 class BufferManager final : public std::enable_shared_from_this<BufferManager>, public BufferRecycler, public AbstractBufferProvider
 {
-    friend class TupleBuffer;
+    friend class Buffer;
     friend class NES::detail::MemorySegment;
 
     /// Hide the BufferManager constructor and only allow creation via BufferManager::create().
@@ -113,10 +113,10 @@ private:
 
 public:
     /// This blocks until a buffer is available.
-    TupleBuffer getBufferBlocking() override;
+    Buffer getBufferBlocking() override;
 
     /// invalid optional if there is no buffer.
-    std::optional<TupleBuffer> getBufferNoBlocking() override;
+    std::optional<Buffer> getBufferNoBlocking() override;
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
@@ -124,9 +124,9 @@ public:
      * @param timeoutMs the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
+    std::optional<Buffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<Buffer> getUnpooledBuffer(size_t bufferSize) override;
 
 
     size_t getBufferSize() const override;

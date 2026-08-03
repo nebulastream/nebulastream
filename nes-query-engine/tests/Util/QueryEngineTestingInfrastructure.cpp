@@ -37,9 +37,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -75,7 +75,7 @@ std::vector<std::byte> identifiableData(size_t identifier)
     return {bytes.begin(), bytes.end()};
 }
 
-bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier)
+bool verifyIdentifier(const Buffer& buffer, size_t identifier)
 {
     if (buffer.getBufferSize() == 0)
     {
@@ -113,14 +113,14 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
                buffers->size());
 }
 
-void TestSinkController::insertBuffer(TupleBuffer&& buffer)
+void TestSinkController::insertBuffer(Buffer&& buffer)
 {
     ++invocations;
     receivedBuffers.lock()->push_back(std::move(buffer));
     receivedBufferTrigger.notify_one();
 }
 
-std::vector<TupleBuffer> TestSinkController::takeBuffers()
+std::vector<Buffer> TestSinkController::takeBuffers()
 {
     auto buffers = receivedBuffers.exchange({});
     std::ranges::sort(

@@ -29,7 +29,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -126,13 +126,13 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
 namespace
 {
 void storeVarSized(
-    const nautilus::val<TupleBuffer*>& tupleBuffer,
+    const nautilus::val<Buffer*>& tupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProviderRef,
     const nautilus::val<int8_t*>& memoryAddress,
     const VariableSizedData& variableSizedData)
 {
     nautilus::invoke(
-        +[](TupleBuffer* tupleBuffer,
+        +[](Buffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t** memoryAddressInEntry,
             const int8_t* varSizedData,
@@ -157,7 +157,7 @@ void writeVarVal(
     const VarVal& value,
     const nautilus::val<int8_t*>& fieldAddress,
     const DataType& type,
-    const nautilus::val<TupleBuffer*>& hashMapTupleBuffer,
+    const nautilus::val<Buffer*>& hashMapTupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     /// For now, we store the null byte before the actual VarVal
@@ -183,7 +183,7 @@ void writeVarVal(
 
 void ChainedEntryMemoryProvider::writeRecord(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    const nautilus::val<Buffer*>& hashMapBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const Record& record) const
 {
@@ -197,7 +197,7 @@ void ChainedEntryMemoryProvider::writeRecord(
 
 void ChainedEntryMemoryProvider::writeEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    const nautilus::val<Buffer*>& hashMapBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
 {

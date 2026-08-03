@@ -34,7 +34,7 @@
 #include <Interface/Record.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -174,7 +174,7 @@ public:
         tlOwnedRawBufferIndices = OwnedRawBufferIndices{};
     }
 
-    static IndexResult indexRawBuffer(InputFormatIndexer& indexer, const TupleBuffer& tupleBuffer)
+    static IndexResult indexRawBuffer(InputFormatIndexer& indexer, const Buffer& tupleBuffer)
     {
         auto result = indexer.indexRawBuffer({tupleBuffer.getAvailableMemoryArea<char>().data(), tupleBuffer.getNumberOfTuples()});
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter] = result->getTupleDelimiterOffsets();
@@ -252,7 +252,7 @@ private:
 };
 
 bool indexTrailingSpanningTupleProxy(
-    const TupleBuffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
+    const Buffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
 {
     /// Value was stashed on tlIndexPhaseResult when the indexer returned its RawBufferIndex; max() means no delimiter in the buffer.
     const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.offsetOfLastTupleInRawBuffer;
@@ -280,7 +280,7 @@ bool indexTrailingSpanningTupleProxy(
 }
 
 IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
-    const TupleBuffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
+    const Buffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
 {
     IndexPhaseResultBuilder::startBuildingIndex();
     const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]

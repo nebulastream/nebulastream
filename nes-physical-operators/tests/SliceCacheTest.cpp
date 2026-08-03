@@ -50,9 +50,9 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -149,16 +149,16 @@ class SliceCacheTestBase : public Testing::BaseUnitTest
 public:
     struct MockedPipelineContext final : PipelineExecutionContext
     {
-        bool emitBuffer(const TupleBuffer&, ContinuationPolicy) override
+        bool emitBuffer(const Buffer&, ContinuationPolicy) override
         {
             INVARIANT(false, "This function should not be called");
             std::unreachable();
         }
 
-        TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        Buffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
 
         /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): unreachable stub; parameter matches the overridden signature.
-        TupleBuffer& pinBuffer(TupleBuffer&&) override
+        Buffer& pinBuffer(Buffer&&) override
         {
             INVARIANT(false, "This function should not be called");
             std::unreachable();
@@ -186,7 +186,7 @@ public:
 
         explicit MockedPipelineContext(std::shared_ptr<AbstractBufferProvider> bufferManager) : bufferManager(std::move(bufferManager)) { }
 
-        void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
+        void repeatTask(const Buffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
         std::shared_ptr<AbstractBufferProvider> bufferManager;
     };

@@ -18,22 +18,22 @@
 #include <cstdint>
 #include <variant>
 #include <Interface/NESStrongTypeRef.hpp> /// NOLINT(misc-include-cleaner): re-exported so callers get the nautilus val<> specialization for ChildBufferIndex.
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val_details.hpp>
 #include <val_ptr.hpp>
 #include <val_std.hpp>
 
-/// A NautilusBuffer is a Wrapper around a TupleBuffer. It can come in two different flavours:
-/// 1. The BorrowedNautilusBuffer requires that an instance of a TupleBuffer is kept alive outside the nautilus execution. This handle
+/// A NautilusBuffer is a Wrapper around a Buffer. It can come in two different flavours:
+/// 1. The BorrowedNautilusBuffer requires that an instance of a Buffer is kept alive outside the nautilus execution. This handle
 ///    should be accessed by a single thread, as the handle itself is not Threadsafe. A common use case for the Borrowed variant
-///    is the initial entry point into the nautilus pipeline which holds the TupleBuffer on the WorkerThreads stack.
+///    is the initial entry point into the nautilus pipeline which holds the Buffer on the WorkerThreads stack.
 ///    If these two things can be guaranteed, you should prefer the BorrowedNautilusBuffer, as it does not require additional buffer
 ///    lifetime management
 /// 2. The OwnedNautilusBuffer is allocated within the nautilus execution, and the lifetime is managed by the nautilus execution.
-///    A common usecase is keeping a TupleBuffer alive which was allocated in a `nautilus::invoke` or loaded as a child of a different buffer:
+///    A common usecase is keeping a Buffer alive which was allocated in a `nautilus::invoke` or loaded as a child of a different buffer:
 ///    ```c++
 ///    OwnedNautilusBuffer owned;
-///    nautilus::invoke(+[](AbstractBufferProvider* provider, TupleBuffer* owned){
+///    nautilus::invoke(+[](AbstractBufferProvider* provider, Buffer* owned){
 ///         *owned = provider->getBufferBlocking();
 ///    }, provider, owned.asArg());
 ///    /// owned keeps the buffer alive, and releases once it goes out of scope
@@ -47,10 +47,10 @@ class NautilusBuffer;
 
 class OwnedNautilusBuffer
 {
-    nautilus::val<TupleBuffer> buffer;
+    nautilus::val<Buffer> buffer;
 
 public:
-    /// Creates an owned buffer that holds a reference-counted copy of `source`'s underlying TupleBuffer. Works for both owned and
+    /// Creates an owned buffer that holds a reference-counted copy of `source`'s underlying Buffer. Works for both owned and
     /// borrowed sources, and is the way to promote a borrowed buffer into one whose lifetime is managed by the nautilus execution.
     static OwnedNautilusBuffer copy(const NautilusBuffer& source);
 
@@ -64,24 +64,24 @@ public:
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
-    /// Returns a pointer to the wrapped TupleBuffer that is only valid for as long as this buffer is alive.
+    /// Returns a pointer to the wrapped Buffer that is only valid for as long as this buffer is alive.
     /// It is solely intended to be passed as an argument to a `nautilus::invoke` and MUST NOT be stored or used to outlive this buffer.
     /// The lvalue-ref qualifier prevents calling it on a temporary, which would return a dangling pointer into the destroyed buffer.
-    [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const&;
-    nautilus::val<TupleBuffer*> asArg() &;
+    [[nodiscard]] nautilus::val<const Buffer*> asArg() const&;
+    nautilus::val<Buffer*> asArg() &;
     /// Do not call asArg() on a temporary OwnedNautilusBuffer: the returned pointer would dangle.
-    [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const&& = delete;
-    nautilus::val<TupleBuffer*> asArg() && = delete;
+    [[nodiscard]] nautilus::val<const Buffer*> asArg() const&& = delete;
+    nautilus::val<Buffer*> asArg() && = delete;
 };
 
 class BorrowedNautilusBuffer
 {
-    nautilus::val<TupleBuffer*> buffer;
+    nautilus::val<Buffer*> buffer;
 
-    explicit BorrowedNautilusBuffer(const nautilus::val<TupleBuffer*>& buffer);
+    explicit BorrowedNautilusBuffer(const nautilus::val<Buffer*>& buffer);
 
 public:
-    static BorrowedNautilusBuffer from(const nautilus::val<const TupleBuffer*>& originalBuffer);
+    static BorrowedNautilusBuffer from(const nautilus::val<const Buffer*>& originalBuffer);
 
     nautilus::val<int8_t*> data();
     [[nodiscard]] nautilus::val<const int8_t*> data() const;
@@ -94,10 +94,10 @@ public:
 
     nautilus::val<ChildBufferIndex> storeChild(BorrowedNautilusBuffer&& child);
 
-    /// Returns a pointer to the wrapped TupleBuffer that is only valid for as long as this buffer is alive.
+    /// Returns a pointer to the wrapped Buffer that is only valid for as long as this buffer is alive.
     /// It is solely intended to be passed as an argument to a `nautilus::invoke` and MUST NOT be stored or used to outlive this buffer.
-    [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const;
-    [[nodiscard]] nautilus::val<TupleBuffer*> asArg();
+    [[nodiscard]] nautilus::val<const Buffer*> asArg() const;
+    [[nodiscard]] nautilus::val<Buffer*> asArg();
 };
 
 class NautilusBuffer
@@ -116,14 +116,14 @@ public:
 
     [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
 
-    /// Returns a pointer to the wrapped TupleBuffer that is only valid for as long as this buffer is alive.
+    /// Returns a pointer to the wrapped Buffer that is only valid for as long as this buffer is alive.
     /// It is solely intended to be passed as an argument to a `nautilus::invoke` and MUST NOT be stored or used to outlive this buffer.
     /// The lvalue-ref qualifier prevents calling it on a temporary, which would return a dangling pointer into the destroyed buffer.
-    [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const&;
-    nautilus::val<TupleBuffer*> asArg() &;
+    [[nodiscard]] nautilus::val<const Buffer*> asArg() const&;
+    nautilus::val<Buffer*> asArg() &;
     /// Do not call asArg() on a temporary NautilusBuffer: the returned pointer would dangle.
-    [[nodiscard]] nautilus::val<const TupleBuffer*> asArg() const&& = delete;
-    nautilus::val<TupleBuffer*> asArg() && = delete;
+    [[nodiscard]] nautilus::val<const Buffer*> asArg() const&& = delete;
+    nautilus::val<Buffer*> asArg() && = delete;
 
     /// returns true if the underlying buffer is a owned buffer. Notice, that this is a c++ bool, as this information is not runtime data
     /// dependent.

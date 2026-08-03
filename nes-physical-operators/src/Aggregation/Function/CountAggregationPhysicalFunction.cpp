@@ -23,7 +23,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -48,7 +48,7 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 
 void CountAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
+    nautilus::val<Buffer*>,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -67,9 +67,9 @@ void CountAggregationPhysicalFunction::lift(
 
 void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
+    nautilus::val<Buffer*>,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
+    nautilus::val<Buffer*>,
     PipelineMemoryProvider&)
 {
     /// Reading the count from the first aggregation state
@@ -88,7 +88,7 @@ void CountAggregationPhysicalFunction::combine(
 }
 
 Record CountAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<Buffer*>, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -102,7 +102,7 @@ Record CountAggregationPhysicalFunction::lower(
 }
 
 void CountAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<Buffer*>, PipelineMemoryProvider&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);

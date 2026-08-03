@@ -25,7 +25,7 @@
 #include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -34,7 +34,7 @@ namespace NES
 {
 
 
-/// This class takes care of reading and writing data from/to a TupleBuffer.
+/// This class takes care of reading and writing data from/to a Buffer.
 /// A MemoryLayout is closely coupled with a memory layout, and we support row and column layouts, currently.
 /// We store multiple variable sized datas in one pooled buffer. If the pooled buffer is not large enough or there are no pooled buffer
 /// available, we fall back to an unpooled buffer.
@@ -51,12 +51,11 @@ public:
 
     /// @brief Writes the variable sized data to the buffer
     static VariableSizedAccess
-    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
+    writeVarSized(Buffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
     /// @brief Reads the variable sized data and returns the pointer to the var sized data
     /// @return Pointer to variable sized data
-    static std::span<std::byte>
-    loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess) noexcept;
+    static std::span<std::byte> loadAssociatedVarSizedValue(const Buffer& tupleBuffer, VariableSizedAccess variableSizedAccess) noexcept;
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available

@@ -25,7 +25,7 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
@@ -87,7 +87,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
+void ChecksumSink::execute(const Buffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     /// Create a buffer iterator to help iterate through the tuplebuffer and its children

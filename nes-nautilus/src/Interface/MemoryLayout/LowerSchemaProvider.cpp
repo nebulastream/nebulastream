@@ -27,9 +27,9 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/MemoryLayout/ColumnLayout.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/MemoryLayout/OutputFormatterLayout.hpp>
 #include <Interface/MemoryLayout/RowLayout.hpp>
-#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
