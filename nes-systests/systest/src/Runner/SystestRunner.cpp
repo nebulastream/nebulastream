@@ -104,25 +104,65 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
     return runningQuery->verdict.has_value() and runningQuery->verdict->has_value();
 }
 
-/// A sink that discards its input writes no result file, so a query that ends in one has nothing to check.
-bool writesIntoDiscardingSink(const SystestQuery& query)
+/// A sink that discards its input writes no result file, so there is nothing to check for it.
+bool isDiscardingSink(const LogicalOperator& rootOperator)
 {
-    if (not query.planInfoOrException.has_value())
-    {
-        return false;
-    }
-    const auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query.planInfoOrException.value().queryPlan.getGlobalPlan());
-    if (sinkOperators.empty())
-    {
-        return false;
-    }
-    const auto sinkOperator = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>();
+    const auto sinkOperator = rootOperator.tryGetAs<SinkLogicalOperator>();
     if (not sinkOperator.has_value())
     {
         return false;
     }
     const auto sinkDescriptor = sinkOperator.value()->getSinkDescriptor();
     return sinkDescriptor.has_value() and toUpperCase(sinkDescriptor.value().getSinkType()) == "VOID";
+}
+
+/// A query whose sinks all discard their input has nothing to check.
+bool writesIntoDiscardingSinksOnly(const SystestQuery& query)
+{
+    if (not query.planInfoOrException.has_value())
+    {
+        return false;
+    }
+    const auto rootOperators = query.planInfoOrException.value().queryPlan.getGlobalPlan().getRootOperators();
+    return not rootOperators.empty() and std::ranges::all_of(rootOperators, isDiscardingSink);
+}
+
+/// Checks every sink of the query against the result block that belongs to it and returns the first mismatch.
+Verdict checkResultOfEverySink(const SystestQuery& query)
+{
+    const auto& planInfo = query.planInfoOrException.value();
+    const auto& expectedRows = NES::get<ExpectedRows>(query.expectation);
+    if (planInfo.sinkOutputSchemas.size() != expectedRows.rowsPerSink.size())
+    {
+        return std::unexpected(Mismatch{fmt::format(
+            "query has {} sink(s) but {} result block(s); every sink needs its own result block",
+            planInfo.sinkOutputSchemas.size(),
+            expectedRows.rowsPerSink.size())});
+    }
+
+    /// The binder takes the sink output schemas from the root operators, so both are in the same order.
+    const auto rootOperators = planInfo.queryPlan.getGlobalPlan().getRootOperators();
+    for (size_t sinkIndex = 0; sinkIndex < expectedRows.rowsPerSink.size(); ++sinkIndex)
+    {
+        if (isDiscardingSink(rootOperators.at(sinkIndex)))
+        {
+            continue;
+        }
+        auto verdict = runCheck(QueryResultCheck{
+            .resultFile = query.resultFile(sinkIndex),
+            .expectedSchema = planInfo.sinkOutputSchemas.at(sinkIndex),
+            .expectedTuples = expectedRows.rowsPerSink.at(sinkIndex)});
+        if (not verdict.has_value())
+        {
+            /// Only a query with more than one sink needs to say which of them mismatched.
+            if (expectedRows.rowsPerSink.size() > 1)
+            {
+                verdict.error().detail = fmt::format("Sink #{} of the query:\n{}", sinkIndex, verdict.error().detail);
+            }
+            return verdict;
+        }
+    }
+    return Success{};
 }
 
 /// Checks a query that reached a successful terminal state against what the test expects of its result.
@@ -134,7 +174,7 @@ Verdict checkSucceededQuery(const SystestQuery& query)
             Mismatch{fmt::format("expected error {} but query succeeded", std::get<ExpectedError>(query.expectation).code)});
     }
 
-    if (writesIntoDiscardingSink(query))
+    if (writesIntoDiscardingSinksOnly(query))
     {
         NES_INFO("Skipping result check for {}:{} because it writes to a Void sink.", query.testName, query.queryIdInFile);
         return Success{};
@@ -146,10 +186,7 @@ Verdict checkSucceededQuery(const SystestQuery& query)
             DifferentialCheck{.firstResultFile = query.resultFile(), .secondResultFile = query.resultFileForDifferentialQuery()});
     }
 
-    return runCheck(QueryResultCheck{
-        .resultFile = query.resultFile(),
-        .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
-        .expectedTuples = NES::get<ExpectedRows>(query.expectation).rows});
+    return checkResultOfEverySink(query);
 }
 
 /// Checks the plan an EXPLAIN printed, which the binder computed, because an EXPLAIN never reaches the worker.
