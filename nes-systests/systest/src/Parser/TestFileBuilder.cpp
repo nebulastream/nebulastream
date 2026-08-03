@@ -14,9 +14,12 @@
 
 #include <Parser/TestFileBuilder.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
+#include <iterator>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <variant>
@@ -67,7 +70,9 @@ ExpectedPlan expectedPlan(const Expectation& expected)
 {
     if (const auto* lines = std::get_if<ExpectedRows>(&expected))
     {
-        return ExpectedPlan{.lines = lines->rows};
+        /// The parser reports every result block on its own, so an EXPLAIN is completed by exactly one.
+        INVARIANT(lines->rowsPerSink.size() == 1, "an EXPLAIN is completed by a single result block");
+        return ExpectedPlan{.lines = lines->rowsPerSink.front()};
     }
     throw SLTUnexpectedToken("an EXPLAIN expects the plan it prints, not an error");
 }
@@ -113,11 +118,40 @@ public:
         pendingQuery = PendingQuery{.sql = std::move(sql), .overrides = {}, .isExplain = true};
     }
 
+    /// A query with several sinks is followed by one result block per sink, and the parser reports every block after the first
+    /// with the number of the query it already completed. Such a block holds the rows of the query's next sink.
+    void addResultBlockOfNextSink(const SystestQueryId id, const Expectation& expected)
+    {
+        const auto* rowsOfNextSink = std::get_if<ExpectedRows>(&expected);
+        bool isBlockOfCompletedQuery = false;
+        /// Every pairing of overrides added a statement of the query, and these are the last statements read.
+        for (auto& statement : statements | std::views::reverse)
+        {
+            auto* query = std::get_if<SelectStatement>(&statement);
+            if (query == nullptr or query->id != id)
+            {
+                break;
+            }
+            auto* rows = std::get_if<ExpectedRows>(&query->expected);
+            if (rows == nullptr or rowsOfNextSink == nullptr)
+            {
+                throw SLTUnexpectedToken("only a query that expects rows can have a result block per sink");
+            }
+            std::ranges::copy(rowsOfNextSink->rowsPerSink, std::back_inserter(rows->rowsPerSink));
+            isBlockOfCompletedQuery = true;
+        }
+        if (not isBlockOfCompletedQuery)
+        {
+            throw SLTUnexpectedToken("a result or an expected error must follow a query");
+        }
+    }
+
     void completeQuery(const SystestQueryId id, const Expectation& expected)
     {
         if (not pendingQuery.has_value())
         {
-            throw SLTUnexpectedToken("a result or an expected error must follow a query");
+            addResultBlockOfNextSink(id, expected);
+            return;
         }
         auto [sql, queryOverrides, isExplain] = std::move(*pendingQuery);
         pendingQuery.reset();
@@ -187,7 +221,7 @@ ParsedTestFile buildTestFile(SystestParser& parser, const std::filesystem::path&
                                            { builder.addLocalOverrides(overrides); });
 
     parser.registerOnResultTuplesCallback([&](std::vector<std::string> rows, const SystestQueryId id)
-                                          { builder.completeQuery(id, ExpectedRows{.rows = std::move(rows)}); });
+                                          { builder.completeQuery(id, ExpectedRows{.rowsPerSink = {std::move(rows)}}); });
 
     parser.registerOnErrorExpectationCallback([&](const SystestParser::ErrorExpectation& error, const SystestQueryId id)
                                               { builder.completeQuery(id, ExpectedError{.code = error.code, .message = error.message}); });
