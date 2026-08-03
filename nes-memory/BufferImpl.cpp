@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <TupleBufferImpl.hpp>
+#include <BufferImpl.hpp>
 
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -225,7 +225,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 #endif
 
 /// -----------------------------------------------------------------------------
-/// ------------------ Utility functions for TupleBuffer ------------------------
+/// ------------------ Utility functions for Buffer ------------------------
 /// -----------------------------------------------------------------------------
 
 uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
@@ -299,7 +299,7 @@ void BufferControlBlock::setOriginId(const OriginId originId)
 }
 
 /// -----------------------------------------------------------------------------
-/// ------------------ VarLen fields support for TupleBuffer --------------------
+/// ------------------ VarLen fields support for Buffer --------------------
 /// -----------------------------------------------------------------------------
 
 ChildBufferIndex BufferControlBlock::storeChildBuffer(BufferControlBlock* control)

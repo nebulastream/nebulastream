@@ -21,8 +21,8 @@
 
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -36,7 +36,7 @@ constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 using TestTypes = ::testing::Types<uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t>;
 
 template <typename T>
-class TupleBufferMemoryAccessTest : public ::testing::Test
+class BufferMemoryAccessTest : public ::testing::Test
 {
 protected:
     static constexpr size_t minBufferSize = 100;
@@ -53,11 +53,11 @@ protected:
 };
 
 template <typename T>
-size_t TupleBufferMemoryAccessTest<T>::bufferSize = 0;
+size_t BufferMemoryAccessTest<T>::bufferSize = 0;
 
-TYPED_TEST_SUITE(TupleBufferMemoryAccessTest, TestTypes);
+TYPED_TEST_SUITE(BufferMemoryAccessTest, TestTypes);
 
-TYPED_TEST(TupleBufferMemoryAccessTest, FillAndRetrieveFromSpan)
+TYPED_TEST(BufferMemoryAccessTest, FillAndRetrieveFromSpan)
 {
     using T = TypeParam;
     auto bufferManager = BufferManager::create(
