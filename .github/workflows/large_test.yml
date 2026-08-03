@@ -109,16 +109,6 @@ jobs:
 
   systest-remote-test:
     name: "Run systest remote test on ${{matrix.arch}} with ${{matrix.stdlib}}"
-    container:
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
-      volumes:
-        - ccache:/ccache
-        - test-file-cache:/test-file-cache
-        - /var/run/docker.sock:/var/run/docker.sock
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      options: --user root
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}", large-memory ]
     strategy:
@@ -137,19 +127,20 @@ jobs:
           endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
           access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
           secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
-      - name: Configure NebulaStream
-        run: |
-          sccache --start-server
-          sccache --show-stats
-          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_DOCKER_EXTERNAL_DATA_VOLUME=test-file-cache -DLARGE_TEST_TOTAL_MEMORY_BYTES=76911476736
-      - name: Build NebulaStream
-        run: |
-          sccache --show-stats
-          cmake --build build --target systest nes-single-node-worker -j
-          sccache --show-stats
-          sccache --stop-server
-      - name: Run systest remote test
-        run: ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
+      - name: Configure, build, and run systest remote test
+        uses: ./.github/steps/run-in-container
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          additional_mounts: |
+            test-file-cache:/test-file-cache
+          run: |
+            sccache --start-server
+            sccache --show-stats
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_DOCKER_TESTS=ON -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_DOCKER_EXTERNAL_DATA_VOLUME=test-file-cache -DLARGE_TEST_TOTAL_MEMORY_BYTES=76911476736
+            cmake --build build --target systest nes-single-node-worker -j
+            sccache --show-stats
+            sccache --stop-server
+            ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v5
         if: failure() && !github.event.act

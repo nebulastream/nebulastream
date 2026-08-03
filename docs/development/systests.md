@@ -429,8 +429,8 @@ The Docker approach provides the most realistic testing environment for distribu
 > If you are using a Docker-based development environment, provide access to
 > the Docker daemon and preserve the workspace path, for example:
 > `docker run -v /var/run/docker.sock:/var/run/docker.sock -v "$(pwd):$(pwd)" -w "$(pwd)" ...`.
-> CMake automatically disables Docker-based tests when it cannot confirm that
-> the host and container workspace paths match.
+> CMake fails configuration when Docker tests are enabled but it cannot confirm
+> that the host and container workspace paths match.
 
 > [!NOTE]
 > CLion's Docker toolchain mounts the checkout at `/tmp/nebulastream` by default.
@@ -442,6 +442,5 @@ Large Docker-based systests also require Docker to access the CMake
 `ExternalData_OBJECT_STORES` directory. CMake verifies a same-path bind mount
 when one external store is configured. If the store is provided to the
 development container as a Docker volume instead, pass its name with
-`-DNES_DOCKER_EXTERNAL_DATA_VOLUME=<volume>`. When neither route can expose
-the store, only the large case in `systest-remote-test` is skipped; native
-large systests remain enabled.
+`-DNES_DOCKER_EXTERNAL_DATA_VOLUME=<volume>`. Configuration fails when both
+Docker and large tests are enabled but neither route can expose the store.
