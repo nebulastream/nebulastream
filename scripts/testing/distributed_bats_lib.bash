@@ -25,7 +25,7 @@
 #   Layer 2 — preset for the cli/repl/MQTT-style suites:
 #     nes_distributed_setup_file, nes_distributed_teardown_file
 #     nes_distributed_setup, nes_distributed_teardown
-#     sync_workdir, setup_distributed
+#     setup_distributed
 #     docker_nes_cli, wait_until_status [--require-healthy <regex>]
 #                                            (used by cli/MQTT* suites)
 #
@@ -290,8 +290,9 @@ nes_distributed_teardown_file() {
 }
 
 nes_distributed_setup() {
-  # Create temp directory within the mounted workspace (not /tmp)
-  # so it's accessible from docker-compose containers running on the host
+  # Docker Compose talks to the host daemon, so its bind source must be a path
+  # that exists both on the host and in the development container. CI mounts
+  # the repository at the same absolute path in both places.
   mkdir -p "$NES_TEST_TMP_DIR"
   export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
   # Testdata lives in the same dir as the .bats file (by convention named
@@ -301,27 +302,11 @@ nes_distributed_setup() {
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 
-  local volume
-  volume=$(docker volume create)
-  local volume_host_container
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
-  docker cp . $volume_host_container:/data
-  docker stop -t0 $volume_host_container
-  export TEST_VOLUME=$volume
-  echo "# Using test volume: $TEST_VOLUME" >&3
-}
-
-sync_workdir() {
-  local volume_host_container
-  volume_host_container=$(docker run -d --rm -v $TEST_VOLUME:/data alpine sleep infinite)
-  docker cp $volume_host_container:/data/. .
-  docker stop -t0 $volume_host_container
+  export TEST_DIR="$TMP_DIR"
 }
 
 nes_distributed_teardown() {
-  sync_workdir || true
   docker compose down -v || true
-  docker volume rm $TEST_VOLUME || true
 }
 
 # Generate docker-compose.yaml from a topology file using the suite's local

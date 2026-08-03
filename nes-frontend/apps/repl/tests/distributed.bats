@@ -118,7 +118,6 @@ docker_nes_repl() {
   run docker_nes_repl tests/sql-file-tests/bad/invalid_projection_distributed.sql
   [ "$status" -ne 0 ]
 
-  sync_workdir
   grep "invalid query syntax" nes-repl.log
 }
 
@@ -198,11 +197,10 @@ docker_nes_repl() {
 
   # Check the log to ensure that the query has been started but not stopped.
   # The source may take a moment to start after the REPL exits, so retry
-  # sync_workdir + grep for up to 10 seconds to avoid a race condition.
+  # Check the bind-mounted log for up to 10 seconds to avoid a race condition.
   local found=false
   for i in $(seq 1 10); do
     sleep 1
-    sync_workdir
     if grep -q "Starting source with originId" worker-node/singleNodeWorker.log 2>/dev/null; then
       found=true
       break
