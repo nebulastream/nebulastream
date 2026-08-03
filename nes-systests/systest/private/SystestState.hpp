@@ -76,10 +76,11 @@ private:
 struct SystestQuery
 {
     static std::filesystem::path
-    resultFile(const std::filesystem::path& workingDir, std::string_view testName, SystestQueryId queryIdInTestFile);
+    resultFile(const std::filesystem::path& workingDir, std::string_view testName, SystestQueryId queryIdInTestFile, size_t sinkIndex = 0);
 
     static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
-    [[nodiscard]] std::filesystem::path resultFile() const;
+    /// Each sink of a query writes its own result file.
+    [[nodiscard]] std::filesystem::path resultFile(size_t sinkIndex = 0) const;
     [[nodiscard]] std::filesystem::path resultFileForDifferentialQuery() const;
 
     TestName testName;
@@ -92,26 +93,26 @@ struct SystestQuery
     {
         DistributedLogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
-        /// The schema of the data written to a CSV file.
+        /// The schema of the data each sink writes to its CSV file, one per sink in the order the sinks appear in the query.
         /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
-        Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
+        std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchemas;
 
         PlanInfo() = delete;
 
         PlanInfo(
             DistributedLogicalPlan plan,
             std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
-            Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
-            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
+            std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkSchemas)
+            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchemas(std::move(sinkSchemas))
         {
         }
 
-        PlanInfo(DistributedLogicalPlan plan, Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
-            : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema))
+        PlanInfo(DistributedLogicalPlan plan, std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkSchemas)
+            : queryPlan(std::move(plan)), sinkOutputSchemas(std::move(sinkSchemas))
         {
         }
 
-        PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
+        PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchemas(other.sinkOutputSchemas)
         {
             copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
         }
@@ -123,7 +124,7 @@ struct SystestQuery
                 return *this;
             }
             queryPlan = other.queryPlan;
-            sinkOutputSchema = other.sinkOutputSchema;
+            sinkOutputSchemas = other.sinkOutputSchemas;
             copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
             return *this;
         }

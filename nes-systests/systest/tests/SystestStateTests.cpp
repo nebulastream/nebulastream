@@ -47,4 +47,17 @@ TEST_F(SystestStateTest, ResultFilesCreateDirectoriesForNestedTestNames)
     EXPECT_EQ(resultFile, tempDir.get() / "results" / "left" / "same_1.csv");
     EXPECT_TRUE(std::filesystem::is_directory(resultFile.parent_path()));
 }
+
+/// A query with several sinks writes one result file per sink, and the files of further sinks sit next to the first one,
+/// also when the test name holds a directory.
+TEST_F(SystestStateTest, ResultFilesOfFurtherSinksSitNextToTheFirst)
+{
+    const Testing::TemporaryDirectory tempDir;
+
+    const auto firstSink = SystestQuery::resultFile(tempDir.get(), "left/same", SystestQueryId(1), 0);
+    const auto secondSink = SystestQuery::resultFile(tempDir.get(), "left/same", SystestQueryId(1), 1);
+
+    EXPECT_EQ(secondSink, tempDir.get() / "results" / "left" / "same_1_sink1.csv");
+    EXPECT_EQ(secondSink.parent_path(), firstSink.parent_path());
+}
 }
