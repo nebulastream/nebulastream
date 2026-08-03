@@ -35,7 +35,8 @@ namespace NES
 struct BoundPlan
 {
     DistributedLogicalPlan plan;
-    Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
+    /// The schema of the rows in each sink's result file, one per sink in the order the query lists them.
+    std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchemas;
 };
 
 struct BoundStatement

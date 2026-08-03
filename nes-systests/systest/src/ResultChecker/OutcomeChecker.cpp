@@ -117,20 +117,57 @@ Verdict checkExplain(const StatementOutcome& outcome, const ExpectedPlan& expect
     return runCheck(ExplainLinesCheck{.expected = expected.lines, .actual = std::move(actual)});
 }
 
-Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, const ExpectedRows& expected)
+/// Checks one sink of a query against the result block at the same position.
+Verdict checkSink(const StatementOutcome& outcome, const RewrittenQuery& query, const ExpectedRows& expected, const size_t sinkIndex)
 {
-    if (not query.resultFile.has_value())
+    const auto& expectedRows = expected.rowsPerSink.at(sinkIndex);
+    const auto& resultFile = query.resultFiles.at(sinkIndex);
+    /// No result file means nothing to check, e.g., for a void sink.
+    /// Expected rows on such a sink would never be compared, so they fail it, not pass it.
+    if (not resultFile.has_value())
     {
-        if (not expected.rows.empty())
+        if (not expectedRows.empty())
         {
-            return std::unexpected{Mismatch{"the test expects rows, but the query writes no result file to compare them with"}};
+            return std::unexpected{Mismatch{"the test expects rows, but the sink writes no result file to compare them with"}};
         }
-        NES_INFO("Skipping the result check for {} because it writes no result file.", query.id);
+        NES_INFO("Skipping the result check for sink #{} of {} because it writes no result file.", sinkIndex, query.id);
         return Success{};
     }
-    INVARIANT(outcome.sinkOutputSchema.has_value(), "a query that ran has a bound plan and so a sink schema");
     return runCheck(
-        QueryResultCheck{.resultFile = *query.resultFile, .expectedSchema = *outcome.sinkOutputSchema, .expectedTuples = expected.rows});
+        QueryResultCheck{
+            .resultFile = *resultFile, .expectedSchema = outcome.sinkOutputSchemas.at(sinkIndex), .expectedTuples = expectedRows});
+}
+
+Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, const ExpectedRows& expected)
+{
+    const auto resultBlocks = expected.rowsPerSink.size();
+    if (query.resultFiles.size() != resultBlocks)
+    {
+        return std::unexpected{Mismatch{fmt::format(
+            "the query writes into {} sink(s) but the test gives {} result block(s); every sink needs its own result block",
+            query.resultFiles.size(),
+            resultBlocks)}};
+    }
+    INVARIANT(
+        outcome.sinkOutputSchemas.size() == query.resultFiles.size(),
+        "the optimized plan has {} sink(s) but the rewriter chose {} result file(s)",
+        outcome.sinkOutputSchemas.size(),
+        query.resultFiles.size());
+
+    for (size_t sinkIndex = 0; sinkIndex < resultBlocks; ++sinkIndex)
+    {
+        auto verdict = checkSink(outcome, query, expected, sinkIndex);
+        if (not verdict.has_value())
+        {
+            /// Only a query with more than one sink needs to say which of them mismatched.
+            if (resultBlocks > 1)
+            {
+                verdict.error().detail = fmt::format("Sink #{} of the query:\n{}", sinkIndex, verdict.error().detail);
+            }
+            return verdict;
+        }
+    }
+    return Success{};
 }
 
 Verdict checkQuery(const StatementOutcome& outcome, const RewrittenQuery& query)

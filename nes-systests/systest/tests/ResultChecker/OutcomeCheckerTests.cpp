@@ -13,6 +13,7 @@
 */
 
 #include <exception>
+#include <filesystem>
 #include <expected>
 #include <optional>
 #include <string>
@@ -22,11 +23,14 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
 #include <ResultChecker/OutcomeChecker.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/UUID.hpp>
@@ -55,21 +59,21 @@ DistributedQueryStatusSnapshot createSnapshotIn(const QueryStatus state, const s
 
 StatementOutcome createOutcomeOf(std::expected<DistributedQueryStatusSnapshot, Exception> reached)
 {
-    return StatementOutcome{.reached = std::move(reached), .sinkOutputSchema = std::nullopt, .explained = std::nullopt};
+    return StatementOutcome{.reached = std::move(reached), .sinkOutputSchemas = {}, .explained = std::nullopt};
 }
 
-RewrittenTestCase createQueryExpecting(Expectation expectation)
+RewrittenTestCase createQueryExpecting(Expectation expectation, std::vector<std::optional<std::filesystem::path>> resultFiles = {})
 {
     return RewrittenTestCase{
         .action = RewrittenQuery{
-            .sql = "", .id = SystestQueryId{1}, .resultFile = std::nullopt, .inputFiles = {}, .expected = std::move(expectation)}};
+            .sql = "", .id = SystestQueryId{1}, .resultFiles = std::move(resultFiles), .inputFiles = {}, .expected = std::move(expectation)}};
 }
 
 StatementOutcome createExplainedOutcome(std::string plan)
 {
     return StatementOutcome{
         .reached = std::unexpected{InvalidQuerySyntax("an EXPLAIN never reaches a worker")},
-        .sinkOutputSchema = std::nullopt,
+        .sinkOutputSchemas = {},
         .explained = std::move(plan)};
 }
 
@@ -162,11 +166,22 @@ TEST_F(OutcomeCheckerTest, OnlyAPassingVerdictCountsAsPassed)
 
 TEST_F(OutcomeCheckerTest, ExpectedRowsWithoutAResultFileAreAMismatch)
 {
-    const auto expected = createQueryExpecting(ExpectedRows{.rows = {"1"}});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
+    const auto expected = createQueryExpecting(ExpectedRows{.rowsPerSink = {{"1"}}}, {std::nullopt});
+    auto outcome = createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt));
+    outcome.sinkOutputSchemas = {Schema<UnqualifiedUnboundField, Ordered>{}};
+    const std::vector outcomes{std::move(outcome)};
     const auto verdict = checkTestCase(outcomes, expected, {});
     ASSERT_FALSE(verdict.has_value());
     EXPECT_NE(verdict.error().detail.find("writes no result file"), std::string::npos);
+}
+
+TEST_F(OutcomeCheckerTest, ASinkWithoutItsOwnResultBlockIsAMismatch)
+{
+    const auto expected = createQueryExpecting(ExpectedRows{.rowsPerSink = {{"1"}}}, {std::nullopt, std::nullopt});
+    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
+    const auto verdict = checkTestCase(outcomes, expected, {});
+    ASSERT_FALSE(verdict.has_value());
+    EXPECT_NE(verdict.error().detail.find("every sink needs its own result block"), std::string::npos);
 }
 
 TEST_F(OutcomeCheckerTest, NoExpectedRowsAndNoResultFilePass)

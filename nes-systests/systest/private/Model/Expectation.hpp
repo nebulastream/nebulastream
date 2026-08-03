@@ -24,9 +24,10 @@
 namespace NES
 {
 
+/// The rows a query should write, one block per sink in the order the sinks appear in the query.
 struct ExpectedRows
 {
-    std::vector<std::string> rows;
+    std::vector<std::vector<std::string>> rowsPerSink;
 };
 
 struct ExpectedError

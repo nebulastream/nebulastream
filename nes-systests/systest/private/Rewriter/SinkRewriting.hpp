@@ -18,6 +18,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <AntlrSQLParser.h>
 
@@ -44,8 +45,13 @@ struct RewrittenSink
     std::optional<std::filesystem::path> resultFile;
 };
 
-/// Returns the query sink from the AST, and rejects a query that declares less or more than one.
-AntlrSQLParser::SinkContext* requireSingleSink(const SqlParse& parse, const std::string& sql);
+/// Returns the query's sinks in the order it lists them, and rejects a query that writes into none.
+/// The runner reads back one result file per sink and checks it against the result block at the same position.
+std::vector<AntlrSQLParser::SinkContext*> requireSinks(const SqlParse& parse, const std::string& sql);
+
+/// Returns whether the query lists one declared sink more than once, which the engine rejects.
+/// Inlining would give each listing an anonymous sink of its own and hide that mistake from the engine.
+bool listsADeclaredSinkTwice(const std::vector<AntlrSQLParser::SinkContext*>& sinks);
 
 /// Inlines the sink into the query statement, and rewrites the sink declarations of EXPLAIN test cases.
 class SinkRewriter
