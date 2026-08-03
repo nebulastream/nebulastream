@@ -14,12 +14,33 @@
 
 #include <array>
 #include <string>
+#include <vector>
+#include <Util/VersionPluginList.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <Version.hpp>
 
 namespace NES
 {
+
+namespace
+{
+/// Registers fake providers once, mirroring how the generated registrar translation units announce their plugins.
+/// The two "TestSources" providers overlap to cover merging and deduplication across registries of the same kind.
+/// Registration happens lazily inside the tests (instead of at static initialization time) to satisfy cert-err58-cpp.
+void registerTestPluginProviders()
+{
+    [[maybe_unused]] static const bool Registered = []
+    {
+        auto& pluginList = VersionPluginList::instance();
+        pluginList.addProvider("TestSources", [] { return std::vector<std::string>{"TCP", "FILE"}; });
+        pluginList.addProvider("TestSources", [] { return std::vector<std::string>{"FILE", "GENERATOR"}; });
+        pluginList.addProvider("TestFunctions", [] { return std::vector<std::string>{"ADD"}; });
+        pluginList.addProvider("TestEmptyKind", [] { return std::vector<std::string>{}; });
+        return true;
+    }();
+}
+}
 
 TEST(VersionTest, formatVersionContainsBinaryName)
 {
@@ -29,6 +50,7 @@ TEST(VersionTest, formatVersionContainsBinaryName)
 
 TEST(VersionTest, formatVersionContainsAllFields)
 {
+    registerTestPluginProviders();
     const auto output = formatVersion("nes-single-node-worker");
     /// The labels for every embedded build-info field must be present.
     EXPECT_THAT(output, testing::HasSubstr("commit:"));
@@ -40,6 +62,22 @@ TEST(VersionTest, formatVersionContainsAllFields)
     EXPECT_THAT(output, testing::HasSubstr("stdlib:"));
     EXPECT_THAT(output, testing::HasSubstr("log level:"));
     EXPECT_THAT(output, testing::HasSubstr("vcpkg baseline:"));
+    EXPECT_THAT(output, testing::HasSubstr("plugins:"));
+}
+
+TEST(VersionTest, formatVersionListsPluginsGroupedByKind)
+{
+    registerTestPluginProviders();
+    const auto output = formatVersion("nes-single-node-worker");
+    /// Names of the same kind are merged across providers, deduplicated, and sorted.
+    /// The kind labels are padded to the longest kind, hence no fixed spacing between label and names.
+    EXPECT_THAT(output, testing::HasSubstr("TestSources:"));
+    EXPECT_THAT(output, testing::HasSubstr("FILE, GENERATOR, TCP"));
+    /// Padding-agnostic: the label-to-names spacing depends on the longest kind linked into THIS
+    /// binary, which varies by build configuration (some axes link the real registries into the test).
+    EXPECT_THAT(output, testing::ContainsRegex("TestFunctions: +ADD"));
+    /// Kinds without any plugins are omitted entirely.
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("TestEmptyKind")));
 }
 
 TEST(VersionTest, formatVersionFirstLineIsBinaryNameAndVersion)

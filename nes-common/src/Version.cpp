@@ -14,7 +14,9 @@
 
 #include <Version.hpp>
 
+#include <Util/VersionPluginList.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <BuildInfo.hpp>
 
 #include <algorithm>
@@ -29,10 +31,34 @@
 namespace NES
 {
 
+namespace
+{
+/// Formats the plugins linked into this binary as one comma-separated line per registry kind. The registries announce
+/// themselves via VersionPluginList, so the listing reflects exactly what is compiled into the current binary.
+std::string formatPluginList()
+{
+    const auto pluginsByKind = VersionPluginList::instance().list();
+    if (pluginsByKind.empty())
+    {
+        return "  plugins:        (none)\n";
+    }
+    /// Align the plugin names by padding each kind label to the longest one.
+    std::size_t longestKind = 0;
+    for (const auto& [kind, names] : pluginsByKind)
+    {
+        longestKind = std::max(longestKind, kind.size());
+    }
+    std::string formatted = "  plugins:\n";
+    for (const auto& [kind, names] : pluginsByKind)
+    {
+        formatted += fmt::format("    {:<{}} {}\n", kind + ":", longestKind + 1, fmt::join(names, ", "));
+    }
+    return formatted;
+}
+}
+
 std::string formatVersion(const std::string_view binaryName)
 {
-    /// Plugin listing is deferred to a follow-up (see issue #1640); listing the registered
-    /// plugins requires restructuring the CMake plugin discovery / registry.
     return fmt::format(
         "{} {}\n"
         "  commit:         {}\n"
@@ -43,7 +69,8 @@ std::string formatVersion(const std::string_view binaryName)
         "  compiler flags: {}\n"
         "  stdlib:         {}\n"
         "  log level:      {}\n"
-        "  vcpkg baseline: {}\n",
+        "  vcpkg baseline: {}\n"
+        "{}",
         binaryName,
         BuildInfo::version,
         BuildInfo::gitCommit,
@@ -54,7 +81,8 @@ std::string formatVersion(const std::string_view binaryName)
         BuildInfo::compilerFlags,
         BuildInfo::stdlib,
         BuildInfo::logLevel,
-        BuildInfo::vcpkgBaseline);
+        BuildInfo::vcpkgBaseline,
+        formatPluginList());
 }
 
 void printVersion(const std::string_view binaryName)

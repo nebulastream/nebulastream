@@ -36,8 +36,16 @@ namespace NES::AggregationLogicalFunctionGeneratedRegistrar
 
 namespace NES
 {
+/// registerAll is only defined in the CMake-generated registrar translation unit of this registry's component
+/// (see generate_plugin_registrar in cmake/PluginRegistrationUtil.cmake). All other translation units see just this
+/// declaration, so including the registry header does not require the plugin registration symbols at link time;
+/// only calling instance() does.
 template <>
-inline void Registrar<AggregationLogicalFunctionRegistry, std::string, AggregationLogicalFunctionRegistryReturnType, AggregationLogicalFunctionRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+void Registrar<AggregationLogicalFunctionRegistry, std::string, AggregationLogicalFunctionRegistryReturnType, AggregationLogicalFunctionRegistryArguments>::registerAll(Registry<Registrar>& registry);
+
+#ifdef NES_DEFINE_AGGREGATIONLOGICALFUNCTION_REGISTER_ALL
+template <>
+void Registrar<AggregationLogicalFunctionRegistry, std::string, AggregationLogicalFunctionRegistryReturnType, AggregationLogicalFunctionRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::AggregationLogicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
@@ -48,4 +56,5 @@ inline void Registrar<AggregationLogicalFunctionRegistry, std::string, Aggregati
     @UNREFLECTOR_REGISTER_CALLS@
 }
 
+#endif
 }

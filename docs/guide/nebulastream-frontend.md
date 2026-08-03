@@ -31,8 +31,9 @@ All interfaces support JSON output for programmatic access.
 ### Version information
 
 Every non-test binary accepts `--version` / `-v` and prints build metadata (git commit incl. `+dirty`, build
-timestamp/type, sanitizer, compiler and effective flags, stdlib, log level, vcpkg baseline) — useful when reporting
-issues or debugging remote deployments.
+timestamp/type, sanitizer, compiler and effective flags, stdlib, log level, vcpkg baseline), followed by the plugins
+linked into the binary (one line per registry kind, upper-case canonical names; the listing differs per binary) —
+useful when reporting issues or debugging remote deployments.
 
 ---
 
