@@ -222,6 +222,16 @@ void SystestParser::parse()
     static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
 
     SystestQueryIdAssigner queryIdAssigner{};
+    /// A query with several sinks is followed by one result block per sink; only the first of them advances the result counter.
+    bool readResultOfCurrentQuery = false;
+    const auto queryOfNextResultBlock = [&queryIdAssigner, &readResultOfCurrentQuery]
+    {
+        if (std::exchange(readResultOfCurrentQuery, true))
+        {
+            return queryIdAssigner.getLastQueryResultNumber();
+        }
+        return queryIdAssigner.getNextQueryResultNumber();
+    };
     while (auto token = getNextToken())
     {
         switch (token.value())
@@ -234,6 +244,7 @@ void SystestParser::parse()
             case TokenType::QUERY: {
                 auto query = expectQuery(DefaultQueryStopTokens);
                 expectedResultType = ResultType::TUPLES;
+                readResultOfCurrentQuery = false;
                 lastParsedQuery = query;
                 auto queryId = queryIdAssigner.getNextQueryNumber();
                 lastParsedQueryId = queryId;
@@ -246,6 +257,7 @@ void SystestParser::parse()
             case TokenType::EXPLAIN: {
                 auto statement = expectQuery(DefaultQueryStopTokens);
                 expectedResultType = ResultType::VERBATIM;
+                readResultOfCurrentQuery = false;
                 /// EXPLAIN statements cannot be part of a differential block
                 lastParsedQuery.reset();
                 lastParsedQueryId.reset();
@@ -265,7 +277,7 @@ void SystestParser::parse()
                     auto expectation = expectError();
                     if (onErrorExpectationCallback)
                     {
-                        onErrorExpectationCallback(expectation, queryIdAssigner.getNextQueryResultNumber());
+                        onErrorExpectationCallback(expectation, queryOfNextResultBlock());
                     }
                 }
                 else if (expectedResultType == ResultType::VERBATIM)
@@ -275,14 +287,14 @@ void SystestParser::parse()
                     auto verbatimResultLines = expectVerbatimResultLines();
                     if (onResultTuplesCallback)
                     {
-                        onResultTuplesCallback(std::move(verbatimResultLines), queryIdAssigner.getNextQueryResultNumber());
+                        onResultTuplesCallback(std::move(verbatimResultLines), queryOfNextResultBlock());
                     }
                 }
                 else
                 {
                     if (onResultTuplesCallback)
                     {
-                        onResultTuplesCallback(expectTuples(false), queryIdAssigner.getNextQueryResultNumber());
+                        onResultTuplesCallback(expectTuples(false), queryOfNextResultBlock());
                     }
                 }
                 break;
@@ -310,6 +322,7 @@ void SystestParser::parse()
                 INVARIANT(lastParsedQuery.has_value() && lastParsedQueryId.has_value(), "Differential block without preceding query");
 
                 auto [leftQuery, rightQuery] = expectDifferentialBlock();
+                readResultOfCurrentQuery = false;
                 const auto mainQueryId = lastParsedQueryId.value();
                 auto differentialQueryId = queryIdAssigner.getNextQueryResultNumber();
 
@@ -468,6 +481,8 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
+                /// A block may end on the delimiter of the next sink's block, which the parse loop has to read again.
+                shouldRevisitCurrentLine = true;
                 break;
             }
         }

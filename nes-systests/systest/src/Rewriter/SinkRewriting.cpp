@@ -14,9 +14,11 @@
 
 #include <Rewriter/SinkRewriting.hpp>
 
+#include <algorithm>
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <AntlrSQLParser.h>
@@ -32,18 +34,23 @@
 namespace NES
 {
 
-AntlrSQLParser::SinkContext* requireSingleSink(const SqlParse& parse, const std::string& sql)
+std::vector<AntlrSQLParser::SinkContext*> requireSinks(const SqlParse& parse, const std::string& sql)
 {
     auto* sinkClause = findFirst<AntlrSQLParser::SinkClauseContext>(parse.tree());
     if (sinkClause == nullptr or sinkClause->sink().empty())
     {
         throw TestException("A systest query must write into a sink: {}", sql);
     }
-    if (sinkClause->sink().size() > 1)
-    {
-        throw TestException("A query writing into more than one sink is not supported yet: {}", sql);
-    }
-    return sinkClause->sink().front();
+    return sinkClause->sink();
+}
+
+bool listsADeclaredSinkTwice(const std::vector<AntlrSQLParser::SinkContext*>& sinks)
+{
+    std::unordered_set<Identifier> listed;
+    return std::ranges::any_of(
+        sinks,
+        [&listed](auto* sink)
+        { return sink->identifier() != nullptr and not listed.insert(Identifier::parse(sink->identifier()->getText())).second; });
 }
 
 SinkRewriter::SinkRewriter(const RewriteContext& context, const PrefixedNames& names, const SinkByName& sinkByName)
