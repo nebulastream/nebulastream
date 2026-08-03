@@ -41,6 +41,10 @@ add_custom_command(
         "${PROTO_FILE_PATH}"
         DEPENDS "${PROTO_FILES}")
 
+# The command above also writes the .pb.h/.grpc.pb.h headers, so depending on the sources is enough.
+add_custom_target(nes-grpc-codegen DEPENDS ${OUTPUT_SOURCES})
+add_dependencies(nes-codegen nes-grpc-codegen)
+
 macro(target_public_headers TARGET)
     set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
 endmacro()

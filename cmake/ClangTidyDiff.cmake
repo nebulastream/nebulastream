@@ -117,4 +117,9 @@ function(project_enable_tidy_diff)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             USES_TERMINAL
             COMMENT "Running clang-tidy on the diff vs origin/main (fix)")
+
+    # clang-tidy sees the generated grpc/ANTLR/cxxbridge headers only if they exist, so generate them first.
+    foreach (TIDY_TARGET tidy-diff tidy-diff-fix tidy-diff-to-main tidy-diff-to-main-fix)
+        add_dependencies(${TIDY_TARGET} nes-codegen)
+    endforeach ()
 endfunction(project_enable_tidy_diff)
