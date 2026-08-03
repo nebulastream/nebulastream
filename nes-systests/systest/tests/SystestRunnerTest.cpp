@@ -90,7 +90,7 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
-    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected,
+    std::variant<std::vector<std::vector<std::string>>, NES::Systest::ExpectedError> expected,
     std::optional<std::pair<NES::Systest::TestName, NES::Systest::SystestQueryId>> runAfter = std::nullopt,
     NES::Systest::SystestQueryId queryId = NES::INVALID<NES::Systest::SystestQueryId>)
 {
@@ -209,7 +209,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, std::nullopt, dummyQueryId)},
+            SystestQuery::PlanInfo{distributedPlan, {}, {Schema<UnqualifiedUnboundField, Ordered>{}}}, {}, std::nullopt, dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -247,7 +247,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, {}, {Schema<UnqualifiedUnboundField, Ordered>{}}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
             std::nullopt,
             dummyQueryId)},
@@ -285,7 +285,7 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     EXPECT_ANY_THROW(
         const auto result = runQueries(
             {makeQuery(
-                SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
+                SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}},
                 ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
                 runAfter,
                 dummyQueryId)},
@@ -338,20 +338,20 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     auto query1 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}},
+        std::vector<std::vector<std::string>>{{}},
         std::nullopt,
         SystestQueryId(1));
 
     auto query2 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}},
+        std::vector<std::vector<std::string>>{{}},
         std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}},
+        std::vector<std::vector<std::string>>{{}},
         std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));
 
