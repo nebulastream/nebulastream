@@ -76,16 +76,15 @@ if (ENABLE_LARGE_TESTS AND ENABLE_DOCKER_TESTS)
             set(NES_DOCKER_EXTERNAL_DATA_TARGET "${_external_data_store}")
             message(STATUS "Docker large systests enabled: verified ExternalData ${_external_data_mount_type} mount")
         else ()
-            message(WARNING
+            message(FATAL_ERROR
                 "Docker cannot access the ExternalData store at ${_external_data_store}.\n"
-                "Set NES_DOCKER_EXTERNAL_DATA_VOLUME to a Docker volume that exposes this directory.\n"
-                "The Docker-based large systest will be disabled."
+                "Set NES_DOCKER_EXTERNAL_DATA_VOLUME to a Docker volume that exposes this directory."
             )
         endif ()
     else ()
-        message(WARNING
+        message(FATAL_ERROR
             "Docker-based large systests support at most one ExternalData_OBJECT_STORES entry; "
-            "found ${_external_data_store_count}. The Docker-based large systest will be disabled."
+            "found ${_external_data_store_count}."
         )
     endif ()
 endif ()

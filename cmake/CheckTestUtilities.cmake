@@ -46,10 +46,9 @@ function(verify_host_path_is_accessible_from_docker PATH MOUNT_SOURCE RESULT_VAR
     )
     file(REMOVE "${_probe_file}")
     if (_probe_result EQUAL 42)
-        message(WARNING
+        message(FATAL_ERROR
             "Cannot identify the development container through its hostname. "
             "Do not override the development container's default hostname.")
-        set(${RESULT_VARIABLE} FALSE PARENT_SCOPE)
     elseif (NOT _probe_result EQUAL 0 OR NOT _probe_output STREQUAL _probe_token)
         set(${RESULT_VARIABLE} FALSE PARENT_SCOPE)
     endif ()
@@ -79,14 +78,11 @@ endif ()
 
 if (ENABLE_DOCKER_TESTS)
     if (NOT NES_DOCKER_AVAILABLE)
-        message(WARNING
+        message(FATAL_ERROR
             "ENABLE_DOCKER_TESTS is ON but docker is not working.\n"
             "  For dev container: Mount docker socket with -v /var/run/docker.sock:/var/run/docker.sock\n"
-            "  For host system: Ensure docker is installed and running\n"
-            "  Set -DENABLE_DOCKER_TESTS=OFF to suppress this warning\n"
-            "Docker tests will be automatically disabled."
+            "  For host system: Ensure docker is installed and running"
         )
-        set(ENABLE_DOCKER_TESTS OFF CACHE BOOL "Runs testcases that require docker" FORCE)
     elseif (EXISTS "/.dockerenv")
         # Docker commands use the host daemon through its socket. Prove that
         # the build directory is mounted at the same absolute path on the host
@@ -94,15 +90,13 @@ if (ENABLE_DOCKER_TESTS)
         verify_host_path_is_accessible_from_docker(
             "${CMAKE_BINARY_DIR}" "${CMAKE_BINARY_DIR}" _docker_can_access_build_directory)
         if (NOT _docker_can_access_build_directory)
-            message(WARNING
+            message(FATAL_ERROR
                 "The host Docker daemon cannot read the CMake build directory at its container path:\n"
                 "  ${CMAKE_BINARY_DIR}\n"
                 "  Mount the repository at the same absolute path on the host and in the development container.\n"
                 "  CLion mounts it at /tmp/nebulastream by default. For a checkout at /path/to/nebulastream,\n"
-                "  add -v /path/to:/path/to to the Docker toolchain's container run options.\n"
-                "Docker tests will be automatically disabled."
+                "  add -v /path/to:/path/to to the Docker toolchain's container run options."
             )
-            set(ENABLE_DOCKER_TESTS OFF CACHE BOOL "Runs testcases that require docker" FORCE)
         else ()
             message(STATUS "Docker tests enabled")
         endif ()
@@ -114,6 +108,9 @@ endif()
 # Check if bats is available for shell-based e2e tests
 find_program(BATS bats)
 if (BATS STREQUAL "BATS-NOTFOUND")
+    if (ENABLE_DOCKER_TESTS)
+        message(FATAL_ERROR "ENABLE_DOCKER_TESTS is ON but Bats was not found. Install Bats or disable Docker tests.")
+    endif ()
     set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
     message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
 else ()
@@ -133,6 +130,13 @@ else ()
         ERROR_VARIABLE  _bats_libs_output
     )
     if (NOT _bats_libs_check EQUAL 0)
+        if (ENABLE_DOCKER_TESTS)
+            message(FATAL_ERROR
+                "ENABLE_DOCKER_TESTS is ON but the Bats helper libraries are not loadable "
+                "(BATS_LIB_PATH=$ENV{BATS_LIB_PATH}). Install bats-support, bats-assert, and bats-file, "
+                "or adjust BATS_LIB_PATH.\n${_bats_libs_output}"
+            )
+        endif ()
         set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
         message(WARNING
             "Bats found at ${BATS} but helper libraries are not loadable "

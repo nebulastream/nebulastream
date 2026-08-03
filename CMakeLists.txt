@@ -24,7 +24,7 @@ option(CODE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Enable tests" ON)
 option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 set(LARGE_TEST_DOWNLOAD_TIMEOUT 1200 CACHE STRING "Absolute timeout in seconds for downloading large test data files")
-option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
+option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" OFF)
 
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
