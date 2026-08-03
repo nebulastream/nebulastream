@@ -366,10 +366,10 @@ std::optional<QueryResult> loadQueryResult(const std::filesystem::path& resultFi
     return result;
 }
 
-[[maybe_unused]] std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query)
+[[maybe_unused]] std::optional<QueryResult> loadQueryResult(const NES::Systest::SystestQuery& query, const size_t sinkIndex)
 {
-    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
-    return loadQueryResult(query.resultFile());
+    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile(sinkIndex));
+    return loadQueryResult(query.resultFile(sinkIndex));
 }
 
 struct ExpectedToActualFieldMap
@@ -719,6 +719,8 @@ struct QueryCheckResult
     }
 
     Type type;
+    /// The sink whose result this is; a query has one result per sink.
+    size_t sinkIndex = 0;
     std::string queryError;
     SchemaErrorString schemaErrorStream;
     ResultErrorString resultErrorStream;
@@ -755,10 +757,16 @@ private:
     ActualResultTuples actualResults;
 };
 
-QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
+bool isVoidSink(const NES::TypedLogicalOperator<NES::SinkLogicalOperator>& sink)
+{
+    return sink->getSinkDescriptor().has_value() and NES::toUpperCase(sink->getSinkDescriptor().value().getSinkType()) == "VOID";
+}
+
+/// Checks one sink of the query against the result block that belongs to it.
+QueryCheckResult checkSink(const NES::Systest::RunningQuery& runningQuery, const size_t sinkIndex)
 {
     /// Get result for running query
-    const auto queryResult = loadQueryResult(runningQuery.systestQuery);
+    const auto queryResult = loadQueryResult(runningQuery.systestQuery, sinkIndex);
     if (not queryResult.has_value())
     {
         return QueryCheckResult{fmt::format("Failed to load query result for query: {}", runningQuery.systestQuery.queryDefinition)};
@@ -769,13 +777,15 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
         auto [actualSchemaResult, actualQueryResult] = queryResult.value();
 
         /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-        auto expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
-        INVARIANT(std::holds_alternative<std::vector<std::string>>(expectedQueryResult), "Systest was expected to have an expected result");
+        const auto& expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
+        INVARIANT(
+            std::holds_alternative<std::vector<std::vector<std::string>>>(expectedQueryResult),
+            "Systest was expected to have an expected result");
 
         return QuerySchemasAndResults(
-            ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchema),
+            ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchemas.at(sinkIndex)),
             ActualResultSchema(actualSchemaResult),
-            std::get<std::vector<std::string>>(expectedQueryResult),
+            std::get<std::vector<std::vector<std::string>>>(expectedQueryResult).at(sinkIndex),
             std::move(actualQueryResult));
     }();
 
@@ -786,6 +796,45 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
         querySchemasAndResults.getExpectedToActualResultMap());
 
     return QueryCheckResult{querySchemasAndResults.getSchemaErrorStream(), resultComparisonErrorStream};
+}
+
+/// Checks every sink of the query and returns the result of the first sink that does not match.
+QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
+{
+    const auto& planInfo = runningQuery.systestQuery.planInfoOrException;
+    const auto* expectedResults
+        = std::get_if<std::vector<std::vector<std::string>>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
+    if (expectedResults == nullptr or expectedResults->empty())
+    {
+        return QueryCheckResult{fmt::format("No expected results for query: {}", runningQuery.systestQuery.queryDefinition)};
+    }
+    if (planInfo.has_value() and planInfo->sinkOutputSchemas.size() != expectedResults->size())
+    {
+        return QueryCheckResult{fmt::format(
+            "Query has {} sink(s) but {} result block(s); every sink needs its own result block",
+            planInfo->sinkOutputSchemas.size(),
+            expectedResults->size())};
+    }
+
+    const auto sinkOperators = planInfo.has_value() ? NES::getOperatorByType<NES::SinkLogicalOperator>(planInfo->queryPlan.getGlobalPlan())
+                                                    : std::vector<NES::TypedLogicalOperator<NES::SinkLogicalOperator>>{};
+
+    QueryCheckResult lastCheckResult{""};
+    for (size_t sinkIndex = 0; sinkIndex < expectedResults->size(); ++sinkIndex)
+    {
+        /// A Void sink writes no result file, so there is nothing to compare.
+        if (sinkIndex < sinkOperators.size() and isVoidSink(sinkOperators.at(sinkIndex)))
+        {
+            continue;
+        }
+        lastCheckResult = checkSink(runningQuery, sinkIndex);
+        lastCheckResult.sinkIndex = sinkIndex;
+        if (lastCheckResult.type != QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MATCH)
+        {
+            return lastCheckResult;
+        }
+    }
+    return lastCheckResult;
 }
 
 constexpr std::string_view RegexOpen = "<REGEX>";
@@ -945,18 +994,13 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
     {
         const auto sinkOperators
             = getOperatorByType<SinkLogicalOperator>(runningQuery.systestQuery.planInfoOrException.value().queryPlan.getGlobalPlan());
-        if (not sinkOperators.empty())
+        if (not sinkOperators.empty() and std::ranges::all_of(sinkOperators, isVoidSink))
         {
-            if (const auto sinkOp = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>(); sinkOp.has_value()
-                and sinkOp.value()->getSinkDescriptor().has_value()
-                and toUpperCase(sinkOp.value()->getSinkDescriptor().value().getSinkType()) == "VOID")
-            {
-                NES_INFO(
-                    "Skipping result check for {}:{} because it writes to a Void sink.",
-                    runningQuery.systestQuery.testName,
-                    runningQuery.systestQuery.queryIdInFile);
-                return std::nullopt;
-            }
+            NES_INFO(
+                "Skipping result check for {}:{} because it writes to a Void sink.",
+                runningQuery.systestQuery.testName,
+                runningQuery.systestQuery.queryIdInFile);
+            return std::nullopt;
         }
     }
 
@@ -1034,6 +1078,16 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
         checkQueryResult = checkQuery(runningQuery);
     }
 
+    /// Only queries with more than one sink need to say which sink mismatched.
+    const auto annotateSink = [&](std::string message) -> std::string
+    {
+        if (checkQueryResult.sinkIndex > 0)
+        {
+            message.append(fmt::format("\n\nSink #{} of the query", checkQueryResult.sinkIndex));
+        }
+        return message;
+    };
+
     switch (checkQueryResult.type)
     {
         case QueryCheckResult::Type::QUERY_NOT_FOUND: {
@@ -1043,15 +1097,17 @@ std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery
             return std::nullopt;
         }
         case QueryCheckResult::Type::SCHEMAS_MATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format("{}{}", ResultMismatchMessage, checkQueryResult.resultErrorStream));
+            return annotateDifferentialError(
+                fmt::format("{}{}{}", annotateSink(""), ResultMismatchMessage, checkQueryResult.resultErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MATCH: {
             return annotateDifferentialError(
-                fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
+                fmt::format("{}{}{}\n\nAll Results match", annotateSink(""), SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
             return annotateDifferentialError(fmt::format(
-                "{}{}{}{}",
+                "{}{}{}{}{}",
+                annotateSink(""),
                 SchemaMismatchMessage,
                 checkQueryResult.schemaErrorStream,
                 ResultMismatchMessage,
@@ -1086,10 +1142,13 @@ std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runni
         return normalized;
     };
 
-    const auto* expectedResultLines = std::get_if<std::vector<std::string>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
-    INVARIANT(expectedResultLines != nullptr, "EXPLAIN statements must have expected result lines");
+    /// An EXPLAIN statement has a single result block, holding its expected plan output verbatim.
+    const auto* expectedResultBlocks
+        = std::get_if<std::vector<std::vector<std::string>>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
+    INVARIANT(
+        expectedResultBlocks != nullptr and expectedResultBlocks->size() == 1, "EXPLAIN statements must have one expected result block");
 
-    const auto expected = normalize(*expectedResultLines);
+    const auto expected = normalize(expectedResultBlocks->front());
     const auto actual = normalize(
         runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
         | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));

@@ -121,6 +121,34 @@ TEST_F(SystestParserTest, testCallbackQuery)
     ASSERT_EQ(receivedResultTuples.at(1), tpl2);
 }
 
+TEST_F(SystestParserTest, testCallbackQueryWithResultPerSink)
+{
+    SystestParser parser{};
+
+    const std::string queryIn = "SELECT id, value, timestamp FROM window INTO sinkA, sinkB;";
+    const std::string testFileString = fmt::format("{}\n----\n1,1,1\n----\n2,2,2\n", queryIn);
+
+    std::optional<SystestQueryId> queryId;
+    std::vector<std::pair<SystestQueryId, std::vector<std::string>>> receivedResults;
+
+    parser.registerOnQueryCallback([&](const std::string&, const SystestQueryId parsedQueryId, bool) { queryId = parsedQueryId; });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { receivedResults.emplace_back(correspondingQueryId, std::move(resultTuples)); });
+
+    ASSERT_TRUE(parser.loadString(testFileString));
+    EXPECT_NO_THROW(parser.parse());
+
+    /// Both result blocks belong to the one query, one per sink.
+    ASSERT_TRUE(queryId.has_value());
+    ASSERT_EQ(receivedResults.size(), 2);
+    ASSERT_EQ(receivedResults.at(0).first, queryId.value());
+    ASSERT_EQ(receivedResults.at(1).first, queryId.value());
+    ASSERT_EQ(receivedResults.at(0).second, std::vector<std::string>{"1,1,1"});
+    ASSERT_EQ(receivedResults.at(1).second, std::vector<std::string>{"2,2,2"});
+}
+
 TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 {
     SystestParser parser{};

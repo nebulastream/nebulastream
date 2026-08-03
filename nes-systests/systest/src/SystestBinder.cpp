@@ -213,9 +213,21 @@ public:
 
     SystestQueryId getSystemTestQueryId() const { return queryIdInFile; }
 
-    void setExpectedResult(std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrError)
+    /// Appends the expected results of the query's next sink, or sets the error the query is expected to fail with.
+    void addExpectedResult(std::variant<std::vector<std::string>, ExpectedError> expectedResultOrError)
     {
-        this->expectedResultsOrError = std::move(expectedResultsOrError);
+        if (const auto* expectedError = std::get_if<ExpectedError>(&expectedResultOrError))
+        {
+            this->expectedResultsOrError = *expectedError;
+            return;
+        }
+        if (not this->expectedResultsOrError.has_value()
+            or not std::holds_alternative<std::vector<std::vector<std::string>>>(this->expectedResultsOrError.value()))
+        {
+            this->expectedResultsOrError = std::vector<std::vector<std::string>>{};
+        }
+        std::get<std::vector<std::vector<std::string>>>(this->expectedResultsOrError.value())
+            .push_back(std::get<std::vector<std::string>>(std::move(expectedResultOrError)));
     }
 
     void setName(TestName testName) { this->testName = std::move(testName); }
@@ -283,27 +295,25 @@ public:
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));
-        const auto sinkOperatorOpt = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-        INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
-        INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
-            == "CHECKSUM")
+        sinkOutputSchemas.clear();
+        for (const auto& rootOperator : this->optimizedPlan->getGlobalPlan().getRootOperators())
         {
-            sinkOutputSchema = SLTSinkFactory::checksumSchema();
-        }
-        else
-        {
-            sinkOutputSchema = [&]
+            const auto sinkOperatorOpt = rootOperator.tryGetAs<SinkLogicalOperator>();
+            if (!sinkOperatorOpt.has_value())
             {
-                /// Sinks do not have an output schema, but they are guaranteed to have only one child, from which we can take the output schema
-                const auto sink = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-                if (!sink.has_value())
-                {
-                    throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
-                }
-                return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
-                    sink.value()->getSinkDescriptor()->getSchema());
-            }();
+                throw InvalidQuerySyntax("The optimized plan should have a sink as its root");
+            }
+            INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
+            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+            if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) == "CHECKSUM")
+            {
+                sinkOutputSchemas.push_back(SLTSinkFactory::checksumSchema());
+            }
+            else
+            {
+                sinkOutputSchemas.push_back(*get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
+                    sinkOperatorOpt.value()->getSinkDescriptor()->getSchema()));
+            }
         }
     }
 
@@ -387,7 +397,7 @@ public:
                      unexpected{exception.has_value() ? exception.value() : Exception{TestException("EXPLAIN statements are not executed and have no plan info")}},
                  .expectedResultsOrExpectedError = expectedResultsOrError.has_value()
                      ? expectedResultsOrError.value()
-                     : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}},
+                     : std::variant<std::vector<std::vector<std::string>>, ExpectedError>{std::vector<std::vector<std::string>>{}},
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = ConfigurationOverride{},
                  .differentialQueryPlan = std::nullopt,
@@ -401,15 +411,15 @@ public:
             {
                 PRECONDITION(
                     boundPlan.has_value() && optimizedPlan.has_value() && sourcesToFilePathsAndCounts.has_value()
-                        && sinkOutputSchema.has_value() && additionalSourceThreads.has_value(),
+                        && not sinkOutputSchemas.empty() && additionalSourceThreads.has_value(),
                     "Neither optimized plan nor an exception has been set");
-                return SystestQuery::PlanInfo{optimizedPlan.value(), sourcesToFilePathsAndCounts.value(), sinkOutputSchema.value()};
+                return SystestQuery::PlanInfo{optimizedPlan.value(), sourcesToFilePathsAndCounts.value(), sinkOutputSchemas};
             }
             return std::unexpected{exception.value()};
         };
         const auto expectedResultsValue = expectedResultsOrError.has_value()
             ? expectedResultsOrError.value()
-            : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}};
+            : std::variant<std::vector<std::vector<std::string>>, ExpectedError>{std::vector<std::vector<std::string>>{}};
 
         auto planInfoTemplate = createPlanInfoOrException();
 
@@ -447,8 +457,8 @@ private:
     std::optional<Exception> exception;
     std::optional<DistributedLogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
-    std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
+    std::vector<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchemas;
+    std::optional<std::variant<std::vector<std::vector<std::string>>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
@@ -757,12 +767,20 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] LogicalOperator updateAnonymousSource(const LogicalOperator& current) const
+    /// @param updated operators already rewritten, keyed by their id before the rewrite. The sub-plan the sinks share must be
+    /// rewritten once, or each sink reads its own copy of the sources.
+    [[nodiscard]] LogicalOperator
+    updateAnonymousSource(const LogicalOperator& current, std::unordered_map<OperatorId, LogicalOperator>& updated) const
     {
+        if (const auto alreadyUpdated = updated.find(current.getId()); alreadyUpdated != updated.end())
+        {
+            return alreadyUpdated->second;
+        }
+
         std::vector<LogicalOperator> newChildren;
         for (const auto& child : current.getChildren())
         {
-            newChildren.emplace_back(updateAnonymousSource(child));
+            newChildren.emplace_back(updateAnonymousSource(child, updated));
         }
 
         if (const auto anonymousSource = current.tryGetAs<AnonymousSourceLogicalOperator>())
@@ -791,19 +809,20 @@ struct SystestBinder::Impl
                 const auto newOperator = AnonymousSourceLogicalOperator::create(
                     anonymousSource.value()->getSourceType(), anonymousSource.value()->getSourceSchema(), sourceConfig, parserConfig);
 
-                return newOperator.withChildrenUnsafe(newChildren);
+                return updated.emplace(current.getId(), newOperator.withChildrenUnsafe(newChildren)).first->second;
             }
         }
 
-        return current.withChildrenUnsafe(std::move(newChildren));
+        return updated.emplace(current.getId(), current.withChildrenUnsafe(std::move(newChildren))).first->second;
     }
 
     void setAnonymousSources(LogicalPlan& plan) const
     {
+        std::unordered_map<OperatorId, LogicalOperator> updated;
         std::vector<LogicalOperator> newRoots;
         for (const auto& root : plan.getRootOperators())
         {
-            newRoots.emplace_back(updateAnonymousSource(root));
+            newRoots.emplace_back(updateAnonymousSource(root, updated));
         }
         plan = plan.withRootOperators(newRoots);
     }
@@ -812,9 +831,10 @@ struct SystestBinder::Impl
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
+        const size_t sinkIndex,
         const TypedLogicalOperator<AnonymousSinkLogicalOperator>& sinkOperator) const
     {
-        const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
+        const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest, sinkIndex);
 
         auto sinkConfig = sinkOperator->getSinkConfig();
         auto formatConfig = sinkOperator->getFormatConfig();
@@ -850,6 +870,7 @@ struct SystestBinder::Impl
         const std::string_view& testFileName,
         SLTSinkFactory& sltSinkProvider,
         const SystestQueryId& currentQueryNumberInTest,
+        const size_t sinkIndex,
         const TypedLogicalOperator<SinkLogicalOperator>& sinkOperator) const
     {
         const auto sinkNameInFile = sinkOperator->getSinkName();
@@ -859,7 +880,7 @@ struct SystestBinder::Impl
             = Identifier::parse(toUpperCase(sinkNameInFile.asCanonicalString() + std::to_string(currentQueryNumberInTest.getRawValue())));
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
-        const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
+        const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest, sinkIndex);
 
         auto sinkExpected = sltSinkProvider.createActualSink(sinkNameInFile, sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
@@ -880,16 +901,20 @@ struct SystestBinder::Impl
         const SystestQueryId& currentQueryNumberInTest) const
     {
         std::vector<LogicalOperator> newRoots;
-        for (const auto& rootOperator : plan.getRootOperators())
+        /// Every sink of the query writes into its own result file, so that each one can be checked against its own result block.
+        const auto roots = plan.getRootOperators();
+        for (size_t sinkIndex = 0; sinkIndex < roots.size(); ++sinkIndex)
         {
+            const auto& rootOperator = roots[sinkIndex];
             if (auto anonymousSink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); anonymousSink.has_value())
             {
-                newRoots.emplace_back(setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, anonymousSink.value()));
+                newRoots.emplace_back(
+                    setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, sinkIndex, anonymousSink.value()));
             }
             else if (auto namedSink = rootOperator.tryGetAs<SinkLogicalOperator>(); namedSink.has_value())
             {
                 newRoots.emplace_back(
-                    setNamedSink(currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, namedSink.value()));
+                    setNamedSink(currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest, sinkIndex, namedSink.value()));
             }
             else
             {
@@ -910,11 +935,14 @@ struct SystestBinder::Impl
         std::vector<LogicalOperator> newRoots;
 
 
-        for (const auto& rootOperator : plan.getRootOperators())
+        const auto roots = plan.getRootOperators();
+        for (size_t sinkIndex = 0; sinkIndex < roots.size(); ++sinkIndex)
         {
+            const auto& rootOperator = roots[sinkIndex];
             if (auto anonymousSink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); anonymousSink.has_value())
             {
-                newRoots.emplace_back(setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, anonymousSink.value()));
+                newRoots.emplace_back(
+                    setAnonymousSink(testFileName, sltSinkProvider, currentQueryNumberInTest, sinkIndex, anonymousSink.value()));
             }
             else
             {
@@ -1008,7 +1036,7 @@ struct SystestBinder::Impl
     {
         /// Error always belongs to the last parsed plan
         plans.emplace(correspondingQueryId, correspondingQueryId)
-            .first->second.setExpectedResult(
+            .first->second.addExpectedResult(
                 ExpectedError{.code = std::move(errorExpectation.code), .message = std::move(errorExpectation.message)});
     }
 
@@ -1017,7 +1045,7 @@ struct SystestBinder::Impl
         std::vector<std::string>&& resultTuples,
         const SystestQueryId& correspondingQueryId)
     {
-        plans.emplace(correspondingQueryId, correspondingQueryId).first->second.setExpectedResult(std::move(resultTuples));
+        plans.emplace(correspondingQueryId, correspondingQueryId).first->second.addExpectedResult(std::move(resultTuples));
     }
 
     void differentialQueryBlocksCallback(
