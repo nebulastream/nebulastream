@@ -21,6 +21,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -30,11 +31,7 @@ class AvgAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     AvgAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        bool includeNullValues);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -49,9 +46,10 @@ public:
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
     ~AvgAggregationPhysicalFunction() override = default;
 
+    static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
+
 private:
     DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    bool includeNullValues;
 };
 
 }

@@ -160,8 +160,7 @@ size_t MaxAggregationPhysicalFunction::getSizeOfStateInBytes() const
     return inputType.getSizeInBytesWithNull();
 }
 
-AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMaxAggregationPhysicalFunction(
-    AggregationPhysicalFunctionRegistryArguments arguments)
+AggregationPhysicalFunctionRegistryReturnType MaxAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArguments arguments)
 {
     return std::make_shared<MaxAggregationPhysicalFunction>(
         std::move(arguments.inputType), std::move(arguments.resultType), arguments.inputFunction, arguments.resultFieldIdentifier);

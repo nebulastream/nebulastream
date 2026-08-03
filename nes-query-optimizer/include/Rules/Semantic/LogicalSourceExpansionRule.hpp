@@ -25,6 +25,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -84,6 +85,8 @@ namespace NES
 class LogicalSourceExpansionRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
+
     explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
     static constexpr std::string_view NAME = "LogicalSourceExpansionRule";

@@ -43,8 +43,6 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -170,16 +168,6 @@ std::ostream& NetworkSink::toString(std::ostream& str) const
 DescriptorConfig::Config NetworkSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSink>(std::move(config), name());
-}
-
-SinkValidationRegistryReturnType RegisterNetworkSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return NetworkSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
-SinkRegistryReturnType RegisterNetworkSink(SinkRegistryArguments sinkRegistryArguments)
-{
-    return std::make_unique<NetworkSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

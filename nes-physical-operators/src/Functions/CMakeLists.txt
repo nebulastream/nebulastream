@@ -11,25 +11,40 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
+        PhysicalFunctionRegistry.cpp
         FunctionProvider.cpp
         FieldAccessPhysicalFunction.cpp
         ConstantValueVariableSizePhysicalFunction.cpp
         CastToPhysicalFunction.cpp
         )
 
-add_plugin(Concat PhysicalFunction ConcatPhysicalFunction.cpp)
-add_plugin(OCTET_LENGTH PhysicalFunction OctetLengthPhysicalFunction.cpp)
-add_plugin(CHAR_LENGTH PhysicalFunction CharLengthPhysicalFunction.cpp)
-add_plugin(FROM_BASE64 PhysicalFunction FromBase64PhysicalFunction.cpp)
-add_plugin(TO_BASE64 PhysicalFunction ToBase64PhysicalFunction.cpp)
-add_plugin(CastToType PhysicalFunction CastToPhysicalFunction.cpp)
-add_plugin(CastToUnixTs PhysicalFunction CastToUnixTimestampPhysicalFunction.cpp)
-add_plugin(CastFromUnixTs PhysicalFunction CastFromUnixTimestampPhysicalFunction.cpp)
-add_plugin(VarSizedToNumeric PhysicalFunction CastVarSizedToNumericPhysicalFunction.cpp)
-add_plugin(Day_Of PhysicalFunction ExtractFromTimestampPhysicalFunction.cpp)
-add_plugin(Month_Of PhysicalFunction ExtractFromTimestampPhysicalFunction.cpp)
-add_plugin(Year_Of PhysicalFunction ExtractFromTimestampPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 add_subdirectory(BooleanFunctions)
+
+add_source_files(nes-physical-operators
+        ConcatPhysicalFunction.cpp
+        OctetLengthPhysicalFunction.cpp
+        CharLengthPhysicalFunction.cpp
+        FromBase64PhysicalFunction.cpp
+        ToBase64PhysicalFunction.cpp
+        CastToPhysicalFunction.cpp
+        CastToUnixTimestampPhysicalFunction.cpp
+        CastFromUnixTimestampPhysicalFunction.cpp
+        CastVarSizedToNumericPhysicalFunction.cpp
+        ExtractFromTimestampPhysicalFunction.cpp
+)
+
+add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
+add_registry_entry(PhysicalFunction CastTo KEY CastToType)
+add_registry_entry(PhysicalFunction CastToUnixTimestamp KEY CastToUnixTs)
+add_registry_entry(PhysicalFunction CastVarSizedToNumeric KEY VarSizedToNumeric)
+add_registry_entry(PhysicalFunction CharLength KEY CHAR_LENGTH)
+add_registry_entry(PhysicalFunction Concat)
+add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Day_Of)
+add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Month_Of)
+add_registry_entry(PhysicalFunction ExtractFromTimestamp KEY Year_Of)
+add_registry_entry(PhysicalFunction FromBase64 KEY FROM_BASE64)
+add_registry_entry(PhysicalFunction OctetLength KEY OCTET_LENGTH)
+add_registry_entry(PhysicalFunction ToBase64 KEY TO_BASE64)

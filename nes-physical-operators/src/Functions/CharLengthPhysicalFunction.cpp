@@ -55,8 +55,9 @@ VarVal CharLengthPhysicalFunction::execute(const Record& record, ArenaRef& arena
     return VarVal{count, inputValue.isNullable(), inputValue.isNull()};
 }
 
+/// NOLINTNEXTLINE(readability-identifier-naming, readability-convert-member-functions-to-static)
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCHAR_LENGTHPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+CharLengthPhysicalFunction::createCHAR_LENGTH(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "CHAR_LENGTH function must have exactly one child function");
     return CharLengthPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);

@@ -55,7 +55,7 @@ LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOper
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterDecideMemoryLayoutPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType DecideMemoryLayoutRule::create(PlanRuleRegistryArguments)
 {
     return DecideMemoryLayoutRule{};
 }

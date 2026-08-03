@@ -19,6 +19,7 @@
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -32,6 +33,7 @@ namespace NES
 class CalcTargetOrderRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "CalcTargetOrderRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan) const;

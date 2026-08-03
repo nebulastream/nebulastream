@@ -11,25 +11,26 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        LogicalOperatorRegistry.cpp
         LogicalOperator.cpp
+        SelectionLogicalOperator.cpp
+        ProjectionLogicalOperator.cpp
+        UnionLogicalOperator.cpp
+        IngestionTimeWatermarkAssignerLogicalOperator.cpp
+        EventTimeWatermarkAssignerLogicalOperator.cpp
+        InferModelLogicalOperator.cpp
+        InferModelNameLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windows)
 
-add_plugin(Selection LogicalOperator SelectionLogicalOperator.cpp)
-add_plugin(Projection LogicalOperator ProjectionLogicalOperator.cpp)
-add_plugin(Union LogicalOperator UnionLogicalOperator.cpp)
-add_plugin(IngestionTimeWatermarkAssigner LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator.cpp)
-add_plugin(EventTimeWatermarkAssigner LogicalOperator EventTimeWatermarkAssignerLogicalOperator.cpp)
-add_plugin(InferModel LogicalOperator InferModelLogicalOperator.cpp)
-add_plugin(InferModelName LogicalOperator InferModelNameLogicalOperator.cpp)
 
-add_unreflection_plugin(LogicalOperator Selection)
-add_unreflection_plugin(LogicalOperator Projection)
-add_unreflection_plugin(LogicalOperator Union)
-add_unreflection_plugin(LogicalOperator IngestionTimeWatermarkAssigner)
-add_unreflection_plugin(LogicalOperator EventTimeWatermarkAssigner)
-add_unreflection_plugin(LogicalOperator InferModel)
-add_unreflection_plugin(LogicalOperator InferModelName)
+add_unreflection_entry(LogicalOperator Selection)
+add_unreflection_entry(LogicalOperator Projection)
+add_unreflection_entry(LogicalOperator Union)
+add_unreflection_entry(LogicalOperator IngestionTimeWatermarkAssigner)
+add_unreflection_entry(LogicalOperator EventTimeWatermarkAssigner)
+add_unreflection_entry(LogicalOperator InferModel)
+add_unreflection_entry(LogicalOperator InferModelName)

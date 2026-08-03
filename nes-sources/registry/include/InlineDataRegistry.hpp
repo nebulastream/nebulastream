@@ -15,13 +15,13 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
-
 #include <Sources/SourceDataProvider.hpp>
-#include <Util/Registry.hpp>
+#include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
@@ -36,12 +36,12 @@ struct InlineDataRegistryArguments
     std::filesystem::path testFilePath;
 };
 
-class InlineDataRegistry : public BaseRegistry<InlineDataRegistry, std::string, PhysicalSourceConfig, InlineDataRegistryArguments>
+using InlineDataFn = std::function<InlineDataRegistryReturnType(InlineDataRegistryArguments)>;
+
+class InlineDataRegistry : public RuntimeRegistry<InlineDataRegistry, std::string, InlineDataFn, /*CaseSensitive*/ false>
 {
+public:
+    static InlineDataRegistry& instance();
 };
 
 }
-
-#define INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY
-#include <InlineDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SOURCES_INLINE_DATA_REGISTRY

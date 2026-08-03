@@ -10,14 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-add_plugin_as_library(RedundantUnionRemoval PlanRule RedundantUnionRemovalRulePlugin RedundantUnionRemovalRule.cpp)
+add_library(RedundantUnionRemovalRulePlugin STATIC RedundantUnionRemovalRule.cpp)
+target_link_libraries(RedundantUnionRemovalRulePlugin PRIVATE nes-query-optimizer)
+target_include_directories(RedundantUnionRemovalRulePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
-target_include_directories(RedundantUnionRemovalRulePlugin
-        PUBLIC include
-        PRIVATE .
-)
+link_plugin_library(nes-query-optimizer RedundantUnionRemovalRulePlugin)
+add_registry_entry(PlanRule RedundantUnionRemovalRule KEY RedundantUnionRemoval)
 
 if (NES_ENABLES_TESTS)
     add_nes_unit_test(RedundantUnionRemovalRuleTest RedundantUnionRemovalRuleTest.cpp)

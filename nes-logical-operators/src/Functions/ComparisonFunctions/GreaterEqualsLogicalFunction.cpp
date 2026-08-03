@@ -103,8 +103,7 @@ Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& reflected
     return {std::move(left), std::move(right)};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType GreaterEqualsLogicalFunction::createGreaterEquals(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

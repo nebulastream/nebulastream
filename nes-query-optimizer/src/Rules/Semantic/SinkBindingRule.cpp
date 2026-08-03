@@ -81,7 +81,7 @@ std::set<std::type_index> SinkBindingRule::neededBy() const
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterSinkBindingPlanRule(PlanRuleRegistryArguments arguments)
+PlanRuleRegistryReturnType SinkBindingRule::create(PlanRuleRegistryArguments arguments)
 {
     return SinkBindingRule{arguments.sinkCatalog};
 }

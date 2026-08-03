@@ -31,6 +31,10 @@ provide(const std::string_view inputFormat, std::unordered_map<std::string, std:
     /// The input formatter type is passed explicitly, but the validation expects it as part of the config (see InputFormatterDescriptor::TYPE).
     stringConfig.insert_or_assign(InputFormatterDescriptor::getTypeString(), std::string{inputFormat});
     auto inputFormatValidationArgs = InputFormatterValidationRegistryArguments(std::move(stringConfig));
-    return InputFormatterValidationRegistry::instance().create(std::string{inputFormat}, std::move(inputFormatValidationArgs));
+    if (const auto validator = InputFormatterValidationRegistry::instance().find(std::string{inputFormat}))
+    {
+        return (*validator)(std::move(inputFormatValidationArgs));
+    }
+    return std::nullopt;
 }
 }

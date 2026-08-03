@@ -36,10 +36,9 @@ PhysicalSourceConfig SourceDataProvider::provideFileDataSource(
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig
-        = FileDataRegistry::instance().create(fileDataArgs.physicalSourceConfig.type.asCanonicalString(), fileDataArgs))
+    if (const auto fileDataAdaptor = FileDataRegistry::instance().find(fileDataArgs.physicalSourceConfig.type.asCanonicalString()))
     {
-        return physicalSourceConfig.value();
+        return (*fileDataAdaptor)(fileDataArgs);
     }
     throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.type);
 }
@@ -55,10 +54,9 @@ PhysicalSourceConfig SourceDataProvider::provideInlineDataSource(
         .tuples = std::move(tuples),
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
-    if (auto physicalSourceConfig
-        = InlineDataRegistry::instance().create(inlineDataArgs.physicalSourceConfig.type.asCanonicalString(), inlineDataArgs))
+    if (const auto inlineDataAdaptor = InlineDataRegistry::instance().find(inlineDataArgs.physicalSourceConfig.type.asCanonicalString()))
     {
-        return physicalSourceConfig.value();
+        return (*inlineDataAdaptor)(inlineDataArgs);
     }
     throw UnknownSourceType("Source type {} not found.", inlineDataArgs.physicalSourceConfig.type);
 }

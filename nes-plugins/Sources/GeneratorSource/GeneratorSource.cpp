@@ -35,8 +35,6 @@
 #include <Generator.hpp>
 #include <GeneratorRate.hpp>
 #include <SinusGeneratorRate.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -132,6 +130,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             const size_t bytesRead = tuplesStream.readsome(currentBuffer.data(), static_cast<std::streamsize>(currentBuffer.size()));
             writtenBytes += bytesRead;
             currentBuffer = currentBuffer.subspan(bytesRead);
+            this->generatedTuplesCounter++;
             if (currentBuffer.empty())
             {
                 break;
@@ -179,6 +178,7 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
 {
     str << "\nGeneratorSource(";
     str << "\n\tgenerated buffers: " << this->generatedBuffers;
+    str << "\n\tgenerated tuples: " << this->generatedTuplesCounter;
     str << "\n\tschema: " << this->generatorSchemaRaw;
     str << "\n\tseed: " << this->seed;
     str << ")\n";
@@ -190,16 +190,4 @@ DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<s
     return DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
 }
 
-SourceValidationRegistryReturnType
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return GeneratorSource::validateAndFormat(sourceConfig.config);
-}
-
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterGeneratorSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<GeneratorSource>(sourceRegistryArguments.sourceDescriptor);
-}
 }

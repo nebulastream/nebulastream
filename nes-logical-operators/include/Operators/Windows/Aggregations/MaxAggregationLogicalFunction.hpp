@@ -27,6 +27,7 @@
 #include <Schema/Field.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -45,6 +46,8 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const MaxAggregationLogicalFunction& other) const;
+
+    static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
     AggregationFieldAccess inputFunction;

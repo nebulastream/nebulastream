@@ -10,14 +10,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And LogicalFunction AndLogicalFunction.cpp)
-add_plugin(Equals LogicalFunction EqualsLogicalFunction.cpp)
-add_plugin(Negate LogicalFunction NegateLogicalFunction.cpp)
-add_plugin(Or LogicalFunction OrLogicalFunction.cpp)
-add_plugin(IsNull LogicalFunction IsNullCheckLogicalFunction.cpp)
 
-add_unreflection_plugin(LogicalFunction And)
-add_unreflection_plugin(LogicalFunction Equals)
-add_unreflection_plugin(LogicalFunction Negate)
-add_unreflection_plugin(LogicalFunction Or)
-add_unreflection_plugin(LogicalFunction IsNullCheck KEY IsNull)
+add_unreflection_entry(LogicalFunction And)
+add_unreflection_entry(LogicalFunction Equals)
+add_unreflection_entry(LogicalFunction Negate)
+add_unreflection_entry(LogicalFunction Or)
+add_unreflection_entry(LogicalFunction IsNullCheck KEY IsNull)
+
+add_source_files(nes-logical-operators
+        AndLogicalFunction.cpp
+        EqualsLogicalFunction.cpp
+        NegateLogicalFunction.cpp
+        OrLogicalFunction.cpp
+        IsNullCheckLogicalFunction.cpp
+)
+
+add_registry_entry(LogicalFunction And)
+add_registry_entry(LogicalFunction Equals)
+add_registry_entry(LogicalFunction IsNullCheck KEY IsNull)
+add_registry_entry(LogicalFunction Negate)
+add_registry_entry(LogicalFunction Or)

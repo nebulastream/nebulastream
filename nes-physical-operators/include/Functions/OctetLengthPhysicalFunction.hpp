@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -29,6 +30,9 @@ class OctetLengthPhysicalFunction final
 public:
     explicit OctetLengthPhysicalFunction(PhysicalFunction childPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    /// NOLINTNEXTLINE(readability-identifier-naming)
+    static PhysicalFunctionRegistryReturnType createOCTET_LENGTH(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction childPhysicalFunction;

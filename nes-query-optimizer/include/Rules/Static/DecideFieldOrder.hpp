@@ -18,6 +18,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -26,6 +27,7 @@ namespace NES
 class DecideFieldOrder
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "DecideFieldOrder";
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;

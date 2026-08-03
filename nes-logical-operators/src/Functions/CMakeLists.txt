@@ -15,36 +15,51 @@ add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
+        LogicalFunctionRegistry.cpp
         LogicalFunctionProvider.cpp
+        ConstantValueLogicalFunction.cpp
+        FieldAccessLogicalFunction.cpp
+        ConcatLogicalFunction.cpp
+        OctetLengthLogicalFunction.cpp
+        CharLengthLogicalFunction.cpp
+        FromBase64LogicalFunction.cpp
+        ToBase64LogicalFunction.cpp
+        CastToTypeLogicalFunction.cpp
+        UnboundFieldAccessLogicalFunction.cpp
+        CastToUnixTimestampLogicalFunction.cpp
+        CastFromUnixTimestampLogicalFunction.cpp
+        VarSizedToNumericLogicalFunction.cpp
+        ExtractFromTimestampLogicalFunction.cpp
 )
 
-add_plugin(ConstantValue LogicalFunction ConstantValueLogicalFunction.cpp)
-add_plugin(FieldAccess LogicalFunction FieldAccessLogicalFunction.cpp)
-add_plugin(Concat LogicalFunction ConcatLogicalFunction.cpp)
-add_plugin(OCTET_LENGTH LogicalFunction OctetLengthLogicalFunction.cpp)
-add_plugin(CHAR_LENGTH LogicalFunction CharLengthLogicalFunction.cpp)
-add_plugin(FROM_BASE64 LogicalFunction FromBase64LogicalFunction.cpp)
-add_plugin(TO_BASE64 LogicalFunction ToBase64LogicalFunction.cpp)
-add_plugin(CastToType LogicalFunction CastToTypeLogicalFunction.cpp)
-add_plugin(UnboundFieldAccess LogicalFunction UnboundFieldAccessLogicalFunction.cpp)
-add_plugin(CastToUnixTs LogicalFunction CastToUnixTimestampLogicalFunction.cpp)
-add_plugin(CastFromUnixTs LogicalFunction CastFromUnixTimestampLogicalFunction.cpp)
-add_plugin(VarSizedToNumeric LogicalFunction VarSizedToNumericLogicalFunction.cpp)
-add_plugin(Day_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
-add_plugin(Month_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
-add_plugin(Year_Of LogicalFunction ExtractFromTimestampLogicalFunction.cpp)
 
-add_unreflection_plugin(LogicalFunction ConstantValue)
-add_unreflection_plugin(LogicalFunction FieldAccess)
-add_unreflection_plugin(LogicalFunction Concat)
-add_unreflection_plugin(LogicalFunction CharLength KEY CHAR_LENGTH)
-add_unreflection_plugin(LogicalFunction OctetLength KEY OCTET_LENGTH)
-add_unreflection_plugin(LogicalFunction FromBase64 KEY FROM_BASE64)
-add_unreflection_plugin(LogicalFunction ToBase64 KEY TO_BASE64)
-add_unreflection_plugin(LogicalFunction CastToType)
-add_unreflection_plugin(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
-add_unreflection_plugin(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
-add_unreflection_plugin(LogicalFunction VarSizedToNumeric)
-add_unreflection_plugin(LogicalFunction ExtractFromTimestamp KEY Day_Of)
-add_unreflection_plugin(LogicalFunction ExtractFromTimestamp KEY Month_Of)
-add_unreflection_plugin(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_unreflection_entry(LogicalFunction ConstantValue)
+add_unreflection_entry(LogicalFunction FieldAccess)
+add_unreflection_entry(LogicalFunction Concat)
+add_unreflection_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
+add_unreflection_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
+add_unreflection_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
+add_unreflection_entry(LogicalFunction ToBase64 KEY TO_BASE64)
+add_unreflection_entry(LogicalFunction CastToType)
+add_unreflection_entry(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
+add_unreflection_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
+add_unreflection_entry(LogicalFunction VarSizedToNumeric)
+add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
+add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
+add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+
+add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
+add_registry_entry(LogicalFunction CastToType)
+add_registry_entry(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
+add_registry_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
+add_registry_entry(LogicalFunction Concat)
+add_registry_entry(LogicalFunction ConstantValue)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
+add_registry_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_registry_entry(LogicalFunction FieldAccess)
+add_registry_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
+add_registry_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
+add_registry_entry(LogicalFunction ToBase64 KEY TO_BASE64)
+add_registry_entry(LogicalFunction UnboundFieldAccess)
+add_registry_entry(LogicalFunction VarSizedToNumeric)
