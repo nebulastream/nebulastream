@@ -30,6 +30,11 @@ if [ -z "$REPL_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$TEST_DIR" ]; then
+  echo "ERROR: TEST_DIR is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -69,7 +74,9 @@ services:
     working_dir: /workdir
     command: ["sleep", "infinity"]
     volumes:
-      - $TEST_VOLUME:/workdir
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
 EOF
 
 # Read workers and generate services
@@ -101,7 +108,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:
-      - $TEST_VOLUME:/workdir
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
 EOF
 
 done
@@ -111,7 +120,4 @@ networks:
   default:
     labels:
       nes-test: ${NES_BATS_TEST_LABEL:-distributed-repl}
-volumes:
-  $TEST_VOLUME:
-    external: true
 EOF
