@@ -40,18 +40,18 @@ if [ -z "$CONTAINER_WORKDIR" ]; then
   exit 1
 fi
 
-if [ -z "$TEST_VOLUME" ]; then
-  echo "ERROR: TEST_VOLUME is not set"
+if [ -z "$TEST_DIR" ]; then
+  echo "ERROR: TEST_DIR is not set"
   exit 1
 fi
 
-if [ -z "$TESTDATA_VOLUME" ]; then
-  echo "ERROR: TESTDATA_VOLUME is not set"
+if [ -z "$TESTDATA_DIR" ]; then
+  echo "ERROR: TESTDATA_DIR is not set"
   exit 1
 fi
 
-if [ -z "$TESTCONFIG_VOLUME" ]; then
-  echo "ERROR: TESTCONFIG_VOLUME is not set"
+if [ -z "$TESTCONFIG_DIR" ]; then
+  echo "ERROR: TESTCONFIG_DIR is not set"
   exit 1
 fi
 
@@ -74,11 +74,27 @@ if [ ! -f "$WORKERS_FILE" ]; then
   exit 1
 fi
 
+# ExternalData entries may be symlinks into a store outside TESTDATA_DIR.
+# CMake has already verified this optional mount with the host Docker daemon.
+TESTDATA_CACHE_MOUNT=
+TESTDATA_CACHE_VOLUME=
+if [ -n "$NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE" ]; then
+  TESTDATA_CACHE_MOUNT="      - type: $NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE
+        source: \"$NES_DOCKER_EXTERNAL_DATA_SOURCE\"
+        target: \"$NES_DOCKER_EXTERNAL_DATA_TARGET\"
+        read_only: true"
+  if [ "$NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE" = volume ]; then
+    TESTDATA_CACHE_VOLUME="volumes:
+  $NES_DOCKER_EXTERNAL_DATA_SOURCE:
+    external: true"
+  fi
+fi
+
 # Start building the compose file
 # Volume mounts:
-#   TESTDATA_VOLUME:   test input data -> /data
-#   TESTCONFIG_VOLUME: contains /nes-systests/* -> $NES_DIR (reconstructs $NES_DIR/nes-systests/*)
-#   TEST_VOLUME:       test working directory -> $CONTAINER_WORKDIR
+#   TESTDATA_DIR:   test input data -> /data
+#   TESTCONFIG_DIR: repository checkout -> $NES_DIR
+#   TEST_DIR:       test working directory -> $CONTAINER_WORKDIR
 cat <<EOF
 services:
   systest:
@@ -88,9 +104,16 @@ services:
     command: ["sleep", "infinity"]
     working_dir: $CONTAINER_WORKDIR
     volumes:
-      - $TESTDATA_VOLUME:/data
-      - $TESTCONFIG_VOLUME:$NES_DIR
-      - $TEST_VOLUME:$CONTAINER_WORKDIR
+      - type: bind
+        source: "$TESTDATA_DIR"
+        target: /data
+$TESTDATA_CACHE_MOUNT
+      - type: bind
+        source: "$TESTCONFIG_DIR"
+        target: "$NES_DIR"
+      - type: bind
+        source: "$TEST_DIR"
+        target: "$CONTAINER_WORKDIR"
 EOF
 
 # Read workers and generate services
@@ -126,9 +149,16 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--data_address=$DATA",
     ]
     volumes:
-      - $TESTDATA_VOLUME:/data
-      - $TEST_VOLUME:$CONTAINER_WORKDIR
-      - $TESTCONFIG_VOLUME:$NES_DIR
+      - type: bind
+        source: "$TESTDATA_DIR"
+        target: /data
+$TESTDATA_CACHE_MOUNT
+      - type: bind
+        source: "$TEST_DIR"
+        target: "$CONTAINER_WORKDIR"
+      - type: bind
+        source: "$TESTCONFIG_DIR"
+        target: "$NES_DIR"
 EOF
 
 done
@@ -138,11 +168,5 @@ networks:
   default:
     labels:
       nes-test: systest-remote
-volumes:
-  $TESTDATA_VOLUME:
-    external: true
-  $TESTCONFIG_VOLUME:
-    external: true
-  $TEST_VOLUME:
-    external: true
+$TESTDATA_CACHE_VOLUME
 EOF
