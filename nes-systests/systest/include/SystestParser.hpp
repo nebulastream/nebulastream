@@ -80,6 +80,13 @@ public:
         return SystestQueryId(currentQueryNumber++);
     }
 
+    /// The query the last result block belonged to; a query has one block per sink, so further blocks belong to the same query.
+    [[nodiscard]] SystestQueryId getLastQueryResultNumber() const
+    {
+        PRECONDITION(currentQueryResultNumber > INITIAL_QUERY_NUMBER, "No result block was read yet");
+        return SystestQueryId(currentQueryResultNumber - 1);
+    }
+
     [[nodiscard]] SystestQueryId getNextQueryResultNumber()
     {
         if (currentQueryNumber != (currentQueryResultNumber + 1))

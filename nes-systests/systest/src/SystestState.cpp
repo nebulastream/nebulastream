@@ -194,8 +194,8 @@ void shortenUniqueTestNames(NES::Systest::TestFileMap& testFiles)
 namespace NES::Systest
 {
 
-std::filesystem::path
-SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
+std::filesystem::path SystestQuery::resultFile(
+    const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile, const size_t sinkIndex)
 {
     auto resultPath = workingDir / "results" / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
     const auto resultDir = resultPath.parent_path();
@@ -205,7 +205,12 @@ SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_vi
         std::cout << "Created working directory: file://" << resultDir.string() << "\n";
     }
 
-    return resultPath;
+    /// The first sink keeps the plain name, so result files of single-sink queries stay recognizable.
+    if (sinkIndex == 0)
+    {
+        return resultPath;
+    }
+    return resultDir / std::filesystem::path(fmt::format("{}_{}_sink{}.csv", testName, queryIdInTestFile, sinkIndex));
 }
 
 std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
@@ -221,9 +226,9 @@ std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& work
     return sourcePath;
 }
 
-std::filesystem::path SystestQuery::resultFile() const
+std::filesystem::path SystestQuery::resultFile(const size_t sinkIndex) const
 {
-    return resultFile(workingDir, testName, queryIdInFile);
+    return resultFile(workingDir, testName, queryIdInFile, sinkIndex);
 }
 
 std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
