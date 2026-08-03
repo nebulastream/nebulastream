@@ -99,8 +99,10 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
     {
         return std::unexpected{sinkPluginConfigExp.error()};
     }
+
+    auto outputFormatterConfigExp = outputFormatterEntry(config);
     PluginSinkConfiguration pluginSinkConfig{sinkType, std::move(sinkPluginConfigExp).value()};
-    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move(out)};
+    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move()};
 
 
 
