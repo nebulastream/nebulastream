@@ -16,69 +16,99 @@
 
 #include <condition_variable>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <stop_token>
 #include <utility>
+#include <vector>
 
 #include <folly/Synchronized.h>
 
 #include <ErrorHandling.hpp>
 
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
-/// The channel is initially open.
+/// The channel is initially open and closed while at least one controller applies backpressure, so no sink releases what another still requires.
 struct Channel
 {
-    enum State : uint8_t
+    struct State
     {
-        OPEN,
-        CLOSED,
-        DESTROYED,
+        /// The channel is closed while this is not zero.
+        size_t controllersApplyingPressure = 0;
+        /// Live controllers; the channel is destroyed with the last one.
+        size_t controllers = 0;
+        bool destroyed = false;
     };
 
-    folly::Synchronized<State, std::mutex> stateMtx{OPEN};
+    folly::Synchronized<State, std::mutex> stateMtx{State{}};
     std::condition_variable_any change;
 };
 
 BackpressureController::BackpressureController(std::shared_ptr<Channel> channel) : channel{std::move(channel)}
 {
+    ++this->channel->stateMtx.lock()->controllers;
 }
 
 BackpressureController::~BackpressureController()
 {
-    if (channel)
+    if (!channel)
     {
-        *channel->stateMtx.lock() = Channel::DESTROYED;
-        channel->change.notify_all();
+        return;
     }
+
+    {
+        auto state = channel->stateMtx.lock();
+        if (applyingPressure)
+        {
+            --state->controllersApplyingPressure;
+        }
+        --state->controllers;
+        state->destroyed = state->controllers == 0;
+    }
+    channel->change.notify_all();
 }
 
 bool BackpressureController::applyPressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::CLOSED);
-    INVARIANT(old != Channel::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
-    return old == Channel::OPEN;
+    auto state = channel->stateMtx.lock();
+    INVARIANT(!state->destroyed, "The backpressureController is still alive thus the channel should not have been destroyed");
+    if (applyingPressure)
+    {
+        return false;
+    }
+    applyingPressure = true;
+    ++state->controllersApplyingPressure;
+    /// Only the controller that closes the channel reports a state change.
+    return state->controllersApplyingPressure == 1;
 }
 
 bool BackpressureController::releasePressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::OPEN);
-    INVARIANT(old != Channel::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
-    if (old == Channel::CLOSED)
+    bool opened = false;
     {
-        /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
-        channel->change.notify_all();
-        return true;
+        auto state = channel->stateMtx.lock();
+        INVARIANT(!state->destroyed, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
+        if (!applyingPressure)
+        {
+            return false;
+        }
+        applyingPressure = false;
+        --state->controllersApplyingPressure;
+        opened = state->controllersApplyingPressure == 0;
     }
-    return false;
+
+    if (opened)
+    {
+        /// The last controller released its pressure, wake up all waiting BackpressureListeners
+        channel->change.notify_all();
+    }
+    return opened;
 }
 
 void BackpressureListener::wait(const std::stop_token& stopToken) const
 {
     auto state = channel->stateMtx.lock();
-    /// If the channel is open, backpressureListener can proceed
-    if (*state == Channel::State::OPEN)
+    /// If no controller applies backpressure, the backpressureListener can proceed
+    if (state->controllersApplyingPressure == 0)
     {
         return;
     }
@@ -90,15 +120,28 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
         stopToken,
         [&destroyed, &state] -> bool
         {
-            destroyed = *state == Channel::DESTROYED;
-            return destroyed || *state == Channel::OPEN;
+            destroyed = state->destroyed;
+            return destroyed || state->controllersApplyingPressure == 0;
         });
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
 }
 
+std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(const size_t numberOfControllers)
+{
+    PRECONDITION(numberOfControllers > 0, "A backpressure channel needs at least one controller");
+    const auto channel = std::make_shared<Channel>();
+    std::vector<BackpressureController> controllers;
+    controllers.reserve(numberOfControllers);
+    for (size_t controller = 0; controller < numberOfControllers; ++controller)
+    {
+        controllers.emplace_back(BackpressureController{channel});
+    }
+    return {std::move(controllers), BackpressureListener{channel}};
+}
+
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()
 {
-    const auto channel = std::make_shared<Channel>();
-    return {BackpressureController{channel}, BackpressureListener{channel}};
+    auto [controllers, listener] = createBackpressureChannel(1);
+    return {std::move(controllers.front()), std::move(listener)};
 }
