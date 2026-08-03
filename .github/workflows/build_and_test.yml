@@ -217,7 +217,7 @@ jobs:
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
             rm -rf build
-            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DENABLE_DOCKER_TESTS=ON
             MOLD_JOBS=1 cmake --build build -j -- -k 0
             ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 1200
       - name: Offline clean build and tests (--network=none)
