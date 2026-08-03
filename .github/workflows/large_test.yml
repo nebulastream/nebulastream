@@ -141,7 +141,7 @@ jobs:
         run: |
           sccache --start-server
           sccache --show-stats
-          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DLARGE_TEST_TOTAL_MEMORY_BYTES=76911476736
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_DOCKER_EXTERNAL_DATA_VOLUME=test-file-cache -DLARGE_TEST_TOTAL_MEMORY_BYTES=76911476736
       - name: Build NebulaStream
         run: |
           sccache --show-stats

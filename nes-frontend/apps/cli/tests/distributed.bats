@@ -176,7 +176,6 @@ teardown()      { nes_distributed_teardown; }
 
   run docker_nes_cli -d start
 
-  sync_workdir
   grep "(5002) : query start call failed; Could not start query: query start call failed; Status: UNAVAILABLE" nes-cli.log
   [ "$status" -eq 1 ]
 
@@ -325,7 +324,6 @@ EOF
   # Poll until backpressure is observed in the worker log
   for i in $(seq 1 30); do
     sleep 1
-    sync_workdir
     if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
@@ -350,7 +348,6 @@ EOF
   # Poll until backpressure is observed in the worker log
   for i in $(seq 1 30); do
     sleep 1
-    sync_workdir
     if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
@@ -374,7 +371,6 @@ EOF
   # Poll until backpressure is observed in the worker log
   for i in $(seq 1 30); do
     sleep 1
-    sync_workdir
     if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
@@ -385,7 +381,6 @@ EOF
   # Poll until the sink closure propagates
   for i in $(seq 1 20); do
     sleep 1
-    sync_workdir
     if grep -q "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
@@ -428,7 +423,6 @@ EOF
   # Poll until backpressure is observed in the worker log
   for i in $(seq 1 30); do
     sleep 1
-    sync_workdir
     if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
       break
     fi
@@ -478,7 +472,6 @@ EOF
   run docker_nes_cli start
   [ "$status" -eq 1 ]
 
-  sync_workdir
   grep "topology is not connected" nes-cli.log
 }
 

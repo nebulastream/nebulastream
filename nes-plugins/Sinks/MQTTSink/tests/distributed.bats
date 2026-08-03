@@ -37,7 +37,6 @@ docker_mqtt_subscribe() {
   wait_until_status tests/good/example.yaml "Stopped" $output
 
   wait_until awk 'NF { count++ } END { exit(count != 9) }' results.csv
-  sync_workdir
   # assert that all generates tuples (1, 1000] where generated
   assert_file_line_count results.csv 9 --ignore-empty-lines
 }
@@ -69,7 +68,6 @@ EOF
   assert_success
   wait_until_status tests/good/example.yaml "Stopped" $output --require-healthy "worker-1"
 
-  sync_workdir
   assert_file_line_count results.csv 1000 --ignore-empty-lines
 }
 
@@ -103,7 +101,6 @@ EOF
   assert_success
   wait_until_status tests/good/example.yaml "Stopped" $output
 
-  sync_workdir
   assert_file_line_count results.csv 400000 --ignore-empty-lines
   grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
 }

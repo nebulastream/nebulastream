@@ -30,6 +30,11 @@ if [ -z "$CLI_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$TEST_DIR" ]; then
+  echo "ERROR: TEST_DIR is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -72,7 +77,9 @@ services:
     working_dir: /workdir
     command: ["sleep", "infinity"]
     volumes:
-      - $TEST_VOLUME:/workdir
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
 EOF
 
 # Read workers and generate services
@@ -115,7 +122,9 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
         echo '$CONFIG_B64' | base64 -d > /workdir/configs/$HOST_NAME.yaml
         exec nes-single-node-worker --grpc=$HOST_NAME:$HOST_PORT --data_address=$DATA --worker.default_query_execution.execution_mode=INTERPRETER --worker.query_engine.number_of_worker_threads=1 --configPath=/workdir/configs/$HOST_NAME.yaml
     volumes:
-      - $TEST_VOLUME:/workdir
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
 EOF
       continue
     fi
@@ -140,7 +149,9 @@ EOF
       "--worker.query_engine.number_of_worker_threads=1",
     ]
     volumes:
-      - $TEST_VOLUME:/workdir
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
 EOF
 
 done
@@ -150,7 +161,4 @@ networks:
   default:
     labels:
       nes-test: distributed-cli
-volumes:
-  $TEST_VOLUME:
-    external: true
 EOF
