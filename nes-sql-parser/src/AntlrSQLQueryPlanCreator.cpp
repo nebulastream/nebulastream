@@ -22,6 +22,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -92,20 +93,29 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     {
         throw InvalidQuerySyntax("Query could not be parsed");
     }
-    /// TODO #421: support multiple sinks
-    INVARIANT(!sinks.empty(), "Need at least one sink!");
-    return std::visit(
-        Overloaded{
-            [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::pair<Identifier, ConfigMap>& anonymousSink)
-            {
-                const auto& [type, configOptions] = anonymousSink;
-                const auto sinkConfig = getSinkConfig(configOptions);
-                const auto formatConfig = parseOutputFormatterConfig(configOptions);
-                const auto schemaOpt = getSinkSchema(configOptions);
-                return LogicalPlanBuilder::addAnonymousSink(type, schemaOpt, sinkConfig, formatConfig, queryPlans.top());
-            }},
-        sinks.front());
+    /// Every sink is attached to the same sub-plan, so they share one operator DAG instead of getting a copy each.
+    const auto addSink = [this](const auto& sink)
+    {
+        return std::visit(
+            Overloaded{
+                [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
+                [&](const std::pair<Identifier, ConfigMap>& anonymousSink)
+                {
+                    const auto& [type, configOptions] = anonymousSink;
+                    const auto sinkConfig = getSinkConfig(configOptions);
+                    const auto formatConfig = parseOutputFormatterConfig(configOptions);
+                    const auto schemaOpt = getSinkSchema(configOptions);
+                    return LogicalPlanBuilder::addAnonymousSink(type, schemaOpt, sinkConfig, formatConfig, queryPlans.top());
+                }},
+            sink);
+    };
+
+    auto plan = addSink(sinks.front());
+    for (const auto& sink : sinks | std::views::drop(1))
+    {
+        plan = addRootOperators(plan, addSink(sink).getRootOperators());
+    }
+    return plan;
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
@@ -341,11 +351,17 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
         throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
     }
     /// Store all specified sinks.
+    std::unordered_set<Identifier> sinkNames;
     for (const auto& sink : context->sink())
     {
         if (sink->identifier() != nullptr)
         {
-            sinks.emplace_back(bindIdentifier(sink->identifier()));
+            auto sinkName = bindIdentifier(sink->identifier());
+            if (not sinkNames.insert(sinkName).second)
+            {
+                throw InvalidQuerySyntax("Sink {} is listed more than once in the INTO clause.", sinkName);
+            }
+            sinks.emplace_back(std::move(sinkName));
         }
         else if (sink->anonymousSink() != nullptr)
         {
