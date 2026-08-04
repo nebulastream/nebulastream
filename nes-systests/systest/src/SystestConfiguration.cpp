@@ -22,7 +22,7 @@ namespace NES
 std::vector<BaseOption*> SystestConfiguration::getOptions()
 {
     return {
-        &testsDiscoverDir,
+        &testDiscoverDirs,
         &directlySpecifiedTestFiles,
         &testFileExtension,
         &workingDir,
