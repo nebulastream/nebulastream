@@ -25,6 +25,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -51,18 +52,35 @@ std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
         return std::unexpected{InvalidConfigParameter("Sink name '{}' is invalid: only-digit names are reserved", sinkName)};
     }
 
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
-    if (not descriptorConfigOpt.has_value())
+    auto descriptorConfig = [&]() -> std::expected<DescriptorConfig::Config, Exception>
     {
-        return std::unexpected{InvalidConfigParameter("Invalid configuration for sink '{}' of type '{}'", sinkName, sinkType)};
+        try
+        {
+            if (auto validated = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config)))
+            {
+                return std::move(validated).value();
+            }
+            return std::unexpected{UnknownSinkType("{}", sinkType)};
+        }
+        catch (const Exception& configValidationError)
+        {
+            /// Validation of a known sink type throws on invalid configs; report what actually failed.
+            return std::unexpected{configValidationError};
+        }
+    }();
+    if (not descriptorConfig.has_value())
+    {
+        return std::unexpected{descriptorConfig.error()};
     }
 
     const auto lockedSinks = sinks.wlock();
     auto sinkDescriptor = SinkDescriptor{NamedSinkDescriptor{
-        sinkName, schema, sinkType.asCanonicalString(), std::move(host), formatConfig, std::move(descriptorConfigOpt.value())}};
+        sinkName, schema, sinkType.asCanonicalString(), std::move(host), formatConfig, std::move(descriptorConfig.value())}};
 
-    /// TODO #1504: duplicate sinks are not registered
-    lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
+    if (const auto [existing, inserted] = lockedSinks->emplace(std::move(sinkName), sinkDescriptor); not inserted)
+    {
+        return std::unexpected{SinkAlreadyExists("{}", existing->first)};
+    }
     return sinkDescriptor;
 }
 
