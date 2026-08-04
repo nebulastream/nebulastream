@@ -414,7 +414,9 @@ public:
 
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
-        controller->insertBuffer(deepCopyBuffer(inputBuffer, *bufferProvider));
+        /// Allocate through the PipelineExecutionContext's (per-query) buffer provider so sink allocations are
+        /// covered by the buffer-exhaustion arbiter, like every other pipeline allocation.
+        controller->insertBuffer(deepCopyBuffer(inputBuffer, *pipelineExecutionContext.getBufferManager()));
 
         /// Handle repeat functionality
         const size_t maxRepeats = controller->repeatCount.load();
@@ -424,7 +426,7 @@ public:
             const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
             if (currentRepeatCount < maxRepeats)
             {
-                auto copiedBuffer = deepCopyBuffer(inputBuffer, *bufferProvider);
+                auto copiedBuffer = deepCopyBuffer(inputBuffer, *pipelineExecutionContext.getBufferManager());
                 copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
             }
@@ -451,10 +453,7 @@ public:
         }
     }
 
-    TestSink(std::shared_ptr<AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
-        : bufferProvider(std::move(bufferProvider)), controller(std::move(controller))
-    {
-    }
+    explicit TestSink(std::shared_ptr<TestSinkController> controller) : controller(std::move(controller)) { }
 
     ~TestSink() override { controller->destruction.set_value(); }
 
@@ -467,12 +466,11 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<TestSinkController> controller;
 };
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, BackpressureController backpressureController);
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
