@@ -13,6 +13,7 @@
 add_source_files(nes-configurations
         BaseConfiguration.cpp
         BaseOption.cpp
+        ByteAmount.cpp
         Descriptor.cpp
 )
 
