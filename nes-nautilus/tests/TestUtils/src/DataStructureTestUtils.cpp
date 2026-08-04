@@ -11,20 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access)
 #include <DataStructureTestUtils.hpp>
 
+#include <algorithm>
 #include <any>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
@@ -33,9 +35,16 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Ranges.hpp>
+#include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
+#include <function.hpp>
 #include <options.hpp>
 #include <static.hpp>
+#include <val_arith.hpp>
+#include <val_base.hpp>
+#include <val_bool.hpp>
+#include <val_enum.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::TestUtils
 {
@@ -516,7 +525,5 @@ void storeRecordToAnyVec(
         storeVarValToAnyVec(out, outOffset + static_cast<uint64_t>(i), record.read(fieldNames[i]), fieldTypes[i]);
     }
 }
-
-/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access)
 
 }

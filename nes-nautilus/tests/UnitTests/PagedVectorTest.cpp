@@ -57,11 +57,12 @@
 
 #include <Util/Ranges.hpp>
 
-#include <rapidcheck.h> /// NOLINT(misc-include-cleaner)
+/// Umbrella header: rapidcheck spreads rc::gen and the DefaultArbitrary specialisations over impl headers
+/// (gen/*.hpp) that cannot be included directly, so the umbrella is the only supported entry point.
+#include <rapidcheck.h>
 #include <fmt/ranges.h>
 #include <rapidcheck/gtest.h>
 
-/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access)
 namespace NES
 {
 namespace
@@ -787,5 +788,3 @@ TEST(PagedVectorTest, oversizedVarSizedThrowsWhenUnpooledUnavailable)
 }
 
 }
-
-/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access)
