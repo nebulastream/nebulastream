@@ -242,6 +242,39 @@ CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
 As you can see, one source reads CSV-formatted data from a TCP socket, while the other reads JSON-formatted data from a file.
 Both produce tuples that conform to the `lrb` schema.
 
+To ingest the output of a periodically executed shell command, use a `Process` source. The command
+is passed to `/bin/bash -c`, so pipelines, redirections, shell expansion, and tools such as `jq` are
+supported. Only standard output is ingested; standard error remains available for diagnostics.
+
+```yaml
+physical:
+  - logical: metrics
+    type: Process
+    host: localhost:8080
+    parser_config:
+      type: JSON
+    source_config:
+      command: >-
+        awk 'BEGIN{printf "{"} /^[A-Za-z_][A-Za-z0-9_]*:/ {k=$1; sub(/:$/,"",k);
+        normalized=""; for(i=1;i<=length(k);i++){c=substr(k,i,1);
+        if(i>1 && c~/[A-Z]/ && substr(k,i-1,1)~/[a-z]/) normalized=normalized "_";
+        normalized=normalized c} printf "%s\"%s_KB\":%s",(n++?",":""),toupper(normalized),$2}
+        END{print "}"}'
+        "/proc/$pid/smaps_rollup"
+      refresh_interval_ms: 1000
+      flush_interval_ms: 100
+```
+
+`REFRESH_INTERVAL_MS` controls how often the command starts. Invocations never overlap; if a command
+runs longer than the refresh interval, the next invocation starts after it exits. `FLUSH_INTERVAL_MS`
+limits how long a partially filled tuple buffer is retained after the first output byte arrives.
+Each invocation also receives the following exported environment variables:
+
+- `PID`, `pid`, and `WORKER_PID`: the PID of the NebulaStream worker process
+- `SOURCE_ID`: the physical source ID
+- `INVOCATION`: a one-based invocation counter
+- `TIMESTAMP_MS`: the invocation time as Unix epoch milliseconds
+
 The CSV file might look like this:
 ```
 creationTS,vehicle,speed,highway,lane,direction,position
@@ -780,4 +813,3 @@ Query compilation traces expression trees at compile time, producing efficient m
 | Count    | `SELECT COUNT(x) FROM s WINDOW SLIDING(ts, SIZE 1 SEC, ADVANCE BY 100 MS) INTO sink` |
 | Average  | `SELECT AVG(x) FROM s WINDOW SLIDING(ts, SIZE 1 MIN, ADVANCE BY 15 SEC) INTO sink`   |
 | Median   | `SELECT MEDIAN(x) FROM s WINDOW TUMBLING(ts, SIZE 1 SEC) INTO sink`                  |
-
