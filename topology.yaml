@@ -503,6 +503,74 @@ logical:
       - name: IMAGE
         type: VARSIZED
         nullable: false
+  - name: smaps_rollup
+    schema:
+      - name: RSS_KB
+        type: UINT64
+        nullable: true
+      - name: PSS_KB
+        type: UINT64
+        nullable: true
+      - name: PSS_DIRTY_KB
+        type: UINT64
+        nullable: true
+      - name: PSS_ANON_KB
+        type: UINT64
+        nullable: true
+      - name: PSS_FILE_KB
+        type: UINT64
+        nullable: true
+      - name: PSS_SHMEM_KB
+        type: UINT64
+        nullable: true
+      - name: SHARED_CLEAN_KB
+        type: UINT64
+        nullable: true
+      - name: SHARED_DIRTY_KB
+        type: UINT64
+        nullable: true
+      - name: PRIVATE_CLEAN_KB
+        type: UINT64
+        nullable: true
+      - name: PRIVATE_DIRTY_KB
+        type: UINT64
+        nullable: true
+      - name: REFERENCED_KB
+        type: UINT64
+        nullable: true
+      - name: ANONYMOUS_KB
+        type: UINT64
+        nullable: true
+      - name: KSM_KB
+        type: UINT64
+        nullable: true
+      - name: LAZY_FREE_KB
+        type: UINT64
+        nullable: true
+      - name: ANON_HUGE_PAGES_KB
+        type: UINT64
+        nullable: true
+      - name: SHMEM_PMD_MAPPED_KB
+        type: UINT64
+        nullable: true
+      - name: FILE_PMD_MAPPED_KB
+        type: UINT64
+        nullable: true
+      - name: SHARED_HUGETLB_KB
+        type: UINT64
+        nullable: true
+      - name: PRIVATE_HUGETLB_KB
+        type: UINT64
+        nullable: true
+      - name: SWAP_KB
+        type: UINT64
+        nullable: true
+      - name: SWAP_PSS_KB
+        type: UINT64
+        nullable: true
+      - name: LOCKED_KB
+        type: UINT64
+        nullable: true
 
 physical:
   - logical: rgb_with_faces_pipe_source
@@ -576,6 +644,21 @@ physical:
       type: NATIVE
     source_config:
       SAMPLE_RATE: 16000
+  - logical: smaps_rollup
+    host: localhost:8080
+    type: Process
+    parser_config:
+      type: JSON
+    source_config:
+      command: >-
+        awk 'BEGIN{printf "{"} /^[A-Za-z_][A-Za-z0-9_]*:/ {k=$1; sub(/:$/,"",k);
+        normalized=""; for(i=1;i<=length(k);i++){c=substr(k,i,1);
+        if(i>1 && c~/[A-Z]/ && substr(k,i-1,1)~/[a-z]/) normalized=normalized "_";
+        normalized=normalized c} printf "%s\"%s_KB\":%s",(n++?",":""),toupper(normalized),$2}
+        END{print "}"}'
+        "/proc/$pid/smaps_rollup"
+      refresh_interval_ms: 1000
+      flush_interval_ms: 100
 
 workers:
   - host: localhost:8080
