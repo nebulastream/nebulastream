@@ -26,11 +26,8 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -39,21 +36,19 @@
 #include <gtest/gtest.h> /// NOLINT(misc-include-cleaner): consumed via macros expanded from rapidcheck/gtest.h
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
-#include <ErrorHandling.hpp>
 #include <TestableChainedHashMap.hpp>
-#include <function.hpp>
 #include <static.hpp> /// NOLINT(misc-include-cleaner)
 #include <val_arith.hpp>
-#include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
-#include <rapidcheck.h> /// NOLINT(misc-include-cleaner)
+/// Umbrella header: rapidcheck spreads rc::gen and the DefaultArbitrary specialisations over impl headers
+/// (gen/*.hpp) that cannot be included directly, so the umbrella is the only supported entry point.
+#include <rapidcheck.h>
 
 #include <fmt/ranges.h>
 #include <rapidcheck/gtest.h>
 
-/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access)
 namespace NES
 {
 
@@ -126,6 +121,7 @@ void verifyLookups(
             const auto& [key, expectedValue] = entries[idx];
             const auto actual = chainedHashMap.at(key);
             RC_ASSERT(actual.has_value());
+            /// NOLINTNEXTLINE(bugprone-unchecked-optional-access): the RC_ASSERT above aborts the property on nullopt.
             RC_ASSERT(TestUtils::anyVecsEqual(*actual, expectedValue, valueTypes));
         }
     }
@@ -331,6 +327,7 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     constexpr uint64_t numberOfPooledBuffers = 16;
 
     auto bufferManager = TestUtils::createBufferManager(bufferSize, numberOfPooledBuffers);
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access): .value() throws on nullopt, which fails the test.
     auto hashMapBuffer = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(numberOfBuckets)).value();
     ChainedHashMap::init(hashMapBuffer, entrySize, numberOfBuckets, entrySize * entriesPerPage);
 
@@ -350,5 +347,3 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
 }
 
 }
-
-/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access)

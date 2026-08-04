@@ -201,4 +201,6 @@ CheckOptions:
   # It always tries to insert the libc++ implementation headers instead of the stdlib headers.
   # Also, it sometimes even tries to remove the stdlib headers as not needed, then inserts the libc++ headers.
   # Reflection headers use transitive includes intentionally for clean API separation
-  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;__.*fold\.h;__.*ranges_lower_bound\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp;Reflection\.hpp;Reflection.*\.hpp'
+  # rapidcheck defines rc::gen and the Arbitrary specialisations in impl headers (rapidcheck/**/*.hpp) that are
+  # not meant to be included directly; <rapidcheck.h> is the only supported entry point.
+  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;__.*fold\.h;__.*ranges_lower_bound\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp;Reflection\.hpp;Reflection.*\.hpp;rapidcheck.*'

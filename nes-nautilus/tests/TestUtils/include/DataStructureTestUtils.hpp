@@ -33,15 +33,17 @@
 #include <nautilus/Engine.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
+#include <val_base.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
-#include <rapidcheck.h> /// NOLINT(misc-include-cleaner)
+/// Umbrella header: rapidcheck spreads rc::gen and the DefaultArbitrary specialisations over impl headers
+/// (gen/*.hpp) that cannot be included directly, so the umbrella is the only supported entry point.
+#include <rapidcheck.h>
 
 namespace NES::TestUtils
 {
-
-/// NOLINTBEGIN(misc-include-cleaner, bugprone-unchecked-optional-access, fuchsia-default-arguments-declarations)
 
 enum class EngineMode : std::uint8_t
 {
@@ -254,8 +256,16 @@ void storeRecordToAnyVec(
     const Record& record,
     const std::vector<Record::RecordFieldIdentifier>& fieldNames,
     const std::vector<DataType>& fieldTypes,
-    uint64_t outOffset = 0);
+    uint64_t outOffset);
 
-/// NOLINTEND(misc-include-cleaner, bugprone-unchecked-optional-access, fuchsia-default-arguments-declarations)
+/// Stores into out[i], i.e. the single-record case.
+inline void storeRecordToAnyVec(
+    const nautilus::val<AnyVec*>& out,
+    const Record& record,
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames,
+    const std::vector<DataType>& fieldTypes)
+{
+    storeRecordToAnyVec(out, record, fieldNames, fieldTypes, 0);
+}
 
 }
