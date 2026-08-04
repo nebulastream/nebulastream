@@ -90,9 +90,10 @@ SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
 
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("file"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
@@ -111,9 +112,10 @@ SinkDescriptor createTestSinkDescriptorWithNewField(SinkCatalog& sinkCatalog)
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("new_field"), DataType::Type::INT64}};
 
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("file"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
@@ -359,9 +361,10 @@ TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
         UnqualifiedUnboundField{Identifier::parse("renamed_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("file"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();

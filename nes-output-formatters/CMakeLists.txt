@@ -48,7 +48,8 @@ target_sources(nes-output-formatters PRIVATE ${NES_OUTPUT_FORMATTERS_SOURCE_FILE
 # 'Public' provider library: exposes the descriptor, the provider, and the config registries
 # without dragging the nautilus-dependent formatter interfaces into consumers (e.g. nes-sinks,
 # whose SinkDescriptor carries an OutputFormatterDescriptor).
-add_library(nes-output-formatter-provider src/OutputFormatterProvider.cpp)
+add_library(nes-output-formatter-provider src/OutputFormatterProvider.cpp
+        include/OutputFormatters/CSVOutputFormatterConfig.hpp)
 target_link_libraries(nes-output-formatter-provider PUBLIC nes-configurations nes-memory PRIVATE nes-output-formatters)
 target_include_directories(nes-output-formatter-provider PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

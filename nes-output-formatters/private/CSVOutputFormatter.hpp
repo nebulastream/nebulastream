@@ -30,6 +30,7 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <OutputFormatters/CSVOutputFormatterConfig.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -43,18 +44,6 @@
 
 namespace NES
 {
-
-/// Formatter-defined config struct: instantiated from the generic config by the
-/// OutputFormatterConfig registry entry, carried through the OutputFormatterDescriptor as
-/// std::any, and serialized via reflection of exactly this struct (all members are reflectable).
-struct CSVOutputFormatterConfig
-{
-    bool quoteStrings;
-    std::string fieldDelimiter;
-    std::string tupleDelimiter;
-
-    static std::expected<CSVOutputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
-};
 
 class CSVOutputFormatter : public OutputFormatter
 {

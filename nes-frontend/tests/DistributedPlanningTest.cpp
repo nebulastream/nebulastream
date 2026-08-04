@@ -211,8 +211,9 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
                           { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
             | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
-        auto [generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor] = NES::unwrapOrThrow(NES::SinkCatalog::resolveNamedSinkConfig(
-            NES::Identifier::parse("VOID"), NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::vector<NES::LiteralConfigValue>{}}));
+        auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = NES::unwrapOrThrow(
+            NES::unwrapOrThrow(NES::SinkCatalog::getConfigSchema(NES::Identifier::parse("VOID"), NES::Identifier::parse("NATIVE")))
+                .resolveConfigs(NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::vector<NES::LiteralConfigValue>{}}));
         generalSinkConfig.host = NES::Host(host);
         statements.emplace_back(NES::CreateSinkStatement{
             .name = NES::Identifier::parse(name),

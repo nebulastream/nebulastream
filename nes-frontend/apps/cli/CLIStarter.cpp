@@ -669,7 +669,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         const auto values = mergeConfigValues(
             bindSourceConfig(config), formatValues | std::ranges::to<std::vector<NES::LiteralConfigValue>>());
         auto configSchema = NES::unwrapOrThrow(NES::SinkCatalog::getConfigSchema(bindIdentifierName(type), outputFormatterType));
-        auto [generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor] = NES::unwrapOrThrow(configSchema.resolveConfigs(values));
+        auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = NES::unwrapOrThrow(configSchema.resolveConfigs(values));
         generalSinkConfig.host = NES::Host(host);
         statements.emplace_back(NES::CreateSinkStatement{
             .name = bindIdentifierName(name),

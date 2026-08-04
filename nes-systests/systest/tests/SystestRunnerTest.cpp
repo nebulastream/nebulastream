@@ -141,11 +141,12 @@ public:
 
     SinkDescriptor dummySinkDescriptor = [&]
     {
-        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("Print"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
-                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
-              .value();
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("Print"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                      {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+                  .value();
         generalConfig.host = Host("localhost");
         return SinkCatalog{}
             .addSinkDescriptor(

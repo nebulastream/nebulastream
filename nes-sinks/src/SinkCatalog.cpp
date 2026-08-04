@@ -88,26 +88,38 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
     {
         return std::unexpected{UnknownSinkType(sinkType.asCanonicalString())};
     }
-    auto outputFormatterEntry = OutputFormatterConfigRegistry::instance().find(outputFormatterType.asCanonicalString());
-    if (not outputFormatterEntry)
-    {
-        return std::unexpected{UnknownOutputFormatterType(outputFormatterType.asCanonicalString())};
-    }
-
     auto sinkPluginConfigExp = sinkRegistryEntry->instantiate(config);
     if (not sinkPluginConfigExp)
     {
         return std::unexpected{sinkPluginConfigExp.error()};
     }
 
-    auto outputFormatterConfigExp = outputFormatterEntry->instantiate(config);
-    if (not outputFormatterConfigExp)
+    /// The NATIVE format has no registry entry and no config (see getConfigSchema).
+    auto outputFormatterDescriptorExp = [&]() -> std::expected<OutputFormatterDescriptor, Exception>
     {
-        return std::unexpected{outputFormatterConfigExp.error()};
+        if (outputFormatterType == Identifier::parse("NATIVE"))
+        {
+            return OutputFormatterDescriptor::native();
+        }
+        auto outputFormatterEntry = OutputFormatterConfigRegistry::instance().find(outputFormatterType.asCanonicalString());
+        if (not outputFormatterEntry)
+        {
+            return std::unexpected{UnknownOutputFormatterType(outputFormatterType.asCanonicalString())};
+        }
+        auto outputFormatterConfigExp = outputFormatterEntry->instantiate(config);
+        if (not outputFormatterConfigExp)
+        {
+            return std::unexpected{outputFormatterConfigExp.error()};
+        }
+        return OutputFormatterDescriptor{outputFormatterType, std::move(outputFormatterConfigExp).value()};
+    }();
+    if (not outputFormatterDescriptorExp)
+    {
+        return std::unexpected{outputFormatterDescriptorExp.error()};
     }
 
     PluginSinkConfiguration pluginSinkConfig{sinkType, std::move(sinkPluginConfigExp).value()};
-    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move(outputFormatterConfigExp).value()};
+    OutputFormatterDescriptor outputFormatterDescriptor = std::move(outputFormatterDescriptorExp).value();
 
     auto schema = config.get(SinkDescriptor::SCHEMA);
     auto host = config.get(SinkDescriptor::HOST);

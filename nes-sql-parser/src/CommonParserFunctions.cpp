@@ -124,10 +124,6 @@ std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, Outp
     const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
 {
     const auto configOptions = bindConfigValues(configOptionsAst);
-    if (configOptions.getFieldByName(QualifiedIdentifier::parse("SINK.SCHEMA")).has_value())
-    {
-        throw InvalidQuerySyntax("SINK.SCHEMA cannot be specified for a named sink; the schema is declared in the CREATE SINK statement");
-    }
 
     const auto outputFormatterType = [&]
     {

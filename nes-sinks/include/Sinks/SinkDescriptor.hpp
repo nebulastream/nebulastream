@@ -198,7 +198,8 @@ public:
         {
             return tryGetOr<std::string>(literal, expectedType<std::string>())
                 .transform([](std::string&& value) -> Host { return Host{std::move(value)}; });
-        }};
+        },
+        Host{Host::INVALID}};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{

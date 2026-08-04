@@ -109,12 +109,13 @@ public:
     static SinkDescriptor
     createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("file"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
-                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
-                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
-              .value();
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                      {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                      {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+                  .value();
         generalConfig.host = Host{"localhost"};
         return sinkCatalog
             .addSinkDescriptor(sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))

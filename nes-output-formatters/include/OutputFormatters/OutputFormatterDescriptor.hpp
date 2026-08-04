@@ -40,7 +40,6 @@ class OutputFormatterDescriptor final
 {
 public:
     explicit OutputFormatterDescriptor(Identifier outputFormatterType, ExplicitAny config);
-    ~OutputFormatterDescriptor() = default;
 
     /// The NATIVE format forwards buffers without formatting; it has no registry entry and no config.
     static OutputFormatterDescriptor native();

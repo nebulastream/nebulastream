@@ -78,6 +78,7 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <OutputFormatters/CSVOutputFormatterConfig.hpp>
 #include "Sinks/FileSink.hpp"
 
 #include "ChecksumSink.hpp"
@@ -126,6 +127,20 @@ public:
 
     bool registerSink(const CreateSinkStatement& createSinkStatement)
     {
+        /// Also register the sink under its declared name: EXPLAIN statements keep the original
+        /// sink name in the plan, so the optimizer's sink binding must find it in the catalog.
+        /// Executed queries instead go through createActualSink, which registers per-query sinks
+        /// under assigned names.
+        if (const auto sink = sinkCatalog->addSinkDescriptor(
+                createSinkStatement.name,
+                createSinkStatement.schema,
+                createSinkStatement.generalSinkConfig,
+                createSinkStatement.pluginSinkConfig,
+                createSinkStatement.outputFormatterDescriptor);
+            not sink.has_value())
+        {
+            throw sink.error();
+        }
         auto [_, success] = sinkProviders.emplace(
             createSinkStatement.name,
             [this, createSinkStatement = createSinkStatement](
@@ -145,6 +160,12 @@ public:
                     checksumSinkConfig.filePath = filePath;
                     pluginSinkConfig
                         = PluginSinkConfiguration{pluginSinkConfig.getType(), ExplicitAny{std::any{std::move(checksumSinkConfig)}}};
+                    if (outputFormatterConfig.getConfig().getValue().type() == typeid(CSVOutputFormatterConfig))
+                    {
+                        auto csvOutputConfig = outputFormatterConfig.getConfig().getAs<CSVOutputFormatterConfig>();
+                        csvOutputConfig.quoteStrings = true;
+                        outputFormatterConfig = OutputFormatterDescriptor{outputFormatterConfig.getOutputFormatterType(), ExplicitAny{std::any{std::move(csvOutputConfig)}}};
+                    }
                 }
                 return sinkCatalog->addSinkDescriptor(
                     std::move(assignedSinkName),

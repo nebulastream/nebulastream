@@ -81,9 +81,10 @@ SourceDescriptor createTestSourceDescriptor(SharedPtr<SourceCatalog>& sourceCata
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
 {
-    auto [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = SinkCatalog::resolveNamedSinkConfig(
-              Identifier::parse("file"),
-              Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
                   {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
                   {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();

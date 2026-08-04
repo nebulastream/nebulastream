@@ -193,7 +193,7 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
         ConfigFieldDefault{"OUTPUT_FORMATTER.TYPE", [] { return "CSV"; }},
         ConfigFieldDefault{"FILE_SINK.FILE_PATH", [] { return "/tmp/systest_file_source_placeholder.txt"; }},
         ConfigFieldDefault{"CHECKSUM_SINK.FILE_PATH", [] { return "/tmp/systest_checksum_sink_placeholder.txt"; }},
-        ConfigFieldDefault{"SINK.HOST", [&]{ return config.clusterConfig.allowSourcePlacement.at(0).getRawValue(); }},
+        ConfigFieldDefault{"SINK.HOST", [&]{ return config.clusterConfig.allowSinkPlacement.at(0).getRawValue(); }},
         ConfigFieldDefault{"FILE_SINK.PATH", []{ return "/tmp/systest_file_sink_placeholder.txt"; }}
     };
 }

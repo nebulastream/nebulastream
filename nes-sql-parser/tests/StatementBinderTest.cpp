@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <any>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -366,11 +367,14 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
 
-    const Schema<LiteralConfigValue, Ordered> expectedSinkConfig{std::vector<LiteralConfigValue>{
-        {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"out.csv"}},
-        {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}},
-        {QualifiedIdentifier::parse("SINK.SCHEMA"), schema}}};
-    ASSERT_EQ(expectedSinkConfig, anonymousSinkOperator->getSinkConfig());
+    const auto sinkSchema = anonymousSinkOperator->getSinkSchema();
+    const auto* boundSchema = std::get_if<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(&sinkSchema);
+    ASSERT_NE(nullptr, boundSchema);
+    EXPECT_EQ(schema, **boundSchema);
+
+    const auto fileSinkConfig = anonymousSinkOperator->getPluginSinkConfiguration().getPluginData().getAs<FileSinkConfig>();
+    EXPECT_EQ(std::filesystem::path{"out.csv"}, fileSinkConfig.filePath);
+    EXPECT_EQ(Identifier::parse("CSV"), anonymousSinkOperator->getOutputFormatterDescriptor().getOutputFormatterType());
 }
 
 TEST_F(StatementBinderTest, AnonymousSourceQuery)
