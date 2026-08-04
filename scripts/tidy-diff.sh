@@ -61,7 +61,7 @@ NES_TIDY_DIFF_BASE="${NES_TIDY_DIFF_BASE:-HEAD}"
 
 # Path exclusions mirror the CI invocation (.github/workflows/clang_tidy_diff.yml):
 # generated/vendored sources are not ours to lint.
-EXCLUDES=(':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**')
+EXCLUDES=(':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' ':!cmake/corrosion/**')
 
 COLOR_BOLD="\e[1m"
 COLOR_RESET="\e[0m"

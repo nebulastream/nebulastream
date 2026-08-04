@@ -97,13 +97,16 @@ fi
 
 FAIL=0
 
+# Vendored third-party trees are excluded from all formatting / preamble / lint checks.
+VENDORED_PATHSPEC=':!cmake/corrosion'
+
 if [ "${1-}" = "-i" ]
 then
     # clang-format
-    git ls-files -- '*.cpp' '*.hpp' \
+    git ls-files -- '*.cpp' '*.hpp' "$VENDORED_PATHSPEC" \
       | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" -i
 
-    git ls-files -- '*.rs' \
+    git ls-files -- '*.rs' "$VENDORED_PATHSPEC" \
       | xargs --max-args=10 --max-procs="$(nproc)" "$RUSTFMT" --edition 2024
 
     # newline at eof
@@ -112,16 +115,16 @@ then
     #   remove filenames indicating non-text content
     #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
     git ls-files \
-      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" -e "\.onnx$" \
+      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" -e "\.onnx$" -e "^cmake/corrosion/" \
       | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
 else
     # clang-format
-    git ls-files -- '*.cpp' '*.hpp' \
+    git ls-files -- '*.cpp' '*.hpp' "$VENDORED_PATHSPEC" \
       | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror \
       || FAIL=1
 
-    git ls-files -- '*.rs' \
+    git ls-files -- '*.rs' "$VENDORED_PATHSPEC" \
       | xargs --max-args=10 --max-procs="$(nproc)" "$RUSTFMT" --edition 2024 --check \
       || FAIL=1
 
@@ -132,7 +135,7 @@ else
     #   take last char of the files, count lines and chars,
     #   fail if not equal (i.e. not every char is a newline)
     git ls-files \
-      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" -e "\.onnx$" \
+      | grep --invert-match -e "\.png$" -e "\.zip$" -e "\.bin$" -e "\.nes" -e "\.onnx$" -e "^cmake/corrosion/" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
       | awk '$1 != $2 { exit 1 }' \
       || log_error 'There are missing newline(s) at EOF. Please run "scripts/format.sh -i" to fix'
@@ -143,7 +146,7 @@ fi
 # Only /// allowed, as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex matches an even number of slashes (i.e. //, ////, ...)
 # The regex does not match "://" (for e.g. https://foo)
-for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp" "$VENDORED_PATHSPEC")
 do
     if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "$file" > /dev/null
     then
@@ -153,7 +156,7 @@ done
 
 # first include in .cpp file is the corresponding .hpp file
 #
-for file in $(git diff --name-only --diff-filter RAM "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp")
+for file in $(git diff --name-only --diff-filter RAM "HEAD~$DISTANCE_MERGE_BASE" -- "*.cpp" "$VENDORED_PATHSPEC")
 do
     # remove path and .cpp suffix, i.e. /foo/bar.cpp -> bar
     basename=$(basename "$file" .cpp)
@@ -179,7 +182,7 @@ done
 #
 # CLion uses double quotes when adding includes (automatically).
 # This check warns the author of a PR about includes with double quotes to avoid burdening the reviewers
-for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp")
+for file in $(git diff --name-only "HEAD~$DISTANCE_MERGE_BASE" -- "*.hpp" "*.cpp" "$VENDORED_PATHSPEC")
 do
     # if an added line contains contains a quote include
     if git diff "HEAD~$DISTANCE_MERGE_BASE" -- "$file" | grep "^+" | grep '#include ".*"' > /dev/null
@@ -194,18 +197,18 @@ done
 # (e.g. <../../foo.hpp> or "../../foo.hpp") or absolute paths (e.g. </home/user/foo.hpp>
 # or "/home/user/foo.hpp"). This applies to both angle-bracket and double-quote includes.
 INCLUDE_PATH_PATTERN='#include[[:space:]]+([<"]/|[<"][^>"]*\.\./)'
-if git grep -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp" > /dev/null
+if git grep -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp" "$VENDORED_PATHSPEC" > /dev/null
 then
-    log_error "Found include(s) with parent-relative or absolute paths. Use proper include paths instead.\n$(git grep -n -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp")"
+    log_error "Found include(s) with parent-relative or absolute paths. Use proper include paths instead.\n$(git grep -n -E "$INCLUDE_PATH_PATTERN" -- "*.hpp" "*.cpp" "$VENDORED_PATHSPEC")"
 fi
 
 # no raw catch (...)
 #
 # We generally want to have cpptrace traces, thus we need to use the cpptrace try-catch wrapper.
 # c.f. https://github.com/jeremy-rifkin/cpptrace?tab=readme-ov-file#traces-from-all-exceptions-cpptrace_try-and-cpptrace_catch
-if git grep "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)" > /dev/null
+if git grep "catch (\.\.\.)" -- ".hpp" "*.cpp" "$VENDORED_PATHSPEC" | grep -v "NOLINT(no-raw-catch-all)" > /dev/null
 then
-    log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH (or cpptrace::try_catch for multiple exception handlers) to preserve stacktraces, .\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)")"
+    log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH (or cpptrace::try_catch for multiple exception handlers) to preserve stacktraces, .\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" "$VENDORED_PATHSPEC" | grep -v "NOLINT(no-raw-catch-all)")"
 fi
 
 python3 scripts/check_preamble.py || FAIL=1
