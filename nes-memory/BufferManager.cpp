@@ -32,8 +32,10 @@
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/MallocUnpooledBufferManager.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/UnpooledChunksManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
@@ -48,9 +50,13 @@ BufferManager::BufferManager(
     const uint32_t numOfBuffers,
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
     const size_t unpooledMemoryLimitInBytes,
-    const uint32_t alignment)
+    const uint32_t alignment,
+    const UnpooledBufferManagerType unpooledBufferManagerType)
     : availableBuffers(numOfBuffers)
-    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
+    , unpooledBufferManager(
+          unpooledBufferManagerType == UnpooledBufferManagerType::MALLOC
+              ? std::shared_ptr<UnpooledBufferManager>{std::make_shared<MallocUnpooledBufferManager>(unpooledMemoryLimitInBytes)}
+              : std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , alignment(alignment)
@@ -65,7 +71,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
     const double unpooledMemoryFraction,
     const BufferAlignment alignment,
     const uint32_t bufferSize,
-    const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
+    const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+    const UnpooledBufferManagerType unpooledBufferManagerType)
 {
     PRECONDITION(
         unpooledMemoryFraction >= 0.0 and unpooledMemoryFraction <= 1.0,
@@ -81,7 +88,13 @@ std::shared_ptr<BufferManager> BufferManager::create(
         pooledMemoryInBytes / bufferSize);
     const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
     return std::make_shared<BufferManager>(
-        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
+        Private{},
+        bufferSize,
+        numOfBuffers,
+        memoryResource,
+        unpooledMemoryLimitInBytes,
+        alignment.getRawValue(),
+        unpooledBufferManagerType);
 }
 
 BufferManager::~BufferManager()
@@ -130,7 +143,7 @@ void BufferManager::destroy()
         allocatedAreaSize = 0;
 
         /// Destroying the unpooled chunks
-        unpooledChunksManager.reset();
+        unpooledBufferManager.reset();
     }
 }
 
@@ -273,7 +286,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
+    return unpooledBufferManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
@@ -308,7 +321,7 @@ size_t BufferManager::getNumOfPooledBuffers() const
 
 size_t BufferManager::getNumOfUnpooledBuffers() const
 {
-    return unpooledChunksManager->getNumberOfUnpooledBuffers();
+    return unpooledBufferManager->getNumberOfUnpooledBuffers();
 }
 
 size_t BufferManager::getNumberOfAvailableBuffers() const

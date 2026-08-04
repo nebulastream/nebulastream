@@ -27,6 +27,7 @@
 #include <vector>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/UnpooledBufferManager.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/RollingAverage.hpp>
 #include <fmt/format.h>
@@ -37,7 +38,7 @@ namespace NES
 
 
 /// Stores and tracks all memory chunks for unpooled / variable sized buffers
-class UnpooledChunksManager
+class UnpooledChunksManager final : public UnpooledBufferManager
 {
     static constexpr auto NUM_PRE_ALLOCATED_CHUNKS = 10;
     static constexpr auto ROLLING_AVERAGE_UNPOOLED_BUFFER_SIZE = 100;
@@ -98,11 +99,11 @@ class UnpooledChunksManager
 
 public:
     explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t unpooledMemoryBudgetInBytes);
-    size_t getNumberOfUnpooledBuffers() const;
+    size_t getNumberOfUnpooledBuffers() const override;
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.
     std::optional<TupleBuffer>
-    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler);
+    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler) override;
 };
 
 }

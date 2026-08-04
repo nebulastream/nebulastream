@@ -27,7 +27,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/UnpooledChunksManager.hpp>
+#include <Runtime/UnpooledBufferManager.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES
@@ -81,7 +81,8 @@ public:
         uint32_t numOfBuffers,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
         size_t unpooledMemoryLimitInBytes,
-        uint32_t alignment);
+        uint32_t alignment,
+        UnpooledBufferManagerType unpooledBufferManagerType);
 
     /// Creates a new global buffer manager from a total memory budget. The pooled buffer count and the unpooled
     /// memory limit are derived: unpooledLimit = totalMemoryInBytes * unpooledMemoryFraction, the remaining
@@ -91,12 +92,14 @@ public:
     /// @param alignment byte alignment of every buffer; must be a power of two <= page size (a cache line is 64 bytes)
     /// @param bufferSize the size of each pooled buffer in bytes
     /// @param memoryResource resource for allocating and deallocating memory
+    /// @param unpooledBufferManagerType chunked (default) or one malloc allocation per unpooled buffer
     static std::shared_ptr<BufferManager> create(
         size_t totalMemoryInBytes,
         double unpooledMemoryFraction,
         BufferAlignment alignment,
         uint32_t bufferSize,
-        const std::shared_ptr<std::pmr::memory_resource>& memoryResource);
+        const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+        UnpooledBufferManagerType unpooledBufferManagerType = UnpooledBufferManagerType::CHUNKED);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
@@ -156,7 +159,7 @@ private:
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
 
-    std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
+    std::shared_ptr<NES::UnpooledBufferManager> unpooledBufferManager;
 
     size_t bufferSize;
     size_t numOfBuffers;

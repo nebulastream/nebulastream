@@ -99,12 +99,12 @@ query:
                  END       AS "image",
              rgb_timestamp AS "timestamp"
       FROM (SELECT *, image_manip_face_detection(rgb_image, rgb_width, rgb_height) as face
-            FROM (SELECT image AS rgb_image, timestamp AS rgb_timestamp, width AS rgb_width, height AS rgb_height
+            FROM (SELECT image AS thermal_image, timestamp AS thermal_timestamp, width AS thermal_width, height AS thermal_height
                   FROM video_pipe
-                  WHERE PIXEL_FORMAT = 34603058) ASOF
-                     JOIN (SELECT image AS thermal_image, timestamp AS thermal_timestamp, width AS thermal_width, height AS thermal_height
+                  WHERE PIXEL_FORMAT = 17825799) ASOF
+                     JOIN (SELECT image AS rgb_image, timestamp AS rgb_timestamp, width AS rgb_width, height AS rgb_height
                            FROM video_pipe
-                           WHERE PIXEL_FORMAT = 17825799) TIME (rgb_timestamp, thermal_timestamp)) INTO MQTT('rgb-image' AS "SINK"."TOPIC",
+                           WHERE PIXEL_FORMAT = 34603058) TIME (thermal_timestamp, rgb_timestamp)) INTO MQTT('rgb-image' AS "SINK"."TOPIC",
         'localhost:8080' AS "SINK"."HOST",
         'localhost:1883' AS "SINK"."SERVER_URI",
         2 AS "SINK"."QOS",
