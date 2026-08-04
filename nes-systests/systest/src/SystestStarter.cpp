@@ -72,9 +72,11 @@ void configureArgumentParser(ArgumentParser& program)
 {
     const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
 
-    program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., filter.test, or a directory to discover test files in. Use "
-              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+    program.add_argument("-t", "--testLocations")
+        .help("directly specified test files, directories, or multiple locations to discover test files in. "
+              "If a directory is given, all .test files are discovered recursively. "
+              "Use 'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR)
+        .nargs(argparse::nargs_pattern::any);
     program.add_argument("-g", "--groups").help("run specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -246,60 +248,70 @@ std::vector<std::filesystem::path> findAllInTree(const std::filesystem::path& wa
     return hits;
 }
 
-std::vector<std::filesystem::path> resolveTestArg(const std::filesystem::path& arg, const std::filesystem::path& discoverRoot)
+void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES::SystestConfiguration& config)
 {
-    if (std::filesystem::exists(arg))
+    /// Search all discover directories for a matching file name
+    std::vector<std::filesystem::path> allMatches;
+    for (const auto& dir : config.testDiscoverDirs.getValues())
     {
-        return {std::filesystem::canonical(arg)};
+        auto matches = findAllInTree(testFilePath.filename(), dir.getValue());
+        allMatches.insert(allMatches.end(), matches.begin(), matches.end());
     }
-    return findAllInTree(arg.filename(), discoverRoot);
-}
 
-void applyDiscoveredTestLocation(
-    const std::filesystem::path& testFilePath, const std::filesystem::path& discoverRoot, NES::SystestConfiguration& config)
-{
-    const auto matches = resolveTestArg(testFilePath, discoverRoot);
-    if (matches.empty())
+    if (allMatches.empty())
     {
-        std::cerr << '\'' << testFilePath << "' could not be located under '" << discoverRoot << "'.\n";
+        std::cerr << '\'' << testFilePath << "' could not be located in any test discover directory.\n";
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
-    if (matches.size() == 1)
+    if (allMatches.size() == 1)
     {
-        config.directlySpecifiedTestFiles = matches.front();
+        config.directlySpecifiedTestFiles = allMatches.front();
         return;
     }
 
     std::cerr << "Ambiguous test name '" << testFilePath << "':\n";
-    for (const auto& path : matches)
+    for (const auto& path : allMatches)
     {
         std::cerr << "  • " << path << '\n';
     }
     std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
 }
 
-void applyTestLocation(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
-    if (not program.is_used("--testLocation"))
+    if (not program.is_used("--testLocations"))
     {
         return;
     }
 
-    const auto testFilePath = parseTestLocationPath(program.get<std::string>("--testLocation"), config);
-    if (std::filesystem::is_directory(testFilePath))
-    {
-        config.testsDiscoverDir = testFilePath;
-        return;
-    }
+    /// Directories given on the command line replace the default discover directory rather than extending it,
+    /// so `-t dirA dirB` discovers in dirA and dirB only. The default is dropped on the first directory seen.
+    bool defaultDiscoverDirReplaced = false;
 
-    if (std::filesystem::is_regular_file(testFilePath))
+    const auto testLocations = program.get<std::vector<std::string>>("--testLocations");
+    for (const auto& location : testLocations)
     {
-        config.directlySpecifiedTestFiles = testFilePath;
-        return;
-    }
+        const auto testFilePath = parseTestLocationPath(location, config);
+        if (std::filesystem::is_directory(testFilePath))
+        {
+            if (not defaultDiscoverDirReplaced)
+            {
+                config.testDiscoverDirs.clear();
+                defaultDiscoverDirReplaced = true;
+            }
+            config.testDiscoverDirs.add(testFilePath.string());
+            continue;
+        }
 
-    applyDiscoveredTestLocation(testFilePath, config.testsDiscoverDir.getValue(), config);
+        if (std::filesystem::is_regular_file(testFilePath))
+        {
+            config.directlySpecifiedTestFiles = testFilePath;
+            continue;
+        }
+
+        applyDiscoveredTestLocation(testFilePath, config);
+    }
 }
 
 void addSequenceOptionValues(
@@ -487,7 +499,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     applyBenchmarkMode(program, config);
     applyDebugMode(program);
     applyInputLocations(program, config);
-    applyTestLocation(program, config);
+    applyTestLocations(program, config);
     applyGroupSelection(program, config);
     applyExecutionOptions(program, config);
     applyConfigurationFiles(program, config);

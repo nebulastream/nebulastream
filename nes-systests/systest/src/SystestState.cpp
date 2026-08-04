@@ -369,7 +369,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
-                    "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
+                    "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
                     testfile.getLogFilePath());
             }
             return TestFileMap{{testfile.file, testfile}};
@@ -383,13 +383,19 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
-                "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
+                "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
                 testfile.getLogFilePath());
         }
         return TestFileMap{{testfile.file, testfile}};
     }
 
-    auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
+    TestFileMap testMap;
+    for (const auto& discoverDir : config.testDiscoverDirs.getValues())
+    {
+        auto tests = discoverTestsRecursively(discoverDir.getValue(), config.testFileExtension.getValue());
+        testMap.merge(tests);
+    }
+
     std::erase_if(
         testMap,
         [&](const auto& nameAndFile)
