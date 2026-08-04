@@ -546,7 +546,7 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
 TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
 {
     SystestConfiguration config{};
-    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
+    config.testDiscoverDirs.add(SYSTEST_DATA_DIR);
     const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
     const auto testMap = Systest::loadTestFileMap(config);
