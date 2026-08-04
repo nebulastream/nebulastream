@@ -112,6 +112,18 @@ jobs:
       NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
     tests: [systest, docker]
 
+  # Validates a full build without compiler-cache assistance. Keep this on the
+  # self-hosted runner because every translation unit must be compiled locally.
+  - name: "{arch} {stdlib} {build_type} clean build (unit+systest+docker)"
+    arch: x64
+    stdlib: libcxx
+    build_type: Debug
+    sanitizer: none
+    runner: self-hosted-{arch}
+    cmake_flags:
+      USE_BUILD_CACHE: "OFF"
+    tests: [unit, systest, docker]
+
   # === Build-only (no tests, validates compilation) ===
 
   - name: "{arch} {stdlib} {build_type} (build only)"
