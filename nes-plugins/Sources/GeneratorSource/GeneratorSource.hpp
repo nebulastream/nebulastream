@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -33,14 +34,10 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
 #include <GeneratorRate.hpp>
-#include <SinusGeneratorRate.hpp>
 
 namespace NES
 {
@@ -65,7 +62,12 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    /// Validates the generator config without throwing: a malformed user config is reported via the returned error.
+    [[nodiscard]] static std::expected<DescriptorConfig::Config, Exception>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// A rate config is valid if it parses as either a fixed or a sinus rate.
+    [[nodiscard]] static std::expected<void, Exception> validateGeneratorRateConfig(std::string_view configString);
 
 private:
     uint32_t seed;
@@ -83,37 +85,13 @@ private:
 
 struct ConfigParametersGenerator
 {
+    /// The validation lambdas must not throw on malformed user input: they return nullopt on invalid values,
+    /// GeneratorSource::validateAndFormat produces the informative error for the user.
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
         "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
-            if (not optToken.has_value() || not optToken.value().asEnum<GeneratorStop>().has_value())
-            {
-                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"))
-                throw InvalidConfigParameter(
-                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"));
-            }
-            switch (optToken.value().asEnum<GeneratorStop>().value())
-            {
-                case GeneratorStop::ALL: {
-                    return std::optional(EnumWrapper(GeneratorStop::ALL));
-                }
-                case GeneratorStop::ONE: {
-                    return std::optional(EnumWrapper(GeneratorStop::ONE));
-                }
-                case GeneratorStop::NONE: {
-                    return std::optional(EnumWrapper(GeneratorStop::NONE));
-                }
-                default: {
-                    NES_ERROR(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"))
-                    throw InvalidConfigParameter(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("STOP_GENERATOR_WHEN_SEQUENCE_FINISHES"));
-                }
-            }
-        }};
+        { return DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SEED{
         "SEED",
@@ -123,77 +101,32 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorRate::Type> GENERATOR_RATE_TYPE{
         "GENERATOR_RATE_TYPE",
         EnumWrapper{GeneratorRate::Type::FIXED},
-        [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_TYPE, config);
-            if (not optToken.has_value() || not optToken.value().asEnum<GeneratorRate::Type>().has_value())
-            {
-                return std::optional<EnumWrapper>();
-            }
-            switch (optToken.value().asEnum<GeneratorRate::Type>().value())
-            {
-                case GeneratorRate::Type::FIXED:
-                    return std::optional(EnumWrapper(GeneratorRate::Type::FIXED));
-                case GeneratorRate::Type::SINUS:
-                    return std::optional(EnumWrapper(GeneratorRate::Type::SINUS));
-            }
-            return std::optional<EnumWrapper>();
-        }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(GENERATOR_RATE_TYPE, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
         "GENERATOR_RATE_CONFIG",
         "emit_rate 1000",
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         {
-            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
-            if (not optToken.has_value())
+            auto configString = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
+            if (configString.has_value() and GeneratorSource::validateGeneratorRateConfig(configString.value()).has_value())
             {
-                return std::optional<std::string>();
+                return configString;
             }
-            if (SinusGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value()
-                or FixedGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value())
-            {
-                return DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
-            }
-            return std::optional<std::string>();
+            return std::nullopt;
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
         "GENERATOR_SCHEMA",
         {},
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
         {
-            const std::string schema = DescriptorConfig::tryGet(GENERATOR_SCHEMA, config).value_or("");
-            if (schema.empty())
+            auto schema = DescriptorConfig::tryGet(GENERATOR_SCHEMA, config);
+            if (schema.has_value() and GeneratorFields::validateSchema(schema.value()).has_value())
             {
-                NES_ERROR("Generator schema cannot be empty!")
-                throw InvalidConfigParameter("Generator schema cannot be empty!");
+                return schema;
             }
-
-
-            for (const auto lines = splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
-            {
-                line = trimWhiteSpaces(line);
-                const auto foundIdentifier
-                    = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
-                bool validatorExists = false;
-                for (const auto& [identifier, validator] : GeneratorFields::Validators)
-                {
-                    if (identifier == foundIdentifier)
-                    {
-                        validator(line);
-                        validatorExists = true;
-                        break;
-                    }
-                }
-                if (not validatorExists)
-                {
-                    NES_ERROR("Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
-                    throw InvalidConfigParameter(
-                        "Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
-                }
-            }
-            return DescriptorConfig::tryGet(GENERATOR_SCHEMA, config);
+            return std::nullopt;
         }};
 
     static inline const NES::DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
