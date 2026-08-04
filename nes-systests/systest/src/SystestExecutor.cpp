@@ -94,7 +94,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    Systest::SystestProgressTracker& progressTracker)
+    Systest::SystestProgressTracker& progressTracker,
+    const std::optional<ErrorCode>& toleratedErrorCode)
 {
     auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
@@ -114,7 +115,12 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
             auto shuffledQueries = entry.second;
             std::ranges::shuffle(shuffledQueries, rng);
             const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+                shuffledQueries,
+                numberConcurrentQueries,
+                querySubmitter,
+                progressTracker,
+                Systest::discardPerformanceMessage,
+                toleratedErrorCode);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -126,7 +132,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& baseConfiguration,
-    Systest::SystestProgressTracker& progressTracker)
+    Systest::SystestProgressTracker& progressTracker,
+    const std::optional<ErrorCode>& toleratedErrorCode)
 {
     while (true)
     {
@@ -153,7 +160,12 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
             const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+                shuffledQueries,
+                numberConcurrentQueries,
+                querySubmitter,
+                progressTracker,
+                Systest::discardPerformanceMessage,
+                toleratedErrorCode);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -189,12 +201,18 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     if (config.remoteWorker.getValue())
     {
-        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker);
+        runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker, config.toleratedErrorCode);
     }
     else
     {
         runEndlessLocal(
-            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration, progressTracker);
+            queriesByOverride,
+            rng,
+            numberConcurrentQueries,
+            config.clusterConfig,
+            singleNodeWorkerConfiguration,
+            progressTracker,
+            config.toleratedErrorCode);
     }
 }
 
@@ -332,8 +350,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
                                                           { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                 : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
-            auto failed
-                = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage);
+            auto failed = runQueriesAtRemoteWorker(
+                queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage, config.toleratedErrorCode);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
@@ -422,7 +440,13 @@ SystestExecutorResult SystestExecutor::executeSystests()
                                                                   { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                         : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
                     auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
+                        queriesForConfig,
+                        numberConcurrentQueries,
+                        config.clusterConfig,
+                        configCopy,
+                        progressTracker,
+                        performanceMessage,
+                        config.toleratedErrorCode);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }
