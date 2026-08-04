@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -341,23 +340,5 @@ RunningQueryPlan::~RunningQueryPlan()
         sources = std::move(internal.sources);
     }
     sources.clear();
-}
-
-uint64_t RunningQueryPlan::sumPendingTasks()
-{
-    auto lock = this->internal.lock();
-    uint64_t sum = 0;
-    for (const auto& weakRef : lock->pipelines)
-    {
-        if (auto strongRef = weakRef.lock())
-        {
-            const auto pending = strongRef->pendingTasks.load();
-            if (pending > 0)
-            {
-                sum += static_cast<uint64_t>(pending);
-            }
-        }
-    }
-    return sum;
 }
 }

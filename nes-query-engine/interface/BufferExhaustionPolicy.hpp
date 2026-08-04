@@ -19,10 +19,10 @@ namespace NES
 {
 
 /// Chooses which query is terminated to relieve global buffer-pool exhaustion. The "buffers held" by a query is
-/// approximated by the sum of pending tasks across its pipelines (each in-flight task holds ~one pooled buffer).
+/// the number of pooled buffers handed out through its per-query buffer provider and not yet recycled.
 enum class BufferExhaustionPolicy : uint8_t
 {
-    /// Terminate the running query holding the most buffers (default): one kill frees the most and targets the offender.
+    /// Terminate the query holding the most buffers (default): one kill frees the most and targets the offender.
     TERMINATE_LARGEST,
     /// The query whose worker hit the exhaustion terminates itself (minimal; no enumeration; may be unfair).
     TERMINATE_SELF
