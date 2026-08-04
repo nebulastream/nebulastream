@@ -37,6 +37,7 @@
 namespace NES
 {
 class UnpooledChunksManager;
+class MallocUnpooledBufferManager;
 }
 
 namespace NES
@@ -179,6 +180,7 @@ class MemorySegment
     friend class NES::FixedSizeBufferPool;
     friend class NES::BufferManager;
     friend class NES::UnpooledChunksManager;
+    friend class NES::MallocUnpooledBufferManager;
     friend class BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t

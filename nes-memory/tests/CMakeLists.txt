@@ -13,6 +13,9 @@
 add_nes_test(unpooled-buffer-test UnpooledBufferTests.cpp)
 target_link_libraries(unpooled-buffer-test nes-memory)
 
+add_nes_test(malloc-unpooled-buffer-manager-test MallocUnpooledBufferManagerTest.cpp)
+target_link_libraries(malloc-unpooled-buffer-manager-test nes-memory)
+
 add_nes_test(tuple-buffer-memory-access-tests TupleBufferMemoryAccessTest.cpp)
 target_link_libraries(tuple-buffer-memory-access-tests nes-memory)
 

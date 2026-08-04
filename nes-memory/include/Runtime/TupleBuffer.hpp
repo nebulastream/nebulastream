@@ -34,6 +34,7 @@
 namespace NES
 {
 class UnpooledChunksManager;
+class MallocUnpooledBufferManager;
 
 /// @brief Identifies a child TupleBuffer attached to a parent TupleBuffer by its position among the parent's children.
 using ChildBufferIndex = NESStrongType<uint32_t, struct ChildBufferIndex_Tag, std::numeric_limits<uint32_t>::max(), 0>;
@@ -74,6 +75,7 @@ class TupleBuffer
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class UnpooledChunksManager;
+    friend class MallocUnpooledBufferManager;
     friend class FixedSizeBufferPool;
     friend class LocalBufferPool;
     friend class detail::MemorySegment;

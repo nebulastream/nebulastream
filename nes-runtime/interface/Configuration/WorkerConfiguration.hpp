@@ -24,6 +24,7 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
+#include <Runtime/UnpooledBufferManager.hpp>
 #include <Util/DumpMode.hpp>
 #include <fmt/format.h>
 #include <QueryEngineConfiguration.hpp>
@@ -61,6 +62,11 @@ public:
            "Fraction (0.0-1.0) of total memory reserved for unpooled buffers.",
            {std::make_shared<FloatValidation>(0, 1)}};
 
+    EnumOption<UnpooledBufferManagerType> unpooledBufferManagerType
+        = {"unpooled_buffer_manager_type",
+           UnpooledBufferManagerType::MALLOC,
+           fmt::format("Allocation strategy for unpooled buffers: {}", enumPipeList<UnpooledBufferManagerType>())};
+
     /// Byte alignment of every pooled and unpooled buffer. Must be a power of two and at most the page size;
     /// the default is a cache line (64 B).
     UIntOption bufferAlignmentInBytes
@@ -94,6 +100,7 @@ private:
             &network,
             &totalMemoryInBytes,
             &unpooledMemoryFraction,
+            &unpooledBufferManagerType,
             &bufferAlignmentInBytes,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
