@@ -359,14 +359,14 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         switch (currentJoinType)
         {
             case JT::OUTER_LEFT_JOIN:
-                return OuterJoinTriggerStrategy<true, false>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = true, .emitRightNullFill = false};
             case JT::OUTER_RIGHT_JOIN:
-                return OuterJoinTriggerStrategy<false, true>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = false, .emitRightNullFill = true};
             case JT::OUTER_FULL_JOIN:
-                return OuterJoinTriggerStrategy<true, true>{};
+                return JoinTriggerStrategy{.emitLeftNullFill = true, .emitRightNullFill = true};
             case JT::CARTESIAN_PRODUCT:
             case JT::INNER_JOIN:
-                return InnerJoinTriggerStrategy{};
+                return JoinTriggerStrategy{};
         }
         std::unreachable();
     };
@@ -414,10 +414,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-    /// Verify at compile time that both probe operators satisfy the JoinProbeOperator concept
-    static_assert(JoinProbeOperator<HJInnerProbePhysicalOperator>);
-    static_assert(JoinProbeOperator<HJOuterProbePhysicalOperator>);
-
+    /// The chosen probe operator's compatibility with the requested join type is enforced at the PRECONDITION below.
     auto createProbeWrapper = [&](const auto& probeOperator)
     {
         return std::make_shared<PhysicalOperatorWrapper>(
