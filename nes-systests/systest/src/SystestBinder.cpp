@@ -78,6 +78,9 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include "Sinks/FileSink.hpp"
+
+#include "ChecksumSink.hpp"
 
 namespace NES::Systest
 {
@@ -121,90 +124,46 @@ public:
     {
     }
 
-    /// Systest chooses the sink configuration itself (every query writes to its own result file),
-    /// so only the file path (and the CSV formatter) are injected per sink type.
-    static std::vector<LiteralConfigValue> makeSinkConfigValues(const Identifier& sinkType, const std::filesystem::path& filePath)
+    bool registerSink(const CreateSinkStatement& createSinkStatement)
     {
-        std::vector<LiteralConfigValue> values;
-        if (sinkType == Identifier::parse("File"))
-        {
-            values.emplace_back(QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), filePath.string());
-            values.emplace_back(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"});
-        }
-        else if (sinkType == Identifier::parse("CHECKSUM"))
-        {
-            values.emplace_back(QualifiedIdentifier::parse("CHECKSUM_SINK.FILE_PATH"), filePath.string());
-            values.emplace_back(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"});
-            values.emplace_back(QualifiedIdentifier::parse("CSV_OUTPUT_FORMATTER.QUOTE_STRINGS"), true);
-        }
-        else
-        {
-            values.emplace_back(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"});
-        }
-        return values;
-    }
-
-    std::expected<SinkDescriptor, Exception> makeSink(
-        const Identifier& sinkType,
-        const Identifier& assignedSinkName,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const std::filesystem::path& filePath)
-    {
-        PRECONDITION(
-            not possibleSinkPlacements.empty(),
-            "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
-        return SinkCatalog::resolveNamedSinkConfig(sinkType, Schema<LiteralConfigValue, Ordered>{makeSinkConfigValues(sinkType, filePath)})
-            .and_then(
-                [&](auto resolved)
-                {
-                    auto& [generalConfig, pluginSinkConfig, outputFormatterDescriptor] = resolved;
-                    if (generalConfig.host == Host{Host::INVALID})
-                    {
-                        generalConfig.host = Host(possibleSinkPlacements.at(0).getRawValue());
-                    }
-                    return sinkCatalog->addSinkDescriptor(
-                        assignedSinkName,
-                        schema,
-                        std::move(generalConfig),
-                        std::move(pluginSinkConfig),
-                        std::move(outputFormatterDescriptor));
-                });
-    }
-
-    bool registerSink(const Identifier& sinkType, const Identifier& sinkNameInFile, const Schema<UnqualifiedUnboundField, Ordered>& schema)
-    {
-        const auto sink = makeSink(sinkType, sinkNameInFile, schema, "/tmp/none.txt");
-        if (not sink.has_value())
-        {
-            throw SinkAlreadyExists("Failed to create file sink with assigned name {}: {}", sinkNameInFile, sink.error().what());
-        }
-
         auto [_, success] = sinkProviders.emplace(
-            sinkNameInFile,
-            [this, schema, sinkType](
+            createSinkStatement.name,
+            [this, createSinkStatement = createSinkStatement](
                 Identifier assignedSinkName, const std::filesystem::path& filePath) -> std::expected<SinkDescriptor, Exception>
-            { return makeSink(sinkType, assignedSinkName, schema, filePath); });
+            {
+                auto [name, schema, generalSinkConfig, pluginSinkConfig, outputFormatterConfig] = std::move(createSinkStatement);
+                if (pluginSinkConfig.getPluginData().getValue().type() == typeid(FileSinkConfig))
+                {
+                    auto fileSinkConfig = pluginSinkConfig.getPluginData().getAs<FileSinkConfig>();
+                    fileSinkConfig.filePath = filePath;
+                    pluginSinkConfig
+                        = PluginSinkConfiguration(pluginSinkConfig.getType(), ExplicitAny{std::any{std::move(fileSinkConfig)}});
+                }
+                else if (pluginSinkConfig.getPluginData().getValue().type() == typeid(ChecksumSinkConfig))
+                {
+                    auto checksumSinkConfig = pluginSinkConfig.getPluginData().getAs<ChecksumSinkConfig>();
+                    checksumSinkConfig.filePath = filePath;
+                    pluginSinkConfig
+                        = PluginSinkConfiguration{pluginSinkConfig.getType(), ExplicitAny{std::any{std::move(checksumSinkConfig)}}};
+                }
+                return sinkCatalog->addSinkDescriptor(
+                    std::move(assignedSinkName),
+                    schema,
+                    std::move(generalSinkConfig),
+                    std::move(pluginSinkConfig),
+                    std::move(outputFormatterConfig));
+            });
         return success;
     }
 
-    std::optional<SinkDescriptor> getAnonymousSink(const Identifier& sinkType, const Schema<LiteralConfigValue, Ordered>& config)
+    std::optional<SinkDescriptor> getAnonymousSink(
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfig,
+        OutputFormatterDescriptor outputFormatterDescriptor,
+        AnonymousSinkSchema schema)
     {
-        PRECONDITION(
-            not possibleSinkPlacements.empty(),
-            "Topology must list at least one worker in allow_sink_placement to assign a default anonymous sink host");
-        auto resolved = SinkCatalog::resolveAnonymousSinkConfig(sinkType, config);
-        if (not resolved.has_value())
-        {
-            NES_ERROR("Failed to resolve anonymous sink config for type {}: {}", sinkType, resolved.error().what());
-            return std::nullopt;
-        }
-        auto& [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = resolved.value();
-        if (generalConfig.host == Host{Host::INVALID})
-        {
-            generalConfig.host = Host(possibleSinkPlacements.at(0).getRawValue());
-        }
         return sinkCatalog->createAnonymousSinkDescriptor(
-            std::move(sinkSchema), std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
+            std::move(schema), std::move(generalSinkConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
     }
 
     std::expected<SinkDescriptor, Exception>
@@ -297,8 +256,10 @@ public:
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
-                        const auto& path
-                            = std::any_cast<const FileSourceConfig&>(logicalSourceOperator->getSourceDescriptor().getPluginData().getValue()).filePath;
+                        const auto& path = logicalSourceOperator->getSourceDescriptor()
+                                               .getPluginData()
+                                               .template getAs<const FileSourceConfig&>()
+                                               .filePath;
                         sourceNamesToFilepathAndCountForQuery.emplace(
                             logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{path}, 1));
                     }
@@ -710,7 +671,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        sltSinkProvider.registerSink(statement.pluginSinkConfig.getType(), statement.name, statement.schema);
+        sltSinkProvider.registerSink(statement);
     }
 
     void createModel(const std::shared_ptr<ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
@@ -745,13 +706,15 @@ struct SystestBinder::Impl
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\" with error", replaceAll(query, "\n", " "), parseResult.error().what());
+            throw InvalidQuerySyntax(
+                "failed to to parse the query \"{}\" with error", replaceAll(query, "\n", " "), parseResult.error().what());
         }
 
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\" with error {}", replaceAll(query, "\n", " "), binding.error().what());
+            throw InvalidQuerySyntax(
+                "failed to to parse the query \"{}\" with error {}", replaceAll(query, "\n", " "), binding.error().what());
         }
 
         if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
@@ -784,39 +747,26 @@ struct SystestBinder::Impl
     {
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        const auto sinkType = sinkOperator->getSinkType();
+        auto pluginData = sinkOperator->getPluginSinkConfiguration().getPluginData();
+        if (pluginData.getValue().type() == typeid(FileSinkConfig))
+        {
+            auto fileSinkConfig = pluginData.getAs<FileSinkConfig>();
+            fileSinkConfig.filePath = resultFile;
+            pluginData = ExplicitAny{std::any{std::move(fileSinkConfig)}};
+        }
+        else if (pluginData.getValue().type() == typeid(ChecksumSinkConfig))
+        {
+            auto checksumSinkConfig = pluginData.getAs<ChecksumSinkConfig>();
+            checksumSinkConfig.filePath = resultFile;
+            pluginData = ExplicitAny{std::any{std::move(checksumSinkConfig)}};
+        }
+        auto pluginSinkConfig = PluginSinkConfiguration{sinkOperator->getPluginSinkConfiguration().getType(), std::move(pluginData)};
 
-        /// Every query writes to its own result file: drop any user-specified FILE_PATH and inject
-        /// the assigned one for sink types that consume it.
-        const auto endsWithFilePath = [](const LiteralConfigValue& value)
-        {
-            const auto identifiers = value.getFullyQualifiedName() | std::ranges::to<std::vector<Identifier>>();
-            return not identifiers.empty() and identifiers.back() == Identifier::parse("FILE_PATH");
-        };
-        auto sinkConfigValues = sinkOperator->getSinkConfig() | std::views::filter([&](const auto& value) { return not endsWithFilePath(value); })
-            | std::ranges::to<std::vector<LiteralConfigValue>>();
-        if (sinkType == Identifier::parse("File"))
-        {
-            sinkConfigValues.emplace_back(QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), resultFile.string());
-        }
-        else if (sinkType == Identifier::parse("CHECKSUM"))
-        {
-            sinkConfigValues.emplace_back(QualifiedIdentifier::parse("CHECKSUM_SINK.FILE_PATH"), resultFile.string());
-            sinkConfigValues.emplace_back(QualifiedIdentifier::parse("CSV_OUTPUT_FORMATTER.QUOTE_STRINGS"), true);
-        }
-        auto sinkConfig = Schema<LiteralConfigValue, Ordered>{std::move(sinkConfigValues)};
-        if (not sinkConfig.getFieldByName(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE")).has_value())
-        {
-            auto withFormatter = sinkConfig | std::ranges::to<std::vector<LiteralConfigValue>>();
-            withFormatter.emplace_back(QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"});
-            sinkConfig = Schema<LiteralConfigValue, Ordered>{std::move(withFormatter)};
-        }
-
-        auto sinkDescriptor = sltSinkProvider.getAnonymousSink(sinkType, sinkConfig);
-        if (not sinkDescriptor.has_value())
-        {
-            throw InvalidConfigParameter("Failed to create anonymous sink of type {}", sinkOperator->getSinkType());
-        }
+        auto sinkDescriptor = sltSinkProvider.getAnonymousSink(
+            sinkOperator->getGeneralSinkConfig(),
+            std::move(pluginSinkConfig),
+            sinkOperator->getOutputFormatterDescriptor(),
+            sinkOperator->getSinkSchema());
         const auto newOperator = SinkLogicalOperator::create(sinkDescriptor.value());
 
         return newOperator.withChildrenUnsafe(sinkOperator->getChildren());

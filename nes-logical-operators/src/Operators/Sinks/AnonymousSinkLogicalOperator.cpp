@@ -46,13 +46,14 @@ namespace NES
 {
 
 AnonymousSinkLogicalOperator::AnonymousSinkLogicalOperator(
-    WeakLogicalOperator,
+    WeakLogicalOperator self,
     Identifier sinkType,
     AnonymousSinkSchema schema,
     GeneralSinkConfig generalSinkConfig,
     PluginSinkConfiguration pluginSinkConfiguration,
     OutputFormatterDescriptor outputFormatterDescriptor)
-    : sinkType(std::move(sinkType))
+    : ManagedByOperator{std::move(self)}
+    , sinkType(std::move(sinkType))
     , targetSchema(std::move(schema))
     , generalSinkConfig(std::move(generalSinkConfig))
     , pluginSinkConfig(std::move(pluginSinkConfiguration))

@@ -208,7 +208,6 @@ LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& 
 }
 
 LogicalPlan LogicalPlanBuilder::addAnonymousSink(
-    Identifier type,
     AnonymousSinkSchema sinkSchema,
     GeneralSinkConfig generalSinkConfig,
     PluginSinkConfiguration pluginSinkConfig,
@@ -218,7 +217,7 @@ LogicalPlan LogicalPlanBuilder::addAnonymousSink(
     return promoteOperatorToRoot(
         queryPlan,
         AnonymousSinkLogicalOperator::create(
-            std::move(type), std::move(sinkSchema), std::move(generalSinkConfig), std::move(pluginSinkConfig), outputFormatterDescriptor));
+            pluginSinkConfig.getType(), std::move(sinkSchema), std::move(generalSinkConfig), std::move(pluginSinkConfig), outputFormatterDescriptor));
 }
 
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const Windowing::TimeCharacteristic& timeCharacteristic)

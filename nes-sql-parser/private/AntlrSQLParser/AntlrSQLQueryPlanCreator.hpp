@@ -33,7 +33,7 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::variant<
         Identifier,
-        std::tuple<Identifier, AnonymousSinkSchema, GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>>>
+        std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>>>
         sinks;
     std::stack<LogicalPlan> queryPlans;
     Schema<ConfigFieldDefault, Ordered> defaultConfigValues;

@@ -191,8 +191,10 @@ Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfigu
         /// Sink defaults only make `CREATE SINK` statements without options bindable; systest
         /// replaces every sink's config with a per-query result file anyway (see SLTSinkFactory).
         ConfigFieldDefault{"OUTPUT_FORMATTER.TYPE", [] { return "CSV"; }},
-        ConfigFieldDefault{"FILE_SINK.FILE_PATH", [] { return "/tmp/none.txt"; }},
-        ConfigFieldDefault{"CHECKSUM_SINK.FILE_PATH", [] { return "/tmp/none.txt"; }},
+        ConfigFieldDefault{"FILE_SINK.FILE_PATH", [] { return "/tmp/systest_file_source_placeholder.txt"; }},
+        ConfigFieldDefault{"CHECKSUM_SINK.FILE_PATH", [] { return "/tmp/systest_checksum_sink_placeholder.txt"; }},
+        ConfigFieldDefault{"SINK.HOST", [&]{ return config.clusterConfig.allowSourcePlacement.at(0).getRawValue(); }},
+        ConfigFieldDefault{"FILE_SINK.PATH", []{ return "/tmp/systest_file_sink_placeholder.txt"; }}
     };
 }
 

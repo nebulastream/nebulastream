@@ -192,14 +192,13 @@ public:
     /// General sink config fields, shared by all sink types. Host determines worker placement;
     /// the (optional) schema types the sink's input for anonymous sinks declared inside a query.
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const ConfigField<std::optional<Host>> HOST{
+    static inline const ConfigField<Host> HOST{
         "HOST",
-        [](const ConfigLiteral& literal) -> std::expected<std::optional<Host>, Exception>
+        [](const ConfigLiteral& literal) -> std::expected<Host, Exception>
         {
             return tryGetOr<std::string>(literal, expectedType<std::string>())
-                .transform([](std::string&& value) -> std::optional<Host> { return Host{std::move(value)}; });
-        },
-        std::nullopt};
+                .transform([](std::string&& value) -> Host { return Host{std::move(value)}; });
+        }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{

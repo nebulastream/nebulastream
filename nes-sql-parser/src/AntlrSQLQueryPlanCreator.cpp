@@ -101,12 +101,12 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     return std::visit(
         Overloaded{
             [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::tuple<Identifier, AnonymousSinkSchema, GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>&
+            [&](const std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>&
                     anonymousSink)
             {
-                const auto& [type, sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor] = anonymousSink;
+                const auto& [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = anonymousSink;
                 return LogicalPlanBuilder::addAnonymousSink(
-                    type, sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor, queryPlans.top());
+                    sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor, queryPlans.top());
             }},
         sinks.front());
 }
@@ -293,9 +293,11 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
             const auto& anonymousSink = sink->anonymousSink();
 
             const auto type = bindIdentifier(anonymousSink->type);
-            auto configOptions = bindConfigValues(anonymousSink->parameters->namedConfigExpression());
+            auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterConfig]
+                = bindSinkConfig(type, anonymousSink->parameters->namedConfigExpression(), defaultConfigValues, configTransformations);
 
-            sinks.emplace_back(std::make_pair(type, std::move(configOptions)));
+
+            sinks.emplace_back(std::tuple{std::move(generalSinkConfig), std::move(sinkSchema), std::move(pluginSinkConfig), std::move(outputFormatterConfig)});
         }
     }
 }

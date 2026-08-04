@@ -41,7 +41,7 @@ struct GeneralSinkConfig
 {
     /// Host determines worker placement. Resolution leaves the INVALID sentinel if SINK.HOST was
     /// not passed; frontends then apply their host policy (or reject) before creating a descriptor.
-    Host host = Host{Host::INVALID};
+    Host host;
     bool addTimestamp = false;
     size_t backpressureUpperThreshold = 1000;
     size_t backpressureLowerThreshold = 200;

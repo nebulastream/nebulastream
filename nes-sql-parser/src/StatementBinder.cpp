@@ -224,8 +224,13 @@ public:
             }
             return std::vector<AntlrSQLParser::NamedConfigExpressionContext*>{};
         }();
-        auto [generalConfig, pluginConfig, outputFormatterDescriptor]
+        auto [generalConfig, anonymousSinkSchema, pluginConfig, outputFormatterDescriptor]
             = bindSinkConfig(sinkType, configAST, defaultConfigValues, configTransformations);
+
+        if (!std::holds_alternative<std::monostate>(anonymousSinkSchema))
+        {
+            throw InvalidConfigParameter("Cannot set sink schema as parameter in named sink {}", sinkName);
+        }
 
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
         return CreateSinkStatement{

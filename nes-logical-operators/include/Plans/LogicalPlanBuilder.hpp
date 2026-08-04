@@ -103,7 +103,6 @@ public:
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addAnonymousSink(
-        Identifier type,
         AnonymousSinkSchema sinkSchema,
         GeneralSinkConfig generalSinkConfig,
         PluginSinkConfiguration pluginSinkConfig,

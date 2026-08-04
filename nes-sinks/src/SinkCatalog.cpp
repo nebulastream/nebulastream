@@ -18,9 +18,9 @@
 #include <array>
 #include <cctype>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <ranges>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -71,7 +71,7 @@ SinkConfigSchema SinkConfigSchema::withConfigTransformations(Schema<ConfigFieldT
     return copy;
 }
 
-std::expected<std::tuple<GeneralSinkConfig, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
+std::expected<std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
 SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const
 {
     auto [resolvedConfig, resolvationErrors] = resolveConfig(values, configSchema, configDefaults);
@@ -88,7 +88,7 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
     {
         return std::unexpected{UnknownSinkType(sinkType.asCanonicalString())};
     }
-    auto outputFormatterEntry = OutputFormatterRegistry::instance().find(outputFormatterType.asCanonicalString());
+    auto outputFormatterEntry = OutputFormatterConfigRegistry::instance().find(outputFormatterType.asCanonicalString());
     if (not outputFormatterEntry)
     {
         return std::unexpected{UnknownOutputFormatterType(outputFormatterType.asCanonicalString())};
@@ -100,31 +100,40 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
         return std::unexpected{sinkPluginConfigExp.error()};
     }
 
-    auto outputFormatterConfigExp = outputFormatterEntry(config);
+    auto outputFormatterConfigExp = outputFormatterEntry->instantiate(config);
+    if (not outputFormatterConfigExp)
+    {
+        return std::unexpected{outputFormatterConfigExp.error()};
+    }
+
     PluginSinkConfiguration pluginSinkConfig{sinkType, std::move(sinkPluginConfigExp).value()};
-    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move()};
+    OutputFormatterDescriptor outputFormatterDescriptor{outputFormatterType, std::move(outputFormatterConfigExp).value()};
 
+    auto schema = config.get(SinkDescriptor::SCHEMA);
+    auto host = config.get(SinkDescriptor::HOST);
+    auto addTimestamp = config.get(SinkDescriptor::ADD_TIMESTAMP);
+    auto backpressureUpperThreshold = config.get(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD);
+    auto backpressureLowerThreshold = config.get(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD);
 
+    auto generalSinkConfig = GeneralSinkConfig{
+        .host = std::move(host),
+        .addTimestamp = addTimestamp,
+        .backpressureUpperThreshold = backpressureUpperThreshold,
+        .backpressureLowerThreshold = backpressureLowerThreshold,};
 
-    const auto& config = instantiatedConfig.value();
-
-    auto pluginSinkConfig = instantiatePluginConfig(config);
-    if (not pluginSinkConfig.has_value())
+    auto sinkSchemaVariant = [&] -> AnonymousSinkSchema
     {
-        return std::unexpected{pluginSinkConfig.error()};
-    }
-    auto outputFormatterDescriptor = instantiateOutputFormatterDescriptor(config);
-    if (not outputFormatterDescriptor.has_value())
-    {
-        return std::unexpected{outputFormatterDescriptor.error()};
-    }
+        if (not schema)
+        {
+            return std::monostate{};
+        }
+        return std::make_shared<Schema<UnqualifiedUnboundField, Ordered>>(*schema);
+    }();
 
-    return std::make_tuple(
-        extractGeneralSinkConfig(config), std::move(pluginSinkConfig).value(), std::move(outputFormatterDescriptor).value());
+    return std::tuple{std::move(generalSinkConfig), std::move(sinkSchemaVariant), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor)};
 }
 
-std::expected<SinkConfigSchema, Exception>
-SinkCatalog::getConfigSchema(const Identifier& sinkType, const Identifier& outputFormatterType)
+std::expected<SinkConfigSchema, Exception> SinkCatalog::getConfigSchema(const Identifier& sinkType, const Identifier& outputFormatterType)
 {
     const auto sinkPluginConfigSchema = SinkConfigSchemaRegistry::instance().getSchema(sinkType.asCanonicalString());
     if (not sinkPluginConfigSchema.has_value())
@@ -151,15 +160,12 @@ SinkCatalog::getConfigSchema(const Identifier& sinkType, const Identifier& outpu
         return std::unexpected{formatterPluginConfigSchema.error()};
     }
 
-    auto targetSchema = std::array{
-                            sinkPluginConfigSchema.value(),
-                            SinkDescriptor::configSchema,
-                            std::move(formatterPluginConfigSchema).value(),
-                            OutputFormatterDescriptor::configSchema}
+    auto targetSchema
+        = std::
+              array{sinkPluginConfigSchema.value(), SinkDescriptor::configSchema, std::move(formatterPluginConfigSchema).value(), OutputFormatterDescriptor::configSchema}
         | std::views::join | std::ranges::to<Schema<QualifiedErasedConfigField, Ordered>>();
     return SinkConfigSchema{sinkType, outputFormatterType, std::move(targetSchema)};
 }
-
 
 std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
     Identifier sinkName,
