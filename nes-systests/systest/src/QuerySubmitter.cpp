@@ -66,7 +66,7 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const
         return queryManager->registerQuery(plan);
     }
 
-    const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
+    const auto exception = CannotSerialize("TEST CHANGE: {}", serializationErrorsPerWorker);
     return std::unexpected(exception);
 }
 
