@@ -1,0 +1,15 @@
+diff --git a/nautilus/include/nautilus/tracing/Types.hpp b/nautilus/include/nautilus/tracing/Types.hpp
+--- a/nautilus/include/nautilus/tracing/Types.hpp
++++ b/nautilus/include/nautilus/tracing/Types.hpp
+@@ -47,8 +47,10 @@ struct TypeResolver<T> {
+ 		using type = std::remove_cvref_t<T>;
+ 		if constexpr (std::is_same_v<type, bool>) {
+ 			return Type::b;
+-		} else if constexpr (std::is_same_v<type, int8_t> || (std::is_same_v<type, char>) ) {
++		} else if constexpr (std::is_same_v<type, int8_t>) {
+ 			return Type::i8;
++		} else if constexpr (std::is_same_v<type, char>) {
++			return std::is_signed_v<char> ? Type::i8 : Type::ui8;
+ 		} else if constexpr (std::is_same_v<type, int16_t>) {
+ 			return Type::i16;
+ 		} else if constexpr (std::is_same_v<type, int32_t> || std::is_same_v<type, wchar_t>) {
