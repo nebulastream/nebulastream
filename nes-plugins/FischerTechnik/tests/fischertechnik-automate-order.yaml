@@ -1,0 +1,134 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Closes the loop on the FischerTechnik factory's NFC read event: whenever
+# the DPS station's NFC reader sees a raw (unprocessed) workpiece with an
+# actual color, NES re-publishes an order-placement message back to the
+# factory's own order-intake topic. Both source and sink talk to the same
+# physical MQTT broker (the TXT 4.0 controller, 192.168.0.10) — NES sits
+# in the middle, subscribing on one topic and publishing on another.
+#
+#   ┌──────────────────────────┐         ┌─────────────────────────┐         ┌──────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  worker-1  (cap: 10000) │  ──▶    │ TXT 4.0 controller       │
+#   │ 192.168.0.10:1883        │ subscribe  S: MQTT_SOURCE          │ publish │ 192.168.0.10:1883        │
+#   │ topic: fl/i/nfc/ds       │ qos=2   │  K: MQTT_SINK           │ qos=2   │ topic: f/o/order         │
+#   │ (NFC read event, TXT-    │         │  filters to real, RAW   │         │ (documented dashboard/   │
+#   │  native I²C reader)      │         │  workpiece reads only)  │         │  Node-RED order-intake   │
+#   └──────────────────────────┘         └─────────────────────────┘         │  channel -- relayed to   │
+#                                                                             │  the PLC via Node-RED's  │
+#                                                                             │  OPC-UA bridge, so this  │
+#                                                                             │  only works while        │
+#                                                                             │  Node-RED is running on  │
+#                                                                             │  the Pi, 192.168.0.5)    │
+#                                                                             └──────────────────────────┘
+#
+# Source: NFC_DS_LOCAL, reading fl/i/nfc/ds — confirmed live against the
+# real broker on 2026-08-03 (see the Dropbox "FischerTechnik Input Streams
+# Reference.md" and this repo's memory notes):
+#   {"history": null, "ts": "2026-08-03T13:15:58.001Z",
+#    "workpiece": {"type": "NONE", "id": "04767a3ae41290", "state": "NONE"}}
+# workpiece/type and workpiece/state read "NONE" together when no tag is
+# currently being read (idle/heartbeat-like state) — confirmed live, not
+# inferred. Occupied/scanned reads instead carry a real color in type and
+# "RAW" in state for an unprocessed workpiece (per STOCK's confirmed live
+# capture, e.g. {"workpiece": {"id": "04927c3ae41290", "type": "BLUE",
+# "state": "RAW"}, "location": "A1"}). The paired query
+# (fischertechnik-automate-order.sql) filters on both conditions so an
+# order is only placed for an actual, unprocessed color read.
+#
+# Sink: publishes to f/o/order — the documented "dashboard/Node-RED →
+# factory commands" order-placement channel (see CLAUDE.md's protocol
+# section), the same one the real fischertechnik Cloud dashboard uses to
+# place an order through the PLC's own order-processing logic (the state
+# machine you read back via f/i/order). Unlike a hypothetical o/order
+# (TXT-native, no Node-RED needed, per the "o/" vs "f/o/" prefix legend in
+# the Dropbox Input Streams Reference doc), f/o/order is Node-RED/PLC-
+# bridged: this only reaches the PLC while Node-RED is running on the Pi
+# (192.168.0.5). If Node-RED is down, this publish goes nowhere -- no
+# error on the NES side, just silently un-consumed.
+#
+# ts is forwarded byte-for-byte from the source's "ts" field (same
+# ISO-8601 string, no reformatting). The payload's "type" field matches
+# f/i/order's own "type" field name for workpiece color (RED/WHITE/BLUE).
+#
+# ⚠️ Confirmed live (2026-08-03): publishing here DOES trigger a real,
+# visible order in the physical factory -- this is a genuine write path
+# into the PLC's order-processing logic, not just something a listener
+# quietly logs. Treat this query as capable of real-world side effects.
+#
+# Field-name casing note: both the sink's schema and the query's SELECT
+# aliases use quoted, lowercase identifiers ("ts", "type") deliberately.
+# An unquoted YAML schema field name (e.g. `name: type`) canonicalizes to
+# uppercase (`TYPE`) the same way an unquoted SQL identifier would
+# (NES::Identifier::parse, nes-common/src/Identifiers/Identifier.cpp), and
+# the JSON output formatter writes that canonical name verbatim as the
+# JSON key (JSONOutputFormatter.cpp) — so an unquoted schema here would
+# produce `{"TS":..., "TYPE":...}` on the wire, not the lowercase keys
+# the factory's f/o/order listener expects. Quoting preserves the case.
+#
+# host/data_address below are the NES worker's own control-plane address
+# (matches every other fischertechnik yaml's convention of localhost:8080),
+# completely separate from the MQTT broker's address (192.168.0.10),
+# which only ever appears in server_uri fields.
+
+sinks:
+  - name: FischerTechnikMQTT
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"type"'
+        type: VARSIZED
+    type: MQTT
+    config:
+      output_format: JSON
+      server_uri: 192.168.0.10
+      topic: f/o/order
+      client_id: nebulastream-fischertechnik-order-sink
+      qos: 2
+
+logical:
+  - name: NFC_DS_LOCAL
+    # fl/i/nfc/ds = NFC read event, read straight off the TXT controller's
+    # own I²C bus (qos=2). workpiece/id, workpiece/type, workpiece/state
+    # are '/'-separated JSON-Pointer field names, not literal top-level
+    # keys; "history" is a JSON array and is deliberately not addressed
+    # here, arrays remain unsupported.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"workpiece/id"'
+        type: VARSIZED
+      - name: '"workpiece/type"'
+        type: VARSIZED
+      - name: '"workpiece/state"'
+        type: VARSIZED
+
+physical:
+  - logical: NFC_DS_LOCAL
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: fl/i/nfc/ds
+      flush_interval_ms: 1000
+      client_id: nebulastream-fischertechnik-order-source
+      qos: 2
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000
