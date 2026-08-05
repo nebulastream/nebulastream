@@ -33,7 +33,7 @@ jobs:
 
   create_image:
     needs: sanitize
-    uses: ./.github/workflows/create_release_image.yml
+    uses: ./.github/workflows/create_executable_images.yml
     secrets: inherit
     with:
       head_sha: ${{ inputs.branch }}

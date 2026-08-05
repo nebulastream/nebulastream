@@ -32,7 +32,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined|--no-sanitizer] [--name] [--no-vcpkg-cache]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined|--no-sanitizer] [--name NAME] [--no-vcpkg-cache]"
     echo "Options:"
     echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx and a sanitizer option)"
     echo "  -l, --local          Build all Docker images locally"
@@ -43,7 +43,8 @@ usage() {
     echo "  --thread             Enable Thread Sanitizer"
     echo "  --undefined          Enable Undefined Behavior Sanitizer"
     echo "  --no-sanitizer       Disable sanitizers (use no sanitizer)"
-    echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
+    echo "  --name NAME          Add a name suffix to the tag of the development image"
+    echo "                       (nes-development:local-<name>)"
     echo "  --no-vcpkg-cache     Disable vcpkg binary caching (by default uses public read-only cache)"
     echo ""
     echo "Environment variables for S3-compatible vcpkg binary caching (local builds only):"
@@ -53,7 +54,7 @@ usage() {
     echo "  VCPKG_CACHE_BUCKET       S3 bucket name (default: nes-vcpkg-cache)"
     echo "  VCPKG_CACHE_REGION       S3 region (default: auto)"
     echo "  VCPKG_CACHE_PUBLIC_URL   Public read-only cache URL (set automatically if no credentials provided)"
-    exit 1
+    exit "${1:-1}"
 }
 
 # Query Docker Hub for tags that share the given dependency hash on the given arch.
@@ -137,7 +138,7 @@ while [[ "$#" -gt 0 ]]; do
             fi
             ;;
         -h|--help)
-            usage
+            usage 0
             ;;
         -*)
             echo "Unknown option: $1"
