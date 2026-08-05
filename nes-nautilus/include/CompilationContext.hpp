@@ -13,15 +13,18 @@
 */
 #pragma once
 
+#include <any>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <fmt/format.h>
+#include <CompilationStatistics.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <Module.hpp>
@@ -32,7 +35,7 @@ namespace NES
 
 class CompilationContext;
 
-/// Handle to a function that an operator registered in its pipeline's nautilus module during setup().
+/// Handle to a function registered in a nautilus module.
 /// All functions of a pipeline are compiled together into exactly one module, so the handle only becomes
 /// invocable once the pipeline stage has compiled that module; the CompilationContext resolves all handles
 /// directly after compilation. Invoking a handle before that is a logic error.
@@ -68,29 +71,25 @@ public:
 /// Similar to the execution context, this class provides access to functionality for compiling code in a pipeline.
 /// It builds the single nautilus module of a pipeline: operators register named functions during setup(), the
 /// pipeline stage adds the main pipeline function and compiles all of them together with one compile() call, and
-/// afterwards resolveAfterCompilation() makes the handles returned to the operators invocable.
+/// compile() makes the handles returned to the operators invocable. The handles co-own the compiled module state,
+/// so this context may be destroyed after compilation.
 class CompilationContext
 {
-    /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
-    nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    nautilus::engine::NautilusModule module;
+    std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
+    std::unordered_map<std::string, std::any> cache;
     uint64_t functionNameCounter = 0;
-    /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
+    /// Set once compile() has run; registering further functions afterwards would append a resolver
     /// that never runs, leaving its handle permanently unresolved, so it is a precondition violation.
     bool compiled = false;
 
-public:
-    explicit CompilationContext(nautilus::engine::NautilusModule& module) : module(module) { }
-
     template <typename R, typename... FunctionArguments>
-    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)
+    auto registerUncachedFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)
     {
-        PRECONDITION(!compiled, "registerFunction() must not be called after the module has been compiled");
         using RawR = nautilus::engine::details::raw_return_type_t<R>;
         using Handle = PipelineFunction<RawR(FunctionArguments...)>;
 
-        /// The counter guarantees unique names within the module. It can never collide with the name of the
-        /// main pipeline function, which carries no counter suffix.
         auto state = std::make_shared<typename Handle::SharedState>();
         state->name = fmt::format("{}_{}", namePrefix, functionNameCounter++);
         module.registerFunction(state->name, std::move(func));
@@ -99,33 +98,58 @@ public:
         return Handle(std::move(state));
     }
 
+public:
+    explicit CompilationContext(nautilus::engine::NautilusModule module) : module(std::move(module)) { }
+
+    /// Registers a function once per key in this pipeline module. Reusing a key returns the first handle,
+    /// so every caller must derive a unique key from the function's signature and semantics.
     template <typename R, typename... FunctionArguments>
-    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func)
+    auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view key)
     {
-        return registerFunction(std::move(func), "operatorFunction");
+        PRECONDITION(!compiled, "registerFunction() must not be called after the module has been compiled");
+        PRECONDITION(!key.empty(), "Registered function key must not be empty");
+
+        using RawR = nautilus::engine::details::raw_return_type_t<R>;
+        using Handle = PipelineFunction<RawR(FunctionArguments...)>;
+
+        const auto keyString = std::string{key};
+        if (const auto existing = cache.find(keyString); existing != cache.end())
+        {
+            const auto handle = std::any_cast<Handle>(&existing->second);
+            PRECONDITION(handle != nullptr, "Compilation cache key '{}' was reused for a different type", key);
+            return *handle;
+        }
+
+        /// Function names only need to be unique within the module. The semantic key remains in the cache and may
+        /// contain schema punctuation that is unsuitable for a backend symbol name.
+        auto handle = registerUncachedFunction(std::move(func), "cachedFunction");
+        cache.emplace(keyString, handle);
+        return handle;
     }
 
     template <typename R, typename... FunctionArguments>
-    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...), const std::string_view namePrefix)
+    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...), const std::string_view key)
     {
-        return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), namePrefix);
+        return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), key);
     }
 
-    template <typename R, typename... FunctionArguments>
-    auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...))
+    /// Compiles all registered functions and resolves every handle returned by registerFunction().
+    void compile()
     {
-        return registerFunction(std::function<R(nautilus::val<FunctionArguments>...)>(fnptr), "operatorFunction");
-    }
-
-    /// Called by CompiledExecutablePipelineStage once, directly after compiling the pipeline's module.
-    void resolveAfterCompilation(nautilus::engine::CompiledModule& compiledModule)
-    {
+        PRECONDITION(!compiled, "CompilationContext::compile() must only be called once");
+        compiledModule.emplace(module.compile());
         for (const auto& resolver : pendingResolvers)
         {
-            resolver(compiledModule);
+            resolver(*compiledModule);
         }
         pendingResolvers.clear();
         compiled = true;
+    }
+
+    [[nodiscard]] std::shared_ptr<const nautilus::compiler::CompilationStatistics> getStatistics() const
+    {
+        PRECONDITION(compiledModule.has_value(), "Compilation statistics are unavailable before compile()");
+        return compiledModule->getStatistics();
     }
 };
 }
