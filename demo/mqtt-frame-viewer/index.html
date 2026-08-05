@@ -69,13 +69,20 @@
       </header>
       <canvas id="keyword-chart" aria-label="Keyword frequency over the last 5 seconds"></canvas>
     </section>
+    <section class="viewer">
+      <header>
+        <strong>Memory usage · last 5 seconds</strong>
+        <span class="count" id="memory-current">Waiting for memory</span>
+      </header>
+      <canvas id="memory-chart" aria-label="RSS and PSS memory usage over the last 5 seconds"></canvas>
+    </section>
   </main>
 
   <script>
     let client;
     const AUDIO_WINDOW_MS = 1000;
     const HISTORY_MS = 5000;
-    const TOPICS = ['rgb-image', 'thermal-image', 'audio', 'audio-noise-level', 'audio-kws'];
+    const TOPICS = ['rgb-image', 'thermal-image', 'audio', 'audio-noise-level', 'audio-kws', 'memory'];
     const status = document.querySelector('#status');
     const audioCanvas = document.querySelector('#waveform-1');
     const audioViewer = {
@@ -97,6 +104,12 @@
       events: [],
     };
     keywords.context = keywords.canvas.getContext('2d');
+    const memory = {
+      canvas: document.querySelector('#memory-chart'),
+      current: document.querySelector('#memory-current'),
+      samples: [],
+    };
+    memory.context = memory.canvas.getContext('2d');
 
     function sizeCanvas(canvas) {
       const scale = window.devicePixelRatio || 1;
@@ -214,6 +227,57 @@
       context.textBaseline = 'alphabetic';
     }
 
+    function drawMemory(now = Date.now()) {
+      memory.samples = recent(memory.samples, now);
+      const { scale, width, height } = sizeCanvas(memory.canvas);
+      const context = memory.context;
+      const padding = 36 * scale;
+      context.clearRect(0, 0, width, height);
+      context.strokeStyle = '#49566a';
+      context.lineWidth = scale;
+      for (let line = 0; line <= 4; line += 1) {
+        const y = padding + line * (height - 2 * padding) / 4;
+        context.beginPath();
+        context.moveTo(padding, y);
+        context.lineTo(width - padding, y);
+        context.stroke();
+      }
+      if (!memory.samples.length) {
+        memory.current.textContent = 'No samples in the last 5 seconds';
+        return;
+      }
+
+      const maximumKb = Math.max(1024, ...memory.samples.flatMap(sample => [sample.rssKb, sample.pssKb].filter(Number.isFinite))) * 1.1;
+      const drawSeries = (field, color) => {
+        const samples = memory.samples.filter(sample => Number.isFinite(sample[field]));
+        if (!samples.length) return;
+        context.strokeStyle = color;
+        context.lineWidth = 2 * scale;
+        context.beginPath();
+        samples.forEach((sample, index) => {
+          const x = padding + (sample.time - (now - HISTORY_MS)) * (width - 2 * padding) / HISTORY_MS;
+          const y = height - padding - sample[field] * (height - 2 * padding) / maximumKb;
+          index ? context.lineTo(x, y) : context.moveTo(x, y);
+        });
+        context.stroke();
+      };
+      drawSeries('rssKb', '#56d4ff');
+      drawSeries('pssKb', '#ffb454');
+
+      context.fillStyle = '#aeb8c8';
+      context.font = `${12 * scale}px system-ui`;
+      context.fillText(`${(maximumKb / 1024).toFixed(1)} MiB`, 4 * scale, padding);
+      context.fillText('5s ago', padding, height - 7 * scale);
+      context.fillStyle = '#56d4ff';
+      context.fillText('RSS', padding, 18 * scale);
+      context.fillStyle = '#ffb454';
+      context.fillText('PSS', padding + 42 * scale, 18 * scale);
+      context.fillStyle = '#aeb8c8';
+      context.textAlign = 'right';
+      context.fillText('now', width - padding, height - 7 * scale);
+      context.textAlign = 'left';
+    }
+
     function parseTelemetry(payload) {
       try {
         const value = JSON.parse(payload);
@@ -236,6 +300,19 @@
       keywords.events.push({ time: message.timestamp, label: message.label });
       keywords.current.textContent = `Latest: ${message.label} · confidence ${message.confidence.toFixed(3)}`;
       drawKeywords();
+    }
+
+    function appendMemory(payload) {
+      const message = parseTelemetry(payload);
+      const rssKb = message?.rss_kb;
+      const pssKb = message?.pss_kb;
+      if ((!Number.isFinite(rssKb) && !Number.isFinite(pssKb)) || rssKb < 0 || pssKb < 0) return;
+      memory.samples.push({ time: Date.now(), rssKb, pssKb });
+      const values = [];
+      if (Number.isFinite(rssKb)) values.push(`RSS ${(rssKb / 1024).toFixed(1)} MiB`);
+      if (Number.isFinite(pssKb)) values.push(`PSS ${(pssKb / 1024).toFixed(1)} MiB`);
+      memory.current.textContent = values.join(' · ');
+      drawMemory();
     }
 
     function showFrame(number, frame) {
@@ -284,6 +361,7 @@
       client.onMessageArrived = message => {
         if (message.destinationName === 'audio-noise-level') appendNoise(message.payloadString);
         if (message.destinationName === 'audio-kws') appendKeyword(message.payloadString);
+        if (message.destinationName === 'memory') appendMemory(message.payloadString);
         if (message.destinationName === 'audio') appendAudioChunk(audioViewer, message.payloadString);
         const videoNumber = { 'rgb-image': 1, 'thermal-image': 2 }[message.destinationName];
         if (videoNumber) {
@@ -308,6 +386,7 @@
       drawWaveform(audioViewer);
       drawNoise();
       drawKeywords();
+      drawMemory();
     });
     document.querySelector('#connect').addEventListener('click', connect);
     console.assert(decodeAudioChunk('{"timestamp_start":0,"timestamp_end":1,"chunk":"AAAAAAAA8D8AAAAAAAAAAA=="}')?.samples.length === 2,
@@ -317,9 +396,11 @@
     drawWaveform(audioViewer);
     drawNoise();
     drawKeywords();
+    drawMemory();
     setInterval(() => {
       drawNoise();
       drawKeywords();
+      drawMemory();
     }, 250);
   </script>
 </body>

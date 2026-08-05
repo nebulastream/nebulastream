@@ -2,7 +2,7 @@
 
 Start the local broker with `docker compose up -d`, then serve this folder with any static web server and open `index.html`. Its default WebSocket URL, `ws://localhost:9001/mqtt`, connects to that broker. MQTT is also exposed on `localhost:1883` for publishers.
 
-The viewer subscribes directly to `rgb-image`, `thermal-image`, `audio`, `audio-noise-level`, and `audio-kws`. RGB, thermal, and the single audio waveform share the first row.
+The viewer subscribes directly to `rgb-image`, `thermal-image`, `audio`, `audio-noise-level`, `audio-kws`, and `memory`. RGB, thermal, and the single audio waveform share the first row.
 
 Video topics use the existing JSON frame format:
 
@@ -18,6 +18,12 @@ The audio topic uses JSON with millisecond timestamps and a base64-encoded, litt
   "timestamp_end": 1720000000100,
   "chunk": "AAAAAAAA8D8AAAAAAAAAAA=="
 }
+```
+
+The `memory` topic publishes the process metrics from `/proc/$pid/smaps_rollup` with lowercase identifiers. The viewer plots RSS and PSS values, which are expressed in KiB by the source, over the last five seconds:
+
+```json
+{"rss_kb": 123456, "pss_kb": 120000}
 ```
 
 The page loads the Eclipse Paho browser client from unpkg, so it needs internet access unless that script is hosted locally.
