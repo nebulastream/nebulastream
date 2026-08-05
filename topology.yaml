@@ -111,6 +111,42 @@ query:
         'JSON' AS "SINK"."OUTPUT_FORMAT")
 
   # ==========================================================================
+  # Memory monitoring
+  # ==========================================================================
+  - name: memory_mqtt
+    # language=SQL
+    query: |
+      SELECT
+          RSS_KB AS "rss_kb",
+          PSS_KB AS "pss_kb",
+          PSS_DIRTY_KB AS "pss_dirty_kb",
+          PSS_ANON_KB AS "pss_anon_kb",
+          PSS_FILE_KB AS "pss_file_kb",
+          PSS_SHMEM_KB AS "pss_shmem_kb",
+          SHARED_CLEAN_KB AS "shared_clean_kb",
+          SHARED_DIRTY_KB AS "shared_dirty_kb",
+          PRIVATE_CLEAN_KB AS "private_clean_kb",
+          PRIVATE_DIRTY_KB AS "private_dirty_kb",
+          REFERENCED_KB AS "referenced_kb",
+          ANONYMOUS_KB AS "anonymous_kb",
+          KSM_KB AS "ksm_kb",
+          LAZY_FREE_KB AS "lazy_free_kb",
+          ANON_HUGE_PAGES_KB AS "anon_huge_pages_kb",
+          SHMEM_PMD_MAPPED_KB AS "shmem_pmd_mapped_kb",
+          FILE_PMD_MAPPED_KB AS "file_pmd_mapped_kb",
+          SHARED_HUGETLB_KB AS "shared_hugetlb_kb",
+          PRIVATE_HUGETLB_KB AS "private_hugetlb_kb",
+          SWAP_KB AS "swap_kb",
+          SWAP_PSS_KB AS "swap_pss_kb",
+          LOCKED_KB AS "locked_kb"
+      FROM smaps_rollup
+      INTO MQTT('memory' AS "SINK"."TOPIC",
+                'localhost:8080' AS "SINK"."HOST",
+                'localhost:1883' AS "SINK"."SERVER_URI",
+                0 AS "SINK"."QOS",
+                'JSON' AS "SINK"."OUTPUT_FORMAT");
+
+  # ==========================================================================
   # Audio processing
   # ==========================================================================
   - name: audio_pipe
