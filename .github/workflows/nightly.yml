@@ -154,7 +154,7 @@ jobs:
     # (scheduled run, or a manual dispatch from the `main` branch). This prevents anyone
     # triggering the nightly on a different branch from unintentionally overwriting `:latest`.
     if: ${{ !github.event.act && github.ref == 'refs/heads/main' }}
-    uses: ./.github/workflows/create_release_image.yml
+    uses: ./.github/workflows/create_executable_images.yml
     secrets: inherit
     with:
       head_sha: "main"

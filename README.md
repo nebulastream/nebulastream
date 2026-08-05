@@ -100,6 +100,18 @@ docker run \
   ctest --test-dir cmake-build-debug -j
 ```
 
+#### Package the binaries as Docker images
+Build the runtime base and package each executable into a slim image (`nebulastream/nes-cli`, `nes-repl`,
+`nes-repl-embedded`, `nes-worker`):
+
+```shell
+cmake --build cmake-build-debug --target package-docker-images-all -j
+```
+
+Use `package-docker-<nes-cli|nes-repl|nes-repl-embedded|nes-worker>` for a single image. These targets are excluded from the
+default build. See [Packaging Docker images](docs/development/packaging_docker_images.md) for image names and
+tags.
+
 ### Execute Queries & Tests
 
 #### Run systest for a query
@@ -141,7 +153,7 @@ For further information about our frontends, check out the [Frontend Reference](
 
 ## Documentation
 - Design proposals and architectural notes: [Design index](docs/design/README.md)
-- Developer workflows and environment setup: [Development environment](docs/development/development.md), [Run workflows locally](docs/development/running_workflows_locally.md)
+- Developer workflows and environment setup: [Development environment](docs/development/development.md), [Run workflows locally](docs/development/running_workflows_locally.md), [Packaging Docker images](docs/development/packaging_docker_images.md)
 - Implementation guides: [Add a source](docs/guide/how_to_add_a_source.md), [Add a sink](docs/guide/how_to_add_a_sink.md), [Add a placement strategy](docs/guide/how_to_add_a_placement_strategy.md)
 - Technical deep dives: [Dependency architecture](docs/technical/dependency.md), [Query engine task queue](docs/technical/QueryEngine_TaskQueue.md), [Watermarking trigger details](docs/technical/watermarking_progress_window_triggering.md)
 - Organizational guidelines and processes: [Meetings overview](docs/organizational/meetings.md), [Nightly CI process](docs/organizational/processes/nightly_ci.md)

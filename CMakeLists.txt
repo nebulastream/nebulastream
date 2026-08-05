@@ -236,16 +236,6 @@ if (NES_ENABLES_TESTS)
     enable_testing()
     message(STATUS "Tests are enabled")
     if (ENABLE_DOCKER_TESTS)
-        if (NOT DEFINED VCPKG_HASH)
-            execute_process(
-                    COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                    OUTPUT_VARIABLE VCPKG_HASH
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    COMMAND_ERROR_IS_FATAL ANY
-            )
-        endif ()
-        set(NES_RUNTIME_BASE_IMAGE "nebulastream/nes-runtime-base:${VCPKG_HASH}" CACHE STRING "Docker image name for the runtime base used by DockerCompose tests")
         add_test(NAME build-runtime-base-image
                 COMMAND bash -c "docker image inspect \"$0\" >/dev/null 2>&1 || docker build --load -t \"$0\" -f \"$1\" \"$2\""
                 ${NES_RUNTIME_BASE_IMAGE}
@@ -304,3 +294,9 @@ if (CODE_COVERAGE)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
 endif ()
 
+# Registers the `package-docker-images-all` target (and per-binary sub-targets) that
+# packages the already-built cli/repl/embedded-repl/worker binaries into slim
+# Docker runtime images. Included here, after add_subdirectory() has defined the
+# binary targets, so the packaging targets can depend on them. The targets are
+# only registered when a Docker daemon is reachable at configure time.
+include(cmake/PackageDockerImages.cmake)

@@ -10,16 +10,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Validate docker is available when ENABLE_DOCKER_TESTS is ON
-if (ENABLE_DOCKER_TESTS)
+# Check Docker once for both tests and image packaging.
+find_program(DOCKER_EXECUTABLE docker)
+if (DOCKER_EXECUTABLE)
     execute_process(
-        COMMAND docker version
+        COMMAND ${DOCKER_EXECUTABLE} version
         RESULT_VARIABLE DOCKER_CHECK_RESULT
         OUTPUT_QUIET
         ERROR_QUIET
     )
+else ()
+    set(DOCKER_CHECK_RESULT 1)
+endif ()
 
-    if (NOT DOCKER_CHECK_RESULT EQUAL 0)
+if (DOCKER_CHECK_RESULT EQUAL 0)
+    set(NES_DOCKER_AVAILABLE ON)
+else ()
+    set(NES_DOCKER_AVAILABLE OFF)
+endif ()
+
+if (NES_DOCKER_AVAILABLE)
+    if (NOT DEFINED VCPKG_HASH OR VCPKG_HASH STREQUAL "")
+        execute_process(
+            COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            OUTPUT_VARIABLE VCPKG_HASH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif ()
+    set(NES_RUNTIME_BASE_IMAGE "nebulastream/nes-runtime-base:${VCPKG_HASH}")
+endif ()
+
+if (ENABLE_DOCKER_TESTS)
+    if (NOT NES_DOCKER_AVAILABLE)
         message(WARNING
             "ENABLE_DOCKER_TESTS is ON but docker is not working.\n"
             "  For dev container: Mount docker socket with -v /var/run/docker.sock:/var/run/docker.sock\n"
@@ -27,7 +51,7 @@ if (ENABLE_DOCKER_TESTS)
             "  Set -DENABLE_DOCKER_TESTS=OFF to suppress this warning\n"
             "Docker tests will be automatically disabled."
         )
-        set(ENABLE_DOCKER_TESTS OFF PARENT_SCOPE)
+        set(ENABLE_DOCKER_TESTS OFF CACHE BOOL "Runs testcases that require docker" FORCE)
     else()
         message(STATUS "Docker tests enabled: using docker")
     endif()
