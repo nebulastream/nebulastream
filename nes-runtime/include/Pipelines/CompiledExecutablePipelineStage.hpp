@@ -16,13 +16,12 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
-#include <nautilus/Module.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -50,15 +49,11 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
-    static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
-
-    /// Registers the pipeline's main traced function in the pipeline's module.
-    void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
+    /// Registers the pipeline's main traced function in the pipeline's compilation context.
+    PipelineFunction<PipelineSignature> registerPipelineFunction(CompilationContext& compilationContext) const;
 
     nautilus::engine::NautilusEngine engine;
-    /// Both are created lazily in start(); neither type is default-constructible.
-    std::optional<nautilus::engine::CompiledModule> compiledModule;
-    std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
+    std::optional<PipelineFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };
