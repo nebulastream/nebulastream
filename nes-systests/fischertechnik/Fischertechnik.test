@@ -1,0 +1,114 @@
+# name: fischertechnik/Fischertechnik.test
+# description: Basic smoke tests for the Fischertechnik factory model. Data originates from MQTT
+#              topics (sensor readings, workpiece scan events, station/order state, stock snapshots)
+#              and was captured to CSV; the per-topic MQTT timestamp is kept as the ts column and
+#              used as event time for windowed queries, matching how the other MQTT/broker-origin
+#              datasets (debs, manufacturing, ysb) are attached in this suite.
+# groups: [Fischertechnik, CSV]
+
+# Source definitions
+
+CREATE LOGICAL SOURCE bme680(ts UINT64 NOT NULL, t FLOAT64 NOT NULL, rt FLOAT64 NOT NULL, h FLOAT64 NOT NULL, rh FLOAT64 NOT NULL, p FLOAT64 NOT NULL, iaq FLOAT64 NOT NULL, aq UINT64 NOT NULL, gr FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bme680 TYPE File;
+ATTACH FILE small/fischertechnik/factory_bme680.csv
+
+CREATE LOGICAL SOURCE ldrSensor(ts UINT64 NOT NULL, br FLOAT64 NOT NULL, ldr FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ldrSensor TYPE File;
+ATTACH FILE small/fischertechnik/factory_ldr.csv
+
+CREATE LOGICAL SOURCE broadcast(ts UINT64 NOT NULL, hardwareId VARSIZED NOT NULL, hardwareModel VARSIZED NOT NULL, softwareName VARSIZED NOT NULL, softwareVersion VARSIZED NOT NULL, message VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR broadcast TYPE File;
+ATTACH FILE small/fischertechnik/factory_broadcast.csv
+
+CREATE LOGICAL SOURCE factoryOrder(ts UINT64 NOT NULL, state VARSIZED NOT NULL, type VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR factoryOrder TYPE File;
+ATTACH FILE small/fischertechnik/factory_order.csv
+
+# nfcDs is the retained/state MQTT topic for the NFC reader: no timestamp in the payload, only the
+# current scan state. nfcDsLocal is the corresponding locally-timestamped event stream.
+CREATE LOGICAL SOURCE nfcDs(workpieceId VARSIZED NOT NULL, workpieceType VARSIZED NOT NULL, workpieceState VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR nfcDs TYPE File;
+ATTACH FILE small/fischertechnik/factory_nfc_ds.csv
+
+CREATE LOGICAL SOURCE nfcDsLocal(ts UINT64 NOT NULL, workpieceId VARSIZED NOT NULL, workpieceType VARSIZED NOT NULL, workpieceState VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR nfcDsLocal TYPE File;
+ATTACH FILE small/fischertechnik/factory_nfc_ds_local.csv
+
+CREATE LOGICAL SOURCE ptuPos(ts UINT64 NOT NULL, pan FLOAT64 NOT NULL, tilt FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ptuPos TYPE File;
+ATTACH FILE small/fischertechnik/factory_ptu_pos.csv
+
+CREATE LOGICAL SOURCE stationState(ts UINT64 NOT NULL, station VARSIZED NOT NULL, code UINT64 NOT NULL, description VARSIZED NOT NULL, active BOOLEAN NOT NULL, target VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stationState TYPE File;
+ATTACH FILE small/fischertechnik/factory_station_state.csv
+
+CREATE LOGICAL SOURCE stock(ts UINT64 NOT NULL, slot0Location VARSIZED NOT NULL, slot0WorkpieceId VARSIZED, slot0WorkpieceType VARSIZED, slot0WorkpieceState VARSIZED, slot1Location VARSIZED NOT NULL, slot1WorkpieceId VARSIZED, slot1WorkpieceType VARSIZED, slot1WorkpieceState VARSIZED, slot2Location VARSIZED NOT NULL, slot2WorkpieceId VARSIZED, slot2WorkpieceType VARSIZED, slot2WorkpieceState VARSIZED, slot3Location VARSIZED NOT NULL, slot3WorkpieceId VARSIZED, slot3WorkpieceType VARSIZED, slot3WorkpieceState VARSIZED, slot4Location VARSIZED NOT NULL, slot4WorkpieceId VARSIZED, slot4WorkpieceType VARSIZED, slot4WorkpieceState VARSIZED, slot5Location VARSIZED NOT NULL, slot5WorkpieceId VARSIZED, slot5WorkpieceType VARSIZED, slot5WorkpieceState VARSIZED, slot6Location VARSIZED NOT NULL, slot6WorkpieceId VARSIZED, slot6WorkpieceType VARSIZED, slot6WorkpieceState VARSIZED, slot7Location VARSIZED NOT NULL, slot7WorkpieceId VARSIZED, slot7WorkpieceType VARSIZED, slot7WorkpieceState VARSIZED, slot8Location VARSIZED NOT NULL, slot8WorkpieceId VARSIZED, slot8WorkpieceType VARSIZED, slot8WorkpieceState VARSIZED);
+CREATE PHYSICAL SOURCE FOR stock TYPE File;
+ATTACH FILE small/fischertechnik/factory_stock.csv
+
+# Sink definitions
+
+CREATE SINK bme680Sink(ts UINT64 NOT NULL, t FLOAT64 NOT NULL, rt FLOAT64 NOT NULL, h FLOAT64 NOT NULL, rh FLOAT64 NOT NULL, p FLOAT64 NOT NULL, iaq FLOAT64 NOT NULL, aq UINT64 NOT NULL, gr FLOAT64 NOT NULL) TYPE File;
+CREATE SINK ldrSink(ts UINT64 NOT NULL, br FLOAT64 NOT NULL, ldr FLOAT64 NOT NULL) TYPE File;
+CREATE SINK broadcastSink(ts UINT64 NOT NULL, hardwareId VARSIZED NOT NULL, hardwareModel VARSIZED NOT NULL, softwareName VARSIZED NOT NULL, softwareVersion VARSIZED NOT NULL, message VARSIZED NOT NULL) TYPE File;
+CREATE SINK factoryOrderSink(ts UINT64 NOT NULL, state VARSIZED NOT NULL, type VARSIZED NOT NULL) TYPE File;
+CREATE SINK nfcDsSink(workpieceId VARSIZED NOT NULL, workpieceType VARSIZED NOT NULL, workpieceState VARSIZED NOT NULL) TYPE File;
+CREATE SINK nfcDsLocalSink(ts UINT64 NOT NULL, workpieceId VARSIZED NOT NULL, workpieceType VARSIZED NOT NULL, workpieceState VARSIZED NOT NULL) TYPE File;
+CREATE SINK ptuPosCountSink(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK stationStateCountSink(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK stockCountSink(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+
+# Query 1 - BME680 environmental sensor readings, passed through unchanged
+SELECT * FROM bme680 INTO bme680Sink;
+----
+1785774576199,28.3,0.0,39.3,0.0,1008.8,2.0,3,0.0
+1785774576162,28.3,0.0,39.3,0.0,1008.8,2.0,3,0.0
+1785774636655,28.3,0.0,39.4,0.0,1008.8,2.0,3,0.0
+1785774636869,28.3,0.0,39.4,0.0,1008.8,2.0,3,0.0
+1785774697498,28.3,0.0,39.3,0.0,1008.8,2.0,3,0.0
+1785774697646,28.3,0.0,39.3,0.0,1008.8,2.0,3,0.0
+
+# Query 2 - LDR light sensor readings
+SELECT * FROM ldrSensor INTO ldrSink;
+----
+1785774599256,98.7,866.0
+1785774599278,98.7,873.0
+1785774659315,98.6,908.0
+1785774659336,98.6,907.0
+
+# Query 3 - broadcast topic: no device announcements captured in this snapshot, expect no rows
+SELECT * FROM broadcast INTO broadcastSink;
+----
+
+# Query 4 - order topic: no orders captured in this snapshot, expect no rows
+SELECT * FROM factoryOrder INTO factoryOrderSink;
+----
+
+# Query 5 - nfcDs retained state: latest scan result per read (no event-time column upstream)
+SELECT * FROM nfcDs INTO nfcDsSink;
+----
+044aa5ca341291,NONE,RAW
+044aa5ca341291,NONE,RAW
+044aa5ca341291,RED,RAW
+
+# Query 6 - nfcDsLocal: the same scan events, timestamped on local ingest
+SELECT * FROM nfcDsLocal INTO nfcDsLocalSink;
+----
+1785774612526,044aa5ca341291,NONE,RAW
+1785774619617,044aa5ca341291,NONE,RAW
+1785774647274,044aa5ca341291,RED,RAW
+
+# Query 7 - pan/tilt unit position updates, tumbling window over event time (all rows fall in one window)
+SELECT start, end, COUNT(*) AS rowCount FROM ptuPos WINDOW TUMBLING(ts, SIZE 1 HOUR) INTO ptuPosCountSink;
+----
+1785772800000,1785776400000,79
+
+# Query 8 - station state changes, tumbling window over event time
+SELECT start, end, COUNT(*) AS rowCount FROM stationState WINDOW TUMBLING(ts, SIZE 1 HOUR) INTO stationStateCountSink;
+----
+1785772800000,1785776400000,461
+
+# Query 9 - stock slot occupancy snapshots, tumbling window over event time
+SELECT start, end, COUNT(*) AS rowCount FROM stock WINDOW TUMBLING(ts, SIZE 1 HOUR) INTO stockCountSink;
+----
+1785772800000,1785776400000,76
