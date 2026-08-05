@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+list(APPEND VCPKG_HASH_ADDITIONAL_FILES "${CMAKE_CURRENT_LIST_FILE}")
+
 # ARM64 emits compiler-rt builtins such as __muloti4 for 128-bit arithmetic.
 # Select compiler-rt explicitly so sanitizer link commands include those builtins.
 set(VCPKG_CXX_FLAGS "-fsanitize=undefined")
