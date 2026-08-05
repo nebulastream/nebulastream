@@ -24,19 +24,13 @@ on:
 
 jobs:
   build-code-coverage-pr-branch:
-    container:
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-      env:
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
-        SCCACHE_REGION: auto
-        SCCACHE_S3_USE_SSL: "true"
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
+    env:
+      SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+      SCCACHE_REGION: auto
+      SCCACHE_S3_USE_SSL: "true"
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
     timeout-minutes: 90
     runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
     strategy:
@@ -49,10 +43,13 @@ jobs:
         with:
           ref: ${{ inputs.head_sha }}
       - name: Build coverage and export as lcov
-        run: |
-          cmake -DCODE_COVERAGE=ON -B build
-          cmake --build build -j -- -k 0
-          cmake --build build --target ccov-all-export
+        uses: ./.github/steps/run-in-container
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+          run: |
+            cmake -DCODE_COVERAGE=ON -DENABLE_DOCKER_TESTS=ON -B build
+            cmake --build build -j -- -k 0
+            cmake --build build --target ccov-all-export
       - uses: codecov/codecov-action@v7
         with:
           slug: nebulastream/nebulastream

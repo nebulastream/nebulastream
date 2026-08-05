@@ -45,7 +45,6 @@ docker_mqtt_subscribe() {
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
   wait_until docker compose exec -T worker-1 grep -q "2,410" results.csv
 
-  sync_workdir
   grep "2,410" worker-1/results.csv
 }
 
@@ -76,7 +75,6 @@ EOF
   [ "$status" -eq 0 ]
   wait_until docker compose exec -T worker-1 grep -q "2,222" results.csv
 
-  sync_workdir
   grep "2,222" worker-1/results.csv
 }
 
@@ -106,7 +104,6 @@ EOF
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
   assert_success
 
-  sync_workdir
   assert_file_line_count worker-1/results.csv 2
   grep -x "32" worker-1/results.csv
 }
@@ -133,7 +130,6 @@ EOF
   docker_mqtt_produce mqtt-source-test 32
 
   wait_until docker compose exec -T worker-1 grep -qx 32 results.csv
-  sync_workdir
   # header + 2 rows
   [ "$(cat worker-1/results.csv | wc -l)" -eq 3 ]
 }
@@ -160,7 +156,6 @@ EOF
   docker_mqtt_produce mqtt-source-test 32
   sleep 5
 
-  sync_workdir
   assert_file_line_count worker-1/results.csv 0
 }
 
@@ -193,13 +188,11 @@ EOF
   wait
   sleep 1
 
-  sync_workdir
   [ "$(cat worker-1/results.csv | wc -l)" -eq 0 ]
 
   docker_mqtt_produce mqtt-source-test $'32\n32\n32\n32\n32\n32'
 
   wait_until docker compose exec -T worker-1 sh -c '[ "$(wc -l < results.csv)" -eq 1366 ]'
-  sync_workdir
 
   # header + 1365 rows (4096 / 3)
   [ "$(cat worker-1/results.csv | wc -l)" -eq 1366 ]
@@ -253,7 +246,6 @@ EOF
   wait_until docker compose exec -T worker-1 sh -c '[ "$(wc -l < results.csv)" -eq 30501 ]'
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
 
-  sync_workdir
   assert_file_line_count worker-1/results.csv 30501
 }
 
@@ -323,7 +315,6 @@ EOF
   wait_until docker compose exec -T worker-1 grep -Fq \
     "Received MQTT message on topic 'mqtt-source-test': '{\"ID\": 32}'" singleNodeWorker.log
 
-  sync_workdir
   assert_file_line_count worker-1/results.csv 2
   grep -x "32" worker-1/results.csv
 }

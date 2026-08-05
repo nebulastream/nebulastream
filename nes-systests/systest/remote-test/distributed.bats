@@ -32,42 +32,19 @@ setup_file() {
     "$NES_SYSTEST" systest
 
   export CONTAINER_WORKDIR="/$(cat /proc/sys/kernel/random/uuid)"
-  # Will contain the test data
-  export TESTDATA_VOLUME=$(docker volume create)
-
-  # Will contain the tests itself, as well as the configuration files
-  export TESTCONFIG_VOLUME=$(docker volume create)
-
-  # Prepare Volumes with Testdata. We cannot mount as we are potentially running in a container using Docker out of Docker.
-  # Systest is a little picky about where it finds the testdata. We can freely place input data anywhere and use the ---data flag
-  # Systest discovery and configuration are hard coded and look in the $NES_DIR/nes-systests directory. We have to replicate this in docker compose
-  #
-  # Volume structure:
-  #   TESTCONFIG_VOLUME: contains /nes-systests/* and will be mounted at $NES_DIR in containers
-  #                      This reconstructs the expected path $NES_DIR/nes-systests/* inside containers
-  #   TESTDATA_VOLUME:   contains test input data, mounted at /data in containers
-
-  volume_host_container=$(docker run -d --rm -v $TESTCONFIG_VOLUME:/config -v $TESTDATA_VOLUME:/data alpine sleep infinite)
-  docker exec $volume_host_container sh -c "mkdir -p /config/nes-systests"
-  # Dereference symlinks via tar and pipe directly into the volume container
-  tar -chf - -C "${DATADIR}" . \
-    | docker exec -i $volume_host_container tar -xf - -C /data
-  tar -chf - -C "${NES_DIR}/nes-systests" . \
-    | docker exec -i $volume_host_container tar -xf - -C /config/nes-systests
-  docker stop -t0 $volume_host_container
+  export TESTDATA_DIR=$(realpath "$DATADIR")
+  export TESTCONFIG_DIR=$(realpath "$NES_DIR")
 
   echo "# Using NES_DIR: $NES_DIR" >&3
   echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
   echo "# Using SYSTEST_IMAGE: $SYSTEST_IMAGE" >&3
-  echo "# Using TESTDATA_VOLUME: $TESTDATA_VOLUME" >&3
-  echo "# Using TESTCONFIG_VOLUME: $TESTCONFIG_VOLUME" >&3
+  echo "# Using TESTDATA_DIR: $TESTDATA_DIR" >&3
+  echo "# Using TESTCONFIG_DIR: $TESTCONFIG_DIR" >&3
   echo "# Using CONTAINER_WORKDIR: $CONTAINER_WORKDIR" >&3
 }
 
 teardown_file() {
   echo "# Test suite completed" >&3
-  docker volume rm $TESTDATA_VOLUME || true
-  docker volume rm $TESTCONFIG_VOLUME || true
   docker rmi $WORKER_IMAGE || true
   docker rmi $SYSTEST_IMAGE || true
 }
@@ -77,26 +54,19 @@ setup() {
   mkdir -p "$NES_TEST_TMP_DIR"
   export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
 
-  # Copy NES_DIR contents to temp directory for DOOD compatibility
   cd "$TMP_DIR" || exit
 
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 
-  volume=$(docker volume create)
-  volume_host_container=$(docker run -d --rm -v $volume:/data alpine sleep infinite)
-  docker stop -t0 $volume_host_container
-  export TEST_VOLUME=$volume
-  echo "Using test volume: $TEST_VOLUME" >&3
+  export TEST_DIR="$TMP_DIR"
 }
 
 teardown() {
-  docker compose cp systest:$CONTAINER_WORKDIR/. . || true
   docker compose down -v || true
-  docker volume rm $TEST_VOLUME || true
 }
 
 function setup_distributed() {
-  # Extract per-worker configs from the topology YAML and copy them into the test volume.
+  # Extract per-worker configs from the topology YAML.
   local topology="$1"
   local worker_count=$(yq '.workers | length' "$topology")
   local config_dir=$(mktemp -d)
@@ -127,12 +97,10 @@ function setup_distributed() {
     fi
   fi
 
-  # Copy config files into the test volume
+  # Store generated configs directly in the bind-mounted test directory.
   if [ -n "$(ls -A "$config_dir")" ]; then
-    local volume_host=$(docker run -d --rm -v $TEST_VOLUME:/vol alpine sleep infinite)
-    docker exec $volume_host mkdir -p /vol/configs
-    tar -cf - -C "$config_dir" . | docker exec -i $volume_host tar -xf - -C /vol/configs
-    docker stop -t0 $volume_host
+    mkdir -p "$TEST_DIR/configs"
+    cp "$config_dir"/* "$TEST_DIR/configs/"
   fi
   rm -rf "$config_dir"
 
@@ -170,8 +138,8 @@ fi
 }
 
 @test "large scale tests on two nodes" {
-  if [ "$ENABLE_LARGE_TESTS" != "ON" ]; then
-    skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
+  if [ "$ENABLE_DOCKER_LARGE_TESTS" != "ON" ]; then
+    skip "Docker-based large tests disabled"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
   run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
