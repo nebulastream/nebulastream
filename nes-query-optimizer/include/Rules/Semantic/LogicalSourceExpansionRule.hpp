@@ -21,7 +21,9 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -93,6 +95,8 @@ public:
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+
+    [[nodiscard]] LogicalOperator expandLogicalSource(const LogicalOperator& visiting, std::vector<LogicalOperator> children) const;
 };
 
 static_assert(RuleConcept<LogicalSourceExpansionRule, LogicalPlan>);

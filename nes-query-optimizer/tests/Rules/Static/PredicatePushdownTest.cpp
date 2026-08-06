@@ -393,5 +393,49 @@ TEST_F(PredicatePushdownTest, PushBeyondhasAsterisk)
     ASSERT_TRUE(op3.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
+TEST_F(PredicatePushdownTest, ValidateMultiSinkPlan)
+{
+    /// BEFORE: (sink1 > select (a>0) > projection, sink2 > select (b>0)) > source
+    /// AFTER: (sink1 > projection > select (a>0), sink2 > select (b>0)) > source
+
+
+    auto source = utils.createSource("multiSink", {"a", "b"});
+    auto select2 = SelectionLogicalOperator::create(
+        source,
+        GreaterEqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("b")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "0"}});
+    auto sink2 = utils.createSink(select2, "multiSink2", {"a", "b"});
+
+    auto projection = ProjectionLogicalOperator::create(source, {}, ProjectionLogicalOperator::Asterisk{true});
+    auto select1 = SelectionLogicalOperator::create(
+        projection,
+        GreaterEqualsLogicalFunction{
+            FieldAccessLogicalFunction{projection.getOutputSchema()[Identifier::parse("b")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "0"}});
+    auto sink1 = utils.createSink(select1, "multiSink1", {"a", "b"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+    auto pushed = PredicatePushdownRule{}.apply(plan);
+
+    auto optSink1 = pushed.getRootOperators().at(0);
+    ASSERT_TRUE(optSink1.tryGetAs<SinkLogicalOperator>());
+    auto optProjection = optSink1.getChildren().at(0);
+    ASSERT_TRUE(optProjection.tryGetAs<ProjectionLogicalOperator>());
+    auto optSelect1 = optProjection.getChildren().at(0);
+    ASSERT_TRUE(optSelect1.tryGetAs<SelectionLogicalOperator>());
+    auto optSource = optSelect1.getChildren().at(0);
+    ASSERT_TRUE(optSource.tryGetAs<SourceDescriptorLogicalOperator>());
+
+    auto optSink2 = pushed.getRootOperators().at(1);
+    ASSERT_TRUE(optSink2.tryGetAs<SinkLogicalOperator>());
+    auto optSelect2 = optSink2.getChildren().at(0);
+    ASSERT_FALSE(optSelect1 == optSelect2);
+    ASSERT_TRUE(optSelect2.tryGetAs<SelectionLogicalOperator>());
+    auto optSourceAlt = optSelect2.getChildren().at(0);
+    ASSERT_EQ(optSource, optSourceAlt);
+}
+
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }

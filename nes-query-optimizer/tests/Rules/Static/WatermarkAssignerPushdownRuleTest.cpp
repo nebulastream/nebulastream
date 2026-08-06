@@ -301,7 +301,7 @@ TEST_F(WatermarkAssignerPushdownRuleTest, ProjectionPartialBreakers)
 
 TEST_F(WatermarkAssignerPushdownRuleTest, Breakers)
 {
-    /// BEFORE AND AFTER: Sink < IngestionTime < Join < Source
+    /// BEFORE AND AFTER: Sink < IngestionTime < Join <(source1, source2)
 
     auto sourceLeft = utils.createSource("breakers1", {"a", "b"});
     auto sourceRight = utils.createSource("breakers2", {"c", "d"});
@@ -419,6 +419,73 @@ TEST_F(WatermarkAssignerPushdownRuleTest, ProjectionAsteriskWithComputedFieldBre
     ASSERT_TRUE(op2.tryGetAs<ProjectionLogicalOperator>());
     auto op3 = op2.getChildren().at(0);
     ASSERT_TRUE(op3.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(WatermarkAssignerPushdownRuleTest, MultiSink)
+{
+    /// BEFORE: (Sink1 < ET(a), Sink2 < ET(B) < IT) < SELECTION < SOURCE
+    /// AFTER: (Sink1, Sink2) < SELECTION < ET(a) < ET(b) < IT < SOURCE
+
+    auto source = utils.createSource("multiSink", {"a", "b"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}});
+
+    auto eventTime1 = EventTimeWatermarkAssignerLogicalOperator::create(
+        select, FieldAccessLogicalFunction{select.getOutputSchema()[Identifier::parse("a")].value()}, Windowing::TimeUnit{0});
+    auto sink1 = utils.createSink(eventTime1, "multiSink", {"a", "b"});
+
+    auto ingestionTime = IngestionTimeWatermarkAssignerLogicalOperator::create(select);
+    auto eventTime2 = EventTimeWatermarkAssignerLogicalOperator::create(
+        ingestionTime, FieldAccessLogicalFunction{ingestionTime.getOutputSchema()[Identifier::parse("b")].value()}, Windowing::TimeUnit{0});
+    auto sink2 = utils.createSink(eventTime2, "multiSink", {"a", "b"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+
+    auto pushed = WatermarkAssignerPushdownRule{}.apply(plan);
+
+
+    auto op00 = pushed.getRootOperators().at(0);
+    ASSERT_TRUE(op00.tryGetAs<SinkLogicalOperator>());
+    auto op01 = op00.getChildren()[0];
+    ASSERT_TRUE(op01.tryGetAs<SelectionLogicalOperator>());
+
+    auto op10 = pushed.getRootOperators().at(1);
+    ASSERT_TRUE(op10.tryGetAs<SinkLogicalOperator>());
+    auto op11 = op10.getChildren()[0];
+    ASSERT_TRUE(op11.tryGetAs<SelectionLogicalOperator>());
+
+    ASSERT_EQ(op01, op11);
+
+    auto op2 = op01.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>());
+    ASSERT_TRUE(
+        op2.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>()
+            .value()
+            ->getOnField()
+            .tryGetAs<FieldAccessLogicalFunction>()
+            .value()
+            ->getField()
+            .getLastName()
+        == Identifier::parse("a"));
+    auto op3 = op2.getChildren().at(0);
+    ASSERT_TRUE(op3.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>());
+    ASSERT_TRUE(
+        op3.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>()
+            .value()
+            ->getOnField()
+            .tryGetAs<FieldAccessLogicalFunction>()
+            .value()
+            ->getField()
+            .getLastName()
+        == Identifier::parse("b"));
+    auto op4 = op3.getChildren().at(0);
+    ASSERT_TRUE(op4.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>());
+    auto op5 = op4.getChildren().at(0);
+    ASSERT_TRUE(op5.tryGetAs<SourceDescriptorLogicalOperator>());
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

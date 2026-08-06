@@ -18,6 +18,9 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include <Identifiers/Identifier.hpp>
@@ -26,25 +29,22 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
 
-LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(const LogicalOperator& current) const
+LogicalOperator
+AnonymousSourceBindingRule::bindAnonymousSources(const LogicalOperator& op, const std::vector<LogicalOperator>& children) const
 {
-    std::vector<LogicalOperator> newChildren;
-    for (const auto& child : current.getChildren())
+    if (const auto anonymousSource = op.tryGetAs<AnonymousSourceLogicalOperator>())
     {
-        newChildren.emplace_back(bindAnonymousSourceLogicalOperators(child));
-    }
-
-    if (const auto anonymousSource = current.tryGetAs<AnonymousSourceLogicalOperator>())
-    {
-        PRECONDITION(std::ranges::empty(anonymousSource->getChildren()), "Anonymous source operator must have no children");
+        PRECONDITION(children.empty(), "Anonymous source operator must have no children");
         const auto type = anonymousSource.value()->getSourceType();
         const auto schema = anonymousSource.value()->getSourceSchema();
         const auto parserConfig = anonymousSource.value()->getParserConfig();
@@ -66,21 +66,23 @@ LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(
         {
             throw InvalidConfigParameter("Could not create an anonymous source descriptor because of invalid config parameters");
         }
-        const auto& descriptor = descriptorOpt.value();
-        return SourceDescriptorLogicalOperator::create(descriptor);
+        return LogicalOperator{SourceDescriptorLogicalOperator::create(std::move(descriptorOpt).value())};
     }
 
-    return current.withChildrenUnsafe(newChildren);
+    if (op.tryGetAs<SourceNameLogicalOperator>())
+    {
+        return op;
+    }
+
+    return op.withChildrenUnsafe(children);
 }
 
 LogicalPlan AnonymousSourceBindingRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& root : queryPlan.getRootOperators())
-    {
-        newRoots.emplace_back(bindAnonymousSourceLogicalOperators(root));
-    }
-    return queryPlan.withRootOperators(newRoots);
+    PlanVisitor<> visitor{[this](const LogicalOperator& op, const std::vector<LogicalOperator>& children)
+                          { return this->bindAnonymousSources(op, children); }};
+
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
