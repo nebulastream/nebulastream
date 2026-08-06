@@ -25,7 +25,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
@@ -133,7 +133,7 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     const DataType& fieldType,
     const nautilus::val<int8_t*>& address,
     const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     nautilus::val<uint64_t> writtenBytes = 0;

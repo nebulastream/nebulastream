@@ -31,7 +31,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -133,7 +133,7 @@ MemoryLayout::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const 
 }
 
 VarVal
-MemoryLayout::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+MemoryLayout::loadValue(const DataType& physicalType, const TaskBufferRef& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     /// For now, we store the null byte before the actual VarVal
     nautilus::val<bool> null = false;
@@ -168,7 +168,7 @@ MemoryLayout::loadValue(const DataType& physicalType, const RecordBuffer& record
 
 VarVal MemoryLayout::storeValue(
     const DataType& physicalType,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)

@@ -21,7 +21,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>

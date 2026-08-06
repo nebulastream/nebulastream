@@ -17,7 +17,7 @@
 #include <optional>
 #include <utility>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -30,7 +30,7 @@ namespace NES
 EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
 
-void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
     executionCtx.watermarkTs = nautilus::val<Timestamp>(Timestamp(Timestamp::INITIAL_VALUE));
@@ -48,7 +48,7 @@ void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, 
     executeChild(ctx, record);
 }
 
-void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }

@@ -32,7 +32,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Arena.hpp>
@@ -347,7 +347,7 @@ void parseLeadingRecord(
 
 void parseRecordsInRawBuffer(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -367,7 +367,7 @@ void parseRecordsInRawBuffer(
 
 void parseTrailingRecord(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -402,14 +402,14 @@ std::vector<DataType> InputFormatter::getAllDataTypes() const
     std::unreachable();
 }
 
-Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
+Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const TaskBufferRef&, nautilus::val<uint64_t>&) const
 {
     INVARIANT(false, "Does not implement 'readRecord()'");
     std::unreachable();
 }
 
 MemoryLayout::WriteRecordResult InputFormatter::writeRecord(
-    nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+    nautilus::val<uint64_t>&, const TaskBufferRef&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
 {
     INVARIANT(false, "unsupported operation on InputFormatter");
     std::unreachable();
@@ -421,7 +421,7 @@ std::vector<Record::RecordFieldIdentifier> InputFormatter::getAllFieldNames() co
     std::unreachable();
 }
 
-nautilus::val<bool> InputFormatter::indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
+nautilus::val<bool> InputFormatter::indexBuffer(const TaskBufferRef& recordBuffer, const ArenaRef& arenaRef) const
 {
     setDefaultRawBufferIndicesForTracing(*this->inputFormatIndexer);
     /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
@@ -442,7 +442,7 @@ nautilus::val<bool> InputFormatter::indexBuffer(const RecordBuffer& recordBuffer
 
 void InputFormatter::readBuffer(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild)
 {
     /// @Note: the order below is important

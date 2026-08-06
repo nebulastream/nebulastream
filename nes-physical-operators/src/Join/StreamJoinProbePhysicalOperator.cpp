@@ -25,7 +25,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
@@ -92,7 +92,7 @@ StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
 {
 }
 
-void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.currentTs = recordBuffer.getCreatingTs();

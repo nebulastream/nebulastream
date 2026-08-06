@@ -24,7 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -99,7 +99,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
     pipelineCtx->emitBuffer(*tb);
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
+void ExecutionContext::emitBuffer(const TaskBufferRef& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }

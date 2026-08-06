@@ -29,7 +29,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <fmt/format.h>
@@ -86,7 +86,7 @@ void writeValue(
     const VarVal& value,
     const DataType& fieldType,
     const nautilus::val<int8_t*>& fieldPointer,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<bool>& quoteStrings,
     nautilus::val<uint64_t>& written,
@@ -151,7 +151,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     uint64_t fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,
     const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
     nautilus::val<uint64_t> written{0};

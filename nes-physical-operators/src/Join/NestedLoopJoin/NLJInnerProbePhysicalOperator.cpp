@@ -25,7 +25,7 @@
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperatorBase.hpp>
@@ -65,7 +65,7 @@ NLJInnerProbePhysicalOperator::NLJInnerProbePhysicalOperator(
 {
 }
 
-void NLJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void NLJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 

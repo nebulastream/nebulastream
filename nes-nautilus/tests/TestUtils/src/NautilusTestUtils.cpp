@@ -39,7 +39,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -197,7 +197,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                                   nautilus::val<uint64_t> sizeVarSizedDataVal,
                                   nautilus::val<uint64_t*> outputIndex)
     {
-        RecordBuffer recordBuffer(buffer);
+        TaskBufferRef recordBuffer(buffer);
         nautilus::val<uint64_t> value = std::move(startForValues);
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {

@@ -21,7 +21,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_arith.hpp>
@@ -61,12 +61,12 @@ public:
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& bytesWritten,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };

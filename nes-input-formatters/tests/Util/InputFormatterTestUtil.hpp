@@ -37,7 +37,7 @@
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -244,7 +244,7 @@ public:
             }
             currentTupleIdx = 0;
         }
-        const RecordBuffer recordBuffer{buffers.data() + currentBufferIdx};
+        const TaskBufferRef recordBuffer{buffers.data() + currentBufferIdx};
         auto record = bufferRef->readRecord(
             schema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
                 | std::ranges::to<std::vector>(),
@@ -350,7 +350,7 @@ void writeFieldToBuffer(
     AbstractBufferProvider& bufferProvider)
 {
     Record record;
-    const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const TaskBufferRef recordBuffer{std::addressof(tupleBuffer)};
     const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
 
     /// Creating a Record containing the current field
@@ -376,7 +376,7 @@ inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleB
     const nautilus::val<const char*> messageVal{message.data()};
     nautilus::stringstream ss;
     ss << messageVal;
-    const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
+    const TaskBufferRef recordBuffer{std::addressof(tupleBuffer)};
     for (nautilus::val<uint64_t> recordIndex = 0; recordIndex < recordBuffer.getNumRecords(); ++recordIndex)
     {
         const auto record = tupleBufferRef.readRecord(tupleBufferRef.getAllFieldNames(), recordBuffer, recordIndex);

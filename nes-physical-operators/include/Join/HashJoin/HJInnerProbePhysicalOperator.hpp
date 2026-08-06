@@ -17,7 +17,7 @@
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -43,7 +43,7 @@ public:
         HashMapOptions leftHashMapBasedOptions,
         HashMapOptions rightHashMapBasedOptions);
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override;
 
     static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
     {

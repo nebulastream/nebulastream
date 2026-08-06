@@ -23,7 +23,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
@@ -145,7 +145,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) outer join dispatches by task type and delegates to inner/null-fill probes
-void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 

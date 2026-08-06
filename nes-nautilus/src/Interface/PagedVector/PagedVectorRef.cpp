@@ -31,7 +31,7 @@
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>

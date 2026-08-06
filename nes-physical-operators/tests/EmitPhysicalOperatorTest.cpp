@@ -36,7 +36,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/MemoryLayout/RowLayout.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -146,7 +146,7 @@ public:
         return emit;
     }
 
-    void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
+    void run(const std::function<void(ExecutionContext&, TaskBufferRef&)>& test, TupleBuffer buffer)
     {
         MockedPipelineContext pec{buffers, bm};
         pec.setOperatorHandlers(handlers);
@@ -157,7 +157,7 @@ public:
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
 
-        RecordBuffer recordBuffer(std::addressof(buffer));
+        TaskBufferRef recordBuffer(std::addressof(buffer));
         test(executionContext, recordBuffer);
     }
 

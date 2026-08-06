@@ -22,7 +22,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -53,7 +53,7 @@ nautilus::val<int8_t*> calculateFieldAddress(
 
 Record ColumnLayout::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
@@ -74,7 +74,7 @@ Record ColumnLayout::readRecord(
 
 MemoryLayout::WriteRecordResult ColumnLayout::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {

@@ -23,7 +23,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -43,7 +43,7 @@ OutputFormatterLayout::OutputFormatterLayout(
 }
 
 Record
-OutputFormatterLayout::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
+OutputFormatterLayout::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const TaskBufferRef&, nautilus::val<uint64_t>&) const
 {
     INVARIANT(false, "OutputFormatterLayout should not be able to read records.");
     std::unreachable();
@@ -51,7 +51,7 @@ OutputFormatterLayout::readRecord(const std::vector<Record::RecordFieldIdentifie
 
 MemoryLayout::WriteRecordResult OutputFormatterLayout::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {

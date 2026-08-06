@@ -26,7 +26,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -99,7 +99,7 @@ struct ExecutionContext final
 
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
-    void emitBuffer(const RecordBuffer& buffer) const;
+    void emitBuffer(const TaskBufferRef& buffer) const;
 
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;

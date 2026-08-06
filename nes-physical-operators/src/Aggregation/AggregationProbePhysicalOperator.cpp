@@ -26,7 +26,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -46,7 +46,7 @@
 namespace NES
 {
 
-void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();

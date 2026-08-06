@@ -24,7 +24,7 @@
 
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
@@ -76,23 +76,23 @@ public:
     InputFormatter(InputFormatter&&) = default;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override;
+    Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const TaskBufferRef&, nautilus::val<uint64_t>&) const override;
 
     WriteRecordResult
-    writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
+    writeRecord(nautilus::val<uint64_t>&, const TaskBufferRef&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
-    [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const;
+    [[nodiscard]] nautilus::val<bool> indexBuffer(const TaskBufferRef& recordBuffer, const ArenaRef& arenaRef) const;
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer
     /// Relies on the index created in the first phase (indexBuffer), which it accesses through the static_thread local member
     void readBuffer(
         ExecutionContext& executionCtx,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild);
 
 

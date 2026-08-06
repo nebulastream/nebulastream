@@ -26,14 +26,14 @@
 namespace NES
 {
 
-/// @brief The RecordBuffer is a representation of a set of records that are stored together.
+/// @brief The TaskBufferRef is a representation of a set of records that are stored together.
 /// In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
-class RecordBuffer
+class TaskBufferRef
 {
 public:
     /// @brief Creates a new record buffer with a reference to a tuple buffer
     /// @param tupleBufferRef
-    explicit RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef);
+    explicit TaskBufferRef(const nautilus::val<TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
@@ -68,7 +68,7 @@ public:
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
-    ~RecordBuffer() = default;
+    ~TaskBufferRef() = default;
 
 private:
     nautilus::val<TupleBuffer*> tupleBufferRef;

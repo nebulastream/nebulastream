@@ -19,7 +19,7 @@
 #include <optional>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/val.hpp>
 #include <CompilationContext.hpp>
@@ -40,12 +40,12 @@ public:
 
     void terminate(ExecutionContext&) const override { /*noop*/ }
 
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
     void emitRecordBuffer(
         ExecutionContext& ctx,
-        RecordBuffer& recordBuffer,
+        TaskBufferRef& recordBuffer,
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
