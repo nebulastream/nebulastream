@@ -22,6 +22,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
@@ -42,7 +43,7 @@ MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
 
 void MaxAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
@@ -79,9 +80,9 @@ void MaxAggregationPhysicalFunction::lift(
 
 void MaxAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     const nautilus::val<AggregationState*> aggregationState2,
-    nautilus::val<TupleBuffer*>,
+    BorrowedNautilusBuffer,
     PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
@@ -118,7 +119,7 @@ void MaxAggregationPhysicalFunction::combine(
 }
 
 Record MaxAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     if (not inputType.nullable)
     {
@@ -144,7 +145,7 @@ Record MaxAggregationPhysicalFunction::lower(
 }
 
 void MaxAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
+    const nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider&)
 {
     /// Initialize the null flag to "no value seen yet" so the first non-null input becomes the running max
     if (inputType.nullable)

@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -54,6 +55,11 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
+    /// A proxy that throws must be called through nautilus::invokeGuarded / invokeGuardedPtr: those park the exception
+    /// so the traced function still reaches its end, where the emitted destructors sit, and nautilus rethrows it here
+    /// once this call has returned. A throwing proxy called through a plain nautilus::invoke instead unwinds straight
+    /// through the compiled frame, skipping those destructors; that leaks the result buffer and is caught by the buffer
+    /// accounting at teardown rather than here, since an unwound and a rethrown exception are indistinguishable.
     (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
@@ -73,7 +79,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
                                nautilus::val<const Arena*> arenaRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-        RecordBuffer recordBuffer(recordBufferRef);
+        RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
         switch (ctx.getOpenReturnState())

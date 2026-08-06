@@ -25,10 +25,13 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/exception.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>
 #include <PhysicalOperator.hpp>
+#include <function.hpp>
 #include <val.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -54,8 +57,16 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
 
-    /// process buffer
-    const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
+    /// process buffer. The parse loop lives inside readBuffer, so the callback is the only record boundary we control:
+    /// remaining records are still parsed (each guarded parse short-circuits) but nothing goes downstream.
+    const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record)
+    {
+        if (nautilus::hasParkedExceptionTraced())
+        {
+            return;
+        }
+        executeChild(executionCtx, record);
+    };
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
@@ -80,6 +91,12 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
+        /// A parked exception does not unwind, so without this check every remaining record is still processed and
+        /// emitted on sentinel values before the pipeline boundary rethrows.
+        if (nautilus::hasParkedExceptionTraced())
+        {
+            break;
+        }
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }

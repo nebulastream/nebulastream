@@ -24,6 +24,7 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/exception.hpp>
 #include <nautilus/select.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
@@ -355,7 +356,9 @@ VarVal VarVal::operator/(const VarVal& other) const
                 {
                     if (rhsVal == RHS{0} and not rightIsNull)
                     {
-                        nautilus::invoke(+[] { throw ArithmeticalError("Can not divide by zero!"); });
+                        /// invokeGuarded parks the throw so the compiled frame (no landing pads) still runs its traced
+                        /// destructors; a plain invoke would unwind through it and leak the pipeline's result buffer.
+                        nautilus::invokeGuarded([] { throw ArithmeticalError("Can not divide by zero!"); });
                     }
 
                     /// Using safe denominator if it is zero and rhs is null
@@ -393,7 +396,8 @@ VarVal VarVal::operator%(const VarVal& other) const
                 {
                     if (rhsVal == RHS{0} and not rightIsNull)
                     {
-                        nautilus::invoke(+[] { throw ArithmeticalError("Can not modulo by zero!"); });
+                        /// See operator/ above: guarded so the parked throw cannot unwind through the compiled frame.
+                        nautilus::invokeGuarded([] { throw ArithmeticalError("Can not modulo by zero!"); });
                     }
 
                     /// Using safe denominator if it is zero and rhs is null

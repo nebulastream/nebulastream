@@ -33,6 +33,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/exception.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapSlice.hpp>
@@ -47,6 +48,22 @@
 
 namespace NES
 {
+namespace
+{
+/// Throws when no buffer is available for the entry's paged vector, so it is called through invokeGuarded.
+void initEntryPagedVectorProxy(
+    TupleBuffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
+{
+    if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
+    {
+        PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSize);
+        auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
+        *valueMemArea = childIndex.getRawValue();
+        return;
+    }
+    throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+}
+}
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
@@ -58,9 +75,10 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapBuffer
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
+    const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
 
     ChainedHashMapRef hashMap{
-        hashMapBuffer.asArg(),
+        borrowedHashMapBuffer,
         hashMapOptions.fieldKeys,
         hashMapOptions.fieldValues,
         hashMapOptions.entriesPerPage,
@@ -89,21 +107,12 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             {
                 /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+                    entry, borrowedHashMapBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
-                nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
-                    {
-                        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
-                        {
-                            PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSize);
-                            auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
-                            *valueMemArea = childIndex.getRawValue();
-                            return;
-                        }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
-                    },
+                /// The proxy throws when it cannot get a buffer for the entry's paged vector. The guard parks that
+                /// throw so the compiled frame still runs its traced destructors instead of leaking them.
+                nautilus::invokeGuarded<&initEntryPagedVectorProxy, TupleBuffer*, uint32_t*, AbstractBufferProvider*, uint64_t>(
                     hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
@@ -111,18 +120,20 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
             },
             ctx.pipelineMemoryProvider.bufferProvider);
 
+        /// A parked allocation left the entry's child index unset, and the paged-vector load below would follow it.
+        /// Leave through the traced return instead: the emitted destructors still run and the boundary rethrows.
+        if (nautilus::hasParkedExceptionTraced())
+        {
+            return;
+        }
+
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
-            hashMapEntry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
-        auto entryMemArea = entryRef.getValueMemArea();
-        OwnedNautilusBuffer pagedVecBuffer;
-        nautilus::invoke(
-            +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-            { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            hashMapBuffer.asArg(),
-            pagedVecBuffer.asArg(),
-            static_cast<nautilus::val<uint32_t*>>(entryMemArea));
-        PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVecBuffer.asArg()), tupleLayout);
+            hashMapEntry, borrowedHashMapBuffer, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        auto pagedVecBuffer
+            = borrowedHashMapBuffer.getChildFromIndexAddress(static_cast<nautilus::val<uint32_t*>>(entryRef.getValueMemArea()));
+        /// Move the owned buffer into the PagedVectorRef (which takes a NautilusBuffer), so it keeps the paged vector alive.
+        PagedVectorRef pagedVectorRef{std::move(pagedVecBuffer), tupleLayout};
         pagedVectorRef.pushBack(record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 }

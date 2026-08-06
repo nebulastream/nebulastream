@@ -34,6 +34,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nautilus/exception.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <WindowProbePhysicalOperator.hpp>
@@ -45,6 +46,28 @@
 
 namespace NES
 {
+namespace
+{
+/// Throws when no buffer is available for the final hash map, so it is called through invokeGuarded.
+void initFinalHashMapProxy(const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
+{
+    INVARIANT(parent != nullptr, "Parent TupleBuffer MUST NOT be null at this point");
+    /// load the first hash map
+    const ChildBufferIndex bufferIndex{0};
+    auto buffer = parent->loadChildBuffer(bufferIndex);
+    const auto chm = ChainedHashMap::load(buffer);
+    /// get a buffer and for the final hash map with the same config
+    auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains());
+    std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
+    if (not finalHashMapTupleBuffer.has_value())
+    {
+        throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
+    }
+    /// initialize the final hash map tuple buffer
+    *finalHashMapBuffer = finalHashMapTupleBuffer.value();
+    ChainedHashMap::init(*finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
+}
+}
 
 void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
@@ -67,30 +90,19 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 
     /// create final hash map and pin it
     OwnedNautilusBuffer finalHashMapNautilusBuffer;
-    nautilus::invoke(
-        +[](const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
-        {
-            INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
-            /// load the first hash map
-            const ChildBufferIndex bufferIndex{0};
-            auto buffer = parent->loadChildBuffer(bufferIndex);
-            const auto chm = ChainedHashMap::load(buffer);
-            /// get a buffer and for the final hash map with the same config
-            auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains());
-            std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
-            if (not finalHashMapTupleBuffer.has_value())
-            {
-                throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
-            }
-            /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = finalHashMapTupleBuffer.value();
-            ChainedHashMap::init(*finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
-        },
-        recordBuffer.getReference(),
-        executionCtx.pipelineMemoryProvider.bufferProvider,
-        finalHashMapNautilusBuffer.asArg());
-    /// get the reference to the final hash map buffer
-    auto finalHashMapBufferRef = finalHashMapNautilusBuffer.asArg();
+    /// The proxy throws when it cannot get a buffer for the final hash map. The guard parks that throw so the compiled
+    /// frame, which has no landing pads, still runs its traced destructors instead of leaking them.
+    nautilus::invokeGuarded<&initFinalHashMapProxy, const TupleBuffer*, AbstractBufferProvider*, TupleBuffer*>(
+        recordBuffer.getReference(), executionCtx.pipelineMemoryProvider.bufferProvider, finalHashMapNautilusBuffer.asArg());
+    /// A parked allocation left finalHashMapNautilusBuffer empty, and everything below dereferences it. Leave through
+    /// the traced return instead: the emitted destructors still run and the boundary rethrows the parked failure.
+    if (nautilus::hasParkedExceptionTraced())
+    {
+        return;
+    }
+
+    /// Borrow the pinned final hash map buffer for the ChainedHashMapRef/entry views below (implicit Owned->Borrowed conversion).
+    const BorrowedNautilusBuffer finalHashMapBufferRef = finalHashMapNautilusBuffer;
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
     ChainedHashMapRef finalHashMap{
@@ -114,7 +126,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             recordBuffer.getReference(),
             curHashMapIdx,
             hashMapNautilusBuffer.asArg());
-        auto hashMapBufferRef = hashMapNautilusBuffer.asArg();
+        const BorrowedNautilusBuffer hashMapBufferRef = hashMapNautilusBuffer;
         const ChainedHashMapRef currentMap{
             hashMapBufferRef,
             hashMapOptions.fieldKeys,
@@ -137,7 +149,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  pinnedFinalBuffer = finalHashMapBufferRef,
-                 hashMapBufferRef = hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
+                 hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
                     const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert{entryOnUpdate, pinnedFinalBuffer, fieldKeys, fieldValues};
@@ -157,7 +169,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
                  pinnedFinalBuffer = finalHashMapBufferRef,
-                 hashMapBufferRef = hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnInsert)
+                 hashMapBufferRef](const nautilus::val<AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
@@ -205,7 +217,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         }
     }
 
-    /// As we are creating a new hash map for the probe operator, we have to reset/destroy the final hash map of the emitted aggregation window
+    /// The probe has consumed the emitted aggregation window (its per-thread hash maps were combined into the final hash map
+    /// above), so destroy it here to release the child buffers it holds.
     nautilus::invoke(
         +[](EmittedAggregationWindow* emittedAggregationWindow)
         {

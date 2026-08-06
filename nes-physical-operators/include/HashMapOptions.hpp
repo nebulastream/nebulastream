@@ -23,7 +23,9 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -140,6 +142,13 @@ struct HashMapOptions
                 copyOfCleanupStateNautilusFunction->operator()(hashMap.get());
             }
         };
+    }
+
+    /// Builds a ChainedHashMapRef view over `buffer` using this options' key/value layout. Colocated with the options
+    /// data so probe operators construct the ref directly instead of through a separate factory.
+    [[nodiscard]] ChainedHashMapRef createChainedHashMapRef(BorrowedNautilusBuffer buffer) const
+    {
+        return ChainedHashMapRef{std::move(buffer), fieldKeys, fieldValues, entriesPerPage, entrySize};
     }
 
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution

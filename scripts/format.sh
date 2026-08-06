@@ -208,6 +208,15 @@ then
     log_error "Found catch (...). Please use CPPTRACE_TRY and CPPTRACE_CATCH (or cpptrace::try_catch for multiple exception handlers) to preserve stacktraces, .\n$(git grep -n "catch (\.\.\.)" -- ".hpp" "*.cpp" | grep -v "NOLINT(no-raw-catch-all)")"
 fi
 
+# no throw inside a plain nautilus::invoke
+#
+# A compiled nautilus frame has no landing pads: an exception thrown by a proxy called through plain
+# nautilus::invoke unwinds straight through it and skips the traced destructors, leaking their
+# resources (e.g. the pipeline's result buffer). Throwing proxies must use nautilus::invokeGuarded /
+# invokeGuardedSlot. This only catches a literal throw inside the invoke's argument list; named
+# proxies that throw are not detected.
+python3 scripts/check_invoke_throw.py || FAIL=1
+
 python3 scripts/check_preamble.py || FAIL=1
 
 DISTANCE_MERGE_BASE=$DISTANCE_MERGE_BASE python3 scripts/check_todos.py || FAIL=1

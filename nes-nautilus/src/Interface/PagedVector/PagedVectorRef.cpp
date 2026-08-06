@@ -23,15 +23,13 @@
 
 #include <cstdint>
 #include <ranges>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordLayoutUtil.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -43,6 +41,8 @@
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
+
+#include <exception.hpp>
 
 namespace NES
 {
@@ -105,72 +105,77 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
     };
 }
 
+/// Allocates `allocationSize` bytes of varsized space in `pageBuffer`, records where it landed in the VariableSizedAccess
+/// slot at `fieldSlot`, and returns the address the payload must be copied to. Throws when no buffer can be obtained, so
+/// it must be called through nautilus::invokeGuardedPtr.
+int8_t* allocVarSizedProxy(TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize)
+{
+    INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
+    INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
+
+    auto numChildren = pageBuffer->getNumberOfChildBuffers();
+    if (numChildren > 0)
+    {
+        auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
+        TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
+        const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
+        const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
+        if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
+        {
+            lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+            *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
+                lastVarSizedBufferIndex,
+                VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
+                VariableSizedAccess::Size{allocationSize}};
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
+            return reinterpret_cast<int8_t*>(lastVarSizedBuffer
+                                                 .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+                                                 .subspan(lastVarSizedBufferNumTuples)
+                                                 .data());
+        }
+    }
+    TupleBuffer newVarSizedBuffer;
+    if (allocationSize <= bufferProvider->getBufferSize())
+    {
+        newVarSizedBuffer = bufferProvider->getBufferBlocking();
+    }
+    else
+    {
+        /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
+        auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
+        if (not unpooledBuffer.has_value())
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
+        }
+        newVarSizedBuffer = std::move(unpooledBuffer.value());
+    }
+    auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
+    newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+    *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
+        = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
+    newVarSizedBuffer.setNumberOfTuples(allocationSize);
+    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
+    return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
+}
+
 /// Factory method that returns the lambda function to write a record at a specific memory address in a paged vector page.
 /// The lastPageBuffer argument is the capture variable pointing to the last page of the paged vector.
 /// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
 auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    return /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-        /// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the lambda's exception spec; INVARIANT may throw on bad input.
-        [lastPageBuffer,
-         bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
+    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
+    return [lastPageBuffer, bufferProvider](
+               const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
     {
-        return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-            +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
-            {
-                INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
-                INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
-
-                auto numChildren = pageBuffer->getNumberOfChildBuffers();
-                if (numChildren > 0)
-                {
-                    auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
-                    TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
-                    const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
-                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
-                    if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
-                    {
-                        lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                        *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
-                            lastVarSizedBufferIndex,
-                            VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
-                            VariableSizedAccess::Size{allocationSize}};
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
-                        return reinterpret_cast<int8_t*>(lastVarSizedBuffer
-                                                             .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                             .subspan(lastVarSizedBufferNumTuples)
-                                                             .data());
-                    }
-                }
-                TupleBuffer newVarSizedBuffer;
-                if (allocationSize <= bufferProvider->getBufferSize())
-                {
-                    newVarSizedBuffer = bufferProvider->getBufferBlocking();
-                }
-                else
-                {
-                    /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
-                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
-                    if (not unpooledBuffer.has_value())
-                    {
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
-                    }
-                    newVarSizedBuffer = std::move(unpooledBuffer.value());
-                }
-                auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
-                newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
-                    = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
-                newVarSizedBuffer.setNumberOfTuples(allocationSize);
-                /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
-                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
-            },
-            lastPageBuffer.asArg(),
-            bufferProvider,
-            fieldSlot,
-            allocationSize);
+        /// allocVarSizedProxy throws when it cannot get a buffer. The guarded form parks that throw so the compiled
+        /// frame, which has no landing pads, still runs its traced destructors instead of leaking them. A parked call
+        /// yields nullptr, which is why the caller skips the copy while an exception is parked.
+        /// The argument types are spelled out because they cannot be deduced from the call: the captured buffer is const,
+        /// so asArg() hands back a val<const TupleBuffer*> that has to convert to the proxy's non-const parameter.
+        return nautilus::invokeGuardedPtr<&allocVarSizedProxy, TupleBuffer*, AbstractBufferProvider*, int8_t*, uint64_t>(
+            lastPageBuffer.asArg(), bufferProvider, fieldSlot, allocationSize);
     };
 }
 }
@@ -187,104 +192,59 @@ PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr
 
 Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSizedFunction loadFunction) const
 {
-    const auto numFields = std::ranges::size(schema);
-    Record record;
     uint64_t fieldOffset = 0;
-    for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
-    {
-        auto fieldOpt = schema[i];
-        INVARIANT(
-            fieldOpt.has_value(),
-            "Failed trying to access field at pos {} but schema has only {} fields.",
-            static_cast<size_t>(i),
-            std::ranges::size(schema));
-        const auto name = fieldOpt->getFullyQualifiedName();
-        const auto dataType = fieldOpt->getDataType();
-        auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
-
-        nautilus::val<bool> null = false;
-        nautilus::val<int8_t*> varValRef = fieldAddress;
-        if (dataType.nullable)
+    const auto access = FieldAccess::createFieldAccesses(
+        schema,
+        [&fieldOffset, &recordMemAddress](const auto& field)
         {
-            null = readValueFromMemRef<bool>(fieldAddress);
-            varValRef += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            record.write(name, VarVal::readVarValFromMemory(varValRef, dataType, null));
-        }
-        else
-        {
-            auto [ptr, len] = loadFunction(varValRef);
-            record.write(name, VarVal{VariableSizedData(ptr, len), dataType.nullable, null});
-        }
-        fieldOffset += dataType.getSizeInBytesWithNull();
-    }
-    return record;
+            const auto dataType = field.getDataType();
+            FieldAccess fieldAccess{
+                .name = field.getFullyQualifiedName(),
+                .dataType = dataType,
+                .address = recordMemAddress + nautilus::val<uint64_t>(fieldOffset)};
+            fieldOffset += dataType.getSizeInBytesWithNull();
+            return fieldAccess;
+        });
+    return readRecordFields(access, loadFunction);
 }
 
 void DefaultPagedVectorTupleLayout::writeRecord(
     const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
 {
-    const auto numFields = std::ranges::size(schema);
-    uint64_t fieldOffset = 0;
-    for (nautilus::static_val<uint64_t> i = 0; i < numFields; ++i)
+    /// Varsized data is appended to the paged vector's page via the allocate callback, then copied in.
+    const VarSizedStoreFn storeVarSized = [&allocateVarSized](const nautilus::val<int8_t*>& slot, const VarVal& value)
     {
-        const auto fieldOpt = schema[i];
-        INVARIANT(
-            fieldOpt.has_value(),
-            "Failed trying to access field at pos {} but schema has only {} fields.",
-            static_cast<size_t>(i),
-            std::ranges::size(schema));
-        const auto name = fieldOpt->getFullyQualifiedName();
-        const auto dataType = fieldOpt->getDataType();
-        if (not record.hasField(name))
-        {
-            /// Skipping any fields that are not part of the record
-            fieldOffset += dataType.getSizeInBytesWithNull();
-            continue;
-        }
-        auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
-        const auto& value = record.read(name);
-
-        /// For now, we store the null byte before the actual VarVal
-        nautilus::val<int8_t*> addressToWriteValue = fieldAddress;
-        if (dataType.nullable)
-        {
-            /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
-            VarVal{value.isNull()}.writeToMemory(addressToWriteValue);
-            addressToWriteValue += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            auto sizeInBytes = nautilus::val<uint64_t>(DataTypeProvider::provideDataType(dataType.type).getSizeInBytesWithNull());
-
-            if (const auto storeFunction = storeValueFunctionMap.find(dataType.type); storeFunction != storeValueFunctionMap.end())
-            {
-                auto dummy = storeFunction->second(value, addressToWriteValue);
-                fieldOffset += dataType.getSizeInBytesWithNull();
-                continue;
-            }
-            throw UnknownDataType("Physical Type: {} is currently not supported", dataType);
-        }
-
-        /// field is varsized data, get the appropriate memory address to write it to
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(addressToWriteValue, varSizedValue.getSize());
-
-        /// write the varsized data to the memory address
-        invoke(
-            +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
-            {
-                INVARIANT(varSizedMemAddress != nullptr, "Memory address MUST NOT be null at this point");
-                std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
-            },
-            varSizedMemAddress,
-            varSizedValue.getContent(),
-            varSizedValue.getSize());
-
-        fieldOffset += dataType.getSizeInBytesWithNull();
-    }
+        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(slot, varSizedValue.getSize());
+        /// A failed allocation parks its exception and hands back a nullptr sentinel, so the copy has to be skipped:
+        /// the traced code must still reach the end of the compiled call, which is where nautilus rethrows.
+        if (not nautilus::hasParkedExceptionTraced())
+        {
+            invoke(
+                +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
+                {
+                    INVARIANT(varSizedMemAddress != nullptr, "Memory address MUST NOT be null at this point");
+                    std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
+                },
+                varSizedMemAddress,
+                varSizedValue.getContent(),
+                varSizedValue.getSize());
+        }
+    };
+    uint64_t fieldOffset = 0;
+    const auto access = FieldAccess::createFieldAccesses(
+        schema,
+        [&fieldOffset, &memoryForRecord](const auto& field)
+        {
+            const auto dataType = field.getDataType();
+            FieldAccess fieldAccess{
+                .name = field.getFullyQualifiedName(),
+                .dataType = dataType,
+                .address = memoryForRecord + nautilus::val<uint64_t>(fieldOffset)};
+            fieldOffset += dataType.getSizeInBytesWithNull();
+            return fieldAccess;
+        });
+    writeRecordFields(access, record, storeVarSized);
 }
 
 void PagedVectorRef::pushBack(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider)

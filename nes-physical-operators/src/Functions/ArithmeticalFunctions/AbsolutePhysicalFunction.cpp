@@ -21,6 +21,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
+#include <nautilus/exception.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
@@ -54,7 +55,9 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
         /// A NULL value carries arbitrary raw bits, so only raise the overflow error when the value is INT64_MIN and non-null.
         if (isMinValue and not value.isNull())
         {
-            nautilus::invoke(+[] { throw ArithmeticalError("ABS() of INT64_MIN overflows"); });
+            /// invokeGuarded parks the throw so the compiled frame (which has no landing pads) still runs its traced
+            /// destructors; a plain invoke would unwind through it and leak the pipeline's result buffer.
+            nautilus::invokeGuarded([] { throw ArithmeticalError("ABS() of INT64_MIN overflows"); });
         }
     }
 
