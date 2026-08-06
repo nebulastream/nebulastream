@@ -33,6 +33,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
+#include <boost/asio/detail/chrono.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
@@ -45,6 +47,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <testing.hpp>
 
 namespace NES
 {
@@ -71,15 +74,36 @@ void NetworkSink::start(PipelineExecutionContext&)
         .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
         .receiver_queue_size = 0,
     };
-    this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+    setupTime = std::chrono::system_clock::now();
+
+    //this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
     NES_DEBUG("Sender channel registered: {}", channelId);
 }
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
 {
-    PRECONDITION(channel, "Sender channel is not initialized");
+    if (!channel)
+    {
+        // TODO workaround to correctly stop queries with no data on a source
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        channelMutex.lock();
+        const NetworkServiceOptions options{
+            .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
+            .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
+            .receiver_queue_size = 0,
+        };
+        this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+        channelMutex.unlock();
+    }
     if (!closed)
     {
+        #ifdef INJECT_CHAOS
+        if (pec.getCurrentEpoch().getRawValue() == 1)
+        {
+            return;
+        }
+        #endif
+
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
 
         /// Check if the sender network service has pending buffers to send
@@ -98,8 +122,54 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
 
 void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
+    auto now = std::chrono::system_clock::now();
+    if (now - setupTime > std::chrono::seconds(3))
+    {
+        channelMutex.lock();
+        if (!setup)
+        {
+            const NetworkServiceOptions options{
+                .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
+                .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
+                .receiver_queue_size = 0,
+            };
+            this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+            setup = true;
+        }
+
+        channelMutex.unlock();
+    }
+    else
+    {
+        pec.repeatTask(inputBuffer, BACKPRESSURE_RETRY_INTERVAL);
+        return;
+    }
     PRECONDITION(channel, "Sender channel is not initialized");
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
+
+    #ifdef INJECT_CHAOS
+    if (pec.getCurrentEpoch().getRawValue() == 1)
+    {
+        auto sn = inputBuffer.getSequenceNumber().getRawValue();
+        sn ^= sn >> 16;
+        sn ^= sn >> 8;
+
+        switch (sn % 3)
+        {
+            case 0:
+                // NOOP
+                break;
+            case 1:
+                return;
+            case 2:
+                if ((std::rand() % 2 == 1 || (inputBuffer.getChunkNumber().getRawValue() == 1)))
+                {
+                    return;
+                }
+                break;
+        }
+    }
+    #endif
 
     if (closed)
     {
@@ -115,6 +185,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
             .origin_id = currentBuffer->getOriginId().getRawValue(),
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
+            .origin_epoch = currentBuffer->getOriginEpoch().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
             .last_chunk = currentBuffer->isLastChunk()};

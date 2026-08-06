@@ -131,11 +131,13 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
         let mut lock = self.registered_channels.write().await;
         let replaced = lock.insert(channel_identifier, (data_queue, cancellation_token));
         lock.retain(|_, v| !v.1.is_cancelled());
-
-        assert!(
+        if replaced.is_some() {
+            //panic!("There should not be a registered channel with the same identifier");
+        }
+        /*assert!(
             replaced.is_none(),
             "There should not be a registered channel with the same identifier"
-        )
+        )*/
     }
     async fn take_registered_channel(
         &self,

@@ -75,6 +75,9 @@ private:
     size_t senderQueueSize;
     size_t maxPendingAcks;
     std::atomic_bool closed;
+    mutable std::mutex channelMutex;
+    bool setup = false;
+    std::chrono::system_clock::time_point setupTime = std::chrono::system_clock::now();
 };
 
 /// NOLINTBEGIN(cert-err58-cpp)

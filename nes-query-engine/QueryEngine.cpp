@@ -54,6 +54,7 @@
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
+#include <testing.hpp>
 
 namespace NES
 {
@@ -340,7 +341,13 @@ public:
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
+            #ifdef INJECT_CHAOS
+            auto delay = std::chrono::milliseconds(1 + std::rand() % 1000);
+            delayedAdmissionTaskSubmitter.submitTaskIn(std::move(task), delay);
+            //std::cout << "Delaying task by " << delay << std::endl;
+            #else
             taskQueue.addAdmissionTaskBlocking({}, std::move(task));
+            #endif
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -424,6 +431,8 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
+        , delayedAdmissionTaskSubmitter([this](Task&& task) noexcept { taskQueue.addAdmissionTaskBlocking({}, std::move(task)); })
+
     {
     }
 
@@ -472,6 +481,8 @@ private:
 
     TaskQueue<Task> taskQueue;
     DelayedTaskSubmitter<> delayedTaskSubmitter;
+    DelayedTaskSubmitter<> delayedAdmissionTaskSubmitter;
+
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
