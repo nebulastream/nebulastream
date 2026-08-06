@@ -30,5 +30,6 @@ public:
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
+    [[nodiscard]] std::set<std::type_index> wantedBy() const;
 };
 }

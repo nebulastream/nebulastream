@@ -27,10 +27,12 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/Trait.hpp>
@@ -43,22 +45,19 @@ namespace NES
 
 namespace
 {
-LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, OriginId& lastOriginId)
+LogicalOperator propagateOriginIds(const LogicalOperator& op, const std::vector<LogicalOperator>& children, OriginId& lastOriginId)
 {
-    std::vector<LogicalOperator> newChildren;
     std::vector<OutputOriginIdsTrait> childOriginIds;
-    for (const auto& child : visitingOperator.getChildren())
+    for (const auto& child : children)
     {
-        auto newChild = propagateOriginIds(child, lastOriginId);
-        newChildren.push_back(newChild);
-        const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(newChild.getTraitSet());
+        const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
         INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
         childOriginIds.push_back(childOriginIdsOpt.value().get());
     }
 
-    auto traitSet = visitingOperator.getTraitSet();
+    auto traitSet = op.getTraitSet();
 
-    if (visitingOperator.tryGetAs<OriginIdAssigner>().has_value())
+    if (op.tryGetAs<OriginIdAssigner>().has_value())
     {
         lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
         const auto success = tryInsert(traitSet, OutputOriginIdsTrait{{lastOriginId}});
@@ -73,7 +72,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
         INVARIANT(success, "Failed to insert origin id trait, did another phase already assign them?");
     }
 
-    return visitingOperator.withTraitSet(traitSet).withChildren(newChildren);
+    return op.withTraitSet(traitSet).withChildren(children);
 }
 }
 
@@ -86,16 +85,13 @@ std::set<std::type_index> OriginIdInferenceRule::needs() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
-    /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
-    /// propagate origin ids through the complete query plan
-    std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.getRootOperators().size());
-    for (auto& sinkOperator : queryPlan.getRootOperators())
-    {
-        newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
-    }
-    return queryPlan.withRootOperators(newSinks);
+
+    PlanVisitor<> visitor{
+        [&originIdCounter](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
+        { return propagateOriginIds(op, children, originIdCounter); }};
+
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

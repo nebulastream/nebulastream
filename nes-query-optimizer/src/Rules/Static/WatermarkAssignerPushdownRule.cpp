@@ -13,11 +13,13 @@
 */
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 
+#include <cstddef>
 #include <ranges>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -36,6 +38,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
@@ -45,8 +48,32 @@ namespace NES
 {
 namespace
 {
-LogicalOperator
-watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime);
+
+struct RequiredWatermarkAssigners
+{
+    bool ingestionTime = false;
+    std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime;
+};
+
+struct OperatorContext
+{
+    RequiredWatermarkAssigners toApply;
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> pushed;
+    bool hasMultipleParents = false;
+};
+
+using Visitor = PlanVisitor<OperatorContext, RequiredWatermarkAssigners, bool>;
+
+Visitor::DownResult watermarkAssignerPushdown(const LogicalOperator& op, const std::vector<RequiredWatermarkAssigners>& contexts);
+
+RequiredWatermarkAssigners mergeContexts(const std::vector<RequiredWatermarkAssigners>& contexts)
+{
+    if (contexts.empty() || contexts.size() > 1)
+    {
+        return {};
+    }
+    return contexts.at(0);
+}
 
 LogicalOperator
 addWatermarkAssigners(LogicalOperator op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
@@ -80,50 +107,45 @@ fieldsWithNewBase(const LogicalOperator& base, std::vector<std::pair<Field, Wind
     return eventTime;
 }
 
-LogicalOperator
-applyToAllChildren(const LogicalOperator& op, const bool ingestionTime, const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
+std::unordered_map<LogicalOperator, RequiredWatermarkAssigners>
+getChildContexts(const LogicalOperator& op, const RequiredWatermarkAssigners& context)
 {
-    std::vector<LogicalOperator> children;
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> childContexts;
+
     for (const auto& child : op.getChildren())
     {
-        const auto childEventTime = fieldsWithNewBase(child, eventTime);
-        auto newChild = watermarkAssignerPushdown(child, ingestionTime, childEventTime);
-        children.push_back(newChild);
+        const RequiredWatermarkAssigners childContext{
+            .ingestionTime = context.ingestionTime, .eventTime = fieldsWithNewBase(child, context.eventTime)};
+        childContexts.emplace(child, childContext);
     }
-    return op.withChildren(children).withInferredSchema();
+    return childContexts;
 }
 
-LogicalOperator pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
+Visitor::DownResult pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
-    /// Sinks are the starting point of the recursion.
-    /// Because they don't have parents, no watermark assigner
-    /// has to be pushed here.
-    /// The recursion starts thus with an empty event time watermark assigner set,
-    /// and no ingestion time watermark assigner.
-    auto newChild = watermarkAssignerPushdown(op->getChild(), {}, {});
-    return op->withChildren({newChild}).withInferredSchema();
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> pushed = {{op->getChild(), {.ingestionTime = false, .eventTime = {}}}};
+    OperatorContext operatorContext{.toApply = {}, .pushed = pushed};
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator pushBeyondSource(
-    const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op,
-    bool ingestionTime,
-    std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+Visitor::DownResult pushBeyondSource(RequiredWatermarkAssigners context)
 {
-    return addWatermarkAssigners(op, std::move(ingestionTime), std::move(eventTime));
+    OperatorContext operatorContext{.toApply = std::move(context), .pushed = {}};
+    return {.operatorContext = std::move(operatorContext), .downContexts = {}};
 }
 
-LogicalOperator pushBeyondTransparentOperator(
-    const LogicalOperator& op, bool ingestionTime, const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
+Visitor::DownResult pushBeyondTransparentOperator(const LogicalOperator& op, const RequiredWatermarkAssigners& context)
 {
     /// Pushes watermark assigners beyond operators that do not affect the
     /// watermark assigners.
-    return applyToAllChildren(op, std::move(ingestionTime), eventTime);
+
+    auto pushed = getChildContexts(op, context);
+    OperatorContext operatorContext{.toApply = {}, .pushed = pushed};
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator pushBeyondProjection(
-    const TypedLogicalOperator<ProjectionLogicalOperator>& op,
-    bool ingestionTime,
-    const std::vector<std::pair<Field, Windowing::TimeUnit>>& eventTime)
+Visitor::DownResult
+pushBeyondProjection(const TypedLogicalOperator<ProjectionLogicalOperator>& op, const RequiredWatermarkAssigners& context)
 {
     /// test if event time fields are generated by projection.
     /// If not, they are pushed further.
@@ -157,7 +179,7 @@ LogicalOperator pushBeyondProjection(
     std::vector<std::pair<Field, Windowing::TimeUnit>> pushFurther{};
     std::vector<std::pair<Field, Windowing::TimeUnit>> applyNow{};
 
-    for (const auto& [onField, unit] : eventTime)
+    for (const auto& [onField, unit] : context.eventTime)
     {
         auto pushable = pushableFields.contains(onField);
         if (pushable)
@@ -170,21 +192,13 @@ LogicalOperator pushBeyondProjection(
         }
     }
 
-    auto newOp = applyToAllChildren(op, ingestionTime, pushFurther);
-
-    for (const auto& [onField, unit] : std::ranges::reverse_view(applyNow))
-    {
-        auto field = newOp.getOutputSchema()[onField.getLastName()];
-        PRECONDITION(field.has_value(), "the operator must have the event time field");
-        newOp = TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>(newOp, FieldAccessLogicalFunction{field.value()}, unit);
-    }
-    return newOp;
+    auto pushed = getChildContexts(op, {.ingestionTime = context.ingestionTime, .eventTime = pushFurther});
+    OperatorContext operatorContext{.toApply = {.ingestionTime = false, .eventTime = applyNow}, .pushed = pushed};
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator pushBeyondEventTimeWatermarkAssigner(
-    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op,
-    const bool ingestionTime,
-    std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+Visitor::DownResult pushBeyondEventTimeWatermarkAssigner(
+    const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, RequiredWatermarkAssigners context)
 {
     /// Adds relevant metadata to eventTime variable to push the assigner further down if possible
     /// Does not push event time water mark assigners that don't use a FieldAccessLogicalFunction.
@@ -194,61 +208,109 @@ LogicalOperator pushBeyondEventTimeWatermarkAssigner(
         "EventTime watermark assigner onField must be a FieldAccessLogicalFunction");
 
     const auto fieldAccess = op->getOnField().tryGetAs<FieldAccessLogicalFunction>();
-    eventTime = fieldsWithNewBase(op->getChild(), eventTime);
-    eventTime.emplace_back(fieldAccess.value()->getField(), op->getUnit());
-    return watermarkAssignerPushdown(op->getChild(), ingestionTime, eventTime);
+    context.eventTime = fieldsWithNewBase(op->getChild(), context.eventTime);
+
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    context.eventTime.emplace_back(fieldAccess.value()->getField(), op->getUnit());
+
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> pushed{{op->getChild(), context}};
+    OperatorContext operatorContext{.toApply = {}, .pushed = pushed};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
-    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op,
-    bool /* ingestionTime */,
-    std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+Visitor::DownResult pushBeyondIngestionTimeWatermarkAssigner(
+    const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op, RequiredWatermarkAssigners context)
 {
     /// Adds flag that a ingestion time watermark assigner is required
 
-    eventTime = fieldsWithNewBase(op->getChild(), eventTime);
-    return watermarkAssignerPushdown(op->getChild(), true, eventTime);
+    context.eventTime = fieldsWithNewBase(op->getChild(), context.eventTime);
+
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> pushed{
+        {op->getChild(), {.ingestionTime = true, .eventTime = context.eventTime}}};
+    OperatorContext operatorContext{.toApply = {}, .pushed = pushed};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator
-pushBeyondDefault(const LogicalOperator& op, const bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+Visitor::DownResult pushBeyondDefault(const LogicalOperator& op, RequiredWatermarkAssigners context)
 {
     /// Implements default behavior if operator is not explicitly handled.
     /// Applies all watermark assigners and restarts recursion for all children.
-    auto newOp = applyToAllChildren(op, false, {});
-    return addWatermarkAssigners(std::move(newOp), ingestionTime, std::move(eventTime));
+
+    std::unordered_map<LogicalOperator, RequiredWatermarkAssigners> pushed = getChildContexts(op, {});
+    OperatorContext operatorContext{.toApply = std::move(context), .pushed = pushed};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = std::move(pushed)};
 }
 
-LogicalOperator
-watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::vector<std::pair<Field, Windowing::TimeUnit>> eventTime)
+Visitor::DownResult watermarkAssignerPushdown(const LogicalOperator& op, const std::vector<RequiredWatermarkAssigners>& downContexts)
 {
+    const bool hasMultipleParents = downContexts.size() > 1;
+
+    Visitor::DownResult downResult;
+
+    auto context = mergeContexts(downContexts);
+
     if (const auto sink = op.tryGetAs<SinkLogicalOperator>())
     {
-        return pushBeyondSink(sink.value());
+        downResult = pushBeyondSink(sink.value());
     }
-    if (const auto source = op.tryGetAs<SourceDescriptorLogicalOperator>())
+    else if (const auto source = op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
-        return pushBeyondSource(source.value(), std::move(ingestionTime), std::move(eventTime));
+        downResult = pushBeyondSource(context);
     }
-    if (const auto eventTimeWA = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
+    else if (const auto eventTimeWA = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondEventTimeWatermarkAssigner(eventTimeWA.value(), std::move(ingestionTime), std::move(eventTime));
+        downResult = pushBeyondEventTimeWatermarkAssigner(eventTimeWA.value(), std::move(context));
     }
-    if (const auto ingestionTimeWatermarkAssigner = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
+    else if (const auto ingestionTimeWatermarkAssigner = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondIngestionTimeWatermarkAssigner(
-            ingestionTimeWatermarkAssigner.value(), std::move(ingestionTime), std::move(eventTime));
+        downResult = pushBeyondIngestionTimeWatermarkAssigner(ingestionTimeWatermarkAssigner.value(), std::move(context));
     }
-    if (op.tryGetAs<SelectionLogicalOperator>().has_value() || op.tryGetAs<UnionLogicalOperator>().has_value())
+    else if (op.tryGetAs<SelectionLogicalOperator>().has_value() || op.tryGetAs<UnionLogicalOperator>().has_value())
     {
-        return pushBeyondTransparentOperator(op, std::move(ingestionTime), eventTime);
+        downResult = pushBeyondTransparentOperator(op, context);
     }
-    if (const auto projOp = op.tryGetAs<ProjectionLogicalOperator>())
+    else if (const auto projOp = op.tryGetAs<ProjectionLogicalOperator>())
     {
-        return pushBeyondProjection(projOp.value(), std::move(ingestionTime), eventTime);
+        downResult = pushBeyondProjection(projOp.value(), context);
+    }
+    else
+    {
+        downResult = pushBeyondDefault(op, std::move(context));
     }
 
-    return pushBeyondDefault(op, std::move(ingestionTime), std::move(eventTime));
+    downResult.operatorContext.hasMultipleParents = hasMultipleParents;
+
+    return downResult;
+}
+
+Visitor::UpResult rebuildPlan(
+    LogicalOperator op,
+    std::vector<LogicalOperator> children,
+    OperatorContext context,
+    const std::unordered_map<LogicalOperator, bool>& childWithMultipleParents)
+{
+    const auto originalChildren = op.getChildren();
+    for (size_t i = 0; i < children.size(); ++i)
+    {
+        if (childWithMultipleParents.at(children[i]) && context.pushed.contains(originalChildren[i]))
+        {
+            auto [ingestionTime, eventTime] = context.pushed.at(originalChildren.at(i));
+            children[i] = addWatermarkAssigners(children[i], ingestionTime, std::move(eventTime));
+        }
+    }
+
+    if (op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value()
+        || op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value())
+    {
+        PRECONDITION(children.size() == 1, "WatermarkAssigners can only have one child");
+        return {children[0], {}};
+    }
+
+    op = op.withChildren(children);
+    return {addWatermarkAssigners(op, context.toApply.ingestionTime, std::move(context.toApply.eventTime)), context.hasMultipleParents};
 }
 
 }
@@ -256,11 +318,8 @@ watermarkAssignerPushdown(const LogicalOperator& op, bool ingestionTime, std::ve
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan WatermarkAssignerPushdownRule::apply(LogicalPlan queryPlan) const
 {
-    auto originalRoots = queryPlan.getRootOperators();
-    PRECONDITION(originalRoots.size() == 1, "watermark pushdown not yet implemented for more than one root");
-    auto newRoot = watermarkAssignerPushdown(originalRoots.at(0), false, {});
-    queryPlan = queryPlan.withRootOperators({newRoot});
-    return queryPlan;
+    Visitor visitor{watermarkAssignerPushdown, rebuildPlan};
+    return visitor.apply(std::move(queryPlan));
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

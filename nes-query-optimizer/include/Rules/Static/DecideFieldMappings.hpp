@@ -43,8 +43,5 @@ public:
 
     [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
-
-private:
-    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
 };
 }

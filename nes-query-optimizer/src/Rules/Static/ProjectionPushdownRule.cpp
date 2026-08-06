@@ -45,13 +45,13 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/WatermarkAssignerPushdownRule.hpp>
 #include <Schema/Field.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -59,7 +59,24 @@ namespace NES
 namespace
 {
 
-LogicalOperator projectionPushdown(const LogicalOperator& op, const std::unordered_set<Field>& required);
+
+struct OperatorContext
+{
+    std::variant<
+        std::monostate,
+        std::vector<ProjectionLogicalOperator::UnboundProjection>,
+        std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation>>
+        context = std::monostate{};
+};
+
+using Visitor = PlanVisitor<OperatorContext, std::unordered_set<Field>>;
+
+Visitor::DownResult projectionPushdown(const LogicalOperator& op, const std::vector<std::unordered_set<Field>>& downContexts);
+
+std::unordered_set<Field> merge(const std::vector<std::unordered_set<Field>>& downContexts)
+{
+    return downContexts | std::views::join | std::ranges::to<std::unordered_set<Field>>();
+}
 
 std::unordered_set<Field> getAccessedFields(const LogicalFunction& logicalFunction)
 {
@@ -85,7 +102,7 @@ std::vector<Field> sortFields(const std::unordered_set<Field>& fields)
     return sortedFields;
 }
 
-LogicalOperator pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
+Visitor::DownResult pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& op)
 {
     /// Use identifiers from output schema as starting point for required fields.
     std::unordered_set<Field> required{};
@@ -94,19 +111,18 @@ LogicalOperator pushBeyondSink(const TypedLogicalOperator<SinkLogicalOperator>& 
         required.insert(field);
     }
 
-    auto newChild = projectionPushdown(op->getChild(), required);
-
-    return op.withChildren({newChild}).withInferredSchema();
+    return {.operatorContext = {}, .downContexts = {{op->getChild(), required}}};
 }
 
-LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOperator> op, std::unordered_set<Field> required)
+Visitor::DownResult
+pushBeyondSource(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Recursion stop. Add projection if required is a strict subset of output schema.
 
     /// Preserve the input schema for constant-only projections.
     if (required.empty())
     {
-        return op;
+        return {};
     }
 
     const auto allFieldsAreRequired
@@ -122,13 +138,13 @@ LogicalOperator pushBeyondSource(TypedLogicalOperator<SourceDescriptorLogicalOpe
         {
             projections.emplace_back(field.getLastName(), UnboundFieldAccessLogicalFunction{field.getLastName()});
         }
-
-        return TypedLogicalOperator<ProjectionLogicalOperator>{op, projections, ProjectionLogicalOperator::Asterisk{false}};
+        return {.operatorContext{std::move(projections)}, .downContexts = {}};
     }
-    return op;
+
+    return {};
 }
 
-LogicalOperator pushBeyondSelection(const TypedLogicalOperator<SelectionLogicalOperator>& op, const std::unordered_set<Field>& required)
+Visitor::DownResult pushBeyondSelection(const TypedLogicalOperator<SelectionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add accessed identifiers in predicate if necessary
 
@@ -140,11 +156,11 @@ LogicalOperator pushBeyondSelection(const TypedLogicalOperator<SelectionLogicalO
         newRequired.insert(newField.value());
     }
 
-    auto child = projectionPushdown(op->getChild(), newRequired);
-    return op.withChildren({child}).withInferredSchema();
+    return {.operatorContext = {}, .downContexts = {{op->getChild(), newRequired}}};
 }
 
-LogicalOperator pushBeyondProjection(const TypedLogicalOperator<ProjectionLogicalOperator>& op, const std::unordered_set<Field>& required)
+Visitor::DownResult
+pushBeyondProjection(const TypedLogicalOperator<ProjectionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// remove unnecessary projections, replace required identifiers via accessed fields from remaining projections
 
@@ -181,11 +197,10 @@ LogicalOperator pushBeyondProjection(const TypedLogicalOperator<ProjectionLogica
         }
     }
 
-    auto newChild = projectionPushdown(op->getChild(), newRequired);
-    return TypedLogicalOperator<ProjectionLogicalOperator>{newChild, newProjections, ProjectionLogicalOperator::Asterisk{false}};
+    return {.operatorContext = {std::move(newProjections)}, .downContexts = {{op->getChild(), newRequired}}};
 }
 
-LogicalOperator pushBeyondJoin(const TypedLogicalOperator<JoinLogicalOperator>& op, const std::unordered_set<Field>& required)
+Visitor::DownResult pushBeyondJoin(const TypedLogicalOperator<JoinLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add accessed identifiers in join predicate if necessary
     /// Apply recursion to both children, each with the relevant subset of required fields that come from the individual child
@@ -259,19 +274,19 @@ LogicalOperator pushBeyondJoin(const TypedLogicalOperator<JoinLogicalOperator>& 
         }
     }
 
+    std::unordered_map<LogicalOperator, std::unordered_set<Field>> downContexts;
 
-    auto newLeft = projectionPushdown(left, requiredLeft);
-    auto newRight = projectionPushdown(right, requiredRight);
+    downContexts[left] = std::move(requiredLeft);
+    downContexts[right] = std::move(requiredRight);
 
-    return TypedLogicalOperator<JoinLogicalOperator>{
-        std::array{newLeft, newRight}, predicate, op->getWindowType(), op->getJoinType(), op->getJoinTimeCharacteristics()};
+    return {.operatorContext = {}, .downContexts = std::move(downContexts)};
 }
 
-LogicalOperator pushBeyondUnion(const TypedLogicalOperator<UnionLogicalOperator>& op, const std::unordered_set<Field>& required)
+Visitor::DownResult pushBeyondUnion(const TypedLogicalOperator<UnionLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// no new required fields are added in union operator
 
-    std::vector<LogicalOperator> newChildren;
+    std::unordered_map<LogicalOperator, std::unordered_set<Field>> downContexts;
     for (const auto& child : op->getChildren())
     {
         std::unordered_set<Field> newRequired;
@@ -281,13 +296,13 @@ LogicalOperator pushBeyondUnion(const TypedLogicalOperator<UnionLogicalOperator>
             INVARIANT(newField.has_value(), "the given field must be available in the plan");
             newRequired.insert(newField.value());
         }
-        newChildren.emplace_back(projectionPushdown(child, newRequired));
+        downContexts[child] = newRequired;
     }
 
-    return op.withChildren(newChildren).withInferredSchema();
+    return {.operatorContext = {}, .downContexts = downContexts};
 }
 
-LogicalOperator pushBeyondEventTimeWatermarkAssigner(
+Visitor::DownResult pushBeyondEventTimeWatermarkAssigner(
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add eventTime field if necessary
@@ -300,11 +315,10 @@ LogicalOperator pushBeyondEventTimeWatermarkAssigner(
         newRequired.insert(newField.value());
     }
 
-    auto newChild = projectionPushdown(op->getChild(), newRequired);
-    return op.withChildren({newChild}).withInferredSchema();
+    return {.operatorContext = {}, .downContexts = {{op->getChild(), newRequired}}};
 }
 
-LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
+Visitor::DownResult pushBeyondIngestionTimeWatermarkAssigner(
     const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// No new required fields are added in ingestion time watermark assigner operator.
@@ -317,11 +331,10 @@ LogicalOperator pushBeyondIngestionTimeWatermarkAssigner(
         newRequired.insert(newField.value());
     }
 
-    auto newChild = projectionPushdown(op->getChild(), newRequired);
-    return op.withChildren({newChild}).withInferredSchema();
+    return {.operatorContext = {}, .downContexts = {{op->getChild(), newRequired}}};
 }
 
-LogicalOperator
+Visitor::DownResult
 pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op, const std::unordered_set<Field>& required)
 {
     /// Add grouping keys if necessary and remove aggregations that are not accessed later
@@ -394,19 +407,17 @@ pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogi
         }
     }
 
-    auto newChild = projectionPushdown(op->getChild(), newRequired);
 
-    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
-        newChild, op->getGroupingKeysWithName(), newAggregations, op->getWindowType(), op->getCharacteristic()};
+    return {.operatorContext = {newAggregations}, .downContexts = {{op->getChild(), newRequired}}};
 }
 
-LogicalOperator pushBeyondDefault(const LogicalOperator& op, const std::unordered_set<Field>& required)
+Visitor::DownResult pushBeyondDefault(const LogicalOperator& op, const std::unordered_set<Field>& required)
 {
     /// Default behavior if concrete operator is not explicitly handled above.
     /// New projection with all required fields is added.
     /// Recursion is restarted for all children with full set of their output schemas.
 
-    std::vector<LogicalOperator> newChildren;
+    std::unordered_map<LogicalOperator, std::unordered_set<Field>> downContext;
 
     for (const auto& child : op.getChildren())
     {
@@ -415,23 +426,24 @@ LogicalOperator pushBeyondDefault(const LogicalOperator& op, const std::unordere
         {
             newRequired.insert(field);
         }
-        newChildren.push_back(projectionPushdown(child, newRequired));
+        downContext[child] = newRequired;
     }
 
-    auto newOp = op.withChildren(newChildren).withInferredSchema();
 
     std::vector<ProjectionLogicalOperator::UnboundProjection> newProjections;
     for (const auto& field : required)
     {
-        auto function = FieldAccessLogicalFunction{Field(newOp, field.getLastName(), field.getDataType())};
+        auto function = UnboundFieldAccessLogicalFunction{field.getLastName()};
         newProjections.emplace_back(field.getLastName(), function);
     }
 
-    return TypedLogicalOperator<ProjectionLogicalOperator>{newOp, newProjections, ProjectionLogicalOperator::Asterisk{false}};
+    return {.operatorContext = {std::move(newProjections)}, .downContexts = std::move(downContext)};
 }
 
-LogicalOperator projectionPushdown(const LogicalOperator& op, const std::unordered_set<Field>& required)
+Visitor::DownResult projectionPushdown(const LogicalOperator& op, const std::vector<std::unordered_set<Field>>& downContexts)
 {
+    auto required = merge(downContexts);
+
     if (auto sinkOp = op.tryGetAs<SinkLogicalOperator>())
     {
         return pushBeyondSink(sinkOp.value());
@@ -470,16 +482,58 @@ LogicalOperator projectionPushdown(const LogicalOperator& op, const std::unorder
     }
     return pushBeyondDefault(op, required);
 }
+
+Visitor::UpResult rebuildPlan(LogicalOperator op, std::vector<LogicalOperator> children, const OperatorContext& context)
+{
+    if (op.tryGetAs<ProjectionLogicalOperator>())
+    {
+        PRECONDITION(
+            std::holds_alternative<std::vector<ProjectionLogicalOperator::UnboundProjection>>(context.context),
+            "OperatorContext must contain UnboundProjections");
+        auto projections = std::get<std::vector<ProjectionLogicalOperator::UnboundProjection>>(context.context);
+
+        LogicalOperator newProjection
+            = TypedLogicalOperator<ProjectionLogicalOperator>{children.at(0), projections, ProjectionLogicalOperator::Asterisk{false}};
+        return newProjection;
+    }
+    if (const auto windowedAggregationOp = op.tryGetAs<WindowedAggregationLogicalOperator>())
+    {
+        PRECONDITION(
+            std::holds_alternative<std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation>>(context.context),
+            "OperatorContext must contain ProjectedAggregations");
+        auto aggregations = std::get<std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation>>(context.context);
+        const auto& windowedAggregation = windowedAggregationOp.value();
+        LogicalOperator newOp = TypedLogicalOperator<WindowedAggregationLogicalOperator>{
+            children.at(0),
+            windowedAggregation->getGroupingKeysWithName(),
+            aggregations,
+            windowedAggregation->getWindowType(),
+            windowedAggregation->getCharacteristic()};
+
+        return newOp;
+    }
+    if (op.tryGetAs<SourceDescriptorLogicalOperator>())
+    {
+        if (!std::holds_alternative<std::vector<ProjectionLogicalOperator::UnboundProjection>>(context.context))
+        {
+            return op;
+        }
+        auto projections = std::get<std::vector<ProjectionLogicalOperator::UnboundProjection>>(context.context);
+        LogicalOperator newSource
+            = TypedLogicalOperator<ProjectionLogicalOperator>{op, projections, ProjectionLogicalOperator::Asterisk{false}};
+        return newSource;
+    }
+    return op.withChildren(children);
+}
+
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan ProjectionPushdownRule::apply(LogicalPlan queryPlan) const
 {
-    const auto originalRoots = queryPlan.getRootOperators();
-    PRECONDITION(originalRoots.size() == 1, "projection pushdown not yet implemented for more than one root");
-    auto newRoot = projectionPushdown(originalRoots.at(0), {});
-    queryPlan = queryPlan.withRootOperators({newRoot});
-    return queryPlan;
+    Visitor visitor{projectionPushdown, rebuildPlan};
+
+    return visitor.apply(std::move(queryPlan));
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
