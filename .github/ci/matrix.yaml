@@ -47,6 +47,7 @@ default_cmake_flags:
 profile_cmake_flags:
   nightly:
     ALL_SLICE_CACHE_TESTS: "ON"
+    NES_EXHAUSTIVE_TESTS: "1"
 
 runners:
   github-x64: ubuntu-24.04
