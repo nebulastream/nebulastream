@@ -171,7 +171,13 @@
             };
             boostPkg = overrideStdenv pkgs.boost;
             tbbPkg = overrideStdenv pkgs.tbb;
+            pugixmlPkg = overrideStdenv pkgs.pugixml;
+            xbyakPkg = overrideStdenv pkgs.xbyak;
             simdjsonPkg = overrideStdenv simdjsonBasePkg;
+            nlohmannJsonPkg = nlohmannJsonPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
             reflectCppPkg = reflectCppPackages.withSanitizer {
               extraBuildInputs = extraInputs;
               inherit useLibcxx;
@@ -196,11 +202,24 @@
               compilerFlags = sanitizer.compilerFlags;
               linkerFlags = sanitizer.linkerFlags;
             };
+            openvinoPkg = openvinoPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit
+                useLibcxx
+                nlohmannJsonPkg
+                pugixmlPkg
+                tbbPkg
+                xbyakPkg
+                ;
+              compilerFlags = sanitizer.compilerFlags;
+              linkerFlags = sanitizer.linkerFlags;
+            };
             baseThirdPartyDeps =
               [
                 fmtPkg
                 spdlogPkg
                 simdjsonPkg
+                nlohmannJsonPkg
                 grpcPkg
                 protobufPkg
                 abseilPkg
@@ -213,11 +232,14 @@
                 gtestPkg
                 rapidcheckPkg
                 tbbPkg
+                pugixmlPkg
+                xbyakPkg
                 follyPkg
                 re2Pkg
                 reflectCppPkg
                 nameofPkg
                 scopeGuardPkg
+                openvinoPkg
               ]
               ++ [
                 pkgs.highs
@@ -233,19 +255,17 @@
                 pkgs.libuuid
                 pahoMqttPkg.c
                 pahoMqttPkg.cpp
-                ireeruntimePkg
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
           };
-
-        ireeruntimePkg = pkgs.callPackage ./.nix/ireeruntime/package.nix { };
 
         nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
         abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };
         re2Packages = pkgs.callPackage ./.nix/re2/package.nix { };
         protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix { };
         grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix { };
+        openvinoPackages = pkgs.callPackage ./.nix/openvino/package.nix { };
 
         ccacheFlags = [
           "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
@@ -850,11 +870,18 @@
       let
         packageVariants = mkVariantAttrset mkPackage;
         devShellVariants = mkVariantAttrset mkDevShell;
+        defaultOpenvino = openvinoPackages.withSanitizer {
+          extraBuildInputs = stdlibOptions.${defaultStdlibName}.extraPackages;
+          useLibcxx = false;
+        };
       in
       {
         formatter = pkgs.nixfmt-tree;
 
-        packages = packageVariants // { default = packageVariants.none; };
+        packages = packageVariants // {
+          default = packageVariants.none;
+          openvino = defaultOpenvino;
+        };
 
         checks =
           let
@@ -878,6 +905,7 @@
             libcuckoo = libcuckooPackages.withSanitizer sanitizerArgs;
             nlohmann_json = nlohmannJsonPackages.withSanitizer sanitizerArgs;
             nautilus = nautilusPackages.withSanitizer sanitizerArgs;
+            openvino = openvinoPackages.withSanitizer sanitizerArgs;
           };
 
         apps = {

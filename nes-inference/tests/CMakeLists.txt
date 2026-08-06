@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (ENABLE_IREE_TESTS)
+if (ENABLE_INFERENCE_TESTS)
     add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testdata")
 
     function(add_nes_test_inference)
@@ -22,4 +22,7 @@ if (ENABLE_IREE_TESTS)
 
     add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)
     add_nes_test_inference(ModelCatalogTest ModelCatalogTest.cpp)
+
+    add_nes_test_inference(InferenceRuntimeTest InferenceRuntimeTest.cpp)
+    target_link_libraries(InferenceRuntimeTest nes-inference-runtime)
 endif ()

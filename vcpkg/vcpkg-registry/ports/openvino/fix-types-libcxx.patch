@@ -1,0 +1,66 @@
+Subject: [PATCH] fix-types-libcxx
+---
+Index: src/core/src/type/float4_e2m1.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/src/type/float4_e2m1.cpp b/src/core/src/type/float4_e2m1.cpp
+--- a/src/core/src/type/float4_e2m1.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/src/type/float4_e2m1.cpp	(date 1778517279452)
+@@ -6,6 +6,7 @@
+ 
+ #include <cmath>
+ #include <limits>
++#include <type_traits>
+ 
+ #include "openvino/core/type/float_util.hpp"
+ #include "openvino/reference/fake_convert.hpp"
+Index: src/core/src/type/float8_e5m2.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/src/type/float8_e5m2.cpp b/src/core/src/type/float8_e5m2.cpp
+--- a/src/core/src/type/float8_e5m2.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/src/type/float8_e5m2.cpp	(date 1778517295278)
+@@ -6,6 +6,7 @@
+ 
+ #include <cmath>
+ #include <limits>
++#include <type_traits>
+ 
+ #include "openvino/reference/fake_convert.hpp"
+ 
+Index: src/core/src/type/float8_e4m3.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/src/type/float8_e4m3.cpp b/src/core/src/type/float8_e4m3.cpp
+--- a/src/core/src/type/float8_e4m3.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/src/type/float8_e4m3.cpp	(date 1778517295290)
+@@ -7,6 +7,7 @@
+ #include <array>
+ #include <cmath>
+ #include <limits>
++#include <type_traits>
+ 
+ #include "openvino/core/type/float16.hpp"
+ #include "openvino/core/type/float_util.hpp"
+Index: src/core/src/type/float8_e8m0.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/core/src/type/float8_e8m0.cpp b/src/core/src/type/float8_e8m0.cpp
+--- a/src/core/src/type/float8_e8m0.cpp	(revision ac13440bdcb0a04e1fe9a6f7ee952b3263ce700d)
++++ b/src/core/src/type/float8_e8m0.cpp	(date 1778517295304)
+@@ -6,6 +6,7 @@
+ 
+ #include <cmath>
+ #include <limits>
++#include <type_traits>
+ 
+ #include "openvino/core/type/float_util.hpp"
+ #include "openvino/reference/fake_convert.hpp"

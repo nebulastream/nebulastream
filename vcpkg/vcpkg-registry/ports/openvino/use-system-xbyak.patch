@@ -1,0 +1,41 @@
+diff --git a/src/plugins/intel_cpu/CMakeLists.txt b/src/plugins/intel_cpu/CMakeLists.txt
+index 644407fe7f..fd208240ce 100644
+--- a/src/plugins/intel_cpu/CMakeLists.txt
++++ b/src/plugins/intel_cpu/CMakeLists.txt
+@@ -260,6 +260,10 @@ target_link_libraries(${TARGET_NAME} PRIVATE dnnl
+                                              openvino::shape_inference
+                                              openvino::snippets)
+ 
++if(X86_64 OR X86)
++    target_include_directories(${TARGET_NAME} SYSTEM PRIVATE
++        $<TARGET_PROPERTY:xbyak::xbyak,INTERFACE_INCLUDE_DIRECTORIES>)
++endif()
+ target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+ if (ENABLE_MLAS_FOR_CPU)
+     target_link_libraries(${TARGET_NAME} PRIVATE mlas)
+@@ -382,5 +386,9 @@ if(BUILD_SHARED_LIBS)
+ 
+     set(CPU_OBJ_LINK_SYSTEM LIBRARIES dnnl openvino::pugixml)
++    if(X86_64 OR X86)
++        target_include_directories(${TARGET_NAME}_obj SYSTEM PRIVATE
++            $<TARGET_PROPERTY:xbyak::xbyak,INTERFACE_INCLUDE_DIRECTORIES>)
++    endif()
+     if(RISCV64)
+         list(APPEND CPU_OBJ_LINK_SYSTEM xbyak_riscv::xbyak_riscv)
+     endif()
+diff --git a/src/plugins/intel_cpu/thirdparty/CMakeLists.txt b/src/plugins/intel_cpu/thirdparty/CMakeLists.txt
+index ef3d8eb7f0..433416f466 100644
+--- a/src/plugins/intel_cpu/thirdparty/CMakeLists.txt
++++ b/src/plugins/intel_cpu/thirdparty/CMakeLists.txt
+@@ -151,6 +151,11 @@ function(ov_add_onednn)
+     endif()
+ 
++    if(X86_64 OR X86)
++        get_target_property(XBYAK_INCLUDE_DIRS xbyak::xbyak INTERFACE_INCLUDE_DIRECTORIES)
++        include_directories(SYSTEM ${XBYAK_INCLUDE_DIRS})
++    endif()
++
+     add_subdirectory(onednn EXCLUDE_FROM_ALL)
+ 
+     # install static libraries
+     ov_install_static_lib(dnnl ${OV_CPACK_COMP_CORE})

@@ -14,36 +14,35 @@
 
 #pragma once
 
+#include <array>
 #include <expected>
 #include <filesystem>
-#include <optional>
+#include <string_view>
 
+#include <BackendTool.hpp>
 #include <Inference.hpp>
-#include <IreeTool.hpp>
 #include <Model.hpp>
 
 namespace NES
 {
 
-/// Wraps the `iree-compile` tool. Internal — exposed to consumers through the
-/// free function `compileIreeModel` in `Inference.hpp`.
-class IreeCompiler
+class OpenVinoImporter
 {
 public:
-    IreeCompiler();
+    OpenVinoImporter();
 
     [[nodiscard]] bool available() const
     {
-        return !discovery.path.empty() && discovery.version.has_value() && *discovery.version == expectedIreeVersion;
+        return !discovery.path.empty() && discovery.version.has_value() && *discovery.version == expectedOpenVinoVersion;
     }
 
-    [[nodiscard]] const std::filesystem::path& path() const { return discovery.path; }
-
-    [[nodiscard]] std::optional<IreeVersion> version() const { return discovery.version; }
-
-    [[nodiscard]] std::expected<CompiledModel, CompileError> compile(const ImportedModel& imported) const;
+    [[nodiscard]] std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath) const;
 
 private:
+    static constexpr std::array<std::string_view, 7> SupportedExtensions{".onnx", ".pb", ".pbtxt", ".meta", ".tflite", ".pdmodel", ".pt2"};
+
+    [[nodiscard]] static bool isSupportedInput(const std::filesystem::path& modelPath);
+
     detail::ToolDiscovery discovery;
 };
 

@@ -755,7 +755,7 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), Identifier::parse("TESTSINK1"));
 }
 
-#if NES_HAVE_IREE_TESTS
+#if NES_HAVE_INFERENCE_TESTS
 TEST_F(StatementBinderTest, BindCreateModel)
 {
     const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
@@ -817,6 +817,15 @@ TEST_F(StatementBinderTest, BindCreateModel)
     ASSERT_FALSE(badResult.has_value());
 }
 #endif
+
+TEST_F(StatementBinderTest, BindCreateModelRejectsBackendClause)
+{
+    const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
+    /// OpenVINO is the only inference backend, so there is no BACKEND clause to select one.
+    const auto withBackendClause = binder->parseAndBindSingle(
+        "CREATE MODEL backendClause ('" + modelPath + "' BACKEND openvino) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
+    ASSERT_FALSE(withBackendClause.has_value());
+}
 
 TEST_F(StatementBinderTest, ExplainStatement)
 {

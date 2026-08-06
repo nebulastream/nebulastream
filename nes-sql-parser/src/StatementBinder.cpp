@@ -258,7 +258,6 @@ public:
     {
         const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
         const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
-
         std::vector<UnqualifiedUnboundField> inputs;
         for (auto* const inputField : modelDefAST->modelInputField())
         {
