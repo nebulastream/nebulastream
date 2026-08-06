@@ -34,7 +34,7 @@
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -90,13 +90,36 @@ public:
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
     explicit CSVInputFormatIndexer(
-        Private, const char tupleDelimiter, const char fieldDelimiter, const bool allowCommasInStrings, const size_t numberOfFields)
+        Private,
+        const char tupleDelimiter,
+        const char fieldDelimiter,
+        const bool allowCommasInStrings,
+        const size_t numberOfFields,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , fieldDelimiter(fieldDelimiter)
         , allowCommasInStrings(allowCommasInStrings)
         , numberOfFields(numberOfFields)
         , nullValues({""})
     {
+        deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        deserializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        deserializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        deserializerTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        deserializerTypes[DataType::Type::INT8] = "DefaultINT8";
+        deserializerTypes[DataType::Type::INT16] = "DefaultINT16";
+        deserializerTypes[DataType::Type::INT32] = "DefaultINT32";
+        deserializerTypes[DataType::Type::INT64] = "DefaultINT64";
+        deserializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        deserializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        deserializerTypes[DataType::Type::CHAR] = "DefaultCHAR";
+        deserializerTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+        /// Placeholder for UNDEFINED. Will throw an error if any field is UNDEFINED typed.
+        deserializerTypes[DataType::Type::UNDEFINED] = "";
+
+        /// Override the default deserializers with the ones set by the user
+        parseValueDeserializerOverrides(deserializerOverrides, deserializerTypes);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -107,7 +130,8 @@ public:
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
-            tupleBufferRef.getAllDataTypes().size());
+            tupleBufferRef.getAllDataTypes().size(),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~CSVInputFormatIndexer() override = default;
@@ -117,8 +141,6 @@ public:
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, SIZE_OF_TUPLE_DELIMITER}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return {&fieldDelimiter, SIZE_OF_FIELD_DELIMITER}; }
-
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::NONE; }
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 

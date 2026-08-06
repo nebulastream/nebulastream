@@ -20,12 +20,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <val_arith.hpp>
@@ -37,7 +39,7 @@ namespace NES
 class JSONOutputFormatter : public OutputFormatter
 {
 public:
-    explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames);
+    explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
         const VarVal& value,
@@ -65,7 +67,7 @@ namespace NES::OutputFormatterConfig
 struct ConfigParametersJSON
 {
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
+        = DescriptorConfig::createConfigParameterContainerMap(OutputFormatterDescriptor::parameterMap);
 };
 }
 
