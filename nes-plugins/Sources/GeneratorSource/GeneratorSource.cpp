@@ -118,11 +118,11 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
             NES_TRACE("numberOfTuplesToGenerate: {}", numberOfTuplesToGenerate);
             if (numberOfTuplesToGenerate == 0)
             {
-                std::this_thread::sleep_for(std::chrono::microseconds{flushInterval});
+                //std::this_thread::sleep_for(std::chrono::microseconds{flushInterval});
                 ++noIntervals;
             }
         }
-
+        numberOfTuplesToGenerate = 10;
         auto currentBuffer = tupleBuffer.getAvailableMemoryArea<std::ostream::char_type>();
         /// Generating the required number of tuples. Any tuples that do not fit into the tuple buffer, the content is persisted in the tupleStream.
         uint64_t curTupleCount = 0;
