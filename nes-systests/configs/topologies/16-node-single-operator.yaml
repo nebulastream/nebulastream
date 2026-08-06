@@ -1,0 +1,128 @@
+# Topology:
+#
+# source-node-1 ─┐
+#                ├── merge-node-1 ─┐
+# source-node-2 ─┘                 │
+#                                  ├── merge-node-3 ── chain-node-1 ── chain-node-2 ── chain-node-3 ── chain-node-4 ── chain-node-5 ── chain-node-6 ── chain-node-7 ── chain-node-8 ── sink-node
+# source-node-3 ─┐                 │
+#                ├── merge-node-2 ─┘
+# source-node-4 ─┘
+
+workers:
+  - host: "sink-node:8080"
+    data_address: "sink-node:9090"
+    max_operators: 1
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+
+  - host: "chain-node-3:8080"
+    data_address: "chain-node-3:9090"
+    max_operators: 1
+    downstream:
+      - "sink-node:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "chain-node-2:8080"
+    data_address: "chain-node-2:9090"
+    max_operators: 1
+    downstream:
+      - "chain-node-3:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "chain-node-1:8080"
+    data_address: "chain-node-1:9090"
+    max_operators: 1
+    downstream:
+      - "chain-node-2:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "merge-node-3:8080"
+    data_address: "merge-node-3:9090"
+    max_operators: 1
+    downstream:
+      - "chain-node-1:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 12
+
+  - host: "merge-node-2:8080"
+    data_address: "merge-node-2:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-3:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "merge-node-1:8080"
+    data_address: "merge-node-1:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-3:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "source-node-4:8080"
+    data_address: "source-node-4:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-2:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "source-node-3:8080"
+    data_address: "source-node-3:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-2:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "source-node-2:8080"
+    data_address: "source-node-2:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-1:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+  - host: "source-node-1:8080"
+    data_address: "source-node-1:9090"
+    max_operators: 1
+    downstream:
+      - "merge-node-1:8080"
+    config:
+      worker:
+        query_engine:
+          number_of_worker_threads: 1
+
+allow_source_placement:
+  - "source-node-1:8080"
+  - "source-node-2:8080"
+  - "source-node-3:8080"
+  - "source-node-4:8080"
+
+allow_sink_placement:
+  - "sink-node:8080"
