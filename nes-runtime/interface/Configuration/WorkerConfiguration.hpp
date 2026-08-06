@@ -77,6 +77,11 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    /// #1713: enables adaptive (AIMD) per-source inflight-buffer provisioning -- the inflight cap starts low and grows
+    /// toward default_max_inflight_buffers under load, decaying when idle. Off by default (fixed cap).
+    BoolOption enableAdaptiveInflightBuffers
+        = {"enable_adaptive_inflight_buffers", "false", "Enable adaptive (AIMD) per-source inflight-buffer provisioning."};
+
     EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
            DumpMode::Options::NONE,
@@ -96,6 +101,7 @@ private:
             &unpooledMemoryFraction,
             &bufferAlignmentInBytes,
             &defaultMaxInflightBuffers,
+            &enableAdaptiveInflightBuffers,
             &dumpQueryCompilationIR,
             &dumpGraph};
     }

@@ -28,8 +28,11 @@
 namespace NES
 {
 
-SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool)
-    : defaultMaxInflightBuffers(defaultMaxInflightBuffers), bufferPool(std::move(bufferPool))
+SourceProvider::SourceProvider(
+    size_t defaultMaxInflightBuffers, bool enableAdaptiveInflight, std::shared_ptr<AbstractBufferProvider> bufferPool)
+    : defaultMaxInflightBuffers(defaultMaxInflightBuffers)
+    , enableAdaptiveInflight(enableAdaptiveInflight)
+    , bufferPool(std::move(bufferPool))
 {
 }
 
@@ -45,7 +48,7 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
             ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
             : defaultMaxInflightBuffers;
-        SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
+        SourceRuntimeConfiguration runtimeConfig{.inflightBufferLimit = maxInflightBuffers, .adaptiveInflight = enableAdaptiveInflight};
 
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
