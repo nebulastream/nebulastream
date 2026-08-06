@@ -30,6 +30,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Static/ProjectionPushdownRule.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
@@ -58,10 +59,8 @@ std::set<std::type_index> RedundantProjectionRemovalRule::needs() const
 
 namespace
 {
-LogicalOperator recur(const LogicalOperator& op)
+PlanVisitor<>::UpResult removeRedundantProjections(const LogicalOperator& op, const std::vector<LogicalOperator>& children)
 {
-    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
-
     if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
     {
         const auto trivial = [&]
@@ -83,19 +82,18 @@ LogicalOperator recur(const LogicalOperator& op)
         }();
         if (trivial)
         {
-            return newChildren.front();
+            return children.at(0);
         }
     }
-    return op.withChildren(std::move(newChildren));
+    return op.withChildren(children);
 }
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
-    return queryPlan;
+    PlanVisitor<> visitor{removeRedundantProjections};
+    return visitor.apply(std::move(queryPlan));
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

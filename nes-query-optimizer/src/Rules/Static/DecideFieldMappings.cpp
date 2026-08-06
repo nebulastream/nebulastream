@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -36,6 +37,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Schema/Field.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -176,13 +178,9 @@ defaultMapping(const LogicalOperator& logicalOperator, const std::vector<Logical
     }
     return mapping;
 }
-}
 
-LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperator) const
+PlanVisitor<>::UpResult decideFieldMappings(const LogicalOperator& logicalOperator, const std::vector<LogicalOperator>& children)
 {
-    const auto children = logicalOperator->getChildren() | std::views::transform([this](const auto& child) { return apply(child); })
-        | std::ranges::to<std::vector>();
-
     const auto mapping = [&]
     {
         if (const auto& reprojecter = logicalOperator.tryGetAs<Reprojecter>())
@@ -209,12 +207,14 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     PRECONDITION(success, "Field mapping trait already set");
     return logicalOperator.withTraitSet(std::move(traitSet)).withChildren(children);
 }
+}
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(std::ranges::size(queryPlan.getRootOperators()) == 1, "Currently only one root operator is supported");
-    auto newRootOperator = apply(queryPlan.getRootOperators().at(0));
-    return queryPlan.withRootOperators({newRootOperator});
+    PlanVisitor<> visitor{decideFieldMappings};
+
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -30,10 +30,16 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Reorderer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Rules/Static/DecideJoinTypesRule.hpp>
+#include <Rules/Static/DecideMemoryLayoutRule.hpp>
+#include <Rules/Static/OriginIdInferenceRule.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
@@ -54,76 +60,144 @@ namespace NES
 ///     If the current operator outputs a fields that has the same name, append it to the list of fields
 /// 2. Any field that does not appear in the input to the operator, is appended to the ordered output fields in lexicographic order.
 ///
-/// Concrete operators can overwrite this behavior by overwriting Reorderer
+/// Concrete operators can overwrite this behavior by overwriting Reorderer.
+///
+/// Implemented as a two-pass PlanVisitor over the (possibly DAG-shaped) plan: down-pass propagates the sink's required
+/// order to its child, up-pass rebuilds bottom-up assigning each op a FieldOrderingTrait (propagated, or computed via
+/// calculateOutputOrder). Shared subplans (multi-sink) get a synthetic Projection per sink to hold sink-specific ordering,
+/// see setSinkFieldOrder.
 namespace
 {
-LogicalOperator applyRecur(const LogicalOperator& visiting)
+
+struct OperatorContext
+{
+    Schema<UnqualifiedUnboundField, Ordered> requiredFieldOrdering;
+
+    /// True if this op has >1 parent in the plan DAG (shared subplan). A shared op can only hold one FieldOrderingTrait,
+    /// so setSinkFieldOrder must not impose its sink's order directly on it; instead it wraps it in a per-sink projection.
+    bool hasMultipleParents = false;
+};
+
+using Visitor = PlanVisitor<OperatorContext, Schema<UnqualifiedUnboundField, Ordered>, bool>;
+
+Visitor::UpResult setSinkFieldOrder(
+    const LogicalOperator& op, std::vector<LogicalOperator> children, const OperatorContext& operatorContext, bool childHasMultipleParents)
+{
+    PRECONDITION(op.tryGetAs<SinkLogicalOperator>(), "function can only be executed on SinkLogicalOperator");
+
+    auto sink = op.getAs<SinkLogicalOperator>();
+
+    PRECONDITION(children.size() == 1, "Sinks can only have exactly one child");
+    auto child = children.at(0);
+
+    auto sinkDescriptorOpt = sink->getSinkDescriptor();
+    PRECONDITION(sinkDescriptorOpt.has_value(), "Root sink must have a sink descriptor");
+    auto targetSchema = *NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptorOpt->getSchema());
+    for (const auto& targetField : targetSchema)
+    {
+        PRECONDITION(
+            children.at(0).getOutputSchema().contains(targetField.getFullyQualifiedName()),
+            "Field {} not present in root child output schema",
+            targetField.getFullyQualifiedName());
+    }
+
+    if (childHasMultipleParents)
+    {
+        auto newChild = ProjectionLogicalOperator::create(child, {}, ProjectionLogicalOperator::Asterisk{true});
+        auto traitSet = newChild.getTraitSet();
+        traitSet.insert(FieldOrderingTrait{operatorContext.requiredFieldOrdering});
+        child = newChild.withChildren({child}).withTraitSet(traitSet);
+    }
+
+    auto rootTraitSet = sink->getTraitSet();
+    rootTraitSet.insert(FieldOrderingTrait{Schema<UnqualifiedUnboundField, Ordered>{}});
+
+    return {op.withChildren({child}).withTraitSet(rootTraitSet), false};
+}
+
+Schema<Field, Ordered> calculateOutputOrder(const LogicalOperator& op, std::vector<LogicalOperator> children)
+{
+    const std::unordered_map<TypedLogicalOperator<>, Schema<Field, Ordered>> childrenWithOutputOrder
+        = children
+        | std::views::transform(
+              [](const auto& child) -> std::pair<TypedLogicalOperator<>, Schema<Field, Ordered>>
+              {
+                  return std::pair{
+                      child,
+                      child->getTraitSet().template get<FieldOrderingTrait>()->getOrderedFields() | RangeBinder{child}
+                          | std::ranges::to<Schema<Field, Ordered>>()};
+              })
+        | std::ranges::to<std::unordered_map>();
+
+    if (const auto reorderer = op.tryGetAs<Reorderer>())
+    {
+        return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder](const LogicalOperator& child)
+                                                               { return childrenWithOutputOrder.at(child); });
+    }
+
+    std::vector<Field> newOutputOrder;
+    std::vector<Field> rest;
+    const auto outputSchema = op.getOutputSchema();
+    const auto orderedBoundInputSchema = children
+        | std::views::transform([&](const auto& child) { return childrenWithOutputOrder.at(child); }) | std::views::join
+        | std::ranges::to<Schema<Field, Ordered>>();
+    for (const auto& inputField : orderedBoundInputSchema)
+    {
+        if (const auto& outputFieldOpt = outputSchema[inputField.getFullyQualifiedName()])
+        {
+            newOutputOrder.push_back(outputFieldOpt.value());
+        }
+    }
+
+    for (const auto& outputField : outputSchema)
+    {
+        if (!orderedBoundInputSchema.contains(outputField.getFullyQualifiedName()))
+        {
+            rest.push_back(outputField);
+        }
+    }
+
+    std::ranges::sort(
+        rest,
+        [](const auto& lhs, const auto& rhs)
+        { return fmt::format("{}", lhs.getFullyQualifiedName()) < fmt::format("{}", rhs.getFullyQualifiedName()); });
+
+    for (const auto& field : rest)
+    {
+        newOutputOrder.push_back(field);
+    }
+    return newOutputOrder | std::ranges::to<Schema<Field, Ordered>>();
+}
+
+Visitor::UpResult decideFieldOrder(
+    LogicalOperator op,
+    const std::vector<LogicalOperator>& children,
+    const OperatorContext& operatorContext,
+    const std::unordered_map<LogicalOperator, bool>& childHasMultipleParents)
 {
     /// For now we reuse the semantic field order of the operators as a heuristic for deciding the FieldOrdering trait
     /// Other strategies may be explored for better physical optimization
-    const auto oldWithNewChildren = visiting.getChildren()
-        | std::views::transform([&](const auto& child) { return std::pair{child, applyRecur(child)}; }) | std::ranges::to<std::vector>();
-    const auto newChildren
-        = oldWithNewChildren | std::views::transform(&std::pair<LogicalOperator, LogicalOperator>::second) | std::ranges::to<std::vector>();
 
-
-    const Schema<Field, Ordered> outputOrder = [&]
+    if (auto sinkOp = op.tryGetAs<SinkLogicalOperator>())
     {
-        const auto childrenMap = oldWithNewChildren | std::ranges::to<std::unordered_map>();
-        const std::unordered_map<TypedLogicalOperator<>, Schema<Field, Ordered>> childrenWithOutputOrder
-            = newChildren
-            | std::views::transform(
-                  [](const auto& child) -> std::pair<TypedLogicalOperator<>, Schema<Field, Ordered>>
-                  {
-                      return std::pair{
-                          child,
-                          child->getTraitSet().template get<FieldOrderingTrait>()->getOrderedFields() | RangeBinder{child}
-                              | std::ranges::to<Schema<Field, Ordered>>()};
-                  })
-            | std::ranges::to<std::unordered_map>();
+        PRECONDITION(children.size() == 1, "A sink can only have one child");
+        return setSinkFieldOrder(op, children, operatorContext, childHasMultipleParents.at(children.at(0)));
+    }
+    op = op.withChildren(children);
 
-        if (const auto reorderer = visiting.tryGetAs<Reorderer>())
-        {
-            return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder, &childrenMap](const LogicalOperator& child)
-                                                                   { return childrenWithOutputOrder.at(childrenMap.at(child)); });
-        }
-        std::vector<Field> outputOrder;
-        std::vector<Field> rest;
-        const auto outputSchema = visiting.getOutputSchema();
-        const auto orderedBoundInputSchema = newChildren
-            | std::views::transform([&](const auto& child) { return childrenWithOutputOrder.at(child); }) | std::views::join
-            | std::ranges::to<Schema<Field, Ordered>>();
-        for (const auto& inputField : orderedBoundInputSchema)
-        {
-            if (const auto& outputFieldOpt = outputSchema[inputField.getFullyQualifiedName()])
-            {
-                outputOrder.push_back(outputFieldOpt.value());
-            }
-        }
+    auto traitSet = op.getTraitSet();
 
-        for (const auto& outputField : outputSchema)
-        {
-            if (!orderedBoundInputSchema.contains(outputField.getFullyQualifiedName()))
-            {
-                rest.push_back(outputField);
-            }
-        }
+    if (operatorContext.requiredFieldOrdering.size() > 0)
+    {
+        traitSet.insert(FieldOrderingTrait{unbind(operatorContext.requiredFieldOrdering)});
+    }
+    else
+    {
+        const auto outputOrder = calculateOutputOrder(op, children);
+        traitSet.insert(FieldOrderingTrait{unbind(outputOrder)});
+    }
 
-        std::ranges::sort(
-            rest,
-            [](const auto& lhs, const auto& rhs)
-            { return fmt::format("{}", lhs.getFullyQualifiedName()) < fmt::format("{}", rhs.getFullyQualifiedName()); });
-
-        for (const auto& field : rest)
-        {
-            outputOrder.push_back(field);
-        }
-        return outputOrder | std::ranges::to<Schema<Field, Ordered>>();
-    }();
-
-    auto traitSet = visiting.getTraitSet();
-    traitSet.insert(FieldOrderingTrait{unbind(outputOrder)});
-    return visiting.withTraitSet(std::move(traitSet)).withChildren(newChildren);
+    return {op.withTraitSet(std::move(traitSet)), operatorContext.hasMultipleParents};
 }
 
 }
@@ -135,46 +209,40 @@ std::set<std::type_index> DecideFieldOrder::needs() const
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> DecideFieldOrder::wantedBy() const
+{
+    return {typeid(DecideFieldMappings), typeid(DecideJoinTypesRule), typeid(DecideMemoryLayoutRule), typeid(OriginIdInferenceRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan DecideFieldOrder::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(
-        std::ranges::size(queryPlan.getRootOperators()) == 1,
-        "query plan must have exactly one root operator but has {}",
-        std::ranges::size(queryPlan.getRootOperators()));
-
-    auto rootSink = queryPlan.getRootOperators()[0].getAs<SinkLogicalOperator>();
-    auto oldRootChild = rootSink->getChild();
-
-    const auto newRootChild = [&]
-    {
-        if (std::ranges::size(oldRootChild->getChildren()) > 0)
+    Visitor visitor{
+        [](const LogicalOperator& op, const std::vector<Schema<UnqualifiedUnboundField, Ordered>>& downContext) -> Visitor::DownResult
         {
-            auto newGrandchildren = oldRootChild->getChildren()
-                | std::views::transform([](const auto& grandchild) { return applyRecur(grandchild); }) | std::ranges::to<std::vector>();
-            return oldRootChild.withChildren(std::move(newGrandchildren));
-        }
-        return oldRootChild;
-    }();
+            if (auto sinkOp = op.tryGetAs<SinkLogicalOperator>())
+            {
+                const auto& sink = sinkOp.value();
 
-    auto sinkDescriptorOpt = rootSink->getSinkDescriptor();
-    PRECONDITION(sinkDescriptorOpt.has_value(), "Root sink must have a sink descriptor");
-    auto targetSchema = *NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptorOpt->getSchema());
-    for (const auto& targetField : targetSchema)
-    {
-        PRECONDITION(
-            newRootChild.getOutputSchema().contains(targetField.getFullyQualifiedName()),
-            "Field {} not present in root child output schema",
-            targetField.getFullyQualifiedName());
-    }
-    TraitSet rootChildTraitSet = newRootChild.getTraitSet();
-    rootChildTraitSet.insert(FieldOrderingTrait{targetSchema});
-    const auto rootChildWithTargetOrder = newRootChild.withTraitSet(TraitSet{rootChildTraitSet});
+                auto sinkDescriptorOpt = sink->getSinkDescriptor();
+                PRECONDITION(sinkDescriptorOpt.has_value(), "Root sink must have a sink descriptor");
+                auto targetSchema
+                    = *NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptorOpt->getSchema());
 
-    auto rootTraitSet = rootSink->getTraitSet();
-    rootTraitSet.insert(FieldOrderingTrait{Schema<UnqualifiedUnboundField, Ordered>{}});
+                const OperatorContext context = {.requiredFieldOrdering = targetSchema, .hasMultipleParents = downContext.size() > 1};
+                return {.operatorContext = context, .downContexts = {{sink->getChild(), targetSchema}}};
+            }
+            if (downContext.size() == 1)
+            {
+                return {
+                    .operatorContext = {.requiredFieldOrdering = downContext.at(0), .hasMultipleParents = downContext.size() > 1},
+                    .downContexts = {}};
+            }
+            return {.operatorContext = {.requiredFieldOrdering = {}, .hasMultipleParents = downContext.size() > 1}, .downContexts = {}};
+        },
+        decideFieldOrder};
 
-    auto newRoot = rootSink.withChildren({rootChildWithTargetOrder}).withTraitSet(rootTraitSet);
-    return queryPlan.withRootOperators({std::move(newRoot)});
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

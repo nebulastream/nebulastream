@@ -12,8 +12,16 @@
 
 add_nes_optimizer_test(DecideJoinTypesTest DecideJoinTypesTest.cpp)
 add_nes_optimizer_test(DecideMemoryLayoutTest DecideMemoryLayoutTest.cpp)
+add_nes_optimizer_test(DecideFieldOrderTest DecideFieldOrderTest.cpp)
 add_nes_optimizer_test(CalcTargetOrderTest CalcTargetOrderTest.cpp)
 add_nes_optimizer_test(DecideFieldMappingsTest DecideFieldMappingsTest.cpp)
+add_nes_optimizer_test(OriginIdInferenceRuleTest OriginIdInferenceRuleTest.cpp)
 add_nes_optimizer_test(PredicatePushdownTest PredicatePushdownTest.cpp)
 add_nes_optimizer_test(ProjectionPushdownRuleTest ProjectionPushdownRuleTest.cpp)
+if (ENABLE_IREE_TESTS)
+    ### InferModel is the only operator that reaches projectionPushdown's default branch
+    target_link_libraries(ProjectionPushdownRuleTest nes-inference nes-grpc)
+    target_compile_definitions(ProjectionPushdownRuleTest PRIVATE INFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
+endif ()
+add_nes_optimizer_test(RedundantProjectionRemovalRuleTest RedundantProjectionRemovalRuleTest.cpp)
 add_nes_optimizer_test(WatermarkAssignerPushdownRuleTest WatermarkAssignerPushdownRuleTest.cpp)

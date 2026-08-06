@@ -15,6 +15,7 @@
 #include <Rules/Static/PredicatePushdownRule.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <ranges>
 #include <set>
 #include <string_view>
@@ -42,7 +43,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
-#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRewriteUtils.hpp>
@@ -53,8 +54,32 @@ namespace NES
 
 namespace
 {
-[[nodiscard]] LogicalOperator
-predicatePushdown(LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields);
+
+struct Projections
+{
+    std::vector<LogicalFunction> predicateSet;
+    std::unordered_map<Field, Field> fields;
+};
+
+struct OperatorContext
+{
+    Projections toApply;
+    std::unordered_map<LogicalOperator, Projections> pushed;
+    bool hasMultipleParents = false;
+};
+
+Projections merge(const std::vector<Projections>& contexts)
+{
+    if (contexts.empty() || contexts.size() > 1)
+    {
+        return {};
+    }
+    return contexts.at(0);
+}
+
+using Visitor = PlanVisitor<OperatorContext, Projections, bool>;
+
+[[nodiscard]] Visitor::DownResult predicatePushdown(const LogicalOperator& op, const std::vector<Projections>& downContexts);
 
 std::vector<LogicalFunction> splitPredicate(LogicalFunction function)
 {
@@ -122,19 +147,7 @@ std::unordered_map<Field, Field> fieldsWithNewOperator(const LogicalOperator& ba
     return newFields;
 }
 
-LogicalOperator applyToAllChildren(
-    const LogicalOperator& op, const std::vector<LogicalFunction>& predicateSet, const std::unordered_map<Field, Field>& fields)
-{
-    std::vector<LogicalOperator> children;
-    for (const auto& child : op.getChildren())
-    {
-        auto newChild = predicatePushdown(child, predicateSet, fieldsWithNewOperator(child, fields));
-        children.push_back(newChild);
-    }
-    return op.withChildren(children).withInferredSchema();
-}
-
-LogicalOperator pushBeyondSelection(
+Visitor::DownResult pushBeyondSelection(
     const TypedLogicalOperator<SelectionLogicalOperator>& op,
     std::vector<LogicalFunction> predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -156,10 +169,13 @@ LogicalOperator pushBeyondSelection(
         predicateSet.emplace_back(newPredicate);
     }
 
-    return predicatePushdown(op->getChild(), std::move(predicateSet), std::move(fields));
+    std::unordered_map<LogicalOperator, Projections> toPush{{op->getChild(), {.predicateSet = predicateSet, .fields = fields}}};
+    const OperatorContext operatorContext{.toApply = {}, .pushed = toPush};
+
+    return {.operatorContext = operatorContext, .downContexts = std::move(toPush)};
 }
 
-LogicalOperator pushBeyondUnion(
+Visitor::DownResult pushBeyondUnion(
     const TypedLogicalOperator<UnionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -167,16 +183,21 @@ LogicalOperator pushBeyondUnion(
     /// predicates are pushed to all children
 
     std::vector<LogicalOperator> newChildren;
+
+    std::unordered_map<LogicalOperator, Projections> downContext;
+
     for (const auto& child : op.getChildren())
     {
         const auto childFields = fieldsWithNewOperator(child, fields);
-        newChildren.emplace_back(predicatePushdown(child, predicateSet, childFields));
+        downContext[child] = {.predicateSet = predicateSet, .fields = childFields};
     }
 
-    return op.withChildren(newChildren).withInferredSchema();
+    OperatorContext operatorContext{.toApply = {}, .pushed = downContext};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = downContext};
 }
 
-LogicalOperator pushBeyondProjection(
+Visitor::DownResult pushBeyondProjection(
     const TypedLogicalOperator<ProjectionLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -234,12 +255,21 @@ LogicalOperator pushBeyondProjection(
         }
     }
 
-    const auto newOp = applyToAllChildren(op, pushable, fields);
 
-    return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
+    std::unordered_map<LogicalOperator, Projections> downContext;
+    for (const auto& child : op.getChildren())
+    {
+        downContext[child] = {.predicateSet = pushable, .fields = fieldsWithNewOperator(child, fields)};
+    }
+
+    Projections toApply{.predicateSet = nonPushable, .fields = fields};
+
+    OperatorContext operatorContext{.toApply = std::move(toApply), .pushed = downContext};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = downContext};
 }
 
-LogicalOperator pushBeyondJoin(
+Visitor::DownResult pushBeyondJoin(
     const TypedLogicalOperator<JoinLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     const std::unordered_map<Field, Field>& fields)
@@ -281,25 +311,34 @@ LogicalOperator pushBeyondJoin(
         }
     }
 
-    const auto newLeft = predicatePushdown(left, std::move(leftPushable), leftFields);
-    const auto newRight = predicatePushdown(right, std::move(rightPushable), rightFields);
 
-    const auto newOp = op->withChildren({newLeft, newRight}).withInferredSchema();
+    std::unordered_map<LogicalOperator, Projections> downContexts;
 
-    return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
+    downContexts[left] = {.predicateSet = leftPushable, .fields = leftFields};
+    downContexts[right] = {.predicateSet = rightPushable, .fields = rightFields};
+
+    Projections toApply = {.predicateSet = nonPushable, .fields = fields};
+
+    OperatorContext operatorContext{.toApply = std::move(toApply), .pushed = downContexts};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = downContexts};
 }
 
-LogicalOperator pushBeyondWatermarkAssigner(
+Visitor::DownResult pushBeyondWatermarkAssigner(
     const LogicalOperator& op, const std::vector<LogicalFunction>& predicateSet, const std::unordered_map<Field, Field>& fields)
 {
     /// pushes all predicates further because
     /// operator does not add/modify any fields
 
-    const auto newFields = fieldsWithNewOperator(op->getChildren().at(0), fields);
-    return applyToAllChildren(op, predicateSet, newFields);
+    PRECONDITION(op.getChildren().size() == 1, "WatermarkAssigners must have exactly one child");
+
+    auto child = op.getChildren().at(0);
+    auto childFields = fieldsWithNewOperator(op->getChildren().at(0), fields);
+
+    return {.operatorContext = {}, .downContexts = {{std::move(child), {.predicateSet = predicateSet, .fields = std::move(childFields)}}}};
 }
 
-LogicalOperator pushBeyondWindowedAggregation(
+Visitor::DownResult pushBeyondWindowedAggregation(
     const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op,
     const std::vector<LogicalFunction>& predicateSet,
     std::unordered_map<Field, Field> fields)
@@ -344,48 +383,98 @@ LogicalOperator pushBeyondWindowedAggregation(
         }
     }
 
-    const auto newOp = applyToAllChildren(op, pushable, fields);
+    std::unordered_map<LogicalOperator, Projections> downContexts;
 
-    return addSelectionIfRequired(newOp, std::move(nonPushable), fields);
+    downContexts[op->getChild()] = {.predicateSet = pushable, .fields = fieldsWithNewOperator(op->getChild(), fields)};
+
+    Projections toApply = {.predicateSet = nonPushable, .fields = fields};
+    OperatorContext operatorContext{.toApply = std::move(toApply), .pushed = downContexts};
+
+    return {.operatorContext = std::move(operatorContext), .downContexts = downContexts};
 }
 
-LogicalOperator predicatePushdown(LogicalOperator op, std::vector<LogicalFunction> predicateSet, std::unordered_map<Field, Field> fields)
+Visitor::DownResult predicatePushdown(const LogicalOperator& op, const std::vector<Projections>& downContexts)
 {
+    const bool hasMultipleParents = downContexts.size() > 1;
+
+    auto [predicateSet, fields] = merge(downContexts);
+
+    Visitor::DownResult downResult;
+
     if (op.tryGetAs<SourceDescriptorLogicalOperator>())
     {
-        return addSelectionIfRequired(std::move(op), std::move(predicateSet), fields);
+        OperatorContext operatorContext = {.toApply = {.predicateSet = predicateSet, .fields = fields}, .pushed = {}};
+        downResult = {.operatorContext = std::move(operatorContext), .downContexts = {}};
     }
-    if (auto selectionOp = op.tryGetAs<SelectionLogicalOperator>())
+    else if (auto selectionOp = op.tryGetAs<SelectionLogicalOperator>())
     {
-        return pushBeyondSelection(selectionOp.value(), std::move(predicateSet), std::move(fields));
+        downResult = pushBeyondSelection(selectionOp.value(), predicateSet, fields);
     }
-    if (auto projectionOp = op.tryGetAs<ProjectionLogicalOperator>())
+    else if (auto projectionOp = op.tryGetAs<ProjectionLogicalOperator>())
     {
-        return pushBeyondProjection(projectionOp.value(), predicateSet, fields);
+        downResult = pushBeyondProjection(projectionOp.value(), predicateSet, fields);
     }
-    if (auto joinOp = op.tryGetAs<JoinLogicalOperator>())
+    else if (auto joinOp = op.tryGetAs<JoinLogicalOperator>())
     {
-        return pushBeyondJoin(joinOp.value(), predicateSet, fields);
+        downResult = pushBeyondJoin(joinOp.value(), predicateSet, fields);
     }
-    if (auto unionOp = op.tryGetAs<UnionLogicalOperator>())
+    else if (auto unionOp = op.tryGetAs<UnionLogicalOperator>())
     {
-        return pushBeyondUnion(unionOp.value(), predicateSet, fields);
+        downResult = pushBeyondUnion(unionOp.value(), predicateSet, fields);
     }
-    if (auto eventTimeOp = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
+    else if (auto eventTimeOp = op.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondWatermarkAssigner(std::move(eventTimeOp.value()), predicateSet, fields);
+        downResult = pushBeyondWatermarkAssigner(std::move(eventTimeOp.value()), predicateSet, fields);
     }
-    if (auto ingestionTimeOp = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
+    else if (auto ingestionTimeOp = op.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
     {
-        return pushBeyondWatermarkAssigner(std::move(ingestionTimeOp.value()), predicateSet, fields);
+        downResult = pushBeyondWatermarkAssigner(std::move(ingestionTimeOp.value()), predicateSet, fields);
     }
-    if (auto windowedAggOp = op.tryGetAs<WindowedAggregationLogicalOperator>())
+    else if (auto windowedAggOp = op.tryGetAs<WindowedAggregationLogicalOperator>())
     {
-        return pushBeyondWindowedAggregation(windowedAggOp.value(), predicateSet, std::move(fields));
+        downResult = pushBeyondWindowedAggregation(windowedAggOp.value(), predicateSet, fields);
+    }
+    else
+    {
+        downResult
+            = {.operatorContext
+               = {.toApply = {.predicateSet = std::move(predicateSet), .fields = fields},
+                  .pushed = {},
+                  .hasMultipleParents = hasMultipleParents},
+               .downContexts = {}};
     }
 
-    op = applyToAllChildren(op, {}, {});
-    return addSelectionIfRequired(std::move(op), std::move(predicateSet), fields);
+    downResult.operatorContext.hasMultipleParents = hasMultipleParents;
+
+
+    return downResult;
+}
+
+Visitor::UpResult rebuildPlan(
+    LogicalOperator op,
+    std::vector<LogicalOperator> children,
+    const OperatorContext& opContext,
+    const std::unordered_map<LogicalOperator, bool>& childWithMultipleParents)
+{
+    /// Add selections infront of children if they couldn't apply predicates because they have mutliple children
+    const auto originalChildren = op.getChildren();
+    for (size_t i = 0; i < children.size(); ++i)
+    {
+        if (childWithMultipleParents.at(children[i]) && opContext.pushed.contains(originalChildren.at(i)))
+        {
+            auto [predicates, fields] = opContext.pushed.at(originalChildren.at(i));
+            children[i] = addSelectionIfRequired(children[i], predicates, fields);
+        }
+    }
+
+    if (op.tryGetAs<SelectionLogicalOperator>())
+    {
+        INVARIANT(children.size() == 1, "selection operators can only have one child");
+        return {children.at(0), opContext.hasMultipleParents};
+    }
+
+    op = op.withChildren(children);
+    return {addSelectionIfRequired(op, opContext.toApply.predicateSet, opContext.toApply.fields), opContext.hasMultipleParents};
 }
 
 }
@@ -393,12 +482,8 @@ LogicalOperator predicatePushdown(LogicalOperator op, std::vector<LogicalFunctio
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan PredicatePushdownRule::apply(const LogicalPlan& queryPlan) const
 {
-    const auto originalRoots = queryPlan.getRootOperators();
-    PRECONDITION(originalRoots.size() == 1, "predicate pushdown not yet implemented for more than one root");
-
-    auto newRoot = predicatePushdown(originalRoots.at(0), {}, {});
-
-    return queryPlan.withRootOperators({newRoot});
+    Visitor visitor{predicatePushdown, rebuildPlan};
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

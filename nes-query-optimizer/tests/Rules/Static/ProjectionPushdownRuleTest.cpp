@@ -13,17 +13,22 @@
 */
 
 #include <array>
+#include <filesystem>
 #include <optional>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -41,6 +46,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ModelCatalog.hpp>
 #include <OptimizerTestUtils.hpp>
 
 namespace NES
@@ -495,6 +501,59 @@ TEST_F(ProjectionPushdownRuleTest, ValidateNoProjectionAddedIfFullSourceSchemaIs
     auto op2 = op1.getChildren().at(0);
     ASSERT_TRUE(op2.tryGetAs<SourceDescriptorLogicalOperator>());
 }
+
+#ifdef INFERENCE_TEST_DATA
+TEST_F(ProjectionPushdownRuleTest, UnhandledOperatorIsNarrowedToRequiredFields)
+{
+    /// PLAN BEFORE: Sink(prediction) < Project(prediction) < InferModel < Source(in_0, sibling)
+    /// PLAN AFTER:  Sink(prediction) < Project(prediction) < InferModel < Source(in_0, sibling)
+    /// InferModel is not in projectionPushdown's dispatch list, so it takes the default branch.
+    /// pushBeyondDefault computes the narrowing projection for it, so rebuildPlan has to materialize it.
+
+    ModelCatalog catalog;
+    catalog.registerModel(
+        "tiny",
+        std::filesystem::path{INFERENCE_TEST_DATA} / "tiny_1_to_1.onnx",
+        ModelSchema{
+            .inputs = ModelFieldList{UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::FLOAT32}},
+            .outputs = ModelFieldList{UnqualifiedUnboundField{Identifier::parse("prediction"), DataType::Type::FLOAT32}}});
+
+    auto source = utils.createSource(
+        "inferModel",
+        Schema<UnqualifiedUnboundField, Ordered>{
+            UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::FLOAT32},
+            UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::FLOAT32},
+            UnqualifiedUnboundField{Identifier::parse("sibling"), DataType::Type::UINT64}});
+
+    auto inferModel = TypedLogicalOperator<InferModelLogicalOperator>{catalog.load("tiny"), LogicalOperator{source}};
+
+    auto projection = ProjectionLogicalOperator::create(
+        inferModel,
+        std::vector<std::pair<Identifier, LogicalFunction>>{
+            {Identifier::parse("prediction"),
+             FieldAccessLogicalFunction{inferModel.getOutputSchema()[Identifier::parse("prediction")].value()}}},
+        ProjectionLogicalOperator::Asterisk{false});
+
+    auto sink = utils.createSink(
+        projection,
+        "inferModel",
+        Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("prediction"), DataType::Type::FLOAT32}});
+    auto plan = utils.createPlan(sink);
+
+    auto pushed = ProjectionPushdownRule{}.apply(plan);
+
+    auto op0 = pushed.getRootOperators().at(0);
+    ASSERT_TRUE(op0.tryGetAs<SinkLogicalOperator>());
+    auto op1 = op0.getChildren().at(0);
+    ASSERT_TRUE(op1.tryGetAs<ProjectionLogicalOperator>());
+    ASSERT_EQ(op1.getOutputSchema().size(), 1);
+    ASSERT_TRUE(op1.getOutputSchema()[Identifier::parse("prediction")].has_value());
+    auto op2 = op1.getChildren().at(0);
+    ASSERT_TRUE(op2.tryGetAs<InferModelLogicalOperator>());
+    auto op3 = op2.getChildren().at(0);
+    ASSERT_TRUE(op3.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+#endif
 
 /// NOLINTEND(bugprone-unchecked-optional-access)
 
