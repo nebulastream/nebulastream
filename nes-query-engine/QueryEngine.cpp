@@ -17,9 +17,11 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -34,12 +36,15 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
+#include <BufferExhaustionPolicy.hpp>
 #include <DelayedTaskSubmitter.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -49,6 +54,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
+#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
@@ -168,12 +174,19 @@ struct Terminated
     TerminationReason reason;
 };
 
+class QueryPlanReaper;
+
 class QueryCatalog
 {
 public:
     using State = std::shared_ptr<AtomicState<Reserved, Starting, Running, Stopping, Terminated>>;
     using WeakStateRef = State::weak_type;
     using StateRef = State::element_type;
+
+    QueryCatalog(std::shared_ptr<AbstractQueryStatusListener> listener, std::shared_ptr<QueryEngineStatisticListener> statistic)
+        : listener(std::move(listener)), statistic(std::move(statistic))
+    {
+    }
 
     void start(
         QueryId queryId,
@@ -184,6 +197,22 @@ public:
         WorkEmitter& emitter);
     void stopQuery(QueryId queryId);
 
+    /// Terminates a query by id with an error: transitions it to Terminated::Failed, reports the failure exactly once
+    /// (guarded by the transition), and hands the blocking disposal of its plan to the QueryPlanReaper. Used by the
+    /// buffer-exhaustion arbiter to shed a victim query. Thread-safe.
+    void failQuery(QueryId queryId, Exception exception);
+
+    /// Chooses a victim query to terminate when the buffer pool is exhausted, per the given policy, or nullopt if there
+    /// is no eligible victim. currentQuery is the query whose worker hit the exhaustion (used by TERMINATE_SELF and as
+    /// a fallback). `buffersHeld` maps each query to the number of pooled buffers it currently holds (maintained by the
+    /// per-query buffer providers); queries without an entry hold none. Thread-safe.
+    std::optional<QueryId>
+    selectVictim(BufferExhaustionPolicy policy, QueryId currentQuery, const std::unordered_map<QueryId, uint64_t>& buffersHeld);
+
+    /// The reaper performs the blocking disposal of plans terminated via failQuery. Must be attached before any query
+    /// is started.
+    void attachReaper(QueryPlanReaper* planReaper) { this->reaper = planReaper; }
+
     void clear()
     {
         const std::scoped_lock lock(mutex);
@@ -191,8 +220,88 @@ public:
     }
 
 private:
+    /// Queries eligible to be terminated on buffer-pool exhaustion. Running, Starting and Stopping queries all hold
+    /// buffers: under tiny-pool startup contention the offender is often still Starting, and a Stopping query can hold
+    /// many buffers while flushing (e.g. a large window) -- StopPipelineTasks allocate through the arbiter as well.
+    /// failQuery supports the Stopping -> Terminated::Failed transition, so terminating a Stopping victim is safe.
+    /// The state may change between this check and the kill; failQuery re-checks atomically and is a no-op on
+    /// Terminated queries. Must be called while holding `mutex`.
+    std::vector<QueryId> gatherVictimCandidates();
+
+    /// The candidate holding the most pooled buffers (ties broken by iteration order). `candidates` must be non-empty.
+    static QueryId selectLargest(const std::vector<QueryId>& candidates, const std::unordered_map<QueryId, uint64_t>& buffersHeld);
+
     std::recursive_mutex mutex;
     std::unordered_map<QueryId, State> queryStates;
+    std::shared_ptr<AbstractQueryStatusListener> listener;
+    std::shared_ptr<QueryEngineStatisticListener> statistic;
+    QueryPlanReaper* reaper = nullptr; ///NOLINT owned by the QueryEngine; attached right after construction
+};
+
+/// Disposes terminated query plans on a dedicated thread. Disposal is blocking work: it joins the victim's source
+/// threads, which can themselves be blocked allocating from the exhausted pool or in the bounded admission queue. If
+/// the worker that detected the exhaustion disposed the victim inline, every worker of a small pool could end up in
+/// allocate -> failQuery -> join with nobody left to release a buffer. The initiating worker therefore only
+/// *initiates* the kill (state transition + enqueue here); this thread performs the blocking disposal.
+class QueryPlanReaper
+{
+public:
+    using Disposable = std::variant<std::unique_ptr<RunningQueryPlan>, std::unique_ptr<StoppingQueryPlan>>;
+
+    explicit QueryPlanReaper(const Host& host) : thread("PlanReaper", host, [this](const std::stop_token&) { run(); }) { }
+
+    ~QueryPlanReaper() { shutdown(); }
+
+    QueryPlanReaper(const QueryPlanReaper&) = delete;
+    QueryPlanReaper(QueryPlanReaper&&) = delete;
+    QueryPlanReaper& operator=(const QueryPlanReaper&) = delete;
+    QueryPlanReaper& operator=(QueryPlanReaper&&) = delete;
+
+    /// Disposes `plan` (destroying it and releasing its buffers) on the reaper thread. After shutdown() the caller
+    /// disposes inline instead; at that point failQuery is only reachable from worker threads, which are allowed to
+    /// emit the pipeline stops that disposal produces.
+    void dispose(Disposable plan)
+    {
+        {
+            std::unique_lock lock(mutex);
+            if (!stopped)
+            {
+                queue.push_back(std::move(plan));
+                lock.unlock();
+                pending.notify_one();
+                return;
+            }
+        }
+        disposeNow(std::move(plan));
+    }
+
+    /// Drains outstanding disposals and joins the reaper thread. Idempotent. Must be called while the ThreadPool is
+    /// still alive, because disposing a plan emits pipeline-stop tasks into the task queue.
+    void shutdown()
+    {
+        {
+            const std::scoped_lock lock(mutex);
+            stopped = true;
+        }
+        pending.notify_all();
+        thread = {}; /// joins; run() drains the queue before returning
+    }
+
+private:
+    /// Defined below ThreadPool: the reaper thread registers itself as an engine thread (terminatorThreadId).
+    void run();
+
+    static void disposeNow(Disposable plan)
+    {
+        std::visit([]<typename T>(T&& owned) { T::element_type::dispose(std::forward<T>(owned)); }, std::move(plan));
+    }
+
+    std::mutex mutex;
+    std::condition_variable pending;
+    std::deque<Disposable> queue;
+    bool stopped = false;
+    /// Must be the last member: the thread starts immediately and accesses the members above.
+    Thread thread;
 };
 
 namespace detail
@@ -200,11 +309,228 @@ namespace detail
 using Queue = folly::MPMCQueue<Task>;
 }
 
+class BufferExhaustionArbiter;
+
+/// Per-query view onto the global buffer pool, handed to pipelines through the PipelineExecutionContext.
+/// 1. Every allocation that would otherwise block indefinitely (getBufferBlocking) routes through the
+///    BufferExhaustionArbiter, so *all* pipeline-side allocation sites (Arena, PagedVector, output formatters,
+///    SequenceShredder, ...) participate in exhaustion handling, not only DefaultPEC::allocateTupleBuffer.
+/// 2. It counts the pooled buffers the query currently holds: incremented on hand-out, decremented on recycle.
+///    Buffers are prepared with this provider as their recycler, so the recycle callback flows through
+///    recyclePooledBuffer on its way back to the global pool. The arbiter ranks victim candidates on this count.
+class QueryBufferProvider final : public AbstractBufferProvider,
+                                  public BufferRecycler,
+                                  public std::enable_shared_from_this<QueryBufferProvider>
+{
+public:
+    QueryBufferProvider(std::shared_ptr<BufferManager> globalPool, BufferExhaustionArbiter* arbiter, QueryId queryId)
+        : globalPool(std::move(globalPool)), arbiter(arbiter), queryId(std::move(queryId))
+    {
+    }
+
+    [[nodiscard]] QueryId getQueryId() const { return queryId; }
+    [[nodiscard]] uint64_t buffersHeld() const { return held.load(std::memory_order_relaxed); }
+
+    /// Counted, non-blocking take from the global pool; the buffer is prepared with this provider as its recycler.
+    std::optional<TupleBuffer> takeCounted()
+    {
+        if (auto buffer = globalPool->getBufferNoBlockingFor(shared_from_this()))
+        {
+            held.fetch_add(1, std::memory_order_relaxed);
+            return buffer;
+        }
+        return std::nullopt;
+    }
+
+    /// Routes through the arbiter; defined after BufferExhaustionArbiter.
+    TupleBuffer getBufferBlocking() override;
+
+    std::optional<TupleBuffer> getBufferNoBlocking() override { return takeCounted(); }
+
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override
+    {
+        /// Bounded wait: the caller handles the empty optional, so this needs no arbitration.
+        if (auto buffer = globalPool->getBufferWithTimeoutFor(timeoutMs, shared_from_this()))
+        {
+            held.fetch_add(1, std::memory_order_relaxed);
+            return buffer;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<TupleBuffer> getUnpooledBuffer(const size_t bufferSize) override { return globalPool->getUnpooledBuffer(bufferSize); }
+
+    BufferManagerType getBufferManagerType() const override { return BufferManagerType::LOCAL; }
+    size_t getBufferSize() const override { return globalPool->getBufferSize(); }
+    size_t getNumOfPooledBuffers() const override { return globalPool->getNumOfPooledBuffers(); }
+    size_t getNumOfUnpooledBuffers() const override { return globalPool->getNumOfUnpooledBuffers(); }
+    [[nodiscard]] size_t getNumberOfAvailableBuffers() const override { return globalPool->getNumberOfAvailableBuffers(); }
+
+    void recyclePooledBuffer(detail::MemorySegment* segment) override
+    {
+        held.fetch_sub(1, std::memory_order_relaxed);
+        globalPool->recyclePooledBuffer(segment);
+    }
+
+    void recycleUnpooledBuffer(detail::MemorySegment* segment, const AllocationThreadInfo& threadInfo) override
+    {
+        globalPool->recycleUnpooledBuffer(segment, threadInfo);
+    }
+
+private:
+    std::shared_ptr<BufferManager> globalPool;
+    BufferExhaustionArbiter* arbiter; ///NOLINT owned by the QueryEngine, which outlives the ThreadPool that uses providers
+    QueryId queryId;
+    std::atomic<uint64_t> held{0};
+};
+
+/// Relieves global buffer-pool exhaustion by terminating a victim query instead of deadlocking. All pipeline
+/// allocations go through per-query QueryBufferProviders (see providerFor); their blocking path lands in allocate().
+///
+/// allocate() hands out a buffer while more than `recoveryMargin` buffers remain free. On exhaustion it first waits a
+/// bounded grace period for a recycled buffer, so transient pressure (the backpressure the removed getBufferBlocking
+/// timeout used to provide) resolves without any kill. Only then does it select and terminate the query holding the
+/// most pooled buffers. Victim selection and termination are serialized under `victimMutex`: the killing worker holds
+/// it from selection until the victim's buffers drained (or the per-victim recovery window lapsed), and every other
+/// exhausted worker re-checks pool availability after acquiring the mutex before it may select another victim -- so
+/// concurrent workers cannot shed two queries where one sufficed. If the caller's own query is the chosen victim,
+/// allocate() throws QueryBufferExhausted to abort the current task.
+///
+/// LOCK ORDER: victimMutex -> QueryCatalog::mutex (via selectVictim/failQuery) and victimMutex -> providersMutex
+/// (via snapshotBuffersHeld). Neither the catalog nor the providers call back into the arbiter's locks, so the
+/// reverse order cannot occur. providersMutex is a leaf lock.
+class BufferExhaustionArbiter
+{
+public:
+    BufferExhaustionArbiter(
+        std::shared_ptr<BufferManager> bufferProvider, QueryCatalog* catalog, BufferExhaustionPolicy policy, size_t recoveryMargin)
+        : bufferProvider(std::move(bufferProvider)), catalog(catalog), policy(policy), recoveryMargin(recoveryMargin)
+    {
+    }
+
+    /// The per-query buffer provider handed to pipelines of `queryId` (created on first use). Entries are only
+    /// reclaimed on engine shutdown, mirroring queryStates in the QueryCatalog; an idle entry is a few bytes.
+    std::shared_ptr<QueryBufferProvider> providerFor(QueryId queryId)
+    {
+        const std::scoped_lock lock(providersMutex);
+        auto& provider = providers[queryId];
+        if (!provider)
+        {
+            provider = std::make_shared<QueryBufferProvider>(bufferProvider, this, queryId);
+        }
+        return provider;
+    }
+
+    /// Acquire a buffer for the requesting query, terminating a victim query if the pool stays exhausted. Throws
+    /// QueryBufferExhausted if the caller's own query is selected as the victim.
+    TupleBuffer allocate(QueryBufferProvider& requester)
+    {
+        /// Fast path: the pool has slack beyond the recovery margin (which stays free for the teardown path).
+        if (hasSlack())
+        {
+            if (auto buffer = requester.takeCounted())
+            {
+                return std::move(*buffer);
+            }
+        }
+
+        /// Exhausted: wait once (bounded) for a recycled buffer before considering any kill.
+        waitForSlack(std::chrono::steady_clock::now() + backpressureGrace);
+
+        /// Defensive backstop only: terminating queries frees buffers monotonically (bounded by the number of
+        /// queries), so this loop makes progress without it; the deadline just guards against unforeseen wedges.
+        const auto deadline = std::chrono::steady_clock::now() + safetyDeadline;
+        while (true)
+        {
+            if (hasSlack())
+            {
+                if (auto buffer = requester.takeCounted())
+                {
+                    return std::move(*buffer);
+                }
+                /// Slack was reported but the take raced with other workers; re-evaluate.
+                continue;
+            }
+
+            const std::scoped_lock killLock(victimMutex);
+            if (hasSlack())
+            {
+                /// Another worker shed a victim while we waited for the mutex; re-check availability and retry the
+                /// normal path before considering another victim.
+                continue;
+            }
+
+            const auto victim = catalog->selectVictim(policy, requester.getQueryId(), snapshotBuffersHeld());
+            if (!victim.has_value() || *victim == requester.getQueryId() || std::chrono::steady_clock::now() >= deadline)
+            {
+                /// We are the victim (or no other victim exists, or the backstop fired): terminate this query.
+                throw QueryBufferExhausted("query {} terminated to relieve buffer-pool exhaustion", requester.getQueryId());
+            }
+            /// Initiate the kill: failQuery transitions the victim and hands the blocking disposal to the reaper.
+            /// Keep holding victimMutex while the victim's (asynchronous) teardown returns buffers, so no other
+            /// worker concurrently selects a second victim where this one sufficed.
+            catalog->failQuery(
+                *victim, QueryBufferExhausted("query {} terminated to relieve buffer-pool exhaustion (selected as victim)", *victim));
+            waitForSlack(std::chrono::steady_clock::now() + perVictimRecovery);
+        }
+    }
+
+private:
+    /// Mirrors the global pool's former getBufferBlocking timeout (GET_BUFFER_TIMEOUT), so transiently exhausted
+    /// callers self-resolve exactly as before instead of escalating to a kill on first observation.
+    static constexpr auto backpressureGrace = std::chrono::milliseconds(1000);
+    /// After initiating a kill, wait up to this long for the victim's teardown to return buffers before escalating to
+    /// another victim, so the minimum number of queries is shed.
+    static constexpr auto perVictimRecovery = std::chrono::milliseconds(1000);
+    static constexpr auto safetyDeadline = std::chrono::seconds(10);
+
+    [[nodiscard]] bool hasSlack() const { return bufferProvider->getNumberOfAvailableBuffers() > recoveryMargin; }
+
+    void waitForSlack(const std::chrono::steady_clock::time_point until) const
+    {
+        while (std::chrono::steady_clock::now() < until && !hasSlack())
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+    }
+
+    /// Snapshot of the pooled buffers held per query, for victim ranking.
+    [[nodiscard]] std::unordered_map<QueryId, uint64_t> snapshotBuffersHeld() const
+    {
+        const std::scoped_lock lock(providersMutex);
+        std::unordered_map<QueryId, uint64_t> held;
+        held.reserve(providers.size());
+        for (const auto& [queryId, provider] : providers)
+        {
+            held.emplace(queryId, provider->buffersHeld());
+        }
+        return held;
+    }
+
+    std::shared_ptr<BufferManager> bufferProvider;
+    QueryCatalog* catalog;
+    BufferExhaustionPolicy policy;
+    size_t recoveryMargin;
+
+    /// Serializes victim selection+termination across exhausted workers (see the class comment for the lock order).
+    std::mutex victimMutex;
+    /// Guards `providers`. Leaf lock: taken from providerFor (per task) and snapshotBuffersHeld (under victimMutex).
+    mutable std::mutex providersMutex;
+    std::unordered_map<QueryId, std::shared_ptr<QueryBufferProvider>> providers;
+};
+
+TupleBuffer QueryBufferProvider::getBufferBlocking()
+{
+    return arbiter->allocate(*this);
+}
+
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
+    /// The per-query QueryBufferProvider: every allocation (direct or via getBufferManager()) is counted against the
+    /// owning query and routes through the buffer-exhaustion arbiter when it would otherwise block indefinitely.
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
@@ -408,11 +734,11 @@ public:
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        BufferExhaustionArbiter* arbiter,
         const size_t admissionQueueSize)
         : listener(std::move(listener))
         , statistic(std::move(stats))
-        , bufferProvider(std::move(bufferProvider))
+        , arbiter(arbiter)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
     {
@@ -457,7 +783,7 @@ private:
     /// Order of destruction matters: TaskQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    BufferExhaustionArbiter* arbiter; ///NOLINT owned by the QueryEngine, which outlives the pool
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     TaskQueue<Task> taskQueue;
@@ -474,6 +800,28 @@ private:
 
 /// Marks every Thread which has not explicitly been created by the ThreadPool as a non-worker thread
 thread_local WorkerThreadId ThreadPool::WorkerThread::id = INVALID<WorkerThreadId>;
+
+void QueryPlanReaper::run()
+{
+    /// Disposing a plan destroys its pipeline nodes, whose deleter emits StopPipelineTasks into the internal task
+    /// queue -- an operation reserved for engine threads. Register like the terminator thread (which disposes plans
+    /// the same way during shutdown); the id is only used as an access gate and in statistics events.
+    ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
+    std::unique_lock lock(mutex);
+    while (true)
+    {
+        pending.wait(lock, [this] { return stopped || !queue.empty(); });
+        if (queue.empty())
+        {
+            return; /// only reachable when stopped: the queue is drained before shutdown completes
+        }
+        auto plan = std::move(queue.front());
+        queue.pop_front();
+        lock.unlock();
+        disposeNow(std::move(plan));
+        lock.lock();
+    }
+}
 
 bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 {
@@ -492,7 +840,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
-            pool.bufferProvider,
+            pool.arbiter->providerFor(task.queryId),
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
@@ -549,7 +897,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
-            pool.bufferProvider,
+            pool.arbiter->providerFor(startPipeline.queryId),
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
                 /// Catch Emits, that are currently not supported during pipeline stage initialization.
@@ -627,7 +975,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
-        pool.bufferProvider,
+        pool.arbiter->providerFor(stopPipelineTask.queryId),
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
             if (terminating)
@@ -775,10 +1123,18 @@ QueryEngine::QueryEngine(
     : bufferManager(std::move(bm))
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
-    , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
+    , queryCatalog(std::make_shared<QueryCatalog>(statusListener, statisticListener))
+    , queryPlanReaper(std::make_unique<QueryPlanReaper>(host))
+    , bufferExhaustionArbiter(std::make_unique<BufferExhaustionArbiter>(
+          bufferManager,
+          queryCatalog.get(),
+          config.bufferExhaustionPolicy.getValue(),
+          config.bufferRecoveryMargin.getValue() != 0 ? config.bufferRecoveryMargin.getValue() : config.numberOfWorkerThreads.getValue()))
+    , threadPool(std::make_unique<ThreadPool>(
+          statusListener, statisticListener, bufferExhaustionArbiter.get(), config.admissionQueueSize.getValue()))
     , host(host)
 {
+    queryCatalog->attachReaper(queryPlanReaper.get());
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
         threadPool->addThread(host);
@@ -803,6 +1159,9 @@ QueryEngine::~QueryEngine()
 {
     ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
     queryCatalog->clear();
+    /// Drain and stop the reaper while the ThreadPool still accepts and processes the pipeline-stop tasks that
+    /// disposal emits. Any failQuery after this point disposes inline on the calling worker thread.
+    queryPlanReaper->shutdown();
 }
 
 void QueryCatalog::start(
@@ -849,8 +1208,10 @@ void QueryCatalog::start(
                 /// We want to avoid running destructors and callbacks while holding the atomic transition lock.
                 /// So we move the queryplan out of the lock and dispose (if there exists one)
                 std::optional<std::variant<std::unique_ptr<RunningQueryPlan>, std::unique_ptr<StoppingQueryPlan>>> toDispose{};
-                /// Regardless of its current state the query should move into the Terminated::Failed state.
-                locked->transition(
+                /// Move the query into the Terminated::Failed state from any non-terminated state. An already
+                /// terminated query (e.g. shed by the buffer-exhaustion arbiter via failQuery) does not transition:
+                /// its failure was already reported, and in-flight tasks failing afterwards must not report it again.
+                const auto didTransition = locked->transition(
                     [](Reserved&&)
                     {
                         ENGINE_LOG_DEBUG("Query was stopped before all pipeline starts were submitted");
@@ -870,8 +1231,7 @@ void QueryCatalog::start(
                     {
                         toDispose = std::move(stopping.plan);
                         return Terminated{Terminated::Failed};
-                    },
-                    [](Terminated&&) { return Terminated{Terminated::Failed}; });
+                    });
 
                 /// Dispose after the transition (lock released) to avoid deadlock
                 if (toDispose)
@@ -879,10 +1239,13 @@ void QueryCatalog::start(
                     std::visit([]<typename T>(T&& plan) { T::element_type::dispose(std::forward<T>(plan)); }, std::move(toDispose).value());
                 }
 
-                exception.what() += fmt::format(" in Query {}.", queryId);
-                ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
-                listener->logQueryFailure(queryId, std::move(exception), timestamp);
-                statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
+                if (didTransition)
+                {
+                    exception.what() += fmt::format(" in Query {}.", queryId);
+                    ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
+                    listener->logQueryFailure(queryId, std::move(exception), timestamp);
+                    statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
+                }
             }
         }
 
@@ -990,5 +1353,116 @@ void QueryCatalog::stopQuery(QueryId id)
             ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.", id);
         }
     }
+}
+
+void QueryCatalog::failQuery(QueryId id, Exception exception)
+{
+    std::optional<QueryPlanReaper::Disposable> toDispose{};
+    bool didTransition = false;
+    {
+        const std::scoped_lock lock(mutex);
+        if (auto it = queryStates.find(id); it != queryStates.end())
+        {
+            /// Move the query into Terminated::Failed regardless of its current (non-terminated) state, mirroring
+            /// RealQueryLifeTimeListener::onFailure. The plan is moved out and disposed AFTER releasing the lock.
+            didTransition = it->second->transition(
+                [&toDispose](Starting&& starting)
+                {
+                    auto terminating = std::move(starting);
+                    toDispose = std::move(terminating.plan);
+                    return Terminated{Terminated::Failed};
+                },
+                [&toDispose](Running&& running)
+                {
+                    auto terminating = std::move(running);
+                    toDispose = std::move(terminating.plan);
+                    return Terminated{Terminated::Failed};
+                },
+                [&toDispose](Stopping&& stopping)
+                {
+                    auto terminating = std::move(stopping);
+                    toDispose = std::move(terminating.plan);
+                    return Terminated{Terminated::Failed};
+                });
+        }
+    }
+
+    if (!didTransition)
+    {
+        return;
+    }
+
+    /// Report the failure exactly once (guarded by the transition). In-flight tasks of the victim that fail later hit
+    /// the Terminated state in RealQueryLifeTimeListener::onFailure and do not report again.
+    const auto timestamp = std::chrono::system_clock::now();
+    exception.what() += fmt::format(" in Query {}.", id);
+    ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
+    listener->logQueryFailure(id, std::move(exception), timestamp);
+    statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, id));
+
+    /// Hand the blocking disposal (joins the victim's source threads, releases its buffers) to the reaper thread, so
+    /// the initiating worker returns to its allocation loop instead of blocking inside the exhausted pool.
+    if (toDispose)
+    {
+        PRECONDITION(reaper != nullptr, "QueryPlanReaper must be attached before failing queries");
+        reaper->dispose(std::move(*toDispose));
+    }
+}
+
+std::vector<QueryId> QueryCatalog::gatherVictimCandidates()
+{
+    std::vector<QueryId> candidates;
+    candidates.reserve(queryStates.size());
+    for (const auto& [queryId, state] : queryStates)
+    {
+        if (state->is<Running>() || state->is<Starting>() || state->is<Stopping>())
+        {
+            candidates.push_back(queryId);
+        }
+    }
+    return candidates;
+}
+
+QueryId QueryCatalog::selectLargest(const std::vector<QueryId>& candidates, const std::unordered_map<QueryId, uint64_t>& buffersHeld)
+{
+    QueryId bestQuery = INVALID_QUERY_ID;
+    uint64_t bestHeld = 0;
+    for (const auto& candidate : candidates)
+    {
+        const auto it = buffersHeld.find(candidate);
+        const uint64_t held = it != buffersHeld.end() ? it->second : 0;
+        if (bestQuery == INVALID_QUERY_ID || held > bestHeld)
+        {
+            bestQuery = candidate;
+            bestHeld = held;
+        }
+    }
+    return bestQuery;
+}
+
+std::optional<QueryId> QueryCatalog::selectVictim(
+    const BufferExhaustionPolicy policy, QueryId currentQuery, const std::unordered_map<QueryId, uint64_t>& buffersHeld)
+{
+    if (policy == BufferExhaustionPolicy::TERMINATE_SELF)
+    {
+        return currentQuery;
+    }
+
+    const std::scoped_lock lock(mutex);
+
+    const std::vector<QueryId> candidates = gatherVictimCandidates();
+    if (candidates.empty())
+    {
+        return std::nullopt;
+    }
+
+    switch (policy)
+    {
+        case BufferExhaustionPolicy::TERMINATE_LARGEST:
+            return selectLargest(candidates, buffersHeld);
+        case BufferExhaustionPolicy::TERMINATE_SELF:
+            return currentQuery; /// handled above
+    }
+    return std::nullopt;
 }
 }

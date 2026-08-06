@@ -218,6 +218,11 @@ public:
     std::atomic<size_t> throwOnNthInvocation = -1;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
+    /// When > 0, each execute() invocation allocates this many buffers via the PipelineExecutionContext (the
+    /// buffer-exhaustion arbiter path) and holds them, to deliberately exhaust the global pool in tests. The held
+    /// buffers are released when the pipeline is destroyed (e.g. when its query is terminated).
+    std::atomic<size_t> allocateAndHoldPerInvocation = 0;
+    folly::Synchronized<std::vector<TupleBuffer>, std::mutex> heldBuffers;
 
     std::promise<void> start;
     std::promise<void> startEntered;
@@ -269,6 +274,7 @@ struct TestPipeline final : ExecutablePipelineStage
 
     ~TestPipeline() override
     {
+        controller->heldBuffers.lock()->clear();
         controller->stage = nullptr;
         controller->destruction.set_value();
     }
@@ -319,6 +325,14 @@ struct TestPipeline final : ExecutablePipelineStage
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
             throw Exception("I should throw here.", 9999);
+        }
+
+        /// Optionally allocate-and-hold buffers via the PipelineExecutionContext to drive the buffer-exhaustion
+        /// arbiter. allocateTupleBuffer() throws QueryBufferExhausted when this query is selected as the victim.
+        for (size_t held = 0; held < controller->allocateAndHoldPerInvocation.load(); ++held)
+        {
+            auto buffer = pipelineExecutionContext.allocateTupleBuffer();
+            controller->heldBuffers.lock()->emplace_back(std::move(buffer));
         }
 
         /// Handle repeat functionality
@@ -400,7 +414,9 @@ public:
 
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
-        controller->insertBuffer(deepCopyBuffer(inputBuffer, *bufferProvider));
+        /// Allocate through the PipelineExecutionContext's (per-query) buffer provider so sink allocations are
+        /// covered by the buffer-exhaustion arbiter, like every other pipeline allocation.
+        controller->insertBuffer(deepCopyBuffer(inputBuffer, *pipelineExecutionContext.getBufferManager()));
 
         /// Handle repeat functionality
         const size_t maxRepeats = controller->repeatCount.load();
@@ -410,7 +426,7 @@ public:
             const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
             if (currentRepeatCount < maxRepeats)
             {
-                auto copiedBuffer = deepCopyBuffer(inputBuffer, *bufferProvider);
+                auto copiedBuffer = deepCopyBuffer(inputBuffer, *pipelineExecutionContext.getBufferManager());
                 copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
             }
@@ -437,10 +453,7 @@ public:
         }
     }
 
-    TestSink(std::shared_ptr<AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
-        : bufferProvider(std::move(bufferProvider)), controller(std::move(controller))
-    {
-    }
+    explicit TestSink(std::shared_ptr<TestSinkController> controller) : controller(std::move(controller)) { }
 
     ~TestSink() override { controller->destruction.set_value(); }
 
@@ -453,12 +466,11 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<TestSinkController> controller;
 };
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, BackpressureController backpressureController);
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);

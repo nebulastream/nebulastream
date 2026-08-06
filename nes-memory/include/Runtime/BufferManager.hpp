@@ -118,6 +118,15 @@ public:
     /// invalid optional if there is no buffer.
     std::optional<TupleBuffer> getBufferNoBlocking() override;
 
+    /// Same as getBufferNoBlocking, but prepares the buffer with `recycler` as its owner, so the recycle callback
+    /// flows through `recycler` on its way back to this pool. Used by per-query buffer providers to track how many
+    /// pooled buffers a query currently holds. `recycler` must forward the segment to recyclePooledBuffer.
+    std::optional<TupleBuffer> getBufferNoBlockingFor(const std::shared_ptr<BufferRecycler>& recycler);
+
+    /// Same as getBufferWithTimeout, but prepares the buffer with `recycler` as its owner (see getBufferNoBlockingFor).
+    std::optional<TupleBuffer>
+    getBufferWithTimeoutFor(std::chrono::milliseconds timeoutMs, const std::shared_ptr<BufferRecycler>& recycler);
+
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
      * timeoutMs.
@@ -132,7 +141,7 @@ public:
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
-    size_t getNumberOfAvailableBuffers() const;
+    size_t getNumberOfAvailableBuffers() const override;
 
     /// Explicitly shuts down the buffer manager: checks for leaked buffers (fires INVARIANT on leaks),
     /// deallocates all memory, and marks the manager as destroyed. The destructor calls this automatically

@@ -212,12 +212,17 @@ TupleBuffer BufferManager::getBufferBlocking()
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 {
+    return getBufferNoBlockingFor(shared_from_this());
+}
+
+std::optional<TupleBuffer> BufferManager::getBufferNoBlockingFor(const std::shared_ptr<BufferRecycler>& recycler)
+{
     detail::MemorySegment* memSegment = nullptr;
     if (!availableBuffers.read(memSegment))
     {
         return std::nullopt;
     }
-    if (memSegment->controlBlock->prepare(shared_from_this()))
+    if (memSegment->controlBlock->prepare(recycler))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
@@ -226,13 +231,19 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
+    return getBufferWithTimeoutFor(timeoutMs, shared_from_this());
+}
+
+std::optional<TupleBuffer> BufferManager::getBufferWithTimeoutFor(
+    const std::chrono::milliseconds timeoutMs, const std::shared_ptr<BufferRecycler>& recycler)
+{
     detail::MemorySegment* memSegment = nullptr;
     const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
     if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
         return std::nullopt;
     }
-    if (memSegment->controlBlock->prepare(shared_from_this()))
+    if (memSegment->controlBlock->prepare(recycler))
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }

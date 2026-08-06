@@ -136,10 +136,10 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, BackpressureController backpressureController)
 {
     auto sinkController = std::make_shared<TestSinkController>(std::move(backpressureController));
-    auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
+    auto stage = std::make_unique<TestSink>(sinkController);
     auto pipeline = ExecutablePipeline::create(id, std::move(stage), {});
     return {pipeline, sinkController};
 }
@@ -222,7 +222,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
                 },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<ExecutablePipeline>
                 {
-                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, std::move(backpressureController), bm);
+                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, std::move(backpressureController));
                     pipelines.push_back(sink);
                     stages[identifier] = sink->stage.get();
                     sinkCtrls[identifier] = ctrl;

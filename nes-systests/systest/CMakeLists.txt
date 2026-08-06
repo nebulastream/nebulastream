@@ -131,6 +131,16 @@ if (NOT CODE_COVERAGE)
             NAME systest_benchmark_small
             COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_benchmark_small PROPERTIES LABELS "Systest" PROCESSORS 4)
+
+    # Buffer-pool exhaustion under a deliberately tiny pooled pool (unpooled_memory_fraction=0.999 of the join budget
+    # leaves ~196 pooled 4 KiB operator buffers while keeping the unpooled share generous, so only the pooled pool is
+    # under pressure). The engine must neither hang nor crash: queries that exhaust the pool are shed with
+    # QueryBufferExhausted (3007), which the runner tolerates via --tolerate_error_code, and the remaining queries
+    # must still succeed. The TIMEOUT is the hang detector.
+    ExternalData_Add_Test(test-data
+            NAME systest_buffer_exhaustion
+            COMMAND systest -n 6 -t ${CMAKE_CURRENT_SOURCE_DIR}/../operator/join --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --tolerate_error_code 3007 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/buffer_exhaustion --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=HASH_JOIN -- --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=0.999)
+    set_tests_properties(systest_buffer_exhaustion PROPERTIES LABELS "Systest" PROCESSORS 4 TIMEOUT 1800)
 endif (NOT CODE_COVERAGE)
 
 
