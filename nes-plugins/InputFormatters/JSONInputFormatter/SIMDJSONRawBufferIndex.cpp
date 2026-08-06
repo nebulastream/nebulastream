@@ -34,13 +34,13 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SIMDJSONParsingUtil.hpp>
 #include <function.hpp>
 #include <static.hpp>
@@ -140,7 +140,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const nautilus::val<uint64_t>&,
     const InputFormatIndexer& indexer,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
-    const TupleBufferRef& bufferRef) const
+    const MemoryLayout& bufferRef) const
 {
     Record record;
     const auto numberOfFields = bufferRef.getAllDataTypes().size();

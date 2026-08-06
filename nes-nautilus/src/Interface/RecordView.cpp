@@ -17,18 +17,18 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
-#include <val.hpp>
+#include <val_arith.hpp>
+#include <val_base.hpp>
 
 namespace NES
 {
 
-RecordView::RecordView(RecordBuffer buffer, std::shared_ptr<TupleBufferRef> layout)
-    : recordBuffer(std::move(buffer)), layout(std::move(layout))
+RecordView::RecordView(const TaskBufferRef& buffer, std::shared_ptr<MemoryLayout> layout) : recordBuffer(buffer), layout(std::move(layout))
 {
     PRECONDITION(this->layout != nullptr, "RecordView requires a memory layout");
 }
@@ -38,18 +38,18 @@ Record RecordView::readRecord(const std::vector<Record::RecordFieldIdentifier>& 
     return layout->readRecord(projections, recordBuffer, recordIndex);
 }
 
-TupleBufferRef::WriteRecordResult RecordView::writeRecord(
+MemoryLayout::WriteRecordResult RecordView::writeRecord(
     nautilus::val<uint64_t>& recordIndex, const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     return layout->writeRecord(recordIndex, recordBuffer, record, bufferProvider);
 }
 
-RecordBuffer& RecordView::getBuffer()
+TaskBufferRef& RecordView::getBuffer()
 {
     return recordBuffer;
 }
 
-const RecordBuffer& RecordView::getBuffer() const
+const TaskBufferRef& RecordView::getBuffer() const
 {
     return recordBuffer;
 }

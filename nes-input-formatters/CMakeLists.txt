@@ -19,7 +19,7 @@ add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
-# Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
+# Exposing Buffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
 target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
 
 
@@ -29,7 +29,7 @@ target_include_directories(nes-input-formatters PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-# 'Public' provider library, only exposing the provider and the TupleBufferRef
+# 'Public' provider library, only exposing the provider and the MemoryLayout
 add_library(nes-input-formatter-provider src/InputFormatterProvider.cpp)
 target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters-registry nes-input-formatters)
 target_include_directories(nes-input-formatter-provider PUBLIC

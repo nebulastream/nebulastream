@@ -19,7 +19,6 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -31,7 +30,7 @@
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -93,7 +92,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
                 nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
+                    +[](Buffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
                     {
                         if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
                         {
@@ -102,7 +101,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                             *valueMemArea = childIndex.getRawValue();
                             return;
                         }
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
+                        throw BufferAllocationFailure("No unpooled Buffer available for chained hash map entry's paged vector!");
                     },
                     hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
@@ -117,7 +116,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         auto entryMemArea = entryRef.getValueMemArea();
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
-            +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
+            +[](Buffer* hashMapBuf, Buffer* out, const uint32_t* indexPtr)
             { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
             hashMapBuffer.asArg(),
             pagedVecBuffer.asArg(),

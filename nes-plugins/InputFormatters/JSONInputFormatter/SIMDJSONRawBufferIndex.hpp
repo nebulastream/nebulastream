@@ -23,11 +23,11 @@
 #include <vector>
 
 #include <simdjson.h>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <InputFormatIndexer.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -51,7 +51,7 @@ public:
         const nautilus::val<uint64_t>& /*recordIndex*/,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const override;
+        const MemoryLayout& bufferRef) const override;
 
     [[nodiscard]] TupleDelimiterOffsets getTupleDelimiterOffsets() const override
     {

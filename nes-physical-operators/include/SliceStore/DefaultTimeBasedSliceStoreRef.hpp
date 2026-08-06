@@ -24,8 +24,8 @@
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -43,8 +43,8 @@ class DefaultTimeBasedSliceStore;
 class DefaultTimeBasedSliceStoreRef final : public SliceStoreRef
 {
 public:
-    /// Extracts the operator-specific data structure (TupleBuffer) from a Slice.
-    using DataStructureExtractor = std::function<const TupleBuffer*(Slice&, WorkerThreadId, AbstractBufferProvider&)>;
+    /// Extracts the operator-specific data structure (Buffer) from a Slice.
+    using DataStructureExtractor = std::function<const Buffer*(Slice&, WorkerThreadId, AbstractBufferProvider&)>;
 
     /// The function that creates new slices given a start and end timestamp.
     using SliceCreateFunction = std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>;

@@ -20,13 +20,14 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
@@ -55,7 +56,7 @@ SourceThread::SourceThread(
 
 namespace
 {
-void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBuffer& buffer)
+void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Buffer& buffer)
 {
     /// set the origin id for this source
     buffer.setOriginId(originId);
@@ -76,7 +77,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Buffer&&, bool addBufferMetadata)>;
 
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
@@ -91,9 +92,9 @@ SourceImplementationTermination dataSourceThreadRoutine(
         source.close();
     };
 
-    /// If a source fails during fillTupleBuffer we still want to call close. However This will be handled during stack unwinding.
+    /// If a source fails during fillBuffer we still want to call close. However This will be handled during stack unwinding.
     /// If the close method throws again the system would terminate, we have to resort to swalling and logging the exception.
-    /// The actual fillTupleBuffer failure is handled in the parent exception handler.
+    /// The actual fillBuffer failure is handled in the parent exception handler.
     SCOPE_FAIL
     {
         cpptrace::try_catch(
@@ -109,10 +110,10 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `StopRequested`
         /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
         ///    The thread exits with `EndOfStream`
-        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
+        /// 4. Failure. The fillBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
-        std::optional<TupleBuffer> emptyBuffer;
+        std::optional<Buffer> emptyBuffer;
         while (!emptyBuffer && !stopToken.stop_requested())
         {
             emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
@@ -122,7 +123,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
         {
@@ -155,7 +156,7 @@ void dataSourceThread(
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
+    const EmitFn dataEmit = [&](Buffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {

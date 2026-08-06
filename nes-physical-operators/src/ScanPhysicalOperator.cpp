@@ -21,9 +21,10 @@
 #include <utility>
 #include <vector>
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordView.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>
@@ -33,19 +34,18 @@
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
-    : bufferRef(std::move(bufferRef))
+ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<MemoryLayout> layout, std::vector<Record::RecordFieldIdentifier> projections)
+    : layout(std::move(layout))
     , projections(std::move(projections))
-    , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)
+    , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->layout) != nullptr)
 {
 }
 
-void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
-    auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(this->bufferRef);
+    auto inputFormatter = std::dynamic_pointer_cast<InputFormatter>(this->layout);
 
-    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
+    if (not inputFormatter->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
@@ -56,10 +56,10 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 
     /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
-    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
+    inputFormatter->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -77,10 +77,11 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer
+    const RecordView view{recordBuffer, layout};
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = bufferRef->readRecord(projections, recordBuffer, i);
+        auto record = view.readRecord(projections, i);
         executeChild(executionCtx, record);
     }
 }

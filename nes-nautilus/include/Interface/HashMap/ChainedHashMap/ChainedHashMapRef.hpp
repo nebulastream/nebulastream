@@ -25,7 +25,7 @@
 #include <Interface/HashMap/HashMapRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -54,13 +54,13 @@ public:
         [[nodiscard]] nautilus::val<ChainedHashMapEntry*> getNext() const;
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<TupleBuffer*>& hashMapBuffer,
+            const nautilus::val<Buffer*>& hashMapBuffer,
             std::vector<FieldOffsets> fieldsKey,
             std::vector<FieldOffsets> fieldsValue);
 
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
-            const nautilus::val<TupleBuffer*>& hashMapBuffer,
+            const nautilus::val<Buffer*>& hashMapBuffer,
             ChainedEntryMemoryProvider memoryProviderKeys,
             ChainedEntryMemoryProvider memoryProviderValues);
 
@@ -70,7 +70,7 @@ public:
         ~ChainedEntryRef() = default;
 
         nautilus::val<ChainedHashMapEntry*> entryRef;
-        nautilus::val<TupleBuffer*> hashMapBuffer;
+        nautilus::val<Buffer*> hashMapBuffer;
         ChainedEntryMemoryProvider memoryProviderKeys;
         ChainedEntryMemoryProvider memoryProviderValues;
     };
@@ -82,7 +82,7 @@ public:
     {
     public:
         EntryIterator(
-            const nautilus::val<TupleBuffer*>& buffer,
+            const nautilus::val<Buffer*>& buffer,
             const nautilus::val<ChainedHashMapEntry*>& currentEntry,
             const nautilus::val<uint64_t>& entrySize,
             const nautilus::val<uint64_t>& tupleIndex,
@@ -103,7 +103,7 @@ public:
         nautilus::val<ChainedHashMapEntry*> operator*() const;
 
     private:
-        nautilus::val<TupleBuffer*> buffer;
+        nautilus::val<Buffer*> buffer;
         nautilus::val<ChainedHashMapEntry*> currentEntry;
         nautilus::val<uint64_t> entrySize;
         nautilus::val<uint64_t> tupleIndex;
@@ -114,7 +114,7 @@ public:
     };
 
     ChainedHashMapRef(
-        const nautilus::val<TupleBuffer*>& buffer,
+        const nautilus::val<Buffer*>& buffer,
         std::vector<FieldOffsets> fieldsKey,
         std::vector<FieldOffsets> fieldsValue,
         const nautilus::val<uint64_t>& entriesPerPage,

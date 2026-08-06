@@ -28,7 +28,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -60,7 +60,7 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-void ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+void ChainedHashMap::init(Buffer& tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     const uint64_t entriesPerPage = pageSize / entrySize;
@@ -101,7 +101,7 @@ void ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, co
 }
 
 void ChainedHashMap::init(
-    TupleBuffer& tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+    Buffer& tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
     const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const uint64_t entriesPerPage = pageSize / entrySize;
@@ -142,7 +142,7 @@ void ChainedHashMap::init(
         = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
-ChainedHashMap ChainedHashMap::load(const TupleBuffer& tupleBuffer)
+ChainedHashMap ChainedHashMap::load(const Buffer& tupleBuffer)
 {
     ChainedHashMap chm{tupleBuffer};
     const auto& hdr = chm.header();
@@ -166,7 +166,7 @@ ChainedHashMap ChainedHashMap::load(const TupleBuffer& tupleBuffer)
 
 void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
-    TupleBuffer newPage;
+    Buffer newPage;
     if (neededSize <= bufferProvider->getBufferSize())
     {
         newPage = bufferProvider->getBufferBlocking();
@@ -184,7 +184,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     }
 
     auto varSizedBufferIdx = getVarSizedBufferIdx();
-    if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    if (varSizedBufferIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         /// Storage buffer already exists - just add the new page
         auto varSizedBuffer = buffer.loadChildBuffer(varSizedBufferIdx);
@@ -238,7 +238,7 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
 void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 {
     /// create and initialize new page
-    TupleBuffer newPage;
+    Buffer newPage;
     if (bufferProvider->getBufferSize() == getPageSize())
     {
         newPage = bufferProvider->getBufferBlocking();
@@ -258,7 +258,7 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 
     /// get or create storage buffer
     auto storageBufferIdx = getStorageBufferIdx();
-    if (storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    if (storageBufferIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         /// storage buffer already exists
         auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
@@ -337,28 +337,27 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
     return header().varSizedSpaceIndex;
 }
 
-TupleBuffer ChainedHashMap::getPage(const uint64_t pageIndex) const
+Buffer ChainedHashMap::getPage(const uint64_t pageIndex) const
 {
     auto storageBufferIdx = getStorageBufferIdx();
-    PRECONDITION(storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "Storage space not initialized during getPage()");
+    PRECONDITION(storageBufferIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "Storage space not initialized during getPage()");
     auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
     uint64_t numberOfPages = storageBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = storageBuffer.loadChildBuffer(pageBufferIdx);
+    Buffer page = storageBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }
 
-TupleBuffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
+Buffer ChainedHashMap::getVarSizedPage(const uint64_t pageIndex) const
 {
     auto varSizedSpaceIdx = getVarSizedBufferIdx();
-    PRECONDITION(
-        varSizedSpaceIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "VarSized space not initialized during getVarSizedPage()");
+    PRECONDITION(varSizedSpaceIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE, "VarSized space not initialized during getVarSizedPage()");
     auto varSizedBuffer = buffer.loadChildBuffer(varSizedSpaceIdx);
     uint64_t numberOfPages = varSizedBuffer.getNumberOfChildBuffers();
     PRECONDITION(pageIndex < numberOfPages, "Page index {} is greater than the number of pages {}", pageIndex, numberOfPages);
     const ChildBufferIndex pageBufferIdx{static_cast<uint32_t>(pageIndex)};
-    TupleBuffer page = varSizedBuffer.loadChildBuffer(pageBufferIdx);
+    Buffer page = varSizedBuffer.loadChildBuffer(pageBufferIdx);
     return page;
 }
 
@@ -376,7 +375,7 @@ uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains)
 [[nodiscard]] uint64_t ChainedHashMap::getNumberOfPages() const
 {
     auto storageBufferIdx = getStorageBufferIdx();
-    if (storageBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    if (storageBufferIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         auto storageBuffer = buffer.loadChildBuffer(storageBufferIdx);
         return storageBuffer.getNumberOfChildBuffers();
@@ -387,7 +386,7 @@ uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains)
 [[nodiscard]] uint64_t ChainedHashMap::getNumberOfVarSizedPages() const
 {
     auto varSizedBufferIdx = getVarSizedBufferIdx();
-    if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    if (varSizedBufferIdx != Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
         auto varSizedBuffer = buffer.loadChildBuffer(varSizedBufferIdx);
         return varSizedBuffer.getNumberOfChildBuffers();

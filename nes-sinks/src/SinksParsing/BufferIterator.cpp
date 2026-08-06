@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <optional>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 namespace NES
 {
@@ -39,7 +39,7 @@ std::optional<BufferIterator::BufferElement> BufferIterator::getNextElement()
 
     /// Iterate through the children
     /// Child buffers store the number of written bytes in them as the number of tuples
-    const TupleBuffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
+    const Buffer childBuffer = tupleBuffer.loadChildBuffer(ChildBufferIndex(bufferIndex - 1));
     ++bufferIndex;
     return std::optional<BufferElement>({.buffer = childBuffer, .contentLength = childBuffer.getNumberOfTuples()});
 }

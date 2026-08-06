@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -55,7 +55,7 @@ public:
     NetworkSink& operator=(NetworkSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext& pec) override;
     void stop(PipelineExecutionContext& pec) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -65,7 +65,7 @@ protected:
 
 private:
     size_t tupleSize;
-    folly::Synchronized<std::vector<TupleBuffer>> bufferBacklog;
+    folly::Synchronized<std::vector<Buffer>> bufferBacklog;
     BackpressureHandler backpressureHandler;
     std::optional<rust::Box<SenderNetworkService>> server;
     std::optional<rust::Box<SenderDataChannel>> channel;

@@ -19,10 +19,13 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/RecordView.hpp>
+#include <Interface/TaskBufferRef.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -41,19 +44,18 @@ namespace NES
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+    explicit EmitState(RecordView resultView) : resultView(std::move(resultView)) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
-    RecordBuffer resultBuffer;
-    nautilus::val<int8_t*> bufferMemoryArea;
+    RecordView resultView;
 };
 
-void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::open(ExecutionContext& ctx, TaskBufferRef&) const
 {
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
-    const auto resultBuffer = RecordBuffer(resultBufferRef);
-    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    RecordView resultView{TaskBufferRef{BorrowedNautilusBuffer::from(resultBufferRef)}, layout};
+    auto emitState = std::make_unique<EmitState>(std::move(resultView));
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
 
@@ -64,30 +66,27 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    auto writeResult
-        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    auto writeResult = emitState->resultView.writeRecord(emitState->outputIndex, record, ctx.pipelineMemoryProvider.bufferProvider);
     /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
     /// We emit and create a new record buffer
     if (!writeResult.successful)
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+        emitTaskBufferRef(ctx, emitState->resultView.getBuffer(), emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
+        emitState->resultView = RecordView{TaskBufferRef{BorrowedNautilusBuffer::from(resultBufferRef)}, layout};
         emitState->outputIndex = 0_u64;
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
-        writeResult
-            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        writeResult = emitState->resultView.writeRecord(emitState->outputIndex, record, ctx.pipelineMemoryProvider.bufferProvider);
     }
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
 
-void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::close(ExecutionContext& ctx, TaskBufferRef&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
+    emitTaskBufferRef(ctx, emitState->resultView.getBuffer(), emitState->outputIndex, true);
 }
 
 namespace
@@ -98,14 +97,10 @@ void setChunkNumber(
     const nautilus::val<bool>& closesChunk,
     const nautilus::val<ChunkNumber>& currentChunkNumber,
     const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
+    const nautilus::val<Buffer*>& newBuffer)
 {
     nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
+        +[](OperatorHandler* handler, bool closesChunk, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, Buffer* newBuffer)
         {
             PRECONDITION(handler != nullptr, "Expects a valid handler");
             PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
@@ -122,9 +117,9 @@ void setChunkNumber(
 }
 }
 
-void EmitPhysicalOperator::emitRecordBuffer(
+void EmitPhysicalOperator::emitTaskBufferRef(
     ExecutionContext& ctx,
-    RecordBuffer& recordBuffer,
+    TaskBufferRef& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
@@ -134,19 +129,19 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
 
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
+    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getBuffer().asArg());
 
     ctx.emitBuffer(recordBuffer);
 }
 
-EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
-    : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
+EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> layout)
+    : layout(std::move(layout)), operatorHandlerId(operatorHandlerId)
 {
 }
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
-    return bufferRef->getCapacity();
+    return layout->getCapacity();
 }
 
 std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const

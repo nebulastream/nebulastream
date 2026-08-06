@@ -16,7 +16,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -81,7 +81,7 @@ void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
 }
 
-void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// Update the watermark for the probe and delete all slices that can be deleted
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);

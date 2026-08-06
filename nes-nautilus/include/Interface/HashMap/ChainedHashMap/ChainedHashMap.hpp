@@ -25,7 +25,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 namespace NES
 {
@@ -71,21 +71,21 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
-    /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
+    /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated Buffer
     /// Constructors are private
-    static void init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    static void init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    static void init(Buffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    static void init(Buffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
 
-    /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
-    static ChainedHashMap load(const TupleBuffer& tupleBuffer);
+    /// @brief Loads a ChainedHashMap view from a pre-filled Buffer
+    static ChainedHashMap load(const Buffer& tupleBuffer);
 
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
 
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const override { return header().numRecords; }
 
-    [[nodiscard]] TupleBuffer getPage(uint64_t pageIndex) const;
-    [[nodiscard]] TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
+    [[nodiscard]] Buffer getPage(uint64_t pageIndex) const;
+    [[nodiscard]] Buffer getVarSizedPage(uint64_t pageIndex) const;
     [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets);
     [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
     [[nodiscard]] uint64_t getNumberOfPages() const;
@@ -109,9 +109,9 @@ public:
     [[nodiscard]] ChildBufferIndex getVarSizedBufferIdx() const;
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
 
-    /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
+    /// @warning Be super careful with this. Sometimes you need a pointer to the Buffer but you should never alter it outside of this
     /// view and without using its access methods
-    [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
+    [[nodiscard]] Buffer* getBuffer() { return std::addressof(buffer); }
 
     /// HashMapSlice magic numbers
     static constexpr auto VALID_CHM = 82543427462775423;
@@ -125,7 +125,7 @@ protected:
 
 private:
     /// private constructor that takes a pre-filled buffer
-    explicit ChainedHashMap(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    explicit ChainedHashMap(Buffer buffer) : buffer(std::move(buffer)) { }
 
     friend class ChainedHashMapRef;
 
@@ -155,8 +155,8 @@ private:
             , entrySize(entrySize)
             , entriesPerPage(entriesPerPage)
             , mask(mask)
-            , storageSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
-            , varSizedSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , storageSpaceIndex(Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , varSizedSpaceIndex(Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
         {
         }
     };
@@ -179,6 +179,6 @@ private:
     }
 
     /// the main tuple buffer for this chained hash map
-    TupleBuffer buffer;
+    Buffer buffer;
 };
 }

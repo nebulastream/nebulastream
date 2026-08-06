@@ -21,7 +21,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TypeTraits.hpp>
 #include <absl/functional/any_invocable.h>
@@ -127,12 +127,12 @@ private:
 
 struct WorkTask : BaseTask
 {
-    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback);
+    WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, Buffer buf, TaskCallback callback);
 
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
-    TupleBuffer buf;
+    Buffer buf;
 };
 
 struct StartPipelineTask : BaseTask

@@ -23,7 +23,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <static.hpp>
@@ -49,11 +49,11 @@ nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recor
 
 Record RowLayout::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
-    const auto bufferAddress = recordBuffer.getMemArea();
+    const auto bufferAddress = recordBuffer.getBuffer().data();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
@@ -71,7 +71,7 @@ Record RowLayout::readRecord(
 
 MemoryLayout::WriteRecordResult RowLayout::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
@@ -80,7 +80,7 @@ MemoryLayout::WriteRecordResult RowLayout::writeRecord(
     /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto bufferAddress = recordBuffer.getBuffer().data();
         const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {

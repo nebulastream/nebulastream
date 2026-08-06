@@ -126,7 +126,7 @@ TEST_F(DelayedTaskSubmitterTest, testBasicTaskSubmission)
     auto submitter = DelayedTaskSubmitter([this](Task task) noexcept { submitTask(std::move(task)); });
 
     /// Create a simple task
-    auto task = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
+    auto task = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
 
     /// Submit task with immediate execution
     submitter.submitTaskIn(std::move(task), std::chrono::milliseconds(10));
@@ -159,9 +159,9 @@ TEST_F(DelayedTaskSubmitterTest, testMultipleTasksOrderedExecution)
     const auto qid1 = randomQueryId();
     const auto qid2 = randomQueryId();
     const auto qid3 = randomQueryId();
-    auto task1 = WorkTask(qid1, PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
-    auto task2 = WorkTask(qid2, PipelineId(2), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
-    auto task3 = WorkTask(qid3, PipelineId(3), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
+    auto task1 = WorkTask(qid1, PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
+    auto task2 = WorkTask(qid2, PipelineId(2), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
+    auto task3 = WorkTask(qid3, PipelineId(3), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
 
     /// Submit in reverse order with increasing delays
     submitter.submitTaskIn(std::move(task3), std::chrono::milliseconds(30));
@@ -187,7 +187,7 @@ TEST_F(DelayedTaskSubmitterTest, testTaskWithZeroDelay)
 {
     auto submitter = DelayedTaskSubmitter([this](Task task) noexcept { submitTask(std::move(task)); });
 
-    auto task = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
+    auto task = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
 
     /// Submit task with zero delay
     submitter.submitTaskIn(std::move(task), std::chrono::milliseconds(0));
@@ -202,9 +202,9 @@ TEST_F(DelayedTaskSubmitterTest, testDifferentDurationTypes)
 {
     auto submitter = DelayedTaskSubmitter([this](Task task) noexcept { submitTask(std::move(task)); });
 
-    auto task1 = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
-    auto task2 = WorkTask(randomQueryId(), PipelineId(2), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
-    auto task3 = WorkTask(randomQueryId(), PipelineId(3), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
+    auto task1 = WorkTask(randomQueryId(), PipelineId(1), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
+    auto task2 = WorkTask(randomQueryId(), PipelineId(2), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
+    auto task3 = WorkTask(randomQueryId(), PipelineId(3), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
 
     /// Test different duration types
     submitter.submitTaskIn(std::move(task1), std::chrono::microseconds(10000)); /// 10ms
@@ -235,7 +235,7 @@ TEST_F(DelayedTaskSubmitterTest, testConcurrentTaskSubmission)
                 for (int j = 0; j < tasksPerThread; ++j)
                 {
                     auto task = WorkTask(
-                        randomQueryId(), PipelineId((i * tasksPerThread) + j), std::weak_ptr<RunningQueryPlanNode>(), TupleBuffer(), {});
+                        randomQueryId(), PipelineId((i * tasksPerThread) + j), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
                     if (j % 2 == 0)
                     {
                         TestClock::advance(std::chrono::milliseconds(1), false);
@@ -269,7 +269,7 @@ TEST_F(DelayedTaskSubmitterTest, testDestructorCleanup)
             randomQueryId(),
             PipelineId(1),
             std::weak_ptr<RunningQueryPlanNode>(),
-            TupleBuffer(),
+            Buffer(),
             TaskCallback(
                 TaskCallback::OnComplete([&completeCount] { ++completeCount; }),
                 TaskCallback::OnFailure([&failureCount](const Exception&) { ++failureCount; })));
@@ -309,11 +309,7 @@ TEST_F(DelayedTaskSubmitterTest, testStressRandomTasks)
                 for (int i = 0; i < tasksPerThread; ++i)
                 {
                     auto task = WorkTask(
-                        randomQueryId(),
-                        PipelineId((threadId * tasksPerThread) + i),
-                        std::weak_ptr<RunningQueryPlanNode>(),
-                        TupleBuffer(),
-                        {});
+                        randomQueryId(), PipelineId((threadId * tasksPerThread) + i), std::weak_ptr<RunningQueryPlanNode>(), Buffer(), {});
 
                     /// Random delay between 0 and maxDelayMs milliseconds
                     const int randomDelay = dis(gen);

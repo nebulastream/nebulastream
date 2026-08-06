@@ -24,7 +24,7 @@ namespace NES
 
 static constexpr size_t STASH_TARGET_CAPACITY = 1024;
 
-/// A simple stash for persisting partial payloads that did not fit into a TB between calls to `fillTupleBuffer`.
+/// A simple stash for persisting partial payloads that did not fit into a TB between calls to `fillBuffer`.
 /// When a payload does not fit, stash the remainder.
 /// On the next invocation, consume the stashed payload before reading new data.
 /// The stash can be in two states:

@@ -59,9 +59,9 @@ Currently, NebulaStream does not support the above [vision](#motivation-and-visi
       - `nes-configurations/include/Configurations/Worker/PhysicalSourceFactoryPlugin.hpp`
       - `nes-operators/include/Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp`
       - ...
-- P2: The DataSource interface forces all sources to use the TestTupleBuffer and it mixes reading data from sources, formatting/parsing sources, and starting and stopping queries in a single class
-  - DataSource provides the allocateBuffer() function which returns a TestTupleBuffer
-    - as a result, all sources use the TestTupleBuffer
+- P2: The DataSource interface forces all sources to use the TestBuffer and it mixes reading data from sources, formatting/parsing sources, and starting and stopping queries in a single class
+  - DataSource provides the allocateBuffer() function which returns a TestBuffer
+    - as a result, all sources use the TestBuffer
 - P3: adding a single source and sink requires changing/touching 20+ files (partially a result of P1)
 - P4: setting up sources and sinks for querying is complex
   -  define logical sources in the coordinator YAML config
@@ -72,7 +72,7 @@ Currently, NebulaStream does not support the above [vision](#motivation-and-visi
 
 
 # Goals
-- G1: Simplify the source implementations. Following the encapsulation principle of OOP, the task of a source should simply be to ingest data and to write that data to a TupleBuffer.
+- G1: Simplify the source implementations. Following the encapsulation principle of OOP, the task of a source should simply be to ingest data and to write that data to a Buffer.
   - addresses P1 and P3
 - G2: Starting a query should be handled by a separate class that simply uses a source implementation.
   - addresses P2
@@ -144,8 +144,8 @@ the described **Source** using the **SourceRegistry** and, using the constructed
 becomes part of an executable query plan. The SourceHandel offers a very slim interface, `start()` and `stop()` and thereby hides all the 
 implementation details from users of sources. Internally, the SourceHandle constructs a **SourceThread** and delegates the start and stop
 calls to the *SourceThread*. The SourceThread starts a thread, so one thread per source, which runs the `runningRoutine()`. In the running routine,
-the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **SourceTCP**. 
-If `fillTupleBuffer` succeeds, the *SourceThread* returns a TupleBuffer to the runtime via the *EmitFunction*, if not, it returns an
+the SourceThread repeatedly calls the `fillBuffer` function of the specific *Source* implementation, e.g., of the **SourceTCP**. 
+If `fillBuffer` succeeds, the *SourceThread* returns a Buffer to the runtime via the *EmitFunction*, if not, it returns an
 error using the *EmitFunction*.
 ```mermaid
 ---
@@ -153,7 +153,7 @@ title: Sources Implementation Overview
 ---
 classDiagram
     SourceHandle --> SourceThread : calls start/stop of SourceThread
-    SourceThread --> Source : calls fillTupleBuffer in running routine
+    SourceThread --> Source : calls fillBuffer in running routine
     Source ..> SourceFile : data ingestion implemented by 
     Source ..> SourceTCP : data ingestion implemented by
     SourceProvider --> SourceRegistry : provide SourceDescriptor
@@ -195,20 +195,20 @@ namespace SourceInternals {
     }
     %% Source is the interface for the PluginRegistry for sources
     class Source {
-      + bool fillTupleBuffer(TupleBuffer)
+      + bool fillBuffer(Buffer)
       + void virtual open()
       + void virtual close()
     }
     
     class SourceFile {
-        + bool fillTupleBuffer(TupleBuffer)
+        + bool fillBuffer(Buffer)
         + void open()
         + void close()
         - std::string filePath
     }
     
     class SourceTCP {
-        + bool fillTupleBuffer(TupleBuffer)
+        + bool fillBuffer(Buffer)
         + void open()
         + void close()
         - string host
@@ -217,7 +217,7 @@ namespace SourceInternals {
 }
 ```
 ## G1
-Source implementations now only implement the logic to read data from a certain source, e.g. File, Kafka, or ZMQ, and write the raw bytes received from that source into a TupleBuffer (not a TestTupleBuffer!). This design follows the encapsulation principle of OOP. Additionally, since we write only the raw bytes into a buffer, there is no CSVSource anymore, or a JSONSourceFile, or a ParquetSource. There is only a SourceFile that reads data from a file. CSV, JSON and Parquet are formats, therefore they are handled by a formatter/parser.
+Source implementations now only implement the logic to read data from a certain source, e.g. File, Kafka, or ZMQ, and write the raw bytes received from that source into a Buffer (not a TestBuffer!). This design follows the encapsulation principle of OOP. Additionally, since we write only the raw bytes into a buffer, there is no CSVSource anymore, or a JSONSourceFile, or a ParquetSource. There is only a SourceFile that reads data from a file. CSV, JSON and Parquet are formats, therefore they are handled by a formatter/parser.
 
 We plan to reduce the supported sources to only the File, ZMQ and the TCP source. We will add the other sources back as soon as the design is fleshed out.
 ## G2

@@ -20,7 +20,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -36,14 +36,14 @@ AggregationSlice::AggregationSlice(
 {
 }
 
-const TupleBuffer* AggregationSlice::getHashMapBufferRefForWorker(const WorkerThreadId workerThreadId) const
+const Buffer* AggregationSlice::getHashMapBufferRefForWorker(const WorkerThreadId workerThreadId) const
 {
     const auto hashMapIndex = workerThreadId % getNumberOfHashMaps();
     INVARIANT(hashMapIndex < getNumberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
     return getHashMapBufferRef(ChildBufferIndex{static_cast<uint32_t>(hashMapIndex)});
 }
 
-const TupleBuffer*
+const Buffer*
 AggregationSlice::getOrCreateHashMapBufferRefForWorker(AbstractBufferProvider& bufferProvider, const WorkerThreadId workerThreadId)
 {
     const auto hashMapIndex = workerThreadId % getNumberOfHashMaps();

@@ -25,7 +25,7 @@
 #include <folly/Synchronized.h>
 
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
@@ -33,7 +33,7 @@
 
 namespace NES
 {
-/// A sink that writes formatted TupleBuffers to arbitrary files.
+/// A sink that writes formatted Buffers to arbitrary files.
 class FileSink final : public Sink
 {
 public:
@@ -47,7 +47,7 @@ public:
     FileSink& operator=(FileSink&&) = delete;
 
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);

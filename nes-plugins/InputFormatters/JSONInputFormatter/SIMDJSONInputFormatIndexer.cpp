@@ -25,8 +25,8 @@
 #include <fmt/format.h>
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatterValidationRegistry.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SIMDJSONRawBufferIndex.hpp>
 
 namespace NES

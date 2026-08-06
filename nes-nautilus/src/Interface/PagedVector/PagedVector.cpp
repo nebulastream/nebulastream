@@ -26,20 +26,20 @@
 #include <vector>
 
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/MemoryUtils.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void PagedVector::Page::init(TupleBuffer buffer)
+void PagedVector::Page::init(Buffer buffer)
 {
     new (buffer.getAvailableMemoryArea<Header>().data()) Header(0);
 }
 
-PagedVector::Page PagedVector::Page::load(TupleBuffer buffer)
+PagedVector::Page PagedVector::Page::load(Buffer buffer)
 {
     return Page(std::move(buffer));
 }
@@ -61,15 +61,20 @@ void PagedVector::Page::setCumulativeSum(size_t newCumulativeSum)
 
 uint64_t PagedVector::Page::getNumberOfTuples() const
 {
-    return buffer.getNumberOfTuples();
+    return header().numberOfTuples;
 }
 
-void PagedVector::init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize)
+void PagedVector::Page::setNumberOfTuples(const uint64_t newNumberOfTuples)
+{
+    header().numberOfTuples = newNumberOfTuples;
+}
+
+void PagedVector::init(Buffer buffer, uint64_t pageBufferSize, uint64_t tupleSize)
 {
     new (buffer.getAvailableMemoryArea<Header>().data()) Header(0, pageBufferSize, tupleSize);
 }
 
-PagedVector PagedVector::load(const TupleBuffer& buffer)
+PagedVector PagedVector::load(const Buffer& buffer)
 {
     PagedVector pagedVector(buffer);
     return pagedVector;
@@ -162,7 +167,7 @@ void PagedVector::addNewPage(AbstractBufferProvider* bufferProvider, const uint6
     }
     else
     {
-        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        throw BufferAllocationFailure("No unpooled Buffer available!");
     }
 }
 
@@ -174,8 +179,8 @@ void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider)
     if (numPages > 0)
     {
         const ChildBufferIndex lastPageIndex{static_cast<uint32_t>(numPages - 1)};
-        auto lastPage = buffer.loadChildBuffer(lastPageIndex);
-        if (lastPage.getNumberOfTuples() < getPageCapacity())
+        auto lastPageBuffer = buffer.loadChildBuffer(lastPageIndex);
+        if (Page::load(lastPageBuffer).getNumberOfTuples() < getPageCapacity())
         {
             return;
         }

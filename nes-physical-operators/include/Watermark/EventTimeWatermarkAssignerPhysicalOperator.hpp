@@ -14,6 +14,7 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <Interface/TaskBufferRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -27,9 +28,9 @@ class EventTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcep
 {
 public:
     explicit EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction);
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

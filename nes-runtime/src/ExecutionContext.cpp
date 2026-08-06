@@ -24,10 +24,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
@@ -71,14 +71,14 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
+nautilus::val<Buffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(
         +[](PipelineExecutionContext* pec)
         {
             PRECONDITION(pec, "pipeline execution context should not be null");
-            auto newTupleBuffer = pec->allocateTupleBuffer();
-            return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
+            auto newBuffer = pec->allocateBuffer();
+            return std::addressof(pec->pinBuffer(std::move(newBuffer)));
         },
         pipelineContext);
     return bufferPtr;
@@ -89,7 +89,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+static void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Buffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 
@@ -100,9 +100,9 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
     pipelineCtx->emitBuffer(*tb);
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
+void ExecutionContext::emitBuffer(const TaskBufferRef& buffer) const
 {
-    nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
+    nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getBuffer().asArg());
 }
 
 void ExecutionContext::setOpenReturnState(const OpenReturnState openReturnState)

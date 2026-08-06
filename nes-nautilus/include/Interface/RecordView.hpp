@@ -17,33 +17,34 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <val.hpp>
+#include <val_arith.hpp>
+#include <val_base.hpp>
 
 namespace NES
 {
 
-/// Interprets a RecordBuffer's bytes as Records through a memory layout, hiding layout and buffer ownership from operators.
+/// Interprets a TaskBufferRef's bytes as Records through a memory layout, hiding layout and buffer ownership from operators.
 class RecordView
 {
 public:
-    RecordView(RecordBuffer buffer, std::shared_ptr<TupleBufferRef> layout);
+    RecordView(const TaskBufferRef& buffer, std::shared_ptr<MemoryLayout> layout);
 
     [[nodiscard]] Record
     readRecord(const std::vector<Record::RecordFieldIdentifier>& projections, nautilus::val<uint64_t>& recordIndex) const;
 
-    TupleBufferRef::WriteRecordResult writeRecord(
-        nautilus::val<uint64_t>& recordIndex, const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+    MemoryLayout::WriteRecordResult
+    writeRecord(nautilus::val<uint64_t>& recordIndex, const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
 
-    RecordBuffer& getBuffer();
-    [[nodiscard]] const RecordBuffer& getBuffer() const;
+    TaskBufferRef& getBuffer();
+    [[nodiscard]] const TaskBufferRef& getBuffer() const;
 
 private:
-    RecordBuffer recordBuffer;
-    std::shared_ptr<TupleBufferRef> layout;
+    TaskBufferRef recordBuffer;
+    std::shared_ptr<MemoryLayout> layout;
 };
 
 }

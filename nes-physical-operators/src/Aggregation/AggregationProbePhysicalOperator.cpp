@@ -26,11 +26,11 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,7 +46,7 @@
 namespace NES
 {
 
-void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -58,7 +58,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     openChild(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
-    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
+    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer().data());
     const auto numberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
     const auto windowInfoRef = getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
@@ -68,7 +68,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// create final hash map and pin it
     OwnedNautilusBuffer finalHashMapNautilusBuffer;
     nautilus::invoke(
-        +[](const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
+        +[](const Buffer* parent, AbstractBufferProvider* bufferProvider, Buffer* finalHashMapBuffer)
         {
             INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
             /// load the first hash map
@@ -77,16 +77,16 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             const auto chm = ChainedHashMap::load(buffer);
             /// get a buffer and for the final hash map with the same config
             auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains());
-            std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
-            if (not finalHashMapTupleBuffer.has_value())
+            std::optional<Buffer> allocatedFinalHashMapBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
+            if (not allocatedFinalHashMapBuffer.has_value())
             {
                 throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
             }
             /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = finalHashMapTupleBuffer.value();
+            *finalHashMapBuffer = allocatedFinalHashMapBuffer.value();
             ChainedHashMap::init(*finalHashMapBuffer, chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
         },
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
         finalHashMapNautilusBuffer.asArg());
     /// get the reference to the final hash map buffer
@@ -105,13 +105,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         /// Use NautilusBuffer to persist the chained hash map buffer
         OwnedNautilusBuffer hashMapNautilusBuffer;
         nautilus::invoke(
-            +[](TupleBuffer* parent, uint32_t curHashMapIdx, TupleBuffer* hashMapBuffer)
+            +[](Buffer* parent, uint32_t curHashMapIdx, Buffer* hashMapBuffer)
             {
                 INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
                 const ChildBufferIndex bufferIndex{curHashMapIdx};
                 *hashMapBuffer = parent->loadChildBuffer(bufferIndex);
             },
-            recordBuffer.getReference(),
+            recordBuffer.getBuffer().asArg(),
             curHashMapIdx,
             hashMapNautilusBuffer.asArg());
         auto hashMapBufferRef = hashMapNautilusBuffer.asArg();
