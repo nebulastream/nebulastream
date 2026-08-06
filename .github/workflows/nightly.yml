@@ -93,7 +93,7 @@ jobs:
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-      matrix_config: nightly_matrix.yaml
+      matrix_profile: nightly
 
   slt-corpus:
     name: "Run Nightly SLT Corpus"
