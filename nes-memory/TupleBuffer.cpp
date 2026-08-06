@@ -191,6 +191,11 @@ TupleBuffer TupleBuffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noe
     return childBuffer;
 }
 
+void TupleBuffer::clearChildBuffers() noexcept
+{
+    controlBlock->clearChildBuffers();
+}
+
 bool recycleTupleBuffer(void* bufferPointer)
 {
     PRECONDITION(bufferPointer, "invalid bufferPointer");

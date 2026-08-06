@@ -100,6 +100,7 @@ public:
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] ChildBufferIndex storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(ChildBufferIndex index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    void clearChildBuffers();
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

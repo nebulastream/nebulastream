@@ -129,3 +129,27 @@ TEST(ChildBufferTests, StoreAndLoadChildBufferRandomSizes)
         EXPECT_EQ(loadedBuffer.getBufferSize(), bufferSizeBeforeStore);
     }
 }
+
+TEST(ChildBufferTests, ClearChildBuffers)
+{
+    auto bufferManager = NES::BufferManager::create(
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NES::NesDefaultMemoryAllocator>());
+    auto baseBuffer = bufferManager->getBufferBlocking();
+
+    for (uint32_t childIndex = 0; childIndex < 3; ++childIndex)
+    {
+        auto child = bufferManager->getBufferBlocking();
+        EXPECT_EQ(baseBuffer.storeChildBuffer(child).getRawValue(), childIndex);
+    }
+    ASSERT_EQ(baseBuffer.getNumberOfChildBuffers(), 3);
+
+    baseBuffer.clearChildBuffers();
+
+    EXPECT_EQ(baseBuffer.getNumberOfChildBuffers(), 0);
+    auto replacement = bufferManager->getBufferBlocking();
+    EXPECT_EQ(baseBuffer.storeChildBuffer(replacement).getRawValue(), 0);
+}

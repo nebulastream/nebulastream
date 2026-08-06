@@ -186,6 +186,9 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    /// @brief Releases and removes all child buffers attached to this TupleBuffer.
+    void clearChildBuffers() noexcept;
+
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!

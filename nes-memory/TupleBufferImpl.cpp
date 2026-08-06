@@ -191,11 +191,7 @@ bool BufferControlBlock::release()
     const uint32_t prevRefCnt = referenceCounter.fetch_sub(1);
     if (prevRefCnt == 1)
     {
-        for (auto&& child : children)
-        {
-            child->controlBlock->release();
-        }
-        children.clear();
+        clearChildBuffers();
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
@@ -319,5 +315,14 @@ bool BufferControlBlock::loadChildBuffer(const ChildBufferIndex index, BufferCon
     size = child->size;
 
     return true;
+}
+
+void BufferControlBlock::clearChildBuffers()
+{
+    for (auto&& child : children)
+    {
+        child->controlBlock->release();
+    }
+    children.clear();
 }
 }
