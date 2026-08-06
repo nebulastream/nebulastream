@@ -14,7 +14,6 @@
 
 #pragma once
 #include <memory>
-#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>

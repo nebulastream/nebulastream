@@ -104,7 +104,7 @@ void writeValue(
                 nautilus::val<bool>{quoteStrings},
                 varSizedValue.getContent(),
                 varSizedValue.getSize(),
-                recordBuffer.getReference(),
+                recordBuffer.getBuffer().asArg(),
                 bufferProvider);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
@@ -166,7 +166,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
                 writeValueToBuffer,
                 nautilus::val<const char*>{"NULL"},
                 currentRemainingSize,
-                recordBuffer.getReference(),
+                recordBuffer.getBuffer().asArg(),
                 bufferProvider,
                 fieldPointer + written);
             written += amountWritten;
@@ -190,7 +190,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
 
     /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
     written += nautilus::invoke(
-        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
+        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getBuffer().asArg(), bufferProvider, fieldPointer + written);
     return written;
 }
 

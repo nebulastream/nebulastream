@@ -47,7 +47,7 @@ public:
     FileSource(FileSource&&) = delete;
     FileSource& operator=(FileSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillBufferResult fillBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open file socket.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;

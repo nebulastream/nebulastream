@@ -103,7 +103,7 @@ void NLJProbePhysicalOperatorBase::performNLJ(
 }
 
 nautilus::val<const Buffer*> NLJProbePhysicalOperatorBase::getPagedVectorBufferRef(
-    const nautilus::val<OperatorHandler*>& operatorHandlerRef, const nautilus::val<SliceEnd>& sliceEnd, const JoinBuildSideType side) const
+    const nautilus::val<OperatorHandler*>& operatorHandlerRef, const nautilus::val<SliceEnd>& sliceEnd, const JoinBuildSideType side)
 {
     /// During triggering, all pages of all local copies are appended to a single PagedVector at worker-thread 0.
     const nautilus::val<WorkerThreadId> workerThreadIdForPages{WorkerThreadId(0)};
@@ -112,7 +112,7 @@ nautilus::val<const Buffer*> NLJProbePhysicalOperatorBase::getPagedVectorBufferR
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
+            return nljSlice->getPagedVectorMemoryLayout(workerThreadId, joinBuildSide);
         },
         sliceRef,
         workerThreadIdForPages,

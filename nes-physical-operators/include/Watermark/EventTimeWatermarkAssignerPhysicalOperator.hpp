@@ -14,6 +14,7 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <Interface/TaskBufferRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
 

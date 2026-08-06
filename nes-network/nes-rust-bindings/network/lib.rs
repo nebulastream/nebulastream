@@ -31,7 +31,7 @@ pub mod ffi {
         Full,
     }
 
-    struct SerializedTupleBufferHeader {
+    struct SerializedBufferHeader {
         sequence_number: u64,
         origin_id: u64,
         chunk_number: u64,
@@ -57,13 +57,13 @@ pub mod ffi {
 
     unsafe extern "C++" {
         include!("NetworkBindings.hpp");
-        type TupleBufferBuilder;
+        type BufferBuilder;
         #[allow(non_snake_case)]
-        fn setMetadata(self: Pin<&mut TupleBufferBuilder>, meta: &SerializedTupleBufferHeader);
+        fn setMetadata(self: Pin<&mut BufferBuilder>, meta: &SerializedBufferHeader);
         #[allow(non_snake_case)]
-        fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn setData(self: Pin<&mut BufferBuilder>, data: &[u8]);
         #[allow(non_snake_case)]
-        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn addChildBuffer(self: Pin<&mut BufferBuilder>, data: &[u8]);
         #[allow(non_snake_case)]
         fn identifyThread(thread_name: &str, worker_id: &str);
     }
@@ -95,7 +95,7 @@ pub mod ffi {
         ) -> Result<Box<ReceiverDataChannel>>;
         fn receive_buffer(
             receiver_channel: &ReceiverDataChannel,
-            builder: Pin<&mut TupleBufferBuilder>,
+            builder: Pin<&mut BufferBuilder>,
         ) -> Result<bool>;
         fn interrupt_receive(receiver_channel: &ReceiverDataChannel);
 
@@ -112,7 +112,7 @@ pub mod ffi {
         fn flush_sender_channel(channel: &SenderDataChannel) -> bool;
         fn send_buffer(
             channel: &SenderDataChannel,
-            metadata: SerializedTupleBufferHeader,
+            metadata: SerializedBufferHeader,
             data: &[u8],
             children: &[&[u8]],
         ) -> SendResult;
@@ -368,7 +368,7 @@ fn register_receiver_channel(
 /// - `Err(_)`: An error occurred while receiving the buffer
 fn receive_buffer(
     receiver_channel: &ReceiverDataChannel,
-    mut buffer_builder: Pin<&mut ffi::TupleBufferBuilder>,
+    mut buffer_builder: Pin<&mut ffi::BufferBuilder>,
 ) -> Result<bool, Box<dyn Error>> {
     let buffer = match receiver_channel.chan.receive() {
         ReceiverChannelResult::Ok(buffer) => buffer,
@@ -382,7 +382,7 @@ fn receive_buffer(
 
     buffer_builder
         .as_mut()
-        .setMetadata(&ffi::SerializedTupleBufferHeader {
+        .setMetadata(&ffi::SerializedBufferHeader {
             sequence_number: buffer.sequence_number as u64,
             origin_id: buffer.origin_id as u64,
             watermark: buffer.watermark as u64,
@@ -458,7 +458,7 @@ fn register_sender_channel(
 
 fn send_buffer(
     channel: &SenderDataChannel,
-    metadata: ffi::SerializedTupleBufferHeader,
+    metadata: ffi::SerializedBufferHeader,
     data: &[u8],
     children: &[&[u8]],
 ) -> ffi::SendResult {

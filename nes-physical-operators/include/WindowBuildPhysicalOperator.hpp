@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>

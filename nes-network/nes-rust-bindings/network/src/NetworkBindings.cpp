@@ -42,7 +42,7 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
     init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
 }
 
-void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
+void BufferBuilder::setMetadata(const SerializedBufferHeader& metaData)
 {
     buffer.setSequenceNumber(NES::SequenceNumber(metaData.sequence_number));
     buffer.setChunkNumber(NES::ChunkNumber(metaData.chunk_number));
@@ -52,7 +52,7 @@ void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData
     buffer.setNumberOfTuples(metaData.number_of_tuples);
 }
 
-void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)
+void BufferBuilder::setData(rust::Slice<const uint8_t> data)
 {
     INVARIANT(
         buffer.getBufferSize() >= data.length(),
@@ -63,7 +63,7 @@ void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)
     std::ranges::copy(data, buffer.getAvailableMemoryArea<uint8_t>().begin());
 }
 
-void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
+void BufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
 {
     auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
     if (!childBuffer)

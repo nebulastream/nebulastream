@@ -142,7 +142,7 @@ inline std::string readVarSizedDataAsString(const Buffer& tupleBuffer, VariableS
     return std::string{strPtrContent, variableSizedAccess.getSize().getRawSize()};
 }
 
-inline void writePagedSizeTupleBufferChunkToFile(
+inline void writePagedSizeBufferChunkToFile(
     std::span<Buffer> pagedSizeBufferChunk,
     const SequenceNumber::Underlying sequenceNumber,
     const size_t numTuplesInChunk,
@@ -180,13 +180,13 @@ inline void writePagedSizeTupleBufferChunkToFile(
     }
 }
 
-struct TupleBufferChunk
+struct BufferChunk
 {
     size_t lastBufferInChunkIdx;
     size_t numTuplesInChunk = 0;
 };
 
-inline void sortTupleBuffers(std::vector<Buffer>& buffers)
+inline void sortBuffers(std::vector<Buffer>& buffers)
 {
     std::ranges::sort(
         buffers.begin(),
@@ -198,21 +198,20 @@ inline void sortTupleBuffers(std::vector<Buffer>& buffers)
         });
 }
 
-inline void writeTupleBuffersToFile(
+inline void writeBuffersToFile(
     std::vector<Buffer>& resultBufferVec,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& actualResultFilePath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
-    sortTupleBuffers(resultBufferVec);
+    sortBuffers(resultBufferVec);
     const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
 
-    const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
-        = [](const std::vector<Buffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
+    const std::vector<BufferChunk> pagedSizedChunkOffsets = [](const std::vector<Buffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
     {
         size_t numBytesInNextChunk = 0;
         size_t numTuplesInNextChunk = 0;
-        std::vector<TupleBufferChunk> offsets;
+        std::vector<BufferChunk> offsets;
         for (const auto& [bufferIdx, buffer] : resultBufferVec | NES::views::enumerate)
         {
             if (const auto sizeOfCurrentBufferInBytes = buffer.getNumberOfTuples() * sizeOfSchemaInBytes;
@@ -240,7 +239,7 @@ inline void writeTupleBuffersToFile(
     for (const auto& [lastBufferIdxInChunk, numTuplesInChunk] : pagedSizedChunkOffsets)
     {
         const auto nextChunk = std::span(resultBufferVec).subspan(nextChunkStart, lastBufferIdxInChunk - nextChunkStart);
-        writePagedSizeTupleBufferChunkToFile(
+        writePagedSizeBufferChunkToFile(
             nextChunk, nextChunkSequenceNumber, numTuplesInChunk, appendFile, sizeOfSchemaInBytes, varSizedFieldOffsets);
         nextChunkStart = lastBufferIdxInChunk;
         ++nextChunkSequenceNumber;
@@ -263,7 +262,7 @@ inline void updateChildBufferIdx(
     std::ranges::copy(combinedIndexOffsetBytes, parentBuffer.getAvailableMemoryArea().begin() + varSizedOffset);
 }
 
-inline std::vector<Buffer> loadTupleBuffersFromFile(
+inline std::vector<Buffer> loadBuffersFromFile(
     AbstractBufferProvider& bufferProvider,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& filepath,

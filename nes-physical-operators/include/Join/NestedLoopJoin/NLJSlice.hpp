@@ -60,7 +60,7 @@ public:
     /// Returns the pointer to the PagedVector on either side.
     [[nodiscard]] const Buffer* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
     [[nodiscard]] const Buffer* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] const Buffer* getPagedVectorTupleBufferRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] const Buffer* getPagedVectorMemoryLayout(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();

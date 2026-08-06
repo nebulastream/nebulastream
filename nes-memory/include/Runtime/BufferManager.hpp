@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -26,6 +27,7 @@
 #include <vector>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
 #include <folly/MPMCQueue.h>

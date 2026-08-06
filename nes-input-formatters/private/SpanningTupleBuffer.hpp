@@ -24,9 +24,8 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <SequenceShredder.hpp>
 #include <SpanningTupleBufferState.hpp>
 

@@ -149,7 +149,7 @@ void NES::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
     fail_during_close = true;
 }
 
-NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
+NES::Source::FillBufferResult NES::TestSource::fillBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
@@ -161,7 +161,7 @@ NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::Buffer&
     if (stopToken.stop_requested())
     {
         NES_DEBUG("Test Source {} was requested to shutdown", this->sourceId);
-        return FillTupleBufferResult::eos();
+        return FillBufferResult::eos();
     }
 
     auto data = std::visit(
@@ -185,12 +185,12 @@ NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::Buffer&
 
     if (!data)
     {
-        return FillTupleBufferResult::eos();
+        return FillBufferResult::eos();
     }
     INVARIANT(data->data.size() <= tupleBuffer.getBufferSize(), "Test source attempted to send a buffer which is to big");
     tupleBuffer.setNumberOfTuples(data->numberOfTuples);
     std::ranges::copy(data->data, tupleBuffer.getAvailableMemoryArea().data());
-    return FillTupleBufferResult::withBytes(data->data.size());
+    return FillBufferResult::withBytes(data->data.size());
 }
 
 void NES::TestSource::open(std::shared_ptr<AbstractBufferProvider>)

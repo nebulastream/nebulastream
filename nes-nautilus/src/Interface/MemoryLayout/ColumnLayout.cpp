@@ -57,7 +57,7 @@ Record ColumnLayout::readRecord(
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
-    const auto bufferAddress = recordBuffer.getMemArea();
+    const auto bufferAddress = recordBuffer.getBuffer().data();
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
@@ -83,7 +83,7 @@ MemoryLayout::WriteRecordResult ColumnLayout::writeRecord(
     /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto bufferAddress = recordBuffer.getBuffer().data();
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
             const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);

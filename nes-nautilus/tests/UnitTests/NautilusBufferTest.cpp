@@ -146,13 +146,6 @@ nautilus::val<size_t> consume(const NautilusBufferType& buffer)
     return nautilus::invoke(+[](const Buffer* tupleBuffer) { return tupleBuffer->getNumberOfTuples(); }, buffer.asArg());
 }
 
-/// A BorrowedNautilusBuffer reads through to the on-stack Buffer it does not own.
-TEST_P(NautilusBufferTest, BorrowedBufferReadsThroughToTupleBuffer)
-{
-    runInNautilus([](nautilus::val<Buffer*> onStackBuffer, nautilus::val<AbstractBufferProvider*>)
-                  { expectRecordCount(BorrowedNautilusBuffer::from(onStackBuffer).getNumberOfRecords(), ON_STACK_RECORD_COUNT); });
-}
-
 /// The intended construction of an OwnedNautilusBuffer: empty-init on the stack, then assign the buffer inside a nautilus::invoke.
 TEST_P(NautilusBufferTest, OwnedBufferEmptyInitThenAssignInInvoke)
 {
@@ -177,7 +170,7 @@ TEST_P(NautilusBufferTest, OwnedBufferMoveConstruction)
         {
             auto owned = allocateOwned(provider, 7);
             const OwnedNautilusBuffer movedInto = std::move(owned);
-            expectRecordCount(movedInto.getNumberOfRecords(), 7);
+            expectRecordCount(consume(movedInto), 7);
         });
 }
 
@@ -189,7 +182,7 @@ TEST_P(NautilusBufferTest, OwnedBufferCopyConstruction)
         {
             const auto owned = allocateOwned(provider, 7);
             const OwnedNautilusBuffer copied = owned;
-            expectRecordCount(copied.getNumberOfRecords(), 7);
+            expectRecordCount(consume(copied), 7);
         });
 }
 
@@ -212,7 +205,7 @@ TEST_P(NautilusBufferTest, NautilusBufferFromBorrowed)
         [](nautilus::val<Buffer*> onStackBuffer, nautilus::val<AbstractBufferProvider*>)
         {
             const NautilusBuffer fromBorrowed{BorrowedNautilusBuffer::from(onStackBuffer)};
-            expectRecordCount(fromBorrowed.getNumberOfRecords(), ON_STACK_RECORD_COUNT);
+            expectRecordCount(consume(fromBorrowed), ON_STACK_RECORD_COUNT);
             EXPECT_FALSE(fromBorrowed.isOwned());
         });
 }
@@ -224,7 +217,7 @@ TEST_P(NautilusBufferTest, NautilusBufferFromOwned)
         [](nautilus::val<Buffer*>, nautilus::val<AbstractBufferProvider*> provider)
         {
             const NautilusBuffer fromOwned{allocateOwned(provider, 5)};
-            expectRecordCount(fromOwned.getNumberOfRecords(), 5);
+            expectRecordCount(consume(fromOwned), 5);
             EXPECT_TRUE(fromOwned.isOwned());
         });
 }
@@ -257,7 +250,7 @@ TEST_P(NautilusBufferTest, CopyFromBorrowed)
         [](nautilus::val<Buffer*> onStackBuffer, nautilus::val<AbstractBufferProvider*>)
         {
             const auto owned = OwnedNautilusBuffer::copy(NautilusBuffer{BorrowedNautilusBuffer::from(onStackBuffer)});
-            expectRecordCount(owned.getNumberOfRecords(), ON_STACK_RECORD_COUNT);
+            expectRecordCount(consume(owned), ON_STACK_RECORD_COUNT);
         });
 }
 
@@ -268,7 +261,7 @@ TEST_P(NautilusBufferTest, CopyFromOwned)
         [](nautilus::val<Buffer*>, nautilus::val<AbstractBufferProvider*> provider)
         {
             const auto owned = OwnedNautilusBuffer::copy(NautilusBuffer{allocateOwned(provider, 5)});
-            expectRecordCount(owned.getNumberOfRecords(), 5);
+            expectRecordCount(consume(owned), 5);
         });
 }
 

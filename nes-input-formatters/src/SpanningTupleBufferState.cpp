@@ -23,7 +23,7 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 
 namespace NES
 {
@@ -76,8 +76,8 @@ bool SpanningTupleBufferEntry::isCurrentEntryUsedUp(const ABAItNo abaItNumber) c
 
 void SpanningTupleBufferEntry::setBuffersAndOffsets(const StagedBuffer& indexedBuffer)
 {
-    this->leadingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
-    this->trailingBufferRef = indexedBuffer.getRawTupleBuffer().getRawBuffer();
+    this->leadingBufferRef = indexedBuffer.getRawBuffer().getRawBuffer();
+    this->trailingBufferRef = indexedBuffer.getRawBuffer().getRawBuffer();
     this->firstDelimiterOffset = indexedBuffer.getOffsetOfLastTuple();
     this->lastDelimiterOffset = indexedBuffer.getByteOffsetOfLastTuple();
 }
@@ -115,8 +115,7 @@ std::optional<StagedBuffer> SpanningTupleBufferEntry::tryClaimSpanningTuple(cons
             this->atomicState.setUsedTrailingBuffer();
             return {StagedBuffer{}};
         }
-        const auto stagedBuffer
-            = StagedBuffer(RawTupleBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        const auto stagedBuffer = StagedBuffer(RawBuffer{std::move(this->trailingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
         this->atomicState.setUsedTrailingBuffer();
         return {stagedBuffer};
     }
@@ -139,7 +138,7 @@ void SpanningTupleBufferEntry::claimNoDelimiterBuffer(std::span<StagedBuffer> sp
 
     /// First claim buffer uses
     spanningTupleVector[spanningTupleIdx]
-        = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        = StagedBuffer(RawBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
     this->trailingBufferRef = NES::Buffer{};
 
     /// Then atomically mark buffer as used
@@ -150,7 +149,7 @@ void SpanningTupleBufferEntry::claimLeadingBuffer(std::span<StagedBuffer> spanni
 {
     INVARIANT(this->leadingBufferRef.getReferenceCounter() != 0, "Tried to claim a leading buffer with a nullptr");
     spanningTupleVector[spanningTupleIdx]
-        = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
+        = StagedBuffer(RawBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
     this->atomicState.setUsedLeadingBuffer();
 }
 

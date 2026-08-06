@@ -35,7 +35,7 @@ namespace NES
 
 
 /// This class takes care of reading and writing data from/to a Buffer.
-/// A MemoryLayout is closely coupled with a memory layout, and we support row and column layouts, currently.
+/// We support row and column layouts, currently.
 /// We store multiple variable sized datas in one pooled buffer. If the pooled buffer is not large enough or there are no pooled buffer
 /// available, we fall back to an unpooled buffer.
 class MemoryLayout
@@ -77,7 +77,7 @@ public:
     };
 
     /// Writes a record from the given bufferAddress and recordIndex.
-    /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
+    /// @param recordBuffer: provides the buffer's memory segment via recordBuffer.getBuffer().data()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
     virtual WriteRecordResult writeRecord(

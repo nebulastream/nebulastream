@@ -100,14 +100,14 @@ public:
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const MemoryLayout& tupleBufferRef)
+    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const MemoryLayout& layout)
     {
         return std::make_unique<CSVInputFormatIndexer>(
             Private{},
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
             config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS),
-            tupleBufferRef.getAllDataTypes().size());
+            layout.getAllDataTypes().size());
     }
 
     ~CSVInputFormatIndexer() override = default;

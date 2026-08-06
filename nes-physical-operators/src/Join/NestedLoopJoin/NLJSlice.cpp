@@ -107,7 +107,7 @@ const Buffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThread
     return &rightPagedVectorBuffers[pos];
 }
 
-const Buffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+const Buffer* NLJSlice::getPagedVectorMemoryLayout(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {

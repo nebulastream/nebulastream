@@ -39,8 +39,8 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SIMDJSONParsingUtil.hpp>
 #include <function.hpp>
 #include <static.hpp>

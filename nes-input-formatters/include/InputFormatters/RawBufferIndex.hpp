@@ -20,7 +20,7 @@
 
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>

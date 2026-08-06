@@ -56,7 +56,7 @@ Buffer& TestPipelineExecutionContext::pinBuffer(Buffer&& tupleBuffer)
     return *pinnedBuffers.back();
 }
 
-Buffer TestPipelineExecutionContext::allocateTupleBuffer()
+Buffer TestPipelineExecutionContext::allocateBuffer()
 {
     if (auto buffer = bufferManager->getBufferNoBlocking())
     {

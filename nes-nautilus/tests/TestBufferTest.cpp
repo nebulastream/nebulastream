@@ -30,7 +30,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <TestTupleBuffer.hpp>
+#include <TestBuffer.hpp>
 
 namespace NES
 {
@@ -43,16 +43,16 @@ constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 }
 
-class TestTupleBufferTest : public Testing::BaseUnitTest
+class TestBufferTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("TestTupleBufferTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TestTupleBufferTest class.");
+        Logger::setupLogging("TestBufferTest.log", LogLevel::LOG_DEBUG);
+        NES_INFO("Setup TestBufferTest class.");
     }
 
-    static void TearDownTestSuite() { NES_INFO("Tear down TestTupleBufferTest class."); }
+    static void TearDownTestSuite() { NES_INFO("Tear down TestBufferTest class."); }
 
     void SetUp() override
     {
@@ -70,10 +70,10 @@ public:
 
 /// NOLINTBEGIN(readability-magic-numbers)
 
-TEST_F(TestTupleBufferTest, AppendAndReadSingleField)
+TEST_F(TestBufferTest, AppendAndReadSingleField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -84,12 +84,12 @@ TEST_F(TestTupleBufferTest, AppendAndReadSingleField)
     EXPECT_EQ(view[0]["value"].as<int64_t>(), 42);
 }
 
-TEST_F(TestTupleBufferTest, AppendAndReadMultipleFields)
+TEST_F(TestBufferTest, AppendAndReadMultipleFields)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("b"), DataType::Type::UINT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -101,10 +101,10 @@ TEST_F(TestTupleBufferTest, AppendAndReadMultipleFields)
     EXPECT_EQ(view[0]["b"].as<uint32_t>(), 200);
 }
 
-TEST_F(TestTupleBufferTest, AppendMultipleRecords)
+TEST_F(TestBufferTest, AppendMultipleRecords)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -119,10 +119,10 @@ TEST_F(TestTupleBufferTest, AppendMultipleRecords)
     EXPECT_EQ(view[2]["x"].as<int32_t>(), 30);
 }
 
-TEST_F(TestTupleBufferTest, IndexedWriteAndRead)
+TEST_F(TestBufferTest, IndexedWriteAndRead)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("val"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -136,10 +136,10 @@ TEST_F(TestTupleBufferTest, IndexedWriteAndRead)
     EXPECT_EQ(view[0]["val"].as<int64_t>(), 999);
 }
 
-TEST_F(TestTupleBufferTest, OutOfBoundsThrows)
+TEST_F(TestBufferTest, OutOfBoundsThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("f"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -151,10 +151,10 @@ TEST_F(TestTupleBufferTest, OutOfBoundsThrows)
     EXPECT_ANY_THROW(view[5]);
 }
 
-TEST_F(TestTupleBufferTest, UnknownFieldThrows)
+TEST_F(TestBufferTest, UnknownFieldThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("exists"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -164,10 +164,10 @@ TEST_F(TestTupleBufferTest, UnknownFieldThrows)
     EXPECT_ANY_THROW(view[0]["nonexistent"]);
 }
 
-TEST_F(TestTupleBufferTest, TypeMismatchThrows)
+TEST_F(TestBufferTest, TypeMismatchThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("i64"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -178,10 +178,10 @@ TEST_F(TestTupleBufferTest, TypeMismatchThrows)
     EXPECT_ANY_THROW(view[0]["i64"] = Testing::FieldValue(int32_t{42}));
 }
 
-TEST_F(TestTupleBufferTest, DanglingFieldViewThrows)
+TEST_F(TestBufferTest, DanglingFieldViewThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("f"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     Testing::FieldView captured;
     {
@@ -195,10 +195,10 @@ TEST_F(TestTupleBufferTest, DanglingFieldViewThrows)
     EXPECT_ANY_THROW(captured.as<int32_t>());
 }
 
-TEST_F(TestTupleBufferTest, StringField)
+TEST_F(TestBufferTest, StringField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("name"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -209,12 +209,12 @@ TEST_F(TestTupleBufferTest, StringField)
     EXPECT_EQ(view[0]["name"].as<std::string>(), "hello world");
 }
 
-TEST_F(TestTupleBufferTest, MixedFixedAndVarSizedFields)
+TEST_F(TestBufferTest, MixedFixedAndVarSizedFields)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("label"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -229,10 +229,10 @@ TEST_F(TestTupleBufferTest, MixedFixedAndVarSizedFields)
     EXPECT_EQ(view[1]["label"].as<std::string>(), "second");
 }
 
-TEST_F(TestTupleBufferTest, BooleanField)
+TEST_F(TestBufferTest, BooleanField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("flag"), DataType::Type::BOOLEAN}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -245,12 +245,12 @@ TEST_F(TestTupleBufferTest, BooleanField)
     EXPECT_EQ(view[1]["flag"].as<bool>(), false);
 }
 
-TEST_F(TestTupleBufferTest, FloatingPointFields)
+TEST_F(TestBufferTest, FloatingPointFields)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("f32"), DataType::Type::FLOAT32},
         UnqualifiedUnboundField{Identifier::parse("f64"), DataType::Type::FLOAT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -263,12 +263,12 @@ TEST_F(TestTupleBufferTest, FloatingPointFields)
 }
 
 /// Plain int literals are implicitly cast to the schema's field types.
-TEST_F(TestTupleBufferTest, AppendImplicitCastFromInt)
+TEST_F(TestBufferTest, AppendImplicitCastFromInt)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("b"), DataType::Type::UINT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -282,13 +282,13 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastFromInt)
 }
 
 /// Multiple records with implicit casts across different numeric types.
-TEST_F(TestTupleBufferTest, AppendImplicitCastMultipleRecords)
+TEST_F(TestBufferTest, AppendImplicitCastMultipleRecords)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("i8"), DataType::Type::INT8},
         UnqualifiedUnboundField{Identifier::parse("u64"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("f32"), DataType::Type::FLOAT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -307,12 +307,12 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastMultipleRecords)
 }
 
 /// String literals (const char[]) are implicitly converted to std::string for VARSIZED fields.
-TEST_F(TestTupleBufferTest, AppendImplicitCastStringLiteral)
+TEST_F(TestBufferTest, AppendImplicitCastStringLiteral)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::INT32},
         UnqualifiedUnboundField{Identifier::parse("name"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -326,10 +326,10 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastStringLiteral)
 }
 
 /// Assigning a string to a numeric field via append should throw.
-TEST_F(TestTupleBufferTest, AppendImplicitCastStringToNumericThrows)
+TEST_F(TestBufferTest, AppendImplicitCastStringToNumericThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -339,11 +339,11 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastStringToNumericThrows)
 
 /// Nullable fields: append accepts plain values, std::optional, and std::nullopt; reads
 /// require the std::optional<T> form and return nullopt for null values.
-TEST_F(TestTupleBufferTest, NullableFieldRoundTrip)
+TEST_F(TestBufferTest, NullableFieldRoundTrip)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("v"), DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -365,11 +365,11 @@ TEST_F(TestTupleBufferTest, NullableFieldRoundTrip)
 }
 
 /// Reading a nullable field with the non-optional form must fail.
-TEST_F(TestTupleBufferTest, NullableFieldReadWithoutOptionalThrows)
+TEST_F(TestBufferTest, NullableFieldReadWithoutOptionalThrows)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("v"), DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -379,10 +379,10 @@ TEST_F(TestTupleBufferTest, NullableFieldReadWithoutOptionalThrows)
 }
 
 /// Reading a non-nullable field with the optional form must fail.
-TEST_F(TestTupleBufferTest, NonNullableFieldReadWithOptionalThrows)
+TEST_F(TestBufferTest, NonNullableFieldReadWithOptionalThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -392,10 +392,10 @@ TEST_F(TestTupleBufferTest, NonNullableFieldReadWithOptionalThrows)
 }
 
 /// Writing null to a non-nullable field must fail (both via append and assignment).
-TEST_F(TestTupleBufferTest, NullWriteToNonNullableFieldThrows)
+TEST_F(TestBufferTest, NullWriteToNonNullableFieldThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -406,10 +406,10 @@ TEST_F(TestTupleBufferTest, NullWriteToNonNullableFieldThrows)
 }
 
 /// `as<T>` with the wrong underlying type must fail even on a non-nullable field.
-TEST_F(TestTupleBufferTest, GetWithWrongTypeThrows)
+TEST_F(TestBufferTest, GetWithWrongTypeThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -419,11 +419,11 @@ TEST_F(TestTupleBufferTest, GetWithWrongTypeThrows)
 }
 
 /// Nullable VARSIZED — null and non-null payloads round-trip correctly.
-TEST_F(TestTupleBufferTest, NullableVarsizedRoundTrip)
+TEST_F(TestBufferTest, NullableVarsizedRoundTrip)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("s"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    Testing::TestBuffer ttb(schema);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());

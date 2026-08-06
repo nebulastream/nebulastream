@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <TestTupleBuffer.hpp>
+#include <TestBuffer.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -34,6 +34,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -221,51 +222,51 @@ std::optional<FieldValue> varValToFieldValue(const VarVal& value, const DataType
 
 } /// anonymous namespace
 
-/// ---- TestTupleBuffer ----
+/// ---- TestBuffer ----
 
-TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
+TestBuffer::TestBuffer(TestSchema schema) : schema(std::move(schema))
 {
 }
 
-TestTupleBufferView TestTupleBuffer::open(Buffer& buffer, AbstractBufferProvider* bufferProvider)
+TestBufferView TestBuffer::open(Buffer& buffer, AbstractBufferProvider* bufferProvider)
 {
     auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
 
-    TestTupleBufferView view;
-    view.impl = std::make_shared<TestTupleBufferView::Impl>(
-        TestTupleBufferView::Impl{.schema = schema, .buffer = buffer, .bufferProvider = bufferProvider, .bufRef = std::move(bufRef)});
+    TestBufferView view;
+    view.impl = std::make_shared<TestBufferView::Impl>(
+        TestBufferView::Impl{.schema = schema, .buffer = buffer, .bufferProvider = bufferProvider, .bufRef = std::move(bufRef)});
     return view;
 }
 
-/// ---- TestTupleBufferView ----
+/// ---- TestBufferView ----
 
-TestTupleBufferRecordView TestTupleBufferView::operator[](const size_t index)
+TestBufferRecordView TestBufferView::operator[](const size_t index)
 {
     if (index >= impl->buffer.getNumberOfTuples())
     {
-        throw TestException("TestTupleBufferView: index {} out of bounds, buffer has {} tuples", index, impl->buffer.getNumberOfTuples());
+        throw TestException("TestBufferView: index {} out of bounds, buffer has {} tuples", index, impl->buffer.getNumberOfTuples());
     }
-    TestTupleBufferRecordView recordView;
+    TestBufferRecordView recordView;
     recordView.impl = impl;
     recordView.recordIndex = index;
     return recordView;
 }
 
-uint64_t TestTupleBufferView::getNumberOfTuples() const
+uint64_t TestBufferView::getNumberOfTuples() const
 {
     return impl->buffer.getNumberOfTuples();
 }
 
-void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> values)
+void TestBufferView::appendImpl(std::span<const std::optional<FieldValue>> values)
 {
     if (values.size() != impl->schema.size())
     {
-        throw TestException("TestTupleBufferView: expected {} fields, got {}", impl->schema.size(), values.size());
+        throw TestException("TestBufferView: expected {} fields, got {}", impl->schema.size(), values.size());
     }
 
     auto tupleIndex = nautilus::val<uint64_t>(impl->buffer.getNumberOfTuples());
     auto bufPtr = nautilus::val<Buffer*>(std::addressof(impl->buffer));
-    const TaskBufferRef recordBuffer(bufPtr);
+    const TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(impl->bufferProvider);
 
     Record record;
@@ -278,14 +279,14 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
     impl->buffer.setNumberOfTuples(impl->buffer.getNumberOfTuples() + 1);
 }
 
-/// ---- TestTupleBufferRecordView ----
+/// ---- TestBufferRecordView ----
 
-FieldView TestTupleBufferRecordView::operator[](const std::string& fieldName)
+FieldView TestBufferRecordView::operator[](const std::string& fieldName)
 {
     const auto field = impl->schema[static_cast<QualifiedIdentifierBase<1>>(Identifier::parse(fieldName))];
     if (!field.has_value())
     {
-        throw FieldNotFound("TestTupleBufferRecordView: field '{}' not found in schema", fieldName);
+        throw FieldNotFound("TestBufferRecordView: field '{}' not found in schema", fieldName);
     }
 
     FieldView fieldView;
@@ -312,7 +313,7 @@ FieldView& FieldView::operator=(const FieldValue& value)
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
-    const TaskBufferRef recordBuffer(bufPtr);
+    const TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -336,7 +337,7 @@ FieldView& FieldView::operator=(std::nullopt_t)
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
-    const TaskBufferRef recordBuffer(bufPtr);
+    const TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -356,7 +357,7 @@ std::optional<FieldValue> FieldView::readFieldValue() const
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
     auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
-    const TaskBufferRef recordBuffer(bufPtr);
+    const TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(bufPtr)};
 
     const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
     auto record = locked->bufRef->readRecord({fieldId}, recordBuffer, recordIdx);

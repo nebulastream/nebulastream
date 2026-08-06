@@ -36,6 +36,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/MemoryLayout/RowLayout.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -82,7 +83,7 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             return true;
         }
 
-        Buffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        Buffer allocateBuffer() override { return bufferManager->getBufferBlocking(); }
 
         Buffer& pinBuffer(Buffer&& tupleBuffer) override
         {
@@ -157,7 +158,7 @@ public:
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
 
-        TaskBufferRef recordBuffer(std::addressof(buffer));
+        TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(std::addressof(buffer))};
         test(executionContext, recordBuffer);
     }
 

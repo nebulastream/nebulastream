@@ -178,10 +178,10 @@ public:
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId id) noexcept;
 
-    ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
+    ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedBufferKey
     [[nodiscard]] ChildBufferIndex storeChildBuffer(Buffer& buffer) noexcept;
 
-    ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
+    ///@brief retrieve a child tuple buffer via its NestedBufferKey
     [[nodiscard]] Buffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
@@ -201,5 +201,5 @@ private:
  * @brief This method determines the control block based on the ptr to the data region and decrements the reference counter.
  * @param bufferPointer pointer to the data region of an buffer.
  */
-[[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
+[[maybe_unused]] bool recycleBuffer(void* bufferPointer);
 }

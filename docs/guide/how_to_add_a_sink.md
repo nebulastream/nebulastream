@@ -59,14 +59,14 @@ MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
 ```
 
 ## 4. Implementation
-Sinks are implemented as their own pipelines that are invoked with a reference to a `TupleBuffer` and are expected to write this buffer into the target system/device.
+Sinks are implemented as their own pipelines that are invoked with a reference to a `Buffer` and are expected to write this buffer into the target system/device.
 Their interface is as follows:
 ```c++
 /// Equivalent to `open` in sources
 void start(PipelineExecutionContext& pipelineExecutionContext) override;
 
-/// Equivalent to `fillTupleBuffer` in sources
-void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+/// Equivalent to `fillBuffer` in sources
+void execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 /// Equivalent to `close` in sources
 void stop(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -110,7 +110,7 @@ Operators can use them to emit result buffers into successor pipelines, which is
 Our MQTT sink's `execute` method could be implemented like this:
 ```c++
 
-void MQTTSink::execute(const TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+void MQTTSink::execute(const Buffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     /// (1) Early exit when empty
     if (inputBuffer.getNumberOfTuples() == 0)

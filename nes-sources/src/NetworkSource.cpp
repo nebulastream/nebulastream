@@ -61,24 +61,24 @@ void NetworkSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     NES_DEBUG("Receiver channel registered: {}", channelId);
 }
 
-Source::FillTupleBufferResult NetworkSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillBufferResult NetworkSource::fillBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     PRECONDITION(channel, "Network Source was opened multiple times");
     PRECONDITION(bufferProvider, "Network Source was opened without a buffer provider");
-    TupleBufferBuilder builder(tupleBuffer, *bufferProvider);
+    BufferBuilder builder(tupleBuffer, *bufferProvider);
 
     /// If the source is requested to shutdown the network channel is closed, which will interrupt the call to receive_buffer.
     const std::stop_callback callback(stopToken, [this] { interrupt_receive(**channel); });
 
     if (receive_buffer(**channel, builder))
     {
-        return FillTupleBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
+        return FillBufferResult::withBytes(tupleBuffer.getNumberOfTuples()); /// Received one buffer
     }
 
     /// Receive Buffer has failed, which means that the queue was closed.
     /// The SourceThread logic will figure out if the queue was closed by an external source (i.e. the other side of the network connection)
     /// or because of a stop_request.
-    return FillTupleBufferResult::eos(); /// End of Stream
+    return FillBufferResult::eos(); /// End of Stream
 }
 
 void NetworkSource::close()

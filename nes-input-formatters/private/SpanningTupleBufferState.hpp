@@ -22,7 +22,7 @@
 #include <ostream>
 #include <span>
 #include <Runtime/Buffer.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
 

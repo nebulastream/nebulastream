@@ -20,6 +20,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <utility>
@@ -91,9 +92,9 @@ SourceImplementationTermination dataSourceThreadRoutine(
         source.close();
     };
 
-    /// If a source fails during fillTupleBuffer we still want to call close. However This will be handled during stack unwinding.
+    /// If a source fails during fillBuffer we still want to call close. However This will be handled during stack unwinding.
     /// If the close method throws again the system would terminate, we have to resort to swalling and logging the exception.
-    /// The actual fillTupleBuffer failure is handled in the parent exception handler.
+    /// The actual fillBuffer failure is handled in the parent exception handler.
     SCOPE_FAIL
     {
         cpptrace::try_catch(
@@ -109,7 +110,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `StopRequested`
         /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
         ///    The thread exits with `EndOfStream`
-        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
+        /// 4. Failure. The fillBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
 
         std::optional<Buffer> emptyBuffer;
@@ -122,7 +123,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        const auto fillTupleResult = source.fillBuffer(*emptyBuffer, stopToken);
 
         if (!fillTupleResult.isEoS())
         {

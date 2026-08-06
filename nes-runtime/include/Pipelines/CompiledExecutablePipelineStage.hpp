@@ -23,6 +23,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
+#include <Arena.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -42,7 +43,7 @@ public:
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 protected:

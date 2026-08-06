@@ -48,7 +48,7 @@ public:
 
     virtual std::optional<Buffer> getBufferNoBlocking() = 0;
 
-    virtual std::optional<Buffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
+    virtual std::optional<Buffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) = 0;
 
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
     virtual std::optional<Buffer> getUnpooledBuffer(size_t bufferSize) = 0;

@@ -157,7 +157,7 @@ void writeVarVal(
     const VarVal& value,
     const nautilus::val<int8_t*>& fieldAddress,
     const DataType& type,
-    const nautilus::val<Buffer*>& hashMapTupleBuffer,
+    const nautilus::val<Buffer*>& hashMapBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     /// For now, we store the null byte before the actual VarVal
@@ -172,7 +172,7 @@ void writeVarVal(
     if (type.isType(DataType::Type::VARSIZED))
     {
         const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        storeVarSized(hashMapTupleBuffer, bufferProvider, memoryAddress, varSizedValue);
+        storeVarSized(hashMapBuffer, bufferProvider, memoryAddress, varSizedValue);
     }
     else
     {

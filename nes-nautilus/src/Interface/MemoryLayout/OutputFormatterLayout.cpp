@@ -64,7 +64,7 @@ MemoryLayout::WriteRecordResult OutputFormatterLayout::writeRecord(
     }
     else
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto bufferAddress = recordBuffer.getBuffer().data();
         const auto recordAddress = bufferAddress + bytesWritten;
 
         /// Iterate through the vals of the record and pass them to the output formatter for formatting

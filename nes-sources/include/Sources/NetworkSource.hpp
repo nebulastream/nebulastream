@@ -52,7 +52,7 @@ public:
     NetworkSource(NetworkSource&&) = delete;
     NetworkSource& operator=(NetworkSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillBufferResult fillBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<AbstractBufferProvider> provider) override;
     void close() override;
 
@@ -63,7 +63,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool fillBuffer(Buffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBufferFromSocket(Buffer& tupleBuffer, size_t& numReceivedBytes);
 
     std::string channelId;
     size_t receiverQueueSize;

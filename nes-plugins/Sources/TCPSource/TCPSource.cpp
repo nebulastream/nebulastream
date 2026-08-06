@@ -204,20 +204,20 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token&)
+Source::FillBufferResult TCPSource::fillBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
         size_t numReceivedBytes = 0;
-        while (fillBuffer(tupleBuffer, numReceivedBytes))
+        while (fillBufferFromSocket(tupleBuffer, numReceivedBytes))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
         if (numReceivedBytes == 0)
         {
-            return FillTupleBufferResult::eos();
+            return FillBufferResult::eos();
         }
-        return FillTupleBufferResult::withBytes(numReceivedBytes);
+        return FillBufferResult::withBytes(numReceivedBytes);
     }
     catch (const std::exception& e)
     {
@@ -226,7 +226,7 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(Buffer& tupleBuffer, co
     }
 }
 
-bool TCPSource::fillBuffer(Buffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBufferFromSocket(Buffer& tupleBuffer, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
