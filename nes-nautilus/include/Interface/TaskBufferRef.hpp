@@ -27,11 +27,11 @@ namespace NES
 {
 
 /// @brief Wraps a NautilusBuffer and provides access to it and its metadata
-class RecordBuffer
+class TaskBufferRef
 {
 public:
     /// Wraps a NautilusBuffer (owned or borrowed)
-    explicit RecordBuffer(NautilusBuffer buffer);
+    explicit TaskBufferRef(NautilusBuffer buffer);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
@@ -64,7 +64,7 @@ public:
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
-    ~RecordBuffer() = default;
+    ~TaskBufferRef() = default;
 
 private:
     NautilusBuffer buffer;

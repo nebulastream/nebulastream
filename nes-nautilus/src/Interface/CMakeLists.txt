@@ -17,7 +17,7 @@ add_subdirectory(PagedVector)
 
 add_source_files(nes-nautilus
         Record.cpp
-        RecordBuffer.cpp
+        TaskBufferRef.cpp
         RecordView.cpp
         NautilusBuffer.cpp
         VariableSizedAccess.cpp
