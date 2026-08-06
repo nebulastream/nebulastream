@@ -18,15 +18,17 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
-
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -36,13 +38,10 @@ namespace NES
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
-    std::vector<LogicalOperator> newRoots;
-    for (const auto& sink : queryPlan.getRootOperators())
-    {
-        const LogicalOperator inferredRoot = sink->withInferredSchema();
-        newRoots.push_back(inferredRoot);
-    }
-    return queryPlan.withRootOperators(newRoots);
+    PlanVisitor<> visitor{
+        [](const LogicalOperator& op, std::vector<LogicalOperator> children) -> PlanVisitor<>::UpResult
+        { return op.withChildren(std::move(children)); }};
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -17,8 +17,17 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <unordered_map>
+#include <variant>
+#include <vector>
+
+#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaFwd.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Rule.hpp>
+#include <Schema/Field.hpp>
 
 namespace NES
 {
@@ -37,6 +46,12 @@ public:
     [[nodiscard]] LogicalPlan apply(LogicalPlan plan) const;
     [[nodiscard]] std::set<std::type_index> needs() const;
     [[nodiscard]] std::set<std::type_index> neededBy() const;
+
+private:
+    using Visitor = PlanVisitor<std::monostate, std::monostate, Schema<Field, Ordered>>;
+
+    [[nodiscard]] static Visitor::UpResult calcTargetOrder(
+        LogicalOperator op, std::vector<LogicalOperator> children, std::unordered_map<LogicalOperator, Schema<Field, Ordered>> upContexts);
 };
 
 static_assert(RuleConcept<CalcTargetOrderRule, LogicalPlan>);

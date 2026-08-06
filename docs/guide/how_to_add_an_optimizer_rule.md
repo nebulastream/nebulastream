@@ -175,42 +175,50 @@ To assert that we correctly declared the rule, we assert that it follows the Rul
 Next, we define the actual behavior of the rule in `RedundantUnionRemovalRule.cpp`. 
 To keep the example readable, we'll only focus on individual snippets. 
 
+Traversing and rebuilding a `LogicalPlan` by hand is easy to get wrong for plans with multiple root
+operators (e.g. several sinks sharing part of a subplan), since a shared operator must then be visited and
+rebuilt exactly once, not once per parent. Rather than writing that traversal ourselves, we use the generic
+`PlanVisitor` utility (`Rules/PlanVisitor.hpp`), which walks the plan bottom-up (and, if needed, top-down first)
+and calls back into our rule for each operator.
+
 First, we define the `apply` method. 
-We first ensure that the given plan only has one root operator.
-Then we start a (yet-to-be-defined) recursive function call at that root operator, 
-replace that root operator with the updated one,
-and return the changed plan.
+We construct a `PlanVisitor<>` — using the default `OperatorContext`, `DownContext`, and `UpContext` of
+`std::monostate`, since this rule does not need to thread any information between operators — and hand it our
+bottom-up callback `redundantUnionRemoval`. `PlanVisitor` takes care of visiting every operator exactly once and
+rebuilding the plan for us, so we no longer need to assert that the plan has a single root or manage the
+recursion ourselves.
 
 ```cpp 
 LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
-    return queryPlan;
+    PlanVisitor<> visitor{redundantUnionRemoval};
+    return visitor.apply(std::move(queryPlan));
 }
 ```
 
-Next, we define what is happening in the recursion.
-The algorithm works bottom up. Thus, we first continue the recursion for all child operators of the current operator. 
-It will stop at Source operators because source operators are the only operators that do not have children. 
-Then, if the current operator is a UNION operator with only one child, we return that child operator, thereby removing the unnecessary UNION operator. 
+Next, we define what happens on the bottom-up pass.
+`PlanVisitor` calls `redundantUnionRemoval` once per operator, always after all of that operator's children have
+already been rebuilt, passing in the operator itself and its (already rebuilt) children.
+If the current operator is a UNION operator with only one child, we return that child operator, thereby removing
+the unnecessary UNION operator. 
 If the current operator is not a UNION operator or if it is but has more than one child, we leave it as is, 
-but update its children with the recursively updated child operators. 
-The whole function is defined within an anonymous namespace because there is no need to expose the function to other objects or classes 
-by defining it in the class definition.
+but rebuild it with the already-rebuilt children.
+Because this rule needs neither the top-down `OperatorContext` nor per-child `UpContext`, we use `PlanVisitor`'s
+reduced-arity `FunctionUpAlt3` signature — `(LogicalOperator op, std::vector<LogicalOperator> children) -> UpResult` —
+instead of the full `FunctionUp` signature; see `PlanVisitor.hpp` for the other available callback signatures.
+The whole function is defined within an anonymous namespace because there is no need to expose the function to
+other objects or classes by defining it in the class definition.
 
 ```cpp
 namespace
 {
-LogicalOperator recur(const LogicalOperator& op)
+PlanVisitor<>::UpResult redundantUnionRemoval(const LogicalOperator& op, std::vector<LogicalOperator> children)
 {
-    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
-
-    if (op.tryGetAs<UnionLogicalOperator>().has_value() && newChildren.size() == 1)
+    if (op.tryGetAs<UnionLogicalOperator>().has_value() && children.size() == 1)
     {
-        return newChildren.front();
+        return children.front();
     }
-    return op.withChildren(std::move(newChildren));
+    return op.withChildren(std::move(children));
 }
 }
 ```

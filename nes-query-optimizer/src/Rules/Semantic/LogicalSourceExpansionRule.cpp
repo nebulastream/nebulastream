@@ -29,6 +29,7 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
@@ -37,22 +38,18 @@
 namespace NES
 {
 
-namespace
+LogicalOperator
+LogicalSourceExpansionRule::expandLogicalSource(const LogicalOperator& visiting, std::vector<LogicalOperator> children) const
 {
-LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCatalog& sourceCatalog)
-{
-    auto children = visiting.getChildren()
-        | std::views::transform([&sourceCatalog](const auto& child) { return applyRecursive(child, sourceCatalog); })
-        | std::ranges::to<std::vector>();
     if (const auto sourceNameOperator = visiting.tryGetAs<SourceNameLogicalOperator>())
     {
-        const auto logicalSourceOpt = sourceCatalog.getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
+        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
             throw UnknownSourceName("{}", sourceNameOperator.value()->getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog.getPhysicalSources(logicalSource);
+        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
 
         if (not entriesOpt.has_value())
         {
@@ -78,12 +75,14 @@ LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCata
     }
     return visiting->withChildrenUnsafe(std::move(children));
 }
-}
 
 LogicalPlan LogicalSourceExpansionRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)});
+    PlanVisitor<> visitor{
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children) -> PlanVisitor<>::UpResult
+        { return this->expandLogicalSource(op, std::move(children)); }};
+
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
