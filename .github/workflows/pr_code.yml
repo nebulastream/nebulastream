@@ -34,7 +34,7 @@ jobs:
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      matrix_config: pr_matrix.yaml
+      matrix_profile: pr
 
   large-tests:
     needs: [ get-dev-images, smoke-tests ]
