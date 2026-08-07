@@ -87,7 +87,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
+bool TCPSource::tryToConnect(const addrinfo* result)
 {
     const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
 
@@ -110,16 +110,15 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         return false;
     }
 
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-signed-bitwise) - POSIX API requires varargs
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-    /// set timeout for both blocking receive and send calls
-    /// if timeout is set to zero, then the operation will never timeout
-    /// (https://linux.die.net/man/7/socket)
-    /// as a workaround, we implicitly add one microsecond to the timeout
-    timeval timeout{.tv_sec = socketConnectDefaultTimeout.count(), .tv_usec = IMPLICIT_TIMEOUT_USEC};
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+    const int flags = fcntl(sockfd, F_GETFL, 0); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
+    if (flags == -1
+        || fcntl(sockfd, F_SETFL, flags | O_NONBLOCK)
+            == -1) /// NOLINT(cppcoreguidelines-pro-type-vararg, hicpp-signed-bitwise) - POSIX API requires varargs
+    {
+        const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+        close();
+        throw CannotOpenSource("Could not configure non-blocking socket for {}:{}. {}", socketHost, socketPort, strerrorResult);
+    }
     connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
     /// if the TCPSource did not establish a connection, try with timeout
@@ -186,20 +185,15 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// make sure that result is cleaned up automatically (RAII)
     const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
 
-    const int flags = fcntl(sockfd, F_GETFL, 0);
-
     CPPTRACE_TRY
     {
-        tryToConnect(result, flags);
+        tryToConnect(result);
     }
     CPPTRACE_CATCH(...)
     {
         ::close(sockfd); /// close socket to clean up state
         throw wrapExternalException("Could not establich connection!");
     }
-
-    /// Set connection to non-blocking again to enable a timeout in the 'read()' call
-    fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
 
     NES_TRACE("TCPSource::open: Connected to server.");
 }
@@ -228,48 +222,79 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffe
 
 bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
 {
-    const auto flushIntervalTimerStart = std::chrono::system_clock::now();
-    bool flushIntervalPassed = false;
-    bool readWasValid = true;
-
     const size_t rawTBSize = tupleBuffer.getBufferSize();
-    while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
+    std::optional<std::chrono::steady_clock::time_point> firstByteReceivedAt;
+    while (numReceivedBytes < rawTBSize)
     {
         const ssize_t bufferSizeReceived
             = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
-        numReceivedBytes += bufferSizeReceived;
-        if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
+        if (bufferSizeReceived > 0)
         {
-            /// if read method returned -1 an error occurred during read.
-            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
-            readWasValid = false;
-            numReceivedBytes = 0;
-            break;
+            if (numReceivedBytes == 0)
+            {
+                firstByteReceivedAt = std::chrono::steady_clock::now();
+            }
+            numReceivedBytes += static_cast<size_t>(bufferSizeReceived);
+            continue;
         }
+
         if (bufferSizeReceived == EOF_RECEIVED_BUFFER_SIZE)
         {
             NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
             if (numReceivedBytes == 0)
             {
                 NES_INFO("TCP Source detected EoS");
-                readWasValid = false;
+                return false;
+            }
+            break;
+        }
+
+        if (errno == EINTR)
+        {
+            continue;
+        }
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        {
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotReadSource("Could not read from {}:{}. {}", socketHost, socketPort, strerrorResult);
+        }
+
+        fd_set readSet;
+        FD_ZERO(&readSet);
+        FD_SET(sockfd, &readSet);
+
+        timeval timeout{};
+        timeval* timeoutPtr = nullptr;
+        if (firstByteReceivedAt.has_value() && flushIntervalInMs > 0)
+        {
+            const auto flushInterval = std::chrono::duration<float, std::milli>(flushIntervalInMs);
+            const auto elapsed = std::chrono::steady_clock::now() - firstByteReceivedAt.value();
+            if (elapsed >= flushInterval)
+            {
+                NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
                 break;
             }
+
+            const auto remaining = std::chrono::duration_cast<std::chrono::microseconds>(flushInterval - elapsed);
+            timeout.tv_sec = remaining.count() / 1000000;
+            timeout.tv_usec = remaining.count() % 1000000;
+            timeoutPtr = &timeout;
         }
-        /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
-        /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
-        /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((flushIntervalInMs > 0
-             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
-                 >= flushIntervalInMs))
+
+        const int selectResult = select(sockfd + 1, &readSet, nullptr, nullptr, timeoutPtr);
+        if (selectResult == 0)
         {
             NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
-            flushIntervalPassed = true;
+            break;
+        }
+        if (selectResult < 0 && errno != EINTR)
+        {
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotReadSource("Could not wait for data from {}:{}. {}", socketHost, socketPort, strerrorResult);
         }
     }
     ++generatedBuffers;
-    /// Loop while we haven't received any bytes yet and we can still read from the socket.
-    return numReceivedBytes == 0 and readWasValid;
+    return numReceivedBytes == 0;
 }
 
 DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

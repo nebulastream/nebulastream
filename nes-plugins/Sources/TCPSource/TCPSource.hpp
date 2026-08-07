@@ -156,7 +156,6 @@ struct ConfigParametersTCP
 
 class TCPSource : public Source
 {
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
     constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
     /// We implicitly add one microsecond to avoid operation from never timing out
@@ -191,7 +190,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
+    bool tryToConnect(const addrinfo* result);
     bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
     int connection = -1;
