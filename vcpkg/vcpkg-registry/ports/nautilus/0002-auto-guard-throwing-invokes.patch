@@ -1,0 +1,464 @@
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index d80a081..b53d6c6 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -6,6 +6,7 @@
+ #include "nautilus/Module.hpp"
+ #include "nautilus/config.hpp"
+ #include "nautilus/core.hpp"
++#include "nautilus/exception.hpp"
+ #include "nautilus/options.hpp"
+ #include <any>
+ #include <functional>
+@@ -38,17 +39,34 @@ auto createTraceableArgument() {
+ 
+ #ifdef ENABLE_TRACING
+ 
++template <typename R>
++void traceExitReturn() {
++	if constexpr (std::is_void_v<R>) {
++		tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
++	} else {
++		using RawType = typename R::raw_type;
++		R returnValue {RawType {}};
++		auto type = tracing::TypeResolver<typename R::raw_type>::to_type();
++		tracing::traceReturnOperation(type, returnValue.state);
++	}
++}
++
+ template <size_t... Indices, typename R, typename... FunctionArguments>
+ std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>,
+                                             std::function<R(FunctionArguments...)> func) {
+ 	return std::function([func = std::move(func)]() {
+-		if constexpr (std::is_void_v<R>) {
+-			func(details::createTraceableArgument<FunctionArguments, Indices>()...);
+-			tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
+-		} else {
+-			auto returnValue = func(details::createTraceableArgument<FunctionArguments, Indices>()...);
+-			auto type = tracing::TypeResolver<typename decltype(returnValue)::raw_type>::to_type();
+-			tracing::traceReturnOperation(type, returnValue.state);
++		const nautilus::details::TraceExceptionHolderScope exceptionHolderScope;
++		try {
++			if constexpr (std::is_void_v<R>) {
++				func(details::createTraceableArgument<FunctionArguments, Indices>()...);
++				tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
++			} else {
++				auto returnValue = func(details::createTraceableArgument<FunctionArguments, Indices>()...);
++				auto type = tracing::TypeResolver<typename decltype(returnValue)::raw_type>::to_type();
++				tracing::traceReturnOperation(type, returnValue.state);
++			}
++		} catch (const tracing::TraceExitException&) {
++			traceExitReturn<R>();
+ 		}
+ 	});
+ }
+@@ -63,13 +81,18 @@ template <size_t... Indices, typename R, typename... FunctionArguments>
+ std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>, R (*fnptr)(FunctionArguments...)) {
+ 	[[maybe_unused]] std::size_t args = sizeof...(FunctionArguments);
+ 	auto traceFunc = [=]() {
+-		if constexpr (std::is_void_v<R>) {
+-			fnptr(details::createTraceableArgument<FunctionArguments, Indices>()...);
+-			tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
+-		} else {
+-			auto returnValue = fnptr(details::createTraceableArgument<FunctionArguments, Indices>()...);
+-			auto type = tracing::TypeResolver<typename decltype(returnValue)::raw_type>::to_type();
+-			tracing::traceReturnOperation(type, returnValue.state);
++		const nautilus::details::TraceExceptionHolderScope exceptionHolderScope;
++		try {
++			if constexpr (std::is_void_v<R>) {
++				fnptr(details::createTraceableArgument<FunctionArguments, Indices>()...);
++				tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
++			} else {
++				auto returnValue = fnptr(details::createTraceableArgument<FunctionArguments, Indices>()...);
++				auto type = tracing::TypeResolver<typename decltype(returnValue)::raw_type>::to_type();
++				tracing::traceReturnOperation(type, returnValue.state);
++			}
++		} catch (const tracing::TraceExitException&) {
++			traceExitReturn<R>();
+ 		}
+ 	};
+ 	return traceFunc;
+diff --git a/nautilus/include/nautilus/Module.hpp b/nautilus/include/nautilus/Module.hpp
+index 504960f..ec15f5b 100644
+--- a/nautilus/include/nautilus/Module.hpp
++++ b/nautilus/include/nautilus/Module.hpp
+@@ -6,6 +6,7 @@
+ #include "nautilus/JITCompiler.hpp"
+ #include "nautilus/config.hpp"
+ #include "nautilus/core.hpp"
++#include "nautilus/exception.hpp"
+ #include "nautilus/options.hpp"
+ #include <any>
+ #include <atomic>
+@@ -140,7 +141,19 @@ public:
+ 		if (cache_->version.load(std::memory_order_acquire) != state_->version.load(std::memory_order_acquire)) {
+ 			resolve();
+ 		}
+-		return cache_->impl(std::forward<Args>(args)...);
++		const nautilus::details::InvocationScope scope;
++		if constexpr (std::is_void_v<R>) {
++			cache_->impl(std::forward<Args>(args)...);
++			if (scope.isOutermost()) {
++				nautilus::rethrowIfParked();
++			}
++		} else {
++			R result = cache_->impl(std::forward<Args>(args)...);
++			if (scope.isOutermost()) {
++				nautilus::rethrowIfParked();
++			}
++			return result;
++		}
+ 	}
+ };
+ 
+diff --git a/nautilus/include/nautilus/exception.hpp b/nautilus/include/nautilus/exception.hpp
+new file mode 100644
+index 0000000..c795b99
+--- /dev/null
++++ b/nautilus/include/nautilus/exception.hpp
+@@ -0,0 +1,176 @@
++/*
++    Licensed under the Apache License, Version 2.0 (the "License");
++    you may not use this file except in compliance with the License.
++    You may obtain a copy of the License at
++
++        https://www.apache.org/licenses/LICENSE-2.0
++
++    Unless required by applicable law or agreed to in writing, software
++    distributed under the License is distributed on an "AS IS" BASIS,
++    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++    See the License for the specific language governing permissions and
++    limitations under the License.
++*/
++
++#pragma once
++
++#include "nautilus/val_ptr.hpp"
++#include <array>
++#include <bit>
++#include <cstddef>
++#include <exception>
++#include <list>
++#include <optional>
++#include <type_traits>
++#include <utility>
++
++namespace nautilus {
++
++namespace tracing {
++
++/**
++ * Internal control-flow exception used to stop tracing the current path.
++ *
++ * This is deliberately distinct from TraceTerminationException: that exception
++ * belongs to the symbolic executor, whereas this one requests a return from the
++ * traced function after normal C++ stack unwinding has run its destructors.
++ */
++class TraceExitException final : public std::exception {};
++
++[[noreturn]] inline void exitTrace() {
++	throw TraceExitException {};
++}
++
++} // namespace tracing
++
++namespace details {
++
++inline thread_local std::exception_ptr currentException;
++inline thread_local unsigned invocationDepth = 0;
++
++/**
++ * Generated stack storage used to communicate a parked exception from a guarded
++ * native call back into the generated function. The pointer is written by the
++ * runtime thread, so generated code never embeds the tracing thread's TLS address.
++ */
++struct ExceptionHolder {
++	std::exception_ptr* exception;
++};
++
++static_assert(std::is_trivially_constructible_v<ExceptionHolder>);
++static_assert(std::is_trivially_destructible_v<ExceptionHolder>);
++
++#ifdef ENABLE_TRACING
++
++// Each active function trace owns one lazily initialized symbolic holder. A list
++// keeps outer holders stable while Nautilus recursively traces a generated callee.
++inline thread_local std::list<std::optional<val<ExceptionHolder*>>> traceExceptionHolders;
++
++class TraceExceptionHolderScope {
++public:
++	TraceExceptionHolderScope() {
++		traceExceptionHolders.emplace_back();
++	}
++
++	~TraceExceptionHolderScope() {
++		traceExceptionHolders.pop_back();
++	}
++
++	TraceExceptionHolderScope(const TraceExceptionHolderScope&) = delete;
++	TraceExceptionHolderScope& operator=(const TraceExceptionHolderScope&) = delete;
++};
++
++inline val<ExceptionHolder*>& getOrCreateTraceExceptionHolder() {
++	auto& holder = traceExceptionHolders.back();
++	if (!holder) {
++		auto& ref = tracing::traceAlloca(sizeof(ExceptionHolder), alignof(ExceptionHolder));
++		holder.emplace(ref);
++		holder->set(&ExceptionHolder::exception, static_cast<std::exception_ptr*>(nullptr));
++	}
++	return *holder;
++}
++
++#endif
++
++template <typename R>
++R exceptionSentinel() noexcept {
++	if constexpr (std::is_default_constructible_v<R>) {
++		return R {};
++	} else {
++		static_assert(std::is_trivially_copyable_v<R>,
++		              "a potentially throwing proxy must return a trivially copyable nautilus boundary type");
++		return std::bit_cast<R>(std::array<std::byte, sizeof(R)> {});
++	}
++}
++
++struct InvocationScope {
++	InvocationScope() : outermost(++invocationDepth == 1), uncaughtOnEntry(std::uncaught_exceptions()) {
++		if (outermost) {
++			currentException = nullptr;
++		}
++	}
++
++	~InvocationScope() noexcept {
++		if (outermost && std::uncaught_exceptions() > uncaughtOnEntry) {
++			currentException = nullptr;
++		}
++		--invocationDepth;
++	}
++
++	InvocationScope(const InvocationScope&) = delete;
++	InvocationScope& operator=(const InvocationScope&) = delete;
++
++	[[nodiscard]] bool isOutermost() const {
++		return outermost;
++	}
++
++private:
++	bool outermost;
++	int uncaughtOnEntry;
++};
++
++inline void updateExceptionHolder(ExceptionHolder* holder) noexcept {
++	holder->exception = currentException ? &currentException : nullptr;
++}
++
++template <typename R, typename... Args>
++R guardedRuntimeProxy(ExceptionHolder* holder, void* rawFunction, Args... args) noexcept {
++	auto function = reinterpret_cast<R (*)(Args...)>(rawFunction);
++	try {
++		if constexpr (std::is_void_v<R>) {
++			function(args...);
++			updateExceptionHolder(holder);
++			return;
++		} else {
++			auto result = function(args...);
++			updateExceptionHolder(holder);
++			return result;
++		}
++	} catch (...) {
++		if (!currentException) {
++			currentException = std::current_exception();
++		}
++		updateExceptionHolder(holder);
++		if constexpr (!std::is_void_v<R>) {
++			return exceptionSentinel<R>();
++		}
++	}
++}
++
++[[nodiscard]] inline bool hasParkedExceptionProxy() noexcept {
++	return static_cast<bool>(currentException);
++}
++
++} // namespace details
++
++[[nodiscard]] inline bool hasParkedException() {
++	return static_cast<bool>(details::currentException);
++}
++
++inline void rethrowIfParked() {
++	if (details::currentException) {
++		std::rethrow_exception(std::exchange(details::currentException, nullptr));
++	}
++}
++
++} // namespace nautilus
+diff --git a/nautilus/include/nautilus/function.hpp b/nautilus/include/nautilus/function.hpp
+index 38e202a..fb3e920 100644
+--- a/nautilus/include/nautilus/function.hpp
++++ b/nautilus/include/nautilus/function.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include "nautilus/common/FunctionAttributes.hpp"
++#include "nautilus/exception.hpp"
+ #include "nautilus/val.hpp"
+ #include "nautilus/val_ptr.hpp"
+ #include <functional>
+@@ -62,40 +63,92 @@ private:
+ 	R (*fnptr)(FunctionArguments...);
+ };
+ 
++namespace details {
++
++inline void traceExitIfParked() {
++#ifdef ENABLE_TRACING
++	auto failed = CallableRuntimeFunction<bool>(hasParkedExceptionProxy)();
++	if (failed) {
++		tracing::exitTrace();
++	}
++#endif
++}
++
++inline void traceExitIfExceptionSet(val<ExceptionHolder*>& holder) {
++#ifdef ENABLE_TRACING
++	val<std::exception_ptr*> exception = holder.get(&ExceptionHolder::exception);
++	if (exception != nullptr) {
++		tracing::exitTrace();
++	}
++#endif
++}
++
++template <typename R, typename... FunctionArguments, typename... ValueArguments>
++auto invokeGuardedRuntime(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...),
++                          ValueArguments&&... args) {
++#ifdef ENABLE_TRACING
++	if (tracing::inTracer()) {
++		// The guard prevents a native exception from crossing a generated frame. All guarded calls in this
++		// function trace share one lazily emitted stack holder. The proxy writes the executing thread's TLS
++		// state into it, so the generated failure edge never captures the tracing thread's TLS address.
++		const FunctionAttributes guardedFnAttrs {
++		    .modRefInfo = ModRefInfo::ModRef,
++		    .willReturn = fnAttrs.willReturn,
++		    .noUnwind = true,
++		};
++		auto& exceptionHolder = getOrCreateTraceExceptionHolder();
++		if constexpr (std::is_void_v<R>) {
++			CallableRuntimeFunction<void, ExceptionHolder*, void*, FunctionArguments...>(
++			    guardedRuntimeProxy<void, FunctionArguments...>, guardedFnAttrs)(
++			    exceptionHolder, val<void*> {reinterpret_cast<void*>(fnptr)}, std::forward<ValueArguments>(args)...);
++			traceExitIfExceptionSet(exceptionHolder);
++			return;
++		} else {
++			auto result = CallableRuntimeFunction<R, ExceptionHolder*, void*, FunctionArguments...>(
++			    guardedRuntimeProxy<R, FunctionArguments...>, guardedFnAttrs)(
++			    exceptionHolder, val<void*> {reinterpret_cast<void*>(fnptr)}, std::forward<ValueArguments>(args)...);
++			traceExitIfExceptionSet(exceptionHolder);
++			return result;
++		}
++	}
++#endif
++	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
++}
++
++} // namespace details
++
+ /// Invoke calls without attributes
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+-auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
++auto invoke(R (*fnptr)(FunctionArguments...) noexcept, ValueArguments&&... args) {
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
+ }
+ 
++template <typename R, typename... FunctionArguments, typename... ValueArguments>
++auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
++	return details::invokeGuardedRuntime(FunctionAttributes {}, fnptr, std::forward<ValueArguments>(args)...);
++}
++
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
+ 	auto fnptr = func.template target<R(FunctionArguments...)>();
+-	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
++	return invoke(fnptr, std::forward<ValueArguments>(args)...);
+ }
+ 
+-template <is_fundamental... FunctionArguments, typename... ValueArguments>
+-void invoke(void (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+-	auto func = CallableRuntimeFunction<void, FunctionArguments...>(fnptr);
+-	func(std::forward<ValueArguments>(args)...);
++/// Invoke calls with attributes
++template <typename R, typename... FunctionArguments, typename... ValueArguments>
++auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...) noexcept, ValueArguments&&... args) {
++	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
+ }
+ 
+-/// Invoke calls with attributes
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+-	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
++	return details::invokeGuardedRuntime(fnAttrs, fnptr, std::forward<ValueArguments>(args)...);
+ }
+ 
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(const FunctionAttributes fnAttrs, std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
+ 	auto fnptr = func.template target<R(FunctionArguments...)>();
+-	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
+-}
+-
+-template <is_fundamental... FunctionArguments, typename... ValueArguments>
+-void invoke(const FunctionAttributes fnAttrs, void (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+-	auto func = CallableRuntimeFunction<void, FunctionArguments...>(fnptr, fnAttrs);
+-	func(std::forward<ValueArguments>(args)...);
++	return invoke(fnAttrs, fnptr, std::forward<ValueArguments>(args)...);
+ }
+ 
+ template <typename R, typename... FunctionArguments>
+diff --git a/nautilus/include/nautilus/nautilus_function.hpp b/nautilus/include/nautilus/nautilus_function.hpp
+index 309ee06..7e54319 100644
+--- a/nautilus/include/nautilus/nautilus_function.hpp
++++ b/nautilus/include/nautilus/nautilus_function.hpp
+@@ -129,12 +129,14 @@ public:
+ 			if constexpr (std::is_void_v<std::invoke_result_t<F&, Args...>>) {
+ 				tracing::traceNautilusCall(&definition_, fwrapper, Type::v, functionArgumentReferences,
+ 				                           FunctionAttributes {});
++				details::traceExitIfParked();
+ 				return;
+ 			} else {
+ 				using R = std::invoke_result_t<F&, Args...>;
+ 				auto resultRef = tracing::traceNautilusCall(&definition_, fwrapper,
+ 				                                            tracing::TypeResolver<typename R::raw_type>::to_type(),
+ 				                                            functionArgumentReferences, FunctionAttributes {});
++				details::traceExitIfParked();
+ 				return R(resultRef);
+ 			}
+ 		}
+diff --git a/nautilus/include/nautilus/val_func.hpp b/nautilus/include/nautilus/val_func.hpp
+index a9045d1..e075c84 100644
+--- a/nautilus/include/nautilus/val_func.hpp
++++ b/nautilus/include/nautilus/val_func.hpp
+@@ -145,10 +145,12 @@ public:
+ 			auto argRefs = getArgumentReferences(std::forward<ValueArgs>(args)...);
+ 			if constexpr (std::is_void_v<R>) {
+ 				tracing::traceIndirectCall(fnPtrRef, Type::v, argRefs, {});
++				details::traceExitIfParked();
+ 				return;
+ 			} else {
+ 				auto& resultRef =
+ 				    tracing::traceIndirectCall(fnPtrRef, tracing::TypeResolver<R>::to_type(), argRefs, {});
++				details::traceExitIfParked();
+ 				return val<R>(resultRef);
+ 			}
+ 		}
+diff --git a/nautilus/include/nautilus/val_std.hpp b/nautilus/include/nautilus/val_std.hpp
+index eee49ff..f40e5bd 100644
+--- a/nautilus/include/nautilus/val_std.hpp
++++ b/nautilus/include/nautilus/val_std.hpp
+@@ -186,7 +186,7 @@ private:
+ 		new (ptr) ValueType();
+ 	}
+ 
+-	static void destruct(ValueType* ptr) {
++	static void destruct(ValueType* ptr) noexcept {
+ 		ptr->~ValueType();
+ 	}
+ 
