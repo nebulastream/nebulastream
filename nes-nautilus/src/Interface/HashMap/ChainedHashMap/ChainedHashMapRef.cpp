@@ -13,6 +13,7 @@
 */
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -94,10 +95,7 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
         {
             const auto offset = field.fieldOffset;
             const auto fieldSize = field.type.getSizeInBytesWithNull();
-            if (valueMemAreaOffset < offset + fieldSize)
-            {
-                valueMemAreaOffset = offset + fieldSize;
-            }
+            valueMemAreaOffset = std::max(valueMemAreaOffset, offset + fieldSize);
         }
     }
     else
@@ -107,10 +105,7 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
         for (const auto& field : memoryProviderValues.getAllFields())
         {
             const auto offset = field.fieldOffset;
-            if (valueMemAreaOffset > offset)
-            {
-                valueMemAreaOffset = offset;
-            }
+            valueMemAreaOffset = std::min(valueMemAreaOffset, offset);
         }
     }
     auto castedMemArea = static_cast<nautilus::val<int8_t*>>(entryRef);

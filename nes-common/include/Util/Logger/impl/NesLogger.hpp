@@ -15,7 +15,9 @@
 #pragma once
 
 #include <Util/Logger/LogLevel.hpp>
+#include <fmt/base.h>
 #include <fmt/core.h>
+#include <spdlog/common.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
 #include <spdlog/mdc.h>
@@ -50,35 +52,35 @@ public:
 
     /// Logs a tracing message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
-    constexpr inline void trace(spdlog::source_loc&& loc, fmt::format_string<arguments...>&& format, arguments&&... args)
+    constexpr void trace(spdlog::source_loc&& loc, fmt::format_string<arguments...>&& format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::trace, std::move(format), std::forward<arguments>(args)...);
     }
 
     /// Logs a warning message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
-    constexpr inline void warn(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr void warn(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
     }
 
     /// Logs an info message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
-    constexpr inline void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::info, std::move(format), std::forward<arguments>(args)...);
     }
 
     /// Logs a debug message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
-    constexpr inline void debug(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr void debug(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::debug, std::move(format), std::forward<arguments>(args)...);
     }
 
     /// Logs an error message using a format, a source location, and a set of arguments to display
     template <typename... arguments>
-    constexpr inline void error(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr void error(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
     {
         impl->log(std::move(loc), spdlog::level::err, std::move(format), std::forward<arguments>(args)...);
     }
@@ -89,10 +91,10 @@ public:
     /// forcefully flushes the current log to filesystem
     void forceFlush();
 
-    inline LogLevel getCurrentLogLevel() const noexcept { return currentLogLevel; }
+    LogLevel getCurrentLogLevel() const noexcept { return currentLogLevel; }
 
     /// Returns true if the logger was configured to log to the console (stdout).
-    inline bool isConsoleLoggingEnabled() const noexcept { return consoleLoggingEnabled; }
+    bool isConsoleLoggingEnabled() const noexcept { return consoleLoggingEnabled; }
 
     void changeLogLevel(LogLevel newLevel);
 

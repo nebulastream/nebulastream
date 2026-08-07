@@ -212,6 +212,7 @@ void ChainedEntryMemoryProvider::writeEntryRef(
 std::vector<Record::RecordFieldIdentifier> ChainedEntryMemoryProvider::getAllFieldIdentifiers() const
 {
     std::vector<Record::RecordFieldIdentifier> fieldIdentifiers;
+    fieldIdentifiers.reserve(fields.size());
     for (const auto& [fieldIdentifier, type, fieldOffset] : fields)
     {
         fieldIdentifiers.push_back(fieldIdentifier);

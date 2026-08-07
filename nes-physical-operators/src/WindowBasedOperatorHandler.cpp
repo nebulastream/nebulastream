@@ -36,7 +36,6 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
     , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId}))
-    , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {

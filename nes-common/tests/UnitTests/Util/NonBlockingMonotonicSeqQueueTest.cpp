@@ -29,7 +29,6 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
@@ -108,7 +107,7 @@ public:
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadSequentialUpdaterTest)
 {
-    auto updates = 10000_u64;
+    const uint64_t updates = 10000;
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= updates; i++)
@@ -116,7 +115,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadSequentialUpdaterTest)
         watermarkBarriers.emplace_back(
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));
     }
-    for (auto i = 0_u64; i < updates; i++)
+    for (uint64_t i = 0; i < updates; i++)
     {
         auto currentWatermarkBarrier = watermarkBarriers[i];
         auto oldWatermark = watermarkProcessor.getCurrentValue();
@@ -135,7 +134,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadSequentialUpdaterTest)
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest)
 {
-    auto updates = 10000_u64;
+    const uint64_t updates = 10000;
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= updates; i++)
@@ -146,7 +145,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest
     /// reverse updates
     std::ranges::reverse(watermarkBarriers);
 
-    for (auto i = 0_u64; i < updates - 1; i++)
+    for (uint64_t i = 0; i < updates - 1; i++)
     {
         auto currentWatermarkBarrier = watermarkBarriers[i];
         auto oldWatermark = watermarkProcessor.getCurrentValue();
@@ -167,7 +166,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadRandomeUpdaterTest)
 {
-    auto updates = 100_u64;
+    const uint64_t updates = 100;
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= updates; i++)
@@ -178,7 +177,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadRandomeUpdaterTest)
     std::mt19937 randomGenerator(42);
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
 
-    for (auto i = 0_u64; i < updates; i++)
+    for (uint64_t i = 0; i < updates; i++)
     {
         auto currentWatermarkBarrier = watermarkBarriers[i];
         auto oldWatermark = watermarkProcessor.getCurrentValue();
@@ -290,8 +289,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithLostUpdateThreadTe
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInRandomFashionTest)
 {
-    auto noSeqNumbers = 10000_u64;
-    auto maxChunksPerSeqNumber = 20_u64;
+    const uint64_t noSeqNumbers = 10000;
+    const uint64_t maxChunksPerSeqNumber = 20;
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= noSeqNumbers; i++)
@@ -333,11 +332,11 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRandomFashionTest)
 {
-    constexpr auto blockSize = 100_u64;
-    constexpr auto noSeqNumbers = 10000_u64;
-    constexpr auto averageUpdatesPerRound = 100_u64;
+    constexpr uint64_t blockSize = 100;
+    constexpr uint64_t noSeqNumbers = 10000;
+    constexpr uint64_t averageUpdatesPerRound = 100;
     constexpr auto threadsCount = 10;
-    constexpr auto maxChunksPerSeqNumber = 20_u64;
+    constexpr uint64_t maxChunksPerSeqNumber = 20;
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t, blockSize>();
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i < noSeqNumbers + SequenceNumber::INITIAL; i++)
@@ -372,7 +371,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
                 [&watermarkProcessor, this, &globalUpdateCounter, maxUpdatePos]()
                 {
                     /// Emplacing the next updatesThisRound per thread
-                    auto nextUpdatePos = 0_u64;
+                    uint64_t nextUpdatePos = 0;
                     while ((nextUpdatePos = globalUpdateCounter++) < maxUpdatePos)
                     {
                         auto currentWatermarkBarrier = watermarkBarriers[nextUpdatePos];
@@ -393,7 +392,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
         globalUpdateCounter = maxUpdatePos;
 
         /// Emplacing in mock-up queue the same updates
-        auto currentValueExpected = 0_u64;
+        uint64_t currentValueExpected = 0;
         for (auto i = copyGlobalUpdateCounter; i < globalUpdateCounter; ++i)
         {
             auto currentWatermarkBarrier = watermarkBarriers[i];

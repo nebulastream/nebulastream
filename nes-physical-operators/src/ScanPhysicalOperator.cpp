@@ -24,11 +24,11 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
-#include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 
 namespace NES
 {
@@ -78,7 +78,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
-    for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
+    for (nautilus::val<uint64_t> i = uint64_t{0}; i < numberOfRecords; i = i + uint64_t{1})
     {
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);

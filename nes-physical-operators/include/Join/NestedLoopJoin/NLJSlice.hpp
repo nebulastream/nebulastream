@@ -30,9 +30,7 @@ namespace NES
 struct CreateNewNLJSliceArgs final : CreateNewSlicesArguments
 {
     CreateNewNLJSliceArgs(AbstractBufferProvider& bufferProvider, uint64_t tupleSizeLeft, uint64_t tupleSizeRight)
-        : bufferProvider(&bufferProvider)
-        , tupleSizeLeft(tupleSizeLeft)
-        , tupleSizeRight(tupleSizeRight) /// NOLINT(clang-analyzer-optin.cplusplus.UninitializedObject)
+        : bufferProvider(&bufferProvider), tupleSizeLeft(tupleSizeLeft), tupleSizeRight(tupleSizeRight)
     {
     }
 
