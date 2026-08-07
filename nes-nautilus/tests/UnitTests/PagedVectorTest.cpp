@@ -201,197 +201,7 @@ constexpr std::array<uint64_t, 5> BUFFER_SIZE_POOL = {64, 128, 512, 4096, 2ULL *
 /// Per-vector item-count range and max number of paged vectors used by the concat properties.
 constexpr uint64_t MAX_ITEMS_PER_CONCAT_VECTOR = 201;
 constexpr uint64_t MAX_CONCAT_VECTORS = 5;
-
-/// Scalar-only subset of TestUtils::ALL_VALUE_TYPES (no VARSIZED), used by the dedicated oversized-varsized property to
-/// build small schemas with a guaranteed, separately-controlled VARSIZED field appended.
-constexpr std::array SCALAR_VALUE_TYPES = {
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-    DataType::Type::FLOAT32,
-    DataType::Type::FLOAT64,
-};
-
-/// Varsized payload lengths are occasionally drawn relative to the property's chosen bufferSize (not just
-/// [0, TestUtils::MAX_VARSIZED_LEN]) so that some generated values don't fit in a single pooled buffer.
-/// TestUtils::MAX_VARSIZED_LEN historically equalled the smallest BUFFER_SIZE_POOL entry (64), which meant a
-/// generated payload could never exceed a pooled buffer's capacity -- silently preventing the
-/// AbstractBufferProvider::getUnpooledBuffer fallback path in makeVarSizedAllocFunction from ever being exercised
-/// with an oversized value.
-///
-/// This must be gated by an absolute per-run budget rather than a flat per-field probability: a wide schema times a
-/// large item count means a single property run can generate thousands of varsized fields, so even a low per-field
-/// percentage of "needs a dedicated pooled buffer" draws can exhaust DirtyBufferProvider's pooled buffer pool --
-/// which is clamped as low as 16-32 buffers for the largest BUFFER_SIZE_POOL entry (2 MiB) under
-/// TestUtils::pooledBufferCountFor's memory cap. Capping the *count* of special draws per run (see
-/// OversizedVarSizedBudget below), independent of schema width or item count, avoids that blow-up.
-constexpr uint64_t MODERATE_OVERSIZED_MULTIPLIER = 3;
-constexpr uint64_t GROSS_OVERSIZED_MIN_MULTIPLIER = 8;
-constexpr uint64_t GROSS_OVERSIZED_MAX_MULTIPLIER = 32;
-/// Absolute ceiling on the gross-oversized regime so the largest BUFFER_SIZE_POOL entry (2 MiB) doesn't blow up
-/// property runtime/memory (2 MiB * 32 would be 64 MiB per single value). When bufferSize itself is already
-/// >= this cap, the gross-oversized regime folds into the moderate-oversized one instead.
-constexpr uint64_t GROSS_OVERSIZED_ABS_CAP = 256ULL * 1024;
-/// Upper bound (inclusive) on how many varsized fields in a single property run may roll a boundary/oversized
-/// length; the exact per-run budget is itself randomised in [0, this]. Small enough that even the worst case
-/// (all budget spent as pooled-buffer-consuming boundary draws) stays far under the smallest pooled buffer count.
-constexpr int MAX_OVERSIZED_DRAWS_PER_PROPERTY = 3;
-
-/// Shared, mutable per-property-run counter of remaining "special" (boundary/oversized) varsized draws. Threaded
-/// by shared_ptr through genVarSizedLen/genVarSizedString/genAnyVec so every varsized field across an entire
-/// property run decrements the same budget, instead of each field rolling independently.
-using OversizedVarSizedBudget = std::shared_ptr<int>;
-
-/// Draws a varsized payload length correlated with `bufferSize`, spending from `budget` when landing outside the
-/// small [0, TestUtils::MAX_VARSIZED_LEN] case: sometimes right at the pooled-buffer boundary (off-by-one coverage),
-/// sometimes moderately over one buffer's capacity, and occasionally far over it -- exercising both the
-/// "doesn't fit" branch and the unpooled fallback for a range of overshoot magnitudes. Once the budget is spent,
-/// always returns a small length.
-rc::Gen<size_t> genVarSizedLen(uint64_t bufferSize, const OversizedVarSizedBudget& budget)
-{
-    return rc::gen::exec(
-        [bufferSize, budget]() -> size_t
-        {
-            if (*budget <= 0)
-            {
-                return *rc::gen::inRange<size_t>(0, TestUtils::MAX_VARSIZED_LEN + 1);
-            }
-            /// Equal three-way split of the budget between the boundary/moderate/gross regimes.
-            const auto regime = *rc::gen::inRange(0, 3);
-            --*budget;
-            if (regime == 0)
-            {
-                const auto delta = *rc::gen::inRange<int64_t>(-3, 4);
-                return static_cast<size_t>(std::max<int64_t>(0, static_cast<int64_t>(bufferSize) + delta));
-            }
-            if (regime == 1 or bufferSize >= GROSS_OVERSIZED_ABS_CAP)
-            {
-                return *rc::gen::inRange<size_t>(bufferSize + 1, (bufferSize * MODERATE_OVERSIZED_MULTIPLIER) + 1);
-            }
-            const auto grossUpper = std::min(bufferSize * GROSS_OVERSIZED_MAX_MULTIPLIER, GROSS_OVERSIZED_ABS_CAP);
-            const auto grossLower = std::min(bufferSize * GROSS_OVERSIZED_MIN_MULTIPLIER, grossUpper);
-            return *rc::gen::inRange<size_t>(grossLower, grossUpper + 1);
-        });
-}
-
-/// Builds a printable-ASCII string of a bufferSize-correlated length (see genVarSizedLen). Short payloads (within
-/// TestUtils::MAX_VARSIZED_LEN) get varied random characters like before; longer ones are filled with a single
-/// random printable character since their purpose is to stress allocation/copy sizing, not character-level
-/// randomness.
-rc::Gen<std::string> genVarSizedString(uint64_t bufferSize, const OversizedVarSizedBudget& budget)
-{
-    return rc::gen::exec(
-        [bufferSize, budget]() -> std::string
-        {
-            const auto len = *genVarSizedLen(bufferSize, budget);
-            if (len <= TestUtils::MAX_VARSIZED_LEN)
-            {
-                auto str = *rc::gen::container<std::string>(
-                    rc::gen::inRange<char>(TestUtils::PRINTABLE_ASCII_MIN, TestUtils::PRINTABLE_ASCII_MAX));
-                if (str.size() > len)
-                {
-                    str.resize(len);
-                }
-                return str;
-            }
-            const auto fillChar = *rc::gen::inRange<char>(TestUtils::PRINTABLE_ASCII_MIN, TestUtils::PRINTABLE_ASCII_MAX);
-            /// NOLINTNEXTLINE(modernize-return-braced-init-list)
-            return std::string(len, fillChar);
-        });
-}
-
-/// Like genVarSizedLen, but always lands in the moderate- or gross-oversized regime (never small/boundary).
-/// Used by the dedicated oversized-varsized property, which needs every generated value to definitely exceed
-/// bufferSize rather than relying on genVarSizedLen's weighted mix to occasionally roll one.
-rc::Gen<size_t> genOversizedVarSizedLen(uint64_t bufferSize)
-{
-    return rc::gen::exec(
-        [bufferSize]() -> size_t
-        {
-            const auto useGross = bufferSize < GROSS_OVERSIZED_ABS_CAP and * rc::gen::arbitrary<bool>();
-            if (useGross)
-            {
-                const auto grossUpper = std::min(bufferSize * GROSS_OVERSIZED_MAX_MULTIPLIER, GROSS_OVERSIZED_ABS_CAP);
-                const auto grossLower = std::min(bufferSize * GROSS_OVERSIZED_MIN_MULTIPLIER, grossUpper);
-                return *rc::gen::inRange<size_t>(grossLower, grossUpper + 1);
-            }
-            return *rc::gen::inRange<size_t>(bufferSize + 1, (bufferSize * MODERATE_OVERSIZED_MULTIPLIER) + 1);
-        });
-}
-
-/// Generator for a record of arbitrary values matching the given field types. `bufferSize` is the pool buffer
-/// size chosen for the current property run; VARSIZED fields draw payload lengths relative to it (see
-/// genVarSizedLen), spending from the shared `budget` so oversized draws stay capped across the whole run.
-rc::Gen<TestUtils::AnyVec> genAnyVec(std::vector<DataType> types, uint64_t bufferSize, const OversizedVarSizedBudget& budget)
-{
-    return rc::gen::exec(
-        [types = std::move(types), bufferSize, budget]()
-        {
-            TestUtils::AnyVec result;
-            result.reserve(types.size());
-            for (const auto& dataType : types)
-            {
-                switch (dataType.type)
-                {
-                    case DataType::Type::UINT8:
-                        result.push_back(TestUtils::genScalarAny<uint8_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::UINT16:
-                        result.push_back(TestUtils::genScalarAny<uint16_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::UINT32:
-                        result.push_back(TestUtils::genScalarAny<uint32_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::UINT64:
-                        result.push_back(TestUtils::genScalarAny<uint64_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::INT8:
-                        result.push_back(TestUtils::genScalarAny<int8_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::INT16:
-                        result.push_back(TestUtils::genScalarAny<int16_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::INT32:
-                        result.push_back(TestUtils::genScalarAny<int32_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::INT64:
-                        result.push_back(TestUtils::genScalarAny<int64_t>(dataType.nullable));
-                        break;
-                    case DataType::Type::FLOAT32:
-                        result.push_back(TestUtils::genScalarAny<float>(dataType.nullable));
-                        break;
-                    case DataType::Type::FLOAT64:
-                        result.push_back(TestUtils::genScalarAny<double>(dataType.nullable));
-                        break;
-                    case DataType::Type::VARSIZED: {
-                        if (dataType.nullable)
-                        {
-                            const bool isNull = *rc::gen::arbitrary<bool>();
-                            if (isNull)
-                            {
-                                result.emplace_back(std::optional<std::string>{});
-                                break;
-                            }
-                            result.emplace_back(std::optional<std::string>{*genVarSizedString(bufferSize, budget)});
-                            break;
-                        }
-                        result.emplace_back(*genVarSizedString(bufferSize, budget));
-                        break;
-                    }
-                    case DataType::Type::BOOLEAN:
-                    case DataType::Type::CHAR:
-                    case DataType::Type::UNDEFINED:
-                        throw TestException("Unsupported type for genAnyVec");
-                }
-            }
-            return result;
-        });
-}
+constexpr uint64_t MAX_VARSIZED_MEMORY_BUDGET = 64ULL * 1024 * 1024;
 
 uint64_t estimateSchemaSize(const std::vector<DataType>& types)
 {
@@ -422,25 +232,23 @@ void insertAndIterateProperty(TestUtils::EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
-    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
     NES_INFO(
-        "Property insertAndIterate: fields={}, N={}, bufferSize={}, oversizedBudget={}, field_types={}",
+        "Property insertAndIterate: fields={}, N={}, bufferSize={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
-        *oversizedBudget,
         fmt::join(fieldTypes, ", "));
 
-    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
+    auto reference
+        = *rc::gen::container<std::vector<TestUtils::AnyVec>>(numberOfItems, TestUtils::genAnyVec(fieldTypes, varSizedMemoryBudget));
 
-    std::vector<TestUtils::AnyVec> reference;
-    reference.reserve(numberOfItems);
-    for (uint64_t i = 0; i < numberOfItems; ++i)
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
+    for (const auto& record : reference)
     {
-        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
-        reference.push_back(record);
         pagedVector.pushBack(record);
     }
 
@@ -465,24 +273,18 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
-    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
-    NES_INFO(
-        "Property insertAndReadByIndex: fields={}, N={}, bufferSize={}, oversizedBudget={}",
-        fieldTypes.size(),
-        numberOfItems,
-        bufferSize,
-        *oversizedBudget);
+    NES_INFO("Property insertAndReadByIndex: fields={}, N={}, bufferSize={}", fieldTypes.size(), numberOfItems, bufferSize);
 
-    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
+    auto reference
+        = *rc::gen::container<std::vector<TestUtils::AnyVec>>(numberOfItems, TestUtils::genAnyVec(fieldTypes, varSizedMemoryBudget));
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
     TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
-
-    std::vector<TestUtils::AnyVec> reference;
-    reference.reserve(numberOfItems);
-    for (uint64_t i = 0; i < numberOfItems; ++i)
+    for (const auto& record : reference)
     {
-        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
-        reference.push_back(record);
         pagedVector.pushBack(record);
     }
 
@@ -505,28 +307,30 @@ void concatMoveProperty(TestUtils::EngineMode mode)
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
 
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
-    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
-    NES_INFO(
-        "Property concatMove: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
-        fieldTypes.size(),
-        numVectors,
-        bufferSize,
-        *oversizedBudget);
+    NES_INFO("Property concatMove: fields={}, numVectors={}, bufferSize={}", fieldTypes.size(), numVectors, bufferSize);
 
-    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-
-    std::vector<TestUtils::TestablePagedVector> pagedVectors;
-    pagedVectors.reserve(numVectors);
+    std::vector<std::vector<TestUtils::AnyVec>> references;
+    references.reserve(numVectors);
     std::vector<TestUtils::AnyVec> fullReference;
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
+        references.push_back(
+            *rc::gen::container<std::vector<TestUtils::AnyVec>>(itemCount, TestUtils::genAnyVec(fieldTypes, varSizedMemoryBudget)));
+        fullReference.insert(fullReference.end(), references.back().begin(), references.back().end());
+    }
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
+    std::vector<TestUtils::TestablePagedVector> pagedVectors;
+    pagedVectors.reserve(numVectors);
+    for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
+    {
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
-        for (uint64_t i = 0; i < itemCount; ++i)
+        for (const auto& record : references[vecIdx])
         {
-            auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
-            fullReference.push_back(record);
             pagedVectors.back().pushBack(record);
         }
         NES_INFO("concatMove: vector {} has {} entries", vecIdx, pagedVectors.back().size());
@@ -557,26 +361,29 @@ void concatCopyProperty(TestUtils::EngineMode mode)
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
     RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
-    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
-    NES_INFO(
-        "Property concatCopy: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
-        fieldTypes.size(),
-        numVectors,
-        bufferSize,
-        *oversizedBudget);
-    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    std::vector<TestUtils::TestablePagedVector> pagedVectors;
-    pagedVectors.reserve(numVectors);
-    std::vector<TestUtils::AnyVec> fullReference;
+    NES_INFO("Property concatCopy: fields={}, numVectors={}, bufferSize={}", fieldTypes.size(), numVectors, bufferSize);
 
+    std::vector<std::vector<TestUtils::AnyVec>> references;
+    references.reserve(numVectors);
+    std::vector<TestUtils::AnyVec> fullReference;
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
+        references.push_back(
+            *rc::gen::container<std::vector<TestUtils::AnyVec>>(itemCount, TestUtils::genAnyVec(fieldTypes, varSizedMemoryBudget)));
+        fullReference.insert(fullReference.end(), references.back().begin(), references.back().end());
+    }
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
+    std::vector<TestUtils::TestablePagedVector> pagedVectors;
+    pagedVectors.reserve(numVectors);
+    for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
+    {
         pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
-        for (uint64_t i = 0; i < itemCount; ++i)
+        for (const auto& record : references[vecIdx])
         {
-            auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
-            fullReference.push_back(record);
             pagedVectors.back().pushBack(record);
         }
         NES_INFO("concatCopy: vector {} has {} entries", vecIdx, pagedVectors.back().size());
@@ -624,83 +431,6 @@ void concatCopyProperty(TestUtils::EngineMode mode)
         RC_ASSERT(TestUtils::anyVecsEqual(actual[i], fullReference[i], fieldTypes));
     }
 }
-
-/// Small extra-field cap and item count kept deliberately tight: every item's VARSIZED field is forced above
-/// bufferSize here (see genOversizedVarSizedLen), so a wide schema or large item count would balloon memory/time
-/// the way the weighted mix in genAnyVec avoids for the general properties above.
-constexpr size_t MAX_OVERSIZED_EXTRA_SCALAR_FIELDS = 3;
-constexpr uint64_t MAX_ITEMS_PER_OVERSIZED_PROPERTY = 20;
-
-/// Dedicated property targeting AbstractBufferProvider::getUnpooledBuffer fallback in makeVarSizedAllocFunction:
-/// every record's VARSIZED field is forced to a length that exceeds the chosen bufferSize, so it can never fit
-/// in a single pooled buffer. Unlike the general properties (whose varsized lengths only sometimes land here via
-/// a weighted mix), this guarantees the fallback path runs on every push_back.
-void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
-{
-    const auto numExtraFields = *rc::gen::inRange<size_t>(0, MAX_OVERSIZED_EXTRA_SCALAR_FIELDS + 1);
-    auto fieldTypes = *TestUtils::genDataTypeSchema(SCALAR_VALUE_TYPES, numExtraFields, numExtraFields);
-    const auto varSizedNullable = *rc::gen::arbitrary<bool>() ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
-    fieldTypes.emplace_back(DataType::Type::VARSIZED, varSizedNullable);
-    const auto varSizedFieldIdx = fieldTypes.size() - 1;
-
-    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
-
-    const auto numberOfItems = *rc::gen::inRange<uint64_t>(1, MAX_ITEMS_PER_OVERSIZED_PROPERTY + 1);
-
-    NES_INFO(
-        "Property insertOversizedVarSized: fields={}, N={}, bufferSize={}, field_types={}",
-        fieldTypes.size(),
-        numberOfItems,
-        bufferSize,
-        fmt::join(fieldTypes, ", "));
-
-    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
-
-    /// genAnyVec's own draw for the VARSIZED field is immediately overwritten below with a guaranteed-oversized
-    /// value, so it's kept on the small path (zero budget) to avoid wasting pooled-buffer draws before that.
-    const auto noOversizedBudget = std::make_shared<int>(0);
-    std::vector<TestUtils::AnyVec> reference;
-    reference.reserve(numberOfItems);
-    for (uint64_t i = 0; i < numberOfItems; ++i)
-    {
-        auto record = *genAnyVec(fieldTypes, bufferSize, noOversizedBudget);
-        const bool forceNull = fieldTypes[varSizedFieldIdx].nullable and * rc::gen::arbitrary<bool>();
-        if (forceNull)
-        {
-            record[varSizedFieldIdx] = std::optional<std::string>{};
-        }
-        else
-        {
-            const auto len = *genOversizedVarSizedLen(bufferSize);
-            const auto fillChar = *rc::gen::inRange<char>(TestUtils::PRINTABLE_ASCII_MIN, TestUtils::PRINTABLE_ASCII_MAX);
-            auto str = std::string(len, fillChar);
-            if (fieldTypes[varSizedFieldIdx].nullable)
-            {
-                record[varSizedFieldIdx] = std::optional<std::string>{std::move(str)};
-            }
-            else
-            {
-                record[varSizedFieldIdx] = std::move(str);
-            }
-        }
-        reference.push_back(record);
-        pagedVector.pushBack(record);
-    }
-
-    RC_ASSERT(pagedVector.size() == reference.size());
-
-    verifyRandomAccess(pagedVector, reference, fieldTypes);
-
-    auto actual = pagedVector.toVector();
-    RC_ASSERT(actual.size() == reference.size());
-    for (size_t i = 0; i < actual.size(); ++i)
-    {
-        RC_ASSERT(TestUtils::anyVecsEqual(actual[i], reference[i], fieldTypes));
-    }
-}
-
 
 } /// anonymous namespace
 
@@ -752,18 +482,6 @@ RC_GTEST_PROP(PagedVectorPropertyTest, concatCopyPagedVectorInterpreter, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
     concatCopyProperty(TestUtils::EngineMode::Interpreter);
-}
-
-RC_GTEST_PROP(PagedVectorPropertyTest, insertOversizedVarSizedCompiler, ())
-{
-    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertOversizedVarSizedProperty(TestUtils::EngineMode::Compiler);
-}
-
-RC_GTEST_PROP(PagedVectorPropertyTest, insertOversizedVarSizedInterpreter, ())
-{
-    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertOversizedVarSizedProperty(TestUtils::EngineMode::Interpreter);
 }
 
 TEST(PagedVectorTest, oversizedVarSizedThrowsWhenUnpooledUnavailable)
