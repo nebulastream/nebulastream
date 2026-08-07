@@ -15,13 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Util/Registry.hpp>
 
@@ -36,7 +34,6 @@ struct AggregationPhysicalFunctionRegistryArguments
     DataType resultType;
     PhysicalFunction inputFunction;
     Record::RecordFieldIdentifier resultFieldIdentifier;
-    std::optional<std::shared_ptr<PagedVectorTupleLayout>> tupleLayout;
     bool includeNullValues;
 };
 

@@ -16,11 +16,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <vector>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
+#include <Interface/BTree/BTreeRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <val_concepts.hpp>
@@ -33,11 +34,8 @@ class MedianAggregationPhysicalFunction : public AggregationPhysicalFunction
 {
 public:
     MedianAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+    void setup(CompilationContext& compilationContext) override;
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         nautilus::val<TupleBuffer*> parentBuffer,
@@ -62,7 +60,9 @@ public:
     ~MedianAggregationPhysicalFunction() override = default;
 
 private:
-    std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    std::shared_ptr<BTreeTupleLayout> tupleLayout;
+    std::vector<std::unique_ptr<BTreeComparator>> comparators;
+    BTreeComparator* activeComparator = nullptr;
 };
 
 }
