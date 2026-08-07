@@ -437,5 +437,75 @@ TEST_F(PredicatePushdownTest, ValidateMultiSinkPlan)
     ASSERT_EQ(optSource, optSourceAlt);
 }
 
+TEST_F(PredicatePushdownTest, SharedSourceUnderPlainSinkKeepsThatBranchUnfiltered)
+{
+    /// BEFORE: (sink1 > select (a>=0), sink2) > source
+    /// AFTER:  (sink1 > select (a>=0), sink2) > source
+    /// The source is shared, so the predicate must stay in sink1's branch and must not be folded into the source itself.
+    /// sink2 pushes no down-context, so it is invisible to `downContexts.size() > 1`.
+
+    auto source = utils.createSource("sharedSinkOnly", {"a", "b"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        GreaterEqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "0"}});
+    auto sink1 = utils.createSink(select, "sharedSinkOnly1", {"a", "b"});
+    auto sink2 = utils.createSink(source, "sharedSinkOnly2", {"a", "b"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+    auto pushed = PredicatePushdownRule{}.apply(plan);
+
+    auto optSink1 = pushed.getRootOperators().at(0);
+    ASSERT_TRUE(optSink1.tryGetAs<SinkLogicalOperator>());
+    auto optSelect = optSink1.getChildren().at(0);
+    ASSERT_TRUE(optSelect.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(optSelect.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+
+    /// sink2 has no predicate of its own, so its branch must read the unfiltered source
+    auto optSink2 = pushed.getRootOperators().at(1);
+    ASSERT_TRUE(optSink2.tryGetAs<SinkLogicalOperator>());
+    ASSERT_TRUE(optSink2.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(PredicatePushdownTest, SharedSourceUnderWatermarkAssignerKeepsThatBranchUnfiltered)
+{
+    /// BEFORE: (sink1 > select (a>=0), sink2 > eventTimeWatermark) > source
+    /// AFTER:  (sink1 > select (a>=0), sink2 > eventTimeWatermark) > source
+    /// Both parents push a down-context, so the source is flagged multi-parent; the watermark assigner's
+    /// OperatorContext carries an empty `pushed` map, so rebuilding it must not look up a missing entry.
+
+    auto source = utils.createSource("sharedWatermark", {"a", "ts"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        GreaterEqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE}, "0"}});
+    auto sink1 = utils.createSink(select, "sharedWatermark1", {"a", "ts"});
+
+    auto watermark = EventTimeWatermarkAssignerLogicalOperator::create(
+        source, FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("ts")].value()}, Windowing::TimeUnit{0});
+    auto sink2 = utils.createSink(watermark, "sharedWatermark2", {"a", "ts"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+    std::optional<LogicalPlan> pushed;
+    ASSERT_NO_THROW(pushed.emplace(PredicatePushdownRule{}.apply(plan)));
+
+    auto optSink1 = pushed->getRootOperators().at(0);
+    ASSERT_TRUE(optSink1.tryGetAs<SinkLogicalOperator>());
+    auto optSelect = optSink1.getChildren().at(0);
+    ASSERT_TRUE(optSelect.tryGetAs<SelectionLogicalOperator>());
+    ASSERT_TRUE(optSelect.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+
+    /// sink2's branch has no predicate of its own, so the watermark assigner must sit directly on the unfiltered source
+    auto optSink2 = pushed->getRootOperators().at(1);
+    ASSERT_TRUE(optSink2.tryGetAs<SinkLogicalOperator>());
+    auto optWatermark = optSink2.getChildren().at(0);
+    ASSERT_TRUE(optWatermark.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>());
+    ASSERT_TRUE(optWatermark.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
 /// NOLINTEND(bugprone-unchecked-optional-access)
 }
