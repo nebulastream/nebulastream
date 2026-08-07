@@ -46,6 +46,15 @@
 namespace NES
 {
 
+void AggregationProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    for (const auto& aggregationFunction : aggregationPhysicalFunctions)
+    {
+        aggregationFunction->setup(compilationContext);
+    }
+    WindowProbePhysicalOperator::setup(executionCtx, compilationContext);
+}
+
 void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
