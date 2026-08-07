@@ -102,7 +102,7 @@ inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, cons
         return Exception(fmt::format("{}; {}\n", message, msg), code); \
     } \
     template <typename... Args> \
-    inline Exception name(fmt::format_string<Args...> fmt_msg, Args&&... args) \
+    Exception name(fmt::format_string<Args...> fmt_msg, Args&&... args) \
     { \
         return Exception(fmt::format("{}; {}\n", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
     }

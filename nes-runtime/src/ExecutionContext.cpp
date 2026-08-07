@@ -29,7 +29,6 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
@@ -63,8 +62,8 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , pipelineId(nautilus::invoke(getPipelineIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
-    , watermarkTs(0_u64)
-    , currentTs(0_u64)
+    , watermarkTs(uint64_t{0})
+    , currentTs(uint64_t{0})
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)

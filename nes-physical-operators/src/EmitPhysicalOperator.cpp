@@ -25,7 +25,6 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
@@ -74,7 +73,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
-        emitState->outputIndex = 0_u64;
+        emitState->outputIndex = uint64_t{0};
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
         writeResult

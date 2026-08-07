@@ -24,7 +24,6 @@ using SliceEnd = Timestamp;
 
 struct CreateNewSlicesArguments
 {
-    uint64_t numberOfWorkerThreads;
     virtual ~CreateNewSlicesArguments() = default;
 };
 
