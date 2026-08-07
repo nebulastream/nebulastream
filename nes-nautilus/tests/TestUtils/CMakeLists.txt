@@ -14,6 +14,7 @@ add_library(nes-nautilus-test-util STATIC
         src/DataStructureTestUtils.cpp
         src/NautilusTestUtils.cpp
         src/TestTupleBuffer.cpp
+        src/TestableBTree.cpp
         src/TestablePagedVector.cpp
         src/TestableChainedHashMap.cpp
 )
