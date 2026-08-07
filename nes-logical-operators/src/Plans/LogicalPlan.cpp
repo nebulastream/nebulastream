@@ -137,24 +137,57 @@ std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOp
     return parents;
 }
 
+std::vector<LogicalOperator> planOperators(const LogicalPlan& plan)
+{
+    std::vector<LogicalOperator> operators;
+    std::unordered_set<OperatorId> visited;
+    for (const auto& root : plan.getRootOperators())
+    {
+        for (const auto& op : BFSRange(root))
+        {
+            if (visited.insert(op.getId()).second)
+            {
+                operators.push_back(op);
+            }
+        }
+    }
+    return operators;
+}
+
+namespace
+{
+/// Marks an operator an earlier sink already rendered; repeating its sub-plan would read as if each sink had a copy.
+constexpr std::string_view SharedOperatorMarker = " [shared]";
+
+void dumpOperator( /// NOLINT(misc-no-recursion)
+    const LogicalOperator& op,
+    const std::size_t level,
+    std::ostream& out,
+    const ExplainVerbosity verbosity,
+    std::unordered_set<OperatorId>& alreadyDumped)
+{
+    const std::string indent(level * 2, ' ');
+    if (not alreadyDumped.insert(op.getId()).second)
+    {
+        out << indent << op.explain(verbosity) << SharedOperatorMarker << '\n';
+        return;
+    }
+
+    out << indent << op.explain(verbosity) << '\n';
+    for (const auto& child : op.getChildren())
+    {
+        dumpOperator(child, level + 1, out, verbosity, alreadyDumped);
+    }
+}
+}
+
 std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
 {
     std::stringstream stringstream;
-    if (verbosity == ExplainVerbosity::Short)
+    std::unordered_set<OperatorId> alreadyDumped;
+    for (const auto& rootOperator : plan.getRootOperators())
     {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Short);
-        for (const auto& rootOperator : plan.getRootOperators())
-        {
-            dumpHandler.dump({rootOperator});
-        }
-    }
-    else
-    {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Debug);
-        for (const auto& rootOperator : plan.getRootOperators())
-        {
-            dumpHandler.dump({rootOperator});
-        }
+        dumpOperator(rootOperator, 0, stringstream, verbosity, alreadyDumped);
     }
     return stringstream.str();
 }
