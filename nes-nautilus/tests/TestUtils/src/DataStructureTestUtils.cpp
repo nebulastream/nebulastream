@@ -115,9 +115,28 @@ rc::Gen<std::vector<DataType>> genDataTypeSchema(std::span<const DataType::Type>
 
 rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
 {
+    return genAnyVec(std::move(types), nullptr);
+}
+
+rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types, VarSizedMemoryBudget varSizedMemoryBudget)
+{
     return rc::gen::exec(
-        [types = std::move(types)]()
+        [types = std::move(types), varSizedMemoryBudget = std::move(varSizedMemoryBudget)]()
         {
+            const auto generateString = [&varSizedMemoryBudget]
+            {
+                const auto characters = rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX + 1);
+                if (varSizedMemoryBudget == nullptr)
+                {
+                    auto str = *rc::gen::container<std::string>(characters);
+                    str.resize(std::min(str.size(), MAX_VARSIZED_LEN));
+                    return str;
+                }
+                const auto length = *rc::gen::inRange<uint64_t>(0, *varSizedMemoryBudget + 1);
+                *varSizedMemoryBudget -= length;
+                return std::string(length, *characters);
+            };
+
             AnyVec result;
             result.reserve(types.size());
             for (const auto& dataType : types)
@@ -163,15 +182,10 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                                 result.emplace_back(std::optional<std::string>{});
                                 break;
                             }
-                            auto str
-                                = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX + 1));
-                            str.resize(std::min(str.size(), MAX_VARSIZED_LEN));
-                            result.emplace_back(std::optional<std::string>{std::move(str)});
+                            result.emplace_back(std::optional<std::string>{generateString()});
                             break;
                         }
-                        auto str = *rc::gen::container<std::string>(rc::gen::inRange<char>(PRINTABLE_ASCII_MIN, PRINTABLE_ASCII_MAX + 1));
-                        str.resize(std::min(str.size(), MAX_VARSIZED_LEN));
-                        result.emplace_back(std::move(str));
+                        result.emplace_back(generateString());
                         break;
                     }
                     case DataType::Type::BOOLEAN:

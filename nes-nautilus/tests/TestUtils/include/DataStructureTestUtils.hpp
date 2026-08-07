@@ -78,6 +78,14 @@ constexpr size_t pooledBufferCountFor(uint64_t bufferSize)
     return std::clamp<size_t>(fitsInBudget, MIN_POOLED_BUFFER_COUNT, POOLED_BUFFER_COUNT);
 }
 
+/// Sizes the test buffer manager so its unpooled-memory allowance can absorb the generated variable-sized payloads
+/// and the allocator's rolling-average chunk preallocation.
+constexpr size_t pooledBufferCountFor(uint64_t bufferSize, uint64_t varSizedMemoryBudget)
+{
+    const auto requiredForVarSized = ((8 * varSizedMemoryBudget) + (9 * bufferSize) - 1) / (9 * bufferSize);
+    return std::max<size_t>(pooledBufferCountFor(bufferSize), requiredForVarSized);
+}
+
 /// Creates a BufferManager sized to hold at least numberOfBuffers pooled buffers of bufferSize bytes each.
 /// Wraps BufferManager::create's total-memory-budget signature: reserving 90% of the budget for unpooled
 /// buffers and sizing the total budget at 10x the requested pooled bytes leaves exactly numberOfBuffers
@@ -95,6 +103,7 @@ constexpr size_t MAX_VARSIZED_LEN = 64;
 constexpr uint64_t MAX_ITEMS_PER_PROPERTY = 501;
 
 using AnyVec = std::vector<std::any>;
+using VarSizedMemoryBudget = std::shared_ptr<uint64_t>;
 
 /// Value types used by the property generators (includes VARSIZED).
 constexpr std::array ALL_VALUE_TYPES = {
@@ -133,7 +142,11 @@ std::any genScalarAny(bool nullable)
     return std::any{*rc::gen::arbitrary<T>()};
 }
 
-/// Generator for a record of arbitrary values matching the given field types.
+/// Generator for a record of arbitrary values matching the given field types. Generated VARSIZED payload lengths
+/// are drawn from and subtracted from the shared remaining memory budget.
+rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types, VarSizedMemoryBudget varSizedMemoryBudget);
+
+/// Same, with each VARSIZED payload capped at MAX_VARSIZED_LEN instead of drawn from a shared budget.
 rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types);
 
 template <typename T>
