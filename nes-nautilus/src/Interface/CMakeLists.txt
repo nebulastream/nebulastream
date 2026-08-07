@@ -13,6 +13,7 @@
 add_subdirectory(Hash)
 add_subdirectory(HashMap)
 add_subdirectory(BufferRef)
+add_subdirectory(BTree)
 add_subdirectory(PagedVector)
 
 add_source_files(nes-nautilus
