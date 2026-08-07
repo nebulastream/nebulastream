@@ -24,7 +24,7 @@
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <SliceCacheConfiguration.hpp>
 #include <val_concepts.hpp>
@@ -36,7 +36,7 @@ namespace NES
 /// Represents the C++ struct that is stored in the SliceCache
 struct SliceCacheEntry
 {
-    using DataStructure = const TupleBuffer*;
+    using DataStructure = const Buffer*;
 
     /// As we are doing everything in Nautilus, we do not care about the initialization of these values
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }

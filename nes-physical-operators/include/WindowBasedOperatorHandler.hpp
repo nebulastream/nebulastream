@@ -32,7 +32,7 @@
 namespace NES
 {
 
-/// Stores the metadata for a RecordBuffer
+/// Stores the metadata for a TaskBufferRef
 struct BufferMetaData
 {
     BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId)

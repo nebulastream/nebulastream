@@ -21,9 +21,8 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 
 
 class ConcurrentSynchronizationTest;

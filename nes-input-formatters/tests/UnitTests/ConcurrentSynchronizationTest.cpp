@@ -26,11 +26,11 @@
 #include <vector>
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <SequenceShredder.hpp>
 
 #include <ErrorHandling.hpp>
@@ -58,7 +58,7 @@ public:
         TestThreadPool(
             const NES::SequenceNumberType upperBound,
             const std::optional<NES::SequenceNumberType> fixedSeed,
-            const NES::TupleBuffer& dummyBuffer)
+            const NES::Buffer& dummyBuffer)
             : currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
             for (size_t i = 0; i < NUM_THREADS; ++i)
@@ -116,7 +116,7 @@ public:
             const size_t upperBound,
             std::mt19937_64 sequenceNumberGen,
             std::bernoulli_distribution boolDistribution,
-            const NES::TupleBuffer& dummyBuffer)
+            const NES::Buffer& dummyBuffer)
         {
             threadLocalCheckSum.at(threadIdx) = 0;
 
@@ -139,7 +139,7 @@ public:
                 /// Thus, we can't set the sequence number in that control block. Instead, we exploit the 'offset of last tuple delimiter',
                 /// of the StagedBuffer, which we create during each iteration and which is not manipulated by other threads
                 const auto dummyStagedBuffer
-                    = NES::StagedBuffer{NES::RawTupleBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
+                    = NES::StagedBuffer{NES::RawBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
                 if (tupleDelimiter)
                 {
                     NES::SequenceShredderResult leadingSpanningTupleResult = sequenceShredder.findLeadingSpanningTupleWithDelimiter(
@@ -187,7 +187,7 @@ public:
     static void executeTest(const uint32_t upperBound, const std::optional<NES::SequenceNumberType> fixedSeed)
     {
         PRECONDITION(upperBound <= std::numeric_limits<uint32_t>::max(), "Not supporting values larger than 4294967295");
-        /// To avoid (future) errors by creating a TupleBuffer without a valid control block, we create a single valid (dummy) tuple buffer
+        /// To avoid (future) errors by creating a Buffer without a valid control block, we create a single valid (dummy) tuple buffer
         /// All threads share the reference to that buffer throughout this test
         constexpr uint32_t dummyBufferSize = 1;
         constexpr NES::BufferAlignment bufferAlignment{64};

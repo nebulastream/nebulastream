@@ -44,13 +44,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -60,7 +60,7 @@
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <TestTupleBuffer.hpp>
+#include <TestBuffer.hpp>
 #include <options.hpp>
 
 namespace NES
@@ -78,13 +78,13 @@ class InferModelPhysicalOperatorTest : public Testing::BaseUnitTest
 protected:
     struct MockedPipelineContext final : PipelineExecutionContext
     {
-        bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy) override
+        bool emitBuffer(const Buffer& buffer, ContinuationPolicy) override
         {
             buffers.wlock()->emplace_back(buffer);
             return true;
         }
 
-        TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        Buffer allocateBuffer() override { return bufferManager->getBufferBlocking(); }
 
         [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return threadId; }
 
@@ -104,24 +104,24 @@ protected:
             operatorHandlers = &opHandlers;
         }
 
-        void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
+        void repeatTask(const Buffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
-        TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+        Buffer& pinBuffer(Buffer&& tupleBuffer) override
         {
-            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(std::move(tupleBuffer)));
+            pinnedBuffers.emplace_back(std::make_unique<Buffer>(std::move(tupleBuffer)));
             return *pinnedBuffers.back();
         }
 
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the fixture
-        folly::Synchronized<std::vector<TupleBuffer>>& buffers;
+        folly::Synchronized<std::vector<Buffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-        std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
+        std::vector<std::unique_ptr<Buffer>> pinnedBuffers;
         WorkerThreadId threadId = INITIAL<WorkerThreadId>;
         uint64_t numWorkerThreads = 1;
 
         MockedPipelineContext(
-            folly::Synchronized<std::vector<TupleBuffer>>& buffers,
+            folly::Synchronized<std::vector<Buffer>>& buffers,
             std::shared_ptr<BufferManager> bufferManager,
             WorkerThreadId threadId = INITIAL<WorkerThreadId>,
             uint64_t numWorkerThreads = 1)
@@ -267,8 +267,8 @@ public:
         return {.pipeline = std::move(pipeline), .handlers = std::move(handlers)};
     }
 
-    /// Creates an input TupleBuffer with VARSIZED records, each containing packed floats.
-    static TupleBuffer createInputBuffer(const TestSchema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
+    /// Creates an input Buffer with VARSIZED records, each containing packed floats.
+    static Buffer createInputBuffer(const TestSchema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
     {
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -278,7 +278,7 @@ public:
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setOriginId(INITIAL<OriginId>);
 
-        Testing::TestTupleBuffer ttb(inputSchema);
+        Testing::TestBuffer ttb(inputSchema);
         auto view = ttb.open(tupleBuffer, bufMgr.get());
         for (const auto& floats : recordFloats)
         {
@@ -317,7 +317,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -331,7 +331,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -372,7 +372,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -386,7 +386,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -427,7 +427,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -441,7 +441,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -490,7 +490,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -504,7 +504,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -522,7 +522,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 }
 
 /// Zero-record buffer produces zero output records. Interpreted + compiled.
-TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
+TEST_F(InferModelPhysicalOperatorTest, ZeroBufferRef)
 {
     ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
@@ -546,7 +546,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -560,7 +560,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             totalRecords += view.getNumberOfTuples();
         }
@@ -588,7 +588,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     options.setOption("engine.compilationStrategy", std::string("legacy"));
     CompiledExecutablePipelineStage stage(pipeline, handlers, options);
 
-    folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+    folly::Synchronized<std::vector<Buffer>> emittedBuffers;
     emittedBuffers.wlock()->reserve(numThreads * buffersPerThread * 2);
     auto bufMgr = BufferManager::create(
         10 * static_cast<size_t>(numThreads) * buffersPerThread * 4 * bufferSize,
@@ -605,7 +605,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     const auto inputFloats = makeFloats(numFloats);
 
     /// Pre-create input buffers with unique sequence numbers
-    std::vector<std::vector<TupleBuffer>> threadInputBuffers(numThreads);
+    std::vector<std::vector<Buffer>> threadInputBuffers(numThreads);
     for (size_t tid = 0; tid < numThreads; ++tid)
     {
         threadInputBuffers[tid].reserve(buffersPerThread);
@@ -653,7 +653,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     auto outputBuffers = *emittedBuffers.rlock();
     for (auto& outBuf : outputBuffers)
     {
-        Testing::TestTupleBuffer ttb(outputSchema);
+        Testing::TestBuffer ttb(outputSchema);
         auto view = ttb.open(outBuf);
         for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
         {
@@ -709,7 +709,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
                 return opt;
             }());
 
-        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        folly::Synchronized<std::vector<Buffer>> emittedBuffers;
         emittedBuffers.wlock()->reserve(16);
         auto bufMgr = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
@@ -723,7 +723,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {

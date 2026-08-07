@@ -20,7 +20,7 @@
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -113,8 +113,7 @@ void BaseTask::fail(Exception exception)
     callback.callOnFailure(std::move(exception));
 }
 
-WorkTask::WorkTask(
-    QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, TupleBuffer buf, TaskCallback callback)
+WorkTask::WorkTask(QueryId queryId, PipelineId pipelineId, std::weak_ptr<RunningQueryPlanNode> pipeline, Buffer buf, TaskCallback callback)
     : BaseTask(queryId, std::move(callback)), pipeline(std::move(pipeline)), pipelineId(pipelineId), buf(std::move(buf))
 {
 }

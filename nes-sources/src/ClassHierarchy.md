@@ -6,8 +6,8 @@ the described **Source** using the **SourceRegistry** and, using the constructed
 becomes part of an executable query plan. The SourceHandel offers a very slim interface, `start()` and `stop()` and thereby hides all the
 implementation details from users of sources. Internally, the SourceHandle constructs a **SourceThread** and delegates the start and stop
 calls to the *SourceThread*. The SourceThread starts a thread, so one thread per source, which runs the `runningRoutine()`. In the running routine,
-the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **TCPSource**.
-If `fillTupleBuffer` succeeds, the *SourceThread* returns a TupleBuffer to the runtime via the *EmitFunction*, if not, it returns an
+the SourceThread repeatedly calls the `fillBuffer` function of the specific *Source* implementation, e.g., of the **TCPSource**.
+If `fillBuffer` succeeds, the *SourceThread* returns a Buffer to the runtime via the *EmitFunction*, if not, it returns an
 error using the *EmitFunction*.
 ```mermaid
 ---
@@ -15,7 +15,7 @@ title: Sources Implementation Overview
 ---
 classDiagram
     SourceHandle --> SourceThread : calls start/stop of SourceThread
-    SourceThread --> Source : calls fillTupleBuffer in running routine
+    SourceThread --> Source : calls fillBuffer in running routine
     Source ..> FileSource : data ingestion implemented by
     Source ..> TCPSource : data ingestion implemented by
     SourceProvider --> SourceRegistry : provide SourceDescriptor
@@ -69,20 +69,20 @@ classDiagram
         }
     %% Source is the interface for the PluginRegistry for sources
         class Source {
-            + bool fillTupleBuffer(TupleBuffer)
+            + bool fillBuffer(Buffer)
             + void virtual open()
             + void virtual close()
         }
 
         class FileSource {
-            + bool fillTupleBuffer(TupleBuffer)
+            + bool fillBuffer(Buffer)
             + void open()
             + void close()
             - std::string filePath
         }
 
         class TCPSource {
-            + bool fillTupleBuffer(TupleBuffer)
+            + bool fillBuffer(Buffer)
             + void open()
             + void close()
             - string host

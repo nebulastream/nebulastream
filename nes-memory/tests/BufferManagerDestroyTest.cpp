@@ -16,8 +16,8 @@
 #include <cstdint>
 #include <memory>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
 
 namespace NES

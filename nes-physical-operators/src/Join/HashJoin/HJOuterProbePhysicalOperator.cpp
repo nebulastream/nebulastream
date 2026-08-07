@@ -23,7 +23,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
@@ -31,8 +31,8 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -58,8 +58,7 @@ loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const s
     auto valueMemArea = entryRef.getValueMemArea();
     OwnedNautilusBuffer pagedVectorBuffer;
     nautilus::invoke(
-        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-        { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
+        +[](Buffer* hashMapBuf, Buffer* out, const uint32_t* indexPtr) { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         entryRef.hashMapBuffer,
         pagedVectorBuffer.asArg(),
         static_cast<nautilus::val<uint32_t*>>(valueMemArea));
@@ -91,7 +90,7 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
 }
 
 void HJOuterProbePhysicalOperator::performNullFillProbe(
-    const nautilus::val<TupleBuffer*>& recordBufferRef,
+    const nautilus::val<Buffer*>& recordBufferRef,
     nautilus::val<uint64_t> outerOffset,
     nautilus::val<uint64_t> outerNumberOfHashMaps,
     nautilus::val<uint64_t> innerOffset,
@@ -145,12 +144,12 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
 }
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) outer join dispatches by task type and delegates to inner/null-fill probes
-void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Parse the trigger buffer
-    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
+    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getBuffer().data());
     const auto leftNumberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
     const auto rightNumberOfHashMaps
@@ -161,7 +160,7 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
     /// The hash map buffers themselves are stored as child buffers of the record buffer: left ones first, right ones after
-    const auto& recordBufferRef = recordBuffer.getReference();
+    const auto recordBufferRef = recordBuffer.getBuffer().asArg();
     const nautilus::val<uint64_t> leftOffset{0ULL};
     /// Right-side hash maps are stored immediately after the left ones
     const nautilus::val<uint64_t>& rightOffset = leftNumberOfHashMaps;

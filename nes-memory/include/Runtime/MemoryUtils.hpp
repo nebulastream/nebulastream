@@ -16,16 +16,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 namespace NES
 {
-/// Deep-copies a TupleBuffer: copies the raw bytes, replicates all metadata, and recursively copies every child buffer into freshly allocated buffers obtained from `provider`.
-TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider);
+/// Deep-copies a Buffer: copies the raw bytes, replicates all metadata, and recursively copies every child buffer into freshly allocated buffers obtained from `provider`.
+Buffer deepCopyBuffer(const Buffer& buffer, AbstractBufferProvider& provider);
 
 /// Returns a buffer for the specified size and optimizes internally for either pooled or unpooled.
 /// TODO #1582: This logic will be refactored into the Buffer Provider
-TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
+Buffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
 }
 
 /**

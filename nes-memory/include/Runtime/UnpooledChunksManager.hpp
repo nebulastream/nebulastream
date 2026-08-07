@@ -25,8 +25,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/RollingAverage.hpp>
 #include <fmt/format.h>
@@ -101,8 +101,7 @@ public:
     size_t getNumberOfUnpooledBuffers() const;
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.
-    std::optional<TupleBuffer>
-    getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler);
+    std::optional<Buffer> getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler);
 };
 
 }

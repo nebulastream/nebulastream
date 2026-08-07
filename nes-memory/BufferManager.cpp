@@ -30,13 +30,13 @@
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/MemoryUtils.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+#include <BufferImpl.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 
 namespace NES
 {
@@ -199,7 +199,7 @@ void BufferManager::initialize()
     NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
 }
 
-TupleBuffer BufferManager::getBufferBlocking()
+Buffer BufferManager::getBufferBlocking()
 {
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
     if (buffer.has_value())
@@ -210,7 +210,7 @@ TupleBuffer BufferManager::getBufferBlocking()
     throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout({})", GET_BUFFER_TIMEOUT);
 }
 
-std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
+std::optional<Buffer> BufferManager::getBufferNoBlocking()
 {
     detail::MemorySegment* memSegment = nullptr;
     if (!availableBuffers.read(memSegment))
@@ -219,12 +219,12 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+        return Buffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
+std::optional<Buffer> BufferManager::getBufferWithTimeout(const std::chrono::milliseconds timeoutMs)
 {
     detail::MemorySegment* memSegment = nullptr;
     const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
@@ -234,12 +234,12 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+        return Buffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
+std::optional<Buffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
     return unpooledChunksManager->getUnpooledBuffer(bufferSize, alignment, shared_from_this());
 }

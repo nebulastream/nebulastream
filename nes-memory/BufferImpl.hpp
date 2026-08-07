@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -42,7 +42,7 @@ namespace NES
 {
 class BufferManager;
 class LocalBufferPool;
-class TupleBuffer;
+class Buffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
 
@@ -58,8 +58,8 @@ class MemorySegment;
 
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
- * MemorySegment/TupleBuffer. In particular, it stores the atomic reference counter that tracks how many
- * live reference exists of the owning MemorySegment/TupleBuffer and it also stores the callback to execute
+ * MemorySegment/Buffer. In particular, it stores the atomic reference counter that tracks how many
+ * live reference exists of the owning MemorySegment/Buffer and it also stores the callback to execute
  * when the reference counter reaches 0.
  *
  * Reminder: this class should be header-only to help inlining
@@ -71,9 +71,9 @@ public:
 
     [[nodiscard]] MemorySegment* getOwner() const;
 
-    /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
+    /// This method must be called before the BufferManager hands out a Buffer. It ensures that the internal
     /// reference counter is zero. If that's not the case, an exception is thrown.
-    /// Returns true if the mem segment can be used to create a TupleBuffer.
+    /// Returns true if the mem segment can be used to create a Buffer.
     bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
 
     /// Increase the reference counter by one.
@@ -161,14 +161,14 @@ static_assert(alignof(BufferControlBlock) % 64 == 0);
  * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.
  * The BufferManager is the only class that can store MemorySegments. A MemorySegment has no clue of what it's stored
  * inside its allocated memory and has no way to expose the pointer to outside world.
- * The public companion of a MemorySegment is the TupleBuffer, which can "leak" the pointer to the outside world.
+ * The public companion of a MemorySegment is the Buffer, which can "leak" the pointer to the outside world.
  *
  * Reminder: this class should be header-only to help inlining
  *
  */
 class MemorySegment
 {
-    friend class NES::TupleBuffer; /// needed, because not in NES::detail namespace
+    friend class NES::Buffer; /// needed, because not in NES::detail namespace
     friend class NES::LocalBufferPool;
     friend class NES::FixedSizeBufferPool;
     friend class NES::BufferManager;

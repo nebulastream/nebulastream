@@ -20,7 +20,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
@@ -58,12 +58,12 @@ HJInnerProbePhysicalOperator::HJInnerProbePhysicalOperator(
 {
 }
 
-void HJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void HJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting number of hash maps
-    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
+    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getBuffer().data());
     const auto leftNumberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
     const auto rightNumberOfHashMaps
@@ -75,6 +75,7 @@ void HJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
     /// The hash map buffers themselves are stored as child buffers of the record buffer, not as raw pointers in the trigger struct
-    performMatchPairsProbe(recordBuffer.getReference(), leftNumberOfHashMaps, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
+    performMatchPairsProbe(
+        recordBuffer.getBuffer().asArg(), leftNumberOfHashMaps, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
 }
 }

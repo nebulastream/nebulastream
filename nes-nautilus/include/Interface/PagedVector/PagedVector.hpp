@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -36,41 +36,43 @@ class PagedVector
 public:
     /// @brief This class represents a single page of the paged vector.
     /// Pages store fixed-sized data directly. Varsized data is stored into buffers that are attached to the page as children buffers.
-    /// Each page contains the cumulative sum in its header.
+    /// Each page stores the cumulative sum and its own tuple count in its header, so the paged vector never relies on Buffer metadata.
     struct Page
     {
-        static void init(TupleBuffer buffer);
-        static Page load(TupleBuffer buffer);
+        static void init(Buffer buffer);
+        static Page load(Buffer buffer);
         static uint64_t getHeaderSize();
 
         [[nodiscard]] size_t getCumulativeSum() const;
         void setCumulativeSum(size_t newCumulativeSum);
 
         [[nodiscard]] uint64_t getNumberOfTuples() const;
+        void setNumberOfTuples(uint64_t newNumberOfTuples);
 
     private:
-        explicit Page(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        explicit Page(Buffer buffer) : buffer(std::move(buffer)) { }
 
         struct Header
         {
             uint64_t cumulativeSum;
+            uint64_t numberOfTuples;
 
-            explicit Header(uint64_t cumulativeSum) : cumulativeSum(cumulativeSum) { }
+            explicit Header(const uint64_t cumulativeSum) : cumulativeSum(cumulativeSum), numberOfTuples(0) { }
         };
 
         [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
         [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
-        TupleBuffer buffer;
+        Buffer buffer;
     };
 
     /// Paged Vector magic numbers
     static constexpr auto VALID_PV = 8254372433832867;
     static constexpr auto INVALID_PV = 0;
 
-    static void init(TupleBuffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
-    static PagedVector load(const TupleBuffer& buffer);
+    static void init(Buffer buffer, uint64_t pageBufferSize, uint64_t tupleSize);
+    static PagedVector load(const Buffer& buffer);
 
     /// @brief Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull(AbstractBufferProvider* bufferProvider);
@@ -79,7 +81,7 @@ public:
     void copyPagesFrom(AbstractBufferProvider& bufferProvider, const PagedVector& other);
 
     /// @brief Transfers ownership of `other`'s pages to this PagedVector by appending them as child buffers.
-    /// This is a *logical* move: the underlying page TupleBuffers are not physically detached from `other.buffer`;
+    /// This is a *logical* move: the underlying page Buffers are not physically detached from `other.buffer`;
     /// they remain refcount-pinned by `other.buffer.children` until `other.buffer` itself is destroyed.
     /// `other` is marked INVALID_PV after the call. The caller MUST drop `other` immediately after and MUST NOT
     /// access it again — any further operation on `other` is undefined.
@@ -117,7 +119,7 @@ private:
         }
     };
 
-    explicit PagedVector(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    explicit PagedVector(Buffer buffer) : buffer(std::move(buffer)) { }
 
     [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
@@ -128,7 +130,7 @@ private:
     void updateCumulativeSumAllPages() const;
     void addNewPage(AbstractBufferProvider* bufferProvider, uint64_t bufferSize);
 
-    TupleBuffer buffer;
+    Buffer buffer;
 };
 
 }

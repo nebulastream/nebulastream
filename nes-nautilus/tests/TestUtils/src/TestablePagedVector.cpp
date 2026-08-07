@@ -27,7 +27,7 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 #include <options.hpp>
@@ -57,7 +57,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
 
     pushbackFn.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
+            nautilus::val<Buffer*> pagedVector, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
         {
             const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
             PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
@@ -66,7 +66,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
 
     readAtFn.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
+            nautilus::val<Buffer*> pagedVector, nautilus::val<uint64_t> index, nautilus::val<AnyVec*> out)
         {
             const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
             auto record = pvRef.at(index);
@@ -75,7 +75,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
 
     readAll.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
-            nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
+            nautilus::val<Buffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
         {
             const PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
             for (const auto& record : pvRef)

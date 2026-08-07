@@ -19,7 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>

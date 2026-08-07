@@ -34,7 +34,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <SpanningTupleBuffer.hpp>
 
 namespace NES
@@ -66,7 +66,7 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawBuffer().getSequenceNumber());
 }
 
 SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber)
@@ -76,7 +76,7 @@ SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const S
 
 SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawBuffer().getSequenceNumber());
 }
 
 SequenceShredderResult

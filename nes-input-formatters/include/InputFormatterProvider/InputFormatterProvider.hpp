@@ -17,15 +17,15 @@
 #include <memory>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<TupleBufferRef>
-provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
+std::shared_ptr<MemoryLayout>
+provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<MemoryLayout> memoryProvider);
 
 bool contains(const std::string& parserType);
 }

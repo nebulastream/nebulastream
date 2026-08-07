@@ -32,5 +32,5 @@ if(ALL_HASHMAP_TESTS)
     target_compile_definitions(chained-hashmap-unit-tests PRIVATE ALL_HASHMAP_TESTS)
 endif()
 
-add_nes_unit_test(TestTupleBufferTest "TestTupleBufferTest.cpp")
-target_link_libraries(TestTupleBufferTest nes-nautilus-test-util)
+add_nes_unit_test(TestBufferTest "TestBufferTest.cpp")
+target_link_libraries(TestBufferTest nes-nautilus-test-util)

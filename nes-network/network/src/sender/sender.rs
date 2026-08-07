@@ -87,9 +87,9 @@ pub enum TrySendDataResult {
     /// The buffer was successfully queued for sending.
     Ok,
     /// The channel's internal queue is full. The buffer is returned to the caller.
-    Full(TupleBuffer),
+    Full(Buffer),
     /// The channel is closed. The buffer is returned to the caller.
-    Closed(TupleBuffer),
+    Closed(Buffer),
 }
 impl SenderChannel {
     /// Attempts to send a tuple buffer through this channel without blocking.
@@ -104,7 +104,7 @@ impl SenderChannel {
     /// When `Full` is returned, the caller should apply backpressure to avoid
     /// unbounded memory growth. The buffer is returned so it can be retried later
     /// or handled appropriately.
-    pub fn try_send_data(&self, buffer: TupleBuffer) -> TrySendDataResult {
+    pub fn try_send_data(&self, buffer: Buffer) -> TrySendDataResult {
         let result = self.queue.try_send(ChannelCommand::Data(buffer));
         match result {
             Ok(()) => TrySendDataResult::Ok,

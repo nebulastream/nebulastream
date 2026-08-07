@@ -20,7 +20,7 @@
 #include <utility>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -29,21 +29,20 @@ namespace NES
 using FieldIndex = uint32_t;
 using SequenceNumberType = SequenceNumber::Underlying;
 
-/// Wraps a TupleBuffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
-/// the underlying TupleBuffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
-class RawTupleBuffer
+/// Wraps a Buffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
+/// the underlying Buffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
+class RawBuffer
 {
 public:
-    RawTupleBuffer() = default;
-    ~RawTupleBuffer() = default;
-    explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
-        : rawBuffer(std::move(rawTupleBuffer))
-        , bufferView(rawBuffer.getAvailableMemoryArea<char>().data(), rawBuffer.getNumberOfTuples()) { };
+    RawBuffer() = default;
+    ~RawBuffer() = default;
+    explicit RawBuffer(Buffer buffer)
+        : rawBuffer(std::move(buffer)), bufferView(rawBuffer.getAvailableMemoryArea<char>().data(), rawBuffer.getNumberOfTuples()) { };
 
-    RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
-    RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
-    RawTupleBuffer(const RawTupleBuffer& other) = default;
-    RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
+    RawBuffer(RawBuffer&& other) noexcept = default;
+    RawBuffer& operator=(RawBuffer&& other) noexcept = default;
+    RawBuffer(const RawBuffer& other) = default;
+    RawBuffer& operator=(const RawBuffer& other) = default;
 
     [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
 
@@ -51,10 +50,10 @@ public:
 
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
-    [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+    [[nodiscard]] const Buffer& getRawBuffer() const noexcept { return rawBuffer; }
 
 private:
-    TupleBuffer rawBuffer;
+    Buffer rawBuffer;
     std::string_view bufferView;
 };
 
@@ -69,8 +68,8 @@ private:
 public:
     StagedBuffer() = default;
 
-    StagedBuffer(RawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
-        : rawBuffer(std::move(rawTupleBuffer))
+    StagedBuffer(RawBuffer rawBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawBuffer))
         , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
         , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter)
@@ -111,10 +110,10 @@ public:
 
     [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
 
-    [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
+    [[nodiscard]] const RawBuffer& getRawBuffer() const { return rawBuffer; }
 
 protected:
-    RawTupleBuffer rawBuffer;
+    RawBuffer rawBuffer;
     size_t sizeOfBufferInBytes{};
     FieldIndex offsetOfFirstTupleDelimiter{};
     FieldIndex offsetOfLastTupleDelimiter{};

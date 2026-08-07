@@ -30,9 +30,9 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/TypeTraits.hpp>
 #include <ErrorHandling.hpp>
 
@@ -101,33 +101,33 @@ constexpr DataType::Type expectedType()
 }
 }
 
-class TestTupleBufferView;
-class TestTupleBufferRecordView;
+class TestBufferView;
+class TestBufferRecordView;
 class FieldView;
 
 using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
 /// Entry point. Holds schema config.
-class TestTupleBuffer
+class TestBuffer
 {
 public:
-    explicit TestTupleBuffer(TestSchema schema);
+    explicit TestBuffer(TestSchema schema);
 
-    /// Wraps an existing TupleBuffer for schema-aware access.
+    /// Wraps an existing Buffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
     /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations) convenience default for non-VARSIZED use
-    TestTupleBufferView open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
+    TestBufferView open(Buffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
 
 private:
     TestSchema schema;
 };
 
-/// View over a TupleBuffer. Supports append and indexed record access.
-class TestTupleBufferView
+/// View over a Buffer. Supports append and indexed record access.
+class TestBufferView
 {
 public:
     /// Access record at index. Throws if index >= getNumberOfTuples().
-    TestTupleBufferRecordView operator[](size_t index);
+    TestBufferRecordView operator[](size_t index);
 
     /// Append a record with values matching schema fields left-to-right.
     /// Supports implicit numeric casting: append(10, 200) works when the
@@ -138,17 +138,17 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 private:
-    friend class TestTupleBuffer;
-    friend class TestTupleBufferRecordView;
+    friend class TestBuffer;
+    friend class TestBufferRecordView;
     friend class FieldView;
 
     struct Impl
     {
         TestSchema schema;
-        TupleBuffer&
-            buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
+        Buffer&
+            buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the Buffer it wraps
         AbstractBufferProvider* bufferProvider;
-        std::shared_ptr<TupleBufferRef> bufRef;
+        std::shared_ptr<MemoryLayout> bufRef;
     };
 
     std::shared_ptr<Impl> impl;
@@ -163,16 +163,16 @@ private:
 };
 
 /// View over a single record.
-class TestTupleBufferRecordView
+class TestBufferRecordView
 {
 public:
     /// Access field by name. Throws if field not in schema.
     FieldView operator[](const std::string& fieldName);
 
 private:
-    friend class TestTupleBufferView;
+    friend class TestBufferView;
 
-    std::shared_ptr<TestTupleBufferView::Impl> impl;
+    std::shared_ptr<TestBufferView::Impl> impl;
     size_t recordIndex;
 };
 
@@ -195,11 +195,11 @@ public:
     T as() const;
 
 private:
-    friend class TestTupleBufferRecordView;
+    friend class TestBufferRecordView;
 
     [[nodiscard]] std::optional<FieldValue> readFieldValue() const;
 
-    std::weak_ptr<TestTupleBufferView::Impl> implWeak;
+    std::weak_ptr<TestBufferView::Impl> implWeak;
     size_t recordIndex;
     std::string fieldName;
     DataType dataType;
@@ -208,7 +208,7 @@ private:
 /// Template implementations
 
 template <typename T>
-std::optional<FieldValue> TestTupleBufferView::toFieldValue(T&& arg, DataType::Type targetType)
+std::optional<FieldValue> TestBufferView::toFieldValue(T&& arg, DataType::Type targetType)
 {
     using Raw = std::remove_cvref_t<T>;
 
@@ -282,12 +282,12 @@ std::optional<FieldValue> TestTupleBufferView::toFieldValue(T&& arg, DataType::T
     }
     else
     {
-        static_assert(!sizeof(T*), "Unsupported type for TestTupleBuffer append");
+        static_assert(!sizeof(T*), "Unsupported type for TestBuffer append");
     }
 }
 
 template <typename... Args>
-void TestTupleBufferView::append(Args&&... values)
+void TestBufferView::append(Args&&... values)
 {
     static_assert(sizeof...(Args) > 0, "append requires at least one argument");
     if (sizeof...(Args) != impl->schema.size())

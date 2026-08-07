@@ -20,7 +20,7 @@
 #include <utility>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 #include <InputFormatIndexer.hpp>
@@ -37,14 +37,14 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatter>;
 /// hands a `unique_ptr<InputFormatIndexer>` to `createInputFormatterWithIndexer()` to assemble a concrete `InputFormatter`.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(const InputFormatterDescriptor& config, std::shared_ptr<TupleBufferRef> memoryProvider)
+    InputFormatIndexerRegistryArguments(const InputFormatterDescriptor& config, std::shared_ptr<MemoryLayout> memoryProvider)
         : inputFormatIndexerConfig(config), memoryProvider(std::move(memoryProvider))
     {
     }
 
     [[nodiscard]] const InputFormatterDescriptor& getInputFormatterConfig() const { return inputFormatIndexerConfig; }
 
-    [[nodiscard]] const TupleBufferRef& getInputMemoryProvider() const { return *memoryProvider; }
+    [[nodiscard]] const MemoryLayout& getInputMemoryProvider() const { return *memoryProvider; }
 
     /// Instantiates an InputFormatter with a specific input format indexer
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(std::unique_ptr<InputFormatIndexer> inputFormatIndexer)
@@ -58,7 +58,7 @@ private:
     /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
     InputFormatterDescriptor inputFormatIndexerConfig;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
+    std::shared_ptr<MemoryLayout> memoryProvider;
 };
 
 class InputFormatIndexerRegistry : public BaseRegistry<

@@ -35,7 +35,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -204,29 +204,29 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillBufferResult TCPSource::fillBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
         size_t numReceivedBytes = 0;
-        while (fillBuffer(tupleBuffer, numReceivedBytes))
+        while (fillBufferFromSocket(tupleBuffer, numReceivedBytes))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
         if (numReceivedBytes == 0)
         {
-            return FillTupleBufferResult::eos();
+            return FillBufferResult::eos();
         }
-        return FillTupleBufferResult::withBytes(numReceivedBytes);
+        return FillBufferResult::withBytes(numReceivedBytes);
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("Failed to fill the TupleBuffer. Error: {}.", e.what());
+        NES_ERROR("Failed to fill the Buffer. Error: {}.", e.what());
         throw;
     }
 }
 
-bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBufferFromSocket(Buffer& tupleBuffer, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
@@ -258,12 +258,12 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
-        /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
+        /// If so, we flush the current Buffer(TB) and proceed with the next TB.
         if ((flushIntervalInMs > 0
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
                  >= flushIntervalInMs))
         {
-            NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("Reached Buffer flush interval. Finishing writing to current Buffer.");
             flushIntervalPassed = true;
         }
     }

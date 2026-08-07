@@ -28,8 +28,8 @@
 #include <DataTypes/DataType.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -334,7 +334,7 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Interpreter);
     auto iterate = engine.registerFunction(std::function(
         /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
-        [](nautilus::val<TupleBuffer*> buffer)
+        [](nautilus::val<Buffer*> buffer)
         {
             const ChainedHashMapRef ref{buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}};
             for (const auto entry : ref)

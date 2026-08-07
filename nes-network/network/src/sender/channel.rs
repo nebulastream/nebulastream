@@ -94,7 +94,7 @@ async fn create_channel<C: Communication>(
 /// Commands sent from `SenderChannel` to the channel handler task.
 pub(super) enum ChannelCommand {
     /// Send a data buffer through the channel.
-    Data(TupleBuffer),
+    Data(Buffer),
     /// Flush the network writer and report whether all data has been acknowledged.
     /// The boolean sent through the oneshot indicates: true if both pending and
     /// in-flight queues are empty, false otherwise.
@@ -136,8 +136,8 @@ pub(super) type ChannelCommandQueueListener = async_channel::Receiver<ChannelCom
 /// - Unrecoverable error occurs
 pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     cancellation_token: CancellationToken,
-    pending_writes: VecDeque<TupleBuffer>,
-    wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
+    pending_writes: VecDeque<Buffer>,
+    wait_for_ack: HashMap<OriginSequenceNumber, Buffer>,
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
@@ -232,7 +232,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         Ok(())
     }
 
-    /// Attempts to send the next pending TupleBuffer to the receiver.
+    /// Attempts to send the next pending Buffer to the receiver.
     ///
     /// # Behavior
     ///
@@ -257,8 +257,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     async fn send_pending(
         cancel_token: &CancellationToken,
         writer: &mut DataChannelSenderWriter<W>,
-        pending_writes: &mut VecDeque<TupleBuffer>,
-        wait_for_ack: &mut HashMap<OriginSequenceNumber, TupleBuffer>,
+        pending_writes: &mut VecDeque<Buffer>,
+        wait_for_ack: &mut HashMap<OriginSequenceNumber, Buffer>,
     ) -> InternalResult<()> {
         let Some(buffer) = pending_writes.front() else {
             return Ok(());

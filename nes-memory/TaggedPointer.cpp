@@ -15,8 +15,8 @@
 #include <TaggedPointer.hpp>
 
 #include <cstdint>
+#include <BufferImpl.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 
 namespace NES
 {

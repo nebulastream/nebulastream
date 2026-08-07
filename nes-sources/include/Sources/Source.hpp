@@ -20,22 +20,22 @@
 #include <stop_token>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
 
-/// Source is the interface for all sources that read data into TupleBuffers.
-/// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
-/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
+/// Source is the interface for all sources that read data into Buffers.
+/// 'SourceThread' creates Buffers and uses 'Source' to fill.
+/// When 'fillBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled Buffer.
 class Source
 {
 public:
-    class FillTupleBufferResult
+    class FillBufferResult
     {
-        explicit FillTupleBufferResult(size_t sizeInBytes) : result(Data{sizeInBytes}) { };
-        FillTupleBufferResult() = default;
+        explicit FillBufferResult(size_t sizeInBytes) : result(Data{sizeInBytes}) { };
+        FillBufferResult() = default;
 
         struct EoS
         {
@@ -49,9 +49,9 @@ public:
         std::variant<EoS, Data> result = EoS{};
 
     public:
-        static FillTupleBufferResult eos() { return {}; }
+        static FillBufferResult eos() { return {}; }
 
-        static FillTupleBufferResult withBytes(size_t sizeInBytes) { return FillTupleBufferResult{sizeInBytes}; }
+        static FillBufferResult withBytes(size_t sizeInBytes) { return FillBufferResult{sizeInBytes}; }
 
         [[nodiscard]] bool isEoS() const { return std::holds_alternative<EoS>(result); }
 
@@ -61,9 +61,9 @@ public:
     Source() = default;
     virtual ~Source() = default;
 
-    /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
+    /// Read data from a source into a Buffer, until the Buffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+    virtual FillBufferResult fillBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;

@@ -24,7 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <CompilationContext.hpp>
 
@@ -103,10 +103,10 @@ protected:
     /// otherwise. Never allocates, so it is safe to call without synchronization: it only ever reads state that
     /// is either not-yet-written (nullptr) or was already fully written by whichever thread first-touched this
     /// index via getOrCreateHashMapBufferRef.
-    [[nodiscard]] const TupleBuffer* getHashMapBufferRef(ChildBufferIndex childBufferIndex) const;
+    [[nodiscard]] const Buffer* getHashMapBufferRef(ChildBufferIndex childBufferIndex) const;
 
     /// @brief Loads a specific hash map from the slice based on the index, lazily allocating it on first access.
-    [[nodiscard]] const TupleBuffer* getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, ChildBufferIndex childBufferIndex);
+    [[nodiscard]] const Buffer* getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, ChildBufferIndex childBufferIndex);
 
     /// metadata
     uint64_t numHashMaps;
@@ -114,7 +114,7 @@ protected:
     uint64_t numHashmapsPerInputStream;
     HashMapSliceParams params;
     /// the hash map buffers for the hash map slice
-    std::vector<TupleBuffer> hashMapBuffers;
+    std::vector<Buffer> hashMapBuffers;
     /// Holds the state of whether individual tuplebuffers have been allocated.
     std::vector<HashMapBufferState> hashMapBuffersState;
 };

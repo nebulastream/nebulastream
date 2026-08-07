@@ -24,9 +24,9 @@
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -51,12 +51,12 @@ void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx, CompilationC
     setupChild(executionCtx, compilationContext);
 }
 
-void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
 }
 
-void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     closeChild(executionCtx, recordBuffer);
 }
@@ -77,13 +77,13 @@ void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, Compila
     getChild().value().setup(executionCtx, compilationContext);
 }
 
-void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
     getChild().value().open(executionCtx, recordBuffer);
 }
 
-void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
     getChild().value().close(executionCtx, recordBuffer);
@@ -133,12 +133,12 @@ void PhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&
     self->setup(executionCtx, compilationContext);
 }
 
-void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     self->open(executionCtx, recordBuffer);
 }
 
-void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void PhysicalOperator::close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     self->close(executionCtx, recordBuffer);
 }

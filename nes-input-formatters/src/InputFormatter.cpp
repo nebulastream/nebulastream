@@ -30,16 +30,16 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -174,7 +174,7 @@ public:
         tlOwnedRawBufferIndices = OwnedRawBufferIndices{};
     }
 
-    static IndexResult indexRawBuffer(InputFormatIndexer& indexer, const TupleBuffer& tupleBuffer)
+    static IndexResult indexRawBuffer(InputFormatIndexer& indexer, const Buffer& tupleBuffer)
     {
         auto result = indexer.indexRawBuffer({tupleBuffer.getAvailableMemoryArea<char>().data(), tupleBuffer.getNumberOfTuples()});
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter] = result->getTupleDelimiterOffsets();
@@ -252,7 +252,7 @@ private:
 };
 
 bool indexTrailingSpanningTupleProxy(
-    const TupleBuffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
+    const Buffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
 {
     /// Value was stashed on tlIndexPhaseResult when the indexer returned its RawBufferIndex; max() means no delimiter in the buffer.
     const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.offsetOfLastTupleInRawBuffer;
@@ -280,7 +280,7 @@ bool indexTrailingSpanningTupleProxy(
 }
 
 IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
-    const TupleBuffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
+    const Buffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
 {
     IndexPhaseResultBuilder::startBuildingIndex();
     const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
@@ -289,7 +289,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     if (hasTupleDelimiter)
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findLeadingSpanningTupleWithDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+            StagedBuffer{RawBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
         if (not isInRange)
         {
             IndexPhaseResultBuilder::setIsRepeat(true);
@@ -304,7 +304,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     else /* has no tuple delimiter */
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findSpanningTupleWithoutDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
+            StagedBuffer{RawBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
 
         if (not isInRange)
         {
@@ -330,7 +330,7 @@ void parseLeadingRecord(
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
     {
@@ -347,19 +347,19 @@ void parseLeadingRecord(
 
 void parseRecordsInRawBuffer(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     nautilus::val<uint64_t> bufferRecordIdx = 0;
     auto rawBufferIndexVal = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, rawBufferIndex));
     while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
     {
         auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            projections, recordBuffer.getMemArea(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
+            projections, recordBuffer.getBuffer().data(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
         executeChild(executionCtx, record);
         bufferRecordIdx += 1;
     }
@@ -367,17 +367,17 @@ void parseRecordsInRawBuffer(
 
 void parseTrailingRecord(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
     const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     InputFormatIndexer& indexer,
     SequenceShredder& sequenceShredder,
-    const TupleBufferRef& bufferRef)
+    const MemoryLayout& bufferRef)
 {
     const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
         indexTrailingSpanningTupleProxy,
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         executionCtx.pipelineMemoryProvider.arena.getArena(),
         nautilus::val<InputFormatIndexer*>(&indexer),
         nautilus::val<SequenceShredder*>(&sequenceShredder));
@@ -402,14 +402,14 @@ std::vector<DataType> InputFormatter::getAllDataTypes() const
     std::unreachable();
 }
 
-Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
+Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const TaskBufferRef&, nautilus::val<uint64_t>&) const
 {
     INVARIANT(false, "Does not implement 'readRecord()'");
     std::unreachable();
 }
 
-TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
-    nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+MemoryLayout::WriteRecordResult InputFormatter::writeRecord(
+    nautilus::val<uint64_t>&, const TaskBufferRef&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
 {
     INVARIANT(false, "unsupported operation on InputFormatter");
     std::unreachable();
@@ -421,13 +421,13 @@ std::vector<Record::RecordFieldIdentifier> InputFormatter::getAllFieldNames() co
     std::unreachable();
 }
 
-nautilus::val<bool> InputFormatter::indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
+nautilus::val<bool> InputFormatter::indexBuffer(const TaskBufferRef& recordBuffer, const ArenaRef& arenaRef) const
 {
     setDefaultRawBufferIndicesForTracing(*this->inputFormatIndexer);
     /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
     const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
         indexLeadingSpanningTupleAndBufferProxy,
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         arenaRef.getArena(),
         nautilus::val<InputFormatIndexer*>(this->inputFormatIndexer.get()),
         nautilus::val<SequenceShredder*>(this->sequenceShredder.get())));
@@ -442,7 +442,7 @@ nautilus::val<bool> InputFormatter::indexBuffer(const RecordBuffer& recordBuffer
 
 void InputFormatter::readBuffer(
     ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild)
 {
     /// @Note: the order below is important
@@ -451,7 +451,7 @@ void InputFormatter::readBuffer(
     /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
     /// we count such a spanning tuple as a leading spanning tuple
     /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
-    parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
+    parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->layout);
 
     /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
     /// such a buffer can only form one (leading) spanning tuple, so returning is safe
@@ -463,7 +463,7 @@ void InputFormatter::readBuffer(
     /// a buffer that delimits tuples may contain multiple complete tuples
     /// determining the offset of a tuple may require parsing the prior tuple
     parseRecordsInRawBuffer(
-        executionCtx, recordBuffer, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
+        executionCtx, recordBuffer, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->layout);
 
     /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
     /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
@@ -475,7 +475,7 @@ void InputFormatter::readBuffer(
         this->projections,
         *this->inputFormatIndexer,
         *this->sequenceShredder,
-        *this->memoryProvider);
+        *this->layout);
 }
 
 std::ostream& InputFormatter::toString(std::ostream& os) const
