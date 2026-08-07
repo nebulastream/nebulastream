@@ -20,6 +20,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <Operators/LogicalOperator.hpp>
@@ -28,7 +29,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
-
+#include <Rules/PlanVisitor.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -38,24 +39,23 @@ namespace NES
 
 namespace
 {
-LogicalOperator recur(const LogicalOperator& op)
-{
-    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
 
-    if (op.tryGetAs<UnionLogicalOperator>().has_value() && newChildren.size() == 1)
+
+PlanVisitor<>::UpResult redundantUnionRemoval(const LogicalOperator& op, std::vector<LogicalOperator> children)
+{
+    if (op.tryGetAs<UnionLogicalOperator>().has_value() && children.size() == 1)
     {
-        return newChildren.front();
+        return children.front();
     }
-    return op.withChildren(std::move(newChildren));
+    return op.withChildren(std::move(children));
 }
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
-    return queryPlan;
+    PlanVisitor<> visitor{redundantUnionRemoval};
+    return visitor.apply(std::move(queryPlan));
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -301,7 +301,7 @@ TEST_F(WatermarkAssignerPushdownRuleTest, ProjectionPartialBreakers)
 
 TEST_F(WatermarkAssignerPushdownRuleTest, Breakers)
 {
-    /// BEFORE AND AFTER: Sink < IngestionTime < Join < Source
+    /// BEFORE AND AFTER: Sink < IngestionTime < Join <(source1, source2)
 
     auto sourceLeft = utils.createSource("breakers1", {"a", "b"});
     auto sourceRight = utils.createSource("breakers2", {"c", "d"});
@@ -419,6 +419,91 @@ TEST_F(WatermarkAssignerPushdownRuleTest, ProjectionAsteriskWithComputedFieldBre
     ASSERT_TRUE(op2.tryGetAs<ProjectionLogicalOperator>());
     auto op3 = op2.getChildren().at(0);
     ASSERT_TRUE(op3.tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(WatermarkAssignerPushdownRuleTest, MultiSinkDivergingTimeSemanticsStayInTheirBranch)
+{
+    /// BEFORE: (sink1 < IT, sink2 < ET(ts)) < selection < source
+    /// AFTER:  (sink1 < IT, sink2 < ET(ts)) < selection < source
+    /// The selection is shared, so the two branches' requirements must not be unioned onto it: a union of
+    /// requirements is not the requirement of the union. sink2's windows must not see ingestion-time
+    /// watermarks, and sink1 must not gain an event-time assigner it never asked for.
+
+    auto source = utils.createSource("divergingSemantics", {"a", "ts"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}});
+
+    auto ingestionTime = IngestionTimeWatermarkAssignerLogicalOperator::create(select);
+    auto sink1 = utils.createSink(ingestionTime, "divergingSemantics1", {"a", "ts"});
+
+    auto eventTime = EventTimeWatermarkAssignerLogicalOperator::create(
+        select, FieldAccessLogicalFunction{select.getOutputSchema()[Identifier::parse("ts")].value()}, Windowing::TimeUnit{0});
+    auto sink2 = utils.createSink(eventTime, "divergingSemantics2", {"a", "ts"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+    auto pushed = WatermarkAssignerPushdownRule{}.apply(plan);
+
+    /// sink1 keeps ingestion time only
+    auto optSink1 = pushed.getRootOperators().at(0);
+    ASSERT_TRUE(optSink1.tryGetAs<SinkLogicalOperator>());
+    auto optIngestionTime = optSink1.getChildren().at(0);
+    ASSERT_TRUE(optIngestionTime.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>());
+    auto optSelect1 = optIngestionTime.getChildren().at(0);
+    ASSERT_TRUE(optSelect1.tryGetAs<SelectionLogicalOperator>());
+
+    /// sink2 keeps event time only
+    auto optSink2 = pushed.getRootOperators().at(1);
+    ASSERT_TRUE(optSink2.tryGetAs<SinkLogicalOperator>());
+    auto optEventTime = optSink2.getChildren().at(0);
+    ASSERT_TRUE(optEventTime.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>());
+    auto optSelect2 = optEventTime.getChildren().at(0);
+    ASSERT_TRUE(optSelect2.tryGetAs<SelectionLogicalOperator>());
+
+    /// the shared subplan is still shared and carries no assigner of either branch
+    ASSERT_EQ(optSelect1, optSelect2);
+    ASSERT_TRUE(optSelect1.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+}
+
+TEST_F(WatermarkAssignerPushdownRuleTest, MultiSinkSameEventTimeFieldIsNotDuplicated)
+{
+    /// BEFORE: (sink1 < ET(ts), sink2 < ET(ts)) < selection < source
+    /// AFTER:  (sink1 < ET(ts), sink2 < ET(ts)) < selection < source
+    /// Both branches want the same assigner, so concatenating the two contexts must not produce two
+    /// stacked, identical event-time assigners on the shared subplan.
+
+    auto source = utils.createSource("duplicateEventTime", {"a", "ts"});
+    auto select = SelectionLogicalOperator::create(
+        source,
+        EqualsLogicalFunction{
+            FieldAccessLogicalFunction{source.getOutputSchema()[Identifier::parse("a")].value()},
+            ConstantValueLogicalFunction{DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE}, "0"}});
+
+    auto eventTime1 = EventTimeWatermarkAssignerLogicalOperator::create(
+        select, FieldAccessLogicalFunction{select.getOutputSchema()[Identifier::parse("ts")].value()}, Windowing::TimeUnit{0});
+    auto sink1 = utils.createSink(eventTime1, "duplicateEventTime1", {"a", "ts"});
+
+    auto eventTime2 = EventTimeWatermarkAssignerLogicalOperator::create(
+        select, FieldAccessLogicalFunction{select.getOutputSchema()[Identifier::parse("ts")].value()}, Windowing::TimeUnit{0});
+    auto sink2 = utils.createSink(eventTime2, "duplicateEventTime2", {"a", "ts"});
+
+    auto plan = utils.createPlan({sink1, sink2});
+
+    auto pushed = WatermarkAssignerPushdownRule{}.apply(plan);
+
+    for (const auto& root : pushed.getRootOperators())
+    {
+        ASSERT_TRUE(root.tryGetAs<SinkLogicalOperator>());
+        auto optEventTime = root.getChildren().at(0);
+        ASSERT_TRUE(optEventTime.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>());
+        /// exactly one assigner per branch, not two identical ones stacked
+        auto optSelect = optEventTime.getChildren().at(0);
+        ASSERT_TRUE(optSelect.tryGetAs<SelectionLogicalOperator>());
+        ASSERT_TRUE(optSelect.getChildren().at(0).tryGetAs<SourceDescriptorLogicalOperator>());
+    }
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

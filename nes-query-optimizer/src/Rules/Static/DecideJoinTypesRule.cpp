@@ -29,9 +29,11 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -83,34 +85,14 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
 
     return true;
 }
-}
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-std::set<std::type_index> DecideJoinTypesRule::needs() const
+LogicalOperator
+decideJoinTypes(const LogicalOperator& logicalOperator, const std::vector<LogicalOperator>& children, const StreamJoinStrategy joinStrategy)
 {
-    return {typeid(FixedPlanStructureBarrier)};
-}
-
-LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan) const
-{
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
-    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
-}
-
-bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
-{
-    return this->joinStrategy == other.joinStrategy;
-}
-
-LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator) const
-{
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
     auto traitSet = logicalOperator.getTraitSet();
     if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
-        if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
+        if (joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
@@ -121,7 +103,7 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
         else
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
-            if (this->joinStrategy == StreamJoinStrategy::HASH_JOIN)
+            if (joinStrategy == StreamJoinStrategy::HASH_JOIN)
             {
                 NES_WARNING(
                     "Operator {} has not the HashJoinTrait, as the hash join is not supported for the join condition. Therefore, we "
@@ -135,6 +117,27 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
         tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
     }
     return logicalOperator.withChildren(children).withTraitSet(traitSet);
+}
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> DecideJoinTypesRule::needs() const
+{
+    return {typeid(FixedPlanStructureBarrier)};
+}
+
+LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan) const
+{
+    PlanVisitor<> visitor{
+        [this](const LogicalOperator& op, const std::vector<LogicalOperator>& children) -> PlanVisitor<>::UpResult
+        { return decideJoinTypes(op, children, this->joinStrategy); }};
+
+    return visitor.apply(queryPlan);
+}
+
+bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
+{
+    return this->joinStrategy == other.joinStrategy;
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
@@ -39,34 +40,30 @@
 namespace NES
 {
 
-namespace
-{
-LogicalOperator recur(const LogicalOperator& op, const ModelCatalog& modelCatalog)
-{
-    auto newChildren = op.getChildren() | std::views::transform([&](const auto& child) { return recur(child, modelCatalog); })
-        | std::ranges::to<std::vector>();
-
-    if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
-    {
-        const auto& modelName = inferModelName->get().getModelName();
-        if (!modelCatalog.hasModel(modelName))
-        {
-            throw UnknownModelName("Model '{}' is not registered", modelName);
-        }
-        PRECONDITION(
-            std::ranges::size(newChildren) == 1,
-            "Expected InferModelName Logical Operator to have one child, but has {}",
-            std::ranges::size(newChildren));
-        return TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog.load(modelName), std::move(newChildren.at(0))};
-    }
-    return op.withChildren(std::move(newChildren));
-}
-}
 
 LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    return queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front(), *modelCatalog)});
+    PlanVisitor<> visitor{
+        [this](const LogicalOperator& op, std::vector<LogicalOperator> children) -> PlanVisitor<>::UpResult
+        {
+            if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
+            {
+                const auto& modelName = inferModelName->get().getModelName();
+                if (!modelCatalog->hasModel(modelName))
+                {
+                    throw UnknownModelName("Model '{}' is not registered", modelName);
+                }
+                PRECONDITION(
+                    std::ranges::size(children) == 1,
+                    "Expected InferModelName Logical Operator to have one child, but has {}",
+                    std::ranges::size(children));
+                return LogicalOperator{
+                    TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog->load(modelName), std::move(children.at(0))}};
+            }
+            return op.withChildren(std::move(children));
+        }};
+
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

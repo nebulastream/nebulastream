@@ -18,11 +18,15 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
+#include <vector>
 
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
@@ -31,27 +35,27 @@
 namespace NES
 {
 
+namespace
+{
+PlanVisitor<>::UpResult decideMemoryLayout(const LogicalOperator& op, const std::vector<LogicalOperator>& children)
+{
+    auto traitSet = op.getTraitSet();
+    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    return op.withChildren(children).withTraitSet(std::move(traitSet));
+}
+}
+
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> DecideMemoryLayoutRule::needs() const
 {
     return {typeid(FixedPlanStructureBarrier)};
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
-    PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
-}
-
-LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator) const
-{
-    /// Iterating over all operators and setting the memory layout trait to row
-    const auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
-    auto traitSet = logicalOperator.getTraitSet();
-    tryInsert(traitSet, MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
-    return logicalOperator.withChildren(children).withTraitSet(traitSet);
+    PlanVisitor<> visitor{decideMemoryLayout};
+    return visitor.apply(queryPlan);
 }
 
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
