@@ -51,6 +51,7 @@ public:
     TypedLogicalOperator<SinkLogicalOperator>
     createSink(LogicalOperator child, std::string name, const std::vector<std::string>& fieldNames);
     LogicalPlan createPlan(LogicalOperator sink);
+    LogicalPlan createPlan(std::vector<LogicalOperator> sink);
     SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema);
 
 private:

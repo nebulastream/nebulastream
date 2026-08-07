@@ -33,6 +33,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Rules/PlanVisitor.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
@@ -50,26 +51,67 @@ namespace NES
 
 namespace
 {
-Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
+bool hasOrder(const LogicalOperator& rootNode)
 {
-    const auto childrenWithOutputOrder = visiting.getChildren()
-        | std::views::transform([](const auto& child) { return std::pair{child, applyRecursive(child)}; })
-        | std::ranges::to<std::unordered_map>();
+    const auto sink = rootNode.getAs<SinkLogicalOperator>();
+    PRECONDITION(sink->getSinkDescriptor().has_value(), "Expected all sink descriptors to be set");
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    const auto schemaVariant = sink->getSinkDescriptor()->getSchema();
+    return std::visit(
+        Overloaded{
+            [](const std::monostate&) -> bool
+            {
+                PRECONDITION(false, "Expected schema to be set in sink descriptor, was schema inference run?");
+                std::unreachable();
+            },
+            [](const std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>&) { return false; },
+            [](const std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>&) { return true; }},
+        schemaVariant);
+}
+}
 
+CalcTargetOrderRule::Visitor::UpResult CalcTargetOrderRule::calcTargetOrder(
+    LogicalOperator op, std::vector<LogicalOperator> children, std::unordered_map<LogicalOperator, Schema<Field, Ordered>> upContexts)
+{
+    op = op.withChildren(children);
 
-    if (const auto reorderer = visiting.tryGetAs<Reorderer>())
+    if (auto sinkOp = op.tryGetAs<SinkLogicalOperator>())
     {
-        return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder](const LogicalOperator& child)
-                                                               { return childrenWithOutputOrder.at(child); });
+        const auto& sink = sinkOp.value();
+
+        /// avoid overwrite sink orders if they are predefined
+        if (hasOrder(op))
+        {
+            return {op, {}};
+        }
+
+        PRECONDITION(children.size() == 1, "Sinks can only have one child");
+
+        const auto newTargetSchema
+            = upContexts.at(children.at(0)) | RangeUnbinder{} | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
+        auto sinkDescriptorOpt = sink->getSinkDescriptor();
+        PRECONDITION(sinkDescriptorOpt.has_value(), "Sink operator must have a descriptor to infer target schema order");
+        const auto oldDescriptor = NES::get<AnonymousSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
+        auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
+        auto newSinkRoot = sink->withSinkDescriptor(newAnonymousSinkDescriptor);
+
+        return {newSinkRoot, {}};
     }
+
+    if (auto reorderer = op.tryGetAs<Reorderer>())
+    {
+        auto schema
+            = reorderer.value()->get().getOrderedOutputSchema([&upContexts](const LogicalOperator& child) { return upContexts.at(child); });
+        return {op, schema};
+    }
+
     /// the unordered map above does not maintain the order of the children, so we have to go through them again
-    const auto orderedBoundInputSchema = visiting->getChildren()
-        | std::views::transform([&](const auto& child) { return childrenWithOutputOrder.at(child); }) | std::views::join
-        | std::ranges::to<Schema<Field, Ordered>>();
+    const auto orderedBoundInputSchema = children | std::views::transform([&](const auto& child) { return upContexts.at(child); })
+        | std::views::join | std::ranges::to<Schema<Field, Ordered>>();
 
     std::vector<Field> outputOrder;
     std::vector<Field> rest;
-    const auto outputSchema = visiting.getOutputSchema();
+    const auto outputSchema = op.getOutputSchema();
     for (const auto& inputField : orderedBoundInputSchema)
     {
         if (const auto& outputFieldOpt = outputSchema[inputField.getFullyQualifiedName()])
@@ -95,47 +137,26 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
     {
         outputOrder.push_back(field);
     }
-    return outputOrder | std::ranges::to<Schema<Field, Ordered>>();
-}
 
+    auto schema = std::move(outputOrder) | std::ranges::to<Schema<Field, Ordered>>();
+
+    return {op, schema};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
 {
-    auto hasOrder = [](const LogicalOperator& rootNode)
-    {
-        const auto sink = rootNode.getAs<SinkLogicalOperator>();
-        PRECONDITION(sink->getSinkDescriptor().has_value(), "Expected all sink descriptors to be set");
-        const auto schemaVariant = sink->getSinkDescriptor()->getSchema();
-        return std::visit(
-            Overloaded{
-                [](const std::monostate&) -> bool
-                {
-                    PRECONDITION(false, "Expected schema to be set in sink descriptor, was schema inference run?");
-                    std::unreachable();
-                },
-                [](const std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>&) { return false; },
-                [](const std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>&) { return true; }},
-            schemaVariant);
-    };
-
     if (std::ranges::all_of(plan.getRootOperators(), hasOrder))
     {
         return plan;
     }
 
-    PRECONDITION(std::ranges::size(plan.getRootOperators()) == 1, "Can only infer target schema order for plans with exactly one root");
-    const auto root = plan.getRootOperators()[0].getAs<SinkLogicalOperator>();
-    auto outputOrder = applyRecursive(root->getChild());
-    const auto newTargetSchema
-        = outputOrder | std::views::transform(Unbinder<Field>{}) | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
-    auto sinkDescriptorOpt = root->getSinkDescriptor();
-    PRECONDITION(sinkDescriptorOpt.has_value(), "Sink operator must have a descriptor to infer target schema order");
-    const auto oldDescriptor = NES::get<AnonymousSinkDescriptor>(sinkDescriptorOpt->getUnderlying());
-    auto newAnonymousSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
-    auto newSinkRoot = root->withSinkDescriptor(newAnonymousSinkDescriptor);
-    return plan.withRootOperators({newSinkRoot});
+    Visitor visitor{[](const LogicalOperator& op,
+                       std::vector<LogicalOperator> children,
+                       std::unordered_map<LogicalOperator, Schema<Field, Ordered>> upContexts)
+                    { return calcTargetOrder(op, std::move(children), std::move(upContexts)); }};
+
+    return visitor.apply(plan);
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

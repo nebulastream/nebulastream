@@ -114,4 +114,11 @@ LogicalPlan OptimizerTestUtils::createPlan(LogicalOperator sink)
     return LogicalPlan{
         QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), {std::move(sink)}};
 }
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
+{
+    return LogicalPlan{
+        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
+}
 }
