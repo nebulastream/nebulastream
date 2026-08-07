@@ -18,10 +18,12 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <span>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -31,6 +33,21 @@ namespace NES
 {
 /// Forward declaration of the ChainedHashMapRef, to avoid cyclic dependencies between ChainedHashMap and ChainedHashMapRef
 class ChainedHashMapRef;
+
+/// Sizing for a ChainedHashMap view, passed to init(). An engaged bloomFilter enables the in-map BloomFilter
+/// and reserves its bit area inline in the map's buffer; std::nullopt allocates nothing for it.
+struct ChainedHashMapConfig
+{
+    uint64_t entrySize;
+    uint64_t numberOfBuckets;
+    uint64_t pageSize;
+    std::optional<Nautilus::Interface::BloomFilterParams> bloomFilter = std::nullopt;
+
+    [[nodiscard]] uint64_t bloomFilterMemAreaSize() const { return bloomFilter ? bloomFilter->allocationByteCount() : 0; }
+
+    /// Bytes the TupleBuffer backing a map with this config must provide.
+    [[nodiscard]] uint64_t bufferSize() const;
+};
 
 /// Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
 /// The physical layout of the storage space is the following
@@ -73,8 +90,9 @@ class ChainedHashMap final : public HashMap
 public:
     /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
     /// Constructors are private
-    static void init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    static void init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    /// The buffer must be at least config.bufferSize() bytes; entries built from a key/value split size their
+    /// entrySize as sizeof(ChainedHashMapEntry) + keySize + valueSize.
+    static void init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config);
 
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
     static ChainedHashMap load(const TupleBuffer& tupleBuffer);
@@ -86,8 +104,12 @@ public:
 
     [[nodiscard]] TupleBuffer getPage(uint64_t pageIndex) const;
     [[nodiscard]] TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
-    [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets);
-    [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains);
+
+    /// Size of the buffer a ChainedHashMap view needs: header, chains array and the in-map BloomFilter bit
+    /// area. The bloom size is a parameter rather than an afterthought so no caller can allocate a buffer
+    /// that init() then overruns.
+    [[nodiscard]] static uint64_t calculateBufferSizeFromBuckets(uint64_t numberOfBuckets, uint64_t bloomFilterMemAreaSize);
+    [[nodiscard]] static uint64_t calculateBufferSizeFromChains(uint64_t numberOfChains, uint64_t bloomFilterMemAreaSize);
     [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
 
@@ -105,9 +127,18 @@ public:
 
     [[nodiscard]] uint64_t getMask() const { return header().mask; }
 
+    /// Sizing of the optional in-map BloomFilter (nullopt when disabled). Used to propagate the filter when a
+    /// derived map is created from an existing one (e.g. the aggregation final map).
+    [[nodiscard]] const std::optional<Nautilus::Interface::BloomFilterParams>& getBloomFilterParams() const { return header().bloomFilter; }
+
     [[nodiscard]] ChildBufferIndex getStorageBufferIdx() const;
     [[nodiscard]] ChildBufferIndex getVarSizedBufferIdx() const;
     [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
+
+    /// Pointer to the optional in-map BloomFilter bit area, consulted by ChainedHashMapRef::findChain to
+    /// short-circuit chain traversal. The area lives inline in this buffer right behind the chains array and
+    /// is zeroed by init(), so it is valid from construction on. Returns nullptr when the filter is disabled.
+    [[nodiscard]] uint64_t* getBloomFilterMemArea();
 
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
     /// view and without using its access methods
@@ -142,12 +173,23 @@ private:
         uint64_t mask;
         ChildBufferIndex storageSpaceIndex;
         ChildBufferIndex varSizedSpaceIndex;
+        /// Sizing of the optional in-map BloomFilter, nullopt when disabled. The bit area itself sits inline
+        /// behind the chains array, so no index into a child buffer is needed.
+        std::optional<Nautilus::Interface::BloomFilterParams> bloomFilter;
 
-        /// Chains array starts immediately after this header
-        /// it is dynamically sized based on numChains, so nothing to store in here.
-        /// Conceptually, it is like below:
+        /// Chains array starts immediately after this header, followed by the BloomFilter bit area.
+        /// Both are dynamically sized (based on numChains and bloomFilterMemAreaSize), so nothing to store
+        /// in here. Conceptually, it is like below:
         /// uint64_t chains[numChains + 1];
-        Header(uint64_t numBuckets, uint64_t numChains, uint64_t pageSize, uint64_t entrySize, uint64_t entriesPerPage, uint64_t mask)
+        /// uint64_t bloomBits[bloomFilterMemAreaSize / sizeof(uint64_t)];
+        Header(
+            uint64_t numBuckets,
+            uint64_t numChains,
+            uint64_t pageSize,
+            uint64_t entrySize,
+            uint64_t entriesPerPage,
+            uint64_t mask,
+            std::optional<Nautilus::Interface::BloomFilterParams> bloomFilter)
             : status(VALID_CHM)
             , numBuckets(numBuckets)
             , numChains(numChains)
@@ -157,6 +199,7 @@ private:
             , mask(mask)
             , storageSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
             , varSizedSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , bloomFilter(bloomFilter)
         {
         }
     };
@@ -175,6 +218,24 @@ private:
         /// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
         auto* entries = reinterpret_cast<ChainedHashMapEntry**>(data + sizeof(Header));
         return {entries, getNumberOfChains() + 1};
+        /// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    }
+
+    /// The in-map BloomFilter bit area, sitting inline right behind the chains array. Empty when the filter
+    /// is disabled. allocationByteCount() rounds to whole words, so the span is always word-aligned in size.
+    [[nodiscard]] std::span<uint64_t> bloomBits()
+    {
+        const auto& bloomFilter = header().bloomFilter;
+        const auto memAreaSize = bloomFilter ? bloomFilter->allocationByteCount() : 0;
+        if (memAreaSize == 0)
+        {
+            return {};
+        }
+        auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
+
+        /// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        auto* bits = reinterpret_cast<uint64_t*>(data + sizeof(Header) + ((getNumberOfChains() + 1) * sizeof(ChainedHashMapEntry*)));
+        return {bits, memAreaSize / sizeof(uint64_t)};
         /// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
 

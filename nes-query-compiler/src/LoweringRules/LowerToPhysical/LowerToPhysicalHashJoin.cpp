@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <string>
@@ -255,7 +256,9 @@ HashMapOptions createHashMapOptions(
         keySize,
         valueSize,
         pageSize,
-        numberOfBuckets};
+        numberOfBuckets,
+        /// HashJoin does not yet enable the ChainedHashMap's optional filter.
+        std::nullopt};
     return hashMapOptions;
 }
 }
