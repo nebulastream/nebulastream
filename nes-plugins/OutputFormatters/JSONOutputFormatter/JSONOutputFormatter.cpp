@@ -174,6 +174,7 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
+    CompilationContext& /*compilationContext*/,
     const VarVal& value,
     const DataType& fieldType,
     uint64_t fieldIndex,

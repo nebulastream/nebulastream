@@ -33,6 +33,7 @@
 namespace NES
 {
 
+class CompilationContext;
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
@@ -82,6 +83,18 @@ public:
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
     virtual WriteRecordResult writeRecord(
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        = 0;
+
+    /// Overload that additionally hands the pipeline's CompilationContext to the layout, so it can register shared
+    /// nautilus functions (see OutputFormatterBufferRef).
+    /// Layouts that do not register functions fall through to the plain overload.
+    /// With TODO #1831, we will get rid of this method here
+    virtual WriteRecordResult writeRecord(
+        CompilationContext&,
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

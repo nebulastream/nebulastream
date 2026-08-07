@@ -26,6 +26,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -33,6 +34,7 @@
 
 namespace NES
 {
+
 
 /// The output formatter is responsible for converting a Record into a string of a given Output Format like CSV or JSON
 /// Output formatters are stateless, meaning that they must be able to produce valid output in a streaming fashion.
@@ -51,7 +53,10 @@ public:
     /// If the formatted value does not fit into the record buffer, child buffers will be allocated to write the value into.
     /// The main buffer's space will always be utilized completely before writing in a child.
     /// Returns the number of bytes written into the record buffer (excluding the bytes written into the children).
+    /// The CompilationContext lets formatters trace the per-type formatting once into a shared nautilus function
+    /// instead of inlining it at every column of the schema.
     [[nodiscard]] virtual nautilus::val<uint64_t> writeFormattedValue(
+        CompilationContext& compilationContext,
         const VarVal& value,
         const DataType& fieldType,
         uint64_t fieldIndex,

@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -113,6 +114,12 @@ void ExecutionContext::setOpenReturnState(const OpenReturnState openReturnState)
 OpenReturnState ExecutionContext::getOpenReturnState() const
 {
     return this->openReturnState;
+}
+
+CompilationContext& ExecutionContext::getCompilationContext() const
+{
+    INVARIANT(compilationContext != nullptr, "The compilation context is only available while the pipeline is compiled");
+    return *compilationContext;
 }
 
 OperatorState* ExecutionContext::getLocalState(const OperatorId operatorId)
