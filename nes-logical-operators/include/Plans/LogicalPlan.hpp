@@ -66,22 +66,18 @@ private:
 /// Get all parent operators of the target operator
 [[nodiscard]] std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOperator& target);
 
+/// All operators reachable from any root, each one exactly once. BFSRange alone yields a shared operator once per path.
+[[nodiscard]] std::vector<LogicalOperator> planOperators(const LogicalPlan& plan);
+
 [[nodiscard]] LogicalPlan addRootOperators(const LogicalPlan& plan, const std::vector<LogicalOperator>& rootsToAdd);
 
+/// Every operator of the given type, each one exactly once even if it is shared between sink roots.
 template <LogicalOperatorConcept T>
 [[nodiscard]] std::vector<TypedLogicalOperator<T>> getOperatorByType(const LogicalPlan& plan)
 {
-    std::vector<TypedLogicalOperator<T>> operators;
-    std::ranges::for_each(
-        plan.getRootOperators(),
-        [&operators](const auto& rootOperator)
-        {
-            auto typedOps = BFSRange(rootOperator)
-                | std::views::filter([&](const LogicalOperator& op) { return op.tryGetAs<T>().has_value(); })
-                | std::views::transform([](const LogicalOperator& op) { return op.getAs<T>(); });
-            std::ranges::copy(typedOps, std::back_inserter(operators));
-        });
-    return operators;
+    return planOperators(plan) | std::views::filter([](const LogicalOperator& op) { return op.tryGetAs<T>().has_value(); })
+        | std::views::transform([](const LogicalOperator& op) { return op.getAs<T>(); })
+        | std::ranges::to<std::vector<TypedLogicalOperator<T>>>();
 }
 
 [[nodiscard]] std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, OperatorId operatorId);
