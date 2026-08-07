@@ -237,7 +237,15 @@ Alternatively, you can click the double triangle in the first line to run all te
 You can also run the systest via the CMake `systest` executable either in the terminal or via your IDE such as CLion.
 The executable can run individual tests, all tests in a given file, or all test files that belong to a defined group.
 You can select the test cases and define the behaviour via command line arguments. 
-The executable can run individual tests (`-t /path/to/test.test:1`), all tests in a given file (`-t /path/to/test.test`), or all test files that belong to a defined group (`-g group1 group2`, `-e excludedGroup`).
+The `-t`/`--testLocations` flag accepts one or more values, each of which can be:
+- A specific test with query number: `-t /path/to/test.test:1`
+- All tests in a file: `-t /path/to/test.test`
+- All `.test` files in a directory (searched recursively): `-t /path/to/directory`
+- Multiple locations at once: `-t dir1 dir2 /path/to/test.test`
+
+By default, the systest runner discovers tests in `nes-systests/` (recursively). Passing directories via `-t` replaces that default, so `-t dirA dirB` discovers in `dirA` and `dirB` only.
+
+Tests can also be filtered by group (`-g group1 group2`, `-e excludedGroup`).
 Tests can be run with specific configuration settings (`-- --worker.total_memory_in_bytes=81920000`).
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).

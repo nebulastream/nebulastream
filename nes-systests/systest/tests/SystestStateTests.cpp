@@ -93,7 +93,9 @@ TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigEx
     writeTextFile(otherFile, "# groups:[other]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
+    config.testDiscoverDirs.clear();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
     config.globalExcludedGroups = {"large"};
     config.testGroups.add("large");
@@ -111,7 +113,9 @@ TEST_F(SystestStateTest, ExplicitCommandLineExclusionOverridesExplicitInclusion)
     writeTextFile(joinFile, "# groups:[Join]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
+    config.testDiscoverDirs.clear();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
     config.testGroups.add("Join");
     config.excludeGroups.add("Join");
@@ -148,7 +152,9 @@ TEST_F(SystestStateTest, OnlyDuplicateDiscoveredTestNamesIncludeRelativeDirector
     writeTextFile(uniqueFile, "# groups:[Join]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
+    config.testDiscoverDirs.clear();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
 
     const auto testMap = loadTestFileMap(config);
@@ -168,7 +174,9 @@ TEST_F(SystestStateTest, FilteredDuplicateTestNameUsesStem)
     writeTextFile(filteredFile, "# groups:[Filtered]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
+    config.testDiscoverDirs.clear();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
     config.testGroups.add("Included");
 
@@ -185,7 +193,9 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestNamesUseStem)
     writeTextFile(testFile, "# groups:[Join]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
+    config.testDiscoverDirs.clear();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.directlySpecifiedTestFiles = testFile.string();
 
     const auto directlySpecifiedTestMap = loadTestFileMap(config);
