@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <memory>
-#include <vector>
+#include <mutex>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
@@ -61,8 +61,8 @@ public:
 
 private:
     std::shared_ptr<BTreeTupleLayout> tupleLayout;
-    std::vector<std::unique_ptr<BTreeComparator>> comparators;
-    BTreeComparator* activeComparator = nullptr;
+    std::once_flag comparatorSetup;
+    std::unique_ptr<BTreeComparator> comparator;
 };
 
 }
