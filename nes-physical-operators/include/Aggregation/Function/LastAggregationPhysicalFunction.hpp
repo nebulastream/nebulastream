@@ -29,7 +29,8 @@ public:
         nautilus::val<TupleBuffer*> parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record,
-        const nautilus::val<Timestamp>& timestamp) override;
+        const nautilus::val<Timestamp>& timestamp,
+        const AggregationInputBuffer& inputBuffer) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<TupleBuffer*> parentBuffer1,

@@ -11,52 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <cstddef>
-#include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <DataTypes/DataType.hpp>
-#include <Functions/PhysicalFunction.hpp>
-#include <Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 
 namespace NES
 {
-
-class MinAggregationPhysicalFunction : public AggregationPhysicalFunction
+class ArrayAggPageSortedAggregationPhysicalFunction final : public AggregationPhysicalFunction
 {
 public:
-    MinAggregationPhysicalFunction(
+    ArrayAggPageSortedAggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        nautilus::val<TupleBuffer*>,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record,
         const nautilus::val<Timestamp>& timestamp,
         const AggregationInputBuffer& inputBuffer) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
-        nautilus::val<TupleBuffer*>,
         nautilus::val<AggregationState*> aggregationState2,
-        nautilus::val<TupleBuffer*>,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
-    Record lower(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void reset(
-        nautilus::val<AggregationState*> aggregationState,
-        nautilus::val<TupleBuffer*>,
-        PipelineMemoryProvider& pipelineMemoryProvider) override;
+    Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+    void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~MinAggregationPhysicalFunction() override = default;
 };
-
 }

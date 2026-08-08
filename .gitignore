@@ -46,7 +46,9 @@ nes-asp/data/*.csv
 *.undo
 
 scripts/__pycache__
+benchmarks/**/__pycache__/
 .ccache
+benchmarks/array-agg-audio/audio-44khz-1gb.csv
 
 # Ignore nix symlinks
 .nix/clang

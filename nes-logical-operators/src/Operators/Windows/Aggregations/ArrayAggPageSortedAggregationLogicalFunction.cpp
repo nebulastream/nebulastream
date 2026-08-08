@@ -1,0 +1,105 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <Operators/Windows/Aggregations/ArrayAggPageSortedAggregationLogicalFunction.hpp>
+
+#include <utility>
+#include <variant>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <fmt/format.h>
+#include <folly/hash/Hash.h>
+#include <AggregationLogicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES
+{
+ArrayAggPageSortedAggregationLogicalFunction::ArrayAggPageSortedAggregationLogicalFunction(AggregationFieldAccess inputFunction)
+    : inputFunction(std::move(inputFunction))
+{
+}
+
+std::string_view ArrayAggPageSortedAggregationLogicalFunction::getName() noexcept
+{
+    return NAME;
+}
+
+DataType ArrayAggPageSortedAggregationLogicalFunction::getAggregateType() const
+{
+    return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+}
+
+bool ArrayAggPageSortedAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return false;
+}
+
+AggregationFieldAccess ArrayAggPageSortedAggregationLogicalFunction::getInputFunction() const
+{
+    return inputFunction;
+}
+
+std::string ArrayAggPageSortedAggregationLogicalFunction::explain(const ExplainVerbosity verbosity) const
+{
+    if (verbosity == ExplainVerbosity::Short)
+    {
+        return fmt::format("{}()", NAME);
+    }
+    return fmt::format("{}({})", NAME, std::visit([verbosity](const auto& input) { return input->explain(verbosity); }, inputFunction));
+}
+
+bool ArrayAggPageSortedAggregationLogicalFunction::operator==(const ArrayAggPageSortedAggregationLogicalFunction& other) const
+{
+    return inputFunction == other.inputFunction;
+}
+
+ArrayAggPageSortedAggregationLogicalFunction
+ArrayAggPageSortedAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
+{
+    auto input = inferFieldAccess(inputFunction, schema);
+    if (input->getDataType().type == DataType::Type::VARSIZED)
+    {
+        throw CannotInferStamp("ARRAY_AGG_PAGE_SORTED requires a fixed-size input field, but got {}.", input->getDataType());
+    }
+    return ArrayAggPageSortedAggregationLogicalFunction{input};
+}
+
+Reflected Reflector<ArrayAggPageSortedAggregationLogicalFunction>::operator()(
+    const ArrayAggPageSortedAggregationLogicalFunction& function, const ReflectionContext& context) const
+{
+    return context.reflect(function.getInputFunction());
+}
+
+ArrayAggPageSortedAggregationLogicalFunction
+Unreflector<ArrayAggPageSortedAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    return ArrayAggPageSortedAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
+}
+
+AggregationLogicalFunctionRegistryReturnType
+AggregationLogicalFunctionGeneratedRegistrar::RegisterArrayAggPageSortedAggregationLogicalFunction(
+    AggregationLogicalFunctionRegistryArguments arguments)
+{
+    if (arguments.on.size() != 1)
+    {
+        throw CannotDeserialize("ArrayAggPageSortedAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+    }
+    return ArrayAggPageSortedAggregationLogicalFunction{arguments.on.at(0)};
+}
+}
+
+size_t std::hash<NES::ArrayAggPageSortedAggregationLogicalFunction>::operator()(
+    const NES::ArrayAggPageSortedAggregationLogicalFunction& aggregationFunction) const noexcept
+{
+    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::ArrayAggPageSortedAggregationLogicalFunction::getName());
+}

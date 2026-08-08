@@ -51,7 +51,8 @@ void LastAggregationPhysicalFunction::lift(
     nautilus::val<TupleBuffer*> parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record,
-    const nautilus::val<Timestamp>& timestamp)
+    const nautilus::val<Timestamp>& timestamp,
+    const AggregationInputBuffer&)
 {
     const auto memory = stateMemory(aggregationState);
     const auto seen = readValueFromMemRef<bool>(memory + nautilus::val<uint64_t>{seenOffset});

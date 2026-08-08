@@ -13,6 +13,7 @@ ATTACH INLINE
 
 CREATE SINK tensorSink(tensor VARSIZED NOT NULL) TYPE File;
 CREATE SINK unsortedTensorSink(tensor VARSIZED NOT NULL) TYPE File;
+CREATE SINK pageSortedTensorSink(tensor VARSIZED NOT NULL) TYPE File;
 CREATE SINK sizeSink(bytes UINT64 NOT NULL) TYPE File;
 
 CREATE LOGICAL SOURCE generatedReadings(
@@ -74,6 +75,14 @@ WINDOW TUMBLING(ts, SIZE 1000 MS)
 INTO unsortedTensorSink;
 ----
 AABQQAAAwD8AAADA
+
+# ARRAY_AGG_PAGE_SORTED preserves tuple order inside buffers and orders buffer pages by their first timestamp.
+SELECT TO_BASE64(ARRAY_AGG_PAGE_SORTED(value)) AS tensor
+FROM readings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO pageSortedTensorSink;
+----
+AADAPwAAAMAAAFBA
 
 # The raw payload contains no array header or element metadata.
 SELECT OCTET_LENGTH(ARRAY_AGG(value)) AS bytes

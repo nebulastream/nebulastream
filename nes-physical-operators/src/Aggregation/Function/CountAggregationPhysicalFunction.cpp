@@ -51,7 +51,8 @@ void CountAggregationPhysicalFunction::lift(
     nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record,
-    const nautilus::val<Timestamp>&)
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     /// Reading the old count from the aggregation state.
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);

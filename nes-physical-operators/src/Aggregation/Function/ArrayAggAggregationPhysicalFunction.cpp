@@ -95,7 +95,8 @@ void ArrayAggAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record,
-    const nautilus::val<Timestamp>& timestamp)
+    const nautilus::val<Timestamp>& timestamp,
+    const AggregationInputBuffer&)
 {
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     PagedVectorRef pagedVector(BorrowedNautilusBuffer::from(memArea), tupleLayout);
