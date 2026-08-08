@@ -14,6 +14,11 @@ on:
         description: 'tag to tag the image on dockerhub with'
         required: true
         type: string
+      hardened:
+        description: 'Build with DEBUG logging, AddressSanitizer, libc++, and FAST libc++ hardening'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   get-dev-images:
@@ -56,16 +61,21 @@ jobs:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Pull development image
-        run: docker pull nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+        run: docker pull nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}${{ inputs.hardened && '-libcxx-address' || '' }}
       # The binaries are compiled in the development container itself (sccache is
       # forwarded by the run-in-container step), then the `package-docker-images-all`
       # target copies them into the runtime images.
       - name: Build and package executable images via CMake target
         uses: ./.github/steps/run-in-container
         with:
-          image_name: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+          image_name: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}${{ inputs.hardened && '-libcxx-address' || '' }}
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DNES_ENABLES_TESTS=0
+            cmake -B build \
+              -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DNES_ENABLES_TESTS=0 \
+              -DNES_LOG_LEVEL=${{ inputs.hardened && 'DEBUG' || 'WARN' }} \
+              -DUSE_SANITIZER=${{ inputs.hardened && 'address' || 'none' }} \
+              -DNES_LIBCXX_HARDENING_MODE=${{ inputs.hardened && 'FAST' || 'AUTO' }}
             NES_DOCKER_TAG=${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }} \
               cmake --build build --target package-docker-images-all
       - name: Push executable images
