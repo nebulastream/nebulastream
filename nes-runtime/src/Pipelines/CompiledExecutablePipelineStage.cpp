@@ -57,7 +57,8 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
     (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
+PipelineFunction<CompiledExecutablePipelineStage::PipelineSignature>
+CompiledExecutablePipelineStage::registerPipelineFunction(CompilationContext& compilationContext) const
 {
     /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
     /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
@@ -93,7 +94,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
         }
     };
     /// NOLINTEND(performance-unnecessary-value-param)
-    module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+    return compilationContext.registerFunction(compiledFunction, "pipelineFunction:execute");
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
@@ -119,17 +120,14 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
     CPPTRACE_TRY
     {
-        auto module = engine.createModule();
-        CompilationContext compilationCtx{module};
-        pipeline->getRootOperator().setup(ctx, compilationCtx);
-        registerPipelineFunction(module);
-        compiledModule = module.compile();
-        compilationCtx.resolveAfterCompilation(*compiledModule);
-        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        CompilationContext compilationContext{engine.createModule()};
+        pipeline->getRootOperator().setup(ctx, compilationContext);
+        compiledPipelineFunction = registerPipelineFunction(compilationContext);
+        compilationContext.compile();
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
-        if (const auto statistics = compiledModule->getStatistics())
+        if (const auto statistics = compilationContext.getStatistics())
         {
             NES_DEBUG(
                 "Nautilus compilation statistics for pipeline {}:\n{}",

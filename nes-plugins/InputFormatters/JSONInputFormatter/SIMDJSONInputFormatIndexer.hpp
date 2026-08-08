@@ -62,6 +62,13 @@ struct ConfigParametersSIMDJSON
         = DescriptorConfig::createConfigParameterContainerMap(InputFormatterDescriptor::parameterMap, TUPLE_DELIMITER);
 };
 
+/// Parses JSON-encoded tuples (one JSON object per tuple delimiter, '\n' by default) using
+/// SIMDJSON's ondemand parser. Nested JSON objects are accessed by encoding the path in the
+/// (quoted) schema field name with '/' as separator, e.g. "MILK/CYCLES/LEFT" reads
+/// {"MILK": {"CYCLES": {"LEFT": ...}}}. Unquoted identifiers are uppercased, so JSON keys must be
+/// uppercase to match; use quoted identifiers for case-sensitive keys. For nullable fields, a
+/// missing field, a missing parent object, or an explicit JSON null all map to NULL; for NOT NULL
+/// fields, a missing field/parent raises FieldNotFound. JSON arrays are not supported.
 class SIMDJSONInputFormatIndexer final : public InputFormatIndexer
 {
     /// Passkey idiom (to enforce checks before calling the constructor)
@@ -80,11 +87,11 @@ public:
     explicit SIMDJSONInputFormatIndexer(
         Private,
         const char tupleDelimiter,
-        std::vector<Identifier> fieldNamesInJson,
+        std::vector<std::string> jsonPointersToFields,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
         std::vector<DataType> fieldDataTypes)
         : tupleDelimiter(tupleDelimiter)
-        , fieldNamesInJson(std::move(fieldNamesInJson))
+        , jsonPointersToFields(std::move(jsonPointersToFields))
         , fieldNamesOutput(std::move(fieldNamesOutput))
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
@@ -95,21 +102,23 @@ public:
     static std::unique_ptr<SIMDJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
     {
         /// JSON keys are unqualified — take the trailing identifier of each (possibly source-qualified) name.
-        std::vector<Identifier> fieldNamesInJson;
+        /// Precompute each field's JSON Pointer (RFC 6901) once: prepend '/' and escape literal '~' as
+        /// '~0'. A '/' in a (quoted) field name deliberately stays unescaped — it separates nesting levels.
+        std::vector<std::string> jsonPointersToFields;
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            fieldNamesInJson.emplace_back(*std::ranges::rbegin(fieldName));
+            jsonPointersToFields.emplace_back("/" + replaceAll(std::ranges::rbegin(fieldName)->asCanonicalString(), "~", "~0"));
         }
 
         auto fieldNamesOutput = tupleBufferRef.getAllFieldNames();
         auto fieldDataTypes = tupleBufferRef.getAllDataTypes();
-        PRECONDITION(fieldNamesInJson.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+        PRECONDITION(jsonPointersToFields.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
         PRECONDITION(fieldNamesOutput.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
 
         return std::make_unique<SIMDJSONInputFormatIndexer>(
             Private{},
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
-            std::move(fieldNamesInJson),
+            std::move(jsonPointersToFields),
             std::move(fieldNamesOutput),
             std::move(fieldDataTypes));
     }
@@ -130,7 +139,10 @@ public:
 
     [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(uint64_t fieldIndex) const { return fieldNamesOutput[fieldIndex]; }
 
-    [[nodiscard]] const Identifier& getFieldNameInJsonAt(uint64_t fieldIndex) const { return fieldNamesInJson[fieldIndex]; }
+    [[nodiscard]] std::string_view getJsonPointerAt(const nautilus::static_val<uint64_t>& fieldIndex) const
+    {
+        return jsonPointersToFields[fieldIndex];
+    }
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(uint64_t fieldIndex) const { return fieldDataTypes[fieldIndex]; }
 
@@ -145,7 +157,7 @@ protected:
 
 private:
     char tupleDelimiter;
-    std::vector<Identifier> fieldNamesInJson;
+    std::vector<std::string> jsonPointersToFields;
     std::vector<Record::RecordFieldIdentifier> fieldNamesOutput;
     std::vector<DataType> fieldDataTypes;
     std::vector<std::string> nullValues;

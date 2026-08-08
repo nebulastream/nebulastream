@@ -28,6 +28,7 @@
 
 namespace NES
 {
+class CompilationContext;
 
 /// Base class for any aggregation state. This class is used to store the intermediate state of an aggregation.
 /// For example, the aggregation state for a sum aggregation would be the sum of all values seen so far.
@@ -45,6 +46,8 @@ class AggregationPhysicalFunction
 public:
     AggregationPhysicalFunction(
         DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+
+    virtual void setup(CompilationContext&) { }
 
     /// Adds the incoming record to the existing aggregation state
     virtual void lift(

@@ -68,6 +68,7 @@ constexpr std::array<uint64_t, 6> NUM_BUCKETS_POOL = {32, 64, 128, 256, 512, 102
 /// Number of entries per page — multiplied by entrySize to derive pageSize.
 /// Small values (1, 2) force long page chains; large values (64, 512) exercise the bulk path.
 constexpr std::array<uint64_t, 6> ENTRIES_PER_PAGE_POOL = {1, 2, 4, 16, 64, 512};
+constexpr uint64_t MAX_VARSIZED_MEMORY_BUDGET = 64ULL * 1024 * 1024;
 
 /// A real std::unordered_map<TestUtils::AnyVec, TestUtils::AnyVec> reference, so property tests compare the chained hash map against
 /// the standard library's own hash map semantics rather than a hand-rolled linear-scan association list.
@@ -87,12 +88,13 @@ void populateReference(
     TestUtils::TestableChainedHashMap& chainedHashMap,
     const std::vector<DataType>& fieldTypes,
     uint64_t numberOfItems,
-    KeyValueReference& reference)
+    KeyValueReference& reference,
+    const TestUtils::VarSizedMemoryBudget& varSizedMemoryBudget)
 {
     const auto numKeys = static_cast<TestUtils::AnyVec::difference_type>(chainedHashMap.numKeyFields());
     for (uint64_t i = 0; i < numberOfItems; ++i)
     {
-        auto record = *TestUtils::genAnyVec(fieldTypes);
+        auto record = *TestUtils::genAnyVec(fieldTypes, varSizedMemoryBudget);
         TestUtils::AnyVec key(record.begin(), record.begin() + numKeys);
         TestUtils::AnyVec value(record.begin() + numKeys, record.end());
         chainedHashMap.put(key, value);
@@ -104,7 +106,10 @@ void populateReference(
 /// handful of independently-random keys (must miss, for whichever candidates don't happen to collide with
 /// the reference) - the miss path is new coverage the old index-based readAt() could never express.
 void verifyLookups(
-    TestUtils::TestableChainedHashMap& chainedHashMap, const KeyValueReference& reference, const std::vector<DataType>& fieldTypes)
+    TestUtils::TestableChainedHashMap& chainedHashMap,
+    const KeyValueReference& reference,
+    const std::vector<DataType>& fieldTypes,
+    const TestUtils::VarSizedMemoryBudget& varSizedMemoryBudget)
 {
     const auto numKeys = chainedHashMap.numKeyFields();
     const auto& valueTypes = chainedHashMap.getValueDataTypes();
@@ -129,7 +134,7 @@ void verifyLookups(
     constexpr int numMissCandidates = 5;
     for (int i = 0; i < numMissCandidates; ++i)
     {
-        const auto candidateKey = *TestUtils::genAnyVec(keyOnlyTypes);
+        const auto candidateKey = *TestUtils::genAnyVec(keyOnlyTypes, varSizedMemoryBudget);
         if (!reference.contains(candidateKey))
         {
             RC_ASSERT(!chainedHashMap.at(candidateKey).has_value());
@@ -152,6 +157,8 @@ void putAndLookupKeysProperty(TestUtils::EngineMode mode)
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
     const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
 
     NES_INFO(
         "Property putAndLookupKeys: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
@@ -165,14 +172,15 @@ void putAndLookupKeysProperty(TestUtils::EngineMode mode)
         numIterations,
         fmt::join(fieldTypes, ", "));
 
-    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    auto bufferManager
+        = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
     TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
     auto reference = makeEmptyReference(chainedHashMap);
 
     const auto itemsPerIteration = numberOfItems / numIterations;
     for (uint64_t iteration = 0; iteration < numIterations; ++iteration)
     {
-        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference);
+        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference, varSizedMemoryBudget);
         NES_INFO(
             "putAndLookupKeys: iteration {}/{}, CHM has {} entries, {} unique keys",
             iteration + 1,
@@ -180,7 +188,7 @@ void putAndLookupKeysProperty(TestUtils::EngineMode mode)
             chainedHashMap.size(),
             reference.size());
         RC_ASSERT(chainedHashMap.size() == reference.size());
-        verifyLookups(chainedHashMap, reference, fieldTypes);
+        verifyLookups(chainedHashMap, reference, fieldTypes, varSizedMemoryBudget);
     }
 }
 
@@ -193,6 +201,8 @@ void putAndGetAllProperty(TestUtils::EngineMode mode)
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numKeyFields = *rc::gen::inRange<size_t>(1, fieldTypes.size() + 1);
     const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
 
     NES_INFO(
         "Property putAndGetAll: fields={}, N={}, bufferSize={}, numKeyFields={}, numBuckets={}, entriesPerPage={}, "
@@ -205,10 +215,11 @@ void putAndGetAllProperty(TestUtils::EngineMode mode)
         numEntriesPerPage,
         fmt::join(fieldTypes, ", "));
 
-    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    auto bufferManager
+        = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
     TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
     auto reference = makeEmptyReference(chainedHashMap);
-    populateReference(chainedHashMap, fieldTypes, numberOfItems, reference);
+    populateReference(chainedHashMap, fieldTypes, numberOfItems, reference, varSizedMemoryBudget);
 
     NES_INFO("putAndGetAll: CHM has {} entries, {} unique keys", chainedHashMap.size(), reference.size());
     RC_ASSERT(chainedHashMap.size() == reference.size());
@@ -245,6 +256,8 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
     const auto numberOfBuckets = *rc::gen::elementOf(NUM_BUCKETS_POOL);
     const auto numEntriesPerPage = *rc::gen::elementOf(ENTRIES_PER_PAGE_POOL);
     const auto numIterations = *rc::gen::inRange<uint64_t>(1, maxIterations + 1);
+    const auto initialVarSizedMemoryBudget = *rc::gen::inRange<uint64_t>(0, MAX_VARSIZED_MEMORY_BUDGET + 1);
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(initialVarSizedMemoryBudget);
     /// Deterministic, not drawn: every field is a key, so the map under test is exercised purely as a HashSet.
     const auto numKeyFields = fieldTypes.size();
 
@@ -259,7 +272,8 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
         numIterations,
         fmt::join(fieldTypes, ", "));
 
-    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    auto bufferManager
+        = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize, initialVarSizedMemoryBudget));
     TestUtils::TestableChainedHashMap chainedHashMap{fieldTypes, *bufferManager, mode, numberOfBuckets, numKeyFields, numEntriesPerPage};
     RC_ASSERT(chainedHashMap.getValueDataTypes().empty());
     auto reference = makeEmptyReference(chainedHashMap);
@@ -267,7 +281,7 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
     const auto itemsPerIteration = numberOfItems / numIterations;
     for (uint64_t iteration = 0; iteration < numIterations; ++iteration)
     {
-        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference);
+        populateReference(chainedHashMap, fieldTypes, itemsPerIteration, reference, varSizedMemoryBudget);
         NES_INFO(
             "putAndLookupHashSet: iteration {}/{}, CHM has {} entries, {} unique keys",
             iteration + 1,
@@ -275,7 +289,7 @@ void putAndLookupHashSetProperty(TestUtils::EngineMode mode)
             chainedHashMap.size(),
             reference.size());
         RC_ASSERT(chainedHashMap.size() == reference.size());
-        verifyLookups(chainedHashMap, reference, fieldTypes);
+        verifyLookups(chainedHashMap, reference, fieldTypes, varSizedMemoryBudget);
     }
 }
 } /// anonymous namespace
