@@ -1,0 +1,31 @@
+# name: benchmark_small/NestedLoopJoin.test
+# description: Baseline the nested-loop implementation for the selective theta-join index benchmark.
+# groups: [benchmark, benchmark_small, IndexNestedLoopJoinBenchmark]
+
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [4]
+GlobalConfiguration worker.default_query_execution.execution_mode: [COMPILER]
+GlobalConfiguration worker.total_memory_in_bytes: [805306368]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.8333333]
+GlobalConfiguration worker.default_query_execution.slice_cache.enable_slice_cache: [true]
+
+# Keep this query in sync with IndexNestedLoopJoin.test so that their benchmark results are directly comparable.
+CREATE LOGICAL SOURCE leftStream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+CREATE LOGICAL SOURCE rightStream(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH FILE small/outer_join_right.csv
+
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL,
+                 timestamp UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL)
+TYPE Checksum;
+
+SELECT *
+FROM (SELECT * FROM leftStream WHERE id <= 150) INNER JOIN (SELECT * FROM rightStream WHERE id2 >= 301)
+ON id > id2
+WINDOW TUMBLING (timestamp, timestamp2, size 100 sec)
+INTO sink;
+----
+0 0

@@ -1,0 +1,61 @@
+# name: explain/IndexNestedLoopJoinOptimizer.test
+# description: Verifies which join implementation the optimizer selects for supported and unsupported predicates.
+# groups: [explain, Join]
+
+GlobalConfiguration optimizer.join_strategy: [OPTIMIZER_CHOOSES]
+
+CREATE LOGICAL SOURCE leftStream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,2,1000
+
+CREATE LOGICAL SOURCE rightStream(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+2,3,1000
+
+# Direct, non-nullable numeric range comparisons are supported by the index nested-loop join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id <= id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id > id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id >= id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</REGEX>
+==END==
+# Equality remains a hash join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id = id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: HASH_JOIN</REGEX>
+==END==
+# Unsupported predicates fall back to the nested-loop join.
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id != id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+==END==
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id < id2 AND value > value2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+==END==

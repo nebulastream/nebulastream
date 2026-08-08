@@ -25,6 +25,10 @@
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -83,6 +87,40 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
 
     return true;
 }
+
+bool isProducedBy(const Field& field, const LogicalOperator& input)
+{
+    return std::ranges::any_of(BFSRange<LogicalOperator>(input), [&](const auto& producer) { return producer == field.getProducedBy(); });
+}
+
+bool shallUseIndexNestedLoopJoin(const LogicalFunction& joinFunction, const LogicalOperator& leftInput, const LogicalOperator& rightInput)
+{
+    const auto isSupportedComparison = joinFunction.tryGetAs<LessLogicalFunction>().has_value()
+        or joinFunction.tryGetAs<LessEqualsLogicalFunction>().has_value() or joinFunction.tryGetAs<GreaterLogicalFunction>().has_value()
+        or joinFunction.tryGetAs<GreaterEqualsLogicalFunction>().has_value();
+    if (not isSupportedComparison)
+    {
+        return false;
+    }
+    const auto children = joinFunction.getChildren();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    const auto lhs = children[0].tryGetAs<FieldAccessLogicalFunction>();
+    const auto rhs = children[1].tryGetAs<FieldAccessLogicalFunction>();
+    if (not lhs.has_value() or not rhs.has_value())
+    {
+        return false;
+    }
+    const auto lhsType = lhs->getDataType();
+    const auto rhsType = rhs->getDataType();
+    const auto lhsField = lhs.value()->getField();
+    const auto rhsField = rhs.value()->getField();
+    const auto comparesInputs = (isProducedBy(lhsField, leftInput) and isProducedBy(rhsField, rightInput))
+        or (isProducedBy(lhsField, rightInput) and isProducedBy(rhsField, leftInput));
+    return lhsType == rhsType and not lhsType.nullable and lhsType.isNumeric() and comparesInputs;
+}
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -117,6 +155,15 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
         else if (shallUseHashJoin(joinOperator.value()->getJoinFunction()))
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+        }
+        else if (
+            joinOperator.value()->getJoinType() == JoinLogicalOperator::JoinType::INNER_JOIN
+            and shallUseIndexNestedLoopJoin(
+                joinOperator.value()->getJoinFunction(),
+                joinOperator.value()->getBothChildren()[0],
+                joinOperator.value()->getBothChildren()[1]))
+        {
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::INDEX_NESTED_LOOP_JOIN});
         }
         else
         {

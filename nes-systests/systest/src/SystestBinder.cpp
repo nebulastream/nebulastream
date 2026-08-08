@@ -557,11 +557,12 @@ struct SystestBinder::Impl
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
+        auto [loadedSystests, fileOptimizerConfiguration]
+            = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+            fileOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -1058,7 +1059,7 @@ struct SystestBinder::Impl
         }
     }
 
-    std::vector<SystestQueryBuilder> loadFromSLTFile(
+    std::pair<std::vector<SystestQueryBuilder>, QueryOptimizerConfiguration> loadFromSLTFile(
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
@@ -1072,6 +1073,8 @@ struct SystestBinder::Impl
         std::vector configOverrides{ConfigurationOverride{}};
         std::vector globalConfigOverrides{ConfigurationOverride{}};
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
+        auto fileOptimizerConfiguration = queryOptimizerConfiguration;
+        std::unordered_map<std::string, std::string> fileOptimizerOverrides;
         SystestParser parser{};
         const auto binder = NES::StatementBinder{
             sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
@@ -1139,14 +1142,63 @@ struct SystestBinder::Impl
         parser.registerOnGlobalConfigurationCallback(
             [&](const std::vector<ConfigurationOverride>& overrides)
             {
+                static constexpr std::string_view OptimizerPrefix = "optimizer.";
+                std::vector<ConfigurationOverride> workerOverrides;
+                for (const auto& override : overrides)
+                {
+                    ConfigurationOverride workerOverride;
+                    for (const auto& [key, value] : override.overrideParameters)
+                    {
+                        if (key.starts_with(OptimizerPrefix))
+                        {
+                            const auto optimizerKey = key.substr(OptimizerPrefix.size());
+                            if (optimizerKey.empty())
+                            {
+                                throw SLTUnexpectedToken("Expected optimizer configuration key after '{}'.", OptimizerPrefix);
+                            }
+                            const auto [existing, inserted] = fileOptimizerOverrides.emplace(optimizerKey, value);
+                            if (not inserted && existing->second != value)
+                            {
+                                throw SLTUnexpectedToken(
+                                    "Optimizer GlobalConfiguration '{}' must select exactly one value per test file.", key);
+                            }
+                        }
+                        else
+                        {
+                            workerOverride.overrideParameters.emplace(key, value);
+                        }
+                    }
+                    if (not workerOverride.overrideParameters.empty())
+                    {
+                        workerOverrides.emplace_back(std::move(workerOverride));
+                    }
+                }
+
+                if (std::ranges::any_of(
+                        overrides,
+                        [](const auto& override)
+                        {
+                            return std::ranges::any_of(
+                                override.overrideParameters, [](const auto& entry) { return entry.first.starts_with(OptimizerPrefix); });
+                        }))
+                {
+                    if (overrides.size() != 1)
+                    {
+                        throw SLTUnexpectedToken("Optimizer GlobalConfiguration must select exactly one value per test file.");
+                    }
+                }
+                if (workerOverrides.empty())
+                {
+                    return;
+                }
                 const bool isDefault = globalConfigOverrides.size() == 1 && globalConfigOverrides.front().overrideParameters.empty();
                 if (isDefault)
                 {
-                    globalConfigOverrides = overrides;
+                    globalConfigOverrides = std::move(workerOverrides);
                 }
                 else
                 {
-                    globalConfigOverrides = mergeConfigurations(overrides, globalConfigOverrides);
+                    globalConfigOverrides = mergeConfigurations(workerOverrides, globalConfigOverrides);
                 }
             });
 
@@ -1179,16 +1231,18 @@ struct SystestBinder::Impl
             exception.what() += fmt::format("Could not successfully parse and bind test file://{}", testFilePath.string());
             throw;
         }
-        return plans
+        fileOptimizerConfiguration.overwriteConfigWithCommandLineInput(fileOptimizerOverrides);
+        auto builders = plans
             | std::ranges::views::transform(
-                   [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
-                   {
-                       pair.second.setPaths(testFilePath, workingDir);
-                       pair.second.setName(std::string{testFileName});
-                       pair.second.setAdditionalSourceThreads(sourceThreads);
-                       return pair.second;
-                   })
+                            [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
+                            {
+                                pair.second.setPaths(testFilePath, workingDir);
+                                pair.second.setName(std::string{testFileName});
+                                pair.second.setAdditionalSourceThreads(sourceThreads);
+                                return pair.second;
+                            })
             | std::ranges::to<std::vector>();
+        return {std::move(builders), std::move(fileOptimizerConfiguration)};
     }
 
 private:

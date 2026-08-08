@@ -28,6 +28,7 @@ namespace NES
 enum class JoinImplementation : uint8_t
 {
     NESTED_LOOP_JOIN,
+    INDEX_NESTED_LOOP_JOIN,
     HASH_JOIN,
     CHOICELESS
 };

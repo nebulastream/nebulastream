@@ -38,6 +38,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/select.hpp>
 #include <DataStructureTestUtils.hpp>
+#include <ErrorHandling.hpp>
 #include <static.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -165,18 +166,58 @@ TestableBTree::TestableBTree(const std::vector<DataType>& fieldTypes, AbstractBu
             }),
         "testableBTreeAt"));
 
+    if (std::ranges::none_of(dataTypes, [](const auto type) { return type.type == DataType::Type::VARSIZED; }))
+    {
+        lowerBoundFn.emplace(compilationContext.registerFunction(
+            std::function(
+                [layout, comparator = comparator, projections, dataTypes = dataTypes](
+                    nautilus::val<TupleBuffer*> tree, nautilus::val<AnyVec*> values)
+                {
+                    const BTreeRef ref{BorrowedNautilusBuffer::from(tree), layout};
+                    return ref.lowerBound(buildRecordFromAnyVec(values, projections, dataTypes), *comparator);
+                }),
+            "testableBTreeLowerBound"));
+
+        upperBoundFn.emplace(compilationContext.registerFunction(
+            std::function(
+                [layout, comparator = comparator, projections, dataTypes = dataTypes](
+                    nautilus::val<TupleBuffer*> tree, nautilus::val<AnyVec*> values)
+                {
+                    const BTreeRef ref{BorrowedNautilusBuffer::from(tree), layout};
+                    return ref.upperBound(buildRecordFromAnyVec(values, projections, dataTypes), *comparator);
+                }),
+            "testableBTreeUpperBound"));
+    }
+
     readAllFn.emplace(compilationContext.registerFunction(
         std::function(
             [layout, projections, dataTypes = dataTypes](nautilus::val<TupleBuffer*> tree, nautilus::val<std::vector<AnyVec>*> output)
             {
                 const BTreeRef ref{BorrowedNautilusBuffer::from(tree), layout};
-                for (nautilus::val<uint64_t> index = 0; index < ref.size(); index = index + 1)
+                for (auto iterator = ref.begin(); iterator != ref.end(); ++iterator)
                 {
                     auto record = anyVecPushBack(output, nautilus::val<size_t>{dataTypes.size()});
-                    storeRecordToAnyVec(record, ref.at(index), projections, dataTypes);
+                    storeRecordToAnyVec(record, *iterator, projections, dataTypes);
                 }
             }),
         "testableBTreeReadAll"));
+
+    readRangeFn.emplace(compilationContext.registerFunction(
+        std::function(
+            [layout, projections, dataTypes = dataTypes](
+                nautilus::val<TupleBuffer*> tree,
+                nautilus::val<uint64_t> begin,
+                nautilus::val<uint64_t> end,
+                nautilus::val<std::vector<AnyVec>*> output)
+            {
+                const BTreeRef ref{BorrowedNautilusBuffer::from(tree), layout};
+                for (auto iterator = ref.iteratorAt(begin); iterator != ref.end(end); ++iterator)
+                {
+                    auto record = anyVecPushBack(output, nautilus::val<size_t>{dataTypes.size()});
+                    storeRecordToAnyVec(record, *iterator, projections, dataTypes);
+                }
+            }),
+        "testableBTreeReadRange"));
 
     sizeFn.emplace(compilationContext.registerFunction(
         std::function(
@@ -205,12 +246,35 @@ AnyVec TestableBTree::at(const uint64_t index)
     return result;
 }
 
+uint64_t TestableBTree::lowerBound(const AnyVec& record)
+{
+    INVARIANT(lowerBoundFn.has_value(), "Variable-sized BTree search keys are not supported");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, bugprone-unchecked-optional-access)
+    return (*lowerBoundFn)(&tree, const_cast<AnyVec*>(&record));
+}
+
+uint64_t TestableBTree::upperBound(const AnyVec& record)
+{
+    INVARIANT(upperBoundFn.has_value(), "Variable-sized BTree search keys are not supported");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, bugprone-unchecked-optional-access)
+    return (*upperBoundFn)(&tree, const_cast<AnyVec*>(&record));
+}
+
 std::vector<AnyVec> TestableBTree::toVector()
 {
     std::vector<AnyVec> result;
     result.reserve(size());
     /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
     (*readAllFn)(&tree, &result);
+    return result;
+}
+
+std::vector<AnyVec> TestableBTree::range(const uint64_t begin, const uint64_t end)
+{
+    std::vector<AnyVec> result;
+    result.reserve(end - begin);
+    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access)
+    (*readRangeFn)(&tree, begin, end, &result);
     return result;
 }
 

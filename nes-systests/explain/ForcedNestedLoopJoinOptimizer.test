@@ -1,0 +1,23 @@
+# name: explain/ForcedNestedLoopJoinOptimizer.test
+# description: Verifies that the explicit nested-loop strategy takes precedence over index-join selection.
+# groups: [explain, Join]
+
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN]
+
+CREATE LOGICAL SOURCE leftStream(id UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,1000
+
+CREATE LOGICAL SOURCE rightStream(id2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+2,1000
+
+EXPLAIN (OPTIMIZED) FORMAT VERBOSE
+SELECT * FROM (SELECT * FROM leftStream) INNER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO File();
+----
+<REGEX>JoinImplementationTypeTrait: NESTED_LOOP_JOIN</REGEX>
+<!REGEX>JoinImplementationTypeTrait: INDEX_NESTED_LOOP_JOIN</!REGEX>
+==END==

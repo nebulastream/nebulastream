@@ -56,6 +56,17 @@ namespace
 /// Small pages force frequent node splits; the large page covers the no-split case.
 constexpr std::array<uint64_t, 4> BUFFER_SIZE_POOL = {128, 512, 4096, 2ULL * 1024 * 1024};
 constexpr uint64_t MAX_VARSIZED_MEMORY_BUDGET = 64ULL * 1024 * 1024;
+constexpr std::array FIXED_VALUE_TYPES
+    = {DataType::Type::UINT8,
+       DataType::Type::UINT16,
+       DataType::Type::UINT32,
+       DataType::Type::UINT64,
+       DataType::Type::INT8,
+       DataType::Type::INT16,
+       DataType::Type::INT32,
+       DataType::Type::INT64,
+       DataType::Type::FLOAT32,
+       DataType::Type::FLOAT64};
 
 template <typename T>
 int compareValues(const std::any& lhs, const std::any& rhs, const bool nullable)
@@ -267,6 +278,40 @@ void appendAndReadByIndexProperty(const TestUtils::EngineMode mode)
     verifyAtExhaustively(tree, expected, fieldTypes);
 }
 
+void boundsMatchSortedVectorProperty(const TestUtils::EngineMode mode)
+{
+    auto fieldTypes = *TestUtils::genDataTypeSchema(FIXED_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS).as("field types");
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL).as("buffer size");
+    RC_PRE(schemaFitsBTreePage(fieldTypes, bufferSize));
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(1, TestUtils::MAX_ITEMS_PER_PROPERTY).as("number of items");
+    auto varSizedMemoryBudget = std::make_shared<uint64_t>(0);
+    auto expected = generateRecords(fieldTypes, numberOfItems, varSizedMemoryBudget);
+    auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestableBTree tree{fieldTypes, *bufferManager, mode};
+    for (const auto& record : expected)
+    {
+        tree.append(record);
+    }
+    sortOracle(expected, fieldTypes);
+    const AnyVecLess less{&fieldTypes};
+    for (const auto& record : expected)
+    {
+        const auto expectedLower = std::ranges::lower_bound(expected, record, less) - expected.begin();
+        const auto expectedUpper = std::ranges::upper_bound(expected, record, less) - expected.begin();
+        RC_ASSERT(tree.lowerBound(record) == static_cast<uint64_t>(expectedLower));
+        RC_ASSERT(tree.upperBound(record) == static_cast<uint64_t>(expectedUpper));
+    }
+
+    const auto first = *rc::gen::inRange<uint64_t>(0, expected.size() + 1).as("range begin");
+    const auto last = *rc::gen::inRange<uint64_t>(first, expected.size() + 1).as("range end");
+    const auto actualRange = tree.range(first, last);
+    RC_ASSERT(actualRange.size() == last - first);
+    for (uint64_t index = first; index < last; ++index)
+    {
+        RC_ASSERT(recordsEqual(actualRange[index - first], expected[index], fieldTypes));
+    }
+}
+
 }
 
 RC_GTEST_PROP(BTreePropertyTest, appendAndIterateCompiler, ())
@@ -291,6 +336,18 @@ RC_GTEST_PROP(BTreePropertyTest, appendAndReadByIndexInterpreter, ())
 {
     Logger::setupLogging("BTreePropertyTest.log", LogLevel::LOG_DEBUG);
     appendAndReadByIndexProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(BTreePropertyTest, boundsMatchSortedVectorCompiler, ())
+{
+    Logger::setupLogging("BTreePropertyTest.log", LogLevel::LOG_DEBUG);
+    boundsMatchSortedVectorProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(BTreePropertyTest, boundsMatchSortedVectorInterpreter, ())
+{
+    Logger::setupLogging("BTreePropertyTest.log", LogLevel::LOG_DEBUG);
+    boundsMatchSortedVectorProperty(TestUtils::EngineMode::Interpreter);
 }
 
 }

@@ -250,6 +250,24 @@ void BTreeRef::appendRecord(
         });
 }
 
+uint64_t
+BTreeRef::findBound(TupleBuffer* buffer, const BTreeComparator* comparator, const int8_t* entry, const uint64_t entrySize, const bool upper)
+{
+    PRECONDITION(buffer != nullptr, "BTree buffer must not be null");
+    PRECONDITION(comparator != nullptr, "BTree comparator must not be null");
+    PRECONDITION(entry != nullptr, "BTree entry must not be null");
+    const auto compare = [buffer, comparator](const std::span<const std::byte> lhs, const std::span<const std::byte> rhs)
+    {
+        return comparator->compare(
+            buffer,
+            reinterpret_cast<int8_t*>(const_cast<std::byte*>(lhs.data())),
+            reinterpret_cast<int8_t*>(const_cast<std::byte*>(rhs.data()))); /// NOLINT(cppcoreguidelines-pro-type-const-cast)
+    };
+    const auto tree = BTree::load(*buffer);
+    const std::span<const std::byte> searchEntry{reinterpret_cast<const std::byte*>(entry), entrySize};
+    return upper ? tree.upperBound(searchEntry, compare) : tree.lowerBound(searchEntry, compare);
+}
+
 void BTreeRef::append(
     const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider, const BTreeComparator& comparator) const
 {
@@ -264,6 +282,115 @@ void BTreeRef::append(
         nautilus::val<const BTreeComparator*>{&comparator},
         entry.data(),
         nautilus::val<uint64_t>{entrySize});
+}
+
+nautilus::val<uint64_t> BTreeRef::findBound(const Record& record, const BTreeComparator& comparator, const bool upper) const
+{
+    const auto entrySize = tupleLayout->getSizeInBytes();
+    const NautilusStackAllocation entry{entrySize};
+    tupleLayout->writeRecord(
+        record,
+        entry.data(),
+        [](nautilus::val<int8_t*>, nautilus::val<uint64_t>) -> nautilus::val<int8_t*>
+        { throw NotImplemented("Variable-sized BTree search keys are not supported"); });
+    return nautilus::invoke(
+        BTreeRef::findBound,
+        btreeBuffer.asArg(),
+        nautilus::val<const BTreeComparator*>{&comparator},
+        entry.data(),
+        nautilus::val<uint64_t>{entrySize},
+        nautilus::val<bool>{upper});
+}
+
+nautilus::val<uint64_t> BTreeRef::lowerBound(const Record& record, const BTreeComparator& comparator) const
+{
+    return findBound(record, comparator, false);
+}
+
+nautilus::val<uint64_t> BTreeRef::upperBound(const Record& record, const BTreeComparator& comparator) const
+{
+    return findBound(record, comparator, true);
+}
+
+void BTreeRef::initializeIterator(const TupleBuffer* buffer, const uint64_t index, int8_t* state)
+{
+    PRECONDITION(buffer != nullptr, "BTree buffer must not be null");
+    PRECONDITION(state != nullptr, "BTree iterator state must not be null");
+    new (state) BTree::Iterator{BTree::load(*buffer).iteratorAt(index)};
+}
+
+int8_t* BTreeRef::iteratorAddress(const int8_t* state)
+{
+    PRECONDITION(state != nullptr, "BTree iterator state must not be null");
+    const auto* iterator = reinterpret_cast<const BTree::Iterator*>(state);
+    return reinterpret_cast<int8_t*>((*iterator).operator*().data());
+}
+
+void BTreeRef::advanceIterator(int8_t* state)
+{
+    PRECONDITION(state != nullptr, "BTree iterator state must not be null");
+    auto* iterator = reinterpret_cast<BTree::Iterator*>(state);
+    ++(*iterator);
+}
+
+void BTreeRef::destroyIterator(int8_t* state)
+{
+    PRECONDITION(state != nullptr, "BTree iterator state must not be null");
+    std::destroy_at(reinterpret_cast<BTree::Iterator*>(state));
+}
+
+BTreeRefIterator BTreeRef::begin() const
+{
+    return BTreeRefIterator{*this, nautilus::val<uint64_t>{0}};
+}
+
+BTreeRefIterator BTreeRef::iteratorAt(const nautilus::val<uint64_t>& index) const
+{
+    return BTreeRefIterator{*this, index};
+}
+
+BTreeRefIteratorSentinel BTreeRef::end() const
+{
+    return BTreeRefIteratorSentinel{size()};
+}
+
+BTreeRefIteratorSentinel BTreeRef::end(const nautilus::val<uint64_t>& index) const
+{
+    return BTreeRefIteratorSentinel{index};
+}
+
+BTreeRefIterator::BTreeRefIterator(BTreeRef tree, const nautilus::val<uint64_t>& position)
+    : tree(std::move(tree)), position(position), state(sizeof(BTree::Iterator), alignof(BTree::Iterator))
+{
+    nautilus::invoke(BTreeRef::initializeIterator, this->tree.btreeBuffer.asArg(), position, state.data());
+}
+
+BTreeRefIterator::~BTreeRefIterator()
+{
+    nautilus::invoke(BTreeRef::destroyIterator, state.data());
+}
+
+Record BTreeRefIterator::operator*() const
+{
+    const auto address = nautilus::invoke(BTreeRef::iteratorAddress, state.data());
+    return tree.read(address);
+}
+
+BTreeRefIterator& BTreeRefIterator::operator++()
+{
+    nautilus::invoke(BTreeRef::advanceIterator, state.data());
+    position = position + 1;
+    return *this;
+}
+
+nautilus::val<bool> BTreeRefIterator::operator==(const BTreeRefIteratorSentinel& sentinel) const
+{
+    return position == sentinel.position;
+}
+
+nautilus::val<bool> BTreeRefIterator::operator!=(const BTreeRefIteratorSentinel& sentinel) const
+{
+    return not(*this == sentinel);
 }
 
 Record BTreeRef::at(const nautilus::val<uint64_t>& index) const

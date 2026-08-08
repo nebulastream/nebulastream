@@ -1,0 +1,71 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <bit>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <vector>
+#include <Join/StreamJoinOperatorHandler.hpp>
+#include <Join/StreamJoinUtil.hpp>
+#include <SliceStore/Slice.hpp>
+
+namespace NES
+{
+
+struct EmittedINLJWindowTrigger
+{
+    EmittedINLJWindowTrigger(
+        const WindowInfo& windowInfo, const std::vector<SliceEnd>& leftSliceEnds, const std::vector<SliceEnd>& rightSliceEnds)
+        : windowInfo(windowInfo), leftNumberOfSliceEnds(leftSliceEnds.size()), rightNumberOfSliceEnds(rightSliceEnds.size())
+    {
+        auto* base = std::bit_cast<int8_t*>(this + 1);
+        this->leftSliceEnds = std::bit_cast<SliceEnd*>(base);
+        this->rightSliceEnds = std::bit_cast<SliceEnd*>(base + (leftSliceEnds.size() * sizeof(SliceEnd)));
+        std::ranges::copy(leftSliceEnds, this->leftSliceEnds);
+        std::ranges::copy(rightSliceEnds, this->rightSliceEnds);
+    }
+
+    WindowInfo windowInfo;
+    uint64_t leftNumberOfSliceEnds;
+    uint64_t rightNumberOfSliceEnds;
+    SliceEnd* leftSliceEnds;
+    SliceEnd* rightSliceEnds;
+};
+
+class INLJOperatorHandler final : public StreamJoinOperatorHandler
+{
+public:
+    INLJOperatorHandler(
+        const std::vector<OriginId>& inputOrigins,
+        OriginId outputOriginId,
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        JoinTriggerStrategy triggerStrategy);
+
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
+
+private:
+    void emitSlicesToProbe(
+        const std::vector<std::shared_ptr<Slice>>& leftSlices,
+        const std::vector<std::shared_ptr<Slice>>& rightSlices,
+        ProbeTaskType probeTaskType,
+        const WindowInfo& windowInfo,
+        const SequenceData& sequenceData,
+        PipelineExecutionContext* pipelineCtx) override;
+};
+
+}
