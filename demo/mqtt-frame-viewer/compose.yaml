@@ -18,3 +18,10 @@ services:
       - "9001:9001" # MQTT over WebSocket
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  viewer:
+    image: nginx:1.29-alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro

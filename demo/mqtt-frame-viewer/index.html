@@ -27,7 +27,7 @@
   <h1>MQTT media viewer</h1>
   <div class="controls">
     <label>Broker WebSocket URL
-      <input id="broker" value="ws://localhost:9001/mqtt" placeholder="wss://broker.example/mqtt">
+      <input id="broker" placeholder="wss://broker.example/mqtt">
     </label>
     <button id="connect">Connect</button>
     <span id="status" aria-live="polite">Disconnected</span>
@@ -80,6 +80,8 @@
 
   <script>
     let client;
+    const brokerInput = document.querySelector('#broker');
+    brokerInput.value = `ws://${window.location.hostname || 'localhost'}:9001/mqtt`;
     const AUDIO_WINDOW_MS = 1000;
     const HISTORY_MS = 5000;
     const TOPICS = ['rgb-image', 'thermal-image', 'audio', 'audio-noise-level', 'audio-kws', 'memory'];

@@ -1,6 +1,8 @@
 # MQTT media viewer
 
-Start the local broker with `docker compose up -d`, then serve this folder with any static web server and open `index.html`. Its default WebSocket URL, `ws://localhost:9001/mqtt`, connects to that broker. MQTT is also exposed on `localhost:1883` for publishers.
+Run `docker compose up -d`, then open <http://localhost:8081>. nginx serves the viewer, which connects directly from the browser to the broker's MQTT-over-WebSocket listener on port 9001. The viewer derives the broker hostname from the page URL, so it also works when opened using the Docker host's network name or IP address. MQTT is exposed on port 1883 for publishers.
+
+Browsers cannot connect to the raw MQTT listener on port 1883; they require the WebSocket listener exposed on port 9001. The broker URL remains editable in the viewer.
 
 The viewer subscribes directly to `rgb-image`, `thermal-image`, `audio`, `audio-noise-level`, `audio-kws`, and `memory`. RGB, thermal, and the single audio waveform share the first row.
 
