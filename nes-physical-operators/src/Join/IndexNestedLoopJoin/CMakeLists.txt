@@ -10,13 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(HashJoin)
-add_subdirectory(IndexNestedLoopJoin)
-add_subdirectory(NestedLoopJoin)
-
 add_source_files(nes-physical-operators
-        JoinTriggerStrategy.cpp
-        StreamJoinBuildPhysicalOperator.cpp
-        StreamJoinOperatorHandler.cpp
-        StreamJoinProbePhysicalOperator.cpp
+        INLJBuildPhysicalOperator.cpp
+        INLJInnerProbePhysicalOperator.cpp
+        INLJOuterProbePhysicalOperator.cpp
+        INLJProbePhysicalOperatorBase.cpp
+        INLJOperatorHandler.cpp
+        INLJSlice.cpp
 )

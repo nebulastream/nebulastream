@@ -198,6 +198,55 @@ private:
         sinkProviders;
 };
 
+std::vector<ConfigurationOverride>
+mergeConfigurations(const std::vector<ConfigurationOverride>& overrides, const std::vector<ConfigurationOverride>& otherOverrides)
+{
+    const auto isDefault = [](const std::vector<ConfigurationOverride>& collection)
+    { return collection.empty() || (collection.size() == 1 && collection.front().overrideParameters.empty()); };
+
+    if (isDefault(overrides) && isDefault(otherOverrides))
+    {
+        return {ConfigurationOverride{}};
+    }
+    if (isDefault(overrides))
+    {
+        return otherOverrides;
+    }
+    if (isDefault(otherOverrides))
+    {
+        return overrides;
+    }
+
+    std::vector<ConfigurationOverride> combined;
+    combined.reserve(overrides.size() * otherOverrides.size());
+
+    for (const auto& override : overrides)
+    {
+        for (const auto& other : otherOverrides)
+        {
+            auto merged = other;
+            for (const auto& [key, value] : override.overrideParameters)
+            {
+                merged.overrideParameters[key] = value;
+            }
+
+            const bool alreadyPresent
+                = std::ranges::any_of(combined, [&merged](const ConfigurationOverride& existing) { return existing == merged; });
+            if (!alreadyPresent)
+            {
+                combined.emplace_back(std::move(merged));
+            }
+        }
+    }
+
+    if (combined.empty())
+    {
+        combined.emplace_back();
+    }
+
+    return combined;
+}
+
 /// A Builder for Systest queries that matches the steps in which information is added.
 /// Contains logic to extract some more information from the set fields, and to validate that all fields have been set.
 class SystestQueryBuilder
@@ -227,6 +276,11 @@ public:
     }
 
     void setConfigurationOverrides(std::vector<ConfigurationOverride> overrides) { configurationOverrides = std::move(overrides); }
+
+    void addConfigurationOverrides(const std::vector<ConfigurationOverride>& overrides)
+    {
+        configurationOverrides = mergeConfigurations(overrides, configurationOverrides);
+    }
 
     void setQueryDefinition(std::string queryDefinition) { this->queryDefinition = std::move(queryDefinition); }
 
@@ -371,7 +425,19 @@ public:
         if (explainStatement.has_value())
         {
             /// EXPLAIN statements have no executable plan and never touch the worker, so configuration overrides do not
-            /// apply and exactly one query is emitted. On success, the runner only reads actualExplainOutput.
+            /// apply and exactly one query is emitted. Keep optimizer overrides only, so optimizer variants remain
+            /// distinguishable in the output. On success, the runner only reads actualExplainOutput.
+            ConfigurationOverride optimizerOverride;
+            for (const auto& configurationOverride : configurationOverrides)
+            {
+                for (const auto& [key, value] : configurationOverride.overrideParameters)
+                {
+                    if (key.starts_with("optimizer."))
+                    {
+                        optimizerOverride.overrideParameters.emplace(key, value);
+                    }
+                }
+            }
             return {
                 {.testName = testName.value(),
                  .queryIdInFile = queryIdInFile,
@@ -384,7 +450,7 @@ public:
                      ? expectedResultsOrError.value()
                      : std::variant<std::vector<std::string>, ExpectedError>{std::vector<std::string>{}},
                  .additionalSourceThreads = additionalSourceThreads.value(),
-                 .configurationOverride = ConfigurationOverride{},
+                 .configurationOverride = std::move(optimizerOverride),
                  .differentialQueryPlan = std::nullopt,
                  .runAfter = runAfter,
                  .actualExplainOutput = exception.has_value() ? std::nullopt : actualExplainOutput}};
@@ -454,6 +520,12 @@ private:
     bool built = false;
 };
 
+struct LoadedSystests
+{
+    std::vector<SystestQueryBuilder> builders;
+    std::vector<std::pair<QueryOptimizerConfiguration, ConfigurationOverride>> optimizerConfigurations;
+};
+
 struct SystestBinder::Impl
 {
     explicit Impl(
@@ -473,55 +545,6 @@ struct SystestBinder::Impl
         {
             workerCatalog->addWorker(host, data, capacity, downstream, config);
         }
-    }
-
-    static std::vector<ConfigurationOverride>
-    mergeConfigurations(const std::vector<ConfigurationOverride>& overrides, const std::vector<ConfigurationOverride>& otherOverrides)
-    {
-        const auto isDefault = [](const std::vector<ConfigurationOverride>& collection)
-        { return collection.empty() || (collection.size() == 1 && collection.front().overrideParameters.empty()); };
-
-        if (isDefault(overrides) && isDefault(otherOverrides))
-        {
-            return {ConfigurationOverride{}};
-        }
-        if (isDefault(overrides))
-        {
-            return otherOverrides;
-        }
-        if (isDefault(otherOverrides))
-        {
-            return overrides;
-        }
-
-        std::vector<ConfigurationOverride> combined;
-        combined.reserve(overrides.size() * otherOverrides.size());
-
-        for (const auto& override : overrides)
-        {
-            for (const auto& other : otherOverrides)
-            {
-                auto merged = other;
-                for (const auto& [key, value] : override.overrideParameters)
-                {
-                    merged.overrideParameters[key] = value;
-                }
-
-                const bool alreadyPresent
-                    = std::ranges::any_of(combined, [&merged](const ConfigurationOverride& existing) { return existing == merged; });
-                if (!alreadyPresent)
-                {
-                    combined.emplace_back(std::move(merged));
-                }
-            }
-        }
-
-        if (combined.empty())
-        {
-            combined.emplace_back();
-        }
-
-        return combined;
     }
 
     std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
@@ -557,27 +580,31 @@ struct SystestBinder::Impl
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
+        auto [loadedSystests, optimizerConfigurations]
+            = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
-
         std::vector<SystestQuery> buildSystests;
-        for (auto& builder : loadedSystests)
+        for (const auto& [optimizerConfiguration, optimizerOverride] : optimizerConfigurations)
         {
-            const bool includeBuilder = testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                || testfile.onlyEnableQueriesWithTestQueryNumber.contains(builder.getSystemTestQueryId());
-            if (!includeBuilder)
+            const QueryOptimizer queryOptimizer{
+                optimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+            for (auto builder : loadedSystests)
             {
-                continue;
-            }
+                const bool includeBuilder = testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                    || testfile.onlyEnableQueriesWithTestQueryNumber.contains(builder.getSystemTestQueryId());
+                if (!includeBuilder)
+                {
+                    continue;
+                }
 
-            foundQueries.insert(builder.getSystemTestQueryId());
-            builder.optimizeQueries(queryOptimizer);
-            for (auto& query : std::move(builder).build())
-            {
-                buildSystests.emplace_back(std::move(query));
+                foundQueries.insert(builder.getSystemTestQueryId());
+                builder.addConfigurationOverrides({optimizerOverride});
+                builder.optimizeQueries(queryOptimizer);
+                for (auto& query : std::move(builder).build())
+                {
+                    buildSystests.emplace_back(std::move(query));
+                }
             }
         }
 
@@ -1058,7 +1085,7 @@ struct SystestBinder::Impl
         }
     }
 
-    std::vector<SystestQueryBuilder> loadFromSLTFile(
+    LoadedSystests loadFromSLTFile(
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
@@ -1071,6 +1098,7 @@ struct SystestBinder::Impl
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
         std::vector configOverrides{ConfigurationOverride{}};
         std::vector globalConfigOverrides{ConfigurationOverride{}};
+        std::vector globalOptimizerOverrides{ConfigurationOverride{}};
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
         const auto binder = NES::StatementBinder{
@@ -1139,14 +1167,54 @@ struct SystestBinder::Impl
         parser.registerOnGlobalConfigurationCallback(
             [&](const std::vector<ConfigurationOverride>& overrides)
             {
+                static constexpr std::string_view OptimizerPrefix = "optimizer.";
+                std::vector<ConfigurationOverride> workerOverrides;
+                std::vector<ConfigurationOverride> optimizerOverrides;
+                for (const auto& override : overrides)
+                {
+                    ConfigurationOverride workerOverride;
+                    ConfigurationOverride optimizerOverride;
+                    for (const auto& [key, value] : override.overrideParameters)
+                    {
+                        if (key.starts_with(OptimizerPrefix))
+                        {
+                            const auto optimizerKey = key.substr(OptimizerPrefix.size());
+                            if (optimizerKey.empty())
+                            {
+                                throw SLTUnexpectedToken("Expected optimizer configuration key after '{}'.", OptimizerPrefix);
+                            }
+                            optimizerOverride.overrideParameters.emplace(key, value);
+                        }
+                        else
+                        {
+                            workerOverride.overrideParameters.emplace(key, value);
+                        }
+                    }
+                    if (not workerOverride.overrideParameters.empty())
+                    {
+                        workerOverrides.emplace_back(std::move(workerOverride));
+                    }
+                    if (not optimizerOverride.overrideParameters.empty())
+                    {
+                        optimizerOverrides.emplace_back(std::move(optimizerOverride));
+                    }
+                }
+                if (not optimizerOverrides.empty())
+                {
+                    globalOptimizerOverrides = mergeConfigurations(optimizerOverrides, globalOptimizerOverrides);
+                }
+                if (workerOverrides.empty())
+                {
+                    return;
+                }
                 const bool isDefault = globalConfigOverrides.size() == 1 && globalConfigOverrides.front().overrideParameters.empty();
                 if (isDefault)
                 {
-                    globalConfigOverrides = overrides;
+                    globalConfigOverrides = std::move(workerOverrides);
                 }
                 else
                 {
-                    globalConfigOverrides = mergeConfigurations(overrides, globalConfigOverrides);
+                    globalConfigOverrides = mergeConfigurations(workerOverrides, globalConfigOverrides);
                 }
             });
 
@@ -1179,16 +1247,31 @@ struct SystestBinder::Impl
             exception.what() += fmt::format("Could not successfully parse and bind test file://{}", testFilePath.string());
             throw;
         }
-        return plans
+        auto builders = plans
             | std::ranges::views::transform(
-                   [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
-                   {
-                       pair.second.setPaths(testFilePath, workingDir);
-                       pair.second.setName(std::string{testFileName});
-                       pair.second.setAdditionalSourceThreads(sourceThreads);
-                       return pair.second;
-                   })
+                            [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
+                            {
+                                pair.second.setPaths(testFilePath, workingDir);
+                                pair.second.setName(std::string{testFileName});
+                                pair.second.setAdditionalSourceThreads(sourceThreads);
+                                return pair.second;
+                            })
             | std::ranges::to<std::vector>();
+        std::vector<std::pair<QueryOptimizerConfiguration, ConfigurationOverride>> optimizerConfigurations;
+        optimizerConfigurations.reserve(globalOptimizerOverrides.size());
+        for (auto& optimizerOverride : globalOptimizerOverrides)
+        {
+            auto fileOptimizerConfiguration = queryOptimizerConfiguration;
+            std::unordered_map<std::string, std::string> fileOptimizerOverrides;
+            for (const auto& [key, value] : optimizerOverride.overrideParameters)
+            {
+                INVARIANT(key.starts_with("optimizer."), "Expected an optimizer configuration key, but got '{}'.", key);
+                fileOptimizerOverrides.emplace(key.substr(std::string_view{"optimizer."}.size()), value);
+            }
+            fileOptimizerConfiguration.overwriteConfigWithCommandLineInput(fileOptimizerOverrides);
+            optimizerConfigurations.emplace_back(std::move(fileOptimizerConfiguration), std::move(optimizerOverride));
+        }
+        return {.builders = std::move(builders), .optimizerConfigurations = std::move(optimizerConfigurations)};
     }
 
 private:

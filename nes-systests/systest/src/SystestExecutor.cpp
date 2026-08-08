@@ -71,6 +71,18 @@ namespace
 {
 using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
 
+void applyWorkerConfigurationOverride(
+    SingleNodeWorkerConfiguration& configuration, const Systest::ConfigurationOverride& configurationOverride)
+{
+    for (const auto& [key, value] : configurationOverride.overrideParameters)
+    {
+        if (not key.starts_with("optimizer."))
+        {
+            configuration.overwriteConfigWithCommandLineInput({{key, value}});
+        }
+    }
+}
+
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
 {
     if (failedQueries.empty())
@@ -140,10 +152,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
         {
             auto configCopy = baseConfiguration;
-            for (const auto& [key, value] : overrideConfig.overrideParameters)
-            {
-                configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-            }
+            applyWorkerConfigurationOverride(configCopy, overrideConfig);
 
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
@@ -385,10 +394,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 for (const auto& [overrideConfig, queriesForConfig] : benchmarkQueriesByOverride)
                 {
                     auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig.overrideParameters)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
+                    applyWorkerConfigurationOverride(configCopy, overrideConfig);
                     auto failed
                         = runQueriesAndBenchmark(queriesForConfig, configCopy, benchmarkResults, config.clusterConfig, progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
@@ -413,10 +419,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
                     auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig.overrideParameters)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
+                    applyWorkerConfigurationOverride(configCopy, overrideConfig);
                     const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
                         ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
                                                                   { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}

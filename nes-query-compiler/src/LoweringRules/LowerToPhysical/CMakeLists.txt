@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_plugin(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
+add_plugin(IndexNLJoin LoweringRule LowerToPhysicalINLJoin.cpp)
 add_plugin(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
 add_plugin(Selection LoweringRule LowerToPhysicalSelection.cpp)
 add_plugin(Projection LoweringRule LowerToPhysicalProjection.cpp)

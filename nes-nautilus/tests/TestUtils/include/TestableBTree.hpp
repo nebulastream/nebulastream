@@ -46,7 +46,11 @@ public:
 
     AnyVec at(uint64_t index);
 
+    uint64_t lowerBound(const AnyVec& record);
+    uint64_t upperBound(const AnyVec& record);
+
     std::vector<AnyVec> toVector();
+    std::vector<AnyVec> range(uint64_t begin, uint64_t end);
 
     uint64_t size();
 
@@ -59,7 +63,10 @@ private:
     std::shared_ptr<BTreeComparator> comparator;
     std::optional<PipelineFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> appendFn;
     std::optional<PipelineFunction<void(TupleBuffer*, uint64_t, AnyVec*)>> atFn;
+    std::optional<PipelineFunction<uint64_t(TupleBuffer*, AnyVec*)>> lowerBoundFn;
+    std::optional<PipelineFunction<uint64_t(TupleBuffer*, AnyVec*)>> upperBoundFn;
     std::optional<PipelineFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAllFn;
+    std::optional<PipelineFunction<void(TupleBuffer*, uint64_t, uint64_t, std::vector<AnyVec>*)>> readRangeFn;
     std::optional<PipelineFunction<uint64_t(TupleBuffer*)>> sizeFn;
 };
 

@@ -2,6 +2,8 @@
 # description: Two-level chained LEFT OUTER JOIN with sliding windows — exercises combine-first trigger path twice
 # groups: [WindowOperators, Join, OuterJoin, SlidingWindow, CompilationIntensive]
 
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN, OPTIMIZER_CHOOSES]
+
 # Source definitions
 # stream: id=1 in slice 1 (t=500), id=2 in slice 1 (t=1500), id=3 in slice 2 (t=2500)
 # stream2: id2=1 in slice 2 (t=2500) — cross-slice match with stream id=1 in Join A

@@ -2,7 +2,7 @@
 # base worker configuration straight to runQueriesAndBenchmark while still printing the override in the query
 # label, so the override silently had no effect and only surfaced as an unrelated crash deep inside a query.
 #
-# This query keeps one paged vector per median in the aggregation state, so its hash map entry does not fit a
+# This query keeps one BTree child index per median in the aggregation state, so its hash map entry does not fit a
 # page at the default size of 1024 bytes: without the page size below, lowering aborts on the entriesPerPage
 # invariant instead of running. Run it with -b, where the regression lived.
 # groups: [regression]

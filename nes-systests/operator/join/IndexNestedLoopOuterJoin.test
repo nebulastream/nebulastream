@@ -1,0 +1,51 @@
+# name: join/IndexNestedLoopOuterJoin.test
+# description: Indexed theta joins emit unmatched tuples for left, right, and full outer joins.
+# groups: [WindowOperators, Join, OuterJoin, IndexNestedLoopJoin]
+
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN, OPTIMIZER_CHOOSES]
+
+CREATE LOGICAL SOURCE leftStream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR leftStream TYPE File;
+ATTACH INLINE
+1,10,100
+3,30,100
+5,50,100
+
+CREATE LOGICAL SOURCE rightStream(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rightStream TYPE File;
+ATTACH INLINE
+0,0,100
+2,20,100
+4,40,100
+
+CREATE SINK leftSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL,
+                     timestamp UINT64 NOT NULL, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE File;
+CREATE SINK rightSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64, value UINT64,
+                      timestamp UINT64, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL) TYPE File;
+CREATE SINK fullSink(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64, value UINT64,
+                     timestamp UINT64, id2 UINT64, value2 UINT64, timestamp2 UINT64) TYPE File;
+
+SELECT * FROM (SELECT * FROM leftStream) LEFT OUTER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO leftSink;
+----
+0,1000,1,10,100,2,20,100
+0,1000,1,10,100,4,40,100
+0,1000,3,30,100,4,40,100
+0,1000,5,50,100,NULL,NULL,NULL
+
+SELECT * FROM (SELECT * FROM leftStream) RIGHT OUTER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO rightSink;
+----
+0,1000,1,10,100,2,20,100
+0,1000,1,10,100,4,40,100
+0,1000,3,30,100,4,40,100
+0,1000,NULL,NULL,NULL,0,0,100
+
+SELECT * FROM (SELECT * FROM leftStream) FULL OUTER JOIN (SELECT * FROM rightStream) ON id < id2
+WINDOW TUMBLING (timestamp, timestamp2, size 1 sec) INTO fullSink;
+----
+0,1000,1,10,100,2,20,100
+0,1000,1,10,100,4,40,100
+0,1000,3,30,100,4,40,100
+0,1000,5,50,100,NULL,NULL,NULL
+0,1000,NULL,NULL,NULL,0,0,100

@@ -2,6 +2,8 @@
 # description: Test FULL OUTER JOIN with sliding windows — pass-2 must fire exactly once per window, not N-squared times
 # groups: [WindowOperators, Join, OuterJoin, SlidingWindow]
 
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN, OPTIMIZER_CHOOSES]
+
 # Source definitions
 # Left stream: id=1 in slice 1 (t=500), id=2 in slice 1 (t=1500), id=3 in slice 2 (t=2500)
 # Right stream: id2=1 in slice 2 (t=2500) — cross-slice match with left id=1; id2=4 has no left match
@@ -36,4 +38,3 @@ INTO sink;
 2000,6000,3,30,2500,NULL,NULL,NULL
 2000,6000,NULL,NULL,NULL,1,100,2500
 2000,6000,NULL,NULL,NULL,4,400,3500
-

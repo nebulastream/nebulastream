@@ -2,6 +2,8 @@
 # description: Join where some join-key fields are NULL - null records are excluded from output
 # groups: [WindowOperators, Join, NullHandling, CompilationIntensive]
 
+GlobalConfiguration optimizer.join_strategy: [NESTED_LOOP_JOIN, OPTIMIZER_CHOOSES]
+
 # Source definitions
 # Empty id field in inline data represents NULL.
 # streamNull1 row 2 (id1=NULL) and streamNull2 row 2 (id2=NULL) must not appear in any output.
