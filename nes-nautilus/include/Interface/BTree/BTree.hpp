@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -29,10 +30,15 @@ namespace NES
 ///
 /// Every key occupies a fixed-size slot. Variable-sized payloads can be allocated through
 /// allocateSpaceForVarSized() and referenced from such a slot (for example with VariableSizedAccess).
-/// BTreeRef provides the record-layout-facing interface.
 class BTree
 {
 public:
+    class Iterator;
+
+    struct Sentinel
+    {
+    };
+
     using Comparator = std::function<bool(std::span<const std::byte>, std::span<const std::byte>)>;
 
     struct VarSizedAllocation
@@ -49,12 +55,30 @@ public:
     [[nodiscard]] uint64_t size() const;
     void append(std::span<const std::byte> entry, AbstractBufferProvider* bufferProvider, const Comparator& comparator);
     [[nodiscard]] std::span<std::byte> at(uint64_t index) const;
+    [[nodiscard]] uint64_t lowerBound(std::span<const std::byte> entry, const Comparator& comparator) const;
+    [[nodiscard]] uint64_t upperBound(std::span<const std::byte> entry, const Comparator& comparator) const;
+    [[nodiscard]] Iterator begin() const;
+    [[nodiscard]] Iterator iteratorAt(uint64_t index) const;
+    [[nodiscard]] Sentinel end() const;
 
     VarSizedAllocation allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, uint64_t size);
 
 private:
     static constexpr uint64_t VALID_BTREE = 8254667332726569;
     static constexpr uint32_t INVALID_CHILD_INDEX = std::numeric_limits<uint32_t>::max();
+    static constexpr uint64_t MAX_TREE_HEIGHT = 64;
+
+    struct IteratorFrame
+    {
+        uint32_t nodeIndex;
+        uint32_t keyIndex;
+    };
+
+    struct IteratorState
+    {
+        std::array<IteratorFrame, MAX_TREE_HEIGHT> frames;
+        uint32_t depth;
+    };
 
     struct Header
     {
@@ -91,6 +115,11 @@ private:
     void setChild(TupleBuffer& nodeBuffer, uint64_t childIndex, uint32_t value) const;
     [[nodiscard]] uint64_t calculateSubtreeSize(const TupleBuffer& nodeBuffer) const;
     [[nodiscard]] uint64_t findInsertPosition(uint32_t nodeIndex, std::span<const std::byte> entry, const Comparator& comparator) const;
+    [[nodiscard]] uint64_t bound(std::span<const std::byte> entry, const Comparator& comparator, bool upper) const;
+    void initializeIterator(IteratorState& state, uint64_t index) const;
+    [[nodiscard]] std::span<std::byte> iteratorValue(const IteratorState& state) const;
+    void advanceIterator(IteratorState& state) const;
+    [[nodiscard]] static bool iteratorValid(const IteratorState& state);
 
     [[nodiscard]] uint32_t allocateNode(AbstractBufferProvider* bufferProvider, bool leaf);
     [[nodiscard]] uint32_t ensureRoot(AbstractBufferProvider* bufferProvider);
@@ -103,5 +132,22 @@ private:
     void splitChild(uint32_t parentIndex, uint64_t childPosition, AbstractBufferProvider* bufferProvider);
 
     TupleBuffer buffer;
+};
+
+class BTree::Iterator
+{
+public:
+    [[nodiscard]] std::span<std::byte> operator*() const;
+    Iterator& operator++();
+    [[nodiscard]] bool operator==(Sentinel) const;
+    [[nodiscard]] bool operator!=(Sentinel sentinel) const;
+
+private:
+    friend class BTree;
+
+    Iterator(TupleBuffer buffer, IteratorState state) : buffer(std::move(buffer)), state(std::move(state)) { }
+
+    TupleBuffer buffer;
+    IteratorState state;
 };
 }

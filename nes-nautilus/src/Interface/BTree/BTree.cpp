@@ -363,6 +363,191 @@ std::span<std::byte> BTree::at(uint64_t index) const
     }
 }
 
+void BTree::initializeIterator(IteratorState& state, uint64_t index) const
+{
+    PRECONDITION(index <= size(), "BTree iterator index {} out of bounds for size {}", index, size());
+    state.depth = 0;
+    if (index == size())
+    {
+        return;
+    }
+
+    auto currentIndex = header().rootIndex;
+    while (true)
+    {
+        PRECONDITION(state.depth < MAX_TREE_HEIGHT, "BTree exceeds the maximum supported iterator height");
+        const auto current = node(currentIndex);
+        const auto& currentHeader = nodeHeader(current);
+        if (currentHeader.leaf)
+        {
+            PRECONDITION(index < currentHeader.numberOfKeys, "BTree subtree sizes are inconsistent");
+            state.frames[state.depth++] = IteratorFrame{.nodeIndex = currentIndex, .keyIndex = static_cast<uint32_t>(index)};
+            return;
+        }
+
+        bool descended = false;
+        for (uint32_t keyIndex = 0; keyIndex < currentHeader.numberOfKeys; ++keyIndex)
+        {
+            const auto leftSize = nodeHeader(node(child(current, keyIndex))).subtreeSize;
+            if (index < leftSize)
+            {
+                state.frames[state.depth++] = IteratorFrame{.nodeIndex = currentIndex, .keyIndex = keyIndex};
+                currentIndex = child(current, keyIndex);
+                descended = true;
+                break;
+            }
+            index -= leftSize;
+            if (index == 0)
+            {
+                state.frames[state.depth++] = IteratorFrame{.nodeIndex = currentIndex, .keyIndex = keyIndex};
+                return;
+            }
+            --index;
+        }
+        if (not descended)
+        {
+            state.frames[state.depth++] = IteratorFrame{.nodeIndex = currentIndex, .keyIndex = currentHeader.numberOfKeys};
+            currentIndex = child(current, currentHeader.numberOfKeys);
+        }
+    }
+}
+
+bool BTree::iteratorValid(const IteratorState& state)
+{
+    return state.depth > 0;
+}
+
+std::span<std::byte> BTree::iteratorValue(const IteratorState& state) const
+{
+    PRECONDITION(iteratorValid(state), "Cannot dereference the BTree end iterator");
+    const auto& frame = state.frames[state.depth - 1];
+    auto nodeBuffer = node(frame.nodeIndex);
+    PRECONDITION(frame.keyIndex < nodeHeader(nodeBuffer).numberOfKeys, "BTree iterator does not reference a key");
+    return {key(nodeBuffer, frame.keyIndex), getEntrySize()};
+}
+
+void BTree::advanceIterator(IteratorState& state) const
+{
+    PRECONDITION(iteratorValid(state), "Cannot increment the BTree end iterator");
+    auto& currentFrame = state.frames[state.depth - 1];
+    auto current = node(currentFrame.nodeIndex);
+    const auto& currentHeader = nodeHeader(current);
+    if (not currentHeader.leaf)
+    {
+        ++currentFrame.keyIndex;
+        auto currentIndex = child(current, currentFrame.keyIndex);
+        while (true)
+        {
+            PRECONDITION(state.depth < MAX_TREE_HEIGHT, "BTree exceeds the maximum supported iterator height");
+            current = node(currentIndex);
+            const auto& header = nodeHeader(current);
+            state.frames[state.depth++] = IteratorFrame{.nodeIndex = currentIndex, .keyIndex = 0};
+            if (header.leaf)
+            {
+                break;
+            }
+            currentIndex = child(current, 0);
+        }
+    }
+    else
+    {
+        ++currentFrame.keyIndex;
+    }
+
+    while (state.depth > 0)
+    {
+        const auto& frame = state.frames[state.depth - 1];
+        if (frame.keyIndex < nodeHeader(node(frame.nodeIndex)).numberOfKeys)
+        {
+            return;
+        }
+        --state.depth;
+    }
+}
+
+BTree::Iterator BTree::begin() const
+{
+    return iteratorAt(0);
+}
+
+BTree::Iterator BTree::iteratorAt(const uint64_t index) const
+{
+    IteratorState state{};
+    initializeIterator(state, index);
+    return Iterator{buffer, std::move(state)};
+}
+
+BTree::Sentinel BTree::end() const
+{
+    return {};
+}
+
+std::span<std::byte> BTree::Iterator::operator*() const
+{
+    return BTree::load(buffer).iteratorValue(state);
+}
+
+BTree::Iterator& BTree::Iterator::operator++()
+{
+    BTree::load(buffer).advanceIterator(state);
+    return *this;
+}
+
+bool BTree::Iterator::operator==(Sentinel) const
+{
+    return not BTree::iteratorValid(state);
+}
+
+bool BTree::Iterator::operator!=(const Sentinel sentinel) const
+{
+    return not(*this == sentinel);
+}
+
+uint64_t BTree::bound(const std::span<const std::byte> entry, const Comparator& comparator, const bool upper) const
+{
+    PRECONDITION(entry.size() == getEntrySize(), "BTree entry has {} bytes, expected {}", entry.size(), getEntrySize());
+    PRECONDITION(static_cast<bool>(comparator), "BTree comparator must not be empty");
+
+    uint64_t rank = 0;
+    auto currentIndex = header().rootIndex;
+    while (currentIndex != INVALID_CHILD_INDEX)
+    {
+        const auto current = node(currentIndex);
+        const auto& currentHeader = nodeHeader(current);
+        uint64_t keyIndex = 0;
+        for (; keyIndex < currentHeader.numberOfKeys; ++keyIndex)
+        {
+            const std::span<const std::byte> existing{key(current, keyIndex), getEntrySize()};
+            const auto belongsBeforeBound = upper ? not comparator(entry, existing) : comparator(existing, entry);
+            if (not belongsBeforeBound)
+            {
+                break;
+            }
+            if (not currentHeader.leaf)
+            {
+                rank += nodeHeader(node(child(current, keyIndex))).subtreeSize;
+            }
+            ++rank;
+        }
+        if (currentHeader.leaf)
+        {
+            return rank;
+        }
+        currentIndex = child(current, keyIndex);
+    }
+    return rank;
+}
+
+uint64_t BTree::lowerBound(const std::span<const std::byte> entry, const Comparator& comparator) const
+{
+    return bound(entry, comparator, false);
+}
+
+uint64_t BTree::upperBound(const std::span<const std::byte> entry, const Comparator& comparator) const
+{
+    return bound(entry, comparator, true);
+}
+
 BTree::VarSizedAllocation BTree::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const uint64_t size)
 {
     PRECONDITION(bufferProvider != nullptr, "BTree buffer provider must not be null");

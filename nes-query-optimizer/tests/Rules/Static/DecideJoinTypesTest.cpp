@@ -39,6 +39,7 @@
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -217,8 +218,8 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
     EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
 }
 
-/// Same join but with NESTED_LOOP_JOIN strategy. Verify NLJ trait.
-TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
+/// An explicit NESTED_LOOP_JOIN strategy takes precedence even when the predicate supports an index join.
+TEST_F(DecideJoinTypesTest, ForcedNLJStrategyTakesPrecedenceOverIndexNestedLoopJoin)
 {
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
@@ -232,7 +233,7 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
     const auto leftSourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto rightSourceOp = SourceDescriptorLogicalOperator::create(rightSourceDescriptor);
 
-    auto joinFunction = EqualsLogicalFunction{
+    auto joinFunction = LessLogicalFunction{
         FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
         FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
 
@@ -268,6 +269,77 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
     ASSERT_EQ(joins.size(), 1);
     auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
     EXPECT_TRUE(trait->implementationType == JoinImplementation::NESTED_LOOP_JOIN);
+}
+
+TEST_F(DecideJoinTypesTest, DirectRangePredicateProducesIndexNestedLoopJoinTrait)
+{
+    const auto leftSchema = createSchema("left");
+    const auto rightSchema = createSchema("right");
+    const auto leftSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+    const auto rightSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+    const auto leftSourceOp = SourceDescriptorLogicalOperator::create(createSourceDescriptor(PhysicalSourceId{1}, leftSource));
+    const auto rightSourceOp = SourceDescriptorLogicalOperator::create(createSourceDescriptor(PhysicalSourceId{2}, rightSource));
+    const auto joinFunction = LessLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+    const auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+    const auto joinOp = JoinLogicalOperator::create(
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value());
+    const auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, false));
+    const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+    const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    const auto result = rule.apply(plan);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    const auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_EQ(trait->implementationType, JoinImplementation::INDEX_NESTED_LOOP_JOIN);
+}
+
+TEST_F(DecideJoinTypesTest, OuterRangePredicatesProduceIndexNestedLoopJoinTrait)
+{
+    using JT = JoinLogicalOperator::JoinType;
+    for (const auto joinType : {JT::OUTER_LEFT_JOIN, JT::OUTER_RIGHT_JOIN, JT::OUTER_FULL_JOIN})
+    {
+        const auto leftSchema = createSchema("left");
+        const auto rightSchema = createSchema("right");
+        const auto leftSource = createLogicalSource(Identifier::parse("LEFT_TEST"), leftSchema);
+        const auto rightSource = createLogicalSource(Identifier::parse("RIGHT_TEST"), rightSchema);
+        const auto leftSourceOp = SourceDescriptorLogicalOperator::create(createSourceDescriptor(PhysicalSourceId{1}, leftSource));
+        const auto rightSourceOp = SourceDescriptorLogicalOperator::create(createSourceDescriptor(PhysicalSourceId{2}, rightSource));
+        const auto joinFunction = LessLogicalFunction{
+            FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+            FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+        const auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+            {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+             Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+        const auto joinOp = JoinLogicalOperator::create(
+            std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+            joinFunction,
+            createTumblingWindow(),
+            joinType,
+            characteristics.value());
+        const auto leftNullable = joinType == JT::OUTER_RIGHT_JOIN || joinType == JT::OUTER_FULL_JOIN;
+        const auto rightNullable = joinType == JT::OUTER_LEFT_JOIN || joinType == JT::OUTER_FULL_JOIN;
+        const auto sinkDescriptor
+            = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(leftNullable, rightNullable));
+        const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
+        const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+        const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+        const auto result = rule.apply(plan);
+        const auto joins = getOperatorByType<JoinLogicalOperator>(result);
+        ASSERT_EQ(joins.size(), 1);
+        const auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+        EXPECT_EQ(trait->implementationType, JoinImplementation::INDEX_NESTED_LOOP_JOIN);
+    }
 }
 
 /// Join with a non-field-access leaf in condition + HASH_JOIN strategy. Verify fallback to NLJ.
@@ -417,7 +489,7 @@ TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
         characteristics.value());
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
-    auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+    auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
@@ -460,7 +532,7 @@ TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
         characteristics.value());
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, false));
-    auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+    auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
@@ -503,7 +575,7 @@ TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
         characteristics.value());
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, true));
-    auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+    auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
@@ -546,7 +618,7 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
         characteristics.value());
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
-    auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+    auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
@@ -594,7 +666,7 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
         characteristics.value());
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
-    auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
+    auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
