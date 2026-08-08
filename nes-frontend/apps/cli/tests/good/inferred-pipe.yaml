@@ -1,0 +1,51 @@
+query:
+  # Deliberately declared before its producer to verify dependency ordering.
+  - name: pipe_consumer
+    query: |
+      SELECT "VALUE"
+      FROM PIPE(VIDEO_FRAMES)
+      INTO VOID_SINK
+  - name: pipe_producer
+    query: |
+      SELECT DOUBLE AS "VALUE"
+      FROM GENERATOR_SOURCE
+      INTO PIPE(video_frames, "localhost:8080")
+  - name: unused_pipe_producer
+    query: |
+      SELECT DOUBLE AS "UNUSED"
+      FROM GENERATOR_SOURCE
+      INTO PIPE(unused_pipe, "localhost:8080")
+
+sinks:
+  - name: VOID_SINK
+    host: localhost:8080
+    schema:
+      - name: '"VALUE"'
+        type: FLOAT64
+    type: Void
+
+logical:
+  - name: GENERATOR_SOURCE
+    schema:
+      - name: DOUBLE
+        type: FLOAT64
+
+physical:
+  - logical: GENERATOR_SOURCE
+    host: localhost:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        NORMAL_DISTRIBUTION FLOAT64 0 1
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

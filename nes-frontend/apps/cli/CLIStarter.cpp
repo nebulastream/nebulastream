@@ -24,11 +24,14 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <ranges>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -44,6 +47,7 @@
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -59,6 +63,7 @@
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <rfl/Generic.hpp>
 #include <rfl/json/write.hpp>
 #include <yaml-cpp/node/node.h>
@@ -582,6 +587,438 @@ std::vector<NES::CLI::NamedQuery> loadQueries(
     return queries;
 }
 
+enum class PipeEndpointType : uint8_t
+{
+    Source,
+    Sink
+};
+
+struct PipeEndpoint
+{
+    PipeEndpointType type;
+    NES::Identifier name;
+    std::optional<std::string> host;
+    size_t offset;
+    size_t length;
+};
+
+struct PipeQueryMetadata
+{
+    std::vector<PipeEndpoint> endpoints;
+};
+
+struct ResolvedPipe
+{
+    NES::Host host;
+    NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> schema;
+};
+
+std::string previousToken(std::string_view query, size_t offset)
+{
+    while (offset > 0 && std::isspace(static_cast<unsigned char>(query[offset - 1])))
+    {
+        --offset;
+    }
+    const auto tokenEnd = offset;
+    while (offset > 0)
+    {
+        const auto character = static_cast<unsigned char>(query[offset - 1]);
+        if (!std::isalnum(character) && character != '_')
+        {
+            break;
+        }
+        --offset;
+    }
+    return NES::toUpperCase(std::string(query.substr(offset, tokenEnd - offset)));
+}
+
+PipeQueryMetadata findPipeEndpoints(const NES::CLI::NamedQuery& query)
+{
+    /// Frontend-only shorthand. A sink is PIPE(name, "host"), while a source is PIPE(name).
+    /// PIPE is intentionally found independent of its surrounding relation syntax so FROM, JOIN, and nested table expressions work.
+    static const std::regex pipePattern{
+        R"pipe(\bPIPE\s*\(\s*((?:[a-zA-Z_][a-zA-Z0-9_]*)|(?:"[^"]*"))\s*(?:,\s*"([a-zA-Z0-9:]*)")?\s*\))pipe",
+        std::regex_constants::icase};
+
+    PipeQueryMetadata metadata;
+    for (auto iter = std::sregex_iterator(query.query.begin(), query.query.end(), pipePattern); iter != std::sregex_iterator{}; ++iter)
+    {
+        const auto& match = *iter;
+        const auto offset = static_cast<size_t>(match.position());
+        const auto isSink = previousToken(query.query, offset) == "INTO";
+        auto name = bindIdentifierName(match[1].str());
+        const auto host = match[2].matched ? std::optional<std::string>{match[2].str()} : std::nullopt;
+        if (isSink && (!host.has_value() || host->empty()))
+        {
+            throw NES::InvalidConfigParameter("Pipe sink '{}' must specify a host", match[1].str());
+        }
+        if (!isSink && host.has_value())
+        {
+            throw NES::InvalidConfigParameter(
+                "Pipe source '{}' must not specify a host; its host is derived from the producing sink", match[1].str());
+        }
+        metadata.endpoints.emplace_back(PipeEndpoint{
+            .type = isSink ? PipeEndpointType::Sink : PipeEndpointType::Source,
+            .name = std::move(name),
+            .host = host,
+            .offset = offset,
+            .length = static_cast<size_t>(match.length())});
+    }
+    return metadata;
+}
+
+std::vector<size_t> pipeQueryOrder(const std::vector<NES::CLI::NamedQuery>& queries, const std::vector<PipeQueryMetadata>& metadata)
+{
+    std::unordered_map<NES::Identifier, size_t> producers;
+    for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
+    {
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type != PipeEndpointType::Sink)
+            {
+                continue;
+            }
+            const auto [existing, inserted] = producers.emplace(endpoint.name, queryIndex);
+            if (!inserted)
+            {
+                throw NES::InvalidConfigParameter(
+                    "Pipe '{}' has multiple producers (queries {} and {})",
+                    endpoint.name.getOriginalString(),
+                    existing->second,
+                    queryIndex);
+            }
+        }
+    }
+
+    std::vector<std::set<size_t>> successors(queries.size());
+    std::vector<size_t> predecessorCount(queries.size(), 0);
+    for (size_t consumerIndex = 0; consumerIndex < metadata.size(); ++consumerIndex)
+    {
+        for (const auto& endpoint : metadata[consumerIndex].endpoints)
+        {
+            if (endpoint.type != PipeEndpointType::Source)
+            {
+                continue;
+            }
+            const auto producer = producers.find(endpoint.name);
+            if (producer == producers.end())
+            {
+                throw NES::InvalidConfigParameter(
+                    "Pipe source '{}' has no producer in this submission", endpoint.name.getOriginalString());
+            }
+            if (successors[producer->second].insert(consumerIndex).second)
+            {
+                ++predecessorCount[consumerIndex];
+            }
+        }
+    }
+
+    /// A set makes the topological order deterministic and preserves declaration order whenever dependencies permit it.
+    std::set<size_t> ready;
+    for (size_t queryIndex = 0; queryIndex < predecessorCount.size(); ++queryIndex)
+    {
+        if (predecessorCount[queryIndex] == 0)
+        {
+            ready.insert(queryIndex);
+        }
+    }
+
+    std::vector<size_t> order;
+    order.reserve(queries.size());
+    while (!ready.empty())
+    {
+        const auto queryIndex = *ready.begin();
+        ready.erase(ready.begin());
+        order.push_back(queryIndex);
+        for (const auto successor : successors[queryIndex])
+        {
+            if (--predecessorCount[successor] == 0)
+            {
+                ready.insert(successor);
+            }
+        }
+    }
+    if (order.size() != queries.size())
+    {
+        throw NES::InvalidConfigParameter("Pipe query dependencies contain a cycle");
+    }
+    return order;
+}
+
+std::set<size_t> ignoredPipeQueries(const std::vector<NES::CLI::NamedQuery>& queries, const std::vector<PipeQueryMetadata>& metadata)
+{
+    std::unordered_map<NES::Identifier, size_t> producers;
+    for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
+    {
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type == PipeEndpointType::Sink)
+            {
+                producers.emplace(endpoint.name, queryIndex);
+            }
+        }
+    }
+
+    /// Non-pipe sinks are terminal outputs. Walk backwards from them to retain only pipe producers that contribute to a terminal output.
+    std::vector<bool> required(queries.size(), false);
+    std::vector<size_t> pending;
+    for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
+    {
+        const auto producesPipe = std::ranges::any_of(
+            metadata[queryIndex].endpoints, [](const PipeEndpoint& endpoint) { return endpoint.type == PipeEndpointType::Sink; });
+        if (!producesPipe)
+        {
+            required[queryIndex] = true;
+            pending.push_back(queryIndex);
+        }
+    }
+    while (!pending.empty())
+    {
+        const auto queryIndex = pending.back();
+        pending.pop_back();
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type != PipeEndpointType::Source)
+            {
+                continue;
+            }
+            const auto producerIndex = producers.at(endpoint.name);
+            if (!required[producerIndex])
+            {
+                required[producerIndex] = true;
+                pending.push_back(producerIndex);
+            }
+        }
+    }
+
+    std::set<size_t> ignored;
+    for (size_t queryIndex = 0; queryIndex < required.size(); ++queryIndex)
+    {
+        if (!required[queryIndex])
+        {
+            ignored.insert(queryIndex);
+        }
+    }
+    return ignored;
+}
+
+std::string pipeDependencyOutput(
+    const std::vector<NES::CLI::NamedQuery>& queries,
+    const std::vector<PipeQueryMetadata>& metadata,
+    const std::set<size_t>& ignoredQueries)
+{
+    struct Producer
+    {
+        size_t queryIndex;
+        std::string host;
+    };
+    std::unordered_map<NES::Identifier, Producer> producers;
+    for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
+    {
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type == PipeEndpointType::Sink)
+            {
+                producers.emplace(endpoint.name, Producer{.queryIndex = queryIndex, .host = endpoint.host.value()});
+            }
+        }
+    }
+
+    const auto queryName = [&queries](size_t queryIndex)
+    { return queries[queryIndex].name.value_or(fmt::format("query[{}]", queryIndex)); };
+
+    std::stringstream output;
+    fmt::println(output, "== Query Dependencies ==");
+    bool hasDependencies = false;
+    std::set<std::tuple<size_t, size_t, std::string>> emitted;
+    for (size_t consumerIndex = 0; consumerIndex < metadata.size(); ++consumerIndex)
+    {
+        if (ignoredQueries.contains(consumerIndex))
+        {
+            continue;
+        }
+        for (const auto& endpoint : metadata[consumerIndex].endpoints)
+        {
+            if (endpoint.type != PipeEndpointType::Source)
+            {
+                continue;
+            }
+            const auto& producer = producers.at(endpoint.name);
+            if (ignoredQueries.contains(producer.queryIndex))
+            {
+                continue;
+            }
+            if (!emitted.emplace(producer.queryIndex, consumerIndex, endpoint.name.asCanonicalString()).second)
+            {
+                continue;
+            }
+            fmt::println(
+                output,
+                "{} --[{}@{}]--> {}",
+                queryName(producer.queryIndex),
+                endpoint.name.getOriginalString(),
+                producer.host,
+                queryName(consumerIndex));
+            hasDependencies = true;
+        }
+    }
+    if (!hasDependencies)
+    {
+        fmt::println(output, "(none)");
+    }
+
+    fmt::println(output, "\n== Ignored Pipe Queries ==");
+    if (ignoredQueries.empty())
+    {
+        fmt::println(output, "(none)");
+        return output.str();
+    }
+
+    std::unordered_map<NES::Identifier, std::vector<size_t>> consumers;
+    for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
+    {
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type == PipeEndpointType::Source)
+            {
+                consumers[endpoint.name].push_back(queryIndex);
+            }
+        }
+    }
+    for (const auto queryIndex : ignoredQueries)
+    {
+        for (const auto& endpoint : metadata[queryIndex].endpoints)
+        {
+            if (endpoint.type != PipeEndpointType::Sink)
+            {
+                continue;
+            }
+            const auto pipeConsumers = consumers[endpoint.name];
+            if (pipeConsumers.empty())
+            {
+                fmt::println(
+                    output,
+                    "{} ({}@{} is not consumed)",
+                    queryName(queryIndex),
+                    endpoint.name.getOriginalString(),
+                    endpoint.host.value());
+                continue;
+            }
+            const auto consumerNames = pipeConsumers
+                | std::views::transform([&queryName](size_t consumerIndex) { return queryName(consumerIndex); })
+                | std::ranges::to<std::vector>();
+            fmt::println(
+                output,
+                "{} ({}@{} is consumed only by ignored queries: {})",
+                queryName(queryIndex),
+                endpoint.name.getOriginalString(),
+                endpoint.host.value(),
+                fmt::join(consumerNames, ", "));
+        }
+    }
+    return output.str();
+}
+
+std::string schemaToSQL(const NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>& schema)
+{
+    std::vector<std::string> fields;
+    fields.reserve(schema.size());
+    for (const auto& field : schema)
+    {
+        const NES::Identifier& fieldName = field.getFullyQualifiedName();
+        const auto canonicalName = fieldName.asCanonicalString();
+        if (canonicalName.contains('"'))
+        {
+            throw NES::InvalidConfigParameter("Cannot insert pipe schema field containing a quote into SQL: {}", canonicalName);
+        }
+        const auto typeName = magic_enum::enum_name(field.getDataType().type);
+        if (typeName.empty() || field.getDataType().type == NES::DataType::Type::UNDEFINED)
+        {
+            throw NES::InvalidConfigParameter("Cannot insert undefined pipe schema field '{}' into SQL", canonicalName);
+        }
+        fields.emplace_back(fmt::format("\"{}\" {}{}", canonicalName, typeName, field.getDataType().nullable ? "" : " NOT NULL"));
+    }
+    return fmt::format("SCHEMA({})", fmt::join(fields, ", "));
+}
+
+std::string rewritePipeQuery(
+    const NES::CLI::NamedQuery& query,
+    const PipeQueryMetadata& metadata,
+    const std::unordered_map<NES::Identifier, ResolvedPipe>& resolvedPipes)
+{
+    std::string rewritten = query.query;
+    for (auto endpoint = metadata.endpoints.rbegin(); endpoint != metadata.endpoints.rend(); ++endpoint)
+    {
+        std::string replacement;
+        if (endpoint->type == PipeEndpointType::Sink)
+        {
+            replacement = fmt::format(
+                "Pipe('{}' AS \"SINK\".\"PIPE_NAME\", '{}' AS \"SINK\".\"HOST\")",
+                endpoint->name.asCanonicalString(),
+                endpoint->host.value());
+        }
+        else
+        {
+            const auto resolved = resolvedPipes.find(endpoint->name);
+            if (resolved == resolvedPipes.end())
+            {
+                throw NES::InvalidConfigParameter(
+                    "Pipe source '{}' was reached before its producer was resolved", endpoint->name.getOriginalString());
+            }
+            replacement = fmt::format(
+                "Pipe('{}' AS \"SOURCE\".\"PIPE_NAME\", '{}' AS \"SOURCE\".\"HOST\", "
+                "'NATIVE' AS \"INPUT_FORMATTER\".\"TYPE\", {} AS \"SOURCE\".\"SCHEMA\")",
+                endpoint->name.asCanonicalString(),
+                resolved->second.host.getRawValue(),
+                schemaToSQL(resolved->second.schema));
+        }
+        rewritten.replace(endpoint->offset, endpoint->length, replacement);
+    }
+    return rewritten;
+}
+
+void resolvePipeSink(
+    const PipeQueryMetadata& metadata,
+    const NES::DistributedLogicalPlan& distributedPlan,
+    std::unordered_map<NES::Identifier, ResolvedPipe>& resolvedPipes)
+{
+    const auto sinks = metadata.endpoints
+        | std::views::filter([](const PipeEndpoint& endpoint) { return endpoint.type == PipeEndpointType::Sink; })
+        | std::ranges::to<std::vector>();
+    if (sinks.empty())
+    {
+        return;
+    }
+    if (sinks.size() != 1)
+    {
+        throw NES::InvalidConfigParameter("A query may currently produce only one pipe");
+    }
+
+    const auto& roots = distributedPlan.getGlobalPlan().getRootOperators();
+    if (roots.size() != 1)
+    {
+        throw NES::InvalidConfigParameter("Expected a pipe-producing query to have exactly one sink");
+    }
+    const auto sinkOperator = roots.front().tryGetAs<NES::SinkLogicalOperator>();
+    if (!sinkOperator.has_value() || !sinkOperator.value()->getSinkDescriptor().has_value())
+    {
+        throw NES::InvalidConfigParameter("Optimized pipe-producing query has no sink descriptor");
+    }
+    const auto descriptor = sinkOperator.value()->getSinkDescriptor().value();
+    if (NES::toUpperCase(descriptor.getSinkType()) != "PIPE")
+    {
+        throw NES::InvalidConfigParameter("Expected PIPE sink but optimizer produced sink type '{}'", descriptor.getSinkType());
+    }
+    const auto schema = descriptor.getSchema();
+    const auto* orderedSchema = std::get_if<std::shared_ptr<const NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>>(&schema);
+    if (orderedSchema == nullptr)
+    {
+        throw NES::InvalidConfigParameter(
+            "Optimizer did not infer an ordered schema for pipe '{}'", sinks.front().name.getOriginalString());
+    }
+    resolvedPipes.emplace(sinks.front().name, ResolvedPipe{.host = descriptor.getHost(), .schema = **orderedSchema});
+}
+
 std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered_map<std::string, std::string>& config)
 {
     const auto boundConfig = config
@@ -817,6 +1254,12 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     {
         throw NES::InvalidConfigParameter("No queries");
     }
+    const auto pipeMetadata = queries | std::views::transform(findPipeEndpoints) | std::ranges::to<std::vector<PipeQueryMetadata>>();
+    const auto allQueryOrder = pipeQueryOrder(queries, pipeMetadata);
+    const auto ignoredQueries = ignoredPipeQueries(queries, pipeMetadata);
+    const auto queryOrder = allQueryOrder
+        | std::views::filter([&ignoredQueries](size_t queryIndex) { return !ignoredQueries.contains(queryIndex); })
+        | std::ranges::to<std::vector>();
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
@@ -832,47 +1275,55 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
 
+    std::unordered_map<NES::Identifier, ResolvedPipe> resolvedPipes;
+
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& namedQuery : queries)
+        for (const auto queryIndex : queryOrder)
         {
-            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(namedQuery.query);
+            const auto& namedQuery = queries[queryIndex];
+            const auto rewrittenQuery = rewritePipeQuery(namedQuery, pipeMetadata[queryIndex], resolvedPipes);
+            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rewrittenQuery);
+            auto distributedPlan = queryOptimizer->optimize(std::move(plan));
             auto id = namedQuery.name.transform([](const auto& name) { return NES::DistributedQueryId(name); });
-            auto result = queryStatementHandler(NES::QueryStatement{.plan = plan, .id = id});
+            if (id.has_value())
+            {
+                distributedPlan.setQueryId(*id);
+            }
+            resolvePipeSink(pipeMetadata[queryIndex], distributedPlan, resolvedPipes);
+            auto result = queryManager->start(distributedPlan);
             if (result)
             {
-                auto queryDescriptor = queryManager->getQuery(result->id);
-                INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
-                auto persistedId = stateBackend.store(result->id, *queryDescriptor);
+                auto queryDescriptor = queryManager->getQuery(*result);
+                INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager after a successful start");
+                auto persistedId = stateBackend.store(*result, *queryDescriptor);
                 std::cout << persistedId.toString() << '\n';
             }
             else
             {
-                throw std::move(result.error());
+                throw NES::QueryStartFailed(
+                    "Could not start query: {}",
+                    fmt::join(std::views::transform(result.error(), [](const auto& exception) { return exception.what(); }), ", "));
             }
         }
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
-        for (const auto& namedQuery : queries)
+        std::cout << pipeDependencyOutput(queries, pipeMetadata, ignoredQueries) << '\n';
+        for (const auto queryIndex : queryOrder)
         {
-            auto result = queryStatementHandler(
-                NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(namedQuery.query)));
-            if (result)
+            const auto& namedQuery = queries[queryIndex];
+            const auto rewrittenQuery = rewritePipeQuery(namedQuery, pipeMetadata[queryIndex], resolvedPipes);
+            auto plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rewrittenQuery);
+            const auto distributedPlan = queryOptimizer->optimize(plan);
+            resolvePipeSink(pipeMetadata[queryIndex], distributedPlan, resolvedPipes);
+            const auto explainString = NES::computeExplainOutput(NES::ExplainQueryStatement(std::move(plan)), *queryOptimizer);
+            if (namedQuery.name.has_value())
             {
-                if (namedQuery.name.has_value())
-                {
-                    std::cout << namedQuery.name.value() << ": ";
-                }
-                std::cout << result->explainString << "\n";
+                std::cout << namedQuery.name.value() << ": ";
             }
-            else
-            {
-                throw std::move(result.error());
-            }
+            std::cout << explainString << "\n";
         }
     }
 }

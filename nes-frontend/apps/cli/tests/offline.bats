@@ -54,6 +54,29 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli infers pipe schema and query dependencies" {
+  run $NES_CLI -t tests/good/inferred-pipe.yaml dump
+  [ "$status" -eq 0 ]
+  assert_output --partial "pipe_producer"
+  assert_output --partial "pipe_consumer"
+  assert_output --partial "== Query Dependencies =="
+  assert_output --partial "pipe_producer --[VIDEO_FRAMES@localhost:8080]--> pipe_consumer"
+  assert_output --partial "== Ignored Pipe Queries =="
+  assert_output --partial "unused_pipe_producer (unused_pipe@localhost:8080 is not consumed)"
+}
+
+@test "nebucli reports a pipe source without a producer" {
+  run $NES_CLI -t tests/bad/missing-pipe-producer.yaml dump
+  [ "$status" -eq 1 ]
+  assert_output --partial "Pipe source 'missing' has no producer in this submission"
+}
+
+@test "nebucli treats quoted pipe names as case-sensitive" {
+  run $NES_CLI -t tests/bad/case-sensitive-pipe-name.yaml dump
+  [ "$status" -eq 1 ]
+  assert_output --partial "Pipe source '\"video_frames\"' has no producer in this submission"
+}
+
 #bats test_tags=IREE
 @test "nebucli dump with model inference topology" {
   run $NES_CLI -t tests/good/infer-model.yaml dump
