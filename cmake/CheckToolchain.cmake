@@ -17,6 +17,15 @@
 include(CheckCXXSourceCompiles)
 
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
+set(NES_LIBCXX_HARDENING_MODE "AUTO" CACHE STRING "Libc++ hardening mode: AUTO, NONE, FAST, EXTENSIVE, or DEBUG")
+set_property(CACHE NES_LIBCXX_HARDENING_MODE PROPERTY STRINGS "AUTO" "NONE" "FAST" "EXTENSIVE" "DEBUG")
+string(TOUPPER "${NES_LIBCXX_HARDENING_MODE}" NES_LIBCXX_HARDENING_MODE_NORMALIZED)
+set(NES_LIBCXX_HARDENING_MODES AUTO NONE FAST EXTENSIVE DEBUG)
+if (NOT NES_LIBCXX_HARDENING_MODE_NORMALIZED IN_LIST NES_LIBCXX_HARDENING_MODES)
+    message(FATAL_ERROR
+            "Invalid NES_LIBCXX_HARDENING_MODE='${NES_LIBCXX_HARDENING_MODE}'. "
+            "Expected one of: AUTO, NONE, FAST, EXTENSIVE, DEBUG")
+endif ()
 SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
@@ -65,8 +74,20 @@ if (${USING_LIBCXX})
     add_compile_options(-stdlib=libc++)
     # Currently C++20 threading features are hidden behind the feature flag
     add_compile_options(-fexperimental-library)
-    # Enable Libc++ hardening mode
-    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
-    add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
+    if (NES_LIBCXX_HARDENING_MODE_NORMALIZED STREQUAL "AUTO")
+        # Preserve the existing defaults: strongest checks in Debug and low-overhead checks in RelWithDebInfo.
+        add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
+        add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>)
+        message(STATUS "Libc++ hardening mode: AUTO (DEBUG for Debug, FAST for RelWithDebInfo, NONE otherwise)")
+    elseif (NOT NES_LIBCXX_HARDENING_MODE_NORMALIZED STREQUAL "NONE")
+        add_compile_definitions(
+                _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_${NES_LIBCXX_HARDENING_MODE_NORMALIZED})
+        message(STATUS "Libc++ hardening mode: ${NES_LIBCXX_HARDENING_MODE_NORMALIZED}")
+    else ()
+        message(STATUS "Libc++ hardening mode: NONE")
+    endif ()
     add_link_options(-lc++)
+elseif (NOT NES_LIBCXX_HARDENING_MODE_NORMALIZED STREQUAL "AUTO"
+       AND NOT NES_LIBCXX_HARDENING_MODE_NORMALIZED STREQUAL "NONE")
+    message(FATAL_ERROR "NES_LIBCXX_HARDENING_MODE requires libc++; enable USE_LIBCXX_IF_AVAILABLE")
 endif ()

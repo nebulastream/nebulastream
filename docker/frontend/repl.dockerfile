@@ -3,6 +3,9 @@ ARG TAG=latest
 ARG RUNTIME_TAG=${TAG}
 FROM nebulastream/nes-development:${TAG} AS build
 ARG BUILD_TYPE=RelWithDebInfo
+ARG NES_LOG_LEVEL=WARN
+ARG USE_SANITIZER=none
+ARG NES_LIBCXX_HARDENING_MODE=AUTO
 
 USER root
 ADD . /home/ubuntu/src
@@ -10,7 +13,9 @@ RUN --mount=type=cache,id=ccache,target=/ccache \
     export CCACHE_DIR=/ccache && \
     cd /home/ubuntu/src \
     && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 \
-    && cmake --build build --target nes-repl -j \
+        -DNES_SPLIT_TEST_BINARIES=OFF -DNES_LOG_LEVEL=${NES_LOG_LEVEL} -DUSE_SANITIZER=${USE_SANITIZER} \
+        -DNES_LIBCXX_HARDENING_MODE=${NES_LIBCXX_HARDENING_MODE} \
+    && MOLD_JOBS=1 cmake --build build --target nes-repl -j \
     && mkdir /tmp/bin \
     && find build -name 'nes-repl' -type f -exec mv --target-directory=/tmp/bin {} +
 
