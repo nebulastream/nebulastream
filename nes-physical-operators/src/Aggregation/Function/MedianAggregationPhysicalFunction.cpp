@@ -80,10 +80,13 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 
 void MedianAggregationPhysicalFunction::setup(CompilationContext& compilationContext)
 {
-    auto comparator = std::make_unique<BTreeComparator>(
-        compilationContext, tupleLayout, fmt::format("medianComparator:{}", fmt::streamed(inputType)), getMedianComparator());
-    activeComparator = comparator.get();
-    comparators.emplace_back(std::move(comparator));
+    std::call_once(
+        comparatorSetup,
+        [&]
+        {
+            comparator = std::make_unique<BTreeComparator>(
+                compilationContext, tupleLayout, fmt::format("medianComparator:{}", fmt::streamed(inputType)), getMedianComparator());
+        });
 }
 
 void MedianAggregationPhysicalFunction::lift(
@@ -92,7 +95,7 @@ void MedianAggregationPhysicalFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record)
 {
-    PRECONDITION(activeComparator != nullptr, "Median BTree comparator must be set up before lift");
+    PRECONDITION(comparator != nullptr, "Median BTree comparator must be set up before lift");
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     Record medianValueRecord;
     medianValueRecord.write(getMedianValueFieldIdentifier(), value);
@@ -115,7 +118,7 @@ void MedianAggregationPhysicalFunction::lift(
                 static_cast<nautilus::val<uint32_t*>>(memArea));
 
             const BTreeRef tree{BorrowedNautilusBuffer::from(treeBuffer.asArg()), tupleLayout};
-            tree.append(medianValueRecord, pipelineMemoryProvider.bufferProvider, *activeComparator);
+            tree.append(medianValueRecord, pipelineMemoryProvider.bufferProvider, *comparator);
         }
     }
     else
@@ -131,7 +134,7 @@ void MedianAggregationPhysicalFunction::lift(
             static_cast<nautilus::val<uint32_t*>>(memArea));
 
         const BTreeRef tree{BorrowedNautilusBuffer::from(treeBuffer.asArg()), tupleLayout};
-        tree.append(medianValueRecord, pipelineMemoryProvider.bufferProvider, *activeComparator);
+        tree.append(medianValueRecord, pipelineMemoryProvider.bufferProvider, *comparator);
     }
 }
 
@@ -142,7 +145,7 @@ void MedianAggregationPhysicalFunction::combine(
     nautilus::val<TupleBuffer*> parentBuffer2,
     PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    PRECONDITION(activeComparator != nullptr, "Median BTree comparator must be set up before combine");
+    PRECONDITION(comparator != nullptr, "Median BTree comparator must be set up before combine");
     auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
     auto memArea2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
 
@@ -183,7 +186,7 @@ void MedianAggregationPhysicalFunction::combine(
     const auto sourceSize = source.size();
     for (nautilus::val<uint64_t> index = 0; index < sourceSize; index = index + 1)
     {
-        destination.append(source.at(index), pipelineMemoryProvider.bufferProvider, *activeComparator);
+        destination.append(source.at(index), pipelineMemoryProvider.bufferProvider, *comparator);
     }
 }
 
