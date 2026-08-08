@@ -357,7 +357,7 @@ timeUnit: MS
         ;
 
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG | ARRAY_AGG_UNSORTED;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG | ARRAY_AGG_UNSORTED | ARRAY_AGG_PAGE_SORTED;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -563,6 +563,7 @@ SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 ARRAY_AGG_UNSORTED: 'ARRAY_AGG_UNSORTED' | 'array_agg_unsorted';
+ARRAY_AGG_PAGE_SORTED: 'ARRAY_AGG_PAGE_SORTED' | 'array_agg_page_sorted';
 ARRAY_AGG: 'ARRAY_AGG' | 'array_agg';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';

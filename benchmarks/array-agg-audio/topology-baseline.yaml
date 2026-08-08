@@ -1,0 +1,47 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+query: |
+  SELECT OCTET_LENGTH(ARRAY_AGG(CASTTOTYPE(sample AS FLOAT32))) AS bytes
+  FROM (
+    SELECT timestamp / UINT64(1000) AS timestamp, sample
+    FROM audio_samples
+  )
+  WINDOW SLIDING(timestamp, SIZE 1000000 MS, ADVANCE BY 10000 MS)
+  INTO VOID_SINK
+
+sinks:
+  - name: VOID_SINK
+    host: localhost:8080
+    schema:
+      - { name: bytes, type: UINT64, nullable: false }
+    type: Void
+    config: { }
+
+logical:
+  - name: audio_samples
+    schema:
+      - { name: sample, type: FLOAT64, nullable: false }
+      - { name: timestamp, type: UINT64, nullable: false }
+
+physical:
+  - logical: audio_samples
+    host: localhost:8080
+    type: File
+    parser_config: { type: CSV, field_delimiter: "," }
+    source_config:
+      file_path: /home/ls/dima/nebulastream/benchmarks/array-agg-audio/audio-44khz-1gb.csv
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

@@ -164,7 +164,7 @@ query:
           timestamp / 1000 AS timestamp, audio
       FROM (
           SELECT
-          start AS timestamp, COUNT (*) AS number_of_samples, ARRAY_AGG(CASTTOTYPE(sample AS FLOAT32)) AS audio
+          start AS timestamp, COUNT (*) AS number_of_samples, ARRAY_AGG_PAGE_SORTED(CASTTOTYPE(sample AS FLOAT32)) AS audio
           FROM audio_pipe
           WINDOW SLIDING(
           timestamp, SIZE 1000000 MS, ADVANCE BY 250000 MS

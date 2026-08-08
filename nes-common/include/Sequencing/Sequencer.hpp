@@ -117,7 +117,7 @@ public:
     }
 
 private:
-    static void validateCheckedOut(const State& state, const SequenceData& sequence)
+    static void validateCheckedOut([[maybe_unused]] const State& state, [[maybe_unused]] const SequenceData& sequence)
     {
         PRECONDITION(
             state.checkedOut && state.processing && *state.checkedOut == sequence,
@@ -207,7 +207,7 @@ private:
         return !previous.lastChunk && candidate.chunkNumber > previous.chunkNumber;
     }
 
-    static void validateCheckedOut(const State& state, const SequenceData& sequence)
+    static void validateCheckedOut([[maybe_unused]] const State& state, [[maybe_unused]] const SequenceData& sequence)
     {
         PRECONDITION(
             state.checkedOut && state.processing && *state.checkedOut == sequence,

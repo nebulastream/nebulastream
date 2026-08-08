@@ -43,7 +43,8 @@ void MaxAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record,
-    const nautilus::val<Timestamp>&)
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 

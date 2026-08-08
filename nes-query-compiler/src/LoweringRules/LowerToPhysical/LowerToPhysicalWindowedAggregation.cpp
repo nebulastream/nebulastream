@@ -95,7 +95,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto inputFieldIdentifier = aggregationInputFunction.getAs<FieldAccessPhysicalFunction>()->getFieldIdentifier();
         const auto resultFieldIdentifier = descriptor.name;
         auto name = descriptor.function->getName();
-        const auto isArrayAgg = name == "ArrayAgg" or name == "ArrayAggUnsorted";
+        const auto isArrayAgg = name == "ArrayAgg" or name == "ArrayAggUnsorted" or name == "ArrayAggPageSorted";
+        const auto storesTupleTimestamps = name == "ArrayAgg" or name == "ArrayAggUnsorted";
         auto pagedVectorInputType = physicalInputType;
         if (isArrayAgg)
         {
@@ -103,7 +104,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             pagedVectorInputType.nullable = false;
         }
         auto tupleFields = std::vector{QualifiedUnboundField{inputFieldIdentifier, pagedVectorInputType}};
-        if (isArrayAgg)
+        if (storesTupleTimestamps)
         {
             tupleFields.insert(
                 tupleFields.begin(),

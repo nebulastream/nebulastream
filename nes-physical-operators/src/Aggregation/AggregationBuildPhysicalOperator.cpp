@@ -127,9 +127,10 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Updating the aggregation states
     const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+    const AggregationInputBuffer inputBuffer{ctx.originId, ctx.sequenceNumber, ctx.chunkNumber};
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record, timestamp);
+        aggFunction->lift(state, ctx.pipelineMemoryProvider, record, timestamp, inputBuffer);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

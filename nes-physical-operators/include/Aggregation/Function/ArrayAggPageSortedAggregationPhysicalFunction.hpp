@@ -11,30 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <cstddef>
-#include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <DataTypes/DataType.hpp>
-#include <Functions/PhysicalFunction.hpp>
-#include <Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <val_concepts.hpp>
 
 namespace NES
 {
-
-class AvgAggregationPhysicalFunction : public AggregationPhysicalFunction
+class ArrayAggPageSortedAggregationPhysicalFunction final : public AggregationPhysicalFunction
 {
 public:
-    AvgAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        bool includeNullValues);
+    ArrayAggPageSortedAggregationPhysicalFunction(
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -49,11 +38,5 @@ public:
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~AvgAggregationPhysicalFunction() override = default;
-
-private:
-    DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
-    bool includeNullValues;
 };
-
 }
