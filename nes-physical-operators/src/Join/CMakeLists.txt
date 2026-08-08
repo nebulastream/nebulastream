@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(HashJoin)
+add_subdirectory(IndexNestedLoopJoin)
 add_subdirectory(IntervalJoin)
 add_subdirectory(NestedLoopJoin)
 
@@ -20,4 +21,3 @@ add_source_files(nes-physical-operators
         StreamJoinOperatorHandler.cpp
         StreamJoinProbePhysicalOperator.cpp
 )
-
