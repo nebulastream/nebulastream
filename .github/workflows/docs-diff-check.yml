@@ -1,0 +1,64 @@
+name: Docs Drift Check
+description: |
+  Runs weekly (Sunday night, so results are ready Monday morning), checking
+  PRs merged in the last 7 days. Only cares whether CODE changes have made
+  docs/ stale - PRs that only touch docs/ are skipped, nothing is said about
+  them.
+
+  For each qualifying PR, a locally-hosted LLM (Qwen2.5-Coder, served from the
+  cached image built by build-docs-drift-llm-image.yml) summarizes what the
+  diff changes; that summary is embedded (mxbai-embed-large, same image) and
+  matched against a RAG index built fresh this run from every docs/ section
+  (fresh because jobs land on a random self-hosted worker each time, so
+  there's nothing to cache between runs); the LLM then cross-references the
+  diff against the retrieved excerpts and flags it, with a detailed reason,
+  only if a specific documented statement has gone stale. Flags are posted to
+  the same Zulip "ci" stream/bot used by nightly.yml.
+
+on:
+  schedule:
+    - cron: '0 22 * * 0'
+  workflow_dispatch: {}
+
+concurrency:
+  group: docs-drift-check
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-docs-drift:
+    runs-on: [ self-hosted ]
+    timeout-minutes: 120
+    services:
+      llm:
+        image: ghcr.io/${{ github.repository_owner }}/docs-drift-llm:latest
+        ports:
+          - 11434:11434
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCS_ROOT: ${{ github.workspace }}/docs
+      LLM_API_BASE: http://localhost:11434/v1
+      LLM_MODEL: qwen2.5-coder:7b
+      EMBED_MODEL: mxbai-embed-large
+      ZULIP_SITE: https://nebulastream.zulipchat.com
+      ZULIP_BOT_EMAIL: pr-reminder-bot@nebulastream.zulipchat.com
+      ZULIP_BOT_API_KEY: ${{ secrets.PRBOT_API_KEY }}
+      ZULIP_STREAM: ci
+      ZULIP_TOPIC: docs drift warnings
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Wait for local LLM
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:11434/api/tags >/dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::local LLM did not become ready in time" && exit 1
+
+      - name: Run docs drift check
+        run: python3 scripts/docs-diff-check/check_docs_impact.py
