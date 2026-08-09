@@ -19,13 +19,16 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <span>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
@@ -47,6 +50,25 @@
 namespace NES
 {
 
+namespace
+{
+/// Parses the "upstream:downstream" pairs of ConfigParametersNetworkSink::ORIGIN_ID_MAP.
+std::unordered_map<OriginId, OriginId> parseOriginIdMap(std::string_view configured)
+{
+    std::unordered_map<OriginId, OriginId> originIds;
+    for (const auto pair : std::views::split(configured, ','))
+    {
+        const std::string_view entry{pair.begin(), pair.end()};
+        const auto separator = entry.find(':');
+        INVARIANT(separator != std::string_view::npos, "Malformed origin id mapping entry '{}'", entry);
+        originIds.emplace(
+            OriginId{std::stoull(std::string{entry.substr(0, separator)})},
+            OriginId{std::stoull(std::string{entry.substr(separator + 1)})});
+    }
+    return originIds;
+}
+}
+
 NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , tupleSize(getSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
@@ -54,6 +76,7 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
           sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
           sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
+    , channelOriginIds(parseOriginIdMap(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::ORIGIN_ID_MAP)))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::DATA_ENDPOINT))
     , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
     , senderQueueSize(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::SENDER_QUEUE_SIZE))
@@ -109,9 +132,17 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
     while (currentBuffer)
     {
         /// Set buffer header
+        /// The buffers of this channel carry origins of its own, so that channels relaying the same upstream operator stay apart on
+        /// the receiving side. Each upstream origin keeps an origin to itself, which leaves the sequence numbers meaningful: they
+        /// are unique only within an origin, and this sink may be fed by more than one at a time.
+        const auto channelOriginId = channelOriginIds.find(currentBuffer->getOriginId());
+        INVARIANT(
+            channelOriginId != channelOriginIds.end(),
+            "Buffer with origin {} reached a network sink that was not told about it",
+            currentBuffer->getOriginId());
         const SerializedTupleBufferHeader metadata{
             .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
-            .origin_id = currentBuffer->getOriginId().getRawValue(),
+            .origin_id = channelOriginId->second.getRawValue(),
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
