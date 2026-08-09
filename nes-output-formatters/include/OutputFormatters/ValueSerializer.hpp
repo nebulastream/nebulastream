@@ -24,6 +24,7 @@
 #include <val_arith.hpp>
 #include <val_base.hpp>
 #include <val_ptr.hpp>
+#include <OutputFormatters/OutputFormatterUtil.hpp>
 
 namespace NES
 {
@@ -42,7 +43,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const = 0;
 };
 }

@@ -77,21 +77,14 @@ void writeValue(
     nautilus::val<uint64_t>& written,
     nautilus::val<uint64_t>& currentRemainingSize,
     const DataType& fieldType,
-    const std::unordered_map<DataType::Type, std::string>& serializerTypes)
+    const std::unordered_map<SerializerKey, std::string>& serializerTypes)
 {
-    if (const auto it = serializerTypes.find(fieldType.type); it != serializerTypes.end())
-    {
-        const ValueSerializerConfig config{.quoted = true};
-        const std::unique_ptr<ValueSerializer> valueSerializer = provideValueSerializer(it->second, config);
-        const nautilus::val<uint64_t> amountWritten = valueSerializer->serializeAndWrite(
-            value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer, serializerTypes, fieldType);
-        written += amountWritten;
-        currentRemainingSize -= amountWritten;
-    }
-    else
-    {
-        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(fieldType.type));
-    }
+    const ValueSerializerConfig config{.quoted = true};
+    const std::unique_ptr<ValueSerializer> valueSerializer = provideSerializerForType(fieldType, config, serializerTypes);
+    const nautilus::val<uint64_t> amountWritten = valueSerializer->serializeAndWrite(
+        value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer, serializerTypes, fieldType);
+    written += amountWritten;
+    currentRemainingSize -= amountWritten;
 }
 }
 

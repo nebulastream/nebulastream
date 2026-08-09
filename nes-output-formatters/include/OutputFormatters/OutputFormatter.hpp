@@ -27,6 +27,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -62,27 +63,17 @@ public:
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 
-    [[nodiscard]] const std::string& getSerializerType(const DataType::Type& dataType) const
-    {
-        if (const auto it = serializerTypes.find(dataType); it != serializerTypes.end())
-        {
-            return it->second;
-        }
-        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(dataType));
-    }
-
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
     /// Stores the configured serializer for each datatype.
-    std::unordered_map<DataType::Type, std::string> serializerTypes;
+    std::unordered_map<SerializerKey, std::string> serializerTypes;
 };
 
 }
