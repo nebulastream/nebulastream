@@ -244,7 +244,7 @@ VarVal JSONSTRUCTValueDeserializer::deserializeToVarVal(
         /// Create deserializer for the subfield at position i
         const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> fieldDeserializer
-            = provideValueDeserializer(deserializerTypes.at(subFieldType.type), config);
+            = provideValueDeserializer(getDeserializerType(subFieldType, deserializerTypes), config);
 
         /// Get position of the value at the ith field of the struct
         nautilus::val<JSONValueDeserializer::JSONElement> element;
@@ -285,7 +285,7 @@ void JSONSTRUCTValueDeserializer::deserializeIntoBuffer(
         /// Create deserializer for the subfield at position i
         const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> fieldDeserializer
-            = provideValueDeserializer(deserializerTypes.at(subFieldType.type), config);
+            = provideValueDeserializer(getDeserializerType(subFieldType, deserializerTypes), config);
 
         /// Get position of the value at the ith field of the struct
         nautilus::val<JSONValueDeserializer::JSONElement> element;
@@ -323,7 +323,7 @@ VarVal JSONFIXEDSIZEDValueDeserializer::deserializeToVarVal(
     /// Create deserializer for element type
     const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
     const std::unique_ptr<ValueDeserializer> elementDeserializer
-        = provideValueDeserializer(deserializerTypes.at(valueType.elementType->type), config);
+        = provideValueDeserializer(getDeserializerType(*valueType.elementType, deserializerTypes), config);
     for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
     {
         /// Get address and size of element i
@@ -360,7 +360,7 @@ void JSONFIXEDSIZEDValueDeserializer::deserializeIntoBuffer(
     /// Create deserializer for element type
     const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
     const std::unique_ptr<ValueDeserializer> elementDeserializer
-        = provideValueDeserializer(deserializerTypes.at(valueType.elementType->type), config);
+        = provideValueDeserializer(getDeserializerType(*valueType.elementType, deserializerTypes), config);
     for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
     {
         /// Get address and size of element i
@@ -397,7 +397,7 @@ VarVal JSONVECTORValueDeserializer::deserializeToVarVal(
     /// Create deserializer for element type
     const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
     const std::unique_ptr<ValueDeserializer> elementDeserializer
-        = provideValueDeserializer(deserializerTypes.at(valueType.elementType->type), config);
+        = provideValueDeserializer(getDeserializerType(*valueType.elementType, deserializerTypes), config);
     for (nautilus::val<size_t> i; i < elementCount; ++i)
     {
         /// Get address and size of element i

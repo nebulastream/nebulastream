@@ -16,11 +16,13 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <magic_enum/magic_enum.hpp>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
@@ -68,6 +70,34 @@ parseValueDeserializerOverrides(const std::string& overrides, const std::vector<
         deserializerTypes[configuredName.value()] = std::string{trimWhiteSpaces(entry.substr(separator + 1))};
     }
     return deserializerTypes;
+}
+
+[[nodiscard]] std::optional<std::string> getPluginTypeDefaultDeserializer(const std::string& pluginName)
+{
+    const std::string defaultDeserializerName = "Default" + pluginName;
+    if (const auto deserializerFactory = ValueDeserializerRegistry::instance().find(defaultDeserializerName))
+    {
+        return std::optional{defaultDeserializerName};
+    }
+    return std::nullopt;
+}
+
+[[nodiscard]] std::string
+getDeserializerType(const DataType& dataType, const std::unordered_map<DataType::Type, std::string>& deserializerTypes)
+{
+    if (dataType.type == DataType::Type::STRUCT)
+    {
+        /// Use the default deserializer for this type, if it exists.
+        if (auto pluginDefault = getPluginTypeDefaultDeserializer(dataType.structName))
+        {
+            return std::move(*pluginDefault);
+        }
+    }
+    if (const auto it = deserializerTypes.find(dataType.type); it != deserializerTypes.end())
+    {
+        return it->second;
+    }
+    throw UnknownValueDeserializerType("No ValueDeserializer configured for DataType {}", magic_enum::enum_name(dataType.type));
 }
 
 std::unique_ptr<ValueDeserializer> provideValueDeserializer(const std::string& deserializerType, const ValueDeserializerConfig& config)

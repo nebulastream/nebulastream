@@ -106,7 +106,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = false, .hasTrailingSpaces = false};
         const std::unique_ptr<ValueDeserializer> deserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
+            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType), deserializerConfig);
         const VarVal deserializedVal = deserializer->deserializeToVarVal(
             fieldAddress, fieldSize, indexer.getNullValues(), arena, indexer.getDeserializerTypes(), fieldDataType);
         record.write(fieldName, deserializedVal);
