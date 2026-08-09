@@ -177,7 +177,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
                 bufferProvider,
                 written,
                 currentRemainingSize,
-                getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+                getSerializerType(fieldNames.at(fieldIndex), fieldType),
                 serializerTypes,
                 fieldType);
         }
@@ -191,7 +191,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
             bufferProvider,
             written,
             currentRemainingSize,
-            getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+            getSerializerType(fieldNames.at(fieldIndex), fieldType),
             serializerTypes,
             fieldType);
     }

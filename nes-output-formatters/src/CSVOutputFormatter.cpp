@@ -174,7 +174,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
                 bufferProvider,
                 written,
                 currentRemainingSize,
-                getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+                getSerializerType(fieldNames.at(fieldIndex), fieldType),
                 quoteStrings,
                 serializerTypes,
                 fieldType);
@@ -189,7 +189,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
             bufferProvider,
             written,
             currentRemainingSize,
-            getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
+            getSerializerType(fieldNames.at(fieldIndex), fieldType),
             quoteStrings,
             serializerTypes,
             fieldType);
