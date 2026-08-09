@@ -35,7 +35,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -49,7 +49,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -63,7 +63,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -77,7 +77,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -91,7 +91,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -105,7 +105,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -119,7 +119,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -133,7 +133,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -147,7 +147,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -161,7 +161,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -175,7 +175,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -189,7 +189,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 };
 
@@ -204,7 +204,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<int8_t*>& startingAddress,
-        const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
         const DataType& valueType) const override;
 
 private:
