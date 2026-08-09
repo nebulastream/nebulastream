@@ -114,7 +114,7 @@ VarVal JSONFIXEDSIZEDValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena) const
 {
@@ -122,81 +122,70 @@ VarVal JSONFIXEDSIZEDValueDeserializer::deserializeToVarVal(
     const auto elementSize = valueType.elementType[0].getSizeInBytesWithoutNull();
     const nautilus::val<int8_t*> buffer = arena.allocateMemory(static_cast<size_t>(valueType.count) * elementSize);
 
-    /// Deserialize array element per element and byte align the deserialized contents in the allocated buffer
-    if (const auto it = deserializerTypes.find(valueType.elementType[0].type); it != deserializerTypes.end())
+    /// Create deserializer for element type
+    const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+    const std::unique_ptr<ValueDeserializer> elementDeserializer
+        = provideDeserializerForType(valueType.elementType[0], config, deserializerTypes);
+    for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
     {
-        /// Create deserializer for element type
-        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> elementDeserializer = provideValueDeserializer(it->second, config);
-        for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
-        {
-            /// Get address and size of element i
-            const auto element
-                = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, nautilus::val<size_t>{i});
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+        /// Get address and size of element i
+        const auto element
+            = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, nautilus::val<size_t>{i});
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
 
-            /// Deserialize element into buffer
-            elementDeserializer->deserializeIntoBuffer(
-                elementAddress,
-                rawSize,
-                nullValues,
-                deserializerTypes,
-                valueType.elementType[0],
-                arena,
-                buffer + nautilus::val<uint64_t>{i * elementSize});
-        }
-        const FixedSizedData fixedSized{buffer, valueType.count, valueType.elementType[0]};
-        return VarVal{fixedSized, false, false};
+        /// Deserialize element into buffer
+        elementDeserializer->deserializeIntoBuffer(
+            elementAddress,
+            rawSize,
+            nullValues,
+            deserializerTypes,
+            valueType.elementType[0],
+            arena,
+            buffer + nautilus::val<uint64_t>{i * elementSize});
     }
-    throw UnknownValueDeserializerType(
-        "No deserializer was configured for element-type {}.", magic_enum::enum_name(valueType.elementType[0].type));
+    const FixedSizedData fixedSized{buffer, valueType.count, valueType.elementType[0]};
+    return VarVal{fixedSized, false, false};
 }
 
 void JSONFIXEDSIZEDValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
 {
     const auto elementSize = valueType.elementType[0].getSizeInBytesWithoutNull();
 
-    /// Deserialize array element per element and byte align the deserialized contents into the provided buffer.
-    if (const auto it = deserializerTypes.find(valueType.elementType[0].type); it != deserializerTypes.end())
-    {
-        /// Create deserializer for element type
-        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> elementDeserializer = provideValueDeserializer(it->second, config);
-        for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
-        {
-            /// Get address and size of element i
-            const auto element
-                = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, nautilus::val<size_t>{i});
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+    /// Create deserializer for element type
+    const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+    const std::unique_ptr<ValueDeserializer> elementDeserializer
+        = provideDeserializerForType(valueType.elementType[0], config, deserializerTypes);
 
-            /// Deserialize element into buffer
-            elementDeserializer->deserializeIntoBuffer(
-                elementAddress,
-                rawSize,
-                nullValues,
-                deserializerTypes,
-                valueType.elementType[0],
-                arena,
-                bufferAddress + nautilus::val<uint64_t>{i * elementSize});
-        }
-    }
-    else
+    /// Deserialize array element per element and byte align the deserialized contents into the provided buffer.
+    for (nautilus::static_val<uint32_t> i; i < valueType.count; ++i)
     {
-        throw UnknownValueDeserializerType(
-            "No deserializer was configured for element-type {}.", magic_enum::enum_name(valueType.elementType[0].type));
+        /// Get address and size of element i
+        const auto element
+            = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, nautilus::val<size_t>{i});
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+
+        /// Deserialize element into buffer
+        elementDeserializer->deserializeIntoBuffer(
+            elementAddress,
+            rawSize,
+            nullValues,
+            deserializerTypes,
+            valueType.elementType[0],
+            arena,
+            bufferAddress + nautilus::val<uint64_t>{i * elementSize});
     }
 }
 
@@ -204,7 +193,7 @@ VarVal JSONVARARRAYValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena) const
 {
@@ -215,43 +204,40 @@ VarVal JSONVARARRAYValueDeserializer::deserializeToVarVal(
         = nautilus::invoke(NestedJSONValueDeserializer::getNumberOfVectorElements, fieldAddress, fieldSize);
     const nautilus::val<int8_t*> buffer = arena.allocateMemory(varArrayCount * elementSize);
 
-    /// Deserialize vector element per element and byte align the deserialized contents in the allocated buffer
-    if (const auto it = deserializerTypes.find(valueType.elementType[0].type); it != deserializerTypes.end())
-    {
-        /// Create deserializer for element type
-        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> elementDeserializer = provideValueDeserializer(it->second, config);
-        for (nautilus::val<size_t> i; i < varArrayCount; ++i)
-        {
-            /// Get address and size of element i
-            const auto element = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, i);
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+    /// Create deserializer for element type
+    const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+    const std::unique_ptr<ValueDeserializer> elementDeserializer
+        = provideDeserializerForType(valueType.elementType[0], config, deserializerTypes);
 
-            /// Deserialize element into buffer
-            elementDeserializer->deserializeIntoBuffer(
-                elementAddress,
-                rawSize,
-                nullValues,
-                deserializerTypes,
-                valueType.elementType[0],
-                arena,
-                buffer + nautilus::val{i * elementSize});
-        }
-        const VarArrayData varArray{buffer, valueType.elementType[0], varArrayCount * elementSize};
-        return VarVal{varArray, false, false};
+    /// Deserialize vector element per element and byte align the deserialized contents in the allocated buffer
+    for (nautilus::val<size_t> i; i < varArrayCount; ++i)
+    {
+        /// Get address and size of element i
+        const auto element = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, i);
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+
+        /// Deserialize element into buffer
+        elementDeserializer->deserializeIntoBuffer(
+            elementAddress,
+            rawSize,
+            nullValues,
+            deserializerTypes,
+            valueType.elementType[0],
+            arena,
+            buffer + nautilus::val{i * elementSize});
     }
-    throw UnknownValueDeserializerType(
-        "No deserializer was configured for element-type {}.", magic_enum::enum_name(valueType.elementType[0].type));
+    const VarArrayData varArray{buffer, valueType.elementType[0], varArrayCount * elementSize};
+    return VarVal{varArray, false, false};
 }
 
 void JSONVARARRAYValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -263,50 +249,44 @@ void JSONVARARRAYValueDeserializer::deserializeIntoBuffer(
         = nautilus::invoke(NestedJSONValueDeserializer::getNumberOfVectorElements, fieldAddress, fieldSize);
     const nautilus::val<int8_t*> buffer = arena.allocateMemory(varArrayCount * elementSize);
 
-    /// Deserialize vector element per element and byte align the deserialized contents in the allocated buffer
-    if (const auto it = deserializerTypes.find(valueType.elementType[0].type); it != deserializerTypes.end())
-    {
-        /// Create deserializer for element type
-        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> elementDeserializer = provideValueDeserializer(it->second, config);
-        for (nautilus::val<size_t> i; i < varArrayCount; ++i)
-        {
-            /// Get address and size of element i
-            const auto element = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, i);
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+    /// Create deserializer for element type
+    const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+    const std::unique_ptr<ValueDeserializer> elementDeserializer
+        = provideDeserializerForType(valueType.elementType[0], config, deserializerTypes);
 
-            /// Deserialize element into buffer
-            elementDeserializer->deserializeIntoBuffer(
-                elementAddress,
-                rawSize,
-                nullValues,
-                deserializerTypes,
-                valueType.elementType[0],
-                arena,
-                buffer + nautilus::val{i * elementSize});
-        }
-        /// Write the vararray buffer address and size into the buffer provided by the function
-        nautilus::invoke(NestedJSONValueDeserializer::writeFlatValToBuffer<int8_t*>, bufferAddress, buffer);
-        nautilus::invoke(
-            NestedJSONValueDeserializer::writeFlatValToBuffer<uint64_t>,
-            bufferAddress + nautilus::val<uint64_t>{sizeof(int8_t*)},
-            nautilus::val<uint64_t>{elementSize * varArrayCount});
-    }
-    else
+    /// Deserialize vector element per element and byte align the deserialized contents in the allocated buffer
+    for (nautilus::val<size_t> i; i < varArrayCount; ++i)
     {
-        throw UnknownValueDeserializerType(
-            "No deserializer was configured for element-type {}.", magic_enum::enum_name(valueType.elementType[0].type));
+        /// Get address and size of element i
+        const auto element = nautilus::invoke(NestedJSONValueDeserializer::getArrayElementAt, fieldAddress, fieldSize, i);
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+
+        /// Deserialize element into buffer
+        elementDeserializer->deserializeIntoBuffer(
+            elementAddress,
+            rawSize,
+            nullValues,
+            deserializerTypes,
+            valueType.elementType[0],
+            arena,
+            buffer + nautilus::val{i * elementSize});
     }
+    /// Write the vararray buffer address and size into the buffer provided by the function
+    nautilus::invoke(NestedJSONValueDeserializer::writeFlatValToBuffer<int8_t*>, bufferAddress, buffer);
+    nautilus::invoke(
+        NestedJSONValueDeserializer::writeFlatValToBuffer<uint64_t>,
+        bufferAddress + nautilus::val<uint64_t>{sizeof(int8_t*)},
+        nautilus::val<uint64_t>{elementSize * varArrayCount});
 }
 
 VarVal JSONSTRUCTValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena) const
 {
@@ -317,29 +297,21 @@ VarVal JSONSTRUCTValueDeserializer::deserializeToVarVal(
     {
         const auto& [subFieldName, subFieldType] = valueType.fields.at(i);
         /// Create deserializer for the subfield at position i
-        if (const auto it = deserializerTypes.find(subFieldType.type); it != deserializerTypes.end())
-        {
-            const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-            const std::unique_ptr<ValueDeserializer> fieldDeserializer = provideValueDeserializer(it->second, config);
-            /// Get position of the value at the ith field of the struct
-            const auto element = nautilus::invoke(
-                NestedJSONValueDeserializer::getStructElementAt, fieldAddress, fieldSize, nautilus::val<const char*>{subFieldName.c_str()});
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+        const std::unique_ptr<ValueDeserializer> fieldDeserializer = provideDeserializerForType(subFieldType, config, deserializerTypes);
+        /// Get position of the value at the ith field of the struct
+        const auto element = nautilus::invoke(
+            NestedJSONValueDeserializer::getStructElementAt, fieldAddress, fieldSize, nautilus::val<const char*>{subFieldName.c_str()});
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
 
-            /// Deserialize element
-            fieldDeserializer->deserializeIntoBuffer(
-                elementAddress, rawSize, nullValues, deserializerTypes, subFieldType, arena, currentBufferPos);
-            /// Move buffer pos
-            currentBufferPos += subFieldType.getSizeInBytesWithoutNull();
-        }
-        else
-        {
-            throw UnknownValueDeserializerType(
-                "No deserializer was configured for struct sub-field type {}.", magic_enum::enum_name(subFieldType.type));
-        }
+        /// Deserialize element
+        fieldDeserializer->deserializeIntoBuffer(
+            elementAddress, rawSize, nullValues, deserializerTypes, subFieldType, arena, currentBufferPos);
+        /// Move buffer pos
+        currentBufferPos += subFieldType.getSizeInBytesWithoutNull();
     }
     const StructData structData{buffer, valueType.fields};
     return VarVal{structData, false, false};
@@ -349,7 +321,7 @@ void JSONSTRUCTValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -359,29 +331,21 @@ void JSONSTRUCTValueDeserializer::deserializeIntoBuffer(
     {
         const auto& [subFieldName, subFieldType] = valueType.fields.at(i);
         /// Create deserializer for the subfield at position i
-        if (const auto it = deserializerTypes.find(subFieldType.type); it != deserializerTypes.end())
-        {
-            const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
-            const std::unique_ptr<ValueDeserializer> fieldDeserializer = provideValueDeserializer(it->second, config);
-            /// Get position of the value at the ith field of the struct
-            const auto element = nautilus::invoke(
-                NestedJSONValueDeserializer::getStructElementAt, fieldAddress, fieldSize, nautilus::val<const char*>{subFieldName.c_str()});
-            const nautilus::val<int8_t*> elementAddress
-                = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
-            const nautilus::val<uint64_t> rawSize
-                = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
+        const ValueDeserializerConfig config{.nullable = false, .quoted = true, .hasTrailingSpaces = true};
+        const std::unique_ptr<ValueDeserializer> fieldDeserializer = provideDeserializerForType(subFieldType, config, deserializerTypes);
+        /// Get position of the value at the ith field of the struct
+        const auto element = nautilus::invoke(
+            NestedJSONValueDeserializer::getStructElementAt, fieldAddress, fieldSize, nautilus::val<const char*>{subFieldName.c_str()});
+        const nautilus::val<int8_t*> elementAddress
+            = *getMemberWithOffset<int8_t*>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementPtr));
+        const nautilus::val<uint64_t> rawSize
+            = *getMemberWithOffset<uint64_t>(element, offsetof(NestedJSONValueDeserializer::JSONElement, elementSize));
 
-            /// Deserialize element
-            fieldDeserializer->deserializeIntoBuffer(
-                elementAddress, rawSize, nullValues, deserializerTypes, subFieldType, arena, currentBufferPos);
-            /// Move buffer pos
-            currentBufferPos += subFieldType.getSizeInBytesWithoutNull();
-        }
-        else
-        {
-            throw UnknownValueDeserializerType(
-                "No deserializer was configured for struct sub-field type {}.", magic_enum::enum_name(subFieldType.type));
-        }
+        /// Deserialize element
+        fieldDeserializer->deserializeIntoBuffer(
+            elementAddress, rawSize, nullValues, deserializerTypes, subFieldType, arena, currentBufferPos);
+        /// Move buffer pos
+        currentBufferPos += subFieldType.getSizeInBytesWithoutNull();
     }
 }
 

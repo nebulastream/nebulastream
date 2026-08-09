@@ -18,13 +18,14 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #include <DataTypes/DataType.hpp>
-#include <ValueDeserializer.hpp>
 
 namespace NES
 {
 
+class ValueDeserializer;
 /// Current placeholder for a fully functional ValueDeserializerDescriptor.
 /// Attributes are either passed into the deserializer implementation or used in the ValueDeserializerProvider to determine the deserializer type.
 struct ValueDeserializerConfig
@@ -34,11 +35,19 @@ struct ValueDeserializerConfig
     bool hasTrailingSpaces;
 };
 
+/// We introduce this variant so that we can use struct-names as keys for the deserializer map as well.
+using DeserializerKey = std::variant<DataType::Type, std::string>;
+
 /// Overrides the deserializer types for the datatypes based on the overrides string. The function expects the string to be formatted like this:
 /// [TYPENAME]:[DESERIALIZER-KEY],...
-void parseValueDeserializerOverrides(const std::string& overrides, std::unordered_map<DataType::Type, std::string>& deserializersMap);
+void parseValueDeserializerOverrides(const std::string& overrides, std::unordered_map<DeserializerKey, std::string>& deserializersMap);
 
 /// Fetches ValueDeserializer from Registry
 /// The concrete type of deserializer is [Nullable]<deserializerType>ValueDeserializer
 std::unique_ptr<ValueDeserializer> provideValueDeserializer(const std::string& deserializerType, const ValueDeserializerConfig& config);
+
+std::unique_ptr<ValueDeserializer> provideDeserializerForType(
+    const DataType& dataType,
+    const ValueDeserializerConfig& config,
+    const std::unordered_map<DeserializerKey, std::string>& deserializersMap);
 }
