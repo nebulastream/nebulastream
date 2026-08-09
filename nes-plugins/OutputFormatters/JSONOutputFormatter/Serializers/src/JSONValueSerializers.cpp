@@ -36,7 +36,9 @@
 #include <val_ptr.hpp>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/FixedSizedData.hpp>
 #include <DataTypes/StructData.hpp>
+#include <DataTypes/VarArrayData.hpp>
 #include <ErrorHandling.hpp>
 #include <select.hpp>
 
@@ -102,7 +104,7 @@ nautilus::val<uint64_t> JSONCHARValueSerializer::serializeAndWrite(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<SerializerKey, std::string>&,
     const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
@@ -116,7 +118,7 @@ nautilus::val<uint64_t> JSONVARSIZEDValueSerializer::serializeAndWrite(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<SerializerKey, std::string>&,
     const DataType&) const
 {
     const auto castedVal = value.getRawValueAs<VariableSizedData>();
@@ -136,54 +138,50 @@ nautilus::val<uint64_t> JSONFIXEDSIZEDValueSerializer::serializeAndWrite(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress,
-    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const std::unordered_map<SerializerKey, std::string>& serializerTypes,
     const DataType& valueType) const
 {
     const auto castedVal = value.getRawValueAs<FixedSizedData>();
     nautilus::val<uint64_t> bytesWritten{0};
 
     /// Create the serializer for the elements of the array
-    if (const auto it = serializerTypes.find(castedVal.getElementType().type); it != serializerTypes.end())
+    const ValueSerializerConfig config{.quoted = true};
+    const std::unique_ptr<ValueSerializer> elementSerializer
+        = provideSerializerForType(castedVal.getElementType(), config, serializerTypes);
+    for (nautilus::static_val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
     {
-        const ValueSerializerConfig config{.quoted = true};
-        const std::unique_ptr<ValueSerializer> elementSerializer = provideValueSerializer(it->second, config);
-        for (nautilus::static_val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
-        {
-            /// Write either opening bracket or comma
-            const nautilus::val<const char*> arrayPrefix
-                = nautilus::select(i == nautilus::val<size_t>{0}, nautilus::val<const char*>{"["}, nautilus::val<const char*>{","});
-            bytesWritten += nautilus::invoke(
-                writeValueToBuffer,
-                arrayPrefix,
-                nautilus::val<size_t>{1},
-                remainingSize - bytesWritten,
-                recordBuffer.getReference(),
-                bufferProvider,
-                startingAddress + bytesWritten);
-
-            /// Serialize and write value at position i
-            bytesWritten += elementSerializer->serializeAndWrite(
-                castedVal.at(nautilus::val<uint64_t>{i}),
-                remainingSize - bytesWritten,
-                recordBuffer,
-                bufferProvider,
-                startingAddress + bytesWritten,
-                serializerTypes,
-                valueType.elementType[0]);
-        }
-        /// Write closing bracket and return number of bytes written to main memory
+        /// Write either opening bracket or comma
+        const nautilus::val<const char*> arrayPrefix
+            = nautilus::select(i == nautilus::val<size_t>{0}, nautilus::val<const char*>{"["}, nautilus::val<const char*>{","});
         bytesWritten += nautilus::invoke(
             writeValueToBuffer,
-            nautilus::val<const char*>{"]"},
+            arrayPrefix,
             nautilus::val<size_t>{1},
             remainingSize - bytesWritten,
             recordBuffer.getReference(),
             bufferProvider,
             startingAddress + bytesWritten);
-        return bytesWritten;
+
+        /// Serialize and write value at position i
+        bytesWritten += elementSerializer->serializeAndWrite(
+            castedVal.at(nautilus::val<uint64_t>{i}),
+            remainingSize - bytesWritten,
+            recordBuffer,
+            bufferProvider,
+            startingAddress + bytesWritten,
+            serializerTypes,
+            valueType.elementType[0]);
     }
-    throw UnknownValueSerializerType(
-        "No serializer configured for FIXEDSIZED element-type {}.", magic_enum::enum_name(castedVal.getElementType().type));
+    /// Write closing bracket and return number of bytes written to main memory
+    bytesWritten += nautilus::invoke(
+        writeValueToBuffer,
+        nautilus::val<const char*>{"]"},
+        nautilus::val<size_t>{1},
+        remainingSize - bytesWritten,
+        recordBuffer.getReference(),
+        bufferProvider,
+        startingAddress + bytesWritten);
+    return bytesWritten;
 }
 
 /// Basically identical to the JSONFIXEDSIZED serializer. Only difference is that the loop variable is a nautilus::val instead of nautilus::static_val.
@@ -193,54 +191,50 @@ nautilus::val<uint64_t> JSONVARARRAYValueSerializer::serializeAndWrite(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress,
-    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const std::unordered_map<SerializerKey, std::string>& serializerTypes,
     const DataType& valueType) const
 {
     const auto castedVal = value.getRawValueAs<VarArrayData>();
     nautilus::val<uint64_t> bytesWritten{0};
 
     /// Create the serializer for the elements of the vector
-    if (const auto it = serializerTypes.find(castedVal.getElementType().type); it != serializerTypes.end())
+    const ValueSerializerConfig config{.quoted = true};
+    const std::unique_ptr<ValueSerializer> elementSerializer
+        = provideSerializerForType(castedVal.getElementType(), config, serializerTypes);
+    for (nautilus::val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
     {
-        const ValueSerializerConfig config{.quoted = true};
-        const std::unique_ptr<ValueSerializer> elementSerializer = provideValueSerializer(it->second, config);
-        for (nautilus::val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
-        {
-            /// Write either opening bracket or comma
-            const nautilus::val<const char*> arrayPrefix
-                = nautilus::select(i == nautilus::val<size_t>{0}, nautilus::val<const char*>{"["}, nautilus::val<const char*>{","});
-            bytesWritten += nautilus::invoke(
-                writeValueToBuffer,
-                arrayPrefix,
-                nautilus::val<size_t>{1},
-                remainingSize - bytesWritten,
-                recordBuffer.getReference(),
-                bufferProvider,
-                startingAddress + bytesWritten);
-
-            /// Serialize and write value at position i
-            bytesWritten += elementSerializer->serializeAndWrite(
-                castedVal.at(i),
-                remainingSize - bytesWritten,
-                recordBuffer,
-                bufferProvider,
-                startingAddress + bytesWritten,
-                serializerTypes,
-                valueType.elementType[0]);
-        }
-        /// Write closing bracket and return number of bytes written to main memory
+        /// Write either opening bracket or comma
+        const nautilus::val<const char*> arrayPrefix
+            = nautilus::select(i == nautilus::val<size_t>{0}, nautilus::val<const char*>{"["}, nautilus::val<const char*>{","});
         bytesWritten += nautilus::invoke(
             writeValueToBuffer,
-            nautilus::val<const char*>{"]"},
+            arrayPrefix,
             nautilus::val<size_t>{1},
             remainingSize - bytesWritten,
             recordBuffer.getReference(),
             bufferProvider,
             startingAddress + bytesWritten);
-        return bytesWritten;
+
+        /// Serialize and write value at position i
+        bytesWritten += elementSerializer->serializeAndWrite(
+            castedVal.at(i),
+            remainingSize - bytesWritten,
+            recordBuffer,
+            bufferProvider,
+            startingAddress + bytesWritten,
+            serializerTypes,
+            valueType.elementType[0]);
     }
-    throw UnknownValueSerializerType(
-        "No serializer configured for VARARRAY element-type {}.", magic_enum::enum_name(castedVal.getElementType().type));
+    /// Write closing bracket and return number of bytes written to main memory
+    bytesWritten += nautilus::invoke(
+        writeValueToBuffer,
+        nautilus::val<const char*>{"]"},
+        nautilus::val<size_t>{1},
+        remainingSize - bytesWritten,
+        recordBuffer.getReference(),
+        bufferProvider,
+        startingAddress + bytesWritten);
+    return bytesWritten;
 }
 
 nautilus::val<uint64_t> JSONSTRUCTValueSerializer::serializeAndWrite(
@@ -249,7 +243,7 @@ nautilus::val<uint64_t> JSONSTRUCTValueSerializer::serializeAndWrite(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<int8_t*>& startingAddress,
-    const std::unordered_map<DataType::Type, std::string>& serializerTypes,
+    const std::unordered_map<SerializerKey, std::string>& serializerTypes,
     const DataType& valueType) const
 {
     const auto castedVal = value.getRawValueAs<StructData>();
@@ -260,35 +254,27 @@ nautilus::val<uint64_t> JSONSTRUCTValueSerializer::serializeAndWrite(
         /// We need to obtain the subFieldName from the passed datatype because the field name from the StructData object does not survive the trace.
         const auto& [subFieldName, subFieldType] = valueType.fields.at(i);
         /// Try to create the serializer for the type of this field and serialize the value of this field
-        if (const auto it = serializerTypes.find(subFieldType.type); it != serializerTypes.end())
-        {
-            const ValueSerializerConfig config{.quoted = true};
-            const std::unique_ptr<ValueSerializer> subFieldSerializer = provideValueSerializer(it->second, config);
+        const ValueSerializerConfig config{.quoted = true};
+        const std::unique_ptr<ValueSerializer> subFieldSerializer = provideSerializerForType(subFieldType, config, serializerTypes);
 
-            /// Write either delimiting curly bracket or comma + the subFieldName
-            bytesWritten += nautilus::invoke(
-                JSONValueSerializer::writeStructFieldPrefix,
-                nautilus::val<uint64_t>{i} == nautilus::val<uint64_t>{0},
-                nautilus::val<const char*>{subFieldName.c_str()},
-                remainingSize - bytesWritten,
-                recordBuffer.getReference(),
-                bufferProvider,
-                startingAddress + bytesWritten);
+        /// Write either delimiting curly bracket or comma + the subFieldName
+        bytesWritten += nautilus::invoke(
+            JSONValueSerializer::writeStructFieldPrefix,
+            nautilus::val<uint64_t>{i} == nautilus::val<uint64_t>{0},
+            nautilus::val<const char*>{subFieldName.c_str()},
+            remainingSize - bytesWritten,
+            recordBuffer.getReference(),
+            bufferProvider,
+            startingAddress + bytesWritten);
 
-            bytesWritten += subFieldSerializer->serializeAndWrite(
-                castedVal.at(i),
-                remainingSize - bytesWritten,
-                recordBuffer,
-                bufferProvider,
-                startingAddress + bytesWritten,
-                serializerTypes,
-                subFieldType);
-        }
-        else
-        {
-            throw UnknownValueSerializerType(
-                "No serializer configured for STRUCT element-type {}.", magic_enum::enum_name(subFieldType.type));
-        }
+        bytesWritten += subFieldSerializer->serializeAndWrite(
+            castedVal.at(i),
+            remainingSize - bytesWritten,
+            recordBuffer,
+            bufferProvider,
+            startingAddress + bytesWritten,
+            serializerTypes,
+            subFieldType);
     }
     /// Write closing bracket and return number of bytes written to main memory
     bytesWritten += nautilus::invoke(
