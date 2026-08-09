@@ -31,6 +31,7 @@
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -44,6 +45,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
@@ -76,6 +79,11 @@ struct DecompositionContext
     /// Network source per (operator, consuming node): an operator shared by sinks is sent to a node once, not once per consumer. It
     /// may still feed several nodes, one channel each — the subtree below it is decomposed once and deployed once all the same.
     std::unordered_map<std::pair<LogicalOperator, NetworkTopology::NodeId>, LogicalOperator, PairHash> networkChannels;
+    /// Continues past the largest id OriginIdInferenceRule handed out, so the channel origins minted here cannot collide with it.
+    /// This assumes that the set of sources stays fixed and that no new origin IDs can be added by mutating the query plan later on.
+    /// To support such mutation in the future, the component in charge of assigning IDs for the mutation must be made aware of the
+    /// IDs handed out here in order to avoid collisions.
+    OriginId lastOriginId{INITIAL_ORIGIN_ID};
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
     SharedPtr<const SourceCatalog> sourceCatalog;
@@ -83,6 +91,12 @@ struct DecompositionContext
     SharedPtr<const WorkerCatalog> workerCatalog;
 
     void addRootToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId) { rootsByNode[nodeId].emplace_back(std::move(op)); }
+
+    OriginId takeOriginId()
+    {
+        lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
+        return lastOriginId;
+    }
 };
 
 struct NetworkChannel
@@ -95,7 +109,7 @@ struct NetworkChannel
 
 using Bridge = std::pair<LogicalOperator, LogicalOperator>;
 
-Bridge connect(const DecompositionContext& context, const NetworkChannel& channel)
+Bridge connect(DecompositionContext& context, const NetworkChannel& channel)
 {
     /// Look up connection (data-plane) addresses for the upstream and downstream nodes.
     /// Network sources/sinks use the data-plane address for actual data transfer,
@@ -115,8 +129,31 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
+    /// The channel carries origins of its own on the receiving side: the sink stamps its buffers with them and the source below
+    /// declares them, so channels relaying one shared upstream operator stay distinguishable to the receiving node. Every upstream
+    /// origin is mapped to one of its own rather than all of them onto a single id, because sequence numbers are unique only within
+    /// an origin and this sink may be fed by several at once — a union placed upstream of the boundary, for instance.
+    const auto upstreamOriginIds = getTrait<OutputOriginIdsTrait>(channel.upstreamOp.getTraitSet());
+    INVARIANT(upstreamOriginIds.has_value(), "Operator feeding a network channel must have origin ids trait");
+    std::vector<OriginId> channelOriginIds;
+    std::vector<std::pair<OriginId, OriginId>> originIdMapping;
+    for (const auto& upstreamOriginId : upstreamOriginIds.value().get())
+    {
+        const auto channelOriginId = context.takeOriginId();
+        channelOriginIds.push_back(channelOriginId);
+        originIdMapping.emplace_back(upstreamOriginId, channelOriginId);
+    }
+
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()},
+        {Identifier::parse("origin_id_map"),
+         fmt::format(
+             "{}",
+             fmt::join(
+                 originIdMapping
+                     | std::views::transform([](const auto& p)
+                                             { return fmt::format("{}:{}", p.first.getRawValue(), p.second.getRawValue()); }),
+                 ","))},
         {Identifier::parse("bind"), upstreamData},
         {Identifier::parse("data_endpoint"), downstreamData},
         {Identifier::parse("output_format"), "NATIVE"}};
@@ -158,10 +195,12 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto ts = channel.upstreamOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
     auto upstreamTs = ts;
-    auto downstreamTs = ts;
+    auto downstreamTs = ts | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(OutputOriginIdsTrait); })
+        | std::ranges::to<TraitSet>();
 
     upstreamTs.insert(PlacementTrait{channel.upstreamNode});
     downstreamTs.insert(PlacementTrait{channel.downstreamNode});
+    downstreamTs.insert(OutputOriginIdsTrait{channelOriginIds});
 
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
@@ -262,6 +301,33 @@ LogicalOperator decomposePlanRecursive(
     return decomposedOperator;
 }
 
+/// Recomputes the origin ids an operator forwards, so that the channel origins minted during decomposition reach the operators
+/// above the network sources carrying them. Every operator that assigns an origin of its own — sources, but also windows and joins
+/// — keeps the id OriginIdInferenceRule gave it, because the rest of the plan already refers to it; only the unions are rebuilt.
+LogicalOperator recomputeForwardedOriginIds(const LogicalOperator& op, std::vector<LogicalOperator> children)
+{
+    auto rewritten = op.withChildren(std::move(children));
+    if (rewritten.tryGetAs<OriginIdAssigner>().has_value())
+    {
+        return rewritten;
+    }
+
+    std::vector<OutputOriginIdsTrait> childOriginIds;
+    for (const auto& child : rewritten.getChildren())
+    {
+        const auto childOriginIdsOpt = getTrait<OutputOriginIdsTrait>(child.getTraitSet());
+        INVARIANT(childOriginIdsOpt.has_value(), "Child operator must have origin ids trait");
+        childOriginIds.push_back(childOriginIdsOpt.value().get());
+    }
+
+    auto traitSet = rewritten.getTraitSet()
+        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(OutputOriginIdsTrait); })
+        | std::ranges::to<TraitSet>();
+    traitSet.insert(
+        OutputOriginIdsTrait{childOriginIds | std::views::join | std::ranges::to<std::unordered_set>() | std::ranges::to<std::vector>()});
+    return rewritten.withTraitSet(traitSet);
+}
+
 /// Roots on one node whose subtrees overlap have to end up in the same plan, so that what they share — and the sources below it —
 /// is deployed once rather than once per root. Roots that share nothing stay in plans of their own: a node hosting several
 /// independent physical sources keeps one plan per source.
@@ -315,10 +381,24 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         std::ranges::all_of(planOperators(placedPlan), [](const auto& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); }),
         "BUG: query decomposition requires placement of all operators");
 
+    /// Channel origins continue past the ids the plan already carries, see DecompositionContext::lastOriginId.
+    OriginId largestAssignedOriginId{INITIAL_ORIGIN_ID};
+    for (const auto& op : planOperators(placedPlan))
+    {
+        if (const auto originIds = getTrait<OutputOriginIdsTrait>(op.getTraitSet()))
+        {
+            for (const auto& originId : originIds.value().get())
+            {
+                largestAssignedOriginId = std::max(largestAssignedOriginId, originId);
+            }
+        }
+    }
+
     DecompositionContext context{
         .plansByNode = {},
         .rootsByNode = {},
         .networkChannels = {},
+        .lastOriginId = largestAssignedOriginId,
         .config = configuration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
