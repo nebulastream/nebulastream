@@ -15,10 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Interface/Record.hpp>
 #include <ValueDeserializer.hpp>
 
@@ -39,6 +41,16 @@ struct ValueDeserializerConfig
 /// Throws an InvalidConfigParameter for a malformed entry or an entry that names no field of the schema.
 [[nodiscard]] std::unordered_map<Record::RecordFieldIdentifier, std::string>
 parseValueDeserializerOverrides(const std::string& overrides, const std::vector<Record::RecordFieldIdentifier>& fieldNames);
+
+/// Check if the datatype plugin of the name pluginName has registered a default deserializer.
+/// Returns its name if it did.
+/// Otherwise, return nullopt.
+[[nodiscard]] std::optional<std::string> getPluginTypeDefaultDeserializer(const std::string& pluginName);
+
+/// Get the deserializer type for a datatype.
+/// Before the format-specific STRUCT default is used for datatype plugins, we check if the plugin has registered a default deserializer under Default<DataType Key>.
+[[nodiscard]] std::string
+getDeserializerType(const DataType& dataType, const std::unordered_map<DataType::Type, std::string>& deserializerTypes);
 
 /// Fetches ValueDeserializer from Registry
 /// The concrete type of deserializer is [Nullable]<deserializerType>ValueDeserializer
