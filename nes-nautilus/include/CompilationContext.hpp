@@ -19,11 +19,14 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
+#include <nautilus/common/FunctionAttributes.hpp>
+#include <nautilus/function.hpp>
 #include <nautilus/nautilus_function.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
@@ -34,6 +37,21 @@ namespace NES
 {
 
 class CompilationContext;
+
+namespace detail
+{
+/// Extracts the nautilus signature R(Args...) from the std::function type that CTAD deduces for a callable.
+/// The deduced parameter types keep the callable's cv/ref qualifiers (e.g. const val<T>&), but the traced
+/// signature must name the plain value types, so they are stripped here.
+template <typename>
+struct TracedSignature;
+
+template <typename R, typename... Args>
+struct TracedSignature<std::function<R(Args...)>>
+{
+    using type = R(std::remove_cvref_t<Args>...);
+};
+}
 
 /// Handle to a function that an operator registered in its pipeline's nautilus module during setup().
 /// All functions of a pipeline are compiled together into exactly one module, so the handle only becomes
@@ -154,6 +172,27 @@ public:
         return *std::static_pointer_cast<Function>(stored);
     }
 
+    /// Overload of the above that deduces the signature from the callable's call operator, so that the signature
+    /// is spelled exactly once: in the parameter list of the body itself. Requires a non-generic callable.
+    template <typename Callable>
+    requires requires(Callable callable) { std::function{std::move(callable)}; }
+    auto& registerTracedFunction(const std::string& name, Callable body)
+    {
+        using DeducedStdFunction = decltype(std::function{std::declval<Callable>()});
+        using Signature = typename detail::TracedSignature<DeducedStdFunction>::type;
+        return registerTracedFunction<Signature>(name, std::function<Signature>{std::move(body)});
+    }
+
+    /// Returns the pipeline's traced function (see registerTracedFunction) whose body is a single
+    /// nautilus::invoke of ProxyFunction. The traced signature val<R>(val<Args>...) is derived from the proxy's
+    /// C++ signature, so the common "shared traced function that only forwards to a proxy" pattern spells no
+    /// signature at all. Passing no attributes is identical to a plain nautilus::invoke of the proxy.
+    template <auto ProxyFunction>
+    auto& registerTracedInvoke(const std::string& name, const nautilus::FunctionAttributes attributes = {})
+    {
+        return registerTracedInvokeImpl<ProxyFunction>(name, attributes, ProxyFunction);
+    }
+
     /// Called by CompiledExecutablePipelineStage once, directly after compiling the pipeline's module.
     void resolveAfterCompilation(nautilus::engine::CompiledModule& compiledModule)
     {
@@ -163,6 +202,19 @@ public:
         }
         pendingResolvers.clear();
         compiled = true;
+    }
+
+private:
+    /// The proxy's C++ signature is taken apart by deducing against the function pointer passed as third argument.
+    template <auto ProxyFunction, typename R, typename... ProxyArguments>
+    auto& registerTracedInvokeImpl(const std::string& name, const nautilus::FunctionAttributes attributes, R (*)(ProxyArguments...))
+    {
+        static_assert(not std::is_void_v<R>, "registerTracedInvoke does not support void-returning proxies yet");
+        using Signature = nautilus::val<R>(nautilus::val<ProxyArguments>...);
+        return registerTracedFunction<Signature>(
+            name,
+            [attributes](const nautilus::val<ProxyArguments>&... arguments)
+            { return nautilus::invoke(attributes, ProxyFunction, arguments...); });
     }
 };
 }

@@ -39,6 +39,9 @@ target_include_directories(nes-nautilus PUBLIC
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
+# Header-only use in DataTypes/StructUnpack.hpp; PUBLIC so dependents including it see the rfl headers
+find_package(reflectcpp CONFIG REQUIRED)
+target_link_libraries(nes-nautilus PUBLIC reflectcpp::reflectcpp)
 
 # We have to set the nes-nautilus to public to use the nautilus library in other modules
 # nautilus::nautilus-std provides the implementations of the nautilus/std/* wrappers (memcmp, cmath, ...)

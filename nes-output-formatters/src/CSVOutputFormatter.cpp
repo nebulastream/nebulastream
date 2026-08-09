@@ -114,26 +114,7 @@ nautilus::val<uint64_t> writeFixedSizeField(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const char* delimiter)
 {
-    using WriteSignature = nautilus::val<uint64_t>(
-        nautilus::val<T>,
-        nautilus::val<bool>,
-        nautilus::val<int8_t*>,
-        nautilus::val<uint64_t>,
-        nautilus::val<TupleBuffer*>,
-        nautilus::val<AbstractBufferProvider*>,
-        nautilus::val<const char*>);
-    auto& writeFunction = compilationContext.registerTracedFunction<WriteSignature>(
-        functionName,
-        [](const nautilus::val<T>& rawValue,
-           const nautilus::val<bool>& isNull,
-           const nautilus::val<int8_t*>& address,
-           const nautilus::val<uint64_t>& remaining,
-           const nautilus::val<TupleBuffer*>& buffer,
-           const nautilus::val<AbstractBufferProvider*>& provider,
-           const nautilus::val<const char*>& delimiterValue)
-        {
-            return nautilus::invoke(writeFieldAndDelimiterProxy<T>, rawValue, isNull, address, remaining, buffer, provider, delimiterValue);
-        });
+    auto& writeFunction = compilationContext.registerTracedInvoke<writeFieldAndDelimiterProxy<T>>(functionName);
     const nautilus::val<bool> isNull = value.isNullable() ? value.isNull() : nautilus::val<bool>{false};
     return writeFunction(
         value.getRawValueAs<nautilus::val<T>>(),

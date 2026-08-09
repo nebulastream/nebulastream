@@ -20,11 +20,13 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/StructUnpack.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -149,25 +151,12 @@ template <typename T>
 {
     if (nullable)
     {
-        using ParseSignature = nautilus::val<ParseResultFixed<T>*>(
-            nautilus::val<FieldIndex>, nautilus::val<RawBufferIndex*>, nautilus::val<const InputFormatIndexer*>);
-        auto& parseFunction = compilationContext.registerTracedFunction<ParseSignature>(
-            fmt::format("ParseJsonValueNullable_{}", NAMEOF_TYPE(T)),
-            [](const nautilus::val<FieldIndex>& fieldIdx,
-               const nautilus::val<RawBufferIndex*>& bufferIdx,
-               const nautilus::val<const InputFormatIndexer*>& formatIndexer)
-            {
-                return nautilus::invoke(
-                    {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, true>, fieldIdx, bufferIdx, formatIndexer);
-            });
-        const auto parseResult = parseFunction(fieldIndex, rawBufferIndex, indexer);
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
-        return VarVal{nautilusValue, nullable, isNull};
+        auto& parseFunction = compilationContext.registerTracedInvoke<parseJsonFixedSizeIntoVarValProxy<T, true>>(
+            fmt::format("ParseJsonValueNullable_{}", NAMEOF_TYPE(T)), {nautilus::ModRefInfo::Ref});
+        const auto [value, isNull] = unpackStruct(parseFunction(fieldIndex, rawBufferIndex, indexer));
+        return VarVal{value, nullable, isNull};
     }
-    using ParseSignature
-        = nautilus::val<T>(nautilus::val<FieldIndex>, nautilus::val<RawBufferIndex*>, nautilus::val<const InputFormatIndexer*>);
-    auto& parseFunction = compilationContext.registerTracedFunction<ParseSignature>(
+    auto& parseFunction = compilationContext.registerTracedFunction(
         fmt::format("ParseJsonValue_{}", NAMEOF_TYPE(T)),
         [](const nautilus::val<FieldIndex>& fieldIdx,
            const nautilus::val<RawBufferIndex*>& bufferIdx,
@@ -175,7 +164,7 @@ template <typename T>
         {
             const auto parseResult = nautilus::invoke(
                 {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, false>, fieldIdx, bufferIdx, formatIndexer);
-            return nautilus::val<T>{*getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value))};
+            return std::get<0>(unpackStruct(parseResult));
         });
     return VarVal{parseFunction(fieldIndex, rawBufferIndex, indexer), nullable, false};
 }

@@ -26,6 +26,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/StructUnpack.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -100,9 +101,7 @@ void writeFixedSizeField(
     /// parse with two formatters, both would have to enter the name -- see registerTracedFunction().
     if (dataType.nullable)
     {
-        using ParseSignature = nautilus::val<ParseResult<T>*>(
-            nautilus::val<int8_t*>, nautilus::val<const FieldIndex*>, nautilus::val<uint64_t>, nautilus::val<uint64_t>);
-        auto& parseFunction = compilationContext.registerTracedFunction<ParseSignature>(
+        auto& parseFunction = compilationContext.registerTracedFunction(
             fmt::format("ParseRawValueNullable_{}", magic_enum::enum_name(dataType.type)),
             [nullValues = &nullValues, trimQuotes](
                 const nautilus::val<int8_t*>& recordBuffer,
@@ -120,15 +119,12 @@ void writeFixedSizeField(
                     parseIntoVarValProxy<T, true>, address, size, nautilus::val<const std::vector<std::string>*>{nullValues});
             });
         const auto parseResult = parseFunction(recordBufferPtr, indexBufferPtr, offsetIdx, nautilus::val<uint64_t>{sizeOfDelimiter});
-        const nautilus::val<T> value = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
+        const auto [value, isNull] = unpackStruct(parseResult);
         record.write(fieldName, VarVal{value, true, isNull});
         return;
     }
 
-    using ParseSignature
-        = nautilus::val<T>(nautilus::val<int8_t*>, nautilus::val<const FieldIndex*>, nautilus::val<uint64_t>, nautilus::val<uint64_t>);
-    auto& parseFunction = compilationContext.registerTracedFunction<ParseSignature>(
+    auto& parseFunction = compilationContext.registerTracedFunction(
         fmt::format("ParseRawValue_{}", magic_enum::enum_name(dataType.type)),
         [nullValues = &nullValues, trimQuotes](
             const nautilus::val<int8_t*>& recordBuffer,

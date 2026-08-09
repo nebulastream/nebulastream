@@ -18,10 +18,12 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
+#include <DataTypes/StructUnpack.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -126,13 +128,11 @@ VarVal parseFixedSizeIntoVarVal(
     {
         const auto parseResult = nautilus::invoke(
             parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
-        return VarVal{nautilusValue, nullable, isNull};
+        const auto [value, isNull] = unpackStruct(parseResult);
+        return VarVal{value, nullable, isNull};
     }
     const auto parseResult = nautilus::invoke(
         parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-    return VarVal{nautilusValue, nullable, false};
+    return VarVal{std::get<0>(unpackStruct(parseResult)), nullable, false};
 }
 }
