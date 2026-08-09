@@ -18,10 +18,12 @@
 #include <array>
 #include <cstddef>
 #include <map>
+#include <numeric>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifier.hpp>
@@ -69,7 +71,10 @@ struct PairHash
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
-    /// Network source per (operator, consuming node): an operator shared by sinks is sent to a node once, not once per consumer.
+    /// Roots collected per node while decomposing, merged into plans once decomposition is done.
+    std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalOperator>> rootsByNode;
+    /// Network source per (operator, consuming node): an operator shared by sinks is sent to a node once, not once per consumer. It
+    /// may still feed several nodes, one channel each — the subtree below it is decomposed once and deployed once all the same.
     std::unordered_map<std::pair<LogicalOperator, NetworkTopology::NodeId>, LogicalOperator, PairHash> networkChannels;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
@@ -77,10 +82,7 @@ struct DecompositionContext
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 
-    void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
-    {
-        plansByNode[nodeId].emplace_back(INVALID_QUERY_ID, std::vector{std::move(op)});
-    }
+    void addRootToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId) { rootsByNode[nodeId].emplace_back(std::move(op)); }
 };
 
 struct NetworkChannel
@@ -152,7 +154,6 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
-    auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
     const auto ts = channel.upstreamOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
@@ -164,7 +165,9 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
-        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
+        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())
+            ->withTraitSet(upstreamTs)
+            .withChildren({channel.upstreamOp})};
 }
 
 LogicalOperator createNetworkChannel(
@@ -193,7 +196,7 @@ LogicalOperator createNetworkChannel(
             NetworkChannel{
                 .id = ChannelId(generateUUID()), .upstreamOp = currentOp, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
 
-        context.addPlanToNode(std::move(networkSink), upstreamNode);
+        context.addRootToNode(std::move(networkSink), upstreamNode);
         currentOp = networkSource;
     }
 
@@ -258,6 +261,45 @@ LogicalOperator decomposePlanRecursive(
     decomposed.emplace(op, decomposedOperator);
     return decomposedOperator;
 }
+
+/// Roots on one node whose subtrees overlap have to end up in the same plan, so that what they share — and the sources below it —
+/// is deployed once rather than once per root. Roots that share nothing stay in plans of their own: a node hosting several
+/// independent physical sources keeps one plan per source.
+/// Compares every pair of roots on a node, of which there is a handful; worth revisiting only if a node ever carries many.
+std::vector<std::vector<LogicalOperator>> groupRootsBySharedOperators(const std::vector<LogicalOperator>& roots)
+{
+    std::vector<std::unordered_set<LogicalOperator>> reachable;
+    reachable.reserve(roots.size());
+    for (const auto& root : roots)
+    {
+        reachable.emplace_back(planOperators(LogicalPlan{INVALID_QUERY_ID, {root}}) | std::ranges::to<std::unordered_set>());
+    }
+
+    std::vector<size_t> groupOfRoot(roots.size());
+    std::iota(groupOfRoot.begin(), groupOfRoot.end(), 0);
+    for (size_t i = 0; i < roots.size(); ++i)
+    {
+        for (size_t j = i + 1; j < roots.size(); ++j)
+        {
+            if (groupOfRoot.at(i) == groupOfRoot.at(j)
+                or std::ranges::none_of(reachable.at(j), [&](const auto& op) { return reachable.at(i).contains(op); }))
+            {
+                continue;
+            }
+            const auto target = groupOfRoot.at(i);
+            const auto merged = groupOfRoot.at(j);
+            std::ranges::replace(groupOfRoot, merged, target);
+        }
+    }
+
+    std::map<size_t, std::vector<LogicalOperator>> grouped;
+    for (size_t i = 0; i < roots.size(); ++i)
+    {
+        grouped[groupOfRoot.at(i)].push_back(roots.at(i));
+    }
+    return grouped | std::views::values | std::ranges::to<std::vector>();
+}
+
 }
 
 QueryDecomposer::QueryDecomposer(
@@ -273,37 +315,22 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         std::ranges::all_of(planOperators(placedPlan), [](const auto& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); }),
         "BUG: query decomposition requires placement of all operators");
 
-    /// An operator shared between sinks lives on exactly one node. Sending it to a second node means duplicating it there, sources
-    /// included, so a plan that would require that is rejected instead of silently reading its sources twice.
-    for (const auto& op : planOperators(placedPlan))
-    {
-        const auto parents = getParents(placedPlan, op);
-        if (parents.size() > 1
-            and not std::ranges::all_of(
-                parents, [&](const auto& parent) { return getPlacementFor(parent) == getPlacementFor(parents.front()); }))
-        {
-            throw PlacementFailure(
-                "Operator {} is shared by sinks that were placed on different workers", op.explain(ExplainVerbosity::Short));
-        }
-    }
-
     DecompositionContext context{
         .plansByNode = {},
+        .rootsByNode = {},
         .networkChannels = {},
         .config = configuration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
 
-    /// All sinks that end up on the same node form one plan for that node, so that the part they share is deployed once.
     std::unordered_map<LogicalOperator, LogicalOperator> decomposed;
-    std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalOperator>> rootsByNode;
     for (const auto& rootOperator : placedPlan.getRootOperators())
     {
         auto root = decomposePlanRecursive(context, rootOperator, decomposed);
-        rootsByNode[getPlacementFor(root)].push_back(root);
+        context.addRootToNode(root, getPlacementFor(root));
     }
-    for (auto& [node, roots] : rootsByNode)
+    for (auto& [node, roots] : context.rootsByNode)
     {
         for (auto& group : groupRootsBySharedOperators(roots))
         {
