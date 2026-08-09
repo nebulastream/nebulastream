@@ -19,6 +19,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -27,6 +28,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -71,17 +73,26 @@ public:
 
     /// Get the serializer type for a specific field. The datatype of the field determines the default, which the user may
     /// override for this particular field.
-    [[nodiscard]] const std::string& getSerializerType(const Record::RecordFieldIdentifier& fieldName, const DataType::Type& dataType) const
+    /// If the datatype is a plugin (struct), check if a default serializer was registered for it before resorting to the configured STRUCT default.
+    [[nodiscard]] std::string getSerializerType(const Record::RecordFieldIdentifier& fieldName, const DataType& dataType) const
     {
         if (const auto it = fieldSerializerTypes.find(fieldName); it != fieldSerializerTypes.end())
         {
             return it->second;
         }
-        if (const auto it = serializerTypes.find(dataType); it != serializerTypes.end())
+        if (dataType.type == DataType::Type::STRUCT)
+        {
+            /// Use the default deserializer for this type, if it exists.
+            if (auto pluginDefault = getPluginTypeDefaultSerializer(dataType.structName))
+            {
+                return std::move(*pluginDefault);
+            }
+        }
+        if (const auto it = serializerTypes.find(dataType.type); it != serializerTypes.end())
         {
             return it->second;
         }
-        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(dataType));
+        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(dataType.type));
     }
 
 protected:

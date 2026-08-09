@@ -138,7 +138,8 @@ nautilus::val<uint64_t> JSONSTRUCTValueSerializer::serializeAndWrite(
         const auto& [fieldName, fieldType] = valueType.fields.at(i);
         /// Try to create the default serializer for this field type
         const ValueSerializerConfig config{.quoted = true};
-        const std::unique_ptr<ValueSerializer> subFieldSerializer = provideValueSerializer(serializerTypes.at(fieldType.type), config);
+        const std::unique_ptr<ValueSerializer> subFieldSerializer
+            = provideValueSerializer(getSerializerType(fieldType, serializerTypes), config);
 
         /// Write either the delimiting curly bracket or a comma + the subfield name
         bytesWritten += nautilus::invoke(
@@ -186,7 +187,7 @@ nautilus::val<uint64_t> JSONFIXEDSIZEDValueSerializer::serializeAndWrite(
     /// Construct the serializer for the elements of the array
     const ValueSerializerConfig config{.quoted = true};
     const std::unique_ptr<ValueSerializer> elementSerializer
-        = provideValueSerializer(serializerTypes.at(castedVal.getElementType().type), config);
+        = provideValueSerializer(getSerializerType(*valueType.elementType, serializerTypes), config);
 
     nautilus::val<uint64_t> bytesWritten{0};
     for (nautilus::static_val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
@@ -242,7 +243,7 @@ nautilus::val<uint64_t> JSONVECTORValueSerializer::serializeAndWrite(
     /// Construct the serializer for the elements of the array
     const ValueSerializerConfig config{.quoted = true};
     const std::unique_ptr<ValueSerializer> elementSerializer
-        = provideValueSerializer(serializerTypes.at(castedVal.getElementType().type), config);
+        = provideValueSerializer(getSerializerType(*valueType.elementType, serializerTypes), config);
 
     nautilus::val<uint64_t> bytesWritten{0};
     for (nautilus::val<size_t> i = 0; i < castedVal.getNumElements(); ++i)
