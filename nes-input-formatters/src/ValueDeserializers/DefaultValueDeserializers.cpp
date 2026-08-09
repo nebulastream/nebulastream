@@ -145,7 +145,7 @@ VarVal DefaultBOOLValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -163,7 +163,7 @@ VarVal NullableDefaultBOOLValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -183,7 +183,7 @@ void DefaultBOOLValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -197,7 +197,7 @@ void NullableDefaultBOOLValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -209,7 +209,7 @@ VarVal DefaultCHARValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -239,7 +239,7 @@ VarVal NullableDefaultCHARValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -272,7 +272,7 @@ void DefaultCHARValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -286,7 +286,7 @@ void NullableDefaultCHARValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -298,7 +298,7 @@ VarVal DefaultF32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -316,7 +316,7 @@ VarVal NullableDefaultF32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -336,7 +336,7 @@ void DefaultF32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -350,7 +350,7 @@ void NullableDefaultF32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -362,7 +362,7 @@ VarVal DefaultF64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -380,7 +380,7 @@ VarVal NullableDefaultF64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -400,7 +400,7 @@ void DefaultF64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -414,7 +414,7 @@ void NullableDefaultF64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -426,7 +426,7 @@ VarVal DefaultINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -444,7 +444,7 @@ VarVal NullableDefaultINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -464,7 +464,7 @@ void DefaultINT8ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -478,7 +478,7 @@ void NullableDefaultINT8ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -490,7 +490,7 @@ VarVal DefaultINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -508,7 +508,7 @@ VarVal NullableDefaultINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -528,7 +528,7 @@ void DefaultINT16ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -542,7 +542,7 @@ void NullableDefaultINT16ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -554,7 +554,7 @@ VarVal DefaultINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -572,7 +572,7 @@ VarVal NullableDefaultINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -592,7 +592,7 @@ void DefaultINT32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -606,7 +606,7 @@ void NullableDefaultINT32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -618,7 +618,7 @@ VarVal DefaultINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -636,7 +636,7 @@ VarVal NullableDefaultINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -656,7 +656,7 @@ void DefaultINT64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -670,7 +670,7 @@ void NullableDefaultINT64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -682,7 +682,7 @@ VarVal DefaultUINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -700,7 +700,7 @@ VarVal NullableDefaultUINT8ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -720,7 +720,7 @@ void DefaultUINT8ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -734,7 +734,7 @@ void NullableDefaultUINT8ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -746,7 +746,7 @@ VarVal DefaultUINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -764,7 +764,7 @@ VarVal NullableDefaultUINT16ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -784,7 +784,7 @@ void DefaultUINT16ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -798,7 +798,7 @@ void NullableDefaultUINT16ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -810,7 +810,7 @@ VarVal DefaultUINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -828,7 +828,7 @@ VarVal NullableDefaultUINT32ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -848,7 +848,7 @@ void DefaultUINT32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -862,7 +862,7 @@ void NullableDefaultUINT32ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -874,7 +874,7 @@ VarVal DefaultUINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -892,7 +892,7 @@ VarVal NullableDefaultUINT64ValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -912,7 +912,7 @@ void DefaultUINT64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -926,7 +926,7 @@ void NullableDefaultUINT64ValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
@@ -938,7 +938,7 @@ VarVal DefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -965,7 +965,7 @@ VarVal NullableDefaultVARSIZEDValueDeserializer::deserializeToVarVal(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&) const
 {
@@ -1008,7 +1008,7 @@ void DefaultVARSIZEDValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+    const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
     const DataType& valueType,
     ArenaRef& arena,
     const nautilus::val<int8_t*>& bufferAddress) const
@@ -1024,7 +1024,7 @@ void NullableDefaultVARSIZEDValueDeserializer::deserializeIntoBuffer(
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
     const std::vector<std::string>&,
-    const std::unordered_map<DataType::Type, std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
     const DataType&,
     ArenaRef&,
     const nautilus::val<int8_t*>&) const
