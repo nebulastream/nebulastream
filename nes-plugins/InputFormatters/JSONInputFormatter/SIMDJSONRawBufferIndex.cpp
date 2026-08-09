@@ -184,7 +184,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> valueDeserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
+            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType), deserializerConfig);
         const VarVal parsedVal = valueDeserializer->deserializeToVarVal(
             static_cast<nautilus::val<int8_t*>>(address),
             size,
