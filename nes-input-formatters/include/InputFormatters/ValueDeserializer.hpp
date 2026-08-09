@@ -21,6 +21,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Arena.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
 
@@ -40,7 +41,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena) const = 0;
 
@@ -52,7 +53,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena,
         const nautilus::val<int8_t*>& bufferAddress) const = 0;

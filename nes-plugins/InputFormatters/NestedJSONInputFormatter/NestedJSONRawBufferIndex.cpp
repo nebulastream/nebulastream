@@ -224,7 +224,7 @@ Record NestedJSONRawBufferIndex::readSpanningRecord(
         /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> valueDeserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldDataType.type), deserializerConfig);
+            = provideDeserializerForType(fieldDataType, deserializerConfig, indexer.getDeserializerTypes());
         const VarVal parsedVal = valueDeserializer->deserializeToVarVal(
             address, size, indexer.getNullValues(), indexer.getDeserializerTypes(), fieldDataType, arena);
         record.write(fieldName, parsedVal);

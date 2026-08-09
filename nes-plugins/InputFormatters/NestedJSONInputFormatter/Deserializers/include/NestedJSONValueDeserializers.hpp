@@ -38,7 +38,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena) const override;
 
@@ -47,7 +47,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena,
         const nautilus::val<int8_t*>& bufferAddress) const override;
@@ -61,7 +61,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena) const override;
 
@@ -70,7 +70,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena,
         const nautilus::val<int8_t*>& bufferAddress) const override;
@@ -84,7 +84,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena) const override;
 
@@ -93,7 +93,7 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues,
-        const std::unordered_map<DataType::Type, std::string>& deserializerTypes,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
         const DataType& valueType,
         ArenaRef& arena,
         const nautilus::val<int8_t*>& bufferAddress) const override;
