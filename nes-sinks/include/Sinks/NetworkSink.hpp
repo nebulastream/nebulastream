@@ -17,12 +17,14 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
@@ -70,6 +72,7 @@ private:
     std::optional<rust::Box<SenderNetworkService>> server;
     std::optional<rust::Box<SenderDataChannel>> channel;
     std::string channelId;
+    std::unordered_map<OriginId, OriginId> channelOriginIds;
     std::string connectionAddr;
     std::string thisConnection;
     size_t senderQueueSize;
@@ -94,6 +97,16 @@ struct ConfigParametersNetworkSink
         "CHANNEL",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
+    /// Origins the receiving side sees this channel as, as "upstream:downstream" pairs separated by commas. A subplan shared by
+    /// several sinks crosses the node boundary once per sink, and every one of those channels relays the same upstream origins, so
+    /// without remapping the receiving node would end up with several sources claiming one origin — which it keys its running
+    /// sources on, and can therefore only hold one of. The mapping is one-to-one rather than collapsing onto a single id: a sink
+    /// may be fed by several origins at once (a union placed upstream of the boundary), and sequence numbers are unique only
+    /// within an origin, so merging them would produce duplicate sequence numbers on the channel.
+    static inline const DescriptorConfig::ConfigParameter<std::string> ORIGIN_ID_MAP{
+        "ORIGIN_ID_MAP",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ORIGIN_ID_MAP, config); }};
 
     /// Per-channel sender queue size override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
@@ -109,7 +122,7 @@ struct ConfigParametersNetworkSink
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap, DATA_ENDPOINT, CHANNEL, BIND, SENDER_QUEUE_SIZE, MAX_PENDING_ACKS);
+            SinkDescriptor::parameterMap, DATA_ENDPOINT, CHANNEL, ORIGIN_ID_MAP, BIND, SENDER_QUEUE_SIZE, MAX_PENDING_ACKS);
 };
 
 /// NOLINTEND(cert-err58-cpp)
