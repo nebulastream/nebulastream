@@ -133,13 +133,17 @@ SINK(SINKFILTER2)
   PROJECTION(fields: [ID, VALUE]) [shared]
 ==END==
 
+# The asterisk projection above the shared selection is one per sink: a shared operator carries a single field order, so each sink
+# gets its own wrapper to hold the order it wants.
 EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter, sinkFilter2;
 ----
 == Optimized Global Plan ==
 SINK(SINKFILTER)
-  SELECTION(VALUE > 2)
-    PROJECTION(fields: [ID, VALUE])
-      SOURCE(STREAM)
+  PROJECTION(fields: [*])
+    SELECTION(VALUE > 2)
+      PROJECTION(fields: [ID, VALUE])
+        SOURCE(STREAM)
 SINK(SINKFILTER2)
-  SELECTION(VALUE > 2) [shared]
+  PROJECTION(fields: [*])
+    SELECTION(VALUE > 2) [shared]
 ==END==
