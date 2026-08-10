@@ -411,7 +411,7 @@ ChainedHashMapRef::ChainedHashMapRef(
     {
         bloomFilter.emplace(
             invoke(
-                +[](TupleBuffer* buffer, const uint64_t bitCount, const uint64_t hashCount)
+                +[](TupleBuffer* buffer IF_INVARIANT(, const uint64_t bitCount) IF_INVARIANT(, const uint64_t hashCount))
                 {
                     auto chm = ChainedHashMap::load(*buffer);
                     INVARIANT(chm.getBloomFilterParams().has_value(), "The hash map was initialised without a BloomFilter bit area");
@@ -426,9 +426,8 @@ ChainedHashMapRef::ChainedHashMapRef(
                         chm.getBloomFilterParams()->getHashCount());
                     return chm.getBloomFilterMemArea();
                 },
-                buffer,
-                nautilus::val<uint64_t>{bloomFilterParams->getBitCount()},
-                nautilus::val<uint64_t>{bloomFilterParams->getHashCount()}),
+                buffer IF_INVARIANT(, nautilus::val<uint64_t>{bloomFilterParams->getBitCount()})
+                    IF_INVARIANT(, nautilus::val<uint64_t>{bloomFilterParams->getHashCount()})),
             *bloomFilterParams);
     }
 }

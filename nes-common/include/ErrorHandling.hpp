@@ -114,8 +114,14 @@ inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, cons
     #define USED_IN_DEBUG [[maybe_unused]]
     #define PRECONDITION(condition, formatString, ...) ((void)0)
     #define INVARIANT(condition, formatString, ...) ((void)0)
+    /// Expands to nothing when assertions are disabled. Use to drop code that only exists for a PRECONDITION/INVARIANT,
+    /// e.g. a parameter name that would otherwise trip -Wunused-parameter: `void f(const uint64_t IF_INVARIANT(bits))`.
+    #define IF_PRECONDITION(...)
+    #define IF_INVARIANT(...)
 #else
     #define USED_IN_DEBUG
+    #define IF_PRECONDITION(...) __VA_ARGS__
+    #define IF_INVARIANT(...) __VA_ARGS__
     /// Note:
     /// - it is not possible to use positional args since formatString is combined with the fmt string containing {}
     /// - \u001B[0m is the ANSI escape code for "color reset"
