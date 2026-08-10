@@ -100,8 +100,9 @@ RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
     inputShape = compiledModel.input(0).get_shape();
     outputElementType = compiledModel.output(0).get_element_type();
     outputShape = compiledModel.output(0).get_shape();
-    requiredInputSize = inputElementType.size() * ov::shape_size(inputShape);
-    requiredOutputSize = outputElementType.size() * ov::shape_size(outputShape);
+    /// When other element types are supported, use inputElementType.size()/outputElementType.size() instead of sizeof(float).
+    requiredInputSize = sizeof(float) * ov::shape_size(inputShape);
+    requiredOutputSize = sizeof(float) * ov::shape_size(outputShape);
 
     return RuntimeMetadata{
         .inputShape = model.getInputShape(),
@@ -113,16 +114,18 @@ RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
 
 void OpenVinoRuntimeBackend::infer(std::byte* inputBuffer, size_t inputBufferSize, std::byte* outputBuffer, size_t outputBufferSize)
 {
-    if (inputBufferSize > requiredInputSize)
+    if (inputBufferSize < requiredInputSize)
     {
         throw NES::InferenceRuntimeFailure(
-            "Model Execution failed. Model input size {} B exceeds buffer capacity {} B", inputBufferSize, requiredInputSize);
+            "Model Execution failed. Buffer capacity {} B is insufficient for model input size {} B", inputBufferSize, requiredInputSize);
     }
 
-    if (outputBufferSize > requiredOutputSize)
+    if (outputBufferSize < requiredOutputSize)
     {
         throw NES::InferenceRuntimeFailure(
-            "Model Execution failed. Model output size {} B exceeds buffer capacity {} B", outputBufferSize, requiredOutputSize);
+            "Model Execution failed. Buffer capacity {} B is insufficient for model output size {} B",
+            outputBufferSize,
+            requiredOutputSize);
     }
 
     const ov::Tensor inputTensor(inputElementType, inputShape, inputBuffer);
