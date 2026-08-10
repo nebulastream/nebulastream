@@ -1,0 +1,23 @@
+# name: TimestampPlugin.test
+# description: Tests the datatypes included in the "Time" plugin
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE timeSource(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource TYPE FILE;
+ATTACH INLINE
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+# Test CSV format deserialization of the timestamps
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSourceJSON(DATE Date NOT NULL, TIME Time NOT NULL, TIMESTAMP Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSourceJSON TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"DATE": "2004-08-28", "TIME": "03:52:42", "TIMESTAMP": "2008-07-11 12:32:07.278912"}
+
+# Test CSV format deserialization of the timestamps
+SELECT * FROM timeSourceJSON INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"DATE":"2004-08-28","TIME":"03:52:42","TIMESTAMP":"2008-07-11 12:32:07.278912"}
