@@ -54,6 +54,23 @@ std::expected<CompiledModel, std::string> importAndCompile(const std::filesystem
     return std::move(*compiled);
 }
 
+void expectLoadsTinyModel(const std::string& fixture)
+{
+    if (!inferenceEnabled())
+    {
+        GTEST_SKIP() << "OpenVINO import unavailable in this environment";
+    }
+
+    const std::string path = std::string(INFERENCE_TEST_DATA) + "/" + fixture;
+    auto result = importAndCompile(path);
+    ASSERT_TRUE(result.has_value()) << "Failed to load " << fixture << ": " << (result ? "" : result.error());
+    EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 4}));
+    EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 4}));
+    EXPECT_EQ(result->inputSize(), 16U);
+    EXPECT_EQ(result->outputSize(), 16U);
+    EXPECT_FALSE(result->empty());
+}
+
 }
 
 TEST(ModelLoaderTest, checkToolAvailability)
@@ -118,6 +135,38 @@ TEST(ModelLoaderTest, LoadsExpansionModel)
     EXPECT_FALSE(result->empty());
 }
 
+TEST(ModelLoaderTest, LoadsTensorFlowFrozenGraph)
+{
+    expectLoadsTinyModel("tiny_1_to_1.pb");
+}
+
+TEST(ModelLoaderTest, LoadsTensorFlowTextGraph)
+{
+    expectLoadsTinyModel("tiny_1_to_1.pbtxt");
+}
+
+TEST(ModelLoaderTest, LoadsTensorFlowMetaGraph)
+{
+    expectLoadsTinyModel("tiny_1_to_1.meta");
+}
+
+TEST(ModelLoaderTest, LoadsTensorFlowSavedModelDirectory)
+{
+    expectLoadsTinyModel("tiny_savedmodel");
+}
+
+TEST(ModelLoaderTest, LoadsTensorFlowLiteModel)
+{
+    expectLoadsTinyModel("tiny_1_to_1.tflite");
+}
+
+/// PaddlePaddle ships the topology (.pdmodel) and weights (.pdiparams) side by side; `ovc` is
+/// pointed at the .pdmodel and reads the .pdiparams next to it.
+TEST(ModelLoaderTest, LoadsPaddlePaddleModel)
+{
+    expectLoadsTinyModel("tiny_1_to_1.pdmodel");
+}
+
 TEST(ModelLoaderTest, LoadInvalidPath)
 {
     if (!inferenceEnabled())
@@ -138,7 +187,7 @@ TEST(ModelLoaderTest, LoadUnsupportedExtensionIsRejected)
 
     auto imported = importModel("model.pt");
     EXPECT_FALSE(imported.has_value());
-    EXPECT_NE(imported.error().message.find(".pt2"), std::string::npos);
+    EXPECT_NE(imported.error().message.find(".onnx"), std::string::npos) << imported.error().message;
 }
 
 /// A dynamic batch dimension is the case single-tuple inference handles: resolve it to 1

@@ -644,7 +644,11 @@ OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
 
 - The `INPUT` fields must match the model's input tensor shape and types. Each field maps to one element of the input tensor.
 - The `OUTPUT` fields must match the model's output tensor shape and types.
-- `.onnx` and the other formats the OpenVINO converter accepts are supported. Models are converted to OpenVINO IR at registration time.
+- The following model formats are supported:
+    - ONNX
+    - TensorFlow (TF frozen graph / graph text, SavedModel, MetaGraph)
+    - LiteRT (formerly TFLite)
+    - PaddlePaddle
 - Only `FLOAT32` tensor element types are currently supported.
 
 **Using a model in a query:**
