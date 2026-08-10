@@ -19,8 +19,9 @@ worker:
     page_size: 4096
     number_of_partitions: 4
     number_of_records_per_key: 1024
-    max_number_of_buckets: 1024
     operator_buffer_size: 4096
+    bloom_filter:
+      expected_entries: 1024
   default_query_optimization:
     join_strategy: HASH_JOIN
   total_memory_in_bytes: 8388608

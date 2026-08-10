@@ -24,6 +24,7 @@
 #include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -85,9 +86,11 @@ private:
     std::vector<DataType> fieldKeyTypes;
     std::vector<Record::RecordFieldIdentifier> fieldValueNames;
     std::vector<DataType> fieldValueTypes;
-    uint64_t entrySize{0};
-    uint64_t probeEntrySize{0};
-    uint64_t entriesPerPage{0};
+    /// Both configs are members rather than locals because the traced lambdas are registered once, in the
+    /// constructor, while at() re-inits a probe map on every call: the two have to be sized from the very
+    /// same config, since nothing validates that any more once the map is built.
+    ChainedHashMapConfig hashMapConfig{};
+    ChainedHashMapConfig probeConfig{};
     TupleBuffer chainedHashMapBuffer;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;

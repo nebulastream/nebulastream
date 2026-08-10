@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
@@ -24,7 +25,6 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 
 namespace NES
 {
@@ -40,8 +40,8 @@ public:
         JoinSchema joinSchema,
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-        HashMapOptions leftHashMapBasedOptions,
-        HashMapOptions rightHashMapBasedOptions);
+        ChainedHashMapConfig leftHashMapBasedOptions,
+        ChainedHashMapConfig rightHashMapBasedOptions);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 

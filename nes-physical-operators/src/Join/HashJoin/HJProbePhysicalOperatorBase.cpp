@@ -17,6 +17,8 @@
 #include <memory>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -31,7 +33,6 @@
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
@@ -46,13 +47,13 @@ HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
     JoinSchema joinSchema,
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-    HashMapOptions leftHashMapOptions,
-    HashMapOptions rightHashMapOptions)
+    ChainedHashMapConfig leftHashMapConfig,
+    ChainedHashMapConfig rightHashMapConfig)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
     , leftTupleLayout(std::move(leftTupleLayout))
     , rightTupleLayout(std::move(rightTupleLayout))
-    , leftHashMapOptions(std::move(leftHashMapOptions))
-    , rightHashMapOptions(std::move(rightHashMapOptions))
+    , leftHashMapConfig(std::move(leftHashMapConfig))
+    , rightHashMapConfig(std::move(rightHashMapConfig))
 {
 }
 
@@ -73,10 +74,9 @@ HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<TupleBuffer*>&
 }
 
 ChainedHashMapRef
-HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options)
+HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const ChainedHashMapConfig& options)
 {
-    return ChainedHashMapRef{
-        hashMapBufferRef, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize, options.bloomFilterParams};
+    return ChainedHashMapRef{hashMapBufferRef, options};
 }
 
 namespace
@@ -119,16 +119,16 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
         auto leftHashMapBuffer = pinHashMapBuffer(recordBufferRef, leftHashMapIndex);
-        ChainedHashMapRef leftHashMap = makeChainedHashMapRef(leftHashMapBuffer.asArg(), leftHashMapOptions);
+        ChainedHashMapRef leftHashMap = makeChainedHashMapRef(leftHashMapBuffer.asArg(), leftHashMapConfig);
         for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
         {
             /// Right hash map buffers are stored as child buffers right after all of the left ones
             auto rightHashMapBuffer = pinHashMapBuffer(recordBufferRef, leftNumberOfHashMaps + rightHashMapIndex);
-            const ChainedHashMapRef rightHashMap = makeChainedHashMapRef(rightHashMapBuffer.asArg(), rightHashMapOptions);
+            const ChainedHashMapRef rightHashMap = makeChainedHashMapRef(rightHashMapBuffer.asArg(), rightHashMapConfig);
             for (const auto rightEntry : rightHashMap)
             {
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                    rightEntry, rightHashMapBuffer.asArg(), rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
+                    rightEntry, rightHashMapBuffer.asArg(), rightHashMapConfig.fieldKeys, rightHashMapConfig.fieldValues};
                 const PagedVectorRef rightPagedVector = loadEntryPagedVector(rightEntryRef, rightTupleLayout);
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
@@ -138,8 +138,8 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         static_cast<nautilus::val<ChainedHashMapEntry*>>(leftEntry),
                         leftHashMapBuffer.asArg(),
-                        leftHashMapOptions.fieldKeys,
-                        leftHashMapOptions.fieldValues};
+                        leftHashMapConfig.fieldKeys,
+                        leftHashMapConfig.fieldValues};
                     const PagedVectorRef leftPagedVector = loadEntryPagedVector(leftEntryRef, leftTupleLayout);
 
                     for (auto leftIt = leftPagedVector.begin(); leftIt != leftPagedVector.end(); ++leftIt)

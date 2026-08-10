@@ -18,6 +18,8 @@
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -38,7 +40,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -76,8 +77,8 @@ HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     JoinSchema joinSchema,
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-    HashMapOptions leftHashMapBasedOptions,
-    HashMapOptions rightHashMapBasedOptions)
+    ChainedHashMapConfig leftHashMapBasedOptions,
+    ChainedHashMapConfig rightHashMapBasedOptions)
     : HJProbePhysicalOperatorBase(
           operatorHandlerId,
           std::move(joinFunction),
@@ -96,8 +97,8 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     nautilus::val<uint64_t> outerNumberOfHashMaps,
     nautilus::val<uint64_t> innerOffset,
     nautilus::val<uint64_t> innerNumberOfHashMaps,
-    const HashMapOptions& outerHashMapOptions,
-    const HashMapOptions& innerHashMapOptions,
+    const ChainedHashMapConfig& outerHashMapConfig,
+    const ChainedHashMapConfig& innerHashMapConfig,
     const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
     const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
     ExecutionContext& executionCtx,
@@ -110,12 +111,12 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     for (nautilus::val<uint64_t> outerIdx = 0; outerIdx < outerNumberOfHashMaps; ++outerIdx)
     {
         auto outerHashMapBuffer = pinHashMapBuffer(recordBufferRef, outerOffset + outerIdx);
-        const ChainedHashMapRef outerHashMap = makeChainedHashMapRef(outerHashMapBuffer.asArg(), outerHashMapOptions);
+        const ChainedHashMapRef outerHashMap = makeChainedHashMapRef(outerHashMapBuffer.asArg(), outerHashMapConfig);
 
         for (const auto outerEntry : outerHashMap)
         {
             const ChainedHashMapRef::ChainedEntryRef outerEntryRef{
-                outerEntry, outerHashMapBuffer.asArg(), outerHashMapOptions.fieldKeys, outerHashMapOptions.fieldValues};
+                outerEntry, outerHashMapBuffer.asArg(), outerHashMapConfig.fieldKeys, outerHashMapConfig.fieldValues};
             const PagedVectorRef outerPagedVector = loadEntryPagedVector(outerEntryRef, outerTupleLayout);
 
             /// Check all inner hash maps for a matching key
@@ -123,7 +124,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
             for (nautilus::val<uint64_t> innerIdx = 0; innerIdx < innerNumberOfHashMaps; ++innerIdx)
             {
                 auto innerHashMapBuffer = pinHashMapBuffer(recordBufferRef, innerOffset + innerIdx);
-                ChainedHashMapRef innerHashMap = makeChainedHashMapRef(innerHashMapBuffer.asArg(), innerHashMapOptions);
+                ChainedHashMapRef innerHashMap = makeChainedHashMapRef(innerHashMapBuffer.asArg(), innerHashMapConfig);
 
                 if (innerHashMap.findEntry(outerEntryRef.entryRef) != nullptr)
                 {
@@ -179,8 +180,8 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
                 leftNumberOfHashMaps,
                 rightOffset,
                 rightNumberOfHashMaps,
-                leftHashMapOptions,
-                rightHashMapOptions,
+                leftHashMapConfig,
+                rightHashMapConfig,
                 leftTupleLayout,
                 joinSchema.rightSchema,
                 executionCtx,
@@ -198,8 +199,8 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
                 rightNumberOfHashMaps,
                 leftOffset,
                 leftNumberOfHashMaps,
-                rightHashMapOptions,
-                leftHashMapOptions,
+                rightHashMapConfig,
+                leftHashMapConfig,
                 rightTupleLayout,
                 joinSchema.leftSchema,
                 executionCtx,

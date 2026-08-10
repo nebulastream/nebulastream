@@ -26,7 +26,6 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Util/RollingAverage.hpp>
 #include <HashMapSlice.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -53,8 +52,7 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -66,8 +64,6 @@ protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
-    folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
-    uint64_t maxNumberOfBuckets;
 };
 
 }

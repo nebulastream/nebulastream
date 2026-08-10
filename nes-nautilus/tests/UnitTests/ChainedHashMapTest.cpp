@@ -26,6 +26,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Interface/Hash/BloomFilterRef.hpp>
+#include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
@@ -457,20 +458,25 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     constexpr uint64_t numberOfPooledBuffers = 16;
 
     const ChainedHashMapConfig hashMapConfig{
-        .entrySize = entrySize, .numberOfBuckets = numberOfBuckets, .pageSize = entrySize * entriesPerPage};
+        .entrySize = entrySize,
+        .numberOfBuckets = numberOfBuckets,
+        .pageSize = entrySize * entriesPerPage,
+        .bloomFilterParams = std::nullopt,
+        .fieldKeys = {},
+        .fieldValues = {},
+        .hashFunction = std::make_shared<MurMur3HashFunction>()};
 
     auto bufferManager = TestUtils::createBufferManager(bufferSize, numberOfPooledBuffers);
     /// NOLINTNEXTLINE(bugprone-unchecked-optional-access): .value() throws on nullopt, which fails the test.
-    auto hashMapBuffer = bufferManager->getUnpooledBuffer(hashMapConfig.bufferSize()).value();
+    auto hashMapBuffer = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSize(numberOfBuckets, 0)).value();
     ChainedHashMap::init(hashMapBuffer, hashMapConfig);
 
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Interpreter);
     auto iterate = engine.registerFunction(std::function(
         /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
-        [](nautilus::val<TupleBuffer*> buffer)
+        [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
         {
-            const ChainedHashMapRef ref{
-                buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}, std::nullopt};
+            const ChainedHashMapRef ref{buffer, hashMapConfig};
             for (const auto entry : ref)
             {
                 std::ignore = entry;

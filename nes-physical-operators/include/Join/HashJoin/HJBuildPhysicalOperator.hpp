@@ -14,7 +14,10 @@
 
 #pragma once
 #include <memory>
+#include <vector>
+#include <Functions/PhysicalFunction.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
@@ -23,7 +26,6 @@
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 
 namespace NES
 {
@@ -39,12 +41,15 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-        HashMapOptions hashMapOptions,
+        ChainedHashMapConfig hashMapConfig,
+        std::vector<PhysicalFunction> keyFunctions,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    HashMapOptions hashMapOptions;
+    ChainedHashMapConfig hashMapConfig;
+    /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
+    std::vector<PhysicalFunction> keyFunctions;
 };
 
 }

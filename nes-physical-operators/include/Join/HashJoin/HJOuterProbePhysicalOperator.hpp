@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
@@ -29,7 +30,6 @@
 #include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
 
@@ -49,8 +49,8 @@ public:
         JoinSchema joinSchema,
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-        HashMapOptions leftHashMapBasedOptions,
-        HashMapOptions rightHashMapBasedOptions);
+        ChainedHashMapConfig leftHashMapBasedOptions,
+        ChainedHashMapConfig rightHashMapBasedOptions);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -69,8 +69,8 @@ private:
         nautilus::val<uint64_t> outerNumberOfHashMaps,
         nautilus::val<uint64_t> innerOffset,
         nautilus::val<uint64_t> innerNumberOfHashMaps,
-        const HashMapOptions& outerHashMapOptions,
-        const HashMapOptions& innerHashMapOptions,
+        const ChainedHashMapConfig& outerHashMapConfig,
+        const ChainedHashMapConfig& innerHashMapConfig,
         const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
         const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
         ExecutionContext& executionCtx,

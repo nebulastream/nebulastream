@@ -65,24 +65,18 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
 
-    /// create final hash map and pin it
+    /// create final hash map and pin it. Its sizing is the same as the per-worker maps it merges, and that is
+    /// a query-compile-time constant, so it comes from hashMapConfig rather than being read back out of one
+    /// of the input maps. The proxy takes the numbers individually: a non-capturing lambda cannot receive the
+    /// config itself.
     OwnedNautilusBuffer finalHashMapNautilusBuffer;
     nautilus::invoke(
-        +[](const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
+        +[](AbstractBufferProvider* bufferProvider,
+            TupleBuffer* finalHashMapBuffer IF_PRECONDITION(, const uint64_t entrySize),
+            const uint64_t numberOfBuckets IF_PRECONDITION(, const uint64_t pageSize),
+            const uint64_t bloomBytes)
         {
-            INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
-            /// load the first hash map
-            const ChildBufferIndex bufferIndex{0};
-            auto buffer = parent->loadChildBuffer(bufferIndex);
-            const auto chm = ChainedHashMap::load(buffer);
-            /// get a buffer and for the final hash map with the same config
-            const ChainedHashMapConfig finalConfig{
-                .entrySize = chm.getEntrySize(),
-                .numberOfBuckets = chm.getNumberOfBuckets(),
-                .pageSize = chm.getPageSize(),
-                .bloomFilter = chm.getBloomFilterParams()};
-            auto neededFinalBufferSize
-                = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains(), finalConfig.bloomFilterMemAreaSize());
+            const auto neededFinalBufferSize = ChainedHashMap::calculateBufferSize(numberOfBuckets, bloomBytes);
             std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
             if (not finalHashMapTupleBuffer.has_value())
             {
@@ -90,22 +84,17 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             }
             /// initialize the final hash map tuple buffer
             *finalHashMapBuffer = finalHashMapTupleBuffer.value();
-            ChainedHashMap::init(*finalHashMapBuffer, finalConfig);
+            ChainedHashMap::init(*finalHashMapBuffer IF_PRECONDITION(, entrySize), numberOfBuckets IF_PRECONDITION(, pageSize), bloomBytes);
         },
-        recordBuffer.getReference(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        finalHashMapNautilusBuffer.asArg());
+        finalHashMapNautilusBuffer.asArg() IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.entrySize}),
+        nautilus::val<uint64_t>{hashMapConfig.numberOfBuckets} IF_PRECONDITION(, nautilus::val<uint64_t>{hashMapConfig.pageSize}),
+        nautilus::val<uint64_t>{hashMapConfig.bloomFilterMemAreaSize()});
     /// get the reference to the final hash map buffer
     auto finalHashMapBufferRef = finalHashMapNautilusBuffer.asArg();
 
     /// Combining all keys from all hash maps in the final hash map, and then iterating over the final hash map once to lower the aggregation states
-    ChainedHashMapRef finalHashMap{
-        finalHashMapBufferRef,
-        hashMapOptions.fieldKeys,
-        hashMapOptions.fieldValues,
-        hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize,
-        hashMapOptions.bloomFilterParams};
+    ChainedHashMapRef finalHashMap{finalHashMapBufferRef, hashMapConfig};
 
     for (nautilus::val<uint64_t> curHashMapIdx = 0; curHashMapIdx < numberOfHashMaps; ++curHashMapIdx)
     {
@@ -122,25 +111,18 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             curHashMapIdx,
             hashMapNautilusBuffer.asArg());
         auto hashMapBufferRef = hashMapNautilusBuffer.asArg();
-        const ChainedHashMapRef currentMap{
-            hashMapBufferRef,
-            hashMapOptions.fieldKeys,
-            hashMapOptions.fieldValues,
-            hashMapOptions.entriesPerPage,
-            hashMapOptions.entrySize,
-            hashMapOptions.bloomFilterParams};
+        const ChainedHashMapRef currentMap{hashMapBufferRef, hashMapConfig};
         for (const auto entry : currentMap)
         {
-            const ChainedHashMapRef::ChainedEntryRef entryRef{
-                entry, hashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+            const ChainedHashMapRef::ChainedEntryRef entryRef{entry, hashMapBufferRef, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
             const auto tmpRecordKey = entryRef.getKey();
 
             /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
             /// We do this by iterating over the aggregation functions and combining all aggregation states into a global state.
             finalHashMap.insertOrUpdateEntry(
                 entryRef.entryRef,
-                [fieldKeys = hashMapOptions.fieldKeys,
-                 fieldValues = hashMapOptions.fieldValues,
+                [fieldKeys = hashMapConfig.fieldKeys,
+                 fieldValues = hashMapConfig.fieldValues,
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
@@ -159,8 +141,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                [fieldKeys = hashMapOptions.fieldKeys,
-                 fieldValues = hashMapOptions.fieldValues,
+                [fieldKeys = hashMapConfig.fieldKeys,
+                 fieldValues = hashMapConfig.fieldValues,
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
@@ -189,8 +171,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// Lowering, each aggregation state in the final hash map and passing the record to the child
     for (const auto entry : finalHashMap)
     {
-        const ChainedHashMapRef::ChainedEntryRef entryRef{
-            entry, finalHashMapBufferRef, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+        const ChainedHashMapRef::ChainedEntryRef entryRef{entry, finalHashMapBufferRef, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -227,13 +208,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
-    HashMapOptions hashMapOptions,
+    ChainedHashMapConfig hashMapConfig,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
     const OperatorHandlerId operatorHandlerId,
     WindowMetaData windowMetaData)
     : WindowProbePhysicalOperator(operatorHandlerId, std::move(windowMetaData))
     , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
-    , hashMapOptions(std::move(hashMapOptions))
+    , hashMapConfig(std::move(hashMapConfig))
 {
 }
 }

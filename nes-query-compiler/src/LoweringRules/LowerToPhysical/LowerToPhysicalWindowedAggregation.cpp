@@ -65,9 +65,9 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <HashMapOptions.hpp>
 #include <HashMapSlice.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -170,7 +170,6 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
-    const auto entriesPerPage = pageSize / entrySize;
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
@@ -188,19 +187,15 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
 
     const auto windowMetaData = WindowMetaData{aggregation->getWindowStartField(), aggregation->getWindowEndField()};
 
-    const HashMapOptions hashMapOptions(
-        std::make_unique<MurMur3HashFunction>(),
-        keyFunctions,
-        fieldKeys,
-        fieldValues,
-        entriesPerPage,
-        entrySize,
-        keySize,
-        valueSize,
-        pageSize,
-        numberOfBuckets,
-        /// Aggregation does not benefit of using the ChainedHashMap's optional filter.
-        std::nullopt);
+    /// Aggregation does not benefit of using the ChainedHashMap's optional filter, so bloomFilter stays empty.
+    const ChainedHashMapConfig hashMapConfig{
+        .entrySize = entrySize,
+        .numberOfBuckets = numberOfBuckets,
+        .pageSize = pageSize,
+        .bloomFilterParams = std::nullopt,
+        .fieldKeys = fieldKeys,
+        .fieldValues = fieldValues,
+        .hashFunction = std::make_shared<MurMur3HashFunction>()};
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
@@ -211,19 +206,18 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return aggregationSlice.getOrCreateHashMapBufferRefForWorker(bufferProvider, workerThreadId);
         },
         /// NOLINTNEXTLINE(bugprone-exception-escape): dynamic_cast<ref> may throw std::bad_cast on bug; non-recoverable here.
-        [hashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        [hashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
             auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize, hashMapOptions.valueSize, hashMapOptions.pageSize, hashMapOptions.numberOfBuckets, &bufferProvider};
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
-    const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
+        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
+    const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(
-        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+        *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore));
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,
         physicalInputSchema,

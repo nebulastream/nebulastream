@@ -18,6 +18,7 @@
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -31,7 +32,6 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -44,8 +44,8 @@ HJInnerProbePhysicalOperator::HJInnerProbePhysicalOperator(
     JoinSchema joinSchema,
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-    HashMapOptions leftHashMapBasedOptions,
-    HashMapOptions rightHashMapBasedOptions)
+    ChainedHashMapConfig leftHashMapBasedOptions,
+    ChainedHashMapConfig rightHashMapBasedOptions)
     : HJProbePhysicalOperatorBase(
           operatorHandlerId,
           std::move(joinFunction),

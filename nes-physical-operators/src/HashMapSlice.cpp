@@ -43,7 +43,7 @@ HashMapSlice::HashMapSlice(
     , numHashMaps(numberOfHashMaps * numberOfInputStreams)
     , numInputStreams(numberOfInputStreams)
     , numHashmapsPerInputStream(numberOfHashMaps)
-    , hashMapConfig(toChainedHashMapConfig(createNewHashMapSliceArgs))
+    , hashMapConfig(createNewHashMapSliceArgs.config)
 {
     hashMapBuffers.resize(numHashMaps);
     hashMapBuffersState.assign(numHashMaps, HashMapBufferState::UNINITIALIZED);
@@ -81,7 +81,8 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
     {
         /// initialize the chained hash map buffer
         /// allocate buffers for the hash maps
-        if (auto childBuffer = bufferProvider.getUnpooledBuffer(hashMapConfig.bufferSize()))
+        if (auto childBuffer = bufferProvider.getUnpooledBuffer(
+                ChainedHashMap::calculateBufferSize(hashMapConfig.numberOfBuckets, hashMapConfig.bloomFilterMemAreaSize())))
         {
             /// initialize chained hash map i
             ChainedHashMap::init(childBuffer.value(), hashMapConfig);

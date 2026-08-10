@@ -17,10 +17,11 @@
 #include <memory>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
-#include <HashMapOptions.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES
@@ -34,14 +35,17 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::unique_ptr<SliceStoreRef> sliceStoreRef,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
-        HashMapOptions hashMapOptions);
+        ChainedHashMapConfig hashMapConfig,
+        std::vector<PhysicalFunction> keyFunctions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
-    HashMapOptions hashMapOptions;
+    ChainedHashMapConfig hashMapConfig;
+    /// Extracts the key fields out of an incoming record. Operator logic, not hash map metadata, hence not in the config.
+    std::vector<PhysicalFunction> keyFunctions;
 };
 
 }
