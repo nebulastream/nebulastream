@@ -45,12 +45,19 @@
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <TaskStatisticListener.hpp>
 #include <WorkerStatus.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
 namespace NES
 {
+
+namespace
+{
+/// Number of statistics rows the feed buffers before further rows are dropped
+constexpr size_t TASK_STATISTICS_FEED_CAPACITY = 8192;
+}
 
 SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
@@ -73,6 +80,16 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
+    if (configuration.enableTaskStatistics.getValue())
+    {
+        auto taskStatisticListener
+            = std::make_shared<TaskStatisticListener>(configuration.taskStatisticsFeed.getValue(), TASK_STATISTICS_FEED_CAPACITY);
+        taskStatisticListener->start();
+        listener->addListener(taskStatisticListener);
+    }
+
+    /// All listeners have to be registered before the engine exists, CompositeStatisticListener does not
+    /// synchronize its listener lists against the worker threads that read them.
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 

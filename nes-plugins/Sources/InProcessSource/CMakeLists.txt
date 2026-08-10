@@ -10,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-single-node-worker
-        SingleNodeWorker.cpp
-        GrpcService.cpp
-        GoogleEventTracePrinter.cpp
-        CompositeStatisticListener.cpp
-        TaskStatisticListener.cpp
-)
+add_plugin_as_library(InProcess Source inprocess_source_plugin_library InProcessSource.cpp)
+add_plugin_as_library(InProcess SourceValidation inprocess_validation_plugin_library InProcessSource.cpp)
+
+target_include_directories(inprocess_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+target_include_directories(inprocess_validation_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)

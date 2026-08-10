@@ -20,6 +20,7 @@ add_source_files(nes-sources
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
+        InProcessFeed.cpp
 )
 
 # Register plugins

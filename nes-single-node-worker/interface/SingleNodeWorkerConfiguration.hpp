@@ -48,6 +48,19 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
+    /// Publish query engine task events into an in-process feed, so that they can be read by an InProcess source
+    BoolOption enableTaskStatistics
+        = {"enable_task_statistics",
+           "false",
+           "Publish query engine task events as CSV rows into an in-process feed, which a physical source of type "
+           "InProcess can read to make engine statistics queryable."};
+
+    ScalarOption<std::string> taskStatisticsFeed
+        = {"task_statistics_feed",
+           "engine_events",
+           "Name of the in-process feed that task statistics are published to. A physical source of type InProcess "
+           "reads the feed of the same name."};
+
 protected:
     std::vector<BaseOption*> getOptions() override;
 
