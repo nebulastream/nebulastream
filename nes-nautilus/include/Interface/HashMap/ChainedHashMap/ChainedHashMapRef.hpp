@@ -23,6 +23,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/HashMap/HashMapRef.hpp>
 #include <Interface/Record.hpp>
@@ -115,23 +116,15 @@ public:
         nautilus::val<uint64_t> numberOfPages;
     };
 
-    /// Empty bloomFilterParams disable the in-map BloomFilter for this view; they must match how the underlying
-    /// map was initialised, since the bit area only exists (and only has that size) when ChainedHashMapConfig
-    /// requested one.
-    ChainedHashMapRef(
-        const nautilus::val<TupleBuffer*>& buffer,
-        std::vector<FieldOffsets> fieldsKey,
-        std::vector<FieldOffsets> fieldsValue,
-        const nautilus::val<uint64_t>& entriesPerPage,
-        const nautilus::val<uint64_t>& entrySize,
-        std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams);
+    /// The config must be the one the underlying map was init()ed with — nothing can verify that any more,
+    /// since the map no longer carries its sizing.
+    ChainedHashMapRef(const nautilus::val<TupleBuffer*>& buffer, ChainedHashMapConfig config);
     ChainedHashMapRef(const ChainedHashMapRef& other);
     ChainedHashMapRef& operator=(const ChainedHashMapRef& other);
     ~ChainedHashMapRef() override = default;
 
     nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
         const Record& recordKey,
-        const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) override;
     void insertOrUpdateEntry(
@@ -152,10 +145,9 @@ private:
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Record& recordKey, const HashFunction::HashValue& hash) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;
 
-    std::vector<FieldOffsets> fieldKeys;
-    std::vector<FieldOffsets> fieldValues;
-    nautilus::val<uint64_t> entriesPerPage;
-    nautilus::val<uint64_t> entrySize;
+    /// Plain host data, not nautilus::val: every option is fixed at query-compilation time, so each use of it
+    /// below is a trace-time constant folded into the generated code.
+    ChainedHashMapConfig config;
     /// Bound to the map's inline bit area at construction.
     std::optional<Nautilus::Interface::BloomFilterRef> bloomFilter;
 };

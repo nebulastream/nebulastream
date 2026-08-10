@@ -45,6 +45,7 @@
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -78,7 +79,6 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
-#include <HashMapOptions.hpp>
 #include <HashMapSlice.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
@@ -100,12 +100,10 @@ struct FieldNamesExtension
 
 /// Sizing of the join's in-map BloomFilter, or nullopt when it is switched off.
 ///
-/// Sized for maxNumberOfBuckets, not for the numberOfBuckets these options carry: the operator handler
-/// re-sizes every slice's bucket count from its rolling key average (clamped to maxNumberOfBuckets), while
-/// these params are a trace-time constant folded into the compiled probe and therefore fixed for the whole
-/// query. Sizing for the upper bound keeps the filter useful across that range; it costs a fixed bit area per
-/// hash map (~9% of the chains array at the same cardinality). Size it per slice only once the sizing stops
-/// being a trace-time constant.
+/// Sized from expectedEntries rather than from the numberOfBuckets these options carry, because the bucket
+/// count bounds nothing: the hash maps never rehash, they only lengthen their chains, so a map routinely
+/// holds far more keys than it has buckets. Sizing the filter for the bucket count would saturate every bit
+/// and make mightContain() always true, i.e. pay the hash positions and skip nothing.
 std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(const QueryExecutionConfiguration& conf)
 {
     if (not conf.bloomFilterConfiguration.enableBloomFilter.getValue())
@@ -113,7 +111,7 @@ std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(co
         return std::nullopt;
     }
     return Nautilus::Interface::BloomFilterParams{
-        conf.maxNumberOfBuckets.getValue(), conf.bloomFilterConfiguration.falsePositiveRate.getValue()};
+        conf.bloomFilterConfiguration.expectedEntries.getValue(), conf.bloomFilterConfiguration.falsePositiveRate.getValue()};
 }
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
@@ -242,7 +240,9 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
     return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
 }
 
-HashMapOptions createHashMapOptions(
+/// The key functions come back alongside the config rather than inside it: extracting key fields out of an
+/// incoming record is build-operator logic, not hash map metadata.
+std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHashMapConfig(
     std::vector<FieldNamesExtension>& joinFieldExtensions,
     Schema<QualifiedUnboundField, Ordered>& inputSchema,
     const QueryExecutionConfiguration& conf)
@@ -261,23 +261,19 @@ HashMapOptions createHashMapOptions(
     const auto pageSize = conf.pageSize.getValue();
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
-    const auto entriesPerPage = pageSize / entrySize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap
     const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, {});
-    HashMapOptions hashMapOptions{
-        std::make_unique<MurMur3HashFunction>(),
-        std::move(keyFunctions),
-        fieldKeys,
-        fieldValues,
-        entriesPerPage,
-        entrySize,
-        keySize,
-        valueSize,
-        pageSize,
-        numberOfBuckets,
-        createBloomFilterParams(conf)};
-    return hashMapOptions;
+    return {
+        ChainedHashMapConfig{
+            .entrySize = entrySize,
+            .numberOfBuckets = numberOfBuckets,
+            .pageSize = pageSize,
+            .bloomFilterParams = createBloomFilterParams(conf),
+            .fieldKeys = fieldKeys,
+            .fieldValues = fieldValues,
+            .hashFunction = std::make_shared<MurMur3HashFunction>()},
+        std::move(keyFunctions)};
 }
 }
 
@@ -329,8 +325,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newLeftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newRightInputSchema);
-    auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
-    auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
+    auto [leftHashMapConfig, leftKeyFunctions] = createChainedHashMapConfig(leftJoinFields, newLeftInputSchema, conf);
+    auto [rightHashMapConfig, rightKeyFunctions] = createChainedHashMapConfig(rightJoinFields, newRightInputSchema, conf);
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
@@ -342,16 +338,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
             return hjSlice.getOrCreateHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Left, bufferProvider);
         },
-        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        [hashMapConfig = leftHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
-            const CreateNewHJSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize,
-                hashMapOptions.valueSize,
-                hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets,
-                &bufferProvider,
-                JoinBuildSideType::Left,
-                hashMapOptions.bloomFilterParams};
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
@@ -360,16 +349,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
             return hjSlice.getOrCreateHashMapBufferRefForSide(workerThreadId, JoinBuildSideType::Right, bufferProvider);
         },
-        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        [hashMapConfig = rightHashMapConfig](WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
         {
-            const CreateNewHJSliceArgs hashMapSliceArgs{
-                hashMapOptions.keySize,
-                hashMapOptions.valueSize,
-                hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets,
-                &bufferProvider,
-                JoinBuildSideType::Right,
-                hashMapOptions.bloomFilterParams};
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{hashMapConfig, &bufferProvider};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     /// Create the trigger strategy based on join type — determines what probe tasks are emitted at runtime
@@ -392,8 +374,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::unreachable();
     };
 
-    auto handler = std::make_shared<HJOperatorHandler>(
-        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, createTriggerStrategy());
+    auto handler
+        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
@@ -401,14 +383,16 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         JoinBuildSideType::Left,
         TimeFunction::create(timeStampFieldLeft),
         leftTupleLayout,
-        leftHashMapOptions,
+        leftHashMapConfig,
+        std::move(leftKeyFunctions),
         std::move(sliceStoreRefLeft)};
     const HJBuildPhysicalOperator rightBuildOperator{
         handlerId,
         JoinBuildSideType::Right,
         TimeFunction::create(timeStampFieldRight),
         rightTupleLayout,
-        rightHashMapOptions,
+        rightHashMapConfig,
+        std::move(rightKeyFunctions),
         std::move(sliceStoreRefRight)};
 
     /// Creating the hash join probe — select inner or outer probe based on join type
@@ -465,8 +449,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             joinSchema,
             leftTupleLayout,
             rightTupleLayout,
-            leftHashMapOptions,
-            rightHashMapOptions));
+            leftHashMapConfig,
+            rightHashMapConfig));
     }
     else
     {
@@ -479,8 +463,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
             joinSchema,
             leftTupleLayout,
             rightTupleLayout,
-            leftHashMapOptions,
-            rightHashMapOptions));
+            leftHashMapConfig,
+            rightHashMapConfig));
     }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;

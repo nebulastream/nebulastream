@@ -168,7 +168,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& rec
     auto entry = findChain(hash);
     while (entry != nullptr)
     {
-        const ChainedEntryRef entryRef{entry, buffer, fieldKeys, fieldValues};
+        const ChainedEntryRef entryRef{entry, buffer, config.fieldKeys, config.fieldValues};
         if (compareKeys(entryRef, recordKey))
         {
             return entry;
@@ -187,14 +187,13 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus
 {
     /// Finding the entry. If chainEntry is nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef{chainEntry, buffer, fieldKeys, fieldValues};
+    const ChainedEntryRef otherEntryRef{chainEntry, buffer, config.fieldKeys, config.fieldValues};
     const auto entryRef = findEntry(otherEntryRef);
     return entryRef;
 }
 
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     const Record& recordKey,
-    const HashFunction& hashFunction,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
@@ -202,21 +201,21 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     /// We can use here a std::vector to store the read VarValues of the keyFunction, as the number of keys does not change between
     /// tracing and run time of the compiled query
     std::vector<VarVal> keyValues;
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
+    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(config.fieldKeys))
     {
         const auto& keyValue = recordKey.read(fieldIdentifier);
         keyValues.emplace_back(keyValue);
     }
 
     ///  If entry contains nullptr, there does not exist a key with the same values.
-    const auto hashValue = hashFunction.calculate(keyValues);
+    const auto hashValue = config.hashFunction->calculate(keyValues);
     if (const auto entryRef = findKey(recordKey, hashValue); entryRef != nullptr)
     {
         return static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), buffer, fieldKeys, fieldValues};
+    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), buffer, config.fieldKeys, config.fieldValues};
     newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
 
 
@@ -238,7 +237,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef{chainEntry, buffer, fieldKeys, fieldValues};
+    const ChainedEntryRef otherEntryRef{chainEntry, buffer, config.fieldKeys, config.fieldValues};
     if (const auto entryRef = findEntry(otherEntryRef); entryRef != nullptr)
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
@@ -251,7 +250,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
     const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider);
-    const ChainedEntryRef newEntryRef{newEntry, buffer, fieldKeys, fieldValues};
+    const ChainedEntryRef newEntryRef{newEntry, buffer, config.fieldKeys, config.fieldValues};
     newEntryRef.copyKeysToEntry(otherEntryRef, bufferProvider);
     if (onInsert)
     {
@@ -294,7 +293,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
         return {
             buffer,
             currentEntry,
-            entrySize,
+            nautilus::val<uint64_t>{config.entrySize},
             tupleIndex,
             indexOnPage,
             args.get(&EntryIterator::DynamicArgsWrapper::numTuplesInPage),
@@ -315,7 +314,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
             return chm.getTotalNumberOfRecords();
         },
         buffer);
-    return {buffer, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
+    return {buffer, nullptr, nautilus::val<uint64_t>{config.entrySize}, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
@@ -326,33 +325,49 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
     {
         return nullptr;
     }
+    /// Masking happens out here rather than inside the proxy: the mask is a query-compile-time constant, so
+    /// it folds into an immediate instead of costing a load from the map's header on every probe.
+    const auto entryPos = hash & nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)};
     return nautilus::invoke(
-        +[](const TupleBuffer* buffer, const HashFunction::HashValue::raw_type hashValue) -> ChainedHashMapEntry*
+        +[](const TupleBuffer* buffer, const uint64_t pos) -> ChainedHashMapEntry*
         {
             ChainedHashMap chm = ChainedHashMap::load(*buffer);
             if (chm.getTotalNumberOfRecords() == 0)
             {
                 return nullptr;
             }
-            const auto entryPos = hashValue & chm.getMask();
-            return chm.getChain(entryPos);
+            return chm.getChain(pos);
         },
         buffer,
-        hash);
+        entryPos);
 }
 
 nautilus::val<ChainedHashMapEntry*>
 ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
+    /// The proxy cannot be handed the config itself — a non-capturing lambda takes scalars only — so the four
+    /// numbers insertEntry needs are passed individually. They are all derived from this object's config, and
+    /// each becomes a constant in the compiled code. Passing a pointer to the config instead would bake a
+    /// host address into the trace, which would dangle if the operator holding it is moved after tracing.
     const auto newEntry = invoke(
-        +[](TupleBuffer* buffer, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
+        +[](TupleBuffer* buffer,
+            const HashFunction::HashValue::raw_type hashValue,
+            AbstractBufferProvider* bufferProviderVal,
+            const uint64_t entrySize,
+            const uint64_t entriesPerPage,
+            const uint64_t pageSize,
+            const uint64_t mask)
         {
             auto chm = ChainedHashMap::load(*buffer);
-            return chm.insertEntry(hashValue, bufferProviderVal);
+            return chm.insertEntry(hashValue, bufferProviderVal, entrySize, entriesPerPage, pageSize, mask);
         },
         buffer,
         hash,
-        bufferProvider);
+        bufferProvider,
+        nautilus::val<uint64_t>{config.entrySize},
+        nautilus::val<uint64_t>{config.entriesPerPage()},
+        nautilus::val<uint64_t>{config.pageSize},
+        nautilus::val<uint64_t>{ChainedHashMap::calculateMask(config.numberOfBuckets)});
 
     if (bloomFilter)
     {
@@ -365,7 +380,7 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
 nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const
 {
     nautilus::val<bool> result{true};
-    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
+    for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(config.fieldKeys))
     {
         /// We need to take the null values into account as they are a separate group.
         /// Thus, a simple if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier)) is not enough
@@ -392,65 +407,42 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
     return result;
 }
 
-ChainedHashMapRef::ChainedHashMapRef(
-    const nautilus::val<TupleBuffer*>& buffer,
-    std::vector<FieldOffsets> fieldsKey,
-    std::vector<FieldOffsets> fieldsValue,
-    const nautilus::val<uint64_t>& entriesPerPage,
-    const nautilus::val<uint64_t>& entrySize,
-    const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams)
-    : HashMapRef(buffer)
-    , fieldKeys(std::move(fieldsKey))
-    , fieldValues(std::move(fieldsValue))
-    , entriesPerPage(entriesPerPage)
-    , entrySize(entrySize)
+ChainedHashMapRef::ChainedHashMapRef(const nautilus::val<TupleBuffer*>& buffer, ChainedHashMapConfig config)
+    : HashMapRef(buffer), config(std::move(config))
 {
+    PRECONDITION(this->config.hashFunction != nullptr, "A ChainedHashMapConfig must carry the map's hash function");
+
     /// The bit area lives inline in the map's buffer and is zeroed by init(), so its address is stable and
-    /// valid from here on. Resolving it once keeps the traced lookup path free of a per-call invoke.
-    if (bloomFilterParams)
+    /// valid from here on. Resolving it once keeps the traced lookup path free of a per-call invoke. Its
+    /// offset follows from the chain count, which is a query-compile-time constant like the rest of the
+    /// sizing — so a view built from a different config than the map would silently address the wrong words.
+    if (this->config.bloomFilterParams)
     {
         bloomFilter.emplace(
             invoke(
-                +[](TupleBuffer* buffer IF_INVARIANT(, const uint64_t bitCount) IF_INVARIANT(, const uint64_t hashCount))
+                +[](TupleBuffer* buffer, const uint64_t numberOfChains, const uint64_t bloomBytes)
                 {
                     auto chm = ChainedHashMap::load(*buffer);
-                    INVARIANT(chm.getBloomFilterParams().has_value(), "The hash map was initialised without a BloomFilter bit area");
-                    /// The traced probe folds bitCount into its modulo and unrolls hashCount, so a view sized
-                    /// differently from the map it is bound to would index outside the allocated bit area.
-                    INVARIANT(
-                        chm.getBloomFilterParams()->getBitCount() == bitCount and chm.getBloomFilterParams()->getHashCount() == hashCount,
-                        "BloomFilter sizing of the view ({} bits, {} hashes) does not match the map it is bound to ({} bits, {} hashes)",
-                        bitCount,
-                        hashCount,
-                        chm.getBloomFilterParams()->getBitCount(),
-                        chm.getBloomFilterParams()->getHashCount());
-                    return chm.getBloomFilterMemArea();
+                    return chm.getBloomFilterMemArea(numberOfChains, bloomBytes);
                 },
-                buffer IF_INVARIANT(, nautilus::val<uint64_t>{bloomFilterParams->getBitCount()})
-                    IF_INVARIANT(, nautilus::val<uint64_t>{bloomFilterParams->getHashCount()})),
-            *bloomFilterParams);
+                buffer,
+                nautilus::val<uint64_t>{ChainedHashMap::calculateNumberOfChains(this->config.numberOfBuckets)},
+                nautilus::val<uint64_t>{this->config.bloomFilterMemAreaSize()}),
+            *this->config.bloomFilterParams);
     }
 }
 
 /// Copies the already-bound bloomFilter rather than delegating to the ctor above, which would re-run its
 /// invokes and emit redundant traced calls per copy.
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
-    : HashMapRef(other.buffer)
-    , fieldKeys(other.fieldKeys)
-    , fieldValues(other.fieldValues)
-    , entriesPerPage(other.entriesPerPage)
-    , entrySize(other.entrySize)
-    , bloomFilter(other.bloomFilter)
+    : HashMapRef(other.buffer), config(other.config), bloomFilter(other.bloomFilter)
 {
 }
 
 ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 {
     buffer = other.buffer;
-    fieldKeys = other.fieldKeys;
-    fieldValues = other.fieldValues;
-    entriesPerPage = other.entriesPerPage;
-    entrySize = other.entrySize;
+    config = other.config;
     bloomFilter = other.bloomFilter;
     return *this;
 }

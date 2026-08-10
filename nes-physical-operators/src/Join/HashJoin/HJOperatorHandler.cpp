@@ -37,6 +37,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <HashMapSlice.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -83,14 +84,10 @@ HJOperatorHandler::HJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const uint64_t maxNumberOfBuckets,
     JoinTriggerStrategy triggerStrategy)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
-    , leftRollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
-    , rightRollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
-    , maxNumberOfBuckets(maxNumberOfBuckets)
 {
 }
 
@@ -100,17 +97,7 @@ HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& ne
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Has setWorkerThreads() being called?");
 
-    auto newHashMapArgs = dynamic_cast<const CreateNewHJSliceArgs&>(newSlicesArguments);
-    switch (newHashMapArgs.joinBuildSide)
-    {
-        case JoinBuildSideType::Left:
-            newHashMapArgs.numberOfBuckets = std::clamp(leftRollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
-            break;
-        case JoinBuildSideType::Right:
-            newHashMapArgs.numberOfBuckets = std::clamp(rightRollingAverageNumberOfKeys.rlock()->getAverage(), 1UL, maxNumberOfBuckets);
-            break;
-    }
-
+    const auto& newHashMapArgs = dynamic_cast<const CreateNewHashMapSliceArgs&>(newSlicesArguments);
     return std::function(
         [outputOriginId = outputOriginId, numberOfWorkerThreads = numberOfWorkerThreads, copyOfNewHashMapArgs = newHashMapArgs](
             SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
@@ -147,34 +134,6 @@ void HJOperatorHandler::emitSlicesToProbe(
 {
     const auto leftHashMapBuffers = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
     const auto rightHashMapBuffers = getHashMapsFromSlices(rightSlices, JoinBuildSideType::Right);
-
-    /// Update rolling average (accumulate locally, single lock acquisition)
-    {
-        uint64_t totalTuples = 0;
-        uint64_t mapCount = 0;
-        for (const auto& buffer : leftHashMapBuffers)
-        {
-            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-            ++mapCount;
-        }
-        if (mapCount > 0)
-        {
-            leftRollingAverageNumberOfKeys.wlock()->add(totalTuples / mapCount);
-        }
-
-        /// Resetting before updating the right side
-        totalTuples = 0;
-        mapCount = 0;
-        for (const auto& buffer : rightHashMapBuffers)
-        {
-            totalTuples += ChainedHashMap::load(buffer).getTotalNumberOfRecords();
-            ++mapCount;
-        }
-        if (mapCount > 0)
-        {
-            rightRollingAverageNumberOfKeys.wlock()->add(totalTuples / mapCount);
-        }
-    }
 
     /// Creating a tuple buffer containing all necessary information for the probe
     uint64_t totalNumberOfTuples = 0;

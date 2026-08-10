@@ -18,7 +18,9 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <vector>
 #include <DataTypes/UnboundSchema.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -60,20 +62,14 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto hashMapBuffer
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
 
-    ChainedHashMapRef hashMap{
-        hashMapBuffer.asArg(),
-        hashMapOptions.fieldKeys,
-        hashMapOptions.fieldValues,
-        hashMapOptions.entriesPerPage,
-        hashMapOptions.entrySize,
-        hashMapOptions.bloomFilterParams};
+    ChainedHashMapRef hashMap{hashMapBuffer.asArg(), hashMapConfig};
 
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};
-    for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < hashMapConfig.fieldKeys.size(); ++i)
     {
-        const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
-        const auto& function = hashMapOptions.keyFunctions[i];
+        const auto& [fieldIdentifier, type, fieldOffset] = hashMapConfig.fieldKeys[i];
+        const auto& function = keyFunctions[i];
         const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
         containsNullInKey = containsNullInKey or (value.isNullable() and value.isNull());
         record.write(fieldIdentifier, value);
@@ -86,12 +82,11 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         /// Finding or creating the entry for the provided record
         const auto hashMapEntry = hashMap.findOrCreateEntry(
             record,
-            *hashMapOptions.hashFunction,
             [&](const nautilus::val<AbstractHashMapEntry*>& entry)
             {
                 /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+                    entry, hashMapBuffer.asArg(), hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
                 nautilus::invoke(
@@ -115,7 +110,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{
-            hashMapEntry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
+            hashMapEntry, hashMapBuffer.asArg(), hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
         auto entryMemArea = entryRef.getValueMemArea();
         OwnedNautilusBuffer pagedVecBuffer;
         nautilus::invoke(
@@ -134,10 +129,12 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
-    HashMapOptions hashMapOptions,
+    ChainedHashMapConfig hashMapConfig,
+    std::vector<PhysicalFunction> keyFunctions,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
     : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
-    , hashMapOptions(std::move(hashMapOptions))
+    , hashMapConfig(std::move(hashMapConfig))
+    , keyFunctions(std::move(keyFunctions))
 {
 }
 

@@ -22,7 +22,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <BloomFilterConfiguration.hpp>
@@ -31,11 +31,10 @@
 namespace NES
 {
 
-static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
+static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 1024;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
-static constexpr auto DEFAULT_MAX_NUMBER_OF_BUCKETS = 10'000.0;
 
 class QueryExecutionConfiguration : public BaseConfiguration
 {
@@ -51,8 +50,9 @@ public:
     UIntOption numberOfPartitions
         = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
-           "Partitions in a hash table",
-           {std::make_shared<NumberValidation>()}};
+           "Number of buckets in a hash table. Fixed at query-compilation time and never grown: the hash maps do not rehash, so too low "
+           "a value lengthens the chains, while too high a one costs a chain pointer per hash map, worker thread and slice.",
+           {std::make_shared<NumberValidation>(), std::make_shared<NonZeroValidation>()}};
     UIntOption pageSize
         = {"page_size",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
@@ -63,11 +63,6 @@ public:
            std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
            "Expected number of records per key, for example in a hash join. If set too low or high affects the performance.",
            {std::make_shared<NumberValidation>()}};
-    UIntOption maxNumberOfBuckets = {
-        "max_number_of_buckets",
-        std::to_string(DEFAULT_MAX_NUMBER_OF_BUCKETS),
-        "Maximal number of buckets for a hash table. If set too low or high degrades either the performance or increases the memory usage.",
-        {std::make_shared<FloatValidation>()}};
     UIntOption operatorBufferSize
         = {"operator_buffer_size",
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
@@ -86,7 +81,6 @@ private:
             &pageSize,
             &numberOfPartitions,
             &numberOfRecordsPerKey,
-            &maxNumberOfBuckets,
             &operatorBufferSize,
             &sliceCacheConfiguration,
             &bloomFilterConfiguration};

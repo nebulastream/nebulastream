@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/TimestampRef.hpp>
@@ -27,7 +29,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
-#include <HashMapOptions.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -52,8 +53,8 @@ public:
         JoinSchema joinSchema,
         std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
         std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
-        HashMapOptions leftHashMapOptions,
-        HashMapOptions rightHashMapOptions);
+        ChainedHashMapConfig leftHashMapConfig,
+        ChainedHashMapConfig rightHashMapConfig);
 
 protected:
     /// Pins the hash map TupleBuffer stored as the `index`-th child buffer of the record buffer that `recordBufferRef` points to.
@@ -71,10 +72,11 @@ protected:
         const nautilus::val<Timestamp>& windowEnd) const;
 
     /// Builds a ChainedHashMapRef view over the hash map stored in `hashMapBufferRef` using the key/value layout described by `options`.
-    static ChainedHashMapRef makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options);
+    static ChainedHashMapRef
+    makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const ChainedHashMapConfig& options);
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
-    HashMapOptions leftHashMapOptions, rightHashMapOptions;
+    ChainedHashMapConfig leftHashMapConfig, rightHashMapConfig;
 };
 
 }

@@ -29,7 +29,6 @@
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Util/RollingAverage.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
@@ -60,7 +59,6 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets,
         JoinTriggerStrategy triggerStrategy);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -81,10 +79,6 @@ protected:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
-
-    folly::Synchronized<RollingAverage<uint64_t>> leftRollingAverageNumberOfKeys;
-    folly::Synchronized<RollingAverage<uint64_t>> rightRollingAverageNumberOfKeys;
-    uint64_t maxNumberOfBuckets;
 };
 
 }

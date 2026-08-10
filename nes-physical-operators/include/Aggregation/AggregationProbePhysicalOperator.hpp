@@ -17,10 +17,10 @@
 #include <memory>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMapConfig.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <HashMapOptions.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 
 namespace NES
@@ -30,7 +30,7 @@ class AggregationProbePhysicalOperator final : public WindowProbePhysicalOperato
 {
 public:
     AggregationProbePhysicalOperator(
-        HashMapOptions hashMapOptions,
+        ChainedHashMapConfig hashMapConfig,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions,
         OperatorHandlerId operatorHandlerId,
         WindowMetaData windowMetaData);
@@ -38,7 +38,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
-    HashMapOptions hashMapOptions;
+    ChainedHashMapConfig hashMapConfig;
 };
 
 }

@@ -13,23 +13,21 @@
 */
 
 #pragma once
+
 #include <cstdint>
-#include <Interface/Hash/HashFunction.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Interface/Record.hpp>
 
 namespace NES
 {
 
-class AbstractHashMapEntry
+/// Where one key or value field sits inside a ChainedHashMapEntry. Lives in its own header because both
+/// ChainedHashMapConfig and ChainedEntryMemoryProvider need it, and the latter includes ChainedHashMap.hpp.
+struct FieldOffsets
 {
-public:
-    virtual ~AbstractHashMapEntry() = default;
+    Record::RecordFieldIdentifier fieldIdentifier;
+    DataType type;
+    uint64_t fieldOffset;
 };
 
-class HashMap
-{
-public:
-    virtual ~HashMap() = default;
-    [[nodiscard]] virtual uint64_t getTotalNumberOfRecords() const = 0;
-};
 }

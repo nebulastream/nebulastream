@@ -39,9 +39,9 @@ public:
     /// insertOrUpdateEntry() if you need update-on-collision semantics.
     /// If the key was not found a new entry for the set of keys is inserted and the onInsert function is called.
     /// After the onInsert function is called, the newly-created entry is returned.
+    /// The hash function is part of the map's own options, so it is not a parameter here.
     virtual nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
         const Record& recordKey,
-        const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider)
         = 0;

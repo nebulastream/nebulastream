@@ -22,6 +22,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Interface/HashMap/ChainedHashMap/FieldOffsets.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -31,14 +32,6 @@
 
 namespace NES
 {
-
-/// ChainedEntryMemoryProvider uses it to store the offsets for the keys and values of the ChainedHashMapEntry
-struct FieldOffsets
-{
-    Record::RecordFieldIdentifier fieldIdentifier;
-    DataType type;
-    uint64_t fieldOffset;
-};
 
 /// ChainedHashMapEntry uses for reading and writing either the keys or values.
 /// Similar to TupleBufferRef, we store the null value as the first byte before the actual value.
