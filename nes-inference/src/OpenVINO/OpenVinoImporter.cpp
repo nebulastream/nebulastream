@@ -109,26 +109,39 @@ std::expected<std::vector<size_t>, ImportError> shapeFromPartial(const ov::Parti
         return std::unexpected(ImportError{fmt::format("OpenVINO model {} tensor rank is dynamic", role)});
     }
 
-    /// A dynamic dimension is resolved to 1: inference feeds the model one tuple at a
-    /// time, so a dynamic batch dimension is exactly the case that works. Warn rather
-    /// than reject, so a stock model does not have to be re-exported to be usable.
-    /// For a FLOAT32 schema `ModelCatalog::registerModel` still rejects the model if the
-    /// resolved shape does not match the field count the user declared.
+    /// Only the leading (batch) dimension may be variable: inference feeds the model one tuple
+    /// at a time, so a dynamic batch is resolved to 1. Warn rather than reject, so a stock model
+    /// does not have to be re-exported. For a FLOAT32 schema `ModelCatalog::registerModel` still
+    /// rejects the model if the resolved shape does not match the field count the user declared.
+    /// Every other dimension must be static: its extent sizes the per-tuple buffer, so a dynamic
+    /// one would leave the tensor size unknown.
     std::vector<size_t> shape;
     shape.reserve(partialShape.size());
     for (size_t index = 0; index < partialShape.size(); ++index)
     {
         const auto& dimension = partialShape[index];
-        if (dimension.is_dynamic() || dimension.get_length() < 0)
+        const bool isDynamic = dimension.is_dynamic() || dimension.get_length() < 0;
+
+        if (isDynamic && index != 0)
         {
-            NES_WARNING(
-                "OpenVINO model {} tensor has a dynamic dimension at index {} (shape {}); assuming an extent of 1",
+            return std::unexpected(ImportError{fmt::format(
+                "OpenVINO model {} tensor has a dynamic dimension at index {} (shape {}). Only the first (batch) "
+                "dimension may be dynamic.",
                 role,
                 index,
+                partialShape.to_string())});
+        }
+
+        if (isDynamic)
+        {
+            NES_WARNING(
+                "OpenVINO model {} tensor has a dynamic batch dimension (shape {}); setting the batch size to 1.",
+                role,
                 partialShape.to_string());
             shape.push_back(1);
             continue;
         }
+
         shape.push_back(static_cast<size_t>(dimension.get_length()));
     }
 
