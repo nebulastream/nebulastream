@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
@@ -31,14 +32,22 @@
 namespace NES
 {
 
+class BufferManager;
+/// Whole-file mmap + fd owner (defined in the .cpp). munmap/close happen in its destructor, so the mapping
+/// outlives the source: each zero-copy buffer holds a shared_ptr to it and the last one released frees it.
+struct MmapFileMapping;
+
 static constexpr std::string_view MMAP_FILE_PATH_PARAMETER = "file_path";
 
-/// Like BlockingFileSource, but the file is mmap'd once in open() and each fillTupleBuffer() does a
-/// userspace memcpy from the mapped region into the (pool-owned) target buffer -- instead of an
-/// std::ifstream::read() that goes through the read(2) syscall + the kernel `_copy_to_iter` page-cache copy.
-/// Eliminates the syscall / iostream / kernel-copy machinery; keeps exactly one (userspace) copy. Setup is
-/// done in open() with the engine's buffer provider, NOT in the ctor (the InMemory ctor preload is an
-/// antipattern). Diagnostic source for the source-scaling study; selected via `TYPE MmapFile`.
+/// The file is mmap'd once in open(). Two modes:
+///  - ZERO-COPY (default): each buffer directly ALIASES a 128 KiB window of the mapping -- no copy at all. The
+///    source pre-fills (preFillsBuffers()==true) and hands wrapped TupleBuffers (BufferManager::wrapExternalMemory)
+///    straight to the pipeline; the SIMDCSV indexer only string_views the raw bytes (read-only, never over-reads
+///    past numBytes -- see SIMDCSVScan.hpp), so PROT_READ pages are safe. This removes the single page-cache->buffer
+///    copy that read(2) forces (the ~11 GB/s read wall), so a read-bound query is no longer capped by it.
+///  - COPY (NES_MMAP_COPY=1): each fillTupleBuffer() memcpys from the mapping into a pool buffer -- one userspace
+///    copy, replacing read(2)'s kernel copy. Kept for A/B against the zero-copy path.
+/// Setup is done in open() with the engine's buffer provider, NOT in the ctor. Selected via `TYPE MmapFile`.
 class MmapFileSource final : public BlockingSource
 {
 public:
@@ -54,6 +63,11 @@ public:
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken, size_t offset) override;
 
+    /// Zero-copy path: the runner drains takePreFilledBuffer() instead of allocating a pool buffer + fillTupleBuffer.
+    [[nodiscard]] bool preFillsBuffers() const override { return zeroCopy; }
+
+    [[nodiscard]] std::optional<TupleBuffer> takePreFilledBuffer(const std::stop_token& stopToken) override;
+
     /// mmap the file.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     /// munmap + close fd.
@@ -65,11 +79,20 @@ public:
 
 private:
     std::string filePath;
+    /// COPY-mode state (NES_MMAP_COPY=1):
     int fileDescriptor = -1;
     void* mapBase = nullptr; ///< base of the whole-file mapping (page-aligned), or nullptr for an empty file
     size_t mapSize = 0; ///< file size in bytes = mapping length
-    size_t cursor = 0; ///< next byte to copy out
+    size_t cursor = 0; ///< next byte to hand out (both modes)
     std::atomic<size_t> totalNumBytesRead = 0;
+    /// ZERO-COPY-mode state (default):
+    bool zeroCopy = true; ///< NES_MMAP_COPY=1 restores the userspace-memcpy path
+    std::shared_ptr<MmapFileMapping> mapping; ///< whole-file mapping, kept alive by every in-flight wrapped buffer
+    std::shared_ptr<BufferManager> wrapPool; ///< the private source pool, used to mint wrapped (aliasing) buffers
+    size_t windowSize = 0; ///< bytes handed out per buffer (= pool/operator buffer size)
+    /// NES_FILE_REPEAT=N steady-window replay (mirrors BlockingFileSource): on EOS re-scan the map from byte 0.
+    std::size_t numPasses = 1;
+    std::size_t passesDone = 0;
 };
 
 struct ConfigParametersMmap

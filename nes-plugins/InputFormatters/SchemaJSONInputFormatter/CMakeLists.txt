@@ -13,6 +13,10 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_plugin_as_library(SchemaJSON InputFormatIndexer nes-input-formatters-registry schema_json_input_format_indexer_plugin_library SchemaJSONInputFormatIndexer.cpp SchemaJSONStage1.cpp)
 add_plugin(SchemaJSON InputFormatterValidation nes-input-formatters SchemaJSONInputFormatIndexer.cpp SchemaJSONStage1.cpp)
+# Sequential variant (ablation baseline rung): same indexer + stage 1, IsSequential=true. Registered into the
+# SAME plugin library so SchemaJSONStage1.cpp is compiled exactly once.
+add_plugin(SequentialSchemaJSON InputFormatIndexer schema_json_input_format_indexer_plugin_library SequentialSchemaJSONInputFormatIndexer.cpp)
+add_plugin(SequentialSchemaJSON InputFormatterValidation nes-input-formatters SequentialSchemaJSONInputFormatIndexer.cpp)
 target_include_directories(schema_json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 find_package(simdjson CONFIG REQUIRED)

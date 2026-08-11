@@ -1,0 +1,186 @@
+# name: formatter/SchemaJSON/WorkloadShapesSchemaJSON.test
+# description: The paper-workload query shapes through the SchemaJSON three-rung ablation ladder
+#   (r-base "SequentialUncompiledSchemaJSON" interpreted, r-comp "SequentialSchemaJSON" compiled W1
+#   carry, r-par "SchemaJSON" parallel) -- all three run the SAME simdjson stage-1 4F+1 strided
+#   index. Shapes: q_project (SELECT price), q_route (varsized string-eq -> full-record output),
+#   q22 (unconditional CONCAT alert), Q_ex (string-eq AND id-OR AND float threshold -> nested
+#   CONCAT of a FLOAT and a UINT column). On the uncompiled rung these run against MATERIALIZED
+#   values (no lazy raw-text forward). Prices are exact binary fractions in shortest form, so lazy
+#   raw-forward and materialize-then-serialize agree byte-for-byte. 512-byte raw buffers force
+#   records to straddle buffer boundaries (records are ~100 bytes), exercising the sequential
+#   carry and the uncompiled twin's padded-copy stage-1 path alongside the query shapes.
+# groups: [Formatter, SchemaJSON, Workload]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [512]
+
+CREATE LOGICAL SOURCE bidUnc(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidUnc TYPE BlockingFile SET("SequentialUncompiledSchemaJSON" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+{"ts":1000, "auctionId":1001, "bidder":21, "price":1.5, "channel":"Google", "url":"https://example.com/a"}
+{"ts":2000, "auctionId":1002, "bidder":22, "price":4.25, "channel":"Apple", "url":"https://example.com/b"}
+{"ts":3000, "auctionId":1003, "bidder":23, "price":2.75, "channel":"Bing", "url":"https://example.com/c"}
+{"ts":4000, "auctionId":1001, "bidder":24, "price":5.5, "channel":"Google", "url":"https://example.com/d"}
+{"ts":5000, "auctionId":1005, "bidder":25, "price":3.25, "channel":"Google", "url":"https://example.com/e"}
+{"ts":6000, "auctionId":1003, "bidder":26, "price":0.5, "channel":"Google", "url":"https://example.com/f"}
+{"ts":7000, "auctionId":1007, "bidder":27, "price":6.75, "channel":"Yahoo", "url":"https://example.com/g"}
+{"ts":8000, "auctionId":1001, "bidder":28, "price":3.375, "channel":"Google", "url":"https://example.com/h"}
+{"ts":9000, "auctionId":1009, "bidder":29, "price":8.125, "channel":"Apple", "url":"https://example.com/i"}
+{"ts":10000, "auctionId":984, "bidder":30, "price":9.5, "channel":"Bing", "url":"https://example.com/j"}
+
+CREATE LOGICAL SOURCE bidSeq(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidSeq TYPE BlockingFile SET("SequentialSchemaJSON" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+{"ts":1000, "auctionId":1001, "bidder":21, "price":1.5, "channel":"Google", "url":"https://example.com/a"}
+{"ts":2000, "auctionId":1002, "bidder":22, "price":4.25, "channel":"Apple", "url":"https://example.com/b"}
+{"ts":3000, "auctionId":1003, "bidder":23, "price":2.75, "channel":"Bing", "url":"https://example.com/c"}
+{"ts":4000, "auctionId":1001, "bidder":24, "price":5.5, "channel":"Google", "url":"https://example.com/d"}
+{"ts":5000, "auctionId":1005, "bidder":25, "price":3.25, "channel":"Google", "url":"https://example.com/e"}
+{"ts":6000, "auctionId":1003, "bidder":26, "price":0.5, "channel":"Google", "url":"https://example.com/f"}
+{"ts":7000, "auctionId":1007, "bidder":27, "price":6.75, "channel":"Yahoo", "url":"https://example.com/g"}
+{"ts":8000, "auctionId":1001, "bidder":28, "price":3.375, "channel":"Google", "url":"https://example.com/h"}
+{"ts":9000, "auctionId":1009, "bidder":29, "price":8.125, "channel":"Apple", "url":"https://example.com/i"}
+{"ts":10000, "auctionId":984, "bidder":30, "price":9.5, "channel":"Bing", "url":"https://example.com/j"}
+
+CREATE LOGICAL SOURCE bidPar(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidPar TYPE File SET("SchemaJSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"ts":1000, "auctionId":1001, "bidder":21, "price":1.5, "channel":"Google", "url":"https://example.com/a"}
+{"ts":2000, "auctionId":1002, "bidder":22, "price":4.25, "channel":"Apple", "url":"https://example.com/b"}
+{"ts":3000, "auctionId":1003, "bidder":23, "price":2.75, "channel":"Bing", "url":"https://example.com/c"}
+{"ts":4000, "auctionId":1001, "bidder":24, "price":5.5, "channel":"Google", "url":"https://example.com/d"}
+{"ts":5000, "auctionId":1005, "bidder":25, "price":3.25, "channel":"Google", "url":"https://example.com/e"}
+{"ts":6000, "auctionId":1003, "bidder":26, "price":0.5, "channel":"Google", "url":"https://example.com/f"}
+{"ts":7000, "auctionId":1007, "bidder":27, "price":6.75, "channel":"Yahoo", "url":"https://example.com/g"}
+{"ts":8000, "auctionId":1001, "bidder":28, "price":3.375, "channel":"Google", "url":"https://example.com/h"}
+{"ts":9000, "auctionId":1009, "bidder":29, "price":8.125, "channel":"Apple", "url":"https://example.com/i"}
+{"ts":10000, "auctionId":984, "bidder":30, "price":9.5, "channel":"Bing", "url":"https://example.com/j"}
+
+# ---- r-base: interpreted (SequentialUncompiledSchemaJSON) ----
+
+# q_project: k=1 projection.
+SELECT price FROM bidUnc INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+# q_route: string-eq against a MATERIALIZED varsized -> full-record output.
+SELECT * FROM bidUnc WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+# q22: unconditional CONCAT alert.
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidUnc INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+# Q_ex: the NEEDMI working example -- CONCAT of MATERIALIZED float + uint columns.
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidUnc WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+# ---- r-comp: compiled sequential (SequentialSchemaJSON) ----
+
+SELECT price FROM bidSeq INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT * FROM bidSeq WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidSeq INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidSeq WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+# ---- r-par: parallel (SchemaJSON) ----
+
+SELECT price FROM bidPar INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT * FROM bidPar WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidPar INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidPar WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000

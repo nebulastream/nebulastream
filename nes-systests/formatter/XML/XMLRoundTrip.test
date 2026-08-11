@@ -1,0 +1,27 @@
+# name: formatter/XML/XMLRoundTrip.test
+# description: XML -> XML loop closure, both sides pure CONFIG of the HL7 formatter family. Reading
+#   testdata/small/xml/two_ints_uniform_10.xml (the uniform-tag packed shape the XML output config
+#   emits, incl. the leading arity-pad element -- see XMLOutput.test) with the XML input config and
+#   re-serializing id,val with the XML output config must reproduce the fixture BYTE-FOR-BYTE. The
+#   expected checksum (10 26248) is not seeded from a run: 10 = the fixture's '\n' count, 26248 =
+#   its byte sum (python3 -c "print(sum(open('two_ints_uniform_10.xml','rb').read()))"), anchoring
+#   the input leaf offsets and the output glue in one test. F=3 value slots (pad, id, val) ->
+#   arity 17, values at slots 4f+5.
+# groups: [Formatter, XML]
+
+CREATE LOGICAL SOURCE xmlStream(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, pad VARSIZED, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, id INT32 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, val UINT64 NOT NULL, x11 VARSIZED, x12 VARSIZED, x13 VARSIZED, x14 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlStream TYPE File SET("HL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/two_ints_uniform_10.xml
+
+SELECT id, val FROM xmlStream INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, '<rec>' as `OUTPUT_FORMATTER`.FRAME_START, '' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, '' as `OUTPUT_FORMATTER`.SEGMENT_DELIMITER, '<f>' as `OUTPUT_FORMATTER`.SEGMENT_NAME, '</f><f>' as `OUTPUT_FORMATTER`.FIELD_DELIMITER, '</f></rec>\n' as `OUTPUT_FORMATTER`.FRAME_END);
+----
+10 26248
+
+# The same byte-identity through the SIMD indexer.
+CREATE LOGICAL SOURCE xmlStreamSimd(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, pad VARSIZED, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, id INT32 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, val UINT64 NOT NULL, x11 VARSIZED, x12 VARSIZED, x13 VARSIZED, x14 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlStreamSimd TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/two_ints_uniform_10.xml
+
+SELECT id, val FROM xmlStreamSimd INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, '<rec>' as `OUTPUT_FORMATTER`.FRAME_START, '' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, '' as `OUTPUT_FORMATTER`.SEGMENT_DELIMITER, '<f>' as `OUTPUT_FORMATTER`.SEGMENT_NAME, '</f><f>' as `OUTPUT_FORMATTER`.FIELD_DELIMITER, '</f></rec>\n' as `OUTPUT_FORMATTER`.FRAME_END);
+----
+10 26248

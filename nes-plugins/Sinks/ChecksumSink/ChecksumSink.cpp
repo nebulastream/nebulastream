@@ -32,6 +32,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/HL7Format.hpp>
+#include <SinksParsing/JSONFormat.hpp>
 #include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -51,8 +53,20 @@ ChecksumSink::ChecksumSink(BackpressureController backpressureController, const 
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
 {
-    const auto legacyOutputFormat = sinkDescriptor.getFromConfig(ConfigParametersChecksum::LEGACY_OUTPUT_FORMAT);
-    if (legacyOutputFormat != "None")
+    const auto legacyOutputFormat = toUpperCase(sinkDescriptor.getFromConfig(ConfigParametersChecksum::LEGACY_OUTPUT_FORMAT));
+    if (legacyOutputFormat == "HL7")
+    {
+        format = std::make_unique<HL7Format>(*sinkDescriptor.getSchema(), HL7Format::hl7Preset());
+    }
+    else if (legacyOutputFormat == "XML")
+    {
+        format = std::make_unique<HL7Format>(*sinkDescriptor.getSchema(), HL7Format::xmlPreset());
+    }
+    else if (legacyOutputFormat == "JSON")
+    {
+        format = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+    }
+    else if (legacyOutputFormat != "NONE")
     {
         format = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
     }
@@ -113,10 +127,12 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     DescriptorConfig::Config validatedConfig = DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
-    /// Very hacky way to ensure that legacy output format is set correctly
-    if (toUpperCase(std::get<std::string>(validatedConfig.at("legacy_output_format"))) != "NONE")
+    /// Any legacy format implies the pipeline emits NATIVE tuples that the sink then materializes:
+    /// normalize the format name (canonical uppercase for the constructor's dispatch) and force the
+    /// output_format pairing.
+    if (const auto legacy = toUpperCase(std::get<std::string>(validatedConfig.at("legacy_output_format"))); legacy != "NONE")
     {
-        validatedConfig["legacy_output_format"] = "CSV";
+        validatedConfig["legacy_output_format"] = legacy;
         validatedConfig["output_format"] = "NATIVE";
     }
     return validatedConfig;

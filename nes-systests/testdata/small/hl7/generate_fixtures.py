@@ -58,11 +58,42 @@ def arity_bad() -> bytes:
     return b"".join(good) + bad
 
 
+## bid_strings-shaped rows (ts UINT64, auctionId UINT64, bidder UINT64, price FLOAT64,
+## channel VARSIZED, url VARSIZED) for the paper-workload query-shape systests. Prices are
+## exact binary fractions, so lazy raw-forward text and materialize-then-serialize agree
+## byte-for-byte across the ablation rungs. channel/auctionId/price are chosen so each leg of
+## the Q_ex predicate (channel=="Google" AND (auctionId==1001 OR ==1003) AND price<3.5) is the
+## single discriminating factor on some row: row 3 fails only on channel, row 4 only on price,
+## row 5 only on auctionId; rows 1/6/8 match all three. Row 10's auctionId 984 = 8*123 feeds
+## the q2-mod (% 123 == 0) shape. Values avoid every HL7/XML structural byte.
+BID_ROWS = [
+    (1000, 1001, 21, b"1.5", b"Google", b"https://example.com/a"),
+    (2000, 1002, 22, b"4.25", b"Apple", b"https://example.com/b"),
+    (3000, 1003, 23, b"2.75", b"Bing", b"https://example.com/c"),
+    (4000, 1001, 24, b"5.5", b"Google", b"https://example.com/d"),
+    (5000, 1005, 25, b"3.25", b"Google", b"https://example.com/e"),
+    (6000, 1003, 26, b"0.5", b"Google", b"https://example.com/f"),
+    (7000, 1007, 27, b"6.75", b"Yahoo", b"https://example.com/g"),
+    (8000, 1001, 28, b"3.375", b"Google", b"https://example.com/h"),
+    (9000, 1009, 29, b"8.125", b"Apple", b"https://example.com/i"),
+    (10000, 984, 30, b"9.5", b"Bing", b"https://example.com/j"),
+]
+
+
+def bid_10() -> bytes:
+    """10 bid_strings-shaped messages (see BID_ROWS); 6 data fields -> 23 leaves."""
+    return b"".join(
+        msg(b"OBX|%d|%d|%d|%s|%s|%s" % (ts, auction, bidder, price, channel, url))
+        for ts, auction, bidder, price, channel, url in BID_ROWS
+    )
+
+
 if __name__ == "__main__":
     for fname, data in [
         ("two_ints_10.hl7", two_ints_10()),
         ("mixed_types_50.hl7", mixed_types_50()),
         ("arity_bad.hl7", arity_bad()),
+        ("bid_10.hl7", bid_10()),
     ]:
         with open(fname, "wb") as f:
             f.write(data)

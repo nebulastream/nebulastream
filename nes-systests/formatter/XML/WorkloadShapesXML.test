@@ -1,0 +1,162 @@
+# name: formatter/XML/WorkloadShapesXML.test
+# description: The paper-workload query shapes through the packed-XML three-rung ablation ladder --
+#   the XML-as-config claim (structural class {<,>}, 1-byte '\n' message delimiter, component/
+#   subcomponent disabled; see XMLInput.test for the leaf model) through "SequentialUncompiledHL7"
+#   (r-base interpreted), "SequentialHL7" (r-comp compiled W1 carry) and "SIMDHL7" (r-par
+#   parallel). Fixture small/xml/bid_10.xml (generate_fixtures.py): 10 bid_strings-shaped records
+#   <rec><ts>..</ts><aid>..</aid><bid>..</bid><pr>..</pr><ch>..</ch><url>..</url></rec>; F=6 data
+#   elements -> arity 29, values at slots 4f+5. Shapes: q_project (SELECT price), q_route
+#   (varsized string-eq -> full-data-record output; literal SELECT * would also emit the junk
+#   leaves, so the 6 data leaves are projected explicitly), q22 (unconditional CONCAT alert),
+#   Q_ex (string-eq AND id-OR AND float threshold -> nested CONCAT of a FLOAT and a UINT column).
+#   On the uncompiled rung these run against MATERIALIZED values (no lazy raw-text forward), and
+#   every junk leaf is declared VARSIZED NOT NULL (the interpreted parse loop has no NULL
+#   coercion; empty leaves parse as empty strings). Prices are exact binary fractions in shortest
+#   form, so lazy raw-forward and materialize-then-serialize agree byte-for-byte. 512-byte raw
+#   buffers force records (~112 bytes) to straddle buffer boundaries, exercising the sequential
+#   carry alongside the query shapes.
+# groups: [Formatter, XML, Workload]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [512]
+
+CREATE LOGICAL SOURCE bidUnc(x01 VARSIZED NOT NULL, x02 VARSIZED NOT NULL, x03 VARSIZED NOT NULL, x04 VARSIZED NOT NULL, ts UINT64 NOT NULL, x05 VARSIZED NOT NULL, x06 VARSIZED NOT NULL, x07 VARSIZED NOT NULL, auctionId UINT64 NOT NULL, x08 VARSIZED NOT NULL, x09 VARSIZED NOT NULL, x10 VARSIZED NOT NULL, bidder UINT64 NOT NULL, x11 VARSIZED NOT NULL, x12 VARSIZED NOT NULL, x13 VARSIZED NOT NULL, price FLOAT64 NOT NULL, x14 VARSIZED NOT NULL, x15 VARSIZED NOT NULL, x16 VARSIZED NOT NULL, channel VARSIZED NOT NULL, x17 VARSIZED NOT NULL, x18 VARSIZED NOT NULL, x19 VARSIZED NOT NULL, url VARSIZED NOT NULL, x20 VARSIZED NOT NULL, x21 VARSIZED NOT NULL, x22 VARSIZED NOT NULL, x23 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidUnc TYPE BlockingFile SET("SequentialUncompiledHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/bid_10.xml
+
+CREATE LOGICAL SOURCE bidSeq(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, ts UINT64 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, auctionId UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, bidder UINT64 NOT NULL, x11 VARSIZED, x12 VARSIZED, x13 VARSIZED, price FLOAT64 NOT NULL, x14 VARSIZED, x15 VARSIZED, x16 VARSIZED, channel VARSIZED NOT NULL, x17 VARSIZED, x18 VARSIZED, x19 VARSIZED, url VARSIZED NOT NULL, x20 VARSIZED, x21 VARSIZED, x22 VARSIZED, x23 VARSIZED);
+CREATE PHYSICAL SOURCE FOR bidSeq TYPE BlockingFile SET("SequentialHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/bid_10.xml
+
+CREATE LOGICAL SOURCE bidPar(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, ts UINT64 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, auctionId UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, bidder UINT64 NOT NULL, x11 VARSIZED, x12 VARSIZED, x13 VARSIZED, price FLOAT64 NOT NULL, x14 VARSIZED, x15 VARSIZED, x16 VARSIZED, channel VARSIZED NOT NULL, x17 VARSIZED, x18 VARSIZED, x19 VARSIZED, url VARSIZED NOT NULL, x20 VARSIZED, x21 VARSIZED, x22 VARSIZED, x23 VARSIZED);
+CREATE PHYSICAL SOURCE FOR bidPar TYPE File SET("SIMDHL7" AS INPUT_FORMATTER.`TYPE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/bid_10.xml
+
+# ---- r-base: interpreted (SequentialUncompiledHL7 + XML config) ----
+
+# q_project: k=1 projection.
+SELECT price FROM bidUnc INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+# q_route: string-eq against a MATERIALIZED varsized -> full-data-record output.
+SELECT ts, auctionId, bidder, price, channel, url FROM bidUnc WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+# q22: unconditional CONCAT alert.
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidUnc INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+# Q_ex: the NEEDMI working example -- CONCAT of MATERIALIZED float + uint columns.
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidUnc WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+# ---- r-comp: compiled sequential (SequentialHL7 + XML config) ----
+
+SELECT price FROM bidSeq INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT ts, auctionId, bidder, price, channel, url FROM bidSeq WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidSeq INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidSeq WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+# ---- r-par: parallel (SIMDHL7 + XML config) ----
+
+SELECT price FROM bidPar INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT ts, auctionId, bidder, price, channel, url FROM bidPar WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidPar INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidPar WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000

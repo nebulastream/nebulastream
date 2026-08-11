@@ -15,5 +15,9 @@ add_plugin_as_library(HL7 InputFormatIndexer nes-input-formatters-registry hl7_i
 add_plugin(HL7 InputFormatterValidation nes-input-formatters HL7InputFormatIndexer.cpp)
 add_plugin_as_library(SIMDHL7 InputFormatIndexer nes-input-formatters-registry simd_hl7_input_format_indexer_plugin_library SIMDHL7InputFormatIndexer.cpp Hl7SimdKernel.cpp)
 add_plugin(SIMDHL7 InputFormatterValidation nes-input-formatters SIMDHL7InputFormatIndexer.cpp Hl7SimdKernel.cpp)
+# Sequential variant (ablation baseline rung): same SIMD flatten + band FIF, IsSequential=true. Registered into
+# the SAME plugin library so Hl7SimdKernel.cpp is compiled exactly once per library.
+add_plugin(SequentialHL7 InputFormatIndexer simd_hl7_input_format_indexer_plugin_library SequentialHL7InputFormatIndexer.cpp)
+add_plugin(SequentialHL7 InputFormatterValidation nes-input-formatters SequentialHL7InputFormatIndexer.cpp)
 target_include_directories(hl7_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_include_directories(simd_hl7_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)

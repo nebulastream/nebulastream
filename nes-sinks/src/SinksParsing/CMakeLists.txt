@@ -15,6 +15,7 @@ add_source_files(nes-sinks
         SchemaFormatter.cpp
         CSVFormat.cpp
         JSONFormat.cpp
+        HL7Format.cpp
         NoneFormat.cpp
         NoneWithIteratorFormat.cpp
 )

@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -26,27 +26,32 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES
 {
 
+/// Interpreted (legacy) JSON writer at the CSVFormat standard: hardcoded fast codecs
+/// (std::to_chars integers, zmij shortest floats == ZMIJF64) and direct writes into the reused
+/// caller buffer -- no per-field std::string, no fmt format-string parsing, no stringstream.
+/// The wire format mirrors the compiled JSONOutputFormatter byte-for-byte on the conventions:
+/// per-field glue `{"NAME":` / `,"NAME":` (names JSON-escaped at construction), lowercase
+/// `null`, RFC 8259 string escaping, record suffix `}\n`. What stays interpreted is the
+/// per-field schema-driven dispatch loop -- no fusion, no specialization, no lazy access.
 class JSONFormat : public Format
 {
 public:
-    /// Stores precalculated offsets based on the input schema.
-    /// The JSONFormat class constructs the formatting context during its construction and stores it as a member to speed up
-    /// the actual formatting.
+    /// Precalculated per-field layout + the constant glue strings, built once at construction.
     struct FormattingContext
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
-        std::vector<std::string> names;
+        std::vector<size_t> sizesWithNull;
+        std::vector<std::string> prefixes;
         std::vector<DataType> physicalTypes;
     };
 
     explicit JSONFormat(const Schema& schema);
 
-    /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
+    /// Convenience API: delegates to formatToBuffer, materializes a string only here.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;
 
-    /// Reads a TupleBuffer and uses the supplied 'schema' to format it to JSON. Returns result as a string.
-    static std::string tupleBufferToFormattedJSONString(TupleBuffer tbuffer, const FormattingContext& formattingContext);
+    [[nodiscard]] size_t formatToBuffer(const TupleBuffer& inputBuffer, std::vector<char>& out) const override;
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 

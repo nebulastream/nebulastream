@@ -1,0 +1,38 @@
+# name: formatter/XML/XMLOutput.test
+# description: Packed-XML OUTPUT as a config of the HL7 output formatter -- the output-side mirror of
+#   the XML-as-config input claim (ZERO new formatter code). The HL7 emission model is
+#   prologue(frame_start + message_header + segment_delimiter + segment_name + field_delimiter) f1
+#   [field_delimiter f2 ...] suffix(segment_delimiter + frame_end); per-field XML tags are expressed
+#   with the single separator '</f><f>' by opening the first element in the prologue
+#   (frame_start '<rec>' + segment_name '<f>') and closing the last in frame_end '</f></rec>\n':
+#     <rec><f></f><f>v1</f><f>v2</f>...<f>vn</f></rec>
+#   The leading EMPTY element is the arity pad that keeps the wire well-formed (the prologue's
+#   field_delimiter closes it) -- uniform tag 'f', values positional, exactly the packed-XML model the
+#   input indexer parses (tag names are junk leaves there anyway). NULL fields emit zero bytes ->
+#   an empty element, arity preserved. Unlike MLLP-HL7 the records end in '\n', so expected outputs
+#   are literal text.
+# groups: [Formatter, XML]
+
+CREATE LOGICAL SOURCE intSource(id INT32 NOT NULL, val UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR intSource TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+1,100
+2,200
+
+CREATE LOGICAL SOURCE mixedSource(name VARSIZED NOT NULL, price FLOAT64 NOT NULL, opt UINT64);
+CREATE PHYSICAL SOURCE FOR mixedSource TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+alice,3.5,1000
+bob,120.25,
+
+# Two ints through the XML config.
+SELECT * FROM intSource INTO FILE('HL7' as `SINK`.OUTPUT_FORMAT, '<rec>' as `OUTPUT_FORMATTER`.FRAME_START, '' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, '' as `OUTPUT_FORMATTER`.SEGMENT_DELIMITER, '<f>' as `OUTPUT_FORMATTER`.SEGMENT_NAME, '</f><f>' as `OUTPUT_FORMATTER`.FIELD_DELIMITER, '</f></rec>\n' as `OUTPUT_FORMATTER`.FRAME_END);
+----
+<rec><f></f><f>1</f><f>100</f></rec>
+<rec><f></f><f>2</f><f>200</f></rec>
+
+# Varsized passthrough + float raw-forward (120.25 keeps its exact digits) + NULL -> empty element.
+SELECT * FROM mixedSource INTO FILE('HL7' as `SINK`.OUTPUT_FORMAT, '<rec>' as `OUTPUT_FORMATTER`.FRAME_START, '' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, '' as `OUTPUT_FORMATTER`.SEGMENT_DELIMITER, '<f>' as `OUTPUT_FORMATTER`.SEGMENT_NAME, '</f><f>' as `OUTPUT_FORMATTER`.FIELD_DELIMITER, '</f></rec>\n' as `OUTPUT_FORMATTER`.FRAME_END);
+----
+<rec><f></f><f>alice</f><f>3.5</f><f>1000</f></rec>
+<rec><f></f><f>bob</f><f>120.25</f><f></f></rec>

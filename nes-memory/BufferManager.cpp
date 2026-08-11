@@ -73,6 +73,12 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
+        /// Free externally-wrapped segments first. By shutdown every wrapped buffer has been released (refcount 0),
+        /// so this just deletes the tiny control blocks and drops the last references to any external mapping.
+        {
+            const std::scoped_lock lock(wrappedSegmentsMutex);
+            wrappedSegments.clear();
+        }
         bool success = true;
         if (allBuffers.size() != getNumberOfAvailableBuffers())
         {
@@ -213,6 +219,37 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
     return unpooledChunksManager->getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
+}
+
+TupleBuffer BufferManager::wrapExternalMemory(uint8_t* ptr, const uint32_t size, std::function<void()> onRelease)
+{
+    INVARIANT(ptr != nullptr, "wrapExternalMemory got a null pointer");
+    INVARIANT(size != 0, "wrapExternalMemory got size=0");
+    /// Wrapped MemorySegment: the payload is the caller's external memory (an mmap window); the control block is
+    /// heap-allocated (Wrapped tag). The recycle callback only runs the user hook (release the mapping ref); it
+    /// must NOT free the segment/control block, because that runs from inside the control block's own recycle
+    /// callback -- self-destroying the executing std::function is UB. Ownership is retained in `wrappedSegments`
+    /// and released in destroy(), which mirrors how UnpooledChunksManager keeps its wrapped segments alive.
+    auto segment = std::make_unique<detail::MemorySegment>(
+        ptr,
+        size,
+        [hook = std::move(onRelease)](detail::MemorySegment*, BufferRecycler*) mutable
+        {
+            if (hook)
+            {
+                hook();
+            }
+        });
+    auto* const raw = segment.get();
+    {
+        const std::scoped_lock lock(wrappedSegmentsMutex);
+        wrappedSegments.push_back(std::move(segment));
+    }
+    if (raw->controlBlock->prepare(shared_from_this()))
+    {
+        return TupleBuffer{raw->controlBlock.get(), raw->ptr, raw->size};
+    }
+    throw InvalidRefCountForBuffer("[BufferManager] wrapped external buffer with invalid reference counter");
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)

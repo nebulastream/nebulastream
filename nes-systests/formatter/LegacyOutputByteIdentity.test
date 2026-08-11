@@ -1,0 +1,75 @@
+# name: formatter/LegacyOutputByteIdentity.test
+# description: The LEGACY (interpreted, sink-side) output writers must be BYTE-IDENTICAL to the
+#   compiled output formatters -- the fairness contract of the ablation ladder's r-base rung (the
+#   baseline hand-implements the same codecs; compilation's measured gain is structural, not codec
+#   choice). Four formats, each as a compiled/legacy pair over the same inline data with identical
+#   expected blocks. The legacy float codec is zmij (shortest, Ryu-STYLE SCIENTIFIC notation:
+#   1.5 -> "1.5e+00") == the ZMIJF64 output parser of the benchmark's compiled rungs -- so every
+#   compiled arm here SETs ZMIJF64, pinning byte identity under the benchmark convention (the
+#   compiled DEFAULT codec is fixed-6-stripped "1.5" and would NOT match; that pairing difference
+#   is why the matrix always runs ZMIJ on compiled rungs). CSV + JSON + XML compare as literal
+#   text; HL7 as a checksum (control characters; the expected 0 19198 is NOT seeded from a run --
+#   it is the byte sum of the hand-constructed wire bytes: 3 x [\x0B MSH-default-header \r
+#   SEG|<f1>|..|<f4> \r \x1C\r] with zmij floats, NULL -> zero bytes between delimiters). Data
+#   notes: one NULL (compiled/legacy must agree: CSV "NULL", JSON lowercase "null", HL7/XML empty
+#   field), one name with a backslash (exercises the JSON escape scan: a\b -> "a\\b").
+# groups: [Formatter, Sink]
+
+CREATE LOGICAL SOURCE legacySrc(id INT32 NOT NULL, val UINT64, price FLOAT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR legacySrc TYPE File SET("CSV" AS `INPUT_FORMATTER`.`TYPE`);
+ATTACH INLINE
+1,100,1.5,alpha
+2,,2.25,a\b
+3,300,3.75,gamma
+
+# --- CSV: compiled formatter (ZMIJF64 = the benchmark codec) ---
+SELECT * FROM legacySrc INTO FILE('CSV' as `SINK`.OUTPUT_FORMAT, 'ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER);
+----
+1,100,1.5e+00,alpha
+2,NULL,2.25e+00,a\b
+3,300,3.75e+00,gamma
+
+# --- CSV: legacy writer (NATIVE pipeline output + sink-side interpreted CSV) ---
+SELECT * FROM legacySrc INTO FILE('NATIVE' as `SINK`.OUTPUT_FORMAT, 'CSV' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+1,100,1.5e+00,alpha
+2,NULL,2.25e+00,a\b
+3,300,3.75e+00,gamma
+
+# --- JSON: compiled formatter ---
+SELECT * FROM legacySrc INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT, 'ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER);
+----
+{"LEGACYSRC$ID":1,"LEGACYSRC$VAL":100,"LEGACYSRC$PRICE":1.5e+00,"LEGACYSRC$NAME":"alpha"}
+{"LEGACYSRC$ID":2,"LEGACYSRC$VAL":null,"LEGACYSRC$PRICE":2.25e+00,"LEGACYSRC$NAME":"a\\b"}
+{"LEGACYSRC$ID":3,"LEGACYSRC$VAL":300,"LEGACYSRC$PRICE":3.75e+00,"LEGACYSRC$NAME":"gamma"}
+
+# --- JSON: legacy writer ---
+SELECT * FROM legacySrc INTO FILE('NATIVE' as `SINK`.OUTPUT_FORMAT, 'JSON' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+{"LEGACYSRC$ID":1,"LEGACYSRC$VAL":100,"LEGACYSRC$PRICE":1.5e+00,"LEGACYSRC$NAME":"alpha"}
+{"LEGACYSRC$ID":2,"LEGACYSRC$VAL":null,"LEGACYSRC$PRICE":2.25e+00,"LEGACYSRC$NAME":"a\\b"}
+{"LEGACYSRC$ID":3,"LEGACYSRC$VAL":300,"LEGACYSRC$PRICE":3.75e+00,"LEGACYSRC$NAME":"gamma"}
+
+# --- XML (packed, via the HL7 machinery): compiled formatter with the XML config ---
+SELECT * FROM legacySrc INTO FILE('HL7' as `SINK`.OUTPUT_FORMAT, 'ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER, '<rec>' as `OUTPUT_FORMATTER`.FRAME_START, '' as `OUTPUT_FORMATTER`.MESSAGE_HEADER, '' as `OUTPUT_FORMATTER`.SEGMENT_DELIMITER, '<f>' as `OUTPUT_FORMATTER`.SEGMENT_NAME, '</f><f>' as `OUTPUT_FORMATTER`.FIELD_DELIMITER, '</f></rec>\n' as `OUTPUT_FORMATTER`.FRAME_END);
+----
+<rec><f></f><f>1</f><f>100</f><f>1.5e+00</f><f>alpha</f></rec>
+<rec><f></f><f>2</f><f></f><f>2.25e+00</f><f>a\b</f></rec>
+<rec><f></f><f>3</f><f>300</f><f>3.75e+00</f><f>gamma</f></rec>
+
+# --- XML: legacy writer (the packed-XML preset) ---
+SELECT * FROM legacySrc INTO FILE('NATIVE' as `SINK`.OUTPUT_FORMAT, 'XML' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+<rec><f></f><f>1</f><f>100</f><f>1.5e+00</f><f>alpha</f></rec>
+<rec><f></f><f>2</f><f></f><f>2.25e+00</f><f>a\b</f></rec>
+<rec><f></f><f>3</f><f>300</f><f>3.75e+00</f><f>gamma</f></rec>
+
+# --- HL7: compiled formatter (default MSH header + SEG segment) ---
+SELECT * FROM legacySrc INTO CHECKSUM('HL7' as `SINK`.OUTPUT_FORMAT, 'ZMIJF64' as `OUTPUT_FORMATTER`.F64_PARSER);
+----
+0 19198
+
+# --- HL7: legacy writer (same defaults preset) ---
+SELECT * FROM legacySrc INTO CHECKSUM('NATIVE' as `SINK`.OUTPUT_FORMAT, 'HL7' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+0 19198

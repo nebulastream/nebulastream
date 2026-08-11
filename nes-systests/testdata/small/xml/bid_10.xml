@@ -1,0 +1,10 @@
+<rec><ts>1000</ts><aid>1001</aid><bid>21</bid><pr>1.5</pr><ch>Google</ch><url>https://example.com/a</url></rec>
+<rec><ts>2000</ts><aid>1002</aid><bid>22</bid><pr>4.25</pr><ch>Apple</ch><url>https://example.com/b</url></rec>
+<rec><ts>3000</ts><aid>1003</aid><bid>23</bid><pr>2.75</pr><ch>Bing</ch><url>https://example.com/c</url></rec>
+<rec><ts>4000</ts><aid>1001</aid><bid>24</bid><pr>5.5</pr><ch>Google</ch><url>https://example.com/d</url></rec>
+<rec><ts>5000</ts><aid>1005</aid><bid>25</bid><pr>3.25</pr><ch>Google</ch><url>https://example.com/e</url></rec>
+<rec><ts>6000</ts><aid>1003</aid><bid>26</bid><pr>0.5</pr><ch>Google</ch><url>https://example.com/f</url></rec>
+<rec><ts>7000</ts><aid>1007</aid><bid>27</bid><pr>6.75</pr><ch>Yahoo</ch><url>https://example.com/g</url></rec>
+<rec><ts>8000</ts><aid>1001</aid><bid>28</bid><pr>3.375</pr><ch>Google</ch><url>https://example.com/h</url></rec>
+<rec><ts>9000</ts><aid>1009</aid><bid>29</bid><pr>8.125</pr><ch>Apple</ch><url>https://example.com/i</url></rec>
+<rec><ts>10000</ts><aid>984</aid><bid>30</bid><pr>9.5</pr><ch>Bing</ch><url>https://example.com/j</url></rec>

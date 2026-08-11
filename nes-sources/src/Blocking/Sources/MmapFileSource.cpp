@@ -21,11 +21,13 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <format>
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
@@ -34,10 +36,14 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceUtility.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Files.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
@@ -47,55 +53,129 @@
 namespace NES
 {
 
+/// Whole-file mapping owner. munmap + close run in the destructor, so the mapping stays valid until the LAST
+/// holder drops its shared_ptr: the source holds one, and every in-flight zero-copy buffer holds one (captured
+/// in its release hook). This is what makes handing raw mmap windows to the pipeline safe.
+struct MmapFileMapping
+{
+    int fileDescriptor = -1;
+    void* base = nullptr;
+    size_t size = 0;
+    MmapFileMapping() = default;
+    MmapFileMapping(const MmapFileMapping&) = delete;
+    MmapFileMapping& operator=(const MmapFileMapping&) = delete;
+    MmapFileMapping(MmapFileMapping&&) = delete;
+    MmapFileMapping& operator=(MmapFileMapping&&) = delete;
+
+    ~MmapFileMapping()
+    {
+        if (base != nullptr && base != MAP_FAILED)
+        {
+            ::munmap(base, size);
+        }
+        if (fileDescriptor >= 0)
+        {
+            ::close(fileDescriptor);
+        }
+    }
+};
+
 MmapFileSource::MmapFileSource(const SourceDescriptor& sourceDescriptor)
     : filePath(sourceDescriptor.getFromConfig(ConfigParametersMmap::FILEPATH))
 {
+    /// Default = zero-copy (alias mmap windows). NES_MMAP_COPY=1 restores the userspace-memcpy-into-pool path.
+    if (const char* const env = std::getenv("NES_MMAP_COPY"); env != nullptr && std::string_view(env) != "0")
+    {
+        this->zeroCopy = false;
+    }
+    /// NES_FILE_REPEAT=N (zero-copy path only): re-scan the map N times for a long steady benchmark window.
+    if (const char* const env = std::getenv("NES_FILE_REPEAT"))
+    {
+        this->numPasses = std::max<std::size_t>(1, std::strtoul(env, nullptr, 10));
+    }
 }
 
-void MmapFileSource::open(std::shared_ptr<AbstractBufferProvider>)
+void MmapFileSource::open(std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
     const auto realPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     if (not realPath)
     {
         throw InvalidConfigParameter("MmapFileSource: could not resolve path: {} - {}", this->filePath, getErrorMessageFromERRNO());
     }
-    this->fileDescriptor = ::open(realPath.get(), O_RDONLY);
-    if (this->fileDescriptor < 0)
+    const int fd = ::open(realPath.get(), O_RDONLY);
+    if (fd < 0)
     {
         throw InvalidConfigParameter("MmapFileSource: could not open file: {} - {}", this->filePath, getErrorMessageFromERRNO());
     }
     struct stat fileStat = {};
-    if (::fstat(this->fileDescriptor, &fileStat) != 0)
+    if (::fstat(fd, &fileStat) != 0)
     {
+        ::close(fd);
         throw InvalidConfigParameter("MmapFileSource: could not stat file: {} - {}", this->filePath, getErrorMessageFromERRNO());
     }
-    this->mapSize = static_cast<size_t>(fileStat.st_size);
+    const auto fileSize = static_cast<size_t>(fileStat.st_size);
     this->cursor = 0;
-    if (this->mapSize > 0)
+    void* base = nullptr;
+    if (fileSize > 0)
     {
-        this->mapBase = ::mmap(nullptr, this->mapSize, PROT_READ, MAP_PRIVATE, this->fileDescriptor, 0);
-        if (this->mapBase == MAP_FAILED)
+        base = ::mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (base == MAP_FAILED)
         {
-            this->mapBase = nullptr;
+            ::close(fd);
             throw InvalidConfigParameter("MmapFileSource: mmap failed: {} - {}", this->filePath, getErrorMessageFromERRNO());
         }
         /// Hint the kernel: sequential scan, and pull the pages in eagerly (cheap when page-cache-resident).
-        ::madvise(this->mapBase, this->mapSize, MADV_SEQUENTIAL);
-        ::madvise(this->mapBase, this->mapSize, MADV_WILLNEED);
+        ::madvise(base, fileSize, MADV_SEQUENTIAL);
+        ::madvise(base, fileSize, MADV_WILLNEED);
         /// Diagnostic A/B: NES_MMAP_POPULATE=1 bulk-prefaults the whole mapping (one range walk) instead of
-        /// paying ~1.6M on-demand minor #PF traps during the per-buffer memcpy. madvise so it's a no-op on
-        /// kernels < 5.14.
+        /// paying on-demand minor #PF traps on first touch. madvise so it's a no-op on kernels < 5.14.
         if (const char* const pop = std::getenv("NES_MMAP_POPULATE"); pop != nullptr && std::string_view(pop) != "0")
         {
 #ifdef MADV_POPULATE_READ
-            ::madvise(this->mapBase, this->mapSize, MADV_POPULATE_READ);
+            ::madvise(base, fileSize, MADV_POPULATE_READ);
 #endif
         }
+    }
+
+    if (this->zeroCopy)
+    {
+        /// The private source pool is a BufferManager (SourceProvider::lower). We use it purely as the factory
+        /// for wrapped (aliasing) buffers -- no pooled memory is consumed on this path.
+        this->wrapPool = std::dynamic_pointer_cast<BufferManager>(bufferProvider);
+        if (this->wrapPool == nullptr)
+        {
+            if (base != nullptr)
+            {
+                ::munmap(base, fileSize);
+            }
+            ::close(fd);
+            throw InvalidConfigParameter("MmapFileSource: zero-copy needs a BufferManager-backed pool");
+        }
+        this->windowSize = this->wrapPool->getBufferSize();
+        auto owned = std::make_shared<MmapFileMapping>();
+        owned->fileDescriptor = fd;
+        owned->base = base;
+        owned->size = fileSize;
+        this->mapping = std::move(owned);
+        NES_DEBUG("MmapFileSource: zero-copy mapping of {} ({} bytes), window={} B", this->filePath, fileSize, this->windowSize);
+    }
+    else
+    {
+        /// COPY mode keeps its own fd + map fields (fillTupleBuffer memcpys out of them).
+        this->fileDescriptor = fd;
+        this->mapBase = (base == MAP_FAILED) ? nullptr : base;
+        this->mapSize = fileSize;
     }
 }
 
 void MmapFileSource::close()
 {
+    /// Zero-copy: drop the source's mapping reference. In-flight buffers keep their own references, so the actual
+    /// munmap/close happens when the last wrapped buffer is released (or the pool retaining the segments is torn
+    /// down), never while a worker might still be reading the pages.
+    this->mapping.reset();
+    this->wrapPool.reset();
+    /// Copy mode:
     if (this->mapBase != nullptr)
     {
         ::munmap(this->mapBase, this->mapSize);
@@ -106,6 +186,40 @@ void MmapFileSource::close()
         ::close(this->fileDescriptor);
         this->fileDescriptor = -1;
     }
+}
+
+std::optional<TupleBuffer> MmapFileSource::takePreFilledBuffer(const std::stop_token&)
+{
+    if (this->mapping == nullptr || this->mapping->base == nullptr)
+    {
+        return std::nullopt; /// empty file
+    }
+    const size_t total = this->mapping->size;
+    if (this->cursor >= total)
+    {
+        if (this->passesDone + 1 < this->numPasses)
+        {
+            ++this->passesDone; /// NES_FILE_REPEAT: rewind the map and stream it again for a steady window
+            this->cursor = 0;
+        }
+        else
+        {
+            return std::nullopt; /// end of stream
+        }
+    }
+    const size_t len = std::min(this->windowSize, total - this->cursor);
+    auto* const windowPtr = static_cast<std::uint8_t*>(this->mapping->base) + this->cursor;
+    /// Alias the window: no copy. The release hook holds a shared_ptr to the mapping so the pages outlive this
+    /// buffer no matter how long a worker holds it (spanning-tuple stitch, backpressure, etc.).
+    TupleBuffer buffer = this->wrapPool->wrapExternalMemory(
+        windowPtr, static_cast<std::uint32_t>(len), [keepAlive = this->mapping]() { (void)keepAlive; });
+    /// The source hands the formatter raw bytes; it reports the BYTE count as numberOfTuples (the input formatter
+    /// derives the tuple count) and stamps read-start so the sink's e2e latency/throughput include ingest.
+    buffer.setNumberOfTuples(len);
+    buffer.setSourceCreationTimestampInMS(Timestamp(ingestNowMicros()));
+    this->cursor += len;
+    this->totalNumBytesRead += len;
+    return buffer;
 }
 
 BlockingSource::FillTupleBufferResult MmapFileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, const size_t offset)
@@ -132,9 +246,10 @@ DescriptorConfig::Config MmapFileSource::validateAndFormat(std::unordered_map<st
 std::ostream& MmapFileSource::toString(std::ostream& str) const
 {
     str << std::format(
-        "\nMmapFileSource(filepath: {}, mapSize: {}, totalNumBytesRead: {})",
+        "\nMmapFileSource(filepath: {}, mode: {}, mapSize: {}, totalNumBytesRead: {})",
         this->filePath,
-        this->mapSize,
+        this->zeroCopy ? "zero-copy" : "copy",
+        this->zeroCopy ? (this->mapping != nullptr ? this->mapping->size : 0) : this->mapSize,
         this->totalNumBytesRead.load());
     return str;
 }

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SinksParsing/JSONFormat.hpp>
+#include <SinksParsing/HL7Format.hpp>
 
 #include <algorithm>
 #include <bit>
@@ -22,7 +22,7 @@
 #include <cstring>
 #include <ostream>
 #include <string>
-#include <string_view>
+#include <utility>
 #include <vector>
 #include <zmij.h>
 #include <DataTypes/DataType.hpp>
@@ -39,104 +39,6 @@ namespace NES
 
 namespace
 {
-/// Construction-time JSON escaping for field names (RFC 8259: `"`, `\`, control bytes < 0x20).
-/// Mirrors the compiled JSONOutputFormatter's jsonEscapeString so the per-field glue is
-/// byte-identical.
-std::string jsonEscapeString(const std::string_view raw)
-{
-    std::string escaped;
-    escaped.reserve(raw.size());
-    for (const char character : raw)
-    {
-        switch (character)
-        {
-            case '"':
-                escaped += "\\\"";
-                break;
-            case '\\':
-                escaped += "\\\\";
-                break;
-            case '\b':
-                escaped += "\\b";
-                break;
-            case '\f':
-                escaped += "\\f";
-                break;
-            case '\n':
-                escaped += "\\n";
-                break;
-            case '\r':
-                escaped += "\\r";
-                break;
-            case '\t':
-                escaped += "\\t";
-                break;
-            default:
-                if (static_cast<unsigned char>(character) < 0x20)
-                {
-                    constexpr std::string_view hexDigits = "0123456789abcdef";
-                    escaped += "\\u00";
-                    escaped += hexDigits[(static_cast<unsigned char>(character) >> 4U) & 0xFU];
-                    escaped += hexDigits[static_cast<unsigned char>(character) & 0xFU];
-                }
-                else
-                {
-                    escaped += character;
-                }
-        }
-    }
-    return escaped;
-}
-
-bool needsJsonEscape(const char character)
-{
-    return character == '"' || character == '\\' || static_cast<unsigned char>(character) < 0x20;
-}
-
-/// Write one escapable byte at `off` (caller ensured >= 6 free bytes); returns the new offset.
-size_t writeJsonEscapedByte(std::vector<char>& out, size_t off, const char character)
-{
-    const auto putTwo = [&](const char second)
-    {
-        out[off++] = '\\';
-        out[off++] = second;
-    };
-    switch (character)
-    {
-        case '"':
-            putTwo('"');
-            break;
-        case '\\':
-            putTwo('\\');
-            break;
-        case '\b':
-            putTwo('b');
-            break;
-        case '\f':
-            putTwo('f');
-            break;
-        case '\n':
-            putTwo('n');
-            break;
-        case '\r':
-            putTwo('r');
-            break;
-        case '\t':
-            putTwo('t');
-            break;
-        default: {
-            constexpr std::string_view hexDigits = "0123456789abcdef";
-            out[off++] = '\\';
-            out[off++] = 'u';
-            out[off++] = '0';
-            out[off++] = '0';
-            out[off++] = hexDigits[(static_cast<unsigned char>(character) >> 4U) & 0xFU];
-            out[off++] = hexDigits[static_cast<unsigned char>(character) & 0xFU];
-        }
-    }
-    return off;
-}
-
 template <typename T>
 void writeIntDirect(std::vector<char>& out, size_t& off, const void* data)
 {
@@ -155,11 +57,35 @@ void writeFloatDirect(std::vector<char>& out, size_t& off, const void* data)
 }
 }
 
-JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
+HL7Format::Preset HL7Format::hl7Preset()
+{
+    /// The compiled HL7OutputFormatter's config DEFAULTS, pre-concatenated the same way
+    /// (prologue = frame_start + message_header + segment_delimiter + segment_name +
+    /// field_delimiter; suffix = segment_delimiter + frame_end).
+    return Preset{
+        .prologue = "\x0B"
+                    "MSH|^~\\&|NES|NES|BENCH|BENCH|20260101000000||ORU^R01|1|P|2.5"
+                    "\r"
+                    "SEG"
+                    "|",
+        .fieldDelimiter = "|",
+        .suffix = "\r"
+                  "\x1C"
+                  "\r"};
+}
+
+HL7Format::Preset HL7Format::xmlPreset()
+{
+    /// The packed-XML config of the same emission model (see formatter/XML/XMLOutput.test):
+    /// frame_start `<rec>` + segment_name `<f>` + field_delimiter `</f><f>` -> the prologue opens
+    /// the well-formedness arity-pad element; suffix closes the last element and the record.
+    return Preset{.prologue = "<rec><f></f><f>", .fieldDelimiter = "</f><f>", .suffix = "</f></rec>\n"};
+}
+
+HL7Format::HL7Format(const Schema& pSchema, Preset pPreset) : Format(pSchema), preset(std::move(pPreset))
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;
-    size_t index = 0;
     for (const auto& field : schema.getFields())
     {
         const auto physicalType = field.dataType;
@@ -167,21 +93,18 @@ JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
         formattingContext.sizesWithNull.push_back(physicalType.getSizeInBytesWithNull());
         offset += physicalType.getSizeInBytesWithNull();
         formattingContext.physicalTypes.emplace_back(physicalType);
-        /// Same glue as the compiled formatter's fieldPrefixes: `{"NAME":` for field 0, `,"NAME":` after.
-        formattingContext.prefixes.push_back(fmt::format("{}\"{}\":", index == 0 ? "{" : ",", jsonEscapeString(field.name)));
-        ++index;
     }
     formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
 }
 
-std::string JSONFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
+std::string HL7Format::getFormattedBuffer(const TupleBuffer& inputBuffer) const
 {
     thread_local std::vector<char> scratch;
     const auto bytes = formatToBuffer(inputBuffer, scratch);
     return std::string(scratch.data(), bytes);
 }
 
-size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>& out) const
+size_t HL7Format::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>& out) const
 {
     const auto& fc = formattingContext;
     const auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -195,18 +118,26 @@ size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>&
             out.resize(std::max(out.size() * 2, off + need + 64));
         }
     };
-    /// Room for the widest single value (a double's shortest form, also >= any int64) + `null`.
-    constexpr size_t valueSlack = zmij::double_buffer_size + 24;
+    /// Room for the longest glue + the widest single value (a double's shortest form, >= any int64).
+    const size_t fieldSlack = std::max(preset.prologue.size(), preset.fieldDelimiter.size() + preset.suffix.size())
+        + zmij::double_buffer_size + 24;
 
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * fc.schemaSizeInBytes, fc.schemaSizeInBytes);
         for (size_t index = 0; index < fc.offsets.size(); ++index)
         {
-            const auto& prefix = fc.prefixes[index];
-            ensure(prefix.size() + valueSlack);
-            std::memcpy(out.data() + off, prefix.data(), prefix.size());
-            off += prefix.size();
+            ensure(fieldSlack);
+            if (index == 0)
+            {
+                std::memcpy(out.data() + off, preset.prologue.data(), preset.prologue.size());
+                off += preset.prologue.size();
+            }
+            else
+            {
+                std::memcpy(out.data() + off, preset.fieldDelimiter.data(), preset.fieldDelimiter.size());
+                off += preset.fieldDelimiter.size();
+            }
             const auto& physicalType = fc.physicalTypes[index];
             auto fieldValueStart = tuple.subspan(fc.offsets[index], fc.sizesWithNull[index]);
             if (physicalType.nullable)
@@ -215,9 +146,8 @@ size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>&
                 fieldValueStart = fieldValueStart.subspan(1);
                 if (isNull)
                 {
-                    /// Lowercase `null`, like the compiled formatter.
-                    std::memcpy(out.data() + off, "null", 4);
-                    off += 4;
+                    /// NULL emits zero bytes: HL7's empty-field convention (`||`), like the
+                    /// compiled formatter.
                     continue;
                 }
             }
@@ -255,7 +185,6 @@ size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>&
                     writeFloatDirect<double>(out, off, data);
                     break;
                 case DataType::Type::BOOLEAN:
-                    /// '1'/'0' like the compiled path's materialized-bool codec (writeIntegralValue(int)).
                     out[off++] = (std::to_integer<int>(*data) != 0) ? '1' : '0';
                     break;
                 case DataType::Type::CHAR:
@@ -271,50 +200,28 @@ size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>&
                         VariableSizedAccess::Offset(*offsetPtr),
                         VariableSizedAccess::Size(*sizePtr)};
                     const auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                    /// Quoted + RFC 8259 escaped. Fast path: a single scan finds no escapable byte ->
-                    /// one memcpy. Slow path reserves the worst case (6x, \u00XX) and escapes per byte.
-                    const bool clean = std::ranges::none_of(varSizedData, needsJsonEscape);
-                    if (clean)
-                    {
-                        ensure(varSizedData.size() + 2);
-                        out[off++] = '"';
-                        std::memcpy(out.data() + off, varSizedData.data(), varSizedData.size());
-                        off += varSizedData.size();
-                        out[off++] = '"';
-                    }
-                    else
-                    {
-                        ensure((varSizedData.size() * 6) + 2);
-                        out[off++] = '"';
-                        for (const char character : varSizedData)
-                        {
-                            if (needsJsonEscape(character))
-                            {
-                                off = writeJsonEscapedByte(out, off, character);
-                            }
-                            else
-                            {
-                                out[off++] = character;
-                            }
-                        }
-                        out[off++] = '"';
-                    }
+                    /// Forwarded verbatim, like the compiled formatter (no HL7 escape sequences; a
+                    /// value containing a structural byte re-parses with the wrong arity and the
+                    /// input indexer rejects it loudly).
+                    ensure(varSizedData.size());
+                    std::memcpy(out.data() + off, varSizedData.data(), varSizedData.size());
+                    off += varSizedData.size();
                     break;
                 }
                 case DataType::Type::UNDEFINED:
-                    throw CannotFormatMalformedStringValue("Cannot format undefined type in legacy JSON output.");
+                    throw CannotFormatMalformedStringValue("Cannot format undefined type in legacy HL7 output.");
             }
         }
-        ensure(2);
-        out[off++] = '}';
-        out[off++] = '\n';
+        ensure(preset.suffix.size());
+        std::memcpy(out.data() + off, preset.suffix.data(), preset.suffix.size());
+        off += preset.suffix.size();
     }
     return off;
 }
 
-std::ostream& operator<<(std::ostream& out, const JSONFormat& format)
+std::ostream& operator<<(std::ostream& out, const HL7Format& format)
 {
-    return out << fmt::format("JSONFormat(Schema: {})", format.schema);
+    return out << fmt::format("HL7Format(Schema: {})", format.schema);
 }
 
 }

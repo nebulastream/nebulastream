@@ -38,7 +38,15 @@ add_library(nes-input-formatters-uncompiled ${NES_INPUT_FORMATTERS_UNCOMPILED_SO
 # private/ headers (SIMDCSVScan.hpp, SIMDCSVKernel.hpp) on the include path.
 # NOTE (debt): reaching into another module's private/ is a benchmark-branch shortcut; productionizing
 # should factor the SIMD kernel + scan into a small shared library both modules link.
-target_link_libraries(nes-input-formatters-uncompiled PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-input-formatters-registry nes-input-formatters FastFloat::fast_float)
+# simdjson: the uncompiled SchemaJSON twin runs the same stage-1 structural indexing as the compiled
+# SchemaJSON plugin (internal dom_parser_implementation API), so it needs an explicit simdjson link.
+find_package(simdjson CONFIG REQUIRED)
+
+# simd_hl7_input_format_indexer_plugin_library (nes-plugins/InputFormatters/HL7InputFormatter): the uncompiled
+# HL7/XML twin reuses the SIMD flatten (Hl7Scan.hpp, header-only) + the runtime-dispatched block kernel
+# (Hl7SimdKernel.hpp/.cpp) from the compiled plugin -- same shared-kernel debt pattern as the SIMD CSV scan note
+# above, but via the plugin's library target (which exports its source dir as a PUBLIC include).
+target_link_libraries(nes-input-formatters-uncompiled PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-input-formatters-registry nes-input-formatters FastFloat::fast_float simdjson::simdjson simd_hl7_input_format_indexer_plugin_library)
 
 target_include_directories(nes-input-formatters-uncompiled PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

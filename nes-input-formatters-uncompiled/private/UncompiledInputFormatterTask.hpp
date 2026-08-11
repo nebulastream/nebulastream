@@ -576,7 +576,7 @@ private:
         if (!accumulatedSpanningTupleBuffers.empty() || offsetOfFirstDelimiter > 0)
         {
             const auto leadingBytes = rawBuffer.getBufferView().substr(0, offsetOfFirstDelimiter);
-            processSequentialLeadingRecord(rawBuffer, leadingBytes, formattedBuffer, *bufferProvider);
+            processSequentialLeadingRecord(rawBuffer, leadingBytes, runningChunkNumber, formattedBuffer, pec);
         }
 
         /// 2. Bulk: the complete tuples the band found (between the first and last delimiter).
@@ -604,14 +604,16 @@ private:
     }
 
     /// Sequential path: completes the leading row of a buffer -- assembles `delim + carried_tail(s) +
-    /// leadingBytes + delim`, indexes it, and parses it as one record. Handles both a spanning row (carry
-    /// non-empty) and a standalone first-of-buffer row (carry empty, leadingBytes = the whole first row).
+    /// leadingBytes + delim`, indexes it, and parses it. Handles both a spanning row (carry non-empty) and a
+    /// standalone first-of-buffer row (carry empty, leadingBytes = the whole first row).
     void processSequentialLeadingRecord(
         const UncompiledRawTupleBuffer& rawBuffer,
         const std::string_view leadingBytes,
+        ChunkNumber::Underlying& runningChunkNumber,
         TupleBuffer& formattedBuffer,
-        AbstractBufferProvider& bufferProvider)
+        PipelineExecutionContext& pec)
     {
+        const auto bufferProvider = pec.getBufferManager();
         const auto delimiterBytes = uncompiledIndexerMetaData.getTupleDelimitingBytes();
 
         /// Build the leading spanning tuple: delimiter + carried_tail(s) + leading_bytes + delimiter
@@ -639,9 +641,33 @@ private:
             tempRawBuffer.setSpanningTuple(completeSpanningTuple);
             inputFormatIndexer.indexRawBuffer(tempFIF, tempRawBuffer, uncompiledIndexerMetaData);
 
-            processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
-                completeSpanningTuple, tempFIF, 0, formattedBuffer, this->schemaInfo, this->parseFunctions, bufferProvider);
-            formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+            /// A reassembled leading tuple normally holds exactly one record, but a MULTI-BYTE tuple delimiter
+            /// split across two raw buffers is only reunited inside the assembled string, which then indexes as
+            /// more than one record (e.g. HL7's "\x1C\r" with \x1C ending buffer k and \r starting buffer k+1).
+            /// Loop like parseRawBuffer instead of reading only record 0, so no reassembled record is lost
+            /// (mirrors the compiled InputFormatter's parseLeadingRecord; single-byte-delimiter formatters
+            /// always index exactly one record here -- the loop runs once).
+            const size_t numberOfTuplesPerBuffer = bufferProvider->getBufferSize() / this->schemaInfo.getSizeOfTupleInBytes();
+            size_t spanningRecordIdx = 0;
+            while (tempFIF.hasNext(spanningRecordIdx))
+            {
+                if (formattedBuffer.getNumberOfTuples() >= numberOfTuplesPerBuffer)
+                {
+                    setUncompiledMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, false);
+                    pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                    formattedBuffer = bufferProvider->getBufferBlocking();
+                }
+                processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
+                    completeSpanningTuple,
+                    tempFIF,
+                    spanningRecordIdx,
+                    formattedBuffer,
+                    this->schemaInfo,
+                    this->parseFunctions,
+                    *bufferProvider);
+                formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+                ++spanningRecordIdx;
+            }
         }
     }
 };

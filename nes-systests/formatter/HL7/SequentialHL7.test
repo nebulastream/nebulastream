@@ -1,0 +1,69 @@
+# name: formatter/HL7/SequentialHL7.test
+# description: The two sequential ablation-baseline variants of the SIMDHL7 formatter, both running the SAME
+#   SIMD flatten into the in-place event band: "SequentialHL7" (compiled strided read, IsSequential ->
+#   single-threaded carry accumulator instead of the SequenceShredder) and "SequentialUncompiledHL7"
+#   (interpreted per-field parse loop over the same band). Fixture two_ints_10.hl7 (see HL7Input.test for the
+#   leaf layout): messages 1..9 are exactly 74 bytes with the <FS> of message k at byte 74(k-1)+72, so
+#   517-byte raw buffers put the first boundary at byte 517 = right between message 7's <FS> (byte 516) and
+#   its <CR> -- deterministically splitting the two-byte MLLP trailer across raw buffers. The reassembled
+#   leading spanning tuple then indexes as TWO records, covering the parse-ALL-reassembled-records loop in
+#   both the compiled and the uncompiled sequential paths.
+#   The uncompiled arm declares every junk leaf VARSIZED NOT NULL (empty leaves parse as empty strings): the
+#   interpreted parse loop has no NULL coercion -- only the data leaves are projected.
+# groups: [Formatter, HL7]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [517]
+
+CREATE LOGICAL SOURCE hl7Seq(h01 VARSIZED, h02 VARSIZED, h03 VARSIZED, h04 VARSIZED, h05 VARSIZED, h06 VARSIZED, h07 VARSIZED, h08 VARSIZED, h09 VARSIZED, h10 VARSIZED, h11 VARSIZED, h12 VARSIZED, h13 VARSIZED, h14 VARSIZED, h15 VARSIZED, seg VARSIZED, id INT32 NOT NULL, val UINT64 NOT NULL, pad VARSIZED);
+CREATE PHYSICAL SOURCE FOR hl7Seq TYPE BlockingFile SET("SequentialHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH FILE small/hl7/two_ints_10.hl7
+
+CREATE LOGICAL SOURCE hl7SeqUnc(h01 VARSIZED NOT NULL, h02 VARSIZED NOT NULL, h03 VARSIZED NOT NULL, h04 VARSIZED NOT NULL, h05 VARSIZED NOT NULL, h06 VARSIZED NOT NULL, h07 VARSIZED NOT NULL, h08 VARSIZED NOT NULL, h09 VARSIZED NOT NULL, h10 VARSIZED NOT NULL, h11 VARSIZED NOT NULL, h12 VARSIZED NOT NULL, h13 VARSIZED NOT NULL, h14 VARSIZED NOT NULL, h15 VARSIZED NOT NULL, seg VARSIZED NOT NULL, id INT32 NOT NULL, val UINT64 NOT NULL, pad VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR hl7SeqUnc TYPE BlockingFile SET("SequentialUncompiledHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH FILE small/hl7/two_ints_10.hl7
+
+CREATE SINK idValSink(hl7Seq.id INT32 NOT NULL, hl7Seq.val UINT64 NOT NULL) TYPE File;
+CREATE SINK junkSink(hl7Seq.h05 VARSIZED, hl7Seq.h10 VARSIZED, hl7Seq.h11 VARSIZED, hl7Seq.seg VARSIZED, hl7Seq.id INT32 NOT NULL) TYPE File;
+CREATE SINK idValSinkUnc(hl7SeqUnc.id INT32 NOT NULL, hl7SeqUnc.val UINT64 NOT NULL) TYPE File;
+
+# Compiled sequential: the data leaves through the carry-based spanning path (incl. the split trailer).
+SELECT id, val FROM hl7Seq INTO idValSink;
+----
+1,100
+2,200
+3,300
+4,400
+5,500
+6,600
+7,700
+8,800
+9,900
+10,1000
+
+# Compiled sequential: junk leaves stay addressable (h10 is the empty MSH-8 leaf, nullable -> NULL).
+SELECT h05, h10, h11, seg, id FROM hl7Seq INTO junkSink;
+----
+NES,NULL,ORU,OBX,1
+NES,NULL,ORU,OBX,2
+NES,NULL,ORU,OBX,3
+NES,NULL,ORU,OBX,4
+NES,NULL,ORU,OBX,5
+NES,NULL,ORU,OBX,6
+NES,NULL,ORU,OBX,7
+NES,NULL,ORU,OBX,8
+NES,NULL,ORU,OBX,9
+NES,NULL,ORU,OBX,10
+
+# Uncompiled sequential twin: same data leaves, same expected rows.
+SELECT id, val FROM hl7SeqUnc INTO idValSinkUnc;
+----
+1,100
+2,200
+3,300
+4,400
+5,500
+6,600
+7,700
+8,800
+9,900
+10,1000

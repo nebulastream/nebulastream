@@ -1,0 +1,68 @@
+# name: formatter/XML/SequentialXML.test
+# description: The packed-XML configuration (structural class {<,>}, 1-byte '\n' message delimiter,
+#   component/subcomponent disabled -- see XMLInput.test for the leaf model) through the two sequential
+#   ablation-baseline variants of the HL7 indexer family: "SequentialHL7" (compiled strided read,
+#   IsSequential -> single-threaded carry accumulator instead of the SequenceShredder) and
+#   "SequentialUncompiledHL7" (interpreted per-field parse loop over the same SIMD-flattened band). XML needs
+#   ZERO new indexer code in either variant -- the same config-only claim as the parallel indexers.
+#   256-byte raw buffers over ~370 bytes (10 records of ~37 bytes) force records to straddle the boundary, so
+#   the sequential carry + leading-row reassembly runs. The uncompiled arm declares every junk leaf VARSIZED
+#   NOT NULL (empty leaves parse as empty strings; the interpreted loop has no NULL coercion) and projects
+#   only the data leaves.
+# groups: [Formatter, XML]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [256]
+
+CREATE LOGICAL SOURCE xmlSeq(x01 VARSIZED, x02 VARSIZED, x03 VARSIZED, x04 VARSIZED, id INT32 NOT NULL, x05 VARSIZED, x06 VARSIZED, x07 VARSIZED, val UINT64 NOT NULL, x08 VARSIZED, x09 VARSIZED, x10 VARSIZED, x11 VARSIZED);
+CREATE PHYSICAL SOURCE FOR xmlSeq TYPE BlockingFile SET("SequentialHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/two_ints_10.xml
+
+CREATE LOGICAL SOURCE xmlSeqUnc(x01 VARSIZED NOT NULL, x02 VARSIZED NOT NULL, x03 VARSIZED NOT NULL, x04 VARSIZED NOT NULL, id INT32 NOT NULL, x05 VARSIZED NOT NULL, x06 VARSIZED NOT NULL, x07 VARSIZED NOT NULL, val UINT64 NOT NULL, x08 VARSIZED NOT NULL, x09 VARSIZED NOT NULL, x10 VARSIZED NOT NULL, x11 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR xmlSeqUnc TYPE BlockingFile SET("SequentialUncompiledHL7" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`, '\n' AS INPUT_FORMATTER.message_delimiter, '<' AS INPUT_FORMATTER.segment_delimiter, '>' AS INPUT_FORMATTER.field_delimiter, '' AS INPUT_FORMATTER.component_delimiter, '' AS INPUT_FORMATTER.subcomponent_delimiter);
+ATTACH FILE small/xml/two_ints_10.xml
+
+CREATE SINK idValSink(xmlSeq.id INT32 NOT NULL, xmlSeq.val UINT64 NOT NULL) TYPE File;
+CREATE SINK junkSink(xmlSeq.x02 VARSIZED, xmlSeq.x04 VARSIZED, xmlSeq.x08 VARSIZED, xmlSeq.x10 VARSIZED, xmlSeq.id INT32 NOT NULL) TYPE File;
+CREATE SINK idValSinkUnc(xmlSeqUnc.id INT32 NOT NULL, xmlSeqUnc.val UINT64 NOT NULL) TYPE File;
+
+# Compiled sequential: the data elements at their 4f+4 leaf slots, across buffer boundaries.
+SELECT id, val FROM xmlSeq INTO idValSink;
+----
+1,100
+2,200
+3,300
+4,400
+5,500
+6,600
+7,700
+8,800
+9,900
+10,1000
+
+# Compiled sequential: junk leaves stay addressable (tag names + close tags).
+SELECT x02, x04, x08, x10, id FROM xmlSeq INTO junkSink;
+----
+rec,id,/val,/rec,1
+rec,id,/val,/rec,2
+rec,id,/val,/rec,3
+rec,id,/val,/rec,4
+rec,id,/val,/rec,5
+rec,id,/val,/rec,6
+rec,id,/val,/rec,7
+rec,id,/val,/rec,8
+rec,id,/val,/rec,9
+rec,id,/val,/rec,10
+
+# Uncompiled sequential twin: same data leaves, same expected rows.
+SELECT id, val FROM xmlSeqUnc INTO idValSinkUnc;
+----
+1,100
+2,200
+3,300
+4,400
+5,500
+6,600
+7,700
+8,800
+9,900
+10,1000

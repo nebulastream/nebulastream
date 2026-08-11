@@ -35,6 +35,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/HL7Format.hpp>
 #include <SinksParsing/JSONFormat.hpp>
 #include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
@@ -63,6 +64,14 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     else if (legacyOutputFormat == "JSON")
     {
         format = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+    }
+    else if (legacyOutputFormat == "HL7")
+    {
+        format = std::make_unique<HL7Format>(*sinkDescriptor.getSchema(), HL7Format::hl7Preset());
+    }
+    else if (legacyOutputFormat == "XML")
+    {
+        format = std::make_unique<HL7Format>(*sinkDescriptor.getSchema(), HL7Format::xmlPreset());
     }
     else
     {

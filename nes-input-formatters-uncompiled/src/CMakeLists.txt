@@ -19,6 +19,7 @@ add_source_files(nes-input-formatters-uncompiled
         UncompiledParserProvider.cpp
         UncompiledInputFormatterTaskPipeline.cpp
         UncompiledSIMDJSONFIF.cpp
+        UncompiledSchemaJSONFIF.cpp
 )
 
 # Register UncompiledInputParser plugins
@@ -36,3 +37,8 @@ add_plugin(SequentialUncompiledOldCSV UncompiledInputFormatIndexer nes-input-for
 add_plugin(SequentialUncompiledOldCSV InputFormatterValidation nes-input-formatters-uncompiled SequentialUncompiledOldCSVInputFormatIndexer.cpp)
 add_plugin(SequentialUncompiledJSON UncompiledInputFormatIndexer nes-input-formatters-uncompiled SequentialUncompiledSIMDJSONInputFormatIndexer.cpp)
 add_plugin(SequentialUncompiledJSON InputFormatterValidation nes-input-formatters-uncompiled SequentialUncompiledSIMDJSONInputFormatIndexer.cpp)
+# The ablation baselines for SchemaJSON and HL7/XML: same SIMD indexing as the compiled formatters, interpreted parse.
+add_plugin(SequentialUncompiledSchemaJSON UncompiledInputFormatIndexer nes-input-formatters-uncompiled SequentialUncompiledSchemaJSONInputFormatIndexer.cpp)
+add_plugin(SequentialUncompiledSchemaJSON InputFormatterValidation nes-input-formatters-uncompiled SequentialUncompiledSchemaJSONInputFormatIndexer.cpp)
+add_plugin(SequentialUncompiledHL7 UncompiledInputFormatIndexer nes-input-formatters-uncompiled SequentialUncompiledHL7InputFormatIndexer.cpp)
+add_plugin(SequentialUncompiledHL7 InputFormatterValidation nes-input-formatters-uncompiled SequentialUncompiledHL7InputFormatIndexer.cpp)

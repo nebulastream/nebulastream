@@ -1,0 +1,189 @@
+# name: formatter/SchemaJSON/SequentialSchemaJSON.test
+# description: The two sequential ablation-baseline variants of the SchemaJSON formatter, both running the
+#   SAME simdjson stage-1 indexing as the parallel SchemaJSON: "SequentialSchemaJSON" (compiled strided read,
+#   IsSequential -> single-threaded carry accumulator instead of the SequenceShredder) and
+#   "SequentialUncompiledSchemaJSON" (interpreted per-field parse loop over the same stage-1 index).
+#   512-byte raw buffers over ~925 bytes of NDJSON force records to straddle buffer boundaries, so the
+#   sequential carry (trailing partial kept alive zero-copy, leading row reassembled between two delimiters)
+#   and the uncompiled twin's padded-copy stage-1 path for assembled spanning strings are exercised.
+# groups: [Formatter, SchemaJSON]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [512]
+
+CREATE LOGICAL SOURCE seqStream(id UINT64 NOT NULL, val UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR seqStream TYPE BlockingFile SET("SequentialSchemaJSON" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+{"ID":1, "VAL":100, "NAME":"name1"}
+{"ID":2, "VAL":200, "NAME":"name2"}
+{"ID":3, "VAL":300, "NAME":"name3"}
+{"ID":4, "VAL":400, "NAME":"name4"}
+{"ID":5, "VAL":500, "NAME":"name5"}
+{"ID":6, "VAL":600, "NAME":"name6"}
+{"ID":7, "VAL":700, "NAME":"name7"}
+{"ID":8, "VAL":800, "NAME":"name8"}
+{"ID":9, "VAL":900, "NAME":"name9"}
+{"ID":10, "VAL":1000, "NAME":"name10"}
+{"ID":11, "VAL":1100, "NAME":"name11"}
+{"ID":12, "VAL":1200, "NAME":"name12"}
+{"ID":13, "VAL":1300, "NAME":"name13"}
+{"ID":14, "VAL":1400, "NAME":"name14"}
+{"ID":15, "VAL":1500, "NAME":"name15"}
+{"ID":16, "VAL":1600, "NAME":"name16"}
+{"ID":17, "VAL":1700, "NAME":"name17"}
+{"ID":18, "VAL":1800, "NAME":"name18"}
+{"ID":19, "VAL":1900, "NAME":"name19"}
+{"ID":20, "VAL":2000, "NAME":"name20"}
+{"ID":21, "VAL":2100, "NAME":"name21"}
+{"ID":22, "VAL":2200, "NAME":"name22"}
+{"ID":23, "VAL":2300, "NAME":"name23"}
+{"ID":24, "VAL":2400, "NAME":"name24"}
+{"ID":25, "VAL":2500, "NAME":"name25"}
+
+CREATE LOGICAL SOURCE seqUncStream(id UINT64 NOT NULL, val UINT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR seqUncStream TYPE BlockingFile SET("SequentialUncompiledSchemaJSON" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+{"ID":1, "VAL":100, "NAME":"name1"}
+{"ID":2, "VAL":200, "NAME":"name2"}
+{"ID":3, "VAL":300, "NAME":"name3"}
+{"ID":4, "VAL":400, "NAME":"name4"}
+{"ID":5, "VAL":500, "NAME":"name5"}
+{"ID":6, "VAL":600, "NAME":"name6"}
+{"ID":7, "VAL":700, "NAME":"name7"}
+{"ID":8, "VAL":800, "NAME":"name8"}
+{"ID":9, "VAL":900, "NAME":"name9"}
+{"ID":10, "VAL":1000, "NAME":"name10"}
+{"ID":11, "VAL":1100, "NAME":"name11"}
+{"ID":12, "VAL":1200, "NAME":"name12"}
+{"ID":13, "VAL":1300, "NAME":"name13"}
+{"ID":14, "VAL":1400, "NAME":"name14"}
+{"ID":15, "VAL":1500, "NAME":"name15"}
+{"ID":16, "VAL":1600, "NAME":"name16"}
+{"ID":17, "VAL":1700, "NAME":"name17"}
+{"ID":18, "VAL":1800, "NAME":"name18"}
+{"ID":19, "VAL":1900, "NAME":"name19"}
+{"ID":20, "VAL":2000, "NAME":"name20"}
+{"ID":21, "VAL":2100, "NAME":"name21"}
+{"ID":22, "VAL":2200, "NAME":"name22"}
+{"ID":23, "VAL":2300, "NAME":"name23"}
+{"ID":24, "VAL":2400, "NAME":"name24"}
+{"ID":25, "VAL":2500, "NAME":"name25"}
+
+CREATE SINK idSink(seqStream.id UINT64 NOT NULL) TYPE File;
+CREATE SINK allSink(seqStream.id UINT64 NOT NULL, seqStream.val UINT64 NOT NULL, seqStream.name VARSIZED NOT NULL) TYPE File;
+CREATE SINK idSinkUnc(seqUncStream.id UINT64 NOT NULL) TYPE File;
+CREATE SINK allSinkUnc(seqUncStream.id UINT64 NOT NULL, seqUncStream.val UINT64 NOT NULL, seqUncStream.name VARSIZED NOT NULL) TYPE File;
+
+# Compiled sequential: projection (strided single-field read through the carry-based spanning path).
+SELECT id FROM seqStream INTO idSink;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+
+# Compiled sequential: all fields, including the quoted VARSIZED.
+SELECT id, val, name FROM seqStream INTO allSink;
+----
+1,100,name1
+2,200,name2
+3,300,name3
+4,400,name4
+5,500,name5
+6,600,name6
+7,700,name7
+8,800,name8
+9,900,name9
+10,1000,name10
+11,1100,name11
+12,1200,name12
+13,1300,name13
+14,1400,name14
+15,1500,name15
+16,1600,name16
+17,1700,name17
+18,1800,name18
+19,1900,name19
+20,2000,name20
+21,2100,name21
+22,2200,name22
+23,2300,name23
+24,2400,name24
+25,2500,name25
+
+# Uncompiled sequential twin: same data, same expected rows.
+SELECT id FROM seqUncStream INTO idSinkUnc;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+
+SELECT id, val, name FROM seqUncStream INTO allSinkUnc;
+----
+1,100,name1
+2,200,name2
+3,300,name3
+4,400,name4
+5,500,name5
+6,600,name6
+7,700,name7
+8,800,name8
+9,900,name9
+10,1000,name10
+11,1100,name11
+12,1200,name12
+13,1300,name13
+14,1400,name14
+15,1500,name15
+16,1600,name16
+17,1700,name17
+18,1800,name18
+19,1900,name19
+20,2000,name20
+21,2100,name21
+22,2200,name22
+23,2300,name23
+24,2400,name24
+25,2500,name25

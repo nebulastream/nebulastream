@@ -1,0 +1,237 @@
+# name: formatter/WorkloadShapesCSV.test
+# description: The paper-workload query shapes through the CSV three-rung ablation ladder
+#   (r-base "SequentialUncompiledCSV" interpreted, r-comp "SequentialCSV" compiled W1 carry,
+#   r-par "SIMDCSV" parallel). Shapes: q_project (SELECT price), q_route (filter -> full-record
+#   output with a varsized-literal string-eq), q22 (unconditional CONCAT alert), Q_ex (the NEEDMI
+#   working example: string-eq AND id-OR AND float threshold -> nested CONCAT of a FLOAT and a
+#   UINT column), q2-mod (the % modulo spelling), q10 (CASTFROMUNIXTS datetime codec).
+#   The uncompiled rung materializes records, so CONCAT-of-numeric and string-eq run against
+#   MATERIALIZED values there (no lazy raw-text forward) -- the risk the ladder must cover.
+#   Prices are exact binary fractions in shortest form, so lazy raw-forward text and
+#   materialize-then-serialize agree byte-for-byte across rungs.
+# groups: [Formatter, Workload]
+
+CREATE LOGICAL SOURCE bidUnc(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidUnc TYPE BlockingFile SET("SequentialUncompiledCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1000,1001,21,1.5,Google,https://example.com/a
+2000,1002,22,4.25,Apple,https://example.com/b
+3000,1003,23,2.75,Bing,https://example.com/c
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+7000,1007,27,6.75,Yahoo,https://example.com/g
+8000,1001,28,3.375,Google,https://example.com/h
+9000,1009,29,8.125,Apple,https://example.com/i
+10000,984,30,9.5,Bing,https://example.com/j
+
+CREATE LOGICAL SOURCE bidSeq(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidSeq TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1000,1001,21,1.5,Google,https://example.com/a
+2000,1002,22,4.25,Apple,https://example.com/b
+3000,1003,23,2.75,Bing,https://example.com/c
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+7000,1007,27,6.75,Yahoo,https://example.com/g
+8000,1001,28,3.375,Google,https://example.com/h
+9000,1009,29,8.125,Apple,https://example.com/i
+10000,984,30,9.5,Bing,https://example.com/j
+
+CREATE LOGICAL SOURCE bidPar(ts UINT64 NOT NULL, auctionId UINT64 NOT NULL, bidder UINT64 NOT NULL, price FLOAT64 NOT NULL, channel VARSIZED NOT NULL, url VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidPar TYPE File SET("SIMDCSV" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+1000,1001,21,1.5,Google,https://example.com/a
+2000,1002,22,4.25,Apple,https://example.com/b
+3000,1003,23,2.75,Bing,https://example.com/c
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+7000,1007,27,6.75,Yahoo,https://example.com/g
+8000,1001,28,3.375,Google,https://example.com/h
+9000,1009,29,8.125,Apple,https://example.com/i
+10000,984,30,9.5,Bing,https://example.com/j
+
+# ---- r-base: interpreted (SequentialUncompiledCSV) ----
+
+# q_project: k=1 projection.
+SELECT price FROM bidUnc INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+# q_route: string-eq against a MATERIALIZED varsized -> full-record output.
+SELECT * FROM bidUnc WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+# q22: unconditional CONCAT alert (varsized-literal + materialized varsized column).
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidUnc INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+# Q_ex: the NEEDMI working example -- CONCAT of MATERIALIZED float + uint columns.
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidUnc WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+# q2-mod: the % spelling (row 10: 984 = 8*123).
+SELECT auctionId, price FROM bidUnc WHERE auctionId % UINT64(123) == UINT64(0) INTO File();
+----
+984,9.5
+
+# q10: CASTFROMUNIXTS datetime codec (ms -> zulu ISO-8601).
+SELECT CASTFROMUNIXTS(ts) AS iso FROM bidUnc INTO File();
+----
+1970-01-01T00:00:01.000Z
+1970-01-01T00:00:02.000Z
+1970-01-01T00:00:03.000Z
+1970-01-01T00:00:04.000Z
+1970-01-01T00:00:05.000Z
+1970-01-01T00:00:06.000Z
+1970-01-01T00:00:07.000Z
+1970-01-01T00:00:08.000Z
+1970-01-01T00:00:09.000Z
+1970-01-01T00:00:10.000Z
+
+# ---- r-comp: compiled sequential (SequentialCSV) ----
+
+SELECT price FROM bidSeq INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT * FROM bidSeq WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidSeq INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidSeq WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+SELECT auctionId, price FROM bidSeq WHERE auctionId % UINT64(123) == UINT64(0) INTO File();
+----
+984,9.5
+
+SELECT CASTFROMUNIXTS(ts) AS iso FROM bidSeq INTO File();
+----
+1970-01-01T00:00:01.000Z
+1970-01-01T00:00:02.000Z
+1970-01-01T00:00:03.000Z
+1970-01-01T00:00:04.000Z
+1970-01-01T00:00:05.000Z
+1970-01-01T00:00:06.000Z
+1970-01-01T00:00:07.000Z
+1970-01-01T00:00:08.000Z
+1970-01-01T00:00:09.000Z
+1970-01-01T00:00:10.000Z
+
+# ---- r-par: parallel (SIMDCSV) ----
+
+SELECT price FROM bidPar INTO File();
+----
+1.5
+4.25
+2.75
+5.5
+3.25
+0.5
+6.75
+3.375
+8.125
+9.5
+
+SELECT * FROM bidPar WHERE channel == VARSIZED("Google") INTO File();
+----
+1000,1001,21,1.5,Google,https://example.com/a
+4000,1001,24,5.5,Google,https://example.com/d
+5000,1005,25,3.25,Google,https://example.com/e
+6000,1003,26,0.5,Google,https://example.com/f
+8000,1001,28,3.375,Google,https://example.com/h
+
+SELECT auctionId, bidder, price, CONCAT(VARSIZED("alert: bid on channel "), channel) AS alert FROM bidPar INTO File();
+----
+1001,21,1.5,alert: bid on channel Google
+1002,22,4.25,alert: bid on channel Apple
+1003,23,2.75,alert: bid on channel Bing
+1001,24,5.5,alert: bid on channel Google
+1005,25,3.25,alert: bid on channel Google
+1003,26,0.5,alert: bid on channel Google
+1007,27,6.75,alert: bid on channel Yahoo
+1001,28,3.375,alert: bid on channel Google
+1009,29,8.125,alert: bid on channel Apple
+984,30,9.5,alert: bid on channel Bing
+
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low price ("), price), VARSIZED(") [Google] for auction ")), auctionId) AS alert, ts AS rowcount FROM bidPar WHERE channel == VARSIZED("Google") AND (auctionId == UINT64(1001) OR auctionId == UINT64(1003)) AND price < FLOAT64(3.5) INTO File();
+----
+Detected low price (1.5) [Google] for auction 1001,1000
+Detected low price (0.5) [Google] for auction 1003,6000
+Detected low price (3.375) [Google] for auction 1001,8000
+
+SELECT auctionId, price FROM bidPar WHERE auctionId % UINT64(123) == UINT64(0) INTO File();
+----
+984,9.5
+
+SELECT CASTFROMUNIXTS(ts) AS iso FROM bidPar INTO File();
+----
+1970-01-01T00:00:01.000Z
+1970-01-01T00:00:02.000Z
+1970-01-01T00:00:03.000Z
+1970-01-01T00:00:04.000Z
+1970-01-01T00:00:05.000Z
+1970-01-01T00:00:06.000Z
+1970-01-01T00:00:07.000Z
+1970-01-01T00:00:08.000Z
+1970-01-01T00:00:09.000Z
+1970-01-01T00:00:10.000Z

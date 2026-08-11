@@ -16,7 +16,9 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
@@ -117,6 +119,15 @@ public:
 
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
+    /// Wrap externally-owned memory (e.g. an mmap'd file window) in a TupleBuffer WITHOUT copying. The returned
+    /// buffer aliases [ptr, ptr+size); `onRelease` runs when its last reference is dropped -- use it to release
+    /// whatever keeps the external memory alive (e.g. a shared_ptr to the mapping). The CALLER guarantees the
+    /// memory stays valid until every wrapped buffer referencing it has been released. The wrapped MemorySegment
+    /// is retained by this manager and freed at destroy(); it is NOT carved from the pooled slab and never counts
+    /// against the pool's capacity or leak check. Enables a true zero-copy file source (mmap the file once, hand
+    /// each 128 KiB window straight to the pipeline) instead of the one page-cache->buffer copy read(2) forces.
+    TupleBuffer wrapExternalMemory(uint8_t* ptr, uint32_t size, std::function<void()> onRelease);
+
     /// The pooled buffers are carved from one contiguous allocation (`basePointer`, `allocatedAreaSize`),
     /// so expose it for io_uring fixed-buffer registration (see AbstractBufferProvider::getContiguousSlab).
     [[nodiscard]] std::optional<std::pair<uint8_t*, size_t>> getContiguousSlab() const override;
@@ -149,6 +160,13 @@ public:
 
 private:
     std::vector<NES::detail::MemorySegment> allBuffers;
+
+    /// Externally-wrapped segments (see wrapExternalMemory): heap-allocated, stable addresses, retained until
+    /// destroy(). The recycle callback deliberately does NOT free the segment -- deleting a control block from
+    /// inside its own recycle callback would destroy the std::function while it executes (UB) -- so ownership
+    /// lives here instead. Bounded by how many windows the source mints over a run (a few MB of tiny segments).
+    std::vector<std::unique_ptr<NES::detail::MemorySegment>> wrappedSegments;
+    std::mutex wrappedSegmentsMutex;
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
 
