@@ -38,6 +38,12 @@ jobs:
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
 
+  quick-start:
+    needs: fetch-current-main-commit
+    uses: ./.github/workflows/nightly-quick-start.yml
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
   nix-build:
     name: "Run Nix Build"
     needs: [ fetch-current-main-commit ]
@@ -174,6 +180,7 @@ jobs:
       - build-and-benchmark
       - benchmark-compile-time
       - create-nightly-image
+      - quick-start
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:
