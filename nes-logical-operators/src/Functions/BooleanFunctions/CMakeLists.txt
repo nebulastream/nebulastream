@@ -16,6 +16,7 @@ add_unreflection_entry(LogicalFunction Equals)
 add_unreflection_entry(LogicalFunction Negate)
 add_unreflection_entry(LogicalFunction Or)
 add_unreflection_entry(LogicalFunction IsNullCheck KEY IsNull)
+add_unreflection_entry(LogicalFunction IsNaN)
 
 add_source_files(nes-logical-operators
         AndLogicalFunction.cpp
@@ -23,6 +24,7 @@ add_source_files(nes-logical-operators
         NegateLogicalFunction.cpp
         OrLogicalFunction.cpp
         IsNullCheckLogicalFunction.cpp
+        IsNaNLogicalFunction.cpp
 )
 
 add_registry_entry(LogicalFunction And)
@@ -30,3 +32,4 @@ add_registry_entry(LogicalFunction Equals)
 add_registry_entry(LogicalFunction IsNullCheck KEY IsNull)
 add_registry_entry(LogicalFunction Negate)
 add_registry_entry(LogicalFunction Or)
+add_registry_entry(LogicalFunction IsNaN)
