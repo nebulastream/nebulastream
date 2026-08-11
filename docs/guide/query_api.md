@@ -502,6 +502,26 @@ SELECT * FROM s WHERE optional_value IS NULL INTO sink
 SELECT * FROM s WHERE optional_value IS NOT NULL INTO sink
 ```
 
+`IS NaN` and `IS NOT NaN` test whether a numeric value is a floating-point *not a number*:
+
+```sql
+SELECT * FROM measurements WHERE reading IS NaN INTO sink
+```
+
+```sql
+SELECT * FROM measurements WHERE reading IS NOT NaN INTO sink
+```
+
+The operand must be numeric. Applying `IS NaN` to a `VARSIZED`, `BOOLEAN`, or `CHAR` field is
+rejected when the query is registered. Integer operands are accepted but are never NaN, so `IS NaN`
+is always false for them. Infinities are not NaN.
+
+💡 `IS NaN` follows SQL three-valued logic, see [null handling](../technical/null_handling.md) for
+more details.
+
+The equivalent function-call spelling `ISNAN(x)` is also available, which is what you need in a
+projection: `SELECT ISNAN(reading) AS invalid FROM measurements INTO sink`.
+
 #### Union
 
 Union combines two input streams with identical schema into one.
@@ -734,6 +754,8 @@ Functions are either unary (one input) or binary (two inputs).
 | Not In value list  | `SELECT * FROM s WHERE a NOT IN (1, 5) INTO sink`              |
 | Is Null            | `SELECT * FROM s WHERE a IS NULL INTO sink`                    |
 | Is Not Null        | `SELECT * FROM s WHERE a IS NOT NULL INTO sink`                |
+| Is NaN             | `SELECT * FROM s WHERE a IS NaN INTO sink`                     |
+| Is Not NaN         | `SELECT * FROM s WHERE a IS NOT NaN INTO sink`                 |
 
 #### **Other**
 
