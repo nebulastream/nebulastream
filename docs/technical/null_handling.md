@@ -322,6 +322,25 @@ SELECT ISNULL(CONCAT(a, b)) FROM stream;       -- true if the concat result is N
 
 `ISNULL()` is the **only way to reliably test for NULL**, since `value == NULL` would itself evaluate to NULL.
 
+### ISNAN Function
+
+Unlike `ISNULL()`, `ISNAN(expr)` — also spelled `expr IS NaN` / `expr IS NOT NaN` — is **not** an
+exception to nullability propagation: it returns a **nullable BOOLEAN** whenever its input is
+nullable, and `ISNAN(NULL)` is `NULL`.
+
+```sql
+SELECT ISNAN(value) FROM stream;               -- true if value is NaN, NULL if value is NULL
+SELECT * FROM stream WHERE value IS NaN;       -- NULL rows excluded
+SELECT * FROM stream WHERE value IS NOT NaN;   -- NULL rows excluded here too
+```
+
+Because a NULL predicate excludes the row, a NULL value is returned by **neither** `IS NaN` nor
+`IS NOT NaN`. To treat both as invalid, test for them explicitly:
+
+```sql
+SELECT * FROM stream WHERE ISNULL(value) OR ISNAN(value);
+```
+
 ---
 
 ## Summary
@@ -336,6 +355,7 @@ SELECT ISNULL(CONCAT(a, b)) FROM stream;       -- true if the concat result is N
 | `NOT` | NULL → NULL | Yes, if operand nullable |
 | `CONCAT` | Either operand NULL → NULL | Yes, if any operand nullable |
 | `ISNULL(x)` | Returns TRUE/FALSE | **Always NOT NULL** |
+| `ISNAN(x)`, `x IS [NOT] NaN` | NULL → NULL | Yes, if operand nullable |
 | `SUM`, `AVG`, `MIN`, `MAX`, `MEDIAN` | Skips NULLs; result is NULL only if **every** input is NULL | Yes, if input nullable |
 | `COUNT(field)` | Skips NULLs | **Always NOT NULL** |
 | Filter (WHERE) | NULL predicate → row excluded | N/A |
