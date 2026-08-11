@@ -40,6 +40,7 @@
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/IsNaNLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/IsNullCheckLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
@@ -438,6 +439,14 @@ void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparison
     {
         function = IsNullCheckLogicalFunction(popFunction());
         if (comparison->nullNotnull()->NOT() != nullptr)
+        {
+            function = NegateLogicalFunction(std::move(function));
+        }
+    }
+    else if (comparison->IS() != nullptr && comparison->nanNotNan() != nullptr)
+    {
+        function = IsNaNLogicalFunction(popFunction());
+        if (comparison->nanNotNan()->NOT() != nullptr)
         {
             function = NegateLogicalFunction(std::move(function));
         }

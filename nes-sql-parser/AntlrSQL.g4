@@ -361,6 +361,10 @@ nullNotnull
     : NOT? NULLTOKEN
     ;
 
+nanNotNan
+    : NOT? NANTOKEN
+    ;
+
 streamName: IDENTIFIER;
 
 fileFormat: CSV_FORMAT;
@@ -377,6 +381,7 @@ booleanComparison
     | NOT? kind=LIKE quantifier=(ANY | SOME | ALL) ('('')' | '(' expression (',' expression)* ')')
     | NOT? kind=LIKE pattern=valueExpression (ESCAPE escapeChar=STRING)?
     | IS nullNotnull
+    | IS nanNotNan
     | IS NOT? kind=(TRUE | FALSE | UNKNOWN)
     | IS NOT? kind=DISTINCT FROM right=valueExpression
     ;
@@ -489,6 +494,7 @@ LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
 MERGE: 'MERGE' | 'merge';
+NANTOKEN: 'NAN' | 'nan' | 'NaN';
 NATURAL: 'NATURAL';
 NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';

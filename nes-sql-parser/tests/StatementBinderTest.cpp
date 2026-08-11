@@ -300,6 +300,36 @@ TEST_F(StatementBinderTest, BindQueryWithIsNotNullPredicate)
     EXPECT_EQ(predicate, "NOT(ISNULL(B))");
 }
 
+TEST_F(StatementBinderTest, BindQueryWithIsNaNPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b is NaN INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "ISNAN(B)");
+}
+
+TEST_F(StatementBinderTest, BindQueryWithIsNotNaNPredicate)
+{
+    const std::string queryString = "SELECT a FROM inputStream WHERE b IS NOT NAN INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto selectionOperators = getOperatorByType<SelectionLogicalOperator>(plan);
+    ASSERT_EQ(selectionOperators.size(), 1);
+
+    const auto predicate = selectionOperators.front()->getPredicate().explain(ExplainVerbosity::Short);
+    EXPECT_EQ(predicate, "NOT(ISNAN(B))");
+}
+
 TEST_F(StatementBinderTest, BindQueryWithUnsupportedIsTruePredicate)
 {
     const std::string queryString = "SELECT a FROM inputStream WHERE b IS TRUE INTO outputStream";
