@@ -13,6 +13,7 @@ A basic setup consists of two components: a [**NebulaStream worker**](), which e
 
 Open a terminal and run the following Docker command to start a NebulaStream worker:
 
+<!-- quick-start-run-worker:start -->
 ```bash
 docker run -d --rm \
   --name worker \
@@ -20,6 +21,7 @@ docker run -d --rm \
   nebulastream/nes-worker \
   --grpc=0.0.0.0:8080
 ```
+<!-- quick-start-run-worker:end -->
 
 This command starts a NebulaStream worker in a Docker container and exposes its gRPC port on all network interfaces at `0.0.0.0:8080`.
 Check with `docker ps` if the worker is running.
@@ -42,6 +44,7 @@ To do this, the CLI requires a [topology file](), which defines the query config
 
 Create a file called `topology.yaml` and paste the following content:
 
+<!-- quick-start-topology:start -->
 ```yaml
 query: |
   SELECT VALUE * UINT64(2) AS SCALED_VALUE
@@ -86,6 +89,7 @@ workers:
     data_address: localhost:9090
     max_operators: 10000
 ```
+<!-- quick-start-topology:end -->
 
 ### What Does This Query Do?
 
@@ -98,6 +102,7 @@ Check the [topology file format]() for further details on how to structure a top
 
 Run the query using the following command:
 
+<!-- quick-start-submit-query:start -->
 ```bash
   docker run --rm \
     --network container:worker \
@@ -105,6 +110,7 @@ Run the query using the following command:
     nebulastream/nes-cli \
     -t /catalog/topology.yaml start
 ```
+<!-- quick-start-submit-query:end -->
 
 If query registration is successful, CLI returns the [query ID]() and stops.
 
@@ -120,9 +126,11 @@ soaring_thoroughbred_0926
 
 After a few seconds, inspect the output:
 
+<!-- quick-start-inspect-output:start -->
 ```bash
 head output/results.csv
 ```
+<!-- quick-start-inspect-output:end -->
 
 The first rows should look like this:
 
@@ -151,9 +159,11 @@ Results were outputted to a CSV file after processing.
 
 Then you can stop the worker with the following command:
 
+<!-- quick-start-stop-worker:start -->
 ```bash
 docker stop worker
 ```
+<!-- quick-start-stop-worker:end -->
 
 ## Use Docker Compose
 
@@ -161,6 +171,7 @@ You can also use [Docker Compose](https://docs.docker.com/compose/install/) to o
 
 First, create a `compose.yaml`:
 
+<!-- quick-start-compose:start -->
 ```yaml
 services:
   worker:
@@ -180,6 +191,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["tail -f /dev/null"]
 ```
+<!-- quick-start-compose:end -->
 
 The compose file above keeps the `nes-cli` alive, so that we can check the query status, and also stop the query later.
 
@@ -188,17 +200,21 @@ The compose file above keeps the `nes-cli` alive, so that we can check the query
 Create a new topology file by using the command below.
 It uses the existing topology file to create a new one (`compose-topology.yaml`) by replacing the host address, so that the client can access the worker.
 
+<!-- quick-start-create-compose-topology:start -->
 ```bash
 sed 's/localhost/worker/g' topology.yaml > compose-topology.yaml
 ```
+<!-- quick-start-create-compose-topology:end -->
 
 ### Run the Setup
 
 Run the docker compose file using the following command:
 
+<!-- quick-start-start-compose:start -->
 ```bash
 docker compose up -d
 ```
+<!-- quick-start-start-compose:end -->
 
 This runs the worker and the nes-cli instances.
 
@@ -218,9 +234,11 @@ This runs the worker and the nes-cli instances.
 
 Check that both containers are running:
 
+<!-- quick-start-list-compose:start -->
 ```bash
 docker compose ps
 ```
+<!-- quick-start-list-compose:end -->
 
 <details>
 <summary>Expected Output</summary>
@@ -239,9 +257,11 @@ CONTAINER ID   IMAGE                       COMMAND                  CREATED     
 
 Run the following command to submit the query via `nes-cli`:
 
+<!-- quick-start-submit-compose-query:start -->
 ```bash
-docker compose exec nes-cli nes-cli -t /catalog/compose-topology.yaml start
+docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml start
 ```
+<!-- quick-start-submit-compose-query:end -->
 
 The command prints a query ID.
 Seeing the query ID in the output means the query registration is successful, and the query is running.
@@ -259,9 +279,11 @@ regal_hanoverian_9516
 
 If you kept the query ID, check its status by replacing it with the `<query-id>` below:
 
+<!-- quick-start-status-compose-query:start -->
 ```bash
-docker compose exec nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
+docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
 ```
+<!-- quick-start-status-compose-query:end -->
 
 This should return the status of the registered query.
 
@@ -327,9 +349,11 @@ Each timestamp contains:
 
 Stop the query using `nes-cli`:
 
+<!-- quick-start-stop-compose-query:start -->
 ```bash
-docker compose exec nes-cli nes-cli -t /catalog/compose-topology.yaml stop <query-id>
+docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml stop <query-id>
 ```
+<!-- quick-start-stop-compose-query:end -->
 
 <details>
 <summary>Example Output of a Query Stop Command</summary>
@@ -347,9 +371,11 @@ docker compose exec nes-cli nes-cli -t /catalog/compose-topology.yaml stop <quer
 
 And check the status again:
 
+<!-- quick-start-status-stopped-compose-query:start -->
 ```bash
-docker compose exec nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
+docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
 ```
+<!-- quick-start-status-stopped-compose-query:end -->
 
 This should return the status of the registered query as `Stopped`.
 
@@ -407,7 +433,9 @@ This should return the status of the registered query as `Stopped`.
 
 You can stop everything by shutting down the Compose stack.
 
+<!-- quick-start-stop-compose:start -->
 ```bash
 docker compose down
 ```
+<!-- quick-start-stop-compose:end -->
 ---
