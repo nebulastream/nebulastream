@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstddef>
 #include <span>
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
@@ -22,6 +23,21 @@
 
 namespace NES
 {
+
+/// Sums up the sizes of all fields, including their null bytes.
+/// These are free functions instead of members of Schema, because Schema must not require its field type
+/// to have a notion of size, only a getFullyQualifiedName() method.
+[[nodiscard]] inline size_t getSizeInBytes(const Schema<QualifiedUnboundField, Ordered>& schema)
+{
+    return std::ranges::fold_left(
+        schema, size_t{0}, [](const size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+}
+
+[[nodiscard]] inline size_t getSizeInBytes(const Schema<UnqualifiedUnboundField, Ordered>& schema)
+{
+    return std::ranges::fold_left(
+        schema, size_t{0}, [](const size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
+}
 
 }
 

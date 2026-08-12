@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -96,8 +97,8 @@ TestableChainedHashMap::TestableChainedHashMap(
     valueDataTypes
         = std::vector<DataType>(fieldTypes.begin() + numKeyFields, fieldTypes.end()); /// NOLINT(cppcoreguidelines-narrowing-conversions)
 
-    const uint64_t keySize = createSchemaFromDataTypes(keyDataTypes).getSizeInBytes();
-    const uint64_t valueSize = createSchemaFromDataTypes(valueDataTypes).getSizeInBytes();
+    const uint64_t keySize = getSizeInBytes(createSchemaFromDataTypes(keyDataTypes));
+    const uint64_t valueSize = getSizeInBytes(createSchemaFromDataTypes(valueDataTypes));
     entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const uint64_t pageSize = entrySize * numEntriesPerPage;
     /// A probe entry never stores value bytes: findEntry() only reads the key region + hash off the

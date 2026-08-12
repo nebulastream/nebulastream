@@ -31,6 +31,7 @@
 
 #include <Configuration/WorkerConfiguration.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -216,7 +217,7 @@ public:
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
-        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeInBytes());
+        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, getSizeInBytes(schema));
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector

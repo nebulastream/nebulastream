@@ -21,13 +21,13 @@
 #include <ranges>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 #include <options.hpp>
@@ -53,7 +53,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
     engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
     pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-    PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getSchema().getSizeInBytes());
+    PagedVector::init(pagedVector, bufferManager.getBufferSize(), getSizeInBytes(layout->getSchema()));
 
     pushbackFn.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
