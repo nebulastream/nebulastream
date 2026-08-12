@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -36,7 +37,6 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -395,7 +395,7 @@ rc::Gen<TestUtils::AnyVec> genAnyVec(std::vector<DataType> types, uint64_t buffe
 
 uint64_t estimateSchemaSize(const std::vector<DataType>& types)
 {
-    return TestUtils::createSchemaFromDataTypes(types).getSizeInBytes();
+    return getSizeInBytes(TestUtils::createSchemaFromDataTypes(types));
 }
 
 /// Reads pagedVector.at(idx) for a rapidcheck-drawn set of indices and asserts each record equals the reference.

@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -92,7 +93,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                 const ChainedHashMapRef::ChainedEntryRef entryRefReset{
                     entry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
-                const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+                const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
                 nautilus::invoke(
                     +[](TupleBuffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
                     {

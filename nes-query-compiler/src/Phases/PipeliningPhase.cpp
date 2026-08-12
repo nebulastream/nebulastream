@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -98,11 +99,11 @@ PhysicalOperator createScanOperator(
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
-    if (inputSchema.value().getSizeInBytes() > configuredBufferSize)
+    if (getSizeInBytes(inputSchema.value()) > configuredBufferSize)
     {
         throw TuplesTooLargeForPipelineBufferSize(
             "Got pipeline with an input schema size of {}, which is larger than the configured buffer size of the pipeline, which is {}",
-            inputSchema.value().getSizeInBytes(),
+            getSizeInBytes(inputSchema.value()),
             configuredBufferSize);
     }
 
