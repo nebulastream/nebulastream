@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(${CMAKE_CURRENT_LIST_DIR}/DependencyHash.cmake)
+
 # Check Docker once for both tests and image packaging.
 find_program(DOCKER_EXECUTABLE docker)
 if (DOCKER_EXECUTABLE)
@@ -30,15 +32,7 @@ else ()
 endif ()
 
 if (NES_DOCKER_AVAILABLE)
-    if (NOT DEFINED VCPKG_HASH OR VCPKG_HASH STREQUAL "")
-        execute_process(
-            COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            OUTPUT_VARIABLE VCPKG_HASH
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif ()
+    get_nes_dependency_hash(VCPKG_HASH)
     set(NES_RUNTIME_BASE_IMAGE "nebulastream/nes-runtime-base:${VCPKG_HASH}")
 endif ()
 

@@ -29,6 +29,7 @@ HASH_PATHS=(
   vcpkg
   docker/dependency
   docker/runtime
+  scripts/hash_dependencies.sh
 )
 # Auto-discover all Cargo manifests + lockfiles (any depth) under each Rust workspace.
 # Adding a new workspace later only requires extending the list of roots passed to find.
