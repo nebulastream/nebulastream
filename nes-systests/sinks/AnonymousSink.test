@@ -1,6 +1,6 @@
 # name: sinks/AnonymousSink.test
 # description: Creating anonymous sinks within queries
-# groups: [Sources]
+# groups: [Sinks]
 
 SELECT ID, VALUE, TIMESTAMP
 FROM File(

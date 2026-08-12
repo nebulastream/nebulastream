@@ -1,6 +1,6 @@
 # name: sinks/VoidSink.test
 # description: Void sink discards all tuples; no result file is produced and the systest harness must skip the output check.
-# groups: [Sources]
+# groups: [Sinks]
 
 SELECT ID, VALUE, TIMESTAMP
 FROM File(
