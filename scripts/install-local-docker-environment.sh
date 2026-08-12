@@ -285,7 +285,12 @@ fi
 ### whether any image for the same hash exists under a different (stdlib, sanitizer)
 ### combo and let the user pick one or fall through to a local dependency rebuild.
 if [ $BUILD_LOCAL -eq 0 ]; then
-  if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
+  # Prefer an image that is already present locally over querying the registry. Tags are
+  # content-addressed (hash-arch-stdlib-sanitizer), so a local image carrying the tag is by
+  # construction the right one -- and this keeps switching between already-pulled dependency
+  # versions working without a network connection.
+  if ! docker image inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 \
+     && ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
     echo -e "${RED}Remote development image nebulastream/nes-development:${TAG} does not exist.${NC}"
     ALTERNATIVE_TAGS=()
     while IFS= read -r alt_line; do
