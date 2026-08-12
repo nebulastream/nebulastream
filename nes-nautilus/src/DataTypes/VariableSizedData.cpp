@@ -78,14 +78,14 @@ nautilus::val<bool> VariableSizedData::isValid() const
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
 {
-    if (size != rhs.size)
+    nautilus::val<bool> result = false;
+    if (size == rhs.size)
     {
-        return {false};
+        const auto varSizedData = getContent();
+        const auto rhsVarSizedData = rhs.getContent();
+        result = nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0;
     }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+    return result;
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
