@@ -46,7 +46,7 @@ if (NOT NES_SKIP_VCPKG)
     # where an exported vcpkg sdk was prepared. This means we will not run in manifest mode,
     # We check if the VCPKG_DEPENDENCY_HASH environment matches the current hash
     message(STATUS "NES_PREBUILT_VCPKG_ROOT Environment is set: Assuming Docker Development Environment with pre-built dependencies at $ENV{NES_PREBUILT_VCPKG_ROOT}")
-    execute_process(COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
+    execute_process(COMMAND ${CMAKE_SOURCE_DIR}/scripts/hash_dependencies.sh
                     OUTPUT_VARIABLE VCPKG_HASH
                     OUTPUT_STRIP_TRAILING_WHITESPACE
     )
