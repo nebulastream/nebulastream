@@ -1,4 +1,7 @@
-# syntax=docker/dockerfile:1
+# No `# syntax=` directive on purpose: this file uses only pre-18.09 Dockerfile instructions, and
+# pinning an external frontend would make every local rebuild pull docker/dockerfile:1 from Docker
+# Hub -- which breaks switching between already-downloaded dependency images while offline.
+# Re-add it if you ever need BuildKit-only syntax (--mount, --checksum, heredocs) in this file.
 # This image is build locally on a developers machine. It installs the current user into the container instead of
 # relying on the root user. Ubuntu 24 by default installs the ubuntu user which is replaced.
 ARG TAG=latest
