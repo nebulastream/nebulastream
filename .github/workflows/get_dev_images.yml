@@ -77,7 +77,7 @@ jobs:
       - name: Calculate and lookup hash
         id: hash-and-lookup
         run: |
-          HASH=$(docker/dependency/hash_dependencies.sh)
+          HASH=$(scripts/hash_dependencies.sh)
           echo "Using Hash: $HASH"
           
           # Output the tag (hash) to GitHub Actions

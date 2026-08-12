@@ -235,7 +235,7 @@ else
 fi
 
 cd "$(git rev-parse --show-toplevel)"
-HASH=$(docker/dependency/hash_dependencies.sh)
+HASH=$(scripts/hash_dependencies.sh)
 ARCH=$(uname -m)
 if [ "$ARCH" == "x86_64" ]; then
    ARCH="x64"
