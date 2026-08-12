@@ -30,6 +30,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -446,7 +447,7 @@ bool validateResult(TestHandle<TupleSchemaTemplate>& testHandle)
                 printTupleBuffer(" Expected result buffer:\n", testHandle.expectedResultVectors[taskIndex][bufferIndex], *tupleBufferRef);
             }
             isValid &= checkIfBuffersAreEqual(
-                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeInBytes());
+                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], getSizeInBytes(testHandle.schema));
             ++bufferIndex;
         }
         ++taskIndex;

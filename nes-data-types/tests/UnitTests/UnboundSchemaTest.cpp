@@ -27,6 +27,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -159,7 +160,7 @@ TEST_F(UnboundSchemaTest, CalcSizeInBytes)
 
     const auto expectedSize = (DataTypeProvider::provideDataType(DataType::Type::BOOLEAN).getSizeInBytesWithNull() * 2)
         + DataTypeProvider::provideDataType(DataType::Type::INT32).getSizeInBytesWithNull();
-    EXPECT_EQ(unboundSchema.getSizeInBytes(), expectedSize);
+    EXPECT_EQ(getSizeInBytes(unboundSchema), expectedSize);
 }
 
 TEST_F(UnboundSchemaTest, EqualityOrdered)

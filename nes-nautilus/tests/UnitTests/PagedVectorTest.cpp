@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -37,7 +38,6 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -352,7 +352,7 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
 
 uint64_t estimateSchemaSize(const std::vector<DataType>& types)
 {
-    return createSchemaFromDataTypes(types).getSizeInBytes();
+    return getSizeInBytes(createSchemaFromDataTypes(types));
 }
 
 template <typename T>
@@ -706,7 +706,7 @@ public:
         engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
         pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-        PagedVector::init(pagedVector, bufferManager.getBufferSize(), layout->getSchema().getSizeInBytes());
+        PagedVector::init(pagedVector, bufferManager.getBufferSize(), getSizeInBytes(layout->getSchema()));
 
         /// NOLINTBEGIN(performance-unnecessary-value-param)
         pushbackFn.emplace(engine->registerFunction(std::function(

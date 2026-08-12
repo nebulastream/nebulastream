@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -205,7 +206,7 @@ inline void writeTupleBuffersToFile(
     const std::vector<size_t>& varSizedFieldOffsets)
 {
     sortTupleBuffers(resultBufferVec);
-    const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
+    const auto sizeOfSchemaInBytes = getSizeInBytes(schema);
 
     const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
         = [](const std::vector<TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
@@ -269,7 +270,7 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
     const std::filesystem::path& filepath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
-    const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
+    const auto sizeOfSchemaInBytes = getSizeInBytes(schema);
     if (std::ifstream file(filepath, std::ifstream::binary); file.is_open())
     {
         const auto fileHeader = [](std::ifstream& file, const std::filesystem::path& filepath)

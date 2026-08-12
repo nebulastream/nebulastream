@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
@@ -62,7 +63,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                 {
                     const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapVal, fieldKeys, fieldValues);
-                    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+                    const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
                     nautilus::invoke(
                         +[](AbstractBufferProvider* bufferManager, TupleBuffer* pagedVectorMemArea, const uint64_t tupleSize)
                         {

@@ -29,6 +29,7 @@
 
 #include <DataTypes/TimeUnit.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -129,8 +130,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
-    const uint64_t tupleSizeLeft = leftTupleLayout->getSchema().getSizeInBytes();
-    const uint64_t tupleSizeRight = rightTupleLayout->getSchema().getSizeInBytes();
+    const uint64_t tupleSizeLeft = getSizeInBytes(leftTupleLayout->getSchema());
+    const uint64_t tupleSizeRight = getSizeInBytes(rightTupleLayout->getSchema());
 
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
     auto characteristicsAreBound

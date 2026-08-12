@@ -21,6 +21,7 @@
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -222,7 +223,7 @@ Record MedianAggregationPhysicalFunction::lower(
 void MedianAggregationPhysicalFunction::reset(
     const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    const nautilus::val<uint64_t> tupleSize = tupleLayout->getSchema().getSizeInBytes();
+    const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
     nautilus::invoke(
         +[](AggregationState* pagedVectorMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
         {

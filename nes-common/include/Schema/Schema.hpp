@@ -113,8 +113,6 @@ public:
 
     [[nodiscard]] std::unordered_set<IdList> getUniqueFieldNames() const;
 
-    [[nodiscard]] size_t getSizeInBytes() const;
-
     [[nodiscard]] auto begin() const -> decltype(std::declval<FieldContainer>().cbegin());
 
     [[nodiscard]] auto end() const -> decltype(std::declval<FieldContainer>().cend());
@@ -124,7 +122,6 @@ public:
 private:
     FieldContainer fields;
     FieldByNameType fieldsByName;
-    size_t sizeInBytes{};
 };
 
 template <typename FieldType, OrderType IsOrdered>
@@ -169,8 +166,6 @@ Schema<FieldType, IsOrdered>::Schema(FieldContainer fields) : fields(std::move(f
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = fieldsByName;
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -186,8 +181,6 @@ Schema<FieldType, IsOrdered>::Schema(Range&& input) : fields{std::forward<Range>
         NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
     }
     this->fieldsByName = std::move(calculatedFieldsByName);
-    sizeInBytes = std::ranges::fold_left(
-        this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
 }
 
 template <typename FieldType, OrderType IsOrdered>
@@ -320,12 +313,6 @@ auto Schema<FieldType, IsOrdered>::getUniqueFieldNames() const -> std::unordered
 {
     auto namesView = this->fields | std::views::transform([](const FieldType& field) { return field.getFullyQualifiedName(); });
     return {namesView.begin(), namesView.end()};
-}
-
-template <typename FieldType, OrderType IsOrdered>
-size_t Schema<FieldType, IsOrdered>::getSizeInBytes() const
-{
-    return sizeInBytes;
 }
 
 template <typename FieldType, OrderType IsOrdered>

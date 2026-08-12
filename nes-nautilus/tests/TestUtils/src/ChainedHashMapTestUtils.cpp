@@ -30,6 +30,7 @@
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
@@ -97,8 +98,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
         std::array{inputSchemaKey, inputSchemaValue} | std::views::join | std::ranges::to<std::vector>()};
 
     /// Setting the hash map configurations
-    keySize = inputSchemaKey.getSizeInBytes();
-    valueSize = inputSchemaValue.getSizeInBytes();
+    keySize = getSizeInBytes(inputSchemaKey);
+    valueSize = getSizeInBytes(inputSchemaValue);
     entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
@@ -111,7 +112,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto callsToCreateMonotonicValues = 3;
     constexpr NES::BufferAlignment bufferAlignment{64};
     constexpr double unpooledMemoryFraction = 0.9;
-    const auto bufferNeeded = callsToCreateMonotonicValues * ((inputSchema.getSizeInBytes() * params.numberOfItems) / bufferSize + 1);
+    const auto bufferNeeded = callsToCreateMonotonicValues * ((getSizeInBytes(inputSchema) * params.numberOfItems) / bufferSize + 1);
     bufferManager = BufferManager::create(
         10 * std::max(bufferNeeded, minimumBuffers) * bufferSize,
         unpooledMemoryFraction,
@@ -379,10 +380,10 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * getSizeInBytes(inputSchema));
     if (not bufferOutputOpt)
     {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeInBytes());
+        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * getSizeInBytes(inputSchema));
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();
