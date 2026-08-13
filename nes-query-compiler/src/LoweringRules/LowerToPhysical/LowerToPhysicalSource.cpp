@@ -53,7 +53,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
 
     const auto outputFieldOrdering = traitSet.get<FieldOrderingTrait>();
     const auto outputFieldMapping = traitSet.get<FieldMappingTrait>();
-    static auto networkString = Identifier::parse("network").asCanonicalString();
+    static auto networkString = Identifier::parse("network");
     for (const auto& [field, mappedTo] : outputFieldMapping->getUnderlying())
     {
         PRECONDITION(

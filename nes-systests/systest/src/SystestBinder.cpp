@@ -55,6 +55,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -257,15 +258,18 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path
-                    = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
-                    path.has_value())
+                if (logicalSourceOperator->getSourceDescriptor().getPluginData().getValue().has_value()
+                    && logicalSourceOperator->getSourceDescriptor().getPluginData().getValue().type() == typeid(FileSourceConfig))
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
                         entry.empty())
                     {
+                        const auto& path = logicalSourceOperator->getSourceDescriptor()
+                                               .getPluginData()
+                                               .template getAs<const FileSourceConfig&>()
+                                               .filePath;
                         sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{path}, 1));
                     }
                     else
                     {
@@ -278,7 +282,7 @@ public:
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
                         logicalSourceOperator->getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator->getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        logicalSourceOperator->getSourceDescriptor().getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));

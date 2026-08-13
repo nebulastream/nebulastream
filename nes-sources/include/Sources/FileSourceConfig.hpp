@@ -12,15 +12,22 @@
     limitations under the License.
 */
 
-#include <SourceValidationRegistry.hpp>
+#pragma once
+
+#include <string>
 
 namespace NES
 {
 
-SourceValidationRegistry& SourceValidationRegistry::instance()
-{
-    static SourceValidationRegistry inst;
-    return inst;
-}
+class InstantiatedConfig;
 
+/// Source-defined config struct: instantiated from the generic config by the SourceConfig
+/// registry entry, carried through the SourceDescriptor as std::any, and serialized via
+/// reflection of exactly this struct (all members are reflectable).
+struct FileSourceConfig
+{
+    std::filesystem::path filePath;
+
+    static std::expected<FileSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 }

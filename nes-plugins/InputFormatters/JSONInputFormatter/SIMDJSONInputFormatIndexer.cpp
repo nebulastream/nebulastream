@@ -14,15 +14,21 @@
 
 #include <SIMDJSONInputFormatIndexer.hpp>
 
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <utility>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Strings.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SIMDJSONRawBufferIndex.hpp>
@@ -61,8 +67,43 @@ std::ostream& SIMDJSONInputFormatIndexer::toString(std::ostream& str) const
     return str << fmt::format("SIMDJSONInputFormatIndexer(tupleDelimiter: {})", SIMDJSONInputFormatIndexer::TUPLE_DELIMITER);
 }
 
-DescriptorConfig::Config SIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+namespace
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersSIMDJSON>(std::move(config), NAME);
+
+/// Config fields of the JSON input formatter, shared by getConfigSchema (declaration) and
+/// SIMDJSONInputFormatterConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<char> TUPLE_DELIMITER_FIELD{
+    Identifier::parse("TUPLE_DELIMITER"),
+    R"(A single byte delimiter to separate tuples. You can use \ to write out for example \n or \t .)",
+    /// Single-byte delimiter parameter; unescapes textual escape sequences such as "\n" or "\t" first.
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<char, Exception>
+                {
+                    const auto unescaped = unescapeSpecialCharacters(value);
+                    if (unescaped.size() != 1)
+                    {
+                        return std::unexpected{InvalidConfigParameter("Expected a single (possibly escaped) character, got {}", value)};
+                    }
+                    return unescaped.front();
+                });
+    },
+    '\n',
+    "\\n"};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> SIMDJSONInputFormatIndexer::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("JSON_INPUT_FORMATTER"), TUPLE_DELIMITER_FIELD);
+}
+
+std::expected<SIMDJSONInputFormatterConfig, Exception> SIMDJSONInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return SIMDJSONInputFormatterConfig{.tupleDelimiter = config.get(TUPLE_DELIMITER_FIELD)};
 }
 }

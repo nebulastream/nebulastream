@@ -114,13 +114,13 @@ PhysicalOperator createScanOperator(
     {
         const auto inputFormatterConfig
             = prevPipeline.getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getInputFormatterDescriptor();
-        if (toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE")
+        if (inputFormatterConfig.getInputFormatterType() != Identifier::parse("NATIVE"))
         {
             /// The inputSchema (from the downstream operator) may be reordered (e.g. alphabetically by FieldOrderingTrait).
             /// Using it as the memoryProvider would mis-map CSV column N to the wrong field name.
             /// Always use the source's natural schema order for the InputFormatter's field-to-column mapping.
-            const auto& sourceLogicalSchema
-                = *prevPipeline.getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getLogicalSource().getSchema();
+            const auto sourceLogicalSchema
+                = prevPipeline.getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getSchema();
             const auto sourceMemoryProvider
                 = LowerSchemaProvider::lowerSchema(configuredBufferSize, sourceLogicalSchema, memoryLayout.value());
             return ScanPhysicalOperator(
@@ -307,25 +307,21 @@ void buildPipelineRecursively(
         const auto sinkFormat = sink->getDescriptor().getFormatType();
         if (currentPipeline->isSourcePipeline())
         {
-            const auto sourceFormat = toUpperCase(currentPipeline->getRootOperator()
-                                                      .get<SourceDescriptorPhysicalOperator>()
-                                                      .getDescriptor()
-                                                      .getInputFormatterDescriptor()
-                                                      .getInputFormatterType());
+            const auto sourceFormat = currentPipeline->getRootOperator()
+                                          .get<SourceDescriptorPhysicalOperator>()
+                                          .getDescriptor()
+                                          .getInputFormatterDescriptor()
+                                          .getInputFormatterType();
 
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
             /// may start and end with a cut-off tuples (rows in the CSV case)
             /// The sink would output these buffers (out of order if the engine uses multiple threads), producing malformed data
-            if (not(sourceFormat == "NATIVE" and toUpperCase(sinkFormat) == "NATIVE"))
+            if (not(sourceFormat == Identifier::parse("NATIVE") and toUpperCase(sinkFormat) == "NATIVE"))
             {
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
                     *currentPipeline,
-                    *currentPipeline->getRootOperator()
-                         .get<SourceDescriptorPhysicalOperator>()
-                         .getDescriptor()
-                         .getLogicalSource()
-                         .getSchema(),
+                    currentPipeline->getRootOperator().get<SourceDescriptorPhysicalOperator>().getDescriptor().getSchema(),
                     opWrapper->getInputMemoryLayoutType(),
                     configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);

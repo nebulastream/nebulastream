@@ -25,16 +25,21 @@ target_include_directories(nes-sources PUBLIC
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # Runtime registries: a source plugin registers itself with add_registry_entry(<Registry> <name>).
-# Entries are expressed through the plugin's TYPE (included via HEADER_TEMPLATE): construction and
-# validation instantiate the factory templates from the registry headers; the systest adaptors are
-# static members of the source class.
+# By convention the plugin provides a class ${name}Source with a static getConfigSchema(), and a
+# config struct ${name}SourceConfig with a static fromConfig(const InstantiatedConfig&); the
+# systest data adaptors are static members of the source class.
 create_runtime_registry(Source nes-sources
-        ENTRY_TEMPLATE "makeSourceFactory<\${PLUGIN_NAME}Source>()"
+        ENTRY_TEMPLATE "makeSourceFactory<\${PLUGIN_NAME}Source, \${PLUGIN_NAME}SourceConfig>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
-create_runtime_registry(SourceValidation nes-sources
-        ENTRY_TEMPLATE "makeSourceValidator<\${PLUGIN_NAME}Source>()"
+create_runtime_registry(SourceConfigSchema nes-sources
+        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}Source::getConfigSchema(); }"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
+create_runtime_registry(SourceConfig nes-sources
+        ENTRY_TEMPLATE "makeSourceConfigEntry<\${PLUGIN_NAME}SourceConfig>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
