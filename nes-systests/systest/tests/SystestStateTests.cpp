@@ -96,7 +96,7 @@ TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigEx
     config.testsDiscoverDir = tempDir.get().string();
     config.testFileExtension = ".test";
     config.globalExcludedGroups = {"large"};
-    config.testGroups.add("large");
+    config.testGroups.push_back("large");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -113,8 +113,8 @@ TEST_F(SystestStateTest, ExplicitCommandLineExclusionOverridesExplicitInclusion)
     SystestConfiguration config;
     config.testsDiscoverDir = tempDir.get().string();
     config.testFileExtension = ".test";
-    config.testGroups.add("Join");
-    config.excludeGroups.add("Join");
+    config.testGroups.push_back("Join");
+    config.excludeGroups.push_back("Join");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -129,7 +129,7 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
 
     SystestConfiguration config;
     config.directlySpecifiedTestFiles = joinFile.string();
-    config.disabledTestFiles.add("join.test");
+    config.disabledTestFiles.push_back("join.test");
 
     const auto testMap = loadTestFileMap(config);
 

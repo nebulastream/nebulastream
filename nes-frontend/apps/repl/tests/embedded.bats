@@ -68,15 +68,15 @@ setup()         { nes_offline_setup; }
 }
 
 @test "Fail on invalid optimizer config name" {
-  run $NES_REPL --optimizer test_invalid_config_name=INVALID
+  run $NES_REPL -- --optimizer.test_invalid_config_name=INVALID
   [ "$status" -ne 0 ]
-  grep "invalid config parameter; Unrecognized configuration key: 'test_invalid_config_name'" nes-repl.log
+  grep -i "Unresolvable fields: optimizer.test_invalid_config_name" nes-repl.log
 }
 
 @test "Fail on invalid optimizer config value" {
-  run $NES_REPL --optimizer join_strategy=INVALID
+  run $NES_REPL -- --optimizer.join_strategy=INVALID
   [ "$status" -ne 0 ]
-  grep "invalid config parameter; Enum for INVALID was not found." nes-repl.log
+  grep "Invalid join strategy, must be NESTED_LOOP_JOIN, HASH_JOIN or OPTIMIZER_CHOOSES: INVALID" nes-repl.log
 }
 
 

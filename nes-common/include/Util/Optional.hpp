@@ -11,18 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/Validation/BooleanValidation.hpp>
 
-#include <algorithm>
+#pragma once
+#include <expected>
+#include <optional>
+#include <utility>
 
 namespace NES
 {
 
-bool BooleanValidation::isValid(const std::string& parameter) const
+template <typename T, typename E, typename ESupplier>
+std::expected<T, E> optionalToExpected(std::optional<T> optional, ESupplier orElse)
 {
-    std::string lowerParam = parameter;
-    std::ranges::transform(lowerParam, lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
-
-    return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
+    if (optional.has_value())
+    {
+        return std::move(optional.value());
+    }
+    return std::unexpected<E>{orElse()};
 }
+
 }

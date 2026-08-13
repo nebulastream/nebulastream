@@ -14,59 +14,30 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include <cstdint>
+#include <optional>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
 
 /// Network configuration overrides for the query optimizer. These are set by the plan decomposer,
 /// which sets the network source / sink configuration per query, overriding the worker-level defaults.
-class QueryOptimizerNetworkConfiguration : public BaseConfiguration
+/// Every field is optional: only explicitly passed values override the worker-level defaults.
+struct QueryOptimizerNetworkConfiguration
 {
-public:
-    QueryOptimizerNetworkConfiguration() = default;
-    QueryOptimizerNetworkConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    /// Size of the sender software queue per network channel.
-    UIntOption senderQueueSize
-        = {"sender_queue_size", "1024", "Size of the sender software queue per network channel.", {std::make_shared<NumberValidation>()}};
+    std::optional<uint64_t> senderQueueSize;
+    std::optional<uint64_t> maxPendingAcks;
+    std::optional<uint64_t> receiverQueueSize;
+    std::optional<uint64_t> backpressureUpperThreshold;
+    std::optional<uint64_t> backpressureLowerThreshold;
 
-    /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged) per network channel.
-    UIntOption maxPendingAcks
-        = {"max_pending_acks",
-           "64",
-           "Maximum number of in-flight buffers awaiting acknowledgment per network channel",
-           {std::make_shared<NumberValidation>()}};
-
-    /// Size of the receiver data queue per network channel.
-    UIntOption receiverQueueSize
-        = {"receiver_queue_size", "10", "Size of the receiver data queue per network channel", {std::make_shared<NumberValidation>()}};
-
-    /// Number of buffered tuples at which backpressure is acquired on a network channel.
-    UIntOption backpressureUpperThreshold
-        = {"backpressure_upper_threshold",
-           "1000",
-           "Number of buffered tuples at which backpressure is acquired per network channel",
-           {std::make_shared<NumberValidation>()}};
-
-    /// Number of buffered tuples at which backpressure is released on a network channel.
-    UIntOption backpressureLowerThreshold
-        = {"backpressure_lower_threshold",
-           "200",
-           "Number of buffered tuples at which backpressure is released per network channel",
-           {std::make_shared<NumberValidation>()}};
-
-private:
-    std::vector<BaseOption*> getOptions() override
-    {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &backpressureUpperThreshold, &backpressureLowerThreshold};
-    }
+    static QueryOptimizerNetworkConfiguration fromConfig(const InstantiatedConfig& config);
 };
 
 }

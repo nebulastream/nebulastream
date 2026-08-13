@@ -23,6 +23,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <folly/concurrency/UnboundedQueue.h>
 #include <ErrorHandling.hpp>
@@ -95,13 +96,19 @@ using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, Quer
 class Channel
 {
 public:
-    Channel(WorkerConfig cfg, const SingleNodeWorkerConfiguration& workerConfiguration)
+    /// Resolving in the constructor (not the worker thread) surfaces configuration errors —
+    /// e.g. conflicting config layers — as an exception to whoever creates the backend.
+    Channel(WorkerConfig cfg, const WorkerConfigResolver& resolveWorkerConfiguration)
         : config(std::move(cfg))
+        , workerConfiguration(resolveWorkerConfiguration(this->config))
         , thread(
               "main",
               this->config.host,
-              [&requests = this->requests, &replies = this->replies, config = this->config, workerConfiguration](
-                  const std::stop_token& stopToken) { runWorker(stopToken, requests, replies, config, workerConfiguration); })
+              [&requests = this->requests,
+               &replies = this->replies,
+               config = this->config,
+               workerConfiguration = this->workerConfiguration](const std::stop_token& stopToken)
+              { runWorker(stopToken, requests, replies, config, workerConfiguration); })
     {
     }
 
@@ -125,18 +132,14 @@ private:
         folly::UMPSCQueue<Request, /*MayBlock*/ true>& requests,
         folly::USPSCQueue<Reply, /*MayBlock*/ true>& replies,
         const WorkerConfig& config,
-        const SingleNodeWorkerConfiguration& workerConfiguration)
+        SingleNodeWorkerConfiguration workerConfiguration)
     {
-        /// Start with the per-worker topology config, then overlay only
-        /// explicitly-set CLI values so that CLI args take highest priority
-        /// but topology values aren't clobbered by CLI defaults.
-        SingleNodeWorkerConfiguration mergedConfig = config.config;
-        mergedConfig.applyExplicitlySetFrom(workerConfiguration);
-
-        /// Set grpc/data from topology (these always come from cluster config)
-        mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
-        mergedConfig.dataAddress.setValue(config.dataAddress);
-        SingleNodeWorker worker(mergedConfig, config.host);
+        /// The injected resolver already produced the configuration (see the Channel
+        /// constructor); the backend only forces the addresses the cluster topology dictates.
+        workerConfiguration.grpcAddressUri = config.host.getRawValue();
+        workerConfiguration.dataAddress = config.dataAddress;
+        NES_INFO("Starting embedded worker {}", config.host.getRawValue());
+        SingleNodeWorker worker(workerConfiguration, config.host);
 
         /// On stop, push a poison `Stop` request so the blocking dequeue below wakes up.
         const std::stop_callback poison(stopToken, [&]() { requests.enqueue(Request{Stop{}}); });
@@ -183,6 +186,7 @@ private:
     mutable folly::USPSCQueue<Reply, /*MayBlock*/ true> replies;
     mutable std::mutex submitMutex;
     WorkerConfig config;
+    SingleNodeWorkerConfiguration workerConfiguration;
     /// Must be declared last: its body references the queues above, and on
     /// destruction the jthread requests stop and joins before earlier members go.
     Thread thread;
@@ -193,8 +197,8 @@ namespace NES
 {
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
-    WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
-    : channel(std::make_unique<detail::Channel>(std::move(config), std::move(workerConfiguration)))
+    WorkerConfig config, WorkerConfigResolver resolveWorkerConfiguration)
+    : channel(std::make_unique<detail::Channel>(std::move(config), std::move(resolveWorkerConfiguration)))
 {
 }
 
@@ -220,10 +224,11 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
     return channel->workerStatus(after);
 }
 
-BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
+BackendProvider createEmbeddedBackend(WorkerConfigResolver resolveWorkerConfiguration)
 {
-    return [workerConfiguration](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
-    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
+    return [resolveWorkerConfiguration
+            = std::move(resolveWorkerConfiguration)](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
+    { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, resolveWorkerConfiguration); };
 }
 
 }

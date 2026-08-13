@@ -39,11 +39,16 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
@@ -56,6 +61,8 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -430,6 +437,25 @@ std::vector<RunningQuery> runQueries(
 
 /// NOLINTEND(readability-function-cognitive-complexity)
 
+/// The run configuration (command line plus per-test-file overrides, already merged by the
+/// executor) is layered over the per-worker topology config and resolved against the declared
+/// schema. Matches the previous precedence: the run configuration wins over the topology.
+WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals)
+{
+    return [runConfigLiterals = std::move(runConfigLiterals)](const WorkerConfig& worker)
+    {
+        auto [literals, overwrites] = mergeConfigLayers(
+            {ConfigLayer{.name = "topology", .literals = worker.config},
+             ConfigLayer{.name = "run configuration", .literals = runConfigLiterals}});
+        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(literals);
+        if (not resolved.has_value())
+        {
+            throw InvalidConfigParameter("{}", resolved.error());
+        }
+        return std::move(resolved)->worker;
+    };
+}
+
 namespace
 {
 std::vector<RunningQuery>
@@ -455,14 +481,14 @@ serializeExecutionResults(const std::vector<RunningQuery>& queries, std::vector<
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
+    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals)));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
@@ -594,13 +620,14 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals))));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

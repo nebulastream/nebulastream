@@ -15,11 +15,10 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 
 namespace NES
@@ -32,22 +31,14 @@ enum class StreamJoinStrategy : uint8_t
     OPTIMIZER_CHOOSES
 };
 
-class QueryOptimizerConfiguration : public BaseConfiguration
+struct QueryOptimizerConfiguration
 {
-public:
-    QueryOptimizerConfiguration() = default;
-    QueryOptimizerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    EnumOption<StreamJoinStrategy> joinStrategy
-        = {"join_strategy",
-           StreamJoinStrategy::OPTIMIZER_CHOOSES,
-           "Join Strategy"
-           "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    StreamJoinStrategy joinStrategy;
+    QueryOptimizerNetworkConfiguration network;
 
-    QueryOptimizerNetworkConfiguration network = {"network", "Network configuration overrides for query decomposition"};
-
-private:
-    std::vector<BaseOption*> getOptions() override { return {&joinStrategy, &network}; }
+    static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);
 };
 
 }

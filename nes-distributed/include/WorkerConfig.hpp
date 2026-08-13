@@ -18,8 +18,10 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -44,7 +46,10 @@ struct WorkerConfig
     std::string dataAddress; /// Data-plane address for network sources/sinks (set via --data_address)
     Capacity maxOperators;
     std::vector<Host> downstream;
-    SingleNodeWorkerConfiguration config;
+    /// Worker config literals from the topology file. They are merged with the CLI literals
+    /// (CLI wins) and resolved against SingleNodeWorkerConfiguration's declared schema when the
+    /// worker is instantiated.
+    Schema<LiteralConfigValue, Ordered> config;
 };
 
 }

@@ -238,8 +238,8 @@ HashMapOptions createHashMapOptions(
         fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
-    const auto pageSize = conf.pageSize.getValue();
-    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
+    const auto pageSize = conf.pageSize;
+    const auto numberOfBuckets = conf.numberOfPartitions;
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto entriesPerPage = pageSize / entrySize;
 

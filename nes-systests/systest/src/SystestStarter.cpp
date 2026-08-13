@@ -22,28 +22,34 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <utility>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Plugins/BuiltinPlugins.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
+#include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
 #include <Thread.hpp>
 #include <WorkerConfig.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 namespace
 {
@@ -88,7 +94,6 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("--log-path").help("set the logging path");
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
     program.add_argument("--data").help("path to the directory where input CSV files are stored");
-    program.add_argument("-w", "--workerConfig").help("load worker config file (.yaml)");
     program.add_argument("-q", "--queryCompilerConfig").help("load query compiler config file (.yaml)");
     program.add_argument("--workingDir")
         .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
@@ -101,13 +106,13 @@ void configureArgumentParser(ArgumentParser& program)
         .default_value(6)
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
+    program.add_argument("-w", "--workerConfig")
+        .help("worker/optimizer config file (.yaml) with fully qualified keys (worker.*, optimizer.*, ...); the lowest-priority config "
+              "layer");
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
-    program.add_argument("--optimizer")
-        .default_value<std::vector<std::string>>({})
-        .append()
-        .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
     program.add_argument("--")
-        .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
+        .help("arguments passed to the worker/optimizer config, e.g., `-- --worker.query_engine.number_of_worker_threads=10 "
+              "--optimizer.join_strategy=HASH_JOIN`")
         .default_value(std::vector<std::string>{})
         .remaining();
     program.add_argument("-b")
@@ -140,10 +145,14 @@ void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration&
         const YAML::Node disableConfig = YAML::LoadFile(disableConfigFilePath);
         config.excludeGroupsConfiguredInDisableConfig
             = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
-        config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
-        config.globalExcludedGroups = config.excludeGroups.getValues()
-            | std::views::transform([](const auto& value) { return value.getValue(); }) | std::ranges::to<std::vector<std::string>>();
-        config.excludeGroups.clear();
+        if (config.excludeGroupsConfiguredInDisableConfig)
+        {
+            config.globalExcludedGroups = disableConfig["exclude_groups"].as<std::vector<std::string>>();
+        }
+        if (disableConfig["disabled_test_files"].IsDefined() && disableConfig["disabled_test_files"].IsSequence())
+        {
+            config.disabledTestFiles = disableConfig["disabled_test_files"].as<std::vector<std::string>>();
+        }
     }
     catch (const std::exception& err)
     {
@@ -211,12 +220,12 @@ void addTestQueryNumbers(NES::SystestConfiguration& config, const std::string& t
             const int end = std::stoi(item.substr(dashPos + 1));
             for (int i = start; i <= end; ++i)
             {
-                config.testQueryNumbers.add(i);
+                config.testQueryNumbers.push_back(i);
             }
             continue;
         }
 
-        config.testQueryNumbers.add(std::stoi(item));
+        config.testQueryNumbers.push_back(std::stoi(item));
     }
 }
 
@@ -299,11 +308,10 @@ void applyTestLocation(const ArgumentParser& program, NES::SystestConfiguration&
         return;
     }
 
-    applyDiscoveredTestLocation(testFilePath, config.testsDiscoverDir.getValue(), config);
+    applyDiscoveredTestLocation(testFilePath, config.testsDiscoverDir, config);
 }
 
-void addSequenceOptionValues(
-    const ArgumentParser& program, const std::string& argumentName, decltype(NES::SystestConfiguration::testGroups)& option)
+void addSequenceOptionValues(const ArgumentParser& program, const std::string& argumentName, std::vector<std::string>& values)
 {
     if (not program.is_used(argumentName))
     {
@@ -312,7 +320,7 @@ void addSequenceOptionValues(
 
     for (const auto& value : program.get<std::vector<std::string>>(argumentName))
     {
-        option.add(value);
+        values.push_back(value);
     }
 }
 
@@ -341,17 +349,16 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
         {
             config.clusterConfigPath = program.get<std::string>("--clusterConfig");
         }
-        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
+        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath);
         NES::SystestClusterConfiguration clusterConfig;
         clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
         clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
         for (const auto& worker : clusterConfigYAML["workers"])
         {
-            NES::SingleNodeWorkerConfiguration config;
-            /// Check if worker has config key
+            NES::Schema<NES::LiteralConfigValue, NES::Ordered> config;
             if (worker["config"].IsDefined() && !worker["config"].IsNull())
             {
-                config.overwriteConfigWithYAMLNode(worker["config"]);
+                config = NES::flattenYAMLConfig(worker["config"]);
             }
 
             clusterConfig.workers.push_back(NES::WorkerConfig{
@@ -394,51 +401,24 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     }
 }
 
-void setValidatedConfigFile(
-    const ArgumentParser& program, const std::string& argumentName, decltype(NES::SystestConfiguration::workerConfig)& option)
+void setValidatedConfigFile(const ArgumentParser& program, const std::string& argumentName, std::string& configFilePath)
 {
     if (not program.is_used(argumentName))
     {
         return;
     }
 
-    option = program.get<std::string>(argumentName);
-    if (not std::filesystem::is_regular_file(option.getValue()))
+    configFilePath = program.get<std::string>(argumentName);
+    if (not std::filesystem::is_regular_file(configFilePath))
     {
-        std::cerr << option.getValue() << " is not a file.\n";
+        std::cerr << configFilePath << " is not a file.\n";
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 }
 
 void applyConfigurationFiles(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
-    setValidatedConfigFile(program, "-w", config.workerConfig);
     setValidatedConfigFile(program, "-q", config.queryCompilerConfig);
-}
-
-void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
-{
-    if (not program.is_used("--optimizer"))
-    {
-        return;
-    }
-
-    std::unordered_map<std::string, std::string> optimizerRawConfig;
-    for (const auto& optimizerConfigString : program.get<std::vector<std::string>>("--optimizer"))
-    {
-        if (auto pos = optimizerConfigString.find('='); pos != std::string::npos)
-        {
-            optimizerRawConfig[optimizerConfigString.substr(0, pos)] = optimizerConfigString.substr(pos + 1);
-            continue;
-        }
-
-        std::cerr << "Invalid --optimizer argument. Requires argument like 'CONFIG=VALUE' but got '" << optimizerConfigString << "'\n";
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
-    }
-
-    NES::QueryOptimizerConfiguration queryOptimizerConfig;
-    queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
-    config.queryOptimizerConfig = queryOptimizerConfig;
 }
 
 void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -448,17 +428,50 @@ void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::Syst
         return;
     }
 
-    auto confVec = program.get<std::vector<std::string>>("--");
-    const int workerArgc = static_cast<int>(confVec.size()) + 1;
-    std::vector<const char*> workerArgv;
-    workerArgv.reserve(workerArgc + 1);
-    workerArgv.push_back("systest");
-    for (auto& arg : confVec)
-    {
-        workerArgv.push_back(arg.c_str());
-    }
+    config.workerOptimizerConfigLiterals = NES::parseCommandLineConfig(program.get<std::vector<std::string>>("--"));
+}
 
-    config.singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(workerArgc, workerArgv.data());
+/// The -w/--workerConfig file and the `--` arguments together form the run configuration; they
+/// must be disjoint (overlap is an unconditional error).
+void applyWorkerConfigFile(const ArgumentParser& program, NES::SystestConfiguration& config)
+{
+    if (not program.is_used("-w"))
+    {
+        return;
+    }
+    try
+    {
+        auto merged = NES::mergeConfigLayers(
+            {NES::ConfigLayer{
+                 .name = "config file", .literals = NES::flattenYAMLConfig(std::filesystem::path{program.get<std::string>("-w")})},
+             NES::ConfigLayer{.name = "command line", .literals = std::move(config.workerOptimizerConfigLiterals)}});
+        if (!merged.overwrites.empty())
+        {
+            throw NES::InvalidConfigParameter(
+                "The config file and the command line options must not both set the same option, but both set: {}",
+                fmt::join(
+                    merged.overwrites
+                        | std::views::transform([](const auto& overwrite) { return NES::toLowerCase(fmt::format("{}", overwrite.name)); }),
+                    ", "));
+        }
+        config.workerOptimizerConfigLiterals = std::move(merged.literals);
+    }
+    catch (const NES::Exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+    }
+}
+
+void validateWorkerOptimizerConfig(NES::SystestConfiguration& config)
+{
+    auto workerOptimizerConfig = NES::resolveConfiguration<NES::WorkerOptimizerConfig>(config.workerOptimizerConfigLiterals);
+    if (not workerOptimizerConfig.has_value())
+    {
+        std::cerr << "Invalid worker/optimizer configuration arguments: " << fmt::format("{}", workerOptimizerConfig.error()) << '\n';
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+    }
+    config.queryOptimizerConfig = std::move(workerOptimizerConfig)->queryOptimizer;
 }
 
 void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfiguration& config)
@@ -480,6 +493,11 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 {
     ArgumentParser program("systest");
     configureArgumentParser(program);
+    {
+        std::ostringstream workerOptimizerConfigHelp;
+        NES::generateHelp(workerOptimizerConfigHelp, NES::WorkerOptimizerConfig::getConfigSchema());
+        program.add_epilog("worker/optimizer config options (pass after --):\n" + workerOptimizerConfigHelp.str());
+    }
     parseArgumentsOrExit(program, argc, argv);
 
     auto config = NES::SystestConfiguration();
@@ -491,8 +509,9 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     applyGroupSelection(program, config);
     applyExecutionOptions(program, config);
     applyConfigurationFiles(program, config);
-    applyOptimizerConfiguration(program, config);
     applySingleNodeWorkerConfiguration(program, config);
+    applyWorkerConfigFile(program, config);
+    validateWorkerOptimizerConfig(config);
     handleMetaCommands(program, config);
     return config;
 }

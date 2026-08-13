@@ -97,7 +97,7 @@ NES::Systest::SystestQuery makeQuery(
         .testName = "test_query",
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
-        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
+        .workingDir = NES::SystestConfiguration{}.workingDir,
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectedResultsOrExpectedError = std::move(expected),

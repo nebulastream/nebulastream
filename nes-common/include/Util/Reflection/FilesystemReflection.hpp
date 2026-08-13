@@ -13,18 +13,29 @@
 */
 
 #pragma once
-
+#include <filesystem>
 #include <string>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <Util/Reflection/ReflectionCore.hpp>
 
 namespace NES
 {
 
-/// @brief This class implements validation for parameters that should represent non-negative non-zero integers
-class NonZeroValidation : public ConfigurationValidation
+template <>
+struct Reflector<std::filesystem::path>
 {
-public:
-    /// @brief Method to check the validity of a parameter as a non-negative non-zero integer
-    bool isValid(const std::string& number) const override;
+    Reflected operator()(const std::filesystem::path& data, const ReflectionContext& context) const
+    {
+        return context.reflect(data.string());
+    }
 };
+
+template <>
+struct Unreflector<std::filesystem::path>
+{
+    std::filesystem::path operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return context.unreflect<std::string>(data);
+    }
+};
+
 }

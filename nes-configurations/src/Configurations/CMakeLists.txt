@@ -11,9 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
-        BaseConfiguration.cpp
-        BaseOption.cpp
         Descriptor.cpp
+        ConfigField.cpp
+        ConfigParsing.cpp
+        ConfigResolution.cpp
+        ConfigValue.cpp
 )
 
 add_subdirectory(Validation)

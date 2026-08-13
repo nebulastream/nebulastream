@@ -14,16 +14,15 @@
 
 #pragma once
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/SequenceOption.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Schema/Schema.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -36,49 +35,60 @@ struct SystestClusterConfiguration
     std::vector<Host> allowSinkPlacement;
 };
 
-class SystestConfiguration final : public BaseConfiguration
+/// Note: for now we ignore/override the here specified default values with ones provided by argparse in `SystestExecutor::parseConfiguration()`
+struct SystestConfiguration final
 {
-public:
-    SystestConfiguration() = default;
-
-    /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `SystestExecutor::parseConfiguration()`
-    StringOption testsDiscoverDir
-        = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
-    StringOption testDataDir
-        = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
-    StringOption configDir
-        = {"config_dir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
-    StringOption logFilePath = {"logFilePath", "Path to the log file"};
-    StringOption directlySpecifiedTestFiles
-        = {"directly_specified_test_files",
-           "",
-           "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    SequenceOption<UIntOption> testQueryNumbers
-        = {"test_query_numbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    StringOption testFileExtension = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
-    StringOption workingDir = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
-    BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
-    UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
-    BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
-    SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};
-    SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
-    SequenceOption<StringOption> disabledTestFiles = {"disabled_test_files", "test files to disable"};
-    StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
-    StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
-    BoolOption remoteWorker = {"remote_worker", "false", "use remote worker"};
-    StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
-    BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
-    BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
+    /// Directory to lookup test files in.
+    std::string testsDiscoverDir = TEST_DISCOVER_DIR;
+    /// Directory to lookup test data files in.
+    std::string testDataDir = SYSTEST_EXTERNAL_DATA_DIR;
+    /// Directory to lookup configuration files.
+    std::string configDir = TEST_CONFIGURATION_DIR;
+    /// Path to the log file.
+    std::string logFilePath;
+    /// Directly specified test files. If directly specified no lookup at the test discovery dir will happen.
+    std::string directlySpecifiedTestFiles;
+    /// Directly specified query numbers within the directly specified test files.
+    std::vector<uint64_t> testQueryNumbers;
+    /// File extension to find test files for.
+    std::string testFileExtension = ".test";
+    /// Directory with source and result files.
+    std::string workingDir = PATH_TO_BINARY_DIR "/nes-systests/working-dir";
+    /// Run queries in random order.
+    bool randomQueryOrder = false;
+    /// Number of maximal concurrently running queries.
+    uint64_t numberConcurrentQueries = 6;
+    /// Records the execution time of each query.
+    bool benchmark = false;
+    /// Test groups to run.
+    std::vector<std::string> testGroups;
+    /// Test groups to exclude.
+    std::vector<std::string> excludeGroups;
+    /// Test files to disable.
+    std::vector<std::string> disabledTestFiles;
+    /// Used query compiler config file (.yaml).
+    std::string queryCompilerConfig;
+    /// Use remote worker.
+    bool remoteWorker = false;
+    /// Cluster configuration.
+    std::string clusterConfigPath = TEST_CONFIGURATION_DIR "/topologies/two-node.yaml";
+    /// Print per-query performance timing in the console output.
+    bool showQueryPerformance = false;
+    /// Continuously issue queries to the worker.
+    bool endlessMode = false;
 
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;
     std::vector<std::string> globalExcludedGroups;
 
     SystestClusterConfiguration clusterConfig;
-    std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
-    std::optional<QueryOptimizerConfiguration> queryOptimizerConfig;
-
-protected:
-    std::vector<BaseOption*> getOptions() override;
+    /// Worker/optimizer config literals from the `-w` file and the command line after `--`
+    /// (empty = nothing passed). They stay literals so per-test-file configuration overrides can
+    /// be layered on top before resolving against SingleNodeWorkerConfiguration's declared schema.
+    Schema<LiteralConfigValue, Ordered> workerOptimizerConfigLiterals;
+    /// Explicitly resolved defaults: tests construct SystestConfiguration without going through
+    /// the starter (which overwrites this from the `--` section), and the config structs are not
+    /// default-initialized to their defaults.
+    QueryOptimizerConfiguration queryOptimizerConfig = defaultConfiguration<QueryOptimizerConfiguration>();
 };
 }

@@ -16,6 +16,7 @@
 #include <QueryManager/QueryManager.hpp>
 
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -23,6 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -36,11 +38,17 @@ namespace detail
 class Channel;
 }
 
+/// Produces the configuration an embedded worker starts with. Injected by the frontend (repl,
+/// systest) so that the policy — which config layers apply, their precedence, and whether
+/// conflicting values are permitted — lives with the caller, not the backend. Throws if the
+/// worker's configuration is invalid.
+using WorkerConfigResolver = std::function<SingleNodeWorkerConfiguration(const WorkerConfig&)>;
+
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
     ~EmbeddedWorkerQuerySubmissionBackend() override;
-    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
+    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, WorkerConfigResolver resolveWorkerConfiguration);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
@@ -50,6 +58,6 @@ private:
     std::unique_ptr<detail::Channel> channel;
 };
 
-BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration);
+BackendProvider createEmbeddedBackend(WorkerConfigResolver resolveWorkerConfiguration);
 
 }

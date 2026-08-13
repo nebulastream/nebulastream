@@ -21,8 +21,6 @@ worker:
     number_of_records_per_key: 1024
     max_number_of_buckets: 1024
     operator_buffer_size: 4096
-  default_query_optimization:
-    join_strategy: HASH_JOIN
   total_memory_in_bytes: 8388608
   default_max_inflight_buffers: 64
   dump_compilation_result: FILE

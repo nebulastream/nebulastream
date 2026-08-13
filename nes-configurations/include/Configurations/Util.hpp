@@ -13,57 +13,81 @@
 */
 
 #pragma once
-#include <cstddef>
-#include <iostream>
-#include <map>
+#include <expected>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
-#include <Configurations/PrintingVisitor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Strings.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
+
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
 
 namespace NES
 {
-template <typename T>
-void generateHelp(std::ostream& ostream)
+
+/// Print `--key: description (Default: x)` for every declared field, keys lowercased as the user
+/// would type them on the command line.
+inline void generateHelp(std::ostream& ostream, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
 {
-    T config{};
-    PrintingVisitor visitor{ostream};
-    config.accept(visitor);
+    for (const auto& field : declaredConfig)
+    {
+        ostream << fmt::format("--{}: {}", toLowerCase(fmt::format("{}", field.getFullyQualifiedName())), field.getDescription());
+        if (const auto& defaultDescription = field.getDefaultDescription())
+        {
+            ostream << fmt::format(" (Default: {})", *defaultDescription);
+        }
+        ostream << '\n';
+    }
 }
 
-template <typename T>
-std::optional<T> loadConfiguration(const int argc, const char** argv)
+/// Render the effective configuration: every declared field with the value it resolves to — the
+/// passed literal where one was passed, the declared default otherwise. Used for the startup
+/// config dump of workers.
+inline std::string formatEffectiveConfig(
+    const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
 {
-    /// Convert the POSIX command line arguments to a map of strings.
-    std::unordered_map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i)
+    /// Exact-name lookup: Schema's own name lookup is suffix-addressable (see mergeConfigLiterals).
+    const auto passedByName = passedConfig
+        | std::views::transform([](const auto& value) { return std::pair{value.getFullyQualifiedName(), value}; })
+        | std::ranges::to<std::unordered_map>();
+
+    std::string rendered;
+    for (const auto& field : declaredConfig)
     {
-        const size_t pos = std::string(argv[i]).find('=');
-        const std::string arg{argv[i]};
-        if (arg == "--help")
-        {
-            generateHelp<T>(std::cout);
-            return std::nullopt;
-        }
-        commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
+        const auto name = toLowerCase(fmt::format("{}", field.getFullyQualifiedName()));
+        const auto passed = passedByName.find(field.getFullyQualifiedName());
+        rendered += fmt::format(
+            "  {}: {}\n",
+            name,
+            passed != passedByName.end() ? passed->second.getValue() : field.getDefaultDescription().value_or("<unset>"));
     }
+    return rendered;
+}
 
-    /// Create a configuration object with default values.
-    T config;
+/// Resolve the passed literals against T's declared config schema (fully qualified only) and
+/// instantiate the typed configuration struct.
+template <typename T>
+std::expected<T, InvalidConfigSpecification> resolveConfiguration(const Schema<LiteralConfigValue, Ordered>& passedConfig)
+{
+    return toExpected(resolveConfigFullyQualified(passedConfig, T::getConfigSchema()))
+        .transform([](Schema<ConfigValue, Ordered> resolved) { return T::fromConfig(InstantiatedConfig{std::move(resolved)}); });
+}
 
-    /// Read options from the YAML file.
-    const auto configPathCLIParam = "--configPath";
-    if (const auto configPath = commandLineParams.find(configPathCLIParam); configPath != commandLineParams.end())
-    {
-        config.overwriteConfigWithYAMLFileInput(configPath->second);
-        commandLineParams.erase(configPathCLIParam);
-    }
-
-    /// Options specified on the command line have the highest precedence.
-    config.overwriteConfigWithCommandLineInput(commandLineParams);
-
-    return config;
+/// The configuration with every field at its declared default, produced through the ordinary
+/// resolution path (an empty literal schema). This is the ONLY way to obtain a "default" config:
+/// the structs carry no member initializers, so a default-constructed instance is uninitialized.
+template <typename T>
+T defaultConfiguration()
+{
+    return resolveConfiguration<T>(Schema<LiteralConfigValue, Ordered>{}).value();
 }
 }
