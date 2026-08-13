@@ -77,7 +77,7 @@ public:
             Identifier::parse("File"),
             schema,
             Host("localhost"),
-            {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "CSV"}},
+            {{InputFormatterDescriptor::TYPE_FIELD.getName(), "CSV"}},
             {{Identifier::parse("file_path"), "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourceDescriptorPhysicalOperator(

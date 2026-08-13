@@ -14,49 +14,93 @@
 
 #include <InputFormatterDescriptor.hpp>
 
+#include <any>
 #include <ostream>
 #include <string>
 #include <utility>
-#include <fmt/format.h>
 
-#include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Util/Any.hpp>
 #include <Util/Reflection.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
+#include <InputFormatterConfigRegistry.hpp>
 
 namespace NES
 {
 
-const std::string& InputFormatterDescriptor::getInputFormatterType() const
+namespace detail
+{
+struct ReflectedInputFormatterDescriptor
+{
+    Identifier inputFormatterType;
+    /// The formatter-defined config struct, reflected by the formatter's InputFormatterConfigRegistry
+    /// entry; empty for formats without a config (NATIVE).
+    Reflected config;
+};
+}
+
+const Identifier& InputFormatterDescriptor::getInputFormatterType() const
 {
     return inputFormatterType;
 }
 
-InputFormatterDescriptor::InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), inputFormatterType(std::move(inputFormatterType))
+const ExplicitAny& InputFormatterDescriptor::getConfig() const
+{
+    return config;
+}
+
+InputFormatterDescriptor::InputFormatterDescriptor(Identifier inputFormatterType, ExplicitAny config)
+    : inputFormatterType(std::move(inputFormatterType)), config(std::move(config))
 {
 }
 
 std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor)
 {
-    return out << fmt::format("InputFormatterDescriptor: (Config: {})", inputFormatterDescriptor.toStringConfig());
+    return out << fmt::format("InputFormatterDescriptor(type: {})", inputFormatterDescriptor.getInputFormatterType());
 }
 
 Reflected Reflector<InputFormatterDescriptor>::operator()(
     const InputFormatterDescriptor& inputFormatterDescriptor, const ReflectionContext& context) const
 {
-    const detail::ReflectedInputFormatterDescriptor descriptor{
-        .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = inputFormatterDescriptor.getReflectedConfig(context)};
+    if (inputFormatterDescriptor.getInputFormatterType() == Identifier::parse("NATIVE"))
+    {
+        return context.reflect(detail::ReflectedInputFormatterDescriptor{
+            .inputFormatterType = inputFormatterDescriptor.inputFormatterType, .config = Reflected{}});
+    }
 
-    return context.reflect(descriptor);
+    const auto configEntry = InputFormatterConfigRegistry::instance().find(inputFormatterDescriptor.inputFormatterType.asCanonicalString());
+    INVARIANT(
+        configEntry.has_value(),
+        "Input formatter type {} has a descriptor but no InputFormatterConfigRegistry entry",
+        inputFormatterDescriptor.inputFormatterType);
+
+    return context.reflect(detail::ReflectedInputFormatterDescriptor{
+        .inputFormatterType = inputFormatterDescriptor.inputFormatterType,
+        .config = configEntry->reflect(inputFormatterDescriptor.config, context)});
 }
 
 InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto reflectedInputFormatterDescriptor = context.unreflect<detail::ReflectedInputFormatterDescriptor>(rfl);
 
-    return InputFormatterDescriptor{
-        reflectedInputFormatterDescriptor.inputFormatterType,
-        Descriptor::unreflectConfig(reflectedInputFormatterDescriptor.config, context)};
-}
+    if (reflectedInputFormatterDescriptor.config.isEmpty())
+    {
+        return InputFormatterDescriptor{std::move(reflectedInputFormatterDescriptor.inputFormatterType), ExplicitAny{std::any{}}};
+    }
 
+    const auto configEntry
+        = InputFormatterConfigRegistry::instance().find(reflectedInputFormatterDescriptor.inputFormatterType.asCanonicalString());
+    if (not configEntry.has_value())
+    {
+        throw UnknownInputFormatterType(
+            "Cannot deserialize input formatter descriptor: type {} has no InputFormatterConfigRegistry entry",
+            reflectedInputFormatterDescriptor.inputFormatterType);
+    }
+
+    return InputFormatterDescriptor{
+        std::move(reflectedInputFormatterDescriptor.inputFormatterType),
+        ExplicitAny{configEntry->unreflect(reflectedInputFormatterDescriptor.config, context)}};
+}
 
 }

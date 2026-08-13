@@ -18,26 +18,36 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 add_library(nes-input-formatters STATIC)
 set_target_properties(nes-input-formatters PROPERTIES LINKER_LANGUAGE CXX)
 
-# Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
-target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)
-
+# Exposing TupleBuffer (nes-memory), PipelineExecutionContext (nes-executable) and the config
+# system (nes-configurations, used by the registry headers) from public APIs
+target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable nes-configurations PRIVATE nes-common nes-runtime nes-executable nes-physical-operators)
 
 # 'Private' nes-input-formatters library that exposes internal headers
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatters>
         $<INSTALL_INTERFACE:include/nebulastream/>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+        PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>)
 
-create_runtime_registry(InputFormatterValidation nes-input-formatters
-        ENTRY_TEMPLATE "makeInputFormatterValidator<\${PLUGIN_NAME}InputFormatIndexer>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
-
+# Runtime registries: an input formatter plugin registers itself with add_registry_entry(<registry> <name>).
+# By convention the plugin provides a class ${name}InputFormatIndexer with a static getConfigSchema()
+# and a static create(const ${name}InputFormatterConfig&, const TupleBufferRef&), and a config struct
+# ${name}InputFormatterConfig with a static fromConfig(const InstantiatedConfig&).
 create_runtime_registry(InputFormatIndexer nes-input-formatters
-        ENTRY_TEMPLATE "makeInputFormatterFactory<\${PLUGIN_NAME}InputFormatIndexer>()"
+        ENTRY_TEMPLATE "makeInputFormatterFactory<\${PLUGIN_NAME}InputFormatIndexer, \${PLUGIN_NAME}InputFormatterConfig>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private ${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider)
+create_runtime_registry(InputFormatterConfigSchema nes-input-formatters
+        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}InputFormatIndexer::getConfigSchema(); }"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private ${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider)
+create_runtime_registry(InputFormatterConfig nes-input-formatters
+        ENTRY_TEMPLATE "makeInputFormatterConfigEntry<\${PLUGIN_NAME}InputFormatterConfig>()"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}InputFormatIndexer.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private ${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider)
 
+# Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 target_sources(nes-input-formatters PRIVATE ${NES_SOURCE_PARSERS_SOURCE_FILES})
@@ -47,6 +57,7 @@ add_library(nes-input-formatter-provider src/InputFormatterProvider.cpp)
 target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters)
 target_include_directories(nes-input-formatter-provider PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 

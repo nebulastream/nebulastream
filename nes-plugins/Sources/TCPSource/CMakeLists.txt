@@ -16,9 +16,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 add_library(tcp_source_plugin_library STATIC TCPSource.cpp TCPDataServer.cpp)
 target_link_libraries(tcp_source_plugin_library PRIVATE nes-sources)
 target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
-
 link_plugin_library(nes-sources tcp_source_plugin_library)
+
 add_registry_entry(Source TCP)
-add_registry_entry(SourceValidation TCP)
+add_registry_entry(SourceConfigSchema TCP)
+add_registry_entry(SourceConfig TCP)
+
+# Systest adaptors
 add_registry_entry(InlineData TCP)
 add_registry_entry(FileData TCP)

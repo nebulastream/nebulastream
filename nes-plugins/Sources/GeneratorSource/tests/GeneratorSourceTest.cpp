@@ -23,10 +23,9 @@
 
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
-#include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
-#include <SinusGeneratorRate.hpp>
+#include <GeneratorRate.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access) -- test values, deterministic seeds, and gtest ASSERT_TRUE guards are intentional
 
@@ -354,41 +353,43 @@ class FixedGeneratorRateTest : public ::testing::Test
 
 TEST_F(FixedGeneratorRateTest, parseValidConfigString)
 {
-    const auto result = FixedGeneratorRate::parseAndValidateConfigString("emit_rate 1000");
+    const auto result = parseValidateFixedRateConfigString("emit_rate 1000");
     ASSERT_TRUE(result.has_value());
-    EXPECT_DOUBLE_EQ(*result, 1000.0);
+    ASSERT_TRUE(result->has_value());
+    EXPECT_DOUBLE_EQ(result->value().emitRate, 1000.0);
 }
 
 TEST_F(FixedGeneratorRateTest, parseValidConfigStringCaseInsensitive)
 {
-    const auto result = FixedGeneratorRate::parseAndValidateConfigString("EMIT_RATE 500");
+    const auto result = parseValidateFixedRateConfigString("EMIT_RATE 500");
     /// The parser uses toLowerCase, so this should work
     ASSERT_TRUE(result.has_value());
-    EXPECT_DOUBLE_EQ(*result, 500.0);
+    ASSERT_TRUE(result->has_value());
+    EXPECT_DOUBLE_EQ(result->value().emitRate, 500.0);
 }
 
 TEST_F(FixedGeneratorRateTest, parseInvalidConfigStringReturnsEmpty)
 {
-    EXPECT_FALSE(FixedGeneratorRate::parseAndValidateConfigString("invalid 1000").has_value());
-    EXPECT_FALSE(FixedGeneratorRate::parseAndValidateConfigString("emit_rate").has_value());
-    EXPECT_FALSE(FixedGeneratorRate::parseAndValidateConfigString("").has_value());
+    EXPECT_FALSE(parseValidateFixedRateConfigString("invalid 1000").has_value());
+    EXPECT_FALSE(parseValidateFixedRateConfigString("emit_rate").has_value());
+    EXPECT_FALSE(parseValidateFixedRateConfigString("").has_value());
 }
 
 TEST_F(FixedGeneratorRateTest, calcNumberOfTuplesForInterval)
 {
-    FixedGeneratorRate rate("emit_rate 1000");
+    const FixedGeneratorRateConfig rate{.emitRate = 1000.0};
     const auto start = std::chrono::system_clock::now();
     const auto end = start + std::chrono::seconds(1);
-    const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
+    const auto tuples = calcNumberOfTuplesForInterval(rate, start, end);
     EXPECT_EQ(tuples, 1000U);
 }
 
 TEST_F(FixedGeneratorRateTest, calcNumberOfTuplesForHalfSecond)
 {
-    FixedGeneratorRate rate("emit_rate 1000");
+    const FixedGeneratorRateConfig rate{.emitRate = 1000.0};
     const auto start = std::chrono::system_clock::now();
     const auto end = start + std::chrono::milliseconds(500);
-    const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
+    const auto tuples = calcNumberOfTuplesForInterval(rate, start, end);
     EXPECT_EQ(tuples, 500U);
 }
 
@@ -400,27 +401,27 @@ class SinusGeneratorRateTest : public ::testing::Test
 
 TEST_F(SinusGeneratorRateTest, parseValidConfigString)
 {
-    const auto result = SinusGeneratorRate::parseAndValidateConfigString("amplitude 100,frequency 1.0");
+    const auto result = parseValidateSinusRateConfigString("amplitude 100,frequency 1.0");
     ASSERT_TRUE(result.has_value());
-    const auto [amplitude, frequency] = *result;
-    EXPECT_DOUBLE_EQ(amplitude, 100.0);
-    EXPECT_DOUBLE_EQ(frequency, 1.0);
+    ASSERT_TRUE(result->has_value());
+    EXPECT_DOUBLE_EQ(result->value().amplitude, 100.0);
+    EXPECT_DOUBLE_EQ(result->value().frequency, 1.0);
 }
 
 TEST_F(SinusGeneratorRateTest, parseInvalidConfigStringReturnsEmpty)
 {
-    EXPECT_FALSE(SinusGeneratorRate::parseAndValidateConfigString("invalid").has_value());
-    EXPECT_FALSE(SinusGeneratorRate::parseAndValidateConfigString("amplitude 100").has_value());
-    EXPECT_FALSE(SinusGeneratorRate::parseAndValidateConfigString("").has_value());
+    EXPECT_FALSE(parseValidateSinusRateConfigString("invalid").has_value());
+    EXPECT_FALSE(parseValidateSinusRateConfigString("amplitude 100").has_value());
+    EXPECT_FALSE(parseValidateSinusRateConfigString("").has_value());
 }
 
 TEST_F(SinusGeneratorRateTest, calcNumberOfTuplesReturnsNonNegative)
 {
-    SinusGeneratorRate rate(1.0, 100.0);
+    const SinusGeneratorRateConfig rate{.amplitude = 100.0, .frequency = 1.0};
     const auto start = std::chrono::system_clock::now();
     const auto end = start + std::chrono::seconds(1);
     /// The sinus integral over any interval should produce a non-negative count
-    const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
+    const auto tuples = calcNumberOfTuplesForInterval(rate, start, end);
     /// We just check it does not crash and returns some value (uint64_t is always >= 0)
     EXPECT_GE(tuples, 0U);
 }

@@ -12,23 +12,15 @@
     limitations under the License.
 */
 
-#include <Sources/SourceValidationProvider.hpp>
+#include <InputFormatterConfigRegistry.hpp>
 
-#include <optional>
-#include <string>
-#include <string_view>
-
-#include <Configurations/ConfigField.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <SourceConfigSchemaRegistry.hpp>
-
-namespace NES::SourceValidationProvider
+namespace NES
 {
 
-std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(const std::string_view sourceType)
+InputFormatterConfigRegistry& InputFormatterConfigRegistry::instance()
 {
-    return SourceConfigSchemaRegistry::instance().getSchema(std::string{sourceType});
+    static InputFormatterConfigRegistry inst;
+    return inst;
 }
 
 }
