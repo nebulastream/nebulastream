@@ -13,9 +13,7 @@ sinks:
       - name: DOUBLE
         type: FLOAT64
     type: Print
-    config:
-      output_format: CSV
-    parser_config: { }
+    parser_config: { type: CSV }
 
 logical:
   - name: GENERATOR_SOURCE

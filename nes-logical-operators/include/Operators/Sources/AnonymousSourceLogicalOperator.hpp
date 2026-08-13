@@ -20,6 +20,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -28,9 +29,12 @@
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
@@ -44,16 +48,16 @@ class AnonymousSourceLogicalOperator : public ManagedByOperator
 public:
     explicit AnonymousSourceLogicalOperator(
         WeakLogicalOperator self,
-        Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor inputFormatterDescriptor);
 
     static TypedLogicalOperator<AnonymousSourceLogicalOperator> create(
-        Identifier type,
         Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor inputFormatterDescriptor);
 
     [[nodiscard]] bool operator==(const AnonymousSourceLogicalOperator& rhs) const;
 
@@ -71,18 +75,21 @@ public:
 
     [[nodiscard]] static AnonymousSourceLogicalOperator withInferredSchema();
 
-    [[nodiscard]] Identifier getSourceType() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getSourceConfig() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getParserConfig() const;
-    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
+    /// The literals exactly as the parser produced them (see getSourceConfigLiterals); resolved
+    /// against the source's declared config schema in the AnonymousSourceBindingRule.
+    [[nodiscard]] const Schema<UnqualifiedUnboundField, Ordered>& getSourceSchema() const;
+
+    [[nodiscard]] const GeneralSourceConfig& getGeneralSourceConfig() const;
+    [[nodiscard]] const PluginSourceConfiguration& getPluginSourceConfig() const;
+    [[nodiscard]] const InputFormatterDescriptor& getInputFormatterDescriptor() const;
 
 private:
     static constexpr std::string_view NAME = "AnonymousSource";
 
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
-    Identifier sourceType;
-    std::unordered_map<Identifier, std::string> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
 
     std::vector<LogicalOperator> children;
 
@@ -97,7 +104,7 @@ private:
 template <>
 struct Reflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>
 {
-    Reflected operator()(const TypedLogicalOperator<AnonymousSourceLogicalOperator>&, const ReflectionContext& context) const;
+    Reflected operator()(const TypedLogicalOperator<AnonymousSourceLogicalOperator>&, const ReflectionContext&) const;
 };
 
 template <>

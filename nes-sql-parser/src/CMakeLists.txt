@@ -17,3 +17,4 @@ add_source_files(nes-sql-parser
         CommonParserFunctions.cpp
         StatementBinder.cpp
 )
+

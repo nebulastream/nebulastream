@@ -18,7 +18,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
@@ -26,9 +25,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -45,15 +47,17 @@ public:
     explicit AnonymousSinkLogicalOperator(
         WeakLogicalOperator self,
         Identifier sinkType,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> config,
-        std::unordered_map<Identifier, std::string> formatConfig);
+        AnonymousSinkSchema schema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfiguration,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
     static TypedLogicalOperator<AnonymousSinkLogicalOperator> create(
         Identifier sinkType,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> config,
-        std::unordered_map<Identifier, std::string> formatConfig);
+        AnonymousSinkSchema schema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfiguration,
+        OutputFormatterDescriptor outputFormatterDescriptor);
 
     [[nodiscard]] bool operator==(const AnonymousSinkLogicalOperator& rhs) const;
 
@@ -72,9 +76,10 @@ public:
     [[nodiscard]] static AnonymousSinkLogicalOperator withInferredSchema();
 
     [[nodiscard]] Identifier getSinkType() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getSinkConfig() const;
-    [[nodiscard]] std::optional<Schema<UnqualifiedUnboundField, Ordered>> getTargetSchema() const;
-    [[nodiscard]] std::unordered_map<Identifier, std::string> getFormatConfig() const;
+    [[nodiscard]] AnonymousSinkSchema getSinkSchema() const;
+    [[nodiscard]] GeneralSinkConfig getGeneralSinkConfig() const;
+    [[nodiscard]] PluginSinkConfiguration getPluginSinkConfiguration() const;
+    [[nodiscard]] OutputFormatterDescriptor getOutputFormatterDescriptor() const;
 
 private:
     static constexpr std::string_view NAME = "AnonymousSink";
@@ -82,10 +87,11 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
 
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> targetSchema;
     Identifier sinkType;
-    std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    AnonymousSinkSchema targetSchema;
+    GeneralSinkConfig generalSinkConfig;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 
     friend Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>;
 };

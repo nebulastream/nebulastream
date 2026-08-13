@@ -23,6 +23,9 @@
 #include <Config/Config.hpp>
 #include <Config/RunPolicy.hpp>
 #include <Runner/SystestRunner.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
+
 #include <ErrorHandling.hpp>
 #include <Progress.hpp>
 #include <SystestState.hpp>
@@ -53,5 +56,7 @@ private:
 
     SystestConfiguration config;
     SystestProgressTracker progressTracker;
+    std::function<AntlrSQLQueryParser::QueryBinder()> queryBinderFactory;
+    std::function<StatementBinder(const std::shared_ptr<NES::SourceCatalog>&, AntlrSQLQueryParser::QueryBinder)> statementBinderFactory;
 };
 }

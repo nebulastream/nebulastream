@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -28,6 +29,7 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -36,6 +38,7 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
@@ -58,13 +61,22 @@ public:
             {Identifier::parse("i8"), DataTypeProvider::provideDataType(DataType::Type::INT8)}};
     }
 
-    static TypedLogicalOperator<SourceDescriptorLogicalOperator> makeSource(SourceCatalog& catalog)
+    static TypedLogicalOperator<SourceDescriptorLogicalOperator> makeSource(SharedPtr<SourceCatalog>& catalog)
     {
-        const auto logical = catalog.addLogicalSource(Identifier::parse("agg_src"), createSchema()).value();
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+        const auto logical = catalog->addLogicalSource(Identifier::parse("agg_src"), createSchema()).value();
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
         const auto descriptor
-            = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig).value();
+            = catalog
+                  ->registerWithLogicalSource(
+                      PhysicalSourceBuilder{
+                          std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(catalog)},
+                      logical.getLogicalSourceName())
+                  .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
@@ -78,7 +90,7 @@ public:
 
 TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto schema = makeSource(catalog)->getOutputSchema();
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())
@@ -103,7 +115,7 @@ TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 
 TEST_F(AggregationInputTypeTest, AcceptsNumericInput)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto schema = makeSource(catalog)->getOutputSchema();
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())

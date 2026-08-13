@@ -17,10 +17,12 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -28,6 +30,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -41,6 +44,7 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
@@ -84,19 +88,29 @@ public:
     static std::vector<Identifier> rightFieldNames() { return {Identifier::parse("right_id"), Identifier::parse("right_value")}; }
 
     static TypedLogicalOperator<SourceDescriptorLogicalOperator>
-    makeSource(SourceCatalog& catalog, std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    makeSource(SharedPtr<SourceCatalog>& catalog, std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{name}), schema).value();
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+        const auto logical = catalog->addLogicalSource(Identifier::parse(std::string{name}), schema).value();
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
         const auto descriptor
-            = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig).value();
+            = catalog
+                  ->registerWithLogicalSource(
+                      PhysicalSourceBuilder{
+                          std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(catalog)},
+                      logical.getLogicalSourceName())
+                  .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
     /// Build a left_id = right_id equi-join over two file sources. Schema inference happens in the children-ctor, so the returned
     /// operator already has its output schema bound. The catalog must outlive the returned operator.
-    static TypedLogicalOperator<JoinLogicalOperator> buildInferredJoin(SourceCatalog& catalog, JoinLogicalOperator::JoinType joinType)
+    static TypedLogicalOperator<JoinLogicalOperator>
+    buildInferredJoin(SharedPtr<SourceCatalog>& catalog, JoinLogicalOperator::JoinType joinType)
     {
         const auto leftSource = makeSource(catalog, "left_src", createLeftSchema());
         const auto rightSource = makeSource(catalog, "right_src", createRightSchema());
@@ -138,9 +152,18 @@ public:
     static SinkDescriptor
     createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const std::unordered_map<Identifier, std::string> sinkConfig{
-            {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {}).value();
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                      {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                      {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+                  .value();
+        generalConfig.host = Host{"localhost"};
+        return sinkCatalog
+            .addSinkDescriptor(
+                sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor))
+            .value();
     }
 };
 
@@ -161,7 +184,7 @@ TEST_F(JoinLogicalOperatorTest, GetJoinType)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         const auto join = buildInferredJoin(catalog, joinType);
         EXPECT_EQ(join->getJoinType(), joinType);
     }
@@ -169,7 +192,7 @@ TEST_F(JoinLogicalOperatorTest, GetJoinType)
 
 TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreservesLeft)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -190,7 +213,7 @@ TEST_F(JoinLogicalOperatorTest, LeftOuterJoinMarksRightFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreservesRight)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -211,7 +234,7 @@ TEST_F(JoinLogicalOperatorTest, RightOuterJoinMarksLeftFieldsNullableAndPreserve
 
 TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -232,7 +255,7 @@ TEST_F(JoinLogicalOperatorTest, FullOuterJoinMarksBothSidesNullable)
 
 TEST_F(JoinLogicalOperatorTest, InnerJoinDoesNotMarkAnyFieldsNullable)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     const auto join = buildInferredJoin(catalog, JoinLogicalOperator::JoinType::INNER_JOIN);
     const auto outputSchema = join->getOutputSchema();
 
@@ -258,7 +281,7 @@ TEST_F(JoinLogicalOperatorTest, WindowStartEndFieldsAreNotNullableForOuterJoins)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         const auto join = buildInferredJoin(catalog, joinType);
         const auto outputSchema = join->getOutputSchema();
 
@@ -279,7 +302,7 @@ TEST_F(JoinLogicalOperatorTest, ReflectionRoundTripPreservesOuterJoinTypes)
           JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
           JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
-        SourceCatalog catalog;
+        auto catalog = SourceCatalog::create();
         SinkCatalog sinkCatalog;
         const auto join = buildInferredJoin(catalog, joinType);
 

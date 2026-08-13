@@ -29,10 +29,12 @@
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -44,6 +46,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 
@@ -83,13 +86,22 @@ RegisteredModel defaultModel()
 /// child in schema-inference tests so the resulting Field-typed schema is fully bound to a
 /// real producing operator.
 TypedLogicalOperator<SourceDescriptorLogicalOperator>
-makeSourceWithSchema(SourceCatalog& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+makeSourceWithSchema(SharedPtr<SourceCatalog>& catalog, std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    const auto logical = catalog.addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    const auto logical = catalog->addLogicalSource(Identifier::parse(std::string{sourceName}), schema).value();
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
     const auto descriptor
-        = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+        = catalog
+              ->registerWithLogicalSource(
+                  PhysicalSourceBuilder{
+                      std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(catalog)},
+                  logical.getLogicalSourceName())
+              .value();
     return SourceDescriptorLogicalOperator::create(descriptor);
 }
 
@@ -125,7 +137,7 @@ TEST_F(InferModelLogicalOperatorTest, BasicProperties)
 /// Happy path: model input field is present in the child's schema; output is child fields ∪ model outputs.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceHappyPath)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -151,7 +163,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceHappyPath)
 /// Model input field missing in child's schema throws CannotInferSchema.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceMissingField)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -164,7 +176,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceMissingField)
 /// Model input field present but with the wrong type throws CannotInferSchema.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceTypeMismatch)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -177,7 +189,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceTypeMismatch)
 /// Nullable model input field is rejected; model inputs must be non-nullable.
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNullableInput)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -192,7 +204,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNullableInput)
 /// (consistent with the join operator's behavior — output schema is the strict union).
 TEST_F(InferModelLogicalOperatorTest, SchemaInferenceRejectsNameCollision)
 {
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
@@ -212,7 +224,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceVarsizedInputAccepted)
         ModelFieldList{UnqualifiedUnboundField{Identifier::parse("text"), DataType::Type::VARSIZED}},
         ModelFieldList{UnqualifiedUnboundField{Identifier::parse("embedding"), DataType::Type::FLOAT32}});
 
-    SourceCatalog catalog;
+    auto catalog = SourceCatalog::create();
     auto source = makeSourceWithSchema(
         catalog,
         "src",
