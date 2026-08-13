@@ -18,6 +18,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -28,6 +30,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -51,6 +54,8 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 
+#include <Configurations/ConfigField.hpp>
+#include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <QueryId.hpp>
 
@@ -61,27 +66,43 @@ namespace
 {
 constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
-LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog, const std::string& name)
+LogicalSource createLogicalTestSource(SharedPtr<SourceCatalog>& sourceCatalog, const std::string& name)
 {
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse(name + "_id"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse(name + "_value"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse(name + "_ts"), DataType::Type::UINT64}};
-    return sourceCatalog.addLogicalSource(Identifier::parse(name), schema).value();
+    return sourceCatalog->addLogicalSource(Identifier::parse(name), schema).value();
 }
 
-SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+SourceDescriptor createTestSourceDescriptor(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    return sourceCatalog
+        ->registerWithLogicalSource(
+            PhysicalSourceBuilder{
+                std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+            logicalSource.getLogicalSourceName())
+        .value();
 }
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-    return sinkCatalog.getAnonymousSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+    generalConfig.host = Host{"localhost"};
+    return sinkCatalog.createAnonymousSinkDescriptor(
+        std::monostate{}, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
 }
 }
 
@@ -98,7 +119,7 @@ public:
     }
 
 protected:
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
     LogicalSource leftSource;
     LogicalSource rightSource;

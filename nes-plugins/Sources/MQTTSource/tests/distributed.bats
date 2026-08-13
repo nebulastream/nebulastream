@@ -60,7 +60,7 @@ docker_mqtt_subscribe() {
         2 AS "SOURCE"."QOS",
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO CHECKSUM('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
+    ) INTO CHECKSUM('CSV' AS "SINK"."OUTPUT_FORMAT", 'worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
 EOF
 )"
 

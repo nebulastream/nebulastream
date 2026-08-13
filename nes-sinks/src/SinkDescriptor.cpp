@@ -14,20 +14,15 @@
 
 #include <Sinks/SinkDescriptor.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
-#include <ranges>
-#include <stdexcept>
 #include <string>
-#include <string_view>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 
-#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Reflection.hpp>
@@ -38,9 +33,9 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <fmt/ranges.h>
+#include <Util/Any.hpp>
 #include <ErrorHandling.hpp>
-#include <SinkValidationRegistry.hpp>
+#include <SinkConfigRegistry.hpp>
 
 namespace NES
 {
@@ -48,7 +43,10 @@ namespace NES
 std::ostream& operator<<(std::ostream& out, const NamedSinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {})", sinkDescriptor.name, sinkDescriptor.sinkType, sinkDescriptor.toStringConfig());
+        "SinkDescriptor: (name: {}, type: {}, formatter: {})",
+        sinkDescriptor.name,
+        sinkDescriptor.getSinkType(),
+        sinkDescriptor.outputFormatterDescriptor);
     return out;
 }
 
@@ -57,22 +55,14 @@ bool operator==(const NamedSinkDescriptor& lhs, const NamedSinkDescriptor& rhs)
     return lhs.name == rhs.name;
 }
 
-std::optional<std::string_view> NamedSinkDescriptor::getFormatType() const
+std::string NamedSinkDescriptor::getFormatType() const
 {
-    try
-    {
-        return getFromConfig(SinkDescriptor::OUTPUT_FORMAT);
-    }
-    catch (std::out_of_range& e)
-    {
-        /// If no output format is set, then the format will be native
-        return "Native";
-    }
+    return outputFormatterDescriptor.getOutputFormatterType().asCanonicalString();
 }
 
 std::string NamedSinkDescriptor::getSinkType() const
 {
-    return sinkType;
+    return pluginSinkConfig.getType().asCanonicalString();
 }
 
 std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> NamedSinkDescriptor::getSchema() const
@@ -90,67 +80,94 @@ Host NamedSinkDescriptor::getHost() const
     return host;
 }
 
-std::unordered_map<Identifier, std::string> NamedSinkDescriptor::getOutputFormatterConfig() const
+const PluginSinkConfiguration& NamedSinkDescriptor::getPluginSinkConfiguration() const
 {
-    return formatConfig;
+    return pluginSinkConfig;
+}
+
+const OutputFormatterDescriptor& NamedSinkDescriptor::getOutputFormatterDescriptor() const
+{
+    return outputFormatterDescriptor;
 }
 
 NamedSinkDescriptor::NamedSinkDescriptor(
     Identifier name,
     Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
-    const std::string_view sinkType,
     Host host,
-    std::unordered_map<Identifier, std::string> formatConfig,
-    DescriptorConfig::Config config)
-    : Descriptor(std::move(config))
-    , name(std::move(name))
+    const bool addTimestamp,
+    const size_t backpressureUpperThreshold,
+    const size_t backpressureLowerThreshold,
+    PluginSinkConfiguration pluginSinkConfig,
+    OutputFormatterDescriptor outputFormatterDescriptor)
+    : name(std::move(name))
     , schema(std::make_shared<Schema<UnqualifiedUnboundField, Ordered>>(std::move(nameWithSchema)))
-    , sinkType(sinkType)
     , host(std::move(host))
-    , formatConfig(std::move(formatConfig))
+    , addTimestamp(addTimestamp)
+    , backpressureUpperThreshold(backpressureUpperThreshold)
+    , backpressureLowerThreshold(backpressureLowerThreshold)
+    , pluginSinkConfig(std::move(pluginSinkConfig))
+    , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
+}
+
+bool NamedSinkDescriptor::getAddTimestamp() const
+{
+    return addTimestamp;
+}
+
+size_t NamedSinkDescriptor::getBackpressureUpperThreshold() const
+{
+    return backpressureUpperThreshold;
+}
+
+size_t NamedSinkDescriptor::getBackpressureLowerThreshold() const
+{
+    return backpressureLowerThreshold;
 }
 
 AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     uint64_t sinkId,
-    std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
-    const std::string_view sinkType,
+    AnonymousSinkSchema schema,
     Host host,
-    std::unordered_map<Identifier, std::string> formatConfig,
-    DescriptorConfig::Config config)
-    : Descriptor(std::move(config))
-    , sinkId(sinkId)
-    , schema(std::visit(
-          [](auto&& arg) -> std::variant<
-                             std::monostate,
-                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-          {
-              using T = std::decay_t<decltype(arg)>;
-              if constexpr (std::is_same_v<T, std::monostate>)
-              {
-                  return std::monostate{};
-              }
-              else
-              {
-                  return std::make_shared<const T>(std::forward<decltype(arg)>(arg));
-              }
-          },
-          std::move(schema)))
-    , sinkType(sinkType)
+    const bool addTimestamp,
+    const size_t backpressureUpperThreshold,
+    const size_t backpressureLowerThreshold,
+    PluginSinkConfiguration pluginSinkConfig,
+    OutputFormatterDescriptor outputFormatterDescriptor)
+    : sinkId(sinkId)
+    , schema(std::move(schema))
     , host(std::move(host))
-    , formatConfig(std::move(formatConfig))
+    , addTimestamp(addTimestamp)
+    , backpressureUpperThreshold(backpressureUpperThreshold)
+    , backpressureLowerThreshold(backpressureLowerThreshold)
+    , pluginSinkConfig(std::move(pluginSinkConfig))
+    , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
+}
+
+bool AnonymousSinkDescriptor::getAddTimestamp() const
+{
+    return addTimestamp;
+}
+
+size_t AnonymousSinkDescriptor::getBackpressureUpperThreshold() const
+{
+    return backpressureUpperThreshold;
+}
+
+size_t AnonymousSinkDescriptor::getBackpressureLowerThreshold() const
+{
+    return backpressureLowerThreshold;
 }
 
 std::ostream& operator<<(std::ostream& out, const AnonymousSinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, host: {}, Config: {})",
+        "SinkDescriptor: (name: {}, type: {}, host: {}, formatter: {})",
         sinkDescriptor.sinkId,
-        sinkDescriptor.sinkType,
+        sinkDescriptor.getSinkType(),
         sinkDescriptor.host,
-        sinkDescriptor.toStringConfig());
+        sinkDescriptor.outputFormatterDescriptor);
     return out;
 }
 
@@ -161,26 +178,15 @@ bool operator==(const AnonymousSinkDescriptor& lhs, const AnonymousSinkDescripto
 
 std::string AnonymousSinkDescriptor::getFormatType() const
 {
-    try
-    {
-        return getFromConfig(SinkDescriptor::OUTPUT_FORMAT);
-    }
-    catch (std::out_of_range& e)
-    {
-        return "Native";
-    }
+    return outputFormatterDescriptor.getOutputFormatterType().asCanonicalString();
 }
 
 std::string AnonymousSinkDescriptor::getSinkType() const
 {
-    return sinkType;
+    return pluginSinkConfig.getType().asCanonicalString();
 }
 
-std::variant<
-    std::monostate,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-AnonymousSinkDescriptor::getSchema() const
+AnonymousSinkSchema AnonymousSinkDescriptor::getSchema() const
 {
     return schema;
 }
@@ -195,30 +201,26 @@ Host AnonymousSinkDescriptor::getHost() const
     return host;
 }
 
-std::unordered_map<Identifier, std::string> AnonymousSinkDescriptor::getOutputFormatterConfig() const
+const PluginSinkConfiguration& AnonymousSinkDescriptor::getPluginSinkConfiguration() const
 {
-    return formatConfig;
+    return pluginSinkConfig;
 }
 
-SinkDescriptor::SinkDescriptor(std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying)
-    : Descriptor(std::visit([](const auto& var) { return var.getConfig(); }, underlying)), underlying(std::move(underlying))
+const OutputFormatterDescriptor& AnonymousSinkDescriptor::getOutputFormatterDescriptor() const
+{
+    return outputFormatterDescriptor;
+}
+
+SinkDescriptor::SinkDescriptor(std::variant<NamedSinkDescriptor, AnonymousSinkDescriptor> underlying) : underlying(std::move(underlying))
 {
 }
 
-std::variant<
-    std::monostate,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-    std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
-SinkDescriptor::getSchema() const
+AnonymousSinkSchema SinkDescriptor::getSchema() const
 {
     return std::visit(
-        [](const auto& var)
-        {
-            return std::variant<
-                std::monostate,
-                std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-                std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>{var.getSchema()};
-        },
+        Overloaded{
+            [](const NamedSinkDescriptor& named) { return AnonymousSinkSchema{named.getSchema()}; },
+            [](const AnonymousSinkDescriptor& anonymous) { return anonymous.getSchema(); }},
         underlying);
 }
 
@@ -235,15 +237,7 @@ AnonymousSinkDescriptor AnonymousSinkDescriptor::withSchemaOrder(const Schema<Un
 
 std::string SinkDescriptor::getFormatType() const
 {
-    try
-    {
-        return std::visit([](const auto& var) { return var.getFromConfig(OUTPUT_FORMAT); }, underlying);
-    }
-    catch (std::out_of_range& e)
-    {
-        /// If no output format is set, then the format will be native
-        return "Native";
-    }
+    return std::visit([](const auto& var) { return var.getFormatType(); }, underlying);
 }
 
 std::string SinkDescriptor::getSinkType() const
@@ -261,9 +255,19 @@ Identifier SinkDescriptor::getSinkName() const
         underlying);
 }
 
-std::unordered_map<Identifier, std::string> SinkDescriptor::getOutputFormatterConfig() const
+const ExplicitAny& SinkDescriptor::getPluginData() const
 {
-    return std::visit([](const auto& var) { return var.getOutputFormatterConfig(); }, underlying);
+    return getPluginSinkConfiguration().getPluginData();
+}
+
+const PluginSinkConfiguration& SinkDescriptor::getPluginSinkConfiguration() const
+{
+    return std::visit([](const auto& var) -> const PluginSinkConfiguration& { return var.getPluginSinkConfiguration(); }, underlying);
+}
+
+const OutputFormatterDescriptor& SinkDescriptor::getOutputFormatterDescriptor() const
+{
+    return std::visit([](const auto& var) -> const OutputFormatterDescriptor& { return var.getOutputFormatterDescriptor(); }, underlying);
 }
 
 bool SinkDescriptor::isAnonymous() const
@@ -276,18 +280,19 @@ Host SinkDescriptor::getHost() const
     return std::visit([](const auto& var) { return var.getHost(); }, underlying);
 }
 
-std::optional<DescriptorConfig::Config>
-SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs)
+bool SinkDescriptor::getAddTimestamp() const
 {
-    const std::unordered_map<std::string, std::string> stringConfigMap = configPairs
-        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
-        | std::ranges::to<std::unordered_map>();
-    auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{stringConfigMap};
-    if (const auto validator = SinkValidationRegistry::instance().find(std::string{sinkType}))
-    {
-        return (*validator)(std::move(sinkValidationRegistryArguments));
-    }
-    return std::nullopt;
+    return std::visit([](const auto& var) { return var.getAddTimestamp(); }, underlying);
+}
+
+size_t SinkDescriptor::getBackpressureUpperThreshold() const
+{
+    return std::visit([](const auto& var) { return var.getBackpressureUpperThreshold(); }, underlying);
+}
+
+size_t SinkDescriptor::getBackpressureLowerThreshold() const
+{
+    return std::visit([](const auto& var) { return var.getBackpressureLowerThreshold(); }, underlying);
 }
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
@@ -308,22 +313,69 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
         rhs.underlying);
 }
 
+namespace detail
+{
+struct ReflectedPluginSinkConfiguration
+{
+    Identifier type;
+    Reflected pluginData;
+};
+}
+
+Reflected Reflector<PluginSinkConfiguration>::operator()(const PluginSinkConfiguration& config, const ReflectionContext& context) const
+{
+    const auto configEntry = SinkConfigRegistry::instance().find(config.getType().asCanonicalString());
+    INVARIANT(configEntry.has_value(), "Sink type {} has a descriptor but no SinkConfigRegistry entry", config.getType());
+    return context.reflect(detail::ReflectedPluginSinkConfiguration{
+        .type = config.getType(), .pluginData = configEntry->reflect(config.getPluginData(), context)});
+}
+
+PluginSinkConfiguration Unreflector<PluginSinkConfiguration>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto reflectedConfig = context.unreflect<detail::ReflectedPluginSinkConfiguration>(rfl);
+    const auto configEntry = SinkConfigRegistry::instance().find(reflectedConfig.type.asCanonicalString());
+    if (not configEntry.has_value())
+    {
+        throw UnknownSinkType("Cannot deserialize sink descriptor: type {} has no SinkConfigRegistry entry", reflectedConfig.type);
+    }
+    return PluginSinkConfiguration{
+        std::move(reflectedConfig.type), ExplicitAny{configEntry->unreflect(reflectedConfig.pluginData, context)}};
+}
+
 Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& descriptor, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedNamedSinkDescriptor{
         .name = descriptor.getSinkName(),
         .schema = *descriptor.getSchema(),
-        .sinkType = descriptor.getSinkType(),
         .host = descriptor.getHost(),
-        .formatConfig = context.reflect(descriptor.getOutputFormatterConfig()),
-        .config = descriptor.getReflectedConfig(context)});
+        .addTimestamp = descriptor.getAddTimestamp(),
+        .backpressureUpperThreshold = descriptor.getBackpressureUpperThreshold(),
+        .backpressureLowerThreshold = descriptor.getBackpressureLowerThreshold(),
+        .pluginSinkConfig = descriptor.getPluginSinkConfiguration(),
+        .outputFormatterDescriptor = descriptor.getOutputFormatterDescriptor()});
 }
 
 NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    const auto [name, schema, sinkType, host, formatConfig, config] = context.unreflect<detail::ReflectedNamedSinkDescriptor>(reflected);
-    const auto unreflectedFormatConfig = context.unreflect<std::unordered_map<Identifier, std::string>>(formatConfig);
-    return NamedSinkDescriptor{name, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
+    auto
+        [name,
+         schema,
+         host,
+         addTimestamp,
+         backpressureUpperThreshold,
+         backpressureLowerThreshold,
+         pluginSinkConfig,
+         outputFormatterDescriptor]
+        = context.unreflect<detail::ReflectedNamedSinkDescriptor>(reflected);
+    return NamedSinkDescriptor{
+        std::move(name),
+        std::move(schema),
+        std::move(host),
+        addTimestamp,
+        backpressureUpperThreshold,
+        backpressureLowerThreshold,
+        std::move(pluginSinkConfig),
+        std::move(outputFormatterDescriptor)};
 }
 
 Reflected Reflector<AnonymousSinkDescriptor>::operator()(const AnonymousSinkDescriptor& descriptor, const ReflectionContext& context) const
@@ -338,17 +390,49 @@ Reflected Reflector<AnonymousSinkDescriptor>::operator()(const AnonymousSinkDesc
     return context.reflect(detail::ReflectedAnonymousSinkDescriptor{
         .sinkId = descriptor.getSinkId(),
         .schema = std::move(schema),
-        .sinkType = descriptor.getSinkType(),
         .host = descriptor.getHost(),
-        .formatConfig = context.reflect(descriptor.getOutputFormatterConfig()),
-        .config = descriptor.getReflectedConfig(context)});
+        .addTimestamp = descriptor.getAddTimestamp(),
+        .backpressureUpperThreshold = descriptor.getBackpressureUpperThreshold(),
+        .backpressureLowerThreshold = descriptor.getBackpressureLowerThreshold(),
+        .pluginSinkConfig = descriptor.getPluginSinkConfiguration(),
+        .outputFormatterDescriptor = descriptor.getOutputFormatterDescriptor()});
 }
 
 AnonymousSinkDescriptor Unreflector<AnonymousSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [sinkId, schema, sinkType, host, formatConfig, config] = context.unreflect<detail::ReflectedAnonymousSinkDescriptor>(reflected);
-    auto unreflectedFormatConfig = context.unreflect<std::unordered_map<Identifier, std::string>>(formatConfig);
-    return AnonymousSinkDescriptor{sinkId, schema, sinkType, host, unreflectedFormatConfig, Descriptor::unreflectConfig(config, context)};
+    auto
+        [sinkId,
+         schema,
+         host,
+         addTimestamp,
+         backpressureUpperThreshold,
+         backpressureLowerThreshold,
+         pluginSinkConfig,
+         outputFormatterDescriptor]
+        = context.unreflect<detail::ReflectedAnonymousSinkDescriptor>(reflected);
+    auto sinkSchema = std::visit(
+        [](auto&& arg) -> AnonymousSinkSchema
+        {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::monostate>)
+            {
+                return std::monostate{};
+            }
+            else
+            {
+                return std::make_shared<const T>(std::forward<decltype(arg)>(arg));
+            }
+        },
+        std::move(schema));
+    return AnonymousSinkDescriptor{
+        sinkId,
+        std::move(sinkSchema),
+        std::move(host),
+        addTimestamp,
+        backpressureUpperThreshold,
+        backpressureLowerThreshold,
+        std::move(pluginSinkConfig),
+        std::move(outputFormatterDescriptor)};
 }
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor, const ReflectionContext& context) const
