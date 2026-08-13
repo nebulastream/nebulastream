@@ -24,12 +24,13 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-
+#include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -199,13 +200,18 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
 
     for (const auto& [logical, host] : physical)
     {
+        const NES::Schema<NES::LiteralConfigValue, NES::Ordered> values{
+            NES::LiteralConfigValue{NES::QualifiedIdentifier::parse("file_path"), "does_not_exist"},
+            NES::LiteralConfigValue{NES::QualifiedIdentifier::parse("host"), host},
+            NES::LiteralConfigValue{NES::QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = NES::SourceCatalog::getConfigSchema(NES::Identifier::parse("File"), NES::Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
         statements.emplace_back(
             NES::CreatePhysicalSourceStatement{
-                .attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
-                .sourceType = NES::Identifier::parse("File"),
-                .host = NES::Host(host),
-                .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
-                .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
+                NES::LogicalSourceName(NES::Identifier::parse(logical)),
+                std::move(generalConfig),
+                std::move(pluginConfig),
+                std::move(inputFormatterDescriptor)});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {
@@ -215,16 +221,20 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
                           { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
             | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
+        auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = NES::unwrapOrThrow(
+            NES::unwrapOrThrow(NES::SinkCatalog::getConfigSchema(NES::Identifier::parse("VOID"), NES::Identifier::parse("NATIVE")))
+                .resolveConfigs(NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::vector<NES::LiteralConfigValue>{}}));
+        generalSinkConfig.host = NES::Host(host);
         statements.emplace_back(
             NES::CreateSinkStatement{
                 .name = NES::Identifier::parse(name),
-                .sinkType = NES::Identifier::parse("VOID"),
                 .schema = std::move(schema),
-                .host = NES::Host(host),
-                .sinkConfig = {},
-                .formatConfig = {}});
+                .generalSinkConfig = std::move(generalSinkConfig),
+                .pluginSinkConfig = std::move(pluginSinkConfig),
+                .outputFormatterDescriptor = std::move(outputFormatterDescriptor)});
     }
-    statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
+    statements.emplace_back(
+        NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query)});
     return statements;
 }
 
@@ -243,7 +253,8 @@ struct OptimizerAndPlan
 
 OptimizerAndPlan loadAndBind(std::string_view yamlContent)
 {
-    auto sources = std::make_shared<NES::SourceCatalog>();
+    auto sourcesHandle = NES::SourceCatalog::create();
+    auto sources = NES::copyPtr(sourcesHandle);
     auto sinks = std::make_shared<NES::SinkCatalog>();
     auto workers = std::make_shared<NES::WorkerCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
@@ -253,7 +264,7 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
 
     NES::TopologyStatementHandler topologyHandler{nullptr, workers};
     NES::SinkStatementHandler sinkStatementHandler{sinks, NES::RequireHostConfig{}};
-    NES::SourceStatementHandler sourceStatementHandler{sources, NES::RequireHostConfig{}};
+    NES::SourceStatementHandler sourceStatementHandler{sources};
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
     renderTopology(workers->getTopology(), std::cout);

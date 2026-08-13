@@ -90,7 +90,8 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      output_format: CSV
+    parser_config:
+      type: CSV
   - name: VOID_SINK
     host: worker-1:8080
     schema:
