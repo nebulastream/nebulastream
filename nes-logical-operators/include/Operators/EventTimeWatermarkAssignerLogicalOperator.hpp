@@ -22,7 +22,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>

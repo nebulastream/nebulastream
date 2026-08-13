@@ -20,16 +20,19 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <OutputFormatters/CSVOutputFormatterConfig.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/core.h>
 #include <OutputFormatterRegistry.hpp>
@@ -40,10 +43,13 @@
 
 namespace NES
 {
+
 class CSVOutputFormatter : public OutputFormatter
 {
 public:
-    explicit CSVOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor);
+    static constexpr std::string_view NAME = "CSV";
+
+    explicit CSVOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const CSVOutputFormatterConfig& config);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
         const VarVal& value,
@@ -56,8 +62,7 @@ public:
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
-    /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     /// Registry entry (see OutputFormatterRegistry.hpp).
     static std::unique_ptr<OutputFormatter> provideFormatter(OutputFormatterRegistryArguments arguments);
@@ -68,30 +73,6 @@ private:
     bool quoteStrings;
     std::string fieldDelimiter;
     std::string tupleDelimiter;
-};
-}
-
-namespace NES::OutputFormatterConfig
-{
-struct ConfigParametersCSV
-{
-    static inline const DescriptorConfig::ConfigParameter<bool> QUOTE_STRINGS{
-        "QUOTE_STRINGS",
-        false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(QUOTE_STRINGS, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
-        "FIELD_DELIMITER",
-        ",",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
-        "TUPLE_DELIMITER",
-        "\n",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
 };
 }
 

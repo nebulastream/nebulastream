@@ -365,8 +365,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: Void/type: NonExistentSink/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Invalid configuration for sink"* ]]
-  [[ "$output" == *"NONEXISTENTSINK"* ]]
+  [[ "$output" == *"sink type 'NONEXISTENTSINK' is not registered"* ]]
 }
 
 @test "error: source on non-existing worker reports source name and host" {

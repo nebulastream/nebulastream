@@ -15,18 +15,24 @@
 #include <KafkaSink.hpp>
 
 #include <cstddef>
+#include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <librdkafka/rdkafkacpp.h>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -43,15 +49,78 @@ void KafkaSink::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
     }
 }
 
-KafkaSink::KafkaSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+namespace
+{
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::string> BROKERS{Identifier::parse("BROKERS"), "Comma-separated Kafka bootstrap servers"};
+
+const ConfigField<std::string> TOPIC{Identifier::parse("TOPIC"), "The Kafka topic to produce to"};
+
+/// Maximum number of messages librdkafka may hold in its outbound queue (queue.buffering.max.messages).
+/// Once reached, produce() fails with ERR__QUEUE_FULL and the sink retries via the BackpressureHandler.
+/// Must be positive: librdkafka treats 0 as "unlimited", which would disable backpressure.
+const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
+    Identifier::parse("MAX_OUTSTANDING_MESSAGES"),
+    "Maximum number of messages in librdkafka's outbound queue; must be positive",
+    [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
+    {
+        auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
+        if (!value)
+        {
+            return std::unexpected{value.error()};
+        }
+        if (*value <= 0)
+        {
+            return std::unexpected{InvalidConfigParameter("KafkaSink: MAX_OUTSTANDING_MESSAGES must be positive")};
+        }
+        return value;
+    },
+    int64_t{100000}};
+
+/// How long librdkafka retries a produced message before reporting it failed (message.timeout.ms).
+/// Must be positive: librdkafka treats 0 as "infinite", which could block a query forever.
+const ConfigField<int64_t> DELIVERY_TIMEOUT_MS{
+    Identifier::parse("DELIVERY_TIMEOUT_MS"),
+    "How long librdkafka retries a produced message before reporting it failed; must be positive",
+    [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
+    {
+        auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
+        if (!value)
+        {
+            return std::unexpected{value.error()};
+        }
+        if (*value <= 0)
+        {
+            return std::unexpected{InvalidConfigParameter("KafkaSink: DELIVERY_TIMEOUT_MS must be positive")};
+        }
+        return value;
+    },
+    int64_t{5000}};
+/// NOLINTEND(cert-err58-cpp)
+}
+
+Schema<QualifiedErasedConfigField, Ordered> KafkaSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("KAFKA_SINK"), BROKERS, TOPIC, MAX_OUTSTANDING_MESSAGES, DELIVERY_TIMEOUT_MS);
+}
+
+std::expected<KafkaSinkConfig, Exception> KafkaSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return KafkaSinkConfig{
+        .bootstrapServers = config.get(BROKERS),
+        .topic = config.get(TOPIC),
+        .maxOutstandingMessages = config.get(MAX_OUTSTANDING_MESSAGES),
+        .deliveryTimeoutMs = config.get(DELIVERY_TIMEOUT_MS),
+    };
+}
+
+KafkaSink::KafkaSink(BackpressureController backpressureController, const KafkaSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , bootstrapServers(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::BROKERS))
-    , topic(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::TOPIC))
-    , maxOutstandingMessages(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::MAX_OUTSTANDING_MESSAGES))
-    , deliveryTimeoutMs(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::DELIVERY_TIMEOUT_MS))
-    , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
+    , bootstrapServers(config.bootstrapServers)
+    , topic(config.topic)
+    , maxOutstandingMessages(static_cast<int32_t>(config.maxOutstandingMessages))
+    , deliveryTimeoutMs(static_cast<int32_t>(config.deliveryTimeoutMs))
+    , backpressureHandler(sinkDescriptor.getBackpressureUpperThreshold(), sinkDescriptor.getBackpressureLowerThreshold())
 {
 }
 
@@ -188,11 +257,6 @@ void KafkaSink::stop(PipelineExecutionContext& pec)
     }
     NES_INFO("Kafka Sink completed.");
     producer.reset();
-}
-
-DescriptorConfig::Config KafkaSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersKafkaSink>(std::move(config), NAME);
 }
 
 }

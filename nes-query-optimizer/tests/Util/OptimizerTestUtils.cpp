@@ -19,10 +19,12 @@
 #include <utility>
 #include <vector>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -32,6 +34,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 
@@ -66,15 +69,22 @@ OptimizerTestUtils::createSource(std::string name, const std::vector<std::string
 SourceDescriptor
 OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    auto source = sourceCatalog.addLogicalSource(identifier, schema);
+    auto source = sourceCatalog->addLogicalSource(identifier, schema);
 
     if (!source.has_value())
     {
         throw TestException();
     }
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
-    auto result = sourceCatalog.addPhysicalSource(source.value(), Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig);
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("FILE_PATH"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("HOST"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("TYPE"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    auto result = sourceCatalog->registerWithLogicalSource(
+        PhysicalSourceBuilder{
+            std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+        source->getLogicalSourceName());
 
     if (!result.has_value())
     {
@@ -85,10 +95,17 @@ OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const S
 
 SinkDescriptor OptimizerTestUtils::createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
 
-    auto sinkDescriptor = sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {});
+    generalConfig.host = Host{"localhost"};
+    auto sinkDescriptor = sinkCatalog.addSinkDescriptor(
+        sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
     if (!sinkDescriptor.has_value())
     {
         throw TestException();

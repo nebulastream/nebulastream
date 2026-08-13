@@ -30,7 +30,6 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>

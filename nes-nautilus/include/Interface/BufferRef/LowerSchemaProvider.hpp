@@ -16,12 +16,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <unordered_map>
 
 #include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 
@@ -42,10 +40,7 @@ class LowerSchemaProvider
 {
 public:
     static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
-        uint64_t bufferSize,
-        const Schema<QualifiedUnboundField, Ordered>& schema,
-        const std::string& outputFormatterType,
-        const std::unordered_map<Identifier, std::string>& config);
+        uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor);
 
     static std::shared_ptr<TupleBufferRef>
     lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);

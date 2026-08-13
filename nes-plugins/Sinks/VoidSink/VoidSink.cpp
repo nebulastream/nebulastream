@@ -13,21 +13,35 @@
 */
 #include <VoidSink.hpp>
 
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+#include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
-VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor&) : Sink(std::move(backpressureController))
+VoidSink::VoidSink(BackpressureController backpressureController, const VoidSinkConfig&) : Sink(std::move(backpressureController))
 {
+}
+
+Schema<QualifiedErasedConfigField, Ordered> VoidSink::getConfigSchema()
+{
+    /// The void sink declares no config parameters.
+    return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+}
+
+std::expected<VoidSinkConfig, Exception> VoidSinkConfig::fromConfig(const InstantiatedConfig&)
+{
+    return VoidSinkConfig{};
 }
 
 void VoidSink::start(PipelineExecutionContext&)
@@ -43,11 +57,6 @@ void VoidSink::stop(PipelineExecutionContext&)
 void VoidSink::execute([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
-}
-
-DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersVoid>(std::move(config), NAME);
 }
 
 }

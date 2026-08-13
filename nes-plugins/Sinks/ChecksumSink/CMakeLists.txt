@@ -22,4 +22,5 @@ target_include_directories(checksum_sink_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DI
 
 link_plugin_library(nes-sinks checksum_sink_plugin)
 add_registry_entry(Sink Checksum)
-add_registry_entry(SinkValidation Checksum)
+add_registry_entry(SinkConfigSchema Checksum)
+add_registry_entry(SinkConfig Checksum)

@@ -32,7 +32,6 @@
 #include <magic_enum/magic_enum.hpp>
 
 /// NOLINTNEXTLINE(misc-include-cleaner)
-#include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>

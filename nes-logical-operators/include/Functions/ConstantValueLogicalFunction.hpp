@@ -19,7 +19,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
@@ -55,18 +54,6 @@ public:
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
-
-    struct ConfigParameters
-    {
-        static inline const DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
-            "CONSTANT_VALUE_AS_STRING",
-            std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config); }};
-
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
-    };
 
     static LogicalFunctionRegistryReturnType createConstantValue(LogicalFunctionRegistryArguments arguments);
 

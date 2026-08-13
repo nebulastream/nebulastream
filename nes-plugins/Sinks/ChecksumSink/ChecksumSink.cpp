@@ -23,13 +23,18 @@
 #include <system_error>
 #include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -39,10 +44,36 @@
 namespace NES
 {
 
-ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
+namespace
+{
+
+/// Config fields of the checksum sink, shared by getConfigSchema (declaration) and
+/// ChecksumSinkConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::filesystem::path> FILE_PATH{
+    Identifier::parse("FILE_PATH"),
+    "The path to the file to wich to wruiteite the final chescksum.",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const auto& val) { return std::filesystem::path{val}; });
+    }};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> ChecksumSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("CHECKSUM_SINK"), FILE_PATH);
+}
+
+std::expected<ChecksumSinkConfig, Exception> ChecksumSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return ChecksumSinkConfig{.filePath = config.get(FILE_PATH)};
+}
+
+ChecksumSink::ChecksumSink(BackpressureController backpressureController, const ChecksumSinkConfig& config)
+    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(config.filePath)
 {
 }
 
@@ -100,11 +131,6 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
         /// Get the next buffer
         element = iterator.getNextElement();
     }
-}
-
-DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }
 
 }

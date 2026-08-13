@@ -112,6 +112,7 @@ public:
         else if (sinkType == Identifier::parse("CHECKSUM"))
         {
             config[Identifier::parse("file_path")] = "/tmp/none.txt";
+            config[Identifier::parse("output_format")] = "CSV";
             formatConfig[Identifier::parse("quote_strings")] = "true";
         }
         std::string host = possibleSinkPlacements.at(0).getRawValue();
@@ -144,6 +145,7 @@ public:
                 else if (sinkType == Identifier::parse("CHECKSUM"))
                 {
                     config[Identifier::parse("file_path")] = std::move(filePath);
+                    config[Identifier::parse("output_format")] = "CSV";
                     formatConfig[Identifier::parse("quote_strings")] = "true";
                 }
 
@@ -776,8 +778,7 @@ struct SystestBinder::Impl
         {
             sinkConfig.emplace(Identifier::parse("file_path"), resultFile);
         }
-        if (not(sinkConfig.contains(Identifier::parse("output_format"))) and sinkOperator->getSinkType() != Identifier::parse("CHECKSUM")
-            and sinkOperator->getSinkType() != Identifier::parse("VOID"))
+        if (not(sinkConfig.contains(Identifier::parse("output_format"))) and sinkOperator->getSinkType() != Identifier::parse("VOID"))
         {
             sinkConfig.emplace(Identifier::parse("output_format"), "CSV");
         }
