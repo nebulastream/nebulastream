@@ -55,7 +55,7 @@
 #include <QueryId.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 #include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>

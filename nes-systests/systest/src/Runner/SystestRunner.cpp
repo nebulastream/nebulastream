@@ -71,7 +71,7 @@
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerOptimizerConfig.hpp>
 
 namespace NES
@@ -397,21 +397,59 @@ std::vector<RunningQuery> runQueries(
 
 /// NOLINTEND(readability-function-cognitive-complexity)
 
-/// The run configuration (command line plus per-test-file overrides, already merged by the
-/// executor) is layered over the per-worker topology config and resolved against the declared
-/// schema. Matches the previous precedence: the run configuration wins over the topology.
-WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals)
+WorkerConfigResolver makeWorkerConfigResolver(
+    Schema<LiteralConfigValue, Ordered> commandLineLiterals,
+    Schema<LiteralConfigValue, Ordered> systestFileLiterals,
+    const bool permitConflictingOptions,
+    std::string overwriteContext)
 {
-    return [runConfigLiterals = std::move(runConfigLiterals)](const WorkerConfig& worker)
+    return [commandLineLiterals = std::move(commandLineLiterals),
+            systestFileLiterals = std::move(systestFileLiterals),
+            permitConflictingOptions,
+            overwriteContext = std::move(overwriteContext)](const WorkerCatalogEntry& worker)
     {
         auto [literals, overwrites] = mergeConfigLayers(
-            {ConfigLayer{.name = "topology", .literals = worker.config},
-             ConfigLayer{.name = "run configuration", .literals = runConfigLiterals}});
+            {ConfigLayer{.name = "command line", .literals = commandLineLiterals},
+             ConfigLayer{.name = "topology", .literals = worker.config},
+             ConfigLayer{.name = "systest file", .literals = systestFileLiterals}});
+        if (!overwrites.empty())
+        {
+            const auto formatted = overwrites
+                | std::views::transform(
+                                       [](const ConfigOverwrite& overwrite)
+                                       {
+                                           return fmt::format(
+                                               "{}: {} ({}) overwrites {} ({})",
+                                               toLowerCase(fmt::format("{}", overwrite.name)),
+                                               overwrite.appliedValue,
+                                               overwrite.appliedLayer,
+                                               overwrite.overwrittenValue,
+                                               overwrite.overwrittenLayer);
+                                       })
+                | std::ranges::to<std::vector>();
+            if (!permitConflictingOptions)
+            {
+                throw InvalidConfigParameter(
+                    "Conflicting configuration values for worker {} ({}):\n{}\nPass --permit-conflicting-options to allow "
+                    "higher-priority layers to overwrite.",
+                    worker.host.getRawValue(),
+                    overwriteContext,
+                    fmt::join(formatted, "\n"));
+            }
+            for (const auto& line : formatted)
+            {
+                std::cout << fmt::format("[{}] worker {}: {}\n", overwriteContext, worker.host.getRawValue(), line);
+            }
+        }
         auto resolved = resolveConfiguration<WorkerOptimizerConfig>(literals);
-        if (not resolved.has_value())
+        if (!resolved)
         {
             throw InvalidConfigParameter("{}", resolved.error());
         }
+        NES_INFO(
+            "Configuration of embedded worker {}:\n{}",
+            worker.host.getRawValue(),
+            formatEffectiveConfig(literals, WorkerOptimizerConfig::getConfigSchema()));
         return std::move(resolved)->worker;
     };
 }
