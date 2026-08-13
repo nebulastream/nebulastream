@@ -37,7 +37,8 @@ add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 # runtime-loaded plugin .so's, which resolve their NES symbols and registry singletons from
 # libnes.so. Linking a component statically here as well would create a second copy of the
 # registries (see cmake/LibNes.cmake).
-target_link_libraries(nes-single-node-worker PRIVATE libnes)
+find_package(argparse CONFIG REQUIRED)
+target_link_libraries(nes-single-node-worker PRIVATE libnes argparse::argparse)
 
 if (NES_BUILD_STATIC_WORKER)
     # Self-contained deployment variant: components linked statically, no libnes.so needed at
@@ -45,7 +46,7 @@ if (NES_BUILD_STATIC_WORKER)
     # in a second copy of every registry and global next to the static one (see
     # cmake/LibNes.cmake); the starter therefore hard-rejects NES_PLUGINS.
     add_executable(nes-single-node-worker-static src/SingleNodeWorkerStarter.cpp)
-    target_link_libraries(nes-single-node-worker-static PRIVATE nes-single-node-worker-lib)
+    target_link_libraries(nes-single-node-worker-static PRIVATE nes-single-node-worker-lib argparse::argparse)
     target_compile_definitions(nes-single-node-worker-static PRIVATE NES_STATIC_WORKER)
 endif ()
 

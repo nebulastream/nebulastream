@@ -82,11 +82,11 @@ teardown() {
 }
 
 @test "worker accepts grpc address" {
-  run timeout 5 $NES_WORKER --grpc=localhost:55555
+  run timeout 5 $NES_WORKER -- --grpc=localhost:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "localhost:55555" singleNodeWorker.log
 
-  run timeout 5 $NES_WORKER --grpc=0.0.0.0:55555
+  run timeout 5 $NES_WORKER -- --grpc=0.0.0.0:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "0.0.0.0:55555" singleNodeWorker.log
 }
@@ -96,24 +96,24 @@ teardown() {
   # depending on whether a DNS server is reachable (EAI_NONAME "Name or service not known")
   # or not (EAI_AGAIN "Temporary failure in name resolution"), so we only assert that the
   # worker logged a clean gRPC-startup failure rather than matching the resolver message.
-  run timeout 10 $NES_WORKER --grpc=asdf.asdf.asdf:55555
+  run timeout 10 $NES_WORKER -- --grpc=asdf.asdf.asdf:55555
 
   grep "Failed to start GRPC Server" singleNodeWorker.log
 
   # DNS Name is Invalid
-  run timeout 10 $NES_WORKER --grpc=wow!:55555
+  run timeout 10 $NES_WORKER -- --grpc=wow!:55555
   grep "Invalid hostname: 'wow!'" singleNodeWorker.log
   [ "$status" -ne 0 ]
 }
 
 @test "worker accepts valid configs" {
-  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml
+  run timeout 5 $NES_WORKER --workerConfig=tests/good/config.yaml
   [ "$status" -eq 124 ] # killed by timeout
 }
 
 @test "worker warns when CLI overrides YAML config value" {
   # The YAML config sets admission_queue_size=1024. Override it via CLI to trigger the warning.
-  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --worker.query_engine.admission_queue_size=2048
+  run timeout 5 $NES_WORKER --workerConfig=tests/good/config.yaml -- --worker.query_engine.admission_queue_size=2048
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should contain the override warning
@@ -123,7 +123,7 @@ teardown() {
 
 @test "worker does not warn when CLI sets a value not in YAML" {
   # The YAML config does not set enable_event_trace. Setting it via CLI should not trigger a warning.
-  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --enable_event_trace=true
+  run timeout 5 $NES_WORKER --workerConfig=tests/good/config.yaml -- --enable_event_trace=true
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should NOT contain the override warning for this key
@@ -136,17 +136,17 @@ teardown() {
 
 @test "worker rejects total_memory_in_bytes of 0" {
   # A zero budget yields zero pooled buffers, which cannot back the internal MPMC queues.
-  run timeout 5 $NES_WORKER --worker.total_memory_in_bytes=0
+  run timeout 5 $NES_WORKER -- --worker.total_memory_in_bytes=0
   grep -E "capacity 0 is impossible|Precondition violated" singleNodeWorker.log
 }
 
 @test "worker rejects unpooled_memory_fraction out of range" {
   # The fraction is validated to [0.0, 1.0] at config-parse time, so both bounds are rejected there.
-  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=1.5
+  run timeout 5 $NES_WORKER -- --worker.unpooled_memory_fraction=1.5
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "unpooled_memory_fraction" singleNodeWorker.log
 
-  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=-0.1
+  run timeout 5 $NES_WORKER -- --worker.unpooled_memory_fraction=-0.1
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "unpooled_memory_fraction" singleNodeWorker.log
 }
@@ -154,13 +154,13 @@ teardown() {
 @test "worker rejects non-power-of-two buffer_alignment_in_bytes" {
   # 48 is not a power of two. Rejected at config-parse time by PowerOfTwoValidation, so this holds on
   # every build type (a BufferManager PRECONDITION would be compiled out in the no-assert Benchmark build).
-  run timeout 5 $NES_WORKER --worker.buffer_alignment_in_bytes=48
+  run timeout 5 $NES_WORKER -- --worker.buffer_alignment_in_bytes=48
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "buffer_alignment_in_bytes" singleNodeWorker.log
 }
 
 @test "worker accepts unpooled_memory_fraction of 0.0 (all pooled)" {
-  run timeout 5 $NES_WORKER --worker.unpooled_memory_fraction=0.0
+  run timeout 5 $NES_WORKER -- --worker.unpooled_memory_fraction=0.0
   [ "$status" -eq 124 ] # stays alive
 }
 

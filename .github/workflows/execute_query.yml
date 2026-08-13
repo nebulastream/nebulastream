@@ -84,7 +84,7 @@ jobs:
           cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
           cmake --build build -j -- -k 0
 
-          build/nes-single-node-worker/nes-single-node-worker --data_address=localhost:9090 > worker.log 2>&1 &
+          build/nes-single-node-worker/nes-single-node-worker -- --data_address=localhost:9090 > worker.log 2>&1 &
           WORKER_PID=$!
 
           sleep 5
