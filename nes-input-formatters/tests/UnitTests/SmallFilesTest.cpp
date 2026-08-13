@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-#include <Configuration/WorkerConfiguration.hpp>
+#include <Configurations/Util.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -52,6 +52,7 @@
 #include <FileUtil.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <QueryExecutionConfiguration.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace
@@ -186,7 +187,7 @@ public:
     size_t getNumberOfExpectedBuffers(
         const TestConfig& testConfig, const std::filesystem::path& testFilePath, USED_IN_DEBUG const size_t sizeOfSchemaInBytes) const
     {
-        const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
+        const auto sizeOfFormattedBuffers = defaultConfiguration<QueryExecutionConfiguration>().operatorBufferSize;
         PRECONDITION(
             sizeOfFormattedBuffers >= sizeOfSchemaInBytes, "The formatted buffer must be large enough to hold at least one tuple.");
 
@@ -216,7 +217,7 @@ public:
                 "Could not find file test file: {}.<file_ending_of_{}>", testDirPath / currentTestFile.fileName, fileEnding);
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
-        const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
+        const auto sizeOfFormattedBuffers = defaultConfiguration<QueryExecutionConfiguration>().operatorBufferSize;
         const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, getSizeInBytes(schema));
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 

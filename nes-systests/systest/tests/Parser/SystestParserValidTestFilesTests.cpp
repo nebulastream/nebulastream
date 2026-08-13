@@ -520,7 +520,7 @@ TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
 {
     SystestConfiguration config{};
     const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
+    config.directlySpecifiedTestFiles = fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName);
     const auto discovered = discoverTestFiles(config);
     ASSERT_EQ(discovered.size(), 1);
     const auto& testFile = discovered.front();

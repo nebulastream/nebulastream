@@ -35,17 +35,16 @@ RunPolicy::RunPolicy(
 
 RunPolicy RunPolicy::create(const SystestConfiguration& config)
 {
-    const auto measuring = config.benchmark.getValue();
+    const auto measuring = config.benchmark;
     /// A measuring run submits one query at a time, because queries that run together share the worker and their timings
     /// would depend on each other.
-    const auto concurrency = measuring ? 1 : config.numberConcurrentQueries.getValue();
-    const auto measureReport
-        = measuring ? std::optional{std::filesystem::path{config.workingDir.getValue()} / "BenchmarkResults.json"} : std::nullopt;
+    const auto concurrency = measuring ? 1 : config.numberConcurrentQueries;
+    const auto measureReport = measuring ? std::optional{std::filesystem::path{config.workingDir} / "BenchmarkResults.json"} : std::nullopt;
 
     return RunPolicy{
-        config.randomQueryOrder.getValue() ? OrderingPolicy{RunInShuffledOrder{}} : OrderingPolicy{RunInFileOrder{}},
+        config.randomQueryOrder ? OrderingPolicy{RunInShuffledOrder{}} : OrderingPolicy{RunInFileOrder{}},
         concurrency,
-        config.endlessMode.getValue() ? RepetitionPolicy{SubmitUntilStopped{}} : RepetitionPolicy{SubmitOnce{}},
+        config.endlessMode ? RepetitionPolicy{SubmitUntilStopped{}} : RepetitionPolicy{SubmitOnce{}},
         measureReport};
 }
 

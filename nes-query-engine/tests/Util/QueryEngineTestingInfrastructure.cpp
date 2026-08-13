@@ -34,6 +34,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -378,8 +379,8 @@ void TestingHarness::start()
     {
         queryRunningFutures[queryRunning.first] = queryRunning.second->get_future().share();
     }
-    QueryEngineConfiguration configuration{};
-    configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    auto configuration = defaultConfiguration<QueryEngineConfiguration>();
+    configuration.numberOfWorkerThreads = numberOfThreads;
     qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, Host("test"));
 }
 
