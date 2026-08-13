@@ -14,48 +14,64 @@
 
 #pragma once
 
-#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Any.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
+#include <Util/Variant.hpp>
 
 namespace NES
 {
-/// Descriptor that stores the configuration parameters of a specific InputFormatter instance
-/// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
-class InputFormatterDescriptor final : public Descriptor
-{
-    static constexpr std::string_view TYPE_STRING{"TYPE"};
 
+/// Describes a configured input formatter instance: its type name plus the formatter-defined
+/// config struct (e.g. CSVInputFormatterConfig), type-erased. The config is produced by the
+/// formatter's InputFormatterConfigRegistry entry, so the formatter factory can safely any_cast
+/// it back; serialization also goes through that entry. The NATIVE format carries no config,
+/// represented by an empty std::any.
+class InputFormatterDescriptor final
+{
 public:
-    explicit InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config);
-    ~InputFormatterDescriptor() = default;
+    explicit InputFormatterDescriptor(Identifier inputFormatterType, ExplicitAny config);
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor);
 
-    static std::string getTypeString() { return std::string{TYPE_STRING}; }
+    /// The type-erased config struct (std::any) is not comparable; two descriptors are considered
+    /// equal if they describe the same formatter type.
+    friend bool operator==(const InputFormatterDescriptor& lhs, const InputFormatterDescriptor& rhs)
+    {
+        return lhs.inputFormatterType == rhs.inputFormatterType;
+    }
 
-    const std::string& getInputFormatterType() const;
+    [[nodiscard]] const Identifier& getInputFormatterType() const;
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
-        std::string{TYPE_STRING},
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TYPE, config); }};
+    [[nodiscard]] const ExplicitAny& getConfig() const;
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(TYPE);
+    /// NOLINTNEXTLINE(cert-err58-cpp) - process aborts anyway if config schema setup throws at startup
+    static inline auto TYPE_FIELD = ConfigField<Identifier>{
+        Identifier::parse("TYPE"),
+        "The type of the InputFormatter.",
+        [](const ConfigLiteral& literal)
+        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp) - process aborts anyway if config schema setup throws at startup
+    static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
+        = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), TYPE_FIELD);
+
 
 private:
-    friend class SourceCatalog;
     friend struct Unreflector<InputFormatterDescriptor>;
     friend struct Reflector<InputFormatterDescriptor>;
 
-    /// Add LowerSchemaProvider as friend, so that it can construct the descriptor
-    std::string inputFormatterType;
+    Identifier inputFormatterType;
+    ExplicitAny config;
 };
 
 template <>
@@ -70,15 +86,6 @@ struct Unreflector<InputFormatterDescriptor>
     InputFormatterDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
-}
-
-namespace NES::detail
-{
-struct ReflectedInputFormatterDescriptor
-{
-    std::string inputFormatterType;
-    Reflected config;
-};
 }
 
 FMT_OSTREAM(NES::InputFormatterDescriptor);
