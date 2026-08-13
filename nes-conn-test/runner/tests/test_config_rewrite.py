@@ -20,29 +20,29 @@ from conntest_runner.config_rewrite import apply_overrides
 
 _CONFIG = (
     "CREATE PHYSICAL SOURCE FOR s TYPE TCP SET (\n"
-    "    'localhost' AS \"SOURCE\".SOCKET_HOST,\n"
-    "    9000        AS \"SOURCE\".\"SOCKET_PORT\",\n"
-    "    100         AS SOURCE.FLUSH_INTERVAL_MS\n"
+    "    'localhost' AS \"TCP_SOURCE\".SOCKET_HOST,\n"
+    "    9000        AS \"TCP_SOURCE\".\"SOCKET_PORT\",\n"
+    "    100         AS TCP_SOURCE.FLUSH_INTERVAL_MS\n"
     ");\n"
 )
 
 
 def test_replaces_each_named_key_and_keeps_the_rest() -> None:
     out = apply_overrides(_CONFIG, {"SOCKET_HOST": "relay", "SOCKET_PORT": 9100})
-    assert "'relay' AS \"SOURCE\".SOCKET_HOST" in out
-    assert "9100        AS \"SOURCE\".\"SOCKET_PORT\"" in out
-    assert "100         AS SOURCE.FLUSH_INTERVAL_MS" in out
+    assert "'relay' AS \"TCP_SOURCE\".SOCKET_HOST" in out
+    assert "9100        AS \"TCP_SOURCE\".\"SOCKET_PORT\"" in out
+    assert "100         AS TCP_SOURCE.FLUSH_INTERVAL_MS" in out
 
 
 def test_value_type_decides_the_literal() -> None:
-    config = "SET ('localhost' AS \"SOURCE\".HOST, 9000 AS \"SOURCE\".PORT)"
+    config = "SET ('localhost' AS TCP_SOURCE.HOST, 9000 AS TCP_SOURCE.PORT)"
     out = apply_overrides(config, {"HOST": "9100", "PORT": 9100})
-    assert out == "SET ('9100' AS \"SOURCE\".HOST, 9100 AS \"SOURCE\".PORT)"
+    assert out == "SET ('9100' AS TCP_SOURCE.HOST, 9100 AS TCP_SOURCE.PORT)"
 
 
 def test_key_does_not_match_a_longer_key_it_prefixes() -> None:
-    config = "SET ('a' AS \"SOURCE\".PORT_RANGE, 'b' AS \"SOURCE\".PORT)"
-    assert apply_overrides(config, {"PORT": "x"}) == "SET ('a' AS \"SOURCE\".PORT_RANGE, 'x' AS \"SOURCE\".PORT)"
+    config = "SET ('a' AS TCP_SOURCE.PORT_RANGE, 'b' AS TCP_SOURCE.PORT)"
+    assert apply_overrides(config, {"PORT": "x"}) == "SET ('a' AS TCP_SOURCE.PORT_RANGE, 'x' AS TCP_SOURCE.PORT)"
 
 
 def test_value_is_inserted_literally() -> None:

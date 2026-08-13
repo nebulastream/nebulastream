@@ -237,6 +237,18 @@ TEST(ConfigResolutionTest, factoryRejectsWrongType)
     EXPECT_EQ(errors.failedInstantiations.size(), 1);
 }
 
+TEST(ConfigResolutionTest, frontendDefaultInvalidValueReportsError)
+{
+    const auto schema = twoLevelSchema();
+    const Schema<ConfigFieldDefault, Ordered> frontendDefaults{
+        ConfigFieldDefault{QualifiedIdentifier::parse("engine.query.threads"), ConfigLiteral{std::string{"not_a_number"}}}};
+    auto [resolved, errors] = resolveConfig(Schema<LiteralConfigValue, Ordered>{}, schema, frontendDefaults);
+    EXPECT_FALSE(errors.empty());
+    ASSERT_EQ(errors.failedInstantiations.size(), 1);
+    EXPECT_EQ(errors.failedInstantiations.front().first, QualifiedIdentifier::parse("engine.query.threads"));
+    const InstantiatedConfig config{resolved};
+}
+
 TEST(ConfigMergeTest, laterLayerOverridesEarlier)
 {
     auto yaml = Schema<LiteralConfigValue, Ordered>{literal("worker.threads", ConfigLiteral{int64_t{2}})};

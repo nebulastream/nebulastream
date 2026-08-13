@@ -94,20 +94,15 @@ void throwOnError(std::expected<T, Exception> result)
 struct SystestBinder::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : sourceCatalog{std::make_shared<SourceCatalog>()}
+        : sourceCatalog{SourceCatalog::create()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
-        , sourceHandler{sourceCatalog, RequireHostConfig{}}
-        , sinkHandler{sinkCatalog, RequireHostConfig{}}
+        , sourceHandler{copyPtr(sourceCatalog)}
+        , sinkHandler{sinkCatalog}
         , modelHandler{modelCatalog}
-        , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
-        , queryOptimizer{
-              config.queryOptimizerConfig,
-              sourceCatalog,
-              sinkCatalog,
-              copyPtr(workerCatalog),
-              modelCatalog}
+        , statementBinder{copyPtr(sourceCatalog)}
+        , queryOptimizer{config.queryOptimizerConfig, copyPtr(sourceCatalog), sinkCatalog, copyPtr(workerCatalog), modelCatalog}
     {
         for (const auto& [host, data, maxOperators, downstream, workerConfig] : config.clusterConfig.workers)
         {
@@ -202,7 +197,7 @@ private:
     /// The query id correlates the statement with its answer.
     [[nodiscard]] BoundPlan optimizeInto(const std::string& sql, const std::string& queryId) const
     {
-        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        auto plan = AntlrSQLQueryParser::QueryBinder{}.createLogicalQueryPlanFromSQLString(sql);
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
         auto schema = getSinkOutputSchema(optimized);
@@ -221,7 +216,7 @@ private:
     }
 
     /// One catalog set for the whole run, which the rewriter's prefixing keeps collision-free.
-    std::shared_ptr<SourceCatalog> sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;

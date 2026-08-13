@@ -17,6 +17,7 @@
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -25,6 +26,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
@@ -42,6 +44,8 @@ public:
     createSource(std::string name, const Schema<UnqualifiedUnboundField, Ordered>& schema);
     TypedLogicalOperator<SourceDescriptorLogicalOperator> createSource(std::string name, const std::vector<std::string>& fieldNames);
     SourceDescriptor createSourceDescriptor(const Identifier& identifier, const Schema<UnqualifiedUnboundField, Ordered>& schema);
+    SourceDescriptor createSourceDescriptor(PhysicalSourceId id, const LogicalSource& logicalSource);
+    SinkDescriptor createAnonymousSinkDescriptor(SinkId id);
 
 
     TypedLogicalOperator<SinkLogicalOperator>

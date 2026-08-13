@@ -42,7 +42,8 @@ sinks:
     type: Print
     config:
       ingestion: 5000
-      output_format: CSV
+    parser_config:
+      type: CSV
 
 logical:
   - name: GENERATOR_SOURCE

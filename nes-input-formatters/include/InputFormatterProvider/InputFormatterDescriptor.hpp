@@ -60,7 +60,7 @@ public:
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
-        = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), TYPE_FIELD, VALUE_DESERIALIZERS);
+        = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), TYPE_FIELD);
 
 
 private:

@@ -63,9 +63,10 @@ sinks:
         type: UINT64
     type: File
     config:
-      output_format: CSV
       file_path: /output/results.csv
       append: false
+    parser_config:
+      type: CSV
 
 logical:
   - name: GENERATOR_SOURCE

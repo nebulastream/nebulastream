@@ -373,33 +373,6 @@ private:
     QualifiedIdentifier name;
     std::function<ConfigLiteral()> supplier;
 };
-
-/// Frontend-specific transformation of validated instances of ConfigValue (not the final config structs).
-class ConfigFieldTransformation
-{
-public:
-    template <typename T>
-    ConfigFieldTransformation(QualifiedIdentifier name, std::function<std::expected<T, Exception>(const T&)> transformation)
-        : name(std::move(name))
-        , transformation(
-              [transformation = std::move(transformation)](const ExplicitAny& value)
-              { return transformation(value.getAs<T>()).transform([](const auto& result) { return ExplicitAny{std::any{result}}; }); })
-    {
-    }
-
-    friend bool operator==(const ConfigFieldTransformation& lhs, const ConfigFieldTransformation& rhs);
-
-    friend std::ostream& operator<<(std::ostream& os, const ConfigFieldTransformation& obj);
-
-    [[nodiscard]] const QualifiedIdentifier& getFullyQualifiedName() const;
-
-    [[nodiscard]] const std::function<std::expected<ExplicitAny, Exception>(const ExplicitAny&)>& getTransformation() const;
-
-private:
-    QualifiedIdentifier name;
-    std::function<std::expected<ExplicitAny, Exception>(const ExplicitAny&)> transformation;
-    friend struct std::hash<ConfigFieldTransformation>;
-};
 }
 
 template <>
@@ -415,12 +388,6 @@ struct std::hash<NES::ConfigFieldDefault>
 };
 
 template <>
-struct std::hash<NES::ConfigFieldTransformation>
-{
-    size_t operator()(const NES::ConfigFieldTransformation& obj) const noexcept;
-};
-
-template <>
 struct std::hash<NES::ConfigFieldId>
 {
     size_t operator()(const NES::ConfigFieldId& obj) const noexcept;
@@ -428,5 +395,4 @@ struct std::hash<NES::ConfigFieldId>
 
 FMT_OSTREAM(NES::ConfigFieldId);
 FMT_OSTREAM(NES::ConfigFieldDefault);
-FMT_OSTREAM(NES::ConfigFieldTransformation);
 FMT_OSTREAM(NES::QualifiedErasedConfigField);

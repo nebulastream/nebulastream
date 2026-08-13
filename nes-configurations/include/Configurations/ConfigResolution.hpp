@@ -55,13 +55,11 @@ struct ConfigResolutionErrors
 
     [[nodiscard]] bool empty() const;
 
-    /// Merges two instances of this class together, usually used to produce a single error message for the errors of resolveConfig and applyConfigTransformations
+    /// Merges two instances of this class together, e.g. to produce a single error message across multiple resolution steps.
     static ConfigResolutionErrors combine(ConfigResolutionErrors lhs, ConfigResolutionErrors rhs);
     friend std::ostream& operator<<(std::ostream& os, const ConfigResolutionErrors&);
 };
 
-[[nodiscard]] std::tuple<Schema<InstantiatedConfigValue, Ordered>, ConfigResolutionErrors> applyConfigTransformations(
-    Schema<InstantiatedConfigValue, Ordered> config, const Schema<ConfigFieldTransformation, Unordered>& configTransformations);
 /// Resolve the passed literal config values against a declared config schema:
 /// each passed value is matched to a declared field (suffix lookup, so unqualified names work)
 /// and instantiated via the field's factory; unmatched declared fields fall back first to the explicit configDefaults

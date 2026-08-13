@@ -17,10 +17,16 @@ ATTACH INLINE
 
 # Description: 'raw' and 'escaped' share the same datatype, but only 'escaped' is serialized with the JSON serializer,
 # which quotes the value and escapes the quotes within it.
-SELECT * FROM messages INTO FILE('escaped:JSONVARSIZED,raw:DefaultVARSIZED' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+SELECT * FROM messages INTO FILE('escaped:JSONVARSIZED,raw:DefaultVARSIZED' as CSV_OUTPUT_FORMATTER.VALUE_SERIALIZERS);
 ----
 say "hi","say \"hi\""
 
-SELECT * FROM measurements INTO FILE('"sensor,value":DefaultUINT64, ts:DefaultINT64, "sensor,value2":DefaultINT32' AS "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+# Description: JSON output defaults to JSONVARSIZED, and JSON_OUTPUT_FORMATTER.VALUE_SERIALIZERS can override a field
+# (DefaultVARSIZED doubles quotes CSV-style instead of backslash-escaping them).
+SELECT * FROM messages INTO FILE('JSON' AS OUTPUT_FORMATTER."TYPE", 'raw:DefaultVARSIZED' AS JSON_OUTPUT_FORMATTER.VALUE_SERIALIZERS);
+----
+{"RAW":"say ""hi""","ESCAPED":"say \"hi\""}
+
+SELECT * FROM measurements INTO FILE('"sensor,value":DefaultUINT64, ts:DefaultINT64, "sensor,value2":DefaultINT32' AS CSV_OUTPUT_FORMATTER.VALUE_SERIALIZERS);
 ----
 42,1000,43

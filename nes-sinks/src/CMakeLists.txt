@@ -19,6 +19,7 @@ add_source_files(nes-sinks
         SinkCatalog.cpp
         SinkRegistry.cpp
         SinkConfigRegistry.cpp
+        SinkConfigSchema.cpp
         SinkConfigSchemaRegistry.cpp
         BackpressureHandler.cpp
         FileSink.cpp

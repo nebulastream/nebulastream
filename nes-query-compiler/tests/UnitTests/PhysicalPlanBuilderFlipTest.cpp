@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <unordered_set>
 #include <utility>
@@ -25,16 +26,20 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <PhysicalOperator.hpp>
@@ -74,14 +79,15 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = SourceDescriptor::create(
-                              PhysicalSourceId{1},
-                              LogicalSource{Identifier::parse("1"), schema},
-                              Identifier::parse("File"),
-                              Host{"localhost"},
-                              {{Identifier::parse("file_path"), "/dev/null"}},
-                              {{Identifier::parse("type"), "CSV"}},
-                              true)
+        const auto logicalSource = LogicalSource{Identifier::parse("1"), schema};
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceConfigSchema::create(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        auto descriptor = PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)}
+                              .build(PhysicalSourceId{1}, *logicalSource.getSchema(), std::nullopt)
                               .value();
         auto sourceOp = SourceDescriptorPhysicalOperator(std::move(descriptor), OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
@@ -92,10 +98,21 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkConfigSchema::create(Identifier::parse("Print"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(
+                      Schema<LiteralConfigValue, Ordered>{
+                          LiteralConfigValue{QualifiedIdentifier::parse("HOST"), "localhost"},
+                          LiteralConfigValue{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), "CSV"}})
+                  .value();
         auto descriptor = SinkDescriptor::createAnonymous(
-            INITIAL_SINK_ID, Identifier::parse("Print"), schema, Host{"localhost"}, {{Identifier::parse("output_format"), "CSV"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+            INITIAL_SINK_ID,
+            std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(schema),
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor));
+        auto sinkOp = SinkPhysicalOperator(descriptor);
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }

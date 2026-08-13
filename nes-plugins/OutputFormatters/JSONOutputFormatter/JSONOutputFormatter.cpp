@@ -203,8 +203,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
 
 Schema<QualifiedErasedConfigField, Ordered> JSONOutputFormatter::getConfigSchema()
 {
-    /// The JSON output formatter declares no config parameters.
-    return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+    return createConfigSchema(Identifier::parse("JSON_OUTPUT_FORMATTER"), OutputFormatterDescriptor::VALUE_SERIALIZERS);
 }
 
 std::expected<JSONOutputFormatterConfig, Exception> JSONOutputFormatterConfig::fromConfig(const InstantiatedConfig& config)
@@ -220,7 +219,6 @@ std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
-    /// The config struct is empty, but the getAs still validates that the descriptor was built for this formatter.
     const auto& config = arguments.descriptor.getConfig().getAs<JSONOutputFormatterConfig>();
     return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames), config);
 }

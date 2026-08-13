@@ -17,14 +17,15 @@
 #include <sstream>
 
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -43,6 +44,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
@@ -68,20 +71,17 @@ public:
                         const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
                             UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
                         auto logicalSource = LogicalSource{Identifier::parse("Source"), dummySchema};
-                        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-                        const std::unordered_map<Identifier, std::string> dummyParserConfig
-                            = {{Identifier::parse("type"), "CSV"},
-                               {Identifier::parse("tuple_delimiter"), "'\n'"},
-                               {Identifier::parse("field_delimiter"), ","}};
-
-                        return SourceDescriptor::create(
-                                   PhysicalSourceId{1},
-                                   logicalSource,
-                                   Identifier::parse("File"),
-                                   Host("localhost"),
-                                   sourceConfig,
-                                   dummyParserConfig,
-                                   false)
+                        const Schema<LiteralConfigValue, Ordered> values{
+                            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("tuple_delimiter"), "\n"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("field_delimiter"), ","}};
+                        auto configSchema = SourceConfigSchema::create(Identifier::parse("File"), Identifier::parse("CSV")).value();
+                        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema]
+                            = configSchema.resolveConfigs(values).value();
+                        return PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)}
+                            .build(PhysicalSourceId{1}, *logicalSource.getSchema(), logicalSource.getLogicalSourceName())
                             .value();
                     }()}
         , selectionOp{UnboundFieldAccessLogicalFunction{testFieldIdentifier}}

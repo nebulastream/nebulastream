@@ -21,7 +21,6 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -29,10 +28,12 @@
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -40,6 +41,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -81,15 +83,14 @@ static TypedLogicalOperator<SourceDescriptorLogicalOperator>
 makeSourceWithSchema(std::string_view sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
     const auto logical = LogicalSource{Identifier::parse(std::string{sourceName}), schema};
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const auto descriptor = SourceDescriptor::create(
-                                PhysicalSourceId{1},
-                                logical,
-                                Identifier::parse("File"),
-                                Host{"localhost"},
-                                sourceConfig,
-                                {{Identifier::parse("type"), "CSV"}},
-                                false)
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceConfigSchema::create(Identifier::parse("File"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    const auto descriptor = PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)}
+                                .build(PhysicalSourceId{1}, *logical.getSchema(), logical.getLogicalSourceName())
                                 .value();
     return SourceDescriptorLogicalOperator::create(descriptor);
 }

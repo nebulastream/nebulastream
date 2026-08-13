@@ -17,10 +17,11 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <unordered_map>
+#include <utility>
 
 #include <gtest/gtest.h>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -28,12 +29,14 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -60,11 +63,15 @@ public:
     static TypedLogicalOperator<SourceDescriptorLogicalOperator> makeSource()
     {
         const auto logical = LogicalSource{Identifier::parse("agg_src"), createSchema()};
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceConfigSchema::create(Identifier::parse("file"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
         const auto descriptor
-            = SourceDescriptor::create(
-                  PhysicalSourceId{1}, logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig, false)
+            = PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)}
+                  .build(PhysicalSourceId{1}, *logical.getSchema(), logical.getLogicalSourceName())
                   .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }

@@ -24,7 +24,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -36,7 +35,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/LogicalSource.hpp>
 #include <Util/Any.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -72,14 +70,6 @@ private:
 class SourceDescriptor final
 {
 public:
-    static std::expected<SourceDescriptor, Exception> create(
-        PhysicalSourceId id,
-        const LogicalSource& logicalSource,
-        const Identifier& sourceType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& descriptorConfig,
-        const std::unordered_map<Identifier, std::string>& inputFormatterConfig,
-        bool isAnonymous);
     ~SourceDescriptor() = default;
     SourceDescriptor(const SourceDescriptor& other) = default;
     /// Deleted, because the descriptors have a const field

@@ -161,15 +161,16 @@ std::tuple<Schema<InstantiatedConfigValue, Ordered>, ConfigResolutionErrors> res
         if (const auto defaultConfigValue = configDefaults.getFieldByName(declaredField.getFullyQualifiedName());
             defaultConfigValue.has_value())
         {
-            auto defaultLiteral = defaultConfigValue->get();
-            auto defaultValue = declaredField.apply(defaultLiteral);
-            PRECONDITION(
-                defaultValue.has_value(),
-                "Additional default value {} for field {} could not be validated",
-                std::visit([](const auto& literal) { return fmt::format("{}", literal); }, defaultLiteral),
-                declaredField.getFullyQualifiedName());
-            resolvedConfig.emplace_back(
-                declaredField.getFullyQualifiedName(), declaredField.getOriginalFieldAddress(), std::move(defaultValue).value());
+            auto defaultValue = declaredField.apply(defaultConfigValue->get());
+            if (not defaultValue.has_value())
+            {
+                errors.failedInstantiations.emplace_back(declaredField.getFullyQualifiedName(), defaultValue.error());
+            }
+            else
+            {
+                resolvedConfig.emplace_back(
+                    declaredField.getFullyQualifiedName(), declaredField.getOriginalFieldAddress(), std::move(defaultValue).value());
+            }
         }
         else if (declaredField.hasDefault())
         {
@@ -244,50 +245,6 @@ std::tuple<Schema<InstantiatedConfigValue, Ordered>, ConfigResolutionErrors> res
             }
             return configFieldIt->second;
         });
-}
-
-std::tuple<Schema<InstantiatedConfigValue, Ordered>, ConfigResolutionErrors> applyConfigTransformations(
-    Schema<InstantiatedConfigValue, Ordered> config, const Schema<ConfigFieldTransformation, Unordered>& configTransformations)
-{
-    std::vector<InstantiatedConfigValue> transformedConfig;
-    std::vector<std::pair<QualifiedIdentifier, Exception>> failedTransformations;
-    auto transformedValues
-        = config
-        | std::views::transform(
-              [&](const auto& validatedValue) -> std::expected<InstantiatedConfigValue, std::pair<QualifiedIdentifier, Exception>>
-              {
-                  if (auto transformation = configTransformations.getFieldByName(validatedValue.getFullyQualifiedName()))
-                  {
-                      return transformation->getTransformation()(validatedValue.getErasedValue())
-                          .transform_error([&](const auto& error) { return std::pair{validatedValue.getFullyQualifiedName(), error}; })
-                          .transform(
-                              [&](const auto& value)
-                              {
-                                  return InstantiatedConfigValue{
-                                      validatedValue.getFullyQualifiedName(), validatedValue.getOriginalFieldAddress(), value};
-                              });
-                  }
-                  return validatedValue;
-              });
-
-    for (auto transformedValue : transformedValues)
-    {
-        if (transformedValue.has_value())
-        {
-            transformedConfig.emplace_back(std::move(transformedValue).value());
-        }
-        else
-        {
-            failedTransformations.emplace_back(std::move(transformedValue).error());
-        }
-    }
-    return {
-        Schema<InstantiatedConfigValue, Ordered>{std::move(transformedConfig)},
-        ConfigResolutionErrors{
-            .unresolvableFields = {},
-            .duplicateFields = {},
-            .failedInstantiations = std::move(failedTransformations),
-            .missingFields = {}}};
 }
 
 std::expected<Schema<InstantiatedConfigValue, Ordered>, ConfigResolutionErrors>

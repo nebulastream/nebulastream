@@ -33,6 +33,8 @@ struct SinkDefinition
 {
     std::string type;
     std::string schema;
+    /// The original declaration outlives its parse tree, so its options can be parsed when inlined.
+    std::string sql;
 };
 
 using SinkByName = std::unordered_map<Identifier, SinkDefinition>;

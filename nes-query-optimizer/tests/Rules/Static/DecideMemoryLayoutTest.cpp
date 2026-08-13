@@ -16,8 +16,8 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
+#include <Util/OptimizerTestUtils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -67,24 +67,12 @@ static LogicalSource createLogicalTestSource(const std::string& name)
 
 static SourceDescriptor createTestSourceDescriptor(const PhysicalSourceId physicalSourceId, const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    return SourceDescriptor::create(
-               physicalSourceId,
-               logicalSource,
-               Identifier::parse("File"),
-               Host{"localhost"},
-               sourceConfig,
-               {{Identifier::parse("type"), "CSV"}},
-               false)
-        .value();
+    return OptimizerTestUtils{}.createSourceDescriptor(physicalSourceId, logicalSource);
 }
 
 static SinkDescriptor createTestSinkDescriptor()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-    return SinkDescriptor::createAnonymous(INITIAL_SINK_ID, Identifier::parse("file"), std::nullopt, Host{"localhost"}, sinkConfig, {})
-        .value();
+    return OptimizerTestUtils{}.createAnonymousSinkDescriptor(INITIAL_SINK_ID);
 }
 
 class DecideMemoryLayoutTest : public ::testing::Test

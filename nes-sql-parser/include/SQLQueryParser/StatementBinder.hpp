@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -29,19 +28,25 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
@@ -65,22 +70,20 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSourceName attachedTo;
-    Identifier sourceType;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sourceConfig;
-    std::unordered_map<Identifier, std::string> parserConfig;
+    Identifier logicalSourceName;
+    GeneralSourceConfig generalSourceConfig;
+    PluginSourceConfiguration pluginSourceConfig;
+    InputFormatterDescriptor pluginInputFormatterConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
 struct CreateSinkStatement
 {
     Identifier name;
-    Identifier sinkType;
     Schema<UnqualifiedUnboundField, Ordered> schema;
-    std::optional<Host> host;
-    std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<Identifier, std::string> formatConfig;
+    GeneralSinkConfig generalSinkConfig;
+    PluginSinkConfiguration pluginSinkConfig;
+    OutputFormatterDescriptor outputFormatterDescriptor;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
@@ -248,8 +251,8 @@ class StatementBinder
 
 public:
     explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+        std::shared_ptr<const SourceCatalog> sourceCatalog,
+        Schema<ConfigFieldDefault, Ordered> configDefaults = {}); /// NOLINT(fuchsia-default-arguments-declarations)
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

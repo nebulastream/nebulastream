@@ -96,7 +96,12 @@ const ConfigField<std::string> TUPLE_DELIMITER{
 
 Schema<QualifiedErasedConfigField, Ordered> CSVOutputFormatter::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("CSV_OUTPUT_FORMATTER"), QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
+    return createConfigSchema(
+        Identifier::parse("CSV_OUTPUT_FORMATTER"),
+        QUOTE_STRINGS,
+        FIELD_DELIMITER,
+        TUPLE_DELIMITER,
+        OutputFormatterDescriptor::VALUE_SERIALIZERS);
 }
 
 std::expected<CSVOutputFormatterConfig, Exception> CSVOutputFormatterConfig::fromConfig(const InstantiatedConfig& config)

@@ -90,7 +90,8 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      output_format: CSV
+    parser_config:
+      type: CSV
   - name: VOID_SINK
     host: worker-1:8080
     schema:
@@ -99,6 +100,8 @@ sinks:
       - name: id
         type: UINT64
     type: Void
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: stream

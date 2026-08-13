@@ -35,6 +35,8 @@ sinks:
         type: UINT64
         nullable: false
     type: Void
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: GENERATOR_SOURCE

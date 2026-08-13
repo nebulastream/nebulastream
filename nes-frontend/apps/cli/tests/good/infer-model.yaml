@@ -38,7 +38,8 @@ sinks:
         type: VARSIZED
     type: Void
     config: { }
-    parser_config: { }
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: stream

@@ -142,9 +142,9 @@ def test_harness_error_is_replayed(harness_binary: Path, sock_dir: Path, tmp_pat
 
 _FILE_CONFIGS = {
     "source": 'CREATE LOGICAL SOURCE s (id TINYINT NOT NULL, "Label" VARSIZED);\n'
-    "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
+    "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n",
     "sink": 'CREATE SINK s (id TINYINT NOT NULL, "Label" VARSIZED) TYPE File SET '
-    "('/dev/null' AS \"SINK\".FILE_PATH, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+    "('/dev/null' AS FILE_SINK.FILE_PATH, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n",
 }
 
 
@@ -207,7 +207,7 @@ def test_error_reply_is_one_json_line_whatever_the_message(
         assert session.end() == _EXIT_OK
 
 
-_PHYSICAL_SOURCE = "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n"
+_PHYSICAL_SOURCE = "CREATE PHYSICAL SOURCE FOR s TYPE File SET ('/dev/null' AS FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\");\n"
 
 
 def _bind_error(harness_binary: Path, sock_dir: Path, config: Path) -> tuple[object, object, object]:
@@ -254,7 +254,7 @@ def test_sink_gets_records_that_continue_in_child_buffers(harness_binary: Path, 
     config = tmp_path / "file.nesql"
     config.write_text(
         f'CREATE SINK s (id INTEGER NOT NULL, "Label" VARSIZED) TYPE File SET '
-        f"('{output}' AS \"SINK\".FILE_PATH, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        f"('{output}' AS FILE_SINK.FILE_PATH, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n",
         encoding="utf-8",
     )
     records_path = tmp_path / "records.jsonl"
@@ -280,7 +280,7 @@ def test_sink_takes_a_buffer_without_tuples(harness_binary: Path, sock_dir: Path
     ingestion_ms = 500
     config = tmp_path / "print.nesql"
     config.write_text(
-        f"CREATE SINK s (id INTEGER NOT NULL) TYPE Print SET ({ingestion_ms} AS \"SINK\".INGESTION, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        f"CREATE SINK s (id INTEGER NOT NULL) TYPE Print SET ({ingestion_ms} AS PRINT_SINK.INGESTION, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n",
         encoding="utf-8",
     )
     with Session(harness_binary, sock_dir, config=config, mode="sink") as session:
@@ -299,8 +299,8 @@ def test_write_empty_does_not_wait_for_a_held_buffer(harness_binary: Path, sock_
     # The source must still get a buffer for WRITE_EMPTY.
     config = tmp_path / "tcp.nesql"
     config.write_text(
-        "CREATE SINK s (id INTEGER NOT NULL) TYPE TCP SET ('127.0.0.1' AS \"SINK\".SOCKET_HOST, 1 AS \"SINK\".SOCKET_PORT, "
-        "90000 AS \"SINK\".CONNECT_TIMEOUT_MS, 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n",
+        "CREATE SINK s (id INTEGER NOT NULL) TYPE TCP SET ('127.0.0.1' AS TCP_SINK.SOCKET_HOST, 1 AS TCP_SINK.SOCKET_PORT, "
+        "90000 AS TCP_SINK.CONNECT_TIMEOUT_MS, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n",
         encoding="utf-8",
     )
     records = tmp_path / "records.jsonl"
@@ -312,7 +312,7 @@ def test_write_empty_does_not_wait_for_a_held_buffer(harness_binary: Path, sock_
 
 
 _JSON_FILE_SINK_STATEMENT = (
-    'CREATE SINK s (id INTEGER NOT NULL) TYPE File SET (\'/dev/null\' AS "SINK".FILE_PATH, \'JSON\' AS "SINK".OUTPUT_FORMAT)'
+    'CREATE SINK s (id INTEGER NOT NULL) TYPE File SET (\'/dev/null\' AS FILE_SINK.FILE_PATH, \'JSON\' AS OUTPUT_FORMATTER."TYPE")'
 )
 _JSON_FILE_SINK = _JSON_FILE_SINK_STATEMENT + ";\n"
 
@@ -320,7 +320,7 @@ _JSON_FILE_SINK = _JSON_FILE_SINK_STATEMENT + ";\n"
 @pytest.mark.parametrize(
     ("config_text", "message"),
     [
-        pytest.param(_JSON_FILE_SINK.replace("'JSON'", "'CSV'"), "OUTPUT_FORMAT must be 'JSON', not 'CSV'", id="csv"),
+        pytest.param(_JSON_FILE_SINK.replace("'JSON'", "'CSV'"), "OUTPUT_FORMATTER.TYPE must be 'JSON', not 'CSV'", id="csv"),
         pytest.param(
             _JSON_FILE_SINK * 2,
             f"expected a single CREATE SINK statement, but the config has 2: {_JSON_FILE_SINK_STATEMENT}; {_JSON_FILE_SINK_STATEMENT}",

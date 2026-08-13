@@ -17,10 +17,10 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Sources/LogicalSource.hpp>
+#include <Util/OptimizerTestUtils.hpp>
 
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 
@@ -64,25 +64,12 @@ static LogicalSource createLogicalTestSource()
 
 static SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    return SourceDescriptor::create(
-               PhysicalSourceId{1},
-               logicalSource,
-               Identifier::parse("File"),
-               Host{"localhost"},
-               sourceConfig,
-               {{Identifier::parse("type"), "CSV"}},
-               false)
-        .value();
+    return OptimizerTestUtils{}.createSourceDescriptor(PhysicalSourceId{1}, logicalSource);
 }
 
 static SinkDescriptor createTestSinkDescriptor()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
-
-    return SinkDescriptor::createAnonymous(INITIAL_SINK_ID, Identifier::parse("file"), std::nullopt, Host{"localhost"}, sinkConfig, {})
-        .value();
+    return OptimizerTestUtils{}.createAnonymousSinkDescriptor(INITIAL_SINK_ID);
 }
 
 class CalcTargetOrderTest : public ::testing::Test

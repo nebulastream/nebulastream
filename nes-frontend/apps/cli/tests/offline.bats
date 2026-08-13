@@ -210,7 +210,8 @@ sinks:
         type: UINT64
     type: Void
     config: { }
-    parser_config: { }
+    parser_config:
+      type: NATIVE
 logical:
   - name: stream
     schema:
@@ -307,6 +308,22 @@ bad_topology() {
   [[ "$output" == *"sinks[0]"* ]]
 }
 
+@test "sink parser config requires a parser config" {
+  sed '/^sinks:/,/^logical:/{/    parser_config:/,+1d;}' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/missing_sink_parser.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/missing_sink_parser.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"The parser config of sink VOID_SINK must specify the TYPE"* ]]
+}
+
+@test "sink parser config requires TYPE" {
+  sed '/^sinks:/,/^logical:/{s/^    parser_config:$/    parser_config: {}/;/^      type: NATIVE$/d;}' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/missing_sink_type.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/missing_sink_type.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"The parser config of sink VOID_SINK must specify the TYPE"* ]]
+}
+
 @test "error: unknown physical source key reports key and suggestions" {
   # Add an extra 'input_format: CSV' line after 'type: Generator' in the physical section
   local f=$(bad_topology '/^physical:/,/^[a-z]/s/^    type: Generator/    type: Generator\n    input_format: CSV/')
@@ -349,7 +366,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: CSV/input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Source config does not contain input formatter type"* ]]
+  [[ "$output" == *"parser config of physical source for GENERATOR_SOURCE must specify the TYPE"* ]]
 }
 
 @test "error: unregistered source type reports type name" {

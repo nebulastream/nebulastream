@@ -44,9 +44,6 @@
 namespace NES
 {
 
-/// Formatter-defined config struct: the JSON output formatter declares no config parameters, but
-/// the (empty) struct still travels through the OutputFormatterDescriptor and its registry entry
-/// so that descriptors are handled uniformly.
 struct JSONOutputFormatterConfig
 {
     std::string valueSerializers;

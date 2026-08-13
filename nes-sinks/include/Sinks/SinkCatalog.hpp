@@ -14,72 +14,28 @@
 
 #pragma once
 #include <atomic>
-#include <cstddef>
 #include <expected>
 #include <optional>
-#include <ostream>
-#include <string>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <Configurations/ConfigField.hpp>
-#include <Configurations/ConfigLiteral.hpp>
+
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-struct GeneralSinkConfig
-{
-    /// Host determines worker placement. Resolution leaves the INVALID sentinel if SINK.HOST was
-    /// not passed; frontends then apply their host policy (or reject) before creating a descriptor.
-    Host host;
-    bool addTimestamp = false;
-    size_t backpressureUpperThreshold = 1000;
-    size_t backpressureLowerThreshold = 200;
-
-    friend std::ostream& operator<<(std::ostream& os, const GeneralSinkConfig& config);
-};
-
-class SinkConfigSchema
-{
-public:
-    [[nodiscard]] std::
-        expected<std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
-        resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const;
-
-    [[nodiscard]] const Schema<QualifiedErasedConfigField, Ordered>& getConfigFields() const { return configSchema; }
-
-    [[nodiscard]] SinkConfigSchema withConfigDefaults(Schema<ConfigFieldDefault, Ordered> configDefaults) const;
-    [[nodiscard]] SinkConfigSchema withConfigTransformations(Schema<ConfigFieldTransformation, Unordered> configTransformations) const;
-
-private:
-    SinkConfigSchema(Identifier sinkType, Identifier outputFormatterType, Schema<QualifiedErasedConfigField, Ordered> configSchema);
-    Identifier sinkType;
-    Identifier outputFormatterType;
-    Schema<QualifiedErasedConfigField, Ordered> configSchema;
-    Schema<ConfigFieldDefault, Ordered> configDefaults;
-    Schema<ConfigFieldTransformation, Unordered> configTransformations;
-    friend class SinkCatalog;
-};
-
 class SinkCatalog
 {
 public:
-    /// Combines the general sink fields, the sink-declared schema, and (unless NATIVE) the output
-    /// formatter fields into the schema user-passed configs are resolved against.
-    [[nodiscard]] static std::expected<SinkConfigSchema, Exception>
-    getConfigSchema(const Identifier& sinkType, const Identifier& outputFormatterType);
-
     [[nodiscard]] std::expected<SinkDescriptor, Exception> addSinkDescriptor(
         Identifier sinkName,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
@@ -95,26 +51,6 @@ public:
 
     std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
-    /// Transitional map-based registration API: raw string values are parsed into config literals
-    /// and resolved against the merged sink/output-formatter schema. Replaced by binder-side
-    /// resolution in a follow-up.
-    [[nodiscard]] std::expected<SinkDescriptor, Exception> addSinkDescriptor(
-        Identifier sinkName,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const Identifier& sinkType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& config,
-        const std::unordered_map<Identifier, std::string>& formatConfig);
-
-    /// Transitional map-based anonymous-sink API, see the map-based addSinkDescriptor.
-    [[nodiscard]] std::optional<SinkDescriptor> getAnonymousSink(
-        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-        const Identifier& sinkType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& config,
-        const std::unordered_map<Identifier, std::string>& formatConfig) const;
-
-
     bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);
 
@@ -128,5 +64,3 @@ private:
     folly::Synchronized<std::unordered_map<Identifier, SinkDescriptor>> sinks;
 };
 }
-
-FMT_OSTREAM(NES::GeneralSinkConfig);

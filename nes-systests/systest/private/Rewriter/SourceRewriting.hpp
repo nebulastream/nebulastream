@@ -67,7 +67,7 @@ private:
 void makeAnonymousSourcePathsAbsolute(
     const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);
 
-/// Adds the config to an anonymous source.
+/// Adds the default host and format to an anonymous source.
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
 }

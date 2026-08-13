@@ -65,16 +65,6 @@ std::ostream& operator<<(std::ostream& os, const ConfigFieldDefault& obj)
 {
     return os << fmt::format("ConfigFieldDefault({})", obj.name);
 }
-
-bool operator==(const ConfigFieldTransformation& lhs, const ConfigFieldTransformation& rhs)
-{
-    return lhs.name == rhs.name;
-}
-
-std::ostream& operator<<(std::ostream& os, const ConfigFieldTransformation& obj)
-{
-    return os << fmt::format("ConfigFieldTransformation({})", obj.name);
-}
 }
 
 std::expected<double, NES::Exception> NES::tryGetDoubleOrInt(const ConfigLiteral& literal, const std::function<Exception()>& orElse)
@@ -178,17 +168,6 @@ const NES::QualifiedIdentifier& NES::ConfigFieldDefault::getFullyQualifiedName()
     return name;
 }
 
-const NES::QualifiedIdentifier& NES::ConfigFieldTransformation::getFullyQualifiedName() const
-{
-    return name;
-}
-
-const std::function<std::expected<NES::ExplicitAny, NES::Exception>(const NES::ExplicitAny&)>&
-NES::ConfigFieldTransformation::getTransformation() const
-{
-    return transformation;
-}
-
 std::size_t std::hash<NES::QualifiedErasedConfigField>::operator()(const NES::QualifiedErasedConfigField& obj) const noexcept
 {
     return std::hash<NES::ConfigFieldId>{}(obj.getOriginalFieldAddress());
@@ -197,11 +176,6 @@ std::size_t std::hash<NES::QualifiedErasedConfigField>::operator()(const NES::Qu
 std::size_t std::hash<NES::ConfigFieldDefault>::operator()(const NES::ConfigFieldDefault& obj) const noexcept
 {
     return std::hash<NES::QualifiedIdentifier>{}(obj.getFullyQualifiedName());
-}
-
-std::size_t std::hash<NES::ConfigFieldTransformation>::operator()(const NES::ConfigFieldTransformation& obj) const noexcept
-{
-    return std::hash<NES::QualifiedIdentifier>{}(obj.name);
 }
 
 std::size_t std::hash<NES::ConfigFieldId>::operator()(const NES::ConfigFieldId& obj) const noexcept
