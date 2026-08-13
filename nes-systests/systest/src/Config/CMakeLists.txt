@@ -12,5 +12,6 @@
 
 add_source_files(nes-systest-lib
         ConfigParser.cpp
+        WorkerConfigResolution.cpp
         RunPolicy.cpp
 )

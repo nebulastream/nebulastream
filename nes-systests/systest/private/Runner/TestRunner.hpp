@@ -135,6 +135,7 @@ private:
     SystestBinder binder;
     SystestClusterConfiguration clusterConfig;
     bool remote;
+    bool permitConflictingOptions;
     Schema<LiteralConfigValue, Ordered> baseWorker;
     std::chrono::milliseconds queryTimeout;
     /// The partitions that setup accepted, which every submit runs.

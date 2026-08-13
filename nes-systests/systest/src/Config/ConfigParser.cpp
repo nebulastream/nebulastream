@@ -49,7 +49,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerOptimizerConfig.hpp>
 
 namespace
@@ -117,6 +117,9 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("--query-timeout")
         .help("fail a query that has not reached a terminal state after this many seconds. 0 waits forever. Default: 300")
         .scan<'i', int>();
+    program.add_argument("--permit-conflicting-options")
+        .flag()
+        .help("allow systest file > topology > command line configuration overwrites and print each overwrite");
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
     program.add_argument("--endless-rounds")
         .help("how many times --endless repeats the queries. Implies --endless. Unlimited by default")
@@ -411,6 +414,7 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     }
 
     config.remoteWorker = program.get<bool>("--remote");
+    config.permitConflictingOptions = program.get<bool>("--permit-conflicting-options");
 
     try
     {
@@ -442,7 +446,7 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
             }
 
             clusterConfig.workers.push_back(
-                NES::WorkerConfig{
+                NES::WorkerCatalogEntry{
                     .host = worker["host"].as<NES::Host>(),
                     .dataAddress = worker["data_address"].as<std::string>(),
                     .maxOperators = worker["max_operators"].IsDefined()
