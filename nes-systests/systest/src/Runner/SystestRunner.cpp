@@ -458,14 +458,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(
-        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals))));
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(workerConfigResolver)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -500,7 +499,7 @@ void recordProcessedInput(RunningQuery& runningQuery)
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
@@ -520,7 +519,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     };
 
     /// Benchmarking runs one query at a time so that the timings are not skewed by concurrently running queries.
-    return runQueriesAtLocalWorker(queries, 1, clusterConfig, runConfigLiterals, progressTracker, benchmarkQuery);
+    return runQueriesAtLocalWorker(queries, 1, clusterConfig, workerConfigResolver, progressTracker, benchmarkQuery);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(

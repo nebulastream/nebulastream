@@ -20,6 +20,8 @@
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <SQLQueryParser/StatementBinder.hpp>
 #include <Util/Pointers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
@@ -38,7 +40,10 @@ public:
         const std::filesystem::path& testDataDir,
         const std::filesystem::path& configDir,
         const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfig);
+        SystestClusterConfiguration clusterConfig,
+        std::function<AntlrSQLQueryParser::QueryBinder()> queryBinderFactory,
+        std::function<StatementBinder(const std::shared_ptr<NES::SourceCatalog>&, AntlrSQLQueryParser::QueryBinder)>
+            statementBinderFactory);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t>

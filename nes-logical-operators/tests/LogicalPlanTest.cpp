@@ -25,7 +25,9 @@
 #include <gtest/gtest.h>
 
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -46,6 +48,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
 #include <QueryId.hpp>
@@ -67,18 +70,24 @@ public:
                     {
                         const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
                             UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
-                        auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
-                        const std::unordered_map<Identifier, std::string> dummyParserConfig
-                            = {{Identifier::parse("type"), "CSV"},
-                               {Identifier::parse("tuple_delimiter"), "\n"},
-                               {Identifier::parse("field_delimiter"), ","}};
+                        auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
+                        const Schema<LiteralConfigValue, Ordered> values{
+                            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("tuple_delimiter"), "\n"},
+                            LiteralConfigValue{QualifiedIdentifier::parse("field_delimiter"), ","}};
+                        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+                        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema]
+                            = configSchema.resolveConfigs(values).value();
                         return sourceCatalog /// NOLINT
-                            .addPhysicalSource(
-                                logicalSource,
-                                Identifier::parse("File"),
-                                Host("localhost"),
-                                {{Identifier::parse("file_path"), "/dev/null"}},
-                                dummyParserConfig)
+                            ->registerWithLogicalSource(
+                                PhysicalSourceBuilder{
+                                    std::move(generalConfig),
+                                    std::move(pluginConfig),
+                                    std::move(inputFormatterDescriptor),
+                                    copyPtr(sourceCatalog)},
+                                logicalSource.getLogicalSourceName())
                             .value();
                     }()}
         , selectionOp{UnboundFieldAccessLogicalFunction{testFieldIdentifier}}
@@ -90,7 +99,7 @@ protected:
     void SetUp() override { }
 
     Identifier testFieldIdentifier;
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     TypedLogicalOperator<SourceNameLogicalOperator> sourceOp;
     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp2;
     TypedLogicalOperator<SelectionLogicalOperator> selectionOp;

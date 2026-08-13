@@ -349,7 +349,7 @@ bad_topology() {
   local f=$(bad_topology 's/type: CSV/input_format: CSV/')
   run $NES_CLI -d -t "$f" dump
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Source config does not contain input formatter type"* ]]
+  [[ "$output" == *"parser config of physical source for GENERATOR_SOURCE must specify the TYPE"* ]]
 }
 
 @test "error: unregistered source type reports type name" {

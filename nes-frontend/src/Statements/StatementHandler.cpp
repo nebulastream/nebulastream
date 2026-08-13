@@ -21,6 +21,7 @@
 #include <memory>
 #include <ranges>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +29,8 @@
 #include <vector>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/ConfigParsing.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -35,6 +38,8 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Overloaded.hpp>
@@ -52,15 +57,13 @@
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
 {
 
-SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy)
-    : sourceCatalog(sourceCatalog), hostPolicy(std::move(hostPolicy))
+SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog)
 {
 }
 
@@ -77,28 +80,17 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
-    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo);
+    auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSourceName);
     if (!logicalSource)
     {
-        return std::unexpected{UnknownSourceName(fmt::format("{}", statement.attachedTo))};
+        return std::unexpected{UnknownSourceName(fmt::format("{}", statement.logicalSourceName.asCanonicalString()))};
     }
 
-    const auto host = [&]
-    {
-        if (statement.host)
-        {
-            return *statement.host;
-        }
-        return std::visit(
-            Overloaded{
-                [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
-                [](const RequireHostConfig&) -> Host
-                { throw InvalidStatement(R"(Could not handle source statement. "SOURCE"."HOST" was not set)"); }},
-            hostPolicy);
-    }();
 
-    auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, statement.sourceConfig, statement.parserConfig);
+    auto created = sourceCatalog->registerWithLogicalSource(
+        PhysicalSourceBuilder{
+            statement.generalSourceConfig, statement.pluginSourceConfig, statement.pluginInputFormatterConfig, sourceCatalog},
+        statement.logicalSourceName);
     if (created)
     {
         return CreatePhysicalSourceStatementResult{created.value()};
@@ -190,22 +182,19 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    const auto host = [&]
+    auto generalSinkConfig = statement.generalSinkConfig;
+    if (generalSinkConfig.host == Host{Host::INVALID})
     {
-        if (statement.host)
-        {
-            return *statement.host;
-        }
-        return std::visit(
+        generalSinkConfig.host = std::visit(
             Overloaded{
                 [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
                 [](const RequireHostConfig&) -> Host
                 { throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set"); }},
             hostPolicy);
-    }();
+    }
 
     auto created = sinkCatalog->addSinkDescriptor(
-        statement.name, statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig);
+        statement.name, statement.schema, std::move(generalSinkConfig), statement.pluginSinkConfig, statement.outputFormatterDescriptor);
     if (created)
     {
         return CreateSinkStatementResult{created.value()};

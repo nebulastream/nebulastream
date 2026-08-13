@@ -90,25 +90,6 @@ public:
 
     std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
-    /// Transitional map-based registration API: raw string values are parsed into config literals
-    /// and resolved against the merged sink/output-formatter schema. Replaced by binder-side
-    /// resolution in a follow-up.
-    [[nodiscard]] std::expected<SinkDescriptor, Exception> addSinkDescriptor(
-        Identifier sinkName,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const Identifier& sinkType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& config,
-        const std::unordered_map<Identifier, std::string>& formatConfig);
-
-    /// Transitional map-based anonymous-sink API, see the map-based addSinkDescriptor.
-    [[nodiscard]] std::optional<SinkDescriptor> getAnonymousSink(
-        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-        const Identifier& sinkType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& config,
-        const std::unordered_map<Identifier, std::string>& formatConfig) const;
-
 
     bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);

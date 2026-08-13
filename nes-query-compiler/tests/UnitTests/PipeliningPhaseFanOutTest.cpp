@@ -30,16 +30,19 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <PhysicalOperator.hpp>
@@ -81,12 +84,17 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getAnonymousSource(
-            Identifier::parse("File"),
-            schema,
-            Host("localhost"),
-            {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "CSV"}},
-            {{Identifier::parse("file_path"), "/dev/null"}});
+        const auto logical = sourceCatalog->addLogicalSource(Identifier::parse(fmt::format("src_{}", nextOriginId)), schema).value();
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        auto descriptor = sourceCatalog->registerWithLogicalSource(
+            PhysicalSourceBuilder{
+                std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+            logical.getLogicalSourceName());
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourceDescriptorPhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
@@ -95,11 +103,24 @@ public:
             PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
 
-    std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper(const std::string& outputFormat = "CSV") const
+    std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper(const std::string& outputFormat = "CSV")
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getAnonymousSink(
-            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), outputFormat}}, {});
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("Print"), Identifier::parse(outputFormat))
+                  .value()
+                  .resolveConfigs(
+                      outputFormat == "NATIVE" ? Schema<LiteralConfigValue, Ordered>{}
+                                               : Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                                                     {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), outputFormat}}})
+                  .value();
+        generalConfig.host = Host("localhost");
+        auto descriptor = sinkCatalog.addSinkDescriptor(
+            Identifier::parse(fmt::format("sink_{}", nextSinkId++)),
+            schema,
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor));
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         /// The real sink lowering (LowerToPhysicalSink) places sinks as INTERMEDIATE; the pipelining
@@ -171,8 +192,9 @@ public:
         return count;
     }
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
+    uint64_t nextSinkId = 0;
     uint64_t nextOriginId = 1;
 };
 

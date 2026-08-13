@@ -17,12 +17,18 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
+
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -31,7 +37,9 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/NetworkSink.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <Sources/NetworkSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -49,6 +57,14 @@
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
+#include <Configurations/ConfigField.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
+
 namespace NES
 {
 
@@ -59,9 +75,9 @@ struct DecompositionContext
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const WorkerCatalog> workerCatalog;
 
     void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
     {
@@ -92,49 +108,64 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<Identifier, std::string>{
-        {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
+    auto sourceConfigValues = std::vector<LiteralConfigValue>{
+        {QualifiedIdentifier::create(Identifier::parse("channel")), channel.id.getRawValue()},
+        {QualifiedIdentifier::create(Identifier::parse("bind")), downstreamData}};
     if (context.config.receiverQueueSize.has_value())
     {
-        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string((*context.config.receiverQueueSize)));
+        sourceConfigValues.emplace_back(
+            QualifiedIdentifier::create(Identifier::parse("receiver_queue_size")), static_cast<int64_t>(*context.config.receiverQueueSize));
     }
+    const auto sourceConfig = Schema<LiteralConfigValue, Ordered>{std::move(sourceConfigValues)};
+    auto networkSourceConfig = unwrapOrAbort(NetworkSourceConfig::fromConfig(
+        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sourceConfig, NetworkSource::getConfigSchema())))}));
+    auto inputFormatterConfig = InputFormatterDescriptor{Identifier::parse("NATIVE"), ExplicitAny{std::any{std::monostate{}}}};
 
-    auto sinkConfig = std::unordered_map<Identifier, std::string>{
-        {Identifier::parse("channel"), channel.id.getRawValue()},
-        {Identifier::parse("bind"), upstreamData},
-        {Identifier::parse("data_endpoint"), downstreamData},
-        {Identifier::parse("output_format"), "NATIVE"}};
+    auto sinkConfigValues = std::vector<LiteralConfigValue>{
+        {QualifiedIdentifier::create(Identifier::parse("channel")), channel.id.getRawValue()},
+        {QualifiedIdentifier::create(Identifier::parse("bind")), upstreamData},
+        {QualifiedIdentifier::create(Identifier::parse("data_endpoint")), downstreamData}};
 
     if (context.config.maxPendingAcks.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string((*context.config.maxPendingAcks)));
+        sinkConfigValues.emplace_back(
+            QualifiedIdentifier::create(Identifier::parse("max_pending_acks")), static_cast<int64_t>(*context.config.maxPendingAcks));
     }
     if (context.config.senderQueueSize.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string((*context.config.senderQueueSize)));
+        sinkConfigValues.emplace_back(
+            QualifiedIdentifier::create(Identifier::parse("sender_queue_size")), static_cast<int64_t>(*context.config.senderQueueSize));
     }
+    const auto sinkConfig = Schema<LiteralConfigValue, Ordered>{std::move(sinkConfigValues)};
+
+    /// The backpressure thresholds are general sink settings, applied directly to the descriptor.
+    GeneralSinkConfig generalSinkConfig{.host = Host(channel.upstreamNode.getRawValue())};
     if (context.config.backpressureUpperThreshold.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_upper_threshold"), std::to_string((*context.config.backpressureUpperThreshold)));
+        generalSinkConfig.backpressureUpperThreshold = *context.config.backpressureUpperThreshold;
     }
     if (context.config.backpressureLowerThreshold.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_lower_threshold"), std::to_string((*context.config.backpressureLowerThreshold)));
+        generalSinkConfig.backpressureLowerThreshold = *context.config.backpressureLowerThreshold;
     }
+    auto networkSinkConfig = unwrapOrAbort(NetworkSinkConfig::fromConfig(
+        InstantiatedConfig{unwrapOrAbort(toExpected(resolveConfig(sinkConfig, NetworkSink::getConfigSchema())))}));
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getAnonymousSource(
-        Identifier::parse("Network"),
-        orderedUpstreamSchema,
-        Host(channel.downstreamNode.getRawValue()),
-        {{InputFormatterDescriptor::TYPE_FIELD.getName(), "NATIVE"}},
-        sourceConfig);
-    INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
-    const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
+    const auto networkSourceDescriptorExp = PhysicalSourceBuilder{
+        GeneralSourceConfig{.host = Host(channel.downstreamNode.getRawValue()), .maxInflightBuffers = std::nullopt},
+        PluginSourceConfiguration{Identifier::parse("Network"), ExplicitAny{std::any{std::move(networkSourceConfig)}}},
+        std::move(inputFormatterConfig),
+        context.sourceCatalog}.build(orderedUpstreamSchema);
 
-    auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
-        orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
-    INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
+    INVARIANT(networkSourceDescriptorExp.has_value(), "Failed to add physical source for network channel");
+    const auto& networkSourceDescriptor = networkSourceDescriptorExp.value();
+
+    auto networkSinkDescriptor = context.sinkCatalog->createAnonymousSinkDescriptor(
+        std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(orderedUpstreamSchema),
+        generalSinkConfig,
+        PluginSinkConfiguration{Identifier::parse("Network"), ExplicitAny{std::any{std::move(networkSinkConfig)}}},
+        OutputFormatterDescriptor::native());
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
@@ -148,7 +179,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
-        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
+        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor)->withTraitSet(upstreamTs).withInferredSchema()};
 }
 
 LogicalOperator createNetworkChannel(

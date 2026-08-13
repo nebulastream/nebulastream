@@ -29,7 +29,6 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/ConfigParsing.hpp>
 #include <Configurations/ConfigResolution.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -289,99 +288,4 @@ std::ostream& operator<<(std::ostream& os, const GeneralSinkConfig& config)
                config.backpressureLowerThreshold,
                config.backpressureUpperThreshold);
 }
-
-namespace
-{
-/// Transitional helper for the map-based registration API: raw string maps become config
-/// literals (unqualified names resolve by suffix against the merged schema) and are resolved
-/// through the same SinkConfigSchema path as the typed API. The output format comes from the
-/// legacy OUTPUT_FORMAT key and defaults to NATIVE.
-std::expected<std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>, Exception>
-resolveLegacySinkConfigMaps(
-    const Identifier& sinkType,
-    const Host& host,
-    const std::unordered_map<Identifier, std::string>& config,
-    const std::unordered_map<Identifier, std::string>& formatConfig)
-{
-    const auto legacyFormatKey = Identifier::parse("OUTPUT_FORMAT");
-    auto outputFormatterType = Identifier::parse("NATIVE");
-    if (const auto formatIter = std::ranges::find_if(config, [&](const auto& entry) { return entry.first == legacyFormatKey; });
-        formatIter != config.end())
-    {
-        outputFormatterType = Identifier::parse(formatIter->second);
-    }
-
-    std::vector<LiteralConfigValue> literals;
-    literals.reserve(config.size() + formatConfig.size() + 2);
-    literals.emplace_back(QualifiedIdentifier::create(SinkDescriptor::HOST.getName()), host.getRawValue());
-    literals.emplace_back(
-        QualifiedIdentifier::create(OutputFormatterDescriptor::TYPE_FIELD.getName()), outputFormatterType.asCanonicalString());
-    for (const auto& [key, value] : config)
-    {
-        if (key == legacyFormatKey)
-        {
-            continue;
-        }
-        /// Transitional contract of the map API: whatever does not parse as a typed literal stays
-        /// a raw string (delimiters like "\n" trim to empty and must survive as strings).
-        literals.emplace_back(QualifiedIdentifier::create(key), parseConfigLiteral(value).value_or(ConfigLiteral{value}));
-    }
-    for (const auto& [key, value] : formatConfig)
-    {
-        if (key == OutputFormatterDescriptor::TYPE_FIELD.getName())
-        {
-            continue;
-        }
-        /// Transitional contract of the map API: whatever does not parse as a typed literal stays
-        /// a raw string (delimiters like "\n" trim to empty and must survive as strings).
-        literals.emplace_back(QualifiedIdentifier::create(key), parseConfigLiteral(value).value_or(ConfigLiteral{value}));
-    }
-
-    auto configSchema = SinkCatalog::getConfigSchema(sinkType, outputFormatterType);
-    if (not configSchema.has_value())
-    {
-        return std::unexpected{std::move(configSchema).error()};
-    }
-    return configSchema->resolveConfigs(createConfigLiteralSchema(std::move(literals)));
-}
-}
-
-std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
-    Identifier sinkName,
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
-    const Identifier& sinkType,
-    const Host& host,
-    const std::unordered_map<Identifier, std::string>& config,
-    const std::unordered_map<Identifier, std::string>& formatConfig)
-{
-    auto resolved = resolveLegacySinkConfigMaps(sinkType, host, config, formatConfig);
-    if (not resolved.has_value())
-    {
-        return std::unexpected{std::move(resolved).error()};
-    }
-    auto& [generalConfig, declaredSchema, pluginConfig, outputFormatterDescriptor] = *resolved;
-    return addSinkDescriptor(
-        std::move(sinkName), schema, std::move(generalConfig), std::move(pluginConfig), std::move(outputFormatterDescriptor));
-}
-
-std::optional<SinkDescriptor> SinkCatalog::getAnonymousSink(
-    const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-    const Identifier& sinkType,
-    const Host& host,
-    const std::unordered_map<Identifier, std::string>& config,
-    const std::unordered_map<Identifier, std::string>& formatConfig) const
-{
-    auto resolved = resolveLegacySinkConfigMaps(sinkType, host, config, formatConfig);
-    if (not resolved.has_value())
-    {
-        NES_ERROR("Could not create anonymous sink: {}", resolved.error().what());
-        return std::nullopt;
-    }
-    auto& [generalConfig, declaredSchema, pluginConfig, outputFormatterDescriptor] = *resolved;
-    auto sinkSchema = schema.has_value() ? AnonymousSinkSchema{std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(*schema)}
-                                         : std::move(declaredSchema);
-    return createAnonymousSinkDescriptor(
-        std::move(sinkSchema), std::move(generalConfig), std::move(pluginConfig), std::move(outputFormatterDescriptor));
-}
-
 }
