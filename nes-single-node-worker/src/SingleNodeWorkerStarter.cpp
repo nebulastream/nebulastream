@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <csignal>
-#include <semaphore>
+/// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
+/// NOLINTNEXTLINE(modernize-deprecated-headers)
+#include <signal.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -32,26 +33,34 @@
 
 namespace
 {
-/// This logic is related to handling shutdown of the system when a signal is received.
-/// GRPC does not like it if it is accessed via the signal handler. Effectively, this creates a thread which waits for
-/// the shutdownBarrier to be released by the signal handler and then shuts the grpc server down, which unblocks the `Wait` call
-/// in the main function.
-/// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, cert-err58-cpp) - required for signal handler communication
-std::binary_semaphore shutdownBarrier{0};
-
-void signalHandler(int signal)
+/// Block termination signals before any worker threads are created. All subsequently created threads inherit this mask, allowing
+/// a dedicated thread to synchronously wait for the signals without doing non-async-signal-safe work in a signal handler.
+/// sigset_t is provided by <signal.h>, but clang-tidy's include-cleaner does not recognize the indirect platform typedef.
+/// NOLINTNEXTLINE(misc-include-cleaner)
+bool blockTerminationSignals(sigset_t& terminationSignals)
 {
-    NES_INFO("Received signal {}. Shutting down.", signal);
-    shutdownBarrier.release();
+    sigemptyset(&terminationSignals);
+    sigaddset(&terminationSignals, SIGINT);
+    sigaddset(&terminationSignals, SIGTERM);
+    return pthread_sigmask(SIG_BLOCK, &terminationSignals, nullptr) == 0;
 }
 
-NES::Thread shutdownHook(grpc::Server& server)
+NES::Thread shutdownHook(grpc::Server& server, const sigset_t terminationSignals)
 {
     return {
         "shutdown-hook",
-        [&]()
+        [&, terminationSignals]() mutable
         {
-            shutdownBarrier.acquire();
+            int signal{};
+            const auto error = sigwait(&terminationSignals, &signal);
+            if (error != 0)
+            {
+                NES_ERROR("Failed to wait for a termination signal: {}", error)
+            }
+            else
+            {
+                NES_INFO("Received signal {}. Shutting down.", signal);
+            }
             server.Shutdown();
         }};
 }
@@ -67,15 +76,12 @@ int main(const int argc, const char* argv[])
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
+        sigset_t terminationSignals{};
+        if (!blockTerminationSignals(terminationSignals))
+        {
+            return 1;
+        }
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
-        if (std::signal(SIGINT, signalHandler) == SIG_ERR)
-        {
-            NES_ERROR("Failed to set SIGINT signal handler")
-        }
-        if (std::signal(SIGTERM, signalHandler) == SIG_ERR)
-        {
-            NES_ERROR("Failed to set SIGTERM signal handler")
-        }
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {
@@ -98,7 +104,7 @@ int main(const int argc, const char* argv[])
                 return 1;
             }
 
-            const auto hook = shutdownHook(*server);
+            const auto hook = shutdownHook(*server, terminationSignals);
             NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
             server->Wait();
             NES_INFO("GRPC Server was shutdown. Terminating the SingleNodeWorker");
