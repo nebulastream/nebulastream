@@ -46,11 +46,11 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
     : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.host.getRawValue(), grpc::InsecureChannelCredentials()))}
     , workerConfig{std::move(config)}
 {
-    if (workerConfig.config.isExplicitlySet())
+    if (workerConfig.config.size() > 0)
     {
         NES_WARNING(
-            "Topology specifies a non-default configuration for remote worker {}. "
-            "This configuration is ignored for remote workers and might not match the actual worker configuration.",
+            "Topology passes configuration values for remote worker {}. "
+            "They are ignored for remote workers and might not match the actual worker configuration.",
             workerConfig.host);
     }
 }

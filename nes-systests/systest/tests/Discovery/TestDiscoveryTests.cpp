@@ -80,7 +80,7 @@ TEST_F(TestDiscoveryTest, NarrowingTheSearchKeepsTheNamesOfAFullRun)
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add((tempDir.get() / "benchmark").string());
+    config.testDiscoverDirs.push_back((tempDir.get() / "benchmark").string());
 
     const auto discovered = discoverTestFiles(config);
 
@@ -101,7 +101,7 @@ TEST_F(TestDiscoveryTest, RelativeSearchDirectoriesResolveFromTheWorkingDirector
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add(relativeDir.string());
+    config.testDiscoverDirs.push_back(relativeDir.string());
 
     const auto discovered = discoverTestFiles(config);
 
@@ -135,7 +135,7 @@ TEST_F(TestDiscoveryTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigE
     config.testDiscoverRoot = tempDir.get().string();
     config.testFileExtension = ".test";
     config.globalExcludedGroups = {"large"};
-    config.testGroups.add("large");
+    config.testGroups.emplace_back("large");
 
     const auto discovered = discoverTestFiles(config);
 
@@ -152,8 +152,8 @@ TEST_F(TestDiscoveryTest, ExplicitCommandLineExclusionOverridesExplicitInclusion
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
     config.testFileExtension = ".test";
-    config.testGroups.add("Join");
-    config.excludeGroups.add("Join");
+    config.testGroups.emplace_back("Join");
+    config.excludeGroups.emplace_back("Join");
 
     const auto testMap = discoverTestFiles(config);
 
@@ -168,7 +168,7 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
 
     SystestConfiguration config;
     config.directlySpecifiedTestFiles = joinFile.string();
-    config.disabledTestFiles.add("join.test");
+    config.disabledTestFiles.emplace_back("join.test");
 
     const auto discovered = discoverTestFiles(config);
 
@@ -208,7 +208,7 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesKeepTheNamesOfAFullRun)
     config.directlySpecifiedTestFiles = testFile.string();
 
     const auto directlySpecified = discoverTestFiles(config);
-    config.testQueryNumbers.add(1);
+    config.testQueryNumbers.push_back(1);
     const auto queryFiltered = discoverTestFiles(config);
 
     ASSERT_EQ(directlySpecified.size(), 1);
@@ -268,7 +268,7 @@ TEST_F(TestDiscoveryTest, FilesOutsideTheRootAreNamedFromTheirDirectory)
     SystestConfiguration config;
     config.testDiscoverRoot = root.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add(outside.get().string());
+    config.testDiscoverDirs.push_back(outside.get().string());
 
     const auto discovered = discoverTestFiles(config);
 
@@ -290,8 +290,8 @@ TEST_F(TestDiscoveryTest, FilesOfTheSameNameInSeparateSearchDirectoriesStayApart
     SystestConfiguration config;
     config.testDiscoverRoot = root.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add((outside.get() / "a").string());
-    config.testDiscoverDirs.add((outside.get() / "b").string());
+    config.testDiscoverDirs.push_back((outside.get() / "a").string());
+    config.testDiscoverDirs.push_back((outside.get() / "b").string());
 
     const auto discovered = discoverTestFiles(config);
 
@@ -309,14 +309,14 @@ TEST_F(TestDiscoveryTest, OverlappingSearchDirectoriesNameFromTheOutermostInAnyO
     SystestConfiguration nestedFirst;
     nestedFirst.testDiscoverRoot = root.get().string();
     nestedFirst.testFileExtension = ".test";
-    nestedFirst.testDiscoverDirs.add((outside.get() / "a" / "nested").string());
-    nestedFirst.testDiscoverDirs.add((outside.get() / "a").string());
+    nestedFirst.testDiscoverDirs.push_back((outside.get() / "a" / "nested").string());
+    nestedFirst.testDiscoverDirs.push_back((outside.get() / "a").string());
 
     SystestConfiguration outerFirst;
     outerFirst.testDiscoverRoot = root.get().string();
     outerFirst.testFileExtension = ".test";
-    outerFirst.testDiscoverDirs.add((outside.get() / "a").string());
-    outerFirst.testDiscoverDirs.add((outside.get() / "a" / "nested").string());
+    outerFirst.testDiscoverDirs.push_back((outside.get() / "a").string());
+    outerFirst.testDiscoverDirs.push_back((outside.get() / "a" / "nested").string());
 
     const auto nestedFirstDiscovered = discoverTestFiles(nestedFirst);
     const auto outerFirstDiscovered = discoverTestFiles(outerFirst);
@@ -340,8 +340,8 @@ TEST_F(TestDiscoveryTest, RejectsTwoFilesThatWouldShareAName)
     SystestConfiguration config;
     config.testDiscoverRoot = root.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add((left.get() / "a").string());
-    config.testDiscoverDirs.add((right.get() / "a").string());
+    config.testDiscoverDirs.push_back((left.get() / "a").string());
+    config.testDiscoverDirs.push_back((right.get() / "a").string());
 
     EXPECT_THROW(discoverTestFiles(config), Exception);
 }
@@ -382,8 +382,8 @@ TEST_F(TestDiscoveryTest, SeveralSearchDirectoriesNarrowToTheirUnionWithoutRepea
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
     config.testFileExtension = ".test";
-    config.testDiscoverDirs.add((tempDir.get() / "wanted").string());
-    config.testDiscoverDirs.add((tempDir.get() / "wanted" / "nested").string());
+    config.testDiscoverDirs.push_back((tempDir.get() / "wanted").string());
+    config.testDiscoverDirs.push_back((tempDir.get() / "wanted" / "nested").string());
 
     const auto discovered = discoverTestFiles(config);
 

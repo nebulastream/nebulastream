@@ -31,12 +31,12 @@ namespace NES
 
 static OrderingPolicy orderingFrom(const SystestConfiguration& config)
 {
-    if (not config.randomQueryOrder.getValue())
+    if (not config.randomQueryOrder)
     {
         return RunInFileOrder{};
     }
     /// A zero seed means the user set none, so the run picks a random one.
-    const auto seed = config.shuffleSeed.getValue();
+    const auto seed = config.shuffleSeed;
     return RunInShuffledOrder{.seed = seed == 0 ? uint64_t{std::random_device{}()} : seed};
 }
 
@@ -52,32 +52,32 @@ RunPolicy::RunPolicy(
 
 RunPolicy RunPolicy::create(const SystestConfiguration& config)
 {
-    const auto measuring = config.benchmark.getValue();
-    if (measuring and config.endlessMode.getValue())
+    const auto measuring = config.benchmark;
+    if (measuring and config.endlessMode)
     {
         throw InvalidConfigParameter("a benchmark run cannot also run in endless mode");
     }
     /// A measuring run submits one query at a time, because queries that run together share the worker and their timings
     /// would depend on each other.
-    const auto concurrency = measuring ? 1 : config.numberConcurrentQueries.getValue();
+    const auto concurrency = measuring ? 1 : config.numberConcurrentQueries;
 
     if (measuring)
     {
         return RunPolicy{
             orderingFrom(config),
             concurrency,
-            SubmitRounds{.count = std::max(uint64_t{1}, config.benchmarkRounds.getValue())},
+            SubmitRounds{.count = std::max(uint64_t{1}, config.benchmarkRounds)},
             std::nullopt,
-            std::filesystem::path{config.workingDir.getValue()} / "BenchmarkResults.json"};
+            std::filesystem::path{config.workingDir} / "BenchmarkResults.json"};
     }
 
     RepetitionPolicy repetition = SubmitOnce{};
     std::optional<std::chrono::seconds> runLimit;
-    if (config.endlessMode.getValue())
+    if (config.endlessMode)
     {
-        const auto rounds = config.endlessRounds.getValue();
+        const auto rounds = config.endlessRounds;
         repetition = rounds == 0 ? RepetitionPolicy{SubmitUntilStopped{}} : RepetitionPolicy{SubmitRounds{.count = rounds}};
-        if (const auto seconds = config.endlessSeconds.getValue(); seconds > 0)
+        if (const auto seconds = config.endlessSeconds; seconds > 0)
         {
             runLimit = std::chrono::seconds{seconds};
         }

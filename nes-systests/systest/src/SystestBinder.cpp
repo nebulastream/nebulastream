@@ -103,7 +103,7 @@ struct SystestBinder::Impl
         , modelHandler{modelCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
-              config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
+              config.queryOptimizerConfig,
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),

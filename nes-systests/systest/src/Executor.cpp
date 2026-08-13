@@ -259,7 +259,7 @@ RunOutcome Executor::execute() const
     setupLogging(config);
     const auto runPolicy = RunPolicy::create(config);
     /// Protect the working dir during the invocation from concurrent invications on the same dir or a subdir
-    const auto guard = WorkingDirectoryGuard{config.workingDir.getValue()};
+    const auto guard = WorkingDirectoryGuard{config.workingDir};
 
     auto prepared = prepareAll(config);
     if (const auto* ordering = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))

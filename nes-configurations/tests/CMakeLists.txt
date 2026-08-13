@@ -14,10 +14,9 @@
 include(ExternalProject)
 ### Config Tests ###
 add_nes_unit_test(
-    configuration-help-message-tests
-    "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp"
-    "UnitTests/Configurations/ExplicitlySetTrackingTests.cpp"
-    "UnitTests/Configurations/SequenceOptionTests.cpp"
+    configuration-validation-tests
     "UnitTests/Configurations/SinkConfigTest.cpp"
     "UnitTests/Validation/EndpointValidationTest.cpp")
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
+
+add_subdirectory(UnitTests/Configurations)

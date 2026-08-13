@@ -80,8 +80,8 @@ public:
     {
         SystestConfiguration config{};
         config.testDiscoverRoot = SYSTEST_DATA_DIR;
-        config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFile, EXTENSION));
-        config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+        config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFile, EXTENSION);
+        config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
         config.clusterConfig = SystestClusterConfiguration{
             .workers = {WorkerConfig{
                 .host = Host{"localhost:8080"},
@@ -134,7 +134,7 @@ TEST_F(SystestE2ETest, ARejectedSetupSkipsEveryTestCaseOfTheFile)
 TEST_F(SystestE2ETest, ASelectionThatMatchesNothingFails)
 {
     auto config = createConfigFor("NothingSelected");
-    config.testQueryNumbers.add(7);
+    config.testQueryNumbers.push_back(7);
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
@@ -144,9 +144,9 @@ TEST_F(SystestE2ETest, ASelectionThatMatchesNothingFails)
 TEST_F(SystestE2ETest, ASelectionRunsOnlyTheSelectedQueriesAndCanSucceed)
 {
     auto config = createConfigFor("MultipleCorrectAndIncorrect");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectSelected", PATH_TO_BINARY_DIR));
-    config.testQueryNumbers.add(1);
-    config.testQueryNumbers.add(5);
+    config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectSelected", PATH_TO_BINARY_DIR);
+    config.testQueryNumbers.push_back(1);
+    config.testQueryNumbers.push_back(5);
     const auto result = Executor{config}.execute();
     const auto* succeeded = std::get_if<RunSucceeded>(&result);
     ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
@@ -156,9 +156,9 @@ TEST_F(SystestE2ETest, ASelectionRunsOnlyTheSelectedQueriesAndCanSucceed)
 TEST_F(SystestE2ETest, ASelectionWithAnAbsentNumberStillRunsTheRest)
 {
     auto config = createConfigFor("NothingSelected");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/NothingSelectedPartial", PATH_TO_BINARY_DIR));
-    config.testQueryNumbers.add(1);
-    config.testQueryNumbers.add(7);
+    config.workingDir = fmt::format("{}/nes-systests/systest/NothingSelectedPartial", PATH_TO_BINARY_DIR);
+    config.testQueryNumbers.push_back(1);
+    config.testQueryNumbers.push_back(7);
     const auto result = Executor{config}.execute();
     const auto* succeeded = std::get_if<RunSucceeded>(&result);
     ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
@@ -198,7 +198,7 @@ TEST_F(SystestE2ETest, ADifferentialBlockWhoseHalfDoesNotBindFailsAlone)
 TEST_F(SystestE2ETest, ARepeatingRunStopsAtTheFirstFailedRound)
 {
     auto config = createConfigFor("MultipleCorrectAndIncorrect");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectEndless", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectEndless", PATH_TO_BINARY_DIR);
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
@@ -209,7 +209,7 @@ TEST_F(SystestE2ETest, ARepeatingRunStopsAtTheFirstFailedRound)
 TEST_F(SystestE2ETest, ARepeatingRunThatKeepsPassingEndsAfterItsRounds)
 {
     auto config = createConfigFor("NothingSelected");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/NothingSelectedRounds", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/NothingSelectedRounds", PATH_TO_BINARY_DIR);
     config.endlessMode = true;
     config.endlessRounds = 2;
     const auto result = Executor{config}.execute();
@@ -221,7 +221,7 @@ TEST_F(SystestE2ETest, ARepeatingRunThatKeepsPassingEndsAfterItsRounds)
 TEST_F(SystestE2ETest, AMeasuringRunOverSeveralRoundsWritesOneReport)
 {
     auto config = createConfigFor("Measured");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MeasuredRounds", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/MeasuredRounds", PATH_TO_BINARY_DIR);
     config.benchmark = true;
     config.benchmarkRounds = 2;
     const auto result = Executor{config}.execute();
@@ -233,8 +233,8 @@ TEST_F(SystestE2ETest, AMeasuringRunOverSeveralRoundsWritesOneReport)
 TEST_F(SystestE2ETest, ARepeatingRunWithNothingSelectedFailsInsteadOfLooping)
 {
     auto config = createConfigFor("NothingSelected");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/NothingSelectedEndless", PATH_TO_BINARY_DIR));
-    config.testQueryNumbers.add(7);
+    config.workingDir = fmt::format("{}/nes-systests/systest/NothingSelectedEndless", PATH_TO_BINARY_DIR);
+    config.testQueryNumbers.push_back(7);
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
@@ -245,7 +245,7 @@ TEST_F(SystestE2ETest, ARepeatingRunWithNothingSelectedFailsInsteadOfLooping)
 TEST_F(SystestE2ETest, ARepeatingRunWithABrokenFileFailsInsteadOfLooping)
 {
     auto config = createConfigFor("Unparseable");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/UnparseableEndless", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/UnparseableEndless", PATH_TO_BINARY_DIR);
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
@@ -257,7 +257,7 @@ TEST_F(SystestE2ETest, ARepeatingRunWithABrokenFileFailsInsteadOfLooping)
 TEST_F(SystestE2ETest, ARepeatingRunWithARejectedSetupFailsInsteadOfLooping)
 {
     auto config = createConfigFor("SetupRejected");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/SetupRejectedEndless", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/SetupRejectedEndless", PATH_TO_BINARY_DIR);
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
@@ -279,7 +279,7 @@ TEST_F(SystestE2ETest, AQueryUnderAnOverrideRunsInItsOwnGroupAndReportsTheOverri
 TEST_F(SystestE2ETest, AConcurrencyOfZeroStillRunsTheQueries)
 {
     auto config = createConfigFor("NothingSelected");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/ZeroConcurrency", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/ZeroConcurrency", PATH_TO_BINARY_DIR);
     config.numberConcurrentQueries = 0;
     const auto result = Executor{config}.execute();
     const auto* succeeded = std::get_if<RunSucceeded>(&result);
@@ -304,7 +304,7 @@ TEST_F(SystestE2ETest, ARemoteRunSkipsAFileThatRequiresSettingsAndStillSucceeds)
 TEST_F(SystestE2ETest, ARepeatingRemoteRunWhoseFilesAllSkipEndsInsteadOfLooping)
 {
     auto config = createConfigFor("AllSkipped");
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/AllSkippedEndless", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/AllSkippedEndless", PATH_TO_BINARY_DIR);
     config.remoteWorker = true;
     config.endlessMode = true;
     const auto result = Executor{config}.execute();
@@ -317,7 +317,7 @@ TEST_F(SystestE2ETest, AShuffledRunKeepsEachExpectationWithItsQuery)
 {
     constexpr std::string_view testFile = "MultipleCorrectAndIncorrect";
     auto config = createConfigFor(testFile);
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectShuffled", PATH_TO_BINARY_DIR));
+    config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectShuffled", PATH_TO_BINARY_DIR);
     config.randomQueryOrder = true;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
@@ -359,9 +359,9 @@ TEST_F(SystestE2ETest, ABrokenFileFailsAloneAndTheOtherFilesStillRun)
         "1\n");
 
     auto config = createConfigFor("MultipleFiles");
-    config.directlySpecifiedTestFiles.setValue("");
-    config.testDiscoverRoot.setValue(tmp.get().string());
-    config.testFileExtension.setValue(std::string{EXTENSION});
+    config.directlySpecifiedTestFiles = "";
+    config.testDiscoverRoot = tmp.get().string();
+    config.testFileExtension = std::string{EXTENSION};
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
@@ -375,8 +375,8 @@ TEST_F(SystestE2ETest, TheReportListsFailuresInFileOrder)
 {
     constexpr std::string_view testFile = "MultipleCorrectAndIncorrect";
     auto config = createConfigFor(testFile);
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectOrdered", PATH_TO_BINARY_DIR));
-    config.numberConcurrentQueries.setValue(8);
+    config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrectOrdered", PATH_TO_BINARY_DIR);
+    config.numberConcurrentQueries = 8;
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
@@ -415,9 +415,9 @@ TEST_F(SystestE2ETest, TheReportKeepsFileOrderAcrossSettingsGroups)
     writeFile("Second.dummy", fmt::format("{}{}{}{}", setup, failing, settings, failing));
 
     auto config = createConfigFor("SettingsGroups");
-    config.directlySpecifiedTestFiles.setValue("");
-    config.testDiscoverRoot.setValue(tmp.get().string());
-    config.testFileExtension.setValue(std::string{EXTENSION});
+    config.directlySpecifiedTestFiles = "";
+    config.testDiscoverRoot = tmp.get().string();
+    config.testFileExtension = std::string{EXTENSION};
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
@@ -444,8 +444,8 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
 {
     const auto& [directory, testFile] = GetParam();
     auto config = createConfigFor(fmt::format("{}/{}", directory, testFile));
-    config.testFileExtension.setValue(std::string{EXTENSION});
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+    config.testFileExtension = std::string{EXTENSION};
+    config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
 
     const auto result = Executor{config}.execute();
     const auto* failed = std::get_if<RunFailed>(&result);

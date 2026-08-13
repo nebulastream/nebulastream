@@ -917,7 +917,7 @@ TEST_F(TestFilePreparerTest, SelectionKeepsThePartitionKeyStable)
 
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
@@ -954,7 +954,7 @@ TEST_F(TestFilePreparerTest, RejectsASecondFileWhosePrefixedNameCollides)
 
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
@@ -974,7 +974,7 @@ TEST_F(TestFilePreparerTest, AFileWithoutQueriesYieldsNothingToRun)
     }
     SystestConfiguration config{};
     config.testDiscoverRoot = tmp.get().string();
-    config.workingDir.setValue(tmp.get().string());
+    config.workingDir = tmp.get().string();
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {}, .allowSourcePlacement = {Host{"localhost:8080"}}, .allowSinkPlacement = {Host{"localhost:8080"}}};
 
