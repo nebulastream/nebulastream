@@ -50,9 +50,6 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     TestFileKeyFactory keyFactory;
-    /// The worker for a statement that states no placement of its own.
-    Host defaultSourceHost;
-    Host defaultSinkHost;
     /// Shared across the run, so two files cannot claim the same prefixed name.
     PrefixedNameOwners nameOwners;
 };

@@ -34,11 +34,18 @@ constexpr auto Source = "SOURCE";
 constexpr auto Sink = "SINK";
 constexpr auto InputFormatter = "INPUT_FORMATTER";
 constexpr auto OutputFormatter = "OUTPUT_FORMATTER";
+constexpr auto FileSource = "FILE_SOURCE";
+constexpr auto TcpSource = "TCP_SOURCE";
+constexpr auto CsvOutputFormatter = "CSV_OUTPUT_FORMATTER";
+
+inline std::string sinkConfigGroup(const std::string_view type)
+{
+    return Identifier::parse(std::string{type}).asCanonicalString() + "_SINK";
+}
 
 /// Config keys within the groups.
 constexpr auto FilePath = "FILE_PATH";
 constexpr auto Host = "HOST";
-constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Schema = "SCHEMA";
 constexpr auto QuoteStrings = "QUOTE_STRINGS";

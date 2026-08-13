@@ -40,29 +40,17 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
     {
         if (auto sink = rootOperator.tryGetAs<AnonymousSinkLogicalOperator>(); sink.has_value())
         {
-            const auto schema = sink.value()->getTargetSchema();
-            const auto type = sink.value()->getSinkType();
-            auto config = sink.value()->getSinkConfig();
-            const auto formatConfig = sink.value()->getFormatConfig();
-
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because AnonymousSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find(Identifier::parse("host"));
-            if (hostIt == config.end())
+            if (sink.value()->getGeneralSinkConfig().host == Host{Host::INVALID})
             {
-                throw InvalidConfigParameter("'host'");
+                throw InvalidConfigParameter("SINK.HOST must be specified for an anonymous sink");
             }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
+            auto sinkDescriptor = sinkCatalog->createAnonymousSinkDescriptor(
+                sink.value()->getSinkSchema(),
+                sink.value()->getGeneralSinkConfig(),
+                sink.value()->getPluginSinkConfiguration(),
+                sink.value()->getOutputFormatterDescriptor());
 
-            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(schema, type, host, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
-            }
-
-            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

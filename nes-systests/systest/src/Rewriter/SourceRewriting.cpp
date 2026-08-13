@@ -14,7 +14,6 @@
 
 #include <Rewriter/SourceRewriting.hpp>
 
-#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -61,7 +60,7 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     /// The rewriter makes the ATTACH path absolute, under the test data directory.
     /// A path the test wrote would stay relative, or set the option twice next to an ATTACH.
     auto* declared = declaredOptions(declaration.definition);
-    if (declaresOption(declared, Sql::Source, Sql::FilePath))
+    if (declaresOption(declared, Sql::FileSource, Sql::FilePath))
     {
         throw TestException(
             "A physical source must not choose its data file, because a source reads the data that its ATTACH names: {}",
@@ -69,7 +68,7 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     }
 
     if (declaration.attached.has_value() and readsFromSocket(declaration.definition->type->getText())
-        and (declaresOption(declared, Sql::Source, Sql::SocketHost) or declaresOption(declared, Sql::Source, Sql::SocketPort)))
+        and (declaresOption(declared, Sql::TcpSource, Sql::SocketHost) or declaresOption(declared, Sql::TcpSource, Sql::SocketPort)))
     {
         throw TestException(
             "A source with attached data must not choose its socket endpoint, because a server sends it that data: {}",
@@ -123,7 +122,10 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
     /// The rewriter prefixes first, because the SET clause replaces what the test declared, and a later edit wins over an earlier one.
     prefixNames(parse, rewriter, names);
-    insertSetClause(rewriter, declaration.definition, setClause);
+    if (not setClause.empty())
+    {
+        insertSetClause(rewriter, declaration.definition, setClause);
+    }
     auto sql = rewriter.getText();
     auto statement = [&]() -> SetupStatement
     {
@@ -140,31 +142,20 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     return RewrittenSource{.statement = std::move(statement), .inputFile = std::move(inputFile)};
 }
 
-/// The host pins the source to one worker, because an omitted host resolves to the worker that responds,
-/// and on a topology no worker responds.
-/// The CSV default exists because creating the source's descriptor rejects a source without an input format.
-/// The options that the test wrote come last, unchanged.
+/// Only per-source data paths are rewritten; binding applies the shared systest defaults.
 std::string SourceRewriter::renderSetClauseFor(
     SqlParse& parse, AntlrSQLParser::NamedConfigExpressionSeqContext* declared, const std::optional<std::filesystem::path>& dataFile) const
 {
     std::vector<std::string> options;
     if (dataFile.has_value())
     {
-        options.push_back(Sql::option(Sql::Source, Sql::FilePath, dataFile->string()));
-    }
-    if (not declaresOption(declared, Sql::Source, Sql::Host))
-    {
-        options.push_back(Sql::option(Sql::Source, Sql::Host, context.sourceHost.view()));
-    }
-    if (not declaresOption(declared, Sql::InputFormatter, Sql::Type))
-    {
-        options.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
+        options.push_back(Sql::option(Sql::FileSource, Sql::FilePath, dataFile->string()));
     }
     if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
     {
         options.push_back(declaredText);
     }
-    return Sql::setClause(Sql::optionList(options));
+    return options.empty() ? std::string{} : Sql::setClause(Sql::optionList(options));
 }
 
 void makeAnonymousSourcePathsAbsolute(
@@ -174,34 +165,13 @@ void makeAnonymousSourcePathsAbsolute(
     {
         for (auto* option : source->parameters->namedConfigExpression())
         {
-            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::Source, Sql::FilePath))
+            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::FileSource, Sql::FilePath))
             {
                 if (const std::filesystem::path declared{unquote(value->getText())}; declared.is_relative())
                 {
                     rewriter.replace(value->getStart(), value->getStop(), Sql::stringLiteral((testDataDir / declared).string()));
                 }
             }
-        }
-    }
-}
-
-void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host)
-{
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
-    {
-        const auto declared = source->parameters->namedConfigExpression();
-        std::vector<std::string> missing;
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::Source, Sql::Host); }))
-        {
-            missing.push_back(Sql::option(Sql::Source, Sql::Host, host.view()));
-        }
-        if (not std::ranges::any_of(declared, [](auto* option) { return isOption(option, Sql::InputFormatter, Sql::Type); }))
-        {
-            missing.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
-        }
-        if (not missing.empty())
-        {
-            rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::optionList(missing)));
         }
     }
 }

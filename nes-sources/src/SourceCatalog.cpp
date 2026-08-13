@@ -15,6 +15,7 @@
 #include <Sources/SourceCatalog.hpp>
 
 #include <algorithm>
+#include <any>
 #include <array>
 #include <cstdint>
 #include <expected>
@@ -130,12 +131,6 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
         return std::unexpected{
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     };
-    auto inputFormatterRegistryEntry = InputFormatterConfigRegistry::instance().find(inputFormatterType.asCanonicalString());
-    if (not inputFormatterRegistryEntry.has_value())
-    {
-        return std::unexpected{UnknownInputFormatterType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activated it.", inputFormatterType)};
-    }
     auto instantiatedPluginConfig = sourceRegistryEntry->instantiate(config);
     if (!instantiatedPluginConfig.has_value())
     {
@@ -143,12 +138,30 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     }
     auto pluginSourceConfig = PluginSourceConfiguration{this->sourceType, std::move(instantiatedPluginConfig).value()};
 
-    auto instantiatedInputFormatterConfig = inputFormatterRegistryEntry->instantiate(config);
-    if (!instantiatedInputFormatterConfig.has_value())
+    /// NATIVE forwards buffers without formatting, so it has no registry entry or formatter config.
+    auto formatDescriptor = [&]() -> std::expected<InputFormatterDescriptor, Exception>
     {
-        return std::unexpected{instantiatedInputFormatterConfig.error()};
+        if (inputFormatterType == Identifier::parse("NATIVE"))
+        {
+            return InputFormatterDescriptor{inputFormatterType, ExplicitAny{std::any{std::monostate{}}}};
+        }
+        const auto inputFormatterRegistryEntry = InputFormatterConfigRegistry::instance().find(inputFormatterType.asCanonicalString());
+        if (not inputFormatterRegistryEntry.has_value())
+        {
+            return std::unexpected{UnknownInputFormatterType(
+                "The input formatter type '{}' is not registered. If it is a plugin, make sure you activated it.", inputFormatterType)};
+        }
+        auto instantiatedInputFormatterConfig = inputFormatterRegistryEntry->instantiate(config);
+        if (!instantiatedInputFormatterConfig.has_value())
+        {
+            return std::unexpected{instantiatedInputFormatterConfig.error()};
+        }
+        return InputFormatterDescriptor{inputFormatterType, std::move(instantiatedInputFormatterConfig).value()};
+    }();
+    if (!formatDescriptor.has_value())
+    {
+        return std::unexpected{formatDescriptor.error()};
     }
-    auto formatDescriptor = InputFormatterDescriptor{this->inputFormatterType, std::move(instantiatedInputFormatterConfig).value()};
 
     auto schema = config.get(SourceDescriptor::SCHEMA);
     auto hostOpt = config.get(SourceDescriptor::HOST);
@@ -158,7 +171,7 @@ SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& va
     return std::make_tuple(
         GeneralSourceConfig{.host = hostOpt, .maxInflightBuffers = maxFlightInBuffers},
         std::move(pluginSourceConfig),
-        std::move(formatDescriptor),
+        std::move(formatDescriptor).value(),
         std::move(schema));
 }
 
@@ -197,12 +210,24 @@ SourceCatalog::getConfigSchema(const Identifier& sourceType, const Identifier& i
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     }
 
-    const auto inputFormatterPluginConfigSchema
-        = InputFormatterConfigSchemaRegistry::instance().getSchema(inputFormatterType.asCanonicalString());
+    /// NATIVE has no formatter-specific config fields; the general input formatter fields still apply.
+    const auto inputFormatterPluginConfigSchema = [&]() -> std::expected<Schema<QualifiedErasedConfigField, Ordered>, Exception>
+    {
+        if (inputFormatterType == Identifier::parse("NATIVE"))
+        {
+            return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+        }
+        const auto schema = InputFormatterConfigSchemaRegistry::instance().getSchema(inputFormatterType.asCanonicalString());
+        if (not schema.has_value())
+        {
+            return std::unexpected{UnknownInputFormatterType(
+                "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormatterType)};
+        }
+        return schema.value();
+    }();
     if (not inputFormatterPluginConfigSchema.has_value())
     {
-        return std::unexpected{UnknownInputFormatterType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormatterType)};
+        return std::unexpected{inputFormatterPluginConfigSchema.error()};
     }
 
     auto targetSchema

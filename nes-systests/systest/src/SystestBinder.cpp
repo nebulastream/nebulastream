@@ -26,10 +26,12 @@
 #include <fmt/format.h>
 
 #include <Config/Config.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -56,6 +58,22 @@ namespace NES
 {
 namespace
 {
+
+/// Defaults shared by setup statements, queries, differential queries, and EXPLAIN.
+Schema<ConfigFieldDefault, Ordered> makeSystestConfigDefaults(const SystestConfiguration& config)
+{
+    PRECONDITION(
+        !config.clusterConfig.allowSourcePlacement.empty(),
+        "Topology must list at least one worker in allow_source_placement to assign a default source host");
+    PRECONDITION(
+        !config.clusterConfig.allowSinkPlacement.empty(),
+        "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
+    return {
+        ConfigFieldDefault{QualifiedIdentifier::parse("SOURCE.HOST"), config.clusterConfig.allowSourcePlacement.front().getRawValue()},
+        ConfigFieldDefault{QualifiedIdentifier::parse("SINK.HOST"), config.clusterConfig.allowSinkPlacement.front().getRawValue()},
+        ConfigFieldDefault{QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"), std::string{Sql::Csv}},
+        ConfigFieldDefault{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{Sql::Csv}}};
+}
 
 /// The schema of the file that a checksum sink writes, different from the schema of the rows.
 /// Function-local static, because the schema resolves data types through a registry that plugins populate at startup.
@@ -98,10 +116,15 @@ struct SystestBinder::Impl
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
-        , sourceHandler{sourceCatalog, RequireHostConfig{}}
+        , sourceHandler{sourceCatalog}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
-        , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
+        , queryBinder{makeSystestConfigDefaults(config), {}}
+        , statementBinder{
+              makeSystestConfigDefaults(config),
+              {},
+              sourceCatalog,
+              [this](auto* plan) { return queryBinder.bindLogicalQueryPlan(plan); }}
         , queryOptimizer{
               config.queryOptimizerConfig,
               sourceCatalog,
@@ -202,7 +225,7 @@ private:
     /// The query id correlates the statement with its answer.
     [[nodiscard]] BoundPlan optimizeInto(const std::string& sql, const std::string& queryId) const
     {
-        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        auto plan = queryBinder.createLogicalQueryPlanFromSQLString(sql);
         plan.setQueryId(QueryId::createDistributed(DistributedQueryId{queryId}));
         auto optimized = queryOptimizer.optimize(plan);
         auto schema = getSinkOutputSchema(optimized);
@@ -229,6 +252,7 @@ private:
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    AntlrSQLQueryParser::QueryBinder queryBinder;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };

@@ -21,22 +21,19 @@
 
 #include <fmt/format.h>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 
 namespace NES
 {
 
 /// Everything the rewrite of one test file needs to know about its surroundings.
-/// Sources and sinks have separate hosts, because a cluster run may place them on different workers.
+/// Placement and formatter defaults are applied by the binding stage.
 struct RewriteContext
 {
     TestFileKey testFileKey;
     std::string name;
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
-    Host sourceHost;
-    Host sinkHost;
 
     /// The suffix distinguishes the queries of one test file, so no two overwrite each other's results.
     /// For test file key `Filter` and suffix `3`: `<workingDir>/Filter_3.csv`.

@@ -25,7 +25,6 @@
 #include <AntlrSQLParser.h>
 #include <TokenStreamRewriter.h>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/ClassifiedStatement.hpp>
 #include <Rewriter/NamePrefixer.hpp>
@@ -69,9 +68,6 @@ private:
 /// The worker resolves a relative path from its own working directory, which may not match where the test data is.
 void makeAnonymousSourcePathsAbsolute(
     const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);
-
-/// Adds the config to an anonymous source.
-void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
 struct SourceOption
 {
