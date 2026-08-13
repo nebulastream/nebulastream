@@ -25,7 +25,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <NetworkTopology.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES
 {
@@ -39,13 +39,13 @@ inline void addWorkers()
 /// query decomposition and placement validation.
 class WorkerCatalog
 {
-    std::unordered_map<Host, WorkerConfig> workers;
+    std::unordered_map<Host, WorkerCatalogEntry> workers;
     NetworkTopology topology;
     uint64_t version = 0;
 
 public:
     WorkerCatalog() = default;
-    explicit WorkerCatalog(const std::vector<WorkerConfig>& workers);
+    explicit WorkerCatalog(const std::vector<WorkerCatalogEntry>& workers);
 
     bool addWorker(
         const Host& host,
@@ -53,10 +53,10 @@ public:
         Capacity maxOperators,
         const std::vector<Host>& downstream,
         Schema<LiteralConfigValue, Ordered> config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
-    std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
-    [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
+    std::optional<WorkerCatalogEntry> removeWorker(const Host& hostAddr);
+    [[nodiscard]] std::optional<WorkerCatalogEntry> getWorker(const Host& hostAddr) const;
     [[nodiscard]] size_t size() const;
-    [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;
+    [[nodiscard]] std::vector<WorkerCatalogEntry> getAllWorkers() const;
     [[nodiscard]] NetworkTopology getTopology() const;
 
     /// Every change to the workerCatalog increments the version. This allows other components to check if the catalog has changed.

@@ -43,7 +43,7 @@
 #include <util/HighsInt.h>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <scope_guard.hpp>
 
 namespace NES
