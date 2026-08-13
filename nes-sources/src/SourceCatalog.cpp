@@ -34,7 +34,6 @@
 
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/ConfigResolution.hpp>
-#include <Configurations/Descriptor.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>

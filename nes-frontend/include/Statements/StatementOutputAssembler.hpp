@@ -27,10 +27,10 @@
 #include <utility>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -42,6 +42,7 @@
 #include <DistributedQuery.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <QueryStatus.hpp>
+#include <SinkConfigRegistry.hpp>
 #include <SourceConfigRegistry.hpp>
 #include <Version.hpp>
 
@@ -101,15 +102,28 @@ inline std::string renderSourceConfig(const SourceDescriptor& descriptor)
     return "{}";
 }
 
+/// Serialize the descriptor's type-erased config for display; only the sink's registry entry
+/// knows the concrete type behind the std::any.
+inline std::string renderSinkConfig(const SinkDescriptor& descriptor)
+{
+    if (const auto configEntry = SinkConfigRegistry::instance().find(descriptor.getSinkType()))
+    {
+        const auto reflectedConfig = configEntry->reflect(descriptor.getPluginData(), ReflectionContext{});
+        return rfl::json::write(*reflectedConfig);
+    }
+    return "{}";
+}
+
 using SinkDescriptorOutputRowType = std::tuple<
     Identifier,
     Schema<UnqualifiedUnboundField, Ordered>,
     std::string,
-    NES::DescriptorConfig::Config,
+    /// The sink-defined config struct, rendered to JSON via the sink's SinkConfigRegistry entry.
+    std::string,
     Host,
-    std::unordered_map<Identifier, std::string>>;
+    OutputFormatterDescriptor>;
 constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
-    "sink_name", "schema", "sink_type", "sink_config", "host", "format_config"};
+    "sink_name", "schema", "sink_type", "sink_config", "host", "output_formatter_config"};
 
 using QueryIdOutputRowType = std::tuple<DistributedQueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -181,9 +195,9 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
                 result.created.getSinkName(),
                 *std::get<NamedSinkDescriptor>(result.created.getUnderlying()).getSchema(),
                 result.created.getSinkType(),
-                result.created.getConfig(),
+                renderSinkConfig(result.created),
                 result.created.getHost(),
-                result.created.getOutputFormatterConfig())});
+                result.created.getOutputFormatterDescriptor())});
     }
 };
 
@@ -243,9 +257,9 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
                 sink.getSinkName(),
                 *std::get<NamedSinkDescriptor>(sink.getUnderlying()).getSchema(),
                 sink.getSinkType(),
-                sink.getConfig(),
+                renderSinkConfig(sink),
                 sink.getHost(),
-                sink.getOutputFormatterConfig());
+                sink.getOutputFormatterDescriptor());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -295,9 +309,9 @@ struct StatementOutputAssembler<DropSinkStatementResult>
                 result.dropped.getSinkName(),
                 *std::get<NamedSinkDescriptor>(result.dropped.getUnderlying()).getSchema(),
                 result.dropped.getSinkType(),
-                result.dropped.getConfig(),
+                renderSinkConfig(result.dropped),
                 result.dropped.getHost(),
-                result.dropped.getOutputFormatterConfig())});
+                result.dropped.getOutputFormatterDescriptor())});
     }
 };
 

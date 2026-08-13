@@ -11,17 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifier.hpp>
+#include <SinkConfigRegistry.hpp>
 
-namespace NES::OutputFormatterValidationProvider
+namespace NES
 {
-/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view outputFormat, std::unordered_map<Identifier, std::string> idConfig);
+
+SinkConfigRegistry& SinkConfigRegistry::instance()
+{
+    static SinkConfigRegistry inst;
+    return inst;
+}
+
 }

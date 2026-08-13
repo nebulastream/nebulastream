@@ -41,19 +41,11 @@ namespace NES
 
 }
 
-template <>
-struct fmt::formatter<NES::Schema<NES::QualifiedUnboundField, NES::Ordered>> : fmt::ostream_formatter
-{
-};
-
-template <>
-struct fmt::formatter<NES::Schema<NES::UnqualifiedUnboundField, NES::Unordered>> : fmt::ostream_formatter
-{
-};
-
-template <>
-struct fmt::formatter<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>> : fmt::ostream_formatter
-{
-};
-
+/// The generic fmt::formatter partial specialization for Schema in Schema/Schema.hpp covers all
+/// unbound schema instantiations; do not add full specializations here — they are ill-formed in any
+/// translation unit that instantiates the formatter (e.g. via fmt::formattable checks in ConfigField)
+/// before including this header.
+static_assert(fmt::formattable<NES::Schema<NES::QualifiedUnboundField, NES::Ordered>>);
+static_assert(fmt::formattable<NES::Schema<NES::UnqualifiedUnboundField, NES::Unordered>>);
+static_assert(fmt::formattable<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>);
 static_assert(fmt::formattable<NES::Schema<NES::UnboundFieldBase<std::dynamic_extent>, NES::Ordered>>);

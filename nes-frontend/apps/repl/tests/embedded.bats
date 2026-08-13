@@ -33,7 +33,7 @@ setup()         { nes_offline_setup; }
 
   assert_json_equal '[{"schema":[{"name":"TS","type":"UINT64"}],"source_name":"ENDLESS"}]' "${lines[0]}"
   assert_json_equal '[{"host":"localhost:8080","input_formatter_config":{"allowCommasInStrings":true,"fieldDelimiter":44,"tupleDelimiter":10,"type":"CSV"},"physical_source_id":1,"schema":[{"name":"TS","type":"UINT64"}],"source_config":"{\"seed\":1,\"maxRuntime\":10000000,\"generatorSchemaRaw\":\"SEQUENCE UINT64 0 10000000 1\",\"stopGeneratorWhenSequenceFinishes\":0,\"flushInterval\":10,\"generatorRateConfig\":{\"index\":0,\"value\":{\"emitRate\":10.0}}}","source_name":"ENDLESS","source_type":"GENERATOR"}]' "${lines[1]}"
-  assert_json_equal '[{"format_config":[],"host":"localhost:8080","schema":[{"name":"TS","type":"UINT64"}],"sink_config":[{"ADD_TIMESTAMP":false},{"APPEND":false},{"BACKPRESSURE_LOWER_THRESHOLD":200},{"BACKPRESSURE_UPPER_THRESHOLD":1000},{"FILE_PATH":"out.csv"},{"OUTPUT_FORMAT":"CSV"}],"sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
+  assert_json_equal '[{"host":"localhost:8080","output_formatter_config":{"config":{"fieldDelimiter":",","quoteStrings":false,"tupleDelimiter":"\n"},"outputFormatterType":"CSV"},"schema":[{"name":"TS","type":"UINT64"}],"sink_config":"{\"filePath\":\"out.csv\",\"append\":false}","sink_name":"SOMESINK","sink_type":"FILE"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
 

@@ -24,10 +24,16 @@
 #include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -37,10 +43,34 @@
 namespace NES
 {
 
-PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , outputStream(&std::cout)
-    , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
+namespace
+{
+
+/// Config fields of the print sink, shared by getConfigSchema (declaration) and
+/// PrintSinkConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<uint32_t> INGESTION{
+    Identifier::parse("INGESTION"),
+    "Artificial delay in milliseconds after emitting each buffer. 0 disables the delay.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint32_t>()).and_then(narrowConfigValue<int64_t, uint32_t>); },
+    uint32_t{0}};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> PrintSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("PRINT_SINK"), INGESTION);
+}
+
+std::expected<PrintSinkConfig, Exception> PrintSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return PrintSinkConfig{.ingestion = config.get(INGESTION)};
+}
+
+PrintSink::PrintSink(BackpressureController backpressureController, const PrintSinkConfig& config)
+    : Sink(std::move(backpressureController)), outputStream(&std::cout), ingestion(config.ingestion)
 {
 }
 
@@ -77,11 +107,6 @@ std::ostream& PrintSink::toString(std::ostream& str) const
 {
     str << fmt::format("PRINT_SINK");
     return str;
-}
-
-DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 }

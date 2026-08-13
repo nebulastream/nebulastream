@@ -33,7 +33,6 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>
-#include <OutputFormatters/OutputFormatterValidationProvider.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
 
@@ -41,10 +40,7 @@ namespace NES
 {
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
-    const uint64_t bufferSize,
-    const Schema<QualifiedUnboundField, Ordered>& schema,
-    const std::string& outputFormatterType,
-    const std::unordered_map<Identifier, std::string>& config)
+    const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const OutputFormatterDescriptor& descriptor)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
@@ -56,14 +52,9 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
         fieldNames.emplace_back(field.getFullyQualifiedName());
     }
 
-    /// Create the output formatter descriptor
-    auto descriptorConfigOpt = OutputFormatterValidationProvider::provide(outputFormatterType, config);
-    INVARIANT(descriptorConfigOpt.has_value(), "Parameter config for output format of type {} could not be validated", outputFormatterType);
-    const OutputFormatterDescriptor descriptor(descriptorConfigOpt.value());
-
-    /// Create a output formatter instance by calling the registry
+    /// Create an output formatter instance by calling the registry
     const std::shared_ptr<OutputFormatter> outputFormatter
-        = OutputFormatterProvider::provideOutputFormatter(outputFormatterType, fieldNames, descriptor);
+        = OutputFormatterProvider::provideOutputFormatter(descriptor.getOutputFormatterType().asCanonicalString(), fieldNames, descriptor);
 
     return std::make_shared<OutputFormatterBufferRef>(OutputFormatterBufferRef{std::move(fields), outputFormatter, bufferSize});
 }

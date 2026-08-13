@@ -13,10 +13,7 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 ### Config Tests ###
-add_nes_unit_test(
-    configuration-validation-tests
-    "UnitTests/Configurations/SinkConfigTest.cpp"
-    "UnitTests/Validation/EndpointValidationTest.cpp")
+add_nes_unit_test(configuration-validation-tests "UnitTests/Validation/EndpointValidationTest.cpp")
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 
 add_subdirectory(UnitTests/Configurations)

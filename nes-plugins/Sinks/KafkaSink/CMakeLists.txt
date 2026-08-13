@@ -22,7 +22,8 @@ target_link_libraries(kafka_sink_plugin_library PRIVATE RdKafka::rdkafka++)
 
 link_plugin_library(nes-sinks kafka_sink_plugin_library)
 add_registry_entry(Sink Kafka)
-add_registry_entry(SinkValidation Kafka)
+add_registry_entry(SinkConfigSchema Kafka)
+add_registry_entry(SinkConfig Kafka)
 
 add_e2e_test(
     NAME kafka-sink-test

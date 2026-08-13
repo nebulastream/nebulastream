@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <string>
@@ -36,14 +37,25 @@ struct SinkRegistryArguments
 
 using SinkFactoryFn = std::function<SinkRegistryReturnType(SinkRegistryArguments)>;
 
-/// Creates the registry entry for a sink implementation. Sinks are constructed from the
-/// backpressure controller and their descriptor; the entry expression in
-/// cmake/RuntimeRegistrationUtil.cmake instantiates this per plugin type.
-template <typename SinkImpl>
+/// Factory for the common case: the descriptor's type-erased plugin data is the sink's own
+/// config struct (put there by this sink's SinkConfigRegistry entry), so the any_cast is safe.
+/// Sinks that need more than their config (e.g. the sink schema) can additionally take the
+/// descriptor.
+template <typename SinkImpl, typename ConfigStruct>
 SinkFactoryFn makeSinkFactory()
 {
     return [](SinkRegistryArguments arguments) -> SinkRegistryReturnType
-    { return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), arguments.sinkDescriptor); };
+    {
+        auto config = arguments.sinkDescriptor.getPluginData().getAs<ConfigStruct>();
+        if constexpr (std::constructible_from<SinkImpl, BackpressureController, const ConfigStruct&, const SinkDescriptor&>)
+        {
+            return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), std::move(config), arguments.sinkDescriptor);
+        }
+        else
+        {
+            return std::make_unique<SinkImpl>(std::move(arguments.backpressureController), std::move(config));
+        }
+    };
 }
 
 class SinkRegistry : public RuntimeRegistry<SinkRegistry, std::string, SinkFactoryFn, /*CaseSensitive*/ false>

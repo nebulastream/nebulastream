@@ -22,7 +22,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>

@@ -22,7 +22,8 @@ target_link_libraries(mqtt_sink_plugin_library PRIVATE PahoMqttCpp::paho-mqttpp3
 
 link_plugin_library(nes-sinks mqtt_sink_plugin_library)
 add_registry_entry(Sink MQTT)
-add_registry_entry(SinkValidation MQTT)
+add_registry_entry(SinkConfigSchema MQTT)
+add_registry_entry(SinkConfig MQTT)
 
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(

@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp> /// NOLINT(misc-include-cleaner)
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/LogicalFunction.hpp>

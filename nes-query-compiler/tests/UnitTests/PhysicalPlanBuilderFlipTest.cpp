@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <unordered_set>
 #include <utility>
@@ -25,16 +26,19 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
@@ -73,12 +77,15 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getAnonymousSource(
-            Identifier::parse("File"),
-            schema,
-            Host("localhost"),
-            {{InputFormatterDescriptor::TYPE_FIELD.getName(), "CSV"}},
-            {{Identifier::parse("file_path"), "/dev/null"}});
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        auto descriptor
+            = PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)}
+                  .build(schema, std::nullopt);
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourceDescriptorPhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
@@ -91,10 +98,19 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getAnonymousSink(
-            schema, Identifier::parse("Print"), Host("localhost"), {{Identifier::parse("output_format"), "CSV"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("Print"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(Schema<LiteralConfigValue, Ordered>{
+                      std::vector<LiteralConfigValue>{{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+                  .value();
+        generalConfig.host = Host{"localhost"};
+        auto descriptor = sinkCatalog.createAnonymousSinkDescriptor(
+            std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(schema),
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor));
+        auto sinkOp = SinkPhysicalOperator(descriptor);
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
@@ -165,7 +181,7 @@ public:
         return visited.size();
     }
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
     uint64_t nextOriginId = 1;
 };
