@@ -23,8 +23,8 @@
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
@@ -56,14 +56,14 @@ public:
         HashMapOptions rightHashMapOptions);
 
 protected:
-    /// Pins the hash map TupleBuffer stored as the `index`-th child buffer of the record buffer that `recordBufferRef` points to.
-    static OwnedNautilusBuffer pinHashMapBuffer(const nautilus::val<TupleBuffer*>& recordBufferRef, const nautilus::val<uint64_t>& index);
+    /// Pins the hash map Buffer stored as the `index`-th child buffer of the record buffer that `recordBufferRef` points to.
+    static OwnedNautilusBuffer pinHashMapBuffer(const nautilus::val<Buffer*>& recordBufferRef, const nautilus::val<uint64_t>& index);
 
     /// Match-pairs probe: iterates all left hash maps against all right hash maps and emits joined records.
     /// Left hash map buffers are stored as child buffers [0, leftNumberOfHashMaps) of the record buffer, right ones follow at
     /// [leftNumberOfHashMaps, leftNumberOfHashMaps + rightNumberOfHashMaps).
     void performMatchPairsProbe(
-        const nautilus::val<TupleBuffer*>& recordBufferRef,
+        const nautilus::val<Buffer*>& recordBufferRef,
         nautilus::val<uint64_t> leftNumberOfHashMaps,
         nautilus::val<uint64_t> rightNumberOfHashMaps,
         ExecutionContext& executionCtx,
@@ -71,7 +71,7 @@ protected:
         const nautilus::val<Timestamp>& windowEnd) const;
 
     /// Builds a ChainedHashMapRef view over the hash map stored in `hashMapBufferRef` using the key/value layout described by `options`.
-    static ChainedHashMapRef makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options);
+    static ChainedHashMapRef makeChainedHashMapRef(const nautilus::val<Buffer*>& hashMapBufferRef, const HashMapOptions& options);
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout, rightTupleLayout;
     HashMapOptions leftHashMapOptions, rightHashMapOptions;

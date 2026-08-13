@@ -27,9 +27,9 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -66,11 +66,11 @@ struct PhysicalOperatorConcept
 
     /// Opens the operator for processing records.
     /// This is called before each batch of records is processed.
-    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
 
     /// Closes the operator after processing records.
     /// This is called after each batch of records is processed.
-    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
 
     /// Terminates the operator.
     /// This is called once after all records have been processed.
@@ -85,8 +85,8 @@ struct PhysicalOperatorConcept
 protected:
     /// Helper classes to propagate to the child
     void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
-    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void openChild(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
     void executeChild(ExecutionContext& executionCtx, Record& record) const;
     void terminateChild(ExecutionContext& executionCtx) const;
 };
@@ -121,8 +121,8 @@ struct PhysicalOperator
     [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
+    void close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const;
     void terminate(ExecutionContext& executionCtx) const;
     void execute(ExecutionContext& executionCtx, Record& record) const;
     [[nodiscard]] std::string toString() const;
@@ -193,9 +193,9 @@ private:
             data.setup(executionCtx, compilationContext);
         }
 
-        void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
+        void open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
 
-        void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.close(executionCtx, recordBuffer); }
+        void close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override { data.close(executionCtx, recordBuffer); }
 
         void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
 

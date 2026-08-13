@@ -13,7 +13,7 @@
 add_nes_test(unpooled-buffer-test UnpooledBufferTests.cpp)
 target_link_libraries(unpooled-buffer-test nes-memory)
 
-add_nes_test(tuple-buffer-memory-access-tests TupleBufferMemoryAccessTest.cpp)
+add_nes_test(tuple-buffer-memory-access-tests BufferMemoryAccessTest.cpp)
 target_link_libraries(tuple-buffer-memory-access-tests nes-memory)
 
 add_nes_test(buffer-manager-destroy-test BufferManagerDestroyTest.cpp)

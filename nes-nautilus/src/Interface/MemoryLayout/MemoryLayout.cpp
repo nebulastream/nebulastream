@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 
 #include <algorithm>
 #include <array>
@@ -31,11 +31,11 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Interface/VariableSizedAccessRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -50,7 +50,7 @@ namespace NES
 
 namespace
 {
-TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
+Buffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
     if (tupleBufferProvider.getBufferSize() > newBufferSize)
@@ -72,7 +72,7 @@ TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider,
 /// @brief Copies the varSizedValue to the specified location and then increments the number of tuples
 /// @return the new childBufferOffset
 void copyVarSizedAndIncrementMetaData(
-    TupleBuffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
+    Buffer& childBuffer, const VariableSizedAccess::Offset childBufferOffset, const std::span<const std::byte> varSizedValue)
 {
     const auto spaceInChildBuffer = childBuffer.getAvailableMemoryArea().subspan(childBufferOffset.getRawOffset());
     PRECONDITION(spaceInChildBuffer.size() >= varSizedValue.size(), "SpaceInChildBuffer must be larger than varSizedValue");
@@ -84,8 +84,8 @@ void copyVarSizedAndIncrementMetaData(
 }
 }
 
-VariableSizedAccess TupleBufferRef::writeVarSized(
-    TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
+VariableSizedAccess
+MemoryLayout::writeVarSized(Buffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const std::span<const std::byte> varSizedValue)
 {
     const auto totalVarSizedLength = varSizedValue.size();
 
@@ -120,7 +120,7 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
 }
 
 std::span<std::byte>
-TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
+MemoryLayout::loadAssociatedVarSizedValue(const Buffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
     /// Loading the childbuffer containing the variable sized data.
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
@@ -133,7 +133,7 @@ TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, cons
 }
 
 VarVal
-TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+MemoryLayout::loadValue(const DataType& physicalType, const TaskBufferRef& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     /// For now, we store the null byte before the actual VarVal
     nautilus::val<bool> null = false;
@@ -153,7 +153,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
     const auto varSizedPtr = invoke(
         {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-        +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
+        +[](const Buffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
             INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
@@ -166,9 +166,9 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
     return VarVal{VariableSizedData(varSizedPtr, size), physicalType.nullable, null};
 }
 
-VarVal TupleBufferRef::storeValue(
+VarVal MemoryLayout::storeValue(
     const DataType& physicalType,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
@@ -196,7 +196,7 @@ VarVal TupleBufferRef::storeValue(
     auto refToIndex = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
 
     invoke(
-        +[](TupleBuffer* tupleBuffer,
+        +[](Buffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t* varSizedPtr,
             const uint64_t varSizedValueLength,
@@ -217,31 +217,31 @@ VarVal TupleBufferRef::storeValue(
     return value;
 }
 
-bool TupleBufferRef::includesField(
+bool MemoryLayout::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
     return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
-uint64_t TupleBufferRef::getCapacity() const
+uint64_t MemoryLayout::getCapacity() const
 {
     return capacity;
 }
 
-uint64_t TupleBufferRef::getBufferSize() const
+uint64_t MemoryLayout::getBufferSize() const
 {
     return bufferSize;
 }
 
-uint64_t TupleBufferRef::getTupleSize() const
+uint64_t MemoryLayout::getTupleSize() const
 {
     return tupleSize;
 }
 
-TupleBufferRef::TupleBufferRef(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
+MemoryLayout::MemoryLayout(const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize)
     : capacity(capacity), bufferSize(bufferSize), tupleSize(tupleSize)
 {
 }
 
-TupleBufferRef::~TupleBufferRef() = default;
+MemoryLayout::~MemoryLayout() = default;
 }

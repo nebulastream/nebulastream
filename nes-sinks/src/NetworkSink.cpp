@@ -27,7 +27,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -95,7 +95,7 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
     NES_DEBUG("Sender channel {} closed", channelId);
 }
 
-void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
+void NetworkSink::execute(const Buffer& inputBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(channel, "Sender channel is not initialized");
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");

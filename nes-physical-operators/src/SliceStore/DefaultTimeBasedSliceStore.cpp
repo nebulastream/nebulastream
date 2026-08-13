@@ -27,7 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
@@ -302,7 +302,7 @@ std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
 
     /// We set everything to 0, as there might be old data in the tuple buffer
     std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
-    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer.value());
+    auto sliceCacheStartBuffer = std::make_unique<Buffer>(buffer.value());
     const auto& memArea = sliceCacheStartBuffer->getAvailableMemoryArea();
     pipelineIdToSliceCacheStarts.wlock()->emplace(pipelineId, std::move(sliceCacheStartBuffer));
     return memArea;

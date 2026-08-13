@@ -17,7 +17,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -68,7 +68,7 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
-void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, TaskBufferRef&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
@@ -91,7 +91,7 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
 }
 
-void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);

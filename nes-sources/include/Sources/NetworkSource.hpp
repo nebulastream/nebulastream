@@ -24,7 +24,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,7 +52,7 @@ public:
     NetworkSource(NetworkSource&&) = delete;
     NetworkSource& operator=(NetworkSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
     void open(std::shared_ptr<AbstractBufferProvider> provider) override;
     void close() override;
 
@@ -63,7 +63,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBuffer(Buffer& tupleBuffer, size_t& numReceivedBytes);
 
     std::string channelId;
     size_t receiverQueueSize;

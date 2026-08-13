@@ -22,7 +22,7 @@
 #include <static.hpp>
 
 #include <DataTypes/DataTypesUtil.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatter.hpp>
@@ -66,7 +66,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
     const nautilus::val<uint64_t>& recordIndex,
     const InputFormatIndexer& indexer,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
-    const TupleBufferRef& bufferRef) const
+    const MemoryLayout& bufferRef) const
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);

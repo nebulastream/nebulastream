@@ -21,7 +21,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -35,7 +35,7 @@ namespace NES
 {
 
 /// Forward declaration suffices: only named as a pointer in getPagedVectorBufferRef's return type below.
-class TupleBuffer;
+class Buffer;
 
 /// Shared base for all NLJ probe operators (inner, outer).
 /// Holds the NLJ-specific state (memory providers, key field names) and the match-pairs nested-loop logic.
@@ -71,7 +71,7 @@ protected:
     /// Resolves the slice owning `sliceEnd` via the operator handler and returns the buffer ref backing its
     /// `side` PagedVector (worker-thread 0, where all pages are consolidated at trigger time). Wrap the result
     /// in BorrowedNautilusBuffer::from(...) together with the matching tuple layout to build a PagedVectorRef.
-    nautilus::val<const TupleBuffer*> getPagedVectorBufferRef(
+    nautilus::val<const Buffer*> getPagedVectorBufferRef(
         const nautilus::val<OperatorHandler*>& operatorHandlerRef, const nautilus::val<SliceEnd>& sliceEnd, JoinBuildSideType side) const;
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout;

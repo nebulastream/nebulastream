@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-use nes_network::protocol::{ConnectionIdentifier, ThisConnectionIdentifier, TupleBuffer};
+use nes_network::protocol::{Buffer, ConnectionIdentifier, ThisConnectionIdentifier};
 use nes_network::receiver::{ReceiverChannel, ReceiverChannelResult};
 use nes_network::sender::{SenderChannel, TrySendDataResult};
 use nes_network::*;
@@ -462,7 +462,7 @@ fn send_buffer(
     data: &[u8],
     children: &[&[u8]],
 ) -> ffi::SendResult {
-    let buffer = TupleBuffer {
+    let buffer = Buffer {
         sequence_number: metadata.sequence_number,
         origin_id: metadata.origin_id,
         chunk_number: metadata.chunk_number,

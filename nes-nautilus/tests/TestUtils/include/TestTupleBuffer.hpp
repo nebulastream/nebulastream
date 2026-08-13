@@ -30,9 +30,9 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/TypeTraits.hpp>
 #include <ErrorHandling.hpp>
 
@@ -113,16 +113,16 @@ class TestTupleBuffer
 public:
     explicit TestTupleBuffer(TestSchema schema);
 
-    /// Wraps an existing TupleBuffer for schema-aware access.
+    /// Wraps an existing Buffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
     /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations) convenience default for non-VARSIZED use
-    TestTupleBufferView open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
+    TestTupleBufferView open(Buffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
 
 private:
     TestSchema schema;
 };
 
-/// View over a TupleBuffer. Supports append and indexed record access.
+/// View over a Buffer. Supports append and indexed record access.
 class TestTupleBufferView
 {
 public:
@@ -145,10 +145,10 @@ private:
     struct Impl
     {
         TestSchema schema;
-        TupleBuffer&
-            buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
+        Buffer&
+            buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the Buffer it wraps
         AbstractBufferProvider* bufferProvider;
-        std::shared_ptr<TupleBufferRef> bufRef;
+        std::shared_ptr<MemoryLayout> bufRef;
     };
 
     std::shared_ptr<Impl> impl;

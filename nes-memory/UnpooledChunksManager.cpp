@@ -26,13 +26,13 @@
 #include <ranges>
 #include <thread>
 #include <utility>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/MemoryUtils.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
+#include <BufferImpl.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 
 namespace NES
 {
@@ -156,7 +156,7 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
-std::optional<TupleBuffer>
+std::optional<Buffer>
 UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler)
 {
     const auto threadId = std::this_thread::get_id();
@@ -170,7 +170,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     /// allocateSpace returns a null pair when the budget is exhausted or the underlying allocation failed. Signal this
     /// to the caller as an empty optional (callers turn it into CannotAllocateBuffer/BufferAllocationFailure) instead of
-    /// constructing a TupleBuffer over a null payload.
+    /// constructing a Buffer over a null payload.
     if (localMemoryForNewTupleBuffer == nullptr)
     {
         return std::nullopt;
@@ -219,7 +219,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     if (leakedMemSegment->controlBlock->prepare(bufferRecycler))
     {
-        return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
+        return Buffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }

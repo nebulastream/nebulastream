@@ -22,7 +22,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -36,7 +36,7 @@ namespace NES
 
 /// The output formatter is responsible for converting a Record into a string of a given Output Format like CSV or JSON
 /// Output formatters are stateless, meaning that they must be able to produce valid output in a streaming fashion.
-/// Output formatters are used by the OutputFormatterBufferRef during the last emit before a sink.
+/// Output formatters are used by the OutputFormatterLayout during the last emit before a sink.
 class OutputFormatter
 {
 public:
@@ -57,7 +57,7 @@ public:
         uint64_t fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 

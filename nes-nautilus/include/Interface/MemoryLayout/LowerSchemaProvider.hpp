@@ -23,7 +23,7 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES
 {
@@ -35,19 +35,19 @@ enum class MemoryLayoutType : uint8_t
     COLUMNAR_LAYOUT = 1
 };
 
-/// Lowers a schema and its memory layout type to a specific TupleBufferRef
+/// Lowers a schema and its memory layout type to a specific MemoryLayout
 /// In case we provide the ref for an emit operator right before a sink, output formatting might be neccessary (CSV, JSON).
 /// For these cases we provide the name of the output format so that the corresponding formatter can be provided.
 class LowerSchemaProvider
 {
 public:
-    static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
+    static std::shared_ptr<MemoryLayout> lowerSchemaWithOutputFormat(
         uint64_t bufferSize,
         const Schema<QualifiedUnboundField, Ordered>& schema,
         const std::string& outputFormatterType,
         const std::unordered_map<Identifier, std::string>& config);
 
-    static std::shared_ptr<TupleBufferRef>
+    static std::shared_ptr<MemoryLayout>
     lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
 };
 

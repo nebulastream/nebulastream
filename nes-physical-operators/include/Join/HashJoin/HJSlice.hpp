@@ -21,7 +21,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <HashMapSlice.hpp>
 
@@ -54,8 +54,8 @@ class HJSlice final : public HashMapSlice
 public:
     HJSlice(
         SliceStart sliceStart, SliceEnd sliceEnd, const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs, uint64_t numberOfHashMaps);
-    [[nodiscard]] const TupleBuffer* getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
-    [[nodiscard]] const TupleBuffer* getOrCreateHashMapBufferRefForSide(
+    [[nodiscard]] const Buffer* getHashMapBufferRefForSide(WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const;
+    [[nodiscard]] const Buffer* getOrCreateHashMapBufferRefForSide(
         WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide, AbstractBufferProvider& bufferProvider);
     [[nodiscard]] uint64_t getNumberOfHashMapsForSide() const;
 };

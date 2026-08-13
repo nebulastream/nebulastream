@@ -26,11 +26,11 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -66,7 +66,7 @@ struct PipelineMemoryProvider
 
 /// Determines whether the CompiledExecutablePipelineStage continues after the open() call (with close()) or calls the 'repeatTask()' of the
 /// pipeline execution context, putting the task back into the task queue for later execution
-/// This is useful, e.g., to prevent a call to 'close()', which may emit a TupleBuffer in an unfinished state
+/// This is useful, e.g., to prevent a call to 'close()', which may emit a Buffer in an unfinished state
 enum class OpenReturnState : uint8_t
 {
     CONTINUE,
@@ -91,7 +91,7 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
-    [[nodiscard]] nautilus::val<TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<Buffer*> allocateBuffer() const;
 
     /// Use allocateMemory if you want to allocate memory that lives for one pipeline invocation, i.e., tuple buffer lifetime.
     /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.
@@ -99,7 +99,7 @@ struct ExecutionContext final
 
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
-    void emitBuffer(const RecordBuffer& buffer) const;
+    void emitBuffer(const TaskBufferRef& buffer) const;
 
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;

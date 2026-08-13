@@ -35,7 +35,7 @@ namespace NES
 {
 class UnpooledChunksManager;
 
-/// @brief Identifies a child TupleBuffer attached to a parent TupleBuffer by its position among the parent's children.
+/// @brief Identifies a child Buffer attached to a parent Buffer by its position among the parent's children.
 using ChildBufferIndex = NESStrongType<uint32_t, struct ChildBufferIndex_Tag, std::numeric_limits<uint32_t>::max(), 0>;
 }
 
@@ -48,28 +48,28 @@ class MemorySegment;
 }
 
 /**
- * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
+ * @brief The Buffer allows Runtime components to access memory to store records in a reference-counted and
  * thread-safe manner.
  *
- * The purpose of the TupleBuffer is to zero memory allocations and enable batching.
+ * The purpose of the Buffer is to zero memory allocations and enable batching.
  * In order to zero the memory allocation, a BufferManager keeps a fixed set of fixed-size buffers that it hands out to
  * components.
- * A TupleBuffer's content is automatically recycled or deleted once its reference count reaches zero.
+ * A Buffer's content is automatically recycled or deleted once its reference count reaches zero.
  *
- * Prefer passing the TupleBuffer by reference whenever possible, pass the TupleBuffer to another thread by value.
+ * Prefer passing the Buffer by reference whenever possible, pass the Buffer to another thread by value.
  *
- * Important note: when a component is done with a TupleBuffer, it must be released. Not returning a TupleBuffer will
+ * Important note: when a component is done with a Buffer, it must be released. Not returning a Buffer will
  * result in a Runtime error that the BufferManager will raise by the termination of the NES program.
  *
- * A TupleBuffer may store one or more child/nested TupleBuffer. As soon as a TupleBuffer is attached to a parent,
+ * A Buffer may store one or more child/nested Buffer. As soon as a Buffer is attached to a parent,
  * it loses ownership of its internal MemorySegment, whose lifecycle is linked to the lifecycle of the parent.
- * This means that when the parent TupleBuffer goes out of scope, no child TupleBuffer must be alive in the program.
+ * This means that when the parent Buffer goes out of scope, no child Buffer must be alive in the program.
  * If that occurs, an error is raised.
  *
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBuffer
+class Buffer
 {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
@@ -78,7 +78,7 @@ class TupleBuffer
     friend class LocalBufferPool;
     friend class detail::MemorySegment;
 
-    [[nodiscard]] explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
+    [[nodiscard]] explicit Buffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
         : controlBlock(controlBlock), ptr(ptr), size(size)
     {
         /// nop
@@ -90,39 +90,39 @@ public:
     inline static const ChildBufferIndex INVALID_CHILD_BUFFER_INDEX_VALUE{std::numeric_limits<ChildBufferIndex::Underlying>::max()};
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
-    [[nodiscard]] TupleBuffer() noexcept = default;
+    [[nodiscard]] Buffer() noexcept = default;
 
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
+    [[nodiscard]] Buffer(const Buffer& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+    [[nodiscard]] Buffer(Buffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
     {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
     }
 
-    /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
+    /// @brief Assign the `other` resource to this Buffer; increase and decrease reference count if necessary.
+    Buffer& operator=(const Buffer& other) noexcept;
 
-    /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
-    TupleBuffer& operator=(TupleBuffer&& other) noexcept;
+    /// @brief Assign the `other` resource to this Buffer; Might release the resource this currently points to.
+    Buffer& operator=(Buffer&& other) noexcept;
 
     /// @brief Return if this is not valid.
     [[nodiscard]] auto operator!() const noexcept -> bool { return ptr == nullptr; }
 
     /// @brief release the resource if necessary.
-    ~TupleBuffer() noexcept;
+    ~Buffer() noexcept;
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
+    friend void swap(Buffer& lhs, Buffer& rhs) noexcept;
 
     /// @brief Increases the internal reference counter by one and return this.
-    TupleBuffer& retain() noexcept;
+    Buffer& retain() noexcept;
 
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
@@ -147,7 +147,7 @@ public:
 
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept;
+    friend std::ostream& operator<<(std::ostream& os, const Buffer& buff) noexcept;
 
     [[nodiscard]] uint64_t getBufferSize() const noexcept;
 
@@ -179,10 +179,10 @@ public:
     void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] ChildBufferIndex storeChildBuffer(TupleBuffer& buffer) noexcept;
+    [[nodiscard]] ChildBufferIndex storeChildBuffer(Buffer& buffer) noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
-    [[nodiscard]] TupleBuffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
+    [[nodiscard]] Buffer loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept;
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 

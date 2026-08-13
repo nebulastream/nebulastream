@@ -23,7 +23,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -39,7 +39,7 @@ namespace NES
 
 constexpr std::string_view GENERATE_CLIENT_ID_TOKEN = "HACK_GENERATED_TOKEN_SENTINEL_VALUE";
 
-/// A sink that publishes the bytes of every incoming TupleBuffer as an MQTT
+/// A sink that publishes the bytes of every incoming Buffer as an MQTT
 /// message to the configured broker/topic.
 class MQTTSink final : public Sink
 {
@@ -51,7 +51,7 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
+    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext&) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -70,7 +70,7 @@ private:
         Closed,
     };
 
-    PublishResult tryPublish(const TupleBuffer& buffer);
+    PublishResult tryPublish(const Buffer& buffer);
 
     std::string serverURI;
     std::string clientId;

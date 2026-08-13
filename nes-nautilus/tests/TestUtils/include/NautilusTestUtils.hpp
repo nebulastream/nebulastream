@@ -28,13 +28,13 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
@@ -172,7 +172,7 @@ public:
     createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, uint64_t typeIdxOffset);
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<Buffer> createMonotonicallyIncreasingValues(
         const Schema<QualifiedUnboundField, Ordered>& schema,
         MemoryLayoutType layoutType,
         uint64_t numberOfTuples,
@@ -180,13 +180,13 @@ public:
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<Buffer> createMonotonicallyIncreasingValues(
         const Schema<QualifiedUnboundField, Ordered>& schema,
         MemoryLayoutType layoutType,
         uint64_t numberOfTuples,
         BufferManager& bufferManager,
         uint64_t minSizeVarSizedData);
-    std::vector<TupleBuffer> createMonotonicallyIncreasingValues(
+    std::vector<Buffer> createMonotonicallyIncreasingValues(
         const Schema<QualifiedUnboundField, Ordered>& schema,
         MemoryLayoutType layoutType,
         uint64_t numberOfTuples,
@@ -197,7 +197,7 @@ public:
         ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema<QualifiedUnboundField, Ordered>& schema,
-        const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
+        const std::shared_ptr<MemoryLayout>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::optional<std::string>
@@ -215,10 +215,10 @@ public:
 
     /// Compares two buffers and returns a string with the differences. If the buffers are equal, return an empty string
     static std::string compareRecordBuffers(
-        const std::vector<TupleBuffer>& actualRecords,
-        const std::vector<TupleBuffer>& expectedRecords,
-        const TupleBufferRef& memoryProviderActualBuffer,
-        const TupleBufferRef& memoryProviderInputBuffer);
+        const std::vector<Buffer>& actualRecords,
+        const std::vector<Buffer>& expectedRecords,
+        const MemoryLayout& memoryProviderActualBuffer,
+        const MemoryLayout& memoryProviderInputBuffer);
 
 
 protected:

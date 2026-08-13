@@ -31,7 +31,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -149,7 +149,7 @@ void NES::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
     fail_during_close = true;
 }
 
-NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.

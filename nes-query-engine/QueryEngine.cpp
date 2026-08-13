@@ -34,9 +34,9 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
@@ -203,15 +203,15 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : PipelineExecutionContext
 {
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-    std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
-    std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
+    std::function<bool(const Buffer& tb, ContinuationPolicy)> handler;
+    std::function<void(const Buffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
-    /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
+    /// We want to ensure that the address of the Buffer is always the same. If we would simply store the object directly in the vector,
     /// the address might change as the vector might be resized and thus, the object have a different address.
-    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
+    std::vector<std::unique_ptr<Buffer>> pinnedBuffers;
 
 #ifndef NO_ASSERT
     bool wasRepeated = false;
@@ -222,8 +222,8 @@ struct DefaultPEC final : PipelineExecutionContext
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<AbstractBufferProvider> bm,
-        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
-        std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
+        std::function<bool(const Buffer& tb, ContinuationPolicy)> handler,
+        std::function<void(const Buffer& tb, std::chrono::milliseconds)> repeatHandler)
         : handler(std::move(handler))
         , repeatHandler(std::move(repeatHandler))
         , bm(std::move(bm))
@@ -239,16 +239,16 @@ struct DefaultPEC final : PipelineExecutionContext
         return threadId;
     }
 
-    TupleBuffer allocateTupleBuffer() override
+    Buffer allocateTupleBuffer() override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return bm->getBufferBlocking();
     }
 
-    TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+    Buffer& pinBuffer(Buffer&& tupleBuffer) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+        pinnedBuffers.emplace_back(std::make_unique<Buffer>(tupleBuffer));
         return *pinnedBuffers.back();
     }
 
@@ -258,13 +258,13 @@ struct DefaultPEC final : PipelineExecutionContext
         return numberOfThreads;
     }
 
-    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    bool emitBuffer(const Buffer& buffer, ContinuationPolicy policy) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return handler(buffer, policy);
     }
 
-    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
+    void repeatTask(const Buffer& buffer, std::chrono::milliseconds duration) override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
 #ifndef NO_ASSERT
@@ -313,7 +313,7 @@ public:
     bool emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
-        TupleBuffer buffer,
+        Buffer buffer,
         TaskCallback callback,
         const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
@@ -493,7 +493,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
-            [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
+            [&](const Buffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
@@ -506,7 +506,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                         return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
                     });
             },
-            [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
+            [&](const Buffer& tupleBuffer, std::chrono::milliseconds duration)
             {
                 if (duration.count() > 0)
                 {
@@ -550,7 +550,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
-            [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
+            [](const Buffer&, PipelineExecutionContext::ContinuationPolicy)
             {
                 /// Catch Emits, that are currently not supported during pipeline stage initialization.
                 INVARIANT(
@@ -559,7 +559,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
                 return false;
             },
-            [&](const TupleBuffer&, std::chrono::milliseconds)
+            [&](const Buffer&, std::chrono::milliseconds)
             {
                 INVARIANT(
                     false,
@@ -628,7 +628,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
         pool.bufferProvider,
-        [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
+        [&](const Buffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
             if (terminating)
             {
@@ -645,7 +645,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
             }
             return true;
         },
-        [&](const TupleBuffer&, std::chrono::milliseconds duration)
+        [&](const Buffer&, std::chrono::milliseconds duration)
         {
             StopPipelineTask repeatedTask(
                 stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));

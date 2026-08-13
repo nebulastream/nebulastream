@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <optional>
 #include <utility>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 namespace NES
 {
@@ -29,16 +29,16 @@ class BufferIterator
 public:
     struct BufferElement
     {
-        TupleBuffer buffer;
+        Buffer buffer;
         uint64_t contentLength;
     };
 
-    explicit BufferIterator(TupleBuffer buffer) : tupleBuffer(std::move(buffer)) { }
+    explicit BufferIterator(Buffer buffer) : tupleBuffer(std::move(buffer)) { }
 
     [[nodiscard]] std::optional<BufferElement> getNextElement();
 
 private:
-    TupleBuffer tupleBuffer;
+    Buffer tupleBuffer;
     size_t bufferIndex = 0;
 };
 }

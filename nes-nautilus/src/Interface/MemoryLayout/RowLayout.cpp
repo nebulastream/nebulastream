@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Interface/MemoryLayout/RowLayout.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <static.hpp>
@@ -33,8 +33,8 @@
 namespace NES
 {
 
-RowTupleBufferRef::RowTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
+RowLayout::RowLayout(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
+    : MemoryLayout(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
 {
 }
 
@@ -47,9 +47,9 @@ nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recor
 }
 }
 
-Record RowTupleBufferRef::readRecord(
+Record RowLayout::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
@@ -69,9 +69,9 @@ Record RowTupleBufferRef::readRecord(
     return record;
 }
 
-TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
+MemoryLayout::WriteRecordResult RowLayout::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
@@ -100,12 +100,12 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
-std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const
+std::vector<Record::RecordFieldIdentifier> RowLayout::getAllFieldNames() const
 {
     return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
 }
 
-std::vector<DataType> RowTupleBufferRef::getAllDataTypes() const
+std::vector<DataType> RowLayout::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
 }

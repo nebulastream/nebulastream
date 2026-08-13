@@ -33,7 +33,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
@@ -101,7 +101,7 @@ void FileSink::start(PipelineExecutionContext&)
     }
 }
 
-void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+void FileSink::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");

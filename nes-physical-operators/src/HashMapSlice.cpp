@@ -26,7 +26,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 
@@ -64,15 +64,14 @@ uint64_t HashMapSlice::getNumHashMapsPerInputStream() const
     return numHashmapsPerInputStream;
 }
 
-const TupleBuffer* HashMapSlice::getHashMapBufferRef(const ChildBufferIndex childBufferIndex) const
+const Buffer* HashMapSlice::getHashMapBufferRef(const ChildBufferIndex childBufferIndex) const
 {
     PRECONDITION(childBufferIndex.getRawValue() < numHashMaps, "Hash Map index out of range in hash map slice getHashMapBufferRef!");
     const auto pos = childBufferIndex.getRawValue();
     return hashMapBuffersState[pos] == HashMapBufferState::INITIALIZED ? &hashMapBuffers[pos] : nullptr;
 }
 
-const TupleBuffer*
-HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, const ChildBufferIndex childBufferIndex)
+const Buffer* HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider, const ChildBufferIndex childBufferIndex)
 {
     PRECONDITION(childBufferIndex.getRawValue() < numHashMaps, "Hash Map index out of range in hash map slice loadHashMapBuffer!");
     const auto pos = childBufferIndex.getRawValue();
@@ -90,7 +89,7 @@ HashMapSlice::getOrCreateHashMapBufferRef(AbstractBufferProvider& bufferProvider
         }
         else
         {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+            throw BufferAllocationFailure("No unpooled Buffer available for chained hash map child buffer!");
         }
     }
     return &hashMapBuffers[pos];

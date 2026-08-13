@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/val.hpp>
 #include <CompilationContext.hpp>
@@ -34,18 +34,18 @@ namespace NES
 class EmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
+    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> bufferRef);
 
     void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
 
     void terminate(ExecutionContext&) const override { /*noop*/ }
 
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void open(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
     void emitRecordBuffer(
         ExecutionContext& ctx,
-        RecordBuffer& recordBuffer,
+        TaskBufferRef& recordBuffer,
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
@@ -56,7 +56,7 @@ private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
 
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::shared_ptr<MemoryLayout> bufferRef;
     OperatorHandlerId operatorHandlerId;
 };
 

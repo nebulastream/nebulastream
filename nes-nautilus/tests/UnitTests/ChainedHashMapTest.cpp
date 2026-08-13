@@ -28,8 +28,8 @@
 #include <Interface/Hash/BloomFilterRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp> /// NOLINT(misc-include-cleaner)
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -82,7 +82,7 @@ KeyValueReference makeEmptyReference(const TestUtils::TestableChainedHashMap& ch
 
 /// Sizing inputs bracketing the collision spectrum: saturated (mightContain constant-true, so every chain is
 /// traversed) through near-empty (~0.2% FP at the 500-entry cap, so negatives take the skip path).
-/// Capped at ~2^18 bits (32KB): the bit area is inline in the map's unpooled TupleBuffer and the allocator
+/// Capped at ~2^18 bits (32KB): the bit area is inline in the map's unpooled Buffer and the allocator
 /// reserves 10x the rolling average per chunk, so a larger map buffer blows the tests' unpooled budget.
 /// Not constexpr: the validating constructor is not a constant expression.
 const std::array<Nautilus::Interface::BloomFilterParams, 4> BLOOM_COLLISION_EXTREMES = {
@@ -467,7 +467,7 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Interpreter);
     auto iterate = engine.registerFunction(std::function(
         /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
-        [](nautilus::val<TupleBuffer*> buffer)
+        [](nautilus::val<Buffer*> buffer)
         {
             const ChainedHashMapRef ref{
                 buffer, {}, {}, nautilus::val<uint64_t>{entriesPerPage}, nautilus::val<uint64_t>{entrySize}, std::nullopt};

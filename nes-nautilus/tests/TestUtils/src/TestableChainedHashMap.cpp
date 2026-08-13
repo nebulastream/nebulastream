@@ -33,7 +33,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 #include <ErrorHandling.hpp>
@@ -110,7 +110,7 @@ TestableChainedHashMap::TestableChainedHashMap(
     auto chainedHashMapBufferOpt = bufferManager.getUnpooledBuffer(hashMapConfig.bufferSize());
     if (not chainedHashMapBufferOpt.has_value())
     {
-        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", hashMapConfig.bufferSize());
+        throw BufferAllocationFailure("No unpooled Buffer of size {} available!", hashMapConfig.bufferSize());
     }
     chainedHashMapBuffer = chainedHashMapBufferOpt.value();
     ChainedHashMap::init(chainedHashMapBuffer, hashMapConfig);
@@ -124,7 +124,7 @@ TestableChainedHashMap::TestableChainedHashMap(
          capturedEntrySize = entrySize,
          bloomFilterParams = bloomFilterParams,
          hashFn = MurMur3HashFunction{}](
-            nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
+            nautilus::val<Buffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
         {
             const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
             ChainedHashMapRef chmRef{
@@ -163,8 +163,8 @@ TestableChainedHashMap::TestableChainedHashMap(
          capturedProbeEntrySize = probeEntrySize,
          bloomFilterParams = bloomFilterParams,
          hashFn = MurMur3HashFunction{}](
-            nautilus::val<TupleBuffer*> chainedHashMapBuffer,
-            nautilus::val<TupleBuffer*> probeBuffer,
+            nautilus::val<Buffer*> chainedHashMapBuffer,
+            nautilus::val<Buffer*> probeBuffer,
             nautilus::val<AbstractBufferProvider*> bm,
             nautilus::val<AnyVec*> keyIn,
             nautilus::val<AnyVec*> out) -> nautilus::val<bool>
@@ -204,12 +204,11 @@ TestableChainedHashMap::TestableChainedHashMap(
          fieldValueTypes = fieldValueTypes,
          capturedEntriesPerPage = entriesPerPage,
          capturedEntrySize = entrySize,
-         bloomFilterParams
-         = bloomFilterParams](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
+         bloomFilterParams = bloomFilterParams](nautilus::val<Buffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
         {
             /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
-            const auto numTuples = nautilus::invoke(
-                +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
+            const auto numTuples
+                = nautilus::invoke(+[](Buffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
             if (numTuples == nautilus::val<uint64_t>(0))
             {
                 return;
@@ -257,7 +256,7 @@ std::optional<AnyVec> TestableChainedHashMap::at(const AnyVec& key)
     auto probeBufferOpt = bufferManager.getUnpooledBuffer(probeConfig.bufferSize());
     if (not probeBufferOpt.has_value())
     {
-        throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", probeConfig.bufferSize());
+        throw BufferAllocationFailure("No unpooled Buffer of size {} available!", probeConfig.bufferSize());
     }
     auto probeBuffer = probeBufferOpt.value();
     ChainedHashMap::init(probeBuffer, probeConfig);

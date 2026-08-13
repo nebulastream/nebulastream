@@ -19,10 +19,10 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/val.hpp>
@@ -40,18 +40,18 @@ namespace NES
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+    explicit EmitState(const TaskBufferRef& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
 
     nautilus::val<uint64_t> outputIndex = 0;
-    RecordBuffer resultBuffer;
+    TaskBufferRef resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
 };
 
-void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::open(ExecutionContext& ctx, TaskBufferRef&) const
 {
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
-    const auto resultBuffer = RecordBuffer(resultBufferRef);
+    const auto resultBuffer = TaskBufferRef(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
@@ -71,7 +71,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultBufferRef);
+        emitState->resultBuffer = TaskBufferRef(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = uint64_t{0};
 
@@ -82,7 +82,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
 
-void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::close(ExecutionContext& ctx, TaskBufferRef&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
@@ -97,14 +97,10 @@ void setChunkNumber(
     const nautilus::val<bool>& closesChunk,
     const nautilus::val<ChunkNumber>& currentChunkNumber,
     const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
+    const nautilus::val<Buffer*>& newBuffer)
 {
     nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
+        +[](OperatorHandler* handler, bool closesChunk, ChunkNumber currentChunkNumber, bool isCurrentBufferTheLastChunk, Buffer* newBuffer)
         {
             PRECONDITION(handler != nullptr, "Expects a valid handler");
             PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
@@ -123,7 +119,7 @@ void setChunkNumber(
 
 void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
-    RecordBuffer& recordBuffer,
+    TaskBufferRef& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
@@ -138,7 +134,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     ctx.emitBuffer(recordBuffer);
 }
 
-EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
+EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> memoryProvider)
     : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
 }

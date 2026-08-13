@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <RawTupleBuffer.hpp>
 

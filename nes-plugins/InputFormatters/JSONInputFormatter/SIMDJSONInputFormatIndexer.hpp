@@ -29,7 +29,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
@@ -99,7 +99,7 @@ public:
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<SIMDJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+    static std::unique_ptr<SIMDJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const MemoryLayout& tupleBufferRef)
     {
         /// JSON keys are unqualified — take the trailing identifier of each (possibly source-qualified) name.
         /// Precompute each field's JSON Pointer (RFC 6901) once: prepend '/' and escape literal '~' as

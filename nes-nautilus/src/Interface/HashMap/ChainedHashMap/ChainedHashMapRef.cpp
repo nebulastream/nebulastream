@@ -32,7 +32,7 @@
 #include <Interface/HashMap/HashMapRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val.hpp>
@@ -131,7 +131,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    const nautilus::val<Buffer*>& hashMapBuffer,
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue)
     : entryRef(entryRef)
@@ -143,7 +143,7 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    const nautilus::val<Buffer*>& hashMapBuffer,
     ChainedEntryMemoryProvider memoryProviderKeys,
     ChainedEntryMemoryProvider memoryProviderValues)
     : entryRef(entryRef)
@@ -267,7 +267,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
     const nautilus::val<uint64_t> pageIndex = 0;
     nautilus::val<EntryIterator::DynamicArgsWrapper> args;
     const auto currentEntry = nautilus::invoke(
-        +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, EntryIterator::DynamicArgsWrapper* args)
+        +[](Buffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, EntryIterator::DynamicArgsWrapper* args)
         {
             const auto chm = ChainedHashMap::load(*buffer);
             /// get number of pages in chained hash map
@@ -309,7 +309,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples = invoke(
-        +[](TupleBuffer* buffer)
+        +[](Buffer* buffer)
         {
             const auto chm = ChainedHashMap::load(*buffer);
             return chm.getTotalNumberOfRecords();
@@ -327,7 +327,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
         return nullptr;
     }
     return nautilus::invoke(
-        +[](const TupleBuffer* buffer, const HashFunction::HashValue::raw_type hashValue) -> ChainedHashMapEntry*
+        +[](const Buffer* buffer, const HashFunction::HashValue::raw_type hashValue) -> ChainedHashMapEntry*
         {
             ChainedHashMap chm = ChainedHashMap::load(*buffer);
             if (chm.getTotalNumberOfRecords() == 0)
@@ -345,7 +345,7 @@ nautilus::val<ChainedHashMapEntry*>
 ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     const auto newEntry = invoke(
-        +[](TupleBuffer* buffer, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
+        +[](Buffer* buffer, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
         {
             auto chm = ChainedHashMap::load(*buffer);
             return chm.insertEntry(hashValue, bufferProviderVal);
@@ -393,7 +393,7 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
 }
 
 ChainedHashMapRef::ChainedHashMapRef(
-    const nautilus::val<TupleBuffer*>& buffer,
+    const nautilus::val<Buffer*>& buffer,
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
@@ -411,7 +411,7 @@ ChainedHashMapRef::ChainedHashMapRef(
     {
         bloomFilter.emplace(
             invoke(
-                +[](TupleBuffer* buffer IF_INVARIANT(, const uint64_t bitCount) IF_INVARIANT(, const uint64_t hashCount))
+                +[](Buffer* buffer IF_INVARIANT(, const uint64_t bitCount) IF_INVARIANT(, const uint64_t hashCount))
                 {
                     auto chm = ChainedHashMap::load(*buffer);
                     INVARIANT(chm.getBloomFilterParams().has_value(), "The hash map was initialised without a BloomFilter bit area");
@@ -456,7 +456,7 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 }
 
 ChainedHashMapRef::EntryIterator::EntryIterator(
-    const nautilus::val<TupleBuffer*>& buffer,
+    const nautilus::val<Buffer*>& buffer,
     const nautilus::val<ChainedHashMapEntry*>& currentEntry,
     const nautilus::val<uint64_t>& entrySize,
     const nautilus::val<uint64_t>& tupleIndex,
@@ -490,7 +490,7 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
         ++pageIndex;
         nautilus::val<DynamicArgsWrapper> args;
         currentEntry = nautilus::invoke(
-            +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, DynamicArgsWrapper* args)
+            +[](Buffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, DynamicArgsWrapper* args)
             {
                 const auto chm = ChainedHashMap::load(*buffer);
                 /// get number of pages in chained hash map

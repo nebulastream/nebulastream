@@ -35,8 +35,8 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -95,7 +95,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
 
     [[nodiscard]] size_t getNumOfUnpooledBuffers() const override { return bm->getNumOfUnpooledBuffers(); }
 
-    TupleBuffer getBufferBlocking() override
+    Buffer getBufferBlocking() override
     {
         /// Tests are single-threaded; nothing releases buffers concurrently, so a blocking get on an exhausted pool would hang.
         /// Fail fast instead so rapidcheck can shrink the offending case quickly.
@@ -111,7 +111,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return std::move(*buffer);
     }
 
-    std::optional<TupleBuffer> getBufferNoBlocking() override
+    std::optional<Buffer> getBufferNoBlocking() override
     {
         auto buffer = bm->getBufferNoBlocking();
         if (buffer)
@@ -124,7 +124,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return buffer;
     }
 
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override
+    std::optional<Buffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override
     {
         auto buffer = bm->getBufferWithTimeout(timeoutMs);
         if (buffer)
@@ -137,7 +137,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
         return buffer;
     }
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override
+    std::optional<Buffer> getUnpooledBuffer(size_t bufferSize) override
     {
         auto buffer = bm->getUnpooledBuffer(bufferSize);
         if (buffer)
@@ -170,16 +170,13 @@ struct NoOversizedUnpooledBufferProvider : AbstractBufferProvider
 
     [[nodiscard]] size_t getNumOfUnpooledBuffers() const override { return bm->getNumOfUnpooledBuffers(); }
 
-    TupleBuffer getBufferBlocking() override { return bm->getBufferBlocking(); }
+    Buffer getBufferBlocking() override { return bm->getBufferBlocking(); }
 
-    std::optional<TupleBuffer> getBufferNoBlocking() override { return bm->getBufferNoBlocking(); }
+    std::optional<Buffer> getBufferNoBlocking() override { return bm->getBufferNoBlocking(); }
 
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override
-    {
-        return bm->getBufferWithTimeout(timeoutMs);
-    }
+    std::optional<Buffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override { return bm->getBufferWithTimeout(timeoutMs); }
 
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override
+    std::optional<Buffer> getUnpooledBuffer(size_t bufferSize) override
     {
         if (bufferSize > bm->getBufferSize())
         {

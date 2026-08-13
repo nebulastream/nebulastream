@@ -35,10 +35,10 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -195,7 +195,7 @@ public:
         return numberOfExpectedRawBuffers;
     }
 
-    SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers)
+    SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<Buffer>& rawBuffers)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(
@@ -256,17 +256,17 @@ public:
 
     template <bool WriteExpectedResultsFile>
     bool compareResults(
-        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
+        const std::vector<std::vector<Buffer>>& resultBuffers,
         const SetupResult& setupResult,
         const std::vector<size_t>& varSizedFieldOffsets,
         BufferManager& testBufferManager)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
-        std::vector<TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
+        std::vector<Buffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
             resultBufferVec,
-            [](const TupleBuffer& left, const TupleBuffer& right)
+            [](const Buffer& left, const Buffer& right)
             {
                 if (left.getSequenceNumber() == right.getSequenceNumber())
                 {
@@ -293,7 +293,7 @@ public:
     void runTest(const TestConfig& testConfig)
     {
         /// Create vector for result buffers and create emit function to collect buffers from source
-        InputFormatterTestUtil::ThreadSafeVector<TupleBuffer> rawBuffers;
+        InputFormatterTestUtil::ThreadSafeVector<Buffer> rawBuffers;
 
         const auto setupResult = setupTest(testConfig, rawBuffers);
 
@@ -324,7 +324,7 @@ public:
                 setupResult.sizeOfFormattedBuffers,
                 testConfig.isCompiled);
 
-            auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
+            auto resultBuffers = std::make_shared<std::vector<std::vector<Buffer>>>(testConfig.numberOfThreads);
             std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(setupResult.numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(

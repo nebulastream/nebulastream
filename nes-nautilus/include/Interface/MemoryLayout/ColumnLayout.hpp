@@ -14,13 +14,13 @@
 
 #pragma once
 
-
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -33,42 +33,41 @@ class LowerSchemaProvider;
 namespace NES
 {
 
-/// Implements BufferRef. Provides row-wise memory access.
-class RowTupleBufferRef final : public TupleBufferRef
+/// Implements MemoryLayout. Provides columnar memory access.
+class ColumnLayout final : public MemoryLayout
 {
     struct Field
     {
         Record::RecordFieldIdentifier name;
         DataType type;
-        uint64_t fieldOffset;
+        size_t dataTypeSize;
+        uint64_t columnOffset;
     };
 
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
+    explicit ColumnLayout(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
 
 public:
-    RowTupleBufferRef(const RowTupleBufferRef&) = default;
-    RowTupleBufferRef(RowTupleBufferRef&&) = default;
-
-    ~RowTupleBufferRef() override = default;
+    ColumnLayout(const ColumnLayout&) = default;
+    ColumnLayout(ColumnLayout&&) = default;
+    ~ColumnLayout() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
-
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };

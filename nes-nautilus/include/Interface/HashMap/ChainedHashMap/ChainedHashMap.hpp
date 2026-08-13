@@ -27,7 +27,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 
 namespace NES
 {
@@ -45,7 +45,7 @@ struct ChainedHashMapConfig
 
     [[nodiscard]] uint64_t bloomFilterMemAreaSize() const { return bloomFilter ? bloomFilter->allocationByteCount() : 0; }
 
-    /// Bytes the TupleBuffer backing a map with this config must provide.
+    /// Bytes the Buffer backing a map with this config must provide.
     [[nodiscard]] uint64_t bufferSize() const;
 };
 
@@ -88,22 +88,22 @@ public:
 class ChainedHashMap final : public HashMap
 {
 public:
-    /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
+    /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated Buffer
     /// Constructors are private
     /// The buffer must be at least config.bufferSize() bytes; entries built from a key/value split size their
     /// entrySize as sizeof(ChainedHashMapEntry) + keySize + valueSize.
-    static void init(TupleBuffer& tupleBuffer, const ChainedHashMapConfig& config);
+    static void init(Buffer& tupleBuffer, const ChainedHashMapConfig& config);
 
-    /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
-    static ChainedHashMap load(const TupleBuffer& tupleBuffer);
+    /// @brief Loads a ChainedHashMap view from a pre-filled Buffer
+    static ChainedHashMap load(const Buffer& tupleBuffer);
 
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
 
     [[nodiscard]] uint64_t getTotalNumberOfRecords() const override { return header().numRecords; }
 
-    [[nodiscard]] TupleBuffer getPage(uint64_t pageIndex) const;
-    [[nodiscard]] TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
+    [[nodiscard]] Buffer getPage(uint64_t pageIndex) const;
+    [[nodiscard]] Buffer getVarSizedPage(uint64_t pageIndex) const;
 
     /// Size of the buffer a ChainedHashMap view needs: header, chains array and the in-map BloomFilter bit
     /// area. The bloom size is a parameter rather than an afterthought so no caller can allocate a buffer
@@ -140,9 +140,9 @@ public:
     /// is zeroed by init(), so it is valid from construction on. Returns nullptr when the filter is disabled.
     [[nodiscard]] uint64_t* getBloomFilterMemArea();
 
-    /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
+    /// @warning Be super careful with this. Sometimes you need a pointer to the Buffer but you should never alter it outside of this
     /// view and without using its access methods
-    [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
+    [[nodiscard]] Buffer* getBuffer() { return std::addressof(buffer); }
 
     /// HashMapSlice magic numbers
     static constexpr auto VALID_CHM = 82543427462775423;
@@ -156,7 +156,7 @@ protected:
 
 private:
     /// private constructor that takes a pre-filled buffer
-    explicit ChainedHashMap(TupleBuffer buffer) : buffer(std::move(buffer)) { }
+    explicit ChainedHashMap(Buffer buffer) : buffer(std::move(buffer)) { }
 
     friend class ChainedHashMapRef;
 
@@ -197,8 +197,8 @@ private:
             , entrySize(entrySize)
             , entriesPerPage(entriesPerPage)
             , mask(mask)
-            , storageSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
-            , varSizedSpaceIndex(TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , storageSpaceIndex(Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+            , varSizedSpaceIndex(Buffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
             , bloomFilter(bloomFilter)
         {
         }
@@ -240,6 +240,6 @@ private:
     }
 
     /// the main tuple buffer for this chained hash map
-    TupleBuffer buffer;
+    Buffer buffer;
 };
 }

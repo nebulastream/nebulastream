@@ -26,7 +26,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
@@ -100,7 +100,7 @@ public:
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+    static std::unique_ptr<CSVInputFormatIndexer> create(const InputFormatterDescriptor& config, const MemoryLayout& tupleBufferRef)
     {
         return std::make_unique<CSVInputFormatIndexer>(
             Private{},

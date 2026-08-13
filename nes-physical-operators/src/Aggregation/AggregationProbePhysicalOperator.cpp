@@ -26,11 +26,11 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,7 +46,7 @@
 namespace NES
 {
 
-void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -68,7 +68,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     /// create final hash map and pin it
     OwnedNautilusBuffer finalHashMapNautilusBuffer;
     nautilus::invoke(
-        +[](const TupleBuffer* parent, AbstractBufferProvider* bufferProvider, TupleBuffer* finalHashMapBuffer)
+        +[](const Buffer* parent, AbstractBufferProvider* bufferProvider, Buffer* finalHashMapBuffer)
         {
             INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
             /// load the first hash map
@@ -83,7 +83,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                 .bloomFilter = chm.getBloomFilterParams()};
             auto neededFinalBufferSize
                 = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains(), finalConfig.bloomFilterMemAreaSize());
-            std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
+            std::optional<Buffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
             if (not finalHashMapTupleBuffer.has_value())
             {
                 throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
@@ -112,7 +112,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         /// Use NautilusBuffer to persist the chained hash map buffer
         OwnedNautilusBuffer hashMapNautilusBuffer;
         nautilus::invoke(
-            +[](TupleBuffer* parent, uint32_t curHashMapIdx, TupleBuffer* hashMapBuffer)
+            +[](Buffer* parent, uint32_t curHashMapIdx, Buffer* hashMapBuffer)
             {
                 INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
                 const ChildBufferIndex bufferIndex{curHashMapIdx};

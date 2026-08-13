@@ -24,7 +24,7 @@
 #include <utility>
 #include <MQTTAsync.h>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -108,7 +108,7 @@ void MQTTSink::start(PipelineExecutionContext&)
     }
 }
 
-MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
+MQTTSink::PublishResult MQTTSink::tryPublish(const Buffer& buffer)
 {
     size_t messageSize = buffer.getNumberOfTuples();
     for (size_t index = 0; index < buffer.getNumberOfChildBuffers(); index++)
@@ -142,7 +142,7 @@ MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     return PublishResult::Ok;
 }
 
-void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
+void MQTTSink::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(client, "MQTTSink client is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in MQTTSink.");

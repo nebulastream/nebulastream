@@ -12,12 +12,12 @@
 
 add_subdirectory(Hash)
 add_subdirectory(HashMap)
-add_subdirectory(BufferRef)
+add_subdirectory(MemoryLayout)
 add_subdirectory(PagedVector)
 
 add_source_files(nes-nautilus
         Record.cpp
-        RecordBuffer.cpp
+        TaskBufferRef.cpp
         NautilusBuffer.cpp
         VariableSizedAccess.cpp
 )

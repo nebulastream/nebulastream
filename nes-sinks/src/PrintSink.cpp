@@ -25,7 +25,7 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
 #include <fmt/format.h>
@@ -54,7 +54,7 @@ void PrintSink::stop(PipelineExecutionContext&)
 {
 }
 
-void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
+void PrintSink::execute(const Buffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
     {

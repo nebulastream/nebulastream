@@ -21,7 +21,7 @@
 #include <optional>
 #include <ostream>
 #include <span>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <RawTupleBuffer.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
@@ -160,7 +160,7 @@ public:
     /// Checks if the current entry was used to construct both a leading and trailing spanning tuple (given it matches abaItNumber - 1)
     [[nodiscard]] bool isCurrentEntryUsedUp(ABAItNo abaItNumber) const;
 
-    /// Sets the TupleBuffer of the staged buffer for both uses (leading/spanning) and copies the offsets
+    /// Sets the Buffer of the staged buffer for both uses (leading/spanning) and copies the offsets
     void setBuffersAndOffsets(const StagedBuffer& indexedBuffer);
 
     /// Sets the indexed buffer as the new entry, if the prior entry is used up and its expected ABA iteration number is (abaItNumber - 1)
@@ -182,10 +182,10 @@ public:
         SpanningTupleBufferIdx bufferIdx, const SpanningTupleBufferEntry& nextEntry, SpanningTupleBufferIdx lastIdxOfBuffer) const;
 
 private:
-    /// 24 Bytes (TupleBuffer)
-    TupleBuffer leadingBufferRef;
-    /// 48 Bytes (TupleBuffer)
-    TupleBuffer trailingBufferRef;
+    /// 24 Bytes (Buffer)
+    Buffer leadingBufferRef;
+    /// 48 Bytes (Buffer)
+    Buffer trailingBufferRef;
     /// 56 Bytes (Atomic state)
     AtomicState atomicState;
     /// 60 Bytes (meta data)

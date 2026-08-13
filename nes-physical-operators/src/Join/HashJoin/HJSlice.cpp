@@ -22,7 +22,7 @@
 #include <Interface/HashMap/HashMap.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
@@ -35,7 +35,7 @@ HJSlice::HJSlice(
 {
 }
 
-[[nodiscard]] const TupleBuffer*
+[[nodiscard]] const Buffer*
 HJSlice::getHashMapBufferRefForSide(const WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide) const
 {
     /// Hashmaps of the left build side come before right
@@ -51,7 +51,7 @@ HJSlice::getHashMapBufferRefForSide(const WorkerThreadId workerThreadId, const J
     return getHashMapBufferRef(ChildBufferIndex(pos));
 }
 
-[[nodiscard]] const TupleBuffer* HJSlice::getOrCreateHashMapBufferRefForSide(
+[[nodiscard]] const Buffer* HJSlice::getOrCreateHashMapBufferRefForSide(
     WorkerThreadId workerThreadId, const JoinBuildSideType& buildSide, AbstractBufferProvider& bufferProvider)
 {
     /// Hashmaps of the left build side come before right

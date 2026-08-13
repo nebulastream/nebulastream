@@ -22,7 +22,7 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Overloaded.hpp>
@@ -47,7 +47,7 @@ std::unique_ptr<TimeFunction> TimeFunction::create(const Windowing::BoundTimeCha
         timeCharacteristic);
 }
 
-void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
+void EventTimeFunction::open(ExecutionContext&, TaskBufferRef&) const
 {
     /// nop
 }
@@ -66,7 +66,7 @@ nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record&
     return tsInMs;
 }
 
-void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer) const
+void IngestionTimeFunction::open(ExecutionContext& ctx, TaskBufferRef& buffer) const
 {
     ctx.currentTs = buffer.getCreatingTs();
 }

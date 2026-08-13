@@ -173,7 +173,7 @@ public:
 
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.
-    /// This method does NOT take care of writing a potential null value, as this is taken care in the TupleBufferRef.
+    /// This method does NOT take care of writing a potential null value, as this is taken care in the MemoryLayout.
     void writeToMemory(const nautilus::val<int8_t*>& memRef) const;
     [[nodiscard]] nautilus::val<bool> isNull() const;
     [[nodiscard]] bool isNullable() const;

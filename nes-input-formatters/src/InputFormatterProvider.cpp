@@ -17,7 +17,7 @@
 #include <memory>
 #include <utility>
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -27,8 +27,8 @@
 namespace NES
 {
 
-std::shared_ptr<TupleBufferRef>
-provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
+std::shared_ptr<MemoryLayout>
+provideInputFormatter(const InputFormatterDescriptor& formatScanConfig, std::shared_ptr<MemoryLayout> memoryProvider)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
             formatScanConfig.getInputFormatterType(), InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider))))

@@ -25,9 +25,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -46,7 +46,7 @@ namespace NES
 inline uint64_t writeValueToBuffer(
     const char* value,
     const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
+    Buffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider,
     int8_t* bufferStartingAddress)
 {
@@ -92,11 +92,7 @@ inline uint64_t writeValueToBuffer(
 
 template <typename T>
 static uint64_t writeValAsString(
-    const T val,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
+    const T val, int8_t* bufferStartingAddress, const uint64_t remainingSpace, Buffer* tupleBuffer, AbstractBufferProvider* bufferProvider)
 {
     /// Convert val to a string
     /// Depending on the type, we need to perform additional transformations besides the direct conversion to string
@@ -133,7 +129,7 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     const DataType& fieldType,
     const nautilus::val<int8_t*>& address,
     const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     nautilus::val<uint64_t> writtenBytes = 0;

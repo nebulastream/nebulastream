@@ -28,10 +28,10 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
@@ -121,7 +121,7 @@ inline void writeFileHeaderToFile(const BinaryFileHeader& binaryFileHeader, cons
 inline void writePagedSizeBufferChunkToFile(
     const BinaryBufferHeader& binaryHeader,
     const size_t sizeOfSchemaInBytes,
-    const std::span<TupleBuffer> pagedSizeBufferChunk,
+    const std::span<Buffer> pagedSizeBufferChunk,
     std::ofstream& file)
 {
     file.write(std::bit_cast<const char*>(&binaryHeader), sizeof(BinaryBufferHeader));
@@ -134,16 +134,16 @@ inline void writePagedSizeBufferChunkToFile(
 }
 
 /// @return Variable sized data as a string
-inline std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess)
+inline std::string readVarSizedDataAsString(const Buffer& tupleBuffer, VariableSizedAccess variableSizedAccess)
 {
     /// Retrieve the variable sized value as span over its bytes
-    const auto varSizedSpan = TupleBufferRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
+    const auto varSizedSpan = MemoryLayout::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
     const auto* const strPtrContent = reinterpret_cast<const char*>(varSizedSpan.data());
     return std::string{strPtrContent, variableSizedAccess.getSize().getRawSize()};
 }
 
 inline void writePagedSizeTupleBufferChunkToFile(
-    std::span<TupleBuffer> pagedSizeBufferChunk,
+    std::span<Buffer> pagedSizeBufferChunk,
     const SequenceNumber::Underlying sequenceNumber,
     const size_t numTuplesInChunk,
     std::ofstream& appendFile,
@@ -186,12 +186,12 @@ struct TupleBufferChunk
     size_t numTuplesInChunk = 0;
 };
 
-inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
+inline void sortTupleBuffers(std::vector<Buffer>& buffers)
 {
     std::ranges::sort(
         buffers.begin(),
         buffers.end(),
-        [](const TupleBuffer& left, const TupleBuffer& right)
+        [](const Buffer& left, const Buffer& right)
         {
             return SequenceData{left.getSequenceNumber(), left.getChunkNumber(), left.isLastChunk()}
             < SequenceData{right.getSequenceNumber(), right.getChunkNumber(), right.isLastChunk()};
@@ -199,7 +199,7 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 }
 
 inline void writeTupleBuffersToFile(
-    std::vector<TupleBuffer>& resultBufferVec,
+    std::vector<Buffer>& resultBufferVec,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& actualResultFilePath,
     const std::vector<size_t>& varSizedFieldOffsets)
@@ -208,7 +208,7 @@ inline void writeTupleBuffersToFile(
     const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
 
     const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
-        = [](const std::vector<TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
+        = [](const std::vector<Buffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
     {
         size_t numBytesInNextChunk = 0;
         size_t numTuplesInNextChunk = 0;
@@ -249,7 +249,7 @@ inline void writeTupleBuffersToFile(
 }
 
 inline void updateChildBufferIdx(
-    TupleBuffer& parentBuffer,
+    Buffer& parentBuffer,
     const VariableSizedAccess varSizedAccess,
     const std::vector<size_t>& varSizedFieldOffsets,
     const size_t sizeOfSchemaInBytes)
@@ -263,7 +263,7 @@ inline void updateChildBufferIdx(
     std::ranges::copy(combinedIndexOffsetBytes, parentBuffer.getAvailableMemoryArea().begin() + varSizedOffset);
 }
 
-inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
+inline std::vector<Buffer> loadTupleBuffersFromFile(
     AbstractBufferProvider& bufferProvider,
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& filepath,
@@ -282,7 +282,7 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
             throw FormattingError("Failed to read file header from file: {}", filepath.string());
         }(file, filepath);
 
-        std::vector<TupleBuffer> expectedResultBuffers(fileHeader.numberOfBuffers);
+        std::vector<Buffer> expectedResultBuffers(fileHeader.numberOfBuffers);
         for (size_t bufferIdx = 0; bufferIdx < fileHeader.numberOfBuffers; ++bufferIdx)
         {
             const auto bufferHeader = [](std::ifstream& file)

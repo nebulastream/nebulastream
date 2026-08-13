@@ -27,7 +27,7 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -89,7 +89,7 @@ void GeneratorSource::close()
     }
 }
 
-Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     /// the generator indicated that it will not produce anymore data and the tupleStream is empty.
     if (this->generator.shouldStop() && tuplesStream.tellp() == 0)
@@ -171,7 +171,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupl
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("Failed to fill the TupleBuffer. Error: {}", e.what());
+        NES_ERROR("Failed to fill the Buffer. Error: {}", e.what());
         throw e;
     }
 }

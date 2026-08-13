@@ -15,7 +15,7 @@
 #pragma once
 
 #include <optional>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <CompilationContext.hpp>
@@ -37,7 +37,7 @@ public:
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
 
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const override;
 
     void terminate(ExecutionContext& executionCtx) const override;
 

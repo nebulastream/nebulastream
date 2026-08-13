@@ -18,7 +18,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
@@ -26,14 +26,14 @@
 namespace NES
 {
 
-/// @brief The RecordBuffer is a representation of a set of records that are stored together.
-/// In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
-class RecordBuffer
+/// @brief The TaskBufferRef is a representation of a set of records that are stored together.
+/// In the common case this maps to a Buffer, which stores the individual records in either a row or a columnar layout.
+class TaskBufferRef
 {
 public:
     /// @brief Creates a new record buffer with a reference to a tuple buffer
     /// @param tupleBufferRef
-    explicit RecordBuffer(const nautilus::val<TupleBuffer*>& tupleBufferRef);
+    explicit TaskBufferRef(const nautilus::val<Buffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
@@ -41,8 +41,8 @@ public:
     /// Retrieve the reference to the underling memory area from the record buffer.
     [[nodiscard]] nautilus::val<int8_t*> getMemArea() const;
 
-    /// Get the reference to the underlying TupleBuffer
-    const nautilus::val<TupleBuffer*>& getReference() const;
+    /// Get the reference to the underlying Buffer
+    const nautilus::val<Buffer*>& getReference() const;
 
     /// Get the origin ID of the underlying tuple buffer. The origin ID is a unique identifier for the origin of the tuple buffer.
     nautilus::val<OriginId> getOriginId();
@@ -68,10 +68,10 @@ public:
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
-    ~RecordBuffer() = default;
+    ~TaskBufferRef() = default;
 
 private:
-    nautilus::val<TupleBuffer*> tupleBufferRef;
+    nautilus::val<Buffer*> tupleBufferRef;
 };
 
 }

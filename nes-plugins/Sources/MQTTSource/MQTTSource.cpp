@@ -30,7 +30,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -114,7 +114,7 @@ void MQTTSource::open(std::shared_ptr<AbstractBufferProvider>)
     }
 }
 
-Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     size_t tbOffset = 0;
     const auto tbSize = tupleBuffer.getBufferSize();
@@ -193,7 +193,7 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupl
 
 /// Write the message payload to the tuple buffer
 /// @return the offset in the TB after writing the payload
-void MQTTSource::writePayloadToBuffer(const std::string_view payload, TupleBuffer& tb, size_t& tbOffset)
+void MQTTSource::writePayloadToBuffer(const std::string_view payload, Buffer& tb, size_t& tbOffset)
 {
     const auto tbSize = tb.getBufferSize();
     /// If the payload fits into the TB, write it

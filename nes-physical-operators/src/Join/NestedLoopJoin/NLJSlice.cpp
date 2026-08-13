@@ -50,7 +50,7 @@ NLJSlice::NLJSlice(
         }
         else
         {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ left paged vector main buffer");
+            throw BufferAllocationFailure("No unpooled Buffer available for NLJ left paged vector main buffer");
         }
     }
 
@@ -64,7 +64,7 @@ NLJSlice::NLJSlice(
         }
         else
         {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for NLJ right paged vector main buffer");
+            throw BufferAllocationFailure("No unpooled Buffer available for NLJ right paged vector main buffer");
         }
     }
 }
@@ -75,7 +75,7 @@ uint64_t NLJSlice::getNumberOfTuplesLeft() const
         leftPagedVectorBuffers.begin(),
         leftPagedVectorBuffers.end(),
         0,
-        [](uint64_t sum, const TupleBuffer& buf)
+        [](uint64_t sum, const Buffer& buf)
         {
             auto pagedVector = PagedVector::load(buf);
             return sum + pagedVector.getTotalNumberOfRecords();
@@ -88,26 +88,26 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         rightPagedVectorBuffers.begin(),
         rightPagedVectorBuffers.end(),
         0,
-        [](uint64_t sum, const TupleBuffer& buf)
+        [](uint64_t sum, const Buffer& buf)
         {
             auto pagedVector = PagedVector::load(buf);
             return sum + pagedVector.getTotalNumberOfRecords();
         });
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+const Buffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectorBuffers.size();
     return &leftPagedVectorBuffers[pos];
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+const Buffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % rightPagedVectorBuffers.size();
     return &rightPagedVectorBuffers[pos];
 }
 
-const TupleBuffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+const Buffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {

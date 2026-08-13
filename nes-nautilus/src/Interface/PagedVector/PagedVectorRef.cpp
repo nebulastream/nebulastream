@@ -27,14 +27,14 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
@@ -48,14 +48,14 @@ namespace NES
 {
 namespace
 {
-uint64_t getTotalNumberOfRecordsProxy(const TupleBuffer* pagedVectorBuffer)
+uint64_t getTotalNumberOfRecordsProxy(const Buffer* pagedVectorBuffer)
 {
     const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
     return pagedVector.getTotalNumberOfRecords();
 }
 
-/// Resolves the page containing `entryPos`, loads its TupleBuffer into `outPageBuffer`, and returns the in-page index.
-uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint64_t entryPos, TupleBuffer* outPageBuffer)
+/// Resolves the page containing `entryPos`, loads its Buffer into `outPageBuffer`, and returns the in-page index.
+uint64_t loadPageForEntryProxy(const Buffer* pagedVectorBuffer, const uint64_t entryPos, Buffer* outPageBuffer)
 {
     const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
     PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for access.");
@@ -80,12 +80,12 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
         auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
         auto varSizedPtr = invoke(
             {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-            +[](TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
+            +[](Buffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
                 INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
                 auto varSizedPage = pageBuffer->loadChildBuffer(access->getIndex());
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
+                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Buffer hands out int8_t spans by design.
                 return reinterpret_cast<int8_t*>(varSizedPage /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
                                                      .getAvailableMemoryArea<>()
                                                      .subspan(access->getOffset().getRawOffset())
@@ -116,7 +116,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
          bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
     {
         return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-            +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
+            +[](Buffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
                 INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
@@ -125,7 +125,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                 if (numChildren > 0)
                 {
                     auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
-                    TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
+                    Buffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
                     const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
                     const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
                     if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
@@ -136,14 +136,14 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                             lastVarSizedBufferIndex,
                             VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
                             VariableSizedAccess::Size{allocationSize}};
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
+                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Buffer hands out int8_t spans by design.
                         return reinterpret_cast<int8_t*>(lastVarSizedBuffer
                                                              .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
                                                              .subspan(lastVarSizedBufferNumTuples)
                                                              .data());
                     }
                 }
-                TupleBuffer newVarSizedBuffer;
+                Buffer newVarSizedBuffer;
                 if (allocationSize <= bufferProvider->getBufferSize())
                 {
                     newVarSizedBuffer = bufferProvider->getBufferBlocking();
@@ -154,7 +154,7 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                     auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
                     if (not unpooledBuffer.has_value())
                     {
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
+                        throw BufferAllocationFailure("No unpooled Buffer available for oversized varsized value.");
                     }
                     newVarSizedBuffer = std::move(unpooledBuffer.value());
                 }
@@ -292,7 +292,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
     /// get the page of the paged vector to write to. Append new page if necessary
     OwnedNautilusBuffer lastPageBuffer;
     invoke(
-        +[](TupleBuffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider, TupleBuffer* currentPage)
+        +[](Buffer* pagedVectorBuffer, AbstractBufferProvider* bufferProvider, Buffer* currentPage)
         {
             PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             PRECONDITION(pagedVector.getStatus() == PagedVector::VALID_PV, "Paged Vector must be valid for push_back.");
@@ -307,7 +307,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
 
     /// get the address in the page bufer to write the record to
     auto recordAddress = nautilus::invoke(
-        +[](TupleBuffer* pagedVectorBuffer, TupleBuffer* lastPageBuffer) -> int8_t*
+        +[](Buffer* pagedVectorBuffer, Buffer* lastPageBuffer) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto totalTuplesNum = pagedVector.getTotalNumberOfRecords();
@@ -326,7 +326,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
     tupleLayout->writeRecord(record, recordAddress, makeVarSizedAllocFunction(lastPageBuffer, bufferProvider));
     /// increase the entry count in the page
     nautilus::invoke(
-        +[](TupleBuffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },
+        +[](Buffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },
         lastPageBuffer.asArg());
 }
 
@@ -337,7 +337,7 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
     auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
 
     auto recordAddress = invoke(
-        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
+        +[](const Buffer* pagedVectorBuffer, Buffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
@@ -387,7 +387,7 @@ Record PagedVectorRefIter::operator*() const
     }
     /// get the record's address in the page bufer
     auto recordAddress = invoke(
-        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, uint64_t entryBufferPos) -> int8_t*
+        +[](const Buffer* pagedVectorBuffer, Buffer* pageBuffer, uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
             const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();

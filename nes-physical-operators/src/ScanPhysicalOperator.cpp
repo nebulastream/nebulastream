@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>
 #include <PhysicalOperator.hpp>
@@ -33,15 +33,14 @@
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
+ScanPhysicalOperator::ScanPhysicalOperator(std::shared_ptr<MemoryLayout> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)
 {
 }
 
-void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(this->bufferRef);
 
@@ -59,7 +58,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();

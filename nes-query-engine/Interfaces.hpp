@@ -16,7 +16,7 @@
 #include <functional>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryId.hpp>
@@ -46,7 +46,7 @@ public:
     virtual bool emitWork(
         QueryId,
         const std::shared_ptr<RunningQueryPlanNode>& target,
-        TupleBuffer,
+        Buffer,
         TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;

@@ -20,9 +20,9 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <cpptrace/from_current_macros.hpp>
@@ -48,7 +48,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 {
 }
 
-void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
+void CompiledExecutablePipelineStage::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     INVARIANT(compiledPipelineFunction.has_value(), "execute() was called before start() compiled the pipeline");
     /// we call the compiled pipeline function with an input buffer and the execution context
@@ -66,14 +66,14 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const Buffer*>, nautilus::val<const Arena*>)>
         compiledFunction = [this](
                                nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                               nautilus::val<const TupleBuffer*> recordBufferRef,
+                               nautilus::val<const Buffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-        RecordBuffer recordBuffer(recordBufferRef);
+        TaskBufferRef recordBuffer(recordBufferRef);
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
         switch (ctx.getOpenReturnState())
@@ -84,8 +84,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
             }
             case OpenReturnState::REPEAT: {
                 nautilus::invoke(
-                    +[](PipelineExecutionContext* pec, const TupleBuffer* buffer)
-                    { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
+                    +[](PipelineExecutionContext* pec, const Buffer* buffer) { pec->repeatTask(*buffer, std::chrono::milliseconds(0)); },
                     pipelineExecutionContext,
                     recordBufferRef);
                 break;

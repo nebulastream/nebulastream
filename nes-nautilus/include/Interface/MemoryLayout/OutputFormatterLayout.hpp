@@ -19,9 +19,9 @@
 #include <memory>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_arith.hpp>
@@ -34,7 +34,7 @@ class LowerSchemaProvider;
 
 namespace NES
 {
-class OutputFormatterBufferRef final : public TupleBufferRef
+class OutputFormatterLayout final : public MemoryLayout
 {
     struct Field
     {
@@ -45,15 +45,15 @@ class OutputFormatterBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
     std::shared_ptr<OutputFormatter> formatter;
 
-    explicit OutputFormatterBufferRef(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t bufferSize);
+    explicit OutputFormatterLayout(std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, uint64_t bufferSize);
 
     friend class NES::LowerSchemaProvider;
 
 public:
-    OutputFormatterBufferRef(const OutputFormatterBufferRef&) = default;
-    OutputFormatterBufferRef(OutputFormatterBufferRef&&) = default;
+    OutputFormatterLayout(const OutputFormatterLayout&) = default;
+    OutputFormatterLayout(OutputFormatterLayout&&) = default;
 
-    ~OutputFormatterBufferRef() override = default;
+    ~OutputFormatterLayout() override = default;
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
@@ -61,12 +61,12 @@ public:
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& bytesWritten,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };

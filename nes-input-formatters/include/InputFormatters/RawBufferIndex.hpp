@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <vector>
 
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
@@ -61,7 +61,7 @@ public:
         const nautilus::val<uint64_t>& recordIndex,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const
+        const MemoryLayout& bufferRef) const
         = 0;
 
     [[nodiscard]] virtual TupleDelimiterOffsets getTupleDelimiterOffsets() const = 0;

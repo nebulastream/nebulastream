@@ -19,7 +19,7 @@
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <folly/Synchronized.h>
 #include <BackpressureChannel.hpp>
 
@@ -44,7 +44,7 @@ class BackpressureHandler
     struct State
     {
         bool hasBackpressure = false;
-        std::deque<TupleBuffer> buffered;
+        std::deque<Buffer> buffered;
         SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
         ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
     };
@@ -58,8 +58,8 @@ public:
     /// @param lowerThreshold Number of buffered tuple buffers at which backpressure is released.
     explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0); /// NOLINT(fuchsia-default-arguments-declarations)
 
-    std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
-    std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
+    std::optional<Buffer> onFull(Buffer buffer, BackpressureController& backpressureController);
+    std::optional<Buffer> onSuccess(BackpressureController& backpressureController);
     [[nodiscard]] bool empty() const;
 };
 

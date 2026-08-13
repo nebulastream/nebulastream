@@ -41,12 +41,12 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -108,7 +108,7 @@ createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<
         | std::ranges::to<Schema<UnqualifiedUnboundField, Ordered>>();
 }
 
-SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers)
+SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<Buffer>& resultBuffers)
 {
     return [&resultBuffers](
                const OriginId, SourceReturnType::SourceReturnType returnType, const std::stop_token&) -> SourceReturnType::EmitResult
@@ -147,7 +147,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
 }
 
-void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
+void waitForSource(const std::vector<Buffer>& resultBuffers, const size_t numExpectedBuffers)
 {
     /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
     const auto timeout = std::chrono::seconds(1);

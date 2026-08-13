@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Interface/BufferRef/ColumnTupleBufferRef.hpp>
+#include <Interface/MemoryLayout/ColumnLayout.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -20,9 +20,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -32,8 +32,8 @@
 namespace NES
 {
 
-ColumnTupleBufferRef::ColumnTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
+ColumnLayout::ColumnLayout(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
+    : MemoryLayout(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
 {
 }
 
@@ -51,9 +51,9 @@ nautilus::val<int8_t*> calculateFieldAddress(
 }
 }
 
-Record ColumnTupleBufferRef::readRecord(
+Record ColumnLayout::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
@@ -72,9 +72,9 @@ Record ColumnTupleBufferRef::readRecord(
     return record;
 }
 
-TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
+MemoryLayout::WriteRecordResult ColumnLayout::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
-    const RecordBuffer& recordBuffer,
+    const TaskBufferRef& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
@@ -102,12 +102,12 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
-std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const
+std::vector<Record::RecordFieldIdentifier> ColumnLayout::getAllFieldNames() const
 {
     return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
 }
 
-std::vector<DataType> ColumnTupleBufferRef::getAllDataTypes() const
+std::vector<DataType> ColumnLayout::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
 }

@@ -29,7 +29,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
@@ -78,7 +78,7 @@ public:
 
 private:
     SliceCacheConfiguration sliceCacheConfiguration;
-    folly::Synchronized<std::unordered_map<PipelineId, std::unique_ptr<TupleBuffer>>> pipelineIdToSliceCacheStarts;
+    folly::Synchronized<std::unordered_map<PipelineId, std::unique_ptr<Buffer>>> pipelineIdToSliceCacheStarts;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

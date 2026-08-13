@@ -17,8 +17,8 @@
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -27,7 +27,7 @@ namespace NES
 {
 
 void EmitOperatorHandler::setChunkNumber(
-    bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer)
+    bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, Buffer& buffer)
 {
     /// The SequenceState tracks how many chunks have been seen per Sequence/OriginId pair.
     /// This allows to reason about completeness of a SequenceNumber and assign unique ChunkNumbers to every produced buffer aswell

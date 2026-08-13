@@ -27,7 +27,7 @@ namespace NES
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
 /// The SourceThread spawns an independent thread for data ingestion and it manages the pipeline and task logic.
-/// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
+/// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a Buffer.
 class SourceProvider
 {
     size_t defaultMaxInflightBuffers;

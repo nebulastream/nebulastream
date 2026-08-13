@@ -20,7 +20,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 
@@ -37,7 +37,7 @@ BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThre
     }
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
+std::optional<Buffer> BackpressureHandler::onFull(Buffer buffer, BackpressureController& backpressureController)
 {
     auto rstate = stateLock.ulock();
 
@@ -71,7 +71,7 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     return {};
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController& backpressureController)
+std::optional<Buffer> BackpressureHandler::onSuccess(BackpressureController& backpressureController)
 {
     const auto state = stateLock.wlock();
     state->pendingSequenceNumber = INVALID<SequenceNumber>;

@@ -33,11 +33,11 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -227,7 +227,7 @@ TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
 {
 }
 
-TestTupleBufferView TestTupleBuffer::open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider)
+TestTupleBufferView TestTupleBuffer::open(Buffer& buffer, AbstractBufferProvider* bufferProvider)
 {
     auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
 
@@ -264,8 +264,8 @@ void TestTupleBufferView::appendImpl(std::span<const std::optional<FieldValue>> 
     }
 
     auto tupleIndex = nautilus::val<uint64_t>(impl->buffer.getNumberOfTuples());
-    auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(impl->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    auto bufPtr = nautilus::val<Buffer*>(std::addressof(impl->buffer));
+    const TaskBufferRef recordBuffer(bufPtr);
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(impl->bufferProvider);
 
     Record record;
@@ -311,8 +311,8 @@ FieldView& FieldView::operator=(const FieldValue& value)
     }
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
-    auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
+    const TaskBufferRef recordBuffer(bufPtr);
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -335,8 +335,8 @@ FieldView& FieldView::operator=(std::nullopt_t)
     }
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
-    auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
+    const TaskBufferRef recordBuffer(bufPtr);
     auto bufProviderVal = nautilus::val<AbstractBufferProvider*>(locked->bufferProvider);
 
     Record record;
@@ -355,8 +355,8 @@ std::optional<FieldValue> FieldView::readFieldValue() const
     }
 
     auto recordIdx = nautilus::val<uint64_t>(recordIndex);
-    auto bufPtr = nautilus::val<TupleBuffer*>(std::addressof(locked->buffer));
-    const RecordBuffer recordBuffer(bufPtr);
+    auto bufPtr = nautilus::val<Buffer*>(std::addressof(locked->buffer));
+    const TaskBufferRef recordBuffer(bufPtr);
 
     const auto fieldId = QualifiedIdentifierBase<1>{Identifier::parse(fieldName)};
     auto record = locked->bufRef->readRecord({fieldId}, recordBuffer, recordIdx);

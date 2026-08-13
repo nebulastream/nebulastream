@@ -27,11 +27,11 @@ use super::control::*;
 const RUNTIME_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(1);
 
 pub struct ReceiverChannel {
-    queue: async_channel::Receiver<TupleBuffer>,
+    queue: async_channel::Receiver<Buffer>,
 }
 
 pub enum ReceiverChannelResult {
-    Ok(TupleBuffer),
+    Ok(Buffer),
     Closed,
     Error(Error),
 }

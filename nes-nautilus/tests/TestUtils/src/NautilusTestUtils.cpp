@@ -34,14 +34,14 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
+#include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
+#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -64,7 +64,7 @@ std::unique_ptr<HashFunction> NautilusTestUtils::getMurMurHashFunction()
     return std::make_unique<MurMur3HashFunction>();
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<Buffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
@@ -80,7 +80,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         schema, memoryLayout, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<Buffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
@@ -90,7 +90,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     return createMonotonicallyIncreasingValues(schema, memoryLayout, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
-std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+std::vector<Buffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema<QualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
@@ -131,7 +131,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     /// Now, we have to call the compiled function to fill the buffer with the values.
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
-    std::vector<TupleBuffer> buffers;
+    std::vector<Buffer> buffers;
     const auto capacity = memoryProviderInputBuffer->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
@@ -142,7 +142,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         auto buffer = bufferManager.getBufferBlocking();
         auto outputBufferIndex = createShuffledVector(tuplesToFill);
         const auto sizeVarSizedData = (rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData)) + minSizeVarSizedData;
-        callCompiledFunction<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
+        callCompiledFunction<void, Buffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
             {FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend},
             std::addressof(buffer),
             std::addressof(bufferManager),
@@ -186,18 +186,18 @@ void NautilusTestUtils::compileFillBufferFunction(
     ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema<QualifiedUnboundField, Ordered>& schema,
-    const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
+    const std::shared_ptr<MemoryLayout>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function tmp = [=](nautilus::val<TupleBuffer*> buffer,
+    const std::function tmp = [=](nautilus::val<Buffer*> buffer,
                                   nautilus::val<AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,
                                   nautilus::val<uint64_t> startForValues,
                                   nautilus::val<uint64_t> sizeVarSizedDataVal,
                                   nautilus::val<uint64_t*> outputIndex)
     {
-        RecordBuffer recordBuffer(buffer);
+        TaskBufferRef recordBuffer(buffer);
         nautilus::val<uint64_t> value = std::move(startForValues);
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
@@ -216,7 +216,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 else if (field.getDataType().isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
-                        +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
+                        +[](Buffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)
                         {
                             INVARIANT(inputBuffer != nullptr, "InputTuplebuffer MUST NOT be null at this point");
                             /// Creating a random string of the given size
@@ -231,8 +231,8 @@ void NautilusTestUtils::compileFillBufferFunction(
 
                             /// Adding the random string to the buffer and returning the pointer to the data
                             const auto varSizedAccess
-                                = TupleBufferRef::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
-                            return TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
+                                = MemoryLayout::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
+                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
@@ -261,7 +261,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     auto compiledFunction = engine.registerFunction(tmp);
 
     compiledFunctions[{functionName, backend}]
-        = std::make_unique<FunctionWrapper<void, TupleBuffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
+        = std::make_unique<FunctionWrapper<void, Buffer*, AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>>(
             std::move(compiledFunction));
 }
 

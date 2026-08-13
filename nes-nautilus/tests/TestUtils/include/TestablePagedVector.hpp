@@ -22,7 +22,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 
@@ -58,14 +58,14 @@ public:
 
 private:
     std::vector<DataType> dataTypes;
-    TupleBuffer pagedVector;
+    Buffer pagedVector;
     /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
     AbstractBufferProvider& bufferManager;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
-    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> pushbackFn;
-    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, AnyVec*)>> readAtFn;
-    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAll;
+    std::optional<nautilus::engine::CompiledFunction<void(Buffer*, AbstractBufferProvider*, AnyVec*)>> pushbackFn;
+    std::optional<nautilus::engine::CompiledFunction<void(Buffer*, uint64_t, AnyVec*)>> readAtFn;
+    std::optional<nautilus::engine::CompiledFunction<void(Buffer*, std::vector<AnyVec>*)>> readAll;
 };
 
 }

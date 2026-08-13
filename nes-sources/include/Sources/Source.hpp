@@ -20,7 +20,7 @@
 #include <stop_token>
 #include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
@@ -28,7 +28,7 @@ namespace NES
 
 /// Source is the interface for all sources that read data into TupleBuffers.
 /// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
-/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
+/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled Buffer.
 class Source
 {
 public:
@@ -61,9 +61,9 @@ public:
     Source() = default;
     virtual ~Source() = default;
 
-    /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
+    /// Read data from a source into a Buffer, until the Buffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+    virtual FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) = 0;

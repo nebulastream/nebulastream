@@ -22,7 +22,7 @@
 #include <vector>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
@@ -43,8 +43,8 @@ struct Arena
     std::span<std::byte> allocateMemory(size_t sizeInBytes);
 
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
-    std::vector<TupleBuffer> fixedSizeBuffers;
-    std::vector<TupleBuffer> unpooledBuffers;
+    std::vector<Buffer> fixedSizeBuffers;
+    std::vector<Buffer> unpooledBuffers;
     size_t lastAllocationSize{0};
     size_t currentOffset{0};
 };

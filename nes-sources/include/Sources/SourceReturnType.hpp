@@ -18,7 +18,7 @@
 #include <functional>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::SourceReturnType
@@ -31,7 +31,7 @@ struct Error
 
 struct Data
 {
-    TupleBuffer buffer;
+    Buffer buffer;
 };
 
 struct EoS

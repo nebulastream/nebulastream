@@ -22,10 +22,10 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -34,11 +34,11 @@ namespace NES
 {
 
 
-/// This class takes care of reading and writing data from/to a TupleBuffer.
-/// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
+/// This class takes care of reading and writing data from/to a Buffer.
+/// A MemoryLayout is closely coupled with a memory layout, and we support row and column layouts, currently.
 /// We store multiple variable sized datas in one pooled buffer. If the pooled buffer is not large enough or there are no pooled buffer
 /// available, we fall back to an unpooled buffer.
-class TupleBufferRef
+class MemoryLayout
 {
 protected:
     uint64_t capacity;
@@ -46,17 +46,16 @@ protected:
     uint64_t tupleSize;
 
 public:
-    TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
-    virtual ~TupleBufferRef();
+    MemoryLayout(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
+    virtual ~MemoryLayout();
 
     /// @brief Writes the variable sized data to the buffer
     static VariableSizedAccess
-    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
+    writeVarSized(Buffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
     /// @brief Reads the variable sized data and returns the pointer to the var sized data
     /// @return Pointer to variable sized data
-    static std::span<std::byte>
-    loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess) noexcept;
+    static std::span<std::byte> loadAssociatedVarSizedValue(const Buffer& tupleBuffer, VariableSizedAccess variableSizedAccess) noexcept;
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
@@ -64,13 +63,13 @@ public:
     /// @param recordIndex: Index of the record to be read
     virtual Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const
         = 0;
 
     /// Returned by writeRecord
     /// Will give information on whether the write operation was successful (record index was inbounds)
-    /// and the number of records (or bytes, in case of OutputFormatterBufferRef) that were written
+    /// and the number of records (or bytes, in case of OutputFormatterLayout) that were written
     struct WriteRecordResult
     {
         nautilus::val<bool> successful;
@@ -83,7 +82,7 @@ public:
     /// @param rec: Record to be stored
     virtual WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
@@ -98,14 +97,14 @@ protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static VarVal loadValue(const DataType& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
+    static VarVal loadValue(const DataType& type, const TaskBufferRef& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
 
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
     static VarVal storeValue(
         const DataType& type,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const nautilus::val<int8_t*>& fieldReference,
         VarVal value,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider);

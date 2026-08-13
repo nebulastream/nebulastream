@@ -17,7 +17,7 @@
 #include <optional>
 #include <utility>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -28,7 +28,7 @@ namespace NES
 IngestionTimeWatermarkAssignerPhysicalOperator::IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) { };
 
-void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, TaskBufferRef& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
     timeFunction.open(executionCtx, recordBuffer);

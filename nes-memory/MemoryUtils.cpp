@@ -19,13 +19,13 @@
 #include <cstdint>
 #include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
+Buffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
 {
     if (size == provider.getBufferSize())
     {
@@ -37,10 +37,10 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     {
         return bufferOpt.value();
     }
-    throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
+    throw BufferAllocationFailure("No unpooled Buffer of size {} available!", size);
 }
 
-TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
+Buffer deepCopyBuffer(const Buffer& buffer, AbstractBufferProvider& provider)
 {
     /// TODO #1582: you may need different size for the copy buffer, not always the default
     auto copiedBuffer = getBuffer(buffer.getBufferSize(), provider);

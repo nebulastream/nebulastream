@@ -26,8 +26,8 @@
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -57,13 +57,13 @@ HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
 }
 
 OwnedNautilusBuffer
-HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<TupleBuffer*>& recordBufferRef, const nautilus::val<uint64_t>& index)
+HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<Buffer*>& recordBufferRef, const nautilus::val<uint64_t>& index)
 {
     OwnedNautilusBuffer hashMapBuffer;
     nautilus::invoke(
-        +[](TupleBuffer* parent, uint32_t idx, TupleBuffer* out)
+        +[](Buffer* parent, uint32_t idx, Buffer* out)
         {
-            INVARIANT(parent != nullptr, "Parent TupleBuffer must not be null when pinning a hash map child buffer");
+            INVARIANT(parent != nullptr, "Parent Buffer must not be null when pinning a hash map child buffer");
             *out = parent->loadChildBuffer(ChildBufferIndex{idx});
         },
         recordBufferRef,
@@ -73,7 +73,7 @@ HJProbePhysicalOperatorBase::pinHashMapBuffer(const nautilus::val<TupleBuffer*>&
 }
 
 ChainedHashMapRef
-HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<TupleBuffer*>& hashMapBufferRef, const HashMapOptions& options)
+HJProbePhysicalOperatorBase::makeChainedHashMapRef(const nautilus::val<Buffer*>& hashMapBufferRef, const HashMapOptions& options)
 {
     return ChainedHashMapRef{
         hashMapBufferRef, options.fieldKeys, options.fieldValues, options.entriesPerPage, options.entrySize, options.bloomFilterParams};
@@ -88,8 +88,7 @@ loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const s
     auto valueMemArea = entryRef.getValueMemArea();
     OwnedNautilusBuffer pagedVectorBuffer;
     nautilus::invoke(
-        +[](TupleBuffer* hashMapBuf, TupleBuffer* out, const uint32_t* indexPtr)
-        { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
+        +[](Buffer* hashMapBuf, Buffer* out, const uint32_t* indexPtr) { *out = hashMapBuf->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         entryRef.hashMapBuffer,
         pagedVectorBuffer.asArg(),
         static_cast<nautilus::val<uint32_t*>>(valueMemArea));
@@ -101,7 +100,7 @@ loadEntryPagedVector(const ChainedHashMapRef::ChainedEntryRef& entryRef, const s
 
 /// NOLINTNEXTLINE(readability-function-cognitive-complexity) inner join's N x N hash-map iteration is inherently deeply nested
 void HJProbePhysicalOperatorBase::performMatchPairsProbe(
-    const nautilus::val<TupleBuffer*>& recordBufferRef,
+    const nautilus::val<Buffer*>& recordBufferRef,
     nautilus::val<uint64_t> leftNumberOfHashMaps,
     nautilus::val<uint64_t> rightNumberOfHashMaps,
     ExecutionContext& executionCtx,

@@ -18,7 +18,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -37,7 +37,7 @@ namespace NES
 class TimeFunction
 {
 public:
-    virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) const = 0;
+    virtual void open(ExecutionContext& ctx, TaskBufferRef& buffer) const = 0;
     virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~TimeFunction() = default;
 
@@ -49,7 +49,7 @@ class EventTimeFunction final : public TimeFunction
 {
 public:
     explicit EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit);
-    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
+    void open(ExecutionContext& ctx, TaskBufferRef& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override
@@ -65,7 +65,7 @@ private:
 class IngestionTimeFunction final : public TimeFunction
 {
 public:
-    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
+    void open(ExecutionContext& ctx, TaskBufferRef& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override { return std::make_unique<IngestionTimeFunction>(); }

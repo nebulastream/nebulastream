@@ -17,7 +17,7 @@
 #include <compare>
 #include <cstdint>
 #include <ostream>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 

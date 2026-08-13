@@ -29,7 +29,7 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
@@ -61,7 +61,7 @@ void FileSource::close()
     this->inputFile.close();
 }
 
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult FileSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     this->inputFile.read(
         tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));

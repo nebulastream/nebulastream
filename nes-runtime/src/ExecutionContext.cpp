@@ -24,10 +24,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
@@ -70,7 +70,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
+nautilus::val<Buffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(
         +[](PipelineExecutionContext* pec)
@@ -88,7 +88,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
+void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Buffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 
@@ -99,7 +99,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
     pipelineCtx->emitBuffer(*tb);
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
+void ExecutionContext::emitBuffer(const TaskBufferRef& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }

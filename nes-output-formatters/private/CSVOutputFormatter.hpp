@@ -26,7 +26,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/RecordBuffer.hpp>
+#include <Interface/TaskBufferRef.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -48,7 +48,7 @@ public:
         uint64_t fieldIndex,
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
+        const TaskBufferRef& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }

@@ -140,7 +140,7 @@ void SpanningTupleBufferEntry::claimNoDelimiterBuffer(std::span<StagedBuffer> sp
     /// First claim buffer uses
     spanningTupleVector[spanningTupleIdx]
         = StagedBuffer(RawTupleBuffer{std::move(this->leadingBufferRef)}, firstDelimiterOffset, lastDelimiterOffset);
-    this->trailingBufferRef = NES::TupleBuffer{};
+    this->trailingBufferRef = NES::Buffer{};
 
     /// Then atomically mark buffer as used
     this->atomicState.setUsedLeadingAndTrailingBuffer();
