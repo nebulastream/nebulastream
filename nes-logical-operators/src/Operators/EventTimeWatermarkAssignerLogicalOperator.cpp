@@ -27,7 +27,6 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>

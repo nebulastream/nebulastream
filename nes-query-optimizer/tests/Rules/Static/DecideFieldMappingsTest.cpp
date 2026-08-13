@@ -49,8 +49,10 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <DistributedQuery.hpp>
 #include <QueryId.hpp>
@@ -61,48 +63,79 @@ namespace
 {
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
-LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog)
+LogicalSource createLogicalTestSource(SharedPtr<SourceCatalog>& sourceCatalog)
 {
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    return sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema).value();
+    return sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema).value();
 }
 
-SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+SourceDescriptor createTestSourceDescriptor(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig).value();
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    return sourceCatalog
+        ->registerWithLogicalSource(
+            PhysicalSourceBuilder{
+                std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+            logicalSource.getLogicalSourceName())
+        .value();
 }
 
 SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
 
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+    generalConfig.host = Host{"localhost"};
     return sinkCatalog
-        .addSinkDescriptor(Identifier::parse("testSink"), schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {})
+        .addSinkDescriptor(
+            Identifier::parse("testSink"),
+            schema,
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor))
         .value();
 }
 
 SinkDescriptor createTestSinkDescriptorWithNewField(SinkCatalog& sinkCatalog)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("new_field"), DataType::Type::INT64}};
 
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+              .value();
+    generalConfig.host = Host{"localhost"};
     return sinkCatalog
-        .addSinkDescriptor(Identifier::parse("testSinkWithNew"), schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {})
+        .addSinkDescriptor(
+            Identifier::parse("testSinkWithNew"),
+            schema,
+            std::move(generalConfig),
+            std::move(pluginSinkConfig),
+            std::move(outputFormatterDescriptor))
         .value();
 }
 
@@ -119,7 +152,7 @@ public:
 protected:
     void SetUp() override { }
 
-    SourceCatalog sourceCatalog;
+    SharedPtr<SourceCatalog> sourceCatalog = SourceCatalog::create();
     SinkCatalog sinkCatalog;
     LogicalSource logicalSource;
     SourceDescriptor sourceDescriptor;
@@ -333,17 +366,26 @@ TEST_F(DecideFieldMappingsTest, TestProjectionToNewField)
 
 TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> renamedSinkSchema{
         UnqualifiedUnboundField{Identifier::parse("renamed_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    const auto renamedSink
-        = sinkCatalog
-              .addSinkDescriptor(
-                  Identifier::parse("renamedSink"), renamedSinkSchema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {})
+    auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+        = SinkCatalog::getConfigSchema(Identifier::parse("file"), Identifier::parse("CSV"))
+              .value()
+              .resolveConfigs(Schema<LiteralConfigValue, Ordered>{std::vector<LiteralConfigValue>{
+                  {QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), std::string{"/dev/null"}},
+                  {QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
               .value();
+    generalConfig.host = Host{"localhost"};
+    const auto renamedSink = sinkCatalog
+                                 .addSinkDescriptor(
+                                     Identifier::parse("renamedSink"),
+                                     renamedSinkSchema,
+                                     std::move(generalConfig),
+                                     std::move(pluginSinkConfig),
+                                     std::move(outputFormatterDescriptor))
+                                 .value();
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
     const std::vector<std::pair<Identifier, LogicalFunction>> projections{
         {Identifier::parse("renamed_a"),
