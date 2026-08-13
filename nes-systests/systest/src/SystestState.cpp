@@ -45,6 +45,7 @@
 
 #include <Runner/SystestRunner.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 

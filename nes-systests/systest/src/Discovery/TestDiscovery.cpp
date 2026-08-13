@@ -32,6 +32,7 @@
 #include <Config/Config.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
@@ -202,12 +203,13 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(
+            auto sourceCatalog = SourceCatalog::create();
+            TestFile testfile(
                 entry.path(),
                 testNameFromRelativePath(entry.path().lexically_relative(path)),
-                std::make_shared<SourceCatalog>(),
+                copyPtr(sourceCatalog),
                 std::make_shared<SinkCatalog>());
-            testFiles.insert({testfile.file, testfile});
+            testFiles.insert({testfile.file, std::move(testfile)});
         }
     }
     return testFiles;
@@ -248,24 +250,25 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
 
     if (not config.directlySpecifiedTestFiles.empty())
     {
-        const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles;
+        const auto& directlySpecifiedTestFiles = config.directlySpecifiedTestFiles;
 
         if (config.testQueryNumbers.empty())
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            auto sourceCatalog = SourceCatalog::create();
+            auto testfile = TestFile(directlySpecifiedTestFiles, copyPtr(sourceCatalog), std::make_shared<SinkCatalog>());
             if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
             {
                 std::cout << fmt::format(
                     "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
                     testfile.getLogFilePath());
             }
-            return TestFileMap{{testfile.file, testfile}};
+            return TestFileMap{{std::pair{testfile.file, std::move(testfile)}}};
         }
 
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             config.testQueryNumbers | std::views::transform([](const auto& queryNumber) { return SystestQueryId(queryNumber); }));
-        const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        auto sourceCatalog = SourceCatalog::create();
+        const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers, copyPtr(sourceCatalog), std::make_shared<SinkCatalog>());
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(

@@ -36,28 +36,28 @@ PhysicalSourceConfig SourceDataProvider::provideFileDataSource(
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .serverThreads = std::move(serverThreads),
         .testFilePath = std::move(testFilePath)};
-    if (const auto fileDataAdaptor = FileDataRegistry::instance().find(fileDataArgs.physicalSourceConfig.type.asCanonicalString()))
+    if (const auto fileDataAdaptor
+        = FileDataRegistry::instance().find(fileDataArgs.physicalSourceConfig.pluginSourceConfig.getType().asCanonicalString()))
     {
         return (*fileDataAdaptor)(fileDataArgs);
     }
-    throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.type);
+    throw UnknownSourceType("Source type {} not found.", fileDataArgs.physicalSourceConfig.pluginSourceConfig.getType());
 }
 
 PhysicalSourceConfig SourceDataProvider::provideInlineDataSource(
     PhysicalSourceConfig initialPhysicalSourceConfig,
     std::vector<std::string> tuples,
-    std::shared_ptr<std::vector<std::jthread>> serverThreads,
-    std::filesystem::path testFilePath)
+    std::shared_ptr<std::vector<std::jthread>> serverThreads)
 {
     const auto inlineDataArgs = InlineDataRegistryArguments{
         .physicalSourceConfig = std::move(initialPhysicalSourceConfig),
         .tuples = std::move(tuples),
-        .serverThreads = std::move(serverThreads),
-        .testFilePath = std::move(testFilePath)};
-    if (const auto inlineDataAdaptor = InlineDataRegistry::instance().find(inlineDataArgs.physicalSourceConfig.type.asCanonicalString()))
+        .serverThreads = std::move(serverThreads)};
+    if (const auto inlineDataAdaptor
+        = InlineDataRegistry::instance().find(inlineDataArgs.physicalSourceConfig.pluginSourceConfig.getType().asCanonicalString()))
     {
         return (*inlineDataAdaptor)(inlineDataArgs);
     }
-    throw UnknownSourceType("Source type {} not found.", inlineDataArgs.physicalSourceConfig.type);
+    throw UnknownSourceType("Source type {} not found.", inlineDataArgs.physicalSourceConfig.pluginSourceConfig.getType());
 }
 }

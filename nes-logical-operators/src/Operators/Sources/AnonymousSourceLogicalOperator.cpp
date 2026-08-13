@@ -35,10 +35,12 @@
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
@@ -50,39 +52,25 @@ AnonymousSourceLogicalOperator AnonymousSourceLogicalOperator::withInferredSchem
     std::unreachable();
 }
 
-Identifier AnonymousSourceLogicalOperator::getSourceType() const
-{
-    return sourceType;
-}
-
-std::unordered_map<Identifier, std::string> AnonymousSourceLogicalOperator::getSourceConfig() const
-{
-    return sourceConfig;
-}
-
-std::unordered_map<Identifier, std::string> AnonymousSourceLogicalOperator::getParserConfig() const
-{
-    return parserConfig;
-}
-
-Schema<UnqualifiedUnboundField, Ordered> AnonymousSourceLogicalOperator::getSourceSchema() const
+const Schema<UnqualifiedUnboundField, Ordered>& AnonymousSourceLogicalOperator::getSourceSchema() const
 {
     return sourceSchema;
 }
 
 bool AnonymousSourceLogicalOperator::operator==(const AnonymousSourceLogicalOperator& rhs) const
 {
-    return this->sourceType == rhs.sourceType && this->sourceSchema == rhs.sourceSchema && this->parserConfig == rhs.parserConfig
-        && this->sourceConfig == rhs.sourceConfig;
+    /// Pointer equality because we don't know if two AnonymousSources with the exact same configuration are the same or not,
+    /// this is only determined by the physical source id which is not assigned yet.
+    return this == &rhs;
 }
 
 std::string AnonymousSourceLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ANONYMOUS_SOURCE(opId: {}, type: {} traitSet: {})", id, getSourceType(), traitSet.explain(verbosity));
+        return fmt::format("INLINE_SOURCE(opId: {}, type: {} traitSet: {})", id, pluginSourceConfig.getType(), traitSet.explain(verbosity));
     }
-    return fmt::format("ANONYMOUS_SOURCE({})", getSourceType());
+    return fmt::format("INLINE_SOURCE({})", pluginSourceConfig.getType());
 }
 
 std::string_view AnonymousSourceLogicalOperator::getName() noexcept
@@ -131,26 +119,41 @@ std::vector<LogicalOperator> AnonymousSourceLogicalOperator::getChildren() const
 
 AnonymousSourceLogicalOperator::AnonymousSourceLogicalOperator(
     WeakLogicalOperator self,
-    Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-    std::unordered_map<Identifier, std::string> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor inputFormatterDescriptor)
     : ManagedByOperator(std::move(self))
     , sourceSchema(std::move(sourceSchema))
-    , sourceType(std::move(type))
-    , sourceConfig(std::move(sourceConfig))
-    , parserConfig(std::move(parserConfig))
+    , generalSourceConfig(std::move(generalSourceConfig))
+    , pluginSourceConfig(std::move(pluginSourceConfig))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
 {
 }
 
 TypedLogicalOperator<AnonymousSourceLogicalOperator> AnonymousSourceLogicalOperator::create(
-    Identifier type,
     Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
-    std::unordered_map<Identifier, std::string> sourceConfig,
-    std::unordered_map<Identifier, std::string> parserConfig)
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration pluginSourceConfig,
+    InputFormatterDescriptor inputFormatterDescriptor)
 {
     return TypedLogicalOperator<AnonymousSourceLogicalOperator>{
-        std::move(type), std::move(sourceSchema), std::move(sourceConfig), std::move(parserConfig)};
+        std::move(sourceSchema), std::move(generalSourceConfig), std::move(pluginSourceConfig), std::move(inputFormatterDescriptor)};
+}
+
+const GeneralSourceConfig& AnonymousSourceLogicalOperator::getGeneralSourceConfig() const
+{
+    return generalSourceConfig;
+}
+
+const PluginSourceConfiguration& AnonymousSourceLogicalOperator::getPluginSourceConfig() const
+{
+    return pluginSourceConfig;
+}
+
+const InputFormatterDescriptor& AnonymousSourceLogicalOperator::getInputFormatterDescriptor() const
+{
+    return inputFormatterDescriptor;
 }
 
 Reflected Reflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>::operator()(
@@ -173,6 +176,5 @@ Unreflector<TypedLogicalOperator<AnonymousSourceLogicalOperator>>::operator()(co
 
 uint64_t std::hash<NES::AnonymousSourceLogicalOperator>::operator()(const NES::AnonymousSourceLogicalOperator& op) const noexcept
 {
-    return folly::hash::hash_combine_generic(
-        NES::Hash{}, op.getSourceType(), op.getSourceSchema(), op.getSourceConfig(), op.getParserConfig());
+    return std::hash<const NES::AnonymousSourceLogicalOperator*>{}(&op);
 }

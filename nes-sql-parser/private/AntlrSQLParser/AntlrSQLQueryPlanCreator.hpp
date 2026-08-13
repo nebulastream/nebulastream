@@ -15,14 +15,21 @@
 
 #include <stack>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
@@ -31,10 +38,16 @@ namespace NES::Parsers
 class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
-    std::vector<std::variant<Identifier, std::pair<Identifier, ConfigMap>>> sinks;
+    std::vector<
+        std::variant<Identifier, std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>>>
+        sinks;
     std::stack<LogicalPlan> queryPlans;
+    Schema<ConfigFieldDefault, Ordered> defaultConfigValues;
+    Schema<ConfigFieldTransformation, Unordered> configTransformations;
 
 public:
+    explicit AntlrSQLQueryPlanCreator(
+        Schema<ConfigFieldDefault, Ordered> defaultConfigValues, Schema<ConfigFieldTransformation, Unordered> configTransformations);
     [[nodiscard]] LogicalPlan getQueryPlan() const;
 
     /// Parsing listener methods (enter/exit pairs)

@@ -86,7 +86,7 @@ INTO "joinSink";
 
 SELECT "id", "value", "timestamp"
 FROM File(
-    'small/stream8.csv' AS "SOURCE"."FILE_PATH",
+    'small/stream8.csv' AS "FILE_SOURCE"."FILE_PATH",
     'CSV' AS "INPUT_FORMATTER"."TYPE",
     SCHEMA("id" UINT64 NOT NULL, "value" UINT64 NOT NULL, "timestamp" UINT64 NOT NULL) AS "SOURCE"."SCHEMA")
 INTO File(

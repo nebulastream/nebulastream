@@ -22,6 +22,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -31,6 +32,7 @@
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
@@ -65,8 +67,13 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -81,6 +88,11 @@
 
 namespace NES::Parsers
 {
+AntlrSQLQueryPlanCreator::AntlrSQLQueryPlanCreator(
+    Schema<ConfigFieldDefault, Ordered> defaultConfigOptions, Schema<ConfigFieldTransformation, Unordered> configTransformations)
+    : defaultConfigValues(std::move(defaultConfigOptions)), configTransformations(std::move(configTransformations))
+{
+}
 
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
@@ -97,13 +109,11 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
     return std::visit(
         Overloaded{
             [&](const Identifier& sinkName) { return LogicalPlanBuilder::addSink(sinkName, queryPlans.top()); },
-            [&](const std::pair<Identifier, ConfigMap>& anonymousSink)
+            [&](const std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor>& anonymousSink)
             {
-                const auto& [type, configOptions] = anonymousSink;
-                const auto sinkConfig = getSinkConfig(configOptions);
-                const auto formatConfig = parseOutputFormatterConfig(configOptions);
-                const auto schemaOpt = getSinkSchema(configOptions);
-                return LogicalPlanBuilder::addAnonymousSink(type, schemaOpt, sinkConfig, formatConfig, queryPlans.top());
+                const auto& [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = anonymousSink;
+                return LogicalPlanBuilder::addAnonymousSink(
+                    sinkSchema, generalSinkConfig, pluginSinkConfig, outputFormatterDescriptor, queryPlans.top());
             }},
         sinks.front());
 }
@@ -352,9 +362,12 @@ void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext
             const auto& anonymousSink = sink->anonymousSink();
 
             const auto type = bindIdentifier(anonymousSink->type);
-            const auto configOptions = bindConfigOptions(anonymousSink->parameters->namedConfigExpression());
+            auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterConfig]
+                = bindSinkConfig(type, anonymousSink->parameters->namedConfigExpression(), defaultConfigValues, configTransformations);
 
-            sinks.emplace_back(std::make_pair(type, configOptions));
+
+            sinks.emplace_back(std::tuple{
+                std::move(generalSinkConfig), std::move(sinkSchema), std::move(pluginSinkConfig), std::move(outputFormatterConfig)});
         }
     }
 }
@@ -747,16 +760,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             {
                 throw InvalidQuerySyntax("Neither named source or anonymous source specified");
             }
-            const auto [type, configOptions] = anonymousSourceConfig.value();
-            const auto parserConfig = parseInputFormatterConfig(configOptions);
-            const auto sourceConfig = getSourceConfig(configOptions);
-            const auto schema = getSourceSchema(configOptions);
-            if (!schema.has_value())
-            {
-                throw InvalidConfigParameter("Anonymous Source is missing schema definition");
-            }
-
-            return LogicalPlanBuilder::createLogicalPlan(type, schema.value(), sourceConfig, parserConfig);
+            auto [generalConfig, pluginSourceConfig, pluginInputFormatterConfig, schema] = anonymousSourceConfig.value();
+            return LogicalPlanBuilder::createLogicalPlan(
+                std::move(generalConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig), std::move(schema));
         }
         return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource().value());
     }();
@@ -1345,9 +1351,15 @@ void AntlrSQLQueryPlanCreator::enterAnonymousSource(AntlrSQLParser::AnonymousSou
 {
     const auto type = bindIdentifier(context->type);
 
-    const auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
+    auto [generalConfig, pluginSourceConfig, pluginInputFormatterConfig, schemaOpt]
+        = bindSourceConfig(type, context->parameters->namedConfigExpression(), defaultConfigValues, configTransformations);
+    if (!schemaOpt.has_value())
+    {
+        throw InvalidQuerySyntax("No schema set for inline source of type: {}", type);
+    }
 
-    helpers.top().setAnonymousSource(type, parameters);
+    helpers.top().setAnonymousSource(
+        {std::move(generalConfig), std::move(pluginSourceConfig), std::move(pluginInputFormatterConfig), std::move(schemaOpt).value()});
 }
 
 void AntlrSQLQueryPlanCreator::enterSetOperation(AntlrSQLParser::SetOperationContext*)

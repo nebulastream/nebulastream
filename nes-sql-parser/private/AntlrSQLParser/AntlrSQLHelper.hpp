@@ -19,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -34,6 +35,13 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <CommonParserFunctions.hpp>
 
+#include <DataTypes/UnboundField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <InputFormatterDescriptor.hpp>
+
 namespace NES::Parsers
 {
 
@@ -45,7 +53,9 @@ class AntlrSQLHelper
     std::optional<Identifier> source;
     std::optional<Identifier> sourceAlias;
     std::vector<Identifier> sourceQualifiers;
-    std::optional<std::pair<Identifier, ConfigMap>> anonymousSourceConfig;
+    std::optional<
+        std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>
+        anonymousSourceConfig;
     std::vector<Projection> projectionBuilder;
 
 public:
@@ -117,8 +127,12 @@ public:
     [[nodiscard]] std::optional<Identifier> getSourceAlias() const;
     void addSourceQualifier(Identifier qualifier);
     [[nodiscard]] const std::vector<Identifier>& getSourceQualifiers() const;
-    void setAnonymousSource(const Identifier& type, const ConfigMap& parameters);
-    [[nodiscard]] std::optional<std::pair<Identifier, ConfigMap>> getAnonymousSourceConfig();
+    void setAnonymousSource(
+        std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>
+            sourceBuilder);
+    [[nodiscard]] const std::optional<
+        std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>&
+    getAnonymousSourceConfig();
     void addProjection(std::optional<Identifier>, LogicalFunction);
 };
 }

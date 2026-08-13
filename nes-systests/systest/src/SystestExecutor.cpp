@@ -19,17 +19,22 @@
 #include <cstdint>
 #include <cstdlib>
 #include <exception>
+#include <expected>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <optional>
 #include <random>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -46,6 +51,7 @@
 #include <Runner/SystestRunner.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -74,27 +80,28 @@ namespace
 {
 using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
 
-/// Merge the run configuration for one override group: the systest file's override parameters
-/// (fully qualified keys, e.g. `worker.total_memory_in_bytes`) are layered over the command-line
-/// literals and intentionally overwrite them, matching the previous overwrite semantics.
-Schema<LiteralConfigValue, Ordered>
-mergeRunConfigLiterals(const Schema<LiteralConfigValue, Ordered>& commandLineLiterals, const Systest::ConfigurationOverride& overrideConfig)
+/// A test file's per-query configuration overrides as the highest-priority config layer (see
+/// makeRunConfigResolver). Override keys are fully qualified (e.g. `worker.total_memory_in_bytes`);
+/// a leading `--` is tolerated as the old command-line-style overwrite stripped it.
+Schema<LiteralConfigValue, Ordered> buildOverrideLiterals(const Systest::ConfigurationOverride& overrideConfig)
 {
     std::vector<LiteralConfigValue> overrideLiterals;
     overrideLiterals.reserve(overrideConfig.overrideParameters.size());
     for (const auto& [key, value] : overrideConfig.overrideParameters)
     {
+        auto keyView = std::string_view{key};
+        if (keyView.starts_with("--"))
+        {
+            keyView.remove_prefix(2);
+        }
         auto literal = parseConfigLiteral(value);
         if (!literal.has_value())
         {
             throw std::move(literal.error());
         }
-        overrideLiterals.emplace_back(QualifiedIdentifier::parse(key), std::move(literal).value());
+        overrideLiterals.emplace_back(QualifiedIdentifier::parse(keyView), std::move(literal).value());
     }
-    auto [literals, overwrites] = mergeConfigLayers(
-        {ConfigLayer{.name = "command line", .literals = commandLineLiterals},
-         ConfigLayer{.name = "systest file", .literals = createConfigLiteralSchema(std::move(overrideLiterals))}});
-    return literals;
+    return createConfigLiteralSchema(std::move(overrideLiterals));
 }
 
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
@@ -151,7 +158,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const Schema<LiteralConfigValue, Ordered>& commandLineLiterals,
+    const Schema<LiteralConfigValue, Ordered>& baseConfigLiterals,
+
     Systest::SystestProgressTracker& progressTracker)
 {
     while (true)
@@ -165,11 +173,15 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         progressTracker.setTotalQueries(totalLocal);
         for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
         {
+            auto [runConfigLiterals, overwrites] = mergeConfigLayers(
+                {ConfigLayer{.name = "command line", .literals = baseConfigLiterals},
+                 ConfigLayer{.name = "systest file", .literals = buildOverrideLiterals(overrideConfig)}});
+            auto workerConfigResolver = Systest::makeRunConfigResolver(std::move(runConfigLiterals));
+
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-            Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(
-                std::move(workerCatalog),
-                createEmbeddedBackend(Systest::makeRunConfigResolver(mergeRunConfigLiterals(commandLineLiterals, overrideConfig)))));
+            Systest::QuerySubmitter querySubmitter(
+                std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(std::move(workerConfigResolver))));
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
@@ -179,9 +191,76 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         }
     }
 }
+
+Schema<ConfigFieldDefault, Ordered> makeDefaultConfigFields(const SystestConfiguration& config)
+{
+    return Schema<ConfigFieldDefault, Ordered>{
+        [&]
+        {
+            PRECONDITION(
+                !config.clusterConfig.allowSourcePlacement.empty(),
+                "Topology must list at least one worker in allow_source_placement to assign a default source host");
+            return ConfigFieldDefault{
+                QualifiedIdentifier::parse("SOURCE.HOST"),
+                [=] { return ConfigLiteral{config.clusterConfig.allowSourcePlacement.at(0).getRawValue()}; }};
+        }(),
+        ConfigFieldDefault{QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"), [] { return "CSV"; }},
+        [&]
+        {
+            auto sourceDir = std::filesystem::path{config.workingDir} / "sources";
+            if (not is_directory(sourceDir))
+            {
+                create_directory(sourceDir);
+                std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
+            }
+
+            return ConfigFieldDefault{
+                QualifiedIdentifier::parse("FILE_SOURCE.FILE_PATH"),
+                [=] { return createUniqueFile(fmt::format("{}/input", sourceDir), ".systest.csv").second; }};
+        }(),
+        ConfigFieldDefault{QualifiedIdentifier::parse("TCP_SOURCE.SOCKET_HOST"), [] { return std::monostate{}; }},
+        ConfigFieldDefault{QualifiedIdentifier::parse("TCP_SOURCE.SOCKET_PORT"), [] { return std::monostate{}; }},
+        ConfigFieldDefault{QualifiedIdentifier::parse("TCP_SOURCE.OVERWRITEABLE_HOST_AND_PORT"), [] { return true; }},
+        /// Sink defaults only make `CREATE SINK` statements without options bindable; systest
+        /// replaces every sink's config with a per-query result file anyway (see SLTSinkFactory).
+        ConfigFieldDefault{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), [] { return "CSV"; }},
+        ConfigFieldDefault{QualifiedIdentifier::parse("FILE_SINK.FILE_PATH"), [] { return "/tmp/systest_file_source_placeholder.txt"; }},
+        ConfigFieldDefault{
+            QualifiedIdentifier::parse("CHECKSUM_SINK.FILE_PATH"), [] { return "/tmp/systest_checksum_sink_placeholder.txt"; }},
+        ConfigFieldDefault{
+            QualifiedIdentifier::parse("SINK.HOST"), [&] { return config.clusterConfig.allowSinkPlacement.at(0).getRawValue(); }},
+        ConfigFieldDefault{QualifiedIdentifier::parse("FILE_SINK.PATH"), [] { return "/tmp/systest_file_sink_placeholder.txt"; }}};
 }
 
-SystestExecutor::SystestExecutor(SystestConfiguration config) : config(std::move(config))
+Schema<ConfigFieldTransformation, Unordered> makeConfigTransformations(const SystestConfiguration& config)
+{
+    return Schema<ConfigFieldTransformation, Unordered>{ConfigFieldTransformation{
+        QualifiedIdentifier::parse("FILE_SOURCE.FILE_PATH"),
+        std::function<std::expected<std::filesystem::path, Exception>(const std::filesystem::path&)>{
+            [testDataDir = config.testDataDir](const std::filesystem::path& filePath) -> std::expected<std::filesystem::path, Exception>
+            {
+                if (!filePath.string().starts_with("/"))
+                {
+                    return std::filesystem::path{testDataDir} / filePath;
+                }
+                return filePath;
+            }}}};
+}
+}
+
+SystestExecutor::SystestExecutor(SystestConfiguration config)
+    : config(std::move(config))
+    , queryBinderFactory([config = this->config]
+                         { return AntlrSQLQueryParser::QueryBinder{makeDefaultConfigFields(config), makeConfigTransformations(config)}; })
+    , statementBinderFactory(
+          [config = this->config](const std::shared_ptr<SourceCatalog>& sourceCatalog, AntlrSQLQueryParser::QueryBinder queryBinder)
+          {
+              return StatementBinder{
+                  makeDefaultConfigFields(config),
+                  makeConfigTransformations(config),
+                  sourceCatalog,
+                  [queryBinder = std::move(queryBinder)](const auto& plan) { return queryBinder.bindLogicalQueryPlan(plan); }};
+          })
 {
 }
 
@@ -190,6 +269,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
     const auto numberConcurrentQueries = config.numberConcurrentQueries;
+    const auto& workerOptimizerConfigLiterals = config.workerOptimizerConfigLiterals;
 
     OverrideQueriesMap queriesByOverride;
     for (const auto& query : queries)
@@ -206,7 +286,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
     else
     {
         runEndlessLocal(
-            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, config.workerOptimizerConfigLiterals, progressTracker);
+            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, workerOptimizerConfigLiterals, progressTracker);
     }
 }
 
@@ -222,7 +302,13 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{
-            config.workingDir, config.testDataDir, config.configDir, config.queryOptimizerConfig, config.clusterConfig};
+            config.workingDir,
+            config.testDataDir,
+            config.configDir,
+            config.queryOptimizerConfig,
+            config.clusterConfig,
+            queryBinderFactory,
+            statementBinderFactory};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -278,6 +364,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         else
         {
+            const auto& workerOptimizerConfigLiterals = config.workerOptimizerConfigLiterals;
             if (config.benchmark)
             {
                 std::vector<Systest::BenchmarkResult> benchmarkResults;
@@ -315,9 +402,12 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(benchmarkQueries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : benchmarkQueriesByOverride)
                 {
+                    auto [runConfigLiterals, overwrites] = mergeConfigLayers(
+                        {ConfigLayer{.name = "command line", .literals = workerOptimizerConfigLiterals},
+                         ConfigLayer{.name = "systest file", .literals = buildOverrideLiterals(overrideConfig)}});
                     auto failed = runQueriesAndBenchmark(
                         queriesForConfig,
-                        mergeRunConfigLiterals(config.workerOptimizerConfigLiterals, overrideConfig),
+                        Systest::makeRunConfigResolver(std::move(runConfigLiterals)),
                         benchmarkResults,
                         config.clusterConfig,
                         progressTracker);
@@ -342,7 +432,10 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(queries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
-                    const auto runConfigLiterals = mergeRunConfigLiterals(config.workerOptimizerConfigLiterals, overrideConfig);
+                    auto [runConfigLiterals, overwrites] = mergeConfigLayers(
+                        {ConfigLayer{.name = "command line", .literals = workerOptimizerConfigLiterals},
+                         ConfigLayer{.name = "systest file", .literals = buildOverrideLiterals(overrideConfig)}});
+                    auto workerConfigResolver = Systest::makeRunConfigResolver(std::move(runConfigLiterals));
                     const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance
                         ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
                                                                   { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
@@ -351,7 +444,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         queriesForConfig,
                         numberConcurrentQueries,
                         config.clusterConfig,
-                        runConfigLiterals,
+                        workerConfigResolver,
                         progressTracker,
                         performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());

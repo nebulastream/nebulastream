@@ -490,14 +490,14 @@ serializeExecutionResults(const std::vector<RunningQuery>& queries, std::vector<
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals)));
+    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(workerConfigResolver));
     QuerySubmitter submitter(std::move(worker));
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -627,14 +627,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(
-        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals))));
+    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(workerConfigResolver)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
