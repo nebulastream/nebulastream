@@ -69,10 +69,10 @@ sinks:
         type: FLOAT64
     type: File
     config:
-      output_format: CSV
       file_path: "<path>"
       append: false
     parser_config:
+      type: CSV
       quote_strings: false
 
 logical:
@@ -135,18 +135,18 @@ CREATE LOGICAL SOURCE lrb(
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   'localhost:8080' AS "SOURCE"."HOST",
-  'localhost' as "SOURCE".SOCKET_HOST,
-  50501 as "SOURCE".SOCKET_PORT,
-  100 as "SOURCE".FLUSH_INTERVAL_MS,
-  60000 as "SOURCE".CONNECT_TIMEOUT_MS,
+  'localhost' as TCP_SOURCE.SOCKET_HOST,
+  50501 as TCP_SOURCE.SOCKET_PORT,
+  100 as TCP_SOURCE.FLUSH_INTERVAL_MS,
+  60000 as TCP_SOURCE.CONNECT_TIMEOUT_MS,
   'CSV' as INPUT_FORMATTER."TYPE",
-  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
-  ',' as INPUT_FORMATTER.FIELD_DELIMITER
+  '\n' as CSV_INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as CSV_INPUT_FORMATTER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
   'localhost:8080' AS "SOURCE"."HOST",
-  'lrb.json' as "SOURCE".FILE_PATH,
+  'lrb.json' as FILE_SOURCE.FILE_PATH,
   'JSON' as INPUT_FORMATTER."TYPE"
 );
 
@@ -159,10 +159,10 @@ CREATE SINK csv_sink(
   avgSpeed FLOAT64
 ) TYPE File SET(
   'localhost:8080' AS "SINK"."HOST",
-  '<path>' as "SINK".FILE_PATH,
-  'CSV' as "SINK".OUTPUT_FORMAT,
-  FALSE as "SINK".APPEND,
-  FALSE as "OUTPUT_FORMATTER".QUOTE_STRINGS
+  '<path>' as FILE_SINK.FILE_PATH,
+  'CSV' as OUTPUT_FORMATTER."TYPE",
+  FALSE as FILE_SINK.APPEND,
+  FALSE as CSV_OUTPUT_FORMATTER.QUOTE_STRINGS
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -223,18 +223,18 @@ In our example, we define two physical sources that both feed the `lrb` logical 
 ```sql
 CREATE PHYSICAL SOURCE FOR lrb TYPE TCP SET(
   'localhost:8080' AS "SOURCE"."HOST",
-  'localhost' as "SOURCE".SOCKET_HOST,
-  50501 as "SOURCE".SOCKET_PORT,
-  100 as "SOURCE".FLUSH_INTERVAL_MS,
-  60000 as "SOURCE".CONNECT_TIMEOUT_MS,
+  'localhost' as TCP_SOURCE.SOCKET_HOST,
+  50501 as TCP_SOURCE.SOCKET_PORT,
+  100 as TCP_SOURCE.FLUSH_INTERVAL_MS,
+  60000 as TCP_SOURCE.CONNECT_TIMEOUT_MS,
   'CSV' as INPUT_FORMATTER."TYPE",
-  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
-  ',' as INPUT_FORMATTER.FIELD_DELIMITER
+  '\n' as CSV_INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as CSV_INPUT_FORMATTER.FIELD_DELIMITER
 );
 
 CREATE PHYSICAL SOURCE FOR lrb TYPE File SET(
   'localhost:8080' AS "SOURCE"."HOST",
-  'lrb.json' as "SOURCE".FILE_PATH,
+  'lrb.json' as FILE_SOURCE.FILE_PATH,
   'JSON' as INPUT_FORMATTER."TYPE"
 );
 ```
@@ -251,8 +251,9 @@ creationTS,vehicle,speed,highway,lane,direction,position
 ```
 
 Each physical source requires configuration for:
-- The specific connector (e.g., file path or TCP socket details) via `SOURCE.*` parameters.
-- The data's input format (e.g., `CSV` or `JSON`) and delimiters via `INPUT_FORMATTER.*` parameters.
+- General source settings, such as the worker host, via `SOURCE.*` parameters.
+- Connector-specific settings via namespaces such as `FILE_SOURCE.*` or `TCP_SOURCE.*`.
+- The data's input format (e.g., `CSV` or `JSON`) via `INPUT_FORMATTER."TYPE"`, with formatter-specific options such as delimiters under `CSV_INPUT_FORMATTER.*`.
 
 The query itself remains completely decoupled from these physical details.
 You can add, remove, or change physical sources without touching the query logic.
@@ -274,9 +275,9 @@ CREATE SINK csv_sink(
   avgSpeed FLOAT64
 ) TYPE File SET(
   'localhost:8080' AS "SINK"."HOST",
-  '<path>' as "SINK".FILE_PATH,
-  'CSV' as "SINK".OUTPUT_FORMAT,
-  FALSE as "SINK".APPEND
+  '<path>' as FILE_SINK.FILE_PATH,
+  'CSV' as OUTPUT_FORMATTER."TYPE",
+  FALSE as FILE_SINK.APPEND
 );
 ```
 The sink name (`csv_sink`) must match the name used in the query's `INTO` clause.
@@ -293,8 +294,8 @@ For a `File` sink, this includes the file path and the data format for the outpu
 
 The `HOST` configuration parameter specifies the worker node, identified by its gRPC address, which hosts the physical source/sink.
 
-- The sink itself can be configured via `SINK.*` parameters.
-- The output formatter can be configured via `OUTPUT_FORMATTER.*` parameters.
+- General sink settings, such as the worker host, can be configured via `SINK.*` parameters; sink-specific options use namespaces such as `FILE_SINK.*`.
+- The output format is selected via `OUTPUT_FORMATTER."TYPE"`; formatter-specific options use namespaces such as `CSV_OUTPUT_FORMATTER.*`.
 ---
 ## Input Formatters
 Tuples can arrive in a variety of formats.
@@ -303,12 +304,12 @@ We distinguish two broad categories:
 - Binary formats (Avro, Parquet, Protobuf, etc.)
 
 Input formatters convert byte streams from source connectors into the native in-memory representation used by query-compiled operators.
-The format is specified via `INPUT_FORMATTER.*` parameters in each physical source:
+The format is selected via `INPUT_FORMATTER."TYPE"` in each physical source. Formatter-specific options use namespaces such as `CSV_INPUT_FORMATTER.*`:
 ```sql
 CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
   'CSV' as INPUT_FORMATTER."TYPE",
-  '\n' as INPUT_FORMATTER.TUPLE_DELIMITER,
-  ',' as INPUT_FORMATTER.FIELD_DELIMITER,
+  '\n' as CSV_INPUT_FORMATTER.TUPLE_DELIMITER,
+  ',' as CSV_INPUT_FORMATTER.FIELD_DELIMITER,
   ...
 );
 ```
@@ -342,7 +343,7 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 ---
 ## Output Formatters
 The output formatter component converts records with values in our native in-memory format into the desired output format of a sink.
-They are employed by sinks that utilize the `OUTPUT_FORMAT` parameter to configure the format of the result tuples.
+Sinks select the format of the result tuples via `OUTPUT_FORMATTER."TYPE"`.
 
 Out-of-the-box available output formats are:
 - CSV
@@ -350,11 +351,11 @@ Out-of-the-box available output formats are:
 
 Some output formats may be configurable via parameters. For instance, the bool parameter `QUOTE_STRINGS` controls how the CSVOutputFormatter
 represents strings.
-All required parameters can be specified via `OUTPUT_FORMATTER.*` in each sink.
+Formatter-specific parameters use namespaces such as `CSV_OUTPUT_FORMATTER.*` in each sink. General options, such as `OUTPUT_FORMATTER.VALUE_SERIALIZERS`, remain under `OUTPUT_FORMATTER.*`.
 ```sql
 CREATE SINK sink_name TYPE FILE SET(
-       'CSV' as "SINK".OUTPUT_FORMAT,
-       TRUE as "OUTPUT_FORMATTER".QUOTE_STRINGS,
+       'CSV' as OUTPUT_FORMATTER."TYPE",
+       TRUE as CSV_OUTPUT_FORMATTER.QUOTE_STRINGS,
        ...
 );
 ```
@@ -393,7 +394,7 @@ Fields that the user did not configure keep the default serializer of their data
 Configuring the serializer per field (instead of per data type) allows two fields of the same data type to leave the system in different external representations:
 ```sql
 CREATE SINK sink_name TYPE FILE SET(
-       'CSV' as "SINK".OUTPUT_FORMAT,
+       'CSV' as OUTPUT_FORMATTER."TYPE",
        'event_time:EpochMillisecondsToRFC3339,ingest_time:UnixMilliseconds' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS,
        ...
 );

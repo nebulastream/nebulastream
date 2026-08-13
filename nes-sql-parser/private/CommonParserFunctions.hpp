@@ -17,10 +17,21 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <InputFormatterDescriptor.hpp>
+
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -31,25 +42,32 @@
 
 namespace NES
 {
-using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
+using Literal = std::variant<std::string, int64_t, uint64_t, double, bool, std::monostate>;
 using ConfigMap
     = std::unordered_map<Identifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
 using ConfigMultiMap = std::vector<std::pair<QualifiedIdentifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
+
 
 Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
 Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 Identifier bindIdentifier(std::string identifier);
 QualifiedIdentifier bindQualifiedIdentifier(AntlrSQLParser::IdentifierChainContext* identifierList);
 
+Schema<LiteralConfigValue, Ordered> bindConfigValues(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
+std::
+    tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, std::optional<Schema<UnqualifiedUnboundField, Ordered>>>
+    bindSourceConfig(
+        const Identifier& sourceType,
+        const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptionsAst,
+        const Schema<ConfigFieldDefault, Ordered>& configDefaults,
+        const Schema<ConfigFieldTransformation, Unordered>& configTransformations);
+std::tuple<GeneralSinkConfig, AnonymousSinkSchema, PluginSinkConfiguration, OutputFormatterDescriptor> bindSinkConfig(
+    const Identifier& sinkType,
+    const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptionsAst,
+    const Schema<ConfigFieldDefault, Ordered>& configDefaults,
+    const Schema<ConfigFieldTransformation, Unordered>& configTransformations);
 ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
-std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions);
-std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions);
-std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions);
-std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions);
-
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);
 double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral);

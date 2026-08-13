@@ -172,7 +172,6 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
     prefixNames(*parse, rewriter, declarations.names);
 
     makeAnonymousSourcePathsAbsolute(*parse, rewriter, context.testDataDir);
-    completeAnonymousSources(*parse, rewriter, context.sourceHost);
 
     const auto queryNumber = id.getRawValue();
     const auto suffix
@@ -230,7 +229,6 @@ void Emitter::emitExplain(ExplainStatement explain)
 
     /// The explained query binds and optimizes as a regular query does, so its sources need the same completion.
     makeAnonymousSourcePathsAbsolute(parse, rewriter, context.testDataDir);
-    completeAnonymousSources(parse, rewriter, context.sourceHost);
 
     if (auto* sink = requireSingleSink(parse, explain.sql); sink->identifier() == nullptr)
     {

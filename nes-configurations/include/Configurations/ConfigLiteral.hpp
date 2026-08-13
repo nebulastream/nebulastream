@@ -38,7 +38,7 @@ template <typename T>
 concept isConfigLiteral = requires(T value) { ConfigLiteral{std::in_place_type<T>, std::move(value)}; };
 
 /// A single (possibly qualified) config assignment as a frontend produced it, e.g.
-/// `'ALL' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES`
+/// `'ALL' AS GENERATOR_SOURCE.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES`
 class LiteralConfigValue
 {
     QualifiedIdentifier name;
