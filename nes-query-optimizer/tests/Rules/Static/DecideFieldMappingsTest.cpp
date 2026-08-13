@@ -17,10 +17,10 @@
 #include <functional>
 #include <ranges>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Rules/Static/DecideFieldMappings.hpp>
+#include <Util/OptimizerTestUtils.hpp>
 
 
 #include <gtest/gtest.h>
@@ -69,45 +69,28 @@ static LogicalSource createLogicalTestSource()
 
 static SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalSource)
 {
-    const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    return SourceDescriptor::create(
-               PhysicalSourceId{1},
-               logicalSource,
-               Identifier::parse("File"),
-               Host{"localhost"},
-               sourceConfig,
-               {{Identifier::parse("type"), "CSV"}},
-               false)
-        .value();
+    return OptimizerTestUtils{}.createSourceDescriptor(PhysicalSourceId{1}, logicalSource);
 }
 
 static SinkDescriptor createTestSinkDescriptor()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
 
-    return SinkDescriptor::createNamed(
-               INVALID_SINK_ID, Identifier::parse("testSink"), Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
-        .value();
+    return OptimizerTestUtils{}.createSinkDescriptor(Identifier::parse("testSink"), schema);
 }
 
 static SinkDescriptor createTestSinkDescriptorWithNewField()
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("new_field"), DataType::Type::INT64}};
 
-    return SinkDescriptor::createNamed(
-               INVALID_SINK_ID, Identifier::parse("testSinkWithNew"), Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
-        .value();
+    return OptimizerTestUtils{}.createSinkDescriptor(Identifier::parse("testSinkWithNew"), schema);
 }
 
 namespace
@@ -338,21 +321,11 @@ TEST_F(DecideFieldMappingsTest, TestProjectionToNewField)
 
 TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
 {
-    const std::unordered_map<Identifier, std::string> sinkConfig{
-        {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
     const Schema<UnqualifiedUnboundField, Ordered> renamedSinkSchema{
         UnqualifiedUnboundField{Identifier::parse("renamed_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    const auto renamedSink = SinkDescriptor::createNamed(
-                                 INVALID_SINK_ID,
-                                 Identifier::parse("renamedSink"),
-                                 Identifier::parse("file"),
-                                 renamedSinkSchema,
-                                 Host{"localhost"},
-                                 sinkConfig,
-                                 {})
-                                 .value();
+    const auto renamedSink = OptimizerTestUtils{}.createSinkDescriptor(Identifier::parse("renamedSink"), renamedSinkSchema);
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
     const std::vector<std::pair<Identifier, LogicalFunction>> projections{
         {Identifier::parse("renamed_a"),

@@ -34,17 +34,21 @@ constexpr auto Source = "SOURCE";
 constexpr auto Sink = "SINK";
 constexpr auto InputFormatter = "INPUT_FORMATTER";
 constexpr auto OutputFormatter = "OUTPUT_FORMATTER";
+constexpr auto FileSource = "FILE_SOURCE";
+constexpr auto FileSink = "FILE_SINK";
+constexpr auto ChecksumSink = "CHECKSUM_SINK";
+constexpr auto CsvOutputFormatter = "CSV_OUTPUT_FORMATTER";
 
 /// Config keys within the groups.
 constexpr auto FilePath = "FILE_PATH";
 constexpr auto Host = "HOST";
-constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Schema = "SCHEMA";
 constexpr auto QuoteStrings = "QUOTE_STRINGS";
 
-/// Default input/output format
+/// Default input/output formats
 constexpr auto Csv = "CSV";
+constexpr auto Native = "NATIVE";
 
 /// Default sink type.
 constexpr auto File = "File";
@@ -60,7 +64,9 @@ constexpr auto Checksum = "CHECKSUM";
 /// A quoted and an unquoted spelling of one name match, and two unquoted spellings differing only in case also match.
 inline bool sameName(const std::string_view left, const std::string_view right)
 {
-    return Identifier::parse(std::string{left}) == Identifier::parse(std::string{right});
+    const auto parsedLeft = Identifier::tryParse(std::string{left});
+    const auto parsedRight = Identifier::tryParse(std::string{right});
+    return parsedLeft.has_value() and parsedRight.has_value() and *parsedLeft == *parsedRight;
 }
 
 /// Only `File` and `Checksum` take a file path, so only they can be pointed at the file that the checker reads.

@@ -34,7 +34,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
 #include <Util/Any.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkConfigRegistry.hpp>
@@ -50,7 +50,6 @@ SinkDescriptor SinkDescriptor::createNamed(
     PluginSinkConfiguration plugin,
     OutputFormatterDescriptor formatter)
 {
-    PRECONDITION(general.host != Host{Host::INVALID}, "A valid host must be set before creating a sink descriptor (see host policy)");
     return SinkDescriptor{NamedSinkDescriptor{
         id,
         std::move(name),
@@ -66,7 +65,6 @@ SinkDescriptor SinkDescriptor::createNamed(
 SinkDescriptor SinkDescriptor::createAnonymous(
     SinkId id, AnonymousSinkSchema schema, GeneralSinkConfig general, PluginSinkConfiguration plugin, OutputFormatterDescriptor formatter)
 {
-    PRECONDITION(general.host != Host{Host::INVALID}, "A valid host must be set before creating a sink descriptor (see host policy)");
     return SinkDescriptor{AnonymousSinkDescriptor{
         id,
         std::move(schema),

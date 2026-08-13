@@ -24,7 +24,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -193,25 +192,6 @@ public:
         PluginSinkConfiguration pluginConfig,
         OutputFormatterDescriptor formatter);
 
-    /// Compatibility adapters for callers that still supply string config maps.
-    static std::optional<SinkDescriptor> createNamed(
-        SinkId id,
-        Identifier name,
-        const Identifier& sinkType,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& descriptorConfig,
-        const std::unordered_map<Identifier, std::string>& formatConfig);
-
-    static std::optional<SinkDescriptor> createAnonymous(
-        SinkId id,
-        const Identifier& sinkType,
-        const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& descriptorConfig,
-        const std::unordered_map<Identifier, std::string>& formatConfig);
-
-
     ~SinkDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
@@ -252,8 +232,7 @@ public:
         {
             return tryGetOr<std::string>(literal, expectedType<std::string>())
                 .transform([](std::string&& value) -> Host { return Host{std::move(value)}; });
-        },
-        Host{Host::INVALID}};
+        }};
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
     static inline const ConfigField<std::optional<Schema<UnqualifiedUnboundField, Ordered>>> SCHEMA{

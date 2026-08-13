@@ -3,8 +3,8 @@
 CREATE LOGICAL SOURCE smoke_input (data UINT8);
 
 CREATE PHYSICAL SOURCE FOR smoke_input TYPE MQTT SET (
-    'tcp://localhost:1883' AS "SOURCE".SERVER_URI,
-    'sensors'              AS "SOURCE".TOPIC,
-    1                      AS "SOURCE".QOS,
+    'tcp://localhost:1883' AS MQTT_SOURCE.SERVER_URI,
+    'sensors'              AS MQTT_SOURCE.TOPIC,
+    1                      AS MQTT_SOURCE.QOS,
     'JSON'                 AS INPUT_FORMATTER."TYPE"
 );

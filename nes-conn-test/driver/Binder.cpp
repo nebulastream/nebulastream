@@ -27,13 +27,19 @@
 
 #include <CharStream.h>
 #include <Token.h>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <misc/Interval.h>
 #include <ErrorHandling.hpp>
@@ -107,13 +113,14 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         return bindError("parsing the SQL", statements.error());
     }
 
-    auto sourceCatalog = std::make_shared<SourceCatalog>();
-    const StatementBinder binder(
-        sourceCatalog, [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    auto sourceCatalogHandle = SourceCatalog::create();
+    auto sourceCatalog = copyPtr(sourceCatalogHandle);
     /// Connectors read their endpoint from config and conn-test does no placement, so a statement without a host gets any valid one,
-    /// as in the REPL with a single worker.
-    SourceStatementHandler handler{sourceCatalog, DefaultHost{"localhost"}};
-
+    /// as in the REPL with a single worker. Placement defaults now belong to the binder, not the statement handler.
+    const Schema<ConfigFieldDefault, Ordered> defaults{
+        ConfigFieldDefault{QualifiedIdentifier::parse("SOURCE.HOST"), ConfigLiteral{std::string{"localhost"}}}};
+    const StatementBinder binder(sourceCatalog, defaults);
+    SourceStatementHandler handler{sourceCatalog};
     std::optional<SourceDescriptor> physicalDescriptor;
     for (const auto& statementContext : *statements)
     {
@@ -176,9 +183,11 @@ std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& s
     }
 
     /// The binder needs a source catalog, even though a sink config declares no source.
-    const StatementBinder binder(
-        std::make_shared<SourceCatalog>(),
-        [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    /// The harness runs the sink in its own process and ignores placement, so any host works.
+    auto sourceCatalog = SourceCatalog::create();
+    const Schema<ConfigFieldDefault, Ordered> defaults{
+        ConfigFieldDefault{QualifiedIdentifier::parse("SINK.HOST"), ConfigLiteral{std::string{"localhost"}}}};
+    const StatementBinder binder(copyPtr(sourceCatalog), defaults);
     auto bound = binder.bind(statements->front().get());
     if (!bound.has_value())
     {
@@ -191,8 +200,7 @@ std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& s
     }
     try
     {
-        /// The harness runs the sink in its own process and ignores placement, so any host works.
-        SinkStatementHandler handler{std::make_shared<SinkCatalog>(), DefaultHost{"localhost"}};
+        SinkStatementHandler handler{std::make_shared<SinkCatalog>()};
         auto created = handler(*sink);
         if (!created.has_value())
         {
@@ -203,7 +211,8 @@ std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& s
             return bindError(
                 "checking the output format",
                 fmt::format(
-                    "failed: the sink receives JSONL, so its OUTPUT_FORMAT must be 'JSON', not '{}'", created->created.getFormatType()));
+                    "failed: the sink receives JSONL, so its OUTPUT_FORMATTER.TYPE must be 'JSON', not '{}'",
+                    created->created.getFormatType()));
         }
         return std::move(created->created);
     }

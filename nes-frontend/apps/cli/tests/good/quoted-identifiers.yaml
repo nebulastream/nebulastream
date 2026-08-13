@@ -19,6 +19,8 @@ sinks:
       - name: A
         type: UINT64
     type: Void
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: '"quotedSource"'

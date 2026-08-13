@@ -15,8 +15,8 @@
 #include <array>
 #include <cstdint>
 #include <memory>
-#include <unordered_map>
 #include <vector>
+#include <Util/OptimizerTestUtils.hpp>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -93,24 +93,12 @@ public:
 
     static SourceDescriptor createSourceDescriptor(const PhysicalSourceId physicalSourceId, const LogicalSource& logicalSource)
     {
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
-        return SourceDescriptor::create(
-                   physicalSourceId,
-                   logicalSource,
-                   Identifier::parse("File"),
-                   Host{"localhost"},
-                   sourceConfig,
-                   {{Identifier::parse("type"), "CSV"}},
-                   false)
-            .value();
+        return OptimizerTestUtils{}.createSourceDescriptor(physicalSourceId, logicalSource);
     }
 
     static SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const std::unordered_map<Identifier, std::string> sinkConfig{
-            {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
-            .value();
+        return OptimizerTestUtils{}.createSinkDescriptor(sinkName, schema);
     }
 
     /// Build the expected join output schema for a left/right (prefix "left"/"right") join. For outer joins the fields of the side that may

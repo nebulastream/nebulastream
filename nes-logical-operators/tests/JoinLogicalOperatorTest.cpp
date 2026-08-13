@@ -16,11 +16,13 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
+#include <Configurations/ConfigLiteral.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -29,6 +31,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -37,8 +40,10 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Sinks/SinkConfigSchema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -86,16 +91,16 @@ public:
     makeSource(std::string_view name, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
         const auto logical = LogicalSource{Identifier::parse(std::string{name}), schema};
-        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-        const auto descriptor = SourceDescriptor::create(
-                                    PhysicalSourceId{1},
-                                    logical,
-                                    Identifier::parse("File"),
-                                    Host{"localhost"},
-                                    sourceConfig,
-                                    {{Identifier::parse("type"), "CSV"}},
-                                    false)
-                                    .value();
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+            LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+            LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+        auto configSchema = SourceConfigSchema::create(Identifier::parse("File"), Identifier::parse("CSV")).value();
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+        const auto descriptor
+            = PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)}
+                  .build(PhysicalSourceId{1}, *logical.getSchema(), logical.getLogicalSourceName())
+                  .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
@@ -142,10 +147,17 @@ public:
 
     static SinkDescriptor createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        const std::unordered_map<Identifier, std::string> sinkConfig{
-            {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
-        return SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("file"), schema, Host{"localhost"}, sinkConfig, {})
-            .value();
+        auto resolved = SinkConfigSchema::create(Identifier::parse("file"), Identifier::parse("CSV"))
+                            .value()
+                            .resolveConfigs(
+                                Schema<LiteralConfigValue, Ordered>{
+                                    LiteralConfigValue{QualifiedIdentifier::parse("FILE_PATH"), "/dev/null"},
+                                    LiteralConfigValue{QualifiedIdentifier::parse("HOST"), "localhost"},
+                                    LiteralConfigValue{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), "CSV"}})
+                            .value();
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor] = std::move(resolved);
+        return SinkDescriptor::createNamed(
+            INVALID_SINK_ID, sinkName, schema, std::move(generalConfig), std::move(pluginSinkConfig), std::move(outputFormatterDescriptor));
     }
 };
 

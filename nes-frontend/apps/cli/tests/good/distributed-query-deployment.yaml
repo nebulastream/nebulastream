@@ -39,6 +39,8 @@ sinks:
       - name: DOUBLE
         type: FLOAT64
     type: Void
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: GENERATOR_SOURCE

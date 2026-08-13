@@ -12,7 +12,7 @@
 
 """Rewrites a pristine ``.nesql`` config for one test run by replacing the values bound to keys that the loader lists.
 
-A committed config holds placeholder values, such as `'localhost' AS "SOURCE".SOCKET_HOST` or `9000 AS "SOURCE".SOCKET_PORT`,
+A committed config holds placeholder values, such as `'localhost' AS TCP_SOURCE.SOCKET_HOST` or `9000 AS TCP_SOURCE.SOCKET_PORT`,
 because the real ones are only known at run time: the compose service, a dead endpoint for ``bad_endpoint``,
 or a topic or table of the test's own.
 Overriding by key means the loader does not depend on the literal that the config holds,
@@ -25,7 +25,7 @@ import re
 
 
 def _binding(key: str) -> str:
-    # A SET entry looks like `'localhost' AS "SOURCE".SOCKET_HOST`.
+    # A SET entry looks like `'localhost' AS TCP_SOURCE.SOCKET_HOST`.
     # The scope and the key may be double-quoted, because NebulaStream SQL quotes reserved words.
     # The lookahead stops a key from matching a longer key that it prefixes, such as `port` in `.port_range`.
     return r'\s+AS\s+"?\w+"?\."?' + re.escape(key) + r'"?(?![\w"])'

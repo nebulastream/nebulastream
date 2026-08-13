@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -54,6 +55,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -135,19 +137,17 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
-    std::unordered_map<Identifier, std::string> fileSourceConfiguration{
-        {Identifier::parse("file_path"), filePath},
-        {Identifier::parse("max_inflight_buffers"), std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = LogicalSource{Identifier::parse("TestSource"), schema};
-    const auto sourceDescriptor = SourceDescriptor::create(
-                                      PhysicalSourceId{1},
-                                      logicalSource,
-                                      Identifier::parse("File"),
-                                      Host("localhost"),
-                                      fileSourceConfiguration,
-                                      {{Identifier::parse("type"), "CSV"}},
-                                      false)
-                                      .value();
+    PRECONDITION(std::in_range<int64_t>(numberOfRequiredSourceBuffers), "Source buffer count exceeds the config literal range");
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("FILE_SOURCE.FILE_PATH"), filePath},
+        LiteralConfigValue{QualifiedIdentifier::parse("SOURCE.HOST"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("SOURCE.MAX_INFLIGHT_BUFFERS"), static_cast<int64_t>(numberOfRequiredSourceBuffers)},
+        LiteralConfigValue{QualifiedIdentifier::parse("INPUT_FORMATTER.TYPE"), "CSV"}};
+    const auto configSchema = unwrapOrThrow(SourceConfigSchema::create(Identifier::parse("File"), Identifier::parse("CSV")));
+    auto [generalConfig, pluginConfig, formatter, declaredSchema] = unwrapOrThrow(configSchema.resolveConfigs(values));
+    const auto sourceDescriptor = unwrapOrThrow(
+        PhysicalSourceBuilder{std::move(generalConfig), std::move(pluginConfig), std::move(formatter)}.build(
+            PhysicalSourceId{1}, schema, Identifier::parse("TestSource")));
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
     return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
@@ -165,10 +165,7 @@ provideInputFormatterDescriptor(const std::string& type, const std::vector<std::
     const Schema<LiteralConfigValue, Ordered> literalValues{std::move(literals)};
     const auto declaredSchema = InputFormatterConfigSchemaRegistry::instance().getSchema(type);
     INVARIANT(declaredSchema.has_value(), "Input formatter type {} is not registered", type);
-    auto fields = *declaredSchema | std::ranges::to<std::vector>();
-    const auto genericFields = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), InputFormatterDescriptor::VALUE_DESERIALIZERS);
-    fields.insert(fields.end(), genericFields.begin(), genericFields.end());
-    auto resolvedConfig = toExpected(resolveConfig(literalValues, Schema<QualifiedErasedConfigField, Ordered>{std::move(fields)}));
+    auto resolvedConfig = toExpected(resolveConfig(literalValues, *declaredSchema));
     INVARIANT(resolvedConfig.has_value(), "Invalid config for input formatter type {}: {}", type, resolvedConfig.error());
     const auto configEntry = InputFormatterConfigRegistry::instance().find(type);
     INVARIANT(configEntry.has_value(), "Input formatter type {} has no InputFormatterConfig registry entry", type);

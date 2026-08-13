@@ -50,20 +50,19 @@ public:
 
     [[nodiscard]] const ExplicitAny& getConfig() const;
 
-    /// Defaults to NATIVE: a sink without an output formatter forwards buffers unformatted.
+    /// Required, including for NATIVE output that forwards buffers unformatted.
     /// NOLINTBEGIN(bugprone-throwing-static-initialization)
     static inline auto TYPE_FIELD = ConfigField<Identifier>{
         Identifier::parse("TYPE"),
         "The type of the output form",
         [](const ConfigLiteral& literal)
-        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); },
-        Identifier::parse("NATIVE")};
+        { return tryGetOr<std::string>(literal, expectedType<std::string>()).and_then(Identifier::tryParse); }};
 
     static inline const ConfigField<std::string> VALUE_SERIALIZERS{
         Identifier::parse("VALUE_SERIALIZERS"), "Per-field value serializer overrides", std::string{}};
 
     static inline Schema<QualifiedErasedConfigField, Ordered> configSchema
-        = createConfigSchema(Identifier::parse("OUTPUT_FORMATTER"), TYPE_FIELD, VALUE_SERIALIZERS);
+        = createConfigSchema(Identifier::parse("OUTPUT_FORMATTER"), TYPE_FIELD);
     /// NOLINTEND(bugprone-throwing-static-initialization)
 
 private:

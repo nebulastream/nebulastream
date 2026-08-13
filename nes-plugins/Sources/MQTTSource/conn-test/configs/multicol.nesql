@@ -2,9 +2,9 @@
 CREATE LOGICAL SOURCE multi_input (id INT32 NOT NULL, label VARSIZED NOT NULL, ratio FLOAT64 NOT NULL);
 
 CREATE PHYSICAL SOURCE FOR multi_input TYPE MQTT SET (
-    'tcp://localhost:1883' AS "SOURCE".SERVER_URI,
-    'sensors'              AS "SOURCE".TOPIC,
-    1                      AS "SOURCE".QOS,
-    100                    AS "SOURCE".FLUSH_INTERVAL_MS,
+    'tcp://localhost:1883' AS MQTT_SOURCE.SERVER_URI,
+    'sensors'              AS MQTT_SOURCE.TOPIC,
+    1                      AS MQTT_SOURCE.QOS,
+    100                    AS MQTT_SOURCE.FLUSH_INTERVAL_MS,
     'JSON'                 AS INPUT_FORMATTER."TYPE"
 );

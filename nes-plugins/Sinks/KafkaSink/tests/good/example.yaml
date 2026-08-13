@@ -36,8 +36,9 @@ sinks:
       - name: number
         type: UINT64
     type: Kafka
+    parser_config:
+      type: CSV
     config:
-      output_format: CSV
       brokers: kafka-broker:9092
       topic: kafka-sink-test
 

@@ -43,6 +43,8 @@ sinks:
       - name: TEXT
         type: VARSIZED
     type: Void
+    parser_config:
+      type: NATIVE
 
 logical:
   - name: GENERATOR_SOURCE

@@ -18,6 +18,7 @@ add_source_files(nes-sources
         SourceProvider.cpp
         SourceRegistry.cpp
         SourceConfigRegistry.cpp
+        SourceConfigSchema.cpp
         SourceConfigSchemaRegistry.cpp
         LogicalSource.cpp
         SourceCatalog.cpp

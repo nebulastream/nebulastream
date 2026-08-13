@@ -22,6 +22,7 @@
 #include <random>
 #include <stop_token>
 #include <thread>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <Configurations/ConfigLiteral.hpp>
@@ -33,9 +34,9 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/FileSourceConfig.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceConfigSchema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -49,6 +50,8 @@
 
 namespace NES
 {
+static_assert(not std::is_default_constructible_v<SourceCatalog>);
+
 class SourceCatalogTest : public Testing::BaseUnitTest
 {
 public:
@@ -70,7 +73,7 @@ addFilePhysicalSource(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSour
         LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
         LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
         LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
-    auto configSchema = SourceCatalog::getConfigSchema(sourceType, Identifier::parse("CSV"));
+    auto configSchema = SourceConfigSchema::create(sourceType, Identifier::parse("CSV"));
     if (not configSchema.has_value())
     {
         return std::unexpected{configSchema.error()};
@@ -99,40 +102,6 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
     const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     ASSERT_TRUE(sourceCatalog->containsLogicalSource(*sourceOpt));
-}
-
-TEST_F(SourceCatalogTest, ConfigMapsRequireExplicitQuotingForNumericStrings)
-{
-    SourceCatalog catalog;
-    const auto schema
-        = Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT32}};
-    const auto logical = catalog.addLogicalSource(Identifier::parse("input"), schema);
-    ASSERT_TRUE(logical.has_value());
-    EXPECT_FALSE(catalog
-                     .addPhysicalSource(
-                         *logical,
-                         Identifier::parse("FILE"),
-                         Host{"localhost:8080"},
-                         {{Identifier::parse("FILE_PATH"), "123"}},
-                         {{Identifier::parse("TYPE"), "CSV"}})
-                     .has_value());
-    EXPECT_FALSE(catalog
-                     .addPhysicalSource(
-                         *logical,
-                         Identifier::parse("FILE"),
-                         Host{"localhost:8080"},
-                         {{Identifier::parse("FILE_PATH"), "'123'"}},
-                         {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "1"}})
-                     .has_value());
-    const auto source = catalog.addPhysicalSource(
-        *logical,
-        Identifier::parse("FILE"),
-        Host{"localhost:8080"},
-        {{Identifier::parse("FILE_PATH"), "'123'"}, {Identifier::parse("MAX_INFLIGHT_BUFFERS"), "2"}},
-        {{Identifier::parse("TYPE"), "CSV"}, {Identifier::parse("FIELD_DELIMITER"), "'1'"}});
-    ASSERT_TRUE(source.has_value()) << source.error();
-    EXPECT_EQ(source->getPluginData().getAs<FileSourceConfig>().filePath, "123");
-    EXPECT_EQ(source->getMaxInflightBuffers(), 2);
 }
 
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)

@@ -190,7 +190,12 @@ const ConfigField<char> FIELD_DELIMITER{
 
 Schema<QualifiedErasedConfigField, Ordered> CSVInputFormatIndexer::getConfigSchema()
 {
-    return createConfigSchema(Identifier::parse("CSV_INPUT_FORMATTER"), ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+    return createConfigSchema(
+        Identifier::parse("CSV_INPUT_FORMATTER"),
+        ALLOW_COMMAS_IN_STRINGS,
+        TUPLE_DELIMITER,
+        FIELD_DELIMITER,
+        InputFormatterDescriptor::VALUE_DESERIALIZERS);
 }
 
 std::expected<CSVInputFormatterConfig, Exception> CSVInputFormatterConfig::fromConfig(const InstantiatedConfig& config)

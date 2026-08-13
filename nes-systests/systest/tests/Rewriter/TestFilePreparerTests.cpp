@@ -27,6 +27,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <AntlrSQLParser.h>
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -80,6 +81,21 @@ public:
     }
 };
 
+TEST(SqlOptionTest, MatchesOnlyCanonicalQualifiedNamesOrUnqualifiedSuffixes)
+{
+    for (const auto* name : {"FILE_SOURCE.FILE_PATH", "file_source.file_path", "FILE_PATH"})
+    {
+        const SqlParse parse{fmt::format("CREATE PHYSICAL SOURCE FOR stream TYPE File SET ('123' AS {});", name)};
+        const auto options = findAll<AntlrSQLParser::NamedConfigExpressionContext>(parse.tree());
+        ASSERT_EQ(options.size(), 1);
+        EXPECT_TRUE(isOption(options.front(), "FILE_SOURCE", "FILE_PATH")) << name;
+    }
+    const SqlParse parse{"CREATE PHYSICAL SOURCE FOR stream TYPE File SET ('123' AS FILE_SINK.FILE_PATH);"};
+    const auto options = findAll<AntlrSQLParser::NamedConfigExpressionContext>(parse.tree());
+    ASSERT_EQ(options.size(), 1);
+    EXPECT_FALSE(isOption(options.front(), "FILE_SOURCE", "FILE_PATH"));
+}
+
 /// Keywords, punctuation and whitespace stay byte for byte.
 TEST_F(PrefixNamesTest, SubstitutesRegisteredNames)
 {
@@ -111,8 +127,8 @@ TEST_F(PrefixNamesTest, DoesNotRewriteInsideStringLiterals)
 {
     const auto names = declareAll({"stream"});
     EXPECT_EQ(
-        prefix(R"(SELECT x FROM stream INTO File('/data/stream/x.csv' AS "SINK".FILE_PATH))", names),
-        R"(SELECT x FROM BENCHMARK_D_NEXMARK_STREAM INTO File('/data/stream/x.csv' AS "SINK".FILE_PATH))");
+        prefix(R"(SELECT x FROM stream INTO File('/data/stream/x.csv' AS "FILE_SINK".FILE_PATH))", names),
+        R"(SELECT x FROM BENCHMARK_D_NEXMARK_STREAM INTO File('/data/stream/x.csv' AS "FILE_SINK".FILE_PATH))");
 }
 
 /// The prefixed spelling is not itself registered.
@@ -138,8 +154,8 @@ TEST_F(PrefixNamesTest, PreservesThePluginTypeOfASourceOrSinkWrittenIntoAQuery)
 {
     const auto names = declareAll({"File"});
     EXPECT_EQ(
-        prefix(R"(SELECT x FROM File INTO File('out.csv' AS "SINK".FILE_PATH))", names),
-        R"(SELECT x FROM BENCHMARK_D_NEXMARK_FILE INTO File('out.csv' AS "SINK".FILE_PATH))");
+        prefix(R"(SELECT x FROM File INTO File('out.csv' AS "FILE_SINK".FILE_PATH))", names),
+        R"(SELECT x FROM BENCHMARK_D_NEXMARK_FILE INTO File('out.csv' AS "FILE_SINK".FILE_PATH))");
 }
 
 /// The grammar parses a function name as a plain identifier too.
@@ -251,7 +267,7 @@ TEST_F(TestFilePreparerTest, RewritesInlineSourceNamedSinkAndQuery)
 
     EXPECT_EQ(
         setup.at(1).sql,
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_ONETUPLE TYPE File SET ('/work/sources/TESTKEY_0.csv' AS "SOURCE"."FILE_PATH", )"
+        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_ONETUPLE TYPE File SET ('/work/sources/TESTKEY_0.csv' AS "FILE_SOURCE"."FILE_PATH", )"
         R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE");)");
     EXPECT_EQ(setup.at(1).inlineData, (InlineData{.path = "/work/sources/TESTKEY_0.csv", .rows = {"1"}}));
 
@@ -259,8 +275,8 @@ TEST_F(TestFilePreparerTest, RewritesInlineSourceNamedSinkAndQuery)
     const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
     EXPECT_EQ(
         query.sql,
-        R"(SELECT field_1 FROM TESTKEY_ONETUPLE INTO File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", )"
-        R"('CSV' AS "SINK"."OUTPUT_FORMAT", SCHEMA(field_1 UINT64 NOT NULL) AS "SINK"."SCHEMA");)");
+        R"(SELECT field_1 FROM TESTKEY_ONETUPLE INTO File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "FILE_SINK"."FILE_PATH", )"
+        R"('CSV' AS "OUTPUT_FORMATTER"."TYPE", SCHEMA(field_1 UINT64 NOT NULL) AS "SINK"."SCHEMA");)");
     EXPECT_EQ(query.resultFile, "/work/TESTKEY_1.csv");
     const auto* expectedRows = std::get_if<ExpectedRows>(&query.expected);
     ASSERT_NE(expectedRows, nullptr);
@@ -390,7 +406,7 @@ TEST_F(TestFilePreparerTest, RewritesFileSourceWithoutMaterializing)
     ASSERT_EQ(setup.size(), 2U);
     EXPECT_EQ(
         setup.at(1).sql,
-        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE File SET ('/data/small/stream8.csv' AS "SOURCE"."FILE_PATH", )"
+        R"(CREATE PHYSICAL SOURCE FOR TESTKEY_STREAM TYPE File SET ('/data/small/stream8.csv' AS "FILE_SOURCE"."FILE_PATH", )"
         R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE");)");
     /// An ATTACH FILE source points at an existing file, so no statement holds inline data to write.
     EXPECT_FALSE(setup.at(1).inlineData.has_value());
@@ -402,21 +418,21 @@ TEST_F(TestFilePreparerTest, GivesASinkThatDiscardsItsInputNoResultFile)
     const auto declared = rewriteSlt(
         "CREATE SINK discard(id UINT64 NOT NULL) TYPE Void;\n"
         "\n"
-        R"(SELECT id FROM File('small/stream8.csv' AS "SOURCE".FILE_PATH) INTO discard;)"
+        R"(SELECT id FROM File('small/stream8.csv' AS "FILE_SOURCE".FILE_PATH) INTO discard;)"
         "\n----\n");
     ASSERT_EQ(declared.testCases.size(), 1U);
     const auto& declaredQuery = std::get<RewrittenQuery>(declared.testCases.at(0).action);
     EXPECT_FALSE(declaredQuery.resultFile.has_value());
-    EXPECT_TRUE(
-        declaredQuery.sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST", SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA"))"));
+    EXPECT_TRUE(declaredQuery.sql.contains(
+        R"(INTO Void('localhost:8080' AS "SINK"."HOST", 'NATIVE' AS "OUTPUT_FORMATTER"."TYPE", SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA"))"));
 
     const auto written = rewriteSlt(
-        R"(SELECT id FROM File('small/stream8.csv' AS "SOURCE".FILE_PATH) INTO Void();)"
+        R"(SELECT id FROM File('small/stream8.csv' AS "FILE_SOURCE".FILE_PATH) INTO Void();)"
         "\n----\n");
     ASSERT_EQ(written.testCases.size(), 1U);
     const auto& writtenQuery = std::get<RewrittenQuery>(written.testCases.at(0).action);
     EXPECT_FALSE(writtenQuery.resultFile.has_value());
-    EXPECT_TRUE(writtenQuery.sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST"))"));
+    EXPECT_TRUE(writtenQuery.sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST", 'NATIVE' AS "OUTPUT_FORMATTER"."TYPE"))"));
 }
 
 /// The test file format admits ATTACH after any CREATE, so the rewriter reports a misplaced one instead of dropping it.
@@ -441,16 +457,16 @@ TEST_F(TestFilePreparerTest, ResolvesTheFileOfASourceWrittenIntoTheQuery)
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
         "\n"
-        R"(SELECT id FROM File('small/stream8.csv' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE") INTO out;)"
+        R"(SELECT id FROM File('small/stream8.csv' AS "FILE_SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE") INTO out;)"
         "\n----\n"
         "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
     EXPECT_EQ(
         std::get<RewrittenQuery>(queries.at(0).action).sql,
-        R"(SELECT id FROM File('/data/small/stream8.csv' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", )"
+        R"(SELECT id FROM File('/data/small/stream8.csv' AS "FILE_SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", )"
         R"('localhost:8080' AS "SOURCE"."HOST") )"
-        R"(INTO File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", 'CSV' AS "SINK"."OUTPUT_FORMAT", )"
+        R"(INTO File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "FILE_SINK"."FILE_PATH", 'CSV' AS "OUTPUT_FORMATTER"."TYPE", )"
         R"(SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA");)");
 }
 
@@ -460,13 +476,13 @@ TEST_F(TestFilePreparerTest, KeepsTheOptionsOfASelfContainedSourceWrittenIntoThe
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
         "\n"
-        R"(SELECT id FROM Generator('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA) INTO out;)"
+        R"(SELECT id FROM Generator('SEQUENCE UINT64 0 10 1' AS "GENERATOR_SOURCE".GENERATOR_SCHEMA) INTO out;)"
         "\n----\n"
         "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
     const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
-    EXPECT_TRUE(query.sql.contains(R"('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA)"));
+    EXPECT_TRUE(query.sql.contains(R"('SEQUENCE UINT64 0 10 1' AS "GENERATOR_SOURCE".GENERATOR_SCHEMA)"));
     EXPECT_TRUE(query.sql.contains(R"('localhost:8080' AS "SOURCE"."HOST")"));
 }
 
@@ -475,12 +491,12 @@ TEST_F(TestFilePreparerTest, KeepsAnAbsoluteFileOfASourceWrittenIntoTheQuery)
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
         "\n"
-        R"(SELECT id FROM File('/elsewhere/stream8.csv' AS "SOURCE".FILE_PATH) INTO out;)"
+        R"(SELECT id FROM File('/elsewhere/stream8.csv' AS "FILE_SOURCE".FILE_PATH) INTO out;)"
         "\n----\n"
         "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('/elsewhere/stream8.csv' AS "SOURCE".FILE_PATH)"));
+    EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('/elsewhere/stream8.csv' AS "FILE_SOURCE".FILE_PATH)"));
 }
 
 /// Such a source generates its own data, so the rewriter stages nothing and adds only defaults.
@@ -488,7 +504,7 @@ TEST_F(TestFilePreparerTest, RewritesSelfContainedSourceKeepingItsOptions)
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE LOGICAL SOURCE gen(id UINT64 NOT NULL);\n"
-        R"(CREATE PHYSICAL SOURCE FOR gen TYPE Generator SET('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA);)"
+        R"(CREATE PHYSICAL SOURCE FOR gen TYPE Generator SET('SEQUENCE UINT64 0 10 1' AS "GENERATOR_SOURCE".GENERATOR_SCHEMA);)"
         "\n\n"
         "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
         "\n"
@@ -500,7 +516,7 @@ TEST_F(TestFilePreparerTest, RewritesSelfContainedSourceKeepingItsOptions)
     EXPECT_EQ(
         setup.at(1).sql,
         R"(CREATE PHYSICAL SOURCE FOR TESTKEY_GEN TYPE Generator SET ('localhost:8080' AS "SOURCE"."HOST", )"
-        R"('CSV' AS "INPUT_FORMATTER"."TYPE", 'SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA);)");
+        R"('CSV' AS "INPUT_FORMATTER"."TYPE", 'SEQUENCE UINT64 0 10 1' AS "GENERATOR_SOURCE".GENERATOR_SCHEMA);)");
     EXPECT_FALSE(setup.at(1).inlineData.has_value());
 }
 
@@ -508,7 +524,7 @@ TEST_F(TestFilePreparerTest, KeepsTheHostAPhysicalSourceChose)
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE LOGICAL SOURCE gen(id UINT64 NOT NULL);\n"
-        R"(CREATE PHYSICAL SOURCE FOR gen TYPE Generator SET('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA, )"
+        R"(CREATE PHYSICAL SOURCE FOR gen TYPE Generator SET('SEQUENCE UINT64 0 10 1' AS "GENERATOR_SOURCE".GENERATOR_SCHEMA, )"
         R"('elsewhere:9999' AS "SOURCE"."HOST");)"
         "\n\n"
         "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
@@ -543,7 +559,7 @@ TEST_F(TestFilePreparerTest, RejectsAPhysicalSourceThatChoosesItsDataFile)
     EXPECT_THROW(
         rewriteSlt(
             "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-            R"(CREATE PHYSICAL SOURCE FOR stream TYPE File SET('small/stream8.csv' AS "SOURCE"."FILE_PATH");)"
+            R"(CREATE PHYSICAL SOURCE FOR stream TYPE File SET('small/stream8.csv' AS "FILE_SOURCE"."FILE_PATH");)"
             "\n\n"
             "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
             "\n"
@@ -560,7 +576,7 @@ TEST_F(TestFilePreparerTest, RejectsASinkThatChoosesItsResultFile)
         rewriteSlt(
             "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
             "\n"
-            R"(SELECT id FROM stream INTO File('/elsewhere/out.csv' AS "SINK"."FILE_PATH");)"
+            R"(SELECT id FROM stream INTO File('/elsewhere/out.csv' AS "FILE_SINK"."FILE_PATH");)"
             "\n----\n"
             "1\n"),
         Exception);
@@ -577,7 +593,7 @@ TEST_F(TestFilePreparerTest, ChecksumSinkGetsQuotedStrings)
         "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('true' AS "OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
+    EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"(true AS "CSV_OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
 }
 
 TEST_F(TestFilePreparerTest, ChecksumSinkKeepsItsOwnQuotingChoice)
@@ -585,29 +601,84 @@ TEST_F(TestFilePreparerTest, ChecksumSinkKeepsItsOwnQuotingChoice)
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
         "\n"
-        "SELECT id FROM stream INTO Checksum('false' AS \"OUTPUT_FORMATTER\".\"QUOTE_STRINGS\");\n"
+        "SELECT id FROM stream INTO Checksum(false AS \"CSV_OUTPUT_FORMATTER\".\"QUOTE_STRINGS\");\n"
         "----\n"
         "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
     const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
-    EXPECT_TRUE(query.sql.contains(R"('false' AS "OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
-    EXPECT_FALSE(query.sql.contains(R"('true' AS "OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
+    EXPECT_TRUE(query.sql.contains(R"(false AS "CSV_OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
+    EXPECT_FALSE(query.sql.contains(R"(true AS "CSV_OUTPUT_FORMATTER"."QUOTE_STRINGS")"));
+}
+
+TEST_F(TestFilePreparerTest, NamedSinkKeepsItsOptionsInEveryQuery)
+{
+    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
+        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+        "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ("
+        "'elsewhere:9999' AS \"SINK\".HOST, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n"
+        "\n"
+        "SELECT id FROM stream INTO out;\n----\n1\n\n"
+        "SELECT id FROM stream INTO out;\n----\n1\n");
+
+    ASSERT_EQ(queries.size(), 2U);
+    for (const auto& testCase : queries)
+    {
+        const auto& query = std::get<RewrittenQuery>(testCase.action);
+        EXPECT_TRUE(query.sql.contains("'elsewhere:9999' AS \"SINK\".HOST, 'JSON' AS OUTPUT_FORMATTER.\"TYPE\""));
+        EXPECT_TRUE(query.sql.contains(R"(SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA")"));
+    }
+    EXPECT_NE(std::get<RewrittenQuery>(queries.at(0).action).resultFile, std::get<RewrittenQuery>(queries.at(1).action).resultFile);
+}
+
+TEST_F(TestFilePreparerTest, NamedChecksumSinkWithJsonDoesNotGetCsvOptions)
+{
+    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
+        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+        "CREATE SINK out(id UINT64 NOT NULL) TYPE Checksum SET ('JSON' AS OUTPUT_FORMATTER.\"TYPE\");\n"
+        "\nSELECT id FROM stream INTO out;\n----\n1\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
+    EXPECT_TRUE(query.sql.contains("'JSON' AS OUTPUT_FORMATTER.\"TYPE\""));
+    EXPECT_FALSE(query.sql.contains("QUOTE_STRINGS"));
+}
+
+TEST_F(TestFilePreparerTest, ChecksumSinkWithInvalidFormatterTypeDoesNotAbort)
+{
+    const auto [name, key, originalNames, setup, queries] = rewriteSlt(
+        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+        "\n"
+        "SELECT id FROM stream INTO Checksum('' AS OUTPUT_FORMATTER.\"TYPE\");\n"
+        "----\n"
+        "1\n");
+    ASSERT_EQ(queries.size(), 1U);
+    EXPECT_FALSE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains("QUOTE_STRINGS"));
+}
+
+TEST_F(TestFilePreparerTest, RejectsANamedQuerySinkThatChoosesItsResultFile)
+{
+    EXPECT_THROW(
+        rewriteSlt(
+            "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+            "CREATE SINK out(id UINT64 NOT NULL) TYPE Checksum SET ('/tmp/mine.csv' AS CHECKSUM_SINK.FILE_PATH);\n"
+            "\nSELECT id FROM stream INTO out;\n----\n1\n"),
+        Exception);
 }
 
 /// An explained query binds like a regular one, so its inline source needs the same path, host, and format.
 TEST_F(TestFilePreparerTest, ExplainCompletesASourceWrittenIntoTheQuery)
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
-        "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM File('small/stream8.csv' AS \"SOURCE\".FILE_PATH) "
-        "INTO Void('true' AS \"SINK\".\"NOOP\");\n"
+        "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM File('small/stream8.csv' AS \"FILE_SOURCE\".FILE_PATH) "
+        "INTO Void(true AS \"SINK\".\"ADD_TIMESTAMP\");\n"
         "----\n"
         "== Optimized Plan ==\n");
 
     ASSERT_EQ(queries.size(), 1U);
     const auto* explain = std::get_if<RewrittenExplain>(&queries.at(0).action);
     ASSERT_NE(explain, nullptr);
-    EXPECT_TRUE(explain->sql.contains(R"('/data/small/stream8.csv' AS "SOURCE".FILE_PATH)"));
+    EXPECT_TRUE(explain->sql.contains(R"('/data/small/stream8.csv' AS "FILE_SOURCE".FILE_PATH)"));
     EXPECT_TRUE(explain->sql.contains(R"('localhost:8080' AS "SOURCE"."HOST")"));
     EXPECT_TRUE(explain->sql.contains(R"('CSV' AS "INPUT_FORMATTER"."TYPE")"));
 }
@@ -620,7 +691,7 @@ TEST_F(TestFilePreparerTest, ExplainRejectsTheVisualFormat)
         return fmt::format(
             "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
             "\n"
-            "EXPLAIN (OPTIMIZED) {} SELECT id FROM stream INTO Void('true' AS \"SINK\".\"NOOP\");\n"
+            "EXPLAIN (OPTIMIZED) {} SELECT id FROM stream INTO Void(true AS \"SINK\".\"ADD_TIMESTAMP\");\n"
             "----\n"
             "== Optimized Plan ==\n",
             format);
@@ -646,8 +717,7 @@ TEST_F(TestFilePreparerTest, ExplainKeepsTheDeclaredSinkAndSubmitsItsDeclaration
     ASSERT_EQ(setup.size(), 2U);
     EXPECT_EQ(
         setup.at(1).sql,
-        R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File )"
-        R"(SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "SINK"."FILE_PATH", 'CSV' AS "SINK"."OUTPUT_FORMAT");)");
+        R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "FILE_SINK"."FILE_PATH", 'CSV' AS "OUTPUT_FORMATTER"."TYPE");)");
 
     ASSERT_EQ(queries.size(), 1U);
     const auto* explain = std::get_if<RewrittenExplain>(&queries.at(0).action);
@@ -702,7 +772,7 @@ TEST_F(TestFilePreparerTest, MergesTheRewrittenSinkOptionsIntoTheOnesTheTestWrot
 {
     const auto [name, key, originalNames, setup, queries] = rewriteSlt(
         "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-        "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('JSON' AS \"SINK\".\"OUTPUT_FORMAT\");\n"
+        "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('JSON' AS \"OUTPUT_FORMATTER\".\"TYPE\");\n"
         "\n"
         "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream INTO out;\n"
         "----\n"
@@ -712,8 +782,7 @@ TEST_F(TestFilePreparerTest, MergesTheRewrittenSinkOptionsIntoTheOnesTheTestWrot
     /// The format that the test chose survives, and the rewriter adds no second one.
     EXPECT_EQ(
         setup.at(1).sql,
-        R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File )"
-        R"(SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "SINK"."FILE_PATH", 'JSON' AS "SINK"."OUTPUT_FORMAT");)");
+        R"(CREATE SINK TESTKEY_OUT(id UINT64 NOT NULL) TYPE File SET ('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_out.csv' AS "FILE_SINK"."FILE_PATH", 'JSON' AS "OUTPUT_FORMATTER"."TYPE");)");
 }
 
 /// The checker reads only the result file the rewriter chose, for declared and inline sinks alike.
@@ -722,7 +791,7 @@ TEST_F(TestFilePreparerTest, RejectsADeclaredSinkThatChoosesItsResultFile)
     EXPECT_THROW(
         rewriteSlt(
             "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-            "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('/tmp/mine.csv' AS \"SINK\".\"FILE_PATH\");\n"
+            "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('/tmp/mine.csv' AS \"FILE_SINK\".\"FILE_PATH\");\n"
             "\n"
             "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream INTO out;\n"
             "----\n"
@@ -736,7 +805,7 @@ TEST_F(TestFilePreparerTest, ExplainInlinesTheSinkThatItsQueryWrites)
         "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
         "\n"
         "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream "
-        "INTO Void('true' AS \"SINK\".\"NOOP\");\n"
+        "INTO Void(true AS \"SINK\".\"ADD_TIMESTAMP\");\n"
         "----\n"
         "== Optimized Plan ==\n");
 

@@ -26,6 +26,7 @@
 #include <TokenStreamRewriter.h>
 #include <fmt/format.h>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Model/ParsedTestFile.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/ClassifiedStatement.hpp>
@@ -48,7 +49,7 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     /// The rewriter makes the ATTACH path absolute, under the test data directory.
     /// A path the test wrote would stay relative, or set the option twice next to an ATTACH.
     auto* declared = declaredOptions(declaration.definition);
-    if (declaresOption(declared, Sql::Source, Sql::FilePath))
+    if (declaresOption(declared, Sql::FileSource, Sql::FilePath))
     {
         throw TestException(
             "A physical source must not choose its data file, because a source reads the data that its ATTACH names: {}",
@@ -94,7 +95,7 @@ std::string SourceRewriter::renderSetClauseFor(
     std::vector<std::string> options;
     if (dataFile.has_value())
     {
-        options.push_back(Sql::option(Sql::Source, Sql::FilePath, dataFile->string()));
+        options.push_back(Sql::option(Sql::FileSource, Sql::FilePath, dataFile->string()));
     }
     if (not declaresOption(declared, Sql::Source, Sql::Host))
     {
@@ -118,7 +119,7 @@ void makeAnonymousSourcePathsAbsolute(
     {
         for (auto* option : source->parameters->namedConfigExpression())
         {
-            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::Source, Sql::FilePath))
+            if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, Sql::FileSource, Sql::FilePath))
             {
                 if (const std::filesystem::path declared{unquote(value->getText())}; declared.is_relative())
                 {
