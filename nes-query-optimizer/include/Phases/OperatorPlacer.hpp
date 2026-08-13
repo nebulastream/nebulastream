@@ -19,6 +19,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES

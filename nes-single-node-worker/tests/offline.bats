@@ -125,28 +125,28 @@ worker_timeout() {
 }
 
 @test "worker accepts valid configs" {
-  # tests/good/config.yaml sets grpc: 0.0.0.0:8080; override it so the test does not bind the default port.
-  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:0
+  # The fixture uses an ephemeral gRPC port, without overlapping file and CLI settings.
+  worker_timeout 5s --workerConfig=tests/good/config.yaml
   [ "$status" -eq 124 ] # killed by timeout
+  grep "Starting SingleNodeWorker" singleNodeWorker.log
 }
 
-@test "worker warns when CLI overrides YAML config value" {
-  # The YAML config sets admission_queue_size=1024. Override it via CLI to trigger the warning.
-  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:0 --worker.query_engine.admission_queue_size=2048
-  [ "$status" -eq 124 ] # killed by timeout
-
-  # The log should contain the override warning
-  grep "was already set" singleNodeWorker.log
-  grep "overridden by a command-line argument" singleNodeWorker.log
+@test "worker rejects overlapping YAML and CLI options" {
+  # The YAML config sets admission_queue_size=1024; setting it on the CLI as well is an error,
+  # regardless of the values: an option belongs in exactly one of the two. As with the memory-budget
+  # errors below, the process can linger to the timeout rather than exiting fast, so the logged marker
+  # -- not the exit code -- is the reliable signal that the overlap was rejected.
+  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --worker.query_engine.admission_queue_size=2048
+  grep "must not both set the same option" singleNodeWorker.log
+  grep "worker.query_engine.admission_queue_size" singleNodeWorker.log
 }
 
-@test "worker does not warn when CLI sets a value not in YAML" {
-  # The YAML config does not set enable_event_trace. Setting it via CLI should not trigger a warning.
-  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:0 --enable_event_trace=true
+@test "worker accepts disjoint YAML and CLI options" {
+  # The YAML config does not set enable_event_trace; setting it via CLI is fine.
+  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --enable_event_trace=true
   [ "$status" -eq 124 ] # killed by timeout
-
-  # The log should NOT contain the override warning for this key
-  ! grep "enable_event_trace.*was already set" singleNodeWorker.log
+  ! grep "must not both set the same option" singleNodeWorker.log
+  grep "Starting SingleNodeWorker" singleNodeWorker.log
 }
 
 # Locks the config contract for the memory-budget options. Degenerate values are rejected at config-parse time by
@@ -165,11 +165,11 @@ worker_timeout() {
   # The fraction is validated to [0.0, 1.0] at config-parse time, so both bounds are rejected there.
   worker_timeout 5s -- --grpc=127.0.0.1:0 --worker.unpooled_memory_fraction=1.5
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
-  grep "unpooled_memory_fraction" singleNodeWorker.log
+  grep -i "unpooled_memory_fraction" singleNodeWorker.log
 
   worker_timeout 5s -- --grpc=127.0.0.1:0 --worker.unpooled_memory_fraction=-0.1
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
-  grep "unpooled_memory_fraction" singleNodeWorker.log
+  grep -i "unpooled_memory_fraction" singleNodeWorker.log
 }
 
 @test "worker rejects non-power-of-two buffer_alignment_in_bytes" {
@@ -177,7 +177,7 @@ worker_timeout() {
   # every build type (a BufferManager PRECONDITION would be compiled out in the no-assert Benchmark build).
   worker_timeout 5s -- --grpc=127.0.0.1:0 --worker.buffer_alignment_in_bytes=48
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
-  grep "buffer_alignment_in_bytes" singleNodeWorker.log
+  grep -i "buffer_alignment_in_bytes" singleNodeWorker.log
 }
 
 @test "worker accepts unpooled_memory_fraction of 0.0 (all pooled)" {

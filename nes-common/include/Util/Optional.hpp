@@ -12,21 +12,23 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/NumberValidation.hpp>
-
-#include <regex>
-#include <string>
+#pragma once
+#include <expected>
+#include <optional>
+#include <type_traits>
+#include <utility>
 
 namespace NES
 {
 
-bool NumberValidation::isValid(const std::string& parameter) const
+template <typename T, typename ESupplier, typename E = std::invoke_result_t<ESupplier>>
+std::expected<T, E> optionalToExpected(std::optional<T> optional, ESupplier orElse)
 {
-    std::regex numberRegex("^\\d+$");
-    if (!std::regex_match(parameter, numberRegex))
+    if (optional.has_value())
     {
-        return false;
+        return std::move(optional.value());
     }
-    return true;
+    return std::unexpected<E>{orElse()};
 }
+
 }

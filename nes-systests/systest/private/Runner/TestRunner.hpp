@@ -25,12 +25,15 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Configurations/ConfigLiteral.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
 #include <ResultChecker/OutcomeChecker.hpp>
 #include <Runner/QuerySubmitter.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <DistributedQuery.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
@@ -132,7 +135,7 @@ private:
     SystestBinder binder;
     SystestClusterConfiguration clusterConfig;
     bool remote;
-    SingleNodeWorkerConfiguration baseWorker;
+    Schema<LiteralConfigValue, Ordered> baseWorker;
     std::chrono::milliseconds queryTimeout;
     /// The partitions that setup accepted, which every submit runs.
     std::vector<SetUpPartition> setUpPartitions;

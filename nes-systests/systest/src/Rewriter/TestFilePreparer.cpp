@@ -73,10 +73,10 @@ void warnNumbersNotInFile(
 }
 
 TestFilePreparer::TestFilePreparer(const SystestConfiguration& config)
-    : workingDir{config.workingDir.getValue()}
-    , testDataDir{config.testDataDir.getValue()}
-    , configDir{config.configDir.getValue()}
-    , keyFactory{config.testDiscoverRoot.getValue()}
+    : workingDir{config.workingDir}
+    , testDataDir{config.testDataDir}
+    , configDir{config.configDir}
+    , keyFactory{config.testDiscoverRoot}
     , defaultSourceHost{getDefaultHost(config.clusterConfig.allowSourcePlacement, "allow_source_placement")}
     , defaultSinkHost{getDefaultHost(config.clusterConfig.allowSinkPlacement, "allow_sink_placement")}
 {
