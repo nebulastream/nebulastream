@@ -15,7 +15,10 @@ our runs use 4 KiB) and hands them out through a lock-free MPMC queue with refer
 no per-buffer heap allocation. Any request for a *different* size — a `VARSIZED` payload, a hash-map page,
 a paged-vector segment — cannot come from that pool and falls to the **unpooled** path
 (`UnpooledChunksManager`): a per-thread allocator that heap-allocates a control block per buffer,
-suballocates from rolling chunks behind a lock, and frees a chunk only once its last buffer is released.
+suballocates from a per-thread chunk behind a lock, and frees a chunk only once its last buffer is released.
+Throughout, a *variable-sized request* means asking the pool for a buffer whose size differs from the
+operator buffer size — to hold a `VARSIZED` value, an operator-state page, or any other payload — not the
+`VARSIZED` column type specifically.
 
 **P1 — the unpooled path is slower and fragments, and variable-sized data always takes it.**
 A microbenchmark (2 M allocate/free pairs per thread) puts the unpooled path at 596 ns/op single-threaded
@@ -24,12 +27,11 @@ size is a rolling average of the last 100 requests and a chunk is pinned until i
 `VARSIZED` workload this tax is paid on *every* payload, and none of that memory is pooled or bounded by
 the pool's accounting.
 
-**P2 — the unpooled path is unbounded (showstopper, already being addressed elsewhere).**
+**P2 — the unpooled path is unbounded (showstopper, addressed elsewhere).**
 It allocates from anonymous memory with no global cap, so large group-by/join state can exhaust memory and
-the OS OOM-kills the worker. This is the priority the reviewers agree on. Bounding the unpooled byte
-counter is **already merged** (#1702); terminating a query when the *bounded* budget is genuinely reached
-is tracked in **#1700**. Both are prerequisites for retiring the unpooled path (#1712) but are out of scope
-here.
+the OS OOM-kills the worker. This is the priority the reviewers agree on. Bounding the unpooled byte counter
+and terminating a query when the bounded budget is genuinely reached are prerequisites for retiring the
+unpooled path; both are tracked as their own work (see Non-Goals) and are out of scope here.
 
 **Correction on the network path.** An earlier draft claimed the wire format fixes the buffer size and
 mis-deserializes a right-sized buffer. That was wrong: the wire carries sizes (Rust slices and vectors
@@ -69,7 +71,8 @@ options; the review argued for A2 and A3, so we weigh them explicitly.
 
 **A1 — Segregated power-of-two size classes (proposed).** One pool per class, each an instance of the
 existing lock-free machinery; round a request up to the smallest fitting class. *For:* reuses the hot path
-verbatim (G2); a request is a bounded index over ~14 classes plus an O(1) queue pop; variable sizes become
+verbatim (G2); a request costs a scan over the ~14 classes to pick the smallest fitting one, then the same
+O(1) lock-free pop the fixed pool uses (the scan adds no measurable latency, §PoC); variable sizes become
 pooled and bounded. *Against:* there are N classes to provision, most unused on any one workload, so the
 provisioning policy carries real weight (§PoC quantifies this — with eager provisioning it is a footgun).
 
@@ -213,7 +216,8 @@ value is memory placement (variable sizes pooled and bounded) at no throughput c
 
 # Appendix — reproduction
 
-On node 11 (`/local-ssd/zeuchste/nes-mem`, `Benchmark` build; run inside `nix develop . --command`):
+On the benchmark node (`sr630-wn-a-11`, 2×32 cores, 503 GiB RAM; tree at `/local-ssd/zeuchste/nes-mem`,
+`Benchmark` build; run inside `nix develop . --command`):
 
 ```bash
 S=cmake-build-release/nes-systests/systest/systest
