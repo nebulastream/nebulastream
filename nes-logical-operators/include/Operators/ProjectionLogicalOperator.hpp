@@ -24,7 +24,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>

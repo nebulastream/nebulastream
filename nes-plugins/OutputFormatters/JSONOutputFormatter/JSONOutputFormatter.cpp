@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <ranges>
@@ -36,11 +37,15 @@
 #include <fmt/format.h>
 #include <std/cstring.h>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <ErrorHandling.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -88,7 +93,7 @@ void writeValue(
 }
 
 JSONOutputFormatter::JSONOutputFormatter(
-    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const JSONOutputFormatterConfig& config)
     : OutputFormatter(fieldNames)
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
@@ -108,8 +113,7 @@ JSONOutputFormatter::JSONOutputFormatter(
     serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
 
     /// Override the datatype defaults for the fields that the user configured a serializer for
-    fieldSerializerTypes
-        = parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), this->fieldNames);
+    fieldSerializerTypes = parseValueSerializerOverrides(config.valueSerializers, this->fieldNames);
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -197,9 +201,15 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     return written;
 }
 
-DescriptorConfig::Config JSONOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+Schema<QualifiedErasedConfigField, Ordered> JSONOutputFormatter::getConfigSchema()
 {
-    return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersJSON>(std::move(config), "JSON");
+    /// The JSON output formatter declares no config parameters.
+    return Schema<QualifiedErasedConfigField, Ordered>{std::vector<QualifiedErasedConfigField>{}};
+}
+
+std::expected<JSONOutputFormatterConfig, Exception> JSONOutputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return JSONOutputFormatterConfig{config.get(OutputFormatterDescriptor::VALUE_SERIALIZERS)};
 }
 
 std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
@@ -210,6 +220,8 @@ std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter&)
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 std::unique_ptr<OutputFormatter> JSONOutputFormatter::provideFormatter(OutputFormatterRegistryArguments arguments)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames), std::move(arguments.descriptor));
+    /// The config struct is empty, but the getAs still validates that the descriptor was built for this formatter.
+    const auto& config = arguments.descriptor.getConfig().getAs<JSONOutputFormatterConfig>();
+    return std::make_unique<JSONOutputFormatter>(std::move(arguments.fieldNames), config);
 }
 }

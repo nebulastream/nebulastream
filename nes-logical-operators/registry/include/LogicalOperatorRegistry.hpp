@@ -17,7 +17,6 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Reflection.hpp>
