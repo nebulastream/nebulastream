@@ -47,7 +47,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerOptimizerConfig.hpp>
 
 namespace
@@ -110,6 +110,10 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-w", "--workerConfig")
         .help("worker/optimizer config file (.yaml) with fully qualified keys (worker.*, optimizer.*, ...); the lowest-priority config "
               "layer");
+    program.add_argument("--permit-conflicting-options")
+        .flag()
+        .help("allow higher-priority config layers (systest file > topology > command line) to overwrite conflicting values; every "
+              "overwrite is printed");
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
     program.add_argument("--")
         .help("arguments passed to the worker/optimizer config, e.g., `-- --worker.query_engine.number_of_worker_threads=10 "
@@ -361,6 +365,7 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     }
 
     config.remoteWorker = program.get<bool>("--remote");
+    config.permitConflictingOptions = program.get<bool>("--permit-conflicting-options");
 
     try
     {
@@ -380,7 +385,7 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
                 config = NES::flattenYAMLConfig(worker["config"]);
             }
 
-            clusterConfig.workers.push_back(NES::WorkerConfig{
+            clusterConfig.workers.push_back(NES::WorkerCatalogEntry{
                 .host = worker["host"].as<NES::Host>(),
                 .dataAddress = worker["data_address"].as<std::string>(),
                 .maxOperators = worker["max_operators"].IsDefined()

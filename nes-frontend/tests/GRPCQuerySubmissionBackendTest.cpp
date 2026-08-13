@@ -24,7 +24,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES::Test
 {
@@ -40,7 +40,7 @@ class OldWorkerService final : public WorkerRPCService::Service
 GRPCQuerySubmissionBackend backendFor(const std::string& host)
 {
     return GRPCQuerySubmissionBackend{
-        WorkerConfig{.host = Host{host}, .dataAddress = {}, .maxOperators = {}, .downstream = {}, .config = {}}};
+        WorkerCatalogEntry{.host = Host{host}, .dataAddress = {}, .maxOperators = {}, .downstream = {}, .config = {}}};
 }
 }
 

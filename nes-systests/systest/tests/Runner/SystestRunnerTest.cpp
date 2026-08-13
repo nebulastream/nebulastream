@@ -64,7 +64,7 @@
 #include <Util/Pointers.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace
@@ -188,7 +188,7 @@ std::pair<QuerySubmitter, MockQuerySubmissionBackend*> createQuerySubmitter()
     workerCatalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity(CapacityKind::Unlimited{}), {});
     QuerySubmitter submitter{std::make_unique<QueryManager>(
         std::move(workerCatalog),
-        [mockBackend = std::move(mockBackend)](const WorkerConfig&) mutable
+        [mockBackend = std::move(mockBackend)](const WorkerCatalogEntry&) mutable
         {
             INVARIANT(mockBackend != nullptr, "mockBackend should only be moved once");
             return std::move(mockBackend);
