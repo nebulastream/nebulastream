@@ -37,6 +37,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <fmt/chrono.h>
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -123,8 +124,8 @@ void verify_non_blocking_stop(SourceThread& sourceThread, std::source_location l
     auto calledStop = std::chrono::high_resolution_clock::now();
     sourceThread.stop();
     auto stopDone = std::chrono::high_resolution_clock::now();
-    EXPECT_LT(stopDone - calledStop, DEFAULT_TIMEOUT)
-        << "Stopping a SourceThread should be non blocking. We estimate a block with around 100 ms";
+    EXPECT_LT(stopDone - calledStop, DEFAULT_LONG_TIMEOUT)
+        << fmt::format("Stopping a SourceThread exceeded its {} deadline", DEFAULT_LONG_TIMEOUT);
 }
 
 void verify_non_blocking_start(
@@ -135,7 +136,7 @@ void verify_non_blocking_start(
     EXPECT_TRUE(sourceThread.start(std::move(emitFn)));
     auto startDone = std::chrono::high_resolution_clock::now();
     EXPECT_LT(startDone - calledStart, DEFAULT_TIMEOUT)
-        << "Starting a SourceThread should be non blocking. We estimate a block with around 100 ms";
+        << fmt::format("Starting a SourceThread should be non blocking. We estimate a block with around {}", DEFAULT_TIMEOUT);
 }
 
 void verify_no_events(RecordingEmitFunction& recorder, std::source_location location = std::source_location::current())
