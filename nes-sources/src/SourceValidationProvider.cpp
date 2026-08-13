@@ -15,29 +15,20 @@
 #include <Sources/SourceValidationProvider.hpp>
 
 #include <optional>
-#include <ranges>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifier.hpp>
-#include <ErrorHandling.hpp>
-#include <SourceValidationRegistry.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <SourceConfigSchemaRegistry.hpp>
 
 namespace NES::SourceValidationProvider
 {
 
-std::optional<DescriptorConfig::Config> provide(const std::string_view sourceType, std::unordered_map<Identifier, std::string> configMap)
+std::optional<Schema<QualifiedErasedConfigField, Ordered>> provide(const std::string_view sourceType)
 {
-    const std::unordered_map<std::string, std::string> stringConfigMap = configMap
-        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
-        | std::ranges::to<std::unordered_map>();
-    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(stringConfigMap);
-    if (const auto validator = SourceValidationRegistry::instance().find(std::string{sourceType}))
-    {
-        return (*validator)(std::move(sourceValidationRegistryArguments));
-    }
-    return std::nullopt;
+    return SourceConfigSchemaRegistry::instance().getSchema(std::string{sourceType});
 }
+
 }

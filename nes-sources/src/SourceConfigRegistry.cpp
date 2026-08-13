@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <InputFormatterValidationRegistry.hpp>
+#include <SourceConfigRegistry.hpp>
 
 namespace NES
 {
 
-InputFormatterValidationRegistry& InputFormatterValidationRegistry::instance()
+SourceConfigRegistry& SourceConfigRegistry::instance()
 {
-    static InputFormatterValidationRegistry inst;
+    static SourceConfigRegistry inst;
     return inst;
 }
 

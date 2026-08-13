@@ -58,6 +58,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -258,15 +259,15 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path
-                    = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
-                    path.has_value())
+                /// getSourceDescriptor returns by value, assigning to keep the reference alive.
+                const auto sourceDescriptor = logicalSourceOperator->getSourceDescriptor();
+                if (sourceDescriptor.getPluginData().getUnderlying().has_value()
+                    && sourceDescriptor.getPluginData().getUnderlying().type() == typeid(FileSourceConfig))
                 {
-                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
-                        entry.empty())
+                    if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(sourceDescriptor); entry.empty())
                     {
-                        sourceNamesToFilepathAndCountForQuery.emplace(
-                            logicalSourceOperator->getSourceDescriptor(), std::make_pair(SourceInputFile{*path}, 1));
+                        const auto& path = sourceDescriptor.getPluginData().template getAs<const FileSourceConfig&>().filePath;
+                        sourceNamesToFilepathAndCountForQuery.emplace(sourceDescriptor, std::make_pair(SourceInputFile{path}, 1));
                     }
                     else
                     {
@@ -278,8 +279,8 @@ public:
                 {
                     NES_INFO(
                         "No file found for physical source {} for logical source {}",
-                        logicalSourceOperator->getSourceDescriptor().getPhysicalSourceId(),
-                        logicalSourceOperator->getSourceDescriptor().getLogicalSource().getLogicalSourceName());
+                        sourceDescriptor.getPhysicalSourceId(),
+                        sourceDescriptor.getLogicalSourceName());
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));

@@ -13,14 +13,9 @@
 */
 #pragma once
 
-#include <optional>
-#include <string>
+#include <expected>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
 
 namespace NES::InputFormatterValidationProvider
 {
-/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view inputFormat, std::unordered_map<std::string, std::string> stringConfig);
 }

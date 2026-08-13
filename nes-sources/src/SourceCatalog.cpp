@@ -14,19 +14,28 @@
 
 #include <Sources/SourceCatalog.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <ostream>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
+#include <vector>
 
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -36,13 +45,135 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <SourceConfigRegistry.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Util/Pointers.hpp>
+#include <InputFormatterConfigRegistry.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
 
 namespace NES
 {
+
+
+PhysicalSourceBuilder::PhysicalSourceBuilder(
+    GeneralSourceConfig generalSourceConfig,
+    PluginSourceConfiguration sourcePluginConfig,
+    InputFormatterDescriptor inputFormatterPluginConfig,
+    std::shared_ptr<const SourceCatalog> catalog)
+    : generalSourceConfig(std::move(generalSourceConfig))
+    , sourcePluginConfig(std::move(sourcePluginConfig))
+    , inputFormatterPluginConfig(std::move(inputFormatterPluginConfig))
+    , catalog(std::move(catalog))
+{
+}
+
+std::expected<SourceDescriptor, Exception>
+PhysicalSourceBuilder::build(Schema<UnqualifiedUnboundField, Ordered> schema, std::optional<Identifier> logicalSourceName) &&
+{
+    INVARIANT(!this->wasCalled, "PhysicalSourceBuilder called twice");
+    this->wasCalled = true;
+    const auto physicalSourceId = PhysicalSourceId{this->catalog->nextPhysicalSourceId.fetch_add(1)};
+    return SourceDescriptor{
+        physicalSourceId,
+        std::move(schema),
+        this->generalSourceConfig.host,
+        this->generalSourceConfig.maxInflightBuffers,
+        std::move(this->sourcePluginConfig),
+        std::move(this->inputFormatterPluginConfig),
+        std::move(logicalSourceName)};
+}
+
+SourceConfigSchema::SourceConfigSchema(
+    Identifier sourceType, Identifier inputFormatterType, Schema<QualifiedErasedConfigField, Ordered> configSchema)
+    : sourceType(std::move(sourceType)), inputFormatterType(std::move(inputFormatterType)), configSchema(std::move(configSchema))
+{
+}
+
+SourceConfigSchema SourceConfigSchema::withConfigDefaults(Schema<ConfigFieldDefault, Ordered> configDefaults) const
+{
+    auto copy = *this;
+    copy.configDefaults = std::move(configDefaults);
+    return copy;
+}
+
+SourceConfigSchema SourceConfigSchema::withConfigTransformations(Schema<ConfigFieldTransformation, Unordered> configTransformations) const
+{
+    auto copy = *this;
+    copy.configTransformations = std::move(configTransformations);
+    return copy;
+}
+
+std::expected<
+    std::tuple<
+        GeneralSourceConfig,
+        PluginSourceConfiguration,
+        InputFormatterDescriptor,
+        std::optional<Schema<UnqualifiedUnboundField, Ordered>>>,
+    Exception>
+SourceConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& values) const
+{
+    auto [resolvedConfig, resolvationErrors] = resolveConfig(values, configSchema, configDefaults);
+    auto [transformedConfig, transformationErrors] = applyConfigTransformations(resolvedConfig, configTransformations);
+    auto combinedErrors = ConfigResolutionErrors::combine(std::move(resolvationErrors), std::move(transformationErrors));
+    if (not combinedErrors.empty())
+    {
+        return std::unexpected{InvalidConfigParameter("{}", combinedErrors)};
+    }
+
+    const InstantiatedConfig config{std::move(transformedConfig)};
+    auto sourceRegistryEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
+    if (not sourceRegistryEntry.has_value())
+    {
+        return std::unexpected{
+            UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
+    };
+    auto inputFormatterRegistryEntry = InputFormatterConfigRegistry::instance().find(inputFormatterType.asCanonicalString());
+    if (not inputFormatterRegistryEntry.has_value())
+    {
+        return std::unexpected{UnknownInputFormatterType(
+            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activated it.", inputFormatterType)};
+    }
+    auto instantiatedPluginConfig = sourceRegistryEntry->instantiate(config);
+    if (!instantiatedPluginConfig.has_value())
+    {
+        return std::unexpected{instantiatedPluginConfig.error()};
+    }
+    auto pluginSourceConfig = PluginSourceConfiguration{this->sourceType, std::move(instantiatedPluginConfig).value()};
+
+    auto instantiatedInputFormatterConfig = inputFormatterRegistryEntry->instantiate(config);
+    if (!instantiatedInputFormatterConfig.has_value())
+    {
+        return std::unexpected{instantiatedInputFormatterConfig.error()};
+    }
+    auto formatDescriptor = InputFormatterDescriptor{this->inputFormatterType, std::move(instantiatedInputFormatterConfig).value()};
+
+    auto schema = config.get(SourceDescriptor::SCHEMA);
+    auto hostOpt = config.get(SourceDescriptor::HOST);
+
+    auto maxFlightInBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS);
+
+    return std::make_tuple(
+        GeneralSourceConfig{.host = hostOpt, .maxInflightBuffers = maxFlightInBuffers},
+        std::move(pluginSourceConfig),
+        std::move(formatDescriptor),
+        std::move(schema));
+}
+
+SourceCatalog::SourceCatalog(Private)
+{
+}
+
+SharedPtr<SourceCatalog> SourceCatalog::create()
+{
+    return std::make_shared<SourceCatalog>(Private{});
+}
 
 std::optional<LogicalSource>
 SourceCatalog::addLogicalSource(const Identifier& logicalSourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
@@ -60,61 +191,58 @@ SourceCatalog::addLogicalSource(const Identifier& logicalSourceName, const Schem
     return std::nullopt;
 }
 
-std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
-    const LogicalSource& logicalSource,
-    const Identifier& sourceType,
-    Host host,
-    std::unordered_map<Identifier, std::string> descriptorConfig,
-    const std::unordered_map<Identifier, std::string>& parserConfig)
+std::expected<SourceConfigSchema, Exception>
+SourceCatalog::getConfigSchema(const Identifier& sourceType, const Identifier& inputFormatterType)
 {
-    const std::unique_lock lock(catalogMutex);
-
-    const auto logicalPhysicalIter = logicalToPhysicalSourceMapping.find(logicalSource);
-    if (logicalPhysicalIter == logicalToPhysicalSourceMapping.end())
-    {
-        NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist.", logicalSource.getLogicalSourceName());
-        return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
-    }
-    auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(descriptorConfig));
-    if (not descriptorConfigOpt.has_value())
+    const auto sourcePluginConfigSchema = SourceValidationProvider::provide(sourceType.asCanonicalString());
+    if (not sourcePluginConfigSchema.has_value())
     {
         return std::unexpected{
             UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
     }
 
-    std::unordered_map<std::string, std::string> parserConfigStringMap;
-    parserConfigStringMap.reserve(parserConfig.size());
-    for (const auto& [key, value] : parserConfig)
+    const auto inputFormatterPluginConfigSchema
+        = InputFormatterConfigSchemaRegistry::instance().getSchema(inputFormatterType.asCanonicalString());
+    if (not inputFormatterPluginConfigSchema.has_value())
     {
-        parserConfigStringMap.emplace(key.asCanonicalString(), value);
+        return std::unexpected{UnknownInputFormatterType(
+            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormatterType)};
     }
-    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
-    {
-        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
-    }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
-    {
-        return std::unexpected{UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat)};
-    }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
 
-    SourceDescriptor descriptor{
-        id,
-        logicalSource,
-        sourceType.asCanonicalString(),
-        std::move(host),
-        std::move(descriptorConfigOpt.value()),
-        formatDescriptor,
-        false};
-    idsToPhysicalSources.emplace(id, descriptor);
-    logicalPhysicalIter->second.insert(descriptor);
-    NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
-    return descriptor;
+    auto targetSchema
+        = std::
+              array{sourcePluginConfigSchema.value(), SourceDescriptor::configSchema, inputFormatterPluginConfigSchema.value(), InputFormatterDescriptor::configSchema}
+        | std::views::join | std::ranges::to<Schema<QualifiedErasedConfigField, Ordered>>();
+    return SourceConfigSchema{sourceType, inputFormatterType, std::move(targetSchema)};
+}
+
+std::expected<SourceDescriptor, Exception>
+SourceCatalog::registerWithLogicalSource(PhysicalSourceBuilder builder, const Identifier& logicalSourceName)
+{
+    const std::unique_lock lock(catalogMutex);
+    const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSourceName);
+    if (logicalSourceIter == namesToLogicalSourceMapping.end())
+    {
+        return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSourceName)};
+    }
+    const auto logicalPhysicalIter = logicalToPhysicalSourceMapping.find(logicalSourceIter->second);
+    PRECONDITION(
+        logicalPhysicalIter != logicalToPhysicalSourceMapping.end(),
+        "Source catalog corrupted, logical source name existed, but no mapping to physical sources found");
+
+    return std::move(builder)
+        .build(*logicalSourceIter->second.getSchema(), logicalSourceName)
+        .transform(
+            [this, &logicalPhysicalIter](SourceDescriptor descriptor)
+            {
+                auto [iter, success] = logicalPhysicalIter->second.insert(descriptor);
+                PRECONDITION(
+                    success,
+                    "Couldn't insert new source descriptor into logical source mapping, the uniqueness of physical source IDs must have "
+                    "been violated");
+                idsToPhysicalSources.emplace(descriptor.getPhysicalSourceId(), descriptor);
+                return descriptor;
+            });
 }
 
 std::optional<LogicalSource> SourceCatalog::getLogicalSource(const Identifier& logicalSourceName) const
@@ -156,49 +284,6 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
         return physicalSourceIter->second;
     }
     return std::nullopt;
-}
-
-std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
-    const Identifier& sourceType,
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
-    Host host,
-    const std::unordered_map<Identifier, std::string>& parserConfigMap,
-    std::unordered_map<Identifier, std::string> sourceConfigMap) const
-{
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(sourceConfigMap));
-    if (!descriptorConfig.has_value())
-    {
-        return std::nullopt;
-    }
-
-    std::unordered_map<std::string, std::string> parserConfigStringMap;
-    parserConfigStringMap.reserve(parserConfigMap.size());
-    for (const auto& [key, value] : parserConfigMap)
-    {
-        parserConfigStringMap.emplace(key.asCanonicalString(), value);
-    }
-    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
-    {
-        throw InvalidConfigParameter("Source config does not contain input formatter type");
-    }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
-    {
-        throw UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat);
-    }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
-
-
-    auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto name = Identifier::parse(physicalId.toString());
-
-    const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{
-        physicalId, logicalSource, sourceType.asCanonicalString(), std::move(host), descriptorConfig.value(), formatDescriptor, true};
-    return sourceDescriptor;
 }
 
 std::optional<std::unordered_set<SourceDescriptor>> SourceCatalog::getPhysicalSources(const LogicalSource& logicalSource) const
@@ -252,12 +337,20 @@ bool SourceCatalog::removePhysicalSource(const SourceDescriptor& physicalSource)
         NES_DEBUG("Trying to remove physical source {}, but it is not registered", physicalSource.getPhysicalSourceId());
         return false;
     }
+    INVARIANT(
+        physicalSource.getLogicalSourceName().has_value(), "Physical source id was registered but was not attached to logical source");
+    const auto logicalSourceIter = namesToLogicalSourceMapping.find(physicalSource.getLogicalSourceName().value());
+    INVARIANT(
+        logicalSourceIter != namesToLogicalSourceMapping.end(),
+        "Did not find logical source \"{}\" when trying to remove physical source {}",
+        physicalSource.getLogicalSourceName().value(),
+        physicalSource.getPhysicalSourceId());
 
-    const auto physicalSourcesIter = logicalToPhysicalSourceMapping.find(physicalSource.getLogicalSource());
+    const auto physicalSourcesIter = logicalToPhysicalSourceMapping.find(logicalSourceIter->second);
     INVARIANT(
         physicalSourcesIter != logicalToPhysicalSourceMapping.end(),
         "Did not find logical source \"{}\" when trying to remove associate physical source {}",
-        physicalSource.getLogicalSource().getLogicalSourceName(),
+        logicalSourceIter->second.getLogicalSourceName(),
         physicalSource.getPhysicalSourceId());
 
     const auto removedPhysicalFromLogical = physicalSourcesIter->second.erase(physicalSource);
@@ -265,7 +358,7 @@ bool SourceCatalog::removePhysicalSource(const SourceDescriptor& physicalSource)
         removedPhysicalFromLogical == 1,
         "While removing physical source {}, associated logical source \"{}\" was not associated with it anymore",
         physicalSource.getPhysicalSourceId(),
-        physicalSource.getLogicalSource().getLogicalSourceName());
+        logicalSourceIter->second.getLogicalSourceName());
 
     idsToPhysicalSources.erase(physicalSourcePair);
     NES_DEBUG("Removed physical source {}", physicalSource.getPhysicalSourceId());
@@ -283,6 +376,172 @@ std::unordered_map<LogicalSource, std::unordered_set<SourceDescriptor>> SourceCa
 {
     const std::unique_lock lock{catalogMutex};
     return logicalToPhysicalSourceMapping;
+}
+
+std::ostream& operator<<(std::ostream& os, const GeneralSourceConfig& config)
+{
+    return os << fmt::format("GeneralSourceConfig(host: {}, maxInflightBuffers: {})", config.host, config.maxInflightBuffers);
+}
+
+namespace
+{
+/// Transitional helper for the map-based registration API: raw string maps become config
+/// literals (unqualified names resolve by suffix against the merged schema) and are resolved
+/// through the same SourceConfigSchema path as the typed API.
+std::expected<
+    std::tuple<
+        GeneralSourceConfig,
+        PluginSourceConfiguration,
+        InputFormatterDescriptor,
+        std::optional<Schema<UnqualifiedUnboundField, Ordered>>>,
+    Exception>
+resolveLegacyConfigMaps(
+    const Identifier& sourceType,
+    const Host& host,
+    const std::unordered_map<Identifier, std::string>& descriptorConfig,
+    const std::unordered_map<Identifier, std::string>& parserConfig)
+{
+    const auto typeKey = InputFormatterDescriptor::TYPE_FIELD.getName();
+    const auto typeIter = std::ranges::find_if(parserConfig, [&](const auto& entry) { return entry.first == typeKey; });
+    if (typeIter == parserConfig.end())
+    {
+        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
+    }
+    const auto inputFormatterType = Identifier::parse(typeIter->second);
+
+    std::vector<LiteralConfigValue> literals;
+    literals.reserve(descriptorConfig.size() + parserConfig.size() + 1);
+    literals.emplace_back(QualifiedIdentifier::create(SourceDescriptor::HOST.getName()), host.getRawValue());
+    for (const auto& [key, value] : descriptorConfig)
+    {
+        /// Transitional contract of the map API: whatever does not parse as a typed literal stays
+        /// a raw string (delimiters like "\n" trim to empty and must survive as strings).
+        literals.emplace_back(QualifiedIdentifier::create(key), parseConfigLiteral(value).value_or(ConfigLiteral{value}));
+    }
+    for (const auto& [key, value] : parserConfig)
+    {
+        /// The formatter type selects the schema; it is only a resolvable field for registered
+        /// formatter plugins (the NATIVE format has none).
+        if (key == typeKey)
+        {
+            continue;
+        }
+        /// Transitional contract of the map API: whatever does not parse as a typed literal stays
+        /// a raw string (delimiters like "\n" trim to empty and must survive as strings).
+        literals.emplace_back(QualifiedIdentifier::create(key), parseConfigLiteral(value).value_or(ConfigLiteral{value}));
+    }
+
+    /// The NATIVE format has no registered formatter plugin (it needs no formatting and carries
+    /// no config): resolve against the source-side schema only and build the descriptor directly.
+    if (inputFormatterType == Identifier::parse("NATIVE"))
+    {
+        auto sourcePluginConfigSchema = SourceValidationProvider::provide(sourceType.asCanonicalString());
+        if (not sourcePluginConfigSchema.has_value())
+        {
+            return std::unexpected{
+                UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
+        }
+        auto targetSchema = std::array{sourcePluginConfigSchema.value(), SourceDescriptor::configSchema} | std::views::join
+            | std::ranges::to<Schema<QualifiedErasedConfigField, Ordered>>();
+        auto [resolvedConfig, resolvationErrors] = resolveConfig(createConfigLiteralSchema(std::move(literals)), targetSchema);
+        if (not resolvationErrors.empty())
+        {
+            return std::unexpected{InvalidConfigParameter("{}", resolvationErrors)};
+        }
+        const InstantiatedConfig config{std::move(resolvedConfig)};
+        auto sourceRegistryEntry = SourceConfigRegistry::instance().find(sourceType.asCanonicalString());
+        if (not sourceRegistryEntry.has_value())
+        {
+            return std::unexpected{UnknownSourceType("The source type '{}' is not registered.", sourceType)};
+        }
+        auto instantiatedPluginConfig = sourceRegistryEntry->instantiate(config);
+        if (not instantiatedPluginConfig.has_value())
+        {
+            return std::unexpected{instantiatedPluginConfig.error()};
+        }
+        return std::make_tuple(
+            GeneralSourceConfig{
+                .host = config.get(SourceDescriptor::HOST), .maxInflightBuffers = config.get(SourceDescriptor::MAX_INFLIGHT_BUFFERS)},
+            PluginSourceConfiguration{sourceType, std::move(instantiatedPluginConfig).value()},
+            InputFormatterDescriptor{inputFormatterType, ExplicitAny{std::any{std::monostate{}}}},
+            config.get(SourceDescriptor::SCHEMA));
+    }
+
+    auto configSchema = SourceCatalog::getConfigSchema(sourceType, inputFormatterType);
+    if (not configSchema.has_value())
+    {
+        return std::unexpected{std::move(configSchema).error()};
+    }
+    literals.emplace_back(QualifiedIdentifier::create(typeKey), inputFormatterType.asCanonicalString());
+    return configSchema->resolveConfigs(createConfigLiteralSchema(std::move(literals)));
+}
+}
+
+std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
+    const LogicalSource& logicalSource,
+    const Identifier& sourceType,
+    const Host& host,
+    const std::unordered_map<Identifier, std::string>& descriptorConfig,
+    const std::unordered_map<Identifier, std::string>& parserConfig)
+{
+    auto resolved = resolveLegacyConfigMaps(sourceType, host, descriptorConfig, parserConfig);
+    if (not resolved.has_value())
+    {
+        return std::unexpected{std::move(resolved).error()};
+    }
+    auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+
+    const std::unique_lock lock(catalogMutex);
+    const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSource.getLogicalSourceName());
+    if (logicalSourceIter == namesToLogicalSourceMapping.end())
+    {
+        return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
+    }
+    const auto logicalPhysicalIter = logicalToPhysicalSourceMapping.find(logicalSourceIter->second);
+    PRECONDITION(
+        logicalPhysicalIter != logicalToPhysicalSourceMapping.end(),
+        "Source catalog corrupted, logical source name existed, but no mapping to physical sources found");
+
+    const auto physicalSourceId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
+    SourceDescriptor descriptor{
+        physicalSourceId,
+        *logicalSourceIter->second.getSchema(),
+        generalConfig.host,
+        generalConfig.maxInflightBuffers,
+        std::move(pluginConfig),
+        std::move(formatDescriptor),
+        logicalSource.getLogicalSourceName()};
+    auto [iter, success] = logicalPhysicalIter->second.insert(descriptor);
+    PRECONDITION(
+        success,
+        "Couldn't insert new source descriptor into logical source mapping, the uniqueness of physical source IDs must have been violated");
+    idsToPhysicalSources.emplace(descriptor.getPhysicalSourceId(), descriptor);
+    return descriptor;
+}
+
+std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
+    const Identifier& sourceType,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const Host& host,
+    const std::unordered_map<Identifier, std::string>& parserConfigMap,
+    const std::unordered_map<Identifier, std::string>& sourceConfigMap) const
+{
+    auto resolved = resolveLegacyConfigMaps(sourceType, host, sourceConfigMap, parserConfigMap);
+    if (not resolved.has_value())
+    {
+        NES_ERROR("Could not create anonymous source: {}", resolved.error().what());
+        return std::nullopt;
+    }
+    auto& [generalConfig, pluginConfig, formatDescriptor, declaredSchema] = *resolved;
+    const auto physicalSourceId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
+    return SourceDescriptor{
+        physicalSourceId,
+        schema,
+        generalConfig.host,
+        generalConfig.maxInflightBuffers,
+        std::move(pluginConfig),
+        std::move(formatDescriptor),
+        std::nullopt};
 }
 
 }
