@@ -27,7 +27,7 @@
 #include <BaseUnitTest.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace
 {
@@ -73,7 +73,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName);
     config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR);
     config.clusterConfig = SystestClusterConfiguration{
-        .workers = {WorkerConfig{
+        .workers = {WorkerCatalogEntry{
             .host = Host("localhost:8080"),
             .dataAddress = "localhost:9090",
             .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),
@@ -108,7 +108,7 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.testFileExtension = std::string(EXTENSION);
     config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
     config.clusterConfig = SystestClusterConfiguration{
-        .workers = {WorkerConfig{
+        .workers = {WorkerCatalogEntry{
             .host = Host("localhost:8080"),
             .dataAddress = "localhost:9090",
             .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),

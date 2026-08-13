@@ -40,7 +40,7 @@ struct Limited
 
 using Capacity = std::variant<CapacityKind::Unlimited, CapacityKind::Limited>;
 
-struct WorkerConfig
+struct WorkerCatalogEntry
 {
     Host host; /// gRPC management endpoint, used as primary worker identity
     std::string dataAddress; /// Data-plane address for network sources/sinks (set via --data_address)

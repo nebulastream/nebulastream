@@ -38,7 +38,7 @@
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES
 {
@@ -67,7 +67,7 @@ std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQue
 }
 
 std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>>
-QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider)
+QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerCatalogEntry>& workers, BackendProvider& provider)
 {
     std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>> backends;
     for (const auto& workerConfig : workers)

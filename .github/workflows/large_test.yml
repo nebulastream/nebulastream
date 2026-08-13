@@ -79,6 +79,7 @@ jobs:
               --workingDir=build/nes-systests/large_scale \
               --data build/nes-systests/testdata \
               --groups large \
+              --permit-conflicting-options \
               -- \
               --worker.default_query_execution.execution_mode=COMPILER \
               --worker.query_engine.number_of_worker_threads=${{ inputs.number_of_worker_threads }} \

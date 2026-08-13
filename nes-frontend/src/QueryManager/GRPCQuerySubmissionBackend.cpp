@@ -37,11 +37,12 @@
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
 {
-GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
+GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerCatalogEntry config)
     : stub{WorkerRPCService::NewStub(grpc::CreateChannel(config.host.getRawValue(), grpc::InsecureChannelCredentials()))}
     , workerConfig{std::move(config)}
 {
@@ -171,7 +172,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
 
 BackendProvider createGRPCBackend()
 {
-    return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
+    return [](const WorkerCatalogEntry& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };
 }
 
 }

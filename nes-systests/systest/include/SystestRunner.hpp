@@ -32,7 +32,6 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <rfl/Rename.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
@@ -67,9 +66,16 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
-/// Build the embedded-worker config resolver from the merged run-configuration literals
-/// (command line plus per-test-file overrides). The run configuration wins over the topology.
-[[nodiscard]] WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals);
+/// Build the config policy for embedded workers spawned by systest: per worker, merge the config
+/// layers lowest priority first — command line, per-worker topology config, systest-file override —
+/// and resolve the result. Any overwrite (same name, differing value) fails the run unless
+/// `permitConflictingOptions` is set, in which case each overwrite is printed to stdout together
+/// with `overwriteContext` (the systest file(s) being run).
+[[nodiscard]] WorkerConfigResolver makeWorkerConfigResolver(
+    Schema<LiteralConfigValue, Ordered> commandLineLiterals,
+    Schema<LiteralConfigValue, Ordered> systestFileLiterals,
+    bool permitConflictingOptions,
+    std::string overwriteContext);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries

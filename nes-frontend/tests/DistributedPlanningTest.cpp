@@ -82,7 +82,7 @@ struct PhysicalSource
     std::string host;
 };
 
-struct WorkerConfig
+struct WorkerCatalogEntry
 {
     std::string host;
     std::optional<std::string> dataAddress;
@@ -96,7 +96,7 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
-    std::vector<WorkerConfig> workers;
+    std::vector<WorkerCatalogEntry> workers;
 };
 }
 
@@ -138,9 +138,9 @@ struct convert<NES::Test::PhysicalSource>
 };
 
 template <>
-struct convert<NES::Test::WorkerConfig>
+struct convert<NES::Test::WorkerCatalogEntry>
 {
-    static bool decode(const Node& node, NES::Test::WorkerConfig& rhs)
+    static bool decode(const Node& node, NES::Test::WorkerCatalogEntry& rhs)
     {
         rhs.host = node["host"].as<std::string>();
         rhs.dataAddress
@@ -163,7 +163,7 @@ struct convert<NES::Test::QueryConfig>
         rhs.sinks = node["sinks"].as<std::vector<NES::Test::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::Test::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::Test::PhysicalSource>>();
-        rhs.workers = node["workers"].as<std::vector<NES::Test::WorkerConfig>>();
+        rhs.workers = node["workers"].as<std::vector<NES::Test::WorkerCatalogEntry>>();
         rhs.query = node["query"].as<std::string>();
         return true;
     }

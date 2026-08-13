@@ -80,7 +80,7 @@ namespace
 using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
 
 /// A test file's per-query configuration overrides as the highest-priority config layer (see
-/// makeRunConfigResolver). Override keys are fully qualified (e.g. `worker.total_memory_in_bytes`);
+/// makeWorkerConfigResolver). Override keys are fully qualified (e.g. `worker.total_memory_in_bytes`);
 /// a leading `--` is tolerated as the old command-line-style overwrite stripped it.
 Schema<LiteralConfigValue, Ordered> buildOverrideLiterals(const Systest::ConfigurationOverride& overrideConfig)
 {
@@ -96,6 +96,16 @@ Schema<LiteralConfigValue, Ordered> buildOverrideLiterals(const Systest::Configu
         overrideLiterals.emplace_back(QualifiedIdentifier::parse(keyView), parseConfigLiteral(value));
     }
     return createConfigLiteralSchema(std::move(overrideLiterals));
+}
+
+/// The systest files a group of queries came from, for the conflict/overwrite report.
+std::string testFilesLabel(const std::vector<Systest::SystestQuery>& queries)
+{
+    auto names = queries | std::views::transform([](const auto& query) { return query.testName; }) | std::ranges::to<std::vector>();
+    std::ranges::sort(names);
+    const auto [first, last] = std::ranges::unique(names);
+    names.erase(first, last);
+    return fmt::format("{}", fmt::join(names, ", "));
 }
 
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
@@ -153,7 +163,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     const Schema<LiteralConfigValue, Ordered>& baseConfigLiterals,
-
+    const bool permitConflictingOptions,
     Systest::SystestProgressTracker& progressTracker)
 {
     while (true)
@@ -167,10 +177,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         progressTracker.setTotalQueries(totalLocal);
         for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
         {
-            auto [runConfigLiterals, overwrites] = mergeConfigLayers(
-                {ConfigLayer{.name = "command line", .literals = baseConfigLiterals},
-                 ConfigLayer{.name = "systest file", .literals = buildOverrideLiterals(overrideConfig)}});
-            auto workerConfigResolver = Systest::makeRunConfigResolver(std::move(runConfigLiterals));
+            auto workerConfigResolver = Systest::makeWorkerConfigResolver(
+                baseConfigLiterals, buildOverrideLiterals(overrideConfig), permitConflictingOptions, testFilesLabel(queriesForConfig));
 
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
@@ -275,7 +283,13 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
     else
     {
         runEndlessLocal(
-            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, workerOptimizerConfigLiterals, progressTracker);
+            queriesByOverride,
+            rng,
+            numberConcurrentQueries,
+            config.clusterConfig,
+            workerOptimizerConfigLiterals,
+            config.permitConflictingOptions,
+            progressTracker);
     }
 }
 
@@ -451,7 +465,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(benchmarkQueries.size());
                 auto failed = runQueriesAndBenchmark(
                     benchmarkQueries,
-                    Systest::makeRunConfigResolver(workerOptimizerConfigLiterals),
+                    Systest::makeWorkerConfigResolver(
+                        workerOptimizerConfigLiterals, {}, config.permitConflictingOptions, testFilesLabel(benchmarkQueries)),
                     benchmarkResults,
                     config.clusterConfig,
                     progressTracker);
@@ -475,10 +490,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(queries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
-                    auto [runConfigLiterals, overwrites] = mergeConfigLayers(
-                        {ConfigLayer{.name = "command line", .literals = workerOptimizerConfigLiterals},
-                         ConfigLayer{.name = "systest file", .literals = buildOverrideLiterals(overrideConfig)}});
-                    auto workerConfigResolver = Systest::makeRunConfigResolver(std::move(runConfigLiterals));
+                    auto workerConfigResolver = Systest::makeWorkerConfigResolver(
+                        workerOptimizerConfigLiterals,
+                        buildOverrideLiterals(overrideConfig),
+                        config.permitConflictingOptions,
+                        testFilesLabel(queriesForConfig));
                     const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance
                         ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
                                                                   { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}

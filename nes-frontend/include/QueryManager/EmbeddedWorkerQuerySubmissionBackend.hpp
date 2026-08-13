@@ -24,7 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -42,13 +42,13 @@ class Channel;
 /// systest) so that the policy — which config layers apply, their precedence, and whether
 /// conflicting values are permitted — lives with the caller, not the backend. Throws if the
 /// worker's configuration is invalid.
-using WorkerConfigResolver = std::function<SingleNodeWorkerConfiguration(const WorkerConfig&)>;
+using WorkerConfigResolver = std::function<SingleNodeWorkerConfiguration(const WorkerCatalogEntry&)>;
 
 class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
     ~EmbeddedWorkerQuerySubmissionBackend() override;
-    EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, WorkerConfigResolver resolveWorkerConfiguration);
+    EmbeddedWorkerQuerySubmissionBackend(WorkerCatalogEntry config, const WorkerConfigResolver& resolveWorkerConfiguration);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;

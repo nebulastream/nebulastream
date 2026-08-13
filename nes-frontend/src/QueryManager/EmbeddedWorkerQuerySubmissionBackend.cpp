@@ -32,7 +32,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES::detail
@@ -98,7 +98,7 @@ class Channel
 public:
     /// Resolving in the constructor (not the worker thread) surfaces configuration errors —
     /// e.g. conflicting config layers — as an exception to whoever creates the backend.
-    Channel(WorkerConfig cfg, const WorkerConfigResolver& resolveWorkerConfiguration)
+    Channel(WorkerCatalogEntry cfg, const WorkerConfigResolver& resolveWorkerConfiguration)
         : config(std::move(cfg))
         , workerConfiguration(resolveWorkerConfiguration(this->config))
         , thread(
@@ -131,7 +131,7 @@ private:
         const std::stop_token& stopToken,
         folly::UMPSCQueue<Request, /*MayBlock*/ true>& requests,
         folly::USPSCQueue<Reply, /*MayBlock*/ true>& replies,
-        const WorkerConfig& config,
+        const WorkerCatalogEntry& config,
         SingleNodeWorkerConfiguration workerConfiguration)
     {
         /// The injected resolver already produced the configuration (see the Channel
@@ -185,7 +185,7 @@ private:
     mutable folly::UMPSCQueue<Request, /*MayBlock*/ true> requests;
     mutable folly::USPSCQueue<Reply, /*MayBlock*/ true> replies;
     mutable std::mutex submitMutex;
-    WorkerConfig config;
+    WorkerCatalogEntry config;
     SingleNodeWorkerConfiguration workerConfiguration;
     /// Must be declared last: its body references the queues above, and on
     /// destruction the jthread requests stop and joins before earlier members go.
@@ -197,7 +197,7 @@ namespace NES
 {
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
-    WorkerConfig config, WorkerConfigResolver resolveWorkerConfiguration)
+    WorkerCatalogEntry config, const WorkerConfigResolver& resolveWorkerConfiguration)
     : channel(std::make_unique<detail::Channel>(std::move(config), std::move(resolveWorkerConfiguration)))
 {
 }
@@ -227,7 +227,7 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
 BackendProvider createEmbeddedBackend(WorkerConfigResolver resolveWorkerConfiguration)
 {
     return [resolveWorkerConfiguration
-            = std::move(resolveWorkerConfiguration)](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
+            = std::move(resolveWorkerConfiguration)](const WorkerCatalogEntry& config) /// NOLINT(bugprone-exception-escape)
     { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, resolveWorkerConfiguration); };
 }
 

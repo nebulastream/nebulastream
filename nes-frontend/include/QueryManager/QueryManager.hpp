@@ -30,7 +30,7 @@
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -47,7 +47,7 @@ public:
 };
 
 /// std::move_only_function is the C++23 equivalent but is not yet available in libc++19.
-using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(const WorkerConfig&)>;
+using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(const WorkerCatalogEntry&)>;
 
 struct QueryManagerState
 {
@@ -68,7 +68,7 @@ class QueryManager
         mutable std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>> backends;
         mutable uint64_t cachedWorkerCatalogVersion = 0;
         static std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>>
-        createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider);
+        createBackends(const std::vector<WorkerCatalogEntry>& workers, BackendProvider& provider);
         void rebuildBackendsIfNeeded() const;
 
     public:

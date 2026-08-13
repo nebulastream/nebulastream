@@ -25,6 +25,7 @@
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <WorkerCatalogEntry.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -32,10 +33,10 @@ namespace NES
 class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 {
     std::unique_ptr<WorkerRPCService::Stub> stub;
-    WorkerConfig workerConfig;
+    WorkerCatalogEntry workerConfig;
 
 public:
-    explicit GRPCQuerySubmissionBackend(WorkerConfig config);
+    explicit GRPCQuerySubmissionBackend(WorkerCatalogEntry config);
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;

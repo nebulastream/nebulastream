@@ -24,13 +24,12 @@
 #include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES
 {
 
-WorkerCatalog::WorkerCatalog(const std::vector<WorkerConfig>& workers)
+WorkerCatalog::WorkerCatalog(const std::vector<WorkerCatalogEntry>& workers)
 {
     for (const auto& [host, data, capacity, downstream, config] : workers)
     {
@@ -48,7 +47,7 @@ bool WorkerCatalog::addWorker(
     const bool added = workers
                            .try_emplace(
                                host,
-                               WorkerConfig{
+                               WorkerCatalogEntry{
                                    .host = host,
                                    .dataAddress = std::move(dataAddress),
                                    .maxOperators = maxOperators,
@@ -63,7 +62,7 @@ bool WorkerCatalog::addWorker(
     return added;
 }
 
-std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
+std::optional<WorkerCatalogEntry> WorkerCatalog::removeWorker(const Host& hostAddr)
 {
     if (const auto node = workers.extract(hostAddr); not node.empty())
     {
@@ -74,7 +73,7 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
     return std::nullopt;
 }
 
-[[nodiscard]] std::optional<WorkerConfig> WorkerCatalog::getWorker(const Host& hostAddr) const
+[[nodiscard]] std::optional<WorkerCatalogEntry> WorkerCatalog::getWorker(const Host& hostAddr) const
 {
     if (workers.contains(hostAddr))
     {
@@ -93,9 +92,9 @@ NetworkTopology WorkerCatalog::getTopology() const
     return topology; /// Copy constructor creates a snapshot
 }
 
-std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
+std::vector<WorkerCatalogEntry> WorkerCatalog::getAllWorkers() const
 {
-    return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();
+    return workers | std::views::values | std::ranges::to<std::vector<WorkerCatalogEntry>>();
 }
 
 uint64_t WorkerCatalog::getVersion() const

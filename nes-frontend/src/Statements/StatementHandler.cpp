@@ -56,7 +56,7 @@
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES
 {

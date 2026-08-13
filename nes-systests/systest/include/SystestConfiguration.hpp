@@ -23,14 +23,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <WorkerConfig.hpp>
+#include <WorkerCatalogEntry.hpp>
 
 namespace NES
 {
 
 struct SystestClusterConfiguration
 {
-    std::vector<WorkerConfig> workers;
+    std::vector<WorkerCatalogEntry> workers;
     std::vector<Host> allowSourcePlacement;
     std::vector<Host> allowSinkPlacement;
 };
@@ -66,10 +66,14 @@ struct SystestConfiguration final
     std::vector<std::string> excludeGroups;
     /// Test files to disable.
     std::vector<std::string> disabledTestFiles;
+    /// Used worker config file (.yaml).
     /// Used query compiler config file (.yaml).
     std::string queryCompilerConfig;
     /// Use remote worker.
     bool remoteWorker = false;
+    /// Allow higher-priority config layers (systest file > topology > command line) to overwrite
+    /// conflicting values; every overwrite is printed. Without it, conflicting values fail the run.
+    bool permitConflictingOptions = false;
     /// Cluster configuration.
     std::string clusterConfigPath = TEST_CONFIGURATION_DIR "/topologies/two-node.yaml";
     /// Print per-query performance timing in the console output.
@@ -82,9 +86,9 @@ struct SystestConfiguration final
     std::vector<std::string> globalExcludedGroups;
 
     SystestClusterConfiguration clusterConfig;
-    /// Worker/optimizer config literals from the `-w` file and the command line after `--`
-    /// (empty = nothing passed). They stay literals so per-test-file configuration overrides can
-    /// be layered on top before resolving against SingleNodeWorkerConfiguration's declared schema.
+    /// Worker config literals passed on the command line after `--` (empty = nothing passed).
+    /// They stay literals end to end; the embedded backend merges them with the topology literals
+    /// and resolves against SingleNodeWorkerConfiguration's declared schema.
     Schema<LiteralConfigValue, Ordered> workerOptimizerConfigLiterals;
     /// Explicitly resolved defaults: tests construct SystestConfiguration without going through
     /// the starter (which overwrites this from the `--` section), and the config structs are not

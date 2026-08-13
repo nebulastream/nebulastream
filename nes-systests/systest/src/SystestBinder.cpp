@@ -56,6 +56,7 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/FileSink.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/FileSourceConfig.hpp>
@@ -79,7 +80,6 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <Sinks/FileSink.hpp>
 
 #include <ChecksumSink.hpp>
 

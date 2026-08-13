@@ -74,7 +74,7 @@
 #ifdef EMBED_ENGINE
     #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
-    #include <WorkerConfig.hpp>
+    #include <WorkerCatalogEntry.hpp>
 #endif
 
 /// If repl is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
@@ -283,7 +283,7 @@ int main(int argc, char** argv)
         const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri;
         const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
         const auto dataAddr = singleNodeWorkerConfig.dataAddress;
-        const NES::WorkerConfig workerConfig{
+        const NES::WorkerCatalogEntry workerConfig{
             .host = NES::Host(grpcAddr),
             .dataAddress = dataAddr,
             .maxOperators = NES::Capacity(NES::CapacityKind::Unlimited{}),
@@ -294,7 +294,7 @@ int main(int argc, char** argv)
         /// Embedded workers resolve their config from two layers (lowest priority first): the CLI
         /// worker/optimizer literals, then the per-worker registration config (topology wins). Conflicting
         /// values are an error in the repl — there is no override switch here.
-        auto resolveWorkerConfiguration = [workerOptimizerLiterals](const NES::WorkerConfig& worker)
+        auto resolveWorkerConfiguration = [workerOptimizerLiterals](const NES::WorkerCatalogEntry& worker)
         {
             auto [literals, overwrites] = NES::mergeConfigLayers(
                 {NES::ConfigLayer{.name = "command line", .literals = workerOptimizerLiterals},
