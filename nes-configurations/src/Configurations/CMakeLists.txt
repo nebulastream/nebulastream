@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
-        Descriptor.cpp
         ConfigField.cpp
         ConfigParsing.cpp
         ConfigResolution.cpp

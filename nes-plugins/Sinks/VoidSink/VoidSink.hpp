@@ -14,21 +14,30 @@
 
 #pragma once
 
-#include <cstddef>
-#include <optional>
 #include <ostream>
-#include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Sink-defined config struct: the void sink declares no config parameters, but the (empty)
+/// struct still travels through the SinkDescriptor and its registry entry so that descriptors
+/// are handled uniformly.
+struct VoidSinkConfig
+{
+    static std::expected<VoidSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 /// A sink that simply dumps input tuples into the void
 /// As such the output written to file will always be
@@ -37,36 +46,15 @@ class VoidSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Void";
-    explicit VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit VoidSink(BackpressureController backpressureController, const VoidSinkConfig& config);
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
-};
-
-struct ConfigParametersVoid
-{
-    /// Void discards every tuple but still accepts the standard sink parameters (file_path,
-    /// output_format) so it can be used as a drop-in null target in systest's --workingDir flow,
-    /// which injects file_path into every sink.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
-
-    /// Optional (default empty): Void ignores the path entirely but must not *require* it, so that sinks
-    /// configured without a file_path (e.g. DistributedPlanningTest's empty config) still validate.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
-        "",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
 };
 }
 

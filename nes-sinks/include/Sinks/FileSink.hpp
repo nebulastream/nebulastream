@@ -14,31 +14,45 @@
 
 #pragma once
 
+#include <filesystem>
 #include <fstream>
-#include <memory>
-#include <optional>
 #include <ostream>
-#include <string>
 #include <string_view>
-#include <unordered_map>
 
 #include <folly/Synchronized.h>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
+#include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Sink-defined config struct: instantiated from the generic config by the SinkConfig registry
+/// entry, carried through the SinkDescriptor as std::any, and serialized via reflection of
+/// exactly this struct (all members are reflectable).
+struct FileSinkConfig
+{
+    std::filesystem::path filePath;
+    bool append;
+
+    static std::expected<FileSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
+
 /// A sink that writes formatted TupleBuffers to arbitrary files.
 class FileSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "File";
-    explicit FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit FileSink(BackpressureController backpressureController, const FileSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;
@@ -50,7 +64,7 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -62,23 +76,6 @@ private:
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
     SchemaFormatter schemaFormatter;
-};
-
-struct ConfigParametersFile
-{
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "FILE_PATH",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
-        "APPEND",
-        false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);
 };
 
 }

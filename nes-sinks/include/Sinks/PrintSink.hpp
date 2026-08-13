@@ -15,31 +15,42 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <ostream>
-#include <string>
 #include <string_view>
-#include <unordered_map>
 
 #include <folly/Synchronized.h>
 
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifiers.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Sink-defined config struct: instantiated from the generic config by the SinkConfig registry
+/// entry, carried through the SinkDescriptor as std::any, and serialized via reflection of
+/// exactly this struct (all members are reflectable).
+struct PrintSinkConfig
+{
+    /// Milliseconds to sleep after each buffer, to simulate a slow consumer.
+    uint32_t ingestion;
+
+    static std::expected<PrintSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 class PrintSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(BackpressureController backpressureController, const PrintSinkConfig& config);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
@@ -50,7 +61,7 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -58,22 +69,6 @@ protected:
 private:
     folly::Synchronized<std::ostream*> outputStream;
     uint32_t ingestion = 0;
-};
-
-struct ConfigParametersPrint
-{
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
-        "INGESTION",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "OUTPUT_FORMAT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT);
 };
 
 }

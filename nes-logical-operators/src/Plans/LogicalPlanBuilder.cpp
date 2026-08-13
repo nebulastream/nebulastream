@@ -26,7 +26,6 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -74,7 +73,6 @@ LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(Identifier logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
-    const DescriptorConfig::Config sourceDescriptorConfig{};
     return LogicalPlan(INVALID_QUERY_ID, {SourceNameLogicalOperator::create(std::move(logicalSourceName))});
 }
 

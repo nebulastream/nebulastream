@@ -502,8 +502,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
+    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
@@ -536,8 +536,8 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
+    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
