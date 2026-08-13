@@ -61,7 +61,12 @@ void PagedVector::Page::setCumulativeSum(size_t newCumulativeSum)
 
 uint64_t PagedVector::Page::getNumberOfTuples() const
 {
-    return buffer.getNumberOfTuples();
+    return header().numberOfTuples;
+}
+
+void PagedVector::Page::setNumberOfTuples(const uint64_t newNumberOfTuples)
+{
+    header().numberOfTuples = newNumberOfTuples;
 }
 
 void PagedVector::init(Buffer buffer, uint64_t pageBufferSize, uint64_t tupleSize)
@@ -174,8 +179,8 @@ void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider)
     if (numPages > 0)
     {
         const ChildBufferIndex lastPageIndex{static_cast<uint32_t>(numPages - 1)};
-        auto lastPage = buffer.loadChildBuffer(lastPageIndex);
-        if (lastPage.getNumberOfTuples() < getPageCapacity())
+        auto lastPageBuffer = buffer.loadChildBuffer(lastPageIndex);
+        if (Page::load(lastPageBuffer).getNumberOfTuples() < getPageCapacity())
         {
             return;
         }

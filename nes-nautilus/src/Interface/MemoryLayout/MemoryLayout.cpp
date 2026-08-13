@@ -159,7 +159,7 @@ MemoryLayout::loadValue(const DataType& physicalType, const TaskBufferRef& recor
             INVARIANT(variableSizedAccessPtr != nullptr, "VariableSizedAccess MUST NOT be null at this point");
             return loadAssociatedVarSizedValue(*tupleBuffer, *variableSizedAccessPtr).data();
         },
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         variableSizedAccess);
 
     const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(variableSizedAccess, offsetof(VariableSizedAccess, size));
@@ -208,7 +208,7 @@ VarVal MemoryLayout::storeValue(
             const VariableSizedAccess writtenAccess = writeVarSized(*tupleBuffer, *bufferProvider, std::as_bytes(varSizedValueSpan));
             *refToIndex = writtenAccess;
         },
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         bufferProvider,
         varSizedValue.getContent(),
         varSizedValue.getSize(),

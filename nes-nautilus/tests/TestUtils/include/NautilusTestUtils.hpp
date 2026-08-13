@@ -214,7 +214,7 @@ public:
     }
 
     /// Compares two buffers and returns a string with the differences. If the buffers are equal, return an empty string
-    static std::string compareRecordBuffers(
+    static std::string compareBufferRefs(
         const std::vector<Buffer>& actualRecords,
         const std::vector<Buffer>& expectedRecords,
         const MemoryLayout& memoryProviderActualBuffer,

@@ -314,7 +314,7 @@ struct TestPipeline final : ExecutablePipelineStage
         }
     }
 
-    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
@@ -326,17 +326,17 @@ struct TestPipeline final : ExecutablePipelineStage
         if (maxRepeats > 0)
         {
             /// Get current repeat count from creation timestamp
-            const uint64_t currentRepeatCount = inputTupleBuffer.getWatermark().getRawValue();
+            const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
             if (currentRepeatCount < maxRepeats)
             {
-                auto copiedBuffer = deepCopyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
+                auto copiedBuffer = deepCopyBuffer(inputBuffer, *pipelineExecutionContext.getBufferManager());
                 copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
                 return;
             }
         }
 
-        pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(inputBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
     std::shared_ptr<TestPipelineController> controller;

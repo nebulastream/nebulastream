@@ -53,7 +53,7 @@ public:
     /// Open connection to MQTT broker.
     void open(std::shared_ptr<AbstractBufferProvider>) override;
 
-    FillTupleBufferResult fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillBufferResult fillBuffer(Buffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Close connection to MQTT broker.
     void close() override;

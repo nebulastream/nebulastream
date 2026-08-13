@@ -53,7 +53,7 @@ Record RowLayout::readRecord(
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
-    const auto bufferAddress = recordBuffer.getMemArea();
+    const auto bufferAddress = recordBuffer.getBuffer().data();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
@@ -80,7 +80,7 @@ MemoryLayout::WriteRecordResult RowLayout::writeRecord(
     /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto bufferAddress = recordBuffer.getBuffer().data();
         const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {

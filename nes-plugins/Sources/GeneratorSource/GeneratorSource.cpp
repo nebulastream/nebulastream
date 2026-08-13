@@ -89,12 +89,12 @@ void GeneratorSource::close()
     }
 }
 
-Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token&)
+Source::FillBufferResult GeneratorSource::fillBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     /// the generator indicated that it will not produce anymore data and the tupleStream is empty.
     if (this->generator.shouldStop() && tuplesStream.tellp() == 0)
     {
-        return FillTupleBufferResult::eos();
+        return FillBufferResult::eos();
     }
 
     try
@@ -104,7 +104,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(Buffer& tupleBuff
         if (maxRuntime >= 0 && elapsedTime >= maxRuntime)
         {
             NES_INFO("Reached max runtime! Stopping Source");
-            return FillTupleBufferResult::eos();
+            return FillBufferResult::eos();
         }
 
         /// Asking the generatorRate how many tuples we should generate for this interval [now, now + flushInterval].
@@ -167,7 +167,7 @@ Source::FillTupleBufferResult GeneratorSource::fillTupleBuffer(Buffer& tupleBuff
             std::this_thread::sleep_for(sleepDuration);
         }
         this->startOfInterval = std::chrono::system_clock::now();
-        return FillTupleBufferResult::withBytes(writtenBytes);
+        return FillBufferResult::withBytes(writtenBytes);
     }
     catch (const std::exception& e)
     {

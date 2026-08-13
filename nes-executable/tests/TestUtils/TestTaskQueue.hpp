@@ -89,7 +89,7 @@ public:
     /// if buffer contains data, writes it into the result buffer vector, otherwise, calls the 'repeatTaskCallback'
     bool emitBuffer(const Buffer& resultBuffer, ContinuationPolicy continuationPolicy) override;
 
-    Buffer allocateTupleBuffer() override;
+    Buffer allocateBuffer() override;
 
     Buffer& pinBuffer(Buffer&& tupleBuffer) override;
 

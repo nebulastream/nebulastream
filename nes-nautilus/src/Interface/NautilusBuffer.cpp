@@ -22,7 +22,6 @@
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Runtime/Buffer.hpp>
 #include <Util/Overloaded.hpp>
-#include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_details.hpp>
@@ -39,17 +38,6 @@ nautilus::val<int8_t*> OwnedNautilusBuffer::data()
 nautilus::val<const int8_t*> OwnedNautilusBuffer::data() const
 {
     return nautilus::invoke(+[](const NES::Buffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, asArg());
-}
-
-nautilus::val<size_t> OwnedNautilusBuffer::getNumberOfRecords() const
-{
-    return nautilus::invoke(
-        +[](const NES::Buffer* buffer)
-        {
-            INVARIANT(buffer->getAvailableMemoryArea<>().data() != nullptr, "Buffer is invalid for NautilusBuffer:getNumberOfRecords()");
-            return buffer->getNumberOfTuples();
-        },
-        asArg());
 }
 
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
@@ -110,11 +98,6 @@ nautilus::val<int8_t*> BorrowedNautilusBuffer::data()
 nautilus::val<const int8_t*> BorrowedNautilusBuffer::data() const
 {
     return nautilus::invoke(+[](const NES::Buffer* buffer) { return buffer->getAvailableMemoryArea<int8_t>().data(); }, buffer);
-}
-
-nautilus::val<size_t> BorrowedNautilusBuffer::getNumberOfRecords() const
-{
-    return nautilus::invoke(+[](const NES::Buffer* buffer) { return buffer->getNumberOfTuples(); }, buffer);
 }
 
 OwnedNautilusBuffer BorrowedNautilusBuffer::getChild(const nautilus::val<ChildBufferIndex>& index) const
@@ -179,11 +162,6 @@ NautilusBuffer::NautilusBuffer(OwnedNautilusBuffer buffer) : underlying(std::mov
 
 NautilusBuffer::NautilusBuffer(BorrowedNautilusBuffer buffer) : underlying(std::move(buffer))
 {
-}
-
-nautilus::val<size_t> NautilusBuffer::getNumberOfRecords() const
-{
-    return std::visit(Overloaded{[](const auto& underlying) { return underlying.getNumberOfRecords(); }}, underlying);
 }
 
 nautilus::val<const Buffer*> NautilusBuffer::asArg() const&

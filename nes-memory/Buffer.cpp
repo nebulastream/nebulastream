@@ -191,7 +191,7 @@ Buffer Buffer::loadChildBuffer(ChildBufferIndex bufferIndex) const noexcept
     return childBuffer;
 }
 
-bool recycleTupleBuffer(void* bufferPointer)
+bool recycleBuffer(void* bufferPointer)
 {
     PRECONDITION(bufferPointer, "invalid bufferPointer");
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);

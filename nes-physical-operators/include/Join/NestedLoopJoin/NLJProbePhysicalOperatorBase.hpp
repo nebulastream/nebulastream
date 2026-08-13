@@ -21,7 +21,6 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/TaskBufferRef.hpp>
 #include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -30,6 +29,7 @@
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
+#include <val_base.hpp>
 
 namespace NES
 {
@@ -71,8 +71,8 @@ protected:
     /// Resolves the slice owning `sliceEnd` via the operator handler and returns the buffer ref backing its
     /// `side` PagedVector (worker-thread 0, where all pages are consolidated at trigger time). Wrap the result
     /// in BorrowedNautilusBuffer::from(...) together with the matching tuple layout to build a PagedVectorRef.
-    nautilus::val<const Buffer*> getPagedVectorBufferRef(
-        const nautilus::val<OperatorHandler*>& operatorHandlerRef, const nautilus::val<SliceEnd>& sliceEnd, JoinBuildSideType side) const;
+    [[nodiscard]] static nautilus::val<const Buffer*> getPagedVectorBufferRef(
+        const nautilus::val<OperatorHandler*>& operatorHandlerRef, const nautilus::val<SliceEnd>& sliceEnd, JoinBuildSideType side);
 
     std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout;
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout;

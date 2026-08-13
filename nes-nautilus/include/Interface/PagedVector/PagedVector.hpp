@@ -36,7 +36,7 @@ class PagedVector
 public:
     /// @brief This class represents a single page of the paged vector.
     /// Pages store fixed-sized data directly. Varsized data is stored into buffers that are attached to the page as children buffers.
-    /// Each page contains the cumulative sum in its header.
+    /// Each page stores the cumulative sum and its own tuple count in its header, so the paged vector never relies on Buffer metadata.
     struct Page
     {
         static void init(Buffer buffer);
@@ -47,6 +47,7 @@ public:
         void setCumulativeSum(size_t newCumulativeSum);
 
         [[nodiscard]] uint64_t getNumberOfTuples() const;
+        void setNumberOfTuples(uint64_t newNumberOfTuples);
 
     private:
         explicit Page(Buffer buffer) : buffer(std::move(buffer)) { }
@@ -54,8 +55,9 @@ public:
         struct Header
         {
             uint64_t cumulativeSum;
+            uint64_t numberOfTuples{0};
 
-            explicit Header(uint64_t cumulativeSum) : cumulativeSum(cumulativeSum) { }
+            explicit Header(const uint64_t cumulativeSum) : cumulativeSum(cumulativeSum) { }
         };
 
         [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }

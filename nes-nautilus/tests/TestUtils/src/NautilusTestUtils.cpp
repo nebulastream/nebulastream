@@ -38,6 +38,7 @@
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/MemoryLayout/LowerSchemaProvider.hpp>
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -197,7 +198,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                                   nautilus::val<uint64_t> sizeVarSizedDataVal,
                                   nautilus::val<uint64_t*> outputIndex)
     {
-        TaskBufferRef recordBuffer(buffer);
+        TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(buffer)};
         nautilus::val<uint64_t> value = std::move(startForValues);
         for (nautilus::val<uint64_t> i = 0; i < numberOfTuplesToFill; i = i + 1)
         {
@@ -234,7 +235,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                                 = MemoryLayout::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
                             return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
                         },
-                        recordBuffer.getReference(),
+                        recordBuffer.getBuffer().asArg(),
                         bufferProvider,
                         sizeVarSizedDataVal);
 

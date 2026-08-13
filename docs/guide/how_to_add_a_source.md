@@ -168,9 +168,9 @@ We check if the port number is within the allowed bounds and return it if yes, a
 The interface to implement a source is straightforward:
 
 ```c++
-/// Read data into a `TupleBuffer`, until the TupleBuffer is full, or stop was requested.
+/// Read data into a `Buffer`, until the Buffer is full, or stop was requested.
 /// @return the number of bytes read
-virtual size_t fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
+virtual size_t fillBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
  /// If applicable, opens resources like file descriptors, database connections, etc.
 virtual void open() = 0;
@@ -179,7 +179,7 @@ virtual void open() = 0;
 virtual void close() = 0;
 ```
 
-The central method we need to implement is called `fillTupleBuffer`, which takes a reference to a buffer and a `stop_token`.
+The central method we need to implement is called `fillBuffer`, which takes a reference to a buffer and a `stop_token`.
 It should implement the necessary logic to ingest data into the buffer.
 Under normal circumstances, on each invocation, you should write to the beginning of the buffer's memory.
 
@@ -199,7 +199,7 @@ Finally, if buffer has been filled entirely (4), we should also return, reportin
 bytes.
 
 The `open` and `close` methods can be used to create or release resources like file descriptors.
-`open` will be called once before the first invocation to `fillTupleBuffer`, `close` likewise at the end, before
+`open` will be called once before the first invocation to `fillBuffer`, `close` likewise at the end, before
 dropping the source.
 
 For our MQTT source, `open` might look like this:
@@ -245,15 +245,15 @@ catch (const mqtt::exception& e)
 ```
 Because no methods of the `MQTTSource` will be called after `close`, we simply report any MQTT-related error closing the session and return.
 
-In most scenarios, `fillTupleBuffer` implements an I/O request loop that stops when either the buffer is full, an error occurs or EOS is signalled.
+In most scenarios, `fillBuffer` implements an I/O request loop that stops when either the buffer is full, an error occurs or EOS is signalled.
 ```c++
-size_t MQTTSource::fillTupleBuffer(NES::TupleBuffer& buf, const std::stop_token& stopToken)
+size_t MQTTSource::fillBuffer(NES::Buffer& buf, const std::stop_token& stopToken)
 {
     /// (1) Setup offset within buffer and size of buffer
     size_t offset = 0;
     const size_t size = tupleBuffer.getBufferSize();
 
-    /// (2) Process stashed payload first (from prior invocation of `fillTupleBuffer`)
+    /// (2) Process stashed payload first (from prior invocation of `fillBuffer`)
     if (!payloadStash.empty())
     {
         auto payload = payloadStash.consume(size);
@@ -271,7 +271,7 @@ size_t MQTTSource::fillTupleBuffer(NES::TupleBuffer& buf, const std::stop_token&
 ```
 A thing to notice here is that this MQTT client library allocates its own receive buffer for incoming data.
 This possibly results in larger messages than currently available space in our buffer.
-To handle such a case, we stash intermediate data until the next invocation of `fillTupleBuffer`, where it is consumed before making another consume request.
+To handle such a case, we stash intermediate data until the next invocation of `fillBuffer`, where it is consumed before making another consume request.
 When errors occur during ingestion, the client will throw an exception, which is handled in a higher-level component.
 If you want to handle an error that is recoverable, you should catch the exception in this method and call any code required for recovery.
 

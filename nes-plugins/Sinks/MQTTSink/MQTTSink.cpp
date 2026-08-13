@@ -142,12 +142,12 @@ MQTTSink::PublishResult MQTTSink::tryPublish(const Buffer& buffer)
     return PublishResult::Ok;
 }
 
-void MQTTSink::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pec)
+void MQTTSink::execute(const Buffer& inputBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(client, "MQTTSink client is not initialized");
-    PRECONDITION(inputTupleBuffer, "Invalid input buffer in MQTTSink.");
+    PRECONDITION(inputBuffer, "Invalid input buffer in MQTTSink.");
 
-    auto currentBuffer = std::optional(inputTupleBuffer);
+    auto currentBuffer = std::optional(inputBuffer);
     while (currentBuffer)
     {
         switch (tryPublish(*currentBuffer))

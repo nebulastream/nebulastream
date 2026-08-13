@@ -121,7 +121,7 @@ void writeValue(
                 fieldPointer + written,
                 currentRemainingSize,
                 value.getRawValueAs<nautilus::val<char>>(),
-                recordBuffer.getReference(),
+                recordBuffer.getBuffer().asArg(),
                 bufferProvider);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
@@ -135,7 +135,7 @@ void writeValue(
                 currentRemainingSize,
                 varSizedValue.getContent(),
                 varSizedValue.getSize(),
-                recordBuffer.getReference(),
+                recordBuffer.getBuffer().asArg(),
                 bufferProvider);
 
             written += amountWritten;
@@ -194,7 +194,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(0),
         fieldName,
         currentRemainingSize,
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         bufferProvider,
         fieldPointer);
     written += amountWritten;
@@ -209,7 +209,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
                 writeValueToBuffer,
                 nautilus::val<const char*>{"null"},
                 currentRemainingSize,
-                recordBuffer.getReference(),
+                recordBuffer.getBuffer().asArg(),
                 bufferProvider,
                 fieldPointer + written);
             written += amountWritten;
@@ -232,7 +232,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         nautilus::val<const char*>{","});
 
     written += nautilus::invoke(
-        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
+        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getBuffer().asArg(), bufferProvider, fieldPointer + written);
     return written;
 }
 

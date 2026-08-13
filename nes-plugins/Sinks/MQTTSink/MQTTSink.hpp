@@ -51,7 +51,7 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const Buffer& inputTupleBuffer, PipelineExecutionContext&) override;
+    void execute(const Buffer& inputBuffer, PipelineExecutionContext&) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

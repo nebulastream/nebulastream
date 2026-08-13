@@ -107,7 +107,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
     }
 
     return testing::AssertionFailure() << fmt::format(
-               "The expected number of TupleBuffers were not received after {}. Expected: {}, but Received {}",
+               "The expected number of Buffers were not received after {}. Expected: {}, but Received {}",
                std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_LONG_AWAIT_TIMEOUT),
                numberOfExpectedBuffers,
                buffers->size());

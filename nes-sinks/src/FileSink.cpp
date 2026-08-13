@@ -101,15 +101,15 @@ void FileSink::start(PipelineExecutionContext&)
     }
 }
 
-void FileSink::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext&)
+void FileSink::execute(const Buffer& inputBuffer, PipelineExecutionContext&)
 {
-    PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
+    PRECONDITION(inputBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
 
     {
         const auto wlocked = outputFileStream.wlock();
         /// Create a buffer iterator to help iterate through the tuplebuffer and its children
-        BufferIterator iterator{inputTupleBuffer};
+        BufferIterator iterator{inputBuffer};
 
         std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
         while (element.has_value())

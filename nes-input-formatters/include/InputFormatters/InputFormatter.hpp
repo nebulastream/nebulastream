@@ -25,7 +25,6 @@
 #include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TaskBufferRef.hpp>
-#include <Runtime/Buffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
@@ -35,7 +34,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <InputFormatIndexer.hpp>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -60,11 +59,11 @@ struct IndexPhaseResult;
 class InputFormatter : public MemoryLayout
 {
 public:
-    explicit InputFormatter(std::unique_ptr<InputFormatIndexer> inputFormatIndexer, std::shared_ptr<MemoryLayout> memoryProvider)
-        : MemoryLayout(*memoryProvider)
+    explicit InputFormatter(std::unique_ptr<InputFormatIndexer> inputFormatIndexer, std::shared_ptr<MemoryLayout> layout)
+        : MemoryLayout(*layout)
         , inputFormatIndexer(std::move(inputFormatIndexer))
-        , projections(memoryProvider->getAllFieldNames())
-        , memoryProvider(std::move(memoryProvider))
+        , projections(layout->getAllFieldNames())
+        , layout(std::move(layout))
         , sequenceShredder(std::make_unique<SequenceShredder>())
     {
     }
@@ -101,7 +100,7 @@ public:
 private:
     std::unique_ptr<InputFormatIndexer> inputFormatIndexer;
     std::vector<Record::RecordFieldIdentifier> projections;
-    std::shared_ptr<MemoryLayout> memoryProvider;
+    std::shared_ptr<MemoryLayout> layout;
     std::unique_ptr<SequenceShredder> sequenceShredder;
 };
 

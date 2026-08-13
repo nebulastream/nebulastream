@@ -32,8 +32,8 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SIMDJSONInputFormatIndexer.hpp>
 #include <SIMDJSONRawBufferIndex.hpp>
 #include <function.hpp>

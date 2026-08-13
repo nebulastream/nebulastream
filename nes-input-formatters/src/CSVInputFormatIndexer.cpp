@@ -30,8 +30,8 @@
 #include <InputFormatIndexerRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterValidationRegistry.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 
 namespace
 {

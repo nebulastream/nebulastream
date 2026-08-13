@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <optional>
+#include <Interface/TaskBufferRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
 

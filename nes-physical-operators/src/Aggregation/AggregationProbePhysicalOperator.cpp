@@ -58,7 +58,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Task
     openChild(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
-    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getMemArea());
+    const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer().data());
     const auto numberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::numberOfHashMaps));
     const auto windowInfoRef = getMemberRef(aggregationWindowRef, &EmittedAggregationWindow::windowInfo);
@@ -83,16 +83,16 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Task
                 .bloomFilter = chm.getBloomFilterParams()};
             auto neededFinalBufferSize
                 = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains(), finalConfig.bloomFilterMemAreaSize());
-            std::optional<Buffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
-            if (not finalHashMapTupleBuffer.has_value())
+            std::optional<Buffer> allocatedFinalHashMapBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
+            if (not allocatedFinalHashMapBuffer.has_value())
             {
                 throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
             }
             /// initialize the final hash map tuple buffer
-            *finalHashMapBuffer = finalHashMapTupleBuffer.value();
+            *finalHashMapBuffer = allocatedFinalHashMapBuffer.value();
             ChainedHashMap::init(*finalHashMapBuffer, finalConfig);
         },
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         executionCtx.pipelineMemoryProvider.bufferProvider,
         finalHashMapNautilusBuffer.asArg());
     /// get the reference to the final hash map buffer
@@ -118,7 +118,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Task
                 const ChildBufferIndex bufferIndex{curHashMapIdx};
                 *hashMapBuffer = parent->loadChildBuffer(bufferIndex);
             },
-            recordBuffer.getReference(),
+            recordBuffer.getBuffer().asArg(),
             curHashMapIdx,
             hashMapNautilusBuffer.asArg());
         auto hashMapBufferRef = hashMapNautilusBuffer.asArg();

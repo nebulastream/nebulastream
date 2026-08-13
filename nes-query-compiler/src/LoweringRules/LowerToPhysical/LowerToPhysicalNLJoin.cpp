@@ -144,7 +144,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider&)
         {
             auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
+            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorMemoryLayout(workerThreadId, JoinBuildSideType::Left);
             return pagedVectorBufferRef;
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
@@ -156,7 +156,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         [](Slice& slice, const WorkerThreadId workerThreadId, AbstractBufferProvider&)
         {
             auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
+            const auto* pagedVectorBufferRef = newNLJSlice.getPagedVectorMemoryLayout(workerThreadId, JoinBuildSideType::Right);
             return pagedVectorBufferRef;
         },
         [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)

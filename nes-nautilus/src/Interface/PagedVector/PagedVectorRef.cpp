@@ -27,11 +27,9 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <Interface/MemoryLayout/MemoryLayout.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
-#include <Interface/TaskBufferRef.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Buffer.hpp>
@@ -105,6 +103,13 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
     };
 }
 
+/// Bump-allocation bookkeeping of each var-sized child buffer, kept in the payload rather than Buffer metadata.
+/// `usedBytes` includes the header itself, so it doubles as the next allocation's offset.
+struct VarSizedBufferHeader
+{
+    uint64_t usedBytes;
+};
+
 /// Factory method that returns the lambda function to write a record at a specific memory address in a paged vector page.
 /// The lastPageBuffer argument is the capture variable pointing to the last page of the paged vector.
 /// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
@@ -127,31 +132,30 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                     auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
                     Buffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
                     const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
-                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
-                    if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
+                    auto* header = lastVarSizedBuffer.getAvailableMemoryArea<VarSizedBufferHeader>().data();
+                    const uint64_t usedBytes = header->usedBytes;
+                    if (usedBytes + allocationSize <= lastVarSizedBufferSize)
                     {
-                        lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
+                        header->usedBytes = usedBytes + allocationSize;
                         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
                         *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
-                            lastVarSizedBufferIndex,
-                            VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
-                            VariableSizedAccess::Size{allocationSize}};
+                            lastVarSizedBufferIndex, VariableSizedAccess::Offset{usedBytes}, VariableSizedAccess::Size{allocationSize}};
                         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): Buffer hands out int8_t spans by design.
                         return reinterpret_cast<int8_t*>(lastVarSizedBuffer
                                                              .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                             .subspan(lastVarSizedBufferNumTuples)
+                                                             .subspan(usedBytes)
                                                              .data());
                     }
                 }
                 Buffer newVarSizedBuffer;
-                if (allocationSize <= bufferProvider->getBufferSize())
+                if (sizeof(VarSizedBufferHeader) + allocationSize <= bufferProvider->getBufferSize())
                 {
                     newVarSizedBuffer = bufferProvider->getBufferBlocking();
                 }
                 else
                 {
                     /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
-                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
+                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(sizeof(VarSizedBufferHeader) + allocationSize);
                     if (not unpooledBuffer.has_value())
                     {
                         throw BufferAllocationFailure("No unpooled Buffer available for oversized varsized value.");
@@ -160,12 +164,13 @@ auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nauti
                 }
                 auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
                 newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
+                new (newVarSizedBuffer.getAvailableMemoryArea<VarSizedBufferHeader>().data())
+                    VarSizedBufferHeader{sizeof(VarSizedBufferHeader) + allocationSize};
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
-                    = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
-                newVarSizedBuffer.setNumberOfTuples(allocationSize);
+                *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
+                    childIndex, VariableSizedAccess::Offset{sizeof(VarSizedBufferHeader)}, VariableSizedAccess::Size{allocationSize}};
                 /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
-                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
+                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().subspan(sizeof(VarSizedBufferHeader)).data());
             },
             lastPageBuffer.asArg(),
             bufferProvider,
@@ -324,9 +329,13 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
         lastPageBuffer.asArg());
     /// write the record using the lambda method from the factory
     tupleLayout->writeRecord(record, recordAddress, makeVarSizedAllocFunction(lastPageBuffer, bufferProvider));
-    /// increase the entry count in the page
+    /// increase the entry count in the page header
     nautilus::invoke(
-        +[](Buffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },
+        +[](Buffer* lastPageBuffer)
+        {
+            auto page = PagedVector::Page::load(*lastPageBuffer);
+            page.setNumberOfTuples(page.getNumberOfTuples() + 1);
+        },
         lastPageBuffer.asArg());
 }
 
@@ -380,7 +389,8 @@ PagedVectorRefIter::PagedVectorRefIter(
 
 Record PagedVectorRefIter::operator*() const
 {
-    auto numberOfRecordsOnPage = curPage.getNumberOfRecords();
+    auto numberOfRecordsOnPage
+        = nautilus::invoke(+[](const Buffer* page) { return PagedVector::Page::load(*page).getNumberOfTuples(); }, curPage.asArg());
     if (posOnPage >= numberOfRecordsOnPage)
     {
         posOnPage = nautilus::invoke(loadPageForEntryProxy, pagedVector.pagedVectorBuffer.asArg(), pos, curPage.asArg());

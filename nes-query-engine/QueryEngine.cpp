@@ -239,7 +239,7 @@ struct DefaultPEC final : PipelineExecutionContext
         return threadId;
     }
 
-    Buffer allocateTupleBuffer() override
+    Buffer allocateBuffer() override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return bm->getBufferBlocking();

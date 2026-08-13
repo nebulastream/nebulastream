@@ -114,7 +114,7 @@ void MQTTSource::open(std::shared_ptr<AbstractBufferProvider>)
     }
 }
 
-Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
+Source::FillBufferResult MQTTSource::fillBuffer(NES::Buffer& tupleBuffer, const std::stop_token& stopToken)
 {
     size_t tbOffset = 0;
     const auto tbSize = tupleBuffer.getBufferSize();
@@ -188,7 +188,7 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::Buffer& tupleBuff
             writePayloadToBuffer(payload, tupleBuffer, tbOffset);
         }
     }
-    return FillTupleBufferResult::withBytes(std::min(tbOffset, tbSize));
+    return FillBufferResult::withBytes(std::min(tbOffset, tbSize));
 }
 
 /// Write the message payload to the tuple buffer

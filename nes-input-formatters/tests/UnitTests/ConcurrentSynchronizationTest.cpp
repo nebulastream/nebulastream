@@ -30,7 +30,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <RawTupleBuffer.hpp>
+#include <RawBuffer.hpp>
 #include <SequenceShredder.hpp>
 
 #include <ErrorHandling.hpp>
@@ -139,7 +139,7 @@ public:
                 /// Thus, we can't set the sequence number in that control block. Instead, we exploit the 'offset of last tuple delimiter',
                 /// of the StagedBuffer, which we create during each iteration and which is not manipulated by other threads
                 const auto dummyStagedBuffer
-                    = NES::StagedBuffer{NES::RawTupleBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
+                    = NES::StagedBuffer{NES::RawBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
                 if (tupleDelimiter)
                 {
                     NES::SequenceShredderResult leadingSpanningTupleResult = sequenceShredder.findLeadingSpanningTupleWithDelimiter(

@@ -57,8 +57,6 @@ public:
     nautilus::val<int8_t*> data();
     [[nodiscard]] nautilus::val<const int8_t*> data() const;
 
-    [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
-
     nautilus::val<ChildBufferIndex> storeChild(OwnedNautilusBuffer&& child);
     nautilus::val<ChildBufferIndex> storeChild(BorrowedNautilusBuffer&& child);
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
@@ -86,8 +84,6 @@ public:
     nautilus::val<int8_t*> data();
     [[nodiscard]] nautilus::val<const int8_t*> data() const;
 
-    [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
-
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
 
     nautilus::val<ChildBufferIndex> storeChild(OwnedNautilusBuffer&& child);
@@ -114,8 +110,6 @@ public:
     /// Loading a child buffer always yields an owned buffer, as its lifetime must be managed by the nautilus execution.
     [[nodiscard]] OwnedNautilusBuffer getChild(const nautilus::val<ChildBufferIndex>& index) const;
 
-    [[nodiscard]] nautilus::val<size_t> getNumberOfRecords() const;
-
     /// Returns a pointer to the wrapped Buffer that is only valid for as long as this buffer is alive.
     /// It is solely intended to be passed as an argument to a `nautilus::invoke` and MUST NOT be stored or used to outlive this buffer.
     /// The lvalue-ref qualifier prevents calling it on a temporary, which would return a dangling pointer into the destroyed buffer.
@@ -125,7 +119,7 @@ public:
     [[nodiscard]] nautilus::val<const Buffer*> asArg() const&& = delete;
     nautilus::val<Buffer*> asArg() && = delete;
 
-    /// returns true if the underlying buffer is a owned buffer. Notice, that this is a c++ bool, as this information is not runtime data
+    /// returns true if the underlying buffer is an owned buffer. Notice, that this is a c++ bool, as this information is not runtime data
     /// dependent.
     [[nodiscard]] bool isOwned() const;
 

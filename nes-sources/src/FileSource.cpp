@@ -61,7 +61,7 @@ void FileSource::close()
     this->inputFile.close();
 }
 
-Source::FillTupleBufferResult FileSource::fillTupleBuffer(Buffer& tupleBuffer, const std::stop_token&)
+Source::FillBufferResult FileSource::fillBuffer(Buffer& tupleBuffer, const std::stop_token&)
 {
     this->inputFile.read(
         tupleBuffer.getAvailableMemoryArea<std::istream::char_type>().data(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
@@ -69,9 +69,9 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(Buffer& tupleBuffer, c
     this->totalNumBytesRead += numBytesRead;
     if (numBytesRead == 0)
     {
-        return FillTupleBufferResult::eos();
+        return FillBufferResult::eos();
     }
-    return FillTupleBufferResult::withBytes(numBytesRead);
+    return FillBufferResult::withBytes(numBytesRead);
 }
 
 DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)

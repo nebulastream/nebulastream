@@ -60,7 +60,7 @@
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <TestTupleBuffer.hpp>
+#include <TestBuffer.hpp>
 #include <options.hpp>
 
 namespace NES
@@ -84,7 +84,7 @@ protected:
             return true;
         }
 
-        Buffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        Buffer allocateBuffer() override { return bufferManager->getBufferBlocking(); }
 
         [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return threadId; }
 
@@ -278,7 +278,7 @@ public:
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setOriginId(INITIAL<OriginId>);
 
-        Testing::TestTupleBuffer ttb(inputSchema);
+        Testing::TestBuffer ttb(inputSchema);
         auto view = ttb.open(tupleBuffer, bufMgr.get());
         for (const auto& floats : recordFloats)
         {
@@ -331,7 +331,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -386,7 +386,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -441,7 +441,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -504,7 +504,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
@@ -522,7 +522,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 }
 
 /// Zero-record buffer produces zero output records. Interpreted + compiled.
-TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
+TEST_F(InferModelPhysicalOperatorTest, ZeroBufferRef)
 {
     ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
@@ -560,7 +560,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             totalRecords += view.getNumberOfTuples();
         }
@@ -653,7 +653,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     auto outputBuffers = *emittedBuffers.rlock();
     for (auto& outBuf : outputBuffers)
     {
-        Testing::TestTupleBuffer ttb(outputSchema);
+        Testing::TestBuffer ttb(outputSchema);
         auto view = ttb.open(outBuf);
         for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
         {
@@ -723,7 +723,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            Testing::TestTupleBuffer ttb(outputSchema);
+            Testing::TestBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {

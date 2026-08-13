@@ -42,9 +42,9 @@ void VoidSink::stop(PipelineExecutionContext&)
     NES_INFO("Void Sink completed.")
 }
 
-void VoidSink::execute([[maybe_unused]] const Buffer& inputTupleBuffer, PipelineExecutionContext&)
+void VoidSink::execute([[maybe_unused]] const Buffer& inputBuffer, PipelineExecutionContext&)
 {
-    PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
+    PRECONDITION(inputBuffer, "Invalid input buffer in VoidSink.");
 }
 
 DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

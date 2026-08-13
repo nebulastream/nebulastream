@@ -34,7 +34,7 @@ namespace NES
 class EmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> bufferRef);
+    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<MemoryLayout> layout);
 
     void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
 
@@ -43,7 +43,7 @@ public:
     void open(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, TaskBufferRef& recordBuffer) const override;
-    void emitRecordBuffer(
+    void emitTaskBufferRef(
         ExecutionContext& ctx,
         TaskBufferRef& recordBuffer,
         const nautilus::val<uint64_t>& numRecords,
@@ -56,7 +56,7 @@ private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
 
     std::optional<PhysicalOperator> child;
-    std::shared_ptr<MemoryLayout> bufferRef;
+    std::shared_ptr<MemoryLayout> layout;
     OperatorHandlerId operatorHandlerId;
 };
 

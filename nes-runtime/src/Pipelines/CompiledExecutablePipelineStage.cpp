@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/TaskBufferRef.hpp>
 #include <Runtime/Buffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -48,13 +49,13 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 {
 }
 
-void CompiledExecutablePipelineStage::execute(const Buffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
+void CompiledExecutablePipelineStage::execute(const Buffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     INVARIANT(compiledPipelineFunction.has_value(), "execute() was called before start() compiled the pipeline");
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputBuffer), std::addressof(arena));
 }
 
 void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
@@ -73,7 +74,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
                                nautilus::val<const Arena*> arenaRef)
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
-        TaskBufferRef recordBuffer(recordBufferRef);
+        TaskBufferRef recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
         switch (ctx.getOpenReturnState())

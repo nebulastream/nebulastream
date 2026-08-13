@@ -19,8 +19,8 @@ Each pipeline is a task. NebulaStream executes tasks in parallel on different wo
 graph LR
 %% Query 1
 %% Define sources
-    A(Source 1) --> B1["**TupleBuffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
-    D(Source 2) --> B2["**TupleBuffer**<br>OriginId: 2<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now + y"]
+    A(Source 1) --> B1["**Buffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
+    D(Source 2) --> B2["**Buffer**<br>OriginId: 2<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now + y"]
 
 %% Pipeline 1
     subgraph Pipeline 1
@@ -43,12 +43,12 @@ graph LR
     B2 --> scan2
     join_build1 --> join_probe[Join Probe]
     join_build2 --> join_probe
-    emit --> C2["**TupleBuffer**<br>OriginId: 3<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: False<br>Watermark Timestamp: now + y"]
-    emit --> C3["**TupleBuffer**<br>OriginId: 3<br>SequenceNumber: 1<br>ChunkNumber: 1<br>Last Chunk: True<br>Watermark Timestamp: now"]
-    emit --> C1["**TupleBuffer**<br>OriginId: 3<br>SequenceNumber: 2<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now + x"]
+    emit --> C2["**Buffer**<br>OriginId: 3<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: False<br>Watermark Timestamp: now + y"]
+    emit --> C3["**Buffer**<br>OriginId: 3<br>SequenceNumber: 1<br>ChunkNumber: 1<br>Last Chunk: True<br>Watermark Timestamp: now"]
+    emit --> C1["**Buffer**<br>OriginId: 3<br>SequenceNumber: 2<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now + x"]
 
-    emit2 --> C4["**TupleBuffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
-    G(Source 3) --> E["**TupleBuffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
+    emit2 --> C4["**Buffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
+    G(Source 3) --> E["**Buffer**<br>OriginId: 1<br>SequenceNumber: 1<br>ChunkNumber: 0<br>Last Chunk: True<br>Watermark Timestamp: now"]
     E-->scan3
 
 %% Query 2

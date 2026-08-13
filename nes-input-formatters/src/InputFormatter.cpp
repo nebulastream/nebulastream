@@ -38,8 +38,8 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <RawBuffer.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -289,7 +289,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     if (hasTupleDelimiter)
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findLeadingSpanningTupleWithDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+            StagedBuffer{RawBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
         if (not isInRange)
         {
             IndexPhaseResultBuilder::setIsRepeat(true);
@@ -304,7 +304,7 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     else /* has no tuple delimiter */
     {
         const auto [isInRange, stagedBuffers] = sequenceShredder->findSpanningTupleWithoutDelimiter(
-            StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
+            StagedBuffer{RawBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
 
         if (not isInRange)
         {
@@ -359,7 +359,7 @@ void parseRecordsInRawBuffer(
     while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
     {
         auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            projections, recordBuffer.getMemArea(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
+            projections, recordBuffer.getBuffer().data(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
         executeChild(executionCtx, record);
         bufferRecordIdx += 1;
     }
@@ -377,7 +377,7 @@ void parseTrailingRecord(
 {
     const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
         indexTrailingSpanningTupleProxy,
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         executionCtx.pipelineMemoryProvider.arena.getArena(),
         nautilus::val<InputFormatIndexer*>(&indexer),
         nautilus::val<SequenceShredder*>(&sequenceShredder));
@@ -427,7 +427,7 @@ nautilus::val<bool> InputFormatter::indexBuffer(const TaskBufferRef& recordBuffe
     /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
     const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
         indexLeadingSpanningTupleAndBufferProxy,
-        recordBuffer.getReference(),
+        recordBuffer.getBuffer().asArg(),
         arenaRef.getArena(),
         nautilus::val<InputFormatIndexer*>(this->inputFormatIndexer.get()),
         nautilus::val<SequenceShredder*>(this->sequenceShredder.get())));
@@ -451,7 +451,7 @@ void InputFormatter::readBuffer(
     /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
     /// we count such a spanning tuple as a leading spanning tuple
     /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
-    parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
+    parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->layout);
 
     /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
     /// such a buffer can only form one (leading) spanning tuple, so returning is safe
@@ -463,7 +463,7 @@ void InputFormatter::readBuffer(
     /// a buffer that delimits tuples may contain multiple complete tuples
     /// determining the offset of a tuple may require parsing the prior tuple
     parseRecordsInRawBuffer(
-        executionCtx, recordBuffer, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
+        executionCtx, recordBuffer, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->layout);
 
     /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
     /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
@@ -475,7 +475,7 @@ void InputFormatter::readBuffer(
         this->projections,
         *this->inputFormatIndexer,
         *this->sequenceShredder,
-        *this->memoryProvider);
+        *this->layout);
 }
 
 std::ostream& InputFormatter::toString(std::ostream& os) const

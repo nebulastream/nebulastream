@@ -20,21 +20,21 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Buffer.hpp>
 
-struct SerializedTupleBufferHeader;
+struct SerializedBufferHeader;
 
-/// The TupleBufferBuilder is a wrapper around a tuple buffer with methods exposed to rust.
+/// The BufferBuilder is a wrapper around a tuple buffer with methods exposed to rust.
 /// This allows the rust code to set metadata on a tuple buffer without directly exposing the Buffer and its control block
 /// to rust.
-/// It is important that the underlying Buffer outlives the TupleBufferBuilder
-class TupleBufferBuilder
+/// It is important that the underlying Buffer outlives the BufferBuilder
+class BufferBuilder
 {
 public:
-    explicit TupleBufferBuilder(NES::Buffer& buffer, NES::AbstractBufferProvider& bufferProvider)
+    explicit BufferBuilder(NES::Buffer& buffer, NES::AbstractBufferProvider& bufferProvider)
         : buffer(buffer), bufferProvider(bufferProvider)
     {
     }
 
-    void setMetadata(const SerializedTupleBufferHeader&);
+    void setMetadata(const SerializedBufferHeader&);
     void setData(rust::Slice<const uint8_t>);
     void addChildBuffer(rust::Slice<const uint8_t>);
 

@@ -155,7 +155,7 @@ public:
             std::unreachable();
         }
 
-        Buffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+        Buffer allocateBuffer() override { return bufferManager->getBufferBlocking(); }
 
         /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): unreachable stub; parameter matches the overridden signature.
         Buffer& pinBuffer(Buffer&&) override

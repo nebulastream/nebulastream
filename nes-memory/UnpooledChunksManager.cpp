@@ -99,16 +99,16 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
             currentAllocatedChunk.usedSize + neededSize < currentAllocatedChunk.totalSize)
         {
             /// There is enough space in the last allocated chunk. Thus, we can create a tuple buffer from the available space
-            const auto localMemoryForNewTupleBuffer = currentAllocatedChunk.startOfChunk + currentAllocatedChunk.usedSize;
+            auto* const localMemoryForNewBuffer = currentAllocatedChunk.startOfChunk + currentAllocatedChunk.usedSize;
             const auto localKeyForUnpooledBufferChunk = localLastAllocatedChunkKey;
             currentAllocatedChunk.activeMemorySegments += 1;
             currentAllocatedChunk.usedSize += neededSize;
             NES_TRACE(
                 "Added tuple buffer {} of {}B to: {}",
-                fmt::ptr(localMemoryForNewTupleBuffer),
+                fmt::ptr(localMemoryForNewBuffer),
                 neededSize,
                 fmt::format("{}", currentAllocatedChunk));
-            return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
+            return {localKeyForUnpooledBufferChunk, localMemoryForNewBuffer};
         }
     }
 
@@ -146,14 +146,14 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     /// Updating the local last allocate chunk key and adding the new chunk to the local chunk storage
     localLastAllocatedChunkKey = newlyAllocatedMemory;
     const auto localKeyForUnpooledBufferChunk = newlyAllocatedMemory;
-    const auto localMemoryForNewTupleBuffer = newlyAllocatedMemory;
+    auto* const localMemoryForNewBuffer = newlyAllocatedMemory;
     auto& currentAllocatedChunk = localUnpooledBufferChunkStorage[localKeyForUnpooledBufferChunk];
     currentAllocatedChunk.startOfChunk = newlyAllocatedMemory;
     currentAllocatedChunk.totalSize = newAllocationSize;
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
-    NES_TRACE("Created new chunk {} for tuple buffer {} of {}B", currentAllocatedChunk, fmt::ptr(localMemoryForNewTupleBuffer), neededSize);
-    return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
+    NES_TRACE("Created new chunk {} for tuple buffer {} of {}B", currentAllocatedChunk, fmt::ptr(localMemoryForNewBuffer), neededSize);
+    return {localKeyForUnpooledBufferChunk, localMemoryForNewBuffer};
 }
 
 std::optional<Buffer>
@@ -165,13 +165,13 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     const auto alignedBufferSizePlusControlBlock = alignBufferSize(neededSize + sizeof(detail::BufferControlBlock), alignment);
 
     /// Getting space from the unpooled chunks manager
-    const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer]
+    const auto& [localKeyForUnpooledBufferChunk, localMemoryForNewBuffer]
         = this->allocateSpace(threadId, alignedBufferSizePlusControlBlock, alignment);
 
     /// allocateSpace returns a null pair when the budget is exhausted or the underlying allocation failed. Signal this
     /// to the caller as an empty optional (callers turn it into CannotAllocateBuffer/BufferAllocationFailure) instead of
     /// constructing a Buffer over a null payload.
-    if (localMemoryForNewTupleBuffer == nullptr)
+    if (localMemoryForNewBuffer == nullptr)
     {
         return std::nullopt;
     }
@@ -181,7 +181,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     const auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), alignment);
     const auto chunk = this->getChunk(threadId);
     auto memSegment = std::make_unique<detail::MemorySegment>(
-        localMemoryForNewTupleBuffer + controlBlockSize,
+        localMemoryForNewBuffer + controlBlockSize,
         alignedBufferSize,
         [copyOfMemoryResource = this->memoryResource,
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
