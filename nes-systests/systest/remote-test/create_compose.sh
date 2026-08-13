@@ -105,7 +105,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
   CONFIG_ARG=""
   if [ "$HAS_CONFIG" = "true" ]; then
-    CONFIG_ARG="\"--configPath=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
+    CONFIG_ARG="\"--workerConfig=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
   fi
 
   cat <<EOF
@@ -120,9 +120,10 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       retries: 3
       start_period: 0s
     command: [
+      $CONFIG_ARG
+      "--",
       "--grpc=$HOST_NAME:$GRPC_PORT",
       "--data_address=$DATA",
-      $CONFIG_ARG
     ]
     volumes:
       - $TESTDATA_VOLUME:/data

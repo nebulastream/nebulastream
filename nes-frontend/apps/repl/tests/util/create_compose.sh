@@ -95,6 +95,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       retries: 5
       start_period: 5s
     command: [
+      "--",
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data_address=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",

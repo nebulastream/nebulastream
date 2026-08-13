@@ -114,7 +114,7 @@ Sources and sinks are automatically placed on the single node. No `HOST` configu
 > [!NOTE]
 > **Starting a worker:** Each worker is started with separate gRPC and data addresses:
 > ```bash
-> nes-single-node-worker --grpc=0.0.0.0:8080 --data_address=<dns-name/ip>:9090
+> nes-single-node-worker -- --grpc=0.0.0.0:8080 --data_address=<dns-name/ip>:9090
 > ```
 > The gRPC address (port 8080 by convention) is the address used to identify workers in topology files and for source/sink placement. The data address (port 9090 by convention) is used internally for data transfer between workers.
 

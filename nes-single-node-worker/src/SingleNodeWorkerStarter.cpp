@@ -15,6 +15,11 @@
 /// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
 /// NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 #include <signal.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -23,6 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Signal.hpp>
+#include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
@@ -86,12 +92,48 @@ int main(const int argc, const char* argv[])
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         /// Register built-in plugins before any registry lookup.
         NES::loadBuiltinPlugins();
-        if (std::getenv("NES_PLUGINS") != nullptr)
+
+        argparse::ArgumentParser program("nes-single-node-worker");
+        program.add_argument("-w", "--workerConfig")
+            .help("worker config file (.yaml); options given after `--` override values from the file");
+        program.add_argument("--")
+            .help("worker config options, e.g. `-- --grpc=[::]:8080 --worker.query_engine.number_of_worker_threads=4`")
+            .default_value(std::vector<std::string>{})
+            .remaining();
         {
-            NES_ERROR("NES_PLUGINS is set, but this worker is statically linked and cannot load plugins. Unset NES_PLUGINS.");
+            std::ostringstream configOptionsHelp;
+            NES::generateHelp<NES::SingleNodeWorkerConfiguration>(configOptionsHelp);
+            program.add_epilog("worker config options (pass after --):\n" + configOptionsHelp.str());
+        }
+        try
+        {
+            program.parse_args(argc, argv);
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << '\n' << program;
             return 1;
         }
-        auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
+
+        /// Re-assemble an argv for the option parser from the config file given via `-w` and the
+        /// options captured after `--`.
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) argv[0] is the program name from main's argv
+        std::vector<std::string> configArgs{argv[0]};
+        if (program.is_used("-w"))
+        {
+            configArgs.push_back("--configPath=" + program.get<std::string>("-w"));
+        }
+        const auto remainingArgs = program.get<std::vector<std::string>>("--");
+        configArgs.insert(configArgs.end(), remainingArgs.begin(), remainingArgs.end());
+        std::vector<const char*> configArgv;
+        configArgv.reserve(configArgs.size());
+        for (const auto& arg : configArgs)
+        {
+            configArgv.push_back(arg.c_str());
+        }
+
+        auto configuration
+            = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(static_cast<int>(configArgv.size()), configArgv.data());
         if (!configuration)
         {
             return 0;

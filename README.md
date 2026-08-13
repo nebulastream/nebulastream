@@ -131,7 +131,7 @@ Build the client and worker binaries, start the worker in one terminal, register
 cmake --build cmake-build-debug -j --target nes-single-node-worker nes-repl
 
 # Terminal 1: start the worker
-cmake-build-debug/nes-single-node-worker/nes-single-node-worker --grpc=localhost:8080 --data_address=localhost:9090
+cmake-build-debug/nes-single-node-worker/nes-single-node-worker -- --grpc=localhost:8080 --data_address=localhost:9090
 
 # Terminal 2: prepare a tiny CSV and submit a query via nes-repl
 printf '1\n2\n3\n' > demo-input.csv

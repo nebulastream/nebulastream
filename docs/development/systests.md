@@ -375,7 +375,7 @@ To test against actual distributed workers, use the `--remote` flag. The systest
 
 ```bash
 # Terminal 1: Start a worker
-cmake-build-debug/nes-single-node-worker/nes-single-node-worker --grpc=localhost:8080 --data_address=localhost:9090
+cmake-build-debug/nes-single-node-worker/nes-single-node-worker -- --grpc=localhost:8080 --data_address=localhost:9090
 
 # Terminal 2: Run systest against the remote worker
 cmake-build-debug/nes-systests/systest/systest \
