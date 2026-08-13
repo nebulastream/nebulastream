@@ -14,19 +14,27 @@
 
 #include <Sources/NetworkSource.hpp>
 
+#include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Configurations/Validation/EndpointValidation.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
@@ -35,10 +43,86 @@
 namespace NES
 {
 
-NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
-    : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
-    , receiverQueueSize(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::RECEIVER_QUEUE_SIZE))
-    , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
+namespace
+{
+
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::string> CHANNEL{
+    Identifier::parse("CHANNEL"),
+    "UUID of the network channel",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!stringToUUID(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("NetworkSource: channel must be a valid UUID, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
+
+const ConfigField<std::string> BIND{
+    Identifier::parse("BIND"),
+    "host:port endpoint the receiver network service binds to",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .and_then(
+                [](const std::string& value) -> std::expected<std::string, Exception>
+                {
+                    if (!EndpointValidation{}.isValid(value))
+                    {
+                        return std::unexpected{InvalidConfigParameter("NetworkSource: bind must be host:port format, got: {}", value)};
+                    }
+                    return value;
+                });
+    }};
+
+/// Per-channel receiver queue size override. 0 means use the worker-level default.
+/// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
+/// The default value (0) is returned directly by the config system, bypassing the lambda.
+const ConfigField<size_t> RECEIVER_QUEUE_SIZE{
+    Identifier::parse("RECEIVER_QUEUE_SIZE"),
+    ""
+    "Per-channel receiver queue size override. 0 means use the worker-level default. Cannot be set to 0 explicitly by the user."
+    "",
+    [](const ConfigLiteral& literal)
+    {
+        /// Integer literals are always passed down signed; lower into size_t.
+        return NES::tryGetOr<int64_t>(literal, expectedType<size_t>())
+            .and_then(narrowConfigValue<int64_t, size_t>)
+            .and_then(
+                [](const size_t value) -> std::expected<size_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{
+                            InvalidConfigParameter("NetworkSource: receiver_queue_size must be > 0 when explicitly set")};
+                    }
+                    return value;
+                });
+    },
+    size_t{0}};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> NetworkSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("NETWORK_SOURCE"), CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
+}
+
+std::expected<NetworkSourceConfig, Exception> NetworkSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return NetworkSourceConfig{
+        .channel = config.get(CHANNEL), .bind = config.get(BIND), .receiverQueueSize = config.get(RECEIVER_QUEUE_SIZE)};
+}
+
+NetworkSource::NetworkSource(const NetworkSourceConfig& config)
+    : channelId(config.channel), receiverQueueSize(config.receiverQueueSize), receiverServer(receiver_instance(config.bind))
 {
 }
 
@@ -84,11 +168,6 @@ void NetworkSource::close()
     PRECONDITION(channel.has_value(), "Network Source was closed multiple times or never opened");
     close_receiver_channel(std::move(*channel));
     NES_DEBUG("Receiver channel closed: {}", channelId);
-}
-
-DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSource>(std::move(config), name());
 }
 
 }

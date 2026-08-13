@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <string>
@@ -25,29 +26,33 @@
 namespace NES
 {
 
-using SourceRegistryReturnType = std::unique_ptr<Source>;
-
-struct SourceRegistryArguments
-{
-    SourceDescriptor sourceDescriptor;
-};
-
-using SourceFactoryFn = std::function<SourceRegistryReturnType(SourceRegistryArguments)>;
-
-/// Creates the registry entry for a source implementation. Sources are constructed from their
-/// descriptor; the entry expression in cmake/RuntimeRegistrationUtil.cmake instantiates this per
-/// plugin type.
-template <typename SourceImpl>
-SourceFactoryFn makeSourceFactory()
-{
-    return [](SourceRegistryArguments arguments) -> SourceRegistryReturnType
-    { return std::make_unique<SourceImpl>(arguments.sourceDescriptor); };
-}
+/// Maps a source type name to a factory that instantiates the source from a SourceDescriptor.
+using SourceFactoryFn = std::function<std::unique_ptr<Source>(const SourceDescriptor&)>;
 
 class SourceRegistry : public RuntimeRegistry<SourceRegistry, std::string, SourceFactoryFn, /*CaseSensitive*/ false>
 {
 public:
     static SourceRegistry& instance();
 };
+
+/// Factory for the common case: the descriptor's type-erased plugin data is the source's own
+/// config struct (put there by this source's SourceConfigRegistry entry), so the any_cast is safe.
+/// Sources that need more than their config can additionally take the descriptor.
+template <typename SourceImpl, typename ConfigStruct>
+SourceFactoryFn makeSourceFactory()
+{
+    return [](const SourceDescriptor& descriptor) -> std::unique_ptr<Source>
+    {
+        auto config = descriptor.getPluginData().getAs<ConfigStruct>();
+        if constexpr (std::constructible_from<SourceImpl, const ConfigStruct&, const SourceDescriptor&>)
+        {
+            return std::make_unique<SourceImpl>(std::move(config), descriptor);
+        }
+        else
+        {
+            return std::make_unique<SourceImpl>(std::move(config));
+        }
+    };
+}
 
 }
