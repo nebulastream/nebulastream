@@ -30,11 +30,17 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
@@ -48,10 +54,10 @@ public:
     static LogicalPlan createLogicalPlan(Identifier logicalSourceName);
 
     static LogicalPlan createLogicalPlan(
-        Identifier anonymousSourceType,
-        Schema<UnqualifiedUnboundField, Ordered> schema,
-        std::unordered_map<Identifier, std::string> sourceConfig,
-        std::unordered_map<Identifier, std::string> parserConfig);
+        GeneralSourceConfig generalSourceConfig,
+        PluginSourceConfiguration pluginSourceConfig,
+        InputFormatterDescriptor pluginInputFormatterConfig,
+        Schema<UnqualifiedUnboundField, Ordered> schema);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
@@ -99,10 +105,10 @@ public:
 
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addAnonymousSink(
-        Identifier type,
-        std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-        std::unordered_map<Identifier, std::string> sinkConfig,
-        std::unordered_map<Identifier, std::string> formatConfig,
+        AnonymousSinkSchema sinkSchema,
+        GeneralSinkConfig generalSinkConfig,
+        PluginSinkConfiguration pluginSinkConfig,
+        OutputFormatterDescriptor outputFormatterDescriptor,
         const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.

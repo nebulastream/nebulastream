@@ -22,7 +22,6 @@ add_source_files(nes-input-formatters
         InputFormatter.cpp
         FieldOffsetRawBufferIndex.cpp
         InputFormatterDescriptor.cpp
-        InputFormatterValidationProvider.cpp
         CSVInputFormatIndexer.cpp
 )
 

@@ -13,17 +13,19 @@
 */
 #include <Rules/Semantic/AnonymousSourceBindingRule.hpp>
 
+#include <optional>
 #include <ranges>
 #include <set>
+#include <string>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -67,32 +69,19 @@ LogicalOperator AnonymousSourceBindingRule::bindAnonymousSourceLogicalOperators(
         newChildren.emplace_back(bindAnonymousSourceLogicalOperators(child));
     }
 
-    if (const auto anonymousSource = current.tryGetAs<AnonymousSourceLogicalOperator>())
+    if (const auto anonymousSourceOpt = current.tryGetAs<AnonymousSourceLogicalOperator>())
     {
+        const auto& anonymousSource = anonymousSourceOpt.value();
         PRECONDITION(std::ranges::empty(anonymousSource->getChildren()), "Anonymous source operator must have no children");
-        const auto type = anonymousSource.value()->getSourceType();
-        const auto schema = anonymousSource.value()->getSourceSchema();
-        const auto parserConfig = anonymousSource.value()->getParserConfig();
-        auto sourceConfig = anonymousSource.value()->getSourceConfig();
+        auto descriptorExp
+            = PhysicalSourceBuilder{anonymousSource->getGeneralSourceConfig(), anonymousSource->getPluginSourceConfig(), anonymousSource->getInputFormatterDescriptor(), this->sourceCatalog}
+                  .build(anonymousSource->getSourceSchema());
 
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because AnonymousSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find(Identifier::parse("host"));
-        if (hostIt == sourceConfig.end())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        const auto descriptorOpt = sourceCatalog->getAnonymousSource(type, schema, host, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
+        if (!descriptorExp.has_value())
         {
             throw InvalidConfigParameter("Could not create an anonymous source descriptor because of invalid config parameters");
         }
-        const auto& descriptor = descriptorOpt.value();
-        return SourceDescriptorLogicalOperator::create(descriptor);
+        return SourceDescriptorLogicalOperator::create(std::move(descriptorExp).value());
     }
 
     return current.withChildrenUnsafe(newChildren);

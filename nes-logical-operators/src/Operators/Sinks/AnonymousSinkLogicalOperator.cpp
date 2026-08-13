@@ -19,9 +19,9 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
+
 
 #include <fmt/format.h>
 
@@ -31,9 +31,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -47,25 +50,32 @@ namespace NES
 AnonymousSinkLogicalOperator::AnonymousSinkLogicalOperator(
     WeakLogicalOperator self,
     Identifier sinkType,
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-    std::unordered_map<Identifier, std::string> config,
-    std::unordered_map<Identifier, std::string> formatConfig)
-    : ManagedByOperator(std::move(self))
-    , targetSchema(std::move(schema))
+    AnonymousSinkSchema schema,
+    GeneralSinkConfig generalSinkConfig,
+    PluginSinkConfiguration pluginSinkConfiguration,
+    OutputFormatterDescriptor outputFormatterDescriptor)
+    : ManagedByOperator{std::move(self)}
     , sinkType(std::move(sinkType))
-    , sinkConfig(std::move(config))
-    , formatConfig(std::move(formatConfig))
+    , targetSchema(std::move(schema))
+    , generalSinkConfig(std::move(generalSinkConfig))
+    , pluginSinkConfig(std::move(pluginSinkConfiguration))
+    , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
 }
 
 TypedLogicalOperator<AnonymousSinkLogicalOperator> AnonymousSinkLogicalOperator::create(
     Identifier sinkType,
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
-    std::unordered_map<Identifier, std::string> config,
-    std::unordered_map<Identifier, std::string> formatConfig)
+    AnonymousSinkSchema schema,
+    GeneralSinkConfig generalSinkConfig,
+    PluginSinkConfiguration pluginSinkConfiguration,
+    OutputFormatterDescriptor outputFormatterDescriptor)
 {
     return TypedLogicalOperator<AnonymousSinkLogicalOperator>{
-        std::move(sinkType), std::move(schema), std::move(config), std::move(formatConfig)};
+        std::move(sinkType),
+        std::move(schema),
+        std::move(generalSinkConfig),
+        std::move(pluginSinkConfiguration),
+        std::move(outputFormatterDescriptor)};
 }
 
 AnonymousSinkLogicalOperator AnonymousSinkLogicalOperator::withInferredSchema()
@@ -79,25 +89,9 @@ Identifier AnonymousSinkLogicalOperator::getSinkType() const
     return sinkType;
 }
 
-std::unordered_map<Identifier, std::string> AnonymousSinkLogicalOperator::getSinkConfig() const
-{
-    return sinkConfig;
-}
-
-std::optional<Schema<UnqualifiedUnboundField, Ordered>> AnonymousSinkLogicalOperator::getTargetSchema() const
-{
-    return targetSchema;
-}
-
-std::unordered_map<Identifier, std::string> AnonymousSinkLogicalOperator::getFormatConfig() const
-{
-    return formatConfig;
-}
-
 bool AnonymousSinkLogicalOperator::operator==(const AnonymousSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->targetSchema == rhs.targetSchema && this->sinkConfig == rhs.sinkConfig
-        && this->formatConfig == rhs.formatConfig;
+    return this == &rhs;
 }
 
 std::string AnonymousSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -153,6 +147,26 @@ std::vector<LogicalOperator> AnonymousSinkLogicalOperator::getChildren() const
     return children;
 }
 
+AnonymousSinkSchema AnonymousSinkLogicalOperator::getSinkSchema() const
+{
+    return targetSchema;
+}
+
+GeneralSinkConfig AnonymousSinkLogicalOperator::getGeneralSinkConfig() const
+{
+    return generalSinkConfig;
+}
+
+PluginSinkConfiguration AnonymousSinkLogicalOperator::getPluginSinkConfiguration() const
+{
+    return pluginSinkConfig;
+}
+
+OutputFormatterDescriptor AnonymousSinkLogicalOperator::getOutputFormatterDescriptor() const
+{
+    return outputFormatterDescriptor;
+}
+
 Reflected Reflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(
     const TypedLogicalOperator<AnonymousSinkLogicalOperator>&, const ReflectionContext&) const
 {
@@ -171,5 +185,5 @@ Unreflector<TypedLogicalOperator<AnonymousSinkLogicalOperator>>::operator()(cons
 
 uint64_t std::hash<NES::AnonymousSinkLogicalOperator>::operator()(const NES::AnonymousSinkLogicalOperator& op) const noexcept
 {
-    return folly::hash::hash_combine_generic(NES::Hash{}, op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
+    return folly::hash::hash_combine_generic(NES::Hash{}, op.getSinkType());
 }

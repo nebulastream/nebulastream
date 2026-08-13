@@ -29,6 +29,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -52,11 +53,14 @@
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
 
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Util/Pointers.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -112,6 +116,25 @@ NES::Systest::SystestQuery makeQuery(
 namespace NES::Systest
 {
 
+namespace
+{
+SourceDescriptor makeTestPhysicalSource(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource)
+{
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV")).value();
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = configSchema.resolveConfigs(values).value();
+    return sourceCatalog
+        ->registerWithLogicalSource(
+            PhysicalSourceBuilder{
+                std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+            logicalSource.getLogicalSourceName())
+        .value();
+}
+}
+
 class SystestRunnerTest : public Testing::BaseUnitTest
 {
 public:
@@ -123,15 +146,24 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}
-                                             .addSinkDescriptor(
-                                                 Identifier::parse("dummySink"),
-                                                 Schema<UnqualifiedUnboundField, Ordered>{},
-                                                 Identifier::parse("Print"),
-                                                 Host("localhost"),
-                                                 {{Identifier::parse("output_format"), "CSV"}},
-                                                 {})
-                                             .value();
+    SinkDescriptor dummySinkDescriptor = [&]
+    {
+        auto [generalConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = SinkCatalog::getConfigSchema(Identifier::parse("Print"), Identifier::parse("CSV"))
+                  .value()
+                  .resolveConfigs(Schema<LiteralConfigValue, Ordered>{
+                      std::vector<LiteralConfigValue>{{QualifiedIdentifier::parse("OUTPUT_FORMATTER.TYPE"), std::string{"CSV"}}}})
+                  .value();
+        generalConfig.host = Host("localhost");
+        return SinkCatalog{}
+            .addSinkDescriptor(
+                Identifier::parse("dummySink"),
+                Schema<UnqualifiedUnboundField, Ordered>{},
+                std::move(generalConfig),
+                std::move(pluginSinkConfig),
+                std::move(outputFormatterDescriptor))
+            .value();
+    }();
     SystestQueryId dummyQueryId = NES::INVALID<SystestQueryId>;
 };
 
@@ -192,16 +224,10 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         .WillRepeatedly(testing::Return(makeSummary(id, QueryStatus::Failed, runtimeErr)));
     SystestProgressTracker progressTracker;
 
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(),
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
+    auto sourceCatalog = SourceCatalog::create();
+    auto testLogicalSource = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    auto testPhysicalSource = makeTestPhysicalSource(sourceCatalog, testLogicalSource.value());
+    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource);
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
@@ -230,16 +256,10 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
         .WillRepeatedly(testing::Return(makeSummary(id, QueryStatus::Stopped, nullptr)));
     SystestProgressTracker progressTracker;
 
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(),
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
+    auto sourceCatalog = SourceCatalog::create();
+    auto testLogicalSource = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    auto testPhysicalSource = makeTestPhysicalSource(sourceCatalog, testLogicalSource.value());
+    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource);
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
@@ -265,16 +285,10 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     SystestProgressTracker progressTracker;
 
     auto [submitter, mockBackend] = createQuerySubmitter();
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(),
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
+    auto sourceCatalog = SourceCatalog::create();
+    auto testLogicalSource = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    auto testPhysicalSource = makeTestPhysicalSource(sourceCatalog, testLogicalSource.value());
+    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource);
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
@@ -322,16 +336,10 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 
     SystestProgressTracker progressTracker;
 
-    SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(),
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
+    auto sourceCatalog = SourceCatalog::create();
+    auto testLogicalSource = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    auto testPhysicalSource = makeTestPhysicalSource(sourceCatalog, testLogicalSource.value());
+    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource);
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 

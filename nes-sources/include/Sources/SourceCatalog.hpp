@@ -114,11 +114,6 @@ class SourceCatalog : std::enable_shared_from_this<SourceCatalog>
 
 public:
     explicit SourceCatalog(Private);
-
-    /// Transitional: callers still construct the catalog directly (also by value in tests);
-    /// goes away once everything moves to create().
-    SourceCatalog() : SourceCatalog(Private{}) { }
-
     static SharedPtr<SourceCatalog> create();
     ~SourceCatalog() = default;
 
@@ -153,24 +148,6 @@ public:
     [[nodiscard]] bool containsLogicalSource(const Identifier& logicalSourceName) const;
 
     [[nodiscard]] std::optional<SourceDescriptor> getPhysicalSource(PhysicalSourceId physicalSourceId) const;
-
-    /// Transitional map-based registration API: the raw string values are parsed into config
-    /// literals and resolved against the merged source/input-formatter schema. Replaced by
-    /// binder-side resolution plus PhysicalSourceBuilder in a follow-up.
-    [[nodiscard]] std::expected<SourceDescriptor, Exception> addPhysicalSource(
-        const LogicalSource& logicalSource,
-        const Identifier& sourceType,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& descriptorConfig,
-        const std::unordered_map<Identifier, std::string>& parserConfig);
-
-    /// Transitional map-based anonymous-source API, see addPhysicalSource.
-    [[nodiscard]] std::optional<SourceDescriptor> getAnonymousSource(
-        const Identifier& sourceType,
-        const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const Host& host,
-        const std::unordered_map<Identifier, std::string>& parserConfigMap,
-        const std::unordered_map<Identifier, std::string>& sourceConfigMap) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it

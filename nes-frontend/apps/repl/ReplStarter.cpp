@@ -28,19 +28,21 @@
 #include <string>
 #include <thread>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 
+#include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Schema.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -167,8 +169,8 @@ int main(int argc, char** argv)
         /// Worker/optimizer config in one schema: the frontend optimizer config
         /// (optimizer.*) and, with the embedded engine, the worker subtree.
         program.add_argument("-w", "--workerConfig")
-            .help("worker/optimizer config file (.yaml) with fully qualified keys (worker.*, optimizer.*, ...); must be disjoint from "
-                  "the config options after `--`");
+            .help("worker/optimizer config file (.yaml) with fully qualified keys (worker.*, optimizer.*, ...); the lowest-priority config "
+                  "layer below the `--` arguments; conflicting values are an error");
         program.add_argument("--")
             .help("worker/optimizer config arguments, e.g., `-- --optimizer.join_strategy=HASH_JOIN "
                   "--worker.query_engine.number_of_worker_threads=10` (worker options require the embedded engine)")
@@ -257,13 +259,18 @@ int main(int argc, char** argv)
         const auto queryOptimizerConfig = workerOptimizerConfig->queryOptimizer;
 
 
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto sourceCatalogHandle = NES::SourceCatalog::create();
+        auto sourceCatalog = NES::copyPtr(sourceCatalogHandle);
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         auto modelCatalog = std::make_shared<NES::ModelCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            {},
+            {},
+            sourceCatalog,
+            [](auto&& pH1)
+            { return NES::AntlrSQLQueryParser::QueryBinder{{}, {}}.bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -320,11 +327,11 @@ int main(int argc, char** argv)
         };
         queryManager
             = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(std::move(resolveWorkerConfiguration)));
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
 #else
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};

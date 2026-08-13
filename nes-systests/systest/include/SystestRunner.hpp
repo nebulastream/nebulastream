@@ -77,7 +77,7 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
@@ -105,7 +105,7 @@ struct BenchmarkResult
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    const WorkerConfigResolver& workerConfigResolver,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker);

@@ -14,6 +14,7 @@
 
 #include <FileSource.hpp>
 
+#include <any>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -113,16 +114,14 @@ std::ostream& FileSource::toString(std::ostream& str) const
 
 InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    auto config
+        = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
+    if (!config.filePath.string().ends_with(".systest.csv"))
     {
-        throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
+        throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
-
-
-    if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+    if (std::ofstream testFile(config.filePath); testFile.is_open())
     {
         /// Write inline tuples to test file.
         for (const auto& tuple : systestAdaptorArguments.tuples)
@@ -130,22 +129,28 @@ InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArg
             testFile << tuple << "\n";
         }
         testFile.flush();
-        return systestAdaptorArguments.physicalSourceConfig;
+
+        auto copy = systestAdaptorArguments.physicalSourceConfig;
+        copy.pluginSourceConfig = PluginSourceConfiguration{copy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
+        return copy;
     }
-    throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+    throw TestException("Could not open source file \"{}\"", config.filePath);
 }
 
 FileDataRegistryReturnType FileSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
+    auto config
+        = std::any_cast<FileSourceConfig>(systestAdaptorArguments.physicalSourceConfig.pluginSourceConfig.getPluginData().getValue());
+    if (!config.filePath.string().ends_with(".systest.csv"))
     {
         throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
     }
+    config.filePath = systestAdaptorArguments.testFilePath;
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
+    auto argCopy = systestAdaptorArguments.physicalSourceConfig;
+    argCopy.pluginSourceConfig = PluginSourceConfiguration{argCopy.pluginSourceConfig.getType(), ExplicitAny{std::any{config}}};
 
-    return systestAdaptorArguments.physicalSourceConfig;
+    return argCopy;
 }
 
 

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -21,11 +22,15 @@
 #include <variant>
 #include <vector>
 
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/ConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
@@ -46,11 +51,13 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Pointers.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterValidationProvider.hpp>
+#include <InputFormatterConfigRegistry.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 
@@ -62,6 +69,7 @@ namespace
 class StatementBinderTest : public Testing::BaseUnitTest
 {
 public:
+    SharedPtr<SourceCatalog> sourceCatalogHandle;
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<StatementBinder> binder;
@@ -79,13 +87,16 @@ public:
     void SetUp() override
     {
         BaseUnitTest::SetUp();
-        sourceCatalog = std::make_shared<SourceCatalog>();
+        sourceCatalogHandle = SourceCatalog::create();
+        sourceCatalog = copyPtr(sourceCatalogHandle);
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
+            Schema<ConfigFieldDefault, Ordered>{},
+            Schema<ConfigFieldTransformation, Unordered>{},
             sourceCatalog,
             [](auto&& queryContext)
-            { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
-        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
+            { return AntlrSQLQueryParser::QueryBinder{{}, {}}.bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
+        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);
         sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
         modelStatementHandler = std::make_shared<ModelStatementHandler>(std::make_shared<ModelCatalog>());
     }
@@ -334,8 +345,8 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
     const std::string query = "SELECT id, text \n"
                               "FROM input\n"
                               "INTO FILE(\n"
-                              "'out.csv' AS \"SINK\".FILE_PATH,\n"
-                              "'CSV' as \"SINK\".OUTPUT_FORMAT,\n"
+                              "'out.csv' AS FILE_SINK.FILE_PATH,\n"
+                              "'CSV' as OUTPUT_FORMATTER.\"TYPE\",\n"
                               "SCHEMA(id UINT64, text VARSIZED) AS \"SINK\".\"SCHEMA\")\n";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
@@ -350,23 +361,28 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
 
     ASSERT_EQ(Identifier::parse("FILE"), anonymousSinkOperator->getSinkType());
 
-    const std::unordered_map<Identifier, std::string> expectedSinkConfig
-        = {{Identifier::parse("file_path"), "out.csv"}, {Identifier::parse("output_format"), "CSV"}};
-    ASSERT_EQ(expectedSinkConfig, anonymousSinkOperator->getSinkConfig());
-
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{
             Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
-    ASSERT_EQ(schema, anonymousSinkOperator->getTargetSchema());
+
+    const auto sinkSchema = anonymousSinkOperator->getSinkSchema();
+    const auto* boundSchema = std::get_if<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(&sinkSchema);
+    ASSERT_NE(nullptr, boundSchema);
+    EXPECT_EQ(schema, **boundSchema);
+
+    const auto fileSinkConfig = anonymousSinkOperator->getPluginSinkConfiguration().getPluginData().getAs<FileSinkConfig>();
+    EXPECT_EQ(std::filesystem::path{"out.csv"}, fileSinkConfig.filePath);
+    EXPECT_EQ(Identifier::parse("CSV"), anonymousSinkOperator->getOutputFormatterDescriptor().getOutputFormatterType());
 }
 
 TEST_F(StatementBinderTest, AnonymousSourceQuery)
 {
     const std::string query = "SELECT id, text \n"
                               "FROM File(\n"
-                              "'input.csv' AS \"SOURCE\".FILE_PATH,\n"
+                              "'input.csv' AS FILE_SOURCE.FILE_PATH,\n"
+                              "'localhost:9090' AS \"SOURCE\".HOST,\n"
                               "'CSV' AS INPUT_FORMATTER.\"TYPE\",\n"
                               "SCHEMA(id UINT64, text VARSIZED) AS \"SOURCE\".\"SCHEMA\")\n"
                               "INTO output\n";
@@ -381,13 +397,9 @@ TEST_F(StatementBinderTest, AnonymousSourceQuery)
 
     const auto& anonymousSourceOperator = anonymousSourceOperatorList.at(0);
 
-    ASSERT_EQ(Identifier::parse("FILE"), anonymousSourceOperator->getSourceType());
+    ASSERT_EQ(Identifier::parse("FILE"), anonymousSourceOperator->getPluginSourceConfig().getType());
 
-    const std::unordered_map<Identifier, std::string> expectedSourceConfig = {{Identifier::parse("file_path"), "input.csv"}};
-    ASSERT_EQ(expectedSourceConfig, anonymousSourceOperator->getSourceConfig());
-
-    const std::unordered_map<Identifier, std::string> expectedParserConfig = {{Identifier::parse("type"), "CSV"}};
-    ASSERT_EQ(expectedParserConfig, anonymousSourceOperator->getParserConfig());
+    ASSERT_EQ(Identifier::parse("CSV"), anonymousSourceOperator->getInputFormatterDescriptor().getInputFormatterType());
 
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{
@@ -433,8 +445,18 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as "SOURCE".MAX_INFLIGHT_BUFFERS, '/dev/null' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", '\n' AS INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as "SOURCE".MAX_INFLIGHT_BUFFERS, 'localhost:9090' AS "SOURCE".HOST, '/dev/null' AS FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", '\n' AS CSV_INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS CSV_INPUT_FORMATTER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
+    const auto expectedParserConfig = []
+    {
+        const Schema<LiteralConfigValue, Ordered> values{
+            LiteralConfigValue{QualifiedIdentifier::parse("TUPLE_DELIMITER"), "\n"},
+            LiteralConfigValue{QualifiedIdentifier::parse("FIELD_DELIMITER"), ","}};
+        auto declaredSchema = InputFormatterConfigSchemaRegistry::instance().getSchema("CSV").value();
+        auto resolved = toExpected(resolveConfig(values, declaredSchema)).value();
+        auto configEntry = InputFormatterConfigRegistry::instance().find("CSV").value();
+        return InputFormatterDescriptor{Identifier::parse("CSV"), configEntry.instantiate(InstantiatedConfig{std::move(resolved)}).value()};
+    }();
 
     ASSERT_TRUE(statement2.has_value());
     ASSERT_TRUE(std::holds_alternative<CreatePhysicalSourceStatement>(*statement2));
@@ -442,9 +464,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(physicalSourceResult.has_value());
     const auto [physicalSource] = physicalSourceResult.value();
     ASSERT_EQ(physicalSource.getLogicalSourceName(), actualSource.getLogicalSourceName());
-    ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getInputFormatterType(), Identifier::parse("CSV"));
+    ASSERT_EQ(physicalSource.getInputFormatterDescriptor(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getSourceType(), Identifier::parse("FILE"));
-    ASSERT_EQ(physicalSource.getPluginData().getAs<const FileSourceConfig&>().filePath, "/dev/null");
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
 
     const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE WHERE ID = 1";
@@ -483,7 +504,7 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
 TEST_F(StatementBinderTest, BindCreateSink)
 {
     const std::string createSinkStatement = "CREATE SINK testSink (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS "
-                                            "\"SINK\".FILE_PATH, 'CSV' AS \"SINK\".OUTPUT_FORMAT)";
+                                            "FILE_SINK.FILE_PATH, 'CSV' AS OUTPUT_FORMATTER.\"TYPE\")";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateSinkStatement>(*statement));
@@ -502,8 +523,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
-    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
+    ASSERT_EQ(actualSink.getPluginData().getAs<FileSinkConfig>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getFormatType(), "CSV");
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
@@ -521,7 +542,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
 TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 {
     const std::string createSinkStatement = "CREATE SINK testSink (attribute1 UINT32, attribute2 VARSIZED NOT NULL) TYPE File "
-                                            "SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS \"SINK\".OUTPUT_FORMAT)";
+                                            "SET ('/dev/null' AS FILE_SINK.FILE_PATH, 'CSV' AS OUTPUT_FORMATTER.\"TYPE\")";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateSinkStatement>(*statement));
@@ -536,8 +557,8 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
     ASSERT_EQ(*actualSchema, expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "FILE");
-    ASSERT_EQ(actualSink.getPluginSinkConfiguration().getPluginData().getAs<const FileSinkConfig&>().filePath, "/dev/null");
-    ASSERT_EQ(actualSink.getOutputFormatterDescriptor().getOutputFormatterType(), Identifier::parse("CSV"));
+    ASSERT_EQ(actualSink.getPluginData().getAs<FileSinkConfig>().filePath, "/dev/null");
+    ASSERT_EQ(actualSink.getFormatType(), "CSV");
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
@@ -608,18 +629,18 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     std::vector<std::string_view> createSourcesStatements;
     createSourcesStatements.emplace_back("CREATE LOGICAL SOURCE testSource1 (attribute1 UINT32, attribute2 VARSIZED)");
     createSourcesStatements.emplace_back("CREATE LOGICAL SOURCE testSource2 (attribute1 UINT32, attribute2 INT32)");
-    createSourcesStatements.emplace_back(
-        "CREATE PHYSICAL SOURCE FOR testSource1 TYPE File SET (200 as "
-        "\"SOURCE\".MAX_INFLIGHT_BUFFERS, '/dev/null' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
-        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
-    createSourcesStatements.emplace_back(
-        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
-        "\"SOURCE\".MAX_INFLIGHT_BUFFERS, '/dev/random' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
-        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
-    createSourcesStatements.emplace_back(
-        "CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
-        "\"SOURCE\".MAX_INFLIGHT_BUFFERS, '/dev/ones' AS \"SOURCE\".FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
-        "INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER)");
+    createSourcesStatements.emplace_back("CREATE PHYSICAL SOURCE FOR testSource1 TYPE File SET (200 as "
+                                         "\"SOURCE\".MAX_INFLIGHT_BUFFERS, \'localhost:9090\' AS \"SOURCE\".HOST, '/dev/null' AS "
+                                         "FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
+                                         "CSV_INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS CSV_INPUT_FORMATTER.FIELD_DELIMITER)");
+    createSourcesStatements.emplace_back("CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
+                                         "\"SOURCE\".MAX_INFLIGHT_BUFFERS, \'localhost:9090\' AS \"SOURCE\".HOST, '/dev/random' AS "
+                                         "FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
+                                         "CSV_INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS CSV_INPUT_FORMATTER.FIELD_DELIMITER)");
+    createSourcesStatements.emplace_back("CREATE PHYSICAL SOURCE FOR testSource2 TYPE File SET (0 as "
+                                         "\"SOURCE\".MAX_INFLIGHT_BUFFERS, \'localhost:9090\' AS \"SOURCE\".HOST, '/dev/ones' AS "
+                                         "FILE_SOURCE.FILE_PATH, 'CSV' AS INPUT_FORMATTER.\"TYPE\", '\n' AS "
+                                         "CSV_INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS CSV_INPUT_FORMATTER.FIELD_DELIMITER)");
 
     for (const auto& sourceStatementString : createSourcesStatements)
     {
@@ -668,8 +689,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value().sources.at(0).getPluginData().getAs<const FileSourceConfig&>().filePath,
-        "/dev/random");
+        filteredPhysicalSourcesStatementResult.value().sources.at(0).getPluginData().getAs<FileSourceConfig>().filePath, "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
@@ -702,21 +722,17 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value()
-            .sources.at(0)
-            .getPluginData()
-            .getAs<const FileSourceConfig&>()
-            .filePath.string(),
+        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).getPluginData().getAs<FileSourceConfig>().filePath,
         "/dev/ones");
 }
 
 TEST_F(StatementBinderTest, ShowSinks)
 {
     const std::vector<std::string_view> sinkStatements{
-        "CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS "
-        "\"SINK\".OUTPUT_FORMAT)",
-        "CREATE SINK testSink2 (attribute1 UINT32, attribute2 INT32) TYPE File SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS "
-        "\"SINK\".OUTPUT_FORMAT)"};
+        "CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS FILE_SINK.FILE_PATH, 'CSV' AS "
+        "OUTPUT_FORMATTER.\"TYPE\")",
+        "CREATE SINK testSink2 (attribute1 UINT32, attribute2 INT32) TYPE File SET ('/dev/null' AS FILE_SINK.FILE_PATH, 'CSV' AS "
+        "OUTPUT_FORMATTER.\"TYPE\")"};
 
     for (const auto& sinkStatement : sinkStatements)
     {
@@ -837,8 +853,9 @@ TEST_F(StatementBinderTest, ExplainStatement)
     }
 
     const std::vector<std::string_view> badExplainStatement{
-        "EXPLAIN CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS "
-        "\"SINK\".OUTPUT_FORMAT)",
+        "EXPLAIN CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS FILE_SINK.FILE_PATH, 'CSV' "
+        "AS "
+        "OUTPUT_FORMATTER.\"TYPE\")",
         "EXPLAIN SHOW PHYSICAL SOURCES"};
 
     for (const auto& explain : badExplainStatement)
@@ -926,7 +943,7 @@ TEST_F(StatementBinderTest, LeftOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT OUTER JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
@@ -936,7 +953,7 @@ TEST_F(StatementBinderTest, RightOuterJoinParsesToOuterRightJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) RIGHT OUTER JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN, joins.at(0)->getJoinType());
@@ -946,7 +963,7 @@ TEST_F(StatementBinderTest, FullOuterJoinParsesToOuterFullJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) FULL OUTER JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
@@ -956,7 +973,7 @@ TEST_F(StatementBinderTest, JoinWithoutKeywordParsesToInnerJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
@@ -966,7 +983,7 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
@@ -976,7 +993,7 @@ TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT outer JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
@@ -986,7 +1003,7 @@ TEST_F(StatementBinderTest, LeftJoinWithoutOuterKeywordParsesToOuterLeftJoinType
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
@@ -996,7 +1013,7 @@ TEST_F(StatementBinderTest, RightJoinWithoutOuterKeywordParsesToOuterRightJoinTy
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) RIGHT JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN, joins.at(0)->getJoinType());
@@ -1006,7 +1023,7 @@ TEST_F(StatementBinderTest, FullJoinWithoutOuterKeywordParsesToOuterFullJoinType
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) FULL JOIN (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
@@ -1016,7 +1033,7 @@ TEST_F(StatementBinderTest, LowercaseLeftJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) left join (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
@@ -1026,7 +1043,7 @@ TEST_F(StatementBinderTest, LowercaseRightJoinParsesToOuterRightJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) right join (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN, joins.at(0)->getJoinType());
@@ -1036,7 +1053,7 @@ TEST_F(StatementBinderTest, LowercaseFullJoinParsesToOuterFullJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) full join (SELECT * FROM s2) "
                               "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
-    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto plan = AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query);
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());

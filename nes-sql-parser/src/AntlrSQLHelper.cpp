@@ -15,11 +15,18 @@
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 
 #include <optional>
+#include <tuple>
 #include <utility>
 #include <vector>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <CommonParserFunctions.hpp>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES::Parsers
 {
@@ -46,12 +53,16 @@ void AntlrSQLHelper::setSource(Identifier sourceName)
     this->source = std::move(sourceName);
 }
 
-void AntlrSQLHelper::setAnonymousSource(const Identifier& type, const ConfigMap& parameters)
+void AntlrSQLHelper::setAnonymousSource(
+    std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>
+        sourceBuilder)
 {
-    this->anonymousSourceConfig = std::make_pair(type, parameters);
+    this->anonymousSourceConfig = std::move(sourceBuilder);
 }
 
-std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getAnonymousSourceConfig()
+const std::optional<
+    std::tuple<GeneralSourceConfig, PluginSourceConfiguration, InputFormatterDescriptor, Schema<UnqualifiedUnboundField, Ordered>>>&
+AntlrSQLHelper::getAnonymousSourceConfig()
 {
     return this->anonymousSourceConfig;
 }

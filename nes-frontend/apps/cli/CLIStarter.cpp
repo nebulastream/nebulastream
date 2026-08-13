@@ -30,11 +30,13 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigParsing.hpp>
+#include <Configurations/ConfigResolution.hpp>
 #include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -60,6 +62,7 @@
 #include <Util/Pointers.hpp>
 #include <Util/Signal.hpp>
 #include <Util/Strings.hpp>
+#include <Util/Variant.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -553,16 +556,44 @@ std::vector<std::string> loadQueries(
     return queries;
 }
 
-std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered_map<std::string, std::string>& config)
+NES::Schema<NES::LiteralConfigValue, NES::Ordered> bindSourceConfig(const std::unordered_map<std::string, std::string>& config)
 {
-    const auto boundConfig = config
-        | std::views::transform([](const auto& rawPair) { return std::make_pair(bindIdentifierName(rawPair.first), rawPair.second); })
-        | std::ranges::to<std::unordered_map<NES::Identifier, std::string>>();
-    if (std::ranges::size(config) != std::ranges::size(boundConfig))
+    auto boundConfig
+        = config
+        | std::views::transform(
+              [](const auto& rawPair)
+              {
+                  return NES::LiteralConfigValue{
+                      NES::QualifiedIdentifier::create(bindIdentifierName(rawPair.first)), NES::parseConfigLiteral(rawPair.second)};
+              })
+        | std::ranges::to<std::vector>();
+    if (std::ranges::size(config)
+        != std::ranges::size(
+            boundConfig | std::views::transform([](const auto& value) { return value.getFullyQualifiedName(); })
+            | std::ranges::to<std::unordered_set<NES::QualifiedIdentifier>>()))
     {
         throw NES::InvalidConfigParameter("Duplicate parameters with different casing");
     }
-    return boundConfig;
+    return NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::move(boundConfig)};
+}
+
+std::optional<NES::Identifier> peekTypeLiteral(const NES::Schema<NES::LiteralConfigValue, NES::Ordered>& values)
+{
+    const auto typeLiteral = values.getFieldByName(NES::QualifiedIdentifier::parse("TYPE"));
+    if (not typeLiteral.has_value())
+    {
+        return std::nullopt;
+    }
+    return NES::unwrapOrThrow(
+        NES::tryGetOr<std::string>(typeLiteral->getValue(), NES::expectedType<std::string>()).and_then(NES::Identifier::tryParse));
+}
+
+NES::Schema<NES::LiteralConfigValue, NES::Ordered>
+mergeConfigValues(const NES::Schema<NES::LiteralConfigValue, NES::Ordered>& lhs, std::vector<NES::LiteralConfigValue> rhs)
+{
+    auto merged = lhs | std::ranges::to<std::vector<NES::LiteralConfigValue>>();
+    merged.insert(merged.end(), std::make_move_iterator(rhs.begin()), std::make_move_iterator(rhs.end()));
+    return NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::move(merged)};
 }
 
 NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields)
@@ -596,22 +627,37 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
+        const auto parserValues = bindSourceConfig(parserConfig);
+        const auto inputFormatterType = peekTypeLiteral(parserValues);
+        if (not inputFormatterType.has_value())
+        {
+            throw NES::InvalidConfigParameter("The parser config of physical source for {} must specify the TYPE", logical);
+        }
+        auto values = mergeConfigValues(
+            mergeConfigValues(bindSourceConfig(sourceConfig), parserValues | std::ranges::to<std::vector<NES::LiteralConfigValue>>()),
+            {NES::LiteralConfigValue{NES::QualifiedIdentifier::parse("HOST"), host}});
+        auto configSchema = NES::unwrapOrThrow(NES::SourceCatalog::getConfigSchema(bindIdentifierName(type), *inputFormatterType));
+        auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema]
+            = NES::unwrapOrThrow(configSchema.resolveConfigs(values));
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = bindIdentifierName(logical),
-            .sourceType = bindIdentifierName(type),
-            .host = NES::Host(host),
-            .sourceConfig = bindConfig(sourceConfig),
-            .parserConfig = bindConfig(parserConfig)});
+            bindIdentifierName(logical), std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
+        const auto formatValues = bindSourceConfig(parserConfig);
+        const auto outputFormatterType = peekTypeLiteral(formatValues).value_or(NES::Identifier::parse("NATIVE"));
+        const auto values
+            = mergeConfigValues(bindSourceConfig(config), formatValues | std::ranges::to<std::vector<NES::LiteralConfigValue>>());
+        auto configSchema = NES::unwrapOrThrow(NES::SinkCatalog::getConfigSchema(bindIdentifierName(type), outputFormatterType));
+        auto [generalSinkConfig, sinkSchema, pluginSinkConfig, outputFormatterDescriptor]
+            = NES::unwrapOrThrow(configSchema.resolveConfigs(values));
+        generalSinkConfig.host = NES::Host(host);
         statements.emplace_back(NES::CreateSinkStatement{
             .name = bindIdentifierName(name),
-            .sinkType = bindIdentifierName(type),
             .schema = bindSchema(schemaFields),
-            .host = NES::Host(host),
-            .sinkConfig = bindConfig(config),
-            .formatConfig = bindConfig(parserConfig)});
+            .generalSinkConfig = std::move(generalSinkConfig),
+            .pluginSinkConfig = std::move(pluginSinkConfig),
+            .outputFormatterDescriptor = std::move(outputFormatterDescriptor)});
     }
     for (const auto& [name, path, input, output] : models)
     {
@@ -640,7 +686,7 @@ NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI:
 {
     if (!topologyConfig.optimizer.IsDefined())
     {
-        return NES::defaultConfiguration<NES::QueryOptimizerConfiguration>();
+        return {};
     }
     /// The topology file addresses the options relative to the optimizer config (e.g.
     /// join_strategy: HASH_JOIN), but its declared schema is rooted at
@@ -738,13 +784,14 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     const auto queries = state | std::views::keys | std::ranges::to<std::vector>();
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto sourceCatalogHandle = NES::SourceCatalog::create();
+    auto sourceCatalog = NES::copyPtr(sourceCatalogHandle);
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     auto queryOptimizer
@@ -779,13 +826,14 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
 
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-    auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+    auto sourceCatalogHandle = NES::SourceCatalog::create();
+    auto sourceCatalog = NES::copyPtr(sourceCatalogHandle);
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto modelCatalog = std::make_shared<NES::ModelCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     auto queryOptimizer
@@ -798,7 +846,8 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(
+                NES::QueryStatement(NES::AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query)));
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -817,8 +866,8 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
-            auto result
-                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto result = queryStatementHandler(
+                NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::QueryBinder{{}, {}}.createLogicalQueryPlanFromSQLString(query)));
             if (result)
             {
                 std::cout << result->explainString << "\n";
