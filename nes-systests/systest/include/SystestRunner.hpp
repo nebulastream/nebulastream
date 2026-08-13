@@ -25,7 +25,11 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <rfl/Rename.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -63,13 +67,17 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
+/// Build the embedded-worker config resolver from the merged run-configuration literals
+/// (command line plus per-test-file overrides). The run configuration wins over the topology.
+[[nodiscard]] WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals);
+
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
@@ -97,7 +105,7 @@ struct BenchmarkResult
 /// @return vector containing failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker);

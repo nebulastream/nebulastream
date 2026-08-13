@@ -26,7 +26,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -40,11 +39,16 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
@@ -57,6 +61,8 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -431,6 +437,134 @@ std::vector<RunningQuery> runQueries(
 
 /// NOLINTEND(readability-function-cognitive-complexity)
 
+/// The run configuration (command line plus per-test-file overrides, already merged by the
+/// executor) is layered over the per-worker topology config and resolved against the declared
+/// schema. Matches the previous precedence: the run configuration wins over the topology.
+WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals)
+{
+    return [runConfigLiterals = std::move(runConfigLiterals)](const WorkerConfig& worker)
+    {
+        auto [literals, overwrites] = mergeConfigLayers(
+            {ConfigLayer{.name = "topology", .literals = worker.config},
+             ConfigLayer{.name = "run configuration", .literals = runConfigLiterals}});
+        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(literals);
+        if (not resolved.has_value())
+        {
+            throw InvalidConfigParameter("{}", resolved.error());
+        }
+        return std::move(resolved)->worker;
+    };
+}
+
+namespace
+{
+std::vector<RunningQuery>
+serializeExecutionResults(const std::vector<RunningQuery>& queries, std::vector<BenchmarkResult>& benchmarkResults)
+{
+    std::vector<RunningQuery> failedQueries;
+    for (const auto& queryRan : queries)
+    {
+        if (!queryRan.passed)
+        {
+            failedQueries.emplace_back(queryRan);
+        }
+        const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
+        benchmarkResults.push_back(
+            {.queryName = queryRan.systestQuery.testName,
+             .time = executionTimeInSeconds,
+             .bytesPerSecond = static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds,
+             .tuplesPerSecond = static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds});
+    }
+    return failedQueries;
+}
+}
+
+std::vector<RunningQuery> runQueriesAndBenchmark(
+    const std::vector<SystestQuery>& queries,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
+    std::vector<BenchmarkResult>& benchmarkResults,
+    const SystestClusterConfiguration& clusterConfig,
+    SystestProgressTracker& progressTracker)
+{
+    auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
+
+    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals)));
+    QuerySubmitter submitter(std::move(worker));
+    std::vector<std::shared_ptr<RunningQuery>> ranQueries;
+    progressTracker.reset();
+    progressTracker.setTotalQueries(queries.size());
+    for (auto it = queries.rbegin(); it != queries.rend(); ++it)
+    {
+        const auto& queryToRun = *it;
+        if (not queryToRun.planInfoOrException.has_value())
+        {
+            NES_ERROR("skip failing query: {}", queryToRun.testName);
+            continue;
+        }
+
+        const auto startResult = submitter.startQuery(queryToRun.planInfoOrException.value().queryPlan);
+        if (not startResult.has_value())
+        {
+            NES_ERROR("skip failing query: {}", queryToRun.testName);
+            continue;
+        }
+        auto queryId = startResult.value();
+
+        auto runningQueryPtr = std::make_shared<RunningQuery>(queryToRun, queryId);
+        runningQueryPtr->passed = false;
+        ranQueries.emplace_back(runningQueryPtr);
+        const auto summary = submitter.finishedQueries().at(0);
+
+        if (summary.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
+        {
+            NES_ERROR("Query {} has failed with: {}", queryId, summary.coalesceException());
+            continue;
+        }
+
+        if (summary.getGlobalQueryStatus() != DistributedQueryStatus::Stopped)
+        {
+            NES_ERROR("Query {} terminated in unexpected state {}", queryId, summary.getGlobalQueryStatus());
+            continue;
+        }
+
+        runningQueryPtr->queryStatus = summary;
+
+        /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
+        size_t bytesProcessed = 0;
+        size_t tuplesProcessed = 0;
+        for (const auto& [sourcePath, sourceOccurrencesInQuery] :
+             queryToRun.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
+        {
+            if (not(std::filesystem::exists(sourcePath.getRawValue()) and sourcePath.getRawValue().has_filename()))
+            {
+                NES_ERROR("Source path is empty or does not exist.");
+                bytesProcessed = 0;
+                tuplesProcessed = 0;
+                break;
+            }
+
+            bytesProcessed += (std::filesystem::file_size(sourcePath.getRawValue()) * sourceOccurrencesInQuery);
+
+            /// Counting the lines, i.e., \n in the sourcePath
+            std::ifstream inFile(sourcePath.getRawValue());
+            tuplesProcessed
+                += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
+        }
+        ranQueries.back()->bytesProcessed = bytesProcessed;
+        ranQueries.back()->tuplesProcessed = tuplesProcessed;
+
+        auto errorMessage = checkResult(*ranQueries.back());
+        ranQueries.back()->passed = not errorMessage.has_value();
+        const auto queryPerformanceMessage
+            = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
+        progressTracker.incrementQueryCounter();
+        printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), progressTracker, queryPerformanceMessage);
+    }
+
+    return serializeExecutionResults(
+        ranQueries | std::views::transform([](const auto& query) { return *query; }) | std::ranges::to<std::vector>(), benchmarkResults);
+}
+
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery,
     const std::string& errorMessage,
@@ -486,68 +620,15 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals))));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
-}
-
-namespace
-{
-/// Size and no. tuples of all input files of the query, so that the throughput can be derived from the elapsed time.
-void recordProcessedInput(RunningQuery& runningQuery)
-{
-    size_t bytesProcessed = 0;
-    size_t tuplesProcessed = 0;
-    for (const auto& [sourcePath, sourceOccurrencesInQuery] :
-         runningQuery.systestQuery.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
-    {
-        if (not(std::filesystem::exists(sourcePath.getRawValue()) and sourcePath.getRawValue().has_filename()))
-        {
-            NES_ERROR("Source path is empty or does not exist.");
-            bytesProcessed = 0;
-            tuplesProcessed = 0;
-            break;
-        }
-
-        bytesProcessed += (std::filesystem::file_size(sourcePath.getRawValue()) * sourceOccurrencesInQuery);
-
-        /// Counting the lines, i.e., \n in the sourcePath
-        std::ifstream inFile(sourcePath.getRawValue());
-        tuplesProcessed += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
-    }
-    runningQuery.bytesProcessed = bytesProcessed;
-    runningQuery.tuplesProcessed = tuplesProcessed;
-}
-}
-
-std::vector<RunningQuery> runQueriesAndBenchmark(
-    const std::vector<SystestQuery>& queries,
-    const SingleNodeWorkerConfiguration& configuration,
-    std::vector<BenchmarkResult>& benchmarkResults,
-    const SystestClusterConfiguration& clusterConfig,
-    SystestProgressTracker& progressTracker)
-{
-    /// The performance message builder is invoked exactly once per query that reached the stopped state, which is exactly the set of
-    /// queries that can be timed. That makes it the hook for collecting the benchmark results.
-    const QueryPerformanceMessageBuilder benchmarkQuery = [&benchmarkResults](RunningQuery& runningQuery)
-    {
-        recordProcessedInput(runningQuery);
-        const auto executionTimeInSeconds = runningQuery.getElapsedTime().count();
-        benchmarkResults.push_back(
-            {.queryName = runningQuery.systestQuery.testName,
-             .time = executionTimeInSeconds,
-             .bytesPerSecond = static_cast<double>(runningQuery.bytesProcessed.value_or(NAN)) / executionTimeInSeconds,
-             .tuplesPerSecond = static_cast<double>(runningQuery.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds});
-        return fmt::format(" in {} ({})", runningQuery.getElapsedTime(), runningQuery.getThroughput());
-    };
-
-    /// Benchmarking runs one query at a time so that the timings are not skewed by concurrently running queries.
-    return runQueriesAtLocalWorker(queries, 1, clusterConfig, configuration, progressTracker, benchmarkQuery);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(

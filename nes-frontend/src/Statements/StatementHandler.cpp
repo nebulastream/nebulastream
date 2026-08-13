@@ -21,11 +21,15 @@
 #include <memory>
 #include <ranges>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -455,10 +459,16 @@ std::expected<ShowVersionStatementResult, Exception> TopologyStatementHandler::o
 
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
 {
-    SingleNodeWorkerConfiguration config;
-    if (!statement.config.empty())
+    /// The statement carries a flat map of fully qualified dotted config keys (a leading "--" is
+    /// tolerated for CLI-style input) to raw string values. Turn them into typed config literals;
+    /// they are resolved against the worker's declared schema when the worker is instantiated.
+    std::vector<LiteralConfigValue> configLiterals;
+    configLiterals.reserve(statement.config.size());
+    for (const auto& [key, value] : statement.config)
     {
-        config.overwriteConfigWithCommandLineInput(statement.config);
+        constexpr std::string_view cliPrefix = "--";
+        const auto name = key.starts_with(cliPrefix) ? key.substr(cliPrefix.size()) : key;
+        configLiterals.emplace_back(QualifiedIdentifier::parse(name), parseConfigLiteral(value));
     }
     auto added = workerCatalog->addWorker(
         Host(statement.host),
@@ -466,7 +476,7 @@ std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::
         statement.capacity.has_value() ? Capacity(CapacityKind::Limited{statement.capacity.value()}) : Capacity(CapacityKind::Unlimited{}),
         statement.downstream | std::views::transform([](auto downstream) { return Host(std::move(downstream)); })
             | std::ranges::to<std::vector>(),
-        std::move(config));
+        createConfigLiteralSchema(std::move(configLiterals)));
     if (!added)
     {
         return std::unexpected(InvalidTopology("Duplicate worker host '{}'", statement.host));

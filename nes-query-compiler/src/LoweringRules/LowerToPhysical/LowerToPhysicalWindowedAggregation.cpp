@@ -89,7 +89,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
-    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize, physicalInputSchema, memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -168,8 +168,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
-    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
-    const auto pageSize = conf.pageSize.getValue();
+    const auto numberOfBuckets = conf.numberOfPartitions;
+    const auto pageSize = conf.pageSize;
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto fieldKeyNames

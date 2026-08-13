@@ -12,6 +12,14 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <string>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -21,6 +29,16 @@
 
 namespace NES::Testing
 {
+namespace
+{
+/// Resolves a QueryEngineConfiguration from a single raw literal assigned to the given field.
+auto resolveWith(const std::string& fullyQualifiedName, const ConfigLiteral& literal)
+{
+    return resolveConfiguration<QueryEngineConfiguration>(
+        Schema<LiteralConfigValue, Ordered>{LiteralConfigValue{QualifiedIdentifier::parse(fullyQualifiedName), literal}});
+}
+}
+
 class QueryEngineConfigurationTest : public BaseUnitTest
 {
 public:
@@ -35,48 +53,38 @@ public:
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsDefault)
 {
-    const QueryEngineConfiguration defaultConfig;
-    EXPECT_EQ(defaultConfig.admissionQueueSize.getValue(), 1000);
-    EXPECT_EQ(defaultConfig.numberOfWorkerThreads.getValue(), 4);
+    const auto defaultConfig = defaultConfiguration<QueryEngineConfiguration>();
+    EXPECT_EQ(defaultConfig.admissionQueueSize, 1000);
+    EXPECT_EQ(defaultConfig.numberOfWorkerThreads, 4);
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 {
-    QueryEngineConfiguration defaultConfig;
-    defaultConfig.overwriteConfigWithCommandLineInput({{"number_of_worker_threads", "2"}, {"admission_queue_size", "123"}});
-
-    EXPECT_EQ(defaultConfig.admissionQueueSize.getValue(), 123);
-    EXPECT_EQ(defaultConfig.numberOfWorkerThreads.getValue(), 2);
+    const auto config = resolveConfiguration<QueryEngineConfiguration>(Schema<LiteralConfigValue, Ordered>{
+        LiteralConfigValue{QualifiedIdentifier::parse("query_engine.number_of_worker_threads"), parseConfigLiteral("2")},
+        LiteralConfigValue{QualifiedIdentifier::parse("query_engine.admission_queue_size"), parseConfigLiteral("123")}});
+    ASSERT_TRUE(config.has_value());
+    EXPECT_EQ(config.value().numberOfWorkerThreads, 2);
+    EXPECT_EQ(config.value().admissionQueueSize, 123);
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputNonString)
 {
-    QueryEngineConfiguration defaultConfig;
-    EXPECT_ANY_THROW(
-        defaultConfig.overwriteConfigWithCommandLineInput({{"admission_queue_size", "XX"}, {"number_of_worker_threads", "2"}}));
+    /// Non-numeric strings stay string literals and are rejected by the integer field factories
+    EXPECT_FALSE(resolveWith("query_engine.admission_queue_size", parseConfigLiteral("XX")).has_value());
+    EXPECT_FALSE(resolveWith("query_engine.number_of_worker_threads", parseConfigLiteral("XX")).has_value());
 
-    QueryEngineConfiguration defaultConfig1;
-    EXPECT_ANY_THROW(
-        defaultConfig1.overwriteConfigWithCommandLineInput({{"admission_queue_size", "200"}, {"number_of_worker_threads", "XX"}}));
-
-    QueryEngineConfiguration defaultConfig2;
-    EXPECT_ANY_THROW(
-        defaultConfig2.overwriteConfigWithCommandLineInput({{"admission_queue_size", "XX"}, {"number_of_worker_threads", "XX"}}));
-
-    const QueryEngineConfiguration defaultConfig3;
-    EXPECT_ANY_THROW(
-        defaultConfig2.overwriteConfigWithCommandLineInput({{"admission_queue_size", "1.0"}, {"number_of_worker_threads", "1.5"}}));
+    /// Fractional literals are typed as double and are rejected by the integer field factories
+    EXPECT_FALSE(resolveWith("query_engine.admission_queue_size", parseConfigLiteral("1.0")).has_value());
+    EXPECT_FALSE(resolveWith("query_engine.number_of_worker_threads", parseConfigLiteral("1.5")).has_value());
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputBadNumberOfThreads)
 {
-    QueryEngineConfiguration defaultConfig;
-    EXPECT_ANY_THROW(
-        defaultConfig.overwriteConfigWithCommandLineInput({{"admission_queue_size", "200"}, {"number_of_worker_threads", "0"}}));
-
-    const QueryEngineConfiguration defaultConfig1;
-    EXPECT_ANY_THROW(
-        defaultConfig.overwriteConfigWithCommandLineInput({{"admission_queue_size", "200"}, {"number_of_worker_threads", "20000"}}));
+    EXPECT_FALSE(resolveWith("query_engine.number_of_worker_threads", ConfigLiteral{int64_t{0}}).has_value());
+    EXPECT_FALSE(resolveWith("query_engine.number_of_worker_threads", ConfigLiteral{int64_t{-1}}).has_value());
+    /// More worker threads than available CPUs are rejected
+    EXPECT_FALSE(resolveWith("query_engine.number_of_worker_threads", ConfigLiteral{int64_t{20000}}).has_value());
 }
 
 }

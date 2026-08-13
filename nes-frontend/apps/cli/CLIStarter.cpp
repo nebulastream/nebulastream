@@ -33,11 +33,15 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -635,12 +639,28 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
 NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
 {
-    NES::QueryOptimizerConfiguration configuration;
-    if (topologyConfig.optimizer.IsDefined())
+    if (!topologyConfig.optimizer.IsDefined())
     {
-        configuration.overwriteConfigWithYAMLNode(topologyConfig.optimizer);
+        return NES::defaultConfiguration<NES::QueryOptimizerConfiguration>();
     }
-    return configuration;
+    /// The topology file addresses the options relative to the optimizer config (e.g.
+    /// join_strategy: HASH_JOIN), but its declared schema is rooted at
+    /// `optimizer`, so qualify the flattened keys accordingly.
+    const auto prefix = NES::Identifier::parse("optimizer");
+    std::vector<NES::LiteralConfigValue> optimizerConfigLiterals;
+    for (const auto& literal : NES::flattenYAMLConfig(topologyConfig.optimizer))
+    {
+        std::vector<NES::Identifier> qualifiedName{prefix};
+        std::ranges::copy(literal.getFullyQualifiedName(), std::back_inserter(qualifiedName));
+        optimizerConfigLiterals.emplace_back(NES::QualifiedIdentifier{std::move(qualifiedName)}, literal.getValue());
+    }
+    auto configuration = NES::resolveConfiguration<NES::QueryOptimizerConfiguration>(
+        NES::Schema<NES::LiteralConfigValue, NES::Ordered>{std::move(optimizerConfigLiterals)});
+    if (!configuration)
+    {
+        throw NES::InvalidConfigParameter("{}", configuration.error());
+    }
+    return *std::move(configuration);
 }
 
 void doStatus(

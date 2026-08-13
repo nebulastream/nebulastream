@@ -12,28 +12,22 @@
     limitations under the License.
 */
 
-#include <SystestConfiguration.hpp>
-
-#include <vector>
-#include <Configurations/BaseOption.hpp>
+#pragma once
+#include <expected>
+#include <optional>
+#include <utility>
 
 namespace NES
 {
-std::vector<BaseOption*> SystestConfiguration::getOptions()
+
+template <typename T, typename E, typename ESupplier>
+std::expected<T, E> optionalToExpected(std::optional<T> optional, ESupplier orElse)
 {
-    return {
-        &testDiscoverDirs,
-        &directlySpecifiedTestFiles,
-        &testFileExtension,
-        &workingDir,
-        &randomQueryOrder,
-        &numberConcurrentQueries,
-        &testGroups,
-        &disabledTestFiles,
-        &testDataDir,
-        &endlessMode,
-        &excludeGroups,
-        &remoteWorker,
-        &clusterConfigPath};
+    if (optional.has_value())
+    {
+        return std::move(optional.value());
+    }
+    return std::unexpected<E>{orElse()};
 }
+
 }

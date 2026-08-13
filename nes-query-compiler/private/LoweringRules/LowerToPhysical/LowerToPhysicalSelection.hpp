@@ -29,7 +29,7 @@ struct LowerToPhysicalSelection : AbstractLoweringRule
     LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    QueryExecutionConfiguration conf;
+    [[maybe_unused]] QueryExecutionConfiguration conf;
 };
 
 }

@@ -94,11 +94,10 @@ TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigEx
 
     SystestConfiguration config;
     /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
+    config.testsDiscoverDirs = {tempDir.get().string()};
     config.testFileExtension = ".test";
     config.globalExcludedGroups = {"large"};
-    config.testGroups.add("large");
+    config.testGroups.push_back("large");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -114,11 +113,10 @@ TEST_F(SystestStateTest, ExplicitCommandLineExclusionOverridesExplicitInclusion)
 
     SystestConfiguration config;
     /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
+    config.testsDiscoverDirs = {tempDir.get().string()};
     config.testFileExtension = ".test";
-    config.testGroups.add("Join");
-    config.excludeGroups.add("Join");
+    config.testGroups.push_back("Join");
+    config.excludeGroups.push_back("Join");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -133,7 +131,7 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
 
     SystestConfiguration config;
     config.directlySpecifiedTestFiles = joinFile.string();
-    config.disabledTestFiles.add("join.test");
+    config.disabledTestFiles.push_back("join.test");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -153,8 +151,7 @@ TEST_F(SystestStateTest, OnlyDuplicateDiscoveredTestNamesIncludeRelativeDirector
 
     SystestConfiguration config;
     /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
+    config.testsDiscoverDirs = {tempDir.get().string()};
     config.testFileExtension = ".test";
 
     const auto testMap = loadTestFileMap(config);
@@ -175,10 +172,9 @@ TEST_F(SystestStateTest, FilteredDuplicateTestNameUsesStem)
 
     SystestConfiguration config;
     /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
+    config.testsDiscoverDirs = {tempDir.get().string()};
     config.testFileExtension = ".test";
-    config.testGroups.add("Included");
+    config.testGroups.push_back("Included");
 
     const auto testMap = loadTestFileMap(config);
 
@@ -194,12 +190,11 @@ TEST_F(SystestStateTest, DirectlySpecifiedTestNamesUseStem)
 
     SystestConfiguration config;
     /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
+    config.testsDiscoverDirs = {tempDir.get().string()};
     config.directlySpecifiedTestFiles = testFile.string();
 
     const auto directlySpecifiedTestMap = loadTestFileMap(config);
-    config.testQueryNumbers.add(1);
+    config.testQueryNumbers.push_back(1);
     const auto queryFilteredTestMap = loadTestFileMap(config);
 
     const auto canonicalTestFile = std::filesystem::weakly_canonical(testFile);

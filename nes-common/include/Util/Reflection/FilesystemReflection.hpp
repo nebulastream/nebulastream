@@ -11,18 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/Validation/BooleanValidation.hpp>
 
-#include <algorithm>
+#pragma once
+#include <filesystem>
+#include <string>
+#include <Util/Reflection/ReflectionCore.hpp>
 
 namespace NES
 {
 
-bool BooleanValidation::isValid(const std::string& parameter) const
+template <>
+struct Reflector<std::filesystem::path>
 {
-    std::string lowerParam = parameter;
-    std::ranges::transform(lowerParam, lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
+    Reflected operator()(const std::filesystem::path& data, const ReflectionContext& context) const
+    {
+        return context.reflect(data.string());
+    }
+};
 
-    return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
-}
+template <>
+struct Unreflector<std::filesystem::path>
+{
+    std::filesystem::path operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return context.unreflect<std::string>(data);
+    }
+};
+
 }

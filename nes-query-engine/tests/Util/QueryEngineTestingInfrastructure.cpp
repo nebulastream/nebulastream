@@ -34,12 +34,17 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
@@ -378,8 +383,11 @@ void TestingHarness::start()
     {
         queryRunningFutures[queryRunning.first] = queryRunning.second->get_future().share();
     }
-    QueryEngineConfiguration configuration{};
-    configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    const auto configuration
+        = resolveConfiguration<QueryEngineConfiguration>(
+              Schema<LiteralConfigValue, Ordered>{LiteralConfigValue{
+                  QualifiedIdentifier::parse("query_engine.number_of_worker_threads"), static_cast<int64_t>(numberOfThreads)}})
+              .value();
     qm = std::make_unique<QueryEngine>(configuration, this->statListener, this->status, this->bm, Host("test"));
 }
 
