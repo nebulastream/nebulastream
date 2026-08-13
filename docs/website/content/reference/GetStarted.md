@@ -18,7 +18,7 @@ docker run -d --rm \
   --name worker \
   -v "$PWD/output:/output" \
   nebulastream/nes-worker \
-  --grpc=0.0.0.0:8080
+  -- --grpc=0.0.0.0:8080
 ```
 
 This command starts a NebulaStream worker in a Docker container and exposes its gRPC port on all network interfaces at `0.0.0.0:8080`.
@@ -167,7 +167,7 @@ services:
     image: nebulastream/nes-worker
     volumes:
       - ./output:/output
-    command: ["--grpc=0.0.0.0:8080"]
+    command: ["--", "--grpc=0.0.0.0:8080"]
     tty: true
     stdin_open: true
 
