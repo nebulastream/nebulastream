@@ -14,6 +14,7 @@
 
 #include <Runner/DataStaging.hpp>
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -63,9 +64,9 @@ RunningServer serve(ServedData data)
         .thread = std::jthread{[owned = std::move(server)](const std::stop_token& stopToken) { owned->run(stopToken); }},
         .options
         = {SourceOption{.group = Sql::Source, .key = Sql::SocketHost, .value = "localhost"},
-           SourceOption{.group = Sql::Source, .key = Sql::SocketPort, .value = std::to_string(port)},
+           SourceOption{.group = Sql::Source, .key = Sql::SocketPort, .value = int64_t{port}},
            /// The test data sets are small, so a source would otherwise wait on a partial buffer for rows that never come.
-           SourceOption{.group = Sql::Source, .key = Sql::FlushIntervalMs, .value = "100"}}};
+           SourceOption{.group = Sql::Source, .key = Sql::FlushIntervalMs, .value = int64_t{100}}}};
 }
 
 StagedSetup stage(const RunnableTestFile& runnable)

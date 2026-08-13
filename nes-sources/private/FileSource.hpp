@@ -18,14 +18,18 @@
 #include <cstddef>
 #include <fstream>
 #include <memory>
-#include <optional>
+#include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
+
+#include <Configurations/ConfigField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -37,7 +41,7 @@ class FileSource final : public Source
 public:
     static constexpr std::string_view NAME = "File";
 
-    explicit FileSource(const SourceDescriptor& sourceDescriptor);
+    explicit FileSource(const FileSourceConfig& config);
     ~FileSource() override = default;
 
     FileSource(const FileSource&) = delete;
@@ -52,8 +56,8 @@ public:
     /// Close file socket.
     void close() override;
 
-    /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -61,17 +65,6 @@ private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
-};
-
-struct ConfigParametersCSV
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "FILE_PATH",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
 
 }
