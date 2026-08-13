@@ -14,6 +14,9 @@
 
 #include <InputFormatterTestUtil.hpp>
 
+#include <InputFormatterConfigRegistry.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -32,13 +35,17 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
@@ -146,6 +153,30 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
 }
 
+InputFormatterDescriptor
+provideInputFormatterDescriptor(const std::string& type, const std::vector<std::pair<std::string, std::string>>& values)
+{
+    std::vector<LiteralConfigValue> literals;
+    literals.reserve(values.size());
+    for (const auto& [name, value] : values)
+    {
+        literals.emplace_back(QualifiedIdentifier::parse(name), value);
+    }
+    const Schema<LiteralConfigValue, Ordered> literalValues{std::move(literals)};
+    const auto declaredSchema = InputFormatterConfigSchemaRegistry::instance().getSchema(type);
+    INVARIANT(declaredSchema.has_value(), "Input formatter type {} is not registered", type);
+    auto fields = *declaredSchema | std::ranges::to<std::vector>();
+    const auto genericFields = createConfigSchema(Identifier::parse("INPUT_FORMATTER"), InputFormatterDescriptor::VALUE_DESERIALIZERS);
+    fields.insert(fields.end(), genericFields.begin(), genericFields.end());
+    auto resolvedConfig = toExpected(resolveConfig(literalValues, Schema<QualifiedErasedConfigField, Ordered>{std::move(fields)}));
+    INVARIANT(resolvedConfig.has_value(), "Invalid config for input formatter type {}: {}", type, resolvedConfig.error());
+    const auto configEntry = InputFormatterConfigRegistry::instance().find(type);
+    INVARIANT(configEntry.has_value(), "Input formatter type {} has no InputFormatterConfig registry entry", type);
+    auto instantiatedConfig = configEntry->instantiate(InstantiatedConfig{std::move(resolvedConfig).value()});
+    INVARIANT(instantiatedConfig.has_value(), "Could not instantiate config for input formatter type {}", type);
+    return InputFormatterDescriptor{Identifier::parse(type), std::move(instantiatedConfig).value()};
+}
+
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
 {
     /// Wait for the file source to fill all expected tuple buffers. Timeout after 1 second (it should never take that long).
@@ -158,7 +189,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 }
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const DescriptorConfig::Config& parserConfiguration,
+    const InputFormatterDescriptor& parserConfiguration,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
@@ -168,9 +199,8 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const auto qualifiedSchema = schema | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 
     auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, qualifiedSchema, memoryLayoutType);
-    auto inputFormatterType = std::get<std::string>(parserConfiguration.at(InputFormatterDescriptor::getTypeString()));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        provideInputFormatter(parserConfiguration, memoryProvider),
         qualifiedSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
             | std::ranges::to<std::vector>());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
@@ -181,6 +211,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     auto nautilusOptions = nautilus::engine::Options{};
     nautilusOptions.setOption("engine.Compilation", isCompiled);
     nautilusOptions.setOption("engine.backend", std::string("mlir"));
+    nautilusOptions.setOption("engine.compilationStrategy", std::string("legacy"));
     nautilusOptions.setOption("mlir.enableMultithreading", false);
     return std::make_shared<CompiledExecutablePipelineStage>(
         physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);

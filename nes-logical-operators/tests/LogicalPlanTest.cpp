@@ -72,7 +72,7 @@ public:
                         const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
                         const std::unordered_map<Identifier, std::string> dummyParserConfig
                             = {{Identifier::parse("type"), "CSV"},
-                               {Identifier::parse("tuple_delimiter"), "\n"},
+                               {Identifier::parse("tuple_delimiter"), "'\n'"},
                                {Identifier::parse("field_delimiter"), ","}};
 
                         return SourceDescriptor::create(
