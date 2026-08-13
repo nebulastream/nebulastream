@@ -15,51 +15,40 @@
 #pragma once
 
 #include <cstdint>
+#include <expected>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <ranges>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
-#include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
 #include <ValueDeserializerUtil.hpp>
 #include <static.hpp>
 
 namespace NES
 {
-struct ConfigParametersSIMDJSON
-{
-    static inline const DescriptorConfig::ConfigParameter<char> TUPLE_DELIMITER{
-        "TUPLE_DELIMITER",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<char>
-        {
-            const auto it = config.find("TUPLE_DELIMITER");
-            if (it == config.end())
-            {
-                return '\n';
-            }
-            const auto unescaped = unescapeSpecialCharacters(it->second);
-            return (unescaped.size() == 1) ? std::optional<char>{unescaped.front()} : std::nullopt;
-        }};
 
-    static inline const std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(InputFormatterDescriptor::parameterMap, TUPLE_DELIMITER);
+struct SIMDJSONInputFormatterConfig
+{
+    char tupleDelimiter;
+    std::string valueDeserializers;
+
+    static std::expected<SIMDJSONInputFormatterConfig, Exception> fromConfig(const InstantiatedConfig& config);
 };
 
 /// Parses JSON-encoded tuples (one JSON object per tuple delimiter, '\n' by default) using
@@ -118,7 +107,8 @@ public:
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
-    static std::unique_ptr<SIMDJSONInputFormatIndexer> create(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+    static std::unique_ptr<SIMDJSONInputFormatIndexer>
+    create(const SIMDJSONInputFormatterConfig& config, const TupleBufferRef& tupleBufferRef)
     {
         /// JSON keys are unqualified — take the trailing identifier of each (possibly source-qualified) name.
         /// Precompute each field's JSON Pointer (RFC 6901) once: prepend '/' and escape literal '~' as
@@ -136,11 +126,11 @@ public:
 
         return std::make_unique<SIMDJSONInputFormatIndexer>(
             Private{},
-            config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
+            config.tupleDelimiter,
             std::move(jsonPointersToFields),
             std::move(fieldNamesOutput),
             std::move(fieldDataTypes),
-            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
+            config.valueDeserializers);
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;
@@ -153,7 +143,7 @@ public:
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(uint64_t fieldIndex) const { return fieldNamesOutput[fieldIndex]; }
 

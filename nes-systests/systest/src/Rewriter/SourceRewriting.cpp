@@ -15,6 +15,7 @@
 #include <Rewriter/SourceRewriting.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -220,7 +221,12 @@ std::string addSourceOptions(const std::string& sql, const std::vector<SourceOpt
     {
         if (not declaresOption(declared, group, key))
         {
-            merged.push_back(Sql::option(group, key, value));
+            merged.push_back(
+                std::visit(
+                    Overloaded{
+                        [&](const std::string& text) { return Sql::option(group, key, text); },
+                        [&](const int64_t number) { return Sql::literalOption(group, key, std::to_string(number)); }},
+                    value));
         }
     }
     if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())

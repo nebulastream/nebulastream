@@ -17,6 +17,8 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <expected>
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <ios>
@@ -25,20 +27,51 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
+#include <Util/Variant.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+namespace
+{
+
+/// NOLINTBEGIN(bugprone-throwing-static-initialization,cert-err58-cpp)
+const ConfigField<std::filesystem::path> FILE_PATH{
+    Identifier::parse("FILE_PATH"),
+    "Path to the file to be read",
+    [](const ConfigLiteral& literal)
+    {
+        return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const auto& val) { return std::filesystem::path{val}; });
+    }};
+/// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> FileSource::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("FILE_SOURCE"), FILE_PATH);
+}
+
+std::expected<FileSourceConfig, Exception> FileSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return FileSourceConfig{.filePath = config.get(FILE_PATH)};
+}
+
+FileSource::FileSource(const FileSourceConfig& config) : filePath(config.filePath)
 {
 }
 
@@ -68,11 +101,6 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
         return FillTupleBufferResult::eos();
     }
     return FillTupleBufferResult::withBytes(numBytesRead);
-}
-
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
 std::ostream& FileSource::toString(std::ostream& str) const

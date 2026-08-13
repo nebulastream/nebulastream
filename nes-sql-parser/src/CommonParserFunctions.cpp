@@ -153,7 +153,7 @@ ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser:
 
 namespace
 {
-/// Converts a config option entry to a lowercase string key-value pair.
+/// Converts a config option entry to a string key-value pair.
 /// Returns std::nullopt for non-Literal values (e.g., Schema), which are handled by separate functions.
 std::optional<std::pair<Identifier, std::string>>
 configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry)
@@ -166,16 +166,31 @@ configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Sche
     return std::make_pair(entry.first, value);
 }
 
+/// Preserve SQL strings when passing through the transitional text-map API. The separately
+/// consumed host or formatter type stays unquoted; other values are parsed as config literals.
+std::optional<std::pair<Identifier, std::string>> configOptionToLiteralValue(
+    const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry,
+    const Identifier& unquotedField)
+{
+    auto converted = configOptionToValue(entry);
+    if (converted && entry.first != unquotedField && std::holds_alternative<std::string>(std::get<Literal>(entry.second)))
+    {
+        converted->second = fmt::format("'{}'", converted->second);
+    }
+    return converted;
+}
+
 /// Collects all literal config options that live under any of the given top-level prefixes into a single key-value map.
+template <typename ConvertOption>
 std::unordered_map<Identifier, std::string>
-collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes)
+collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<std::string_view> prefixes, ConvertOption convertOption)
 {
     auto config = std::unordered_map<Identifier, std::string>{};
     for (const auto prefix : prefixes)
     {
         if (const auto configIter = configOptions.find(Identifier::parse(std::string{prefix})); configIter != configOptions.end())
         {
-            for (const auto& entry : configIter->second | std::views::transform(configOptionToValue))
+            for (const auto& entry : configIter->second | std::views::transform(convertOption))
             {
                 if (entry.has_value())
                 {
@@ -190,25 +205,21 @@ collectConfigBlock(const ConfigMap& configOptions, const std::initializer_list<s
 
 std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
 {
-    return collectConfigBlock(configOptions, {"INPUT_FORMATTER"});
+    const auto typeField = Identifier::parse("TYPE");
+    return collectConfigBlock(
+        configOptions, {"INPUT_FORMATTER"}, [&typeField](const auto& entry) { return configOptionToLiteralValue(entry, typeField); });
 }
 
 std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
 {
-    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"});
+    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"}, configOptionToValue);
 }
 
 std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)
 {
-    std::unordered_map<Identifier, std::string> sourceOptions{};
-    if (const auto sourceConfigIter = configOptions.find(Identifier::parse("SOURCE")); sourceConfigIter != configOptions.end())
-    {
-        sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
-            | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
-    }
-
-    return sourceOptions;
+    const auto hostField = Identifier::parse("HOST");
+    return collectConfigBlock(
+        configOptions, {"SOURCE"}, [&hostField](const auto& entry) { return configOptionToLiteralValue(entry, hostField); });
 }
 
 std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions)

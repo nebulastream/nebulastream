@@ -22,7 +22,6 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -40,9 +39,9 @@
 #include <Sinks/FileSink.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/FileSourceConfig.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -51,7 +50,6 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterValidationProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 
@@ -414,7 +412,7 @@ TEST_F(StatementBinderTest, AnonymousSourceQuery)
 
     ASSERT_EQ(Identifier::parse("FILE"), anonymousSourceOperator->getSourceType());
 
-    const std::unordered_map<Identifier, std::string> expectedSourceConfig = {{Identifier::parse("file_path"), "input.csv"}};
+    const std::unordered_map<Identifier, std::string> expectedSourceConfig = {{Identifier::parse("file_path"), "'input.csv'"}};
     ASSERT_EQ(expectedSourceConfig, anonymousSourceOperator->getSourceConfig());
 
     const std::unordered_map<Identifier, std::string> expectedParserConfig = {{Identifier::parse("type"), "CSV"}};
@@ -426,6 +424,61 @@ TEST_F(StatementBinderTest, AnonymousSourceQuery)
         UnqualifiedUnboundField{
             Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
     ASSERT_EQ(schema, anonymousSourceOperator->getSourceSchema());
+}
+
+TEST_F(StatementBinderTest, AnonymousMQTTSourceAcceptsEmptyMessageDelimiter)
+{
+    const auto statement = binder->parseAndBindSingle(R"(
+        SELECT * FROM MQTT(
+            'worker-1:8080' AS "SOURCE".HOST,
+            'mqtt-source-test' AS "SOURCE".TOPIC,
+            'mqtt-broker' AS "SOURCE".SERVER_URI,
+            100 AS "SOURCE".FLUSH_INTERVAL_MS,
+            '' AS "SOURCE".IMPLICIT_MESSAGE_DELIMITER,
+            'CSV' AS INPUT_FORMATTER."TYPE",
+            SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA") INTO output)");
+    ASSERT_TRUE(statement.has_value()) << statement.error().what();
+    const auto sources = getOperatorByType<AnonymousSourceLogicalOperator>(std::get<QueryStatement>(*statement).plan);
+    ASSERT_EQ(sources.size(), 1);
+    const auto& source = sources.front();
+    auto sourceConfig = source->getSourceConfig();
+    const auto host = Host{sourceConfig.at(Identifier::parse("HOST"))};
+    sourceConfig.erase(Identifier::parse("HOST"));
+    const auto descriptor = sourceCatalog->getAnonymousSource(
+        source->getSourceType(), source->getSourceSchema(), host, source->getParserConfig(), sourceConfig);
+    ASSERT_TRUE(descriptor.has_value());
+    EXPECT_EQ(descriptor->getSourceType(), Identifier::parse("MQTT"));
+}
+
+TEST_F(StatementBinderTest, PhysicalSourcePreservesStringConfigLiterals)
+{
+    const auto logical = sourceCatalog->addLogicalSource(
+        Identifier::parse("input"),
+        Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64}});
+    ASSERT_TRUE(logical.has_value());
+    for (const std::string path : {"", " ", "\n", "123", "true", "null"})
+    {
+        SCOPED_TRACE(path);
+        const auto statement = binder->parseAndBindSingle(
+            fmt::format(
+                R"(
+            CREATE PHYSICAL SOURCE FOR input TYPE File SET (
+                '{}' AS "SOURCE".FILE_PATH,
+                'worker-1:8080' AS "SOURCE".HOST,
+                2 AS "SOURCE".MAX_INFLIGHT_BUFFERS,
+                'CSV' AS INPUT_FORMATTER."TYPE",
+                '1' AS INPUT_FORMATTER.FIELD_DELIMITER,
+                '{}' AS INPUT_FORMATTER.TUPLE_DELIMITER))",
+                path,
+                "\n"));
+        ASSERT_TRUE(statement.has_value()) << statement.error().what();
+        const auto result = sourceStatementHandler->apply(std::get<CreatePhysicalSourceStatement>(*statement));
+        ASSERT_TRUE(result.has_value()) << result.error().what();
+        const auto& [source] = *result;
+        EXPECT_EQ(source.getPluginData().getAs<FileSourceConfig>().filePath.string(), path);
+        EXPECT_EQ(source.getMaxInflightBuffers(), 2);
+        EXPECT_EQ(source.getHost(), Host{"worker-1:8080"});
+    }
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
@@ -466,20 +519,16 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as "SOURCE".MAX_INFLIGHT_BUFFERS, '/dev/null' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", '\n' AS INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
-    const auto expectedParserConfig
-        = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value();
-    std::unordered_map<Identifier, std::string> unvalidatedConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 
     ASSERT_TRUE(statement2.has_value());
     ASSERT_TRUE(std::holds_alternative<CreatePhysicalSourceStatement>(*statement2));
     const auto physicalSourceResult = sourceStatementHandler->apply(std::get<CreatePhysicalSourceStatement>(*statement2));
     ASSERT_TRUE(physicalSourceResult.has_value());
     const auto [physicalSource] = physicalSourceResult.value();
-    ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
-    ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getConfig(), expectedParserConfig);
-    ASSERT_EQ(physicalSource.getSourceType(), "FILE");
-    ASSERT_EQ(physicalSource.getConfig(), descriptorConfig);
+    ASSERT_EQ(physicalSource.getLogicalSourceName(), actualSource.getLogicalSourceName());
+    ASSERT_EQ(physicalSource.getInputFormatterDescriptor().getInputFormatterType(), Identifier::parse("CSV"));
+    ASSERT_EQ(physicalSource.getSourceType(), Identifier::parse("FILE"));
+    ASSERT_EQ(physicalSource.getPluginData().getAs<const FileSourceConfig&>().filePath, "/dev/null");
     ASSERT_EQ(physicalSource.getPhysicalSourceId().getRawValue(), 1);
 
     const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE WHERE ID = 1";
@@ -665,7 +714,8 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
             {
                 if constexpr (requires { sourceStatementHandler->apply(statement); })
                 {
-                    std::ignore = sourceStatementHandler->apply(statement);
+                    const auto result = sourceStatementHandler->apply(statement);
+                    ASSERT_TRUE(result.has_value()) << result.error().what();
                     return;
                 }
                 INVARIANT(false, "Invalid statement type");
@@ -703,7 +753,8 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(), "/dev/random");
+        filteredPhysicalSourcesStatementResult.value().sources.at(0).getPluginData().getAs<const FileSourceConfig&>().filePath,
+        "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
@@ -717,8 +768,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     const auto physicalSourceForLogicalSourceStatementResult = sourceStatementHandler->apply(showPhysicalSourceForLogicalSource);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.size(), 1);
-    ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS), 200);
+    ASSERT_EQ(physicalSourceForLogicalSourceStatementResult.value().sources.at(0).getMaxInflightBuffers(), 200);
 
     const auto physicalSourceForLogicalSourceStatementFilteredExp
         = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementFilteredString);
@@ -737,7 +787,11 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(),
+        physicalSourceForLogicalSourceStatementFilteredResult.value()
+            .sources.at(0)
+            .getPluginData()
+            .getAs<const FileSourceConfig&>()
+            .filePath.string(),
         "/dev/ones");
 }
 

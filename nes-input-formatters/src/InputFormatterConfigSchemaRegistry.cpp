@@ -11,17 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_map>
+#include <InputFormatterConfigSchemaRegistry.hpp>
 
-#include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifier.hpp>
-
-namespace NES::SourceValidationProvider
+namespace NES
 {
-std::optional<DescriptorConfig::Config> provide(std::string_view sourceType, std::unordered_map<Identifier, std::string> configMap);
+
+InputFormatterConfigSchemaRegistry& InputFormatterConfigSchemaRegistry::instance()
+{
+    static InputFormatterConfigSchemaRegistry inst;
+    return inst;
+}
+
 }
