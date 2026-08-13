@@ -14,13 +14,11 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include <cstdint>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -29,48 +27,36 @@ namespace NES
 /// These values serve as worker-level defaults that apply to all NetworkSources and NetworkSinks on this worker.
 /// Individual queries may override these defaults via per-channel configuration in the sink/source descriptors.
 /// Nested under WorkerConfiguration as `worker.network.*`.
-class WorkerNetworkConfiguration final : public BaseConfiguration
+struct WorkerNetworkConfiguration
 {
-public:
-    WorkerNetworkConfiguration() = default;
-    WorkerNetworkConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
+
+    WorkerNetworkConfiguration() = delete;
+
+    WorkerNetworkConfiguration(
+        uint64_t senderQueueSize, uint64_t maxPendingAcks, uint64_t receiverQueueSize, uint64_t senderIOThreads, uint64_t receiverIOThreads)
+        : senderQueueSize(senderQueueSize)
+        , maxPendingAcks(maxPendingAcks)
+        , receiverQueueSize(receiverQueueSize)
+        , senderIOThreads(senderIOThreads)
+        , receiverIOThreads(receiverIOThreads)
+    {
+    }
 
     /// Default size of the sender software queue per network channel.
     /// May be overridden per NetworkSink via query-specific configuration.
-    UIntOption senderQueueSize
-        = {"sender_queue_size",
-           "1024",
-           "Default size of the sender software queue per network channel. May be overridden per NetworkSink.",
-           {std::make_shared<NumberValidation>()}};
-
+    uint64_t senderQueueSize;
     /// Default maximum number of buffers that can be in-flight (sent but not yet acknowledged) per network channel.
     /// May be overridden per NetworkSink via query-specific configuration.
-    UIntOption maxPendingAcks
-        = {"max_pending_acks",
-           "64",
-           "Default maximum number of in-flight buffers awaiting acknowledgment per network channel. May be overridden per NetworkSink.",
-           {std::make_shared<NumberValidation>()}};
-
+    uint64_t maxPendingAcks;
     /// Default size of the receiver data queue per network channel.
     /// May be overridden per NetworkSource via query-specific configuration.
-    UIntOption receiverQueueSize
-        = {"receiver_queue_size",
-           "10",
-           "Default size of the receiver data queue per network channel. May be overridden per NetworkSource.",
-           {std::make_shared<NumberValidation>()}};
-
+    uint64_t receiverQueueSize;
     /// Number of IO threads for the sender tokio runtime. 0 means use the number of available cores.
-    UIntOption senderIOThreads
-        = {"sender_io_threads", "1", "Number of IO threads for the sender network runtime. 0 means use the number of available cores."};
-
+    uint64_t senderIOThreads;
     /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
-    UIntOption receiverIOThreads
-        = {"receiver_io_threads", "1", "Number of IO threads for the receiver network runtime. 0 means use the number of available cores."};
+    uint64_t receiverIOThreads;
 
-private:
-    std::vector<BaseOption*> getOptions() override
-    {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads};
-    }
+    static WorkerNetworkConfiguration fromConfig(const InstantiatedConfig& config);
 };
 }

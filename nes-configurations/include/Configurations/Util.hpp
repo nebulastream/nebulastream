@@ -13,57 +13,89 @@
 */
 
 #pragma once
-#include <cstddef>
-#include <iostream>
-#include <map>
+#include <concepts>
+#include <expected>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 
-#include <Configurations/PrintingVisitor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Strings.hpp>
+#include <fmt/format.h>
+
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 
 namespace NES
 {
-template <typename T>
-void generateHelp(std::ostream& ostream)
+
+/// Print `--key: description (Default: x)` for every declared field, keys lowercased as the user
+/// would type them on the command line.
+inline void generateHelp(std::ostream& ostream, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
 {
-    T config{};
-    PrintingVisitor visitor{ostream};
-    config.accept(visitor);
+    for (const auto& field : declaredConfig)
+    {
+        ostream << fmt::format("--{}: {}", toLowerCase(fmt::format("{}", field.getFullyQualifiedName())), field.getDescription());
+        if (const auto& defaultDescription = field.getDefaultDescription())
+        {
+            ostream << fmt::format(" (Default: {})", *defaultDescription);
+        }
+        ostream << '\n';
+    }
+}
+
+/// Render the effective configuration: every declared field with the value it resolves to — the
+/// passed literal where one was passed, the declared default otherwise. Used for the startup
+/// config dump of workers.
+inline std::string formatEffectiveConfig(
+    const Schema<LiteralConfigValue, Ordered>& passedConfig, const Schema<QualifiedErasedConfigField, Ordered>& declaredConfig)
+{
+    /// Exact-name lookup: Schema's own name lookup is suffix-addressable (see mergeConfigLiterals).
+    const auto passedByName = passedConfig
+        | std::views::transform([](const auto& value) { return std::pair{value.getFullyQualifiedName(), value}; })
+        | std::ranges::to<std::unordered_map>();
+
+    std::string rendered;
+    for (const auto& field : declaredConfig)
+    {
+        const auto name = toLowerCase(fmt::format("{}", field.getFullyQualifiedName()));
+        const auto passed = passedByName.find(field.getFullyQualifiedName());
+        rendered += fmt::format(
+            "  {}: {}\n",
+            name,
+            passed != passedByName.end() ? passed->second.getValue() : field.getDefaultDescription().value_or("<unset>"));
+    }
+    return rendered;
 }
 
 template <typename T>
-std::optional<T> loadConfiguration(const int argc, const char** argv)
+concept ConfigType = requires(InstantiatedConfig instantiatedConfig) {
+    { T::getConfigSchema() } -> std::same_as<Schema<QualifiedErasedConfigField, Ordered>>;
+    { T::fromConfig(instantiatedConfig) } -> std::same_as<T>;
+} && !std::is_default_constructible_v<T>;
+
+/// Resolve the passed literals against T's declared config schema (fully qualified only) and
+/// instantiate the typed configuration struct.
+template <ConfigType T>
+std::expected<T, ConfigResolutionErrors> resolveConfiguration(const Schema<LiteralConfigValue, Ordered>& passedConfig)
 {
-    /// Convert the POSIX command line arguments to a map of strings.
-    std::unordered_map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i)
-    {
-        const size_t pos = std::string(argv[i]).find('=');
-        const std::string arg{argv[i]};
-        if (arg == "--help")
-        {
-            generateHelp<T>(std::cout);
-            return std::nullopt;
-        }
-        commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
-    }
+    return toExpected(resolveConfigFullyQualified(passedConfig, T::getConfigSchema()))
+        .transform([](const Schema<InstantiatedConfigValue, Ordered>& resolved) { return T::fromConfig(InstantiatedConfig{resolved}); });
+}
 
-    /// Create a configuration object with default values.
-    T config;
-
-    /// Read options from the YAML file.
-    const auto configPathCLIParam = "--configPath";
-    if (const auto configPath = commandLineParams.find(configPathCLIParam); configPath != commandLineParams.end())
-    {
-        config.overwriteConfigWithYAMLFileInput(configPath->second);
-        commandLineParams.erase(configPathCLIParam);
-    }
-
-    /// Options specified on the command line have the highest precedence.
-    config.overwriteConfigWithCommandLineInput(commandLineParams);
-
-    return config;
+/// The configuration with every field at its declared default, produced through the ordinary
+/// resolution path (an empty literal schema). This is the ONLY way to obtain a "default" config:
+/// the structs delete their default constructor, so every instance goes through fromConfig.
+template <ConfigType T>
+T defaultConfiguration()
+{
+    return resolveConfiguration<T>(Schema<LiteralConfigValue, Ordered>{}).value();
 }
 }

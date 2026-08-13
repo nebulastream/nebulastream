@@ -14,31 +14,29 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NonZeroValidation.hpp>
+#include <cstdint>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
 
-class SliceCacheConfiguration final : public BaseConfiguration
+struct SliceCacheConfiguration
 {
-public:
-    SliceCacheConfiguration() = default;
-    SliceCacheConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    BoolOption enableSliceCache
-        = {"enable_slice_cache",
-           "true",
-           "Enabling Slice Cache for increased performance by caching the data structure access per thread. Unless weird behavior happens, "
-           "it should not be necessary to disable the slice cache."};
-    UIntOption numberOfEntries = {"number_of_entries_sliceCache", "10", "Size of the slice cache", {std::make_shared<NonZeroValidation>()}};
+    SliceCacheConfiguration() = delete;
 
-private:
-    std::vector<BaseOption*> getOptions() override { return {&enableSliceCache, &numberOfEntries}; }
+    SliceCacheConfiguration(bool enableSliceCache, uint64_t numberOfEntries)
+        : enableSliceCache(enableSliceCache), numberOfEntries(numberOfEntries)
+    {
+    }
+
+    bool enableSliceCache;
+    uint64_t numberOfEntries;
+
+    static SliceCacheConfiguration fromConfig(const InstantiatedConfig& config);
 };
 }

@@ -107,12 +107,12 @@ struct FieldNamesExtension
 /// and make mightContain() always true, i.e. pay the hash positions and skip nothing.
 std::optional<Nautilus::Interface::BloomFilterParams> createBloomFilterParams(const QueryExecutionConfiguration& conf)
 {
-    if (not conf.bloomFilterConfiguration.enableBloomFilter.getValue())
+    if (not conf.bloomFilterConfiguration.enableBloomFilter)
     {
         return std::nullopt;
     }
     return Nautilus::Interface::BloomFilterParams{
-        conf.bloomFilterConfiguration.expectedEntries.getValue(), conf.bloomFilterConfiguration.falsePositiveRate.getValue()};
+        conf.bloomFilterConfiguration.expectedEntries, conf.bloomFilterConfiguration.falsePositiveRate};
 }
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
@@ -259,8 +259,8 @@ std::pair<ChainedHashMapConfig, std::vector<PhysicalFunction>> createChainedHash
         fieldKeyNames.emplace_back(fieldExtension.newField.getFullyQualifiedName());
     }
 
-    const auto pageSize = conf.pageSize.getValue();
-    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
+    const auto pageSize = conf.pageSize;
+    const auto numberOfBuckets = conf.numberOfPartitions;
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
 
     /// As we are using a paged vector for the value, we do not need to set the fieldNameValues for the chained hashmap

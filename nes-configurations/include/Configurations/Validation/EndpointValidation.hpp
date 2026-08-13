@@ -15,14 +15,13 @@
 
 #include <cstdint>
 #include <string>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
 
 namespace NES
 {
 
 /// @brief This class implements validation for Address Endpoints. Valid addresses:
 /// "127.0.0.1:8080", "0.0.0.0:9092", ":8080" (not for grpc), "localhost:8080", "[::]:8080", "[::1]:8080", "[2001:db8::1]:8080"
-class EndpointValidation final : public ConfigurationValidation
+class EndpointValidation final
 {
 public:
     /// GRPC does not allow addresses with empty host names. If the configuration is intended to configure a GRPC Bind address, use
@@ -44,6 +43,6 @@ public:
     /// @brief Method to check the validity of an ip address
     /// @param ip ip address
     /// @return success if validated
-    [[nodiscard]] bool isValid(const std::string& endpointString) const override;
+    [[nodiscard]] bool isValid(const std::string& endpointString) const;
 };
 }

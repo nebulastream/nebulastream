@@ -19,11 +19,9 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <unistd.h>
-#include <Configurations/ConfigValuePrinter.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
@@ -31,6 +29,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 
+#include <Util/DumpMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
@@ -59,13 +58,8 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
-    {
-        std::stringstream configStr;
-        ConfigValuePrinter printer(configStr);
-        SingleNodeWorkerConfiguration(configuration).accept(printer);
-        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", host.getRawValue(), configStr.str());
-    }
-    if (configuration.enableGoogleEventTrace.getValue())
+    NES_INFO("Starting SingleNodeWorker {}", host.getRawValue());
+    if (configuration.enableGoogleEventTrace)
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
             fmt::format("trace_{}_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", host.getRawValue(), std::chrono::system_clock::now(), ::getpid()));
@@ -76,18 +70,18 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
-    if (!configuration.dataAddress.getValue().empty())
+    if (!configuration.dataAddress.empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
         initNetworkServices(
-            configuration.dataAddress.getValue(),
+            configuration.dataAddress,
             host,
             NetworkOptions{
-                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
-                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
-                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
-                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
-                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize),
+                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks),
+                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize),
+                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads),
+                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads),
             });
     }
 }
@@ -116,8 +110,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         const auto planStr = explain(plan, ExplainVerbosity::Debug);
         NES_INFO("Registering query {} with plan:\n{}", plan.getQueryId(), planStr);
         listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), planStr});
-        const DumpMode dumpMode(
-            configuration.workerConfiguration.dumpQueryCompilationIR.getValue(), configuration.workerConfiguration.dumpGraph.getValue());
+        const DumpMode dumpMode(configuration.workerConfiguration.dumpQueryCompilationIR, configuration.workerConfiguration.dumpGraph);
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(plan);
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));

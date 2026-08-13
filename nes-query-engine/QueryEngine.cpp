@@ -808,10 +808,10 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
+    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize))
     , host(host)
 {
-    for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
+    for (size_t i = 0; i < config.numberOfWorkerThreads; ++i)
     {
         threadPool->addThread(host);
     }
