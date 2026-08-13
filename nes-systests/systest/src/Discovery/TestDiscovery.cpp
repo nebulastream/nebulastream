@@ -59,21 +59,21 @@ struct DiscoveryFilters
 
 DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
 {
-    auto includedGroups = toLowerSet(config.testGroups.getValues(), [](const auto& option) { return option.getValue(); });
+    auto includedGroups = toLowerSet(config.testGroups, [](const auto& group) { return group; });
     auto excludedGroups = toLowerSet(config.globalExcludedGroups, [](const auto& group) { return group; });
     for (const auto& includedGroup : includedGroups)
     {
         excludedGroups.erase(includedGroup);
     }
 
-    auto explicitlyExcludedGroups = toLowerSet(config.excludeGroups.getValues(), [](const auto& option) { return option.getValue(); });
+    auto explicitlyExcludedGroups = toLowerSet(config.excludeGroups, [](const auto& group) { return group; });
     excludedGroups.insert(explicitlyExcludedGroups.begin(), explicitlyExcludedGroups.end());
 
     return DiscoveryFilters{
         .includedGroups = std::move(includedGroups),
         .excludedGroups = std::move(excludedGroups),
         .explicitlyExcludedGroups = std::move(explicitlyExcludedGroups),
-        .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); })};
+        .disabledTestFiles = toLowerSet(config.disabledTestFiles, [](const auto& file) { return file; })};
 }
 
 bool hasMatchingGroup(const NES::DiscoveredTestFile& testFile, const std::unordered_set<std::string>& groups)
@@ -304,18 +304,17 @@ std::vector<TestGroupFiles> collectTestGroups(const std::vector<DiscoveredTestFi
 std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
-    const auto discoverRoot = normalizedDirectory(config.testDiscoverRoot.getValue());
+    const auto discoverRoot = normalizedDirectory(config.testDiscoverRoot);
 
-    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    if (not config.directlySpecifiedTestFiles.empty())
     {
         std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
         if (not config.testQueryNumbers.empty())
         {
             enabledQueries = std::ranges::to<std::unordered_set<SystestQueryId>>(
-                config.testQueryNumbers.getValues()
-                | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
+                config.testQueryNumbers | std::views::transform([](const auto& queryNumber) { return SystestQueryId(queryNumber); }));
         }
-        const auto file = std::filesystem::weakly_canonical(config.directlySpecifiedTestFiles.getValue());
+        const auto file = std::filesystem::weakly_canonical(config.directlySpecifiedTestFiles);
         const DiscoveredTestFile testfile{file, nameFor(file, discoverRoot, {}), std::move(enabledQueries)};
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
@@ -328,8 +327,7 @@ std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& co
 
     /// A relative directory would not match the absolute root, and a trailing separator would make its parent the
     /// directory itself, so both are normalised away first.
-    auto searchRoots = config.testDiscoverDirs.getValues()
-        | std::views::transform([](const auto& option) { return normalizedDirectory(option.getValue()); })
+    auto searchRoots = config.testDiscoverDirs | std::views::transform([](const auto& dir) { return normalizedDirectory(dir); })
         | std::ranges::to<std::vector<std::filesystem::path>>();
     if (searchRoots.empty())
     {
@@ -340,7 +338,7 @@ std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& co
     std::unordered_set<std::string> seen;
     for (const auto& searchRoot : searchRoots)
     {
-        for (auto& file : findTestFilesBelow(searchRoot, config.testFileExtension.getValue()))
+        for (auto& file : findTestFilesBelow(searchRoot, config.testFileExtension))
         {
             if (seen.insert(file.string()).second)
             {

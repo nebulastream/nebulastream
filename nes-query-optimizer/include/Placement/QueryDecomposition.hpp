@@ -25,7 +25,7 @@
 namespace NES
 {
 
-class QueryOptimizerNetworkConfiguration;
+struct QueryOptimizerNetworkConfiguration;
 using ChannelId = NESStrongUUIDType<struct ChannelId_>;
 
 class QueryDecomposer

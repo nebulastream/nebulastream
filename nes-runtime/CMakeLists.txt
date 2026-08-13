@@ -16,9 +16,9 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 include_directories(tests/include)
 
 # Add interface library
-add_library(nes-runtime-interface INTERFACE)
-target_include_directories(nes-runtime-interface INTERFACE interface)
-target_link_libraries(nes-runtime-interface INTERFACE nes-configurations nes-query-engine-interface nes-query-compiler-interface nes-network-interface)
+add_library(nes-runtime-interface interface/Configuration/WorkerConfiguration.cpp)
+target_include_directories(nes-runtime-interface PUBLIC interface)
+target_link_libraries(nes-runtime-interface PUBLIC nes-configurations nes-query-engine-interface nes-query-compiler-interface nes-network-interface)
 
 # Set Sources and Headers
 add_subdirectory(src)

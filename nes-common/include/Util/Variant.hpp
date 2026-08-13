@@ -13,7 +13,11 @@
 */
 
 #pragma once
+#include <concepts>
+#include <expected>
+#include <functional>
 #include <variant>
+#include <ErrorHandling.hpp>
 #include <nameof.hpp>
 
 namespace NES
@@ -43,4 +47,17 @@ T get(Variant variant)
     PRECONDITION(std::holds_alternative<T>(variant), "Variant does not hold type {}", NAMEOF_TYPE(T));
     return std::get<T>(variant);
 }
+
+template <typename T, typename... Ts>
+requires(std::same_as<T, Ts> || ...)
+std::expected<T, Exception> tryGetOr(const std::variant<Ts...>& variant, const std::function<Exception()>& orElse)
+{
+    if (const auto* ptr = std::get_if<T>(&variant))
+    {
+        return *ptr;
+    }
+
+    return std::unexpected{orElse()};
+}
+
 }

@@ -13,49 +13,45 @@
 */
 
 #pragma once
-#include <iosfwd>
-#include <memory>
 #include <string>
-#include <vector>
+#include <utility>
 #include <Configuration/WorkerConfiguration.hpp>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/EndpointValidation.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
 
-class SingleNodeWorkerConfiguration final : public BaseConfiguration
+struct SingleNodeWorkerConfiguration
 {
-public:
-    ScalarOption<std::string> dataAddress = {"data_address", "Data-plane address. This is the {Hostname}:{PORT}"};
+    /// Root schema of the worker CLI: top-level fields are unprefixed, the worker sub-schema
+    /// nests under `worker.*` as in the old option tree.
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
+
+    SingleNodeWorkerConfiguration() = delete;
+
+    SingleNodeWorkerConfiguration(
+        std::string dataAddress, std::string grpcAddressUri, bool enableGoogleEventTrace, WorkerConfiguration workerConfiguration)
+        : dataAddress(std::move(dataAddress))
+        , grpcAddressUri(std::move(grpcAddressUri))
+        , enableGoogleEventTrace(enableGoogleEventTrace)
+        , workerConfiguration(std::move(workerConfiguration))
+    {
+    }
+
+    /// Data-plane address. This is the {Hostname}:{PORT}
+    std::string dataAddress;
 
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-    ScalarOption<std::string> grpcAddressUri
-        = {"grpc",
-           "[::]:8080",
-           R"(The address to try to bind to the server in URI form. If
-the scheme name is omitted, "dns:///" is assumed. To bind to any address,
-please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
-connections.  Valid values include dns:///localhost:1234,
-192.168.1.1:31416, dns:///[::1]:27182, etc.)",
-           {std::make_shared<EndpointValidation>(EndpointValidation::GRPC)}};
+    std::string grpcAddressUri;
 
     /// Enable Google Event Trace logging (Chrome tracing format)
-    BoolOption enableGoogleEventTrace
-        = {"enable_event_trace",
-           "false",
-           "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
+    bool enableGoogleEventTrace;
 
-protected:
-    std::vector<BaseOption*> getOptions() override;
+    WorkerConfiguration workerConfiguration;
 
-    template <typename T>
-    friend void generateHelp(std::ostream& ostream);
-
-public:
-    SingleNodeWorkerConfiguration() = default;
-    WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
+    static SingleNodeWorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };
 }

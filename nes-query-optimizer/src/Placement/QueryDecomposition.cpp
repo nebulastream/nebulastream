@@ -94,9 +94,9 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     auto sourceConfig = std::unordered_map<Identifier, std::string>{
         {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
-    if (context.config.receiverQueueSize.isExplicitlySet())
+    if (context.config.receiverQueueSize.has_value())
     {
-        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
+        sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string((*context.config.receiverQueueSize)));
     }
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
@@ -105,23 +105,21 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         {Identifier::parse("data_endpoint"), downstreamData},
         {Identifier::parse("output_format"), "NATIVE"}};
 
-    if (context.config.maxPendingAcks.isExplicitlySet())
+    if (context.config.maxPendingAcks.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string(context.config.maxPendingAcks.getValue()));
+        sinkConfig.emplace(Identifier::parse("max_pending_acks"), std::to_string((*context.config.maxPendingAcks)));
     }
-    if (context.config.senderQueueSize.isExplicitlySet())
+    if (context.config.senderQueueSize.has_value())
     {
-        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string(context.config.senderQueueSize.getValue()));
+        sinkConfig.emplace(Identifier::parse("sender_queue_size"), std::to_string((*context.config.senderQueueSize)));
     }
-    if (context.config.backpressureUpperThreshold.isExplicitlySet())
+    if (context.config.backpressureUpperThreshold.has_value())
     {
-        sinkConfig.emplace(
-            Identifier::parse("backpressure_upper_threshold"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        sinkConfig.emplace(Identifier::parse("backpressure_upper_threshold"), std::to_string((*context.config.backpressureUpperThreshold)));
     }
-    if (context.config.backpressureLowerThreshold.isExplicitlySet())
+    if (context.config.backpressureLowerThreshold.has_value())
     {
-        sinkConfig.emplace(
-            Identifier::parse("backpressure_lower_threshold"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        sinkConfig.emplace(Identifier::parse("backpressure_lower_threshold"), std::to_string((*context.config.backpressureLowerThreshold)));
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
