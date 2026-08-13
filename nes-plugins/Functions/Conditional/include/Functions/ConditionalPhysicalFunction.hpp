@@ -1,0 +1,49 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <vector>
+#include <DataTypes/VarVal.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Interface/Record.hpp>
+#include <Arena.hpp>
+#include <ExecutionContext.hpp>
+
+namespace NES
+{
+
+/// A single WHEN condition together with its THEN result.
+struct WhenThenPhysicalFunction
+{
+    PhysicalFunction when;
+    PhysicalFunction then;
+};
+
+/// Executes a CASE WHEN expression at runtime. Evaluates the conditions in order and returns the
+/// result of the first condition that holds, or the default result if none hold.
+class ConditionalPhysicalFunction final
+{
+public:
+    explicit ConditionalPhysicalFunction(std::vector<PhysicalFunction> childFunctions);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+private:
+    std::vector<WhenThenPhysicalFunction> whenThens;
+    PhysicalFunction elseCase;
+};
+
+static_assert(PhysicalFunctionConcept<ConditionalPhysicalFunction>);
+
+}

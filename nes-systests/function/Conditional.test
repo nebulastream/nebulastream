@@ -1,0 +1,180 @@
+# name: function/Conditional.test
+# description: Tests for the Conditional (CASE WHEN) function
+# groups: [Function, FunctionConditional]
+
+CREATE LOGICAL SOURCE intersection(intersection_id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
+CREATE PHYSICAL SOURCE FOR intersection TYPE File;
+ATTACH INLINE
+1,0.5,true,false
+2,0.1,false,true
+3,0.9,false,false
+4,0.6,false,false
+5,0.3,false,false
+6,0.1,true,true
+7,0.9,false,true
+8,0.6,false,true
+9,0.3,false,true
+10,0.95,true,false
+
+CREATE SINK simple_signal(intersection_id INT32, signal VARSIZED NOT NULL) TYPE File;
+CREATE SINK traffic_light(intersection_id INT32, signal_command VARSIZED NOT NULL) TYPE File;
+
+# Minimal conditional: single condition with default (two-way branch)
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED('STOP'),
+                   VARSIZED('GO'))
+       AS signal
+FROM intersection
+INTO simple_signal;
+----
+1,STOP
+2,GO
+3,GO
+4,GO
+5,GO
+6,STOP
+7,GO
+8,GO
+9,GO
+10,STOP
+
+# All five branches are taken: emergency, pedestrian+low density, high density, medium density, and default.
+# Rows 6-10 test priority ordering when multiple conditions could match:
+#   Row 6: emergency + pedestrian both true -> first branch (emergency) wins
+#   Row 7: pedestrian=true but density too high for branch 2, falls through to branch 3
+#   Row 8: pedestrian=true but density too high for branch 2, density not > 0.8, falls to branch 4
+#   Row 9: pedestrian=true but density not < 0.2, density not > 0.5, falls to default
+#   Row 10: emergency=true with high density -> branch 1 wins over branch 3
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED('ALL_RED_EMERGENCY'),
+                   pedestrian_waiting AND traffic_density < FLOAT32(0.2), VARSIZED('PEDESTRIAN_WALK'),
+                   traffic_density > FLOAT32(0.8), VARSIZED('GREEN_EXTENDED'),
+                   traffic_density > FLOAT32(0.5), VARSIZED('GREEN_STANDARD'),
+                   VARSIZED('FLASHING_YELLOW'))
+       AS signal_command
+FROM intersection
+INTO traffic_light;
+----
+1,ALL_RED_EMERGENCY
+2,PEDESTRIAN_WALK
+3,GREEN_EXTENDED
+4,GREEN_STANDARD
+5,FLASHING_YELLOW
+6,ALL_RED_EMERGENCY
+7,GREEN_EXTENDED
+8,GREEN_STANDARD
+9,FLASHING_YELLOW
+10,ALL_RED_EMERGENCY
+
+CREATE LOGICAL SOURCE scores(student_id INT32, score INT32);
+CREATE PHYSICAL SOURCE FOR scores TYPE File;
+ATTACH INLINE
+1,95
+2,82
+3,70
+4,55
+5,40
+6,100
+7,0
+
+CREATE SINK grade_points_sink(student_id INT32, grade_points INT32 NOT NULL) TYPE File;
+CREATE SINK letter_sink(student_id INT32, letter VARSIZED NOT NULL) TYPE File;
+CREATE SINK code_sink(student_id INT32, code INT32 NOT NULL) TYPE File;
+
+# Numeric (INT32) result type instead of VARSIZED, with five branches and boundary inputs.
+# Boundaries are exclusive: score 70 satisfies "> 69" and yields 2; score 0 falls through to the default.
+SELECT student_id,
+       Conditional(score > INT32(89), INT32(4),
+                   score > INT32(79), INT32(3),
+                   score > INT32(69), INT32(2),
+                   score > INT32(59), INT32(1),
+                   INT32(0))
+       AS grade_points
+FROM scores INTO grade_points_sink;
+----
+1,4
+2,3
+3,2
+4,0
+5,0
+6,4
+7,0
+
+# Nested Conditional: each default is itself a Conditional, forming a three-level chain.
+SELECT student_id,
+       Conditional(score > INT32(89), VARSIZED('A'),
+                   Conditional(score > INT32(79), VARSIZED('B'),
+                               Conditional(score > INT32(69), VARSIZED('C'),
+                                           VARSIZED('F'))))
+       AS letter
+FROM scores INTO letter_sink;
+----
+1,A
+2,B
+3,C
+4,F
+5,F
+6,A
+7,F
+
+# A nested arithmetic function (modulo) inside a condition, and a nested Conditional as a THEN result.
+# For scores above 89 the result depends on the score's parity; otherwise a coarser bucketing applies.
+SELECT student_id,
+       Conditional(score > INT32(89),
+                     Conditional((score % INT32(2)) == INT32(0), INT32(400), INT32(401)),
+                   score > INT32(59), INT32(100),
+                   INT32(0))
+       AS code
+FROM scores INTO code_sink;
+----
+1,401
+2,100
+3,100
+4,0
+5,0
+6,400
+7,0
+
+CREATE SINK nested_condition_sink(intersection_id INT32, decision VARSIZED NOT NULL) TYPE File;
+
+# A Conditional used as the condition of another Conditional. The inner Conditional returns a BOOLEAN:
+# when an emergency is present it yields whether the density is high, otherwise whether a pedestrian waits.
+SELECT intersection_id,
+       Conditional(Conditional(emergency_vehicle_detected, traffic_density > FLOAT32(0.5), pedestrian_waiting),
+                   VARSIZED('YES'),
+                   VARSIZED('NO'))
+       AS decision
+FROM intersection INTO nested_condition_sink;
+----
+1,NO
+2,YES
+3,NO
+4,NO
+5,NO
+6,NO
+7,YES
+8,YES
+9,YES
+10,YES
+
+# ERROR CASES
+
+# Fewer than three arguments: a Conditional needs at least one WHEN/THEN pair plus a default.
+SELECT student_id, Conditional(score > INT32(50)) AS label FROM scores INTO FILE();
+----
+ERROR 2002
+
+# An even argument count means the trailing default is missing.
+SELECT student_id, Conditional(score > INT32(50), INT32(1)) AS label FROM scores INTO FILE();
+----
+ERROR 2002
+
+# A non-BOOLEAN condition is rejected during type inference.
+SELECT student_id, Conditional(score, INT32(1), INT32(0)) AS label FROM scores INTO FILE();
+----
+ERROR 2006
+
+# Every result must share the default result's type.
+SELECT student_id, Conditional(score > INT32(50), INT32(1), VARSIZED('x')) AS label FROM scores INTO FILE();
+----
+ERROR 2006
