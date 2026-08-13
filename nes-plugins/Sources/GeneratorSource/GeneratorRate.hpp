@@ -15,6 +15,11 @@
 #pragma once
 #include <chrono>
 #include <cstdint>
+#include <expected>
+#include <optional>
+#include <string_view>
+#include <variant>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -36,4 +41,32 @@ public:
         const std::chrono::time_point<std::chrono::system_clock>& start, const std::chrono::time_point<std::chrono::system_clock>& end)
         = 0;
 };
+
+/// @brief Rate configs for the generator source. Parsed from the rate config string.
+struct FixedGeneratorRateConfig
+{
+    double emitRate;
+};
+
+struct SinusGeneratorRateConfig
+{
+    double amplitude;
+    double frequency;
+};
+
+using GeneratorRateVariant = std::variant<FixedGeneratorRateConfig, SinusGeneratorRateConfig>;
+
+/// Parsers for the rate config string. The outer optional signals "not this rate type", the inner
+/// expected carries parse/validation errors for the matched type.
+std::optional<std::expected<FixedGeneratorRateConfig, Exception>> parseValidateFixedRateConfigString(std::string_view configString);
+std::optional<std::expected<SinusGeneratorRateConfig, Exception>> parseValidateSinusRateConfigString(std::string_view configString);
+
+uint64_t calcNumberOfTuplesForInterval(
+    const FixedGeneratorRateConfig& rate,
+    const std::chrono::time_point<std::chrono::system_clock>& start,
+    const std::chrono::time_point<std::chrono::system_clock>& end);
+uint64_t calcNumberOfTuplesForInterval(
+    const SinusGeneratorRateConfig& rate,
+    const std::chrono::time_point<std::chrono::system_clock>& start,
+    const std::chrono::time_point<std::chrono::system_clock>& end);
 }

@@ -14,9 +14,13 @@
 
 #include <InputFormatterTestUtil.hpp>
 
+#include <InputFormatterConfigRegistry.hpp>
+#include <InputFormatterConfigSchemaRegistry.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -32,13 +36,16 @@
 #include <variant>
 #include <vector>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigResolution.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
@@ -54,6 +61,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Pointers.hpp>
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <BackpressureChannel.hpp>
@@ -124,27 +132,53 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
 }
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
-    SourceCatalog& sourceCatalog,
+    SharedPtr<SourceCatalog>& sourceCatalog,
     const std::string& filePath,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
-    std::unordered_map<Identifier, std::string> fileSourceConfiguration{
-        {Identifier::parse("file_path"), filePath},
-        {Identifier::parse("max_inflight_buffers"), std::to_string(numberOfRequiredSourceBuffers)}};
-    const auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("TestSource"), schema);
+    const Schema<LiteralConfigValue, Ordered> fileSourceConfiguration{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), filePath},
+        LiteralConfigValue{QualifiedIdentifier::parse("max_inflight_buffers"), static_cast<int64_t>(numberOfRequiredSourceBuffers)},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    const auto logicalSource = sourceCatalog->addLogicalSource(Identifier::parse("TestSource"), schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
-    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(),
-        Identifier::parse("File"),
-        Host("localhost"),
-        std::move(fileSourceConfiguration),
-        {{Identifier::parse("type"), "CSV"}});
+    auto configSchema = SourceCatalog::getConfigSchema(Identifier::parse("File"), Identifier::parse("CSV"));
+    INVARIANT(configSchema.has_value(), "File source or CSV input formatter not registered");
+    auto resolved = configSchema->resolveConfigs(fileSourceConfiguration);
+    INVARIANT(resolved.has_value(), "Test File Source config couldn't be resolved: {}", resolved.error().what());
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = std::move(resolved).value();
+    const auto sourceDescriptor = sourceCatalog->registerWithLogicalSource(
+        PhysicalSourceBuilder{
+            std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+        logicalSource->getLogicalSourceName());
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
     return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+}
+
+InputFormatterDescriptor
+provideInputFormatterDescriptor(const std::string& type, const std::vector<std::pair<std::string, std::string>>& values)
+{
+    std::vector<LiteralConfigValue> literals;
+    literals.reserve(values.size());
+    for (const auto& [name, value] : values)
+    {
+        literals.emplace_back(QualifiedIdentifier::parse(name), value);
+    }
+    const Schema<LiteralConfigValue, Ordered> literalValues{std::move(literals)};
+    const auto declaredSchema = InputFormatterConfigSchemaRegistry::instance().getSchema(type);
+    INVARIANT(declaredSchema.has_value(), "Input formatter type {} is not registered", type);
+    auto resolvedConfig = toExpected(resolveConfig(literalValues, *declaredSchema));
+    INVARIANT(resolvedConfig.has_value(), "Invalid config for input formatter type {}: {}", type, resolvedConfig.error());
+    const auto configEntry = InputFormatterConfigRegistry::instance().find(type);
+    INVARIANT(configEntry.has_value(), "Input formatter type {} has no InputFormatterConfig registry entry", type);
+    auto instantiatedConfig = configEntry->instantiate(InstantiatedConfig{std::move(resolvedConfig).value()});
+    INVARIANT(instantiatedConfig.has_value(), "Could not instantiate config for input formatter type {}", type);
+    return InputFormatterDescriptor{Identifier::parse(type), std::move(instantiatedConfig).value()};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -159,7 +193,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 }
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const DescriptorConfig::Config& parserConfiguration,
+    const InputFormatterDescriptor& parserConfiguration,
     const Schema<UnqualifiedUnboundField, Ordered>& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
@@ -169,9 +203,8 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const auto qualifiedSchema = schema | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 
     auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, qualifiedSchema, memoryLayoutType);
-    auto inputFormatterType = std::get<std::string>(parserConfiguration.at(InputFormatterDescriptor::getTypeString()));
     auto scanOp = ScanPhysicalOperator(
-        provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        provideInputFormatter(parserConfiguration, memoryProvider),
         qualifiedSchema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })
             | std::ranges::to<std::vector>());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));

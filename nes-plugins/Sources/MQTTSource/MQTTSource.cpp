@@ -17,7 +17,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -25,16 +27,20 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <mqtt/client.h>
@@ -57,7 +63,7 @@ std::string generateClientId(std::string clientId)
     return clientId;
 }
 
-std::optional<std::chrono::milliseconds> parseFlushingInterval(size_t flushingIntervalMs)
+std::optional<std::chrono::milliseconds> parseFlushingInterval(int64_t flushingIntervalMs)
 {
     if (flushingIntervalMs == 0)
     {
@@ -65,16 +71,73 @@ std::optional<std::chrono::milliseconds> parseFlushingInterval(size_t flushingIn
     }
     return std::chrono::milliseconds(flushingIntervalMs);
 }
+
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::string> SERVER_URI{Identifier::parse("SERVER_URI"), "The MQTT broker URI"};
+
+const ConfigField<std::string> CLIENT_ID{
+    Identifier::parse("CLIENT_ID"), "The MQTT client ID (leave default to auto-generate)", std::string{GENERATE_CLIENT_ID_TOKEN}};
+
+const ConfigField<std::string> TOPIC{Identifier::parse("TOPIC"), "The MQTT topic to subscribe to"};
+
+const ConfigField<int64_t> FLUSH_INTERVAL_MS{
+    Identifier::parse("FLUSH_INTERVAL_MS"),
+    "Interval in ms between tuple buffer flushes; 0 disables periodic flushing",
+    [](const ConfigLiteral& literal) { return tryGetOr<int64_t>(literal, expectedType<int64_t>()); },
+    int64_t{0}};
+
+const ConfigField<int64_t> QOS{
+    Identifier::parse("QOS"),
+    "MQTT QoS level (0, 1, or 2)",
+    [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
+    {
+        auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
+        if (!value)
+        {
+            return std::unexpected{value.error()};
+        }
+        if (*value != 0 && *value != 1 && *value != 2)
+        {
+            return std::unexpected{InvalidConfigParameter("MQTTSource: QoS must be 0, 1, or 2")};
+        }
+        return value;
+    },
+    int64_t{1}};
+
+const ConfigField<std::string> IMPLICIT_MESSAGE_DELIMITER{
+    Identifier::parse("IMPLICIT_MESSAGE_DELIMITER"), "Delimiter appended to each received message", std::string{"\n"}};
+
+const ConfigField<bool> LOG_MESSAGES{Identifier::parse("LOG_MESSAGES"), "Log received messages", false};
+/// NOLINTEND(cert-err58-cpp)
 }
 
-MQTTSource::MQTTSource(const SourceDescriptor& sourceDescriptor)
-    : serverURI(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::SERVER_URI))
-    , clientId(generateClientId(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::CLIENT_ID)))
-    , topic(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::TOPIC))
-    , qos(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::QOS))
-    , flushingInterval(parseFlushingInterval(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::FLUSH_INTERVAL_MS)))
-    , implicitMessageDelimiter(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::IMPLICIT_MESSAGE_DELIMITER))
-    , logMessages(sourceDescriptor.getFromConfig(ConfigParametersMQTTSource::LOG_MESSAGES))
+Schema<QualifiedErasedConfigField, Ordered> MQTTSource::getConfigSchema()
+{
+    return createConfigSchema(
+        Identifier::parse("MQTT_SOURCE"), SERVER_URI, CLIENT_ID, TOPIC, FLUSH_INTERVAL_MS, QOS, IMPLICIT_MESSAGE_DELIMITER, LOG_MESSAGES);
+}
+
+std::expected<MQTTSourceConfig, Exception> MQTTSourceConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return MQTTSourceConfig{
+        .serverURI = config.get(SERVER_URI),
+        .clientId = config.get(CLIENT_ID),
+        .topic = config.get(TOPIC),
+        .qos = config.get(QOS),
+        .flushIntervalMs = config.get(FLUSH_INTERVAL_MS),
+        .implicitMessageDelimiter = config.get(IMPLICIT_MESSAGE_DELIMITER),
+        .logMessages = config.get(LOG_MESSAGES),
+    };
+}
+
+MQTTSource::MQTTSource(const MQTTSourceConfig& config)
+    : serverURI(config.serverURI)
+    , clientId(generateClientId(config.clientId))
+    , topic(config.topic)
+    , qos(static_cast<int32_t>(config.qos))
+    , flushingInterval(parseFlushingInterval(config.flushIntervalMs))
+    , implicitMessageDelimiter(config.implicitMessageDelimiter)
+    , logMessages(config.logMessages)
 {
 }
 
@@ -217,11 +280,6 @@ void MQTTSource::close()
         client->unsubscribe(topic);
         client->disconnect();
     }
-}
-
-DescriptorConfig::Config MQTTSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSource>(std::move(config), NAME);
 }
 
 }

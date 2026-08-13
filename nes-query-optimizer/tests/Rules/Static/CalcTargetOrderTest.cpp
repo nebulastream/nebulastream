@@ -112,7 +112,7 @@ TEST_F(CalcTargetOrderTest, JustSource)
 
     auto targetSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
         plan.getRootOperators()[0].getAs<SinkLogicalOperator>()->getSinkDescriptor()->getSchema());
-    EXPECT_EQ(*targetSchema, *sourceDescriptor.getLogicalSource().getSchema());
+    EXPECT_EQ(*targetSchema, sourceDescriptor.getSchema());
 }
 
 TEST_F(CalcTargetOrderTest, JoinOverProjection)

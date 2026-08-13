@@ -16,12 +16,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 add_library(json_input_format_indexer_plugin_library STATIC SIMDJSONInputFormatIndexer.cpp SIMDJSONRawBufferIndex.cpp)
 target_link_libraries(json_input_format_indexer_plugin_library PRIVATE nes-input-formatters)
 target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-input-formatters json_input_format_indexer_plugin_library)
 
 find_package(simdjson CONFIG REQUIRED)
 target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)
 
-link_plugin_library(nes-input-formatters json_input_format_indexer_plugin_library)
 # plugin_name SIMDJSON: the indexer class/header are SIMDJSONInputFormatIndexer; the registry key stays JSON.
 add_registry_entry(InputFormatIndexer SIMDJSON KEY JSON)
-
-add_registry_entry(InputFormatterValidation SIMDJSON KEY JSON)
+add_registry_entry(InputFormatterConfigSchema SIMDJSON KEY JSON)
+add_registry_entry(InputFormatterConfig SIMDJSON KEY JSON)

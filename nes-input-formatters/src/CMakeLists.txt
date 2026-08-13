@@ -13,7 +13,8 @@
 add_source_files(nes-input-formatters
         InputFormatIndexer.cpp
         InputFormatIndexerRegistry.cpp
-        InputFormatterValidationRegistry.cpp
+        InputFormatterConfigRegistry.cpp
+        InputFormatterConfigSchemaRegistry.cpp
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
         SpanningTupleBufferState.cpp
@@ -21,11 +22,10 @@ add_source_files(nes-input-formatters
         InputFormatter.cpp
         FieldOffsetRawBufferIndex.cpp
         InputFormatterDescriptor.cpp
-        InputFormatterValidationProvider.cpp
         CSVInputFormatIndexer.cpp
 )
 
-# Runtime registry entry for the built-in CSV indexer
+# Runtime registry entries (formatter factory, config schema, typed config)
 add_registry_entry(InputFormatIndexer CSV)
-
-add_registry_entry(InputFormatterValidation CSV)
+add_registry_entry(InputFormatterConfigSchema CSV)
+add_registry_entry(InputFormatterConfig CSV)
