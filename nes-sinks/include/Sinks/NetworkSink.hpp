@@ -17,13 +17,16 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -31,10 +34,28 @@
 #include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 #include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+/// Sink-defined config struct: instantiated from the generic config by the SinkConfig registry
+/// entry, carried through the SinkDescriptor as std::any, and serialized via reflection of
+/// exactly this struct (all members are reflectable).
+struct NetworkSinkConfig
+{
+    std::string dataEndpoint;
+    std::string bind;
+    std::string channel;
+    /// Per-channel sender queue size override. 0 means use the worker-level default.
+    size_t senderQueueSize;
+    /// Per-channel max pending acks override. 0 means use the worker-level default.
+    size_t maxPendingAcks;
+
+    static std::expected<NetworkSinkConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
+
 class NetworkSink final : public Sink
 {
 public:
@@ -46,7 +67,7 @@ public:
         return Instance;
     }
 
-    NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    NetworkSink(BackpressureController backpressureController, const NetworkSinkConfig& config, const SinkDescriptor& sinkDescriptor);
     ~NetworkSink() override = default;
 
     NetworkSink(const NetworkSink&) = delete;
@@ -58,7 +79,7 @@ public:
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
     void stop(PipelineExecutionContext& pec) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -76,63 +97,5 @@ private:
     size_t maxPendingAcks;
     std::atomic_bool closed;
 };
-
-/// NOLINTBEGIN(cert-err58-cpp)
-struct ConfigParametersNetworkSink
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
-        "DATA_ENDPOINT",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
-        "BIND",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
-
-    /// Per-channel sender queue size override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
-        "SENDER_QUEUE_SIZE",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
-
-    /// Per-channel max pending acks override. 0 means use the worker-level default.
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_PENDING_ACKS{
-        "MAX_PENDING_ACKS",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
-        "BACKPRESSURE_UPPER_THRESHOLD",
-        1000,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
-        "BACKPRESSURE_LOWER_THRESHOLD",
-        200,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap,
-            DATA_ENDPOINT,
-            CHANNEL,
-            BIND,
-            SENDER_QUEUE_SIZE,
-            MAX_PENDING_ACKS,
-            BACKPRESSURE_UPPER_THRESHOLD,
-            BACKPRESSURE_LOWER_THRESHOLD);
-};
-
-/// NOLINTEND(cert-err58-cpp)
 
 }
