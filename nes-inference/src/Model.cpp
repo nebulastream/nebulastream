@@ -37,8 +37,8 @@ namespace detail
 {
 struct ReflectedImportedModel
 {
-    std::optional<std::string> payload;
-    std::optional<std::string> auxiliary;
+    std::optional<std::string> modelGraph;
+    std::optional<std::string> modelWeights;
     std::optional<std::string> functionName;
     std::optional<std::vector<size_t>> inputShape;
     std::optional<std::vector<size_t>> outputShape;
@@ -125,8 +125,8 @@ detail::RefCountedByteBuffer base64ToBytes(std::string_view data)
 Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedImportedModel{
-        .payload = std::make_optional(bytesToBase64(model.getData())),
-        .auxiliary = std::make_optional(bytesToBase64(model.getAuxiliaryData())),
+        .modelGraph = std::make_optional(bytesToBase64(model.getBackendModel().modelGraphView())),
+        .modelWeights = std::make_optional(bytesToBase64(model.getBackendModel().modelWeightsView())),
         .functionName = std::make_optional(model.getFunctionName()),
         .inputShape = std::make_optional(model.getInputShape()),
         .outputShape = std::make_optional(model.getOutputShape())});
@@ -136,8 +136,9 @@ ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const
 {
     auto reflected = context.unreflect<detail::ReflectedImportedModel>(rfl);
     return ImportedModel{
-        base64ToBytes(reflected.payload.value_or(std::string{})),
-        base64ToBytes(reflected.auxiliary.value_or(std::string{})),
+        detail::OpenVinoModel{
+            .modelGraph = base64ToBytes(reflected.modelGraph.value_or(std::string{})),
+            .modelWeights = base64ToBytes(reflected.modelWeights.value_or(std::string{}))},
         reflected.functionName.value_or(std::string{}),
         reflected.inputShape.value_or(std::vector<size_t>{}),
         reflected.outputShape.value_or(std::vector<size_t>{})};
