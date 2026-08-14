@@ -1,0 +1,25 @@
+# name: join/JoinPageSizeTooSmall.test
+# description: The hash join build keeps one PagedVector per distinct join key, and those pages are sized by the state
+#              page-size knob. A page that cannot hold a single tuple is rejected while lowering the join instead of
+#              failing at a precondition inside the build at runtime.
+# groups: [Join, HashJoinOnly]
+
+# 16 UINT64 fields make a 128 byte tuple, which does not fit on a 128 byte page once the 8 byte page header is taken
+# off. The page size still holds several hash map entries (~36 bytes each), so lowering reaches the paged vector check
+# rather than failing earlier on the entriesPerPage invariant.
+GlobalConfiguration worker.default_query_execution.page_size: [128]
+
+CREATE LOGICAL SOURCE wideStream(id UINT64 NOT NULL, timestamp1 UINT64 NOT NULL, f01 UINT64 NOT NULL, f02 UINT64 NOT NULL, f03 UINT64 NOT NULL, f04 UINT64 NOT NULL, f05 UINT64 NOT NULL, f06 UINT64 NOT NULL, f07 UINT64 NOT NULL, f08 UINT64 NOT NULL, f09 UINT64 NOT NULL, f10 UINT64 NOT NULL, f11 UINT64 NOT NULL, f12 UINT64 NOT NULL, f13 UINT64 NOT NULL, f14 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR wideStream TYPE File;
+ATTACH INLINE
+1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+CREATE LOGICAL SOURCE wideStream2(id2 UINT64 NOT NULL, timestamp2 UINT64 NOT NULL, g01 UINT64 NOT NULL, g02 UINT64 NOT NULL, g03 UINT64 NOT NULL, g04 UINT64 NOT NULL, g05 UINT64 NOT NULL, g06 UINT64 NOT NULL, g07 UINT64 NOT NULL, g08 UINT64 NOT NULL, g09 UINT64 NOT NULL, g10 UINT64 NOT NULL, g11 UINT64 NOT NULL, g12 UINT64 NOT NULL, g13 UINT64 NOT NULL, g14 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR wideStream2 TYPE File;
+ATTACH INLINE
+1,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+# The tuples never reach the build: lowering the hash join rejects the page size first.
+SELECT * FROM (SELECT * FROM wideStream) INNER JOIN (SELECT * FROM wideStream2) ON id = id2 WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec) INTO Checksum();
+----
+ERROR QueryCompilerError
