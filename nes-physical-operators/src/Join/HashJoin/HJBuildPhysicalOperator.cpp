@@ -94,12 +94,20 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     entry, hashMapBuffer.asArg(), hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 const nautilus::val<uint64_t> tupleSize = getSizeInBytes(tupleLayout->getSchema());
+                /// One paged vector exists per distinct key per hash map, so its pages follow the state page-size knob. Sizing them by the
+                /// operator buffer size instead multiplies the join state by bufferSize/pageSize, which exhausts the unpooled budget once
+                /// garbage collection falls behind the build.
+                const nautilus::val<uint64_t> pageSize = hashMapOptions.pageSize;
                 nautilus::invoke(
-                    +[](TupleBuffer* hashMapBuf, uint32_t* valueMemArea, AbstractBufferProvider* bufferProvider, uint64_t tupleSize) -> void
+                    +[](TupleBuffer* hashMapBuf,
+                        uint32_t* valueMemArea,
+                        AbstractBufferProvider* bufferProvider,
+                        const uint64_t tupleSize,
+                        const uint64_t pageSize) -> void
                     {
                         if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getMainBufferSize()))
                         {
-                            PagedVector::init(pagedVectorBuffer.value(), bufferProvider->getBufferSize(), tupleSize);
+                            PagedVector::init(pagedVectorBuffer.value(), pageSize, tupleSize);
                             auto childIndex = hashMapBuf->storeChildBuffer(pagedVectorBuffer.value());
                             *valueMemArea = childIndex.getRawValue();
                             return;
@@ -109,7 +117,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
-                    tupleSize);
+                    tupleSize,
+                    pageSize);
             },
             ctx.pipelineMemoryProvider.bufferProvider);
 
