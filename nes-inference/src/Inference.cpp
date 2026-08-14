@@ -46,7 +46,7 @@ std::expected<CompiledModel, CompileError> compileModel(const ImportedModel& imp
 {
     /// OpenVINO consumes the IR produced at import time as-is; there is no separate
     /// ahead-of-time compilation step, so the payload just moves to the compiled stage.
-    return detail::ModelAccess::compileFrom(imported, detail::RefCountedByteBuffer::fromBytes(imported.getData()));
+    return detail::ModelAccess::compileFrom(imported);
 }
 
 }

@@ -230,7 +230,7 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
     if (!isSupportedInput(modelPath))
     {
         return std::unexpected(
-            ImportError{"OpenVINO loading supports .onnx, .pb, .pbtxt, .meta, .tflite, .pdmodel, .pt2, or a SavedModel directory"});
+            ImportError{"OpenVINO loading supports .onnx, .pb, .pbtxt, .meta, .tflite, .pdmodel, or a SavedModel directory"});
     }
 
     const auto tempDir = makeTemporaryDirectory();
@@ -326,8 +326,9 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
         }
 
         return detail::ModelAccess::makeImported(
-            detail::RefCountedByteBuffer::fromBytes(*xmlBytes),
-            detail::RefCountedByteBuffer::fromBytes(*binBytes),
+            detail::OpenVinoModel{
+                .modelGraph = detail::RefCountedByteBuffer::fromBytes(*xmlBytes),
+                .modelWeights = detail::RefCountedByteBuffer::fromBytes(*binBytes)},
             {},
             std::move(*inputShape),
             std::move(*outputShape));

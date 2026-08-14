@@ -72,11 +72,13 @@ RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
     }
     else
     {
+        const auto& backendModel = model.getBackendModel();
+        const auto modelGraphBytes = backendModel.modelGraphView();
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-text for OpenVINO XML payload
-        const std::string modelXml(reinterpret_cast<const char*>(model.getData().data()), model.getData().size());
-        std::vector<std::uint8_t> modelBin(model.getAuxiliaryData().size());
-        std::ranges::transform(
-            model.getAuxiliaryData(), modelBin.begin(), [](std::byte value) { return static_cast<std::uint8_t>(value); });
+        const std::string modelXml(reinterpret_cast<const char*>(modelGraphBytes.data()), modelGraphBytes.size());
+        const auto modelWeightsBytes = backendModel.modelWeightsView();
+        std::vector<std::uint8_t> modelBin(modelWeightsBytes.size());
+        std::ranges::transform(modelWeightsBytes, modelBin.begin(), [](std::byte value) { return static_cast<std::uint8_t>(value); });
 
         const ov::Shape modelInputShape(model.getInputShape().begin(), model.getInputShape().end());
         ov::Tensor weights(ov::element::u8, {modelBin.size()});

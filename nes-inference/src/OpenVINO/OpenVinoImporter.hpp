@@ -39,7 +39,7 @@ public:
     [[nodiscard]] std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath) const;
 
 private:
-    static constexpr std::array<std::string_view, 7> SupportedExtensions{".onnx", ".pb", ".pbtxt", ".meta", ".tflite", ".pdmodel", ".pt2"};
+    static constexpr std::array<std::string_view, 6> SupportedExtensions{".onnx", ".pb", ".pbtxt", ".meta", ".tflite", ".pdmodel"};
 
     [[nodiscard]] static bool isSupportedInput(const std::filesystem::path& modelPath);
 
