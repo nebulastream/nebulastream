@@ -22,7 +22,6 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -44,24 +43,16 @@ namespace NES
 
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
-    auto rootOperator = queryPlan.getRootOperators().front();
+    INVARIANT(not queryPlan.getRootOperators().empty(), "Query plan should have at least one root operator");
 
     SerializableQueryPlan serializableQueryPlan;
     if (queryPlan.getQueryId().isValid())
     {
         *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
     }
-    /// Serialize Query Plan operators
-    std::set<OperatorId> alreadySerialized;
-    for (auto itr : BFSRange(rootOperator))
+    /// Serialize Query Plan operators. Shared operators are serialized once; the children ids restore the sharing.
+    for (const auto& itr : planOperators(queryPlan))
     {
-        if (alreadySerialized.contains(itr.getId()))
-        {
-            /// Skip rest of the steps as the operator is already serialized
-            continue;
-        }
-        alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
 
         auto childrenIds = itr->getChildren() | std::views::transform([](const auto& child) { return child->getOperatorId(); })
@@ -78,8 +69,10 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     }
 
     /// Serialize the root operator ids
-    auto rootOperatorId = rootOperator.getId();
-    serializableQueryPlan.add_rootoperatorids(rootOperatorId.getRawValue());
+    for (const auto& rootOperator : queryPlan.getRootOperators())
+    {
+        serializableQueryPlan.add_rootoperatorids(rootOperator.getId().getRawValue());
+    }
     return serializableQueryPlan;
 }
 
@@ -152,29 +145,25 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         }
     }
 
-    if (rootOperators.size() != 1)
+    for (const auto& rootOperator : rootOperators)
     {
-        throw CannotDeserialize("Plan contains multiple root operators!");
-    }
+        const auto sinkOpt = rootOperator.tryGetAs<SinkLogicalOperator>();
+        if (!sinkOpt)
+        {
+            throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperator, serializedQueryPlan.DebugString());
+        }
+        const auto& sink = sinkOpt.value();
 
-    auto sinkOpt = rootOperators.at(0).tryGetAs<SinkLogicalOperator>();
-    if (!sinkOpt)
-    {
-        throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
-    }
-    auto sink = std::move(sinkOpt).value();
+        if (sink->getChildren().empty())
+        {
+            throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
+        }
 
-    if (sink->getChildren().empty())
-    {
-        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
+        if (not sink->getSinkDescriptor())
+        {
+            throw CannotDeserialize("Sink has no descriptor!");
+        }
     }
-
-    if (not sink->getSinkDescriptor())
-    {
-        throw CannotDeserialize("Sink has no descriptor!");
-    }
-
-    rootOperators = std::vector<LogicalOperator>{sink};
 
     /// 4) Finalize plan
     auto queryId = INVALID_QUERY_ID;
