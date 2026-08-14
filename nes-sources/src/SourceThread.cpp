@@ -159,9 +159,12 @@ void dataSourceThread(
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
-        /// Always set the origin id to the compilation-assigned value.
-        /// No source should ever override this — it must match what downstream operators expect.
-        buffer.setOriginId(originId);
+        /// Most sources have one compilation-assigned origin. A multiplexing source, such as NetworkSource, instead
+        /// transports the logical origin of each buffer and must preserve it for sequence and watermark tracking.
+        if (!source->preservesBufferOriginId())
+        {
+            buffer.setOriginId(originId);
+        }
         if (shouldAddMetadata)
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);

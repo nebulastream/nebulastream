@@ -1,0 +1,27 @@
+# name: union/MultiOriginNetworkUnion.test
+# description: Three source origins merged before a network boundary
+# groups: [Union]
+
+CREATE LOGICAL SOURCE multi_origin_stream(
+    id UINT64 NOT NULL,
+    value UINT64 NOT NULL,
+    timestamp UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR multi_origin_stream TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR multi_origin_stream TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR multi_origin_stream TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+CREATE SINK multi_origin_checksum(
+    id UINT64 NOT NULL,
+    value UINT64 NOT NULL,
+    timestamp UINT64 NOT NULL
+) TYPE Checksum;
+
+SELECT id, value, timestamp
+FROM multi_origin_stream
+INTO multi_origin_checksum;
+----
+30000 20886525
