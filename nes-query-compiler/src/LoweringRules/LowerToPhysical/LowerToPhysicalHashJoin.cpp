@@ -22,6 +22,7 @@
 #include <ranges>
 #include <span>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -327,6 +328,22 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newRightInputSchema);
     auto [leftHashMapConfig, leftKeyFunctions] = createChainedHashMapConfig(leftJoinFields, newLeftInputSchema, conf);
     auto [rightHashMapConfig, rightKeyFunctions] = createChainedHashMapConfig(rightJoinFields, newRightInputSchema, conf);
+
+    /// The build stores every distinct key's tuples in its own PagedVector sized by the same page-size knob, so the knob must also hold a
+    /// tuple - the same "does one element fit on a page" contract HashMapOptions enforces for entriesPerPage.
+    const auto requireTupleFitsOnPage = [](const uint64_t pageSize, const auto& tupleLayout, const std::string_view side)
+    {
+        if (const auto minimumPageSize = tupleLayout->getMinimumPageSize(); pageSize < minimumPageSize)
+        {
+            throw QueryCompilerError(
+                "The {} join input needs a page size of at least {} bytes, but the configured page size is {}. Increase the page size.",
+                side,
+                minimumPageSize,
+                pageSize);
+        }
+    };
+    requireTupleFitsOnPage(leftHashMapConfig.pageSize, leftTupleLayout, "left");
+    requireTupleFitsOnPage(rightHashMapConfig.pageSize, rightTupleLayout, "right");
 
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();

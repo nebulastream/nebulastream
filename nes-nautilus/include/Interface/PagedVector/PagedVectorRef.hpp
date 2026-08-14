@@ -23,6 +23,7 @@
 #include <utility>
 
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
@@ -52,6 +53,11 @@ class PagedVectorTupleLayout
 public:
     virtual ~PagedVectorTupleLayout() = default;
     [[nodiscard]] virtual const Schema<QualifiedUnboundField, Ordered>& getSchema() const = 0;
+
+    /// @brief Smallest page buffer size that can hold a tuple of this layout. PagedVector::init requires strictly more than
+    /// the page header plus one tuple, so this is the first size it accepts.
+    [[nodiscard]] uint64_t getMinimumPageSize() const { return PagedVector::Page::getHeaderSize() + getSizeInBytes(getSchema()) + 1; }
+
     /// @brief Reads a record from the specified memory address. The address is expected to point at the beginning of the record to be read.
     /// The LoadFunction handles the varsized data loading, as it is stored in a separate buffer.
     [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction) const = 0;

@@ -39,7 +39,8 @@ namespace NES::TestUtils
 {
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access, performance-unnecessary-value-param)
-TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode)
+TestablePagedVector::TestablePagedVector(
+    const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode, uint64_t pageBufferSize)
     : dataTypes(fieldTypes), bufferManager(bufferManager)
 {
     const auto schema = createSchemaFromDataTypes(dataTypes);
@@ -53,7 +54,7 @@ TestablePagedVector::TestablePagedVector(const std::vector<DataType>& fieldTypes
     engine = std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode));
 
     pagedVector = bufferManager.getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
-    PagedVector::init(pagedVector, bufferManager.getBufferSize(), getSizeInBytes(layout->getSchema()));
+    PagedVector::init(pagedVector, pageBufferSize, getSizeInBytes(layout->getSchema()));
 
     pushbackFn.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
@@ -133,6 +134,20 @@ uint64_t TestablePagedVector::size() const
 PagedVector TestablePagedVector::raw()
 {
     return PagedVector::load(pagedVector);
+}
+
+bool TestablePagedVector::pagesMatchInitPageSize() const
+{
+    const auto loaded = PagedVector::load(pagedVector);
+    const auto pageBufferSize = loaded.getPageBufferSize();
+    for (uint64_t pageIdx = 0; pageIdx < loaded.getNumberOfPages(); ++pageIdx)
+    {
+        if (pagedVector.loadChildBuffer(ChildBufferIndex{static_cast<uint32_t>(pageIdx)}).getBufferSize() != pageBufferSize)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 }
