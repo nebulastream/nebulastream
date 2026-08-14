@@ -73,7 +73,7 @@ LoweringRuleResultSubgraph LowerToPhysicalMarkApply::apply(LogicalOperator logic
     auto handler = std::make_shared<StreamTableJoinOperatorHandler>(tableOrigins, std::move(allOrigins));
 
     auto inputWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        StreamTableJoinInputPhysicalOperator{handlerId, inputOrigins},
+        StreamTableJoinInputPhysicalOperator{},
         inputSchema,
         inputSchema,
         memoryLayout,
@@ -82,7 +82,7 @@ LoweringRuleResultSubgraph LowerToPhysicalMarkApply::apply(LogicalOperator logic
         handler,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     auto tableWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        StreamTableJoinInputPhysicalOperator{handlerId, tableOrigins},
+        StreamTableJoinInputPhysicalOperator{},
         tableSchema,
         tableSchema,
         memoryLayout,

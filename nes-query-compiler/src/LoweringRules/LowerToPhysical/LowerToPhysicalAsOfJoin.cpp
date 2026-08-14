@@ -138,7 +138,7 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
     auto handler = std::make_shared<StreamTableJoinOperatorHandler>(rightOrigins, std::move(inputOrigins));
 
     auto leftWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        AsOfJoinInputPhysicalOperator{handlerId, leftOrigins},
+        AsOfJoinInputPhysicalOperator{},
         leftSchema,
         leftSchema,
         memoryLayout,
@@ -147,7 +147,7 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     auto rightWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        AsOfJoinInputPhysicalOperator{handlerId, rightOrigins},
+        AsOfJoinInputPhysicalOperator{},
         rightSchema,
         rightSchema,
         memoryLayout,

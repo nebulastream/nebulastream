@@ -19,6 +19,7 @@
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>

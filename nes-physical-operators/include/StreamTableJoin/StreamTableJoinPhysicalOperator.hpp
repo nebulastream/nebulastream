@@ -30,13 +30,11 @@
 namespace NES
 {
 
-/// Preserves the typed pipeline boundary for one join input and turns that
-/// input pipeline's termination into an origin-tagged infinity watermark.
+/// Preserves the typed pipeline boundary for one join input. Finalization is deferred to the merged join pipeline so that one input's
+/// termination cannot overtake data still in flight from another input.
 class StreamTableJoinInputPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    StreamTableJoinInputPhysicalOperator(OperatorHandlerId operatorHandlerId, std::vector<OriginId> inputOriginIds);
-
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
@@ -45,8 +43,6 @@ public:
     void setChild(PhysicalOperator child) override;
 
 private:
-    OperatorHandlerId operatorHandlerId;
-    std::vector<OriginId> inputOriginIds;
     std::optional<PhysicalOperator> child;
 };
 
@@ -83,6 +79,7 @@ public:
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;

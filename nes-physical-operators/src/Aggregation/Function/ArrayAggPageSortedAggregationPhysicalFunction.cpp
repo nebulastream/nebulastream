@@ -27,7 +27,6 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <nautilus/function.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -48,7 +47,7 @@ struct PageHeader
 
 struct PageSortedArrayAggState
 {
-    TupleBuffer pages;
+    ChildBufferIndex::Underlying pagesIndex = 0;
     int8_t* currentPageData = nullptr;
     PageHeader* currentPageHeader = nullptr;
     uint64_t writeOffset = 0;
@@ -61,6 +60,7 @@ struct PageSortedArrayAggState
 
 void startPage(
     PageSortedArrayAggState* state,
+    TupleBuffer* parentBuffer,
     AbstractBufferProvider* bufferProvider,
     const uint64_t firstTimestamp,
     const OriginId originId,
@@ -69,6 +69,7 @@ void startPage(
     [[maybe_unused]] const uint64_t valueSize)
 {
     PRECONDITION(state != nullptr, "ARRAY_AGG_PAGE_SORTED state must not be null");
+    PRECONDITION(parentBuffer != nullptr, "ARRAY_AGG_PAGE_SORTED parent buffer must not be null");
     PRECONDITION(bufferProvider != nullptr, "ARRAY_AGG_PAGE_SORTED buffer provider must not be null");
     auto page = bufferProvider->getBufferBlocking();
     PRECONDITION(page.getBufferSize() >= sizeof(PageHeader) + valueSize, "ARRAY_AGG_PAGE_SORTED value does not fit into a page");
@@ -82,29 +83,35 @@ void startPage(
     state->currentSequenceNumber = sequenceNumber.getRawValue();
     state->currentChunkNumber = chunkNumber.getRawValue();
     state->hasCurrentInputBuffer = true;
-    std::ignore = state->pages.storeChildBuffer(page);
+    auto pages = parentBuffer->loadChildBuffer(ChildBufferIndex{state->pagesIndex});
+    std::ignore = pages.storeChildBuffer(page);
 }
 
-uint64_t getNumberOfValues(const PageSortedArrayAggState* state)
+uint64_t getNumberOfValues(const PageSortedArrayAggState* state, const TupleBuffer* parentBuffer)
 {
     PRECONDITION(state != nullptr, "ARRAY_AGG_PAGE_SORTED state must not be null");
+    PRECONDITION(parentBuffer != nullptr, "ARRAY_AGG_PAGE_SORTED parent buffer must not be null");
+    const auto pages = parentBuffer->loadChildBuffer(ChildBufferIndex{state->pagesIndex});
     uint64_t numberOfValues = 0;
-    for (uint64_t pageIndex = 0; pageIndex < state->pages.getNumberOfChildBuffers(); ++pageIndex)
+    for (uint64_t pageIndex = 0; pageIndex < pages.getNumberOfChildBuffers(); ++pageIndex)
     {
-        const auto page = state->pages.loadChildBuffer(VariableSizedAccess::Index{pageIndex});
+        const auto page = pages.loadChildBuffer(ChildBufferIndex{static_cast<ChildBufferIndex::Underlying>(pageIndex)});
         numberOfValues += page.getAvailableMemoryArea<PageHeader>().front().numberOfValues;
     }
     return numberOfValues;
 }
 
-void copySortedPages(const PageSortedArrayAggState* state, int8_t* destination, const uint64_t valueSize)
+void copySortedPages(
+    const PageSortedArrayAggState* state, const TupleBuffer* parentBuffer, int8_t* destination, const uint64_t valueSize)
 {
     PRECONDITION(state != nullptr, "ARRAY_AGG_PAGE_SORTED state must not be null");
+    PRECONDITION(parentBuffer != nullptr, "ARRAY_AGG_PAGE_SORTED parent buffer must not be null");
+    const auto rootPages = parentBuffer->loadChildBuffer(ChildBufferIndex{state->pagesIndex});
     std::vector<TupleBuffer> pages;
-    pages.reserve(state->pages.getNumberOfChildBuffers());
-    for (uint64_t pageIndex = 0; pageIndex < state->pages.getNumberOfChildBuffers(); ++pageIndex)
+    pages.reserve(rootPages.getNumberOfChildBuffers());
+    for (uint64_t pageIndex = 0; pageIndex < rootPages.getNumberOfChildBuffers(); ++pageIndex)
     {
-        pages.emplace_back(state->pages.loadChildBuffer(VariableSizedAccess::Index{pageIndex}));
+        pages.emplace_back(rootPages.loadChildBuffer(ChildBufferIndex{static_cast<ChildBufferIndex::Underlying>(pageIndex)}));
     }
     std::ranges::stable_sort(
         pages, {}, [](const TupleBuffer& page) { return page.getAvailableMemoryArea<PageHeader>().front().firstTimestamp; });
@@ -127,6 +134,7 @@ ArrayAggPageSortedAggregationPhysicalFunction::ArrayAggPageSortedAggregationPhys
 
 void ArrayAggPageSortedAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
+    nautilus::val<TupleBuffer*> parentBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Record& record,
     const nautilus::val<Timestamp>& timestamp,
@@ -152,6 +160,7 @@ void ArrayAggPageSortedAggregationPhysicalFunction::lift(
         nautilus::invoke(
             startPage,
             static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState),
+            parentBuffer,
             pipelineMemoryProvider.bufferProvider,
             timestamp.convertToValue(),
             inputBuffer.originId,
@@ -172,56 +181,71 @@ void ArrayAggPageSortedAggregationPhysicalFunction::lift(
 }
 
 void ArrayAggPageSortedAggregationPhysicalFunction::combine(
-    nautilus::val<AggregationState*> aggregationState1, nautilus::val<AggregationState*> aggregationState2, PipelineMemoryProvider&)
+    nautilus::val<AggregationState*> aggregationState1,
+    nautilus::val<TupleBuffer*> parentBuffer1,
+    nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*> parentBuffer2,
+    PipelineMemoryProvider&)
 {
     nautilus::invoke(
-        +[](PageSortedArrayAggState* destination, const PageSortedArrayAggState* source)
+        +[](PageSortedArrayAggState* destination,
+            TupleBuffer* destinationParent,
+            const PageSortedArrayAggState* source,
+            const TupleBuffer* sourceParent)
         {
-            for (uint64_t pageIndex = 0; pageIndex < source->pages.getNumberOfChildBuffers(); ++pageIndex)
+            auto destinationPages = destinationParent->loadChildBuffer(ChildBufferIndex{destination->pagesIndex});
+            const auto sourcePages = sourceParent->loadChildBuffer(ChildBufferIndex{source->pagesIndex});
+            for (uint64_t pageIndex = 0; pageIndex < sourcePages.getNumberOfChildBuffers(); ++pageIndex)
             {
-                auto page = source->pages.loadChildBuffer(VariableSizedAccess::Index{pageIndex});
-                std::ignore = destination->pages.storeChildBuffer(page);
+                auto page = sourcePages.loadChildBuffer(ChildBufferIndex{static_cast<ChildBufferIndex::Underlying>(pageIndex)});
+                std::ignore = destinationPages.storeChildBuffer(page);
             }
         },
         static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState1),
-        static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState2));
+        parentBuffer1,
+        static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState2),
+        parentBuffer2);
 }
 
 Record ArrayAggPageSortedAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+    const nautilus::val<AggregationState*> aggregationState,
+    nautilus::val<TupleBuffer*> parentBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const auto state = static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState);
-    const auto numberOfValues = nautilus::invoke(getNumberOfValues, state);
+    const auto numberOfValues = nautilus::invoke(getNumberOfValues, state, parentBuffer);
     const auto valueSize = nautilus::val<uint64_t>{DataTypeProvider::provideDataType(inputType.type).getSizeInBytesWithNull()};
     auto payload = pipelineMemoryProvider.arena.allocateVariableSizedData(numberOfValues * valueSize);
-    nautilus::invoke(copySortedPages, state, payload.getContent(), valueSize);
+    nautilus::invoke(copySortedPages, state, parentBuffer, payload.getContent(), valueSize);
     Record result;
     result.write(resultFieldIdentifier, VarVal{payload});
     return result;
 }
 
 void ArrayAggPageSortedAggregationPhysicalFunction::reset(
-    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+    const nautilus::val<AggregationState*> aggregationState,
+    nautilus::val<TupleBuffer*> parentBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
     nautilus::invoke(
-        +[](PageSortedArrayAggState* state, AbstractBufferProvider* bufferProvider)
+        +[](PageSortedArrayAggState* state, TupleBuffer* parent, AbstractBufferProvider* bufferProvider)
         {
             auto root = bufferProvider->getUnpooledBuffer(1);
             if (not root)
             {
                 throw BufferAllocationFailure("No unpooled TupleBuffer available for ARRAY_AGG_PAGE_SORTED root");
             }
-            new (state) PageSortedArrayAggState{.pages = std::move(*root)};
+            const auto rootIndex = parent->storeChildBuffer(*root).getRawValue();
+            new (state) PageSortedArrayAggState{.pagesIndex = rootIndex};
         },
         static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState),
+        parentBuffer,
         pipelineMemoryProvider.bufferProvider);
 }
 
-void ArrayAggPageSortedAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
+void ArrayAggPageSortedAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
 {
-    nautilus::invoke(
-        +[](PageSortedArrayAggState* state) { state->~PageSortedArrayAggState(); },
-        static_cast<nautilus::val<PageSortedArrayAggState*>>(aggregationState));
+    /// The pages root is a child of the parent hash-map buffer and is released with its parent.
 }
 
 size_t ArrayAggPageSortedAggregationPhysicalFunction::getSizeOfStateInBytes() const

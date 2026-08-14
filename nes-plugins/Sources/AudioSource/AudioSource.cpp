@@ -19,10 +19,10 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <Util/Ranges.hpp>
 
 namespace NES
 {
@@ -89,6 +89,7 @@ static_assert(timestampFor(0, 48'000, 48'000) == 1'000'000'000ULL);
 AudioSource::AudioSource(const SourceDescriptor& sourceDescriptor)
     : device(sourceDescriptor.getFromConfig(ConfigParametersAudio::DEVICE))
     , sampleRate(sourceDescriptor.getFromConfig(ConfigParametersAudio::SAMPLE_RATE))
+    , resetTimestampOnFillTupleBuffer(sourceDescriptor.getFromConfig(ConfigParametersAudio::REAL_TIMESTAMP))
 {
     validateSchema(sourceDescriptor);
 }
@@ -123,6 +124,12 @@ Source::FillTupleBufferResult AudioSource::fillTupleBuffer(TupleBuffer& tupleBuf
     const auto tupleCapacity = tupleBuffer.getBufferSize() / sizeof(AudioTuple);
     PRECONDITION(tupleCapacity > 0, "Audio tuple does not fit into tuple buffer");
 
+    if (resetTimestampOnFillTupleBuffer)
+    {
+        startTimestampNs
+            = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        samplesCaptured = 0;
+    }
     size_t tuplesWritten = 0;
     auto output = tupleBuffer.getAvailableMemoryArea();
     while (tuplesWritten < tupleCapacity && !stopToken.stop_requested())

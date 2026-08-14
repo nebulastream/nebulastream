@@ -2,10 +2,10 @@
 # description: ASOF releases obsolete large VARSIZED right-side state
 # groups: [Join, StreamTableJoin]
 
-# Keep enough unpooled memory for transient source and ASOF buffers, but not for all 32 right-side payloads.
-# 64 MiB * 0.015625 = 1 MiB; the generated payload history totals 2 MiB.
-GlobalConfiguration worker.total_memory_in_bytes: [67108864]
-GlobalConfiguration worker.unpooled_memory_fraction: [0.015625]
+# Each ASOF memory test generates 2 MiB of right-side payloads. Systest may execute both tests concurrently on the
+# same worker, so reserve 4 MiB for their bounded state, allocator chunking, and transient network buffers.
+GlobalConfiguration worker.total_memory_in_bytes: [134217728]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.03125]
 GlobalConfiguration worker.default_max_inflight_buffers: [2]
 
 CREATE LOGICAL SOURCE events(event_id UINT64 NOT NULL, event_ts UINT64 NOT NULL);

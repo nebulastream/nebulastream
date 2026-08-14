@@ -28,4 +28,4 @@ add_plugin(TypeInference PlanRule TypeInferenceRule.cpp)
 add_plugin(SinkBinding PlanRule SinkBindingRule.cpp)
 add_plugin(InferModelResolution PlanRule InferModelResolutionRule.cpp)
 add_plugin(CalcTargetOrder PlanRule CalcTargetOrderRule.cpp)
-
+add_plugin(ExtractMarkApply PlanRule ExtractMarkApplyRule.cpp)

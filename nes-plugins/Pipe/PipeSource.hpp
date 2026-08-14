@@ -57,7 +57,7 @@ public:
 
     /// PipeSource manages sequence numbers and chunk metadata itself — it copies them from the
     /// incoming pipe buffer to preserve the original chunking structure.
-    /// The SourceThread still sets the correct originId (always set regardless of addsMetadata).
+    /// The SourceThread still sets the compilation-assigned originId because PipeSource does not preserve buffer origins.
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
     [[nodiscard]] std::string_view getType() const override { return NAME; }

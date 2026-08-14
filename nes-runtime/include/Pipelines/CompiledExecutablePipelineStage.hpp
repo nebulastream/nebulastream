@@ -50,7 +50,9 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
+    using TerminateSignature = void(PipelineExecutionContext*, const Arena*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
+    static constexpr std::string_view TERMINATE_FUNCTION_NAME = "terminate";
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
@@ -59,6 +61,7 @@ private:
     /// Both are created lazily in start(); neither type is default-constructible.
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
+    std::optional<nautilus::engine::ModuleFunction<TerminateSignature>> terminateFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     /// The executable stage must not retain the compiler's Pipeline DAG. Running pipeline nodes are stopped and
     /// destroyed independently on query-engine workers; retaining the DAG here would make those workers concurrently

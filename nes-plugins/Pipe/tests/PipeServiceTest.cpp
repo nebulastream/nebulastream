@@ -19,6 +19,7 @@
 #include <stop_token>
 #include <thread>
 #include <DataTypes/DataType.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
@@ -28,6 +29,15 @@
 
 namespace NES
 {
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 256;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES
+    = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
 
 class PipeServiceTest : public ::testing::Test
 {
@@ -39,7 +49,12 @@ protected:
             UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}});
         schemaB = std::make_shared<const PipeSchema>(
             PipeSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::FLOAT64}});
-        bufferManager = BufferManager::create(1024, 256);
+        bufferManager = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            POOLED_BUFFER_SIZE,
+            std::make_shared<NesDefaultMemoryAllocator>());
     }
 
     void TearDown() override

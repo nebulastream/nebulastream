@@ -2,10 +2,10 @@
 # description: Stateful joins release obsolete large VARSIZED data
 # groups: [Join, StreamTableJoin, WindowOperators]
 
-# Each generated payload stream totals 8 MiB. The 8 MiB unpooled budget leaves room for bounded transient
-# state, but not for retaining the VARSIZED input history.
-GlobalConfiguration worker.total_memory_in_bytes: [67108864]
-GlobalConfiguration worker.unpooled_memory_fraction: [0.125]
+# Each generated payload stream totals 8 MiB. Systest may execute all three queries concurrently on the same worker,
+# so reserve 32 MiB for their bounded state, allocator chunking, and transient network buffers.
+GlobalConfiguration worker.total_memory_in_bytes: [134217728]
+GlobalConfiguration worker.unpooled_memory_fraction: [0.9]
 GlobalConfiguration worker.default_max_inflight_buffers: [2]
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [2]
 

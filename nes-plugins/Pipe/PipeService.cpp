@@ -50,6 +50,16 @@ void PipeService::SinkHandle::removeConsumer(const std::shared_ptr<PipeQueue>& q
             std::erase(queues.pending, queue);
             updateBackpressure(queues);
         });
+
+    /// Drain the consumer channel to not block a producer that might be stuck on a full queue, which is never going to drain.
+    PipeChannelMessage message;
+    while (queue->read(message))
+    {
+        if (std::holds_alternative<PipeEoS>(message) || std::holds_alternative<PipeError>(message))
+        {
+            break;
+        }
+    }
 }
 
 bool PipeService::SinkHandle::setConsumerQueueFull(bool full)
@@ -83,8 +93,8 @@ PipeService& PipeService::instance()
     return service;
 }
 
-std::shared_ptr<PipeService::SinkHandle>
-PipeService::registerSink(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, BackpressureController* bpController)
+std::shared_ptr<PipeService::SinkHandle> PipeService::registerSink(
+    const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, BackpressureController* bpController)
 {
     return pipes.withWLock(
         [&](auto& map) -> std::shared_ptr<SinkHandle>
@@ -115,8 +125,8 @@ void PipeService::unregisterSink(const std::string& pipeName)
         });
 }
 
-std::shared_ptr<PipeQueue> PipeService::registerSource(
-    const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, const size_t queueCapacity)
+std::shared_ptr<PipeQueue>
+PipeService::registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, const size_t queueCapacity)
 {
     return pipes.withWLock(
         [&](auto& map) -> std::shared_ptr<PipeQueue>

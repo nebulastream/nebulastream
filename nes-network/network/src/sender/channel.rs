@@ -283,9 +283,13 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
                 );
             }
-            Err(_) => {
+            Err(e) => {
                 // feed() failed — buffer stays in pending_writes for retry
-                warn!("Sending {:?} failed", sequence_number);
+                let size = buffer.data.len() + buffer.child_buffers.iter().map(|c| c.len()).sum::<usize>();
+                warn!(
+                    "Sending {:?} failed: {e}. BufferSize: {size}",
+                    sequence_number,
+                );
             }
         }
 

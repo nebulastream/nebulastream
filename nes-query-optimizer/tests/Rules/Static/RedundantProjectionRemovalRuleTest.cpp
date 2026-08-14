@@ -32,6 +32,15 @@ namespace
 {
 class RedundantProjectionRemovalRuleTest : public Testing::BaseUnitTest
 {
+public:
+    static void SetUpTestSuite()
+    {
+        Logger::setupLogging("RedundantProjectionRemovalRuleTest.log", LogLevel::LOG_DEBUG);
+        NES_INFO("Setup RedundantProjectionRemovalRuleTest class.");
+    }
+
+    static void TearDownTestSuite() { NES_INFO("Tear down RedundantProjectionRemovalRuleTest class."); }
+
 protected:
     OptimizerTestUtils utils;
 };

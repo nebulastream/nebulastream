@@ -58,6 +58,9 @@ public:
     void appendCompactedTableTimestamp(uint64_t timestamp);
     void finishTableCompaction();
     [[nodiscard]] uint64_t getTableTimestamp(uint64_t index) const;
+    void prepareTableTimestampOrder();
+    [[nodiscard]] uint64_t getDescendingTimestampStartPosition(uint64_t timestamp) const;
+    [[nodiscard]] uint64_t getTableIndexByDescendingTimestampPosition(uint64_t position) const;
     TupleBuffer* getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
     TupleBuffer* beginPendingCompaction(AbstractBufferProvider* bufferProvider, uint64_t tupleSize);
 
@@ -71,10 +74,7 @@ public:
     [[nodiscard]] Timestamp updateOutputWatermark(Timestamp watermark, SequenceData sequenceData, OriginId originId);
     [[nodiscard]] Timestamp getTableWatermark() const;
     [[nodiscard]] Timestamp getOutputWatermark() const;
-    [[nodiscard]] bool isTableComplete() const;
     [[nodiscard]] bool isTableOrigin(OriginId originId) const;
-    void observeInputSequence(OriginId originId, SequenceNumber sequenceNumber);
-    [[nodiscard]] SequenceNumber getNextInputSequence(OriginId originId) const;
     [[nodiscard]] SequenceNumber getNextOutputSequence();
 
 private:
@@ -82,6 +82,10 @@ private:
     std::optional<TupleBuffer> tableBuffer;
     std::optional<TupleBuffer> compactedTableBuffer;
     std::vector<uint64_t> tableTimestamps;
+    /// Row indices ordered by timestamp ascending. Equal timestamps are ordered by row index descending, so reverse traversal preserves
+    /// the original ASOF tie-break (the first row in state wins).
+    std::vector<uint64_t> tableTimestampOrder;
+    bool tableTimestampOrderDirty{false};
     std::vector<uint64_t> compactedTableTimestamps;
     std::optional<TupleBuffer> pendingBuffer;
     std::optional<TupleBuffer> compactedPendingBuffer;
@@ -90,11 +94,9 @@ private:
     std::vector<uint64_t> pendingTimestamps;
     std::vector<uint64_t> compactedPendingTimestamps;
     std::vector<OriginId> tableOrigins;
-    std::vector<std::pair<OriginId, SequenceNumber>> lastInputSequences;
     MultiOriginWatermarkProcessor tableWatermarks;
     MultiOriginWatermarkProcessor outputWatermarks;
     Timestamp currentTableWatermark{Timestamp::INITIAL_VALUE};
-    bool tableComplete{false};
     std::atomic_uint64_t nextOutputSequence{SequenceNumber::INITIAL};
 };
 }

@@ -27,6 +27,10 @@ namespace NES
 
 struct ConfigParametersAudio
 {
+    static inline const DescriptorConfig::ConfigParameter<bool> REAL_TIMESTAMP{
+        "REAL_TIMESTAMP",
+        true,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(REAL_TIMESTAMP, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> DEVICE{
         "DEVICE",
         "default",
@@ -71,6 +75,7 @@ private:
     uint64_t samplesCaptured = 0;
     snd_pcm_t* pcm = nullptr;
     std::vector<int16_t> samples;
+    bool resetTimestampOnFillTupleBuffer = false;
 };
 
 }

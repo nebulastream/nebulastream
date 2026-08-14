@@ -115,7 +115,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
     }();
 
     auto streamWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        StreamTableJoinInputPhysicalOperator{handlerId, streamOrigins},
+        StreamTableJoinInputPhysicalOperator{},
         streamSchema,
         streamSchema,
         memoryLayout,
@@ -125,7 +125,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     auto tableWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        StreamTableJoinInputPhysicalOperator{handlerId, tableOrigins},
+        StreamTableJoinInputPhysicalOperator{},
         tableSchema,
         tableSchema,
         memoryLayout,

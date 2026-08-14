@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <numeric>
 #include <utility>
 
 #include <Interface/PagedVector/PagedVector.hpp>
@@ -90,6 +91,7 @@ TupleBuffer* StreamTableJoinOperatorHandler::beginTableCompaction(AbstractBuffer
 void StreamTableJoinOperatorHandler::appendTableTimestamp(const uint64_t timestamp)
 {
     tableTimestamps.push_back(timestamp);
+    tableTimestampOrderDirty = true;
 }
 
 void StreamTableJoinOperatorHandler::appendCompactedTableTimestamp(const uint64_t timestamp)
@@ -104,11 +106,50 @@ void StreamTableJoinOperatorHandler::finishTableCompaction()
     compactedTableBuffer.reset();
     tableTimestamps.swap(compactedTableTimestamps);
     compactedTableTimestamps.clear();
+    tableTimestampOrderDirty = true;
+}
+
+void StreamTableJoinOperatorHandler::prepareTableTimestampOrder()
+{
+    if (!tableTimestampOrderDirty)
+    {
+        return;
+    }
+    tableTimestampOrder.resize(tableTimestamps.size());
+    std::iota(tableTimestampOrder.begin(), tableTimestampOrder.end(), uint64_t{0});
+    std::ranges::sort(
+        tableTimestampOrder,
+        [&](const uint64_t left, const uint64_t right)
+        {
+            if (tableTimestamps.at(left) != tableTimestamps.at(right))
+            {
+                return tableTimestamps.at(left) < tableTimestamps.at(right);
+            }
+            return left > right;
+        });
+    tableTimestampOrderDirty = false;
 }
 
 uint64_t StreamTableJoinOperatorHandler::getTableTimestamp(const uint64_t index) const
 {
     return tableTimestamps.at(index);
+}
+
+uint64_t StreamTableJoinOperatorHandler::getDescendingTimestampStartPosition(const uint64_t timestamp) const
+{
+    PRECONDITION(!tableTimestampOrderDirty, "Timestamp order must be prepared before probing");
+    const auto firstFutureTimestamp = std::upper_bound(
+        tableTimestampOrder.begin(),
+        tableTimestampOrder.end(),
+        timestamp,
+        [&](const uint64_t candidateTimestamp, const uint64_t rowIndex)
+        { return candidateTimestamp < tableTimestamps.at(rowIndex); });
+    return tableTimestampOrder.size() - static_cast<uint64_t>(std::distance(tableTimestampOrder.begin(), firstFutureTimestamp));
+}
+
+uint64_t StreamTableJoinOperatorHandler::getTableIndexByDescendingTimestampPosition(const uint64_t position) const
+{
+    return tableTimestampOrder.at(tableTimestampOrder.size() - 1 - position);
 }
 
 TupleBuffer* StreamTableJoinOperatorHandler::getOrCreatePendingBuffer(AbstractBufferProvider* bufferProvider, const uint64_t tupleSize)
@@ -162,8 +203,11 @@ uint64_t StreamTableJoinOperatorHandler::getNumberOfPendingRows() const
 Timestamp
 StreamTableJoinOperatorHandler::updateTableWatermark(const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
 {
+    if (watermark == Timestamp{Timestamp::INVALID_VALUE})
+    {
+        return currentTableWatermark;
+    }
     currentTableWatermark = tableWatermarks.updateWatermark(watermark, sequenceData, originId);
-    tableComplete = currentTableWatermark == Timestamp{Timestamp::INVALID_VALUE};
     return currentTableWatermark;
 }
 
@@ -180,40 +224,16 @@ Timestamp StreamTableJoinOperatorHandler::getOutputWatermark() const
 Timestamp
 StreamTableJoinOperatorHandler::updateOutputWatermark(const Timestamp watermark, const SequenceData sequenceData, const OriginId originId)
 {
+    if (watermark == Timestamp{Timestamp::INVALID_VALUE})
+    {
+        return outputWatermarks.getCurrentWatermark();
+    }
     return outputWatermarks.updateWatermark(watermark, sequenceData, originId);
-}
-
-bool StreamTableJoinOperatorHandler::isTableComplete() const
-{
-    return tableComplete;
 }
 
 bool StreamTableJoinOperatorHandler::isTableOrigin(const OriginId originId) const
 {
     return std::ranges::contains(tableOrigins, originId);
-}
-
-void StreamTableJoinOperatorHandler::observeInputSequence(const OriginId originId, const SequenceNumber sequenceNumber)
-{
-    const auto entry = std::ranges::find(lastInputSequences, originId, &std::pair<OriginId, SequenceNumber>::first);
-    if (entry == lastInputSequences.end())
-    {
-        lastInputSequences.emplace_back(originId, sequenceNumber);
-    }
-    else if (entry->second < sequenceNumber)
-    {
-        entry->second = sequenceNumber;
-    }
-}
-
-SequenceNumber StreamTableJoinOperatorHandler::getNextInputSequence(const OriginId originId) const
-{
-    const auto entry = std::ranges::find(lastInputSequences, originId, &std::pair<OriginId, SequenceNumber>::first);
-    if (entry == lastInputSequences.end())
-    {
-        return SequenceNumber{SequenceNumber::INITIAL};
-    }
-    return SequenceNumber{entry->second.getRawValue() + 1};
 }
 
 SequenceNumber StreamTableJoinOperatorHandler::getNextOutputSequence()

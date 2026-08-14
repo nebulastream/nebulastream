@@ -159,13 +159,13 @@ fi
 
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run docker_systest -e large tcp LongRunning "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run docker_systest -e large tcp LongRunning "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
 

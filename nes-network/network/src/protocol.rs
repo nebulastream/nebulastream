@@ -224,16 +224,22 @@ pub type IdentificationReceiverWriter<W> = Framed<
     Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 
+fn data_channel_codec() -> LengthDelimitedCodec{
+    let mut codec = LengthDelimitedCodec::new();
+    codec.set_max_frame_length(128 * 1024 * 1024);
+    codec
+}
+
 pub fn data_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
     stream: Channel<R, W>,
 ) -> (DataChannelSenderReader<R>, DataChannelSenderWriter<W>) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<DataChannelResponse, DataChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<DataChannelRequest, DataChannelRequest>::default(),
@@ -245,13 +251,13 @@ pub fn data_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + U
 pub fn data_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
     stream: Channel<R, W>,
 ) -> (DataChannelReceiverReader<R>, DataChannelReceiverWriter<W>) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<DataChannelRequest, DataChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<DataChannelResponse, DataChannelResponse>::default(),
@@ -263,13 +269,13 @@ pub fn data_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send +
 pub fn control_channel_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
     stream: Channel<R, W>,
 ) -> (ControlChannelSenderReader<R>, ControlChannelSenderWriter<W>) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
@@ -284,13 +290,13 @@ pub fn control_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Sen
     ControlChannelReceiverReader<R>,
     ControlChannelReceiverWriter<W>,
 ) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<ControlChannelRequest, ControlChannelRequest>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<ControlChannelResponse, ControlChannelResponse>::default(),
@@ -302,13 +308,13 @@ pub fn control_channel_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Sen
 pub fn identification_sender<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send + Unpin>(
     stream: Channel<R, W>,
 ) -> (IdentificationSenderReader<R>, IdentificationSenderWriter<W>) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<IdentificationResponse, IdentificationResponse>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<IdentificationRequest, IdentificationRequest>::default(),
@@ -323,13 +329,13 @@ pub fn identification_receiver<R: AsyncRead + Send + Unpin, W: AsyncWrite + Send
     IdentificationReceiverReader<R>,
     IdentificationReceiverWriter<W>,
 ) {
-    let read = FramedRead::new(stream.reader, LengthDelimitedCodec::new());
+    let read = FramedRead::new(stream.reader, data_channel_codec());
     let read = tokio_serde::Framed::new(
         read,
         Cbor::<IdentificationRequest, IdentificationRequest>::default(),
     );
 
-    let write = FramedWrite::new(stream.writer, LengthDelimitedCodec::new());
+    let write = FramedWrite::new(stream.writer, data_channel_codec());
     let write = tokio_serde::Framed::new(
         write,
         Cbor::<IdentificationResponse, IdentificationResponse>::default(),

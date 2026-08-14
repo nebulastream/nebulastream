@@ -5,6 +5,15 @@
 CREATE LOGICAL SOURCE readings(value FLOAT32, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR readings TYPE File;
 ATTACH INLINE
+1.5,100
+,150
+-2.0,200
+,250
+3.25,300
+
+CREATE LOGICAL SOURCE outOfOrderReadings(value FLOAT32, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR outOfOrderReadings TYPE File;
+ATTACH INLINE
 3.25,300
 1.5,100
 ,150
@@ -70,7 +79,7 @@ AADAPwAAAMAAAFBA
 
 # ARRAY_AGG_UNSORTED preserves insertion order and deliberately does not sort by timestamp.
 SELECT TO_BASE64(ARRAY_AGG_UNSORTED(value)) AS tensor
-FROM readings
+FROM outOfOrderReadings
 WINDOW TUMBLING(ts, SIZE 1000 MS)
 INTO unsortedTensorSink;
 ----

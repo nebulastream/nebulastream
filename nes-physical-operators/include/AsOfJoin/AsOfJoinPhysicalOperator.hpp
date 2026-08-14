@@ -32,8 +32,6 @@ namespace NES
 class AsOfJoinInputPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    AsOfJoinInputPhysicalOperator(OperatorHandlerId operatorHandlerId, std::vector<OriginId> inputOriginIds);
-
     void execute(ExecutionContext& executionCtx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
@@ -42,8 +40,6 @@ public:
     void setChild(PhysicalOperator child) override;
 
 private:
-    OperatorHandlerId operatorHandlerId;
-    std::vector<OriginId> inputOriginIds;
     std::optional<PhysicalOperator> child;
 };
 
@@ -69,6 +65,7 @@ public:
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;

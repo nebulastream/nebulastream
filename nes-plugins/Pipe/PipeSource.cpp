@@ -26,7 +26,6 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -99,7 +98,7 @@ Source::FillTupleBufferResult PipeSource::fillTupleBuffer(TupleBuffer& tupleBuff
 
                         for (size_t childIdx = 0; childIdx < srcBuffer.getNumberOfChildBuffers(); ++childIdx)
                         {
-                            const VariableSizedAccess::Index childIndex{childIdx};
+                            const ChildBufferIndex childIndex{static_cast<ChildBufferIndex::Underlying>(childIdx)};
                             auto childBuffer = srcBuffer.loadChildBuffer(childIndex);
                             const auto storedIndex = tupleBuffer.storeChildBuffer(childBuffer);
                             INVARIANT(storedIndex == childIndex, "Child buffer index: {}, does not match index: {}", childIdx, storedIndex);

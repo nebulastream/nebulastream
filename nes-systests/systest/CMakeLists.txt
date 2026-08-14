@@ -72,15 +72,18 @@ endif ()
 # so the .test files in nes-systests/inference/ are skipped at runtime.
 set(SYSTEST_EXCLUDE_GROUPS large)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
+set(SYSTEST_EXCLUDE_GROUPS_INTERPRETER large LongRunning)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER Inference)
 endif ()
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an
 # hour per query, in the compiler just as much as in the interpreter. So exclude them from both NLJ invocations.
 # They still run for every other join strategy.
 set(SYSTEST_EXCLUDE_GROUPS_NLJ ${SYSTEST_EXCLUDE_GROUPS} NestedLoopIntensive)
 set(SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER ${SYSTEST_EXCLUDE_GROUPS_COMPILER} NestedLoopIntensive)
+set(SYSTEST_EXCLUDE_GROUPS_NLJ_INTERPRETER ${SYSTEST_EXCLUDE_GROUPS_INTERPRETER} NestedLoopIntensive)
 
 # Memory budget for every systest invocation that runs the join tests. The outer-join tests hold far more unpooled state
 # than the rest of the suite: they keep one ChainedHashMap per build side per worker thread alive for every open slice,
@@ -188,10 +191,10 @@ if (NOT CODE_COVERAGE)
         foreach (workerThreads IN ITEMS 1 2 4)
             foreach (joinStrategy IN ITEMS NESTED_LOOP_JOIN HASH_JOIN)
                 if (joinStrategy STREQUAL NESTED_LOOP_JOIN)
-                    set(interpreterExcludeGroups ${SYSTEST_EXCLUDE_GROUPS_NLJ})
+                    set(interpreterExcludeGroups ${SYSTEST_EXCLUDE_GROUPS_NLJ_INTERPRETER})
                     set(compilerExcludeGroups ${SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER})
                 else ()
-                    set(interpreterExcludeGroups ${SYSTEST_EXCLUDE_GROUPS})
+                    set(interpreterExcludeGroups ${SYSTEST_EXCLUDE_GROUPS_INTERPRETER})
                     set(compilerExcludeGroups ${SYSTEST_EXCLUDE_GROUPS_COMPILER})
                 endif ()
                 ExternalData_Add_Test(test-data
@@ -211,10 +214,11 @@ if (NOT CODE_COVERAGE)
             endforeach ()
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter
-                    COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                    COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_INTERPRETER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
             set_tests_properties(systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
+
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_compiler
                     COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}

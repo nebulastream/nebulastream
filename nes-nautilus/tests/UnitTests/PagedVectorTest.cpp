@@ -732,8 +732,7 @@ struct SortKey
 std::function<bool(const TestUtils::AnyVec&, const TestUtils::AnyVec&)>
 makeAnyVecComparator(std::vector<DataType> fieldTypes, std::vector<SortKey> sortKeys)
 {
-    return [fieldTypes = std::move(fieldTypes), sortKeys = std::move(sortKeys)](
-               const TestUtils::AnyVec& lhs, const TestUtils::AnyVec& rhs)
+    return [fieldTypes = std::move(fieldTypes), sortKeys = std::move(sortKeys)](const TestUtils::AnyVec& lhs, const TestUtils::AnyVec& rhs)
     {
         for (const auto& [fieldIndex, ascending] : sortKeys)
         {
@@ -761,35 +760,29 @@ compareNonNullRecordValues(const VarVal& lhs, const VarVal& rhs, const DataType:
     }
     else if (type == DataType::Type::FLOAT32)
     {
-        const auto lhsIsNan
-            = nautilus::invoke(+[](float value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<float>>());
-        const auto rhsIsNan
-            = nautilus::invoke(+[](float value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<float>>());
+        const auto lhsIsNan = nautilus::invoke(+[](float value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<float>>());
+        const auto rhsIsNan = nautilus::invoke(+[](float value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<float>>());
         less = nautilus::select(lhsIsNan, nautilus::val<bool>{false}, nautilus::select(rhsIsNan, nautilus::val<bool>{true}, less));
         equal = (lhsIsNan and rhsIsNan) or (not lhsIsNan and not rhsIsNan and equal);
     }
     else if (type == DataType::Type::FLOAT64)
     {
-        const auto lhsIsNan
-            = nautilus::invoke(+[](double value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<double>>());
-        const auto rhsIsNan
-            = nautilus::invoke(+[](double value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<double>>());
+        const auto lhsIsNan = nautilus::invoke(+[](double value) { return std::isnan(value); }, lhs.getRawValueAs<nautilus::val<double>>());
+        const auto rhsIsNan = nautilus::invoke(+[](double value) { return std::isnan(value); }, rhs.getRawValueAs<nautilus::val<double>>());
         less = nautilus::select(lhsIsNan, nautilus::val<bool>{false}, nautilus::select(rhsIsNan, nautilus::val<bool>{true}, less));
         equal = (lhsIsNan and rhsIsNan) or (not lhsIsNan and not rhsIsNan and equal);
     }
     return {less, equal};
 }
 
-std::pair<nautilus::val<bool>, nautilus::val<bool>>
-compareRecordValues(const VarVal& lhs, const VarVal& rhs, const DataType::Type type)
+std::pair<nautilus::val<bool>, nautilus::val<bool>> compareRecordValues(const VarVal& lhs, const VarVal& rhs, const DataType::Type type)
 {
     const auto lhsIsNull = lhs.isNull();
     const auto rhsIsNull = rhs.isNull();
     const auto bothNonNull = not lhsIsNull and not rhsIsNull;
     const auto [valueLess, valueEqual] = compareNonNullRecordValues(lhs, rhs, type);
     return {
-        nautilus::select(bothNonNull, valueLess, lhsIsNull and not rhsIsNull),
-        (lhsIsNull and rhsIsNull) or (bothNonNull and valueEqual)};
+        nautilus::select(bothNonNull, valueLess, lhsIsNull and not rhsIsNull), (lhsIsNull and rhsIsNull) or (bothNonNull and valueEqual)};
 }
 
 void sortWithRecordComparator(
@@ -836,11 +829,8 @@ void sortWithRecordComparator(
 
     module.registerFunction(
         "sortPagedVectorRecords",
-        std::function(
-            [layout, comparator](nautilus::val<TupleBuffer*> buffer, nautilus::val<Arena*> arenaPtr)
-            {
-                PagedVectorRef{BorrowedNautilusBuffer::from(buffer), layout}.sort(comparator, ArenaRef{arenaPtr});
-            }));
+        std::function([layout, comparator](nautilus::val<TupleBuffer*> buffer, nautilus::val<Arena*> arenaPtr)
+                      { PagedVectorRef{BorrowedNautilusBuffer::from(buffer), layout}.sort(comparator, ArenaRef{arenaPtr}); }));
     auto compiledModule = module.compile();
     compilationContext.resolveAfterCompilation(compiledModule);
     compiledModule.getFunction<void(TupleBuffer*, Arena*)>("sortPagedVectorRecords")(pagedVector.rawBuffer(), &arena);
@@ -887,7 +877,10 @@ void oversizedVarSizedValueRoundTrip(TestUtils::EngineMode mode)
 {
     constexpr size_t POOLED_BUFFER_SIZE = 4096;
     constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
-    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, TestUtils::MIN_POOLED_BUFFER_COUNT);
+    /// The chunked unpooled-buffer manager reserves several rolling-average-sized allocations at once.
+    /// Leave enough budget for that chunk when the first large payload is requested.
+    constexpr size_t POOLED_BUFFER_COUNT = 512;
+    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, POOLED_BUFFER_COUNT);
     TestUtils::TestablePagedVector pagedVector(
         {DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}, *bufferManager, mode);
 
@@ -896,13 +889,16 @@ void oversizedVarSizedValueRoundTrip(TestUtils::EngineMode mode)
 
     ASSERT_EQ(std::any_cast<const std::string&>(pagedVector.readAt(0).at(0)), payload);
 }
+
 void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
 {
     constexpr size_t POOLED_BUFFER_SIZE = 4096;
     constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
-    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, TestUtils::MIN_POOLED_BUFFER_COUNT);
-    const auto schema
-        = TestUtils::createSchemaFromDataTypes({DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}});
+    /// The chunked unpooled-buffer manager reserves several rolling-average-sized allocations at once.
+    /// Leave enough budget for that chunk when the first large payload is requested.
+    constexpr size_t POOLED_BUFFER_COUNT = 512;
+    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, POOLED_BUFFER_COUNT);
+    const auto schema = TestUtils::createSchemaFromDataTypes({DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}});
     auto layout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
     const auto fieldName = schema[0]->getFullyQualifiedName();
 

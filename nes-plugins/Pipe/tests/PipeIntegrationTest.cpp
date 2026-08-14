@@ -29,9 +29,10 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/VariableSizedAccess.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <cpptrace/from_current.hpp>
@@ -43,6 +44,16 @@
 #include <PipelineExecutionContext.hpp>
 
 using namespace NES;
+
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 4096;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES
+    = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
 
 /// Minimal stub that captures tasks repeated by PipeSink.
 class StubPipelineExecutionContext final : public PipelineExecutionContext
@@ -97,14 +108,19 @@ protected:
         schema = PipeSchema{
             UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
             UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}};
-        bufferManager = BufferManager::create(1024, 4096);
+        bufferManager = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            POOLED_BUFFER_SIZE,
+            std::make_shared<NesDefaultMemoryAllocator>());
     }
 
     void TearDown() override { PipeService::instance().unregisterSink("test_pipe"); }
 
     std::unique_ptr<PipeSink> makePipeSink(BackpressureController bpController, const std::string& pipeName = "test_pipe")
     {
-        auto desc = sinkCatalog.getInlineSink(
+        auto desc = sinkCatalog.getAnonymousSink(
             schema, Identifier::parse("Pipe"), Host{"localhost"}, {{Identifier::parse("pipe_name"), pipeName}}, {});
         EXPECT_TRUE(desc.has_value());
         return std::make_unique<PipeSink>(std::move(bpController), desc.value());
@@ -112,7 +128,7 @@ protected:
 
     std::unique_ptr<PipeSource> makePipeSource(const std::string& pipeName = "test_pipe")
     {
-        auto desc = sourceCatalog.getInlineSource(
+        auto desc = sourceCatalog.getAnonymousSource(
             Identifier::parse("Pipe"),
             schema,
             Host{"localhost"},

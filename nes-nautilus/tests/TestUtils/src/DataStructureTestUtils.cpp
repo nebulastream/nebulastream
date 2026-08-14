@@ -144,6 +144,12 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                     case DataType::Type::FLOAT64:
                         result.push_back(genScalarAny<double>(dataType.nullable));
                         break;
+                    case DataType::Type::BOOLEAN:
+                        result.push_back(genScalarAny<bool>(dataType.nullable));
+                        break;
+                    case DataType::Type::CHAR:
+                        result.push_back(genScalarAny<char>(dataType.nullable));
+                        break;
                     case DataType::Type::VARSIZED: {
                         if (dataType.nullable)
                         {
@@ -169,8 +175,6 @@ rc::Gen<AnyVec> genAnyVec(std::vector<DataType> types)
                         result.emplace_back(std::move(str));
                         break;
                     }
-                    case DataType::Type::BOOLEAN:
-                    case DataType::Type::CHAR:
                     case DataType::Type::UNDEFINED:
                         throw TestException("Unsupported type for genAnyVec");
                 }
@@ -203,6 +207,10 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
             return compareTyped<float>(lhs, rhs, type.nullable);
         case DataType::Type::FLOAT64:
             return compareTyped<double>(lhs, rhs, type.nullable);
+        case DataType::Type::BOOLEAN:
+            return compareTyped<bool>(lhs, rhs, type.nullable);
+        case DataType::Type::CHAR:
+            return compareTyped<char>(lhs, rhs, type.nullable);
         case DataType::Type::VARSIZED:
             if (type.nullable)
             {
@@ -219,8 +227,6 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType type)
                 return 0;
             }
             return std::any_cast<const std::string&>(lhs).compare(std::any_cast<const std::string&>(rhs));
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for compareAnyField");
     }
@@ -262,10 +268,12 @@ size_t hashAnyField(const std::any& value, DataType type)
             return hashTyped<float>(value, type.nullable);
         case DataType::Type::FLOAT64:
             return hashTyped<double>(value, type.nullable);
+        case DataType::Type::BOOLEAN:
+            return hashTyped<bool>(value, type.nullable);
+        case DataType::Type::CHAR:
+            return hashTyped<char>(value, type.nullable);
         case DataType::Type::VARSIZED:
             return hashTyped<std::string>(value, type.nullable);
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for hashAnyField");
     }
@@ -330,6 +338,12 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
         case DataType::Type::FLOAT64:
             storeScalarToAnyVec<double>(out, pos, value.getRawValueAs<nautilus::val<double>>(), dataType.nullable, value.isNull());
             break;
+        case DataType::Type::BOOLEAN:
+            storeScalarToAnyVec<bool>(out, pos, value.getRawValueAs<nautilus::val<bool>>(), dataType.nullable, value.isNull());
+            break;
+        case DataType::Type::CHAR:
+            storeScalarToAnyVec<char>(out, pos, value.getRawValueAs<nautilus::val<char>>(), dataType.nullable, value.isNull());
+            break;
         case DataType::Type::VARSIZED: {
             const auto vsd = value.getRawValueAs<VariableSizedData>();
             if (dataType.nullable)
@@ -368,8 +382,6 @@ void storeVarValToAnyVec(const nautilus::val<AnyVec*>& out, uint64_t pos, const 
                 vsd.getSize());
             break;
         }
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw TestException("Unsupported type for TestablePagedVector");
     }
@@ -403,6 +415,10 @@ nautilus::val<bool> checkIfNullInAnyVec(const nautilus::val<AnyVec*>& rec, uint6
                     return !std::any_cast<std::optional<float>>(entry).has_value();
                 case DataType::Type::FLOAT64:
                     return !std::any_cast<std::optional<double>>(entry).has_value();
+                case DataType::Type::BOOLEAN:
+                    return !std::any_cast<std::optional<bool>>(entry).has_value();
+                case DataType::Type::CHAR:
+                    return !std::any_cast<std::optional<char>>(entry).has_value();
                 case DataType::Type::VARSIZED:
                     return !std::any_cast<std::optional<std::string>>(entry).has_value();
                 default:
@@ -451,6 +467,10 @@ VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataTyp
             return {fetchScalarFromAnyVec<float>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::FLOAT64:
             return {fetchScalarFromAnyVec<double>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
+        case DataType::Type::BOOLEAN:
+            return {fetchScalarFromAnyVec<bool>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
+        case DataType::Type::CHAR:
+            return {fetchScalarFromAnyVec<char>(rec, fieldIdx, dataType.nullable), dataType.nullable, isNull};
         case DataType::Type::VARSIZED: {
             auto ptr = nautilus::invoke(
                 +[](AnyVec* anyVec, uint64_t pos, bool nullable) -> int8_t*
@@ -490,8 +510,6 @@ VarVal buildVarVal(const nautilus::val<AnyVec*>& rec, uint64_t fieldIdx, DataTyp
                 nautilus::val<bool>{dataType.nullable});
             return {VariableSizedData(ptr, len), dataType.nullable, isNull};
         }
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             break;
     }

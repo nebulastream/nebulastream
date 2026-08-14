@@ -32,6 +32,7 @@
 #include <Util/Ranges.hpp>
 #include <netinet/in.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/utils/logger.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
@@ -41,7 +42,11 @@
 
 struct OpenCVConfig
 {
-    OpenCVConfig() { cv::setNumThreads(0); }
+    OpenCVConfig()
+    {
+        cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
+        cv::setNumThreads(0);
+    }
 };
 
 static OpenCVConfig opencvConfig;

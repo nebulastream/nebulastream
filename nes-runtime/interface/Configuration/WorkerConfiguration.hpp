@@ -64,7 +64,7 @@ public:
 
     EnumOption<UnpooledBufferManagerType> unpooledBufferManagerType
         = {"unpooled_buffer_manager_type",
-           UnpooledBufferManagerType::MALLOC,
+           UnpooledBufferManagerType::CHUNKED,
            fmt::format("Allocation strategy for unpooled buffers: {}", enumPipeList<UnpooledBufferManagerType>())};
 
     /// Byte alignment of every pooled and unpooled buffer. Must be a power of two and at most the page size;

@@ -96,14 +96,30 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     };
     /// NOLINTEND(performance-unnecessary-value-param)
     module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+
+
+    /// Capture the stage by pointer: this compiled function is only ever invoked through execute()/start()/stop() on
+    /// the owning stage, so the stage (and thus its root operator) outlives every call. Capturing the root operator by
+    /// value instead makes the compiled module co-own its state, and cached slices can keep that module alive past
+    /// teardown, which leaks buffers in the sliceCache systests.
+    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const Arena*>)> terminateFunction
+        = [this](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Arena*> arenaRef)
+    {
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        rootOperator.terminate(ctx);
+    };
+    /// NOLINTEND(performance-unnecessary-value-param)
+    module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+    module.registerFunction(std::string{TERMINATE_FUNCTION_NAME}, terminateFunction);
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    rootOperator.terminate(ctx);
+    (*terminateFunction)(std::addressof(pipelineExecutionContext), std::addressof(arena));
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -128,6 +144,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         compiledModule = module.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        terminateFunction = compiledModule->getFunction<TerminateSignature>(std::string{TERMINATE_FUNCTION_NAME});
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
