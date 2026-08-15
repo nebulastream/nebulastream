@@ -278,7 +278,7 @@ public:
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setOriginId(INITIAL<OriginId>);
 
-        auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+        auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), inputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
         Testing::TestTupleBuffer ttb(ttb_bufRef);
         auto view = ttb.open(tupleBuffer, bufMgr.get());
         for (const auto& floats : recordFloats)
@@ -332,7 +332,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
@@ -388,7 +388,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
@@ -444,7 +444,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
@@ -508,7 +508,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
@@ -565,7 +565,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             totalRecords += view.getNumberOfTuples();
@@ -659,7 +659,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     auto outputBuffers = *emittedBuffers.rlock();
     for (auto& outBuf : outputBuffers)
     {
-        auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+        auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
         auto view = ttb.open(outBuf);
         for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
@@ -730,7 +730,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
         auto lockedBuffers = *emittedBuffers.rlock();
         for (auto& outBuf : lockedBuffers)
         {
-            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
+            auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufMgr->getBufferSize(), outputSchema, NES::MemoryLayoutType::ROW_LAYOUT);
             Testing::TestTupleBuffer ttb(ttb_bufRef);
             auto view = ttb.open(outBuf);
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
