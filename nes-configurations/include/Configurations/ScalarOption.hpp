@@ -20,6 +20,7 @@
 #include <Util/URI.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <Configurations/Validation/ByteAmountValidation.hpp>
 
 namespace NES
 {
@@ -83,6 +84,10 @@ private:
         {
             /// Simple boolean conversion (true for "true", false otherwise)
             return strValue == "true";
+        }
+        else if constexpr (std::is_same_v<Type, NES::Byte>)
+        {
+            return NES::parseByteAmount(strValue);
         }
         else if constexpr (NESIdentifier<Type>)
         {
@@ -184,6 +189,7 @@ using StringOption = ScalarOption<std::string>;
 using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
+using ByteOption = ScalarOption<Byte>;
 
 }
 

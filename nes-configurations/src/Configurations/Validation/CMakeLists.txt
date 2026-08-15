@@ -18,4 +18,5 @@ add_source_files(nes-configurations
         FloatValidation.cpp
         BooleanValidation.cpp
         PowerOfTwoValidation.cpp
+        ByteAmountValidation.cpp
 )

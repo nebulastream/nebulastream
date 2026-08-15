@@ -23,6 +23,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/Validation/ByteAmountValidation.hpp>
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
 #include <Util/DumpMode.hpp>
 #include <fmt/format.h>
@@ -46,11 +47,11 @@ public:
 
     /// Total memory budget in bytes shared by the global buffer pool. The buffer manager splits it into an unpooled
     /// share (see unpooled_memory_fraction) and a pooled share; the pooled share is divided into operator buffers.
-    UIntOption totalMemoryInBytes
+    ByteOption totalMemoryInBytes
         = {"total_memory_in_bytes",
-           "268435456",
+           "256MiB",
            "Total memory budget in bytes for the global buffer pool (pooled + unpooled).",
-           {std::make_shared<NumberValidation>()}};
+           {std::make_shared<ByteAmountValidation>()}};
 
     /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by operator state
     /// (hash maps, paged vectors, var-sized data). On breach, the requesting query fails with CannotAllocateBuffer
@@ -63,7 +64,7 @@ public:
 
     /// Byte alignment of every pooled and unpooled buffer. Must be a power of two and at most the page size;
     /// the default is a cache line (64 B).
-    UIntOption bufferAlignmentInBytes
+    ByteOption bufferAlignmentInBytes
         = {"buffer_alignment_in_bytes",
            "64",
            "Byte alignment of every buffer (power of two, <= page size).",

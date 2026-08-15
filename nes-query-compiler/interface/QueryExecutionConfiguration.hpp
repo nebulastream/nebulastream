@@ -24,6 +24,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/Validation/ByteAmountValidation.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <BloomFilterConfiguration.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -53,11 +54,11 @@ public:
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
            {std::make_shared<NumberValidation>()}};
-    UIntOption pageSize
+    ByteOption pageSize
         = {"page_size",
-           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
+           "1KiB",
            "Page size of any other paged data structure",
-           {std::make_shared<NumberValidation>()}};
+           {std::make_shared<ByteAmountValidation>()}};
     UIntOption numberOfRecordsPerKey
         = {"number_of_records_per_key",
            std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
@@ -68,11 +69,11 @@ public:
         std::to_string(DEFAULT_MAX_NUMBER_OF_BUCKETS),
         "Maximal number of buckets for a hash table. If set too low or high degrades either the performance or increases the memory usage.",
         {std::make_shared<FloatValidation>()}};
-    UIntOption operatorBufferSize
+    ByteOption operatorBufferSize
         = {"operator_buffer_size",
-           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
+           "4KiB",
            "Buffer size of a operator e.g. during scan",
-           {std::make_shared<NumberValidation>()}};
+           {std::make_shared<ByteAmountValidation>()}};
 
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 

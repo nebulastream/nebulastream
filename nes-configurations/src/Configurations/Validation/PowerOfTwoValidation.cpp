@@ -13,9 +13,9 @@
 */
 
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
+#include <Configurations/Validation/ByteAmountValidation.hpp>
 
 #include <cstdint>
-#include <regex>
 #include <string>
 
 namespace NES
@@ -23,15 +23,11 @@ namespace NES
 
 bool PowerOfTwoValidation::isValid(const std::string& parameter) const
 {
-    /// Reject anything that is not a plain integer, and cap the digit count so std::stoul cannot overflow.
-    const std::regex numberRegex("^\\d+$");
-    if (constexpr auto capDigitCount = 10; !std::regex_match(parameter, numberRegex) || parameter.length() > capDigitCount)
-    {
+    try {
+        uint64_t value = parseByteAmount(parameter).value;
+        return value > 0 && (value & (value - 1)) == 0;
+    } catch (...) {
         return false;
     }
-
-    /// A positive power of two has exactly one set bit, so n & (n - 1) clears it to zero.
-    const uint64_t value = std::stoul(parameter);
-    return value > 0 && (value & (value - 1)) == 0;
 }
 }
