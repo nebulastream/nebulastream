@@ -1,3 +1,4 @@
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,7 +74,8 @@ public:
 TEST_F(TestTupleBufferTest, AppendAndReadSingleField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -89,7 +91,8 @@ TEST_F(TestTupleBufferTest, AppendAndReadMultipleFields)
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("b"), DataType::Type::UINT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -104,7 +107,8 @@ TEST_F(TestTupleBufferTest, AppendAndReadMultipleFields)
 TEST_F(TestTupleBufferTest, AppendMultipleRecords)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -122,7 +126,8 @@ TEST_F(TestTupleBufferTest, AppendMultipleRecords)
 TEST_F(TestTupleBufferTest, IndexedWriteAndRead)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("val"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -139,7 +144,8 @@ TEST_F(TestTupleBufferTest, IndexedWriteAndRead)
 TEST_F(TestTupleBufferTest, OutOfBoundsThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("f"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -154,7 +160,8 @@ TEST_F(TestTupleBufferTest, OutOfBoundsThrows)
 TEST_F(TestTupleBufferTest, UnknownFieldThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("exists"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -167,7 +174,8 @@ TEST_F(TestTupleBufferTest, UnknownFieldThrows)
 TEST_F(TestTupleBufferTest, TypeMismatchThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("i64"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -181,7 +189,8 @@ TEST_F(TestTupleBufferTest, TypeMismatchThrows)
 TEST_F(TestTupleBufferTest, DanglingFieldViewThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("f"), DataType::Type::INT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     Testing::FieldView captured;
     {
@@ -198,7 +207,8 @@ TEST_F(TestTupleBufferTest, DanglingFieldViewThrows)
 TEST_F(TestTupleBufferTest, StringField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("name"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -214,7 +224,8 @@ TEST_F(TestTupleBufferTest, MixedFixedAndVarSizedFields)
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("label"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -232,7 +243,8 @@ TEST_F(TestTupleBufferTest, MixedFixedAndVarSizedFields)
 TEST_F(TestTupleBufferTest, BooleanField)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("flag"), DataType::Type::BOOLEAN}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -250,7 +262,8 @@ TEST_F(TestTupleBufferTest, FloatingPointFields)
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("f32"), DataType::Type::FLOAT32},
         UnqualifiedUnboundField{Identifier::parse("f64"), DataType::Type::FLOAT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -268,7 +281,8 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastFromInt)
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("a"), DataType::Type::INT64},
         UnqualifiedUnboundField{Identifier::parse("b"), DataType::Type::UINT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -288,7 +302,8 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastMultipleRecords)
         UnqualifiedUnboundField{Identifier::parse("i8"), DataType::Type::INT8},
         UnqualifiedUnboundField{Identifier::parse("u64"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("f32"), DataType::Type::FLOAT32}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -312,7 +327,8 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastStringLiteral)
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::INT32},
         UnqualifiedUnboundField{Identifier::parse("name"), DataType::Type::VARSIZED}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -329,7 +345,8 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastStringLiteral)
 TEST_F(TestTupleBufferTest, AppendImplicitCastStringToNumericThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer);
@@ -343,7 +360,8 @@ TEST_F(TestTupleBufferTest, NullableFieldRoundTrip)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("v"), DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -369,7 +387,8 @@ TEST_F(TestTupleBufferTest, NullableFieldReadWithoutOptionalThrows)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("v"), DataType{DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -382,7 +401,8 @@ TEST_F(TestTupleBufferTest, NullableFieldReadWithoutOptionalThrows)
 TEST_F(TestTupleBufferTest, NonNullableFieldReadWithOptionalThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -395,7 +415,8 @@ TEST_F(TestTupleBufferTest, NonNullableFieldReadWithOptionalThrows)
 TEST_F(TestTupleBufferTest, NullWriteToNonNullableFieldThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -409,7 +430,8 @@ TEST_F(TestTupleBufferTest, NullWriteToNonNullableFieldThrows)
 TEST_F(TestTupleBufferTest, GetWithWrongTypeThrows)
 {
     auto schema = Testing::TestSchema{UnqualifiedUnboundField{Identifier::parse("v"), DataType::Type::INT64}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
@@ -423,7 +445,8 @@ TEST_F(TestTupleBufferTest, NullableVarsizedRoundTrip)
 {
     auto schema = Testing::TestSchema{
         UnqualifiedUnboundField{Identifier::parse("s"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE}}};
-    Testing::TestTupleBuffer ttb(schema);
+    auto ttb_bufRef = NES::LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), schema, NES::MemoryLayoutType::ROW_LAYOUT);
+    Testing::TestTupleBuffer ttb(ttb_bufRef);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto view = ttb.open(buffer, bufferManager.get());
