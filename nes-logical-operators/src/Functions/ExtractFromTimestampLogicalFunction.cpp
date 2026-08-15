@@ -139,7 +139,7 @@ LogicalFunctionGeneratedRegistrar::RegisterDay_OfLogicalFunction(LogicalFunction
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize(
+        throw InvalidLogicalFunctionArgument(
             "ExtractFromTimestampLogicalFunction (Day_Of) requires exactly one child, but got {}", arguments.children.size());
     }
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Day, arguments.children[0]};
@@ -150,7 +150,7 @@ LogicalFunctionGeneratedRegistrar::RegisterMonth_OfLogicalFunction(LogicalFuncti
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize(
+        throw InvalidLogicalFunctionArgument(
             "ExtractFromTimestampLogicalFunction (Month_Of) requires exactly one child, but got {}", arguments.children.size());
     }
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Month, arguments.children[0]};
@@ -161,7 +161,7 @@ LogicalFunctionGeneratedRegistrar::RegisterYear_OfLogicalFunction(LogicalFunctio
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize(
+        throw InvalidLogicalFunctionArgument(
             "ExtractFromTimestampLogicalFunction (Year_Of) requires exactly one child, but got {}", arguments.children.size());
     }
     return ExtractFromTimestampLogicalFunction{TimestampUnit::Year, arguments.children[0]};

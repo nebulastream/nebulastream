@@ -111,7 +111,7 @@ LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunc
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return LessEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }

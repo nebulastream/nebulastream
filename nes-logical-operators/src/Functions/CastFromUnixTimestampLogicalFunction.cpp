@@ -117,7 +117,7 @@ LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(Logical
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return CastFromUnixTimestampLogicalFunction{arguments.children[0]};
 }
