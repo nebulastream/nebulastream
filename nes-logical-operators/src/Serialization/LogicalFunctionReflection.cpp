@@ -33,7 +33,7 @@ TypedLogicalFunction<> Unreflector<TypedLogicalFunction<>>::operator()(const Ref
     auto logicalFunction = LogicalFunctionUnreflectionRegistry::instance().unreflect(name, data, context);
     if (!logicalFunction.has_value())
     {
-        throw CannotDeserialize("Failed to unreflect logical function of type {}", name);
+        throw InvalidLogicalFunctionArgument("Failed to unreflect logical function of type {}", name);
     }
     return logicalFunction.value();
 }

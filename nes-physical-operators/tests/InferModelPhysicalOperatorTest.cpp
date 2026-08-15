@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -49,8 +51,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -202,7 +202,7 @@ public:
         return names;
     }
 
-    using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
+    using TestSchema = std::vector<PhysicalField>;
 
     static UnqualifiedUnboundField makeField(std::string_view name, DataType::Type type)
     {
@@ -248,8 +248,8 @@ public:
         bool varsizedInput,
         bool varsizedOutput)
     {
-        auto inputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, MemoryLayoutType::ROW_LAYOUT);
-        auto outputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, outputSchema, MemoryLayoutType::ROW_LAYOUT);
+        auto inputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, NES::PhysicalFieldHelper::createPhysicalFields(inputSchema), MemoryLayoutType::ROW_LAYOUT);
+        auto outputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, NES::PhysicalFieldHelper::createPhysicalFields(outputSchema), MemoryLayoutType::ROW_LAYOUT);
 
         ScanPhysicalOperator scan(inputBufRef, toIdLists(inputSchema));
         InferModelPhysicalOperator inferModel(

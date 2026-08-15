@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,8 +54,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -77,7 +77,7 @@ namespace NES
 namespace
 {
 std::vector<QualifiedIdentifier>
-getJoinFieldNames(const Schema<QualifiedUnboundField, Ordered>& inputSchema, const LogicalFunction& joinFunction)
+getJoinFieldNames(const std::vector<PhysicalField>& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })
@@ -197,24 +197,16 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     const NLJBuildPhysicalOperator rightBuildOperator{
         handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightTupleLayout, std::move(sliceStoreRefRight)};
 
-    auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
+    auto joinSchema = JoinSchema(NES::PhysicalFieldHelper::createPhysicalFields(leftInputSchema), NES::PhysicalFieldHelper::createPhysicalFields( rightInputSchema), NES::PhysicalFieldHelper::createPhysicalFields( outputSchema));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator),
-        leftInputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        std::move(leftBuildOperator), memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator),
-        rightInputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        std::move(rightBuildOperator), memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -226,11 +218,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto createProbeWrapper = [&](const auto& probeOperator)
     {
         return std::make_shared<PhysicalOperatorWrapper>(
-            std::move(probeOperator),
-            outputSchema,
-            outputSchema,
-            memoryLayoutType,
-            memoryLayoutType,
+            std::move(probeOperator), memoryLayoutType, memoryLayoutType,
             handlerId,
             handler,
             PhysicalOperatorWrapper::PipelineLocation::SCAN,

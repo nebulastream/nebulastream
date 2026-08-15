@@ -63,10 +63,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
     const auto outputSchema = createSchemaFromTraits(outputFieldMapping->getUnderlying(), outputFieldOrdering->getOrderedFields());
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        Schema<QualifiedUnboundField, Ordered>{},
-        outputSchema,
-        memoryLayoutType,
+        physicalOperator, outputSchema, memoryLayoutType,
         memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leaves = {}};

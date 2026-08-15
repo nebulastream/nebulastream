@@ -31,8 +31,6 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/TypeTraits.hpp>
 #include <ErrorHandling.hpp>
 

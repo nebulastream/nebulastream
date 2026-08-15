@@ -95,7 +95,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             auto parsed = rfl::json::read<rfl::Generic>(reflectedOp);
             if (!parsed.has_value())
             {
-                throw CannotDeserialize(parsed.error().what());
+                throw InvalidLogicalFunctionArgument(parsed.error().what());
             }
 
             auto reflectedOperator = ReflectionContext{}.unreflect<ReflectedOperator>(*parsed);
@@ -116,7 +116,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             msgs += deserExc.what();
             msgs += deserExc.trace().to_string(true);
         }
-        throw CannotDeserialize(
+        throw InvalidLogicalFunctionArgument(
             "Deserialization of {} out of {} operators failed! Encountered Errors:{}",
             deserializeExceptions.size(),
             serializedQueryPlan.reflectedoperators_size(),
@@ -130,7 +130,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     /// 3) Build root-operators
     if (serializedQueryPlan.rootoperatorids().empty())
     {
-        throw CannotDeserialize("Query Plan has no root operator(s)!");
+        throw InvalidLogicalFunctionArgument("Query Plan has no root operator(s)!");
     }
     std::vector<LogicalOperator> rootOperators;
     for (auto rootId : serializedQueryPlan.rootoperatorids())
@@ -143,35 +143,35 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             }
             else
             {
-                throw CannotDeserialize("Could not create root operator {}", rootId);
+                throw InvalidLogicalFunctionArgument("Could not create root operator {}", rootId);
             }
         }
         else
         {
-            throw CannotDeserialize("Unknown rootOperatorId {}", rootId);
+            throw InvalidLogicalFunctionArgument("Unknown rootOperatorId {}", rootId);
         }
     }
 
     if (rootOperators.size() != 1)
     {
-        throw CannotDeserialize("Plan contains multiple root operators!");
+        throw InvalidLogicalFunctionArgument("Plan contains multiple root operators!");
     }
 
     auto sinkOpt = rootOperators.at(0).tryGetAs<SinkLogicalOperator>();
     if (!sinkOpt)
     {
-        throw CannotDeserialize("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
+        throw InvalidLogicalFunctionArgument("Plan root has to be a sink, but got {} from\n{}", rootOperators.at(0), serializedQueryPlan.DebugString());
     }
     auto sink = std::move(sinkOpt).value();
 
     if (sink->getChildren().empty())
     {
-        throw CannotDeserialize("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
+        throw InvalidLogicalFunctionArgument("Sink has no children! From\n{}", serializedQueryPlan.DebugString());
     }
 
     if (not sink->getSinkDescriptor())
     {
-        throw CannotDeserialize("Sink has no descriptor!");
+        throw InvalidLogicalFunctionArgument("Sink has no descriptor!");
     }
 
     rootOperators = std::vector<LogicalOperator>{sink};

@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -63,8 +65,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Schema/Field.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -205,7 +205,7 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
 }
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
-std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
+std::pair<std::vector<PhysicalField>, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
     const LogicalOperator& inputOperator,
     const std::vector<FieldNamesExtension>& fieldNameExtensions,
     const MemoryLayoutType& memoryLayoutType)
@@ -226,25 +226,22 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
             = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction, *inputOperator.getTraitSet().get<FieldMappingTrait>());
 
         /// Get a copy of the current input schema before adding to the inputSchemaOfMap the newly added field
-        auto inputSchema = Schema<QualifiedUnboundField, Ordered>{currentFields};
+        auto inputSchema = std::vector<PhysicalField>{currentFields};
         currentFields.emplace_back(newField);
-        const Schema<QualifiedUnboundField, Ordered> outputSchema(currentFields);
+        const std::vector<PhysicalField> outputSchema(currentFields);
 
         /// Create a new map operator with the cast as its function
         mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-            MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
-            inputSchema,
-            outputSchema,
-            memoryLayoutType,
+            MapPhysicalOperator(newField.getFullyQualifiedName(), outputSchema, memoryLayoutType,
             memoryLayoutType));
     }
 
-    return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
+    return {std::vector<PhysicalField>{currentFields}, mapPhysicalOperators};
 }
 
 HashMapOptions createHashMapOptions(
     std::vector<FieldNamesExtension>& joinFieldExtensions,
-    Schema<QualifiedUnboundField, Ordered>& inputSchema,
+    std::vector<PhysicalField>& inputSchema,
     const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
@@ -412,25 +409,17 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         std::move(sliceStoreRefRight)};
 
     /// Creating the hash join probe — select inner or outer probe based on join type
-    auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
+    auto joinSchema = JoinSchema(NES::PhysicalFieldHelper::createPhysicalFields(newLeftInputSchema), NES::PhysicalFieldHelper::createPhysicalFields( newRightInputSchema), NES::PhysicalFieldHelper::createPhysicalFields( physicalOutputSchema));
 
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator),
-        newLeftInputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        std::move(leftBuildOperator), memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator),
-        newRightInputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        std::move(rightBuildOperator), memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
@@ -442,11 +431,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto createProbeWrapper = [&](const auto& probeOperator)
     {
         return std::make_shared<PhysicalOperatorWrapper>(
-            std::move(probeOperator),
-            physicalOutputSchema,
-            physicalOutputSchema,
-            memoryLayoutType,
-            memoryLayoutType,
+            std::move(probeOperator), memoryLayoutType, memoryLayoutType,
             handlerId,
             handler,
             PhysicalOperatorWrapper::PipelineLocation::SCAN,

@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +30,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -137,7 +137,7 @@ Record StreamJoinProbePhysicalOperator::createNullFilledJoinedRecord(
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd,
     const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
-    const Schema<QualifiedUnboundField, Ordered>& nullSideSchema) const
+    const std::vector<PhysicalField>& nullSideSchema) const
 {
     Record joinedRecord;
 
@@ -152,7 +152,7 @@ Record StreamJoinProbePhysicalOperator::createNullFilledJoinedRecord(
     }
 
     /// Writing null-filled fields for the null side — type must match schema DataType
-    const std::vector<QualifiedUnboundField> nullSideFields(nullSideSchema.begin(), nullSideSchema.end());
+    const std::vector<NES::PhysicalField> nullSideFields(nullSideSchema.begin(), nullSideSchema.end());
     for (const auto& field : nautilus::static_iterable(nullSideFields))
     {
         auto nullVal = makeNullVarVal(field.getDataType());

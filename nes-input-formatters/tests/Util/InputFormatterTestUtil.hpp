@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -229,7 +231,7 @@ public:
     TupleIterator(std::vector<TupleBuffer> buffers, Schema<QualifiedUnboundField, Ordered> schema, const MemoryLayoutType layoutType)
         : schema(std::move(schema))
         , buffers(std::move(buffers))
-        , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType))
+        , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(this->schema), layoutType))
     {
     }
 
@@ -271,7 +273,7 @@ inline bool compareTestTupleBuffersOrderSensitive(
     InputFormatterTestUtil::sortTupleBuffers(expectedResult);
 
     bool allTuplesMatch = true;
-    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(schema), MemoryLayoutType::ROW_LAYOUT);
     TupleIterator expectedResultTupleIt(std::move(expectedResult), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator actualResultTupleIt(std::move(actualResult), schema, MemoryLayoutType::ROW_LAYOUT);
     while (const auto actualResultTuple = actualResultTupleIt.getNextTuple())
@@ -400,7 +402,7 @@ TupleBuffer createTupleBufferFromTuples(
     const Schema<QualifiedUnboundField, Ordered>& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
-    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(schema), MemoryLayoutType::ROW_LAYOUT);
     auto tupleBuffer = bufferManager.getBufferBlocking();
 
     for (const auto& tuple : tuples)
@@ -441,7 +443,7 @@ bool validateResult(TestHandle<TupleSchemaTemplate>& testHandle)
             {
                 /// If specified, print the contents of the buffers.
                 auto tupleBufferRef
-                    = LowerSchemaProvider::lowerSchema(actualResultBuffer.getBufferSize(), testHandle.schema, MemoryLayoutType::ROW_LAYOUT);
+                    = LowerSchemaProvider::lowerSchema(actualResultBuffer.getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(testHandle.schema), MemoryLayoutType::ROW_LAYOUT);
                 printTupleBuffer("\n Actual result buffer:\n", actualResultBuffer, *tupleBufferRef);
                 printTupleBuffer(" Expected result buffer:\n", testHandle.expectedResultVectors[taskIndex][bufferIndex], *tupleBufferRef);
             }

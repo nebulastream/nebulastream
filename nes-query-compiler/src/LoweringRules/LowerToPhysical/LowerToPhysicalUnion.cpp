@@ -62,21 +62,14 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
                            };
 
                            return std::make_shared<PhysicalOperatorWrapper>(
-                               UnionRenamePhysicalOperator{extractNames(childOutputSchema), extractNames(outputSchema)},
-                               childOutputSchema,
-                               outputSchema,
-                               memoryLayoutType,
+                               UnionRenamePhysicalOperator{extractNames(childOutputSchema), outputSchema, memoryLayoutType,
                                memoryLayoutType,
                                PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
                        })
         | std::ranges::to<std::vector>();
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        UnionPhysicalOperator(),
-        outputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        UnionPhysicalOperator(), memoryLayoutType, memoryLayoutType,
         std::nullopt,
         std::nullopt,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

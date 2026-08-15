@@ -48,11 +48,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
 
     auto physicalOperator = SelectionPhysicalOperator(func);
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        inputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        physicalOperator, memoryLayoutType, memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

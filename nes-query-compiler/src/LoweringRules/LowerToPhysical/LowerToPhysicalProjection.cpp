@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -67,7 +69,7 @@ NES::ScanPhysicalOperator createScanOperator(
         | std::views::transform([](const auto& field) -> NES::QualifiedIdentifier { return field.getFullyQualifiedName(); })
         | std::ranges::to<std::vector>();
 
-    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, NES::PhysicalFieldHelper::createPhysicalFields(inputSchema), memoryLayoutType);
     if (sourceDescriptorOpt.has_value())
     {
         if (NES::toUpperCase(sourceDescriptorOpt.value().getInputFormatType()) != "NATIVE")
@@ -100,11 +102,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     auto bufferSize = conf.pageSize.getValue();
     auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        scan,
-        inputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        scan, memoryLayoutType, memoryLayoutType,
         std::nullopt,
         std::nullopt,
         PhysicalOperatorWrapper::PipelineLocation::SCAN);
@@ -120,11 +118,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
             = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
         auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
-            physicalOperator,
-            inputSchema,
-            outputSchema,
-            memoryLayoutType,
-            memoryLayoutType,
+            physicalOperator, memoryLayoutType, memoryLayoutType,
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,

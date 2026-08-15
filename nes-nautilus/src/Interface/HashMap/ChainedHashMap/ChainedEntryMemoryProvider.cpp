@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,8 +29,6 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
@@ -42,7 +41,7 @@ namespace NES
 {
 
 std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemoryProvider::createFieldOffsets(
-    const Schema<QualifiedUnboundField, Ordered>& schema,
+    const std::vector<PhysicalField>& schema,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
     const std::vector<Record::RecordFieldIdentifier>& fieldNameValues)
 {
@@ -58,8 +57,8 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsKey.emplace_back(
-            FieldOffsets{.fieldIdentifier = fieldValue.getFullyQualifiedName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
-        offset += fieldValue.getDataType().getSizeInBytesWithNull();
+            FieldOffsets{.fieldIdentifier = fieldValue.identifier, .type = fieldValue.dataType, .fieldOffset = offset});
+        offset += fieldValue.dataType.getSizeInBytesWithNull();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -68,8 +67,8 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         fieldsValue.emplace_back(
-            FieldOffsets{.fieldIdentifier = fieldValue.getFullyQualifiedName(), .type = fieldValue.getDataType(), .fieldOffset = offset});
-        offset += fieldValue.getDataType().getSizeInBytesWithNull();
+            FieldOffsets{.fieldIdentifier = fieldValue.identifier, .type = fieldValue.dataType, .fieldOffset = offset});
+        offset += fieldValue.dataType.getSizeInBytesWithNull();
     }
     return {fieldsKey, fieldsValue};
 }

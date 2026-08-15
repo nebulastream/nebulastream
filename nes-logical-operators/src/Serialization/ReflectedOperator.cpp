@@ -47,7 +47,7 @@ TraitSet ReflectedPlan::getTraitSetFor(OperatorId operatorId, const ReflectionCo
     {
         return foundTraitSet->second;
     }
-    throw CannotDeserialize("Could not find trait set for operator {}", operatorId);
+    throw InvalidLogicalFunctionArgument("Could not find trait set for operator {}", operatorId);
 }
 
 std::optional<LogicalOperator> ReflectedPlan::getOperator(OperatorId operatorId, const ReflectionContext& context)
@@ -62,7 +62,7 @@ std::optional<LogicalOperator> ReflectedPlan::getOperator(OperatorId operatorId,
             foundReflected->second.type, foundReflected->second.config, context);
         if (!createdOpt.has_value())
         {
-            throw CannotDeserialize("Could not create operator of type {}", foundReflected->second.type);
+            throw InvalidLogicalFunctionArgument("Could not create operator of type {}", foundReflected->second.type);
         }
         auto created = std::move(createdOpt).value();
         created = created.withTraitSet(foundReflected->second.traitSet);
@@ -86,11 +86,11 @@ std::vector<LogicalOperator> ReflectedPlan::getChildrenFor(OperatorId operatorId
             }
             else
             {
-                throw CannotDeserialize("Could not find operator with id {} in operators list", childId);
+                throw InvalidLogicalFunctionArgument("Could not find operator with id {} in operators list", childId);
             }
         }
         return result;
     }
-    throw CannotDeserialize("Could not find children of operator {}", operatorId);
+    throw InvalidLogicalFunctionArgument("Could not find children of operator {}", operatorId);
 }
 }

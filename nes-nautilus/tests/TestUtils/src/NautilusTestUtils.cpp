@@ -1,3 +1,5 @@
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,8 +42,6 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -65,7 +65,7 @@ std::unique_ptr<HashFunction> NautilusTestUtils::getMurMurHashFunction()
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema<QualifiedUnboundField, Ordered>& schema,
+    const std::vector<PhysicalField>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
@@ -81,7 +81,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema<QualifiedUnboundField, Ordered>& schema,
+    const std::vector<PhysicalField>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager)
@@ -91,7 +91,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema<QualifiedUnboundField, Ordered>& schema,
+    const std::vector<PhysicalField>& schema,
     const MemoryLayoutType memoryLayout,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
@@ -100,7 +100,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout);
+    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(schema), memoryLayout);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -159,13 +159,13 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     return buffers;
 }
 
-Schema<QualifiedUnboundField, Ordered> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes)
+std::vector<PhysicalField> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-Schema<QualifiedUnboundField, Ordered>
+std::vector<PhysicalField>
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
 {
     const auto fields = NES::views::enumerate(basicTypes)
@@ -178,14 +178,14 @@ NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>&
                             });
 
     /// Creating a schema for the memory provider
-    return Schema<QualifiedUnboundField, Ordered>{fields | std::ranges::to<std::vector>()};
+    return std::vector<PhysicalField>{fields | std::ranges::to<std::vector>()};
 }
 
 void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
     ExecutionMode backend,
     nautilus::engine::Options& options,
-    const Schema<QualifiedUnboundField, Ordered>& schema,
+    const std::vector<PhysicalField>& schema,
     const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
@@ -205,15 +205,15 @@ void NautilusTestUtils::compileFillBufferFunction(
             for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < std::ranges::size(schema); ++fieldIndex)
             {
                 const auto field = *(std::ranges::begin(schema) + fieldIndex);
-                const auto physicalType = field.getDataType();
-                const auto& fieldName = field.getFullyQualifiedName();
-                if (not field.getDataType().isType(DataType::Type::VARSIZED))
+                const auto physicalType = field.dataType;
+                const auto& fieldName = field.identifier;
+                if (not field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto varValue = createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
-                else if (field.getDataType().isType(DataType::Type::VARSIZED))
+                else if (field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
                         +[](TupleBuffer* inputBuffer, AbstractBufferProvider* bufferProviderVal, const uint64_t size)

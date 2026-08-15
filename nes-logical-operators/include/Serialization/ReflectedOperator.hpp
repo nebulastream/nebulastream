@@ -40,7 +40,7 @@ class ReflectedPlan : public OperatorMapping
 public:
     explicit ReflectedPlan(std::unordered_map<OperatorId, ReflectedOperator> operators);
 
-    ///Throws CannotDeserialize if no entry was found for operator
+    ///Throws InvalidLogicalFunctionArgument if no entry was found for operator
     [[nodiscard]] std::vector<LogicalOperator> getChildrenFor(OperatorId operatorId, const ReflectionContext& context);
     [[nodiscard]] TraitSet getTraitSetFor(OperatorId operatorId, const ReflectionContext& context) const;
     [[nodiscard]] std::optional<LogicalOperator> getOperator(OperatorId operatorId, const ReflectionContext& context) override;

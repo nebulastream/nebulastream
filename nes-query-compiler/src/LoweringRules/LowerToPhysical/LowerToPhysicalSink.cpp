@@ -89,11 +89,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
                 auto physicalFunction = std::ranges::begin(fieldAccesses)->second;
                 auto physicalOperator = MapPhysicalOperator(std::ranges::begin(fieldAccesses)->first, physicalFunction);
                 return std::make_shared<PhysicalOperatorWrapper>(
-                    physicalOperator,
-                    inputSchemaWithRedirections,
-                    inputSchema,
-                    memoryLayoutType,
-                    memoryLayoutType,
+                    physicalOperator, memoryLayoutType, memoryLayoutType,
                     PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
             }();
 
@@ -102,11 +98,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
             {
                 auto physicalOperator = MapPhysicalOperator(fieldName, function);
                 currentChild = std::make_shared<PhysicalOperatorWrapper>(
-                    physicalOperator,
-                    inputSchemaWithRedirections,
-                    inputSchema,
-                    memoryLayoutType,
-                    memoryLayoutType,
+                    physicalOperator, memoryLayoutType, memoryLayoutType,
                     std::nullopt,
                     std::nullopt,
                     PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE,
@@ -120,11 +112,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOpe
 
     auto physicalOperator = SinkPhysicalOperator(sinkDescriptorOpt.value()); /// NOLINT(bugprone-unchecked-optional-access)
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        inputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        physicalOperator, memoryLayoutType, memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     auto leaves = [&]
