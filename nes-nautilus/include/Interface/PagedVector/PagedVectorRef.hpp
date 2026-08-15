@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,7 +28,6 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Schema/Schema.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -51,7 +51,7 @@ class PagedVectorTupleLayout
 {
 public:
     virtual ~PagedVectorTupleLayout() = default;
-    [[nodiscard]] virtual const Schema<QualifiedUnboundField, Ordered>& getSchema() const = 0;
+    [[nodiscard]] virtual const std::vector<PhysicalField>& getSchema() const = 0;
     /// @brief Reads a record from the specified memory address. The address is expected to point at the beginning of the record to be read.
     /// The LoadFunction handles the varsized data loading, as it is stored in a separate buffer.
     [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction) const = 0;
@@ -66,12 +66,12 @@ public:
 struct DefaultPagedVectorTupleLayout final : PagedVectorTupleLayout
 {
 private:
-    Schema<QualifiedUnboundField, Ordered> schema;
+    std::vector<PhysicalField> schema;
 
 public:
-    explicit DefaultPagedVectorTupleLayout(const Schema<QualifiedUnboundField, Ordered>& schema) : schema(schema) { }
+    explicit DefaultPagedVectorTupleLayout(const std::vector<PhysicalField>& schema) : schema(schema) { }
 
-    [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getSchema() const override { return schema; }
+    [[nodiscard]] const std::vector<PhysicalField>& getSchema() const override { return schema; }
 
     [[nodiscard]] Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction loadFunc) const override;
 

@@ -21,7 +21,6 @@
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/UnboundSchema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>

@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,8 +54,6 @@
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -139,8 +139,8 @@ public:
 
     EmitPhysicalOperator createUUT()
     {
-        auto schema = Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{Identifier::parse("A_FIELD"), DataType::Type::UINT32}};
-        auto bufferRef = LowerSchemaProvider::lowerSchema(512, schema, MemoryLayoutType::ROW_LAYOUT);
+        auto schema = std::vector<PhysicalField>{{Identifier::parse("A_FIELD"), DataType::Type::UINT32}};
+        auto bufferRef = LowerSchemaProvider::lowerSchema(512, NES::PhysicalFieldHelper::createPhysicalFields(schema), MemoryLayoutType::ROW_LAYOUT);
         EmitPhysicalOperator emit{OperatorHandlerId(0), std::move(bufferRef)};
         handlers.insert_or_assign(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
         return emit;

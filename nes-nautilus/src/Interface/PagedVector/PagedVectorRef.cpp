@@ -34,7 +34,6 @@
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>

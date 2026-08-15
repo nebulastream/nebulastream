@@ -93,13 +93,8 @@ endif ()
 # Generate BuildInfo.hpp after nes-common is fully configured so its target properties can be evaluated.
 generate_build_info(nes-common "${NES_BUILD_INFO_DIR}")
 
-# The Schema headers live in their own include directory behind a dedicated target on purpose:
-# Schema is meant for the logical/frontend layers, not for components that operate on
-# TupleBufferRefs or MemoryLayouts (e.g. nes-memory, nes-query-engine). Requiring an explicit
-# nes-schema dependency keeps those components from picking up Schema by accident via nes-common.
-add_library(nes-schema INTERFACE)
-target_link_libraries(nes-schema INTERFACE nes-common)
-target_include_directories(nes-schema INTERFACE
+# nes-schema was removed, schema/include is now just part of nes-common
+target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/schema/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 

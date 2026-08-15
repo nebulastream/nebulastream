@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,8 +33,6 @@
 #include <Interface/Record.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/Ranges.hpp>
 #include <nautilus/Engine.hpp>
 #include <ErrorHandling.hpp>
@@ -72,7 +71,7 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
     return {options};
 }
 
-Schema<QualifiedUnboundField, Ordered> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
+std::vector<PhysicalField> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes)
 {
     return views::enumerate(dataTypes)
         | std::views::transform(
@@ -82,7 +81,7 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromDataTypes(const std::vect
                    const Record::RecordFieldIdentifier name{Identifier::parse("field" + std::to_string(typeIdx))};
                    return QualifiedUnboundField{name, dataType};
                })
-        | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
+        | std::ranges::to<std::vector<PhysicalField>>();
 }
 
 rc::Gen<std::vector<DataType>> genDataTypeSchema(std::span<const DataType::Type> dataTypesPool, size_t minFields, size_t maxFields)

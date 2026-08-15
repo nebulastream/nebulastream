@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,9 +63,7 @@ public:
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
-        const std::vector<Record::RecordFieldIdentifier>& projections,
-        const RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex) const override;
+        const std::vector<Record::RecordFieldIdentifier>& projections, NES::PhysicalFieldHelper::createPhysicalFields(const RecordBuffer& recordBuffer), nautilus::val<uint64_t>& recordIndex) const override;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,

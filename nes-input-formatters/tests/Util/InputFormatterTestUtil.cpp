@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -168,7 +170,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
     const auto qualifiedSchema = schema | std::ranges::to<Schema<QualifiedUnboundField, Ordered>>();
 
-    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, qualifiedSchema, memoryLayoutType);
+    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, NES::PhysicalFieldHelper::createPhysicalFields(qualifiedSchema), memoryLayoutType);
     auto inputFormatterType = std::get<std::string>(parserConfiguration.at(InputFormatterDescriptor::getTypeString()));
     auto scanOp = ScanPhysicalOperator(
         provideInputFormatter(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),

@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,7 +30,6 @@
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <nautilus/Engine.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -107,7 +107,7 @@ constexpr std::array ALL_VALUE_TYPES = {
 };
 
 /// Builds a Schema with sequentially named fields ("field0", "field1", ...) from the given DataType vector.
-Schema<QualifiedUnboundField, Ordered> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes);
+std::vector<PhysicalField> createSchemaFromDataTypes(const std::vector<DataType>& dataTypes);
 
 /// Generator for a non-empty vector of DataType drawn from a Type pool.
 /// Nullability is randomised per field.

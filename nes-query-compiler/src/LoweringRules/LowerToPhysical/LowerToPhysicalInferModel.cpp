@@ -87,11 +87,7 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     const auto physicalInputSchema = createPhysicalOutputSchema(inferModelOp.get().getChildren().at(0).getTraitSet());
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator,
-        physicalInputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        physicalOperator, memoryLayoutType, memoryLayoutType,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     std::vector leaves(logicalOperator.getChildren().size(), wrapper);

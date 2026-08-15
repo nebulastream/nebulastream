@@ -72,7 +72,7 @@ struct Unreflector<TypedLogicalFunction<Checked>>
         {
             return casted.value();
         }
-        throw CannotDeserialize("Expected logical function of type {}, but got {}", NAMEOF_TYPE(Checked), erased.getType());
+        throw InvalidLogicalFunctionArgument("Expected logical function of type {}, but got {}", NAMEOF_TYPE(Checked), erased.getType());
     }
 };
 

@@ -18,7 +18,6 @@
 #include <functional>
 #include <memory>
 #include <utility>
-#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>

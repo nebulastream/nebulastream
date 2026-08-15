@@ -73,7 +73,7 @@ struct Unreflector<TypedWindowAggregationLogicalFunction<Checked>>
         {
             return casted.value();
         }
-        throw CannotDeserialize(
+        throw InvalidLogicalFunctionArgument(
             "Expected window aggregation logical function of type {}, but got {}", NAMEOF_TYPE(Checked), erased.getName());
     }
 };

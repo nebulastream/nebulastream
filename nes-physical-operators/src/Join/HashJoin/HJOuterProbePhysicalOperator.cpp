@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -32,7 +33,6 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -99,7 +99,7 @@ void HJOuterProbePhysicalOperator::performNullFillProbe(
     const HashMapOptions& outerHashMapOptions,
     const HashMapOptions& innerHashMapOptions,
     const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
-    const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
+    const std::vector<PhysicalField>& nullSideSchema,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const

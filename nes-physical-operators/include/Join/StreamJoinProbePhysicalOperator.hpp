@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +24,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <val_concepts.hpp>
@@ -64,7 +64,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd,
         const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
-        const Schema<QualifiedUnboundField, Ordered>& nullSideSchema) const;
+        const std::vector<PhysicalField>& nullSideSchema) const;
 
     PhysicalFunction joinFunction;
     JoinSchema joinSchema;

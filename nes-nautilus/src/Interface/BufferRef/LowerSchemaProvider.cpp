@@ -1,3 +1,5 @@
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,17 +36,13 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>
 #include <OutputFormatters/OutputFormatterValidationProvider.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
-    const uint64_t bufferSize,
-    const Schema<QualifiedUnboundField, Ordered>& schema,
-    const std::string& outputFormatterType,
-    const std::unordered_map<Identifier, std::string>& config)
+    const uint64_t bufferSize, NES::PhysicalFieldHelper::createPhysicalFields(const std::vector<PhysicalField>& schema), const std::string& outputFormatterType, const std::unordered_map<Identifier, std::string>& config)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
@@ -52,8 +50,8 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     fieldNames.reserve(std::ranges::size(schema));
     for (const auto& field : schema)
     {
-        fields.emplace_back(field.getFullyQualifiedName(), field.getDataType());
-        fieldNames.emplace_back(field.getFullyQualifiedName());
+        fields.emplace_back(field.identifier, field.dataType);
+        fieldNames.emplace_back(field.identifier);
     }
 
     /// Create the output formatter descriptor
@@ -69,7 +67,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
 }
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
-    const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const MemoryLayoutType layoutType)
+    const uint64_t bufferSize, NES::PhysicalFieldHelper::createPhysicalFields(const std::vector<PhysicalField>& schema), const MemoryLayoutType layoutType)
 {
     PRECONDITION(!std::ranges::empty(schema), "We can not lower an empty schema!");
 
@@ -83,8 +81,8 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
             uint64_t fieldOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), fieldOffset);
-                fieldOffset += field.getDataType().getSizeInBytesWithNull();
+                fields.emplace_back(field.identifier, field.dataType, fieldOffset);
+                fieldOffset += field.dataType.getSizeInBytesWithNull();
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
@@ -100,7 +98,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
                 schema.begin(),
                 schema.end(),
                 0UL,
-                [](auto size, const QualifiedUnboundField& field) { return size + field.getDataType().getSizeInBytesWithNull(); });
+                [](auto size, const QualifiedUnboundField& field) { return size + field.dataType.getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
@@ -110,8 +108,8 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
             for (const auto& field : schema)
             {
                 fields.emplace_back(
-                    field.getFullyQualifiedName(), field.getDataType(), field.getDataType().getSizeInBytesWithNull(), columnOffset);
-                columnOffset += (field.getDataType().getSizeInBytesWithNull() * capacity);
+                    field.identifier, field.dataType, field.dataType.getSizeInBytesWithNull(), columnOffset);
+                columnOffset += (field.dataType.getSizeInBytesWithNull() * capacity);
             }
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});

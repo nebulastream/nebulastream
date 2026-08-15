@@ -98,7 +98,7 @@ Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, 
     auto [function] = context.unreflect<detail::ReflectedIsNullCheckLogicalFunction>(reflected);
     if (!function.has_value())
     {
-        throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
+        throw CannotDeserialize("Failed to deserialize child of IsNullCheckLogicalFunction");
     }
 
     return IsNullCheckLogicalFunction(std::move(function.value()));
@@ -109,7 +109,7 @@ LogicalFunctionGeneratedRegistrar::RegisterIsNullLogicalFunction(const LogicalFu
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("IsNullCheckLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("IsNullCheckLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return IsNullCheckLogicalFunction(arguments.children[0]);
 }

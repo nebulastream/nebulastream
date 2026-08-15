@@ -281,7 +281,7 @@ Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflect
     {
         if (descriptor->getSinkName() != name)
         {
-            throw CannotDeserialize(
+            throw InvalidLogicalFunctionArgument(
                 "SinkLogicalOperator cannot be deserialized because the sink name in the operator ({}) and the sink name in the "
                 "SinkDescriptor (do not link to the same sink ({}) are not equal.",
                 descriptor->getSinkName(),
@@ -290,12 +290,12 @@ Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflect
         auto children = plan->getChildrenFor(id, context);
         if (children.size() != 1)
         {
-            throw CannotDeserialize("SinkLogicalOperator requires exactly one child, but got {}", children.size());
+            throw InvalidLogicalFunctionArgument("SinkLogicalOperator requires exactly one child, but got {}", children.size());
         }
 
         return SinkLogicalOperator::create(std::move(children.at(0)), descriptor.value());
     }
-    throw CannotDeserialize("SinkLogicalOperator requires a sink descriptor, but got none");
+    throw InvalidLogicalFunctionArgument("SinkLogicalOperator requires a sink descriptor, but got none");
 }
 }
 

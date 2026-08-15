@@ -34,7 +34,6 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <nautilus/Engine.hpp>
 #include <DataStructureTestUtils.hpp>
 #include <ErrorHandling.hpp>

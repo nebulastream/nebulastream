@@ -109,7 +109,7 @@ LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionR
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("Function requires exactly one child, but got {}", arguments.children.size());
     }
     return RoundLogicalFunction(arguments.children[0]);
 }

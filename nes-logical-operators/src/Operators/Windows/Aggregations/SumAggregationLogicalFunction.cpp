@@ -139,7 +139,7 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunct
 {
     if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidLogicalFunctionArgument("SumAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
     return SumAggregationLogicalFunction{arguments.on.at(0)};
 }

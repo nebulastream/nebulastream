@@ -27,7 +27,6 @@
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>

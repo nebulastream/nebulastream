@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,8 +38,6 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -229,7 +229,7 @@ TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
 
 TestTupleBufferView TestTupleBuffer::open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider)
 {
-    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), NES::PhysicalFieldHelper::createPhysicalFields(schema), MemoryLayoutType::ROW_LAYOUT);
 
     TestTupleBufferView view;
     view.impl = std::make_shared<TestTupleBufferView::Impl>(

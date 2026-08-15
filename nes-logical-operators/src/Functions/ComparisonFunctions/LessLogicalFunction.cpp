@@ -105,7 +105,7 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLes
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return LessLogicalFunction(arguments.children[0], arguments.children[1]);
 }

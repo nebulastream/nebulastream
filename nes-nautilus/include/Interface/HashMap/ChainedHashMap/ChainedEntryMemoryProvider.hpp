@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,8 +26,6 @@
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -50,7 +49,7 @@ public:
     /// We need to create the fields for the keys and values here, as we know here how the fields and the values are stored in the ChainedHashMapEntry.
     /// We can use here "normal" C++ values, as only the C++ runtime MUST call this method
     static std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> createFieldOffsets(
-        const Schema<QualifiedUnboundField, Ordered>& schema,
+        const std::vector<PhysicalField>& schema,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameValues);
 

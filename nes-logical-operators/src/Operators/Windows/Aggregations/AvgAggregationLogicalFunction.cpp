@@ -109,7 +109,7 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunct
 {
     if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidLogicalFunctionArgument("AvgAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
     return AvgAggregationLogicalFunction{arguments.on.at(0)};
 }

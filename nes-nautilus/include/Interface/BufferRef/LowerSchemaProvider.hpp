@@ -1,3 +1,4 @@
+#include <Interface/PhysicalField.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,8 +23,6 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
@@ -43,12 +42,12 @@ class LowerSchemaProvider
 public:
     static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
         uint64_t bufferSize,
-        const Schema<QualifiedUnboundField, Ordered>& schema,
+        const std::vector<PhysicalField>& schema,
         const std::string& outputFormatterType,
         const std::unordered_map<Identifier, std::string>& config);
 
     static std::shared_ptr<TupleBufferRef>
-    lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
+    lowerSchema(uint64_t bufferSize, const std::vector<PhysicalField>& schema, MemoryLayoutType layoutType);
 };
 
 }

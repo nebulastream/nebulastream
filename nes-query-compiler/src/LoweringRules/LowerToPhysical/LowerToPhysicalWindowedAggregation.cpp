@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -89,7 +91,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
-    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), NES::PhysicalFieldHelper::createPhysicalFields(physicalInputSchema), memoryLayoutType);
 
     for (const auto& descriptor : aggregationDescriptors)
     {
@@ -226,21 +228,13 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto handler = std::make_shared<AggregationOperatorHandler>(
         *inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        build,
-        physicalInputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        build, memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        probe,
-        physicalInputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
+        probe, memoryLayoutType, memoryLayoutType,
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN,

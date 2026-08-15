@@ -84,7 +84,7 @@ public:
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
             OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
-            PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
+            PhysicalOperator{sourceOp}, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a SinkPhysicalOperator.
@@ -96,7 +96,7 @@ public:
         EXPECT_TRUE(descriptor.has_value());
         auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         return std::make_shared<PhysicalOperatorWrapper>(
-            PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
+            PhysicalOperator{sinkOp}, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a UnionPhysicalOperator.
@@ -105,11 +105,7 @@ public:
         auto schema = createSchema();
         auto unionOp = UnionPhysicalOperator();
         return std::make_shared<PhysicalOperatorWrapper>(
-            PhysicalOperator{unionOp},
-            schema,
-            schema,
-            MemoryLayoutType::ROW_LAYOUT,
-            MemoryLayoutType::ROW_LAYOUT,
+            PhysicalOperator{unionOp}, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT,
             PipelineLocation::INTERMEDIATE);
     }
 

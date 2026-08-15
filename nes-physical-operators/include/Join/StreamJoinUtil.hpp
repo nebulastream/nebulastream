@@ -1,3 +1,5 @@
+#include <Interface/PhysicalField.hpp>
+#include <LoweringRules/LowerToPhysical/PhysicalFieldHelper.hpp>
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,8 +24,6 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -69,16 +69,16 @@ concept JoinProbeOperator = requires(JoinLogicalOperator::JoinType jt) {
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
-    JoinSchema(
-        Schema<QualifiedUnboundField, Ordered> leftSchema,
-        Schema<QualifiedUnboundField, Ordered> rightSchema,
-        Schema<QualifiedUnboundField, Ordered> joinSchema)
+    JoinSchema(NES::PhysicalFieldHelper::createPhysicalFields(
+        std::vector<PhysicalField> leftSchema), NES::PhysicalFieldHelper::createPhysicalFields(
+        std::vector<PhysicalField> rightSchema), NES::PhysicalFieldHelper::createPhysicalFields(
+        std::vector<PhysicalField> joinSchema))
         : leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema))
     {
     }
 
-    Schema<QualifiedUnboundField, Ordered> leftSchema;
-    Schema<QualifiedUnboundField, Ordered> rightSchema;
-    Schema<QualifiedUnboundField, Ordered> joinSchema;
+    std::vector<PhysicalField> leftSchema;
+    std::vector<PhysicalField> rightSchema;
+    std::vector<PhysicalField> joinSchema;
 };
 }

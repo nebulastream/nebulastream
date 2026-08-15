@@ -20,14 +20,11 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
-#include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -165,51 +162,39 @@ std::string PhysicalOperator::toString() const
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType)
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(std::move(inputSchema))
-    , outputSchema(std::move(outputSchema))
     , pipelineLocation(PipelineLocation::INTERMEDIATE)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     const PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
-    , inputSchema(std::move(inputSchema))
     , pipelineLocation(pipelineLocation)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     const PipelineLocation pipelineLocation)
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(std::move(inputSchema))
-    , outputSchema(std::move(outputSchema))
     , pipelineLocation(pipelineLocation)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -218,8 +203,6 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(std::move(inputSchema))
-    , outputSchema(std::move(outputSchema))
     , handler(std::move(handler))
     , handlerId(std::move(handlerId))
     , pipelineLocation(pipelineLocation)
@@ -228,8 +211,6 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
-    std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -239,8 +220,6 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
-    , inputSchema(std::move(inputSchema))
-    , outputSchema(std::move(outputSchema))
     , children(std::move(children))
     , handler(std::move(handler))
     , handlerId(std::move(handlerId))
@@ -258,12 +237,9 @@ std::string PhysicalOperatorWrapper::explain(ExplainVerbosity) const
     return fmt::format(
         "PhysicalOperatorWrapper("
         "Operator: {}, id: {}, "
-        "InputSchema: {}, OutputSchema: {}, "
         "pipelineLocation: {} )",
         physicalOperator.toString(),
         physicalOperator.getId(),
-        inputSchema,
-        outputSchema,
         magic_enum::enum_name(pipelineLocation));
 }
 
@@ -272,15 +248,6 @@ const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
     return physicalOperator;
 }
 
-const std::optional<Schema<QualifiedUnboundField, Ordered>>& PhysicalOperatorWrapper::getInputSchema() const
-{
-    return inputSchema;
-}
-
-const std::optional<Schema<QualifiedUnboundField, Ordered>>& PhysicalOperatorWrapper::getOutputSchema() const
-{
-    return outputSchema;
-}
 
 const std::optional<MemoryLayoutType>& PhysicalOperatorWrapper::getInputMemoryLayoutType() const
 {
