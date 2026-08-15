@@ -72,6 +72,14 @@ TEST_F(IdentifierTest, CaseSensitiveCAPS)
     EXPECT_EQ(identifier.getOriginalString(), "\"TEST\"");
 }
 
+TEST_F(IdentifierTest, CaseSensitiveEscapedQuotes)
+{
+    const auto identifier = Identifier::parse("\"some\"\"Identifier\"");
+    EXPECT_EQ(fmt::format("{}", identifier), "some\"Identifier");
+    EXPECT_TRUE(identifier.isCaseSensitive());
+    EXPECT_EQ(identifier.getOriginalString(), "\"some\"\"Identifier\"");
+}
+
 TEST_F(IdentifierTest, Equality)
 {
     const auto identifier1 = Identifier::parse("test");
