@@ -384,6 +384,7 @@ booleanComparison
 
 valueExpression
     : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    | CASE valueExpression? (WHEN expression THEN expression)+ (ELSE expression)? END         #caseExpression
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
@@ -457,6 +458,7 @@ AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';
 CAST: 'CASTTOTYPE' | 'casttotype';
+CASE: 'CASE' | 'case';
 COMMENT: 'COMMENT';
 CUBE: 'CUBE';
 DELETE: 'DELETE';
@@ -509,6 +511,7 @@ SETS: 'SETS';
 SOME: 'SOME';
 START: 'START';
 TABLE: 'TABLE';
+THEN: 'THEN' | 'then';
 TO: 'TO';
 TRUE: 'TRUE';
 TYPE: 'TYPE';

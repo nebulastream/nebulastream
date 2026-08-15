@@ -39,11 +39,12 @@
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
-#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/IsNullCheckLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
+#include <Functions/CaseLogicalFunction.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
@@ -980,6 +981,51 @@ void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpression
     auto child = std::move(helpers.top().functionBuilder.back());
     helpers.top().functionBuilder.pop_back();
     helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
+}
+
+void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpressionContext* context)
+{
+    size_t numWhenThens = context->WHEN().size();
+    bool hasValueExpr = context->valueExpression() != nullptr;
+    bool hasElse = context->ELSE() != nullptr;
+    
+    size_t expectedFunctions = (hasValueExpr ? 1 : 0) + numWhenThens * 2 + (hasElse ? 1 : 0);
+    
+    auto& stack = helpers.top().functionBuilder;
+    if (stack.size() < expectedFunctions) {
+        throw InvalidQuerySyntax("Insufficient expressions for CASE statement");
+    }
+    
+    LogicalFunction elseResult;
+    if (hasElse) {
+        elseResult = std::move(stack.back());
+        stack.pop_back();
+    } else {
+        throw InvalidQuerySyntax("CASE without ELSE is not supported yet"); 
+    }
+    
+    std::vector<LogicalFunction> thenResults(numWhenThens);
+    std::vector<LogicalFunction> whenConditions(numWhenThens);
+    for (int i = numWhenThens - 1; i >= 0; --i) {
+        thenResults[i] = std::move(stack.back());
+        stack.pop_back();
+        whenConditions[i] = std::move(stack.back());
+        stack.pop_back();
+    }
+    
+    LogicalFunction valueExpr;
+    if (hasValueExpr) {
+        valueExpr = std::move(stack.back());
+        stack.pop_back();
+    }
+    
+    if (hasValueExpr) {
+        for (auto& whenCond : whenConditions) {
+            whenCond = EqualsLogicalFunction(valueExpr, std::move(whenCond));
+        }
+    }
+    
+    stack.emplace_back(CaseLogicalFunction(std::move(whenConditions), std::move(thenResults), std::move(elseResult)));
 }
 
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
