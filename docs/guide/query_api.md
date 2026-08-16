@@ -326,10 +326,19 @@ The data type of a field determines its default deserializer type, which the use
 a separate deserializer for nullable fields is implemented.
 
 The system comes with the `(Nullable)Default<Typename>ValueDeserializer` implementations for every data type, which use `std::from_chars`.
-Value Deserializers can be configured with the flags `quoted` and `hasTrailingSpaces`, which need to be set by the `RawBufferIndex` during the construction of the Value Deserializer.
+Value Deserializers can be configured with the flags `quoted` and `hasTrailingSpaces`, which need to be set by the `InputFormatIndexer` during the construction of the Value Deserializer.
 
 Further Value Deserializer implementations, for example using third party parser libraries, may be added as plugin.
 Note, that each new deserializer implementations requires a separate "Nullable" variant.
+
+A deserializer does not emit traced code itself. It supplies a plain C++ function through `proxy()` and a name through `tracedName()`;
+the base class traces that function once per pipeline and calls it for every field that resolves to this deserializer, instead of
+inlining the work at each column. Two consequences for plugin authors:
+- Everything the deserializer does belongs in the proxy, where it is ordinary C++ and costs no trace operations. The proxy receives the
+  arena, so a deserializer that has to decode or assemble a value allocates there.
+- Nautilus interns traced functions by *name* and silently discards a second body registered under a name already in use. `tracedName()`
+  must therefore encode every configuration value the proxy bakes in — nullability, quoting, trailing-space handling — or two differently
+  configured fields will share one parse.
 
 The used Value Deserializer implementation of a specific field can be adjusted with the `VALUE_DESERIALIZERS` parameter of the input formatter by providing a comma-separated list of <Field-Name>:<Deserializer-Key> entries.
 Fields that the user did not configure keep the default deserializer of their data type.
@@ -381,14 +390,20 @@ Here, `"status"` refers to a field named `status`, whereas `'status'` is the lit
 ---
 ## Value Serializers
 Value Serializers convert binary values into their textual representations within textual formats like CSV or JSON.
-Thus, they are part of the output-formatting routine and handle the serialization of the actual values while the output formatter handles the remaining symbols like delimiting characters.
-Unlike the Value Deserializers, Value Serializers do not need to differentiate between nullable and non-nullable fields, as null-values will be detected and written by the output formatter.
+Thus, they are part of the output-formatting routine and handle the serialization of the actual values.
+Unlike the Value Deserializers, Value Serializers need no separate "Nullable" variants: the output formatter detects a null value and
+passes it down as a flag, together with the literal its format spells a null as — CSV uses `NULL`, JSON uses `null`. The serializer emits
+one of the two. It also receives the surrounding symbols as arguments: the prefix that precedes the value, which JSON uses for its
+`"field":`, and the delimiter that follows it. Writing all of them together keeps a field to a single write into the record buffer.
 
 The system comes with the `Default<Typename>ValueSerializer` implementations, as well as JSONCHARValueSerializer and JSONVARSIZEDValueSerializer for json-escaped strings and chars.
 The default implementations use `std::to_string` for int - string conversions and `fmt::format`, which utilizes the Dragonbox algorithm, for float - string conversions.
 Value Serializers can currently be configured with the `quoted` flag, which needs to be set by the output formatter that calls the Value Serializer.
 
 Further Value Serializer implementations, for example using third party parser libraries, may be added as plugin.
+As on the deserializer side, a serializer traces its body into one nautilus function per configuration and shares it across every field
+that uses it, so the same rule applies: `tracedName()` must encode everything the body bakes in. `quoted` in particular, since the CSV
+formatter takes it from its configuration while the JSON formatter hardcodes it.
 
 The used Value Serializer implementation of a specific field can be adjusted with the `VALUE_SERIALIZERS` parameter of the output formatter by providing a comma-separated list of <Field-Name>:<Serializer-Key> entries.
 Fields that the user did not configure keep the default serializer of their data type.
