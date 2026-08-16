@@ -32,6 +32,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
+#include <cpptrace/from_current_macros.hpp>
 #include <fmt/ranges.h>
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
@@ -152,6 +153,29 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 
     if (!exceptions.empty())
     {
+        /// Local plans that already started are not tracked in `state.queries` on this path, so nobody would ever stop them. A network
+        /// sink whose downstream local plan never started finds no receiving end for its channel, so the receiver denies it. The
+        /// sender treats a denied channel as a transient failure and retries forever, which blocks worker shutdown. Thus, we stop the
+        /// partial deployment here.
+        for (const auto& [host, startedQueryIds] : localQueries)
+        {
+            for (const auto& localQueryId : startedQueryIds)
+            {
+                CPPTRACE_TRY
+                {
+                    if (const auto result = backends.at(host).stop(localQueryId); not result)
+                    {
+                        NES_WARNING(
+                            "Could not stop local query {} on {} while unwinding a failed start: {}", localQueryId, host, result.error());
+                    }
+                }
+                CPPTRACE_CATCH(const std::exception& exception)
+                {
+                    NES_WARNING(
+                        "Could not stop local query {} on {} while unwinding a failed start: {}", localQueryId, host, exception.what());
+                }
+            }
+        }
         return std::unexpected(exceptions);
     }
 
