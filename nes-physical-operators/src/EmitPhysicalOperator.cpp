@@ -32,6 +32,7 @@
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -63,23 +64,32 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    auto writeResult
-        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-    /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
-    /// We emit and create a new record buffer
-    if (!writeResult.successful)
+    /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted
+    /// first; the retry on the fresh buffer always succeeds. The retry runs through a traced loop instead of a second
+    /// straight-line writeRecord call, so the (per-field heavy) write code is traced only once per call site.
+    nautilus::val<bool> retryWrite = true;
+    while (retryWrite)
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        const auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
-        emitState->outputIndex = uint64_t{0};
-
-        /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
-        writeResult
-            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        const auto writeResult = bufferRef->writeRecord(
+            ctx.getCompilationContext(),
+            emitState->outputIndex,
+            emitState->resultBuffer,
+            record,
+            ctx.pipelineMemoryProvider.bufferProvider);
+        if (writeResult.successful)
+        {
+            emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
+            retryWrite = false;
+        }
+        else
+        {
+            emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+            const auto resultBufferRef = ctx.allocateBuffer();
+            emitState->resultBuffer = RecordBuffer(resultBufferRef);
+            emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
+            emitState->outputIndex = uint64_t{0};
+        }
     }
-    emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const

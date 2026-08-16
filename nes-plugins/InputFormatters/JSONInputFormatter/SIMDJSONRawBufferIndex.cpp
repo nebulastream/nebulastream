@@ -67,6 +67,7 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
 }
 
 void writeValueToRecord(
+    CompilationContext& compilationContext,
     const DataType dataType,
     Record& record,
     const QualifiedIdentifier& fieldName,
@@ -74,58 +75,53 @@ void writeValueToRecord(
     const nautilus::val<RawBufferIndex*>& rawBufferIndex,
     const nautilus::val<const InputFormatIndexer*>& indexer)
 {
+    /// Type dispatch: the lambda binds the shared arguments once, so each case below only selects the C++ type.
+    /// Without it, every case would repeat the full parseJsonFixedSizeIntoVarVal call with all its arguments.
+    const auto parseFixedSizeField = [&]<typename T>
+    {
+        record.write(
+            fieldName, parseJsonFixedSizeIntoVarVal<T>(compilationContext, dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+    };
     switch (dataType.type)
     {
-        case DataType::Type::INT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::INT8:
+            parseFixedSizeField.operator()<int8_t>();
             return;
-        }
-        case DataType::Type::INT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::INT16:
+            parseFixedSizeField.operator()<int16_t>();
             return;
-        }
-        case DataType::Type::INT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::INT32:
+            parseFixedSizeField.operator()<int32_t>();
             return;
-        }
-        case DataType::Type::INT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::INT64:
+            parseFixedSizeField.operator()<int64_t>();
             return;
-        }
-        case DataType::Type::UINT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::UINT8:
+            parseFixedSizeField.operator()<uint8_t>();
             return;
-        }
-        case DataType::Type::UINT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::UINT16:
+            parseFixedSizeField.operator()<uint16_t>();
             return;
-        }
-        case DataType::Type::UINT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::UINT32:
+            parseFixedSizeField.operator()<uint32_t>();
             return;
-        }
-        case DataType::Type::UINT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::UINT64:
+            parseFixedSizeField.operator()<uint64_t>();
             return;
-        }
-        case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::FLOAT32:
+            parseFixedSizeField.operator()<float>();
             return;
-        }
-        case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::FLOAT64:
+            parseFixedSizeField.operator()<double>();
             return;
-        }
-        case DataType::Type::CHAR: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::CHAR:
+            parseFixedSizeField.operator()<char>();
             return;
-        }
-        case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, rawBufferIndex, indexer));
+        case DataType::Type::BOOLEAN:
+            parseFixedSizeField.operator()<bool>();
             return;
-        }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseJsonVarSized(fieldIndex, rawBufferIndex, indexer, dataType.nullable));
+            record.write(fieldName, parseJsonVarSized(compilationContext, fieldIndex, rawBufferIndex, indexer, dataType.nullable));
             return;
         }
         case DataType::Type::UNDEFINED:
@@ -135,6 +131,7 @@ void writeValueToRecord(
 }
 
 Record SIMDJSONRawBufferIndex::readSpanningRecord(
+    CompilationContext& compilationContext,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
@@ -143,10 +140,14 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const TupleBufferRef& bufferRef) const
 {
     Record record;
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters return by value, so hoist them out of the loop: on a wide schema they would otherwise rebuild
+    /// the whole vector once per field while tracing.
+    const auto& allFieldNames = bufferRef.getAllFieldNames();
+    const auto& allFieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = allFieldDataTypes.size();
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
+        const auto fieldName = allFieldNames.at(i);
 
         if (std::ranges::find(projections, fieldName) == projections.end())
         {
@@ -154,9 +155,15 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         }
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto fieldDataType = allFieldDataTypes.at(i);
         writeValueToRecord(
-            fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, nautilus::val<const InputFormatIndexer*>(&indexer));
+            compilationContext,
+            fieldDataType,
+            record,
+            fieldName,
+            fieldIndex,
+            rawBufferIndex,
+            nautilus::val<const InputFormatIndexer*>(&indexer));
     }
     /// Increment iterator and return record
     nautilus::invoke(

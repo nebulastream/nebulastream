@@ -340,7 +340,13 @@ void parseLeadingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->leadingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexer, leadingRawBufferIndex, bufferRef);
+            executionCtx.getCompilationContext(),
+            projections,
+            spanningRecordPtr,
+            nautilus::val<uint64_t>(0),
+            indexer,
+            leadingRawBufferIndex,
+            bufferRef);
         executeChild(executionCtx, record);
     }
 }
@@ -359,7 +365,13 @@ void parseRecordsInRawBuffer(
     while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
     {
         auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            projections, recordBuffer.getMemArea(), bufferRecordIdx, indexer, rawBufferIndexVal, bufferRef);
+            executionCtx.getCompilationContext(),
+            projections,
+            recordBuffer.getMemArea(),
+            bufferRecordIdx,
+            indexer,
+            rawBufferIndexVal,
+            bufferRef);
         executeChild(executionCtx, record);
         bufferRecordIdx += 1;
     }
@@ -389,7 +401,13 @@ void parseTrailingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->trailingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexer, trailingRawBufferIndex, bufferRef);
+            executionCtx.getCompilationContext(),
+            projections,
+            spanningRecordPtr,
+            nautilus::val<uint64_t>(0),
+            indexer,
+            trailingRawBufferIndex,
+            bufferRef);
         executeChild(executionCtx, record);
     }
 }
@@ -410,6 +428,13 @@ Record InputFormatter::readRecord(const std::vector<Record::RecordFieldIdentifie
 
 TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
     nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+{
+    INVARIANT(false, "unsupported operation on InputFormatter");
+    std::unreachable();
+}
+
+TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
+    CompilationContext&, nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
 {
     INVARIANT(false, "unsupported operation on InputFormatter");
     std::unreachable();

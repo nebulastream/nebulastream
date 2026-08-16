@@ -50,6 +50,7 @@ public:
     static const FieldIndex* getIndexValuesProxy(const RawBufferIndex* rawBufferIndex);
 
     [[nodiscard]] Record readSpanningRecord(
+        CompilationContext& compilationContext,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
