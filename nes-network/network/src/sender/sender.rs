@@ -16,11 +16,13 @@ use super::control::*;
 use crate::channel::Communication;
 use crate::protocol::*;
 use crate::sender::channel::{ChannelCommand, ChannelCommandQueue};
+use async_channel::TrySendError;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
+use tokio::sync::oneshot::error::TryRecvError;
 use tracing::{Instrument, debug, info_span};
 
 /// Timeout for graceful tokio runtime shutdown
@@ -80,6 +82,7 @@ impl Default for SenderConfig {
 /// ```
 pub struct SenderChannel {
     queue: ChannelCommandQueue,
+    pending_flush: Mutex<Option<oneshot::Receiver<bool>>>,
 }
 
 /// Result of a non-blocking send operation on a `SenderChannel`.
@@ -120,27 +123,50 @@ impl SenderChannel {
             _ => unreachable!(),
         }
     }
-    /// Flushes the network writer and checks if all data has been acknowledged.
+    /// Requests a flush and checks whether all queued data has been acknowledged.
     ///
-    /// This blocking operation flushes the underlying network stream to ensure
-    /// buffered data is sent, then checks the state of the channel queues.
+    /// This method is non-blocking with respect to network I/O. It submits at most
+    /// one flush request to the channel handler and polls that request on subsequent
+    /// calls. Callers should retry when `Ok(false)` is returned.
     ///
     /// # Returns
     ///
-    /// - `Ok(true)`: All data has been sent and acknowledged (both pending and in-flight queues are empty)
-    /// - `Ok(false)`: Flush completed but data is still pending or awaiting acknowledgment
-    /// - `Err(_)`: The network service or channel was closed
+    /// - `Ok(true)` if all pending data has been sent and acknowledged.
+    /// - `Ok(false)` if the flush request is still pending, the command queue is
+    ///   currently full, or data is still awaiting transmission or acknowledgment.
+    /// - `Err(_)` if the network service or channel has closed.
     ///
-    /// # Blocking
-    ///
-    /// This method blocks the calling thread. Do not call from async contexts without proper handling.
+    /// Concurrent calls are serialized internally to ensure that only one flush
+    /// request is outstanding at a time.
     pub fn flush(&self) -> Result<bool> {
-        let (tx, rx) = oneshot::channel();
-        self.queue
-            .send_blocking(ChannelCommand::Flush(tx))
-            .map_err(|_| "Network Service Closed")?;
-        rx.blocking_recv()
-            .map_err(|_| "Network Service Closed".into())
+        let mut pending_flush = self.pending_flush.lock().expect("BUG: IO-Thread Crashed");
+        if let Some(mut pending_flush_rx) = pending_flush.take() {
+            return match pending_flush_rx.try_recv() {
+                Ok(r) => Ok(r),
+                Err(TryRecvError::Empty) => {
+                    *pending_flush = Some(pending_flush_rx);
+                    Ok(false)
+                }
+                Err(TryRecvError::Closed) => Err("Network Service Closed".into()),
+            };
+        }
+
+        let (tx, mut rx) = oneshot::channel();
+        if let Err(e) = self.queue.try_send(ChannelCommand::Flush(tx)) {
+            return match e {
+                TrySendError::Full(_) => Ok(false),
+                TrySendError::Closed(_) => Err("Network Service Closed".into()),
+            };
+        }
+
+        match rx.try_recv() {
+            Ok(r) => Ok(r),
+            Err(TryRecvError::Empty) => {
+                *pending_flush = Some(rx);
+                Ok(false)
+            }
+            Err(TryRecvError::Closed) => Err("Network Service Closed".into()),
+        }
     }
 
     /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
@@ -372,7 +398,10 @@ impl<C: Communication + 'static> NetworkService<C> {
 
         // Receive the internal queue handle for the data channel
         let internal = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
-        Ok(SenderChannel { queue: internal })
+        Ok(SenderChannel {
+            queue: internal,
+            pending_flush: Default::default(),
+        })
     }
 
     /// Shuts down the network service and all active channels.
