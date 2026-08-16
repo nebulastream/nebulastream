@@ -162,6 +162,9 @@ For further information about our frontends, check out the [Frontend Reference](
 - Follow the [development guide](docs/development/development.md) for environment setup and tooling expectations.
 - Code style is enforced with `clang-format`, `clang-tidy`, license checks, and pragma guards; run the `format` target before submitting patches.
 - Review the Git workflow aids in [Useful git commands](docs/git/useful_commands.md), [PR checklist](docs/git/checklist_pr.md), and IDE tips in [CLion tricks](docs/git/clion_tricks.md).
+- Before working on an issue or opening a pull request, ask a maintainer to assign the issue to you. Otherwise, we will have to close the pull request.
+- Before opening a pull request, verify that the project completes a clean configure and build and that all unit and system tests pass.
+- Describe your pull request using our [pull request template](.github/PULL_REQUEST_TEMPLATE.md).
 - External contributors should work from personal forks and open pull requests referencing their forked branches; direct pushes to this repository are reserved for maintainers.
 - Adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
