@@ -75,7 +75,14 @@ void NetworkSink::start(PipelineExecutionContext&)
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
 {
-    PRECONDITION(channel, "Sender channel is not initialized");
+    /// A pipeline can be stopped without ever having been started, e.g. when the deployment of a query is cancelled because another
+    /// pipeline failed to start. Nothing was registered, so there is nothing to flush or close.
+    if (!channel)
+    {
+        NES_DEBUG("Sender channel {} was never registered, nothing to close", channelId);
+        return;
+    }
+
     if (!closed)
     {
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");

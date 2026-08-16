@@ -647,6 +647,14 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         },
         [&](const TupleBuffer&, std::chrono::milliseconds duration)
         {
+            if (terminating)
+            {
+                /// A stage that cannot finish its stop (e.g. a network sink whose peer never accepted the channel) would otherwise
+                /// add this task into the queue forever, and the worker threads would never see an empty queue.
+                ENGINE_LOG_WARNING("Dropping pipeline stop retry during query engine termination");
+                return;
+            }
+
             StopPipelineTask repeatedTask(
                 stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));
             if (duration.count() > 0)
