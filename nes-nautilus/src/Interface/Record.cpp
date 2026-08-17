@@ -35,12 +35,14 @@ Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : rec
 
 const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) const
 {
-    if (not recordFields.contains(recordFieldIdentifier))
+    /// One lookup rather than contains() followed by at(): this runs per field per record.
+    const auto field = recordFields.find(recordFieldIdentifier);
+    if (field == recordFields.end())
     {
         auto allFields = fmt::format("{}", fmt::join(std::views::keys(recordFields), ", "));
         throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
     }
-    return recordFields.at(recordFieldIdentifier);
+    return field->second;
 }
 
 void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal)

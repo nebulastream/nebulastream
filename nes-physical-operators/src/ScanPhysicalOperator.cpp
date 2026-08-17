@@ -30,6 +30,8 @@
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
 
+#include <CompilationContext.hpp>
+
 namespace NES
 {
 
@@ -83,6 +85,12 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+}
+
+void ScanPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    bufferRef->setup(compilationContext);
+    setupChild(executionCtx, compilationContext);
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

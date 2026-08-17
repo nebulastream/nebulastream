@@ -26,6 +26,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <CompilationContext.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 
@@ -100,6 +101,17 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
         successful = true;
     }
     return {.successful = successful, .writtenRecords = writtenRecords};
+}
+
+TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
+    CompilationContext&,
+    nautilus::val<uint64_t>& recordIndex,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    /// A memory layout registers no shared nautilus functions; fall through to the plain overload.
+    return writeRecord(recordIndex, recordBuffer, rec, bufferProvider);
 }
 
 std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const

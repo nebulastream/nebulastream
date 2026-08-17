@@ -33,6 +33,9 @@ public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    /// Resolves the buffer ref's shared nautilus functions, then continues down the pipeline -- scan is not a leaf,
+    /// so dropping the setupChild() the default does would silently skip every operator below it.
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

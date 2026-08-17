@@ -49,7 +49,20 @@ OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdenti
     std::unreachable();
 }
 
+void OutputFormatterBufferRef::setup(CompilationContext& compilationContext)
+{
+    formatter->resolveSerializers(compilationContext, getAllDataTypes());
+}
+
 TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
+    nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+{
+    INVARIANT(false, "OutputFormatterBufferRef requires the writeRecord overload that provides a CompilationContext.");
+    std::unreachable();
+}
+
+TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
+    CompilationContext& compilationContext,
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -74,8 +87,8 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
             const auto fieldAddress = recordAddress + writtenForThisRecord;
             const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
             const auto& value = rec.read(name);
-            const auto amountWritten
-                = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
+            const auto amountWritten = formatter->writeFormattedValue(
+                compilationContext, value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
             writtenForThisRecord += amountWritten;
         }
     }

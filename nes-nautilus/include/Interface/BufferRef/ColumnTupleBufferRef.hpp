@@ -70,6 +70,13 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    WriteRecordResult writeRecord(
+        CompilationContext& compilationContext,
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 };
 
 }

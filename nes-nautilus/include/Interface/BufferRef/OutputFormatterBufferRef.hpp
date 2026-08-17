@@ -64,7 +64,17 @@ public:
         const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
+    /// Resolves the formatter's serializers before any worker writes a record.
+    void setup(CompilationContext& compilationContext) override;
+
     WriteRecordResult writeRecord(
+        nautilus::val<uint64_t>& bytesWritten,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    WriteRecordResult writeRecord(
+        CompilationContext& compilationContext,
         nautilus::val<uint64_t>& bytesWritten,
         const RecordBuffer& recordBuffer,
         const Record& rec,
