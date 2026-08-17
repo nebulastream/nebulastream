@@ -340,6 +340,7 @@ void parseLeadingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->leadingSpanningTupleRawBufferIndex->readSpanningRecord(
+            executionCtx.getCompilationContext(),
             projections,
             spanningRecordPtr,
             nautilus::val<uint64_t>(0),
@@ -365,6 +366,7 @@ void parseRecordsInRawBuffer(
     while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
     {
         auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
+            executionCtx.getCompilationContext(),
             projections,
             recordBuffer.getMemArea(),
             bufferRecordIdx,
@@ -401,6 +403,7 @@ void parseTrailingRecord(
             = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleRawBufferIndex));
 
         auto record = getIndexPhaseResult()->trailingSpanningTupleRawBufferIndex->readSpanningRecord(
+            executionCtx.getCompilationContext(),
             projections,
             spanningRecordPtr,
             nautilus::val<uint64_t>(0),
@@ -431,6 +434,19 @@ TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
 {
     INVARIANT(false, "unsupported operation on InputFormatter");
     std::unreachable();
+}
+
+TupleBufferRef::WriteRecordResult InputFormatter::writeRecord(
+    CompilationContext&, nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const
+{
+    INVARIANT(false, "unsupported operation on InputFormatter");
+    std::unreachable();
+}
+
+void InputFormatter::setup(CompilationContext& compilationContext)
+{
+    inputFormatIndexer->resolveDeserializers(compilationContext);
+    inputFormatIndexer->resolveFieldDeserializers(memoryProvider->getAllFieldNames(), memoryProvider->getAllDataTypes());
 }
 
 std::vector<Record::RecordFieldIdentifier> InputFormatter::getAllFieldNames() const

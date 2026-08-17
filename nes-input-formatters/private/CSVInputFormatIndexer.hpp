@@ -118,6 +118,9 @@ public:
 
         /// Override the datatype defaults for the fields that the user configured a deserializer for
         fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, fieldNames);
+
+        /// These are the temporary defaults for our CSV format. Later, they will be set by the user in the source definition.
+        createDeserializers(/*quoted*/ false, /*hasTrailingSpaces*/ false);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor

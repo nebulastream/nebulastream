@@ -38,6 +38,7 @@
 #include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexer.hpp>
 #include <RawBufferIndex.hpp>
@@ -154,6 +155,7 @@ SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::
 }
 
 Record SIMDJSONRawBufferIndex::readSpanningRecord(
+    CompilationContext& compilationContext,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
@@ -163,10 +165,14 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const ArenaRef& arena) const
 {
     Record record;
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters return by value, so hoist them out of the loop: on a wide schema they would otherwise rebuild
+    /// the whole vector once per field while tracing.
+    const auto allFieldNames = bufferRef.getAllFieldNames();
+    const auto allFieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = allFieldDataTypes.size();
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
+        const auto& fieldName = allFieldNames.at(i);
 
         if (std::ranges::find(projections, fieldName) == projections.end())
         {
@@ -174,7 +180,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         }
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto fieldDataType = allFieldDataTypes.at(i);
 
         /// Retrieve the address and size of the raw field value
         /// Workaround to pass nullable into the template. Will be resolved during tracetime as nullable will always be known before compiling the query.
@@ -187,12 +193,9 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         const nautilus::val<uint64_t> size
             = *getMemberWithOffset<uint64_t>(fieldAccessResult, offsetof(RawJsonAccessResult, sizeOfRawJson));
 
-        /// Create the deserializer for the field and deserialize the value.
-        /// These are the temporary defaults for our JSON format. Later, these arguments will be set by the user in the source definition.
-        const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
-        const std::unique_ptr<ValueDeserializer> valueDeserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal parsedVal = valueDeserializer->deserializeToVarVal(address, size, indexer.getNullValues(), arena);
+        /// Every later field of the same type reaches the same traced function rather than inlining the decode.
+        const VarVal parsedVal = indexer.getDeserializerAt(i, fieldName, fieldDataType)
+                                     .deserializeToVarVal(compilationContext, address, size, indexer.getNullValues(), arena, fieldDataType);
         record.write(fieldName, parsedVal);
     }
     /// Increment iterator and return record

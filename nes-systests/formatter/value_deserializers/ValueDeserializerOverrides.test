@@ -14,6 +14,16 @@ ATTACH INLINE
 1,16777217.0,16777217.0
 2,16777217.0,16777217.0
 
+# The same override on a nullable field. Nullable and non-nullable fields resolve to separate deserializer
+# instances, so this covers the nullable half of that resolution as well as the NULL literal itself.
+CREATE LOGICAL SOURCE nullableSensors(sensor_id UINT64 NOT NULL, coarse FLOAT64, precise FLOAT64);
+CREATE PHYSICAL SOURCE FOR nullableSensors TYPE File SET(
+'coarse:DefaultF32,precise:DefaultF64' as "INPUT_FORMATTER".VALUE_DESERIALIZERS
+);
+ATTACH INLINE
+1,16777217.0,16777217.0
+2,,16777217.0
+
 # The configured field name contains a typo and therefore names no field of the schema.
 CREATE LOGICAL SOURCE typoSensors(sensor_id UINT64 NOT NULL, coarse FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR typoSensors TYPE File SET(
@@ -27,6 +37,12 @@ SELECT * FROM sensors INTO FILE();
 ----
 1,16777216.0,16777217.0
 2,16777216.0,16777217.0
+
+# Description: The override applies to a nullable field too, and an empty field still deserializes to NULL.
+SELECT * FROM nullableSensors INTO FILE();
+----
+1,16777216.0,16777217.0
+2,NULL,16777217.0
 
 # Description: A field name that names no field of the schema is reported instead of being silently ignored.
 SELECT * FROM typoSensors INTO FILE();

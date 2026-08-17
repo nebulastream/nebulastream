@@ -64,6 +64,7 @@ const FieldIndex* FieldOffsetRawBufferIndex::getIndexValuesProxy(const RawBuffer
 }
 
 Record FieldOffsetRawBufferIndex::readSpanningRecord(
+    CompilationContext& compilationContext,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>& recordBufferPtr,
     const nautilus::val<uint64_t>& recordIndex,
@@ -74,17 +75,22 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters return by value, so hoist them out of the loop: on a wide schema they would otherwise rebuild
+    /// the whole vector once per field while tracing.
+    const auto fieldNames = bufferRef.getAllFieldNames();
+    const auto fieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = fieldDataTypes.size();
+    /// Identical for every field of the record, so it is computed once instead of per field.
+    const auto numPriorFields = recordIndex * (numberOfFields + 1);
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto& fieldName = fieldNames.at(i);
+        const auto fieldDataType = fieldDataTypes.at(i);
         if (not includesField(projections, fieldName))
         {
             continue;
         }
 
-        const auto numPriorFields = recordIndex * (numberOfFields + 1);
         const auto fieldOffsetAddress = indexBufferPtr + (numPriorFields + i);
         const auto fieldOffsetEndAddress = indexBufferPtr + (numPriorFields + i + 1);
         const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(fieldOffsetAddress);
@@ -94,12 +100,10 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
 
-        /// Retrieve value deserializer for the field and deserialize the value.
-        /// These are the temporary defaults for our CSV format. Later, these arguments will be set by the user in the source definition.
-        const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = false, .hasTrailingSpaces = false};
-        const std::unique_ptr<ValueDeserializer> deserializer
-            = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal deserializedVal = deserializer->deserializeToVarVal(fieldAddress, fieldSize, indexer.getNullValues(), arena);
+        /// Every later field of the same type reaches the same traced function rather than inlining the parse.
+        const VarVal deserializedVal
+            = indexer.getDeserializerAt(i, fieldName, fieldDataType)
+                  .deserializeToVarVal(compilationContext, fieldAddress, fieldSize, indexer.getNullValues(), arena, fieldDataType);
         record.write(fieldName, deserializedVal);
     }
     return record;

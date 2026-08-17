@@ -21,6 +21,7 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -57,6 +58,7 @@ public:
     /// Traced by the InputFormatter. Passing 'rawBufferIndex' as a nautilus value is necessary to bake the 'this' address of
     /// the RawBufferIndex used during tracing into the compiled code.
     [[nodiscard]] virtual Record readSpanningRecord(
+        CompilationContext& compilationContext,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,

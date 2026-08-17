@@ -26,6 +26,7 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 #include <val_arith.hpp>
@@ -45,6 +46,7 @@ public:
     hasNext(const nautilus::val<uint64_t>& tupleIdx, const nautilus::val<RawBufferIndex*>& rawBufferIndex) const override;
 
     [[nodiscard]] Record readSpanningRecord(
+        CompilationContext& compilationContext,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& /*recordBufferPtr*/,
         const nautilus::val<uint64_t>& /*recordIndex*/,
