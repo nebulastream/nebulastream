@@ -30,6 +30,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <CompilationContext.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -42,6 +43,7 @@ public:
     explicit JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor);
 
     [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
+        CompilationContext& compilationContext,
         const VarVal& value,
         const DataType& fieldType,
         uint64_t fieldIndex,
@@ -57,7 +59,9 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
 
 private:
-    std::vector<std::string> canonicalFieldNames;
+    /// The '"name":' that precedes each value, with the opening brace folded into the first field. Built in the
+    /// constructor: it must stay valid at execution time, and it hands the serializer a ready constant.
+    std::vector<std::string> fieldPrefixes;
 };
 
 }

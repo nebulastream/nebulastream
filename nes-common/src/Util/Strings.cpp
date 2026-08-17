@@ -120,13 +120,10 @@ std::string formatFloat(std::floating_point auto value)
         return formatted;
     }
 
+    /// Trim in place rather than returning a substr, which would build a second string.
     const size_t lastNonZero = formatted.find_last_not_of('0');
-    if (lastNonZero == decimalPos)
-    {
-        return formatted.substr(0, decimalPos + 2);
-    }
-
-    return formatted.substr(0, lastNonZero + 1);
+    formatted.resize(lastNonZero == decimalPos ? decimalPos + 2 : lastNonZero + 1);
+    return formatted;
 }
 
 template <>

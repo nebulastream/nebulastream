@@ -15,11 +15,27 @@
 #include <OutputFormatters/OutputFormatter.hpp>
 
 #include <ostream>
+#include <ranges>
+
+#include <OutputFormatters/OutputFormatterUtil.hpp>
+#include <OutputFormatters/ValueSerializer.hpp>
 
 namespace NES
 {
 std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj)
 {
     return obj.toString(os);
+}
+
+void OutputFormatter::createSerializers(const ValueSerializerConfig& config)
+{
+    for (const auto& serializerType : std::views::values(serializerTypes))
+    {
+        serializers.try_emplace(serializerType, provideValueSerializer(serializerType, config));
+    }
+    for (const auto& serializerType : std::views::values(fieldSerializerTypes))
+    {
+        serializers.try_emplace(serializerType, provideValueSerializer(serializerType, config));
+    }
 }
 }

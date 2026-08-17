@@ -39,10 +39,10 @@
 #include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <OutputFormatterValidationRegistry.hpp>
 #include <function.hpp>
-#include <select.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -50,27 +50,6 @@
 
 namespace NES
 {
-
-namespace
-{
-void writeValue(
-    const VarVal& value,
-    const nautilus::val<int8_t*>& fieldPointer,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize,
-    const std::string& serializerType,
-    const bool& quoteStrings)
-{
-    const ValueSerializerConfig config{.quoted = quoteStrings};
-    const std::unique_ptr<ValueSerializer> serializer = provideValueSerializer(serializerType, config);
-    const nautilus::val<uint64_t> amountWritten
-        = serializer->serializeAndWrite(value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer);
-    written += amountWritten;
-    currentRemainingSize -= amountWritten;
-}
-}
 
 CSVOutputFormatter::CSVOutputFormatter(
     const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
@@ -96,83 +75,38 @@ CSVOutputFormatter::CSVOutputFormatter(
     /// Override the datatype defaults for the fields that the user configured a serializer for
     fieldSerializerTypes
         = parseValueSerializerOverrides(descriptor.getFromConfig(OutputFormatterDescriptor::VALUE_SERIALIZERS), this->fieldNames);
+
+    createSerializers(ValueSerializerConfig{.quoted = quoteStrings});
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
+    CompilationContext& compilationContext,
     const VarVal& value,
     const DataType& fieldType,
-    uint64_t fieldIndex,
+    const uint64_t fieldIndex,
     const nautilus::val<int8_t*>& fieldPointer,
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val<uint64_t> written{0};
-    nautilus::val<uint64_t> currentRemainingSize = remainingSize;
+    /// A trace-time constant: the tuple delimiter after the last field, the field delimiter otherwise. Both are
+    /// members of this formatter, which outlives the pipeline.
+    const char* delimiter = (fieldIndex == fieldNames.size() - 1) ? tupleDelimiter.c_str() : fieldDelimiter.c_str();
 
-    /// Handle NULL values and write value
-    if (value.isNullable())
-    {
-        if (value.isNull())
-        {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeValueToBuffer,
-                nautilus::val<const char*>{"NULL"},
-                nautilus::val<size_t>{4},
-                currentRemainingSize,
-                recordBuffer.getReference(),
-                bufferProvider,
-                fieldPointer + written);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-        }
-        else
-        {
-            writeValue(
-                value,
-                fieldPointer,
-                recordBuffer,
-                bufferProvider,
-                written,
-                currentRemainingSize,
-                getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
-                quoteStrings);
-        }
-    }
-    else
-    {
-        writeValue(
+    /// The serializer writes value-or-NULL and the delimiter in one go, so nothing here branches on isNull.
+    const nautilus::val<bool> isNull = value.isNullable() ? value.isNull() : nautilus::val<bool>{false};
+    return getSerializerAt(fieldIndex, fieldNames.at(fieldIndex), fieldType.type)
+        .serializeAndWrite(
+            compilationContext,
             value,
-            fieldPointer,
+            isNull,
+            nautilus::val<const char*>{""},
+            nautilus::val<const char*>{"NULL"},
+            nautilus::val<const char*>{delimiter},
+            remainingSize,
             recordBuffer,
             bufferProvider,
-            written,
-            currentRemainingSize,
-            getSerializerType(fieldNames.at(fieldIndex), fieldType.type),
-            quoteStrings);
-    }
-
-    /// Write either the field delimiter or the tuple delimiter, depending on the field index
-    const auto delimiter = nautilus::select(
-        nautilus::val<uint64_t>{fieldIndex} == nautilus::val<uint64_t>{fieldNames.size()} - 1,
-        nautilus::val<const char*>{tupleDelimiter.c_str()},
-        nautilus::val<const char*>{fieldDelimiter.c_str()});
-
-    const nautilus::val<size_t> delimiterSize = nautilus::select(
-        fieldIndex == nautilus::val<uint64_t>{fieldNames.size()} - 1,
-        nautilus::val<size_t>{tupleDelimiter.size()},
-        nautilus::val<size_t>{fieldDelimiter.size()});
-
-    /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
-    written += nautilus::invoke(
-        writeValueToBuffer,
-        delimiter,
-        delimiterSize,
-        currentRemainingSize,
-        recordBuffer.getReference(),
-        bufferProvider,
-        fieldPointer + written);
-    return written;
+            fieldPointer);
 }
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)

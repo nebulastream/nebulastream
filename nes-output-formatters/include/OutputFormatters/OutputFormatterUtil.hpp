@@ -40,6 +40,18 @@
 
 namespace NES
 {
+
+/// Scratch space for composing one field's output before it is written into the record buffer.
+/// Serializers run per field per record in both execution modes, so building a fresh std::string there
+/// allocates on the hot path; clear() keeps the capacity, which makes the steady state allocation-free.
+/// The buffer is only valid until the same thread serializes its next field.
+inline std::string& serializationBuffer()
+{
+    thread_local std::string buffer;
+    buffer.clear();
+    return buffer;
+}
+
 /// Write the serialized value represented by valuePtr and valueSize completely into the buffer.
 /// Child buffers may be allocated if it does not fit completely into the main memory of the tuple buffer.
 /// String may span between children or between the main buffer and the first child.
@@ -92,12 +104,6 @@ inline uint64_t writeValueToBuffer(
     }
     return writtenToMainMemory;
 }
-
-/// Config parameters for value serializers
-struct ValueSerializerConfig
-{
-    bool quoted;
-};
 
 /// Resolves the serializer that the user configured for individual fields against the fields of the output schema.
 /// The function expects the overrides string to be formatted like this: [FIELD-NAME]:[SERIALIZER-KEY],...

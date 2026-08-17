@@ -14,419 +14,90 @@
 
 #include <ValueSerializers/DefaultValueSerializers.hpp>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <string_view>
-#include <DataTypes/VarVal.hpp>
-#include <DataTypes/VariableSizedData.hpp>
-#include <Interface/RecordBuffer.hpp>
-#include <OutputFormatters/OutputFormatterUtil.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <rapidcheck/shrink/Shrink.h>
+
 #include <ValueSerializerRegistry.hpp>
-#include <function.hpp>
-#include <val_arith.hpp>
-#include <val_bool.hpp>
-#include <val_ptr.hpp>
-
-namespace NES::DefaultValueSerializer
-{
-
-template <typename T>
-uint64_t serializeNumeric(
-    const T value,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    const std::string serializedValue = std::to_string(value);
-    return writeValueToBuffer(
-        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-uint64_t serializeChar(
-    const char value,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    const std::string serializedValue{value};
-    return writeValueToBuffer(
-        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-template <typename T>
-uint64_t serializeFloat(
-    const T value,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    const std::string serializedValue = formatFloat(value);
-    return writeValueToBuffer(
-        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-uint64_t serializeBool(
-    const bool value,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    const std::string serializedValue = value ? "true" : "false";
-    return writeValueToBuffer(
-        serializedValue.data(), serializedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-template <bool Quoted>
-uint64_t serializeVarsized(
-    const int8_t* valueAddress,
-    const uint64_t valueSize,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    const std::string_view stringFormattedValue{reinterpret_cast<const char*>(valueAddress), valueSize};
-    if constexpr (Quoted)
-    {
-        /// Quote varsized and replace all " instances in the string with ""
-        uint64_t writtenBytes = 0;
-        writtenBytes += writeValueToBuffer(
-            "\"", 1, remainingSpace - writtenBytes, tupleBuffer, bufferProvider, bufferStartingAddress + writtenBytes);
-
-        size_t substringStart = 0;
-        size_t quoteOffset = stringFormattedValue.find('\"');
-        while (quoteOffset != std::string::npos)
-        {
-            /// Write substring until the quote and then an additional quote
-            writtenBytes += writeValueToBuffer(
-                stringFormattedValue.substr(substringStart, quoteOffset + 1).data(),
-                stringFormattedValue.substr(substringStart, quoteOffset + 1).size(),
-                remainingSpace - writtenBytes,
-                tupleBuffer,
-                bufferProvider,
-                bufferStartingAddress + writtenBytes);
-            writtenBytes += writeValueToBuffer(
-                "\"", 1, remainingSpace - writtenBytes, tupleBuffer, bufferProvider, bufferStartingAddress + writtenBytes);
-            substringStart += quoteOffset + 1;
-            quoteOffset = stringFormattedValue.substr(substringStart).find('\"');
-        }
-
-        writtenBytes += writeValueToBuffer(
-            stringFormattedValue.substr(substringStart).data(),
-            stringFormattedValue.substr(substringStart).size(),
-            remainingSpace - writtenBytes,
-            tupleBuffer,
-            bufferProvider,
-            bufferStartingAddress + writtenBytes);
-        writtenBytes += writeValueToBuffer(
-            "\"", 1, remainingSpace - writtenBytes, tupleBuffer, bufferProvider, bufferStartingAddress + writtenBytes);
-        return writtenBytes;
-    }
-    else
-    {
-        return writeValueToBuffer(
-            stringFormattedValue.data(), stringFormattedValue.size(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-    }
-}
-}
 
 namespace NES
 {
-nautilus::val<uint64_t> DefaultCHARValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeChar, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
-}
 
-nautilus::val<uint64_t> DefaultF32ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
+namespace
 {
-    const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeFloat<float>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
+/// The traced function is named after the C++ type it formats, not after the registry key, so that datatypes
+/// sharing a body share its single instantiation -- INT8, INT16 and INT32 all serialize through int32_t.
+template <typename T>
+ValueSerializerRegistryReturnType makeFixedSize(const char* tracedName)
+{
+    return std::make_unique<DefaultFixedSizeValueSerializer<T>>(tracedName);
 }
-
-nautilus::val<uint64_t> DefaultF64ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeFloat<double>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultINT8ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<int8_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultINT16ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<int16_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultINT32ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<int32_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultINT64ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<int64_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<int64_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultBOOLValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<bool>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeBool, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultUINT8ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<uint8_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultUINT16ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<uint16_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<uint16_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultUINT32ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<uint32_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<uint32_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultUINT64ValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<nautilus::val<uint64_t>>();
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeNumeric<uint64_t>,
-        castedVal,
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
-}
-
-nautilus::val<uint64_t> DefaultVARSIZEDValueSerializer::serializeAndWrite(
-    const VarVal& value,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<int8_t*>& startingAddress) const
-{
-    const auto castedVal = value.getRawValueAs<VariableSizedData>();
-    if (quoted)
-    {
-        return nautilus::invoke(
-            DefaultValueSerializer::serializeVarsized<true>,
-            castedVal.getContent(),
-            castedVal.getSize(),
-            startingAddress,
-            remainingSize,
-            recordBuffer.getReference(),
-            bufferProvider);
-    }
-    return nautilus::invoke(
-        DefaultValueSerializer::serializeVarsized<false>,
-        castedVal.getContent(),
-        castedVal.getSize(),
-        startingAddress,
-        remainingSize,
-        recordBuffer.getReference(),
-        bufferProvider);
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultCHARValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultCHARValueSerializer>();
+    return makeFixedSize<char>("DefaultChar");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultF32ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultF32ValueSerializer>();
+    return makeFixedSize<float>("DefaultFloat");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultF64ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultF64ValueSerializer>();
+    return makeFixedSize<double>("DefaultDouble");
 }
 
+/// INT8 and INT16 are formatted through int32_t: narrowing them to their own C++ types would make std::to_string
+/// render them unsigned, so all three share the int32_t formatting function.
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultINT8ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultINT8ValueSerializer>();
+    return makeFixedSize<int32_t>("DefaultInt32");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultINT16ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultINT16ValueSerializer>();
+    return makeFixedSize<int32_t>("DefaultInt32");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultINT32ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultINT32ValueSerializer>();
+    return makeFixedSize<int32_t>("DefaultInt32");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultINT64ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultINT64ValueSerializer>();
+    return makeFixedSize<int64_t>("DefaultInt64");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultBOOLValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultBOOLValueSerializer>();
+    return makeFixedSize<bool>("DefaultBool");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultUINT8ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultUINT8ValueSerializer>();
+    return makeFixedSize<uint8_t>("DefaultUInt8");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultUINT16ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultUINT16ValueSerializer>();
+    return makeFixedSize<uint16_t>("DefaultUInt16");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultUINT32ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultUINT32ValueSerializer>();
+    return makeFixedSize<uint32_t>("DefaultUInt32");
 }
 
 ValueSerializerRegistryReturnType ValueSerializerGeneratedRegistrar::RegisterDefaultUINT64ValueSerializer(ValueSerializerRegistryArguments)
 {
-    return std::make_unique<DefaultUINT64ValueSerializer>();
+    return makeFixedSize<uint64_t>("DefaultUInt64");
 }
 
 ValueSerializerRegistryReturnType
 ValueSerializerGeneratedRegistrar::RegisterDefaultVARSIZEDValueSerializer(ValueSerializerRegistryArguments args)
 {
-    return std::make_unique<DefaultVARSIZEDValueSerializer>(args.quoted);
+    return std::make_unique<DefaultVarSizedValueSerializer>(args.quoted);
 }
 }
