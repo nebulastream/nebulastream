@@ -338,6 +338,8 @@ struct Descriptor
     [[nodiscard]] Reflected getReflectedConfig(const ReflectionContext& context) const;
     static DescriptorConfig::Config unreflectConfig(const Reflected& rfl, const ReflectionContext& context);
 
+    template <typename ConfigParameterType>
+void setConfig(std::string identifier, ConfigParameterType value) { config[identifier] = value; }
 protected:
     std::string toStringConfig() const;
 

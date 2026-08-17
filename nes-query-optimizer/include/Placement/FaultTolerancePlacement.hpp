@@ -31,6 +31,6 @@ class FTPlacer final
 public:
     explicit FTPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
 
-    DistributedLogicalPlan apply(DistributedLogicalPlan& distributedPlan);
+    DistributedLogicalPlan apply(DistributedLogicalPlan& distributedPlan, const QueryOptimizerNetworkConfiguration& configuration);
 };
 }

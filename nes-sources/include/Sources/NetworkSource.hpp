@@ -67,6 +67,8 @@ private:
 
     std::string channelId;
     size_t receiverQueueSize;
+    bool backup;
+    std::optional<std::string> backupPath;
     std::optional<rust::Box<ReceiverDataChannel>> channel;
     rust::Box<ReceiverNetworkService> receiverServer;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
@@ -120,8 +122,28 @@ struct ConfigParametersNetworkSource
             return value;
         }};
 
+    static inline const DescriptorConfig::ConfigParameter<bool> BACKUP{
+        "BACKUP",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<bool>
+        { return DescriptorConfig::tryGet(BACKUP, config); }};
+
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> BACKUP_PATH{
+        "BACKUP_PATH",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        {
+            auto value = DescriptorConfig::tryGet(BACKUP_PATH, config);
+            if (!value)
+            {
+                return std::nullopt;
+            }
+            return value;
+        }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE, BACKUP);
 };
 
 /// NOLINTEND(cert-err58-cpp)

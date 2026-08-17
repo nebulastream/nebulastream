@@ -13,7 +13,7 @@
 */
 
 use super::SenderConfig;
-use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler};
+use super::channel::{ChannelCommandQueue, ChannelCommandQueueListener, create_channel_handler, DeadChannel, create_tombstone_handler};
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use crate::util::{ActiveTokens, ScopedTask};
@@ -85,7 +85,7 @@ pub(super) enum NetworkingConnectionControlCommand {
     ),
     /// Retry establishing a channel after a failure. This reuses the existing
     /// cancellation token and command queue from the failed attempt.
-    RetryChannel(PendingChannel),
+    RetryChannel(PendingChannel, Option<DeadChannel>),
 }
 pub(super) type NetworkServiceController = async_channel::Sender<NetworkServiceControlCommand>;
 type NetworkServiceControlListener = async_channel::Receiver<NetworkServiceControlCommand>;
@@ -110,6 +110,8 @@ pub(super) enum EstablishChannelResult {
     Ok(ConnectionIdentifier),
     /// Channel was explicitly rejected by the receiver.
     ChannelReject,
+    /// The receiver side has closed the channel before
+    Tombstone,
     /// Connection failed during the negotiation. Contains channel ID and error.
     BadConnection(ChannelIdentifier, Error),
 }
@@ -166,6 +168,9 @@ pub(super) async fn establish_channel<R: AsyncRead + Unpin, W: AsyncWrite + Unpi
         ControlChannelResponse::DenyChannelResponse => {
             warn!("Channel '{channel_id}' was rejected");
             return EstablishChannelResult::ChannelReject;
+        }
+        ControlChannelResponse::TombstonedChannelResponse => {
+            return EstablishChannelResult::Tombstone;
         }
     };
 
@@ -264,6 +269,7 @@ async fn attempt_channel_registration<C: Communication + 'static>(
     channel_tx: EstablishChannelRequest,
     controller: NetworkingConnectionController,
     communication: C,
+    previous_channel : Option<DeadChannel>
 ) {
     let retry = ExponentialBackoff::from_millis(2)
         .max_delay_millis(500)
@@ -271,7 +277,7 @@ async fn attempt_channel_registration<C: Communication + 'static>(
 
     let target_channel_identifier = Retry::spawn(
         retry,
-        async || -> core::result::Result<ConnectionIdentifier, RetryError<Error>> {
+        async || -> core::result::Result<(Option<ConnectionIdentifier>), RetryError<Error>> {
             let (tx, rx) = oneshot::channel();
             if channel_tx
                 .send((pending_channel.id.clone(), tx))
@@ -287,12 +293,15 @@ async fn attempt_channel_registration<C: Communication + 'static>(
 
             match result {
                 EstablishChannelResult::Ok(channel_connection_identifier) => {
-                    Ok(channel_connection_identifier)
+                    Ok(Some(channel_connection_identifier))
                 }
                 EstablishChannelResult::ChannelReject => Err(Transient {
                     err: "Channel was rejected".into(),
                     retry_after: None,
                 }),
+                EstablishChannelResult::Tombstone => {
+                    Ok(None)
+                },
                 EstablishChannelResult::BadConnection(_, _) => Err(Transient {
                     err: "Bad connection".into(),
                     retry_after: None,
@@ -302,17 +311,26 @@ async fn attempt_channel_registration<C: Communication + 'static>(
     )
     .await;
 
-    let Ok(target_channel_identifier) = target_channel_identifier else {
+    let Ok(target_channel_identifier_opt) = target_channel_identifier else {
         return;
     };
 
-    create_channel_handler(
-        this_connection,
-        target_channel_identifier,
-        pending_channel,
-        communication,
-        controller,
-    );
+    match target_channel_identifier_opt{
+        Some(target_channel_identifier) => {
+            create_channel_handler(
+                this_connection,
+                target_channel_identifier,
+                pending_channel,
+                communication,
+                controller,
+                previous_channel
+            );
+        }
+        None => {
+            create_tombstone_handler(pending_channel)
+        }
+    }
+
 }
 
 /// Handles all channel registrations and retries for a specific connection.
@@ -455,6 +473,7 @@ async fn connection_handler<C: Communication + 'static>(
                         channel_registration_request_handler.clone(),
                         controller.clone(),
                         communication.clone(),
+                        None
                     )
                     .in_current_span(),
                 );
@@ -462,7 +481,7 @@ async fn connection_handler<C: Communication + 'static>(
                 active_channel.add_token(channel_cancellation);
                 let _ = response.send(sender);
             }
-            NetworkingConnectionControlCommand::RetryChannel(pending_channel) => {
+            NetworkingConnectionControlCommand::RetryChannel(pending_channel, previous_channel) => {
                 tokio::spawn(
                     attempt_channel_registration(
                         this_connection.clone(),
@@ -470,6 +489,7 @@ async fn connection_handler<C: Communication + 'static>(
                         channel_registration_request_handler.clone(),
                         controller.clone(),
                         communication.clone(),
+                        previous_channel
                     )
                     .in_current_span(),
                 );

@@ -169,26 +169,33 @@ impl SenderChannel {
         }
     }
 
-
-    /// Propagates a query stop signal to the `ReceiverChannel`.
+    /// Propagates a query stop signal to the `ReceiverChannel` by sending an empty buffer with a closing flag.
     ///
     /// This method provides the functionality for graceful query shutdowns and allows downstream
     /// queries to stop.
     /// This method should not be called when the downstream query should keep running
     ///
-    /// # Returns
+    /// This method will immediately return with one of three results:
+    /// - `Ok`: The close message was successfully queued for sending
+    /// - `Full(buffer)`: The internal queue is full
+    /// - `Closed(buffer)`: The channel is closed
     ///
-    /// - `Ok()`: Stop has been successfully propagated
-    /// - `Err(_)`: The network service or channel was closed
-    pub fn propagate_stop(&self) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        self.queue
-            .send_blocking(ChannelCommand::Stop(tx))
-            .map_err(|_| "Network Service Closed")?;
-        rx.blocking_recv()
-            .map_err(|_| "Network Service Closed".into())
-    }
+    pub fn propagate_stop(&self) -> TrySendDataResult {
+        let buffer = TupleBuffer {
+            sequence_number: u64::MAX,
+            origin_id: u64::MAX,
+            chunk_number: u64::MAX,
+            origin_epoch: u64::MAX,
+            number_of_tuples: 0,
+            watermark: u64::MAX,
+            last_chunk: true,
+            closing: true,
+            data: Vec::new(),
+            child_buffers: Vec::new(),
+        };
 
+        self.try_send_data(buffer)
+    }
 
     /// Initiates a hard shutdown on this channel
     /// Graceful shutdowns should call flush and propagate_stop beforehand
@@ -197,9 +204,6 @@ impl SenderChannel {
     ///
     /// - `true`: The channel was successfully closed
     /// - `false`: The channel was already closed
-    ///
-    /// Note: The return value only indicates whether the local queue was closed,
-    /// not whether the close signal was successfully propagated to the receiver.
     pub fn close(self) -> bool {
         self.queue.close()
     }

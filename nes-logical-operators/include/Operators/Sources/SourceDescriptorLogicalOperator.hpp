@@ -73,6 +73,15 @@ public:
     [[nodiscard]] Schema<Field, Ordered> getOrderedOutputSchema(ChildOutputOrderProvider orderProvider) const override;
     [[nodiscard]] const DynamicBase* getDynamicBase() const;
 
+
+    template <typename ConfigParameterType>
+    [[nodiscard]] SourceDescriptorLogicalOperator withUpdatedConfig(std::string identifier, ConfigParameterType newValue) const
+    {
+        auto copy = *this;
+        copy.sourceDescriptor.setConfig(identifier, newValue);
+        return copy;
+    }
+
 private:
     static constexpr std::string_view NAME = "SourceDescriptor";
 

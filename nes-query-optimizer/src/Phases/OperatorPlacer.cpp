@@ -30,7 +30,7 @@ DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
                           .decompose(plan, defaultQueryOptimization.network);
     if (addFaultTolerance)
     {
-        return FTPlacer(copyPtr(workerCatalog)).apply(decomposed);
+        return FTPlacer(copyPtr(workerCatalog)).apply(decomposed, defaultQueryOptimization.network);
     }
     return decomposed;
 }

@@ -541,6 +541,7 @@ dependencies = [
  "futures",
  "pin-project",
  "serde",
+ "serde_cbor",
  "tokio",
  "tokio-retry2",
  "tokio-serde",
