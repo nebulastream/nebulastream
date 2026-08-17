@@ -21,7 +21,7 @@ if (ENABLE_INFERENCE_TESTS)
     endfunction()
 
     add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)
-    add_nes_test_inference(ModelCatalogTest ModelCatalogTest.cpp)
+    add_nes_test_inference(ModelCatalogTest ModelValidationTest.cpp)
 
     add_nes_test_inference(InferenceRuntimeTest InferenceRuntimeTest.cpp)
     target_link_libraries(InferenceRuntimeTest nes-inference-runtime)

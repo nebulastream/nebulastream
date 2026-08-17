@@ -24,21 +24,22 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
+
+#include <argparse/argparse.hpp>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
+
 #include <Config/Config.hpp>
 #include <Configurations/Util.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
-#include <Util/Logger/LogLevel.hpp>
+#include <Runner/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <argparse/argparse.hpp>
-#include <fmt/format.h>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -92,13 +93,24 @@ void configureArgumentParser(ArgumentParser& program)
               "/nes-systests/");
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
     program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
-    program.add_argument("--shuffle").flag().help("run queries in random order");
+    program.add_argument("--shuffle").flag().help("run the test files in random order");
+    program.add_argument("--shuffle-seed")
+        .help("the seed the test file order is shuffled with, so a shuffled run repeats that order. Implies --shuffle")
+        .scan<'i', int>();
     program.add_argument("-n", "--numberConcurrentQueries")
         .help("number of concurrent queries. Default: 6")
         .default_value(6)
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
-    program.add_argument("--endless").flag().help("continuously issue queries to the worker");
+    program.add_argument("--query-timeout")
+        .help("fail a query that has not reached a terminal state after this many seconds. 0 waits forever. Default: 300")
+        .scan<'i', int>();
+    program.add_argument("--endless").flag().help("keep issuing the discovered queries to the worker");
+    program.add_argument("--benchmark-rounds")
+        .help("how many times -b repeats the queries, keeping each query's best time. Default: 1")
+        .scan<'i', int>();
+    program.add_argument("--endless-rounds").help("how many times --endless repeats the queries. Unlimited by default").scan<'i', int>();
+    program.add_argument("--endless-seconds").help("how long --endless keeps issuing queries. Unlimited by default").scan<'i', int>();
     program.add_argument("--optimizer")
         .default_value<std::vector<std::string>>({})
         .append()
@@ -111,10 +123,9 @@ void configureArgumentParser(ArgumentParser& program)
         .help("Benchmark (time) all specified queries and store results into 'BenchmarkResults.json' in the result directory")
         .default_value(false)
         .implicit_value(true);
-    program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
 }
 
-void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
+void loadDisableConfig(const ArgumentParser& program, NES::Config& config)
 {
     if (program.is_used("--ignoreDisableConfigFile"))
     {
@@ -134,9 +145,6 @@ void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration&
 
     try
     {
-        const YAML::Node disableConfig = YAML::LoadFile(disableConfigFilePath);
-        config.excludeGroupsConfiguredInDisableConfig
-            = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
         config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
         config.globalExcludedGroups = config.excludeGroups.getValues()
             | std::views::transform([](const auto& value) { return value.getValue(); }) | std::ranges::to<std::vector<std::string>>();
@@ -149,7 +157,7 @@ void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration&
     }
 }
 
-void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyBenchmarkMode(const ArgumentParser& program, NES::Config& config)
 {
     if (not program.is_used("-b"))
     {
@@ -169,15 +177,16 @@ void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration
     config.numberConcurrentQueries = 1;
 }
 
-void applyDebugMode(const ArgumentParser& program)
+/// Records the choice only, because the logger takes this run's file once the whole configuration is known.
+void applyDebugMode(const ArgumentParser& program, NES::Config& config)
 {
     if (program.is_used("-d"))
     {
-        NES::Logger::setupLogging("systest.log", NES::LogLevel::LOG_DEBUG);
+        config.debugLogging = true;
     }
 }
 
-void applyInputLocations(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyInputLocations(const ArgumentParser& program, NES::Config& config)
 {
     if (program.is_used("--data"))
     {
@@ -195,14 +204,13 @@ void applyInputLocations(const ArgumentParser& program, NES::SystestConfiguratio
     }
 }
 
-void addTestQueryNumbers(NES::SystestConfiguration& config, const std::string& testNumberStr)
+void addTestQueryNumbers(NES::Config& config, const std::string& testNumberStr)
 {
     std::stringstream ss(testNumberStr);
     std::string item;
     while (std::getline(ss, item, ','))
     {
-        const size_t dashPos = item.find('-');
-        if (dashPos != std::string::npos)
+        if (const size_t dashPos = item.find('-'); dashPos != std::string::npos)
         {
             const int start = std::stoi(item.substr(0, dashPos));
             const int end = std::stoi(item.substr(dashPos + 1));
@@ -217,7 +225,7 @@ void addTestQueryNumbers(NES::SystestConfiguration& config, const std::string& t
     }
 }
 
-std::filesystem::path parseTestLocationPath(const std::string& testFileDefinition, NES::SystestConfiguration& config)
+std::filesystem::path parseTestLocationPath(const std::string& testFileDefinition, NES::Config& config)
 {
     const size_t delimiterPos = testFileDefinition.find(':');
     if (delimiterPos == std::string::npos)
@@ -243,16 +251,10 @@ std::vector<std::filesystem::path> findAllInTree(const std::filesystem::path& wa
     return hits;
 }
 
-void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES::SystestConfiguration& config)
+void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, const std::filesystem::path& discoverRoot, NES::Config& config)
 {
-    /// Search all discover directories for a matching file name
-    std::vector<std::filesystem::path> allMatches;
-    for (const auto& dir : config.testDiscoverDirs.getValues())
-    {
-        auto matches = findAllInTree(testFilePath.filename(), dir.getValue());
-        allMatches.insert(allMatches.end(), matches.begin(), matches.end());
-    }
-
+    /// A bare file name is looked up under the discovery root, so a test can be named without its folder.
+    const auto allMatches = findAllInTree(testFilePath.filename(), discoverRoot);
     if (allMatches.empty())
     {
         std::cerr << '\'' << testFilePath << "' could not be located in any test discover directory.\n";
@@ -273,29 +275,23 @@ void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES:
     std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
 }
 
-void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyTestLocations(const ArgumentParser& program, NES::Config& config)
 {
     if (not program.is_used("--testLocations"))
     {
         return;
     }
 
-    /// Directories given on the command line replace the default discover directory rather than extending it,
-    /// so `-t dirA dirB` discovers in dirA and dirB only. The default is dropped on the first directory seen.
-    bool defaultDiscoverDirReplaced = false;
+    const std::filesystem::path discoverRoot{config.testsDiscoverDir.getValue()};
 
-    const auto testLocations = program.get<std::vector<std::string>>("--testLocations");
-    for (const auto& location : testLocations)
+    for (const auto testLocations = program.get<std::vector<std::string>>("--testLocations"); const auto& location : testLocations)
     {
         const auto testFilePath = parseTestLocationPath(location, config);
         if (std::filesystem::is_directory(testFilePath))
         {
-            if (not defaultDiscoverDirReplaced)
-            {
-                config.testDiscoverDirs.clear();
-                defaultDiscoverDirReplaced = true;
-            }
-            config.testDiscoverDirs.add(testFilePath.string());
+            /// A directory narrows the search below the root rather than moving it, so a file keeps the key it would
+            /// have had from the root however the run named it. Several directories narrow to the union of them.
+            config.searchDirs.emplace_back(testFilePath);
             continue;
         }
 
@@ -305,12 +301,11 @@ void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration
             continue;
         }
 
-        applyDiscoveredTestLocation(testFilePath, config);
+        applyDiscoveredTestLocation(testFilePath, discoverRoot, config);
     }
 }
 
-void addSequenceOptionValues(
-    const ArgumentParser& program, const std::string& argumentName, decltype(NES::SystestConfiguration::testGroups)& option)
+void addSequenceOptionValues(const ArgumentParser& program, const std::string& argumentName, decltype(NES::Config::testGroups)& option)
 {
     if (not program.is_used(argumentName))
     {
@@ -323,18 +318,74 @@ void addSequenceOptionValues(
     }
 }
 
-void applyGroupSelection(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyGroupSelection(const ArgumentParser& program, NES::Config& config)
 {
     addSequenceOptionValues(program, "-g", config.testGroups);
-    if (program.is_used("--exclude-groups"))
-    {
-        config.excludedGroupsProvidedOnCommandLine = true;
-    }
     addSequenceOptionValues(program, "--exclude-groups", config.excludeGroups);
 }
 
-void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfiguration& config)
+/// Flattens a nested YAML mapping into the dotted keys a worker matches its configuration options by.
+void flattenInto(const YAML::Node& node, const std::string& prefix, std::unordered_map<std::string, std::string>& flattened)
 {
+    for (const auto& entry : node)
+    {
+        const auto key = prefix.empty() ? entry.first.as<std::string>() : prefix + "." + entry.first.as<std::string>();
+        if (entry.second.IsMap())
+        {
+            flattenInto(entry.second, key, flattened);
+            continue;
+        }
+        flattened.insert_or_assign(key, entry.second.as<std::string>());
+    }
+}
+
+/// Reads the `workers:` block of a topology file, which the runner registers one `CREATE WORKER` for.
+std::vector<NES::TopologyWorker> readTopologyWorkers(const YAML::Node& workers)
+{
+    if (not workers.IsSequence())
+    {
+        return {};
+    }
+
+    std::vector<NES::TopologyWorker> topology;
+    topology.reserve(workers.size());
+    for (const auto& worker : workers)
+    {
+        NES::TopologyWorker declared{
+            .host = NES::Host{worker["host"].as<std::string>()},
+            .dataAddress = {},
+            .maxOperators = std::nullopt,
+            .downstream = {},
+            .config = {}};
+        if (worker["data_address"])
+        {
+            declared.dataAddress = worker["data_address"].as<std::string>();
+        }
+        if (worker["max_operators"])
+        {
+            declared.maxOperators = worker["max_operators"].as<uint64_t>();
+        }
+        if (worker["downstream"])
+        {
+            declared.downstream = worker["downstream"].as<std::vector<NES::Host>>();
+        }
+        if (worker["config"])
+        {
+            flattenInto(worker["config"], {}, declared.config);
+        }
+        topology.push_back(std::move(declared));
+    }
+    return topology;
+}
+
+void applyExecutionOptions(const ArgumentParser& program, NES::Config& config)
+{
+    if (program.is_used("--shuffle-seed"))
+    {
+        config.shuffleSeed = program.get<int>("--shuffle-seed");
+        config.randomQueryOrder = true;
+    }
+
     if (program.is_used("--shuffle"))
     {
         config.randomQueryOrder = true;
@@ -342,42 +393,25 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
 
     config.remoteWorker = program.get<bool>("--remote");
 
-    try
+    /// Read only when the invocation gives a topology.
+    /// The option carries a default path, and loading it regardless would place every run on a topology nobody asked for.
+    if (program.is_used("--clusterConfig"))
     {
-        if (program.is_used("--clusterConfig"))
+        try
         {
             config.clusterConfigPath = program.get<std::string>("--clusterConfig");
+            auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
+            NES::ClusterConfiguration clusterConfig;
+            clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
+            clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
+            clusterConfig.workers = readTopologyWorkers(clusterConfigYAML["workers"]);
+            config.clusterConfig = clusterConfig;
         }
-        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
-        NES::SystestClusterConfiguration clusterConfig;
-        clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
-        clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
-        for (const auto& worker : clusterConfigYAML["workers"])
+        catch (std::exception& e)
         {
-            NES::SingleNodeWorkerConfiguration config;
-            /// Check if worker has config key
-            if (worker["config"].IsDefined() && !worker["config"].IsNull())
-            {
-                config.overwriteConfigWithYAMLNode(worker["config"]);
-            }
-
-            clusterConfig.workers.push_back(NES::WorkerConfig{
-                .host = worker["host"].as<NES::Host>(),
-                .dataAddress = worker["data_address"].as<std::string>(),
-                .maxOperators = worker["max_operators"].IsDefined()
-                    ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
-                    : NES::Capacity(NES::CapacityKind::Unlimited{}),
-                .downstream
-                = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
-                .config = config,
-            });
+            std::cerr << "Error loading cluster config: " << e.what() << '\n';
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
         }
-        config.clusterConfig = clusterConfig;
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Error loading cluster config: " << e.what() << '\n';
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
     if (program.is_used("-n"))
@@ -390,19 +424,35 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
         config.numberConcurrentQueries = 1;
     }
 
-    if (program.is_used("--show-query-performance"))
+    if (program.is_used("--query-timeout"))
     {
-        config.showQueryPerformance = true;
+        config.queryTimeoutSeconds = program.get<int>("--query-timeout");
     }
 
     if (program.is_used("--endless"))
     {
         config.endlessMode = true;
     }
+
+    if (program.is_used("--benchmark-rounds"))
+    {
+        config.benchmarkRounds = program.get<int>("--benchmark-rounds");
+    }
+
+    if (program.is_used("--endless-rounds"))
+    {
+        config.endlessRounds = program.get<int>("--endless-rounds");
+        config.endlessMode = true;
+    }
+
+    if (program.is_used("--endless-seconds"))
+    {
+        config.endlessSeconds = program.get<int>("--endless-seconds");
+        config.endlessMode = true;
+    }
 }
 
-void setValidatedConfigFile(
-    const ArgumentParser& program, const std::string& argumentName, decltype(NES::SystestConfiguration::workerConfig)& option)
+void setValidatedConfigFile(const ArgumentParser& program, const std::string& argumentName, decltype(NES::Config::workerConfig)& option)
 {
     if (not program.is_used(argumentName))
     {
@@ -417,13 +467,13 @@ void setValidatedConfigFile(
     }
 }
 
-void applyConfigurationFiles(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyConfigurationFiles(const ArgumentParser& program, NES::Config& config)
 {
     setValidatedConfigFile(program, "-w", config.workerConfig);
     setValidatedConfigFile(program, "-q", config.queryCompilerConfig);
 }
 
-void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyOptimizerConfiguration(const ArgumentParser& program, NES::Config& config)
 {
     if (not program.is_used("--optimizer"))
     {
@@ -446,9 +496,12 @@ void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConf
     NES::QueryOptimizerConfiguration queryOptimizerConfig;
     queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
     config.queryOptimizerConfig = queryOptimizerConfig;
+    /// The parse above rejects a key that matches no option.
+    /// This keeps the raw form too, because the coordinator reads these back as keys and values.
+    config.optimizerOverrides = std::move(optimizerRawConfig);
 }
 
-void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::Config& config)
 {
     if (not program.is_used("--"))
     {
@@ -466,13 +519,31 @@ void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::Syst
     }
 
     config.singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(workerArgc, workerArgv.data());
+
+    /// The load above rejects a key that matches no option.
+    /// This keeps the raw form too, because the runner declares it on the worker that the coordinator then starts.
+    for (const auto& argument : confVec)
+    {
+        const auto separator = argument.find('=');
+        if (separator == std::string::npos)
+        {
+            std::cerr << "Invalid worker argument. Requires argument like '--worker.x=VALUE' but got '" << argument << "'\n";
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+        auto key = argument.substr(0, separator);
+        if (key.starts_with("--"))
+        {
+            key = key.substr(2);
+        }
+        config.workerOverrides.insert_or_assign(std::move(key), argument.substr(separator + 1));
+    }
 }
 
-void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfiguration& config)
+void handleMetaCommands(const ArgumentParser& program, const NES::Config& config)
 {
     if (program.is_used("--list"))
     {
-        std::cout << NES::Systest::loadTestFileMap(config);
+        std::cout << NES::discoverTestFiles(config);
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
 
@@ -482,22 +553,21 @@ void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfigu
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
 }
-
 }
 
 namespace NES
 {
 
-SystestConfiguration parseConfig(const int argc, const char** argv)
+Config parseConfig(const int argc, const char** argv)
 {
     ArgumentParser program("systest");
     configureArgumentParser(program);
     parseArgumentsOrExit(program, argc, argv);
 
-    auto config = SystestConfiguration();
+    auto config = Config();
     loadDisableConfig(program, config);
     applyBenchmarkMode(program, config);
-    applyDebugMode(program);
+    applyDebugMode(program, config);
     applyInputLocations(program, config);
     applyTestLocations(program, config);
     applyGroupSelection(program, config);

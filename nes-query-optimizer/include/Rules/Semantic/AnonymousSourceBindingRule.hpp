@@ -14,10 +14,8 @@
 
 #pragma once
 #include <memory>
-#include <set>
 #include <string_view>
 #include <typeindex>
-#include <typeinfo>
 #include <utility>
 #include <vector>
 
@@ -25,7 +23,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Catalog.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -38,7 +36,7 @@ class AnonymousSourceBindingRule
 public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
 
-    explicit AnonymousSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit AnonymousSourceBindingRule(const std::shared_ptr<Catalog>& catalog) : catalog{catalog} { }
 
     static constexpr std::string_view NAME = "AnonymousSourceBindingRule";
 
@@ -47,7 +45,7 @@ public:
 
 private:
     [[nodiscard]] LogicalOperator bindAnonymousSources(const LogicalOperator& op, const std::vector<LogicalOperator>& children) const;
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    const std::shared_ptr<Catalog> catalog;
 };
 
 static_assert(RuleConcept<AnonymousSourceBindingRule, LogicalPlan>);

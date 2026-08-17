@@ -18,23 +18,26 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <Config/Config.hpp>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Discovery/TestDiscovery.hpp>
-#include <Discovery/TestFileReader.hpp>
-#include <Parser/SystestParser.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
-#include <BaseUnitTest.hpp>
-#include <SystestState.hpp>
 
-namespace NES::Systest
+#include <Config/Config.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Discovery/TestDiscovery.hpp>
+#include <Discovery/TestFileReader.hpp>
+#include <Model/SystestQueryId.hpp>
+#include <Parser/SystestParser.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+
+namespace NES
 {
 /// Tests if SLT Parser accepts ands parses valid .test files correctly
 class SystestParserValidTestFileTest : public Testing::BaseUnitTest
@@ -55,9 +58,6 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
     const std::vector<std::vector<std::string>> expectedResults = {{"1,1,1", "1,1,1", "1,1,1"}, {"2,2,2", "2,2,2", "2,2,2"}};
 
-    const SystestParser::SystestLogicalSource expectedLogicalSource
-        = {.name = "e124", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"}}};
-
     bool queryCallbackCalled = false;
     bool createCallbackCalled = false;
 
@@ -71,7 +71,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "valid.dummy";
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename))) << "Failed to load file: " << Filename;
+    parser.loadString(readTestFile(Filename));
     EXPECT_NO_THROW(parser.parse());
 
     /// Verify that all expected callbacks were called
@@ -88,13 +88,6 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "nullable.dummy";
-    const SystestParser::SystestLogicalSource expectedLogicalSource{
-        .name = "window",
-        .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "timestamp"}}};
-
     const std::vector<std::string> expectedInlineData
         = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
             "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
@@ -186,7 +179,7 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
@@ -202,13 +195,6 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "comments.dummy";
-    SystestParser::SystestLogicalSource expectedLogicalSource{
-        .name = "window",
-        .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
-
     const std::vector<std::string> expectedInlineData
         = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
             "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
@@ -300,7 +286,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
@@ -316,13 +302,6 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";
-    SystestParser::SystestLogicalSource expectedLogicalSource{
-        .name = "window",
-        .fields
-        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
-           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}}};
-
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT * FROM window WHERE value == 1 INTO sinkWindow;)",
          R"(SELECT * FROM window WHERE id >= 10 INTO sinkWindow;)",
@@ -420,7 +399,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
     ASSERT_TRUE(createPhysicalSourceCallbackCalled);
@@ -463,7 +442,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "error_expectation.dummy";
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename)));
+    parser.loadString(readTestFile(Filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
@@ -472,13 +451,6 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
 {
     const auto* const filename = SYSTEST_DATA_DIR "create_statement_format.dummy";
-    const SystestParser::SystestLogicalSource input1{
-        .name = "input1", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
-    const SystestParser::SystestLogicalSource input2{
-        .name = "input2", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
-    const SystestParser::SystestLogicalSource input3{
-        .name = "input3", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"}}};
-
     const auto expectedQueries = std::to_array<std::string>(
         {R"(SELECT id AS id FROM input1 INTO output;)",
          R"(SELECT id AS id FROM input2 INTO output;)",
@@ -531,7 +503,7 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
     ASSERT_TRUE(createPhysicalSourceCallbackCalled);
@@ -547,13 +519,13 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
 /// Checking, if text after the closing bracket of the groups is allowed and the file is being correctly excluded
 TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
 {
-    SystestConfiguration config{};
-    config.testDiscoverDirs.add(SYSTEST_DATA_DIR);
+    Config config{};
+    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
     const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
-    const auto testMap = Systest::loadTestFileMap(config);
-    ASSERT_EQ(testMap.size(), 1);
-    const auto testFile = testMap.begin()->second;
+    const auto discovered = discoverTestFiles(config);
+    ASSERT_EQ(discovered.size(), 1);
+    const auto testFile = discovered.front();
     const std::vector<std::string> expectedGroups = {"Aggregation", "WindowOperators", "CompilationIntensive"};
     ASSERT_EQ(testFile.groups, expectedGroups);
 }

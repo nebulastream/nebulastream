@@ -11,6 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-systest-lib
-        SystestRunner.cpp
-        QuerySubmitter.cpp
+        Cluster.cpp
+        DataStaging.cpp
+        Schedule.cpp
+        TestRunner.cpp
+        WorkerRegistration.cpp
 )

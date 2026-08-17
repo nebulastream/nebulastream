@@ -44,6 +44,12 @@ antlr4_generate(NES_SQL_PARSER ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 BOTH -lis
 add_custom_target(nes-sql-parser-codegen DEPENDS ${ANTLR4_SRC_FILES_NES_SQL_PARSER})
 add_dependencies(nes-codegen nes-sql-parser-codegen)
 
+# The generated sources only appear at build time, but the directory is exposed as a public
+# include path. Create it now so it exists at configure time. This matters when the path is
+# propagated onto a Corrosion imported target (the Rust bridge), which requires its interface
+# include directories to exist during CMake's generate step.
+file(MAKE_DIRECTORY ${ANTLR4_INCLUDE_DIR_NES_SQL_PARSER})
+
 # The VCPKG port is called 'antlr4', finding the package requires to look for 'antlr4-runtime' and
 # adding antlr library as a dependency to another library, requires to link against 'antlr-static'.
 find_package(antlr4-runtime CONFIG REQUIRED)
@@ -57,4 +63,3 @@ target_include_directories(nes-sql-parser PUBLIC
 target_link_libraries(nes-sql-parser PRIVATE nes-input-formatters PUBLIC antlr4_static nes-common nes-schema nes-sinks nes-sources nes-logical-operators)
 
 add_tests_if_enabled(tests)
-

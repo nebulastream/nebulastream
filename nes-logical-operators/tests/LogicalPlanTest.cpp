@@ -44,19 +44,12 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/UUID.hpp>
-#include <QueryId.hpp>
+
 
 using namespace NES;
-
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
 
 class LogicalPlanTest : public ::testing::Test
 {
@@ -68,18 +61,21 @@ public:
                     {
                         const auto dummySchema = Schema<UnqualifiedUnboundField, Ordered>{
                             UnqualifiedUnboundField{testFieldIdentifier, DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
-                        auto logicalSource = sourceCatalog.addLogicalSource(Identifier::parse("Source"), dummySchema).value(); /// NOLINT
+                        auto logicalSource = LogicalSource{Identifier::parse("Source"), dummySchema};
+                        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
                         const std::unordered_map<Identifier, std::string> dummyParserConfig
                             = {{Identifier::parse("type"), "CSV"},
                                {Identifier::parse("tuple_delimiter"), "\n"},
                                {Identifier::parse("field_delimiter"), ","}};
-                        return sourceCatalog /// NOLINT
-                            .addPhysicalSource(
-                                logicalSource,
-                                Identifier::parse("File"),
-                                Host("localhost"),
-                                {{Identifier::parse("file_path"), "/dev/null"}},
-                                dummyParserConfig)
+
+                        return SourceDescriptor::create(
+                                   PhysicalSourceId{1},
+                                   logicalSource,
+                                   Identifier::parse("File"),
+                                   Host("localhost"),
+                                   sourceConfig,
+                                   dummyParserConfig,
+                                   false)
                             .value();
                     }()}
         , selectionOp{UnboundFieldAccessLogicalFunction{testFieldIdentifier}}
@@ -91,7 +87,6 @@ protected:
     void SetUp() override { }
 
     Identifier testFieldIdentifier;
-    SourceCatalog sourceCatalog;
     TypedLogicalOperator<SourceNameLogicalOperator> sourceOp;
     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp2;
     TypedLogicalOperator<SelectionLogicalOperator> selectionOp;
@@ -107,7 +102,7 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
     const std::vector<LogicalOperator> roots = {sourceOp, selectionOp};
-    const auto queryId = randomQueryId();
+    const auto queryId = QueryId{1};
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
     EXPECT_EQ(plan.getQueryId(), queryId);
