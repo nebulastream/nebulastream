@@ -57,8 +57,8 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
 VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
     : size(std::move(other.size))
-    , ptrToVarSized(std::move(other.ptrToVarSized))
-    , bufferControlBlock(std::move(other.bufferControlBlock))
+    , ptrToVarSized(other.ptrToVarSized)
+    , bufferControlBlock(other.bufferControlBlock)
     , bufferOffset(std::move(other.bufferOffset))
 {
 }
@@ -72,7 +72,7 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
-    bufferControlBlock = std::move(other.bufferControlBlock);
+    bufferControlBlock = other.bufferControlBlock;
     bufferOffset = std::move(other.bufferOffset);
     return *this;
 }

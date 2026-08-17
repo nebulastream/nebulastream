@@ -861,7 +861,7 @@ void sortByRandomKeysProperty(TestUtils::EngineMode mode)
         pagedVector.pushBack(record);
     }
 
-    std::stable_sort(expected.begin(), expected.end(), makeAnyVecComparator(fieldTypes, sortKeys));
+    std::ranges::stable_sort(expected, makeAnyVecComparator(fieldTypes, sortKeys));
     Arena arena{bufferManager};
     sortWithRecordComparator(pagedVector, fieldTypes, sortKeys, mode, arena);
 

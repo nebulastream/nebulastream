@@ -40,6 +40,8 @@
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+#include "Runtime/UnpooledBufferManager.hpp"
+#include "Util/Sanitizer.hpp"
 
 namespace NES
 {

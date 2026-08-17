@@ -16,10 +16,8 @@
 
 #include <atomic>
 #include <cstdint>
-#include <memory>
 #include <mutex>
 #include <optional>
-#include <utility>
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
@@ -28,6 +26,7 @@
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include "Runtime/QueryTerminationType.hpp"
 
 namespace NES
 {
@@ -43,7 +42,7 @@ class PipelineExecutionContext;
 class StreamTableJoinOperatorHandler final : public OperatorHandler
 {
 public:
-    StreamTableJoinOperatorHandler(std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins);
+    StreamTableJoinOperatorHandler(const std::vector<OriginId>& tableOrigins, const std::vector<OriginId>& inputOrigins);
     ~StreamTableJoinOperatorHandler() override;
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;

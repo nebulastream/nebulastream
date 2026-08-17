@@ -45,6 +45,7 @@
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
+#include "DataTypes/VariableSizedData.hpp"
 
 namespace NES
 {

@@ -18,8 +18,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <numeric>
-#include <ranges>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -34,6 +33,13 @@
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "DataTypes/DataType.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Interface/Record.hpp"
+#include "Aggregation/Function/AggregationPhysicalFunction.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {
@@ -74,7 +80,9 @@ void startPage(
     auto page = bufferProvider->getBufferBlocking();
     PRECONDITION(page.getBufferSize() >= sizeof(PageHeader) + valueSize, "ARRAY_AGG_PAGE_SORTED value does not fit into a page");
     auto* const pageData = reinterpret_cast<int8_t*>(page.getAvailableMemoryArea<>().data()); /// NOLINT
-    auto* const header = new (pageData) PageHeader{firstTimestamp, 0};
+    /// NOLINTNEXTLINE(cppcoreguidelines-owning-memory) - placement new constructs storage owned by the tuple buffer
+    auto* const header = new (pageData)
+        PageHeader{.firstTimestamp = firstTimestamp, .numberOfValues = 0}; /// NOLINT(cppcoreguidelines-owning-memory) - placement new
     state->currentPageData = pageData;
     state->currentPageHeader = header;
     state->writeOffset = sizeof(PageHeader);
@@ -101,8 +109,7 @@ uint64_t getNumberOfValues(const PageSortedArrayAggState* state, const TupleBuff
     return numberOfValues;
 }
 
-void copySortedPages(
-    const PageSortedArrayAggState* state, const TupleBuffer* parentBuffer, int8_t* destination, const uint64_t valueSize)
+void copySortedPages(const PageSortedArrayAggState* state, const TupleBuffer* parentBuffer, int8_t* destination, const uint64_t valueSize)
 {
     PRECONDITION(state != nullptr, "ARRAY_AGG_PAGE_SORTED state must not be null");
     PRECONDITION(parentBuffer != nullptr, "ARRAY_AGG_PAGE_SORTED parent buffer must not be null");

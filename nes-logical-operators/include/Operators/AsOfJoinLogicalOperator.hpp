@@ -15,7 +15,10 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <functional>
+#include <optional>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -32,6 +35,8 @@
 #include <Util/Reflection.hpp>
 #include <Util/Variant.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "DataTypes/UnboundField.hpp"
 
 namespace NES
 {

@@ -34,7 +34,7 @@ class UnpooledBufferManager
 {
 public:
     virtual ~UnpooledBufferManager() = default;
-    virtual size_t getNumberOfUnpooledBuffers() const = 0;
+    [[nodiscard]] virtual size_t getNumberOfUnpooledBuffers() const = 0;
     virtual std::optional<TupleBuffer>
     getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler) = 0;
 };

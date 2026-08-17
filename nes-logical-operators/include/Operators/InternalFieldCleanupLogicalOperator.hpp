@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -28,6 +30,11 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "DataTypes/UnboundField.hpp"
 
 namespace NES
 {

@@ -15,9 +15,14 @@
 #include <Operators/AsOfJoinLogicalOperator.hpp>
 
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
@@ -29,11 +34,14 @@
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Traits/Trait.hpp>
 #include <Util/Hash.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Traits/TraitSet.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -191,6 +199,7 @@ std::string AsOfJoinLogicalOperator::explain(const ExplainVerbosity verbosity, c
     return fmt::format("AsOfJoin({}, {})", rightIsTable ? "TABLE" : "STREAM", joinFunction.explain(verbosity));
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::string_view AsOfJoinLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -208,11 +217,12 @@ AsOfJoinLogicalOperator AsOfJoinLogicalOperator::withInferredSchema() const
 Reflected Reflector<TypedLogicalOperator<AsOfJoinLogicalOperator>>::operator()(
     const TypedLogicalOperator<AsOfJoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedAsOfJoinLogicalOperator{
-        .operatorId = op.getId(),
-        .joinFunction = op->getJoinFunction(),
-        .timeCharacteristics = op->getTimeCharacteristics(),
-        .rightIsTable = op->isRightTable()});
+    return context.reflect(
+        detail::ReflectedAsOfJoinLogicalOperator{
+            .operatorId = op.getId(),
+            .joinFunction = op->getJoinFunction(),
+            .timeCharacteristics = op->getTimeCharacteristics(),
+            .rightIsTable = op->isRightTable()});
 }
 
 Unreflector<TypedLogicalOperator<AsOfJoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))

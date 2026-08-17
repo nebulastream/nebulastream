@@ -15,8 +15,10 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -34,6 +36,8 @@
 #include <Util/Reflection.hpp>
 #include <Util/Variant.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "DataTypes/UnboundField.hpp"
 
 namespace NES
 {
@@ -77,14 +81,14 @@ public:
 
     static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
         LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
-        JoinType joinType = JoinType::INNER_JOIN);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+        JoinType joinType);
 
     static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
         std::array<LogicalOperator, 2> children,
         LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
-        JoinType joinType = JoinType::INNER_JOIN);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+        JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] JoinType getJoinType() const;

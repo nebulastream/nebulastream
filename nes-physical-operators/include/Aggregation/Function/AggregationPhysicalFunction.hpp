@@ -27,6 +27,8 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include "Interface/NESStrongTypeRef.hpp"
+#include "Interface/TimestampRef.hpp"
 
 namespace NES
 {

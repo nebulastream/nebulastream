@@ -19,7 +19,16 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
+#include "Aggregation/Function/AggregationPhysicalFunction.hpp"
+#include "DataTypes/DataType.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Interface/Record.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
+#include "Runtime/AbstractBufferProvider.hpp"
 
 namespace NES
 {

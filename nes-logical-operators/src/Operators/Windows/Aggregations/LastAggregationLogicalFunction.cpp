@@ -5,11 +5,21 @@
 
 #include <Operators/Windows/Aggregations/LastAggregationLogicalFunction.hpp>
 
-#include <memory>
+#include <cstddef>
+#include <functional>
+#include <string_view>
+#include <string>
 #include <utility>
+#include <variant>
 
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
+#include "DataTypes/DataType.hpp"
+#include "Util/PlanRenderer.hpp"
+#include "DataTypes/Schema.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <folly/hash/Hash.h>
 #include <fmt/format.h>

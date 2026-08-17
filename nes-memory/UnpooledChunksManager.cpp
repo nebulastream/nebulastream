@@ -33,6 +33,7 @@
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+#include "Util/Sanitizer.hpp"
 
 namespace NES
 {

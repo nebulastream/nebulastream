@@ -99,6 +99,7 @@ public:
         BufferAlignment alignment,
         uint32_t bufferSize,
         const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         UnpooledBufferManagerType unpooledBufferManagerType = UnpooledBufferManagerType::CHUNKED);
 
     BufferManager(const BufferManager&) = delete;

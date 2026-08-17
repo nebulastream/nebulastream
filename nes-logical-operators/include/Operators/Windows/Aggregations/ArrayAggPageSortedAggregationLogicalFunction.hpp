@@ -19,10 +19,11 @@
 #include <string_view>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Util/Reflection.hpp>
+#include "DataTypes/SchemaFwd.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {

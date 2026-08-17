@@ -260,17 +260,10 @@ void StreamTableJoinPhysicalOperator::probeStreamRecord(
     const auto numberOfTableRows = tableState.getNumberOfRecords();
     nautilus::val<bool> matched = false;
     nautilus::val<bool> sawNull = false;
-    for (
-        nautilus::val<uint64_t> tableIndex = 0;
-        tableIndex < numberOfTableRows;
-        tableIndex = tableIndex + nautilus::val<uint64_t>{1})
+    for (nautilus::val<uint64_t> tableIndex = 0; tableIndex < numberOfTableRows; tableIndex = tableIndex + nautilus::val<uint64_t>{1})
     {
         auto tableRecord = tableState.at(tableIndex);
-        if (joinType == JoinType::INNER_JOIN)
-        {
-            emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
-        }
-        else if (!matched)
+        if (joinType == JoinType::INNER_JOIN || !matched)
         {
             emitJoinedRecord(executionCtx, streamRecord, tableRecord, streamTimestamp, matched, sawNull);
         }

@@ -17,13 +17,13 @@
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
-#include <ErrorHandling.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Interface/VariableSizedAccess.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -46,11 +46,11 @@ struct VideoField
 };
 
 constexpr std::array videoFields{
-    VideoField{"TIMESTAMP", DataType::Type::UINT64, "UINT64"},
-    VideoField{"WIDTH", DataType::Type::UINT64, "UINT64"},
-    VideoField{"HEIGHT", DataType::Type::UINT64, "UINT64"},
-    VideoField{"PIXEL_FORMAT", DataType::Type::UINT64, "UINT64"},
-    VideoField{"IMAGE", DataType::Type::VARSIZED, "VARSIZED"},
+    VideoField{.name = "TIMESTAMP", .type = DataType::Type::UINT64, .typeName = "UINT64"},
+    VideoField{.name = "WIDTH", .type = DataType::Type::UINT64, .typeName = "UINT64"},
+    VideoField{.name = "HEIGHT", .type = DataType::Type::UINT64, .typeName = "UINT64"},
+    VideoField{.name = "PIXEL_FORMAT", .type = DataType::Type::UINT64, .typeName = "UINT64"},
+    VideoField{.name = "IMAGE", .type = DataType::Type::VARSIZED, .typeName = "VARSIZED"},
 };
 
 void validateSchema(const SourceDescriptor& sourceDescriptor)
@@ -66,8 +66,7 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
         const auto actual = (*schema)[index];
         INVARIANT(actual.has_value(), "Video source schema field {} is missing", index);
         const auto& actualName = static_cast<const Identifier&>(actual->getFullyQualifiedName());
-        if (actualName != Identifier::parse(std::string{expected.name})
-            || actual->getDataType().type != expected.type
+        if (actualName != Identifier::parse(std::string{expected.name}) || actual->getDataType().type != expected.type
             || actual->getDataType().nullable)
         {
             throw CannotOpenSource(
@@ -84,6 +83,7 @@ class StreamBuffer
 {
 public:
     explicit StreamBuffer(ArvStream* stream) : stream(stream), buffer(arv_stream_timeout_pop_buffer(stream, 1'000'000)) { }
+
     StreamBuffer(const StreamBuffer&) = delete;
     StreamBuffer& operator=(const StreamBuffer&) = delete;
 
@@ -96,9 +96,13 @@ public:
     }
 
     [[nodiscard]] ArvBufferStatus status() const { return buffer ? arv_buffer_get_status(buffer) : ARV_BUFFER_STATUS_TIMEOUT; }
+
     [[nodiscard]] uint64_t timestamp() const { return arv_buffer_get_timestamp(buffer); }
+
     [[nodiscard]] uint64_t width() const { return arv_buffer_get_image_width(buffer); }
+
     [[nodiscard]] uint64_t height() const { return arv_buffer_get_image_height(buffer); }
+
     [[nodiscard]] uint64_t pixelFormat() const { return arv_buffer_get_image_pixel_format(buffer); }
 
     [[nodiscard]] std::span<const std::byte> data() const

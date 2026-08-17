@@ -24,6 +24,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {

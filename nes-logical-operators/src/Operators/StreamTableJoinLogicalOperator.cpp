@@ -15,9 +15,15 @@
 #include <Operators/StreamTableJoinLogicalOperator.hpp>
 
 #include <array>
+#include <cstddef>
 #include <functional>
+#include <optional>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
@@ -29,11 +35,14 @@
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Traits/Trait.hpp>
 #include <Util/Hash.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Traits/TraitSet.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -216,6 +225,7 @@ std::string StreamTableJoinLogicalOperator::explain(const ExplainVerbosity verbo
     return fmt::format("StreamTableJoin({}, {})", joinTypeName(joinType), joinFunction.explain(verbosity));
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::string_view StreamTableJoinLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -233,11 +243,12 @@ StreamTableJoinLogicalOperator StreamTableJoinLogicalOperator::withInferredSchem
 Reflected Reflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::operator()(
     const TypedLogicalOperator<StreamTableJoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedStreamTableJoinLogicalOperator{
-        .operatorId = op.getId(),
-        .joinFunction = op->getJoinFunction(),
-        .timeCharacteristics = op->getTimeCharacteristics(),
-        .joinType = op->getJoinType()});
+    return context.reflect(
+        detail::ReflectedStreamTableJoinLogicalOperator{
+            .operatorId = op.getId(),
+            .joinFunction = op->getJoinFunction(),
+            .timeCharacteristics = op->getTimeCharacteristics(),
+            .joinType = op->getJoinType()});
 }
 
 Unreflector<TypedLogicalOperator<StreamTableJoinLogicalOperator>>::Unreflector(ContextType operatorMapping)

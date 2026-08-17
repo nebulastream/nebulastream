@@ -15,8 +15,10 @@
 #include <ProcessSource.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <chrono>
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -32,7 +34,6 @@
 #include <utility>
 #include <fcntl.h>
 #include <poll.h>
-#include <signal.h>
 #include <unistd.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -105,8 +106,8 @@ void ProcessSource::startProcess()
     const auto timestamp = std::to_string(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 
-    int pipeFds[2];
-    if (pipe2(pipeFds, O_CLOEXEC) == -1)
+    std::array<int, 2> pipeFds{};
+    if (pipe2(pipeFds.data(), O_CLOEXEC) == -1)
     {
         throw CannotOpenSource("Could not create ProcessSource output pipe: {}", std::strerror(errno));
     }
@@ -131,7 +132,7 @@ void ProcessSource::startProcess()
             _exit(126);
         }
         ::close(pipeFds[1]);
-        execl(
+        execl( /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX execl is async-signal-safe after fork
             "/bin/bash",
             "bash",
             "-c",
@@ -147,8 +148,8 @@ void ProcessSource::startProcess()
     }
 
     ::close(pipeFds[1]);
-    const auto flags = fcntl(pipeFds[0], F_GETFL, 0);
-    if (flags == -1 || fcntl(pipeFds[0], F_SETFL, flags | O_NONBLOCK) == -1)
+    const auto flags = fcntl(pipeFds[0], F_GETFL, 0); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API
+    if (flags == -1 || fcntl(pipeFds[0], F_SETFL, flags | O_NONBLOCK) == -1) /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API
     {
         const auto savedErrno = errno;
         ::close(pipeFds[0]);

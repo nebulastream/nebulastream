@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <array>
 #include <memory>
 #include <optional>
 #include <string>
@@ -105,8 +104,8 @@ public:
         LogicalPlan streamPlan,
         LogicalPlan tablePlan,
         const LogicalFunction& joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics = std::nullopt,
-        StreamTableJoinLogicalOperator::JoinType joinType = StreamTableJoinLogicalOperator::JoinType::INNER_JOIN);
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
+        StreamTableJoinLogicalOperator::JoinType joinType);
 
     /// Adds a directional ASOF join. The left input produces output by selecting
     /// the latest qualifying right tuple at or before its timestamp.

@@ -26,10 +26,10 @@
 #include <unordered_map>
 #include <vector>
 #include <arv.h>
-#include <battery/embed.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <battery/embed.hpp>
 #include <netinet/in.h>
 #include <opencv2/core.hpp>
 #include <opencv2/core/utils/logger.hpp>
@@ -66,7 +66,7 @@ struct __attribute__((packed)) CalRangeDescriptor
     float minManualPaletteSpanDegreesC; ///< Min palette resolution for manual palette scaling mode
     float minAutoPaletteSpanDegreesC; ///< Min palette resolution for automatic palette scaling mode
     unsigned int numUInverseCurvesDescriptors;
-    float UInverse[11][5]; ///< U-Inverse transfer function coefficients array
+    float UInverse[11][5]; ///< NOLINT(modernize-avoid-c-arrays) - fixed on-disk calibration format
 };
 
 struct __attribute__((packed)) CalRangesData
@@ -82,15 +82,15 @@ struct __attribute__((packed)) CalRangesData
 
         struct
         {
-            unsigned short runNumber : 2;
-            unsigned short day : 5;
-            unsigned short month : 4;
-            unsigned short year : 5;
-            unsigned short unused;
+            uint16_t runNumber : 2;
+            uint16_t day : 5;
+            uint16_t month : 4;
+            uint16_t year : 5;
+            uint16_t unused;
         } date;
     } calibrationDate;
 
-    CalRangeDescriptor calRangeDescriptors[3];
+    CalRangeDescriptor calRangeDescriptors[3]; /// NOLINT(modernize-avoid-c-arrays) - fixed on-disk calibration format
     unsigned int checksum;
 };
 
@@ -126,7 +126,7 @@ LookupTable buildLookupTable()
         auto tempToPower = [&](float tempCelsius) -> uint16_t
         {
             const float power = (((tempCelsius * u2) + u1) * tempCelsius) + u0;
-            const int32_t powerAsInt = static_cast<int32_t>(round(power));
+            const auto powerAsInt = static_cast<int32_t>(std::round(power));
             return static_cast<uint16_t>(powerAsInt);
         };
 
@@ -136,9 +136,9 @@ LookupTable buildLookupTable()
             float u1mulU1 = u1 * u1;
             float u1Negative = -u1;
             float u2mul2 = u2 * 2;
-            float u2mul4 = 4.0f * u2;
-            float U1mulU1_minus_U2mul4mulU0 = u1mulU1 - u2mul4 * u0;
-            float temperatureValue = (u1Negative + sqrtf(U1mulU1_minus_U2mul4mulU0 + u2mul4 * static_cast<float>(power))) / u2mul2;
+            float u2mul4 = 4.0F * u2;
+            float U1mulU1_minus_U2mul4mulU0 = u1mulU1 - (u2mul4 * u0);
+            float temperatureValue = (u1Negative + sqrtf(U1mulU1_minus_U2mul4mulU0 + (u2mul4 * static_cast<float>(power)))) / u2mul2;
             return temperatureValue;
         };
 
@@ -211,7 +211,7 @@ static constexpr int AUDIO_SAMPLES = 16000;
 static constexpr int AUDIO_FRAME_SAMPLES = 400;
 static constexpr int AUDIO_FRAME_STRIDE = 160;
 static constexpr int AUDIO_FFT_SIZE = 512;
-static constexpr int AUDIO_FRAMES = AUDIO_SAMPLES / AUDIO_FRAME_STRIDE + 1;
+static constexpr int AUDIO_FRAMES = (AUDIO_SAMPLES / AUDIO_FRAME_STRIDE) + 1;
 static constexpr int MFCC_COEFFICIENTS = 64;
 static constexpr uint32_t AUDIO_BYTES = AUDIO_SAMPLES * sizeof(float);
 static constexpr uint32_t MFCC_BYTES = AUDIO_FRAMES * MFCC_COEFFICIENTS * sizeof(float);
@@ -287,7 +287,7 @@ nautilus::val<uint64_t> argmaxF32(const VariableSizedData& input)
 /// Transforms one second of 16 kHz audio into a frame-major [101, 64] MFCC tensor.
 void audioToMFCC(const float* input, float* output)
 {
-    constexpr int frequencyBins = AUDIO_FFT_SIZE / 2 + 1;
+    constexpr int frequencyBins = (AUDIO_FFT_SIZE / 2) + 1;
     constexpr int fftPadding = (AUDIO_FFT_SIZE - AUDIO_FRAME_SAMPLES) / 2;
 
     if (input == nullptr || output == nullptr)
@@ -310,7 +310,7 @@ void audioToMFCC(const float* input, float* output)
     {
         constexpr int melPoints = MFCC_COEFFICIENTS + 2;
         std::array<float, melPoints> frequencies{};
-        const auto maxMel = 2595.0F * std::log10(1.0F + 8000.0F / 700.0F);
+        const auto maxMel = 2595.0F * std::log10(1.0F + (8000.0F / 700.0F));
         for (int point = 0; point < melPoints; ++point)
         {
             const auto mel = maxMel * static_cast<float>(point) / static_cast<float>(melPoints - 1);
@@ -339,7 +339,7 @@ void audioToMFCC(const float* input, float* output)
     for (int frame = 0; frame < AUDIO_FRAMES; ++frame)
     {
         cv::Mat windowed;
-        cv::multiply(padded.colRange(frame * AUDIO_FRAME_STRIDE, frame * AUDIO_FRAME_STRIDE + AUDIO_FFT_SIZE), hannWindow, windowed);
+        cv::multiply(padded.colRange(frame * AUDIO_FRAME_STRIDE, (frame * AUDIO_FRAME_STRIDE) + AUDIO_FFT_SIZE), hannWindow, windowed);
 
         cv::Mat spectrum;
         cv::dft(windowed, spectrum, cv::DFT_COMPLEX_OUTPUT);
@@ -497,7 +497,7 @@ nautilus::val<uint16_t> mono16AVG(const VariableSizedData& input)
 
     if (pixels == 0)
     {
-        return nautilus::val<uint16_t>(0);
+        return {0};
     }
 
     for (nautilus::val<size_t> i = 0; i < pixels; ++i)
@@ -523,14 +523,14 @@ struct Rectangle
         uint16_t height;
     };
 
-    union
-    {
-        uint64_t packed;
-        Unpacked unpacked;
-    };
+    explicit Rectangle(const uint64_t value) : unpacked(std::bit_cast<Unpacked>(value)) { }
 
-    Rectangle(uint64_t value) : packed(value) { }
+    [[nodiscard]] uint64_t packed() const { return std::bit_cast<uint64_t>(unpacked); }
+
+    Unpacked unpacked;
 };
+
+static_assert(sizeof(Rectangle::Unpacked) == sizeof(uint64_t));
 
 VariableSizedData mono16ROI(
     const VariableSizedData& input,
@@ -568,7 +568,7 @@ VariableSizedData drawRectangle(const VariableSizedData& input, const nautilus::
         +[](uint32_t input_length, int8_t* data, uint64 rectangle, int8_t* destination)
         {
             const auto [x, y, width, height] = Rectangle(rectangle).unpacked;
-            auto input = std::span{reinterpret_cast<int8_t*>(data), input_length};
+            auto input = std::span{data, input_length};
             auto image = std::span{destination, input_length};
             std::ranges::copy(input, image.data());
 
@@ -922,7 +922,7 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
                 r.unpacked.width = 0;
                 r.unpacked.height = 0;
             }
-            return r.packed;
+            return r.packed();
         },
         input.getContent(),
         input.getSize(),
@@ -931,10 +931,10 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
 
     if (result == nautilus::val<uint64_t>(0))
     {
-        return VarVal(nautilus::val<uint64_t>(0), true, nautilus::val<bool>(true));
+        return {nautilus::val<uint64_t>(0), true, nautilus::val<bool>(true)};
     }
 
-    return VarVal(result, true, nautilus::val<bool>(false));
+    return {result, true, nautilus::val<bool>(false)};
 }
 
 thread_local std::vector<uint8_t> monoToBGR;
@@ -996,23 +996,23 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint16_t>>(4),
             arena);
     }
-    else if (functionName == "AudioToMFCC")
+    if (functionName == "AudioToMFCC")
     {
         return audioToMFCC(child.template operator()<VariableSizedData>(0), arena);
     }
-    else if (functionName == "ArgmaxF32")
+    if (functionName == "ArgmaxF32")
     {
         return argmaxF32(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "MaxF32")
+    if (functionName == "MaxF32")
     {
         return reduceF32<maxF32>(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "MaxAbsF32")
+    if (functionName == "MaxAbsF32")
     {
         return reduceF32<maxAbsF32>(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "Mono8ToJPG")
+    if (functionName == "Mono8ToJPG")
     {
         return mono8ToJPG(
             child.template operator()<VariableSizedData>(0),
@@ -1020,7 +1020,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "YUYVToJPG")
+    if (functionName == "YUYVToJPG")
     {
         return yuyvToJPG(
             child.template operator()<VariableSizedData>(0),
@@ -1028,7 +1028,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "Mono16ToPNG16")
+    if (functionName == "Mono16ToPNG16")
     {
         return mono16ToPNG16(
             child.template operator()<VariableSizedData>(0),
@@ -1036,7 +1036,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "Mono16ToJPG")
+    if (functionName == "Mono16ToJPG")
     {
         return mono16ToJPG(
             child.template operator()<VariableSizedData>(0),
@@ -1044,7 +1044,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "Mono16ToYUYV")
+    if (functionName == "Mono16ToYUYV")
     {
         return mono16ToYUYV(
             child.template operator()<VariableSizedData>(0),
@@ -1052,7 +1052,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "Serialize")
+    if (functionName == "Serialize")
     {
         auto image = child.template operator()<VariableSizedData>(0);
         auto width = child.template operator()<nautilus::val<uint64_t>>(1);
@@ -1105,7 +1105,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
 
         return image;
     }
-    else if (functionName == "Deserialize")
+    if (functionName == "Deserialize")
     {
         auto image = child.template operator()<VariableSizedData>(0);
         auto width = child.template operator()<nautilus::val<uint64_t>>(1);
@@ -1116,12 +1116,9 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
         {
             return png16ToMono16(fromBase64(image, arena), width, height, arena);
         }
-        else
-        {
-            return jpgToYUYV(fromBase64(image, arena), width, height, arena);
-        }
+        return jpgToYUYV(fromBase64(image, arena), width, height, arena);
     }
-    else if (functionName == "Mono8ToYUYV")
+    if (functionName == "Mono8ToYUYV")
     {
         return mono8ToYUYV(
             child.template operator()<VariableSizedData>(0),
@@ -1129,7 +1126,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "FaceDetection")
+    if (functionName == "FaceDetection")
     {
         return faceDetection(
             child.template operator()<VariableSizedData>(0),
@@ -1137,7 +1134,7 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(2),
             arena);
     }
-    else if (functionName == "Mono16ROI")
+    if (functionName == "Mono16ROI")
     {
         return mono16ROI(
             child.template operator()<VariableSizedData>(0),
@@ -1146,28 +1143,28 @@ VarVal PhysicalFunctionImageManip::execute(const Record& record, ArenaRef& arena
             child.template operator()<nautilus::val<uint64_t>>(3),
             arena);
     }
-    else if (functionName == "Mono16AVG")
+    if (functionName == "Mono16AVG")
     {
         return mono16AVG(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "Mono16ToCelsius")
+    if (functionName == "Mono16ToCelsius")
     {
         return mono16ToCelsius(child.template operator()<nautilus::val<uint16_t>>(0));
     }
-    else if (functionName == "Mono16MAX")
+    if (functionName == "Mono16MAX")
     {
         return mono16MAX(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "Mono16MIN")
+    if (functionName == "Mono16MIN")
     {
         return mono16MIN(child.template operator()<VariableSizedData>(0));
     }
-    else if (functionName == "Rectangle")
+    if (functionName == "Rectangle")
     {
         return child.template operator()<nautilus::val<uint64_t>>(0) << 48 | child.template operator()<nautilus::val<uint64_t>>(1) << 32
             | child.template operator()<nautilus::val<uint64_t>>(2) << 16 | child.template operator()<nautilus::val<uint64_t>>(3);
     }
-    else if (functionName == "DrawRectangle")
+    if (functionName == "DrawRectangle")
     {
         return drawRectangle(child.template operator()<VariableSizedData>(0), child.template operator()<nautilus::val<uint64_t>>(1), arena);
     }

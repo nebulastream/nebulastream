@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -24,8 +25,8 @@
 #include <iterator>
 #include <memory>
 #include <optional>
-#include <regex>
 #include <ranges>
+#include <regex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -34,6 +35,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <unistd.h>
 #include <DataTypes/DataType.hpp>
@@ -43,11 +45,11 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -62,6 +64,7 @@
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <rfl/Generic.hpp>
@@ -76,6 +79,7 @@
 #include <QueryStateBackend.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
+#include "DistributedLogicalPlan.hpp"
 
 namespace
 {
@@ -430,7 +434,7 @@ struct convert<NES::CLI::NamedQuery>
             rhs.query = node.as<std::string>();
             return true;
         }
-        else if (node.IsMap())
+        if (node.IsMap())
         {
             acceptKeys({"query", "name", "disabled"}, node);
             rhs.name = getOptional<std::string>(node, "name");
@@ -615,7 +619,7 @@ struct ResolvedPipe
 
 std::string previousToken(std::string_view query, size_t offset)
 {
-    while (offset > 0 && std::isspace(static_cast<unsigned char>(query[offset - 1])))
+    while (offset > 0 && (std::isspace(static_cast<unsigned char>(query[offset - 1])) != 0))
     {
         --offset;
     }
@@ -623,7 +627,7 @@ std::string previousToken(std::string_view query, size_t offset)
     while (offset > 0)
     {
         const auto character = static_cast<unsigned char>(query[offset - 1]);
-        if (!std::isalnum(character) && character != '_')
+        if ((std::isalnum(character) == 0) && character != '_')
         {
             break;
         }
@@ -636,12 +640,11 @@ PipeQueryMetadata findPipeEndpoints(const NES::CLI::NamedQuery& query)
 {
     /// Frontend-only shorthand. A sink is PIPE(name, "host"), while a source is PIPE(name).
     /// PIPE is intentionally found independent of its surrounding relation syntax so FROM, JOIN, and nested table expressions work.
-    static const std::regex pipePattern{
-        R"pipe(\bPIPE\s*\(\s*((?:[a-zA-Z_][a-zA-Z0-9_]*)|(?:"[^"]*"))\s*(?:,\s*"([a-zA-Z0-9:]*)")?\s*\))pipe",
-        std::regex_constants::icase};
+    static const std::regex PipePattern{
+        R"pipe(\bPIPE\s*\(\s*((?:[a-zA-Z_][a-zA-Z0-9_]*)|(?:"[^"]*"))\s*(?:,\s*"([a-zA-Z0-9:]*)")?\s*\))pipe", std::regex_constants::icase};
 
     PipeQueryMetadata metadata;
-    for (auto iter = std::sregex_iterator(query.query.begin(), query.query.end(), pipePattern); iter != std::sregex_iterator{}; ++iter)
+    for (auto iter = std::sregex_iterator(query.query.begin(), query.query.end(), PipePattern); iter != std::sregex_iterator{}; ++iter)
     {
         const auto& match = *iter;
         const auto offset = static_cast<size_t>(match.position());
@@ -703,8 +706,7 @@ std::vector<size_t> pipeQueryOrder(const std::vector<NES::CLI::NamedQuery>& quer
             const auto producer = producers.find(endpoint.name);
             if (producer == producers.end())
             {
-                throw NES::InvalidConfigParameter(
-                    "Pipe source '{}' has no producer in this submission", endpoint.name.getOriginalString());
+                throw NES::InvalidConfigParameter("Pipe source '{}' has no producer in this submission", endpoint.name.getOriginalString());
             }
             if (successors[producer->second].insert(consumerIndex).second)
             {
@@ -812,6 +814,7 @@ std::string pipeDependencyOutput(
         size_t queryIndex;
         std::string host;
     };
+
     std::unordered_map<NES::Identifier, Producer> producers;
     for (size_t queryIndex = 0; queryIndex < metadata.size(); ++queryIndex)
     {
@@ -824,8 +827,8 @@ std::string pipeDependencyOutput(
         }
     }
 
-    const auto queryName = [&queries](size_t queryIndex)
-    { return queries[queryIndex].name.value_or(fmt::format("query[{}]", queryIndex)); };
+    const auto queryName
+        = [&queries](size_t queryIndex) { return queries[queryIndex].name.value_or(fmt::format("query[{}]", queryIndex)); };
 
     std::stringstream output;
     fmt::println(output, "== Query Dependencies ==");
@@ -897,11 +900,7 @@ std::string pipeDependencyOutput(
             if (pipeConsumers.empty())
             {
                 fmt::println(
-                    output,
-                    "{} ({}@{} is not consumed)",
-                    queryName(queryIndex),
-                    endpoint.name.getOriginalString(),
-                    endpoint.host.value());
+                    output, "{} ({}@{} is not consumed)", queryName(queryIndex), endpoint.name.getOriginalString(), endpoint.host.value());
                 continue;
             }
             const auto consumerNames = pipeConsumers
@@ -953,9 +952,7 @@ std::string rewritePipeQuery(
         if (endpoint->type == PipeEndpointType::Sink)
         {
             replacement = fmt::format(
-                "Pipe('{}' AS \"SINK\".\"PIPE_NAME\", '{}' AS \"SINK\".\"HOST\")",
-                endpoint->name.asCanonicalString(),
-                endpoint->host.value());
+                R"(Pipe('{}' AS "SINK"."PIPE_NAME", '{}' AS "SINK"."HOST"))", endpoint->name.asCanonicalString(), endpoint->host.value());
         }
         else
         {
@@ -1052,9 +1049,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
     {
-        statements.emplace_back(
-            NES::CreateWorkerStatement{
-                .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
+        statements.emplace_back(NES::CreateWorkerStatement{
+            .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -1063,24 +1059,22 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
-        statements.emplace_back(
-            NES::CreatePhysicalSourceStatement{
-                .attachedTo = bindIdentifierName(logical),
-                .sourceType = bindIdentifierName(type),
-                .host = NES::Host(host),
-                .sourceConfig = bindConfig(sourceConfig),
-                .parserConfig = bindConfig(parserConfig)});
+        statements.emplace_back(NES::CreatePhysicalSourceStatement{
+            .attachedTo = bindIdentifierName(logical),
+            .sourceType = bindIdentifierName(type),
+            .host = NES::Host(host),
+            .sourceConfig = bindConfig(sourceConfig),
+            .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
-        statements.emplace_back(
-            NES::CreateSinkStatement{
-                .name = bindIdentifierName(name),
-                .sinkType = bindIdentifierName(type),
-                .schema = bindSchema(schemaFields),
-                .host = NES::Host(host),
-                .sinkConfig = bindConfig(config),
-                .formatConfig = bindConfig(parserConfig)});
+        statements.emplace_back(NES::CreateSinkStatement{
+            .name = bindIdentifierName(name),
+            .sinkType = bindIdentifierName(type),
+            .schema = bindSchema(schemaFields),
+            .host = NES::Host(host),
+            .sinkConfig = bindConfig(config),
+            .formatConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, path, input, output] : models)
     {

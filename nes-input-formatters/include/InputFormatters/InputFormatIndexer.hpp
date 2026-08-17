@@ -40,6 +40,7 @@ public:
     /// of SIMD lookahead. Callers that own the input memory must guarantee at least this many addressable bytes
     /// past the content end. Defaults to 0 for indexers with no over-read; SIMD-based indexers (e.g. simdjson)
     /// pass their padding constant here.
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
     explicit InputFormatIndexer(std::size_t tailPadding = 0) noexcept : tailPaddingBytes(tailPadding) { }
 
     virtual ~InputFormatIndexer() = default;

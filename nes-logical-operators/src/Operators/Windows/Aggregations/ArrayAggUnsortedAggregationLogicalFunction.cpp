@@ -15,6 +15,7 @@
 #include <Operators/Windows/Aggregations/ArrayAggUnsortedAggregationLogicalFunction.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -47,6 +48,7 @@ std::string_view ArrayAggUnsortedAggregationLogicalFunction::getName() noexcept
     return NAME;
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 DataType ArrayAggUnsortedAggregationLogicalFunction::getAggregateType() const
 {
     return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
@@ -101,7 +103,8 @@ Unreflector<ArrayAggUnsortedAggregationLogicalFunction>::operator()(const Reflec
     return ArrayAggUnsortedAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
-AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterArrayAggUnsortedAggregationLogicalFunction(
+AggregationLogicalFunctionRegistryReturnType
+AggregationLogicalFunctionGeneratedRegistrar::RegisterArrayAggUnsortedAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
     if (arguments.on.size() != 1)
@@ -115,6 +118,5 @@ AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGenerated
 size_t std::hash<NES::ArrayAggUnsortedAggregationLogicalFunction>::operator()(
     const NES::ArrayAggUnsortedAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(
-        aggregationFunction.getInputFunction(), NES::ArrayAggUnsortedAggregationLogicalFunction::getName());
+    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::ArrayAggUnsortedAggregationLogicalFunction::getName());
 }

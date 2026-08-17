@@ -16,15 +16,22 @@
 
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "DataTypes/DataType.hpp"
+#include "DataTypes/Schema.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -121,7 +128,7 @@ Unreflector<QuantifiedComparisonLogicalFunction>::operator()(const Reflected&, c
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterQuantifiedComparisonLogicalFunction(LogicalFunctionRegistryArguments)
+LogicalFunctionGeneratedRegistrar::RegisterQuantifiedComparisonLogicalFunction(const LogicalFunctionRegistryArguments&)
 {
     PRECONDITION(false, "QuantifiedComparisonLogicalFunction is created directly by the SQL parser");
     std::unreachable();

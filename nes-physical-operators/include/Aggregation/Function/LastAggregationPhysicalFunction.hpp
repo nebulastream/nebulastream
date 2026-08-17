@@ -10,6 +10,15 @@
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
+#include "DataTypes/DataType.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Interface/Record.hpp"
+#include <val_base.hpp>
+#include <val_ptr.hpp>
+#include "Runtime/TupleBuffer.hpp"
+#include "ExecutionContext.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {

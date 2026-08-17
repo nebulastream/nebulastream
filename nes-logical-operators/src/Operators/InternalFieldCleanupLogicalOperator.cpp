@@ -14,20 +14,30 @@
 
 #include <Operators/InternalFieldCleanupLogicalOperator.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Schema/Binder.hpp>
-#include <Traits/Trait.hpp>
 #include <Util/Hash.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/Schema.hpp"
+#include "DataTypes/SchemaFwd.hpp"
+#include "Traits/TraitSet.hpp"
+#include "Util/PlanRenderer.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {

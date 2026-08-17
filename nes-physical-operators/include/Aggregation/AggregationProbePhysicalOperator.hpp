@@ -22,6 +22,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <HashMapOptions.hpp>
 #include <WindowProbePhysicalOperator.hpp>
+#include "ExecutionContext.hpp"
 
 namespace NES
 {

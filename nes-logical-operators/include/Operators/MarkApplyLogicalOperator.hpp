@@ -15,7 +15,9 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -32,6 +34,8 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "DataTypes/UnboundField.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {
@@ -59,12 +63,14 @@ public:
     static TypedLogicalOperator<MarkApplyLogicalOperator> create(
         std::vector<LogicalFunction> probeValues,
         Identifier markField,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::vector<Identifier> correlationFields = {});
 
     static TypedLogicalOperator<MarkApplyLogicalOperator> create(
         std::array<LogicalOperator, 2> children,
         std::vector<LogicalFunction> probeValues,
         Identifier markField,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::vector<Identifier> correlationFields = {});
 
     [[nodiscard]] const std::vector<LogicalFunction>& getProbeValues() const;

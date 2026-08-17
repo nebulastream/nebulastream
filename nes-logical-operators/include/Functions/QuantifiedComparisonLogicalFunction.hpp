@@ -23,7 +23,7 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp> ///NOLINT(misc-include-cleaner)
 #include <Schema/Field.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -53,7 +53,9 @@ public:
     QuantifiedComparisonLogicalFunction(
         std::vector<LogicalFunction> probeValues,
         LogicalOperator subqueryRoot,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         Comparison comparison = Comparison::EQUALS,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         Quantifier quantifier = Quantifier::ANY);
 
     [[nodiscard]] const std::vector<LogicalFunction>& getProbeValues() const;

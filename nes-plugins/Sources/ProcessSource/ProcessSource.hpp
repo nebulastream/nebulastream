@@ -74,7 +74,7 @@ private:
     uint64_t nextInvocation{1};
     std::chrono::milliseconds refreshInterval;
     std::chrono::milliseconds flushInterval;
-    std::chrono::steady_clock::time_point nextRefresh{};
+    std::chrono::steady_clock::time_point nextRefresh;
     pid_t childPid{-1};
     pid_t processGroupId{-1};
     int standardOutputFd{-1};

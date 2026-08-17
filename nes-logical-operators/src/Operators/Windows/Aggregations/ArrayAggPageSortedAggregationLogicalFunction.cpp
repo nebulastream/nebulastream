@@ -13,6 +13,10 @@
 */
 #include <Operators/Windows/Aggregations/ArrayAggPageSortedAggregationLogicalFunction.hpp>
 
+#include <string_view>
+#include <string>
+#include <cstddef>
+#include <functional>
 #include <utility>
 #include <variant>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -21,6 +25,12 @@
 #include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
+#include "DataTypes/DataType.hpp"
+#include "Util/PlanRenderer.hpp"
+#include "DataTypes/Schema.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
 
 namespace NES
 {
@@ -34,6 +44,7 @@ std::string_view ArrayAggPageSortedAggregationLogicalFunction::getName() noexcep
     return NAME;
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 DataType ArrayAggPageSortedAggregationLogicalFunction::getAggregateType() const
 {
     return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);

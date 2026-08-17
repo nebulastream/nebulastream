@@ -24,6 +24,13 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
+#include <val_base.hpp>
+#include <val_ptr.hpp>
+#include "ExecutionContext.hpp"
+#include "Interface/PagedVector/PagedVectorComparator.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {
@@ -37,6 +44,7 @@ public:
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         bool sortByTimestamp = true);
 
     void setup(CompilationContext& compilationContext) override;

@@ -14,9 +14,12 @@
 
 #include <Operators/MarkApplyLogicalOperator.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <ranges>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -31,12 +34,20 @@
 #include <Operators/Reorderer.hpp>
 #include <Schema/Binder.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Traits/Trait.hpp>
 #include <Util/Hash.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include "Identifiers/Identifier.hpp"
+#include "DataTypes/Schema.hpp"
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Functions/LogicalFunction.hpp"
+#include "DataTypes/DataType.hpp"
+#include "Traits/TraitSet.hpp"
+#include "Util/PlanRenderer.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {

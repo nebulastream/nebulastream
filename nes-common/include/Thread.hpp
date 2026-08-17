@@ -14,6 +14,7 @@
 
 #pragma once
 #include <string>
+#include <string_view>
 #include <thread>
 
 #include <utility>
@@ -121,6 +122,7 @@ public:
 
     ///Sets the currents thread's name.
     ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
     static void setThreadName(const std::string_view threadName, const std::string_view worker = "")
     {
         PRECONDITION(!threadName.empty(), "Thread name cannot be empty");

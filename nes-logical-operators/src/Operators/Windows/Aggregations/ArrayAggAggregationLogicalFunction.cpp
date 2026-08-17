@@ -15,6 +15,7 @@
 #include <Operators/Windows/Aggregations/ArrayAggAggregationLogicalFunction.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -47,6 +48,7 @@ std::string_view ArrayAggAggregationLogicalFunction::getName() noexcept
     return NAME;
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 DataType ArrayAggAggregationLogicalFunction::getAggregateType() const
 {
     return DataTypeProvider::provideDataType(DataType::Type::VARSIZED);

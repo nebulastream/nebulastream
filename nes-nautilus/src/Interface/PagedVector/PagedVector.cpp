@@ -180,8 +180,7 @@ void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Are
     for (size_t pageIndex = 0; pageIndex < numberOfPages; ++pageIndex)
     {
         std::construct_at(
-            pages + pageIndex,
-            buffer.loadChildBuffer(ChildBufferIndex{static_cast<ChildBufferIndex::Underlying>(pageIndex)}));
+            pages + pageIndex, buffer.loadChildBuffer(ChildBufferIndex{static_cast<ChildBufferIndex::Underlying>(pageIndex)}));
     }
     const auto pageDeleter = [numberOfPages](TupleBuffer* pageArray) { std::destroy_n(pageArray, numberOfPages); };
     const auto destroyPages = std::unique_ptr<TupleBuffer, decltype(pageDeleter)>{pages, pageDeleter};
@@ -226,11 +225,7 @@ void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Are
                 auto output = runBegin;
                 while (left < leftEnd or right < rightEnd)
                 {
-                    if (left == leftEnd)
-                    {
-                        destinationIndexes[output++] = sourceIndexes[right++];
-                    }
-                    else if (right == rightEnd or not recordLess(page, sourceIndexes[right], page, sourceIndexes[left]))
+                    if (right == rightEnd or (left != leftEnd and not recordLess(page, sourceIndexes[right], page, sourceIndexes[left])))
                     {
                         /// Choosing the left run for equivalent records makes the page sort stable.
                         destinationIndexes[output++] = sourceIndexes[left++];
@@ -269,7 +264,7 @@ void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Are
     {
         if (pages[pageIndex].getNumberOfTuples() > 0)
         {
-            heap[heapSize++] = RunCursor{pageIndex, 0};
+            heap[heapSize++] = RunCursor{.pageIndex = pageIndex, .tupleIndex = 0};
         }
     }
 
@@ -279,6 +274,7 @@ void PagedVector::stableSortRecords(const PagedVectorComparator& comparator, Are
     {
         auto& lhsPage = pages[lhs.pageIndex];
         auto& rhsPage = pages[rhs.pageIndex];
+        /// NOLINTNEXTLINE(readability-suspicious-call-argument) - intentionally reverse the comparison for min-heap ordering
         if (recordLess(rhsPage, rhs.tupleIndex, lhsPage, lhs.tupleIndex))
         {
             return true;

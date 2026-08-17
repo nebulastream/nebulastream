@@ -672,7 +672,7 @@ void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpression
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
 
-    const auto numberOfChildren = context->whenClause().size() * 2 + 1;
+    const auto numberOfChildren = (context->whenClause().size() * 2) + 1;
     if (helpers.top().functionBuilder.size() < numberOfChildren)
     {
         throw InvalidQuerySyntax(

@@ -31,7 +31,6 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <LogicalFunctionUnreflectionRegistry.hpp>
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -71,27 +70,27 @@ const auto nullableUint64 = DataTypeProvider::provideDataType(DataType::Type::UI
 const auto float32 = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
 
 const std::unordered_map<std::string_view, ImageManipFunction> functions = {
-    {"IMAGE_MANIP_MONO8_TO_JPG", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_RECTANGLE", {uint64, {uint64, uint64, uint64, uint64}}},
-    {"IMAGE_MANIP_MONO16_TO_MONO8", {varSized, {varSized, uint64, uint64, uint16, uint16}}},
-    {"IMAGE_MANIP_MONO8_TO_YUYV", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_MONO16_TO_PNG16", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_MONO16_TO_JPG", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_MONO16_TO_YUYV", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_YUYV_TO_JPG", {varSized, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_FACE_DETECTION", {nullableUint64, {varSized, uint64, uint64}}},
-    {"IMAGE_MANIP_MONO16_MIN", {uint16, {varSized}}},
-    {"IMAGE_MANIP_MONO16_MAX", {uint16, {varSized}}},
-    {"IMAGE_MANIP_MONO16_AVG", {uint16, {varSized}}},
-    {"IMAGE_MANIP_MONO16_TO_CELSIUS", {float32, {uint16}}},
-    {"IMAGE_MANIP_MONO16_ROI", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"IMAGE_MANIP_DESERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"IMAGE_MANIP_SERIALIZE", {varSized, {varSized, uint64, uint64, uint64}}},
-    {"IMAGE_MANIP_DRAW_RECTANGLE", {varSized, {varSized, uint64}}},
-    {"IMAGE_MANIP_AUDIO_TO_MFCC", {varSized, {varSized}}},
-    {"IMAGE_MANIP_ARGMAX_F32", {uint64, {varSized}}},
-    {"IMAGE_MANIP_MAX_F32", {float32, {varSized}}},
-    {"IMAGE_MANIP_MAX_ABS_F32", {float32, {varSized}}},
+    {"IMAGE_MANIP_MONO8_TO_JPG", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_RECTANGLE", {.returnValue = uint64, .argumentTypes = {uint64, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_MONO8", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64, uint16, uint16}}},
+    {"IMAGE_MANIP_MONO8_TO_YUYV", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_PNG16", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_JPG", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_TO_YUYV", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_YUYV_TO_JPG", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_FACE_DETECTION", {.returnValue = nullableUint64, .argumentTypes = {varSized, uint64, uint64}}},
+    {"IMAGE_MANIP_MONO16_MIN", {.returnValue = uint16, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_MONO16_MAX", {.returnValue = uint16, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_MONO16_AVG", {.returnValue = uint16, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_MONO16_TO_CELSIUS", {.returnValue = float32, .argumentTypes = {uint16}}},
+    {"IMAGE_MANIP_MONO16_ROI", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_DESERIALIZE", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_SERIALIZE", {.returnValue = varSized, .argumentTypes = {varSized, uint64, uint64, uint64}}},
+    {"IMAGE_MANIP_DRAW_RECTANGLE", {.returnValue = varSized, .argumentTypes = {varSized, uint64}}},
+    {"IMAGE_MANIP_AUDIO_TO_MFCC", {.returnValue = varSized, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_ARGMAX_F32", {.returnValue = uint64, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_MAX_F32", {.returnValue = float32, .argumentTypes = {varSized}}},
+    {"IMAGE_MANIP_MAX_ABS_F32", {.returnValue = float32, .argumentTypes = {varSized}}},
 };
 }
 

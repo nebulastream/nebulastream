@@ -24,6 +24,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Sanitizer.hpp"
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <mutex>

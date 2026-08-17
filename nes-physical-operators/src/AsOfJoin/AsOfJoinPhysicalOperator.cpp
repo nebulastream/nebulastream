@@ -283,10 +283,9 @@ void AsOfJoinPhysicalOperator<PredicateFree>::probeLeftRecord(
 
     // Traverse newest-to-oldest so the first qualifying row is the ASOF predecessor. The handler's timestamp index makes this independent
     // of concurrent right-input insertion order and preserves the original first-row tie-break for equal timestamps.
-    for (
-        nautilus::val<uint64_t> position = startPosition;
-        position < numberOfRightRows && *selectedRightIndexState == nautilus::val<uint64_t>{UINT64_MAX};
-        position = position + nautilus::val<uint64_t>{1})
+    for (nautilus::val<uint64_t> position = startPosition;
+         position < numberOfRightRows && *selectedRightIndexState == nautilus::val<uint64_t>{UINT64_MAX};
+         position = position + nautilus::val<uint64_t>{1})
     {
         const auto rightIndex = invoke(
             +[](OperatorHandler* ptr, const uint64_t currentPosition)
@@ -411,7 +410,7 @@ void AsOfJoinPhysicalOperator<PredicateFree>::compactRightState(
         const auto shouldRetain = [&](const nautilus::val<uint64_t>& index)
         {
             const auto record = rightState.at(index);
-            const auto key = record.read(keyField);
+            const auto& key = record.read(keyField);
             const auto timestamp = invoke(
                 +[](OperatorHandler* ptr, const uint64_t pos)
                 { return dynamic_cast<StreamTableJoinOperatorHandler&>(*ptr).getTableTimestamp(pos); },

@@ -65,6 +65,7 @@
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
+#include "QueryId.hpp"
 
 namespace NES::InputFormatterTestUtil
 {

@@ -15,22 +15,29 @@
 #include <StreamTableJoin/StreamTableJoinOperatorHandler.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
+#include <iterator>
 #include <numeric>
 #include <utility>
+#include <vector>
 
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <bits/ranges_algo.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Time/Timestamp.hpp"
+#include "Sequencing/SequenceData.hpp"
 
 namespace NES
 {
 
-StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(std::vector<OriginId> tableOrigins, std::vector<OriginId> inputOrigins)
-    : tableOrigins(tableOrigins), tableWatermarks(std::move(tableOrigins)), outputWatermarks(std::move(inputOrigins))
+StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(const std::vector<OriginId>& tableOrigins, const std::vector<OriginId>& inputOrigins)
+    : tableOrigins(tableOrigins), tableWatermarks(tableOrigins), outputWatermarks(inputOrigins)
 {
     PRECONDITION(!this->tableOrigins.empty(), "Stream-table join requires at least one table origin");
 }
@@ -116,7 +123,7 @@ void StreamTableJoinOperatorHandler::prepareTableTimestampOrder()
         return;
     }
     tableTimestampOrder.resize(tableTimestamps.size());
-    std::iota(tableTimestampOrder.begin(), tableTimestampOrder.end(), uint64_t{0});
+    std::ranges::iota(tableTimestampOrder, uint64_t{0});
     std::ranges::sort(
         tableTimestampOrder,
         [&](const uint64_t left, const uint64_t right)
@@ -138,12 +145,11 @@ uint64_t StreamTableJoinOperatorHandler::getTableTimestamp(const uint64_t index)
 uint64_t StreamTableJoinOperatorHandler::getDescendingTimestampStartPosition(const uint64_t timestamp) const
 {
     PRECONDITION(!tableTimestampOrderDirty, "Timestamp order must be prepared before probing");
-    const auto firstFutureTimestamp = std::upper_bound(
-        tableTimestampOrder.begin(),
-        tableTimestampOrder.end(),
+    const auto firstFutureTimestamp = std::ranges::upper_bound(
+        tableTimestampOrder,
+
         timestamp,
-        [&](const uint64_t candidateTimestamp, const uint64_t rowIndex)
-        { return candidateTimestamp < tableTimestamps.at(rowIndex); });
+        [&](const uint64_t candidateTimestamp, const uint64_t rowIndex) { return candidateTimestamp < tableTimestamps.at(rowIndex); });
     return tableTimestampOrder.size() - static_cast<uint64_t>(std::distance(tableTimestampOrder.begin(), firstFutureTimestamp));
 }
 

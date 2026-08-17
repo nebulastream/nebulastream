@@ -37,6 +37,8 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include "DataTypes/VariableSizedData.hpp"
+#include "Runtime/TupleBuffer.hpp"
 
 namespace NES
 {
@@ -133,10 +135,13 @@ public:
         auto compiledComparator = context.registerFunctionOnce(
             std::function(
                 [tupleLayout = std::move(tupleLayout), recordComparator = std::move(recordComparator)](
+                    /// NOLINTBEGIN(performance-unnecessary-value-param)
                     nautilus::val<TupleBuffer*> lhsPage,
                     nautilus::val<int8_t*> lhsTuple,
                     nautilus::val<TupleBuffer*> rhsPage,
-                    nautilus::val<int8_t*> rhsTuple) -> nautilus::val<bool>
+                    nautilus::val<int8_t*> rhsTuple
+                    /// NOLINTEND(performance-unnecessary-value-param)
+                    ) -> nautilus::val<bool>
                 {
                     const auto lhsRecord = readRecord(*tupleLayout, lhsPage, lhsTuple);
                     const auto rhsRecord = readRecord(*tupleLayout, rhsPage, rhsTuple);

@@ -45,8 +45,8 @@ struct AudioField
 };
 
 constexpr std::array audioFields{
-    AudioField{"SAMPLE", DataType::Type::FLOAT64, "FLOAT64"},
-    AudioField{"TIMESTAMP", DataType::Type::UINT64, "UINT64"},
+    AudioField{.name = "SAMPLE", .type = DataType::Type::FLOAT64, .typeName = "FLOAT64"},
+    AudioField{.name = "TIMESTAMP", .type = DataType::Type::UINT64, .typeName = "UINT64"},
 };
 
 constexpr size_t MAX_FRAMES_PER_READ = 1024;
@@ -80,7 +80,7 @@ void validateSchema(const SourceDescriptor& sourceDescriptor)
 constexpr uint64_t timestampFor(uint64_t startTimestampNs, uint64_t sampleIndex, uint32_t sampleRate)
 {
     return startTimestampNs + ((sampleIndex / sampleRate) * 1'000'000'000ULL)
-        + ((sampleIndex % sampleRate) * 1'000'000'000ULL) / sampleRate;
+        + (((sampleIndex % sampleRate) * 1'000'000'000ULL) / sampleRate);
 }
 
 static_assert(timestampFor(0, 48'000, 48'000) == 1'000'000'000ULL);

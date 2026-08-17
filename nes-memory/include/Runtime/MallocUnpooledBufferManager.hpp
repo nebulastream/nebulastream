@@ -16,7 +16,10 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <Runtime/UnpooledBufferManager.hpp>
+#include "Runtime/TupleBuffer.hpp"
+#include "Runtime/BufferRecycler.hpp"
 
 namespace NES
 {
@@ -32,7 +35,7 @@ public:
     explicit MallocUnpooledBufferManager(size_t unpooledMemoryBudgetInBytes);
     ~MallocUnpooledBufferManager() override;
 
-    size_t getNumberOfUnpooledBuffers() const override;
+    [[nodiscard]] size_t getNumberOfUnpooledBuffers() const override;
     std::optional<TupleBuffer>
     getUnpooledBuffer(size_t neededSize, size_t alignment, const std::shared_ptr<BufferRecycler>& bufferRecycler) override;
 };

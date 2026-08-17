@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <gtest/gtest.h>
+#include "Identifiers/NESStrongType.hpp"
 
 namespace NES
 {

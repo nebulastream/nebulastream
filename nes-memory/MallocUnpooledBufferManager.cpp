@@ -14,16 +14,19 @@
 
 #include <Runtime/MallocUnpooledBufferManager.hpp>
 
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <Runtime/MemoryUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
+#include "Util/Sanitizer.hpp"
 
 namespace NES
 {
@@ -84,15 +87,19 @@ std::optional<TupleBuffer> MallocUnpooledBufferManager::getUnpooledBuffer(
         return std::nullopt;
     }
 
-    void* const allocation = std::malloc(allocationSize); /// NOLINT(cppcoreguidelines-no-malloc)
+    /// NOLINTNEXTLINE(cppcoreguidelines-owning-memory) - ownership is captured by and released in the recycler
+    void* const allocation
+        = std::malloc(allocationSize); /// NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory) - freed by recycler
     if (allocation == nullptr)
     {
         NES_WARNING("Could not malloc {} bytes for an unpooled buffer!", allocationSize);
         return std::nullopt;
     }
 
-    const auto address = reinterpret_cast<std::uintptr_t>(allocation);
-    auto* const slot = reinterpret_cast<uint8_t*>((address + alignment - 1) & ~(alignment - 1));
+    void* slotStart = allocation;
+    auto availableSpace = allocationSize;
+    auto* const slot = static_cast<uint8_t*>(std::align(alignment, slotSize, slotStart, availableSpace));
+    INVARIANT(slot != nullptr, "Could not align malloc-backed unpooled buffer");
     ASAN_POISON_MEMORY_REGION(allocation, allocationSize);
 
     auto memorySegment = std::make_unique<detail::MemorySegment>(
@@ -109,7 +116,7 @@ std::optional<TupleBuffer> MallocUnpooledBufferManager::getUnpooledBuffer(
                 copyOfState->reservedBytes -= allocationSize;
             }
             ASAN_UNPOISON_MEMORY_REGION(allocation, allocationSize);
-            std::free(allocation); /// NOLINT(cppcoreguidelines-no-malloc)
+            std::free(allocation); /// NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory) - matching malloc
         });
 
     auto* const leakedMemorySegment = memorySegment.get();

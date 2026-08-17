@@ -121,7 +121,7 @@ VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint64
     const auto basePtr = allocateMemory(sizeInBytes);
     const auto bufferControlBlock = nautilus::invoke(
         +[](const Arena* arena, const int8_t* allocation) { return arena->getUnpooledBufferControlBlock(allocation); }, arenaRef, basePtr);
-    return VariableSizedData(basePtr, sizeInBytes, bufferControlBlock, 0);
+    return {basePtr, sizeInBytes, bufferControlBlock, 0};
 }
 
 nautilus::val<Arena*> ArenaRef::getArena() const

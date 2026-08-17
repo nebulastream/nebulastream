@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <gtest/gtest.h>
+#include "Runtime/UnpooledBufferManager.hpp"
 
 namespace NES
 {
