@@ -24,6 +24,7 @@ tokio-util = { workspace = true }
 async-channel = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
+serde_cbor = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-serde = { workspace = true }
 tokio-retry2 = { workspace = true }

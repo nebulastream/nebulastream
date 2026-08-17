@@ -13,11 +13,12 @@
 */
 
 use nes_network::protocol::{ConnectionIdentifier, ThisConnectionIdentifier, TupleBuffer};
-use nes_network::receiver::{ReceiverChannel, ReceiverChannelResult};
+use nes_network::receiver::{ReceiverChannel, ReceiverChannelResult, ReceiverChannelFTOptions};
 use nes_network::sender::{SenderChannel, TrySendDataResult};
 use nes_network::*;
 use std::collections::HashMap;
 use std::error::Error;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -35,7 +36,7 @@ pub mod ffi {
         sequence_number: u64,
         origin_id: u64,
         chunk_number: u64,
-        origin_epoch : u64,
+        origin_epoch: u64,
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
@@ -54,6 +55,12 @@ pub mod ffi {
         sender_io_threads: u32,
         /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
         receiver_io_threads: u32,
+    }
+
+
+    pub struct NetworkSinkFTOptions {
+        enable_backup: bool,
+        backup_path: String,
     }
 
     unsafe extern "C++" {
@@ -92,6 +99,7 @@ pub mod ffi {
         fn register_receiver_channel(
             server: &mut ReceiverNetworkService,
             channel_identifier: String,
+            ft_options: &NetworkSinkFTOptions,
             options: &NetworkServiceOptions,
         ) -> Result<Box<ReceiverDataChannel>>;
         fn receive_buffer(
@@ -336,6 +344,7 @@ fn sender_instance(
 fn register_receiver_channel(
     receiver_service: &mut ReceiverNetworkService,
     channel_identifier: String,
+    ffi_ft_options: &ffi::NetworkSinkFTOptions,
     options: &ffi::NetworkServiceOptions,
 ) -> Result<Box<ReceiverDataChannel>, String> {
     // Channel-level override: 0 means use worker default
@@ -345,14 +354,19 @@ fn register_receiver_channel(
         receiver_service.default_data_queue_size
     };
 
+    let opt_path = ffi_ft_options.enable_backup.then(|| PathBuf::from(ffi_ft_options.backup_path.clone()));
+    let ft_options = ReceiverChannelFTOptions{enable_backup: ffi_ft_options.enable_backup, backup_path: opt_path };
+
     // register_channel can fail if the receiver service has been shut down.
     // This should not happen in normal operation as the service is kept alive
     // for the lifetime of the worker.
     let queue = match &receiver_service.handle {
         ReceiverService::MemCom(r) => {
-            r.register_channel(channel_identifier.clone(), data_queue_size)
+            r.register_channel(channel_identifier.clone(), data_queue_size, ft_options)
         }
-        ReceiverService::Tcp(r) => r.register_channel(channel_identifier.clone(), data_queue_size),
+        ReceiverService::Tcp(r) => {
+            r.register_channel(channel_identifier.clone(), data_queue_size, ft_options)
+        }
     }
     .map_err(|_| "The receiver channel was shutdown unexpectedly.")?;
 
@@ -389,7 +403,7 @@ fn receive_buffer(
             origin_id: buffer.origin_id as u64,
             watermark: buffer.watermark as u64,
             chunk_number: buffer.chunk_number as u64,
-            origin_epoch : buffer.origin_epoch as u64,
+            origin_epoch: buffer.origin_epoch as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
         });
@@ -469,10 +483,11 @@ fn send_buffer(
         sequence_number: metadata.sequence_number,
         origin_id: metadata.origin_id,
         chunk_number: metadata.chunk_number,
-        origin_epoch : metadata.origin_epoch,
+        origin_epoch: metadata.origin_epoch,
         number_of_tuples: metadata.number_of_tuples,
         watermark: metadata.watermark,
         last_chunk: metadata.last_chunk,
+        closing: false,
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
     };
@@ -490,7 +505,11 @@ fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
 }
 
 fn propagate_stop(channel: &SenderDataChannel) -> bool {
-    channel.chan.propagate_stop().map(|_| true).unwrap_or(false)
+    match channel.chan.propagate_stop() {
+        TrySendDataResult::Ok => true,
+        TrySendDataResult::Full(_) => false,
+        TrySendDataResult::Closed(_) => false,
+    }
 }
 
 // CXX requires the usage of Boxed types

@@ -15,12 +15,13 @@
 use crate::channel::Communication;
 use crate::protocol::*;
 use std::marker::PhantomData;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
 use tracing::{Instrument, error, info_span, warn};
-
+use crate::receiver::backup::recover_log;
 use super::control::*;
 
 /// Timeout for graceful tokio runtime shutdown
@@ -45,6 +46,12 @@ impl ReceiverChannel {
         };
         ReceiverChannelResult::Ok(buffer)
     }
+}
+
+#[derive(Clone)]
+pub struct ReceiverChannelFTOptions {
+    pub enable_backup: bool,
+    pub backup_path: Option<PathBuf>,
 }
 
 pub struct NetworkService<C: Communication> {
@@ -109,6 +116,7 @@ impl<C: Communication + 'static> NetworkService<C> {
         self: &Arc<NetworkService<C>>,
         channel: ChannelIdentifier,
         data_queue_size: usize,
+        ft_options: ReceiverChannelFTOptions
     ) -> Result<ReceiverChannel> {
         let (data_queue_sender, data_queue_receiver) = async_channel::bounded(data_queue_size);
         let (tx, rx) = oneshot::channel();
@@ -118,6 +126,7 @@ impl<C: Communication + 'static> NetworkService<C> {
                 channel,
                 data_queue_sender,
                 tx,
+                ft_options
             ))
         else {
             return Err("Networking Service was stopped".into());

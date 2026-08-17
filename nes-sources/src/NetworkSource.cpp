@@ -38,6 +38,8 @@ namespace NES
 NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
     : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
     , receiverQueueSize(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::RECEIVER_QUEUE_SIZE))
+    , backup(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BACKUP))
+    , backupPath(sourceDescriptor.tryGetFromConfig(ConfigParametersNetworkSource::BACKUP_PATH).value_or(" "))
     , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
 {
 }
@@ -55,7 +57,12 @@ void NetworkSource::open(std::shared_ptr<AbstractBufferProvider> provider)
         .max_pending_acks = 0,
         .receiver_queue_size = static_cast<uint32_t>(receiverQueueSize),
     };
-    this->channel = register_receiver_channel(*receiverServer, rust::String(channelId), options);
+
+    const NetworkSinkFTOptions ftOptions{
+        .enable_backup = backup,
+        .backup_path = backupPath.value_or("")
+    };
+    this->channel = register_receiver_channel(*receiverServer, rust::String(channelId), ftOptions, options);
     NES_DEBUG("Receiver channel registered: {}", channelId);
 }
 

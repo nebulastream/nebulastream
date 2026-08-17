@@ -86,14 +86,33 @@ QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog
     rebuildBackendsIfNeeded();
 }
 
+namespace fs = std::filesystem;
+
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
     : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider))
 {
+    // TODO tmp workaround, move somewhere else
+    QueryOptimizerNetworkConfiguration networkConfig;
+    auto base = networkConfig.backupBasePath.getValue();
+    if (fs::exists(base) && fs::is_directory(base)) {
+        for (const auto& entry : fs::directory_iterator(base)) {
+            fs::remove_all(entry.path());
+        }
+    }
+    fs::create_directories(base);
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
     : backends(std::move(workerCatalog), std::move(provider))
 {
+    // TODO tmp workaround, move somewhere else
+    QueryOptimizerNetworkConfiguration networkConfig;
+    auto base = networkConfig.backupBasePath.getValue();
+    if (fs::exists(base) && fs::is_directory(base)) {
+        for (const auto& entry : fs::directory_iterator(base)) {
+            fs::remove_all(entry.path());
+        }
+    }
 }
 
 void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
@@ -139,6 +158,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 const auto result = backends.at(host).start(localPlan);
                 if (result)
                 {
+                    std::cout << "Sent query " << *result << " to host " << host.getRawValue() <<  std::endl;
                     NES_DEBUG("Starting query on node {} was successful.", host);
                     localQueries[host].emplace_back(host, *result, localPlan);
                     continue;

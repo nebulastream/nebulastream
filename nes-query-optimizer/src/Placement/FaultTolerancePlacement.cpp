@@ -12,10 +12,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
     limitations under the License.
 */
 
+#include <string>
 #include <Placement/FaultTolerancePlacement.hpp>
 
 #include <Operators/FaultTolerance/SNDeduplicationLogicalOperator.hpp>
-#include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Sources/NetworkSource.hpp>
 
 namespace NES
 {
@@ -31,25 +34,29 @@ static std::string generate_uuid()
     return std::string(str);
 }
 
-static LogicalOperator dfs(LogicalOperator& root)
+static LogicalOperator dfs(LogicalOperator& root, const QueryOptimizerNetworkConfiguration& configuration)
 {
     if (auto source = root.tryGetAs<SourceDescriptorLogicalOperator>())
     {
         if (source.value()->getSourceDescriptor().getSourceType() == Identifier::parse("Network").asCanonicalString())
         {
-            // TODO set up better file paths?
+            auto channelId = source.value()->getSourceDescriptor().getFromConfig(ConfigParametersNetworkSource::CHANNEL);
+            auto path = configuration.backupBasePath.getValue() + channelId + "/";
+            auto newRoot = source.value()->
+            withUpdatedConfig(ConfigParametersNetworkSource::BACKUP.name, true).
+            withUpdatedConfig(ConfigParametersNetworkSource::BACKUP_PATH.name, path);
             return SNDeduplicationLogicalOperator(WeakLogicalOperator{}, generate_uuid())
-                .withChildren({root})
+                .withChildren({newRoot})
                 .withTraitSet(root.getTraitSet());
         }
         return root;
     }
     return root.withChildren(
-        root.getChildren() | std::views::transform([&](LogicalOperator& child) -> LogicalOperator { return dfs(child); })
+        root.getChildren() | std::views::transform([&](LogicalOperator& child) -> LogicalOperator { return dfs(child, configuration); })
         | std::ranges::to<std::vector>());
 }
 
-DistributedLogicalPlan FTPlacer::apply(DistributedLogicalPlan& distributedPlan)
+DistributedLogicalPlan FTPlacer::apply(DistributedLogicalPlan& distributedPlan, const QueryOptimizerNetworkConfiguration& configuration)
 {
     std::unordered_map<Host, std::vector<LogicalPlan>> updatedPlans;
     for (auto [host, localPlans] : distributedPlan)
@@ -58,7 +65,7 @@ DistributedLogicalPlan FTPlacer::apply(DistributedLogicalPlan& distributedPlan)
         for (auto& localPlan : localPlans)
         {
             updatedPlans[host].push_back(localPlan.withRootOperators(
-                localPlan.getRootOperators() | std::views::transform([&](LogicalOperator& child) -> LogicalOperator { return dfs(child); })
+                localPlan.getRootOperators() | std::views::transform([&](LogicalOperator& child) -> LogicalOperator { return dfs(child, configuration); })
                 | std::ranges::to<std::vector>()));
         }
     }

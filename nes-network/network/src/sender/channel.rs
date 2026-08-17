@@ -142,6 +142,13 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     max_pending_acks: usize,
 }
 
+
+#[derive(Clone)]
+pub(super) struct DeadChannel {
+    pending_writes: VecDeque<TupleBuffer>,
+    wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>
+}
+
 enum ErrorOrStatus {
     Error(Error),
     Status(ChannelHandlerStatus),
@@ -184,11 +191,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     .map_err(|e| ErrorOrStatus::Error(e.into()))?;
                 let _ = done.send(self.pending_writes.is_empty() && self.wait_for_ack.is_empty());
             }
-            ChannelCommand::Stop(done) => {
-                Self::cancellable(&self.cancellation_token, self.writer.send(DataChannelRequest::Close), )
-                .await?
-                .map_err(|e| ErrorOrStatus::Error(e.into()))?;
-                let _ = done.send(());
+            ChannelCommand::Stop(sender) => {
+                panic!("why are we sending stop messages?")
             }
         }
         Ok(())
@@ -359,7 +363,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     /// entering `select!` so the receiver can see previously fed data and send acks.
     async fn run_internal(&mut self) -> core::result::Result<(), ErrorOrStatus> {
         loop {
-            let should_read_from_software = self.wait_for_ack.len() < self.max_pending_acks;
+            let should_read_from_software =  self.pending_writes.len() + self.wait_for_ack.len() < self.max_pending_acks;
             let should_read_from_other_side = !self.wait_for_ack.is_empty();
             let should_send_pending = !self.pending_writes.is_empty();
 
@@ -438,7 +442,8 @@ async fn channel_handler(
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
     communication: impl Communication,
-) -> Result<ChannelHandlerStatus> {
+    previous_channel : Option<DeadChannel>,
+) -> (Result<ChannelHandlerStatus>, Option<DeadChannel>) {
     debug!(
         "Channel negotiated. Connecting to {target_connection} on channel {}",
         pending_channel.id
@@ -453,7 +458,7 @@ async fn channel_handler(
     {
         Ok((reader, writer)) => (reader, writer),
         Err(e) => {
-            return Err(format!("Could not create channel to {target_connection}: {e:?}").into());
+            return (Err(format!("Could not create channel to {target_connection}: {e:?}").into()), previous_channel);
         }
     };
 
@@ -464,7 +469,24 @@ async fn channel_handler(
         writer,
         pending_channel.max_pending_acks,
     );
-    handler.run().await
+
+    if let Some(channel) = previous_channel {
+        handler.pending_writes = channel.pending_writes;
+        handler.wait_for_ack = channel.wait_for_ack;
+
+        // schedule wait_for_ack buffers for retransmission
+        // TODO order may not be equal to original order (probably wont matter)
+        handler.pending_writes.extend(handler.wait_for_ack.drain().map(|(_, buffer)| buffer));
+    }
+
+    let res = handler.run().await;
+
+    // save in-flight state
+    let dead_channel = DeadChannel {
+        pending_writes: handler.pending_writes,
+        wait_for_ack: handler.wait_for_ack,
+    };
+    (res, Some(dead_channel))
 }
 
 /// Spawns a channel handler task with automatic error recovery.
@@ -492,6 +514,7 @@ pub(super) fn create_channel_handler(
     pending_channel: PendingChannel,
     communication: impl Communication + 'static,
     controller: NetworkingConnectionController,
+    previous_channel : Option<DeadChannel>,
 ) {
     tokio::spawn(
         {
@@ -499,11 +522,12 @@ pub(super) fn create_channel_handler(
             let target_connection = target_connection.clone();
             let pending_channel = pending_channel.clone();
             async move {
-                let channel_handler_result = channel_handler(
+                let (channel_handler_result, dead_channel) = channel_handler(
                     pending_channel.clone(),
                     this_connection,
                     target_connection,
                     communication,
+                    previous_channel,
                 )
                 .await;
 
@@ -515,7 +539,7 @@ pub(super) fn create_channel_handler(
                         .cancellation
                         .clone()
                         .run_until_cancelled(controller.send(
-                            NetworkingConnectionControlCommand::RetryChannel(pending_channel),
+                            NetworkingConnectionControlCommand::RetryChannel(pending_channel, dead_channel),
                         ))
                         .await;
                     return;
@@ -538,4 +562,38 @@ pub(super) fn create_channel_handler(
         }
         .instrument(info_span!(parent: Span::current(),"channel", channel = %pending_channel.id)),
     );
+}
+
+
+pub(super) fn create_tombstone_handler(
+    pending_channel: PendingChannel,
+){
+    tokio::spawn({
+         async move {
+             let queue = pending_channel.queue;
+             loop {
+
+                 let channel_control_message = match pending_channel
+                     .cancellation
+                     .run_until_cancelled(queue.recv())
+                     .await
+                 {
+                     None => return,
+                     Some(Ok(cmd)) => cmd,
+                     Some(Err(err)) => return, 
+                 };
+
+                 // throw away all outputs; confirm flush immediately 
+                 match channel_control_message {
+                     ChannelCommand::Data(data) => {}
+                     ChannelCommand::Flush(done) => {
+                         let _ = done.send(true);
+                     }
+                     ChannelCommand::Stop(done) => {
+                         panic!("why are we sending stop messages?")
+                     }
+                 }
+             }
+         }
+    });
 }
