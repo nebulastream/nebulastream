@@ -23,6 +23,7 @@
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Feeds/EventFeed.hpp>
@@ -57,6 +58,7 @@ constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
 constexpr BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+constexpr size_t FEED_CAPACITY = 16;
 
 /// Collects the bytes of every emitted buffer, so that a test can wait until the source has handed on
 /// everything that was pushed into its feed.
@@ -85,7 +87,7 @@ private:
     std::string emitted;
 };
 
-Schema<UnqualifiedUnboundField, Ordered> statisticsSchema()
+Schema<UnqualifiedUnboundField, Ordered> taskEventSchema()
 {
     return Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("event_type"), DataType::Type::VARSIZED},
@@ -96,15 +98,26 @@ Schema<UnqualifiedUnboundField, Ordered> statisticsSchema()
         UnqualifiedUnboundField{Identifier::parse("task_id"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("tuples"), DataType::Type::UINT64}};
 }
+
+/// The leading columns of what 'BufferStatisticListener' publishes. The source does not interpret the row,
+/// so the test only has to agree with itself on how many columns there are.
+Schema<UnqualifiedUnboundField, Ordered> bufferEventSchema()
+{
+    return Schema<UnqualifiedUnboundField, Ordered>{
+        UnqualifiedUnboundField{Identifier::parse("ts_us"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("interval_ms"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("pooled_total"), DataType::Type::UINT64},
+        UnqualifiedUnboundField{Identifier::parse("pooled_available"), DataType::Type::UINT64}};
+}
 }
 
-class EngineEventsSourceTest : public Testing::BaseUnitTest
+class EventFeedSourceTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("EngineEventsSourceTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup EngineEventsSourceTest test class.");
+        Logger::setupLogging("EventFeedSourceTest.log", LogLevel::LOG_DEBUG);
+        NES_INFO("Setup EventFeedSourceTest test class.");
     }
 
     void SetUp() override { BaseUnitTest::SetUp(); }
@@ -113,21 +126,32 @@ public:
 /// clang tidy doesn't recognize the ASSERT_TRUE guarding the optional accesses below
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
+namespace
+{
 /// The path a query takes: the descriptor goes through the SourceProvider, which resolves
-/// 'EngineEvents' in the SourceRegistry, and the resulting source hands the feed's rows to the query engine.
-TEST_F(EngineEventsSourceTest, SourceEmitsWhatTheWorkerPushedIntoItsFeed)
+/// the source type in the SourceRegistry, and the resulting source hands the feed's rows to the query
+/// engine. Which feed a source reads follows from its type alone, so each source type is checked against
+/// the feed it is supposed to find.
+void expectSourceReadsFeed(
+    const std::string& sourceType,
+    const std::string_view feedName,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const std::vector<std::string>& rows)
 {
     const Host host{"localhost:8080"};
-    auto producer = EventFeedRegistry::instance().create(host, FeedName::ENGINE_EVENTS, 16);
-    EXPECT_TRUE(producer->tryPush("TASK_START,1000,2,1,4,5,64"));
-    EXPECT_TRUE(producer->tryPush("TASK_DONE,1001,2,1,4,5,0"));
-    const std::string expected = "TASK_START,1000,2,1,4,5,64\nTASK_DONE,1001,2,1,4,5,0\n";
+    auto producer = EventFeedRegistry::instance().create(host, feedName, FEED_CAPACITY);
+    std::string expected;
+    for (const auto& row : rows)
+    {
+        EXPECT_TRUE(producer->tryPush(row));
+        expected.append(row).push_back('\n');
+    }
 
-    const LogicalSource logicalSource{Identifier::parse("engineStats"), statisticsSchema()};
+    const LogicalSource logicalSource{Identifier::parse("stats"), schema};
     const auto descriptor = SourceDescriptor::create(
         PhysicalSourceId{1},
         logicalSource,
-        Identifier::parse("EngineEvents"),
+        Identifier::parse(sourceType),
         host,
         {{Identifier::parse("flush_interval_ms"), "10"}},
         {{Identifier::parse("type"), "CSV"}},
@@ -162,6 +186,18 @@ TEST_F(EngineEventsSourceTest, SourceEmitsWhatTheWorkerPushedIntoItsFeed)
 
     /// An empty feed must not terminate the source, it only means that nothing has happened yet.
     EXPECT_EQ(source->tryStop(STOP_TIMEOUT), SourceReturnType::TryStopResult::SUCCESS);
+}
+}
+
+TEST_F(EventFeedSourceTest, EngineEventsSourceEmitsWhatTheWorkerPushedIntoItsFeed)
+{
+    expectSourceReadsFeed(
+        "EngineEvents", FeedName::ENGINE_EVENTS, taskEventSchema(), {"TASK_START,1000,2,1,4,5,64", "TASK_DONE,1001,2,1,4,5,0"});
+}
+
+TEST_F(EventFeedSourceTest, BufferEventsSourceEmitsWhatTheWorkerPushedIntoItsFeed)
+{
+    expectSourceReadsFeed("BufferEvents", FeedName::BUFFER_EVENTS, bufferEventSchema(), {"1000,100,1024,1020", "1100,100,1024,1017"});
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)
