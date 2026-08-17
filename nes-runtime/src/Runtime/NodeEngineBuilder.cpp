@@ -30,8 +30,13 @@ namespace NES
 {
 
 
-NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticsListener)
-    : workerConfiguration(workerConfiguration), statisticsListener(std::move(statisticsListener))
+NodeEngineBuilder::NodeEngineBuilder(
+    const WorkerConfiguration& workerConfiguration,
+    std::shared_ptr<StatisticListener> statisticsListener,
+    std::shared_ptr<BufferProviderStatisticListener> bufferEventListener)
+    : workerConfiguration(workerConfiguration)
+    , statisticsListener(std::move(statisticsListener))
+    , bufferEventListener(std::move(bufferEventListener))
 {
 }
 
@@ -42,7 +47,8 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
         workerConfiguration.unpooledMemoryFraction.getValue(),
         NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes.getValue())},
         static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue()),
-        std::make_shared<NesDefaultMemoryAllocator>());
+        std::make_shared<NesDefaultMemoryAllocator>(),
+        bufferEventListener);
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

@@ -35,6 +35,7 @@ namespace NES
 namespace FeedName
 {
 constexpr std::string_view ENGINE_EVENTS = "engine_events";
+constexpr std::string_view BUFFER_EVENTS = "buffer_events";
 }
 
 /// A bounded channel of text rows between a producer somewhere in the worker process and a source that is
