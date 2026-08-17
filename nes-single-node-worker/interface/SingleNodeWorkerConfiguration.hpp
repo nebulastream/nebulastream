@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <iosfwd>
 #include <memory>
 #include <string>
@@ -22,6 +23,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 
 namespace NES
 {
@@ -47,6 +49,26 @@ connections.  Valid values include dns:///localhost:1234,
         = {"enable_event_trace",
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
+
+    /// Publish buffer pool statistics into an in-process feed, so that they can be read by an InProcess source
+    BoolOption enableBufferStatistics
+        = {"enable_buffer_statistics",
+           "false",
+           "Publish buffer pool statistics as CSV rows into an in-process feed, which a physical source of type "
+           "InProcess can read to make buffer pressure queryable."};
+
+    ScalarOption<std::string> bufferStatisticsFeed
+        = {"buffer_statistics_feed",
+           "buffer_events",
+           "Name of the in-process feed that buffer statistics are published to. A physical source of type "
+           "InProcess reads the feed of the same name."};
+
+    ScalarOption<uint64_t> bufferStatisticsIntervalMs
+        = {"buffer_statistics_interval_ms",
+           "100",
+           "How often a buffer statistics row is published, in milliseconds. Buffer events are counted rather "
+           "than published one by one, so this is what determines the resolution of the published stream.",
+           {std::make_shared<NonZeroValidation>()}};
 
 protected:
     std::vector<BaseOption*> getOptions() override;

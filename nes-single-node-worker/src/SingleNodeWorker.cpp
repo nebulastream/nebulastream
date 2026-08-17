@@ -37,6 +37,7 @@
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
+#include <BufferStatisticListener.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -51,6 +52,13 @@ extern void initNetworkServices(const std::string& connectionAddr, const NES::Ho
 
 namespace NES
 {
+
+namespace
+{
+/// Number of statistics rows the feed buffers before further rows are dropped. One row per flush interval is
+/// a low rate, so this is generous: a query reading the feed can start minutes after the worker did.
+constexpr size_t BUFFER_STATISTICS_FEED_CAPACITY = 8192;
+}
 
 SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
@@ -73,7 +81,19 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+    if (configuration.enableBufferStatistics.getValue())
+    {
+        bufferListener = std::make_shared<BufferStatisticListener>(
+            configuration.bufferStatisticsFeed.getValue(),
+            BUFFER_STATISTICS_FEED_CAPACITY,
+            std::chrono::milliseconds{configuration.bufferStatisticsIntervalMs.getValue()});
+        bufferListener->start();
+    }
+
+    /// All listeners have to be in place before the engine exists: CompositeStatisticListener does not
+    /// synchronize its listener lists against the worker threads that read them, and the BufferManager gets
+    /// its listener handed over at construction time.
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener), bufferListener).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
     if (!configuration.dataAddress.getValue().empty())

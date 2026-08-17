@@ -25,6 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 
 #include <Util/Pointers.hpp>
+#include <BufferStatisticListener.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
@@ -46,6 +47,10 @@ inline constexpr std::string_view SingleNodeWorkerBinaryName{"nes-single-node-wo
 class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
+    /// Null unless buffer statistics are enabled. Declared before nodeEngine so that it outlives the
+    /// BufferManager that emits into it. Unlike the other listeners this one is not part of the composite:
+    /// buffer events travel on their own path, see NodeEngineBuilder.
+    std::shared_ptr<BufferStatisticListener> bufferListener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
