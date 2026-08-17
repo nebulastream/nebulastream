@@ -21,18 +21,15 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
-
 #include <Util/Logger/Logger.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 
 namespace NES
 {
-
 NodeEngine::~NodeEngine()
 {
     NES_DEBUG("Shutting down NodeEngine");
@@ -72,5 +69,4 @@ void NodeEngine::stopQuery(QueryId queryId)
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);
 }
-
 }

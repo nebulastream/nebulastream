@@ -42,8 +42,7 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 
 find_package(highs CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
-
+target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface PRIVATE nes-input-formatter-provider highs::highs)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)

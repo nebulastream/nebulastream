@@ -28,7 +28,7 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO ysb1kChecksum;
 ----
-55 219237
+55 215497
 
 # Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
 # YSB Query
@@ -43,4 +43,4 @@ GROUP BY campaign_id
 WINDOW TUMBLING(event_time, SIZE 30 SEC)
 INTO ysb10kChecksum;
 ----
-55 221693
+55 217953

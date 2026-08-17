@@ -61,7 +61,6 @@
 #include <Interfaces.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
@@ -536,6 +535,7 @@ struct TestingHarness
     std::vector<QueryId> queryIds;
     OriginId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
     PipelineId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
+    QueryId::Underlying lastQueryIdCounter = INITIAL<QueryId>.getRawValue();
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
     std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;

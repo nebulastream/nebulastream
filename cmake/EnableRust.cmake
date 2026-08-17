@@ -207,6 +207,11 @@ if (NOT "${ADDITIONAL_RUSTFLAGS}" STREQUAL "")
     list(APPEND ENV_VARS_LIST RUSTFLAGS=${ADDITIONAL_RUSTFLAGS})
 endif ()
 
+# Build scripts of the coordinator crates compile protos and need the same
+# protoc the C++ build uses. The generator expression resolves after the
+# protobuf package is found, which happens later in the configure run.
+list(APPEND ENV_VARS_LIST "PROTOC=$<TARGET_FILE:protobuf::protoc>")
+
 set(NES_RUST_CARGO_FLAGS "${ADDITIONAL_CARGOFLAGS}" CACHE INTERNAL "Cargo flags for Rust crate builds")
 set(NES_RUST_ENV_VARS "${ENV_VARS_LIST}" CACHE INTERNAL "Environment variables for Rust crate builds")
 
