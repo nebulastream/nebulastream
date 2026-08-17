@@ -97,6 +97,7 @@ pub enum ControlChannelRequest {
 pub enum ControlChannelResponse {
     OkChannelResponse(ConnectionIdentifier),
     DenyChannelResponse,
+    TombstonedChannelResponse,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataChannelRequest {
@@ -122,11 +123,12 @@ pub struct TupleBuffer {
     pub origin_id: u64,
     pub watermark: u64,
     pub chunk_number: u64,
-    pub origin_epoch : u64,
+    pub origin_epoch: u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
+    pub closing: bool,
 }
 
 impl TupleBuffer {

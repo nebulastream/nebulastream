@@ -17,6 +17,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <QueryManager/QueryManagementUtils.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <QueryManager/QuerySupervisor.hpp>
+#include <testing.hpp>
 
 namespace NES
 {
@@ -34,23 +35,25 @@ void QuerySupervisor::spawnHeartbeatThreads()
     {
         for (auto& localQuery : localQueries)
         {
+            if (worker.getRawValue().starts_with("merge-node-1"))
+            {
+                std::thread(
+                    [&]
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+                        //localQuery.setFailureInjectionFlag();
+                    })
+                    .detach();
+            }
             heartbeatThreads.emplace_back(
                 [this, &localQuery](std::stop_token st)
                 {
                     // TODO this is kinda bad practice because we let the local query objects escape the synchronization
                     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                    bool hasFailed = false;
                     while (!st.stop_requested())
                     {
-                        bool injectFailure
-                            = !hasFailed && std::rand() % 100 == 1 && localQuery.getHost().getRawValue().starts_with("source");
-                        if (injectFailure)
-                        {
-                            hasFailed = true;
-                        }
                         /// periodically check the status of the local query
-                        QueryManagementUtils::checkLocalQueryStatus(
-                            localQuery, queryManager.backends.at(localQuery.getHost()), injectFailure);
+                        QueryManagementUtils::checkLocalQueryStatus(localQuery, queryManager.backends.at(localQuery.getHost()), false);
                         std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     }
                 });
@@ -106,9 +109,10 @@ void QuerySupervisor::spawnRepairThread()
 
                 /// collect recovery set by going down the subtrees of missing queries
                 std::unordered_set<LocalQuery*> queriesToRestart;
-                for (auto query : missingQueries)
+                for (auto *query : missingQueries)
                 {
-                    collectQueriesToRestartDFS(distributedQuery, query, queriesToRestart);
+                    queriesToRestart.insert(query);
+                    //collectQueriesToRestartDFS(distributedQuery, query, queriesToRestart);
                 }
 
                 restartQueries(queriesToRestart);

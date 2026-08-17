@@ -335,6 +335,9 @@ struct Descriptor
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
 
+    template <typename ConfigParameterType>
+    void setConfig(std::string identifier, ConfigParameterType value) { config[identifier] = value; }
+
     [[nodiscard]] Reflected getReflectedConfig() const;
     static DescriptorConfig::Config unreflectConfig(const Reflected& rfl, const ReflectionContext& context);
 

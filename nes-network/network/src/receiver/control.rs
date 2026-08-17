@@ -15,9 +15,12 @@
 use super::channel::*;
 use crate::channel::{Channel, Communication, CommunicationListener};
 use crate::protocol::*;
+use crate::receiver::backup::recover_log;
+use crate::receiver::receiver::ReceiverChannelFTOptions;
 use crate::util::*;
 use futures::SinkExt;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::path::{PathBuf};
 use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::RwLock;
@@ -29,12 +32,16 @@ use tracing::{Instrument, Span, error, info, info_span, warn};
 
 pub(super) type Result<T> = std::result::Result<T, Error>;
 pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
+
+pub(super) type CloseFlag = bool;
+
 pub(super) enum NetworkServiceControlCommand {
-    RetryChannel(ChannelIdentifier, DataQueue, CancellationToken),
-    RegisterChannel(ChannelIdentifier, DataQueue, Sender<()>),
+    RetryChannel(ChannelIdentifier, DataQueue, ReceiverChannelFTOptions, CloseFlag, CancellationToken),
+    RegisterChannel(ChannelIdentifier, DataQueue, Sender<()>, ReceiverChannelFTOptions),
 }
 pub(super) type NetworkingServiceController = async_channel::Sender<NetworkServiceControlCommand>;
-type RegisteredChannels = Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, CancellationToken)>>>;
+type RegisteredChannels =
+    Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, ReceiverChannelFTOptions, CancellationToken)>>>;
 type PendingChannels<R, W> = Arc<
     RwLock<
         HashMap<
@@ -43,6 +50,7 @@ type PendingChannels<R, W> = Arc<
         >,
     >,
 >;
+type TombstonedChannels = Arc<RwLock<HashSet<ChannelIdentifier>>>;
 
 type NetworkingServiceControlListener = async_channel::Receiver<NetworkServiceControlCommand>;
 enum ConnectionIdentification<R: AsyncRead, W: AsyncWrite> {
@@ -97,6 +105,9 @@ async fn identify_connection<R: AsyncRead + Unpin + Send, W: AsyncWrite + Unpin 
 }
 
 struct ControllerState<R: AsyncRead, W: AsyncWrite> {
+    // Channels that were closed before
+    tombstoned_channels: TombstonedChannels,
+
     registered_channels: RegisteredChannels,
     // Channels which have been opened by the network side but not have been picked up by the
     // software side.
@@ -126,21 +137,26 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
         &self,
         channel_identifier: ChannelIdentifier,
         data_queue: DataQueue,
+        ft_options: ReceiverChannelFTOptions,
         cancellation_token: CancellationToken,
     ) {
         let mut lock = self.registered_channels.write().await;
-        let replaced = lock.insert(channel_identifier, (data_queue, cancellation_token));
-        lock.retain(|_, v| !v.1.is_cancelled());
-
-        assert!(
-            replaced.is_none(),
-            "There should not be a registered channel with the same identifier"
-        )
+        let replaced = lock.insert(channel_identifier, (data_queue, ft_options, cancellation_token));
+        lock.retain(|_, v| !v.2.is_cancelled());
+        if let Some(r) = replaced {
+            assert!(r.0.is_closed());
+        }
     }
+
+    async fn add_channel_tombstone(&self, channel_identifier: ChannelIdentifier) {
+        let mut lock = self.tombstoned_channels.write().await;
+        lock.insert(channel_identifier);
+    }
+
     async fn take_registered_channel(
         &self,
         channel_identifier: &ChannelIdentifier,
-    ) -> Option<(DataQueue, CancellationToken)> {
+    ) -> Option<(DataQueue, ReceiverChannelFTOptions, CancellationToken)> {
         self.registered_channels
             .write()
             .await
@@ -157,11 +173,26 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
             .await
             .remove(&(connection_identifier, channel_identifier))
     }
+
+    async fn delete_tombstone(&self, channel_identifier: &ChannelIdentifier) {
+        self.tombstoned_channels
+            .write()
+            .await
+            .remove(channel_identifier);
+    }
+
+    async fn find_tombstone(&self, channel_identifier: &ChannelIdentifier) -> bool {
+        self.tombstoned_channels
+            .write()
+            .await
+            .contains(channel_identifier)
+    }
 }
 
 impl<R: AsyncRead, W: AsyncWrite> Default for ControllerState<R, W> {
     fn default() -> Self {
         ControllerState {
+            tombstoned_channels: Default::default(),
             registered_channels: Default::default(),
             pending_channels: Default::default(),
         }
@@ -171,6 +202,7 @@ impl<R: AsyncRead, W: AsyncWrite> Default for ControllerState<R, W> {
 impl<R: AsyncRead, W: AsyncWrite> Clone for ControllerState<R, W> {
     fn clone(&self) -> Self {
         ControllerState {
+            tombstoned_channels: self.tombstoned_channels.clone(),
             registered_channels: self.registered_channels.clone(),
             pending_channels: self.pending_channels.clone(),
         }
@@ -185,7 +217,7 @@ async fn control_socket_handler<
     other_connection_identifier: ConnectionIdentifier,
     mut reader: ControlChannelReceiverReader<R>,
     mut writer: ControlChannelReceiverWriter<W>,
-    state: ControllerState<R, W>,
+    state: Arc<ControllerState<R, W>>,
     control: NetworkingServiceController,
 ) -> Result<ControlChannelRequest> {
     loop {
@@ -196,9 +228,17 @@ async fn control_socket_handler<
         match message {
             // The other side is requesting a new data channel
             ControlChannelRequest::ChannelRequest(channel) => {
+                if state.find_tombstone(&channel).await {
+                    writer
+                        .send(ControlChannelResponse::TombstonedChannelResponse)
+                        .await?;
+                    continue;
+                }
+
                 // The data channel needs to be registered beforehand, which is done by the software
                 // side via the NetworkingServiceController, which is exposed to the NetworkService.
-                let Some((emit, token)) = state.take_registered_channel(&channel).await else {
+                let Some((emit, ft_options, token)) = state.take_registered_channel(&channel).await
+                else {
                     // If the channel has not been registered yet, which is plausible because network sources and sinks
                     // are started without synchronization, the ChannelRequest is denied. Usually the other side will
                     // retry.
@@ -218,7 +258,7 @@ async fn control_socket_handler<
                 // side attempts to connect. This is handled after Connection Identification within
                 // @socket_listener.
                 let attach_to_channel =
-                    create_channel_handler(channel.clone(), emit, token, control.clone());
+                    create_channel_handler(channel.clone(), emit, ft_options, token, control.clone());
 
                 state
                     .add_pending_channel(
@@ -245,9 +285,11 @@ async fn control_socket_handler<
 async fn socket_listener<C: Communication + 'static>(
     this_connection_identifier: ThisConnectionIdentifier,
     controller: NetworkingServiceController,
-    state: ControllerState<
-        <C::Listener as CommunicationListener>::Reader,
-        <C::Listener as CommunicationListener>::Writer,
+    state: Arc<
+        ControllerState<
+            <C::Listener as CommunicationListener>::Reader,
+            <C::Listener as CommunicationListener>::Writer,
+        >,
     >,
     mut communication: C,
     receiver_span: Span,
@@ -347,7 +389,7 @@ pub(super) async fn create_control_socket_handler(
 ) -> Result<()> {
     // Communication between the network-facing side `socket_listener` and the software-facing side
     // via the NetworkingServiceController is managed with shared ControllerState.
-    let state = ControllerState::default();
+    let state = Arc::new(ControllerState::default());
     let receiver_span = Span::current();
 
     // Instantiate the socket listener which will handle all network requests.
@@ -376,22 +418,62 @@ pub(super) async fn create_control_socket_handler(
             // Software wants to register a new channel. The channel is registered in the controller state.
             // Future ChannelRequests with the `ChannelIdentifier` will be accepted by the @control_socket_handler,
             // and the DataChannel will be associated with the emit_fn
-            Ok(NetworkServiceControlCommand::RegisterChannel(ident, emit_fn, response)) => {
-                let token = CancellationToken::new();
-                state
-                    .add_registered_channel(ident, emit_fn, token.clone())
-                    .await;
-
+            Ok(NetworkServiceControlCommand::RegisterChannel(ident, emit_fn, response, ft_options)) => {
+                let state = state.clone();
+                state.delete_tombstone(&ident).await;
                 if response.send(()).is_err() {
-                    token.cancel();
+                    continue;
                 };
+
+                tokio::spawn({
+                    async move {
+                        if ft_options.enable_backup {
+                            let mut file = ft_options.backup_path.clone().expect("Backup receivers need a file path");
+                            file = file.join("log.bin");
+
+                            let mut queue = emit_fn.clone();
+                            let r = recover_log(file, &mut queue).await;
+
+                            match r {
+                                Ok(log_closed) => {
+                                    if log_closed {
+                                        state.add_channel_tombstone(ident).await;
+                                        emit_fn.close();
+                                        return;
+                                    }
+                                }
+                                Err(e) => {
+                                    panic!("figure out what to do here if it ever happens \n {e}")
+                                }
+                            }
+                        }
+
+                        let token = CancellationToken::new();
+                        state
+                            .add_registered_channel(ident, emit_fn, ft_options, token.clone())
+                            .await;
+                    }
+                });
             }
 
             // A DataChannel has been ungracefully terminated, no software request nor stop request
             // from the other side. The channel requested a retry and will be placed back in the
             // registered channel list, where future ChannelRequests can reopen the channel.
-            Ok(NetworkServiceControlCommand::RetryChannel(ident, emit_fn, token)) => {
-                state.add_registered_channel(ident, emit_fn, token).await;
+            Ok(NetworkServiceControlCommand::RetryChannel(
+                ident,
+                emit_fn,
+                ft_options,
+                is_closed,
+                token,
+            )) => {
+                if !is_closed {
+                    state
+                        .add_registered_channel(ident, emit_fn, ft_options, token)
+                        .await;
+                } else {
+                    //println!("creating tombstone {ident}");
+                    state.add_channel_tombstone(ident).await;
+                }
             }
         };
     }

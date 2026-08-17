@@ -33,6 +33,8 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
+#include <boost/asio/detail/chrono.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <fmt/format.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
@@ -66,25 +68,46 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
 void NetworkSink::start(PipelineExecutionContext&)
 {
     this->server = sender_instance(thisConnection);
+    setupTime = std::chrono::system_clock::now();
     const NetworkServiceOptions options{
         .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
         .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
         .receiver_queue_size = 0,
     };
-    this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+    //this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
     NES_DEBUG("Sender channel registered: {}", channelId);
 }
 
 void NetworkSink::stop(PipelineExecutionContext& pec)
 {
-    PRECONDITION(channel, "Sender channel is not initialized");
+    if (!channel)
+    {
+        // TODO workaround to correctly stop queries with no data on a source
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        channelMutex.lock();
+        const NetworkServiceOptions options{
+            .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
+            .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
+            .receiver_queue_size = 0,
+        };
+        this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+        channelMutex.unlock();
+    }
     if (!closed)
     {
         INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
 
-        /// Check if the sender network service has pending buffers to send
-        /// If yes, keep the pipeline alive by emitting an empty buffer
-        if (!flush_sender_channel(*this->channel.value()) || !propagate_stop(*this->channel.value()))
+        if (!sentStop)
+        {
+            if (!flush_sender_channel(*this->channel.value()) || !propagate_stop(*this->channel.value()))
+            {
+                pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+                return;
+            }
+            sentStop = true;
+        }
+
+        if (!flush_sender_channel(*this->channel.value()))
         {
             pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
             return;
@@ -98,14 +121,32 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
 
 void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
-    PRECONDITION(channel, "Sender channel is not initialized");
-    PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
-
-    if (closed)
+    // Delayed channel initialization as tombstone at downstream node may not be cleared yet
+    // TODO solve by clearing downstream tombstones in same region during rollback *before* queries are restarted
+    auto now = std::chrono::system_clock::now();
+    if (now - setupTime > std::chrono::seconds(3))
     {
-        NES_WARNING("Sink is closed dropping buffer: {}-{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
+        channelMutex.lock();
+        if (!setup)
+        {
+            const NetworkServiceOptions options{
+                .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
+                .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
+                .receiver_queue_size = 0,
+            };
+            this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+            setup = true;
+        }
+
+        channelMutex.unlock();
+    }
+    else
+    {
+        pec.repeatTask(inputBuffer, BACKPRESSURE_RETRY_INTERVAL);
         return;
     }
+    PRECONDITION(channel, "Sender channel is not initialized");
+    PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
 
     auto currentBuffer = std::optional(inputBuffer);
     while (currentBuffer)
@@ -115,6 +156,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
             .origin_id = currentBuffer->getOriginId().getRawValue(),
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
+            .origin_epoch = currentBuffer->getOriginEpoch().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
             .last_chunk = currentBuffer->isLastChunk()};
@@ -143,7 +185,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotOpenSink("NetworkSink was closed by other side");
+                throw CannotOpenSink("NetworkSink was closed by other side (should never happen atm)");
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());
