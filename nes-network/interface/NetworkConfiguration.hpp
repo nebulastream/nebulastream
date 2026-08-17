@@ -47,7 +47,7 @@ public:
     /// May be overridden per NetworkSink via query-specific configuration.
     UIntOption maxPendingAcks
         = {"max_pending_acks",
-           "64",
+           "2000",
            "Default maximum number of in-flight buffers awaiting acknowledgment per network channel. May be overridden per NetworkSink.",
            {std::make_shared<NumberValidation>()}};
 

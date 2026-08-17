@@ -40,7 +40,7 @@ public:
     /// Maximum number of buffers that can be in-flight (sent but not yet acknowledged) per network channel.
     UIntOption maxPendingAcks
         = {"max_pending_acks",
-           "64",
+           "2000",
            "Maximum number of in-flight buffers awaiting acknowledgment per network channel",
            {std::make_shared<NumberValidation>()}};
 
@@ -61,6 +61,14 @@ public:
            "200",
            "Number of buffered tuples at which backpressure is released per network channel",
            {std::make_shared<NumberValidation>()}};
+
+    StringOption backupBasePath
+    = {
+        "backup_base_path",
+        "/tmp/nebulastream/backup_logs/",
+        "Base directory to store tuple buffer backup logs",
+        {} // TODO
+    };
 
 private:
     std::vector<BaseOption*> getOptions() override
