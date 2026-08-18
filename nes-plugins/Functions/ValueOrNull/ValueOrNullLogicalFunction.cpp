@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -119,8 +119,7 @@ Unreflector<ValueOrNullLogicalFunction>::operator()(const Reflected& reflected, 
     return ValueOrNullLogicalFunction(predicate.value(), value.value());
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::Registervalue_or_nullLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ValueOrNullLogicalFunction::createvalue_or_null(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 2)
     {

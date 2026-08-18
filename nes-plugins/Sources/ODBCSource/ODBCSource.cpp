@@ -42,10 +42,10 @@
 #include <sqltypes.h>
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/VariableSizedAccess.hpp>
+#include <Interface/VariableSizedAccess.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Time/Timestamp.hpp>
@@ -56,8 +56,6 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <ODBCTypeMappings.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 /// The ODBC C API speaks in `SQLCHAR*` (an unsigned-char alias) and binds parameters / fetches
 /// columns through a `void*`/`SQLPOINTER`. Bridging NebulaStream's `std::byte` / `char` buffers
@@ -470,7 +468,7 @@ struct PreparedStatement
         std::ranges::sort(columnMappings, {}, &ColumnMapping::columnIndex);
 
         size_t fixupSize = 0;
-        const size_t tupleSize = schema.getSizeInBytes();
+        const size_t tupleSize = getSizeInBytes(schema);
         for (auto& columnMapping : columnMappings)
         {
             if (columnMapping.nesType.nullable)
@@ -653,7 +651,7 @@ struct PreparedStatement
                 /// Zero the slot too (size 0): the output tuple is reused across
                 /// fetches, so a stale non-zero size from a prior row would make a
                 /// reader emit a bogus child payload for this NULL value.
-                const auto emptyAccess = VariableSizedAccess{VariableSizedAccess::Index{0}, VariableSizedAccess::Size{0}};
+                const auto emptyAccess = VariableSizedAccess{ChildBufferIndex{0}, VariableSizedAccess::Size{0}};
                 std::memcpy(destination.data(), &emptyAccess, sizeof(emptyAccess));
                 continue;
             }
@@ -664,7 +662,7 @@ struct PreparedStatement
                 /// (no child buffer is read), so index 0 stands in for the old
                 /// INVALID_VARIABLE_SIZED_INDEX sentinel, which our tree's
                 /// VariableSizedAccess no longer defines.
-                const auto emptyAccess = VariableSizedAccess{VariableSizedAccess::Index{0}, VariableSizedAccess::Size{0}};
+                const auto emptyAccess = VariableSizedAccess{ChildBufferIndex{0}, VariableSizedAccess::Size{0}};
                 std::memcpy(destination.data(), &emptyAccess, sizeof(emptyAccess));
                 continue;
             }
@@ -942,18 +940,6 @@ DescriptorConfig::Config ODBCSource::validateAndFormat(std::unordered_map<std::s
 
 void ODBCSource::close()
 {
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): the registry's generated *.inc declares this entry point by value; switching to const& breaks linkage.
-SourceValidationRegistryReturnType RegisterODBCSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return ODBCSource::validateAndFormat(sourceConfig.config);
-}
-
-/// NOLINTNEXTLINE(performance-unnecessary-value-param): the registry's generated *.inc declares this entry point by value; switching to const& breaks linkage.
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterODBCSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<ODBCSource>(sourceRegistryArguments.sourceDescriptor);
 }
 }
 

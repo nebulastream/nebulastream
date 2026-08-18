@@ -21,7 +21,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -111,8 +111,7 @@ ToStringLogicalFunction Unreflector<ToStringLogicalFunction>::operator()(const R
     return ToStringLogicalFunction(child.value());
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::Registerto_stringLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType ToStringLogicalFunction::createto_string(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

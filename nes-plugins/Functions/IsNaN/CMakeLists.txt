@@ -10,16 +10,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
-add_plugin(IsNaN LogicalFunction IsNaNLogicalFunction.cpp)
-add_plugin(IsNaN PhysicalFunction IsNaNPhysicalFunction.cpp)
-add_unreflection_plugin(LogicalFunction IsNaN)
+add_library(isnan_logical_function_plugin_library STATIC IsNaNLogicalFunction.cpp)
+target_link_libraries(isnan_logical_function_plugin_library PRIVATE nes-logical-operators)
+target_include_directories(isnan_logical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-logical-operators isnan_logical_function_plugin_library)
 
-# add_plugin() compiles these sources *into* the component targets, and the generated
-# unreflection glue angle-includes the plugin's own header. Neither the components nor the
-# glue sub-library know about this directory, so put it on all three include paths.
-# In-tree functions get this for free by living under the component's own src/.
-target_include_directories(nes-logical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-physical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-logical-operators-LogicalFunction-unreflection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(isnan_physical_function_plugin_library STATIC IsNaNPhysicalFunction.cpp)
+target_link_libraries(isnan_physical_function_plugin_library PRIVATE nes-physical-operators)
+target_include_directories(isnan_physical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-physical-operators isnan_physical_function_plugin_library)
+
+add_registry_entry(LogicalFunction IsNaN)
+add_registry_entry(PhysicalFunction IsNaN)
+add_unreflection_entry(LogicalFunction IsNaN)

@@ -23,6 +23,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -46,6 +47,8 @@ public:
 
     explicit FmtPhysicalFunction(std::vector<Fragment> fragments);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createFMT(PhysicalFunctionRegistryArguments arguments);
 
 private:
     std::vector<Fragment> fragments;

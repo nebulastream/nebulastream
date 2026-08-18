@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -31,6 +32,8 @@ class ToStringPhysicalFunction final
 public:
     explicit ToStringPhysicalFunction(PhysicalFunction child);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createto_string(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction child;

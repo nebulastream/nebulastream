@@ -19,14 +19,15 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <DataTypes/SchemaFwd.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -48,6 +49,8 @@ public:
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+    static LogicalFunctionRegistryReturnType createIsNaN(LogicalFunctionRegistryArguments arguments);
 
 private:
     DataType dataType;

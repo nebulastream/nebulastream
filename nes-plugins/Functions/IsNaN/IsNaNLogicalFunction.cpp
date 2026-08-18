@@ -20,7 +20,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -108,8 +108,7 @@ IsNaNLogicalFunction Unreflector<IsNaNLogicalFunction>::operator()(const Reflect
 
 /// Deserialization goes through the unreflection registry (see CMakeLists.txt), so this
 /// factory entry point only handles construction from parsed children.
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterIsNaNLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType IsNaNLogicalFunction::createIsNaN(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {

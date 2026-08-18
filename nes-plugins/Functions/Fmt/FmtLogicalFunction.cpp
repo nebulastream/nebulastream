@@ -23,7 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -185,7 +185,7 @@ FmtLogicalFunction Unreflector<FmtLogicalFunction>::operator()(const Reflected& 
     return FmtLogicalFunction(std::move(result.children));
 }
 
-LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterFMTLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType FmtLogicalFunction::createFMT(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.empty())
     {

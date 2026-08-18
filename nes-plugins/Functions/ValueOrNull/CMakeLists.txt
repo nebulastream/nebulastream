@@ -10,14 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
-add_plugin(value_or_null LogicalFunction ValueOrNullLogicalFunction.cpp)
-add_plugin(value_or_null PhysicalFunction ValueOrNullPhysicalFunction.cpp)
-# KEY: the wire/SQL name is value_or_null, but the C++ type is ValueOrNullLogicalFunction.
-add_unreflection_plugin(LogicalFunction ValueOrNull KEY value_or_null)
+add_library(value_or_null_logical_function_plugin_library STATIC ValueOrNullLogicalFunction.cpp)
+target_link_libraries(value_or_null_logical_function_plugin_library PRIVATE nes-logical-operators)
+target_include_directories(value_or_null_logical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-logical-operators value_or_null_logical_function_plugin_library)
 
-# See IsNaN/CMakeLists.txt for why these three include paths are needed.
-target_include_directories(nes-logical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-physical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-logical-operators-LogicalFunction-unreflection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(value_or_null_physical_function_plugin_library STATIC ValueOrNullPhysicalFunction.cpp)
+target_link_libraries(value_or_null_physical_function_plugin_library PRIVATE nes-physical-operators)
+target_include_directories(value_or_null_physical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-physical-operators value_or_null_physical_function_plugin_library)
+
+# KEY: the wire/SQL name is value_or_null, but the C++ type is ValueOrNull*Function.
+add_registry_entry(LogicalFunction ValueOrNull KEY value_or_null)
+add_registry_entry(PhysicalFunction ValueOrNull KEY value_or_null)
+add_unreflection_entry(LogicalFunction ValueOrNull KEY value_or_null)

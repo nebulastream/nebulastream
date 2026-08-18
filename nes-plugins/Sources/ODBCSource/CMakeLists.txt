@@ -10,16 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(ODBC Source odbc_source_plugin_library ODBCSource.cpp ODBCTypeMappings.cpp)
-add_plugin_as_library(ODBC SourceValidation odbc_source_validation_plugin_library ODBCSource.cpp ODBCTypeMappings.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+
+# One implementation library serving both registries this plugin participates in.
+add_library(odbc_source_plugin_library STATIC ODBCSource.cpp ODBCTypeMappings.cpp)
+target_link_libraries(odbc_source_plugin_library PRIVATE nes-sources)
+target_include_directories(odbc_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 # unixODBC is the ODBC driver manager. The driver it loads at runtime (msodbcsql18 /
 # "ODBC Driver 18 for SQL Server") is a system component registered in
 # /etc/odbcinst.ini. CMake's builtin FindODBC module provides the ODBC::ODBC
 # imported target.
 find_package(ODBC REQUIRED)
+target_link_libraries(odbc_source_plugin_library PRIVATE ODBC::ODBC)
 
-foreach (_lib odbc_source_plugin_library odbc_source_validation_plugin_library)
-    target_include_directories(${_lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(${_lib} PRIVATE ODBC::ODBC)
-endforeach ()
+link_plugin_library(nes-sources odbc_source_plugin_library)
+add_registry_entry(Source ODBC)
+add_registry_entry(SourceValidation ODBC)

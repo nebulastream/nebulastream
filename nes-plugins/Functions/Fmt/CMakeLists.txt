@@ -10,20 +10,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 
-add_plugin(FMT LogicalFunction FmtLogicalFunction.cpp)
-add_plugin(to_string LogicalFunction ToStringLogicalFunction.cpp)
+add_library(fmt_logical_function_plugin_library STATIC FmtLogicalFunction.cpp ToStringLogicalFunction.cpp)
+target_link_libraries(fmt_logical_function_plugin_library PRIVATE nes-logical-operators)
+target_include_directories(fmt_logical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-logical-operators fmt_logical_function_plugin_library)
 
-add_plugin(FMT PhysicalFunction FmtPhysicalFunction.cpp)
-add_plugin(to_string PhysicalFunction ToStringPhysicalFunction.cpp)
 # Float / int formatting goes through std::to_chars from <charconv> — no extra link deps.
+add_library(fmt_physical_function_plugin_library STATIC FmtPhysicalFunction.cpp ToStringPhysicalFunction.cpp)
+target_link_libraries(fmt_physical_function_plugin_library PRIVATE nes-physical-operators)
+target_include_directories(fmt_physical_function_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+link_plugin_library(nes-physical-operators fmt_physical_function_plugin_library)
 
-# KEY: the wire/SQL names are FMT and to_string; the C++ types are Fmt/ToStringLogicalFunction.
-add_unreflection_plugin(LogicalFunction Fmt KEY FMT)
-add_unreflection_plugin(LogicalFunction ToString KEY to_string)
-
-# See IsNaN/CMakeLists.txt for why these three include paths are needed.
-target_include_directories(nes-logical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-physical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(nes-logical-operators-LogicalFunction-unreflection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# KEY: the wire/SQL names are FMT and to_string; the C++ types are Fmt/ToString*Function.
+add_registry_entry(LogicalFunction Fmt KEY FMT)
+add_registry_entry(LogicalFunction ToString KEY to_string)
+add_registry_entry(PhysicalFunction Fmt KEY FMT)
+add_registry_entry(PhysicalFunction ToString KEY to_string)
+add_unreflection_entry(LogicalFunction Fmt KEY FMT)
+add_unreflection_entry(LogicalFunction ToString KEY to_string)

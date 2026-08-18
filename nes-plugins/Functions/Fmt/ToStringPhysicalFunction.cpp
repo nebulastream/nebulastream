@@ -134,8 +134,7 @@ VarVal ToStringPhysicalFunction::execute(const Record& record, ArenaRef& arena) 
         });
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::Registerto_stringPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType ToStringPhysicalFunction::createto_string(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(args.childFunctions.size() == 1, "to_string requires exactly one child function");
     return ToStringPhysicalFunction(std::move(args.childFunctions[0]));

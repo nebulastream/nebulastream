@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -27,6 +28,8 @@ class ValueOrNullPhysicalFunction final
 public:
     ValueOrNullPhysicalFunction(PhysicalFunction predicate, PhysicalFunction value);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createvalue_or_null(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction predicate;

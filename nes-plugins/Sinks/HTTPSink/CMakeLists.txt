@@ -10,17 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+
+# One implementation library serving both registries this plugin participates in.
+# It used to be two, each compiling HTTPSink.cpp and each pulling in libcurl.
+add_library(http_sink_plugin_library STATIC HTTPSink.cpp)
+target_link_libraries(http_sink_plugin_library PRIVATE nes-sinks)
+target_include_directories(http_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+
 find_package(CURL REQUIRED)
+target_link_libraries(http_sink_plugin_library PRIVATE CURL::libcurl)
 
-add_plugin_as_library(HTTP Sink http_sink_plugin HTTPSink.cpp)
-add_plugin_as_library(HTTP SinkValidation http_sink_validation_plugin HTTPSink.cpp)
-
-# Both libraries compile HTTPSink.cpp, so both pull in libcurl symbols.
-foreach (_lib http_sink_plugin http_sink_validation_plugin)
-    target_include_directories(${_lib}
-            PUBLIC include
-            PRIVATE .
-    )
-    target_link_libraries(${_lib} PRIVATE CURL::libcurl)
-endforeach ()
+link_plugin_library(nes-sinks http_sink_plugin_library)
+add_registry_entry(Sink HTTP)
+add_registry_entry(SinkValidation HTTP)

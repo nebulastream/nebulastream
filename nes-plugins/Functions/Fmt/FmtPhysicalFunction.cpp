@@ -90,7 +90,7 @@ VarVal FmtPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
     return result;
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterFMTPhysicalFunction(PhysicalFunctionRegistryArguments args)
+PhysicalFunctionRegistryReturnType FmtPhysicalFunction::createFMT(PhysicalFunctionRegistryArguments args)
 {
     PRECONDITION(!args.childFunctions.empty(), "FMT requires at least the format string as its first argument");
 

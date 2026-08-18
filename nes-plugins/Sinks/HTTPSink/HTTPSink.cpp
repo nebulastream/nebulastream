@@ -36,8 +36,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -146,15 +144,5 @@ void HTTPSink::stop(PipelineExecutionContext&)
 DescriptorConfig::Config HTTPSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersMatrix>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterHTTPSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return HTTPSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
-SinkRegistryReturnType RegisterHTTPSink(SinkRegistryArguments sinkRegistryArguments)
-{
-    return std::make_unique<HTTPSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 }

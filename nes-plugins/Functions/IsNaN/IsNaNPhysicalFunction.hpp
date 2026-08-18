@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -27,6 +28,8 @@ class IsNaNPhysicalFunction final
 public:
     IsNaNPhysicalFunction(PhysicalFunction child);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+
+    static PhysicalFunctionRegistryReturnType createIsNaN(PhysicalFunctionRegistryArguments arguments);
 
 private:
     PhysicalFunction child;

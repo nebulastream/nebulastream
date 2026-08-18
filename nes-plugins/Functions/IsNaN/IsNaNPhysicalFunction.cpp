@@ -47,8 +47,7 @@ VarVal IsNaNPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
     return leftValue != leftValue;
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterIsNaNPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType IsNaNPhysicalFunction::createIsNaN(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "IsNaN function must have exactly one child function");
     return IsNaNPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);

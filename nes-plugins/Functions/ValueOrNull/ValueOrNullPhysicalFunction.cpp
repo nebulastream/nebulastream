@@ -49,8 +49,7 @@ VarVal ValueOrNullPhysicalFunction::execute(const Record& record, ArenaRef& aren
         [resultIsNull]<typename Underlying>(const Underlying& underlying) -> VarVal { return VarVal{underlying, true, resultIsNull}; });
 }
 
-PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::Registervalue_or_nullPhysicalFunction(PhysicalFunctionRegistryArguments arguments)
+PhysicalFunctionRegistryReturnType ValueOrNullPhysicalFunction::createvalue_or_null(PhysicalFunctionRegistryArguments arguments)
 {
     PRECONDITION(arguments.childFunctions.size() == 2, "value_or_null function must have exactly two child functions");
     return ValueOrNullPhysicalFunction(arguments.childFunctions[0], arguments.childFunctions[1]);

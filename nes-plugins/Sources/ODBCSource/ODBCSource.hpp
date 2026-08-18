@@ -26,7 +26,7 @@
 #include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Schema/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
