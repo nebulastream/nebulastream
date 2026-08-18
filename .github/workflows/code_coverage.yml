@@ -42,6 +42,13 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/prepare-github
+        name: Preparing Github Runners
+        with:
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - name: Build coverage and export as lcov
         uses: ./.github/steps/run-in-container
         with:
