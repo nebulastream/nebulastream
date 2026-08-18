@@ -39,6 +39,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Model/Expectation.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -769,13 +770,13 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
         auto [actualSchemaResult, actualQueryResult] = queryResult.value();
 
         /// Check if the expected result is empty and if this is the case, the query result should be empty as well
-        auto expectedQueryResult = runningQuery.systestQuery.expectedResultsOrExpectedError;
-        INVARIANT(std::holds_alternative<std::vector<std::string>>(expectedQueryResult), "Systest was expected to have an expected result");
+        const auto* expectedRows = std::get_if<NES::ExpectedRows>(&runningQuery.systestQuery.expectation);
+        INVARIANT(expectedRows != nullptr, "Systest was expected to have an expected result");
 
         return QuerySchemasAndResults(
             ExpectedResultSchema(runningQuery.systestQuery.planInfoOrException.value().sinkOutputSchema),
             ActualResultSchema(actualSchemaResult),
-            std::get<std::vector<std::string>>(expectedQueryResult),
+            expectedRows->rows,
             std::move(actualQueryResult));
     }();
 
@@ -1086,10 +1087,10 @@ std::optional<std::string> checkExplainResult(const Systest::RunningQuery& runni
         return normalized;
     };
 
-    const auto* expectedResultLines = std::get_if<std::vector<std::string>>(&runningQuery.systestQuery.expectedResultsOrExpectedError);
-    INVARIANT(expectedResultLines != nullptr, "EXPLAIN statements must have expected result lines");
+    const auto* expectedPlan = std::get_if<ExpectedPlan>(&runningQuery.systestQuery.expectation);
+    INVARIANT(expectedPlan != nullptr, "EXPLAIN statements must have expected result lines");
 
-    const auto expected = normalize(*expectedResultLines);
+    const auto expected = normalize(expectedPlan->lines);
     const auto actual = normalize(
         runningQuery.systestQuery.actualExplainOutput.value() | std::views::split('\n')
         | std::views::transform([](auto&& split) { return std::string_view(split.begin(), split.end()); }));
