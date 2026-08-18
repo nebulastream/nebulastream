@@ -19,6 +19,8 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Discovery/TestFileReader.hpp>
+#include <Parser/SystestParser.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -26,7 +28,6 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -182,7 +183,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
         { FAIL() << "Error expectation callback should not be called for a differential query test."; });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "differential.dummy";
-    ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename))) << "Failed to load file: " << Filename;
 
     EXPECT_NO_THROW(parser.parse());
 

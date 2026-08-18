@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SystestRunner.hpp>
+#include <Runner/SystestRunner.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -34,6 +34,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Runner/QuerySubmitter.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -47,10 +48,9 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <Progress.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
-#include <QuerySubmitter.hpp>
-#include <SystestProgressTracker.hpp>
 #include <Version.hpp>
 
 #include <DataTypes/UnboundField.hpp>

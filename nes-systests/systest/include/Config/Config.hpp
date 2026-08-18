@@ -45,7 +45,7 @@ public:
         testDiscoverDirs.add(TEST_DISCOVER_DIR);
     }
 
-    /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `SystestExecutor::parseConfiguration()`
+    /// Note: for now we ignore/override the here specified default values with ones provided by argparse when parsing the command line
     SequenceOption<StringOption> testDiscoverDirs
         = {"test_discover_dirs", "Directories to discover test files in. Default: " TEST_DISCOVER_DIR};
     StringOption testDataDir

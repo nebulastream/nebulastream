@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SystestParser.hpp>
+#include <Parser/SystestParser.hpp>
 
 #include <algorithm>
 #include <array>
@@ -20,7 +20,6 @@
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <functional>
 #include <iterator>
 #include <optional>
@@ -158,19 +157,6 @@ void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
         "substitution rule keywords must be unique. Tried to register for the second time: {}",
         rule.keyword);
     substitutionRules.emplace_back(rule);
-}
-
-/// We do not load the file in a constructor, as we want to be able to handle errors
-bool SystestParser::loadFile(const std::filesystem::path& filePath)
-{
-    std::ifstream infile(filePath);
-    if (!infile.is_open() || infile.bad())
-    {
-        return false;
-    }
-    std::stringstream buffer;
-    buffer << infile.rdbuf();
-    return loadString(buffer.str());
 }
 
 bool SystestParser::loadString(const std::string& str)

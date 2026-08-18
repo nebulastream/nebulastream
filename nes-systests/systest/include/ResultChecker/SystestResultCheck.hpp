@@ -26,7 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <nameof.hpp>
 

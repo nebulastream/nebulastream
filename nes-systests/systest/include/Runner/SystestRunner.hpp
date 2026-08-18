@@ -25,12 +25,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Config/Config.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <rfl/Rename.hpp>
+#include <Progress.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest

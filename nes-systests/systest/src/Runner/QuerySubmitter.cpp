@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <QuerySubmitter.hpp>
+#include <Runner/QuerySubmitter.hpp>
 
 #include <chrono>
 #include <memory>

@@ -12,28 +12,15 @@
     limitations under the License.
 */
 
-#include <SystestConfiguration.hpp>
+#pragma once
 
-#include <vector>
-#include <Configurations/BaseOption.hpp>
+#include <Config/Config.hpp>
 
 namespace NES
 {
-std::vector<BaseOption*> SystestConfiguration::getOptions()
-{
-    return {
-        &testDiscoverDirs,
-        &directlySpecifiedTestFiles,
-        &testFileExtension,
-        &workingDir,
-        &randomQueryOrder,
-        &numberConcurrentQueries,
-        &testGroups,
-        &disabledTestFiles,
-        &testDataDir,
-        &endlessMode,
-        &excludeGroups,
-        &remoteWorker,
-        &clusterConfigPath};
-}
+
+/// Parses the systest command line into a configuration.
+/// Exits the process for meta commands (--list, --help) and on invalid arguments.
+[[nodiscard]] SystestConfiguration parseConfig(int argc, const char** argv);
+
 }

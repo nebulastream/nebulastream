@@ -37,9 +37,11 @@
 #include <variant>
 #include <vector>
 
+#include <Config/Config.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Discovery/TestFileReader.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -48,6 +50,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Parser/SystestParser.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -71,8 +74,6 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -1093,7 +1094,7 @@ struct SystestBinder::Impl
                  }
              }});
 
-        if (!parser.loadFile(testFilePath))
+        if (!parser.loadString(NES::readTestFile(testFilePath)))
         {
             throw TestException("Could not successfully load test file://{}", testFilePath.string());
         }

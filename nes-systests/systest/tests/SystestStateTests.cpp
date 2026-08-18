@@ -18,12 +18,13 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <Config/Config.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace

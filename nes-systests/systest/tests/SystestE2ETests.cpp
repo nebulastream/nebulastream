@@ -21,11 +21,11 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <Config/Config.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
-#include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <WorkerConfig.hpp>
 

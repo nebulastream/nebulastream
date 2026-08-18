@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SystestRunner.hpp>
+#include <Runner/SystestRunner.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -40,21 +40,21 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Config/Config.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <ResultChecker/SystestResultCheck.hpp>
+#include <Runner/QuerySubmitter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 

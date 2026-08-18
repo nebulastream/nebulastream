@@ -40,9 +40,10 @@ message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 find_package(reflectcpp CONFIG REQUIRED)
+find_package(argparse CONFIG REQUIRED)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
-target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters)
+target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters argparse::argparse)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
@@ -51,11 +52,8 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
-# Find required packages
-find_package(argparse CONFIG REQUIRED)
-
 # Add the systest executable
-add_executable(systest src/SystestStarter.cpp)
+add_executable(systest src/Main.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)

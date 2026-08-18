@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <chrono>
+#include <Config/ConfigParser.hpp>
+
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
@@ -23,27 +24,20 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
+#include <Config/Config.hpp>
 #include <Configurations/Util.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
-#include <Plugins/BuiltinPlugins.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
-#include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestExecutor.hpp>
-#include <SystestState.hpp>
-#include <Thread.hpp>
-#include <Version.hpp>
 #include <WorkerConfig.hpp>
 
 namespace
@@ -489,13 +483,18 @@ void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfigu
     }
 }
 
-NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
+}
+
+namespace NES
+{
+
+SystestConfiguration parseConfig(const int argc, const char** argv)
 {
     ArgumentParser program("systest");
     configureArgumentParser(program);
     parseArgumentsOrExit(program, argc, argv);
 
-    auto config = NES::SystestConfiguration();
+    auto config = SystestConfiguration();
     loadDisableConfig(program, config);
     applyBenchmarkMode(program, config);
     applyDebugMode(program);
@@ -509,53 +508,5 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     handleMetaCommands(program, config);
     return config;
 }
-}
 
-int main(int argc, const char** argv)
-{
-    if (NES::hasVersionFlag(argc, argv))
-    {
-        NES::printVersion("systest");
-        return 0;
-    }
-    NES::setupSignalHandlers();
-    const auto startTime = std::chrono::high_resolution_clock::now();
-    NES::Thread::initializeThread(NES::Host("systest"), "main");
-
-    CPPTRACE_TRY
-    {
-        NES::loadBuiltinPlugins();
-        auto config = parseConfiguration(argc, argv);
-        NES::SystestExecutor executor(std::move(config));
-        const auto result = executor.executeSystests();
-
-        switch (result.returnType)
-        {
-            case SystestExecutorResult::ReturnType::SUCCESS: {
-                const auto endTime = std::chrono::high_resolution_clock::now();
-                const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-                fmt::print(
-                    "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
-                    result.outputMessage,
-                    duration.count(),
-                    std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
-                return 0;
-            }
-            case SystestExecutorResult::ReturnType::FAILED: {
-                auto endTime = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-                PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
-                NES_ERROR("{}", result.outputMessage);
-                std::cout << result.outputMessage << '\n';
-                std::cout << "Total execution time: " << duration.count() << " ms ("
-                          << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
-                return result.errorCode.value();
-            }
-        }
-    }
-    CPPTRACE_CATCH(const NES::Exception& e)
-    {
-        NES::tryLogCurrentException();
-        return NES::getCurrentErrorCode();
-    }
 }

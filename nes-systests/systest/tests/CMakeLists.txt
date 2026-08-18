@@ -20,11 +20,11 @@ function(add_nes_test_systest)
 endfunction()
 
 add_nes_test_systest(slt-parser-test
-        "SystestParserTests.cpp"
-        "SystestParserInvalidTestFilesTests.cpp"
-        "SystestParserValidTestFilesTests.cpp"
-        "SystestResultCheckTests.cpp"
-        "SystestRunnerTest.cpp"
+        "Parser/SystestParserTests.cpp"
+        "Parser/SystestParserInvalidTestFilesTests.cpp"
+        "Parser/SystestParserValidTestFilesTests.cpp"
+        "ResultChecker/SystestResultCheckTests.cpp"
+        "Runner/SystestRunnerTest.cpp"
         "SystestStateTests.cpp")
 
 add_nes_test_systest(slt-e2e-test

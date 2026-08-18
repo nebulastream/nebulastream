@@ -45,9 +45,6 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestConfiguration.hpp>
-
-#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::Systest
 {
@@ -261,12 +258,6 @@ struct TestFile
 
 /// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
-
-
-std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
-
-/// load test file map objects from files defined in systest config
-TestFileMap loadTestFileMap(const SystestConfiguration& config);
 
 }
 
