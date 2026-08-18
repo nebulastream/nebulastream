@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <cstring>
 #include <ios>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -40,38 +41,43 @@ namespace NES
 
 namespace
 {
-/// `key` pins the IR the compiled model was built from, so a cache hit can be decided by
-/// comparing payloads rather than by pointer identity of a buffer that may have been freed.
-struct CompiledModelCacheEntry
+/// Process-wide OpenVINO runtime: one `ov::Core` and the models compiled from it, behind one
+/// lock. The core, its cache, and the mutex share a single lifetime and are torn down together at process exit.
+///
+/// Every worker thread running the same operator calls `setup` with the same model, and
+/// `read_model`/`compile_model` takes seconds for a large one, so a compiled model is cached and reused across threads.
+class OpenVinoRuntime
 {
-    CompiledModel key;
-    ov::CompiledModel compiled;
-};
-}
-
-RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
-{
-    static ov::Core sharedCore;
-    static std::mutex coreMutex;
-    /// Every worker thread running the same operator calls setup with the same model, and
-    /// read_model/compile_model take seconds for a large one. Caching by model keeps that
-    /// cost at once per distinct model per process instead of once per thread. Entries live
-    /// for the process lifetime: they are bounded by the number of distinct models a worker
-    /// loads, and the payload they pin is already held by the operator using it.
-    static std::vector<CompiledModelCacheEntry> compiledModelCache;
-
-    const std::scoped_lock lock(coreMutex);
-
-    ov::CompiledModel compiledModel;
-    /// Model's equality compares the IR payload, the weights and the shapes, so a hit means
-    /// an identical model, not merely one loaded from the same path.
-    const auto cached = std::ranges::find_if(compiledModelCache, [&](const CompiledModelCacheEntry& entry) { return entry.key == model; });
-    if (cached != compiledModelCache.end())
+public:
+    static OpenVinoRuntime& instance()
     {
-        compiledModel = cached->compiled;
+        static OpenVinoRuntime runtime;
+        return runtime;
     }
-    else
+
+    ov::CompiledModel getOrCompile(const CompiledModel& model)
     {
+        const std::scoped_lock lock(mutex);
+
+        /// The payload buffer is ref-counted and shared by every copy of a model, so its address identifies the model.
+        /// An entry whose `weak_ptr` locks to the same buffer is a hit, and one whose `weak_ptr` has expired
+        /// belongs to a model that has been destroyed.
+        const auto* payloadOwner = model.getBackendModel().modelGraph.buffer.get();
+        for (auto entry = cache.begin(); entry != cache.end();)
+        {
+            const auto pinned = entry->payload.lock();
+            if (!pinned)
+            {
+                entry = cache.erase(entry);
+                continue;
+            }
+            if (pinned.get() == payloadOwner)
+            {
+                return entry->compiled;
+            }
+            ++entry;
+        }
+
         const auto& backendModel = model.getBackendModel();
         const auto modelGraphBytes = backendModel.modelGraphView();
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-text for OpenVINO XML payload
@@ -87,15 +93,38 @@ RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
             std::memcpy(weights.data<std::uint8_t>(), modelBin.data(), modelBin.size());
         }
 
-        auto openVinoModel = sharedCore.read_model(modelXml, weights);
+        auto openVinoModel = core.read_model(modelXml, weights);
         openVinoModel->reshape(modelInputShape);
-        compiledModel = sharedCore.compile_model(
+
+        auto compiledModel = core.compile_model(
             openVinoModel,
             "CPU",
             ov::hint::execution_mode(ov::hint::ExecutionMode::ACCURACY),
             ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
-        compiledModelCache.emplace_back(model, compiledModel);
+
+        cache.push_back(CacheEntry{.payload = backendModel.modelGraph.buffer, .compiled = compiledModel});
+        return compiledModel;
     }
+
+private:
+    OpenVinoRuntime() = default;
+
+    struct CacheEntry
+    {
+        /// NOLINTNEXTLINE(modernize-avoid-c-arrays) mirrors the model payload's array buffer
+        std::weak_ptr<const std::byte[]> payload;
+        ov::CompiledModel compiled;
+    };
+
+    ov::Core core;
+    std::mutex mutex;
+    std::vector<CacheEntry> cache;
+};
+}
+
+RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
+{
+    auto compiledModel = OpenVinoRuntime::instance().getOrCompile(model);
 
     inferRequest = compiledModel.create_infer_request();
     inputElementType = compiledModel.input(0).get_element_type();
