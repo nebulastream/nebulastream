@@ -14,15 +14,35 @@
 
 #pragma once
 
-#include <filesystem>
+#include <optional>
 #include <string>
+#include <variant>
+#include <vector>
+
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-/// Reads a test file into memory.
-/// The only place the pipeline opens a test file, so every stage behind it works on text.
-/// Throws when the file cannot be read, which fails that one test file rather than the run.
-[[nodiscard]] std::string readTestFile(const std::filesystem::path& path);
+struct ExpectedRows
+{
+    std::vector<std::string> rows;
+};
+
+struct ExpectedError
+{
+    ErrorCode code;
+    /// The expected error message, if any.
+    std::optional<std::string> message;
+};
+
+/// The plan an `EXPLAIN` should print.
+struct ExpectedPlan
+{
+    std::vector<std::string> lines;
+};
+
+/// What a query should yield: result rows, a specific error, or a plan.
+using Expectation = std::variant<ExpectedRows, ExpectedError, ExpectedPlan>;
 
 }

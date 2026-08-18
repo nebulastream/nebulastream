@@ -14,15 +14,12 @@
 
 #pragma once
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
-#include <initializer_list>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,10 +28,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Model/ConfigurationOverride.hpp>
+#include <Model/Expectation.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -49,68 +48,13 @@
 namespace NES::Systest
 {
 
-struct ConfigurationOverride
-{
-    std::unordered_map<std::string, std::string> overrideParameters;
-    ConfigurationOverride() = default;
-
-    ConfigurationOverride(std::initializer_list<std::pair<std::string_view, std::string_view>> init)
-    {
-        for (const auto& [key, value] : init)
-        {
-            overrideParameters.emplace(std::string{key}, std::string{value});
-        }
-    }
-
-    std::string& operator[](std::string_view key) { return overrideParameters[std::string{key}]; }
-
-    [[nodiscard]] const std::string& at(std::string_view key) const { return overrideParameters.at(std::string{key}); }
-
-    bool operator==(const ConfigurationOverride& other) const = default;
-    bool operator!=(const ConfigurationOverride& other) const = default;
-};
-}
-
-namespace std
-{
-template <>
-struct hash<NES::Systest::ConfigurationOverride>
-{
-    std::size_t operator()(const NES::Systest::ConfigurationOverride& co) const noexcept
-    {
-        std::size_t seed = 0;
-        std::hash<std::string> hasher;
-        const auto mix = [](std::size_t currentSeed, std::size_t value) noexcept
-        { return currentSeed ^ (value + 0x9e3779b9 + (currentSeed << 6U) + (currentSeed >> 2U)); };
-
-        for (const auto& [key, value] : co.overrideParameters)
-        {
-            seed = mix(seed, hasher(key));
-            seed = mix(seed, hasher(value));
-        }
-        return seed;
-    }
-};
-}
-
-namespace NES::Systest
-{
-
-
 class SystestRunner;
 
 using TestName = std::string;
 using TestGroup = std::string;
 
-using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
-
-struct ExpectedError
-{
-    ErrorCode code;
-    std::optional<std::string> message;
-};
 
 class SourceInputFile
 {
@@ -142,14 +86,14 @@ struct SystestQuery
     SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::filesystem::path testFilePath;
     std::filesystem::path workingDir;
-    /// The schema of the data written to a CSV file.
-    /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
     std::string queryDefinition;
 
     struct PlanInfo
     {
         DistributedLogicalPlan queryPlan;
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
+        /// The schema of the data written to a CSV file.
+        /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
         Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
 
         PlanInfo() = delete;
@@ -200,7 +144,7 @@ struct SystestQuery
     };
 
     std::expected<PlanInfo, Exception> planInfoOrException;
-    std::variant<std::vector<std::string>, ExpectedError> expectedResultsOrExpectedError;
+    Expectation expectation;
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;

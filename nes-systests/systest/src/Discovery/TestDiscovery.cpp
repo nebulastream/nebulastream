@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Strings.hpp>

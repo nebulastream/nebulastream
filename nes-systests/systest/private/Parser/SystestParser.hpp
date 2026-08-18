@@ -15,23 +15,20 @@
 #pragma once
 
 #include <cstddef>
-#include <filesystem>
 #include <functional>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
-namespace NES::Systest
+#include <Identifiers/Identifiers.hpp>
+#include <Model/ConfigurationOverride.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES
 {
 using namespace std::literals;
 
@@ -96,21 +93,6 @@ private:
     SystestQueryId::Underlying currentQueryResultNumber = SystestQueryId::INITIAL;
 };
 
-struct SystestField
-{
-    DataType type;
-    std::string name;
-
-    friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
-    {
-        os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
-        return os;
-    }
-
-    bool operator==(const SystestField& other) const = default;
-    bool operator!=(const SystestField& other) const = default;
-};
-
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
 ///
@@ -130,25 +112,7 @@ public:
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
     /// Loading overrides existing parse content
-    [[nodiscard]] bool loadString(const std::string& str);
-
-    using SystestSchema = std::vector<SystestField>;
-
-    /// Type definitions ///
-    struct SystestLogicalSource
-    {
-        std::string name;
-        SystestSchema fields;
-        bool operator==(const SystestLogicalSource& other) const = default;
-    };
-
-    struct SystestSink
-    {
-        std::string name;
-        std::string type;
-        SystestSchema fields;
-        bool operator==(const SystestSink& other) const = default;
-    };
+    void loadString(const std::string& str);
 
     struct ErrorExpectation
     {
@@ -178,7 +142,6 @@ public:
     void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
 
     void parse();
-    void parseResultLines();
 
 private:
     /// Parsing utils ///
@@ -195,7 +158,6 @@ private:
 
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::vector<std::string> expectVerbatimResultLines();
-    [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
@@ -223,5 +185,3 @@ private:
     std::vector<std::string> lines;
 };
 }
-
-FMT_OSTREAM(NES::Systest::SystestField);

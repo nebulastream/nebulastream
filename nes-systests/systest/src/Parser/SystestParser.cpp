@@ -19,11 +19,9 @@
 #include <cctype>
 #include <cstddef>
 #include <cstring>
-#include <filesystem>
 #include <functional>
-#include <iterator>
+#include <istream>
 #include <optional>
-#include <ranges>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -32,15 +30,11 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Sources/SourceProvider.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
+
+#include <Model/ConfigurationOverride.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
 namespace
 {
@@ -52,7 +46,7 @@ bool emptyOrComment(const std::string& line)
         || line.starts_with('#'); /// slt comment
 }
 
-std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
+std::vector<NES::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
 {
     std::istringstream stream(line);
 
@@ -105,7 +99,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         values = {valueList};
     }
 
-    std::vector<NES::Systest::ConfigurationOverride> result;
+    std::vector<NES::ConfigurationOverride> result;
     for (auto& value : values)
     {
         value = NES::trimWhiteSpaces(value);
@@ -113,8 +107,8 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         {
             throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
         }
-        NES::Systest::ConfigurationOverride override;
-        override.overrideParameters[key] = value;
+        NES::ConfigurationOverride override;
+        override[key] = value;
         result.emplace_back(std::move(override));
     }
     return result;
@@ -122,7 +116,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
 
 }
 
-namespace NES::Systest
+namespace NES
 {
 
 using namespace std::string_view_literals;
@@ -150,7 +144,7 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
-    auto found
+    const auto found
         = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& existing) { return existing.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
@@ -159,7 +153,7 @@ void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
     substitutionRules.emplace_back(rule);
 }
 
-bool SystestParser::loadString(const std::string& str)
+void SystestParser::loadString(const std::string& str)
 {
     currentLine = 0;
     lines.clear();
@@ -182,7 +176,6 @@ bool SystestParser::loadString(const std::string& str)
             lines.push_back(line);
         }
     }
-    return true;
 }
 
 void SystestParser::registerOnQueryCallback(QueryCallback callback)
@@ -433,7 +426,7 @@ std::optional<TokenType> SystestParser::getNextToken()
 
     INVARIANT(!line.empty(), "a potential token should never be empty");
 
-    if (auto token = getTokenIfValid(line); token.has_value())
+    if (const auto token = getTokenIfValid(line); token.has_value())
     {
         return token;
     }
@@ -477,9 +470,8 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
             break;
         }
 
-        std::string potentialToken;
         std::istringstream stream(lines[currentLine]);
-        if (stream >> potentialToken)
+        if (std::string potentialToken; stream >> potentialToken)
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
@@ -588,17 +580,14 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         }
 
         /// Check if we've reached a stop token
-        std::string potentialToken;
         std::istringstream stream(line);
-        if (stream >> potentialToken)
+        if (std::string potentialToken; stream >> potentialToken)
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
                 if (stopTokens.contains(tokenType.value()))
                 {
-                    const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
-
-                    if (trimmedQuerySoFar.back() != ';')
+                    if (const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString)); trimmedQuerySoFar.back() != ';')
                     {
                         throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
                     }
@@ -607,8 +596,8 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             }
             else
             {
-                const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
-                if (!trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
+                if (const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
+                    !trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
                 {
                     throw SLTUnexpectedToken(
                         "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
@@ -639,14 +628,12 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
     INVARIANT(lastParsedQuery.has_value(), "Differential block must follow a query definition");
 
     std::string potentialToken;
-    std::istringstream stream(lines[currentLine]);
-    if (!(stream >> potentialToken))
+    if (std::istringstream stream(lines[currentLine]); !(stream >> potentialToken))
     {
         throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
 
-    auto tokenOpt = getTokenIfValid(potentialToken);
-    if (!tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
+    if (auto tokenOpt = getTokenIfValid(potentialToken); !tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
     {
         throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
@@ -704,8 +691,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
 
-    const std::regex numberRegex("^\\d+$");
-    if (std::regex_match(errorStr, numberRegex))
+    if (const std::regex numberRegex("^\\d+$"); std::regex_match(errorStr, numberRegex))
     {
         /// String is a valid integer
         auto code = std::stoul(errorStr);
@@ -725,8 +711,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     }
 
     /// Read optional error message
-    std::string message;
-    if (std::getline(stream, message))
+    if (std::string message; std::getline(stream, message))
     {
         /// Trim leading whitespace
         message.erase(0, message.find_first_not_of(" \t"));

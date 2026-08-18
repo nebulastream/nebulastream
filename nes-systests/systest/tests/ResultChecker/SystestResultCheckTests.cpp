@@ -22,6 +22,8 @@
 #include <vector>
 
 #include <Discovery/TestFileReader.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Model/Expectation.hpp>
 #include <Parser/SystestParser.hpp>
 #include <ResultChecker/SystestResultCheck.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -39,14 +41,14 @@ NES::Systest::RunningQuery makeExplainRunningQuery(std::vector<std::string> expe
 {
     NES::Systest::SystestQuery query{
         .testName = "regex_explain",
-        .queryIdInFile = NES::Systest::SystestQueryId(1),
+        .queryIdInFile = NES::SystestQueryId(1),
         .testFilePath = SYSTEST_DATA_DIR "regex_explain.dummy",
         .workingDir = {},
         .queryDefinition = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream INTO sink;",
         .planInfoOrException = std::unexpected<NES::Exception>{NES::TestException("unused")},
-        .expectedResultsOrExpectedError = std::move(expectedResultLines),
+        .expectation = NES::ExpectedPlan{.lines = std::move(expectedResultLines)},
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
-        .configurationOverride = NES::Systest::ConfigurationOverride{},
+        .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::nullopt,
         .actualExplainOutput = std::move(actualExplainOutput)};
@@ -99,7 +101,7 @@ TEST_F(SystestResultCheckTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
                                           { expectedResultLines = std::move(resultTuples); });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "regex_explain.dummy";
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename)));
+    parser.loadString(NES::readTestFile(Filename));
     ASSERT_NO_THROW(parser.parse());
 
     ASSERT_TRUE(explainCallbackCalled);
