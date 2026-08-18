@@ -21,6 +21,7 @@
 #include <span>
 #include <utility>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
@@ -383,20 +384,7 @@ BTree::VarSizedAllocation BTree::allocateSpaceForVarSized(AbstractBufferProvider
         }
     }
 
-    TupleBuffer page;
-    if (storageSize <= bufferProvider->getBufferSize())
-    {
-        page = bufferProvider->getBufferBlocking();
-    }
-    else
-    {
-        auto unpooledPage = bufferProvider->getUnpooledBuffer(storageSize);
-        if (not unpooledPage.has_value())
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized BTree variable-sized data");
-        }
-        page = std::move(*unpooledPage);
-    }
+    auto page = getBufferOfAtLeast(storageSize, *bufferProvider);
     page.setNumberOfTuples(storageSize);
     const auto pageIndex = buffer.storeChildBuffer(page);
     header().varSizedPageIndex = pageIndex.getRawValue();

@@ -28,6 +28,7 @@
 #include <Interface/Hash/HashFunction.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
@@ -166,22 +167,7 @@ ChainedHashMap ChainedHashMap::load(const TupleBuffer& tupleBuffer)
 
 void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
-    TupleBuffer newPage;
-    if (neededSize <= bufferProvider->getBufferSize())
-    {
-        newPage = bufferProvider->getBufferBlocking();
-    }
-    else
-    {
-        /// The varsized entry does not fit into a pooled buffer, so we allocate an unpooled buffer sized to fit it.
-        auto newPageUnpooled = bufferProvider->getUnpooledBuffer(neededSize);
-        if (!newPageUnpooled)
-        {
-            throw CannotAllocateBuffer(
-                "Could not allocate memory for unpooled VARSIZED data page of ChainedHashMap of size {}", std::to_string(neededSize));
-        }
-        newPage = newPageUnpooled.value();
-    }
+    auto newPage = getBufferOfAtLeast(neededSize, *bufferProvider);
 
     auto varSizedBufferIdx = getVarSizedBufferIdx();
     if (varSizedBufferIdx != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
