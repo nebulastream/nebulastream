@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SystestResultCheck.hpp>
+#include <ResultChecker/SystestResultCheck.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -51,7 +51,6 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace

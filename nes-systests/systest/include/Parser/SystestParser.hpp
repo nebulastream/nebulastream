@@ -114,7 +114,7 @@ struct SystestField
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
 ///
-/// NOTE: register substitution rules before calling `loadFile`
+/// NOTE: register substitution rules before calling `loadString`
 /// NOTE: register callbacks before calling `parse`
 class SystestParser
 {
@@ -130,7 +130,6 @@ public:
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
     /// Loading overrides existing parse content
-    [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
     [[nodiscard]] bool loadString(const std::string& str);
 
     using SystestSchema = std::vector<SystestField>;

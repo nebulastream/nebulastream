@@ -22,14 +22,16 @@
 #include <utility>
 #include <vector>
 
+#include <Config/Config.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Discovery/TestDiscovery.hpp>
+#include <Discovery/TestFileReader.hpp>
+#include <Parser/SystestParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -69,7 +71,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "valid.dummy";
-    ASSERT_TRUE(parser.loadFile(Filename)) << "Failed to load file: " << Filename;
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename))) << "Failed to load file: " << Filename;
     EXPECT_NO_THROW(parser.parse());
 
     /// Verify that all expected callbacks were called
@@ -184,7 +186,7 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
@@ -298,7 +300,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
@@ -418,7 +420,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
     ASSERT_TRUE(createPhysicalSourceCallbackCalled);
@@ -461,7 +463,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "error_expectation.dummy";
-    ASSERT_TRUE(parser.loadFile(Filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename)));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
@@ -529,7 +531,7 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
                                           { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(createLogicalSourceCallbackCalled);
     ASSERT_TRUE(createPhysicalSourceCallbackCalled);

@@ -18,9 +18,9 @@
 #include <utility>
 #include <vector>
 
+#include <Config/Config.hpp>
 #include <Util/Pointers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest

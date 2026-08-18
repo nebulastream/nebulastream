@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SystestProgressTracker.hpp>
+#include <Progress.hpp>
 
 namespace NES::Systest
 {

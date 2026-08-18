@@ -30,18 +30,18 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unistd.h>
+#include <Config/Config.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Util/Logger/LogLevel.hpp>
+#include <Runner/QuerySubmitter.hpp>
+#include <Runner/SystestRunner.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -49,12 +49,10 @@
 #include <rfl/json/write.hpp>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
-#include <QuerySubmitter.hpp>
+#include <Logging.hpp>
+#include <Progress.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestProgressTracker.hpp>
-#include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -196,74 +194,6 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
         runEndlessLocal(
             queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration, progressTracker);
     }
-}
-
-void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
-{
-    std::error_code errorCode;
-    const auto relativeLogPath = relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
-    if (errorCode)
-    {
-        std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
-        return;
-    }
-
-    if (exists(symlinkPath, errorCode) || is_symlink(symlinkPath, errorCode))
-    {
-        std::filesystem::remove(symlinkPath, errorCode);
-        if (errorCode)
-        {
-            std::cerr << "Error removing existing symlink during logger setup:  " << errorCode.message() << "\n";
-        }
-    }
-
-    try
-    {
-        create_symlink(relativeLogPath, symlinkPath);
-    }
-    catch (const std::filesystem::filesystem_error& e)
-    {
-        std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
-    }
-}
-
-void setupLogging(const SystestConfiguration& config)
-{
-    std::filesystem::path absoluteLogPath;
-    const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
-
-    if (config.logFilePath.getValue().empty())
-    {
-        std::error_code errorCode;
-        create_directories(logDir, errorCode);
-        if (errorCode)
-        {
-            std::cerr << "Error creating log directory during logger setup: " << errorCode.message() << "\n";
-            return;
-        }
-
-        const auto now = std::chrono::system_clock::now();
-        const auto pid = ::getpid();
-        const std::string logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
-
-        absoluteLogPath = logDir / logFileName;
-    }
-    else
-    {
-        absoluteLogPath = config.logFilePath.getValue();
-        const std::filesystem::path parentDir = absoluteLogPath.parent_path();
-        if (not exists(parentDir) or not is_directory(parentDir))
-        {
-            fmt::println(std::cerr, "Error creating log file during logger setup: directory does not exist: file://{}", parentDir.string());
-            std::exit(1); /// NOLINT(concurrency-mt-unsafe)
-        }
-    }
-
-    fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
-    Logger::setupLogging(absoluteLogPath.string(), LogLevel::LOG_DEBUG, false);
-
-    const auto symlinkPath = logDir / "latest.log";
-    createSymlink(absoluteLogPath, symlinkPath);
 }
 
 SystestExecutorResult SystestExecutor::executeSystests()

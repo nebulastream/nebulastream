@@ -21,6 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include <Discovery/TestFileReader.hpp>
+#include <Parser/SystestParser.hpp>
+#include <ResultChecker/SystestResultCheck.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -28,8 +31,6 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <SystestParser.hpp>
-#include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 
 namespace
@@ -98,7 +99,7 @@ TEST_F(SystestResultCheckTest, ExplainRegexAssertionsFromDummyMatchActualOutput)
                                           { expectedResultLines = std::move(resultTuples); });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "regex_explain.dummy";
-    ASSERT_TRUE(parser.loadFile(Filename));
+    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename)));
     ASSERT_NO_THROW(parser.parse());
 
     ASSERT_TRUE(explainCallbackCalled);

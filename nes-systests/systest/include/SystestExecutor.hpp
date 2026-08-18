@@ -20,10 +20,10 @@
 #include <string>
 #include <vector>
 
+#include <Config/Config.hpp>
+#include <Runner/SystestRunner.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestConfiguration.hpp>
-#include <SystestProgressTracker.hpp>
-#include <SystestRunner.hpp>
+#include <Progress.hpp>
 #include <SystestState.hpp>
 
 struct SystestExecutorResult
