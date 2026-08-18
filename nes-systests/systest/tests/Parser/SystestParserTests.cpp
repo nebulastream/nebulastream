@@ -17,20 +17,20 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <Discovery/TestFileReader.hpp>
+#include <Model/SystestQueryId.hpp>
 #include <Parser/SystestParser.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <fmt/format.h>
-#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 class SystestParserTest : public Testing::BaseUnitTest
@@ -50,7 +50,7 @@ TEST_F(SystestParserTest, testEmptyFile)
     SystestParser parser{};
     const std::string str;
 
-    ASSERT_EQ(true, parser.loadString(str));
+    parser.loadString(str);
     EXPECT_NO_THROW(parser.parse());
 }
 
@@ -60,7 +60,7 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
     /// Comment, new line in Unix/Linux, Windows, Older Mac systems
     const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
-    ASSERT_TRUE(parser.loadString(str));
+    parser.loadString(str);
     EXPECT_NO_THROW(parser.parse());
 }
 
@@ -81,7 +81,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
             ASSERT_FALSE(testData.has_value());
         });
 
-    ASSERT_TRUE(parser.loadString(str));
+    parser.loadString(str);
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(isCreateCallbackCalled);
 }
@@ -112,7 +112,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId)
                                           { receivedResultTuples = std::move(resultTuples); });
 
-    ASSERT_TRUE(parser.loadString(testFileString));
+    parser.loadString(testFileString);
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     /// Check that the queryResult map contains the expected two results for the query defined above
@@ -139,7 +139,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadString(str));
+    parser.loadString(str);
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -183,7 +183,7 @@ TEST_F(SystestParserTest, testDifferentialQueryCallbackFromFile)
         { FAIL() << "Error expectation callback should not be called for a differential query test."; });
 
     static constexpr std::string_view Filename = SYSTEST_DATA_DIR "differential.dummy";
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(Filename))) << "Failed to load file: " << Filename;
+    parser.loadString(readTestFile(Filename));
 
     EXPECT_NO_THROW(parser.parse());
 
@@ -244,7 +244,7 @@ SELECT id * 10 AS id, value, timestamp FROM stream INTO streamSink;
 SELECT id * 2 * 5 AS id, value, timestamp FROM stream INTO streamSink;
 )";
 
-    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    parser.loadString(std::string(TestContent));
 
     EXPECT_NO_THROW(parser.parse());
 
@@ -260,8 +260,9 @@ TEST_F(SystestParserTest, testExplainCallbackWithVerbatimResultBlock)
     const std::string explainIn = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > 4 INTO sink;";
     const std::string queryIn = "SELECT id FROM stream INTO sink;";
 
-    /// The expected explain output contains lines that look like parser tokens: a line starting with `----`,
-    /// a section header, and an indented line starting with `SELECT`. All must be delivered verbatim.
+    /// The expected explain output contains lines that look like parser tokens: a line starting with `----`, a section header, and an
+    /// indented line starting with `SELECT`.
+    /// All must be delivered verbatim.
     static constexpr std::string_view TestContent = R"(EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream WHERE value > 4 INTO sink;
 ----
 == Global Optimized Plan ==
@@ -297,7 +298,7 @@ SELECT id FROM stream INTO sink;
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    parser.loadString(std::string(TestContent));
     EXPECT_NO_THROW(parser.parse());
 
     ASSERT_EQ(receivedExplainStatement, explainIn);
@@ -335,7 +336,7 @@ ERROR 3000
         [](std::vector<std::string>&&, SystestQueryId) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
         { FAIL() << "Result tuple callback should not be called for an error expectation."; });
 
-    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    parser.loadString(std::string(TestContent));
     EXPECT_NO_THROW(parser.parse());
 
     ASSERT_TRUE(explainCallbackCalled);
@@ -361,7 +362,7 @@ SINK(SINK1)
     parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, SystestQueryId)
                                           { receivedResultLines = std::move(resultTuples); });
 
-    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    parser.loadString(std::string(TestContent));
     EXPECT_NO_THROW(parser.parse());
 
     EXPECT_EQ(receivedExplainStatement, "EXPLAIN (ALL, FORMAT TEXT)\nSELECT id FROM stream\nINTO sink;");
@@ -393,7 +394,7 @@ SELECT producedPower, timestamp FROM source INTO we;
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&& tuples, SystestQueryId) { (void)std::move(tuples); });
 
-    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    parser.loadString(std::string(TestContent));
     EXPECT_NO_THROW(parser.parse());
 
     /// "producedPower" must NOT be modified, but "we" as a standalone word must be replaced

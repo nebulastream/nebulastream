@@ -32,10 +32,13 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+#include <Model/ConfigurationOverride.hpp>
+#include <Model/Expectation.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -67,7 +70,7 @@ namespace NES
 {
 namespace
 {
-using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
+using OverrideQueriesMap = std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>>;
 
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
 {
@@ -292,7 +295,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         continue;
                     }
 
-                    if (std::holds_alternative<Systest::ExpectedError>(query.expectedResultsOrExpectedError))
+                    if (std::holds_alternative<ExpectedError>(query.expectation))
                     {
                         std::cout << "Skipping query expecting error for benchmarking: " << query.testName << ":"
                                   << query.queryIdInFile.toString() << "\n";
@@ -304,7 +307,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
                 /// Benchmarked queries honour their configuration override just like the regular path does: queries
                 /// are grouped by override and each group runs against a worker configured with it.
-                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> benchmarkQueriesByOverride;
+                std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> benchmarkQueriesByOverride;
                 for (const auto& query : benchmarkQueries)
                 {
                     benchmarkQueriesByOverride[query.configurationOverride].push_back(query);
@@ -332,7 +335,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
             }
             else
             {
-                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+                std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
                 for (const auto& query : queries)
                 {
                     queriesByOverride[query.configurationOverride].push_back(query);

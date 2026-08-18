@@ -30,6 +30,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Model/Expectation.hpp>
+#include <Model/SystestQueryId.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -90,9 +92,9 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
-    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected,
-    std::optional<std::pair<NES::Systest::TestName, NES::Systest::SystestQueryId>> runAfter = std::nullopt,
-    NES::Systest::SystestQueryId queryId = NES::INVALID<NES::Systest::SystestQueryId>)
+    NES::Expectation expected,
+    std::optional<std::pair<NES::Systest::TestName, NES::SystestQueryId>> runAfter,
+    NES::SystestQueryId queryId)
 {
     return NES::Systest::SystestQuery{
         .testName = "test_query",
@@ -101,9 +103,9 @@ NES::Systest::SystestQuery makeQuery(
         .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
-        .expectedResultsOrExpectedError = std::move(expected),
+        .expectation = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
-        .configurationOverride = NES::Systest::ConfigurationOverride{},
+        .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::move(runAfter),
         .actualExplainOutput = std::nullopt};
@@ -339,19 +341,19 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 
     auto query1 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        ExpectedRows{},
         std::nullopt,
         SystestQueryId(1));
 
     auto query2 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        ExpectedRows{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        std::vector<std::string>{},
+        ExpectedRows{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));
 
