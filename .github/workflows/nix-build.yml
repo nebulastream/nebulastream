@@ -85,12 +85,12 @@ jobs:
       - name: Run Unit Tests via devShell
         run: |
           source .github/.env/test-none.env
-          ./.nix/nix-run.sh ctest --test-dir cmake-build-nix -j -LE "Systest|DockerCompose" --output-on-failure --output-junit cmake-build-nix/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+          ./.nix/nix-run.sh ctest --test-dir cmake-build-nix --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --output-junit cmake-build-nix/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
       - name: Run system tests via devShell
         run: |
           source .github/.env/test-none.env
-          ./.nix/nix-run.sh ctest --test-dir cmake-build-nix -j -L Systest --output-on-failure --output-junit cmake-build-nix/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+          ./.nix/nix-run.sh ctest --test-dir cmake-build-nix --no-tests=error -j -L Systest --output-on-failure --output-junit cmake-build-nix/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
 
       - name: Upload build artifacts on failure
         if: failure()
