@@ -34,6 +34,9 @@
 #include <utility>
 #include <fcntl.h>
 #include <poll.h>
+#include <time.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -41,6 +44,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <sys/poll.h>
 #include <sys/wait.h>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
@@ -370,7 +374,7 @@ SourceValidationRegistryReturnType RegisterProcessSourceValidation(SourceValidat
     return ProcessSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterProcessSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterProcessSource(const SourceRegistryArguments& sourceRegistryArguments)
 {
     return std::make_unique<ProcessSource>(sourceRegistryArguments.sourceDescriptor);
 }

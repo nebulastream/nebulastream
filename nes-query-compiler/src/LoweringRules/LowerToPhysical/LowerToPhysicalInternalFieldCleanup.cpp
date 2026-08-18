@@ -15,7 +15,9 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalInternalFieldCleanup.hpp>
 
 #include <memory>
+#include <optional>
 #include <ranges>
+#include <utility>
 #include <vector>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -26,6 +28,8 @@
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
 #include <ScanPhysicalOperator.hpp>
+#include "LoweringRules/AbstractLoweringRule.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
 
 namespace NES
 {

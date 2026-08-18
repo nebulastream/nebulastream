@@ -81,6 +81,8 @@
 #include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
+#include "Operators/StreamTableJoinLogicalOperator.hpp"
+#include "Operators/AsOfJoinLogicalOperator.hpp"
 
 namespace NES::Parsers
 {

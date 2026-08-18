@@ -15,10 +15,12 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <random>
 #include <stop_token>
 #include <string>
@@ -27,7 +29,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -35,13 +36,16 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <cpptrace/from_current.hpp>
+#include <cpptrace/from_current_macros.hpp>
 #include <gtest/gtest.h>
 #include <BackpressureChannel.hpp>
 #include <PipeService.hpp>
 #include <PipeSink.hpp>
 #include <PipeSource.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Identifiers/Identifier.hpp"
+#include "Runtime/AbstractBufferProvider.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 using namespace NES;
 
@@ -51,8 +55,7 @@ constexpr uint32_t POOLED_BUFFER_SIZE = 4096;
 constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
 constexpr BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
-constexpr size_t TOTAL_MEMORY_IN_BYTES
-    = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 }
 
 /// Minimal stub that captures tasks repeated by PipeSink.
@@ -118,6 +121,7 @@ protected:
 
     void TearDown() override { PipeService::instance().unregisterSink("test_pipe"); }
 
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
     std::unique_ptr<PipeSink> makePipeSink(BackpressureController bpController, const std::string& pipeName = "test_pipe")
     {
         auto desc = sinkCatalog.getAnonymousSink(
@@ -126,6 +130,7 @@ protected:
         return std::make_unique<PipeSink>(std::move(bpController), desc.value());
     }
 
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
     std::unique_ptr<PipeSource> makePipeSource(const std::string& pipeName = "test_pipe")
     {
         auto desc = sourceCatalog.getAnonymousSource(
@@ -182,7 +187,7 @@ TEST_F(PipeIntegrationTest, DataFlowThroughRealSinkAndSource)
 
 TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
 {
-    static constexpr size_t numChildren = 5;
+    static constexpr size_t NumChildren = 5;
 
     auto [bpController, bpListener] = createBackpressureChannel();
     auto sink = makePipeSink(std::move(bpController));
@@ -194,7 +199,7 @@ TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
     /// Build a buffer with N child buffers, each containing a known byte pattern.
     auto buffer = bufferManager->getBufferBlocking();
     auto mem = buffer.getAvailableMemoryArea<VariableSizedAccess>();
-    for (size_t idx = 0; idx < numChildren; ++idx)
+    for (size_t idx = 0; idx < NumChildren; ++idx)
     {
         auto child = bufferManager->getBufferBlocking();
         auto childMem = child.getAvailableMemoryArea<uint8_t>();
@@ -206,7 +211,7 @@ TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
         auto childIndex = buffer.storeChildBuffer(child);
         mem[idx] = VariableSizedAccess(childIndex, VariableSizedAccess::Size(64));
     }
-    buffer.setNumberOfTuples(numChildren);
+    buffer.setNumberOfTuples(NumChildren);
     buffer.setSequenceNumber(INITIAL_SEQ_NUMBER);
     buffer.setLastChunk(true);
     sink->execute(buffer, pipeCtx);
@@ -218,10 +223,10 @@ TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
 
     ASSERT_FALSE(result.isEoS());
     EXPECT_NE(outBuffer.getAvailableMemoryArea().data(), buffer.getAvailableMemoryArea().data());
-    ASSERT_EQ(outBuffer.getNumberOfChildBuffers(), numChildren);
+    ASSERT_EQ(outBuffer.getNumberOfChildBuffers(), NumChildren);
 
     auto outMem = outBuffer.getAvailableMemoryArea<VariableSizedAccess>();
-    for (size_t idx = 0; idx < numChildren; ++idx)
+    for (size_t idx = 0; idx < NumChildren; ++idx)
     {
         auto originalChildBuffer = buffer.loadChildBuffer(outMem[idx].getIndex());
         auto childBuffer = outBuffer.loadChildBuffer(outMem[idx].getIndex());
@@ -240,7 +245,7 @@ TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
 
 TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
 {
-    static constexpr uint64_t queueCapacity = 1024;
+    static constexpr uint64_t QueueCapacity = 1024;
 
     auto [bpController, bpListener] = createBackpressureChannel();
     auto sink = makePipeSink(std::move(bpController));
@@ -253,7 +258,7 @@ TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
     slowSource->open(bufferManager);
 
     const std::stop_source stopSource;
-    for (uint64_t value = 0; value < queueCapacity; ++value)
+    for (uint64_t value = 0; value < QueueCapacity; ++value)
     {
         auto buffer = bufferManager->getBufferBlocking();
         buffer.getAvailableMemoryArea<uint64_t>()[0] = value;
@@ -268,9 +273,9 @@ TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
     }
 
     auto overflow = bufferManager->getBufferBlocking();
-    overflow.getAvailableMemoryArea<uint64_t>()[0] = queueCapacity;
+    overflow.getAvailableMemoryArea<uint64_t>()[0] = QueueCapacity;
     overflow.setNumberOfTuples(1);
-    overflow.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + queueCapacity));
+    overflow.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + QueueCapacity));
     overflow.setLastChunk(true);
     sink->execute(overflow, pipeCtx);
 
@@ -278,11 +283,11 @@ TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
     ASSERT_TRUE(repeatedOverflow);
     auto fastOverflow = bufferManager->getBufferBlocking();
     ASSERT_FALSE(fastSource->fillTupleBuffer(fastOverflow, stopSource.get_token()).isEoS());
-    EXPECT_EQ(fastOverflow.getAvailableMemoryArea<uint64_t>()[0], queueCapacity);
+    EXPECT_EQ(fastOverflow.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity);
 
     std::atomic<bool> pressureReleased{false};
     auto pressureWaiter = std::jthread(
-        [&](std::stop_token token)
+        [&](const std::stop_token& token)
         {
             bpListener.wait(token);
             pressureReleased = !token.stop_requested();
@@ -295,9 +300,9 @@ TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
     lateSource->open(bufferManager);
 
     auto buffered = bufferManager->getBufferBlocking();
-    buffered.getAvailableMemoryArea<uint64_t>()[0] = queueCapacity + 1;
+    buffered.getAvailableMemoryArea<uint64_t>()[0] = QueueCapacity + 1;
     buffered.setNumberOfTuples(1);
-    buffered.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + queueCapacity + 1));
+    buffered.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + QueueCapacity + 1));
     buffered.setLastChunk(true);
     sink->execute(buffered, pipeCtx);
     EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
@@ -310,18 +315,18 @@ TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
     ASSERT_TRUE(repeatedBuffered);
     auto lateOverflow = bufferManager->getBufferBlocking();
     ASSERT_FALSE(lateSource->fillTupleBuffer(lateOverflow, stopSource.get_token()).isEoS());
-    EXPECT_EQ(lateOverflow.getAvailableMemoryArea<uint64_t>()[0], queueCapacity);
+    EXPECT_EQ(lateOverflow.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity);
 
     auto fastBuffered = bufferManager->getBufferBlocking();
     ASSERT_FALSE(fastSource->fillTupleBuffer(fastBuffered, stopSource.get_token()).isEoS());
-    EXPECT_EQ(fastBuffered.getAvailableMemoryArea<uint64_t>()[0], queueCapacity + 1);
+    EXPECT_EQ(fastBuffered.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity + 1);
 
     ASSERT_FALSE(slowSource->fillTupleBuffer(slowOutput, stopSource.get_token()).isEoS());
     sink->execute(*repeatedBuffered, pipeCtx);
 
     auto lateBuffered = bufferManager->getBufferBlocking();
     ASSERT_FALSE(lateSource->fillTupleBuffer(lateBuffered, stopSource.get_token()).isEoS());
-    EXPECT_EQ(lateBuffered.getAvailableMemoryArea<uint64_t>()[0], queueCapacity + 1);
+    EXPECT_EQ(lateBuffered.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity + 1);
     EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
 
     pressureWaiter.join();
@@ -433,7 +438,7 @@ TEST_F(PipeIntegrationTest, SourceStopsAtSequenceBoundary)
     sink->execute(buf2, pipeCtx);
 
     /// Request stop before reading — source should still deliver both chunks
-    std::stop_source stopSource;
+    const std::stop_source stopSource;
     stopSource.request_stop();
 
     auto out1 = bufferManager->getBufferBlocking();
@@ -457,28 +462,28 @@ TEST_F(PipeIntegrationTest, SourceStopsAtSequenceBoundary)
 
 TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
 {
-    static constexpr uint64_t numTuples = 100000;
-    static constexpr uint64_t tuplesPerChunk = 1;
-    static constexpr uint64_t chunksPerSeq = 8;
-    static constexpr uint64_t tuplesPerSequence = tuplesPerChunk * chunksPerSeq;
-    static constexpr int numLateJoiners = 4;
+    static constexpr uint64_t NumTuples = 100000;
+    static constexpr uint64_t TuplesPerChunk = 1;
+    static constexpr uint64_t ChunksPerSeq = 8;
+    static constexpr uint64_t TuplesPerSequence = TuplesPerChunk * ChunksPerSeq;
+    static constexpr int NumLateJoiners = 4;
 
     auto [bpController, bpListener] = createBackpressureChannel();
     auto sink = makePipeSink(std::move(bpController));
     sink->start(pipeCtx);
 
     /// Build values with intra-sequence OOO shuffling
-    std::vector<uint64_t> values(numTuples);
-    for (uint64_t idx = 0; idx < numTuples; ++idx)
+    std::vector<uint64_t> values(NumTuples);
+    for (uint64_t idx = 0; idx < NumTuples; ++idx)
     {
         values[idx] = idx;
     }
     {
         std::mt19937 rng(42);
-        for (uint64_t i = 0; i + tuplesPerSequence <= numTuples; i += tuplesPerSequence)
+        for (uint64_t i = 0; i + TuplesPerSequence <= NumTuples; i += TuplesPerSequence)
         {
             std::shuffle(
-                values.begin() + static_cast<std::ptrdiff_t>(i), values.begin() + static_cast<std::ptrdiff_t>(i + tuplesPerSequence), rng);
+                values.begin() + static_cast<std::ptrdiff_t>(i), values.begin() + static_cast<std::ptrdiff_t>(i + TuplesPerSequence), rng);
         }
     }
 
@@ -486,7 +491,7 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
     auto consumeFrom = [this](PipeSource& src) -> std::vector<uint64_t>
     {
         std::vector<uint64_t> received;
-        std::stop_source stopSrc;
+        const std::stop_source stopSrc;
         while (true)
         {
             auto buf = bufferManager->getBufferBlocking();
@@ -518,13 +523,13 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
             producerRunning.store(true);
             uint64_t produced = 0;
             size_t seqNumCounter = SequenceNumber::INITIAL;
-            while (produced < numTuples)
+            while (produced < NumTuples)
             {
-                for (uint64_t chunk = 0; chunk < chunksPerSeq && produced < numTuples; ++chunk)
+                for (uint64_t chunk = 0; chunk < ChunksPerSeq && produced < NumTuples; ++chunk)
                 {
                     auto buffer = bufferManager->getBufferBlocking();
                     auto mem = buffer.getAvailableMemoryArea<uint64_t>();
-                    uint64_t count = std::min(tuplesPerChunk, numTuples - produced);
+                    const uint64_t count = std::min(TuplesPerChunk, NumTuples - produced);
                     for (uint64_t idx = 0; idx < count; ++idx)
                     {
                         mem[idx * 2] = values[produced + idx];
@@ -533,7 +538,7 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
                     buffer.setNumberOfTuples(count);
                     buffer.setSequenceNumber(SequenceNumber(seqNumCounter));
                     buffer.setChunkNumber(ChunkNumber(chunk));
-                    buffer.setLastChunk(chunk == chunksPerSeq - 1 || produced + count >= numTuples);
+                    buffer.setLastChunk(chunk == ChunksPerSeq - 1 || produced + count >= NumTuples);
                     sink->execute(buffer, pipeCtx);
                     produced += count;
                 }
@@ -551,11 +556,11 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
         std::this_thread::yield();
     }
 
-    std::vector<std::vector<uint64_t>> lateResults(numLateJoiners);
+    std::vector<std::vector<uint64_t>> lateResults(NumLateJoiners);
     std::vector<std::thread> lateThreads;
-    lateThreads.reserve(numLateJoiners);
+    lateThreads.reserve(NumLateJoiners);
 
-    for (int i = 0; i < numLateJoiners; ++i)
+    for (int i = 0; i < NumLateJoiners; ++i)
     {
         lateThreads.emplace_back(
             [&, i]
@@ -588,22 +593,22 @@ TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
     {
         ASSERT_FALSE(data.empty()) << label << ": received no data";
         std::ranges::sort(data);
-        uint64_t minVal = data.front();
-        uint64_t maxVal = data.back();
+        const uint64_t minVal = data.front();
+        const uint64_t maxVal = data.back();
         ASSERT_EQ(data.size(), maxVal - minVal + 1) << label << ": expected contiguous range";
         uint64_t expectedSum = maxVal * (maxVal + 1) / 2;
         if (minVal > 0)
         {
             expectedSum -= (minVal - 1) * minVal / 2;
         }
-        uint64_t actualSum = std::accumulate(data.begin(), data.end(), uint64_t{0});
+        const uint64_t actualSum = std::accumulate(data.begin(), data.end(), uint64_t{0});
         EXPECT_EQ(actualSum, expectedSum) << label << ": Gauss sum mismatch";
     };
 
-    EXPECT_EQ(result1.size(), numTuples) << "Consumer 1 should receive all data";
+    EXPECT_EQ(result1.size(), NumTuples) << "Consumer 1 should receive all data";
     verifyNoGaps(result1, "Consumer1");
 
-    for (int i = 0; i < numLateJoiners; ++i)
+    for (int i = 0; i < NumLateJoiners; ++i)
     {
         if (!lateResults[i].empty())
         {

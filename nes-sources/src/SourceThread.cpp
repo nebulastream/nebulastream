@@ -36,6 +36,7 @@
 #include <ErrorHandling.hpp>
 #include <Thread.hpp>
 #include <scope_guard.hpp>
+#include "QueryId.hpp"
 
 namespace NES
 {

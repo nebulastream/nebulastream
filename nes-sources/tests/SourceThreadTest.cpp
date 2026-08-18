@@ -44,6 +44,7 @@
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
 #include <nameof.hpp>
+#include "QueryId.hpp"
 
 namespace NES
 {

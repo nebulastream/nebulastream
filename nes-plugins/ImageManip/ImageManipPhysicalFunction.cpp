@@ -12,33 +12,53 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <limits>
 #include <numbers>
-#include <numeric>
 #include <ranges>
 #include <span>
 #include <stdexcept>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <arv.h>
 #include <Functions/PhysicalFunction.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Ranges.hpp>
 #include <battery/embed.hpp>
-#include <netinet/in.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/utils/logger.defines.hpp>
+#include <opencv2/core/utility.hpp>
+#include <opencv2/core/persistence.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/base.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/utils/logger.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/objdetect.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include <openssl/evp.h>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include "DataTypes/VarVal.hpp"
+#include "Interface/Record.hpp"
+#include "Arena.hpp"
+#include <val_arith.hpp>
+#include "DataTypes/VariableSizedData.hpp"
+#include <function.hpp>
+#include <val_ptr.hpp>
+#include <val_bool.hpp>
 
 struct OpenCVConfig
 {
@@ -53,6 +73,7 @@ static OpenCVConfig opencvConfig;
 
 namespace NES
 {
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void registerImageManipLogicalFunctionUnreflectors();
 
 namespace
@@ -66,7 +87,7 @@ struct __attribute__((packed)) CalRangeDescriptor
     float minManualPaletteSpanDegreesC; ///< Min palette resolution for manual palette scaling mode
     float minAutoPaletteSpanDegreesC; ///< Min palette resolution for automatic palette scaling mode
     unsigned int numUInverseCurvesDescriptors;
-    float UInverse[11][5]; ///< NOLINT(modernize-avoid-c-arrays) - fixed on-disk calibration format
+    float uInverse[11][5]; ///< NOLINT(modernize-avoid-c-arrays) - fixed on-disk calibration format
 };
 
 struct __attribute__((packed)) CalRangesData
@@ -117,11 +138,11 @@ LookupTable buildLookupTable()
     // Second pass: populate lookup table
     for (unsigned segment = 0; segment < calRange->numUInverseCurvesDescriptors; segment++)
     {
-        float startTemp = calRange->UInverse[segment][3];
-        float endTemp = calRange->UInverse[segment][4];
-        float u0 = calRange->UInverse[segment][0];
-        float u1 = calRange->UInverse[segment][1];
-        float u2 = calRange->UInverse[segment][2];
+        float const startTemp = calRange->uInverse[segment][3];
+        float const endTemp = calRange->uInverse[segment][4];
+        float u0 = calRange->uInverse[segment][0];
+        float u1 = calRange->uInverse[segment][1];
+        float u2 = calRange->uInverse[segment][2];
 
         auto tempToPower = [&](float tempCelsius) -> uint16_t
         {
@@ -133,12 +154,12 @@ LookupTable buildLookupTable()
 
         auto powerToTemp = [&](uint16_t power) -> float
         {
-            float u1mulU1 = u1 * u1;
-            float u1Negative = -u1;
-            float u2mul2 = u2 * 2;
-            float u2mul4 = 4.0F * u2;
-            float U1mulU1_minus_U2mul4mulU0 = u1mulU1 - (u2mul4 * u0);
-            float temperatureValue = (u1Negative + sqrtf(U1mulU1_minus_U2mul4mulU0 + (u2mul4 * static_cast<float>(power)))) / u2mul2;
+            float const u1mulU1 = u1 * u1;
+            float const u1Negative = -u1;
+            float const u2mul2 = u2 * 2;
+            float const u2mul4 = 4.0F * u2;
+            float const u1mulU1MinusU2mul4mulU0 = u1mulU1 - (u2mul4 * u0);
+            float const temperatureValue = (u1Negative + sqrtf(u1mulU1MinusU2mul4mulU0 + (u2mul4 * static_cast<float>(power)))) / u2mul2;
             return temperatureValue;
         };
 
@@ -158,8 +179,8 @@ LookupTable buildLookupTable()
 
 const LookupTable& getLookupTable()
 {
-    static const LookupTable lookupTable = buildLookupTable();
-    return lookupTable;
+    static const LookupTable LookupTable = buildLookupTable();
+    return LookupTable;
 }
 
 float calculateTemperature(uint16_t power)
@@ -216,7 +237,7 @@ static constexpr int MFCC_COEFFICIENTS = 64;
 static constexpr uint32_t AUDIO_BYTES = AUDIO_SAMPLES * sizeof(float);
 static constexpr uint32_t MFCC_BYTES = AUDIO_FRAMES * MFCC_COEFFICIENTS * sizeof(float);
 
-constexpr uint64_t argmaxF32(std::span<const float> values)
+constexpr static uint64_t argmaxF32(std::span<const float> values)
 {
     uint64_t maximumIndex = 0;
     for (uint64_t index = 1; index < values.size(); ++index)
@@ -229,12 +250,12 @@ constexpr uint64_t argmaxF32(std::span<const float> values)
     return maximumIndex;
 }
 
-constexpr float maxF32(std::span<const float> values)
+constexpr static float maxF32(std::span<const float> values)
 {
     return values[argmaxF32(values)];
 }
 
-constexpr float maxAbsF32(std::span<const float> values)
+constexpr static float maxAbsF32(std::span<const float> values)
 {
     float maximum = 0;
     for (const float value : values)
@@ -254,7 +275,7 @@ static_assert(
     }());
 
 template <float (*Function)(std::span<const float>)>
-nautilus::val<float> reduceF32(const VariableSizedData& input)
+static nautilus::val<float> reduceF32(const VariableSizedData& input)
 {
     return nautilus::invoke(
         +[](const int8_t* data, const uint32_t size) -> float
@@ -269,7 +290,7 @@ nautilus::val<float> reduceF32(const VariableSizedData& input)
         input.getSize());
 }
 
-nautilus::val<uint64_t> argmaxF32(const VariableSizedData& input)
+static nautilus::val<uint64_t> argmaxF32(const VariableSizedData& input)
 {
     return nautilus::invoke(
         +[](const int8_t* data, const uint32_t size) -> uint64_t
@@ -285,7 +306,7 @@ nautilus::val<uint64_t> argmaxF32(const VariableSizedData& input)
 }
 
 /// Transforms one second of 16 kHz audio into a frame-major [101, 64] MFCC tensor.
-void audioToMFCC(const float* input, float* output)
+static void audioToMFCC(const float* input, float* output)
 {
     constexpr int frequencyBins = (AUDIO_FFT_SIZE / 2) + 1;
     constexpr int fftPadding = (AUDIO_FFT_SIZE - AUDIO_FRAME_SAMPLES) / 2;
@@ -295,7 +316,7 @@ void audioToMFCC(const float* input, float* output)
         throw std::invalid_argument("audioToMFCC requires non-null input and output pointers");
     }
 
-    static const cv::Mat hannWindow = []
+    static const cv::Mat HannWindow = []
     {
         cv::Mat window = cv::Mat::zeros(1, AUDIO_FFT_SIZE, CV_32F);
         for (int sample = 0; sample < AUDIO_FRAME_SAMPLES; ++sample)
@@ -306,7 +327,7 @@ void audioToMFCC(const float* input, float* output)
         return window;
     }();
 
-    static const cv::Mat melFilterbank = []
+    static const cv::Mat MelFilterbank = []
     {
         constexpr int melPoints = MFCC_COEFFICIENTS + 2;
         std::array<float, melPoints> frequencies{};
@@ -335,11 +356,11 @@ void audioToMFCC(const float* input, float* output)
     cv::Mat padded;
     cv::copyMakeBorder(samples, padded, 0, 0, AUDIO_FFT_SIZE / 2, AUDIO_FFT_SIZE / 2, cv::BORDER_REFLECT_101);
 
-    cv::Mat outputView(AUDIO_FRAMES, MFCC_COEFFICIENTS, CV_32F, output);
+    cv::Mat const outputView(AUDIO_FRAMES, MFCC_COEFFICIENTS, CV_32F, output);
     for (int frame = 0; frame < AUDIO_FRAMES; ++frame)
     {
         cv::Mat windowed;
-        cv::multiply(padded.colRange(frame * AUDIO_FRAME_STRIDE, (frame * AUDIO_FRAME_STRIDE) + AUDIO_FFT_SIZE), hannWindow, windowed);
+        cv::multiply(padded.colRange(frame * AUDIO_FRAME_STRIDE, (frame * AUDIO_FRAME_STRIDE) + AUDIO_FFT_SIZE), HannWindow, windowed);
 
         cv::Mat spectrum;
         cv::dft(windowed, spectrum, cv::DFT_COMPLEX_OUTPUT);
@@ -349,7 +370,7 @@ void audioToMFCC(const float* input, float* output)
         cv::extractChannel(powerSpectrum.colRange(0, frequencyBins), power, 0);
 
         cv::Mat logMel;
-        cv::gemm(power, melFilterbank, 1.0, cv::noArray(), 0.0, logMel);
+        cv::gemm(power, MelFilterbank, 1.0, cv::noArray(), 0.0, logMel);
         logMel += 1e-6F;
         cv::log(logMel, logMel);
 
@@ -359,7 +380,7 @@ void audioToMFCC(const float* input, float* output)
     }
 }
 
-VariableSizedData audioToMFCC(const VariableSizedData& input, ArenaRef& arena)
+static VariableSizedData audioToMFCC(const VariableSizedData& input, ArenaRef& arena)
 {
     auto output = arena.allocateVariableSizedData(MFCC_BYTES);
     nautilus::invoke(
@@ -384,7 +405,7 @@ VariableSizedData audioToMFCC(const VariableSizedData& input, ArenaRef& arena)
     return output;
 }
 
-VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
+static VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
 {
     auto length = input.getSize();
     const auto pl = 4 * ((length + 2) / 3);
@@ -412,7 +433,7 @@ VariableSizedData toBase64(const VariableSizedData& input, ArenaRef& arena)
     return output.withSize(pl);
 }
 
-VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
+static VariableSizedData fromBase64(const VariableSizedData& input, ArenaRef& arena)
 {
     const auto pl = 3 * input.getSize() / 4;
     auto output = arena.allocateVariableSizedData(pl);
@@ -448,24 +469,24 @@ struct YUYV
 {
 };
 
-void set_pixel_color(std::span<int8_t> image, uint32_t x, uint32_t y, std::array<uint8_t, 3> yuv)
+static void set_pixel_color(std::span<int8_t> image, uint32_t x, uint32_t y, std::array<uint8_t, 3> yuv)
 {
-    auto sane_x = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_WIDTH), x);
-    auto sane_y = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_HEIGHT), y);
-    auto pixel_index = (sane_y * DEFAULT_IMAGE_WIDTH + sane_x) * 2;
+    auto saneX = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_WIDTH), x);
+    auto saneY = std::min(static_cast<uint32_t>(DEFAULT_IMAGE_HEIGHT), y);
+    auto pixelIndex = (saneY * DEFAULT_IMAGE_WIDTH + saneX) * 2;
 
-    image[pixel_index] = yuv[0];
-    image[pixel_index + 1] = pixel_index % 2 == 0 ? yuv[1] : yuv[2];
+    image[pixelIndex] = yuv[0];
+    image[pixelIndex + 1] = pixelIndex % 2 == 0 ? yuv[1] : yuv[2];
 }
 
-nautilus::val<uint16_t> mono16MAX(const VariableSizedData& input)
+static nautilus::val<uint16_t> mono16MAX(const VariableSizedData& input)
 {
     nautilus::val<uint64_t> max = 0;
     auto pixels = input.getSize() / 2;
 
     for (nautilus::val<size_t> i = 0; i < pixels; ++i)
     {
-        nautilus::val<uint16_t> value = *static_cast<nautilus::val<uint16_t*>>(input.getContent() + (nautilus::val<size_t>(2) * i));
+        nautilus::val<uint16_t> const value = *static_cast<nautilus::val<uint16_t*>>(input.getContent() + (nautilus::val<size_t>(2) * i));
         if (value > max)
         {
             max = value;
@@ -474,7 +495,7 @@ nautilus::val<uint16_t> mono16MAX(const VariableSizedData& input)
     return max;
 }
 
-nautilus::val<uint16_t> mono16MIN(const VariableSizedData& input)
+static nautilus::val<uint16_t> mono16MIN(const VariableSizedData& input)
 {
     nautilus::val<uint64_t> min = std::numeric_limits<uint16_t>::max();
     auto pixels = input.getSize() / 2;
@@ -490,7 +511,7 @@ nautilus::val<uint16_t> mono16MIN(const VariableSizedData& input)
     return min;
 }
 
-nautilus::val<uint16_t> mono16AVG(const VariableSizedData& input)
+static nautilus::val<uint16_t> mono16AVG(const VariableSizedData& input)
 {
     nautilus::val<uint64_t> sum = 0;
     auto pixels = input.getSize() / 2;
@@ -502,13 +523,13 @@ nautilus::val<uint16_t> mono16AVG(const VariableSizedData& input)
 
     for (nautilus::val<size_t> i = 0; i < pixels; ++i)
     {
-        nautilus::val<uint16_t> value = *static_cast<nautilus::val<uint16_t*>>(input.getContent() + (nautilus::val<size_t>(2) * i));
+        nautilus::val<uint16_t> const value = *static_cast<nautilus::val<uint16_t*>>(input.getContent() + (nautilus::val<size_t>(2) * i));
         sum = sum + value;
     }
     return sum / pixels;
 }
 
-nautilus::val<float> mono16ToCelsius(nautilus::val<uint16_t> power)
+static nautilus::val<float> mono16ToCelsius(const nautilus::val<uint16_t>& power)
 {
     return nautilus::invoke(+[](uint16_t power) { return calculateTemperature(power); }, power);
 }
@@ -532,7 +553,7 @@ struct Rectangle
 
 static_assert(sizeof(Rectangle::Unpacked) == sizeof(uint64_t));
 
-VariableSizedData mono16ROI(
+static VariableSizedData mono16ROI(
     const VariableSizedData& input,
     const nautilus::val<uint32_t>& width,
     const nautilus::val<uint32_t>& height,
@@ -546,9 +567,9 @@ VariableSizedData mono16ROI(
         +[](int8_t* input, uint32_t inputWidth, uint32_t inputHeight, uint64_t rectangle, int8_t* destination)
         {
             const auto [x, y, width, height] = Rectangle(rectangle).unpacked;
-            cv::Mat inputImg(inputHeight, inputWidth, CV_16UC1, input);
+            cv::Mat const inputImg(inputHeight, inputWidth, CV_16UC1, input);
             cv::Mat roiImg(height, width, CV_16UC1, destination);
-            cv::Rect roiRect(x, y, width, height);
+            cv::Rect const roiRect(x, y, width, height);
             inputImg(roiRect).copyTo(roiImg);
         },
         input.getContent(),
@@ -560,16 +581,16 @@ VariableSizedData mono16ROI(
     return roi;
 }
 
-VariableSizedData drawRectangle(const VariableSizedData& input, const nautilus::val<uint64_t>& rectangle, ArenaRef& arena)
+static VariableSizedData drawRectangle(const VariableSizedData& input, const nautilus::val<uint64_t>& rectangle, ArenaRef& arena)
 {
     VariableSizedData imageWithRectangle = arena.allocateVariableSizedData(input.getSize());
 
     nautilus::invoke(
-        +[](uint32_t input_length, int8_t* data, uint64 rectangle, int8_t* destination)
+        +[](uint32_t inputLength, int8_t* data, uint64 rectangle, int8_t* destination)
         {
             const auto [x, y, width, height] = Rectangle(rectangle).unpacked;
-            auto input = std::span{data, input_length};
-            auto image = std::span{destination, input_length};
+            auto input = std::span{data, inputLength};
+            auto image = std::span{destination, inputLength};
             std::ranges::copy(input, image.data());
 
             /// Upper and Lower
@@ -602,9 +623,9 @@ VariableSizedData drawRectangle(const VariableSizedData& input, const nautilus::
 
 const static std::vector JPEG_COMPRESSION_PARAMETER = {cv::IMWRITE_JPEG_QUALITY, 90};
 
-thread_local std::vector<uint8_t> jpegBuffer;
+thread_local static std::vector<uint8_t> jpegBuffer;
 
-VariableSizedData
+static VariableSizedData
 yuyvToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
@@ -643,7 +664,7 @@ yuyvToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, co
     return jpgVarsizedBuffer;
 }
 
-VariableSizedData
+static VariableSizedData
 jpgToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto yuyvVarsized = arena.allocateVariableSizedData(width * height * 2);
@@ -653,7 +674,7 @@ jpgToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, co
             const cv::Mat input(1, inputSize, CV_8UC1, inputData);
             cv::Mat output(height, width, CV_8UC2, dest);
             // Decode JPEG to BGR (temporary Mat)
-            cv::Mat bgr = cv::imdecode(input, cv::IMREAD_COLOR);
+            cv::Mat const bgr = cv::imdecode(input, cv::IMREAD_COLOR);
             // Convert BGR to YUYV into your buffer
             cv::cvtColor(bgr, output, cv::COLOR_BGR2YUV_YUYV);
         },
@@ -666,7 +687,7 @@ jpgToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, co
     return yuyvVarsized;
 }
 
-VariableSizedData
+static VariableSizedData
 png16ToMono16(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto mono16Varsized = arena.allocateVariableSizedData(width * height * 2);
@@ -686,17 +707,17 @@ png16ToMono16(const VariableSizedData& input, const nautilus::val<uint64>& width
     return mono16Varsized;
 }
 
-thread_local std::vector<uint8_t> pngBuffer;
-thread_local std::vector<uint8_t> mono16ToJpegBuffer;
+thread_local static std::vector<uint8_t> pngBuffer;
+thread_local static std::vector<uint8_t> mono16ToJpegBuffer;
 
-void applyMono16ColorMap(const cv::Mat& input, cv::Mat& color)
+static void applyMono16ColorMap(const cv::Mat& input, cv::Mat& color)
 {
     cv::Mat mono8;
     cv::normalize(input, mono8, 0, 255, cv::NORM_MINMAX, CV_8U);
     cv::applyColorMap(mono8, color, cv::COLORMAP_INFERNO);
 }
 
-VariableSizedData
+static VariableSizedData
 mono16ToPNG16(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
@@ -726,7 +747,7 @@ mono16ToPNG16(const VariableSizedData& input, const nautilus::val<uint64>& width
     return pngVarsizedBuffer;
 }
 
-VariableSizedData
+static VariableSizedData
 mono16ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
@@ -757,7 +778,7 @@ mono16ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, 
     return jpgVarsizedBuffer;
 }
 
-VariableSizedData
+static VariableSizedData
 mono16ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto yuyvBuffer = arena.allocateVariableSizedData(width * height * 2);
@@ -790,7 +811,7 @@ mono16ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width,
     return yuyvBuffer;
 }
 
-VariableSizedData mono16ToMono8(
+static VariableSizedData mono16ToMono8(
     const VariableSizedData& input,
     const nautilus::val<uint64>& width,
     const nautilus::val<uint64>& height,
@@ -828,7 +849,7 @@ VariableSizedData mono16ToMono8(
             }
             auto max = std::max(mmin, mmax);
             auto min = std::min(mmin, mmax);
-            std::span mono16Bytes(std::bit_cast<uint16_t*>(inputData), inputLength / 2);
+            std::span const mono16Bytes(std::bit_cast<uint16_t*>(inputData), inputLength / 2);
 
             auto mono8Bytes = mono16Bytes
                 | std::views::transform(
@@ -854,24 +875,24 @@ VariableSizedData mono16ToMono8(
     return mono8VarSized;
 }
 
-thread_local std::vector<uint8_t> monoToJpegBuffer;
+thread_local static std::vector<uint8_t> monoToJpegBuffer;
 
-VariableSizedData
+static VariableSizedData
 mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto imageSize = nautilus::invoke(
-        +[](uint32_t input_length, int8_t* data, uint64_t width, uint64_t height)
+        +[](uint32_t inputLength, int8_t* data, uint64_t width, uint64_t height)
         {
-            if (const auto expectedSize = width * height; input_length != expectedSize)
+            if (const auto expectedSize = width * height; inputLength != expectedSize)
             {
                 throw InferenceRuntimeFailure(
-                    "Mono8-to-JPEG expected a {}x{} image with {} bytes, but received {} bytes", width, height, expectedSize, input_length);
+                    "Mono8-to-JPEG expected a {}x{} image with {} bytes, but received {} bytes", width, height, expectedSize, inputLength);
             }
-            cv::Mat gray_input(height, width, CV_8UC1, data);
+            cv::Mat const grayInput(height, width, CV_8UC1, data);
 
-            cv::Mat img_color;
-            cv::applyColorMap(gray_input, img_color, cv::COLORMAP_INFERNO);
-            cv::imencode(".jpg", img_color, monoToJpegBuffer, JPEG_COMPRESSION_PARAMETER);
+            cv::Mat imgColor;
+            cv::applyColorMap(grayInput, imgColor, cv::COLORMAP_INFERNO);
+            cv::imencode(".jpg", imgColor, monoToJpegBuffer, JPEG_COMPRESSION_PARAMETER);
             return monoToJpegBuffer.size();
         },
         input.getSize(),
@@ -888,7 +909,7 @@ mono8ToJPG(const VariableSizedData& input, const nautilus::val<uint64>& width, c
     return jpgVarsizedBuffer;
 }
 
-VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
+static VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_t>& width, const nautilus::val<uint64_t>& height, ArenaRef&)
 {
     auto result = nautilus::invoke(
         +[](uint8_t* data, uint32_t size, uint64_t width, uint64_t height)
@@ -900,9 +921,9 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
                     "Face detection expected a {}x{} YUYV image with {} bytes, but received {} bytes", width, height, expectedSize, size);
             }
             const cv::Mat input(height, width, CV_8UC2, data);
-            thread_local cv::Mat gray;
-            thread_local cv::Mat scaledGray;
-            thread_local std::vector<cv::Rect> faces;
+            thread_local static cv::Mat gray;
+            thread_local static cv::Mat scaledGray;
+            thread_local static std::vector<cv::Rect> faces;
             cv::cvtColor(input, gray, cv::COLOR_YUV2GRAY_YUYV);
             cv::resize(gray, scaledGray, {}, 0.5, 0.5, cv::INTER_AREA);
             faces.clear();
@@ -937,40 +958,40 @@ VarVal faceDetection(const VariableSizedData& input, const nautilus::val<uint64_
     return {result, true, nautilus::val<bool>(false)};
 }
 
-thread_local std::vector<uint8_t> monoToBGR;
+thread_local static std::vector<uint8_t> monoToBGR;
 
-VariableSizedData
+static VariableSizedData
 mono8ToYUYV(const VariableSizedData& input, const nautilus::val<uint64>& width, const nautilus::val<uint64>& height, ArenaRef& arena)
 {
     auto yuyvBuffer = arena.allocateVariableSizedData(width * height * 2);
     nautilus::invoke(
-        +[](uint32_t input_length, int8_t* data, uint64_t width, uint64_t height, uint32_t output_length, int8_t* output)
+        +[](uint32_t inputLength, int8_t* data, uint64_t width, uint64_t height, uint32_t outputLength, int8_t* output)
         {
-            if (const auto expectedInputLength = width * height; input_length != expectedInputLength)
+            if (const auto expectedInputLength = width * height; inputLength != expectedInputLength)
             {
                 throw InferenceRuntimeFailure(
                     "Mono8-to-YUYV expected a {}x{} input with {} bytes, but received {} bytes",
                     width,
                     height,
                     expectedInputLength,
-                    input_length);
+                    inputLength);
             }
-            if (const auto expectedOutputLength = width * height * 2; output_length != expectedOutputLength)
+            if (const auto expectedOutputLength = width * height * 2; outputLength != expectedOutputLength)
             {
                 throw InferenceRuntimeFailure(
                     "Mono8-to-YUYV expected a {}-byte output buffer for a {}x{} image, but received {} bytes",
                     expectedOutputLength,
                     width,
                     height,
-                    output_length);
+                    outputLength);
             }
-            cv::Mat gray_input(height, width, CV_8UC1, data);
+            cv::Mat const grayInput(height, width, CV_8UC1, data);
             monoToBGR.resize(height * width * 3);
-            cv::Mat img_color(height, width, CV_8UC3, monoToBGR.data());
-            cv::Mat output_mat(height, width, CV_8UC2, output);
+            cv::Mat imgColor(height, width, CV_8UC3, monoToBGR.data());
+            cv::Mat outputMat(height, width, CV_8UC2, output);
 
-            cv::applyColorMap(gray_input, img_color, cv::COLORMAP_INFERNO);
-            cv::cvtColor(img_color, output_mat, cv::COLOR_BGR2YUV_YUYV);
+            cv::applyColorMap(grayInput, imgColor, cv::COLORMAP_INFERNO);
+            cv::cvtColor(imgColor, outputMat, cv::COLOR_BGR2YUV_YUYV);
         },
         input.getSize(),
         input.getContent(),

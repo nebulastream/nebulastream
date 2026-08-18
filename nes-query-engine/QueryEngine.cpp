@@ -644,7 +644,8 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
                 if (!successor->requiresTermination)
                 {
                     ENGINE_LOG_WARNING(
-                        "Dropping tuple buffer emitted while stopping pipeline {}-{} because successor pipeline {} has not completed startup",
+                        "Dropping tuple buffer emitted while stopping pipeline {}-{} because successor pipeline {} has not completed "
+                        "startup",
                         stopPipelineTask.queryId,
                         stopPipelineTask.pipeline->id,
                         successor->id);
@@ -760,54 +761,55 @@ __itt_string_handle* taskLabel(const Task& task)
         Overloaded{
             [](const WorkTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Work");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Work");
+                return Label;
             },
             [](const StopQueryTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Stop query");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Stop query");
+                return Label;
             },
             [](const StartQueryTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Start query");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Start query");
+                return Label;
             },
             [](const FailSourceTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Fail source");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Fail source");
+                return Label;
             },
             [](const StopSourceTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Stop source");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Stop source");
+                return Label;
             },
             [](const PendingPipelineStopTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Pending pipeline stop");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Pending pipeline stop");
+                return Label;
             },
             [](const StopPipelineTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Stop pipeline");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Stop pipeline");
+                return Label;
             },
             [](const StartPipelineTask&)
             {
-                static __itt_string_handle* const label = __itt_string_handle_create("Start pipeline");
-                return label;
+                static __itt_string_handle* const Label = __itt_string_handle_create("Start pipeline");
+                return Label;
             },
         },
         task);
 }
 
+///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
 void addTaskMetadata(const QueryId& queryId, const uint64_t pipelineId = PipelineId::INVALID)
 {
-    static __itt_string_handle* const taskMetadata = __itt_string_handle_create("Local query:%s, Distributed query:%s, Pipeline:%llu");
+    static __itt_string_handle* const TaskMetadata = __itt_string_handle_create("Local query:%s, Distributed query:%s, Pipeline:%llu");
     const auto localQueryId = queryId.getLocalQueryId().getRawValue();
     const auto distributedQueryId = queryId.getDistributedQueryId().getRawValue();
-    __itt_formatted_metadata_add(taskExecutionDomain, taskMetadata, localQueryId.c_str(), distributedQueryId.c_str(), pipelineId);
+    __itt_formatted_metadata_add(taskExecutionDomain, TaskMetadata, localQueryId.c_str(), distributedQueryId.c_str(), pipelineId);
 }
 
 void addTaskMetadata(const Task& task)

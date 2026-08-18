@@ -40,6 +40,8 @@
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
+#include "BackpressureChannel.hpp"
+#include "QueryId.hpp"
 
 namespace
 {

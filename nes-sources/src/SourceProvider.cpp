@@ -24,6 +24,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include "QueryId.hpp"
 
 namespace NES
 {

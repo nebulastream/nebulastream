@@ -27,6 +27,7 @@
 #include <Schema/Field.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
 
 namespace NES
 {

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstddef>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -31,6 +33,8 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <LogicalFunctionUnreflectionRegistry.hpp>
+#include "DataTypes/SchemaFwd.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -202,6 +206,7 @@ const auto imageManipUnreflectionRegistration = []
     return true;
 }();
 
+///NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void registerImageManipLogicalFunctionUnreflectors()
 {
     static_cast<void>(imageManipUnreflectionRegistration);

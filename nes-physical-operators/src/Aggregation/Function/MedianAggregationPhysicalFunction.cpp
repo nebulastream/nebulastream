@@ -41,6 +41,8 @@
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {

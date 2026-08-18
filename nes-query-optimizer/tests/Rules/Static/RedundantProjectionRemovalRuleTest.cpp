@@ -18,13 +18,16 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <gtest/gtest.h>
 
 #include <BaseUnitTest.hpp>
 #include <OptimizerTestUtils.hpp>
+#include "Util/Logger/impl/NesLogger.hpp"
+#include "Util/Logger/LogLevel.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Functions/LogicalFunction.hpp"
 
 namespace NES
 {

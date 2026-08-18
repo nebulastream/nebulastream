@@ -26,6 +26,8 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
+#include "PhysicalOperator.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {

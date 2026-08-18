@@ -38,10 +38,11 @@
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
+#include "Interface/TimestampRef.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {

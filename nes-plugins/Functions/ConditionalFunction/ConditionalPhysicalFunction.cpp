@@ -25,6 +25,7 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <static.hpp>
 #include <val_bool.hpp>
 
 namespace NES

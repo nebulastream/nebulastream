@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <stop_token>
@@ -26,6 +27,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
@@ -239,7 +241,7 @@ TEST_F(PipeServiceTest, BackpressureReappliedOnLastConsumerRemoval)
 
     std::atomic<bool> stillOpen{false};
     auto checker = std::jthread(
-        [&](std::stop_token stopToken)
+        [&](const std::stop_token& stopToken)
         {
             bpListener.wait(stopToken);
             if (!stopToken.stop_requested())
@@ -257,7 +259,7 @@ TEST_F(PipeServiceTest, BackpressureReappliedOnLastConsumerRemoval)
 
     std::atomic<bool> blocked{true};
     auto checker2 = std::jthread(
-        [&](std::stop_token stopToken)
+        [&](const std::stop_token& stopToken)
         {
             bpListener.wait(stopToken);
             if (!stopToken.stop_requested())

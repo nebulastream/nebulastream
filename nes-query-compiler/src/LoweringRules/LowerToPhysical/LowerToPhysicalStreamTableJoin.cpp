@@ -16,6 +16,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <unordered_map>
 #include <utility>
@@ -40,6 +41,10 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "WindowTypes/Measures/TimeCharacteristic.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 namespace NES
 {

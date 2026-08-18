@@ -26,6 +26,11 @@
 #include <Interface/Record.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
+#include <val_bool.hpp>
+#include "Interface/RecordBuffer.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {
@@ -72,7 +77,9 @@ public:
         std::shared_ptr<PagedVectorTupleLayout> tableTupleLayout,
         OriginId outputOriginId,
         std::optional<Record::RecordFieldIdentifier> markField,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::unique_ptr<TimeFunction> streamTimeFunction = nullptr,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
         std::unique_ptr<TimeFunction> tableTimeFunction = nullptr);
 
     StreamTableJoinPhysicalOperator(const StreamTableJoinPhysicalOperator& other);

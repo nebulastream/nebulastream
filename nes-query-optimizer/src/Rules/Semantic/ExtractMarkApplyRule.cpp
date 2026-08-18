@@ -14,6 +14,7 @@
 
 #include <Rules/Semantic/ExtractMarkApplyRule.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <ranges>
 #include <set>
@@ -38,6 +39,9 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -188,17 +192,17 @@ std::string_view ExtractMarkApplyRule::getName()
     return NAME;
 }
 
-std::set<std::type_index> ExtractMarkApplyRule::needs() const
+std::set<std::type_index> ExtractMarkApplyRule::needs() 
 {
     return {};
 }
 
-std::set<std::type_index> ExtractMarkApplyRule::neededBy() const
+std::set<std::type_index> ExtractMarkApplyRule::neededBy() 
 {
     return {typeid(LogicalSourceExpansionRule)};
 }
 
-LogicalPlan ExtractMarkApplyRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan ExtractMarkApplyRule::apply(const LogicalPlan& queryPlan) 
 {
     return queryPlan.withRootOperators(
         queryPlan.getRootOperators()
@@ -211,7 +215,7 @@ bool ExtractMarkApplyRule::operator==(const ExtractMarkApplyRule&) const
     return true;
 }
 
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterExtractMarkApplyPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterExtractMarkApplyPlanRule(const PlanRuleRegistryArguments&)
 {
     return ExtractMarkApplyRule{};
 }

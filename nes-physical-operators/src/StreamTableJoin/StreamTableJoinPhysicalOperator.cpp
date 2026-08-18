@@ -28,9 +28,21 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <StreamTableJoin/StreamTableJoinOperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
+#include "Interface/Record.hpp"
+#include "PhysicalOperator.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Interface/BufferRef/TupleBufferRef.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Watermark/TimeFunction.hpp"
+#include "DataTypes/Schema.hpp"
+#include "ErrorHandling.hpp"
+#include "Interface/NESStrongTypeRef.hpp"
+#include <val_arith.hpp>
+#include "Interface/TimestampRef.hpp"
+#include <val_bool.hpp>
+#include <static.hpp>
 
 namespace NES
 {

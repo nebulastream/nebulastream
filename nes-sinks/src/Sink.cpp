@@ -14,12 +14,13 @@
 
 #include <Sinks/Sink.hpp>
 
-#include <optional>
 #include <ostream>
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include "BackpressureChannel.hpp"
+#include "PipelineExecutionContext.hpp"
 
 namespace NES
 {

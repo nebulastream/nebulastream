@@ -14,10 +14,11 @@
 
 #include <PipeService.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <variant>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
@@ -74,7 +75,7 @@ bool PipeService::SinkHandle::setConsumerQueueFull(bool full)
 
 bool PipeService::SinkHandle::updateBackpressure(const Queues& queues) const
 {
-    if (!bpController)
+    if (bpController == nullptr)
     {
         return false;
     }

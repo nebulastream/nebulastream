@@ -16,6 +16,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <unordered_map>
 #include <utility>
@@ -43,6 +44,11 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Interface/Record.hpp"
+#include "WindowTypes/Measures/TimeCharacteristic.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 namespace NES
 {
@@ -156,7 +162,7 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
-    const auto makeJoinWrapper = [&](auto physicalJoin)
+    const auto makeJoinWrapper = [&](const auto& physicalJoin)
     {
         return std::make_shared<PhysicalOperatorWrapper>(
             std::move(physicalJoin),

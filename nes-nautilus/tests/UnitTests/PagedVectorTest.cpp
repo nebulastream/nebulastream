@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -829,8 +830,12 @@ void sortWithRecordComparator(
 
     module.registerFunction(
         "sortPagedVectorRecords",
-        std::function([layout, comparator](nautilus::val<TupleBuffer*> buffer, nautilus::val<Arena*> arenaPtr)
-                      { PagedVectorRef{BorrowedNautilusBuffer::from(buffer), layout}.sort(comparator, ArenaRef{arenaPtr}); }));
+        std::function([layout, comparator](
+                          /// NOLINTBEGIN(performance-unnecessary-value-param)
+                          nautilus::val<TupleBuffer*> buffer,
+                          nautilus::val<Arena*> arenaPtr
+                          /// NOLINTEND(performance-unnecessary-value-param)
+                      ) { PagedVectorRef{BorrowedNautilusBuffer::from(buffer), layout}.sort(comparator, ArenaRef{arenaPtr}); }));
     auto compiledModule = module.compile();
     compilationContext.resolveAfterCompilation(compiledModule);
     compiledModule.getFunction<void(TupleBuffer*, Arena*)>("sortPagedVectorRecords")(pagedVector.rawBuffer(), &arena);
@@ -875,16 +880,16 @@ void sortByRandomKeysProperty(TestUtils::EngineMode mode)
 
 void oversizedVarSizedValueRoundTrip(TestUtils::EngineMode mode)
 {
-    constexpr size_t POOLED_BUFFER_SIZE = 4096;
-    constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
+    constexpr size_t pooledBufferSize = 4096;
+    constexpr size_t payloadSize = 2ULL * 1024 * 1024;
     /// The chunked unpooled-buffer manager reserves several rolling-average-sized allocations at once.
     /// Leave enough budget for that chunk when the first large payload is requested.
-    constexpr size_t POOLED_BUFFER_COUNT = 512;
-    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, POOLED_BUFFER_COUNT);
+    constexpr size_t pooledBufferCount = 512;
+    auto bufferManager = DirtyBufferProvider::create(pooledBufferSize, pooledBufferCount);
     TestUtils::TestablePagedVector pagedVector(
         {DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}, *bufferManager, mode);
 
-    const std::string payload(PAYLOAD_SIZE, 'x');
+    const std::string payload(payloadSize, 'x');
     pagedVector.pushBack(TestUtils::AnyVec{payload});
 
     ASSERT_EQ(std::any_cast<const std::string&>(pagedVector.readAt(0).at(0)), payload);
@@ -892,12 +897,12 @@ void oversizedVarSizedValueRoundTrip(TestUtils::EngineMode mode)
 
 void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
 {
-    constexpr size_t POOLED_BUFFER_SIZE = 4096;
-    constexpr size_t PAYLOAD_SIZE = 2ULL * 1024 * 1024;
+    constexpr size_t pooledBufferSize = 4096;
+    constexpr size_t payloadSize = 2ULL * 1024 * 1024;
     /// The chunked unpooled-buffer manager reserves several rolling-average-sized allocations at once.
     /// Leave enough budget for that chunk when the first large payload is requested.
-    constexpr size_t POOLED_BUFFER_COUNT = 512;
-    auto bufferManager = DirtyBufferProvider::create(POOLED_BUFFER_SIZE, POOLED_BUFFER_COUNT);
+    constexpr size_t pooledBufferCount = 512;
+    auto bufferManager = DirtyBufferProvider::create(pooledBufferSize, pooledBufferCount);
     const auto schema = TestUtils::createSchemaFromDataTypes({DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}});
     auto layout = std::make_shared<DefaultPagedVectorTupleLayout>(schema);
     const auto fieldName = schema[0]->getFullyQualifiedName();
@@ -905,17 +910,23 @@ void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
     TupleBuffer pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getMainBufferSize()).value();
     PagedVector::init(pagedVectorBuffer, bufferManager->getBufferSize(), layout->getSchema().getSizeInBytes());
 
-    nautilus::engine::NautilusEngine engine{TestUtils::makeEngine(mode)};
-    auto pushArenaValue = engine.registerFunction(std::function(
-        [layout,
-         fieldName](nautilus::val<TupleBuffer*> pagedVector, nautilus::val<AbstractBufferProvider*> provider, nautilus::val<Arena*> arena)
-        {
-            auto value = ArenaRef{arena}.allocateVariableSizedData(PAYLOAD_SIZE);
-            nautilus::invoke(+[](int8_t* data) { std::memset(data, 'x', PAYLOAD_SIZE); }, value.getContent());
-            Record record;
-            record.write(fieldName, VarVal{value});
-            PagedVectorRef{BorrowedNautilusBuffer::from(pagedVector), layout}.pushBack(record, provider);
-        }));
+    const nautilus::engine::NautilusEngine engine{TestUtils::makeEngine(mode)};
+    auto pushArenaValue = engine.registerFunction(
+        std::function(
+            [layout, fieldName](
+                /// NOLINTBEGIN(performance-unnecessary-value-param)
+                nautilus::val<TupleBuffer*> pagedVector,
+                nautilus::val<AbstractBufferProvider*> provider,
+                nautilus::val<Arena*> arena
+                /// NOLINTEND(performance-unnecessary-value-param)
+            )
+            {
+                auto value = ArenaRef{arena}.allocateVariableSizedData(payloadSize);
+                nautilus::invoke(+[](int8_t* data) { std::memset(data, 'x', payloadSize); }, value.getContent());
+                Record record;
+                record.write(fieldName, VarVal{value});
+                PagedVectorRef{BorrowedNautilusBuffer::from(pagedVector), layout}.pushBack(record, provider);
+            }));
 
     const std::byte* sourceAddress = nullptr;
     {
@@ -934,7 +945,7 @@ void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
     auto valueBuffer = page.loadChildBuffer(ChildBufferIndex{0});
     EXPECT_EQ(valueBuffer.getAvailableMemoryArea().data(), sourceAddress);
     EXPECT_EQ(valueBuffer.getAvailableMemoryArea().front(), std::byte{'x'});
-    EXPECT_EQ(valueBuffer.getAvailableMemoryArea()[PAYLOAD_SIZE - 1], std::byte{'x'});
+    EXPECT_EQ(valueBuffer.getAvailableMemoryArea()[payloadSize - 1], std::byte{'x'});
 }
 } /// anonymous namespace
 

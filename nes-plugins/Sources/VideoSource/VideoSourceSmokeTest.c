@@ -4,15 +4,18 @@
 */
 
 #include <arv.h>
+#include <glib.h>
+#include <glibconfig.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <glib-object.h>
 
 static volatile sig_atomic_t stop_requested;
 
-static void request_stop(int signal_number)
+static void request_stop(int signalNumber)
 {
-    (void)signal_number;
+    (void)signalNumber;
     stop_requested = 1;
 }
 
@@ -131,10 +134,10 @@ static void dump_boolean(ArvDevice* device, const char* feature)
 
 static void dump_stream_configuration(ArvDevice* device, const char* phase)
 {
-    static const char* const strings[] = {"DeviceVendorName", "DeviceModelName", "DeviceID"};
-    static const char* const enumerations[]
+    static const char* const Strings[] = {"DeviceVendorName", "DeviceModelName", "DeviceID"};
+    static const char* const Enumerations[]
         = {"FLK_TI_StreamDataSourceSelector", "PixelFormat", "TransmitAs", "ImageCompressionMode", "AcquisitionMode"};
-    static const char* const integers[]
+    static const char* const Integers[]
         = {"DeviceStreamChannelCount",
            "FLK_TI_Info_VLDataSize",
            "FLK_TI_Info_REDataSize",
@@ -146,25 +149,25 @@ static void dump_stream_configuration(ArvDevice* device, const char* phase)
            "PayloadSize",
            "GevSCPSPacketSize",
            "GevSCPD"};
-    static const char* const booleans[]
+    static const char* const Booleans[]
         = {"FLK_TI_Info_VLDataProviderAvailable", "FLK_TI_Info_REDataProviderAvailable", "FLK_TI_Info_SecuredDataStreamingOnly"};
 
     printf("Camera configuration %s:\n", phase);
-    for (size_t index = 0; index < G_N_ELEMENTS(strings); ++index)
+    for (size_t index = 0; index < G_N_ELEMENTS(Strings); ++index)
     {
-        dump_string(device, strings[index]);
+        dump_string(device, Strings[index]);
     }
-    for (size_t index = 0; index < G_N_ELEMENTS(enumerations); ++index)
+    for (size_t index = 0; index < G_N_ELEMENTS(Enumerations); ++index)
     {
-        dump_enumeration(device, enumerations[index]);
+        dump_enumeration(device, Enumerations[index]);
     }
-    for (size_t index = 0; index < G_N_ELEMENTS(integers); ++index)
+    for (size_t index = 0; index < G_N_ELEMENTS(Integers); ++index)
     {
-        dump_integer(device, integers[index]);
+        dump_integer(device, Integers[index]);
     }
-    for (size_t index = 0; index < G_N_ELEMENTS(booleans); ++index)
+    for (size_t index = 0; index < G_N_ELEMENTS(Booleans); ++index)
     {
-        dump_boolean(device, booleans[index]);
+        dump_boolean(device, Booleans[index]);
     }
 }
 
@@ -173,7 +176,7 @@ int main(void)
     GError* error = NULL;
     ArvDevice* device = NULL;
     ArvStream* stream = NULL;
-    gint64 payload_size = 0;
+    gint64 payloadSize = 0;
     guint64 processed = 0;
     guint64 failures = 0;
     guint64 underruns = 0;
@@ -220,7 +223,7 @@ int main(void)
     }
 
     dump_stream_configuration(device, "before acquisition");
-    payload_size = arv_device_get_integer_feature_value(device, "PayloadSize", &error);
+    payloadSize = arv_device_get_integer_feature_value(device, "PayloadSize", &error);
     if (fail_if_error("reading camera payload size", &error))
     {
         g_object_unref(stream);
@@ -230,7 +233,7 @@ int main(void)
 
     for (unsigned int index = 0; index < 30; ++index)
     {
-        arv_stream_push_buffer(stream, arv_buffer_new(payload_size, NULL));
+        arv_stream_push_buffer(stream, arv_buffer_new(payloadSize, NULL));
     }
 
     arv_device_execute_command(device, "AcquisitionStart", &error);
@@ -241,7 +244,7 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    printf("Receiving frames (payload %" G_GINT64_FORMAT " bytes); press Ctrl-C to stop.\n", payload_size);
+    printf("Receiving frames (payload %" G_GINT64_FORMAT " bytes); press Ctrl-C to stop.\n", payloadSize);
     if (signal(SIGINT, request_stop) == SIG_ERR)
     {
         g_object_unref(stream);
@@ -257,13 +260,13 @@ int main(void)
         {
             if (arv_buffer_get_status(buffer) == ARV_BUFFER_STATUS_SUCCESS)
             {
-                size_t image_size = 0;
-                (void)arv_buffer_get_data(buffer, &image_size);
+                size_t imageSize = 0;
+                (void)arv_buffer_get_data(buffer, &imageSize);
                 printf(
                     "frame: %ux%u, %zu bytes, pixel format 0x%08x, timestamp %" G_GUINT64_FORMAT "\n",
                     arv_buffer_get_image_width(buffer),
                     arv_buffer_get_image_height(buffer),
-                    image_size,
+                    imageSize,
                     arv_buffer_get_image_pixel_format(buffer),
                     arv_buffer_get_timestamp(buffer));
             }

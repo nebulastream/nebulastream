@@ -37,6 +37,7 @@
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 #include <QueryId.hpp>
+#include "BackpressureChannel.hpp"
 
 namespace NES
 {

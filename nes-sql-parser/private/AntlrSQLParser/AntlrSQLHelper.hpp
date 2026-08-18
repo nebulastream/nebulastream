@@ -34,6 +34,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <CommonParserFunctions.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
 
 namespace NES::Parsers
 {

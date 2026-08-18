@@ -15,6 +15,7 @@
 #include <FileSource.hpp>
 
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <format>

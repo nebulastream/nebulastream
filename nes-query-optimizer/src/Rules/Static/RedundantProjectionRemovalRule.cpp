@@ -15,7 +15,6 @@
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 
 #include <algorithm>
-#include <memory>
 #include <ranges>
 #include <set>
 #include <string_view>
@@ -26,7 +25,6 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
-#include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -40,6 +38,7 @@
 #include <Schema/Field.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
+#include "DataTypes/SchemaFwd.hpp"
 
 namespace NES
 {

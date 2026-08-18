@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <alsa/asoundlib.h>
+#include <alsa/asoundlib.h> ///NOLINT(misc-include-cleaner)
 
 namespace NES
 {

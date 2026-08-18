@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -26,6 +27,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/Synchronized.h>
+#include "DataTypes/SchemaFwd.hpp"
 
 class BackpressureController;
 
@@ -110,7 +112,10 @@ public:
     /// Throws CannotOpenSource if no sink is registered for this name.
     /// Throws CannotOpenSource if the schema does not match the existing pipe schema.
     std::shared_ptr<PipeQueue> registerSource(
-        const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, size_t queueCapacity = DEFAULT_QUEUE_CAPACITY);
+        const std::string& pipeName,
+        const std::shared_ptr<const PipeSchema>& schema,
+        ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+        size_t queueCapacity = DEFAULT_QUEUE_CAPACITY);
 
     /// Unregister a source. Removes the queue from the SinkHandle (active or pending).
     void unregisterSource(const std::string& pipeName, const std::shared_ptr<PipeQueue>& queue);

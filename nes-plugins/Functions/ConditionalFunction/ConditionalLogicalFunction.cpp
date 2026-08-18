@@ -30,6 +30,8 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "Schema/Field.hpp"
+#include "DataTypes/SchemaFwd.hpp"
 
 namespace NES
 {
@@ -102,12 +104,12 @@ std::vector<LogicalFunction> ConditionalLogicalFunction::getChildren() const
     return children;
 }
 
-ConditionalLogicalFunction ConditionalLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ConditionalLogicalFunction ConditionalLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) 
 {
     return ConditionalLogicalFunction(children);
 }
 
-std::string_view ConditionalLogicalFunction::getType() const
+std::string_view ConditionalLogicalFunction::getType() 
 {
     return NAME;
 }

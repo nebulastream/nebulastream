@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ostream>
 #include <Sequencing/Sequencer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include "Runtime/TupleBuffer.hpp"
+#include "PipelineExecutionContext.hpp"
 
 namespace NES
 {

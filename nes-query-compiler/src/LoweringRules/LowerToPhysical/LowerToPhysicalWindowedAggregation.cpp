@@ -71,6 +71,8 @@
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
+#include "DataTypes/Schema.hpp"
+#include "DataTypes/SchemaFwd.hpp"
 
 namespace NES
 {

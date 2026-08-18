@@ -25,6 +25,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
 #include <SourceThread.hpp>
+#include "QueryId.hpp"
 
 namespace NES
 {

@@ -18,6 +18,7 @@
 
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include "Operators/LogicalOperatorFwd.hpp"
 
 namespace NES
 {
