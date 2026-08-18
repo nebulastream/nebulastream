@@ -21,4 +21,5 @@ add_source_files(nes-nautilus
         RecordBuffer.cpp
         NautilusBuffer.cpp
         VariableSizedAccess.cpp
+        VarSizedStorage.cpp
 )
