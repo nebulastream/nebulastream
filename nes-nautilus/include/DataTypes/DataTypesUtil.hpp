@@ -17,10 +17,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
+#include <DataTypes/VariableSizedData.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -147,5 +151,63 @@ inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVa
          }},
         {DataType::Type::UNDEFINED, nullptr},
 };
+
+/// Resolves a VARSIZED field's payload from its slot, returning (pointer, size). Supplied per container.
+using LoadVarSized = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
+
+/// Copies size bytes from data into container owned storage and records the location in fieldSlot.
+using StoreVarSized = std::function<void(nautilus::val<int8_t*> fieldSlot, nautilus::val<int8_t*> data, nautilus::val<uint64_t> size)>;
+
+/// Reads a field in our standard layout: an optional null byte followed by the value.
+inline VarVal loadFieldValue(const DataType& dataType, const nautilus::val<int8_t*>& fieldAddress, const LoadVarSized& loadVarSized)
+{
+    /// For now, we store the null byte before the actual VarVal
+    nautilus::val<bool> null = false;
+    nautilus::val<int8_t*> valueAddress = fieldAddress;
+    if (dataType.nullable)
+    {
+        /// Reading the first byte (null) and then incrementing the memref by 1 byte to read the actual value
+        null = readValueFromMemRef<bool>(fieldAddress);
+        valueAddress += 1;
+    }
+
+    if (dataType.type != DataType::Type::VARSIZED)
+    {
+        return VarVal::readVarValFromMemory(valueAddress, dataType, null);
+    }
+
+    const auto [content, size] = loadVarSized(valueAddress);
+    return VarVal{VariableSizedData(content, size), dataType.nullable, null};
+}
+
+/// Writes a field in our standard layout: an optional null byte followed by the value.
+inline void storeFieldValue(
+    const DataType& dataType, const nautilus::val<int8_t*>& fieldAddress, const VarVal& value, const StoreVarSized& storeVarSized)
+{
+    /// For now, we store the null byte before the actual VarVal
+    nautilus::val<int8_t*> valueAddress = fieldAddress;
+    if (dataType.nullable)
+    {
+        /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
+        VarVal{value.isNull()}.writeToMemory(valueAddress);
+        valueAddress += 1;
+    }
+
+    if (dataType.type != DataType::Type::VARSIZED)
+    {
+        /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
+        /// We get the correct function to call via a unordered_map
+        const auto storeFunction = storeValueFunctionMap.find(dataType.type);
+        if (storeFunction == storeValueFunctionMap.end())
+        {
+            throw UnknownDataType("Physical Type: {} is currently not supported", dataType);
+        }
+        std::ignore = storeFunction->second(value, valueAddress);
+        return;
+    }
+
+    const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+    storeVarSized(valueAddress, varSizedValue.getContent(), varSizedValue.getSize());
+}
 
 }
