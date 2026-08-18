@@ -14,6 +14,7 @@
 # configure, discover test files, read one, parse it, run it and check the results.
 add_subdirectory(Config)
 add_subdirectory(Discovery)
+add_subdirectory(Model)
 add_subdirectory(Parser)
 add_subdirectory(Runner)
 add_subdirectory(ResultChecker)

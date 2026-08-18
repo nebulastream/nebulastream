@@ -37,6 +37,9 @@ using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
 
+/// The number of a query within its test file, counted from one in file order.
+using SystestQueryId = NESStrongType<uint64_t, struct SystestQueryId_, 0, 1>;
+
 
 static constexpr LocalQueryId INVALID_LOCAL_QUERY_ID = LocalQueryId(LocalQueryId::INVALID);
 

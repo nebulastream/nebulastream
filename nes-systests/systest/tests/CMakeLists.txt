@@ -15,7 +15,7 @@ function(add_nes_test_systest)
     set(TARGET_NAME ${ARGV0})
     target_link_libraries(${TARGET_NAME} nes-systest-lib)
     target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
     target_compile_definitions(${TARGET_NAME} PRIVATE SYSTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
 endfunction()
 
@@ -26,6 +26,9 @@ add_nes_test_systest(slt-parser-test
         "ResultChecker/SystestResultCheckTests.cpp"
         "Runner/SystestRunnerTest.cpp"
         "SystestStateTests.cpp")
+
+add_nes_test_systest(testfile-builder-test
+        "Parser/TestFileBuilderTests.cpp")
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
