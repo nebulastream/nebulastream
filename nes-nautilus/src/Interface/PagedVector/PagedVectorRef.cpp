@@ -32,6 +32,7 @@
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/VarSizedStorage.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -69,110 +70,6 @@ uint64_t loadPageForEntryProxy(const TupleBuffer* pagedVectorBuffer, const uint6
     }
     return entryPos - prevCumulativeSum;
 }
-
-/// Factory method that returns the lambda function to read a record from a given page. The pageBuffer argument is the capture variable of the page to read from.
-/// When the labda is invoked, its argument should be the memory address pointing at the beginning of a record in that page.
-auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
-{
-    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-exception-escape)
-    return [pageBuffer](const nautilus::val<int8_t*>& fieldSlot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
-    {
-        auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
-        auto varSizedPtr = invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-            +[](TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
-            {
-                INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
-                INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
-                auto varSizedPage = pageBuffer->loadChildBuffer(access->getIndex());
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
-                return reinterpret_cast<int8_t*>(varSizedPage /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                     .getAvailableMemoryArea<>()
-                                                     .subspan(access->getOffset().getRawOffset())
-                                                     .data());
-            },
-            pageBuffer.asArg(),
-            variableSizedAccess);
-        auto varSizedDataLength = invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-            +[](const VariableSizedAccess* access) -> uint64_t
-            {
-                INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
-                return access->getSize().getRawSize();
-            },
-            variableSizedAccess);
-        return {varSizedPtr, varSizedDataLength}; /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    };
-}
-
-/// Factory method that returns the lambda function to write a record at a specific memory address in a paged vector page.
-/// The lastPageBuffer argument is the capture variable pointing to the last page of the paged vector.
-/// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
-auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
-{
-    return /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-        /// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the lambda's exception spec; INVARIANT may throw on bad input.
-        [lastPageBuffer,
-         bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
-    {
-        return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-            +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
-            {
-                INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
-                INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
-
-                auto numChildren = pageBuffer->getNumberOfChildBuffers();
-                if (numChildren > 0)
-                {
-                    auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
-                    TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
-                    const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
-                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
-                    if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
-                    {
-                        lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                        *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
-                            lastVarSizedBufferIndex,
-                            VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
-                            VariableSizedAccess::Size{allocationSize}};
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
-                        return reinterpret_cast<int8_t*>(lastVarSizedBuffer
-                                                             .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                             .subspan(lastVarSizedBufferNumTuples)
-                                                             .data());
-                    }
-                }
-                TupleBuffer newVarSizedBuffer;
-                if (allocationSize <= bufferProvider->getBufferSize())
-                {
-                    newVarSizedBuffer = bufferProvider->getBufferBlocking();
-                }
-                else
-                {
-                    /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
-                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
-                    if (not unpooledBuffer.has_value())
-                    {
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
-                    }
-                    newVarSizedBuffer = std::move(unpooledBuffer.value());
-                }
-                auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
-                newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
-                    = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
-                newVarSizedBuffer.setNumberOfTuples(allocationSize);
-                /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
-                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
-            },
-            lastPageBuffer.asArg(),
-            bufferProvider,
-            fieldSlot,
-            allocationSize);
-    };
-}
 }
 
 nautilus::val<uint64_t> PagedVectorRef::getNumberOfRecords() const
@@ -185,7 +82,7 @@ PagedVectorRef::PagedVectorRef(NautilusBuffer pagedVectorBuffer, std::shared_ptr
 {
 }
 
-Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSizedFunction loadFunction) const
+Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> recordMemAddress, LoadVarSized loadVarSized) const
 {
     const auto numFields = std::ranges::size(schema);
     Record record;
@@ -200,31 +97,15 @@ Record DefaultPagedVectorTupleLayout::readRecord(const nautilus::val<int8_t*> re
             std::ranges::size(schema));
         const auto name = fieldOpt->getFullyQualifiedName();
         const auto dataType = fieldOpt->getDataType();
-        auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
-
-        nautilus::val<bool> null = false;
-        nautilus::val<int8_t*> varValRef = fieldAddress;
-        if (dataType.nullable)
-        {
-            null = readValueFromMemRef<bool>(fieldAddress);
-            varValRef += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            record.write(name, VarVal::readVarValFromMemory(varValRef, dataType, null));
-        }
-        else
-        {
-            auto [ptr, len] = loadFunction(varValRef);
-            record.write(name, VarVal{VariableSizedData(ptr, len), dataType.nullable, null});
-        }
+        const auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
+        record.write(name, loadFieldValue(dataType, fieldAddress, loadVarSized));
         fieldOffset += dataType.getSizeInBytesWithNull();
     }
     return record;
 }
 
 void DefaultPagedVectorTupleLayout::writeRecord(
-    const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
+    const Record& record, nautilus::val<std::int8_t*> memoryForRecord, StoreVarSized storeVarSized)
 {
     const auto numFields = std::ranges::size(schema);
     uint64_t fieldOffset = 0;
@@ -244,45 +125,8 @@ void DefaultPagedVectorTupleLayout::writeRecord(
             fieldOffset += dataType.getSizeInBytesWithNull();
             continue;
         }
-        auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
-        const auto& value = record.read(name);
-
-        /// For now, we store the null byte before the actual VarVal
-        nautilus::val<int8_t*> addressToWriteValue = fieldAddress;
-        if (dataType.nullable)
-        {
-            /// Writing the null value to the first byte and then incrementing the memref by 1 byte to store the actual value
-            VarVal{value.isNull()}.writeToMemory(addressToWriteValue);
-            addressToWriteValue += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            auto sizeInBytes = nautilus::val<uint64_t>(DataTypeProvider::provideDataType(dataType.type).getSizeInBytesWithNull());
-
-            if (const auto storeFunction = storeValueFunctionMap.find(dataType.type); storeFunction != storeValueFunctionMap.end())
-            {
-                auto dummy = storeFunction->second(value, addressToWriteValue);
-                fieldOffset += dataType.getSizeInBytesWithNull();
-                continue;
-            }
-            throw UnknownDataType("Physical Type: {} is currently not supported", dataType);
-        }
-
-        /// field is varsized data, get the appropriate memory address to write it to
-        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const nautilus::val<int8_t*> varSizedMemAddress = allocateVarSized(addressToWriteValue, varSizedValue.getSize());
-
-        /// write the varsized data to the memory address
-        invoke(
-            +[](int8_t* varSizedMemAddress, const int8_t* varSizedDataPtr, const uint64_t varSizedDataLength)
-            {
-                INVARIANT(varSizedMemAddress != nullptr, "Memory address MUST NOT be null at this point");
-                std::memcpy(varSizedMemAddress, varSizedDataPtr, varSizedDataLength);
-            },
-            varSizedMemAddress,
-            varSizedValue.getContent(),
-            varSizedValue.getSize());
-
+        const auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
+        storeFieldValue(dataType, fieldAddress, record.read(name), storeVarSized);
         fieldOffset += dataType.getSizeInBytesWithNull();
     }
 }
@@ -323,7 +167,7 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
         pagedVectorBuffer.asArg(),
         lastPageBuffer.asArg());
     /// write the record using the lambda method from the factory
-    tupleLayout->writeRecord(record, recordAddress, makeVarSizedAllocFunction(lastPageBuffer, bufferProvider));
+    tupleLayout->writeRecord(record, recordAddress, makeChildBufferVarSizedStoreFunction(lastPageBuffer, bufferProvider));
     /// increase the entry count in the page
     nautilus::invoke(
         +[](TupleBuffer* lastPageBuffer) { lastPageBuffer->setNumberOfTuples(lastPageBuffer->getNumberOfTuples() + 1); },

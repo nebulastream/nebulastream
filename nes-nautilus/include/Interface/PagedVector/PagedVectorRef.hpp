@@ -22,6 +22,7 @@
 #include <functional>
 #include <utility>
 
+#include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Interface/NautilusBuffer.hpp>
@@ -40,12 +41,6 @@ namespace NES
 class PagedVectorRefIter;
 class PagedVectorRefIterSentinel;
 
-/// @brief Load function that reads a varsized field from a specific address in memory
-using LoadVarSizedFunction = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
-/// @brief Allocation function that takes care of allocating the necessary space for the varsized data of a field
-using AllocateVarSizedFunction
-    = std::function<nautilus::val<int8_t*>(nautilus::val<int8_t*> fieldSlot, nautilus::val<uint64_t> allocationSize)>;
-
 /// @brief This class is the interface for creating different tuple layouts
 class PagedVectorTupleLayout
 {
@@ -53,13 +48,12 @@ public:
     virtual ~PagedVectorTupleLayout() = default;
     [[nodiscard]] virtual const Schema<QualifiedUnboundField, Ordered>& getSchema() const = 0;
     /// @brief Reads a record from the specified memory address. The address is expected to point at the beginning of the record to be read.
-    /// The LoadFunction handles the varsized data loading, as it is stored in a separate buffer.
-    [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction) const = 0;
+    /// The LoadVarSized callback loads the varsized data, as it is stored in a separate buffer.
+    [[nodiscard]] virtual Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSized loadVarSized) const = 0;
 
     /// @brief Writes a record to the specified memory address (which should be its correct memory offset inside the correct page, which enough space allocated).
-    /// The allocateVarSized method takes care of allocating extra space for varsized if necessary.
-    virtual void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized)
-        = 0;
+    /// The StoreVarSized callback allocates extra space for varsized data if necessary.
+    virtual void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, StoreVarSized storeVarSized) = 0;
 };
 
 /// @brief This class is the default layout of tuples for the paged vector
@@ -73,9 +67,9 @@ public:
 
     [[nodiscard]] const Schema<QualifiedUnboundField, Ordered>& getSchema() const override { return schema; }
 
-    [[nodiscard]] Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSizedFunction loadFunc) const override;
+    [[nodiscard]] Record readRecord(nautilus::val<std::int8_t*> recordMemAddress, LoadVarSized loadVarSized) const override;
 
-    void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, AllocateVarSizedFunction allocateVarSized) override;
+    void writeRecord(const Record& record, nautilus::val<std::int8_t*> memoryForRecord, StoreVarSized storeVarSized) override;
 };
 
 /// @brief This class is a nautilus interface to our PagedVector. It provides a way to write and read records to and from the PagedVector

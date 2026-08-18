@@ -154,7 +154,7 @@ struct DirtyBufferProvider : AbstractBufferProvider
 };
 
 /// Wraps a real BufferManager but refuses (returns nullopt from) getUnpooledBuffer for any request larger than a
-/// pooled buffer -- i.e. exactly the oversized-varsized allocation path in makeVarSizedAllocFunction -- while
+/// pooled buffer -- i.e. exactly the oversized-varsized allocation path in makeChildBufferVarSizedStoreFunction -- while
 /// leaving small unpooled requests (like PagedVector's own header buffer) and all pooled-buffer paths untouched.
 /// This lets a plain unit test deterministically hit the "no unpooled buffer available for oversized varsized
 /// value" throw without needing to actually exhaust memory.

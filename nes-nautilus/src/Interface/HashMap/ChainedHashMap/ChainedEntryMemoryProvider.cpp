@@ -74,6 +74,51 @@ std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> ChainedEntryMemo
     return {fieldsKey, fieldsValue};
 }
 
+namespace
+{
+/// A ChainedHashMap stores a varsized payload behind a uint32_t length prefix and keeps a raw pointer to it in the entry slot,
+/// rather than a VariableSizedAccess into a child buffer.
+LoadVarSized makeChainedEntryVarSizedLoadFunction()
+{
+    return [](const nautilus::val<int8_t*>& fieldSlot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
+    {
+        const auto varSizedDataPtr = nautilus::invoke(+[](int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, fieldSlot);
+        const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
+        const auto payloadOffset = nautilus::val<uint32_t>(sizeof(uint32_t));
+        return {varSizedDataPtr + payloadOffset, sizeOfVarSized};
+    };
+}
+
+StoreVarSized makeChainedEntryVarSizedStoreFunction(
+    const nautilus::val<TupleBuffer*>& hashMapBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    return [hashMapBuffer, bufferProvider](
+               const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<int8_t*>& data, const nautilus::val<uint64_t>& size)
+    {
+        nautilus::invoke(
+            +[](TupleBuffer* tupleBuffer,
+                AbstractBufferProvider* bufferProvider,
+                const int8_t** memoryAddressInEntry,
+                const int8_t* varSizedData,
+                const uint64_t varSizedDataSize)
+            {
+                constexpr size_t sizeOfIndex = sizeof(uint32_t);
+                auto chm = ChainedHashMap::load(*tupleBuffer);
+                auto spaceForVarSizedData = chm.allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
+                const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
+                *reinterpret_cast<uint32_t*>(spaceForVarSizedData.data()) = varSizedDataSize;
+                std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin() + sizeOfIndex);
+                *memoryAddressInEntry = reinterpret_cast<const signed char*>(spaceForVarSizedData.data());
+            },
+            hashMapBuffer,
+            bufferProvider,
+            fieldSlot,
+            data,
+            size);
+    };
+}
+}
+
 VarVal ChainedEntryMemoryProvider::readVarVal(
     const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record::RecordFieldIdentifier& fieldName) const
 {
@@ -81,31 +126,9 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
     {
         if (fieldIdentifier == fieldName)
         {
-            /// For now, we store the null byte before the actual VarVal
-            nautilus::val<bool> null = false;
             const auto& entryRefCopy = entryRef;
-            auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
-            auto memoryAddress = castedEntryAddress + fieldOffset;
-            if (type.nullable)
-            {
-                /// Reading the first byte (null) and then incrementing the castedEntryAddress by 1 byte to read the actual value
-                null = readValueFromMemRef<bool>(memoryAddress);
-                memoryAddress += 1;
-            }
-
-            if (type.isType(DataType::Type::VARSIZED))
-            {
-                const auto varSizedDataPtr
-                    = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
-                const auto sizeOfVarSized = readValueFromMemRef<uint32_t>(varSizedDataPtr);
-                const auto payloadOffset = nautilus::val<uint32_t>(sizeof(uint32_t));
-                const auto varSizedPayloadPtr = varSizedDataPtr + payloadOffset;
-                VariableSizedData varSizedData(varSizedPayloadPtr, sizeOfVarSized);
-                return VarVal{varSizedData, type.nullable, null};
-            }
-
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type, null);
-            return varVal;
+            const auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
+            return loadFieldValue(type, castedEntryAddress + fieldOffset, makeChainedEntryVarSizedLoadFunction());
         }
     }
     throw FieldNotFound("Field {} not found in ChainedEntryMemoryProvider", fieldName);
@@ -125,34 +148,6 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
 
 namespace
 {
-void storeVarSized(
-    const nautilus::val<TupleBuffer*>& tupleBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProviderRef,
-    const nautilus::val<int8_t*>& memoryAddress,
-    const VariableSizedData& variableSizedData)
-{
-    nautilus::invoke(
-        +[](TupleBuffer* tupleBuffer,
-            AbstractBufferProvider* bufferProvider,
-            const int8_t** memoryAddressInEntry,
-            const int8_t* varSizedData,
-            const uint64_t varSizedDataSize)
-        {
-            constexpr size_t sizeOfIndex = sizeof(uint32_t);
-            auto chm = ChainedHashMap::load(*tupleBuffer);
-            auto spaceForVarSizedData = chm.allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
-            const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
-            *reinterpret_cast<uint32_t*>(spaceForVarSizedData.data()) = varSizedDataSize;
-            std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin() + sizeOfIndex);
-            *memoryAddressInEntry = reinterpret_cast<const signed char*>(spaceForVarSizedData.data());
-        },
-        tupleBuffer,
-        bufferProviderRef,
-        memoryAddress,
-        variableSizedData.getContent(),
-        variableSizedData.getSize());
-}
-
 void writeVarVal(
     const VarVal& value,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -160,24 +155,7 @@ void writeVarVal(
     const nautilus::val<TupleBuffer*>& hashMapTupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    /// For now, we store the null byte before the actual VarVal
-    auto memoryAddress = fieldAddress;
-    if (type.nullable)
-    {
-        /// Writing the null value to the first byte and then incrementing the castedEntryAddress by 1 byte to store the actual value
-        VarVal{value.isNull()}.writeToMemory(memoryAddress);
-        memoryAddress += 1;
-    }
-
-    if (type.isType(DataType::Type::VARSIZED))
-    {
-        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        storeVarSized(hashMapTupleBuffer, bufferProvider, memoryAddress, varSizedValue);
-    }
-    else
-    {
-        value.writeToMemory(memoryAddress);
-    }
+    storeFieldValue(type, fieldAddress, value, makeChainedEntryVarSizedStoreFunction(hashMapTupleBuffer, bufferProvider));
 }
 }
 

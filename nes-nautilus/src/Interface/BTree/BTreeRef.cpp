@@ -29,6 +29,7 @@
 #include <Interface/BTree/BTree.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/VarSizedStorage.hpp>
 #include <Interface/VariableSizedAccess.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -43,55 +44,6 @@
 
 namespace NES
 {
-namespace
-{
-BTreeTupleLayout::LoadVarSized makeBTreeVarSizedLoadFunction(const NautilusBuffer& btreeBuffer)
-{
-    return [btreeBuffer](const nautilus::val<int8_t*>& fieldSlot) -> std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>
-    {
-        const auto access = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
-        auto data = nautilus::invoke(
-            +[](TupleBuffer* buffer, const VariableSizedAccess* access) -> int8_t*
-            {
-                INVARIANT(buffer != nullptr, "BTree buffer must not be null");
-                INVARIANT(access != nullptr, "BTree VariableSizedAccess must not be null");
-                auto page = buffer->loadChildBuffer(access->getIndex());
-                return reinterpret_cast<int8_t*>( /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                    page.getAvailableMemoryArea<>().subspan(access->getOffset().getRawOffset()).data());
-            },
-            btreeBuffer.asArg(),
-            access);
-        auto size = nautilus::invoke(+[](const VariableSizedAccess* access) { return access->getSize().getRawSize(); }, access);
-        return {data, size};
-    };
-}
-
-BTreeTupleLayout::AllocateVarSized
-makeBTreeVarSizedAllocFunction(const NautilusBuffer& btreeBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
-{
-    return [btreeBuffer, bufferProvider](
-               const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
-    {
-        return nautilus::invoke(
-            +[](TupleBuffer* buffer, AbstractBufferProvider* provider, int8_t* slot, const uint64_t size) -> int8_t*
-            {
-                INVARIANT(buffer != nullptr, "BTree buffer must not be null");
-                INVARIANT(provider != nullptr, "BTree buffer provider must not be null");
-                auto allocation = BTree::load(*buffer).allocateSpaceForVarSized(provider, size);
-                *reinterpret_cast<VariableSizedAccess*>(slot) = VariableSizedAccess{/// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                                                                                    allocation.childIndex,
-                                                                                    VariableSizedAccess::Offset{allocation.offset},
-                                                                                    VariableSizedAccess::Size{size}};
-                return reinterpret_cast<int8_t*>(allocation.memory.data()); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            },
-            btreeBuffer.asArg(),
-            bufferProvider,
-            fieldSlot,
-            allocationSize);
-    };
-}
-}
-
 BTreeComparator::BTreeComparator(
     CompilationContext& context,
     std::shared_ptr<BTreeTupleLayout> tupleLayout,
@@ -111,7 +63,7 @@ BTreeComparator::BTreeComparator(
             -> nautilus::val<bool>
             {
                 const auto btreeBuffer = BorrowedNautilusBuffer::from(buffer);
-                const auto loadFunction = makeBTreeVarSizedLoadFunction(btreeBuffer);
+                const auto loadFunction = makeVarSizedLoadFunction(btreeBuffer);
                 return recordComparator(tupleLayout->readRecord(lhs, loadFunction), tupleLayout->readRecord(rhs, loadFunction));
             }),
         std::string{"btreeComparatorFunction:"}.append(comparatorKey));
@@ -139,30 +91,14 @@ Record DefaultBTreeTupleLayout::readRecord(const nautilus::val<int8_t*> recordMe
             std::ranges::size(schema));
         const auto name = fieldOpt->getFullyQualifiedName();
         const auto dataType = fieldOpt->getDataType();
-        auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
-
-        nautilus::val<bool> null = false;
-        nautilus::val<int8_t*> valueAddress = fieldAddress;
-        if (dataType.nullable)
-        {
-            null = readValueFromMemRef<bool>(fieldAddress);
-            valueAddress += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            record.write(name, VarVal::readVarValFromMemory(valueAddress, dataType, null));
-        }
-        else
-        {
-            auto [ptr, length] = loadVarSized(valueAddress);
-            record.write(name, VarVal{VariableSizedData(ptr, length), dataType.nullable, null});
-        }
+        const auto fieldAddress = recordMemAddress + nautilus::val<uint64_t>(fieldOffset);
+        record.write(name, loadFieldValue(dataType, fieldAddress, loadVarSized));
         fieldOffset += dataType.getSizeInBytesWithNull();
     }
     return record;
 }
 
-void DefaultBTreeTupleLayout::writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, AllocateVarSized allocateVarSized)
+void DefaultBTreeTupleLayout::writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, StoreVarSized storeVarSized)
 {
     const auto numFields = std::ranges::size(schema);
     uint64_t fieldOffset = 0;
@@ -182,36 +118,8 @@ void DefaultBTreeTupleLayout::writeRecord(const Record& record, nautilus::val<in
             continue;
         }
 
-        auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
-        const auto& value = record.read(name);
-        nautilus::val<int8_t*> addressToWriteValue = fieldAddress;
-        if (dataType.nullable)
-        {
-            VarVal{value.isNull()}.writeToMemory(addressToWriteValue);
-            addressToWriteValue += 1;
-        }
-        if (dataType.type != DataType::Type::VARSIZED)
-        {
-            if (const auto storeFunction = storeValueFunctionMap.find(dataType.type); storeFunction != storeValueFunctionMap.end())
-            {
-                std::ignore = storeFunction->second(value, addressToWriteValue);
-                fieldOffset += dataType.getSizeInBytesWithNull();
-                continue;
-            }
-            throw UnknownDataType("Physical Type: {} is currently not supported", dataType);
-        }
-
-        const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-        const auto varSizedMemAddress = allocateVarSized(addressToWriteValue, varSizedValue.getSize());
-        nautilus::invoke(
-            +[](int8_t* destination, const int8_t* source, const uint64_t length)
-            {
-                INVARIANT(destination != nullptr, "Memory address MUST NOT be null at this point");
-                std::memcpy(destination, source, length);
-            },
-            varSizedMemAddress,
-            varSizedValue.getContent(),
-            varSizedValue.getSize());
+        const auto fieldAddress = memoryForRecord + nautilus::val<uint64_t>(fieldOffset);
+        storeFieldValue(dataType, fieldAddress, record.read(name), storeVarSized);
         fieldOffset += dataType.getSizeInBytesWithNull();
     }
 }
@@ -224,7 +132,7 @@ BTreeRef::BTreeRef(NautilusBuffer btreeBuffer, std::shared_ptr<BTreeTupleLayout>
 
 Record BTreeRef::read(const nautilus::val<int8_t*>& address) const
 {
-    return tupleLayout->readRecord(address, makeBTreeVarSizedLoadFunction(btreeBuffer));
+    return tupleLayout->readRecord(address, makeVarSizedLoadFunction(btreeBuffer));
 }
 
 void BTreeRef::appendRecord(
@@ -255,7 +163,7 @@ void BTreeRef::append(
 {
     const auto entrySize = tupleLayout->getSizeInBytes();
     const NautilusStackAllocation entry{entrySize};
-    tupleLayout->writeRecord(record, entry.data(), makeBTreeVarSizedAllocFunction(btreeBuffer, bufferProvider));
+    tupleLayout->writeRecord(record, entry.data(), makeBTreeVarSizedStoreFunction(btreeBuffer, bufferProvider));
 
     nautilus::invoke(
         BTreeRef::appendRecord,

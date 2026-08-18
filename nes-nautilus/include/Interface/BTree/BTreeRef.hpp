@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -38,14 +39,10 @@ class CompilationContext;
 class BTreeTupleLayout
 {
 public:
-    using LoadVarSized = std::function<std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>>(nautilus::val<int8_t*> fieldSlot)>;
-    using AllocateVarSized
-        = std::function<nautilus::val<int8_t*>(nautilus::val<int8_t*> fieldSlot, nautilus::val<uint64_t> allocationSize)>;
-
     virtual ~BTreeTupleLayout() = default;
     [[nodiscard]] virtual uint64_t getSizeInBytes() const = 0;
     [[nodiscard]] virtual Record readRecord(nautilus::val<int8_t*> recordMemAddress, LoadVarSized loadVarSized) const = 0;
-    virtual void writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, AllocateVarSized allocateVarSized) = 0;
+    virtual void writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, StoreVarSized storeVarSized) = 0;
 };
 
 struct DefaultBTreeTupleLayout final : BTreeTupleLayout
@@ -59,7 +56,7 @@ public:
     [[nodiscard]] uint64_t getSizeInBytes() const override { return schema.getSizeInBytes(); }
 
     [[nodiscard]] Record readRecord(nautilus::val<int8_t*> recordMemAddress, LoadVarSized loadVarSized) const override;
-    void writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, AllocateVarSized allocateVarSized) override;
+    void writeRecord(const Record& record, nautilus::val<int8_t*> memoryForRecord, StoreVarSized storeVarSized) override;
 };
 
 class BTreeComparator
