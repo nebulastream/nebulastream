@@ -140,7 +140,7 @@ jobs:
             cmake --build build --target systest nes-single-node-worker -j
             sccache --show-stats
             sccache --stop-server
-            ctest --test-dir build --output-on-failure --timeout 2400 -R systest-remote-test
+            ctest --test-dir build --no-tests=error --output-on-failure --timeout 2400 -R systest-remote-test
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v5
         if: failure() && !github.event.act
