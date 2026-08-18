@@ -53,7 +53,7 @@ target_compile_definitions(nes-systest-lib PUBLIC
 )
 
 # Add the systest executable
-add_executable(systest src/Main.cpp)
+add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)

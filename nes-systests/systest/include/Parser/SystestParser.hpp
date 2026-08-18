@@ -15,23 +15,20 @@
 #pragma once
 
 #include <cstddef>
-#include <filesystem>
 #include <functional>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
-namespace NES::Systest
+#include <Model/ConfigurationOverride.hpp>
+#include <Model/SystestQueryId.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES
 {
 using namespace std::literals;
 
@@ -61,13 +58,13 @@ enum class ResultType : uint8_t
     VERBATIM
 };
 
-/// Assures that the number of parsed queries matches the number of parsed results
-class SystestQueryIdAssigner
+/// Assigns query numbers and rejects a test file whose query count and result count do not match.
+class QueryIdAssigner
 {
     static constexpr SystestQueryId::Underlying INITIAL_QUERY_NUMBER = SystestQueryId::INITIAL;
 
 public:
-    explicit SystestQueryIdAssigner() = default;
+    explicit QueryIdAssigner() = default;
 
     [[nodiscard]] SystestQueryId getNextQueryNumber()
     {
@@ -96,59 +93,26 @@ private:
     SystestQueryId::Underlying currentQueryResultNumber = SystestQueryId::INITIAL;
 };
 
-struct SystestField
-{
-    DataType type;
-    std::string name;
-
-    friend std::ostream& operator<<(std::ostream& os, const SystestField& field)
-    {
-        os << fmt::format("{} {}", magic_enum::enum_name(field.type.type), field.name);
-        return os;
-    }
-
-    bool operator==(const SystestField& other) const = default;
-    bool operator!=(const SystestField& other) const = default;
-};
-
-/// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
-/// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
-///
-/// NOTE: register substitution rules before calling `loadString`
-/// NOTE: register callbacks before calling `parse`
+/// Parses a dialect of the sqllogictest format and reports each section that it reads to a callback.
+/// A pull parser, following https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
+/// A caller registers substitution rules before loading a test file, and callbacks before parsing it.
 class SystestParser
 {
 public:
     struct SubstitutionRule
     {
         std::string keyword;
-        /// Takes the keyword by reference and modifies it according to the rule
+        /// Rewrites the keyword in place.
         std::function<void(std::string&)> ruleFunction;
     };
 
-    /// Register a substitution rule to be applied before parsing
+    /// Registers a substitution rule, which the parser applies while loading a test file.
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
-    /// Loading overrides existing parse content
-    [[nodiscard]] bool loadString(const std::string& str);
-
-    using SystestSchema = std::vector<SystestField>;
-
-    /// Type definitions ///
-    struct SystestLogicalSource
-    {
-        std::string name;
-        SystestSchema fields;
-        bool operator==(const SystestLogicalSource& other) const = default;
-    };
-
-    struct SystestSink
-    {
-        std::string name;
-        std::string type;
-        SystestSchema fields;
-        bool operator==(const SystestSink& other) const = default;
-    };
+    /// Fills the line buffer that the parser reads from, dropping comments and applying the registered substitution rules.
+    /// Loading replaces whatever was loaded before.
+    /// The caller supplies the text of a test file, so the parser never opens a file.
+    void loadString(const std::string& str);
 
     struct ErrorExpectation
     {
@@ -167,7 +131,7 @@ public:
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
 
-    /// Register callbacks to be called when the respective section is parsed
+    /// Registers the callback that the parser reports the matching section to.
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnExplainQueryCallback(ExplainQueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
@@ -178,24 +142,22 @@ public:
     void registerOnGlobalConfigurationCallback(GlobalConfigurationCallback callback);
 
     void parse();
-    void parseResultLines();
 
 private:
     /// Parsing utils ///
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(const std::string& line);
-    /// Parse the next token and return its type.
+    /// Reads the next token and returns its type.
     [[nodiscard]] std::optional<TokenType> getNextToken();
-    /// Got the next token. Returns false if reached end of file.
+    /// Advances to the next token, and returns false at the end of the file.
     [[nodiscard]] bool moveToNextToken();
-    /// Look ahead at the next token without consuming it
+    /// Returns the next token without consuming it.
     [[nodiscard]] std::optional<TokenType> peekToken() const;
 
-    /// Apply registered substitutions to line
+    /// Applies the registered substitution rules to one line.
     void applySubstitutionRules(std::string& line);
 
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::vector<std::string> expectVerbatimResultLines();
-    [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
@@ -223,5 +185,3 @@ private:
     std::vector<std::string> lines;
 };
 }
-
-FMT_OSTREAM(NES::Systest::SystestField);
