@@ -23,9 +23,9 @@ namespace NES
 /// Deep-copies a TupleBuffer: copies the raw bytes, replicates all metadata, and recursively copies every child buffer into freshly allocated buffers obtained from `provider`.
 TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider);
 
-/// Returns a buffer for the specified size and optimizes internally for either pooled or unpooled.
+/// Returns a buffer holding at least `size` bytes: pooled whenever `size` fits, otherwise unpooled and sized to fit exactly.
 /// TODO #1582: This logic will be refactored into the Buffer Provider
-TupleBuffer getBuffer(uint64_t size, AbstractBufferProvider& provider);
+TupleBuffer getBufferOfAtLeast(uint64_t size, AbstractBufferProvider& provider);
 }
 
 /**

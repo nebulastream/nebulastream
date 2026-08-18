@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <utility>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -25,9 +26,9 @@
 namespace NES
 {
 
-TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
+TupleBuffer getBufferOfAtLeast(const uint64_t size, AbstractBufferProvider& provider)
 {
-    if (size == provider.getBufferSize())
+    if (size <= provider.getBufferSize())
     {
         return provider.getBufferBlocking();
     }
@@ -35,7 +36,7 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
     auto bufferOpt = provider.getUnpooledBuffer(size);
     if (bufferOpt.has_value())
     {
-        return bufferOpt.value();
+        return std::move(bufferOpt.value());
     }
     throw BufferAllocationFailure("No unpooled TupleBuffer of size {} available!", size);
 }
@@ -43,7 +44,7 @@ TupleBuffer getBuffer(const uint64_t size, AbstractBufferProvider& provider)
 TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
 {
     /// TODO #1582: you may need different size for the copy buffer, not always the default
-    auto copiedBuffer = getBuffer(buffer.getBufferSize(), provider);
+    auto copiedBuffer = getBufferOfAtLeast(buffer.getBufferSize(), provider);
     PRECONDITION(
         copiedBuffer.getBufferSize() >= buffer.getBufferSize(),
         "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
