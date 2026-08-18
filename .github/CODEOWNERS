@@ -1,28 +1,36 @@
-# Protecting the code owner file from any changes
-/.github/CODEOWNERS @adrianmichalke @alepping @Artraxon @keyseven123 @ls-1801 @yschroeder97
-
 # The maintainers are the default owners for everything in the repo. Unless a later match takes precedence, one of
 # the maintainers will be request review when someone opens a pull request.
 * @nebulastream/Maintainer
 
-## We set here owners for each folder that usually encapsulates one or more components.
-## We aim for having at least two persons per folder to have a little bit of a redundancy.
+## Build system, CI, packaging and dependency pinning.
+/cmake/ @nebulastream/DevOps
+/CMakeLists.txt @nebulastream/DevOps
+/codecov.yaml @nebulastream/DevOps
 /docker/ @nebulastream/DevOps
+/flake.lock @nebulastream/DevOps
+/flake.nix @nebulastream/DevOps
 /.github/ @nebulastream/DevOps
 /scripts/ @nebulastream/DevOps
 /vcpkg/ @nebulastream/DevOps
 
+## We set here owners for each folder that usually encapsulates one or more components.
+## We aim for having at least two persons per folder to have a little bit of a redundancy.
+
+## Linked by nearly every component, so no single team is the right reviewer.
 /nes-common/ @nebulastream/Maintainer
 /nes-configurations/ @nebulastream/Maintainer
 
-/grpc/ @nebulastream/QuerySubmission
-/nes-data-types/ @nebulastream/QuerySubmission
-/nes-frontend/ @nebulastream/QuerySubmission
-/nes-sql-parser/ @nebulastream/QuerySubmission
+/nes-frontend/ @nebulastream/Frontend
+
+## The type system and the plan representation, with the parser that builds the plan from a statement.
+/nes-data-types/ @nebulastream/IR
+/nes-logical-operators/ @nebulastream/IR
+/nes-sql-parser/ @nebulastream/IR
 
 /nes-physical-operators/ @nebulastream/Execution
 /nes-nautilus/ @nebulastream/Execution
 /nes-query-compiler/ @nebulastream/Execution
+/nes-inference/ @nebulastream/Execution @gaturchenko
 
 
 /nes-memory/ @nebulastream/Memory
@@ -30,8 +38,12 @@
 /nes-single-node-worker/ @nebulastream/Runtime
 
 
-/nes-logical-operators/ @nebulastream/QueryOptimizer
 /nes-query-optimizer/ @nebulastream/QueryOptimizer
+
+## Everything that crosses a node boundary: placement, transport, and the wire format between them.
+/grpc/ @nebulastream/Distributed
+/nes-distributed/ @nebulastream/Distributed
+/nes-network/ @nebulastream/Distributed
 
 /nes-plugins/ @nebulastream/Plugins
 
@@ -41,9 +53,25 @@
 /nes-input-formatters/ @nebulastream/InputOutput
 /nes-sinks/ @nebulastream/InputOutput
 /nes-sources/ @nebulastream/InputOutput
+/nes-output-formatters/ @nebulastream/InputOutput @LeoRaasch
 
 /nes-systests/ @nebulastream/Testing
 
 
-# We  set here the ownership specific files or folders. This will be populated in the future
-/docs/watermarking_progress_window_triggering.md @keyseven123 @alepping
+# Documentation is routed by subject to the team that owns the matching code. Where the subject is the project as
+# a whole the default maintainer rule already applies, so those documents get no entry.
+/docs/development/ @nebulastream/DevOps
+/docs/git/ @nebulastream/DevOps
+/docs/website/ @nebulastream/DevOps
+
+/docs/technical/dependency.md @nebulastream/DevOps
+/docs/technical/QueryEngine_TaskQueue.md @nebulastream/QueryEngine
+/docs/technical/ir_binding.md @nebulastream/IR
+/docs/technical/null_handling.md @nebulastream/IR
+/docs/technical/model_inference.md @nebulastream/Execution
+/docs/technical/watermarking_progress_window_triggering.md @keyseven123 @alepping
+
+
+# Protecting the code owner file from any changes. GitHub applies the last matching pattern, so this entry has to
+# stay last in the file.
+/.github/CODEOWNERS @adrianmichalke @alepping @Artraxon @greenBene @keyseven123 @ls-1801 @oczerwia-2010 @yschroeder97
