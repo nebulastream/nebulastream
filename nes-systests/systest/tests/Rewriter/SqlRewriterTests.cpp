@@ -621,6 +621,25 @@ TEST_F(SqlRewriterTest, KeepsTheHostASinkWrittenIntoTheQueryChose)
     EXPECT_FALSE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('localhost:8080' AS "SINK"."HOST")"));
 }
 
+/// A declared sink keeps the host it chose when a query inlines it, so the sinks of one query can sit on different workers.
+/// Its other options carry over too, and the rewriter adds no second value for any of them.
+TEST_F(SqlRewriterTest, KeepsTheOptionsADeclaredSinkChose)
+{
+    const auto [name, originalNames, setup, queries]
+        = rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                     "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('elsewhere:9999' AS \"SINK\".\"HOST\", 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n"
+                     "\n"
+                     "SELECT id FROM stream INTO out;\n"
+                     "----\n"
+                     "1\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    EXPECT_EQ(
+        std::get<RewrittenQuery>(queries.at(0).action).sql,
+        R"(SELECT id FROM TESTKEY_STREAM INTO File('/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA", )"
+        R"('elsewhere:9999' AS "SINK"."HOST", 'JSON' AS "SINK".OUTPUT_FORMAT);)");
+}
+
 /// A physical source reads the data of its ATTACH, and the rewrite resolves that path against the test data directory.
 /// A path written into the SET clause would pass through as the test wrote it, so a relative one would miss the file, and one
 /// written alongside an ATTACH would set the option twice.
@@ -803,7 +822,7 @@ TEST_F(SqlRewriterTest, MergesTheRewrittenSinkOptionsIntoTheOnesTheTestWrote)
 }
 
 /// The checker reads the file that the rewriter chose, so a sink that chooses its own result file would write where nothing looks.
-/// A sink written into a query is rejected for the same reason.
+/// A sink written into a query is rejected for the same reason, and so is a declared sink that a query inlines.
 TEST_F(SqlRewriterTest, RejectsADeclaredSinkThatChoosesItsResultFile)
 {
     EXPECT_THROW(
@@ -813,6 +832,14 @@ TEST_F(SqlRewriterTest, RejectsADeclaredSinkThatChoosesItsResultFile)
                    "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream INTO out;\n"
                    "----\n"
                    "== Optimized Plan ==\n"),
+        Exception);
+    EXPECT_THROW(
+        rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                   "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('/tmp/mine.csv' AS \"SINK\".\"FILE_PATH\");\n"
+                   "\n"
+                   "SELECT id FROM stream INTO out;\n"
+                   "----\n"
+                   "1\n"),
         Exception);
 }
 
