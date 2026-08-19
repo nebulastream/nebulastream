@@ -26,7 +26,7 @@ description: |
       - Full tags: nebulastream/nes-[IMAGE_TYPE]:[TAG]-[ARCH]-[STDLIB]-[SANITIZER]
       - Multi-arch tags: nebulastream/nes-[IMAGE_TYPE]:[TAG]-[STDLIB]-[SANITIZER]
       - Branch-specific tags: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME]-[STDLIB]-[SANITIZER]
-      - Shortcuts: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME] (defaults to libstdcxx-none)
+      - Shortcuts: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME] (defaults to libcxx-none)
   
    The workflow creates multi-architecture manifests that combine x64 and arm64 images
    where available, and adds convenience tags for common configurations.

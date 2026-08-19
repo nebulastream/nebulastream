@@ -176,8 +176,8 @@ jobs:
             sccache --show-stats
             sccache --stop-server
 
-  # Aggregate gate for branch protection. Only this job needs to be required —
-  # if any matrix entry or the log-level job fails/cancels/skips, this fails too.
+  # Aggregate gate: if any matrix entry or the log-level job fails/cancels/skips, this
+  # fails too, so callers only have to look at this one job.
   done:
     name: Done
     needs: [build-and-test, build-and-test-log-level]

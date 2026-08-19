@@ -82,8 +82,8 @@ jobs:
             printf "Checks: \"-*,readability-duplicate-include\"\nWarningsAsErrors: \"*\"\n" > build/clang-tidy-precheck.yaml
             export NES_TIDY_DIFF_BASE=${{ inputs.base_sha }}
             export NES_TIDY_CONFIG_FILE=$(pwd)/build/clang-tidy-precheck.yaml
-            # Export fixes here too: if this pass fails the job stops, and the
-            # PR-comment bot still needs a fixes.yml to annotate from.
+            # Export fixes here too: if this pass fails the job stops, so the
+            # uploaded artifact would otherwise be empty.
             export NES_TIDY_EXPORT_FIXES=$(pwd)/clang-tidy-result/fixes.yml
             cmake --build build --target tidy-diff
       - uses: ./.github/steps/run-in-container
