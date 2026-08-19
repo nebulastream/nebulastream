@@ -101,7 +101,8 @@ void processQueryWithError(
     SystestProgressTracker& progressTracker,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
     const std::optional<DistributedException>& exception,
-    const QueryPerformanceMessageBuilder& performanceMessageBuilder)
+    const QueryPerformanceMessageBuilder& performanceMessageBuilder,
+    const std::optional<ErrorCode>& toleratedErrorCode = {})
 {
     runningQuery->exception = exception;
     reportResult(
@@ -110,18 +111,29 @@ void processQueryWithError(
         failed,
         [&]
         {
+            const DistributedException& actualException = runningQuery->exception.value();
+            auto allExceptionByAddress = std::views::join(std::views::transform(
+                actualException.details(),
+                [](auto& exceptionsByAddress)
+                {
+                    return std::views::transform(
+                        exceptionsByAddress.second,
+                        [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
+                }));
+
+            /// --tolerate_error_code: the query is allowed to fail with exactly this code (e.g. it was shed as a
+            /// buffer-exhaustion victim under a deliberately tiny pool). Cascading secondary errors are tolerated
+            /// alongside it, like for expected errors below.
+            if (toleratedErrorCode.has_value()
+                && std::ranges::any_of(
+                    allExceptionByAddress | std::views::values,
+                    [&](const auto& exceptionRef) { return exceptionRef.get().code() == *toleratedErrorCode; }))
+            {
+                return std::string{};
+            }
+
             if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectedResultsOrExpectedError))
             {
-                const DistributedException& actualException = runningQuery->exception.value();
-                auto allExceptionByAddress = std::views::join(std::views::transform(
-                    actualException.details(),
-                    [](auto& exceptionsByAddress)
-                    {
-                        return std::views::transform(
-                            exceptionsByAddress.second,
-                            [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
-                    }));
-
                 /// The test passes if the expected error code is among the thrown exceptions. Additional errors are tolerated, because
                 /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines
                 const auto expectedErrorOccurred = std::ranges::any_of(
@@ -153,7 +165,8 @@ std::vector<RunningQuery> runQueries(
     const uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode)
 {
     using SystestKey = std::pair<TestName, SystestQueryId>;
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
@@ -291,7 +304,8 @@ std::vector<RunningQuery> runQueries(
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
-                        queryPerformanceMessage);
+                        queryPerformanceMessage,
+                        toleratedErrorCode);
                 }
             }
             else if (nextQuery.planInfoOrException.has_value())
@@ -308,7 +322,8 @@ std::vector<RunningQuery> runQueries(
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
-                        queryPerformanceMessage);
+                        queryPerformanceMessage,
+                        toleratedErrorCode);
                 }
             }
             else
@@ -320,7 +335,8 @@ std::vector<RunningQuery> runQueries(
                     failed,
                     DistributedException(std::unordered_map<Host, std::vector<Exception>>{
                         {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
-                    queryPerformanceMessage);
+                    queryPerformanceMessage,
+                    toleratedErrorCode);
             }
         }
         return hasOneMoreQueryToStart;
@@ -340,7 +356,8 @@ std::vector<RunningQuery> runQueries(
 
             if (queryStatus.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
-                processQueryWithError(it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage);
+                processQueryWithError(
+                    it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage, toleratedErrorCode);
                 active.erase(it);
                 continue;
             }
@@ -488,12 +505,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage, toleratedErrorCode);
 }
 
 namespace
@@ -555,7 +573,8 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
@@ -579,7 +598,13 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
 
     auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
+    return runQueries(
+        queriesWithoutConfigurationOverrides,
+        numConcurrentQueries,
+        submitter,
+        progressTracker,
+        queryPerformanceMessage,
+        toleratedErrorCode);
 }
 
 }

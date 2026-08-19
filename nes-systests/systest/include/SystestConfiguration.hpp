@@ -22,6 +22,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
@@ -77,6 +78,11 @@ public:
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;
     std::vector<std::string> globalExcludedGroups;
+
+    /// --tolerate_error_code: a query passes if it either succeeds or fails with exactly this error code. Used by
+    /// suites that run under deliberately scarce resources (e.g. a tiny buffer pool, where the engine sheds victim
+    /// queries with QueryBufferExhausted) to assert "no hang, no crash" without pinning which queries get shed.
+    std::optional<ErrorCode> toleratedErrorCode;
 
     SystestClusterConfiguration clusterConfig;
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

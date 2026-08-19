@@ -28,6 +28,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <rfl/Rename.hpp>
+#include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestProgressTracker.hpp>
@@ -56,12 +57,16 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     return "";
 }
 
+/// `toleratedErrorCode` (--tolerate_error_code): if set, a query also passes when it fails with exactly this error
+/// code (cascading secondary errors are tolerated alongside it). Queries that explicitly expect an error keep their
+/// strict expectation unless they fail with the tolerated code.
 [[nodiscard]] std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     QuerySubmitter& querySubmitter,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode = {});
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return returns a collection of failed queries
@@ -71,7 +76,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode = {});
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
@@ -80,7 +86,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::optional<ErrorCode>& toleratedErrorCode = {});
 
 /// Serialized to BenchmarkResults.json via rfl::json::write. The field names below are the JSON keys.
 struct BenchmarkResult

@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -109,6 +110,10 @@ void configureArgumentParser(ArgumentParser& program)
         .default_value<std::vector<std::string>>({})
         .append()
         .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
+    program.add_argument("--tolerate_error_code")
+        .scan<'u', uint64_t>()
+        .help("a query passes if it either succeeds or fails with exactly this error code, e.g. 3007 (QueryBufferExhausted) when running "
+              "under a deliberately tiny buffer pool");
     program.add_argument("--")
         .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
         .default_value(std::vector<std::string>{})
@@ -404,6 +409,18 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--endless"))
     {
         config.endlessMode = true;
+    }
+
+    if (program.is_used("--tolerate_error_code"))
+    {
+        const auto rawCode = program.get<uint64_t>("--tolerate_error_code");
+        const auto code = NES::errorCodeExists(rawCode);
+        if (not code.has_value())
+        {
+            std::cerr << "Unknown error code for --tolerate_error_code: " << rawCode << '\n';
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+        config.toleratedErrorCode = code;
     }
 }
 

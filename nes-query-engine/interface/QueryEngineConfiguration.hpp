@@ -19,8 +19,11 @@
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <fmt/format.h>
+#include <BufferExhaustionPolicy.hpp>
 
 namespace NES
 {
@@ -40,7 +43,22 @@ public:
     UIntOption admissionQueueSize
         = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
 
+    /// When the global buffer pool is exhausted, a victim query is terminated to free buffers (instead of deadlocking).
+    /// This selects which query.
+    EnumOption<BufferExhaustionPolicy> bufferExhaustionPolicy
+        = {"buffer_exhaustion_policy",
+           BufferExhaustionPolicy::TERMINATE_LARGEST,
+           fmt::format("Policy for choosing a victim query on buffer-pool exhaustion: {}", enumPipeList<BufferExhaustionPolicy>())};
+
+    /// Number of buffers kept free for the recovery/teardown path when the pool is exhausted (the "don't take the last
+    /// buffer" margin). 0 means: use the number of worker threads (so all workers can detect exhaustion concurrently).
+    UIntOption bufferRecoveryMargin
+        = {"buffer_recovery_margin", "0", "Buffers held back for recovery when the pool is exhausted (0 = number of worker threads).", {}};
+
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &admissionQueueSize}; }
+    std::vector<BaseOption*> getOptions() override
+    {
+        return {&numberOfWorkerThreads, &admissionQueueSize, &bufferExhaustionPolicy, &bufferRecoveryMargin};
+    }
 };
 }
