@@ -107,7 +107,7 @@ LogicalFunctionRegistryReturnType GreaterEqualsLogicalFunction::createGreaterEqu
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }

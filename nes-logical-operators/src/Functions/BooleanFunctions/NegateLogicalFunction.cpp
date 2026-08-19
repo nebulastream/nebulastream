@@ -100,11 +100,11 @@ LogicalFunctionRegistryReturnType NegateLogicalFunction::createNegate(LogicalFun
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN)
     {
-        throw CannotDeserialize("requires child of type bool, but got {}", arguments.children[0].getDataType());
+        throw InvalidLogicalFunctionArgument("requires child of type bool, but got {}", arguments.children[0].getDataType());
     }
     return NegateLogicalFunction(arguments.children[0]);
 }

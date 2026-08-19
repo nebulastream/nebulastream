@@ -110,7 +110,7 @@ LogicalFunctionRegistryReturnType EqualsLogicalFunction::createEquals(LogicalFun
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
