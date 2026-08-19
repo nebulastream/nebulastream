@@ -90,12 +90,20 @@ public:
     {
     }
 
+    /// The sink config of the definition is discarded: every query gets its own file_path (see the class comment).
+    /// The placement host is the one property that carries over, which is why the binder hands it to us as a
+    /// dedicated field instead of leaving it in the config map.
     bool registerSink(
         const Identifier& sinkType,
         const Identifier& sinkNameInFile,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const std::unordered_map<Identifier, std::string>& /*config*/)
+        const std::optional<Host>& requestedHost)
     {
+        PRECONDITION(
+            not possibleSinkPlacements.empty(),
+            "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
+        const auto host = requestedHost.value_or(Host(possibleSinkPlacements.at(0).getRawValue()));
+
         std::unordered_map<Identifier, std::string> config{};
         std::unordered_map<Identifier, std::string> formatConfig{};
         if (sinkType == Identifier::parse("File"))
@@ -108,13 +116,8 @@ public:
             config[Identifier::parse("file_path")] = "/tmp/none.txt";
             formatConfig[Identifier::parse("quote_strings")] = "true";
         }
-        std::string host = possibleSinkPlacements.at(0).getRawValue();
-        if (auto hostIt = config.find(Identifier::parse("host")); hostIt != config.end())
-        {
-            host = hostIt->second;
-        }
 
-        const auto sink = sinkCatalog->addSinkDescriptor(sinkNameInFile, schema, sinkType, Host(host), std::move(config), formatConfig);
+        const auto sink = sinkCatalog->addSinkDescriptor(sinkNameInFile, schema, sinkType, host, std::move(config), formatConfig);
         if (not sink.has_value())
         {
             throw SinkAlreadyExists("Failed to create file sink with assigned name {}", sinkNameInFile);
@@ -123,7 +126,7 @@ public:
 
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
-            [this, schema, sinkType](
+            [this, schema, sinkType, host](
                 Identifier assignedSinkName, const std::filesystem::path& filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 /// Only inject a file_path for sink types that consume it. Sinks like Void accept no
@@ -141,17 +144,7 @@ public:
                     formatConfig[Identifier::parse("quote_strings")] = "true";
                 }
 
-                PRECONDITION(
-                    not possibleSinkPlacements.empty(),
-                    "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
-                std::string host = possibleSinkPlacements.at(0).getRawValue();
-                if (auto hostIt = config.find(Identifier::parse("host")); hostIt != config.end())
-                {
-                    host = hostIt->second;
-                }
-
-                const auto sink
-                    = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, Host(host), std::move(config), formatConfig);
+                const auto sink = sinkCatalog->addSinkDescriptor(assignedSinkName, schema, sinkType, host, std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -701,7 +694,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema, statement.sinkConfig);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, statement.schema, statement.host);
     }
 
     void createModel(const std::shared_ptr<ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
