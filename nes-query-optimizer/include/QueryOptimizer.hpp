@@ -14,20 +14,11 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Phases/OperatorPlacer.hpp>
 #include <Phases/RuleBasedOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
+#include <Catalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <WorkerCatalog.hpp>
-
-namespace NES
-{
-class ModelCatalog;
-}
 
 namespace NES
 {
@@ -35,16 +26,19 @@ namespace NES
 class QueryOptimizer final
 {
 public:
-    explicit QueryOptimizer(
-        const QueryOptimizerConfiguration& defaultQueryOptimization,
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
-        const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+    explicit QueryOptimizer(const QueryOptimizerConfiguration& defaultQueryOptimization, const std::shared_ptr<Catalog>& catalog)
+        : ruleBasedOptimization(defaultQueryOptimization, catalog), operatorPlacement(defaultQueryOptimization, catalog)
+    {
+    }
 
-    [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
+    [[nodiscard]] std::unordered_map<Host, std::vector<LogicalPlan>> optimize(LogicalPlan plan) const;
+
+    /// The intermediate stage, after analysis and rewriting but before the split across hosts. Separated out
+    /// so a caller that needs both stages can render them without running the rewrite twice.
+    [[nodiscard]] LogicalPlan optimizeGlobalPlan(LogicalPlan plan) const;
+
+    /// Expects a plan that has already been rewritten. A plan that has not been is placed as given, with no error.
+    [[nodiscard]] std::unordered_map<Host, std::vector<LogicalPlan>> place(LogicalPlan globalPlan) const;
 
 private:
     RuleBasedOptimizer ruleBasedOptimization;

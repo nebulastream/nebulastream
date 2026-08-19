@@ -15,10 +15,6 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 
 #include <ranges>
-#include <set>
-#include <string_view>
-#include <typeindex>
-#include <typeinfo>
 #include <utility>
 #include <vector>
 
@@ -30,8 +26,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -43,30 +39,20 @@ LogicalSourceExpansionRule::expandLogicalSource(const LogicalOperator& visiting,
 {
     if (const auto sourceNameOperator = visiting.tryGetAs<SourceNameLogicalOperator>())
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceNameOperator.value()->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("{}", sourceNameOperator.value()->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
-
-        if (not entriesOpt.has_value())
-        {
-            throw UnknownSourceName("Source \"{}\" was removed concurrently", sourceNameOperator.value()->getLogicalSourceName());
-        }
-        const auto& entries = entriesOpt.value();
-        if (entries.empty())
+        /// The catalog keys sources by their canonical spelling, so the lookup has to fold the name the same way.
+        const auto logicalSource = catalog->getLogicalSource(sourceNameOperator.value()->getLogicalSourceName().asCanonicalString());
+        const auto physicalSources = catalog->getPhysicalSources(logicalSource.getLogicalSourceName().asCanonicalString());
+        if (physicalSources.empty())
         {
             throw UnknownSourceName(
                 "No physical sources present for logical source \"{}\"", sourceNameOperator.value()->getLogicalSourceName());
         }
-        if (std::ranges::size(children) != 0 && std::ranges::size(entries) != 1)
+        if (std::ranges::size(children) != 0 && std::ranges::size(physicalSources) != 1)
         {
             throw UnknownSourceName("LogicalSource must either have no children or only expand to one physical source");
         }
 
-        auto expandedSourceOperators = entries
+        auto expandedSourceOperators = physicalSources
             | std::views::transform([&children](const auto& entry) -> LogicalOperator
                                     { return SourceDescriptorLogicalOperator::create(entry).withChildrenUnsafe(children); })
             | std::ranges::to<std::vector>();
@@ -94,6 +80,6 @@ std::set<std::type_index> LogicalSourceExpansionRule::neededBy() const
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 PlanRuleRegistryReturnType LogicalSourceExpansionRule::create(PlanRuleRegistryArguments arguments)
 {
-    return LogicalSourceExpansionRule{arguments.sourceCatalog};
+    return LogicalSourceExpansionRule{arguments.catalog};
 }
 }

@@ -15,17 +15,36 @@ function(add_nes_test_systest)
     set(TARGET_NAME ${ARGV0})
     target_link_libraries(${TARGET_NAME} nes-systest-lib)
     target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
     target_compile_definitions(${TARGET_NAME} PRIVATE SYSTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
 endfunction()
 
-add_nes_test_systest(slt-parser-test
-        "SystestParserTests.cpp"
-        "SystestParserInvalidTestFilesTests.cpp"
-        "SystestParserValidTestFilesTests.cpp"
-        "SystestResultCheckTests.cpp"
-        "SystestRunnerTest.cpp"
-        "SystestStateTests.cpp")
+add_nes_test_systest(systest-partition-test
+        "TestFilePartitionTests.cpp")
 
-add_nes_test_systest(slt-e2e-test
-        "SystestE2ETests.cpp")
+add_nes_test_systest(systest-test-discovery-test
+        "Discovery/TestDiscoveryTests.cpp")
+
+add_nes_test_systest(slt-parser-test
+        "Parser/SystestParserTests.cpp"
+        "Parser/SystestParserInvalidTestFilesTests.cpp"
+        "Parser/SystestParserValidTestFilesTests.cpp")
+
+add_nes_test_systest(testfile-parser-test
+        "Parser/TestFileParserTests.cpp")
+
+add_nes_test_systest(systest-name-qualifier-test
+        "Rewriter/NameQualifierTests.cpp")
+
+add_nes_test_systest(systest-sql-rewriter-test
+        "Rewriter/SqlRewriterTests.cpp")
+
+add_nes_test_systest(systest-runner-test
+        "Runner/RunnerTests.cpp")
+
+add_nes_test_systest(systest-schedule-test
+        "Runner/ScheduleTests.cpp")
+
+add_nes_test_systest(systest-result-checker-test
+        "ResultChecker/ResultCheckerTests.cpp")

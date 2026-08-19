@@ -39,11 +39,14 @@ message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
+find_package(folly CONFIG REQUIRED)
 find_package(reflectcpp CONFIG REQUIRED)
+find_package(argparse CONFIG REQUIRED)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
-target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters)
+target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-coordinator-bridge nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE folly::folly nes-input-formatters argparse::argparse tcp_source_plugin_library)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_include_directories(nes-systest-lib PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
@@ -51,13 +54,10 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
-# Find required packages
-find_package(argparse CONFIG REQUIRED)
-
 # Add the systest executable
-add_executable(systest src/SystestStarter.cpp)
+add_executable(systest src/Main.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
+target_link_libraries(systest PUBLIC nes-systest-lib nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
@@ -93,8 +93,8 @@ set(SYSTEST_JOIN_UNPOOLED_FRACTION 0.8333333)
 # Add code coverage if enabled
 if (CODE_COVERAGE)
     foreach (enableSliceCache IN LISTS sliceCacheValues)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_sliceCache_${enableSliceCache} PUBLIC AUTO ALL ARGS -n 20 --show-query-performance --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_NLJ} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc_sliceCache_${enableSliceCache} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=NESTED_LOOP_JOIN -- --worker.default_query_execution.execution_mode=INTERPRETER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_Hash_Join_sliceCache_${enableSliceCache} PUBLIC AUTO ALL ARGS -n 20 --show-query-performance --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc_sliceCache_${enableSliceCache} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=HASH_JOIN -- --worker.default_query_execution.execution_mode=INTERPRETER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_sliceCache_${enableSliceCache} PUBLIC AUTO ALL ARGS -n 20 --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_NLJ} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc_sliceCache_${enableSliceCache} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=NESTED_LOOP_JOIN -- --worker.default_query_execution.execution_mode=INTERPRETER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage_Hash_Join_sliceCache_${enableSliceCache} PUBLIC AUTO ALL ARGS -n 20 --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc_sliceCache_${enableSliceCache} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=HASH_JOIN -- --worker.default_query_execution.execution_mode=INTERPRETER --enable_event_trace=true --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         # Make sure to fetch ExternalData before running the ccov targets
         add_dependencies(ccov-run-systest_interpreter_coverage_sliceCache_${enableSliceCache} test-data)
         add_dependencies(ccov-run-systest_interpreter_coverage_Hash_Join_sliceCache_${enableSliceCache} test-data)
@@ -113,7 +113,7 @@ foreach (enableSliceCache IN LISTS sliceCacheValues)
         endif ()
         ExternalData_Add_Test(test-data
                 NAME systest_interpreter_${joinStrategy}_sliceCache_${enableSliceCache}
-                COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${joinStrategy}_sliceCache_${enableSliceCache} --exclude-groups ${interpreterExcludeGroups} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=${joinStrategy} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${joinStrategy}_sliceCache_${enableSliceCache} --exclude-groups ${interpreterExcludeGroups} --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=${joinStrategy} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_interpreter_${joinStrategy}_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
 endforeach ()
@@ -121,7 +121,7 @@ if (NOT CODE_COVERAGE)
     foreach (enableSliceCache IN LISTS sliceCacheValues)
         ExternalData_Add_Test(test-data
                 NAME systest_compiler_sliceCache_${enableSliceCache}
-                COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
+                COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler_sliceCache_${enableSliceCache} --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
         set_tests_properties(systest_compiler_sliceCache_${enableSliceCache} PROPERTIES LABELS "Systest" PROCESSORS 4)
     endforeach ()
 
@@ -129,10 +129,9 @@ if (NOT CODE_COVERAGE)
     # coverage is systest_large_benchmark_*, which is gated behind ENABLE_LARGE_TESTS.
     ExternalData_Add_Test(test-data
             NAME systest_benchmark_small
-            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/benchmark_small --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_benchmark_small PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif (NOT CODE_COVERAGE)
-
 
 if (ENABLE_LARGE_TESTS)
     message(STATUS "Large scale tests enabled")
@@ -149,13 +148,13 @@ if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(test-data
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 
     ExternalData_Add_Test(test-data
             # currently, 16 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_benchmark_${joinStrategy}
-            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 16)
 
     # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
@@ -163,7 +162,7 @@ if (ENABLE_LARGE_TESTS)
     set(joinStrategy NESTED_LOOP_JOIN)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=16384000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
+            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=16384000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
     set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 
     # The in-process large tests above each run one worker at LARGE_TEST_TOTAL_MEMORY_BYTES on this host. Fail loudly at
@@ -196,14 +195,14 @@ if (NOT CODE_COVERAGE)
                 endif ()
                 ExternalData_Add_Test(test-data
                         NAME systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter
-                        COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups ${interpreterExcludeGroups} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
+                        COMMAND systest -n 6 --groups Join --exclude-groups ${interpreterExcludeGroups} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
                         --optimizer join_strategy=${joinStrategy}
                         --
                         --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
                 set_tests_properties(systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
                 ExternalData_Add_Test(test-data
                         NAME systest_join_${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler
-                        COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups ${compilerExcludeGroups} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
+                        COMMAND systest -n 6 --groups Join --exclude-groups ${compilerExcludeGroups} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_sliceCache_${enableSliceCache}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
                         --optimizer join_strategy=${joinStrategy}
                         --
                         --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=${SYSTEST_JOIN_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${SYSTEST_JOIN_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
@@ -211,13 +210,13 @@ if (NOT CODE_COVERAGE)
             endforeach ()
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter
-                    COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                    COMMAND systest -n 6 --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
             set_tests_properties(systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
             ExternalData_Add_Test(test-data
                     NAME systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_compiler
-                    COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
+                    COMMAND systest -n 6 --groups Aggregation --exclude-groups ${SYSTEST_EXCLUDE_GROUPS_COMPILER} --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_sliceCache_${enableSliceCache}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.total_memory_in_bytes=163840000 --worker.default_query_execution.slice_cache.enable_slice_cache=${enableSliceCache})
             set_tests_properties(systest_agg_${workerThreads}_sliceCache_${enableSliceCache}_compiler PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
@@ -225,15 +224,10 @@ if (NOT CODE_COVERAGE)
     endforeach ()
 endif (NOT CODE_COVERAGE)
 
-# Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
-ExternalData_Add_Target(test-data)
-add_dependencies(nes-systest-lib test-data)
-
-add_tests_if_enabled(tests)
-
-# Per-worker memory budgets for the distributed suite live in the topology YAMLs themselves (the large-scale
-# two-node topology declares one; the lightweight topologies keep the worker default). distributed.bats sums the
-# declared budgets and checks the host can back them before starting the compose stack.
+# The distributed end-to-end suite. Every worker runs as its own container and systest reaches them over gRPC, with the
+# test data and the test tree mounted into all of them, which is what lets a source read and a sink write a path both
+# sides see. Each topology YAML declares its own per-worker memory budgets, and distributed.bats sums the declared
+# budgets and checks the host can back them before starting the compose stack.
 add_e2e_test(
     NAME systest-remote-test
     BATS_FILE remote-test/distributed.bats
@@ -242,3 +236,9 @@ add_e2e_test(
         DATADIR=${EXPANDED_TEST_DATA_PATH}
         ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
 )
+
+# Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
+ExternalData_Add_Target(test-data)
+add_dependencies(nes-systest-lib test-data)
+
+add_tests_if_enabled(tests)

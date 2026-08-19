@@ -50,7 +50,6 @@ public:
         = DescriptorConfig::createConfigParameterContainerMap(TYPE);
 
 private:
-    friend class SourceCatalog;
     friend struct Unreflector<InputFormatterDescriptor>;
     friend struct Reflector<InputFormatterDescriptor>;
 
