@@ -82,7 +82,7 @@ jobs:
     runner: self-hosted-{arch}
     tests: [unit, systest, docker]
 
-  # === Debug builds (no sanitizer, split for parallelism on x64) ===
+  # === Debug builds (no sanitizer, split across jobs for parallelism) ===
 
   - name: "{arch} {stdlib} {build_type} (unit)"
     arch: [x64]
@@ -170,8 +170,8 @@ jobs:
 
   # === Build-only (no tests, validates compilation) ===
 
-  # nightly widens build_type coverage to also compile-check Benchmark and
-  # RelWithDebInfo, not just Debug.
+  # nightly widens build_type coverage to also compile-check Benchmark, Release
+  # and RelWithDebInfo, not just Debug.
   - name: "{arch} {stdlib} {build_type} (build only)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
