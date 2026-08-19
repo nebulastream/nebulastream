@@ -159,16 +159,19 @@ void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration
     }
 
     config.benchmark = true;
+    /// A measuring run is limited to one query at a time, so -b and -n above 1 contradict each other.
     if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries")) && program.get<int>("--numberConcurrentQueries") > 1)
     {
-        NES_ERROR("Cannot run systest in Benchmarking mode with concurrency enabled!");
-        std::cout << "Cannot run systest in benchmarking mode with concurrency enabled!\n";
+        const auto message = fmt::format(
+            "Cannot combine -b with -n {}: a measuring run submits one query at a time. Drop one of the two.",
+            program.get<int>("--numberConcurrentQueries"));
+        NES_ERROR("{}", message);
+        std::cout << message << '\n';
         std::exit(-1); ///NOLINT(concurrency-mt-unsafe)
     }
 
     std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
     std::cout << "Any included differential queries and queries expecting an error will be skipped.\n";
-    config.numberConcurrentQueries = 1;
 }
 
 void applyDebugMode(const ArgumentParser& program)
