@@ -20,6 +20,7 @@
 #include <system_error>
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Strings.hpp>
 #include <fast_float/fast_float.h>
 #include <ErrorHandling.hpp>
 
@@ -46,6 +47,26 @@ template <typename T>
         return result;
     }
     throw CannotFormatMalformedStringValue("Could not parse '{}' in the uncompiled fast parser", fieldValue);
+}
+
+/// Original/naive numeric parse: the codebase's from_chars_with_exception -- integers via std::from_chars,
+/// floats via std::stod (trim + std::string alloc + exceptions), i.e. EXACTLY the codec the registry
+/// Default* parsers wrap. It is a direct, hardcoded call (no std::function / registry indirection), so a
+/// fast-vs-slow delta on the input side is the parser codec alone. (libc++ has no floating-point
+/// std::from_chars, which is why fast_float / stod are the two real choices here.)
+template <typename T>
+[[nodiscard]] T uncompiledSlowParse(const std::string_view fieldValue)
+{
+    return from_chars_with_exception<T>(fieldValue);
+}
+
+/// Codec-selected numeric parse leaf. `useSlow` (resolved once per task from NES_INPUT_CODEC) picks the
+/// original std::from_chars codec; otherwise fast_float. Both are hardcoded, inlinable calls -- the branch
+/// is on a per-task-constant bool, so the naive baseline pays no dispatch overhead the fast path avoids.
+template <typename T>
+[[nodiscard]] T uncompiledParse(const std::string_view fieldValue, const bool useSlow)
+{
+    return useSlow ? uncompiledSlowParse<T>(fieldValue) : uncompiledFastParse<T>(fieldValue);
 }
 
 /// Write a fixed-size value into the formatted tuple buffer at the given byte offset (row-wise layout).

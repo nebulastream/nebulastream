@@ -78,7 +78,8 @@ public:
         TupleBuffer& formattedBuffer,
         const UncompiledSchemaInfo& schemaInfo,
         const std::vector<UncompiledParseFunctionSignature>& parseFunctions,
-        AbstractBufferProvider& bufferProvider);
+        AbstractBufferProvider& bufferProvider,
+        bool useSlowInputCodec);
 
     friend Derived;
 

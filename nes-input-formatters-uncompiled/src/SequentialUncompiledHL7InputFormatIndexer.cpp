@@ -87,7 +87,8 @@ UncompiledInputFormatIndexerRegistryReturnType RegisterSequentialUncompiledHL7Un
         SequentialUncompiledHL7InputFormatIndexer(arguments.getNumberOfFieldsInSchema()), UncompiledQuotationType::NONE);
 }
 
-InputFormatterValidationRegistryReturnType InputFormatterValidationGeneratedRegistrar::RegisterSequentialUncompiledHL7InputFormatterValidation(
+InputFormatterValidationRegistryReturnType
+InputFormatterValidationGeneratedRegistrar::RegisterSequentialUncompiledHL7InputFormatterValidation(
     InputFormatterValidationRegistryArguments arguments)
 {
     return SequentialUncompiledHL7InputFormatIndexer::validateAndFormat(arguments.config);

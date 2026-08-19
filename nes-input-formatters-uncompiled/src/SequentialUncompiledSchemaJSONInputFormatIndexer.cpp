@@ -38,8 +38,9 @@ SequentialUncompiledSchemaJSONInputFormatIndexer::SequentialUncompiledSchemaJSON
 }
 
 void SequentialUncompiledSchemaJSONInputFormatIndexer::indexRawBuffer(
-    UncompiledSchemaJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSchemaJSONMetaData& metaData)
-    const
+    UncompiledSchemaJSONFIF& fieldIndexFunction,
+    const UncompiledRawTupleBuffer& rawBuffer,
+    const UncompiledSchemaJSONMetaData& metaData) const
 {
     fieldIndexFunction.startSetup(static_cast<uint32_t>(numberOfFieldsInSchema));
 

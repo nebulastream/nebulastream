@@ -48,6 +48,21 @@ namespace NES
 /// The type that all formatters use to represent indexes to fields.
 using UncompiledFieldIndex = uint32_t;
 
+/// Resolve the input parse codec once (at task construction) from NES_INPUT_CODEC. "original"/"legacy" ->
+/// the naive codec (uncompiledSlowParse = from_chars_with_exception, i.e. std::stod for floats); anything
+/// else -> fast_float. Benchmark-toggle idiom (like NES_MMAP_* / NES_OUTPUT_CODEC): only the ablation naive
+/// baseline sets it; every other arm keeps the fast codec.
+inline bool uncompiledInputUseSlowCodec()
+{
+    const char* const raw = std::getenv("NES_INPUT_CODEC");
+    if (raw != nullptr)
+    {
+        const std::string_view value{raw};
+        return value == "original" || value == "legacy" || value == "Original" || value == "ORIGINAL";
+    }
+    return false;
+}
+
 inline void setUncompiledMetadataOfFormattedBuffer(
     const TupleBuffer& rawBuffer, TupleBuffer& formattedBuffer, ChunkNumber::Underlying& runningChunkNumber, const bool isLastChunk)
 {
@@ -89,7 +104,8 @@ void processUncompiledTuple(
     TupleBuffer& formattedBuffer,
     const UncompiledSchemaInfo& schemaInfo,
     const std::vector<UncompiledParseFunctionSignature>& parseFunctions,
-    AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
+    AbstractBufferProvider& bufferProvider, /// for getting unpooled buffers for varsized data
+    const bool useSlowInputCodec /// naive ablation baseline: from_chars_with_exception instead of fast_float
 )
 {
     const size_t currentTupleIdx = formattedBuffer.getNumberOfTuples();
@@ -110,34 +126,34 @@ void processUncompiledTuple(
         switch (schemaInfo.getFieldTypes()[fieldIndex])
         {
             case DataType::Type::INT8:
-                uncompiledWriteFixed(uncompiledFastParse<int8_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<int8_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::INT16:
-                uncompiledWriteFixed(uncompiledFastParse<int16_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<int16_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::INT32:
-                uncompiledWriteFixed(uncompiledFastParse<int32_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<int32_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::INT64:
-                uncompiledWriteFixed(uncompiledFastParse<int64_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<int64_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::UINT8:
-                uncompiledWriteFixed(uncompiledFastParse<uint8_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<uint8_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::UINT16:
-                uncompiledWriteFixed(uncompiledFastParse<uint16_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<uint16_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::UINT32:
-                uncompiledWriteFixed(uncompiledFastParse<uint32_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<uint32_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::UINT64:
-                uncompiledWriteFixed(uncompiledFastParse<uint64_t>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<uint64_t>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::FLOAT32:
-                uncompiledWriteFixed(uncompiledFastParse<float>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<float>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             case DataType::Type::FLOAT64:
-                uncompiledWriteFixed(uncompiledFastParse<double>(currentFieldSV), writeOffsetInBytes, formattedBuffer);
+                uncompiledWriteFixed(uncompiledParse<double>(currentFieldSV, useSlowInputCodec), writeOffsetInBytes, formattedBuffer);
                 break;
             default:
                 parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
@@ -163,7 +179,8 @@ void processUncompiledSpanningTuple(
     const UncompiledSchemaInfo& schemaInfo,
     const typename FormatterType::UncompiledIndexerMetaData& uncompiledIndexerMetaData,
     const FormatterType& inputFormatIndexer,
-    const std::vector<UncompiledParseFunctionSignature>& parseFunctions)
+    const std::vector<UncompiledParseFunctionSignature>& parseFunctions,
+    const bool useSlowInputCodec)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
     /// If the buffers are not empty, there are at least three buffers
@@ -193,7 +210,7 @@ void processUncompiledSpanningTuple(
         lastBuffer.setSpanningTuple(completeSpanningTuple);
         inputFormatIndexer.indexRawBuffer(fieldIndexFunction, lastBuffer.getRawTupleBuffer(), uncompiledIndexerMetaData);
         processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
-            completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider);
+            completeSpanningTuple, fieldIndexFunction, 0, formattedBuffer, schemaInfo, parseFunctions, bufferProvider, useSlowInputCodec);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
     }
 }
@@ -270,6 +287,7 @@ public:
                   [&parserConfig, quotationType](const auto& field)
                   { return provideUncompiledParseFunction(getUncompiledParserName(field.dataType.type, parserConfig), quotationType); })
               | std::ranges::to<std::vector>())
+        , useSlowInputCodec(uncompiledInputUseSlowCodec())
     {
         if constexpr (hasSpanningTuple() and not isSequential())
         {
@@ -395,6 +413,9 @@ private:
         sequenceShredder;
 
     std::vector<UncompiledParseFunctionSignature> parseFunctions;
+    /// Resolved once from NES_INPUT_CODEC (default false = fast_float). Threaded into processUncompiledTuple
+    /// so the naive ablation baseline parses numerics with std::from_chars instead of fast_float.
+    bool useSlowInputCodec;
 
     /// Sequential mode only: the region of a buffer that is part of a spanning tuple straddling buffers, kept
     /// alive (TupleBuffer is ref-counted) with ZERO copy until the next buffer completes the tuple.
@@ -441,7 +462,8 @@ private:
                 formattedBuffer,
                 this->schemaInfo,
                 this->parseFunctions,
-                *bufferProvider);
+                *bufferProvider,
+                this->useSlowInputCodec);
             formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
             ++numTuplesReadFromRawBuffer;
         }
@@ -478,7 +500,8 @@ private:
                 this->schemaInfo,
                 this->uncompiledIndexerMetaData,
                 this->inputFormatIndexer,
-                this->parseFunctions);
+                this->parseFunctions,
+                this->useSlowInputCodec);
         }
 
         /// 2. process tuples in buffer — iterate for as long as the field index function indicates more tuples
@@ -506,7 +529,8 @@ private:
                 this->schemaInfo,
                 this->uncompiledIndexerMetaData,
                 this->inputFormatIndexer,
-                this->parseFunctions);
+                this->parseFunctions,
+                this->useSlowInputCodec);
         }
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
         if (formattedBuffer.getNumberOfTuples() != 0)
@@ -546,7 +570,8 @@ private:
             this->schemaInfo,
             this->uncompiledIndexerMetaData,
             this->inputFormatIndexer,
-            this->parseFunctions);
+            this->parseFunctions,
+            this->useSlowInputCodec);
 
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
@@ -664,7 +689,8 @@ private:
                     formattedBuffer,
                     this->schemaInfo,
                     this->parseFunctions,
-                    *bufferProvider);
+                    *bufferProvider,
+                    this->useSlowInputCodec);
                 formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
                 ++spanningRecordIdx;
             }

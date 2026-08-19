@@ -80,8 +80,9 @@ public:
     ~SequentialUncompiledSchemaJSONInputFormatIndexer() = default;
 
     void indexRawBuffer(
-        UncompiledSchemaJSONFIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledSchemaJSONMetaData& metaData)
-        const;
+        UncompiledSchemaJSONFIF& fieldIndexFunction,
+        const UncompiledRawTupleBuffer& rawBuffer,
+        const UncompiledSchemaJSONMetaData& metaData) const;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SequentialUncompiledSchemaJSONInputFormatIndexer& obj);

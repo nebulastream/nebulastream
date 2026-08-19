@@ -44,6 +44,8 @@ public:
         std::vector<size_t> sizesWithNull;
         std::vector<std::string> prefixes;
         std::vector<DataType> physicalTypes;
+        /// Raw (unescaped) field names -- only the Original (stringstream) writer consumes these.
+        std::vector<std::string> names;
     };
 
     explicit JSONFormat(const Schema& schema);
@@ -58,7 +60,13 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const JSONFormat& format);
 
 private:
+    /// The genuine pre-optimization naive writer (std::stringstream + DataType::formattedBytesToString),
+    /// reachable only when NES_OUTPUT_CODEC=original. Kept verbatim as the naive output-serializer baseline
+    /// (structure + codec together); the fast direct-buffer path is the optimized target.
+    [[nodiscard]] std::string formatOriginalStringstream(const TupleBuffer& inputBuffer) const;
+
     FormattingContext formattingContext;
+    OutputCodec codec;
 };
 
 }

@@ -35,6 +35,19 @@
 namespace NES
 {
 
+/// Selects the interpreted (legacy) JSON sink writer.
+/// Fast     = the current default: direct-buffer writes with shortest-float (zmij) + std::to_chars ints.
+/// Original = the genuine pre-optimization naive writer: a std::stringstream with a per-tuple std::string
+///            + DataType::formattedBytesToString (fmt "{:.6f}" floats). This is the naive output-serializer
+///            BASELINE -- structure + codec together, exactly the pre-change state -- kept so a benchmark
+///            can attribute the whole output-formatter rewrite apart from indexing and compilation.
+///            Selected per worker process via NES_OUTPUT_CODEC (benchmark-toggle idiom, like NES_MMAP_*).
+enum class OutputCodec : uint8_t
+{
+    Fast,
+    Original
+};
+
 class Format
 {
 public:

@@ -71,8 +71,7 @@ void UncompiledSchemaJSONFIF::indexRegion(
         implementationCapacity = region.size();
     }
 
-    const auto stage1Error
-        = implementation->stage1(reinterpret_cast<const uint8_t*>(bytes), region.size(), simdjson::stage1_mode::regular);
+    const auto stage1Error = implementation->stage1(reinterpret_cast<const uint8_t*>(bytes), region.size(), simdjson::stage1_mode::regular);
     /// EMPTY (no structural element) is fine -- it just means zero complete records in this region.
     if (stage1Error != simdjson::SUCCESS && stage1Error != simdjson::EMPTY)
     {

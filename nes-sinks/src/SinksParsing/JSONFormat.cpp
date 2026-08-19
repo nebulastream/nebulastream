@@ -19,8 +19,12 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <ostream>
+#include <ranges>
+#include <span>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -31,6 +35,7 @@
 #include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <ErrorHandling.hpp>
 
@@ -39,6 +44,22 @@ namespace NES
 
 namespace
 {
+/// Resolve the output codec once (at sink construction) from the NES_OUTPUT_CODEC env var.
+/// "original"/"legacy" -> the genuine pre-optimization stringstream writer; anything else -> Fast.
+OutputCodec outputCodecFromEnv()
+{
+    const char* const raw = std::getenv("NES_OUTPUT_CODEC");
+    if (raw != nullptr)
+    {
+        const std::string_view value{raw};
+        if (value == "original" || value == "legacy" || value == "Original" || value == "ORIGINAL")
+        {
+            return OutputCodec::Original;
+        }
+    }
+    return OutputCodec::Fast;
+}
+
 /// Construction-time JSON escaping for field names (RFC 8259: `"`, `\`, control bytes < 0x20).
 /// Mirrors the compiled JSONOutputFormatter's jsonEscapeString so the per-field glue is
 /// byte-identical.
@@ -155,7 +176,7 @@ void writeFloatDirect(std::vector<char>& out, size_t& off, const void* data)
 }
 }
 
-JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
+JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema), codec(outputCodecFromEnv())
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;
@@ -169,6 +190,7 @@ JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
         formattingContext.physicalTypes.emplace_back(physicalType);
         /// Same glue as the compiled formatter's fieldPrefixes: `{"NAME":` for field 0, `,"NAME":` after.
         formattingContext.prefixes.push_back(fmt::format("{}\"{}\":", index == 0 ? "{" : ",", jsonEscapeString(field.name)));
+        formattingContext.names.emplace_back(field.name);
         ++index;
     }
     formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
@@ -176,6 +198,10 @@ JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
 
 std::string JSONFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
 {
+    if (codec == OutputCodec::Original)
+    {
+        return formatOriginalStringstream(inputBuffer);
+    }
     thread_local std::vector<char> scratch;
     const auto bytes = formatToBuffer(inputBuffer, scratch);
     return std::string(scratch.data(), bytes);
@@ -183,6 +209,20 @@ std::string JSONFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
 
 size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>& out) const
 {
+    if (codec == OutputCodec::Original)
+    {
+        /// The genuine pre-optimization naive output (recovered from 5f7bb111d1): the whole-buffer string
+        /// via the stringstream path, copied into the caller buffer. This is the naive baseline -- it
+        /// measures the full output-serializer rewrite (codec + direct-buffer structure) as one number;
+        /// the fast path below is the optimized target.
+        const std::string formatted = formatOriginalStringstream(tbuffer);
+        if (out.size() < formatted.size())
+        {
+            out.resize(formatted.size());
+        }
+        std::memcpy(out.data(), formatted.data(), formatted.size());
+        return formatted.size();
+    }
     const auto& fc = formattingContext;
     const auto numberOfTuples = tbuffer.getNumberOfTuples();
     const auto buffer = tbuffer.getAvailableMemoryArea().subspan(0, numberOfTuples * fc.schemaSizeInBytes);
@@ -310,6 +350,55 @@ size_t JSONFormat::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>&
         out[off++] = '\n';
     }
     return off;
+}
+
+std::string JSONFormat::formatOriginalStringstream(const TupleBuffer& tbuffer) const
+{
+    /// Verbatim pre-optimization writer (recovered from commit 5f7bb111d1): a std::stringstream, a per-field
+    /// std::string built with fmt::format, and DataType::formattedBytesToString for the value codec. Its
+    /// conventions differ from the Fast path (uppercase NULL, unescaped strings, fmt "{:.6f}" float format) --
+    /// intentional: this IS the original naive serializer, structure and codec together.
+    const auto& fc = formattingContext;
+    std::stringstream ss;
+    const auto numberOfTuples = tbuffer.getNumberOfTuples();
+    const auto buffer = tbuffer.getAvailableMemoryArea().subspan(0, numberOfTuples * fc.schemaSizeInBytes);
+    for (size_t i = 0; i < numberOfTuples; i++)
+    {
+        auto tuple = buffer.subspan(i * fc.schemaSizeInBytes, fc.schemaSizeInBytes);
+        auto fields
+            = std::views::iota(static_cast<size_t>(0), fc.offsets.size())
+            | std::views::transform(
+                  [&fc, &tuple, &tbuffer](const auto& index) -> std::string
+                  {
+                      auto type = fc.physicalTypes[index];
+                      auto fieldValueStart = tuple.subspan(fc.offsets[index]);
+                      if (type.nullable)
+                      {
+                          const bool isNull = static_cast<bool>(std::to_integer<int>(fieldValueStart[0]));
+                          fieldValueStart = fieldValueStart.subspan(1);
+                          if (isNull)
+                          {
+                              return "NULL";
+                          }
+                      }
+                      if (type.type == DataType::Type::VARSIZED)
+                      {
+                          const auto base = fc.offsets[index] + type.nullable;
+                          const auto* indexPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, index)]);
+                          const auto* offsetPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, offset)]);
+                          const auto* sizePtr = std::bit_cast<const uint64_t*>(&tuple[base + offsetof(VariableSizedAccess, size)]);
+                          const VariableSizedAccess variableSizedAccess{
+                              VariableSizedAccess::Index(*indexPtr),
+                              VariableSizedAccess::Offset(*offsetPtr),
+                              VariableSizedAccess::Size(*sizePtr)};
+                          const auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          return fmt::format(R"("{}":"{}")", fc.names.at(index), varSizedData);
+                      }
+                      return fmt::format("\"{}\":{}", fc.names.at(index), type.formattedBytesToString(fieldValueStart.data()));
+                  });
+        ss << fmt::format("{{{}}}\n", fmt::join(fields, ","));
+    }
+    return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& out, const JSONFormat& format)

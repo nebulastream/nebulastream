@@ -143,8 +143,8 @@ public:
     explicit SequentialUncompiledHL7InputFormatIndexer(size_t numberOfFieldsInSchema);
     ~SequentialUncompiledHL7InputFormatIndexer() = default;
 
-    void indexRawBuffer(UncompiledHl7FIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledHL7MetaData& metaData)
-        const;
+    void indexRawBuffer(
+        UncompiledHl7FIF& fieldIndexFunction, const UncompiledRawTupleBuffer& rawBuffer, const UncompiledHL7MetaData& metaData) const;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SequentialUncompiledHL7InputFormatIndexer& obj);

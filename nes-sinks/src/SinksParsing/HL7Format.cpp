@@ -119,8 +119,8 @@ size_t HL7Format::formatToBuffer(const TupleBuffer& tbuffer, std::vector<char>& 
         }
     };
     /// Room for the longest glue + the widest single value (a double's shortest form, >= any int64).
-    const size_t fieldSlack = std::max(preset.prologue.size(), preset.fieldDelimiter.size() + preset.suffix.size())
-        + zmij::double_buffer_size + 24;
+    const size_t fieldSlack
+        = std::max(preset.prologue.size(), preset.fieldDelimiter.size() + preset.suffix.size()) + zmij::double_buffer_size + 24;
 
     for (size_t i = 0; i < numberOfTuples; i++)
     {
