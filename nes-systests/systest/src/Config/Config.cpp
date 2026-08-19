@@ -22,6 +22,7 @@ namespace NES
 std::vector<BaseOption*> SystestConfiguration::getOptions()
 {
     return {
+        &testDiscoverRoot,
         &testDiscoverDirs,
         &directlySpecifiedTestFiles,
         &testFileExtension,

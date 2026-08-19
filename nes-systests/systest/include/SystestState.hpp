@@ -167,42 +167,6 @@ struct RunningQuery
     [[nodiscard]] std::string getThroughput() const;
 };
 
-struct TestFile
-{
-    explicit TestFile(
-        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        TestName testName,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-        TestName testName,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    [[nodiscard]] std::string getLogFilePath() const;
-
-    [[nodiscard]] TestName name() const { return testName; }
-
-    std::filesystem::path file;
-    TestName testName;
-    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
-    std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
-    std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::shared_ptr<SinkCatalog> sinkCatalog;
-};
-
-/// intermediate representation storing all considered test files
-using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
-
 }
 
 template <>
