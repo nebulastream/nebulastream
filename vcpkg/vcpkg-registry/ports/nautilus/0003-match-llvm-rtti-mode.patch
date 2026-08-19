@@ -1,0 +1,17 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
+@@ -2,3 +2,13 @@ add_source_files(nautilus
+         MLIRJit.cpp
+         PackFunctionArguments.cpp
+ )
++
++# ObjectLinkingLayer derives from LLVM's ObjectLayer. When LLVM is built
++# without RTTI, compiling this translation unit with RTTI leaves a reference
++# to ObjectLayer's unavailable typeinfo (visible in unoptimized Debug builds).
++# Match LLVM's RTTI mode for this source file only; the rest of Nautilus uses
++# RTTI for its value/type machinery.
++if (NOT LLVM_ENABLE_RTTI)
++    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/MLIRJit.cpp
++            TARGET_DIRECTORY nautilus PROPERTIES COMPILE_OPTIONS -fno-rtti)
++endif ()

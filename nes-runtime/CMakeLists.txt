@@ -30,6 +30,7 @@ target_link_libraries(nes-runtime PUBLIC nes-common nes-logical-operators nes-ph
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+nautilus_inline(nes-runtime)
 
 # folly
 include(CMakeFindDependencyMacro)

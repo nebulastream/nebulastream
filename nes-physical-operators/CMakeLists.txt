@@ -39,3 +39,4 @@ target_include_directories(nes-physical-operators PUBLIC
 
 
 add_tests_if_enabled(tests)
+nautilus_inline(nes-physical-operators)
