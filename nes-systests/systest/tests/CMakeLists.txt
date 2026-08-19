@@ -29,7 +29,8 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/SystestResultCheckTests.cpp"
         "Runner/SystestRunnerTest.cpp"
-        "SystestStateTests.cpp")
+        "SystestStateTests.cpp"
+        "WorkingDirectoryGuardTests.cpp")
 
 add_nes_test_systest(testfile-builder-test
         "Parser/TestFileBuilderTests.cpp")
