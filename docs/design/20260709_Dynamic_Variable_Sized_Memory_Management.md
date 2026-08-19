@@ -299,4 +299,16 @@ for Q in $SEL $WIN; do for P in "" "$CLS --worker.buffer_size_class_provisioning
     --worker.query_engine.number_of_worker_threads=8 $P
 done; done
 NES_BM_STATS=1 $S -t $JOIN --data <TESTDATA> -- --worker.query_engine.number_of_worker_threads=8 [$CLS ...]
+
+# A1/A2/A3 as engine allocation modes (A2/A3 select an mmap-arena resource; NES_VARALLOC_STATS=1 dumps
+# arena peak resident / reuse / fragmentation). A1 needs the default class elastic (LazyElastic) plus a
+# per-class ceiling for large single-class state:
+#   A1: --worker.enable_buffer_size_classes=true --worker.buffer_size_class_provisioning=LazyElastic \
+#       --worker.buffer_size_class_buffers_per_class=12000000 --worker.number_of_buffers_in_global_buffer_manager=200000
+#   A2: --worker.variable_size_allocator=ComposeFixed
+#   A3: --worker.variable_size_allocator=VmCache
 ```
+
+The A2/A3 allocators and the elastic-default-class change live on the size-class implementation branch
+(`mem/integration`, tracked by #1706), since they depend on the size-class machinery this document proposes;
+build that branch to reproduce the engine-level numbers above.
