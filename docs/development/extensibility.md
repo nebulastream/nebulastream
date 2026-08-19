@@ -1,8 +1,3 @@
----
-title: "Extensibility, Plugins, and Registries"
-weight: 40
----
-
 # On Extensibility, Plugins, and Registries in NebulaStream
 At NebulaStream, we aim to make the system as extensible as reasonably possible.
 This approach follows the open-closed principle, meaning the system should be open to extension, but closed to modification.

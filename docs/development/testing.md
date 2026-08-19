@@ -1,8 +1,3 @@
----
-title: "Testing"
-weight: 60
----
-
 NebulaStream uses a layered testing strategy.
 Each layer has a defined scope, and layers complement rather than replace each other.
 A unit test verifying component logic and a systest verifying end-to-end correctness are not interchangeable, so pick the layers your change actually needs rather than defaulting to one.
