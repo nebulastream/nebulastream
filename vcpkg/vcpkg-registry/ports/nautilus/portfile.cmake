@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-use-jitlink.patch
+		0003-match-llvm-rtti-mode.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
