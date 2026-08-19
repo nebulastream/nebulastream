@@ -41,6 +41,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Discovery/TestFileReader.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -476,13 +477,13 @@ struct SystestBinder::Impl
         }
     }
 
-    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const DiscoveredTestFiles& discoveredTestFiles)
     {
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
 
-        for (const auto& testfile : discoveredTestFiles | std::views::values)
+        for (const auto& testfile : discoveredTestFiles)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
@@ -505,15 +506,18 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
+    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const DiscoveredTestFile& testfile)
     {
-        SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
+        /// Each test file names its sources and sinks in its own terms, so each one binds against its own catalogs.
+        const auto sourceCatalog = std::make_shared<SourceCatalog>();
+        const auto sinkCatalog = std::make_shared<SinkCatalog>();
+
+        SLTSinkFactory sinkProvider{sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration, sourceCatalog, sinkCatalog, copyPtr(workerCatalog), modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -1086,7 +1090,7 @@ SystestBinder::SystestBinder(
 {
 }
 
-std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const DiscoveredTestFiles& discoveredTestFiles)
 {
     return impl->loadOptimizeQueries(discoveredTestFiles);
 }
