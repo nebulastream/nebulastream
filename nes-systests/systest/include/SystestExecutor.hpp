@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Config/RunPlan.hpp>
 #include <Runner/SystestRunner.hpp>
 #include <ErrorHandling.hpp>
 #include <Progress.hpp>
@@ -48,7 +49,7 @@ public:
     SystestExecutorResult executeSystests();
 
 private:
-    void runEndlessMode(const std::vector<Systest::SystestQuery>& queries);
+    void runEndlessMode(const std::vector<Systest::SystestQuery>& queries, const RunPlan& plan);
 
     SystestConfiguration config;
     Systest::SystestProgressTracker progressTracker;

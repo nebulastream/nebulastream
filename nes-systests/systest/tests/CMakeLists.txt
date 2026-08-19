@@ -22,6 +22,9 @@ endfunction()
 add_nes_test_systest(systest-test-discovery-test
         "Discovery/TestDiscoveryTests.cpp")
 
+add_nes_test_systest(systest-run-plan-test
+        "Config/RunPlanTests.cpp")
+
 add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
         "Parser/SystestParserInvalidTestFilesTests.cpp"
