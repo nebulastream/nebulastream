@@ -12,6 +12,46 @@
 
 # Check Docker once for both tests and image packaging.
 find_program(DOCKER_EXECUTABLE docker)
+
+# Docker commands in the development container use the host daemon, which cannot
+# necessarily access paths from the container's filesystem. Write a unique token
+# into the path, identify the development image through the container hostname,
+# then start a sibling with the requested mount and verify that it reads the token.
+# A native host uses the local filesystem directly and needs no probe.
+function(verify_host_path_is_accessible_from_docker PATH MOUNT_SOURCE RESULT_VARIABLE)
+    set(${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+    if (NOT EXISTS "/.dockerenv")
+        return()
+    endif ()
+
+    string(RANDOM LENGTH 32 ALPHABET 0123456789abcdef _probe_token)
+    set(_probe_file "${PATH}/docker-bind-probe-${_probe_token}")
+    file(WRITE "${_probe_file}" "${_probe_token}")
+    execute_process(
+        COMMAND bash -c [=[
+            probe_file="$1"
+            probe_target="$2"
+            mount_source="$3"
+            image=$(docker inspect --format='{{.Config.Image}}' "$(hostname)") || exit 42
+            docker run --rm --pull=never --entrypoint /bin/sh \
+                -v "$mount_source:$probe_target:ro" "$image" \
+                -c "cat '$probe_file'"
+        ]=] _ "${_probe_file}" "${PATH}" "${MOUNT_SOURCE}"
+        RESULT_VARIABLE _probe_result
+        OUTPUT_VARIABLE _probe_output
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    file(REMOVE "${_probe_file}")
+    if (_probe_result EQUAL 42)
+        message(FATAL_ERROR
+            "Cannot identify the development container through its hostname. "
+            "Do not override the development container's default hostname.")
+    elseif (NOT _probe_result EQUAL 0 OR NOT _probe_output STREQUAL _probe_token)
+        set(${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+    endif ()
+endfunction()
+
 if (DOCKER_EXECUTABLE)
     execute_process(
         COMMAND ${DOCKER_EXECUTABLE} version
@@ -44,14 +84,28 @@ endif ()
 
 if (ENABLE_DOCKER_TESTS)
     if (NOT NES_DOCKER_AVAILABLE)
-        message(WARNING
+        message(FATAL_ERROR
             "ENABLE_DOCKER_TESTS is ON but docker is not working.\n"
             "  For dev container: Mount docker socket with -v /var/run/docker.sock:/var/run/docker.sock\n"
-            "  For host system: Ensure docker is installed and running\n"
-            "  Set -DENABLE_DOCKER_TESTS=OFF to suppress this warning\n"
-            "Docker tests will be automatically disabled."
+            "  For host system: Ensure docker is installed and running"
         )
-        set(ENABLE_DOCKER_TESTS OFF CACHE BOOL "Runs testcases that require docker" FORCE)
+    elseif (EXISTS "/.dockerenv")
+        # Docker commands use the host daemon through its socket. Prove that
+        # the build directory is mounted at the same absolute path on the host
+        # before registering tests that use it as a Compose bind source.
+        verify_host_path_is_accessible_from_docker(
+            "${CMAKE_BINARY_DIR}" "${CMAKE_BINARY_DIR}" _docker_can_access_build_directory)
+        if (NOT _docker_can_access_build_directory)
+            message(FATAL_ERROR
+                "The host Docker daemon cannot read the CMake build directory at its container path:\n"
+                "  ${CMAKE_BINARY_DIR}\n"
+                "  Mount the repository at the same absolute path on the host and in the development container.\n"
+                "  CLion mounts it at /tmp/nebulastream by default. For a checkout at /path/to/nebulastream,\n"
+                "  add -v /path/to:/path/to to the Docker toolchain's container run options."
+            )
+        else ()
+            message(STATUS "Docker tests enabled")
+        endif ()
     else()
         message(STATUS "Docker tests enabled: using docker")
     endif()
@@ -60,6 +114,9 @@ endif()
 # Check if bats is available for shell-based e2e tests
 find_program(BATS bats)
 if (BATS STREQUAL "BATS-NOTFOUND")
+    if (ENABLE_DOCKER_TESTS)
+        message(FATAL_ERROR "ENABLE_DOCKER_TESTS is ON but Bats was not found. Install Bats or disable Docker tests.")
+    endif ()
     set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
     message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
 else ()
@@ -79,6 +136,13 @@ else ()
         ERROR_VARIABLE  _bats_libs_output
     )
     if (NOT _bats_libs_check EQUAL 0)
+        if (ENABLE_DOCKER_TESTS)
+            message(FATAL_ERROR
+                "ENABLE_DOCKER_TESTS is ON but the Bats helper libraries are not loadable "
+                "(BATS_LIB_PATH=$ENV{BATS_LIB_PATH}). Install bats-support, bats-assert, and bats-file, "
+                "or adjust BATS_LIB_PATH.\n${_bats_libs_output}"
+            )
+        endif ()
         set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
         message(WARNING
             "Bats found at ${BATS} but helper libraries are not loadable "

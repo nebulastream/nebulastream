@@ -37,6 +37,58 @@ ExternalData_Expand_Arguments(
 )
 message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 
+# Large ExternalData files may live outside the checkout. Docker-out-of-Docker
+# can use that store either through a same-path bind mount or through an
+# explicitly named Docker volume. Verify the selected route before enabling
+# the large case in the remote Compose suite.
+set(NES_DOCKER_EXTERNAL_DATA_VOLUME "" CACHE STRING
+        "Docker volume exposing ExternalData_OBJECT_STORES to Docker-based large systests")
+set(ENABLE_DOCKER_LARGE_TESTS OFF)
+set(NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE "")
+set(NES_DOCKER_EXTERNAL_DATA_SOURCE "")
+set(NES_DOCKER_EXTERNAL_DATA_TARGET "")
+if (ENABLE_LARGE_TESTS AND ENABLE_DOCKER_TESTS)
+    list(LENGTH ExternalData_OBJECT_STORES _external_data_store_count)
+    if (_external_data_store_count EQUAL 0)
+        # ExternalData's default store is inside the build tree, whose
+        # same-path bind was already verified by CheckTestUtilities.cmake.
+        set(ENABLE_DOCKER_LARGE_TESTS ON)
+        message(STATUS "Docker large systests enabled: ExternalData uses its build-tree store")
+    elseif (_external_data_store_count EQUAL 1)
+        list(GET ExternalData_OBJECT_STORES 0 _external_data_store)
+        cmake_path(ABSOLUTE_PATH _external_data_store NORMALIZE)
+        file(MAKE_DIRECTORY "${_external_data_store}")
+
+        if (NES_DOCKER_EXTERNAL_DATA_VOLUME)
+            set(_external_data_mount_type volume)
+            set(_external_data_mount_source "${NES_DOCKER_EXTERNAL_DATA_VOLUME}")
+        else ()
+            set(_external_data_mount_type bind)
+            set(_external_data_mount_source "${_external_data_store}")
+        endif ()
+
+        verify_host_path_is_accessible_from_docker(
+            "${_external_data_store}" "${_external_data_mount_source}" _docker_can_access_external_data)
+        if (_docker_can_access_external_data)
+            set(ENABLE_DOCKER_LARGE_TESTS ON)
+            set(NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE "${_external_data_mount_type}")
+            set(NES_DOCKER_EXTERNAL_DATA_SOURCE "${_external_data_mount_source}")
+            set(NES_DOCKER_EXTERNAL_DATA_TARGET "${_external_data_store}")
+            message(STATUS "Docker large systests enabled: verified ExternalData ${_external_data_mount_type} mount")
+        else ()
+            message(FATAL_ERROR
+                "Docker cannot access the ExternalData store at ${_external_data_store}.\n"
+                "Set NES_DOCKER_EXTERNAL_DATA_VOLUME to a Docker volume that exposes this directory."
+            )
+        endif ()
+    else ()
+        message(FATAL_ERROR
+            "Docker-based large systests support at most one ExternalData_OBJECT_STORES entry; "
+            "found ${_external_data_store_count}."
+        )
+    endif ()
+endif ()
+
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 find_package(reflectcpp CONFIG REQUIRED)
@@ -240,5 +292,8 @@ add_e2e_test(
     DOCKER_COMPOSE
     EXTRA_ENV
         DATADIR=${EXPANDED_TEST_DATA_PATH}
-        ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
+        ENABLE_DOCKER_LARGE_TESTS=${ENABLE_DOCKER_LARGE_TESTS}
+        NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE=${NES_DOCKER_EXTERNAL_DATA_MOUNT_TYPE}
+        NES_DOCKER_EXTERNAL_DATA_SOURCE=${NES_DOCKER_EXTERNAL_DATA_SOURCE}
+        NES_DOCKER_EXTERNAL_DATA_TARGET=${NES_DOCKER_EXTERNAL_DATA_TARGET}
 )

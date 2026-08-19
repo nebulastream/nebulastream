@@ -403,6 +403,13 @@ For complex multi-worker topologies, use Docker Compose to orchestrate the clust
 - Enable Docker tests during build: `-DENABLE_DOCKER_TESTS=ON`
 - Docker and Docker Compose must be installed
 - Sufficient system resources for multiple worker containers
+- When configuring inside a development container, mount the repository at
+  exactly the same absolute path on the host and in the container. Compose
+  communicates with the host Docker daemon and bind-mounts the per-test
+  directories directly; paths that exist only inside the development
+  container are not visible to that daemon. CMake verifies this arrangement
+  by writing a probe file under the build directory and reading it through a
+  host-Docker bind mount.
 
 **Example Test Invocation:**
 
@@ -419,4 +426,21 @@ ctest -R systest-remote-test -V
 The Docker approach provides the most realistic testing environment for distributed deployments, validating network communication, serialization, and multi-node query execution.
 
 > [!NOTE]
-> If you are using a Docker-based development environment, you must provide access to the Docker daemon (e.g., by mounting the Docker socket). Otherwise, Docker-based tests are disabled.
+> If you are using a Docker-based development environment, provide access to
+> the Docker daemon and preserve the workspace path, for example:
+> `docker run -v /var/run/docker.sock:/var/run/docker.sock -v "$(pwd):$(pwd)" -w "$(pwd)" ...`.
+> CMake fails configuration when Docker tests are enabled but it cannot confirm
+> that the host and container workspace paths match.
+
+> [!NOTE]
+> CLion's Docker toolchain mounts the checkout at `/tmp/nebulastream` by default.
+> To preserve the host path, add a bind mount for the checkout's parent directory
+> to the Docker toolchain configuration. For a checkout at `/path/to/nebulastream`,
+> add `-v /path/to:/path/to` to the toolchain's container run options.
+
+Large Docker-based systests also require Docker to access the CMake
+`ExternalData_OBJECT_STORES` directory. CMake verifies a same-path bind mount
+when one external store is configured. If the store is provided to the
+development container as a Docker volume instead, pass its name with
+`-DNES_DOCKER_EXTERNAL_DATA_VOLUME=<volume>`. Configuration fails when both
+Docker and large tests are enabled but neither route can expose the store.
