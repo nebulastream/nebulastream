@@ -111,6 +111,7 @@ if [ "$MODE" = "full" ]; then
         -header-filter="$HEADER_FILTER" "$SOURCE_FILTER" 2>/dev/null \
         | tee >("${DECOLOR[@]}" > "$REPORT_FILE")
     STATUS=${PIPESTATUS[0]}
+    grep -q "file not found" "$REPORT_FILE" && MISSING_GENERATED_HEADERS=1
 else
     # Diff base: default to all uncommitted changes since the last commit (`git diff HEAD`).
     NES_TIDY_DIFF_BASE="${NES_TIDY_DIFF_BASE:-HEAD}"
@@ -137,20 +138,73 @@ else
     fi
     echo
 
+    # Sources and headers are analyzed in two passes, because only a source file
+    # has a compile command. For a header clang-tidy adapts the command of the
+    # nearest source file in the compilation database; a header whose directory
+    # tree holds no compiled source gets no include paths and fails on its first
+    # include. That failure describes the reconstructed flags rather than the
+    # change, so the header pass reports those headers as skipped. Every other
+    # diagnostic, in either pass, still fails the run.
+    #
     # -p1            strip the leading 'a/' 'b/' path component from the diff
     # -path          directory containing compile_commands.json
+    # -iregex        select which of the changed files this pass analyzes
+    SOURCE_PATTERN='.*\.(cpp|cc|c\+\+|cxx|c|cl|m|mm)'
+    HEADER_PATTERN='.*\.(h|hh|hpp|hxx)'
+
     git "${GIT_DIFF_SELECTOR[@]}" \
-        | python3 "$TIDY_TOOL" -p1 -path "$COMPILE_DB_DIR" "${TIDY_ARGS[@]}" \
+        | python3 "$TIDY_TOOL" -p1 -path "$COMPILE_DB_DIR" -iregex "$SOURCE_PATTERN" "${TIDY_ARGS[@]}" \
         | tee >("${DECOLOR[@]}" > "$REPORT_FILE")
     STATUS=${PIPESTATUS[1]}
+
+    # Only a source file can be missing a generated header, so the check for the
+    # hint below runs before the header pass appends to the report.
+    grep -q "file not found" "$REPORT_FILE" && MISSING_GENERATED_HEADERS=1
+
+    # The header pass records its fixes separately, so the source pass keeps the
+    # file name that CI uploads. Repeating the flag overrides the earlier one.
+    HEADER_TIDY_ARGS=("${TIDY_ARGS[@]}")
+    if [ -n "${NES_TIDY_EXPORT_FIXES:-}" ]; then
+        HEADER_TIDY_ARGS+=(-export-fixes "${NES_TIDY_EXPORT_FIXES%.*}-headers.yml")
+    fi
+
+    HEADER_REPORT_FILE="${REPORT_FILE}.headers"
+    git "${GIT_DIFF_SELECTOR[@]}" \
+        | python3 "$TIDY_TOOL" -p1 -path "$COMPILE_DB_DIR" -iregex "$HEADER_PATTERN" "${HEADER_TIDY_ARGS[@]}" \
+        | tee >("${DECOLOR[@]}" > "$HEADER_REPORT_FILE")
+    HEADER_STATUS=${PIPESTATUS[1]}
+
+    # A header pass that failed on nothing but missing includes says nothing about
+    # the change, so the skipped headers are listed and the sources decide the run.
+    ERROR_COUNT="$(grep -cE ': error: ' "$HEADER_REPORT_FILE" || true)"
+    NOT_FOUND_COUNT="$(grep -cE ': error: .*file not found' "$HEADER_REPORT_FILE" || true)"
+    if [ "$HEADER_STATUS" -ne 0 ] && [ "$NOT_FOUND_COUNT" -gt 0 ] && [ "$ERROR_COUNT" -eq "$NOT_FOUND_COUNT" ]; then
+        echo
+        echo -e "${COLOR_BOLD}Skipped ${NOT_FOUND_COUNT} changed header(s): no compile command could be reconstructed.${COLOR_RESET}"
+        grep -E ': error: .*file not found' "$HEADER_REPORT_FILE" \
+            | cut -d: -f1 | sed "s|^${REPO_ROOT}/||" | sort -u | sed 's/^/  /'
+        echo "A header has no compile command of its own, and these sit in a directory tree with no"
+        echo "compiled source to take one from. The tidy-full target analyzes them through the"
+        echo "sources that include them."
+        HEADER_STATUS=0
+    fi
+
+    cat "$HEADER_REPORT_FILE" >> "$REPORT_FILE"
+    rm -f "$HEADER_REPORT_FILE"
+
+    if [ "$STATUS" -eq 0 ]; then
+        STATUS=$HEADER_STATUS
+    fi
 fi
 set -e
 
 # Generated headers (gRPC/protobuf stubs, ANTLR, cxxbridge) only exist after the
 # nes-codegen target has run. When they're missing clang-tidy emits "'foo.h' file
-# not found" fatal errors that look like real findings but aren't -- point the
-# user at the target.
-if grep -q "file not found" "$REPORT_FILE"; then
+# not found" fatal errors on the sources that include them, which look like real
+# findings but aren't -- point the user at the target. A changed header without a
+# compile command shows the same symptom for another reason, which the header
+# pass reports as skipped.
+if [ "${MISSING_GENERATED_HEADERS:-0}" -eq 1 ]; then
     echo
     echo -e "${COLOR_BOLD}Error: clang-tidy reported missing headers ('file not found').${COLOR_RESET}"
     echo "Some headers (e.g. gRPC/protobuf stubs) are generated during the build;"

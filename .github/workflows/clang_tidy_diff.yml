@@ -91,7 +91,11 @@ jobs:
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
-            git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
+            # Same driver as the pre-check above, so both steps select the same files and skip
+            # the headers that have no compile command to reconstruct.
+            export NES_TIDY_DIFF_BASE=${{ inputs.base_sha }}
+            export NES_TIDY_EXPORT_FIXES=$(pwd)/clang-tidy-result/fixes.yml
+            cmake --build build --target tidy-diff
       # Findings are printed by clang-tidy-diff in the steps above and exported here for download.
       # A failing step means clang-tidy flagged something in .clang-tidy's WarningsAsErrors list.
       - name: Upload Clang-Tidy Results
