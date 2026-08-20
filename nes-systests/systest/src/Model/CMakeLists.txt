@@ -13,4 +13,5 @@
 add_source_files(nes-systest-lib
         ConfigurationOverride.cpp
         ParsedTestFile.cpp
+        TestCaseId.cpp
 )
