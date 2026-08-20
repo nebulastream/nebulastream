@@ -38,10 +38,6 @@ target_link_libraries(nes-runtime PRIVATE folly::folly)
 target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-runtime REUSE_FROM nes-common)
-endif ()
-
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
 add_tests_if_enabled(tests)

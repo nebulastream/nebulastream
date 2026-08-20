@@ -86,9 +86,6 @@ target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
-endif ()
 
 # Generate BuildInfo.hpp after nes-common is fully configured so its target properties can be evaluated.
 generate_build_info(nes-common "${NES_BUILD_INFO_DIR}")

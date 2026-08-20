@@ -39,6 +39,3 @@ add_subdirectory(src)
 get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 target_sources(nes-sinks PRIVATE ${NES_SINKS_SOURCE_FILES})
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-sinks REUSE_FROM nes-common)
-endif ()

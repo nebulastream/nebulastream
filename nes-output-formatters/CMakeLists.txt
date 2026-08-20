@@ -38,6 +38,3 @@ add_subdirectory(src)
 get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 target_sources(nes-output-formatters PRIVATE ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-output-formatters REUSE_FROM nes-common)
-endif ()

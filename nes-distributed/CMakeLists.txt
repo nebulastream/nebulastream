@@ -18,9 +18,5 @@ target_link_libraries(nes-distributed PUBLIC nes-common nes-single-node-worker-i
 target_include_directories(nes-distributed
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-distributed REUSE_FROM nes-common)
-    target_compile_options(nes-distributed PUBLIC "-fPIC")
-endif ()
 
 add_tests_if_enabled(tests)

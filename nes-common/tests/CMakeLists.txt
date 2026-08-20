@@ -27,8 +27,5 @@ add_library(nes-test-util
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Util/include")
 target_link_libraries(nes-test-util PUBLIC ${GTEST_LIBRARIES} nes-common)
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-test-util REUSE_FROM nes-common)
-endif ()
 
 add_subdirectory(UnitTests)
