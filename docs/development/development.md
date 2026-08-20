@@ -240,9 +240,8 @@ elsewhere on your system and specify the `-DCMAKE_TOOLCHAIN_FILE` flag.
 ### Using a local installation of MLIR
 
 Building LLVM and `MLIR` locally can be both time and disk-space consuming. The cmake option `-DUSE_LOCAL_MLIR=ON` will
-remove the vcpkg feature responsible for building `MLIR`. Unless the `MLIR` backend is also disabled via
-`-DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=OFF`,
-CMake expects to be able to locate `MLIR` somewhere on the system.
+remove the vcpkg feature responsible for building `MLIR`. CMake then expects to be able to locate `MLIR` somewhere on
+the system.
 
 The current recommendation is to use the
 legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/vmlir-sanitized)
