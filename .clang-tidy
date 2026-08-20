@@ -130,7 +130,6 @@ WarningsAsErrors: '
   -fuchsia-default-arguments-declarations,
   -fuchsia-virtual-inheritance,
   -google-build-using-namespace,
-  -google-runtime-operator,
   -google-upgrade-googletest-case,
   -hicpp-signed-bitwise,
   -misc-const-correctness,
