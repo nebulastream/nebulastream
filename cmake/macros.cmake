@@ -171,14 +171,18 @@ function(add_e2e_test)
         NES_REPL=$<TARGET_FILE:nes-repl>
         NES_REPL_EMBEDDED=$<TARGET_FILE:nes-repl-embedded>
         NES_SYSTEST=$<TARGET_FILE:systest>
+        # Unique per ctest test. Suites derive their Docker image prefixes from this, so the
+        # cleanup wildcards of one suite cannot match another suite's images when they run
+        # concurrently under `ctest -j`.
+        NES_E2E_SUITE=${ARG_NAME}
     )
     if (ARG_DOCKER_COMPOSE)
         list(APPEND _env_pairs NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE})
+        list(APPEND _env_pairs NES_RUNTIME_IREE_IMAGE=${NES_RUNTIME_IREE_IMAGE})
     endif ()
     list(APPEND _env_pairs ${ARG_EXTRA_ENV})
 
     set(_env_cmd)
-        list(APPEND _env_pairs NES_RUNTIME_IREE_IMAGE=${NES_RUNTIME_IREE_IMAGE})
     foreach (_pair IN LISTS _env_pairs)
         list(APPEND _env_cmd env ${_pair})
     endforeach ()

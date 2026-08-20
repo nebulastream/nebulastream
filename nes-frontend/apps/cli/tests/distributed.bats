@@ -512,3 +512,63 @@ EOF
   QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
+
+# --- regression guards for the shared harness (scripts/testing/distributed_bats_lib.bash) ---
+#
+# Both guards cover ways one suite used to destroy another suite's Docker resources mid-run while
+# ctest ran them concurrently, which surfaced as "No such image: ..." and as containers being torn
+# down under a still-running test.
+
+# Suites build their worker image from the same binary with the same Dockerfile, so the images are
+# byte-identical and Docker gives them one id with several tags. Cleaning up by image id
+# (`docker images -q | xargs docker image rm -f`) dropped every tag at that id, including other
+# suites'. Removing by tag only untags.
+@test "cleanup removes images by tag, not by shared image id" {
+  local ctx
+  ctx=$(mktemp -d)
+  cp "$NES_WORKER" "$ctx/nes-single-node-worker"
+  cat > "$ctx/Dockerfile" <<DOCKERFILE
+FROM $NES_RUNTIME_IREE_IMAGE
+COPY nes-single-node-worker /usr/bin
+DOCKERFILE
+  docker build --pull=false --network=none --load -t nes-worker-guarda-test-x "$ctx" >/dev/null
+  docker build --pull=false --network=none --load -t nes-worker-guardb-test-x "$ctx" >/dev/null
+  rm -rf "$ctx"
+
+  # Guard against a vacuous test: if the images ever stop sharing an id the regression cannot
+  # reproduce and a pass below would mean nothing.
+  local id_a id_b
+  id_a=$(docker images --format '{{.ID}}' nes-worker-guarda-test-x)
+  id_b=$(docker images --format '{{.ID}}' nes-worker-guardb-test-x)
+  [ -n "$id_a" ] && [ "$id_a" = "$id_b" ]
+
+  nes_cleanup_leaked_resources guardb 'nes-worker-guardb-test-*'
+
+  local survivor
+  survivor=$(docker images --format '{{.Repository}}' nes-worker-guarda-test-x)
+  docker image rm -f nes-worker-guarda-test-x nes-worker-guardb-test-x >/dev/null 2>&1 || true
+  [ "$survivor" = "nes-worker-guarda-test-x" ]
+}
+
+# distributed-cli-test, mqtt-sink-test and mqtt-source-test all run with "$NES_CLI". Deriving the
+# image prefix from the client binary gave all three the same prefix, so their cleanup wildcards
+# matched each other's images. Prefixes are keyed on NES_E2E_SUITE (the ctest test name) instead.
+@test "image prefixes are scoped per suite, not per client binary" {
+  # The variable the scoping depends on must actually reach the suite.
+  [ -n "$NES_E2E_SUITE" ]
+
+  # Every suite sharing this client binary must still end up with a distinct prefix.
+  local bin_name; bin_name=$(basename "$NES_CLI")
+  local mine="${bin_name}-image-${NES_E2E_SUITE}"
+  local theirs="${bin_name}-image-some-other-suite"
+  [ "$mine" != "$theirs" ]
+
+  # And this suite's own images must not match another suite's cleanup wildcard.
+  case "$mine" in
+    "${bin_name}-image-some-other-suite"*) return 1 ;;
+  esac
+
+  # The images this suite actually built carry the scoped prefix.
+  [[ "${!NES_BATS_APP_IMAGE_VAR}" == "${bin_name}-image-${NES_E2E_SUITE}-"* ]]
+  [[ "$WORKER_IMAGE" == "nes-worker-${NES_E2E_SUITE}-"* ]]
+}

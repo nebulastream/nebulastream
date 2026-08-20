@@ -139,7 +139,13 @@ nes_cleanup_leaked_resources() {
   for img in $(docker images "${filter_args[@]}" -q 2>/dev/null); do
     docker ps -aq --filter ancestor="$img" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
   done
-  docker images "${filter_args[@]}" -q | xargs -r docker image rm -f 2>/dev/null || true
+  # Remove by tag, not by image id. `docker images -q` yields ids, and `docker image rm -f <id>`
+  # drops every tag pointing at that id. Test images built from the same binary with the same
+  # Dockerfile are byte-identical, so e.g. nes-worker-cli-test-* and nes-worker-repl-test-* share
+  # one id and cleaning either would destroy the other test's image mid-run. Removing a tag of a
+  # multi-tagged image only untags it.
+  docker images "${filter_args[@]}" --format '{{.Repository}}:{{.Tag}}' \
+    | xargs -r docker image rm -f 2>/dev/null || true
 }
 
 # Build a worker-style image (FROM $NES_RUNTIME_IREE_IMAGE, COPY <bin>, ENTRYPOINT <bin>).
@@ -259,9 +265,16 @@ nes_distributed_setup_file() {
   local bin_name
   bin_name=$(basename "$bin_path")
   local suffix="${bin_name#nes-}"
-  local test_label="distributed-${suffix}"
-  local worker_prefix="nes-worker-${suffix}-test"
-  local app_prefix="${bin_name}-image"
+  # Image prefixes are keyed on the ctest test name, not the client binary: distributed-cli-test,
+  # mqtt-sink-test and mqtt-source-test all run with "$NES_CLI", so deriving from the binary gave
+  # all three the prefix `nes-cli-image` / `nes-worker-cli-test`. Their cleanup wildcards then
+  # matched each other's images and, running concurrently under `ctest -j`, whichever suite started
+  # last deleted the others' images mid-run ("No such image: ..."). NES_E2E_SUITE is unique per
+  # ctest test, so the wildcards stay confined to the suite that owns them.
+  local suite="${NES_E2E_SUITE:-distributed-${suffix}}"
+  local test_label="$suite"
+  local worker_prefix="nes-worker-${suite}"
+  local app_prefix="${bin_name}-image-${suite}"
   export NES_BATS_APP_IMAGE_VAR="${suffix^^}_IMAGE"
 
   nes_cleanup_leaked_resources "$test_label" "${worker_prefix}-*" "${app_prefix}-*"
