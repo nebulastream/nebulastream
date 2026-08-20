@@ -103,7 +103,19 @@ function(create_runtime_registry name target)
                 $<LINK_LIBRARY:WHOLE_ARCHIVE,${glue_lib}>
         )
     else()
-        target_link_libraries(${glue_lib} PRIVATE ${target})
+        # COMPILE_ONLY for the same reason as the executable branch above: a real link edge here
+        # would form a glue <-> owner cycle. CMake tolerates cycles among static libraries by
+        # repeating the whole cyclic group on the link line (LINK_INTERFACE_MULTIPLICITY), which is
+        # harmless for a plain archive but makes WHOLE_ARCHIVE instantiate every collector TU twice
+        # and the PluginLoader then rejects the build with "duplicate registration". The glue only
+        # needs the owner's usage requirements to compile; the final consumer links the owner.
+        target_link_libraries(${glue_lib} PRIVATE $<COMPILE_ONLY:${target}>)
+        # COMPILE_ONLY carries the owner's usage requirements but creates no dependency edge, so it
+        # does not order the glue TUs after the owner's generated sources (cxxbridge, gRPC, ANTLR).
+        # Without this the glue can be compiled before those headers exist. add_dependencies chains
+        # the glue's object-order phony to the owner's, which is not a link edge and so does not
+        # reintroduce the cycle.
+        add_dependencies(${glue_lib} ${target})
         target_link_libraries(${target} INTERFACE
                 $<LINK_LIBRARY:WHOLE_ARCHIVE,${glue_lib}>
         )
