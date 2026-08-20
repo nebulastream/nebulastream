@@ -142,7 +142,9 @@ nes_cleanup_leaked_resources() {
   docker images "${filter_args[@]}" -q | xargs -r docker image rm -f 2>/dev/null || true
 }
 
-# Build a worker-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY <bin>, ENTRYPOINT <bin>).
+# Build a worker-style image (FROM $NES_RUNTIME_IREE_IMAGE, COPY <bin>, ENTRYPOINT <bin>).
+# Test containers use the IREE base so inference-tagged tests keep working, unlike the shipped
+# nes-cli / nes-repl images which cannot reach iree-compile and stay on the slim base.
 # Exports the resulting image tag under the env var named in arg1.
 nes_build_runtime_image() {
   local image_var="$1"
@@ -155,7 +157,7 @@ nes_build_runtime_image() {
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
+    FROM $NES_RUNTIME_IREE_IMAGE
     COPY $container_bin /usr/bin
     ENTRYPOINT ["$container_bin"]
 EOF
@@ -163,7 +165,7 @@ EOF
   export "$image_var=$image_tag"
 }
 
-# Build an app-style image (FROM $NES_RUNTIME_BASE_IMAGE, COPY <bin>, no entrypoint —
+# Build an app-style image (FROM $NES_RUNTIME_IREE_IMAGE, COPY <bin>, no entrypoint —
 # invoked via `docker compose exec`). Exports the tag under arg1.
 nes_build_app_image() {
   local image_var="$1"
@@ -176,7 +178,7 @@ nes_build_app_image() {
   local ctx=$(mktemp -d)
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
-    FROM $NES_RUNTIME_BASE_IMAGE
+    FROM $NES_RUNTIME_IREE_IMAGE
     COPY $container_bin /usr/bin
 EOF
   rm -rf "$ctx"
@@ -266,7 +268,7 @@ nes_distributed_setup_file() {
 
   nes_require_env NES_WORKER
   nes_require_env NES_TEST_TMP_DIR
-  nes_require_env NES_RUNTIME_BASE_IMAGE
+  nes_require_env NES_RUNTIME_IREE_IMAGE
   nes_require_executable "$NES_WORKER"
   nes_require_executable "$bin_path"
 

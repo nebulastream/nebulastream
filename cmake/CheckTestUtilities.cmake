@@ -40,6 +40,7 @@ if (NES_DOCKER_AVAILABLE)
         )
     endif ()
     set(NES_RUNTIME_BASE_IMAGE "nebulastream/nes-runtime-base:${VCPKG_HASH}")
+    set(NES_RUNTIME_IREE_IMAGE "nebulastream/nes-runtime-iree:${VCPKG_HASH}")
 endif ()
 
 if (ENABLE_DOCKER_TESTS)

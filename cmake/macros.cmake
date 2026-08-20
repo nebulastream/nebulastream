@@ -178,6 +178,7 @@ function(add_e2e_test)
     list(APPEND _env_pairs ${ARG_EXTRA_ENV})
 
     set(_env_cmd)
+        list(APPEND _env_pairs NES_RUNTIME_IREE_IMAGE=${NES_RUNTIME_IREE_IMAGE})
     foreach (_pair IN LISTS _env_pairs)
         list(APPEND _env_cmd env ${_pair})
     endforeach ()

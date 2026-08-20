@@ -238,10 +238,12 @@ if (NES_ENABLES_TESTS)
     enable_testing()
     message(STATUS "Tests are enabled")
     if (ENABLE_DOCKER_TESTS)
+        # $0 base image, $1 IREE image, $2 docker/runtime. The bats helpers build their test
+        # containers FROM the IREE image, so both must exist and the base must come first.
         add_test(NAME build-runtime-base-image
-                COMMAND bash -c "docker image inspect \"$0\" >/dev/null 2>&1 || docker build --load -t \"$0\" -f \"$1\" \"$2\""
+                COMMAND bash -c "{ docker image inspect \"$0\" >/dev/null 2>&1 || docker build --load -t \"$0\" -f \"$2/RuntimeBase.dockerfile\" \"$2\"; } && { docker image inspect \"$1\" >/dev/null 2>&1 || docker build --load --build-arg BASE_IMAGE=\"$0\" -t \"$1\" -f \"$2/RuntimeIree.dockerfile\" \"$2\"; }"
                 ${NES_RUNTIME_BASE_IMAGE}
-                ${CMAKE_SOURCE_DIR}/docker/runtime/RuntimeBase.dockerfile
+                ${NES_RUNTIME_IREE_IMAGE}
                 ${CMAKE_SOURCE_DIR}/docker/runtime
         )
         set_tests_properties(build-runtime-base-image PROPERTIES

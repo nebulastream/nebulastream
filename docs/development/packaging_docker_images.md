@@ -1,15 +1,16 @@
 # Packaging Docker Images
 
-The NebulaStream executables are packaged into slim runtime images based on `nebulastream/nes-runtime-base`,
-one CMake target per executable plus `package-docker-images-all`, which builds all of them:
+The NebulaStream executables are packaged into slim runtime images, one CMake target per executable plus
+`package-docker-images-all`, which builds all of them:
 
-| target                            | image                                             | binary                   |
-|-----------------------------------|---------------------------------------------------|--------------------------|
-| `package-docker-runtime-base`     | `nebulastream/nes-runtime-base:<dependency-hash>` | —                        |
-| `package-docker-nes-cli`          | `nebulastream/nes-cli`                            | `nes-cli`                |
-| `package-docker-nes-repl`         | `nebulastream/nes-repl`                           | `nes-repl`               |
-| `package-docker-nes-repl-embedded`| `nebulastream/nes-repl-embedded`                  | `nes-repl-embedded`      |
-| `package-docker-nes-worker`       | `nebulastream/nes-worker`                         | `nes-single-node-worker` |
+| target                            | image                                             | binary                   | base    |
+|-----------------------------------|---------------------------------------------------|--------------------------|---------|
+| `package-docker-runtime-base`     | `nebulastream/nes-runtime-base:<dependency-hash>` | —                        | —       |
+| `package-docker-runtime-iree`     | `nebulastream/nes-runtime-iree:<dependency-hash>` | —                        | base    |
+| `package-docker-nes-cli`          | `nebulastream/nes-cli`                            | `nes-cli`                | base    |
+| `package-docker-nes-repl`         | `nebulastream/nes-repl`                           | `nes-repl`               | base    |
+| `package-docker-nes-repl-embedded`| `nebulastream/nes-repl-embedded`                  | `nes-repl-embedded`      | IREE    |
+| `package-docker-nes-worker`       | `nebulastream/nes-worker`                         | `nes-single-node-worker` | IREE    |
 
 Every image target is named after the image it builds.
 
@@ -21,7 +22,26 @@ cmake --build <build-dir> --target package-docker-nes-worker -j   # a single ima
 
 Each executable target builds its CMake executable dependency first, uses its `$<TARGET_FILE>` directory as
 the Docker context, and generates a Dockerfile-specific ignore file that includes only that binary. They also
-depend on `package-docker-runtime-base`. None of the Docker targets are part of the default build.
+depend on the base image target they are built `FROM`. None of the Docker targets are part of the default
+build.
+
+## Two base images
+
+`nes-runtime-base` carries only what every binary needs: libc++/libc++abi and `grpc_health_probe`.
+
+`nes-runtime-iree` adds the IREE compiler toolchain (`iree-compile`, `iree-import-onnx`) on top of it. That
+toolchain is the large majority of the image, and only a binary that lowers a query plan itself can invoke
+it — `nes-inference` shells out to those two tools from `LowerToPhysicalInferModel`. `nes-cli` and `nes-repl`
+link `nes-frontend-lib`, which stops at `nes-single-node-worker-interface`, so they can never reach it and
+stay on the slim base. `nes-worker` and `nes-repl-embedded` embed the engine and get the IREE base.
+
+The e2e test containers built by `scripts/testing/distributed_bats_lib.bash` use the IREE base regardless, so
+inference-tagged tests keep working.
+
+Both tags are the same dependency hash. `docker/runtime` is part of `hash_dependencies.sh`, so editing either
+Dockerfile rotates both tags.
+
+## Tags
 
 Executable-image tags default to `local`. Set `NES_DOCKER_TAG` on the build command to use another tag; no
 CMake reconfiguration is needed. The runtime-base tag is the dependency hash already used by the Docker e2e

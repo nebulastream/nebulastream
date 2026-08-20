@@ -28,6 +28,25 @@ add_custom_target(package-docker-runtime-base
 )
 add_dependencies(package-docker-images-all package-docker-runtime-base)
 
+# The IREE toolchain is ~85% of the runtime image and is only reachable from binaries that lower a
+# query plan themselves, so it lives in a layer on top of the slim base instead of in the base.
+add_custom_target(package-docker-runtime-iree
+    COMMAND ${DOCKER_EXECUTABLE} build --pull=false --load
+        --build-arg "BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}"
+        --tag "${NES_RUNTIME_IREE_IMAGE}"
+        --file "${CMAKE_SOURCE_DIR}/docker/runtime/RuntimeIree.dockerfile"
+        "${CMAKE_SOURCE_DIR}/docker/runtime"
+    VERBATIM
+    USES_TERMINAL
+    COMMENT "Building ${NES_RUNTIME_IREE_IMAGE}"
+)
+add_dependencies(package-docker-runtime-iree package-docker-runtime-base)
+add_dependencies(package-docker-images-all package-docker-runtime-iree)
+
+# nes_add_docker_image(<image> <target> [IREE])
+# IREE puts the image on the IREE base. Only binaries that can reach LowerToPhysicalInferModel need
+# it: nes-cli and nes-repl link nes-frontend-lib, which stops at nes-single-node-worker-interface,
+# so they can never invoke iree-compile and stay on the slim base.
 function(nes_add_docker_image IMAGE TARGET)
     if (IMAGE STREQUAL "nes-cli")
         set(STATE "VOLUME /state\nENV XDG_STATE_HOME=/state\n")
@@ -35,9 +54,18 @@ function(nes_add_docker_image IMAGE TARGET)
         set(STATE "")
     endif ()
 
+    set(EXTRA_ARGS ${ARGN})
+    if ("IREE" IN_LIST EXTRA_ARGS)
+        set(BASE_IMAGE "${NES_RUNTIME_IREE_IMAGE}")
+        set(BASE_TARGET package-docker-runtime-iree)
+    else ()
+        set(BASE_IMAGE "${NES_RUNTIME_BASE_IMAGE}")
+        set(BASE_TARGET package-docker-runtime-base)
+    endif ()
+
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")
     string(CONCAT DOCKERFILE_CONTENT
-        "FROM ${NES_RUNTIME_BASE_IMAGE}\n"
+        "FROM ${BASE_IMAGE}\n"
         "${STATE}"
         "COPY $<TARGET_FILE_NAME:${TARGET}> /usr/bin/$<TARGET_FILE_NAME:${TARGET}>\n"
         "ENTRYPOINT [\"/usr/bin/$<TARGET_FILE_NAME:${TARGET}>\"]\n"
@@ -54,11 +82,11 @@ function(nes_add_docker_image IMAGE TARGET)
         USES_TERMINAL
         COMMENT "Building nebulastream/${IMAGE} (NES_DOCKER_TAG, default: local)"
     )
-    add_dependencies(package-docker-${IMAGE} ${TARGET} package-docker-runtime-base)
+    add_dependencies(package-docker-${IMAGE} ${TARGET} ${BASE_TARGET})
     add_dependencies(package-docker-images-all package-docker-${IMAGE})
 endfunction()
 
 nes_add_docker_image(nes-cli nes-cli)
 nes_add_docker_image(nes-repl nes-repl)
-nes_add_docker_image(nes-repl-embedded nes-repl-embedded)
-nes_add_docker_image(nes-worker nes-single-node-worker)
+nes_add_docker_image(nes-repl-embedded nes-repl-embedded IREE)
+nes_add_docker_image(nes-worker nes-single-node-worker IREE)
