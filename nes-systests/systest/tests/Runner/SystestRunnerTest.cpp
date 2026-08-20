@@ -54,6 +54,8 @@
 #include <QueryStatus.hpp>
 #include <Version.hpp>
 
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -88,6 +90,15 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
     }
     return queryStatus;
 }
+
+/// The sink of the ordered queries writes one field, so a result file holding that header is a valid empty result.
+NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> oneFieldSchema()
+{
+    return NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>{std::vector{
+        NES::UnqualifiedUnboundField{NES::Identifier::parse("id"), NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)}}};
+}
+
+constexpr auto ONE_FIELD_HEADER = "id:UINT64:NOT_NULLABLE\n";
 
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
@@ -217,7 +228,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
+    ASSERT_TRUE(result.front().verdict.has_value());
+    EXPECT_FALSE(result.front().verdict->has_value());
     EXPECT_THAT(result.front().exception->what(), ::testing::HasSubstr("runtime boom(10000)"));
 }
 
@@ -258,7 +270,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
+    ASSERT_TRUE(result.front().verdict.has_value());
+    EXPECT_FALSE(result.front().verdict->has_value());
 }
 
 TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
@@ -338,27 +351,23 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
-    auto query1 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
-        ExpectedRows{},
-        std::nullopt,
-        SystestQueryId(1));
+    auto query1 = makeQuery(SystestQuery::PlanInfo{distributedPlan, oneFieldSchema()}, ExpectedRows{}, std::nullopt, SystestQueryId(1));
 
     auto query2 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
+        SystestQuery::PlanInfo{distributedPlan, oneFieldSchema()},
         ExpectedRows{},
         std::make_pair(TestName{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
-        SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
+        SystestQuery::PlanInfo{distributedPlan, oneFieldSchema()},
         ExpectedRows{},
         std::make_pair(TestName{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));
 
-    std::ofstream(query1.resultFile()) << "\n";
-    std::ofstream(query2.resultFile()) << "\n";
-    std::ofstream(query3.resultFile()) << "\n";
+    std::ofstream(query1.resultFile()) << ONE_FIELD_HEADER;
+    std::ofstream(query2.resultFile()) << ONE_FIELD_HEADER;
+    std::ofstream(query3.resultFile()) << ONE_FIELD_HEADER;
 
     const auto result = runQueries({query1, query2, query3}, 4, submitter, progressTracker, discardPerformanceMessage);
 

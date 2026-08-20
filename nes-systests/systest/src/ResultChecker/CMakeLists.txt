@@ -11,5 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-systest-lib
-        SystestResultCheck.cpp
+        Check.cpp
+        DifferentialChecker.cpp
+        QueryResultChecker.cpp
+        ExplainChecker.cpp
+        ResultComparison.cpp
+        QueryResult.cpp
 )
