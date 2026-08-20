@@ -30,6 +30,9 @@ using ExpectedResult = std::vector<std::string>;
 struct ExpectedRows
 {
     ExpectedResult rows;
+    /// Whether each row of the result file is one JSON object, which the checker reads whole rather than splitting into fields.
+    /// The rewriter takes this from the sink it inlines, so a parsed test file always carries false here.
+    bool rowsAreJson = false;
 };
 
 struct ExpectedError
@@ -42,6 +45,9 @@ struct ExpectedError
 struct ExpectedPlan
 {
     ExpectedResult lines;
+    /// The prefix the rewriter puts in front of every name it qualifies, stripped from the printed plan before comparing,
+    /// because the expected lines hold the names the test file wrote.
+    std::string qualifyingPrefix;
 };
 
 /// What a query should yield: result rows, a specific error, or a plan.

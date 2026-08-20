@@ -910,7 +910,7 @@ struct SystestBinder::Impl
     {
         SystestQueryBuilder currentBuilder{statement.id};
         currentBuilder.setQueryDefinition(statement.sql);
-        currentBuilder.setExpectation(ExpectedPlan{.lines = statement.expected});
+        currentBuilder.setExpectation(ExpectedPlan{.lines = statement.expected, .qualifyingPrefix = {}});
         try
         {
             const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(statement.sql);

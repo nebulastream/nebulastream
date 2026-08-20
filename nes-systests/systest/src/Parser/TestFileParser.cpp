@@ -231,7 +231,7 @@ TestFile parseTestFile(SystestParser& parser, const std::filesystem::path& path)
                                            { builder.addLocalSettings(overrides); });
 
     parser.registerOnResultTuplesCallback([&](ExpectedResult rows, const SystestQueryId id)
-                                          { builder.completeQuery(id, ExpectedRows{.rows = std::move(rows)}); });
+                                          { builder.completeQuery(id, ExpectedRows{.rows = std::move(rows), .rowsAreJson = false}); });
 
     parser.registerOnErrorExpectationCallback([&](const SystestParser::ErrorExpectation& error, const SystestQueryId id)
                                               { builder.completeQuery(id, ExpectedError{.code = error.code, .message = error.message}); });
