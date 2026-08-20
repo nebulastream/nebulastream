@@ -25,7 +25,7 @@ namespace NES
 {
 
 /// Identifies one case in a run's reports.
-/// A report line prints this rather than the file path, because one run may report many cases from the same file,
+/// A report line prints this rather than the file path, because one run may report many test cases from the same file,
 /// and a query with multiple configuration overrides runs once per alternative.
 struct TestCaseId
 {
