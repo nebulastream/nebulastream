@@ -218,7 +218,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
+    EXPECT_FALSE(result.front().verdict.has_value());
     EXPECT_THAT(result.front().exception->what(), ::testing::HasSubstr("runtime boom(10000)"));
 }
 
@@ -259,7 +259,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
         discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
-    EXPECT_FALSE(result.front().passed);
+    EXPECT_FALSE(result.front().verdict.has_value());
 }
 
 TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)

@@ -44,12 +44,20 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Model/Expectation.hpp>
+#include <Model/TestCaseId.hpp>
+#include <Model/Verdict.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <ResultChecker/SystestResultCheck.hpp>
+#include <ResultChecker/Check.hpp>
+#include <ResultChecker/DifferentialChecker.hpp>
+#include <ResultChecker/ExplainChecker.hpp>
+#include <ResultChecker/ResultChecker.hpp>
 #include <Runner/QuerySubmitter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -63,16 +71,15 @@ namespace NES::Systest
 {
 namespace
 {
-template <typename ErrorCallable>
 void reportResult(
     std::shared_ptr<RunningQuery>& runningQuery,
     SystestProgressTracker& progressTracker,
     std::vector<std::shared_ptr<RunningQuery>>& failed,
-    ErrorCallable&& errorBuilder,
+    Verdict verdict,
     const QueryPerformanceMessageBuilder& performanceMessageBuilder)
 {
-    std::string msg = errorBuilder();
-    runningQuery->passed = msg.empty();
+    const bool mismatched = not verdict.has_value();
+    runningQuery->verdict = std::move(verdict);
 
     std::string performanceMessage;
     /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
@@ -85,8 +92,8 @@ void reportResult(
     }
 
     progressTracker.incrementQueryCounter();
-    printQueryResultToStdOut(*runningQuery, msg, progressTracker, performanceMessage);
-    if (!msg.empty())
+    printQueryResultToStdOut(*runningQuery, progressTracker, performanceMessage);
+    if (mismatched)
     {
         failed.push_back(runningQuery);
     }
@@ -94,7 +101,111 @@ void reportResult(
 
 bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 {
-    return runningQuery->passed;
+    return runningQuery->verdict.has_value();
+}
+
+/// A sink that discards its input writes no result file, so a query that ends in one has nothing to check.
+bool writesIntoDiscardingSink(const SystestQuery& query)
+{
+    if (not query.planInfoOrException.has_value())
+    {
+        return false;
+    }
+    const auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query.planInfoOrException.value().queryPlan.getGlobalPlan());
+    if (sinkOperators.empty())
+    {
+        return false;
+    }
+    const auto sinkOperator = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>();
+    if (not sinkOperator.has_value())
+    {
+        return false;
+    }
+    const auto sinkDescriptor = sinkOperator.value()->getSinkDescriptor();
+    return sinkDescriptor.has_value() and toUpperCase(sinkDescriptor.value().getSinkType()) == "VOID";
+}
+
+/// Checks a query that reached a successful terminal state against what the test expects of its result.
+Verdict checkSucceededQuery(const SystestQuery& query)
+{
+    if (std::holds_alternative<ExpectedError>(query.expectation))
+    {
+        return std::unexpected(
+            Mismatch{fmt::format("expected error {} but query succeeded", std::get<ExpectedError>(query.expectation).code)});
+    }
+
+    if (writesIntoDiscardingSink(query))
+    {
+        NES_INFO("Skipping result check for {}:{} because it writes to a Void sink.", query.testName, query.queryIdInFile);
+        return {};
+    }
+
+    if (query.differentialQueryPlan.has_value())
+    {
+        return runCheck(
+            DifferentialCheck{.resultFile = query.resultFile(), .differentialResultFile = query.resultFileForDifferentialQuery()});
+    }
+
+    const auto* expectedRows = std::get_if<ExpectedRows>(&query.expectation);
+    INVARIANT(expectedRows != nullptr, "Systest was expected to have an expected result");
+    return runCheck(ResultCheck{
+        .resultFile = query.resultFile(),
+        .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
+        .expected = expectedRows->rows});
+}
+
+/// Checks the plan an EXPLAIN printed, which the binder computed, because an EXPLAIN never reaches the worker.
+Verdict checkExplainedQuery(const SystestQuery& query)
+{
+    if (std::holds_alternative<ExpectedError>(query.expectation))
+    {
+        return std::unexpected(
+            Mismatch{fmt::format("expected error {} but EXPLAIN succeeded", std::get<ExpectedError>(query.expectation).code)});
+    }
+
+    const auto* expectedPlan = std::get_if<ExpectedPlan>(&query.expectation);
+    INVARIANT(expectedPlan != nullptr, "EXPLAIN statements must have expected result lines");
+    INVARIANT(query.actualExplainOutput.has_value(), "checking an EXPLAIN requires a computed explain output");
+    return runCheck(ExplainCheck{.actualOutput = query.actualExplainOutput.value(), .expected = expectedPlan->lines});
+}
+
+/// Checks a query that failed against the error the test expects.
+/// Errors beyond the expected one are tolerated, because a failure on one pipeline can raise further errors on the pipelines
+/// connected to it.
+Verdict checkFailedQuery(const std::optional<DistributedException>& failure, const Expectation& expectation)
+{
+    if (not failure.has_value())
+    {
+        return std::unexpected(Mismatch{"Query Failed without reporting an error"});
+    }
+    const DistributedException& actual = failure.value();
+
+    const auto* expectedError = std::get_if<ExpectedError>(&expectation);
+    if (expectedError == nullptr)
+    {
+        return std::unexpected(Mismatch{fmt::format("Query Failed with unexpected error: {}", actual)});
+    }
+
+    auto allExceptionByAddress = std::views::join(std::views::transform(
+        actual.details(),
+        [](auto& exceptionsByAddress)
+        {
+            return std::views::transform(
+                exceptionsByAddress.second,
+                [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
+        }));
+
+    const auto expectedErrorOccurred = std::ranges::any_of(
+        allExceptionByAddress | std::views::values,
+        [&](const auto& exceptionRef) { return exceptionRef.get().code() == expectedError->code; });
+
+    if (not expectedErrorOccurred)
+    {
+        return std::unexpected(Mismatch{fmt::format(
+            "Expected error \"{}({})\" to occur, but it did not! Actual: {}", expectedError->message, expectedError->code, actual)});
+    }
+
+    return {};
 }
 
 void processQueryWithError(
@@ -105,45 +216,8 @@ void processQueryWithError(
     const QueryPerformanceMessageBuilder& performanceMessageBuilder)
 {
     runningQuery->exception = exception;
-    reportResult(
-        runningQuery,
-        progressTracker,
-        failed,
-        [&]
-        {
-            if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectation))
-            {
-                const DistributedException& actualException = runningQuery->exception.value();
-                auto allExceptionByAddress = std::views::join(std::views::transform(
-                    actualException.details(),
-                    [](auto& exceptionsByAddress)
-                    {
-                        return std::views::transform(
-                            exceptionsByAddress.second,
-                            [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
-                    }));
-
-                /// The test passes if the expected error code is among the thrown exceptions. Additional errors are tolerated, because
-                /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines
-                const auto expectedErrorOccurred = std::ranges::any_of(
-                    allExceptionByAddress | std::views::values,
-                    [&](const auto& exceptionRef) { return exceptionRef.get().code() == expectedError->code; });
-
-                if (!expectedErrorOccurred)
-                {
-                    return fmt::format(
-                        "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
-                        expectedError->message,
-                        expectedError->code,
-                        actualException);
-                }
-
-                return std::string{};
-            }
-
-            return fmt::format("Query Failed with unexpected error: {}", *runningQuery->exception);
-        },
-        performanceMessageBuilder);
+    auto verdict = checkFailedQuery(runningQuery->exception, runningQuery->systestQuery.expectation);
+    reportResult(runningQuery, progressTracker, failed, std::move(verdict), performanceMessageBuilder);
 }
 
 }
@@ -251,24 +325,7 @@ std::vector<RunningQuery> runQueries(
                 /// EXPLAIN statements are never submitted to the worker; their output was computed at bind time,
                 /// so compare it against the expected result lines and report immediately.
                 auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
-                reportResult(
-                    runningQuery,
-                    progressTracker,
-                    failed,
-                    [&]
-                    {
-                        if (std::holds_alternative<ExpectedError>(nextQuery.expectation))
-                        {
-                            return fmt::format(
-                                "expected error {} but EXPLAIN succeeded", std::get<ExpectedError>(nextQuery.expectation).code);
-                        }
-                        if (auto err = checkExplainResult(*runningQuery))
-                        {
-                            return *err;
-                        }
-                        return std::string{};
-                    },
-                    queryPerformanceMessage);
+                reportResult(runningQuery, progressTracker, failed, checkExplainedQuery(nextQuery), queryPerformanceMessage);
                 moveDependentsToPending(nextQuery);
                 continue;
             }
@@ -368,24 +425,7 @@ std::vector<RunningQuery> runQueries(
                     }
 
                     reportResult(
-                        runningQuery,
-                        progressTracker,
-                        failed,
-                        [&]
-                        {
-                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectation))
-                            {
-                                return fmt::format(
-                                    "expected error {} but query succeeded",
-                                    std::get<ExpectedError>(runningQuery->systestQuery.expectation).code);
-                            }
-                            if (auto err = checkResult(*runningQuery))
-                            {
-                                return *err;
-                            }
-                            return std::string{};
-                        },
-                        queryPerformanceMessage);
+                        runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery), queryPerformanceMessage);
 
                     if (otherRunningQueryIt != active.end())
                     {
@@ -401,24 +441,7 @@ std::vector<RunningQuery> runQueries(
             }
 
             /// Regular query (not differential), process immediately
-            reportResult(
-                runningQuery,
-                progressTracker,
-                failed,
-                [&]
-                {
-                    if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectation))
-                    {
-                        return fmt::format(
-                            "expected error {} but query succeeded", std::get<ExpectedError>(runningQuery->systestQuery.expectation).code);
-                    }
-                    if (auto err = checkResult(*runningQuery))
-                    {
-                        return *err;
-                    }
-                    return std::string{};
-                },
-                queryPerformanceMessage);
+            reportResult(runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery), queryPerformanceMessage);
             moveDependentsToPending(runningQuery->systestQuery);
             active.erase(it);
         }
@@ -431,14 +454,9 @@ std::vector<RunningQuery> runQueries(
 /// NOLINTEND(readability-function-cognitive-complexity)
 
 void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    SystestProgressTracker& progressTracker,
-    const std::string_view queryPerformanceMessage)
+    const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.systestQuery.testName.size();
-    const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
-    const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter());
     const auto progressPercent = std::clamp(progressTracker.getProgressInPercent(), 0.0, 100.0);
 
@@ -457,8 +475,8 @@ void printQueryResultToStdOut(
     std::cout << std::string(counterPad, ' ');
     std::cout << queryCounterAsString << "/" << progressTracker.getTotalQueries();
     std::cout << fmt::format(" ({:5.1f}%) ", progressPercent);
-    const auto numberPad = padSizeQueryNumber > queryNumberLength ? padSizeQueryNumber - queryNumberLength : 0;
-    std::cout << runningQuery.systestQuery.testName << ":" << std::string(numberPad, '0') << queryNumberAsString;
+    std::cout << fmt::format(
+        "{}", TestCaseId{.file = runningQuery.systestQuery.testName, .query = runningQuery.systestQuery.queryIdInFile});
     std::cout << overrideStr;
 
     const auto totalUsedSpace = queryNameLength + padSizeQueryNumber + overrideStr.size();
@@ -466,7 +484,7 @@ void printQueryResultToStdOut(
     const auto maxPadding = 1000;
     const auto finalPadding = std::min<size_t>(paddingDots, maxPadding);
     std::cout << std::string(finalPadding, '.');
-    if (runningQuery.passed)
+    if (runningQuery.verdict.has_value())
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);
     }
@@ -476,7 +494,7 @@ void printQueryResultToStdOut(
         std::cout << "===================================================================" << '\n';
         std::cout << runningQuery.systestQuery.queryDefinition << '\n';
         std::cout << "===================================================================" << '\n';
-        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "Error: {}\n", errorMessage);
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "Error: {}\n", runningQuery.verdict.error().detail);
         std::cout << "===================================================================" << '\n';
     }
 }
