@@ -34,6 +34,7 @@
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/SystestQueryId.hpp>
+#include <Model/Verdict.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -160,7 +161,8 @@ struct RunningQuery
     std::optional<DistributedQueryStatusSnapshot> queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
-    bool passed = false;
+    /// What the check said about this query, which the runner fills in once the query has been checked.
+    Verdict verdict;
     std::optional<DistributedException> exception;
 
     std::chrono::duration<double> getElapsedTime() const;
