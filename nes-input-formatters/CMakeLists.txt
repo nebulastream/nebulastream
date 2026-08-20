@@ -51,9 +51,4 @@ target_include_directories(nes-input-formatter-provider PUBLIC
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
-endif ()
-
-
 add_tests_if_enabled(tests)

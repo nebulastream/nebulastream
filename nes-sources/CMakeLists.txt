@@ -53,8 +53,5 @@ add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 target_sources(nes-sources PRIVATE ${NES_SOURCES_SOURCE_FILES})
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-sources REUSE_FROM nes-common)
-endif ()
 
 add_tests_if_enabled(tests)

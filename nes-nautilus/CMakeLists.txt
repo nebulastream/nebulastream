@@ -21,12 +21,6 @@ add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-schema nes-memory nes-output-formatters)
 
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-nautilus REUSE_FROM nes-common)
-    # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-nautilus PUBLIC "-fPIC")
-endif ()
-
 add_tests_if_enabled(tests)
 
 # Add nes-nautilus to the include directories

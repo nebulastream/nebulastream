@@ -45,10 +45,4 @@ find_package(highs CONFIG REQUIRED)
 target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
 
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)
-    # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
-endif ()
-
 add_tests_if_enabled(tests)

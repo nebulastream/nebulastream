@@ -26,7 +26,6 @@ option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 set(LARGE_TEST_DOWNLOAD_TIMEOUT 1200 CACHE STRING "Absolute timeout in seconds for downloading large test data files")
 option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
 
-option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
