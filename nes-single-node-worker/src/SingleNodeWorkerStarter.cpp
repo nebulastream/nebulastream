@@ -14,8 +14,8 @@
 
 /// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
 /// NOLINTNEXTLINE(modernize-deprecated-headers)
+#include <csignal>
 #include <cstdlib>
-#include <signal.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
@@ -59,6 +59,7 @@ void unblockTerminationSignals()
     sigemptyset(&terminationSignals);
     sigaddset(&terminationSignals, SIGINT);
     sigaddset(&terminationSignals, SIGTERM);
+    /// NOLINTNEXTLINE(misc-include-cleaner)
     pthread_sigmask(SIG_UNBLOCK, &terminationSignals, nullptr);
 }
 
