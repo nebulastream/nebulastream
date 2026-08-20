@@ -16,7 +16,6 @@ The style can be imported into Clion by following the steps below:
 
 # Includes and Forward Declaration
 We use `include <>` for all includes and avoid [forward declaration wherever possible](https:///github.com/nebulastream/nebulastream-public/discussions/19).
-Additionally, we use [include-what-you-use](https:///github.com/include-what-you-use/include-what-you-use) to reduce the includes to the bare necessaries.
 We never use `using namespace` in the global scope of header files, as they get pulled into the namespace of all files that include the header file.
 ```cpp
 
