@@ -57,6 +57,10 @@ struct RefCountedByteBuffer
         {
             return false;
         }
+        if (lhs.size == 0)
+        {
+            return true;
+        }
         if (!lhs.buffer || !rhs.buffer)
         {
             return lhs.buffer == rhs.buffer;
@@ -74,6 +78,21 @@ struct RefCountedByteBuffer
     }
 };
 
+/// The complete OpenVINO representation of a model: the IR topology (XML) and the weights (BIN),
+/// the pair `ov::Core::read_model` needs to reconstruct it. The type names the backend the payload
+/// belongs to, so it cannot be fed to a backend that did not produce it.
+struct OpenVinoModel
+{
+    RefCountedByteBuffer modelGraph; /// .xml
+    RefCountedByteBuffer modelWeights; /// .bin
+
+    [[nodiscard]] std::span<const std::byte> modelGraphView() const { return modelGraph.view(); }
+
+    [[nodiscard]] std::span<const std::byte> modelWeightsView() const { return modelWeights.view(); }
+
+    friend bool operator==(const OpenVinoModel&, const OpenVinoModel&) = default;
+};
+
 }
 
 template <typename Tag>
@@ -82,14 +101,14 @@ class Model;
 using ImportedModel = Model<struct Imported_>;
 using CompiledModel = Model<struct Compiled_>;
 
-/// A model at a particular lifecycle stage: textual form after import, compiled
-/// bytecode after compile. The payload is a ref-counted byte buffer; the
-/// signature (function name, shapes) scraped at import time flows unchanged
-/// through compile.
+/// A model at a particular lifecycle stage: imported after import, compiled after
+/// compile. The payload is a backend-tagged `detail::OpenVinoModel` (IR graph + weights);
+/// the signature (function name, shapes) scraped at import time flows unchanged through
+/// compile.
 template <typename Tag>
 class Model
 {
-    detail::RefCountedByteBuffer data;
+    detail::OpenVinoModel backendModel;
     std::string functionName;
     std::vector<size_t> inputShape;
     std::vector<size_t> outputShape;
@@ -101,16 +120,17 @@ class Model
     friend struct Reflector<Model<Imported_>>;
     friend struct Unreflector<Model<Imported_>>;
 
-    Model(detail::RefCountedByteBuffer buf, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
-        : data(std::move(buf)), functionName(std::move(fnName)), inputShape(std::move(inShape)), outputShape(std::move(outShape))
+    Model(detail::OpenVinoModel model, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
+        : backendModel(std::move(model)), functionName(std::move(fnName)), inputShape(std::move(inShape)), outputShape(std::move(outShape))
     {
     }
 
-    /// Cross-tag conversion: carry the signature from `other` and take a fresh
-    /// payload buffer — used when compiling turns one lifecycle stage into the next.
+    /// Cross-tag conversion: carry the payload and signature from `other` unchanged — used
+    /// when compiling turns one lifecycle stage into the next. OpenVINO compile is a
+    /// passthrough, so the ref-counted payload is shared.
     template <typename OtherTag>
-    Model(Model<OtherTag> other, detail::RefCountedByteBuffer buf)
-        : data(std::move(buf))
+    explicit Model(Model<OtherTag> other)
+        : backendModel(std::move(other.backendModel))
         , functionName(std::move(other.functionName))
         , inputShape(std::move(other.inputShape))
         , outputShape(std::move(other.outputShape))
@@ -125,11 +145,11 @@ public:
     Model& operator=(Model&&) noexcept = default;
     ~Model() = default;
 
-    [[nodiscard]] std::span<const std::byte> getData() const { return data.view(); }
+    [[nodiscard]] const detail::OpenVinoModel& getBackendModel() const { return backendModel; }
 
-    [[nodiscard]] size_t size() const { return data.size; }
+    [[nodiscard]] size_t size() const { return backendModel.modelGraph.size; }
 
-    [[nodiscard]] bool empty() const { return data.size == 0; }
+    [[nodiscard]] bool empty() const { return backendModel.modelGraph.size == 0; }
 
     [[nodiscard]] const std::string& getFunctionName() const { return functionName; }
 

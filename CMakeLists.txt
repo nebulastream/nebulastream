@@ -34,7 +34,6 @@ option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
 option(ALL_SLICE_CACHE_TESTS "Run system tests with and without slice cache." OFF)
 
-
 if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
     add_compile_definitions(NO_ASSERT)
     set(NES_BUILD_NATIVE ON)

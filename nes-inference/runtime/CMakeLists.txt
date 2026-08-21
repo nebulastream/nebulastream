@@ -10,10 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(IREERuntime CONFIG REQUIRED)
+find_package(OpenVINO CONFIG REQUIRED COMPONENTS Runtime)
 
-add_library(nes-inference-runtime src/InferenceRuntime.cpp)
+add_library(nes-inference-runtime
+        src/InferenceRuntime.cpp
+        src/OpenVinoRuntimeBackend.cpp)
 target_include_directories(nes-inference-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(nes-inference-runtime
         PUBLIC nes-inference
-        PRIVATE nes-common iree_runtime_runtime)
+        PRIVATE nes-common)
+target_link_openvino_runtime(nes-inference-runtime)

@@ -65,12 +65,12 @@ else ()
     set(sliceCacheValues true)
 endif ()
 
-# Group exclude lists for systest invocations. The Inference group requires the IREE toolchain;
-# when ENABLE_IREE_TESTS is OFF (e.g. iree-import-onnx / iree-compile not in PATH) we exclude it
+# Group exclude lists for systest invocations. The Inference group requires the OpenVINO converter;
+# when ENABLE_INFERENCE_TESTS is OFF (e.g. `ovc` not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
 set(SYSTEST_EXCLUDE_GROUPS large)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
-if (NOT ENABLE_IREE_TESTS)
+if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
 endif ()

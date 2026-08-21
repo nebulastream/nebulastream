@@ -75,6 +75,18 @@ std::filesystem::path identityPath()
     return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_identity.onnx";
 }
 
+std::filesystem::path dynamicBatchPath()
+{
+    /// tiny_dynamic_batch.onnx: f32 identity with shape ["batch",100] on each side.
+    return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_dynamic_batch.onnx";
+}
+
+std::filesystem::path fixedBatchPath()
+{
+    /// tiny_fixed_batch.onnx: f32 identity with shape [4,100] on each side.
+    return std::filesystem::path(INFERENCE_TEST_DATA) / "tiny_fixed_batch.onnx";
+}
+
 }
 
 class ModelCatalogTest : public ::testing::Test
@@ -156,6 +168,42 @@ TEST_F(ModelCatalogTest, RejectsOutputFieldCountMismatch)
             identityPath(),
             /// model produces 100 elements
             ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = fields(10, DataType::Type::FLOAT32)}),
+        NES::ErrorCode::CannotLoadModel);
+}
+
+/// A dynamic batch dimension resolves to 1, so the model registers against a schema
+/// describing a single sample.
+TEST_F(ModelCatalogTest, RegistersModelWithDynamicBatchDimension)
+{
+    ModelCatalog catalog;
+    ASSERT_NO_THROW(catalog.registerModel(
+        "m",
+        dynamicBatchPath(),
+        ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = fields(100, DataType::Type::FLOAT32)}));
+}
+
+/// The declared schema is still validated against the resolved shape: a schema written
+/// for a batch of 4 no longer matches once the dynamic dimension has become 1.
+TEST_F(ModelCatalogTest, RejectsSchemaThatDoesNotMatchResolvedBatchDimension)
+{
+    ModelCatalog catalog;
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerModel(
+            "m",
+            dynamicBatchPath(),
+            ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
+        NES::ErrorCode::CannotLoadModel);
+}
+
+/// A model wanting several samples per invocation cannot be driven one tuple at a time.
+TEST_F(ModelCatalogTest, RejectsModelWithFixedBatchDimension)
+{
+    ModelCatalog catalog;
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerModel(
+            "m",
+            fixedBatchPath(),
+            ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
         NES::ErrorCode::CannotLoadModel);
 }
 
