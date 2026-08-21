@@ -27,14 +27,16 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     pkg-config \
-    -y
+    -y \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
 # install llvm based toolchain
 RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
     && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
     && echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
     && echo "deb-src [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y && apt install clang-${LLVM_TOOLCHAIN_VERSION} libc++-${LLVM_TOOLCHAIN_VERSION}-dev libc++abi-${LLVM_TOOLCHAIN_VERSION}-dev libclang-rt-${LLVM_TOOLCHAIN_VERSION}-dev -y
+    && apt update -y && apt install clang-${LLVM_TOOLCHAIN_VERSION} libc++-${LLVM_TOOLCHAIN_VERSION}-dev libc++abi-${LLVM_TOOLCHAIN_VERSION}-dev libclang-rt-${LLVM_TOOLCHAIN_VERSION}-dev -y \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
 # install recent version of the mold linker
 RUN wget https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-$(uname -m)-linux.tar.gz \
@@ -49,7 +51,8 @@ RUN curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --d
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(. /etc/os-release && echo "$VERSION_CODENAME") main" > /etc/apt/sources.list.d/kitware.list \
     && apt update -y \
     && apt install cmake=${CMAKE_VERSION} cmake-data=${CMAKE_VERSION} -y \
-    && cmake --version
+    && cmake --version \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
 # default cmake generator is ninja
 ENV CMAKE_GENERATOR=Ninja
