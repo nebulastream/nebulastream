@@ -20,9 +20,9 @@
 #include <string_view>
 #include <unordered_map>
 #include <magic_enum/magic_enum.hpp>
+#include <nes-logger-bindings/lib.h>
 #include <rust/cxx.h>
 #include <spdlog/common.h>
-#include <spdlog/lib.h>
 #include <spdlog/logger.h>
 #include <spdlog/mdc.h>
 

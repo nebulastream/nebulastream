@@ -10,15 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[package]
-name = "nes_rust_bindings"
-version = "0.1.0"
-edition = "2021"
 
-[lib]
-crate-type = ["staticlib"]
+add_cxx_bridge(
+        nes-rust-timestamp-bindings
+        CRATE nes_rust_timestamp
+        FILES cast_to_unix_timestamp.rs
+)
 
-[dependencies]
-cxx = "1.0"
-network_bindings = { path = "network" }
-spdlog_bindings = { path = "spdlog" }
+# The bridge only exposes Rust functions, so this crate can be tested by Cargo in isolation.
+add_rust_cargo_test(nes_rust_timestamp)

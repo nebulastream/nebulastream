@@ -22,6 +22,11 @@ set -euo pipefail
 # cd to root of git repo
 cd "$(git rev-parse --show-toplevel)"
 
+# Member manifests are deliberately excluded from the dependency image hash. Enforce the
+# invariants that make that safe: members can only inherit dependencies from the workspace,
+# and the workspace cannot keep dependencies that are not yet used (and therefore not vendored).
+python3 scripts/check_rust_dependency_policy.py
+
 # paths of dirs or files that affect the dependency images
 #
 # Do not use trailing slashes on dirs since this leads to diverging hashes on macos.
@@ -29,11 +34,10 @@ HASH_PATHS=(
   vcpkg
   docker/dependency
   docker/runtime
-)
-# Auto-discover all Cargo manifests + lockfiles (any depth) under each Rust workspace.
-# Adding a new workspace later only requires extending the list of roots passed to find.
-while IFS= read -r f; do HASH_PATHS+=("$f"); done < <(
-  find nes-network \( -name 'Cargo.toml' -o -name 'Cargo.lock' \) -type f
+  scripts/check_rust_dependency_policy.py
+  scripts/hash_dependencies.sh
+  Cargo.toml
+  Cargo.lock
 )
 
 # Find all files, convert CRLF to LF on-the-fly, then hash

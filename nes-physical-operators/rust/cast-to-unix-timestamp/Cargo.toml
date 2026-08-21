@@ -10,7 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(interface)
-add_subdirectory(network-bindings)
+[package]
+name = "nes_rust_timestamp"
+version.workspace = true
+edition.workspace = true
 
-add_rust_cargo_test(nes_network)
+[lib]
+path = "src/cast_to_unix_timestamp.rs"
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+chrono = { workspace = true }
+cxx = { workspace = true }

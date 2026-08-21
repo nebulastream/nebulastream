@@ -10,18 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[package]
-name = "network_bindings"
-version = "0.1.0"
-edition = "2024"
+find_package(magic_enum CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
-[lib]
-path = "lib.rs"
-
-[dependencies]
-# Generate C++ bindings
-cxx = "1.0"
-
-tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time"] }
-nes_network = { path = "../../network" }
-tracing = "0.1.41"
+add_cxx_bridge(
+        nes-logger-bindings
+        CRATE spdlog_bindings
+        FILES lib.rs
+)
+target_sources(nes-logger-bindings PRIVATE src/LoggerBindings.cpp)
+target_link_libraries(nes-logger-bindings
+        PUBLIC spdlog::spdlog
+        PRIVATE magic_enum::magic_enum
+)
+target_include_directories(nes-logger-bindings PUBLIC include)
