@@ -47,6 +47,21 @@ bool blockTerminationSignals(sigset_t& terminationSignals)
     return pthread_sigmask(SIG_BLOCK, &terminationSignals, nullptr) == 0;
 }
 
+/// Counterpart to blockTerminationSignals. Only the shutdown hook consumes the blocked signals, and it does not exist until the gRPC
+/// server is running. On an error path that leaves main before that point a SIGTERM would stay pending forever and the process could
+/// only be killed with SIGKILL, so restore the default disposition to terminate promptly instead. Call this only once the error has
+/// been logged and flushed: a signal that arrived while it was blocked is delivered from inside pthread_sigmask and kills the process
+/// right there, so anything still buffered at that moment is lost.
+/// NOLINTNEXTLINE(misc-include-cleaner)
+void unblockTerminationSignals()
+{
+    sigset_t terminationSignals{};
+    sigemptyset(&terminationSignals);
+    sigaddset(&terminationSignals, SIGINT);
+    sigaddset(&terminationSignals, SIGTERM);
+    pthread_sigmask(SIG_UNBLOCK, &terminationSignals, nullptr);
+}
+
 NES::Thread shutdownHook(grpc::Server& server, const sigset_t terminationSignals)
 {
     return {
@@ -124,6 +139,9 @@ int main(const int argc, const char* argv[])
     CPPTRACE_CATCH(...)
     {
         NES::tryLogCurrentException();
-        return NES::getCurrentErrorCode();
+        const auto errorCode = NES::getCurrentErrorCode();
+        NES::Logger::getInstance()->forceFlush();
+        unblockTerminationSignals();
+        return errorCode;
     }
 }
