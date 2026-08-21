@@ -35,6 +35,7 @@
 #include <variant>
 #include <vector>
 #include <Config/Config.hpp>
+#include <Config/RunPlan.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Model/ConfigurationOverride.hpp>
@@ -166,11 +167,11 @@ SystestExecutor::SystestExecutor(SystestConfiguration config) : config(std::move
 {
 }
 
-void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& queries)
+void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& queries, const RunPlan& plan)
 {
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
-    const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+    const auto numberConcurrentQueries = plan.concurrency;
     auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
     if (not config.workerConfig.getValue().empty())
     {
@@ -203,6 +204,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 SystestExecutorResult SystestExecutor::executeSystests()
 {
     setupLogging(config);
+    const auto plan = RunPlan::create(config);
 
     CPPTRACE_TRY
     {
@@ -241,21 +243,21 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         progressTracker.reset();
 
-        if (config.endlessMode)
+        if (std::holds_alternative<UntilStopped>(plan.repetition))
         {
-            runEndlessMode(queries);
+            runEndlessMode(queries, plan);
             return {
                 .returnType = SystestExecutorResult::ReturnType::FAILED,
                 .outputMessage = "Endless mode should not stop.",
                 .errorCode = ErrorCode::TestException};
         }
 
-        if (config.randomQueryOrder)
+        if (std::holds_alternative<Shuffled>(plan.ordering))
         {
             std::mt19937 rng(std::random_device{}());
             std::ranges::shuffle(queries, rng);
         }
-        const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+        const auto numberConcurrentQueries = plan.concurrency;
         std::vector<Systest::RunningQuery> failedQueries;
         if (config.remoteWorker.getValue())
         {
@@ -280,7 +282,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
-            if (config.benchmark)
+            if (plan.measureReport.has_value())
             {
                 std::vector<Systest::BenchmarkResult> benchmarkResults;
                 std::vector<Systest::SystestQuery> benchmarkQueries;
@@ -328,7 +330,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 }
                 const auto serializedResults = rfl::json::write(benchmarkResults, rfl::json::pretty);
                 std::cout << serializedResults;
-                const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
+                const auto& outputPath = *plan.measureReport;
                 std::ofstream outputFile(outputPath);
                 outputFile << serializedResults;
                 outputFile.close();
