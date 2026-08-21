@@ -19,6 +19,9 @@ function(add_nes_test_systest)
     target_compile_definitions(${TARGET_NAME} PRIVATE SYSTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
 endfunction()
 
+add_nes_test_systest(systest-test-discovery-test
+        "Discovery/TestDiscoveryTests.cpp")
+
 add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
         "Parser/SystestParserInvalidTestFilesTests.cpp"

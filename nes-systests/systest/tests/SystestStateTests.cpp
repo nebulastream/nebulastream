@@ -15,11 +15,10 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <string>
-#include <vector>
-#include <Config/Config.hpp>
-#include <Discovery/TestDiscovery.hpp>
+#include <system_error>
+
+#include <Model/SystestQueryId.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -60,15 +59,6 @@ public:
 private:
     std::filesystem::path path;
 };
-
-void writeTextFile(const std::filesystem::path& path, const std::string& content)
-{
-    std::filesystem::create_directories(path.parent_path());
-    std::ofstream out(path);
-    ASSERT_TRUE(out.is_open()) << "Failed to open file " << path;
-    out << content;
-    out.close();
-}
 }
 
 namespace NES::Systest
@@ -84,131 +74,6 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestStateTest test class."); }
 };
-
-TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigExclusion)
-{
-    const TemporaryDirectory tempDir;
-    const auto largeFile = tempDir.get() / "large.test";
-    const auto otherFile = tempDir.get() / "other.test";
-    writeTextFile(largeFile, "# groups:[large]\n");
-    writeTextFile(otherFile, "# groups:[other]\n");
-
-    SystestConfiguration config;
-    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
-    config.testFileExtension = ".test";
-    config.globalExcludedGroups = {"large"};
-    config.testGroups.add("large");
-
-    const auto testMap = loadTestFileMap(config);
-
-    ASSERT_EQ(testMap.size(), 1);
-    EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(largeFile)));
-}
-
-TEST_F(SystestStateTest, ExplicitCommandLineExclusionOverridesExplicitInclusion)
-{
-    const TemporaryDirectory tempDir;
-    const auto joinFile = tempDir.get() / "join.test";
-    writeTextFile(joinFile, "# groups:[Join]\n");
-
-    SystestConfiguration config;
-    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
-    config.testFileExtension = ".test";
-    config.testGroups.add("Join");
-    config.excludeGroups.add("Join");
-
-    const auto testMap = loadTestFileMap(config);
-
-    EXPECT_TRUE(testMap.empty());
-}
-
-TEST_F(SystestStateTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
-{
-    const TemporaryDirectory tempDir;
-    const auto joinFile = tempDir.get() / "join.test";
-    writeTextFile(joinFile, "# groups:[Join]\n");
-
-    SystestConfiguration config;
-    config.directlySpecifiedTestFiles = joinFile.string();
-    config.disabledTestFiles.add("join.test");
-
-    const auto testMap = loadTestFileMap(config);
-
-    ASSERT_EQ(testMap.size(), 1);
-    EXPECT_TRUE(testMap.contains(std::filesystem::weakly_canonical(joinFile)));
-}
-
-TEST_F(SystestStateTest, OnlyDuplicateDiscoveredTestNamesIncludeRelativeDirectory)
-{
-    const TemporaryDirectory tempDir;
-    const auto leftFile = tempDir.get() / "left" / "same.test";
-    const auto rightFile = tempDir.get() / "right" / "same.test";
-    const auto uniqueFile = tempDir.get() / "right" / "unique.test";
-    writeTextFile(leftFile, "# groups:[Join]\n");
-    writeTextFile(rightFile, "# groups:[Join]\n");
-    writeTextFile(uniqueFile, "# groups:[Join]\n");
-
-    SystestConfiguration config;
-    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
-    config.testFileExtension = ".test";
-
-    const auto testMap = loadTestFileMap(config);
-
-    ASSERT_EQ(testMap.size(), 3);
-    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(leftFile)).name(), "left/same");
-    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(rightFile)).name(), "right/same");
-    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(uniqueFile)).name(), "unique");
-}
-
-TEST_F(SystestStateTest, FilteredDuplicateTestNameUsesStem)
-{
-    const TemporaryDirectory tempDir;
-    const auto includedFile = tempDir.get() / "included" / "same.test";
-    const auto filteredFile = tempDir.get() / "filtered" / "same.test";
-    writeTextFile(includedFile, "# groups:[Included]\n");
-    writeTextFile(filteredFile, "# groups:[Filtered]\n");
-
-    SystestConfiguration config;
-    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
-    config.testFileExtension = ".test";
-    config.testGroups.add("Included");
-
-    const auto testMap = loadTestFileMap(config);
-
-    ASSERT_EQ(testMap.size(), 1);
-    EXPECT_EQ(testMap.at(std::filesystem::weakly_canonical(includedFile)).name(), "same");
-}
-
-TEST_F(SystestStateTest, DirectlySpecifiedTestNamesUseStem)
-{
-    const TemporaryDirectory tempDir;
-    const auto testFile = tempDir.get() / "left" / "same.test";
-    writeTextFile(testFile, "# groups:[Join]\n");
-
-    SystestConfiguration config;
-    /// Drop the default TEST_DISCOVER_DIR so discovery is limited to the temporary directory of this test.
-    config.testDiscoverDirs.clear();
-    config.testDiscoverDirs.add(tempDir.get().string());
-    config.directlySpecifiedTestFiles = testFile.string();
-
-    const auto directlySpecifiedTestMap = loadTestFileMap(config);
-    config.testQueryNumbers.add(1);
-    const auto queryFilteredTestMap = loadTestFileMap(config);
-
-    const auto canonicalTestFile = std::filesystem::weakly_canonical(testFile);
-    ASSERT_EQ(directlySpecifiedTestMap.size(), 1);
-    ASSERT_EQ(queryFilteredTestMap.size(), 1);
-    EXPECT_EQ(directlySpecifiedTestMap.at(canonicalTestFile).name(), "same");
-    EXPECT_EQ(queryFilteredTestMap.at(canonicalTestFile).name(), "same");
-}
 
 TEST_F(SystestStateTest, ResultFilesCreateDirectoriesForNestedTestNames)
 {
