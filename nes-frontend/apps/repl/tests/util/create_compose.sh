@@ -109,7 +109,10 @@ cat <<EOF
 networks:
   default:
     labels:
-      nes-test: distributed-repl
+      # Suite-scoped so one suite's network cleanup cannot match another's: the cli,
+      # MQTTSink and MQTTSource suites all used 'distributed-cli' and, running
+      # concurrently, tore down each other's containers.
+      nes-test: ${NES_E2E_SUITE:-distributed-repl}
 volumes:
   $TEST_VOLUME:
     external: true

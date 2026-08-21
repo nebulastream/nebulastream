@@ -22,7 +22,7 @@ setup_file() {
   nes_require_env NES_DIR
   nes_require_env NES_TEST_TMP_DIR
   nes_require_env DATADIR
-  nes_require_env NES_RUNTIME_BASE_IMAGE
+  nes_require_env NES_RUNTIME_IREE_IMAGE
   nes_require_executable "$NES_SYSTEST"
   nes_require_executable "$NES_WORKER"
 
