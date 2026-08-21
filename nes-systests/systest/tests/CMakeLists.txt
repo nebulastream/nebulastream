@@ -36,5 +36,11 @@ add_nes_test_systest(slt-parser-test
 add_nes_test_systest(testfile-parser-test
         "Parser/TestFileParserTests.cpp")
 
+add_nes_test_systest(systest-name-qualifier-test
+        "Rewriter/NameQualifierTests.cpp")
+
+add_nes_test_systest(systest-sql-rewriter-test
+        "Rewriter/SqlRewriterTests.cpp")
+
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
