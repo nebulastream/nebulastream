@@ -18,7 +18,8 @@ RUN apt-get update -y && apt-get install -y \
         bats-support \
         bats-assert \
         bats-file \
-        openjdk-21-jre-headless
+        openjdk-21-jre-headless \
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
 # Additional testing libraries for bats are discovered via the BATS_LIB_PATH environemnt
 ENV BATS_LIB_PATH=/usr/lib/bats
@@ -105,14 +106,22 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 
 # Install IREE compiler tools for ML inference (ONNX → IREE compilation)
 ARG IREE_COMPILER_VERSION=3.11.0
+# iree-turbine is deliberately not installed, matching docker/runtime/RuntimeIree.dockerfile: both
+# console scripts we use are entry points of iree-base-compiler, and turbine only pulls in
+# iree-base-runtime (runtime + tracy libs) that nothing here uses -- the C++ side links
+# iree_runtime_runtime statically from the vcpkg ireeruntime port. pip and the bytecode caches go
+# once the venv is populated.
 RUN python3 -m venv /opt/iree && \
-    /opt/iree/bin/pip install --no-cache-dir \
+    /opt/iree/bin/pip install --no-cache-dir --no-compile \
         iree-base-compiler==${IREE_COMPILER_VERSION} \
-        iree-turbine \
         onnx && \
+    rm -rf /opt/iree/bin/pip* /opt/iree/lib/python*/site-packages/pip \
+           /opt/iree/lib/python*/site-packages/pip-*.dist-info && \
+    find /opt/iree -name '__pycache__' -type d -prune -exec rm -rf {} + && \
     ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
-    iree-compile --version
+    iree-compile --version && \
+    iree-import-onnx --help > /dev/null
 
 # Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
 # container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
