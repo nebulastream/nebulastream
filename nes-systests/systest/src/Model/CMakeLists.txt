@@ -11,6 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-systest-lib
-        SystestParser.cpp
-        TestFileParser.cpp
+        TestFile.cpp
 )

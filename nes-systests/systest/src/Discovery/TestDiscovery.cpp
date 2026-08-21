@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Model/SystestQueryId.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Strings.hpp>

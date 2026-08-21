@@ -17,16 +17,18 @@
 #include <utility>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 #include <Discovery/TestFileReader.hpp>
+#include <Model/SystestQueryId.hpp>
 #include <Parser/SystestParser.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 /// Tests if SLT Parser rejects invalid .test files correctly
 class SystestParserInvalidTestFilesTest : public Testing::BaseUnitTest
@@ -46,7 +48,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -65,7 +67,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
             /// nop, ensure parsing
         });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -84,7 +86,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
             /// nop, ensure parsing
         });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -97,7 +99,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTokenTest)
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
@@ -113,7 +115,7 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidDifferentialTest)
     parser.registerOnDifferentialQueryBlockCallback(
         [](std::string, std::string, SystestQueryId, SystestQueryId) { /* nop, ensure parsing*/ });
 
-    ASSERT_TRUE(parser.loadString(NES::readTestFile(filename)));
+    parser.loadString(readTestFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 

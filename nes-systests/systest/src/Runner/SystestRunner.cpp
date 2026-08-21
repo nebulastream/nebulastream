@@ -43,6 +43,7 @@
 #include <Config/Config.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Model/Expectation.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -110,7 +111,7 @@ void processQueryWithError(
         failed,
         [&]
         {
-            if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectedResultsOrExpectedError))
+            if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectation))
             {
                 const DistributedException& actualException = runningQuery->exception.value();
                 auto allExceptionByAddress = std::views::join(std::views::transform(
@@ -256,11 +257,10 @@ std::vector<RunningQuery> runQueries(
                     failed,
                     [&]
                     {
-                        if (std::holds_alternative<ExpectedError>(nextQuery.expectedResultsOrExpectedError))
+                        if (std::holds_alternative<ExpectedError>(nextQuery.expectation))
                         {
                             return fmt::format(
-                                "expected error {} but EXPLAIN succeeded",
-                                std::get<ExpectedError>(nextQuery.expectedResultsOrExpectedError).code);
+                                "expected error {} but EXPLAIN succeeded", std::get<ExpectedError>(nextQuery.expectation).code);
                         }
                         if (auto err = checkExplainResult(*runningQuery))
                         {
@@ -373,11 +373,11 @@ std::vector<RunningQuery> runQueries(
                         failed,
                         [&]
                         {
-                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectation))
                             {
                                 return fmt::format(
                                     "expected error {} but query succeeded",
-                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                                    std::get<ExpectedError>(runningQuery->systestQuery.expectation).code);
                             }
                             if (auto err = checkResult(*runningQuery))
                             {
@@ -407,11 +407,10 @@ std::vector<RunningQuery> runQueries(
                 failed,
                 [&]
                 {
-                    if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                    if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectation))
                     {
                         return fmt::format(
-                            "expected error {} but query succeeded",
-                            std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            "expected error {} but query succeeded", std::get<ExpectedError>(runningQuery->systestQuery.expectation).code);
                     }
                     if (auto err = checkResult(*runningQuery))
                     {

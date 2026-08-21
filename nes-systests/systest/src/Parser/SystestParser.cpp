@@ -19,11 +19,9 @@
 #include <cctype>
 #include <cstddef>
 #include <cstring>
-#include <filesystem>
 #include <functional>
-#include <iterator>
+#include <istream>
 #include <optional>
-#include <ranges>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -32,15 +30,11 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Sources/SourceProvider.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
-#include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
+
+#include <Model/ConfigurationOverride.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
 namespace
 {
@@ -52,7 +46,7 @@ bool emptyOrComment(const std::string& line)
         || line.starts_with('#'); /// slt comment
 }
 
-std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
+std::vector<NES::ConfigurationOverride> parseConfigurationLine(const std::string& line, std::string_view kindLabel)
 {
     std::istringstream stream(line);
 
@@ -105,7 +99,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         values = {valueList};
     }
 
-    std::vector<NES::Systest::ConfigurationOverride> result;
+    std::vector<NES::ConfigurationOverride> result;
     for (auto& value : values)
     {
         value = NES::trimWhiteSpaces(value);
@@ -113,7 +107,7 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
         {
             throw NES::SLTUnexpectedToken("Empty {} value found for key '{}'", kindLabel, key);
         }
-        NES::Systest::ConfigurationOverride override;
+        NES::ConfigurationOverride override;
         override.overrideParameters[key] = value;
         result.emplace_back(std::move(override));
     }
@@ -122,20 +116,20 @@ std::vector<NES::Systest::ConfigurationOverride> parseConfigurationLine(const st
 
 }
 
-namespace NES::Systest
+namespace NES
 {
 
 using namespace std::string_view_literals;
 
-static constexpr std::string_view CreateToken = "CREATE"sv;
-static constexpr std::string_view QueryToken = "SELECT"sv;
-static constexpr std::string_view ExplainToken = "EXPLAIN"sv;
-static constexpr std::string_view ResultDelimiter = "----"sv;
-static constexpr std::string_view ErrorToken = "ERROR"sv;
-static constexpr std::string_view DifferentialToken = "===="sv;
-static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
-static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
-static constexpr std::string_view SequentialExecutionToken = "SEQUENTIAL_EXECUTION"sv;
+static constexpr auto CreateToken = "CREATE"sv;
+static constexpr auto QueryToken = "SELECT"sv;
+static constexpr auto ExplainToken = "EXPLAIN"sv;
+static constexpr auto ResultDelimiter = "----"sv;
+static constexpr auto ErrorToken = "ERROR"sv;
+static constexpr auto DifferentialToken = "===="sv;
+static constexpr auto ConfigurationToken = "CONFIGURATION"sv;
+static constexpr auto GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
+static constexpr auto SequentialExecutionToken = "SEQUENTIAL_EXECUTION"sv;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
@@ -150,7 +144,7 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
-    auto found
+    const auto found
         = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& existing) { return existing.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
@@ -159,7 +153,7 @@ void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
     substitutionRules.emplace_back(rule);
 }
 
-bool SystestParser::loadString(const std::string& str)
+void SystestParser::loadString(const std::string& str)
 {
     currentLine = 0;
     lines.clear();
@@ -182,7 +176,6 @@ bool SystestParser::loadString(const std::string& str)
             lines.push_back(line);
         }
     }
-    return true;
 }
 
 void SystestParser::registerOnQueryCallback(QueryCallback callback)
@@ -225,12 +218,12 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
     this->onDifferentialQueryBlockCallback = std::move(callback);
 }
 
-/// Here we model the structure of the test file by what we `expect` to see.
+/// Reads the test file section by section, where each `expect` states what has to come next.
 void SystestParser::parse()
 {
     static const std::unordered_set<TokenType> DefaultQueryStopTokens{TokenType::RESULT_DELIMITER, TokenType::DIFFERENTIAL};
 
-    SystestQueryIdAssigner queryIdAssigner{};
+    QueryIdAssigner queryIdAssigner{};
     bool sequentialExecution = false;
     while (auto token = getNextToken())
     {
@@ -256,7 +249,7 @@ void SystestParser::parse()
             case TokenType::EXPLAIN: {
                 auto statement = expectQuery(DefaultQueryStopTokens);
                 expectedResultType = ResultType::VERBATIM;
-                /// EXPLAIN statements cannot be part of a differential block
+                /// A differential block compares two query results, and an EXPLAIN produces none.
                 lastParsedQuery.reset();
                 lastParsedQueryId.reset();
                 auto queryId = queryIdAssigner.getNextQueryNumber();
@@ -281,7 +274,7 @@ void SystestParser::parse()
                 else if (expectedResultType == ResultType::VERBATIM)
                 {
                     expectedResultType = ResultType::TUPLES;
-                    /// EXPLAIN output is free-form plan text, so it is read verbatim instead of as result tuples
+                    /// An EXPLAIN answers with free-form plan text, so the parser reads these lines verbatim rather than as tuples.
                     auto verbatimResultLines = expectVerbatimResultLines();
                     if (onResultTuplesCallback)
                     {
@@ -351,9 +344,8 @@ void SystestParser::applySubstitutionRules(std::string& line)
         const std::string& keyword = rule.keyword;
         while ((pos = line.find(keyword, pos)) != std::string::npos)
         {
-            /// Check word boundaries: the character immediately before and after the keyword
-            /// must not be alphanumeric or underscore. This prevents replacing substrings of
-            /// longer identifiers (e.g., replacing "we" inside "producedPower").
+            /// The characters around the keyword must be neither alphanumeric nor an underscore.
+            /// Without that check, a rule for `we` would also rewrite the middle of `producedPower`.
             const bool leftBoundary = pos == 0 || (std::isalnum(static_cast<unsigned char>(line[pos - 1])) == 0 && line[pos - 1] != '_');
             const auto endPos = pos + keyword.length();
             const bool rightBoundary
@@ -376,7 +368,7 @@ void SystestParser::applySubstitutionRules(std::string& line)
 
 std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 {
-    /// Query is a special case as it's identifying token is not space seperated
+    /// A query is the one section whose identifying token is not followed by a space.
     if (toLowerCase(line).starts_with(toLowerCase(QueryToken)))
     {
         return TokenType::QUERY;
@@ -398,7 +390,7 @@ std::optional<TokenType> SystestParser::getTokenIfValid(const std::string& line)
 
 bool SystestParser::moveToNextToken()
 {
-    /// Do not move to next token if its the first
+    /// The first token is already current, so only a later one needs advancing.
     if (firstToken)
     {
         firstToken = false;
@@ -433,7 +425,7 @@ std::optional<TokenType> SystestParser::getNextToken()
 
     INVARIANT(!line.empty(), "a potential token should never be empty");
 
-    if (auto token = getTokenIfValid(line); token.has_value())
+    if (const auto token = getTokenIfValid(line); token.has_value())
     {
         return token;
     }
@@ -477,9 +469,8 @@ std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)
             break;
         }
 
-        std::string potentialToken;
         std::istringstream stream(lines[currentLine]);
-        if (stream >> potentialToken)
+        if (std::string potentialToken; stream >> potentialToken)
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
@@ -588,17 +579,14 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
         }
 
         /// Check if we've reached a stop token
-        std::string potentialToken;
         std::istringstream stream(line);
-        if (stream >> potentialToken)
+        if (std::string potentialToken; stream >> potentialToken)
         {
             if (auto tokenType = getTokenIfValid(potentialToken); tokenType.has_value())
             {
                 if (stopTokens.contains(tokenType.value()))
                 {
-                    const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString));
-
-                    if (trimmedQuerySoFar.back() != ';')
+                    if (const auto trimmedQuerySoFar = trimWhiteSpaces(std::string_view(queryString)); trimmedQuerySoFar.back() != ';')
                     {
                         throw InvalidQuerySyntax("Queries must end with a semicolon: \"{}\"", trimmedQuerySoFar);
                     }
@@ -607,8 +595,8 @@ std::string SystestParser::expectQuery(const std::unordered_set<TokenType>& stop
             }
             else
             {
-                const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
-                if (!trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
+                if (const auto trimmedLineView = trimWhiteSpaces(std::string_view(line));
+                    !trimmedLineView.empty() && toLowerCase(trimmedLineView) == "differential")
                 {
                     throw SLTUnexpectedToken(
                         "Expected differential delimiter '{}' but encountered legacy keyword '{}'", DifferentialToken, line);
@@ -639,14 +627,12 @@ std::pair<std::string, std::string> SystestParser::expectDifferentialBlock()
     INVARIANT(lastParsedQuery.has_value(), "Differential block must follow a query definition");
 
     std::string potentialToken;
-    std::istringstream stream(lines[currentLine]);
-    if (!(stream >> potentialToken))
+    if (std::istringstream stream(lines[currentLine]); !(stream >> potentialToken))
     {
         throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
 
-    auto tokenOpt = getTokenIfValid(potentialToken);
-    if (!tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
+    if (auto tokenOpt = getTokenIfValid(potentialToken); !tokenOpt.has_value() || tokenOpt.value() != TokenType::DIFFERENTIAL)
     {
         throw SLTUnexpectedToken("Expected differential delimiter at current line");
     }
@@ -704,8 +690,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
         throw SLTUnexpectedToken("failed to read error code in: {}", line);
     }
 
-    const std::regex numberRegex("^\\d+$");
-    if (std::regex_match(errorStr, numberRegex))
+    if (const std::regex numberRegex("^\\d+$"); std::regex_match(errorStr, numberRegex))
     {
         /// String is a valid integer
         auto code = std::stoul(errorStr);
@@ -725,8 +710,7 @@ SystestParser::ErrorExpectation SystestParser::expectError() const
     }
 
     /// Read optional error message
-    std::string message;
-    if (std::getline(stream, message))
+    if (std::string message; std::getline(stream, message))
     {
         /// Trim leading whitespace
         message.erase(0, message.find_first_not_of(" \t"));
