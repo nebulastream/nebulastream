@@ -108,9 +108,6 @@ struct BenchmarkResult
 /// SELECT * FROM s....
 /// Expected ............ | Actual 1, 2,3
 void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    SystestProgressTracker& progressTracker,
-    std::string_view queryPerformanceMessage);
+    const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, std::string_view queryPerformanceMessage);
 
 }
