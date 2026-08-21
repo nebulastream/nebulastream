@@ -58,6 +58,7 @@
 #include <SystestBinder.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkingDirectoryGuard.hpp>
 
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.
 /// Configures the network layer to use shared memory instead of real network sockets
@@ -206,8 +207,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
     CPPTRACE_TRY
     {
         /// Read the configuration
-        std::filesystem::remove_all(config.workingDir.getValue());
-        std::filesystem::create_directory(config.workingDir.getValue());
+        const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
         auto discoveredTestFiles = discoverTestFiles(config);
         Systest::SystestBinder binder{
