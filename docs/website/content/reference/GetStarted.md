@@ -19,7 +19,7 @@ docker run -d --rm \
   --name worker \
   -v "$PWD/output:/output" \
   nebulastream/nes-worker \
-  --grpc=0.0.0.0:8080
+  -- --grpc=0.0.0.0:8080
 ```
 <!-- quick-start-run-worker:end -->
 
@@ -178,7 +178,7 @@ services:
     image: nebulastream/nes-worker
     volumes:
       - ./output:/output
-    command: ["--grpc=0.0.0.0:8080"]
+    command: ["--", "--grpc=0.0.0.0:8080"]
     tty: true
     stdin_open: true
 

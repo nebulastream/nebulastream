@@ -136,7 +136,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
         set -e
         mkdir -p /workdir/configs
         echo '$CONFIG_B64' | base64 -d > /workdir/configs/$HOST_NAME.yaml
-        exec nes-single-node-worker --grpc=$HOST_NAME:$HOST_PORT --data_address=$DATA --worker.default_query_execution.execution_mode=INTERPRETER --worker.query_engine.number_of_worker_threads=1 --configPath=/workdir/configs/$HOST_NAME.yaml
+        exec nes-single-node-worker --workerConfig=/workdir/configs/$HOST_NAME.yaml -- --grpc=$HOST_NAME:$HOST_PORT --data_address=$DATA --worker.default_query_execution.execution_mode=INTERPRETER --worker.query_engine.number_of_worker_threads=1
     volumes:
       - $TEST_VOLUME:/workdir
 EOF
@@ -158,6 +158,7 @@ EOF
       retries: 10
       start_period: 60s
     command: [
+      "--",
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data_address=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
