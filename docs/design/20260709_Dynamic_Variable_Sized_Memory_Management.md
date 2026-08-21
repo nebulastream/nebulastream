@@ -25,7 +25,7 @@ memory, accounting, and lifecycle. The engine runs two memory subsystems side by
 same machine memory but reasoned about independently: the pool reserves a fixed budget up front; the
 unpooled path grows on demand from anonymous memory. Memory is not exchangeable between them such that the pool can be
 exhausted while the unpooled path has headroom — and each carries its own cap, failure mode, and
-instrumentation. Bounding the unpooled path (#1701/#1702) removed its OOM failure mode but not the split.
+instrumentation. Bounding the unpooled path removed its OOM failure mode but not the split.
 
 The unpooled subsystem is also less predictable than the pool, which matters for an engine targeting
 steady-state latency. Its allocation latency is variable — a heap allocation under a per-thread lock, with
