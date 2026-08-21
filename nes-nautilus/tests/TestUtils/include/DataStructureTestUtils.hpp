@@ -80,10 +80,11 @@ constexpr size_t pooledBufferCountFor(uint64_t bufferSize)
 /// pooled buffers after the unpooled share is carved out, with headroom to spare for unpooled allocations.
 std::shared_ptr<BufferManager> createBufferManager(uint64_t bufferSize, uint64_t numberOfBuffers);
 
-/// Range bounds for randomly sized VARSIZED payloads. Lower bound is the first printable ASCII char,
-/// upper bound is the last; we keep payloads as printable ASCII so failing inputs are easy to read.
-constexpr char PRINTABLE_ASCII_MIN = 32;
-constexpr char PRINTABLE_ASCII_MAX = 127;
+/// Range bounds for randomly sized VARSIZED payloads: the first and last printable ASCII chars, inclusive.
+/// We keep payloads as printable ASCII so failing inputs are easy to read. The generator uses a half-open
+/// range, so it passes PRINTABLE_ASCII_MAX + 1 as the exclusive upper bound.
+constexpr char PRINTABLE_ASCII_MIN = ' ';
+constexpr char PRINTABLE_ASCII_MAX = '~';
 constexpr size_t MAX_VARSIZED_LEN = 64;
 
 /// Upper bound (exclusive) on the per-property generated record count.

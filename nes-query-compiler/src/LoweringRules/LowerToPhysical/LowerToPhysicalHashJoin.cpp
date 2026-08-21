@@ -349,7 +349,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 hashMapOptions.valueSize,
                 hashMapOptions.pageSize,
                 hashMapOptions.numberOfBuckets,
-                &bufferProvider,
+                bufferProvider,
                 JoinBuildSideType::Left,
                 hashMapOptions.bloomFilterParams};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
@@ -367,7 +367,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 hashMapOptions.valueSize,
                 hashMapOptions.pageSize,
                 hashMapOptions.numberOfBuckets,
-                &bufferProvider,
+                bufferProvider,
                 JoinBuildSideType::Right,
                 hashMapOptions.bloomFilterParams};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);

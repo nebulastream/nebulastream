@@ -111,7 +111,7 @@ NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
                 operatorHandler,
                 timestamp,
                 workerThreadId,
-                nautilus::val<const DefaultTimeBasedSliceStoreRef*>(this),
+                nautilus::val<const DefaultTimeBasedSliceStoreRef*>{this},
                 sliceStoreVal,
                 bufferProvider);
         },

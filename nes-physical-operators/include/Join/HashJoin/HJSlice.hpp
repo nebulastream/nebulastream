@@ -35,7 +35,7 @@ struct CreateNewHJSliceArgs final : CreateNewHashMapSliceArgs
         const uint64_t valueSize,
         const uint64_t pageSize,
         const uint64_t numberOfBuckets,
-        AbstractBufferProvider* bufferProvider,
+        AbstractBufferProvider& bufferProvider,
         const JoinBuildSideType joinBuildSide,
         const std::optional<Nautilus::Interface::BloomFilterParams> bloomFilterParams)
         : CreateNewHashMapSliceArgs{keySize, valueSize, pageSize, numberOfBuckets, bufferProvider, bloomFilterParams}
