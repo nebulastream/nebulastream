@@ -34,7 +34,10 @@ namespace NES::TestUtils
 class TestablePagedVector
 {
 public:
-    TestablePagedVector(const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode);
+    /// @param pageBufferSize page size the PagedVector is initialized with. Pass bufferManager.getBufferSize() for provider-buffer-sized
+    /// pages, or a smaller value for the smaller-pages configuration the hash-join build uses.
+    TestablePagedVector(
+        const std::vector<DataType>& fieldTypes, AbstractBufferProvider& bufferManager, EngineMode mode, uint64_t pageBufferSize);
 
     ~TestablePagedVector() = default;
     TestablePagedVector(const TestablePagedVector&) = delete;
@@ -55,6 +58,9 @@ public:
     [[nodiscard]] uint64_t size() const;
 
     PagedVector raw();
+
+    /// Every page must be exactly the init-time page size, not the provider's buffer size.
+    [[nodiscard]] bool pagesMatchInitPageSize() const;
 
 private:
     std::vector<DataType> dataTypes;

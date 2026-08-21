@@ -32,6 +32,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -197,6 +198,17 @@ struct NoOversizedUnpooledBufferProvider : AbstractBufferProvider
 /// - the large 2 MiB buffer keeps everything on a single page and exercises the no-paging path.
 /// Schemas whose tuple size doesn't fit must be discarded via RC_PRE.
 constexpr std::array<uint64_t, 5> BUFFER_SIZE_POOL = {64, 128, 512, 4096, 2ULL * 1024 * 1024};
+
+/// We derive the page size as bufferSize / ratio instead of drawing a second entry from BUFFER_SIZE_POOL. As a result,
+/// page < buffer, i.e. the hash-join build's configuration, holds for every pool entry. In contrast, a second draw would
+/// collapse to page == buffer for wide schemas, which need 4096 bytes or more anyway as RC_PRE(pageBufferSize >= minimumPageSize(fieldTypes))
+/// throws away any run whose page is too small to hold one tuple. We stop the ratios at 8 because
+/// every page starts its own var-sized chain out of pooled buffers. Thus, tiny pages burn one buffer per few tuples and
+/// drain DirtyBufferProvider's pool of 16-32 buffers. This is a harness limit, not a PagedVector defect.
+constexpr std::array<uint64_t, 4> BUFFER_TO_PAGE_SIZE_RATIOS = {1, 2, 4, 8};
+
+/// Pages below the smallest pool entry are not a configuration the engine uses and only starve the harness' pool.
+constexpr uint64_t MIN_PAGE_SIZE = BUFFER_SIZE_POOL.front();
 
 /// Per-vector item-count range and max number of paged vectors used by the concat properties.
 constexpr uint64_t MAX_ITEMS_PER_CONCAT_VECTOR = 201;
@@ -393,9 +405,10 @@ rc::Gen<TestUtils::AnyVec> genAnyVec(std::vector<DataType> types, uint64_t buffe
         });
 }
 
-uint64_t estimateSchemaSize(const std::vector<DataType>& types)
+/// Smallest page size a PagedVector over these fields accepts. Asks the layout instead of doing the header math here.
+uint64_t minimumPageSize(const std::vector<DataType>& types)
 {
-    return getSizeInBytes(TestUtils::createSchemaFromDataTypes(types));
+    return DefaultPagedVectorTupleLayout{TestUtils::createSchemaFromDataTypes(types)}.getMinimumPageSize();
 }
 
 /// Reads pagedVector.at(idx) for a rapidcheck-drawn set of indices and asserts each record equals the reference.
@@ -419,21 +432,23 @@ void insertAndIterateProperty(TestUtils::EngineMode mode)
 {
     const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+    const auto pageBufferSize = bufferSize / *rc::gen::elementOf(BUFFER_TO_PAGE_SIZE_RATIOS);
+    RC_PRE(pageBufferSize >= MIN_PAGE_SIZE and pageBufferSize >= minimumPageSize(fieldTypes));
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
     NES_INFO(
-        "Property insertAndIterate: fields={}, N={}, bufferSize={}, oversizedBudget={}, field_types={}",
+        "Property insertAndIterate: fields={}, N={}, bufferSize={}, pageBufferSize={}, oversizedBudget={}, field_types={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
+        pageBufferSize,
         *oversizedBudget,
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -446,6 +461,9 @@ void insertAndIterateProperty(TestUtils::EngineMode mode)
 
     NES_INFO("insertAndIterate: PagedVector has {} entries", pagedVector.size());
     RC_ASSERT(pagedVector.size() == reference.size());
+    /// Regression: appendPageIfFull used to allocate the provider's buffer size while the capacity math uses the
+    /// init-time page size, over-allocating every page whenever pageBufferSize != bufferSize.
+    RC_ASSERT(pagedVector.pagesMatchInitPageSize());
 
     verifyRandomAccess(pagedVector, reference, fieldTypes);
 
@@ -462,20 +480,22 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
 {
     const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+    const auto pageBufferSize = bufferSize / *rc::gen::elementOf(BUFFER_TO_PAGE_SIZE_RATIOS);
+    RC_PRE(pageBufferSize >= MIN_PAGE_SIZE and pageBufferSize >= minimumPageSize(fieldTypes));
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(0, TestUtils::MAX_ITEMS_PER_PROPERTY);
     const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
     NES_INFO(
-        "Property insertAndReadByIndex: fields={}, N={}, bufferSize={}, oversizedBudget={}",
+        "Property insertAndReadByIndex: fields={}, N={}, bufferSize={}, pageBufferSize={}, oversizedBudget={}",
         fieldTypes.size(),
         numberOfItems,
         bufferSize,
+        pageBufferSize,
         *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
 
     std::vector<TestUtils::AnyVec> reference;
     reference.reserve(numberOfItems);
@@ -487,6 +507,7 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
     }
 
     RC_ASSERT(pagedVector.size() == reference.size());
+    RC_ASSERT(pagedVector.pagesMatchInitPageSize());
 
     verifyRandomAccess(pagedVector, reference, fieldTypes);
 
@@ -502,16 +523,18 @@ void concatMoveProperty(TestUtils::EngineMode mode)
 {
     const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+    const auto pageBufferSize = bufferSize / *rc::gen::elementOf(BUFFER_TO_PAGE_SIZE_RATIOS);
+    RC_PRE(pageBufferSize >= MIN_PAGE_SIZE and pageBufferSize >= minimumPageSize(fieldTypes));
 
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
     const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
 
     NES_INFO(
-        "Property concatMove: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
+        "Property concatMove: fields={}, numVectors={}, bufferSize={}, pageBufferSize={}, oversizedBudget={}",
         fieldTypes.size(),
         numVectors,
         bufferSize,
+        pageBufferSize,
         *oversizedBudget);
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
@@ -522,7 +545,7 @@ void concatMoveProperty(TestUtils::EngineMode mode)
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
-        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
+        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
             auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
@@ -540,6 +563,7 @@ void concatMoveProperty(TestUtils::EngineMode mode)
 
     NES_INFO("concatMove: merged vector has {} entries, reference has {} entries", pagedVectors[0].size(), fullReference.size());
     RC_ASSERT(pagedVectors[0].size() == fullReference.size());
+    RC_ASSERT(pagedVectors[0].pagesMatchInitPageSize());
 
     verifyRandomAccess(pagedVectors[0], fullReference, fieldTypes);
 
@@ -555,14 +579,16 @@ void concatCopyProperty(TestUtils::EngineMode mode)
 {
     const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+    const auto pageBufferSize = bufferSize / *rc::gen::elementOf(BUFFER_TO_PAGE_SIZE_RATIOS);
+    RC_PRE(pageBufferSize >= MIN_PAGE_SIZE and pageBufferSize >= minimumPageSize(fieldTypes));
     const auto numVectors = *rc::gen::inRange<uint64_t>(1, MAX_CONCAT_VECTORS);
     const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
     NES_INFO(
-        "Property concatCopy: fields={}, numVectors={}, bufferSize={}, oversizedBudget={}",
+        "Property concatCopy: fields={}, numVectors={}, bufferSize={}, pageBufferSize={}, oversizedBudget={}",
         fieldTypes.size(),
         numVectors,
         bufferSize,
+        pageBufferSize,
         *oversizedBudget);
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
     std::vector<TestUtils::TestablePagedVector> pagedVectors;
@@ -572,7 +598,7 @@ void concatCopyProperty(TestUtils::EngineMode mode)
     for (uint64_t vecIdx = 0; vecIdx < numVectors; ++vecIdx)
     {
         const auto itemCount = *rc::gen::inRange<uint64_t>(0, MAX_ITEMS_PER_CONCAT_VECTOR);
-        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode);
+        pagedVectors.emplace_back(fieldTypes, *bufferManager, mode, pageBufferSize);
         for (uint64_t i = 0; i < itemCount; ++i)
         {
             auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
@@ -613,6 +639,7 @@ void concatCopyProperty(TestUtils::EngineMode mode)
     }
 
     NES_INFO("concatCopy: merged vector has {} entries, reference has {} entries", pagedVectors[0].size(), fullReference.size());
+    RC_ASSERT(pagedVectors[0].pagesMatchInitPageSize());
     RC_ASSERT(pagedVectors[0].size() == fullReference.size());
 
     verifyRandomAccess(pagedVectors[0], fullReference, fieldTypes);
@@ -644,7 +671,7 @@ void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
     const auto varSizedFieldIdx = fieldTypes.size() - 1;
 
     const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
-    RC_PRE(PagedVector::Page::getHeaderSize() + estimateSchemaSize(fieldTypes) < bufferSize);
+    RC_PRE(bufferSize >= minimumPageSize(fieldTypes));
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(1, MAX_ITEMS_PER_OVERSIZED_PROPERTY + 1);
 
@@ -656,7 +683,7 @@ void insertOversizedVarSizedProperty(TestUtils::EngineMode mode)
         fmt::join(fieldTypes, ", "));
 
     auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, bufferSize};
 
     /// genAnyVec's own draw for the VARSIZED field is immediately overwritten below with a guaranteed-oversized
     /// value, so it's kept on the small path (zero budget) to avoid wasting pooled-buffer draws before that.
@@ -779,12 +806,13 @@ TEST(PagedVectorTest, oversizedVarSizedThrowsWhenUnpooledUnavailable)
         std::make_shared<NesDefaultMemoryAllocator>())};
 
     const std::vector<DataType> fieldTypes{DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}};
-    TestUtils::TestablePagedVector pagedVector{fieldTypes, bufferManager, TestUtils::EngineMode::Interpreter};
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, bufferManager, TestUtils::EngineMode::Interpreter, bufferSize};
 
     TestUtils::AnyVec record;
     /// oversized -> unpooled fallback -> nullopt -> throw
     record.emplace_back(std::string(bufferSize * 2, 'x'));
     ASSERT_EXCEPTION_ERRORCODE(pagedVector.pushBack(record), ErrorCode::BufferAllocationFailure);
 }
+
 
 }

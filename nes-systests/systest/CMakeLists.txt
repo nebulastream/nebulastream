@@ -77,8 +77,10 @@ endif ()
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an
 # hour per query, in the compiler just as much as in the interpreter. So exclude them from both NLJ invocations.
 # They still run for every other join strategy.
-set(SYSTEST_EXCLUDE_GROUPS_NLJ ${SYSTEST_EXCLUDE_GROUPS} NestedLoopIntensive)
-set(SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER ${SYSTEST_EXCLUDE_GROUPS_COMPILER} NestedLoopIntensive)
+# The HashJoinOnly group holds tests that assert behaviour of the hash join lowering itself, which the nested loop join
+# does not share, so they can only pass under HASH_JOIN.
+set(SYSTEST_EXCLUDE_GROUPS_NLJ ${SYSTEST_EXCLUDE_GROUPS} NestedLoopIntensive HashJoinOnly)
+set(SYSTEST_EXCLUDE_GROUPS_NLJ_COMPILER ${SYSTEST_EXCLUDE_GROUPS_COMPILER} NestedLoopIntensive HashJoinOnly)
 
 # Memory budget for every systest invocation that runs the join tests. The outer-join tests hold far more unpooled state
 # than the rest of the suite: they keep one ChainedHashMap per build side per worker thread alive for every open slice,
