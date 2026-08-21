@@ -13,12 +13,16 @@ ARG GID=1000
 ARG USERNAME=ubuntu
 ARG ROOTLESS=false
 
+# The vcpkg root is made world-writable rather than chown -R'd: the export is ~2.8GB across ~16k
+# files, and rewriting every inode would store the whole tree a second time (~2.9GB of image).
+# Dependency.dockerfile already ran `chmod -R g=u,o=u` on it, so every file below is world-readable
+# and world-writable; only the /vcpkg root itself was 0755, which this single-inode chmod fixes.
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
     (deluser ubuntu || true) && \
     addgroup --gid ${GID} ${USERNAME} && \
     adduser --uid ${UID} --gid ${GID} ${USERNAME} && \
-    chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}))
+    chmod 0777 ${NES_PREBUILT_VCPKG_ROOT}))
 
 # Create containerd socket directory with appropriate permissions
 RUN mkdir -p /run/containerd && \
