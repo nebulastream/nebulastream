@@ -1,0 +1,844 @@
+diff --git a/nautilus/include/nautilus/function.hpp b/nautilus/include/nautilus/function.hpp
+index 38e202a5126707fda2263fd16940ad5e3392c881..803071ca3748b9cee9e169f0f02b78c854935c74 100644
+--- a/nautilus/include/nautilus/function.hpp
++++ b/nautilus/include/nautilus/function.hpp
+@@ -30,8 +30,13 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+ 			auto functionArgumentReferences = getArgumentReferences(std::forward<FunctionArgumentsRaw>(args)...);
+-			auto resultRef = tracing::traceCall(reinterpret_cast<void*>(fnptr), tracing::TypeResolver<R>::to_type(),
+-			                                    functionArgumentReferences, fnAttrs);
++			auto& resultRef =
++			    fnAttrs.noUnwind
++			        ? tracing::traceCall(reinterpret_cast<void*>(fnptr), tracing::TypeResolver<R>::to_type(),
++			                             functionArgumentReferences, fnAttrs)
++			        : tracing::traceCallWithExceptionHandling(reinterpret_cast<void*>(fnptr),
++			                                                  tracing::TypeResolver<R>::to_type(),
++			                                                  functionArgumentReferences, fnAttrs);
+ 			return val<R>(resultRef);
+ 		}
+ #endif
+@@ -45,7 +50,12 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+ 			auto functionArgumentReferences = getArgumentReferences(std::forward<FunctionArgumentsRaw>(args)...);
+-			tracing::traceCall(reinterpret_cast<void*>(fnptr), Type::v, functionArgumentReferences, fnAttrs);
++			if (fnAttrs.noUnwind) {
++				tracing::traceCall(reinterpret_cast<void*>(fnptr), Type::v, functionArgumentReferences, fnAttrs);
++			} else {
++				tracing::traceCallWithExceptionHandling(reinterpret_cast<void*>(fnptr), Type::v,
++				                                        functionArgumentReferences, fnAttrs);
++			}
+ 			return;
+ 		}
+ #endif
+@@ -63,6 +73,13 @@ private:
+ };
+ 
+ /// Invoke calls without attributes
++template <typename R, typename... FunctionArguments, typename... ValueArguments>
++auto invoke(R (*fnptr)(FunctionArguments...) noexcept, ValueArguments&&... args) {
++	FunctionAttributes attrs;
++	attrs.noUnwind = true;
++	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, attrs)(std::forward<ValueArguments>(args)...);
++}
++
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
+@@ -81,6 +98,12 @@ void invoke(void (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+ }
+ 
+ /// Invoke calls with attributes
++template <typename R, typename... FunctionArguments, typename... ValueArguments>
++auto invoke(FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...) noexcept, ValueArguments&&... args) {
++	fnAttrs.noUnwind = true;
++	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
++}
++
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
+@@ -98,6 +121,13 @@ void invoke(const FunctionAttributes fnAttrs, void (*fnptr)(FunctionArguments...
+ 	func(std::forward<ValueArguments>(args)...);
+ }
+ 
++template <typename R, typename... FunctionArguments>
++auto function(R (*fnptr)(FunctionArguments...) noexcept) {
++	FunctionAttributes attrs;
++	attrs.noUnwind = true;
++	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, attrs);
++}
++
+ template <typename R, typename... FunctionArguments>
+ auto function(R (*fnptr)(FunctionArguments...)) {
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr);
+diff --git a/nautilus/include/nautilus/nautilus_function.hpp b/nautilus/include/nautilus/nautilus_function.hpp
+index 309ee06881df4dabf5f39576af9a17c3b12c273b..d92edfbd14902a944f4b4c4558005cb499d77bdc 100644
+--- a/nautilus/include/nautilus/nautilus_function.hpp
++++ b/nautilus/include/nautilus/nautilus_function.hpp
+@@ -125,16 +125,18 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (tracing::inTracer()) {
+ 			auto functionArgumentReferences = getArgumentReferences(std::forward<Args>(args)...);
++			FunctionAttributes fnAttrs {};
++			fnAttrs.noUnwind = std::is_nothrow_invocable_v<F&, Args...>;
+ 
+ 			if constexpr (std::is_void_v<std::invoke_result_t<F&, Args...>>) {
+ 				tracing::traceNautilusCall(&definition_, fwrapper, Type::v, functionArgumentReferences,
+-				                           FunctionAttributes {});
++				                           fnAttrs);
+ 				return;
+ 			} else {
+ 				using R = std::invoke_result_t<F&, Args...>;
+ 				auto resultRef = tracing::traceNautilusCall(&definition_, fwrapper,
+ 				                                            tracing::TypeResolver<typename R::raw_type>::to_type(),
+-				                                            functionArgumentReferences, FunctionAttributes {});
++				                                            functionArgumentReferences, fnAttrs);
+ 				return R(resultRef);
+ 			}
+ 		}
+diff --git a/nautilus/include/nautilus/tracing/Operations.hpp b/nautilus/include/nautilus/tracing/Operations.hpp
+index 11fa93f2c04d6019247e116dd3d5e22e1861f3be..34c4d1f4b088a9df1a520e0c5e07aad687a565ea 100644
+--- a/nautilus/include/nautilus/tracing/Operations.hpp
++++ b/nautilus/include/nautilus/tracing/Operations.hpp
+@@ -16,6 +16,7 @@ enum Op : uint8_t {
+ 	CAST,
+ 	FREE,
+ 	CALL,
++	CALL_WITH_EXCEPTION_HANDLING,
+ 	INDIRECT_CALL,
+ 	// Memory
+ 	LOAD,
+@@ -62,6 +63,8 @@ constexpr const char* toString(Op type) {
+ 		return "CAST";
+ 	case CALL:
+ 		return "CALL";
++	case CALL_WITH_EXCEPTION_HANDLING:
++		return "CALL_WITH_EXCEPTION_HANDLING";
+ 	case INDIRECT_CALL:
+ 		return "INDIRECT_CALL";
+ 	case LOAD:
+@@ -165,10 +168,11 @@ constexpr uint8_t inputCountFor(Op op, Type resultType) noexcept {
+ 	case BXOR:
+ 	case BAND:
+ 		return 2;
+-	// Single-input ops: JMP, CALL, INDIRECT_CALL, ASSIGN, CONST, CAST, FREE,
++	// Single-input ops: JMP, CALL, CALL_WITH_EXCEPTION_HANDLING, INDIRECT_CALL, ASSIGN, CONST, CAST, FREE,
+ 	// LOAD, NOT, NEGATE, ALLOCA, FUNC_ADDR.
+ 	case JMP:
+ 	case CALL:
++	case CALL_WITH_EXCEPTION_HANDLING:
+ 	case INDIRECT_CALL:
+ 	case ASSIGN:
+ 	case CONST:
+diff --git a/nautilus/include/nautilus/tracing/TracingInterface.hpp b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+index b293244bcddbed9fc5748e9201868c82d495f59b..e25377066c1b7f1f39ae96f5b77be28c52c075ee 100644
+--- a/nautilus/include/nautilus/tracing/TracingInterface.hpp
++++ b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+@@ -65,6 +65,16 @@ public:
+ 	virtual TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<TypedValueRef>& arguments,
+ 	                                 FunctionAttributes fnAttrs) = 0;
+ 
++	/// Trace a potentially throwing runtime call together with the destructors
++	/// that are live at this point in the traced function.
++	virtual TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
++	                                                      const std::vector<TypedValueRef>& arguments,
++	                                                      FunctionAttributes fnAttrs) = 0;
++
++	/// Maintain the host-side cleanup stack used to annotate throwing calls.
++	virtual void registerDestructor(const TypedValueRef& address, void* destructor) = 0;
++	virtual void unregisterDestructor(const TypedValueRef& address) = 0;
++
+ 	/// Trace a call through a runtime function pointer value (indirect call).
+ 	virtual TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                         const std::vector<TypedValueRef>& arguments,
+diff --git a/nautilus/include/nautilus/tracing/TracingUtil.hpp b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+index 43299ada374abb8723c27dd0b8cdc5db9566b2f0..cf331b9a8981a6f10971c9f38f79aaff11b1eab3 100644
+--- a/nautilus/include/nautilus/tracing/TracingUtil.hpp
++++ b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+@@ -67,6 +67,13 @@ TypedValueRef traceCopy(const TypedValueRef& ref);
+ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+                          FunctionAttributes fnAttrs);
+ 
++TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
++                                              const std::vector<tracing::TypedValueRef>& arguments,
++                                              FunctionAttributes fnAttrs);
++
++void registerDestructor(const TypedValueRef& address, void* destructor);
++void unregisterDestructor(const TypedValueRef& address);
++
+ TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                  const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs);
+ 
+diff --git a/nautilus/include/nautilus/val_std.hpp b/nautilus/include/nautilus/val_std.hpp
+index eee49ff7a38342e3084be6f59d32ffcf44ba063b..84b37bd2a3626de61f90d7fcf75b9094a9a8dc8f 100644
+--- a/nautilus/include/nautilus/val_std.hpp
++++ b/nautilus/include/nautilus/val_std.hpp
+@@ -182,19 +182,40 @@ private:
+ 	// that the resource is released exactly once.
+ 	bool moved_ = false;
+ 
+-	static void construct(ValueType* ptr) {
++	static void construct(ValueType* ptr) noexcept(std::is_nothrow_default_constructible_v<ValueType>) {
+ 		new (ptr) ValueType();
+ 	}
+ 
+-	static void destruct(ValueType* ptr) {
++	static void destruct(ValueType* ptr) noexcept {
+ 		ptr->~ValueType();
+ 	}
+ 
+-	static void copy_construct(ValueType* dst, ValueType* src) {
++	void register_destructor() {
++#ifdef ENABLE_TRACING
++		if constexpr (!std::is_trivially_destructible_v<ValueType>) {
++			if (tracing::inTracer()) {
++				tracing::registerDestructor(value_ptr.getState(), reinterpret_cast<void*>(destruct));
++			}
++		}
++#endif
++	}
++
++	void unregister_destructor() {
++#ifdef ENABLE_TRACING
++		if constexpr (!std::is_trivially_destructible_v<ValueType>) {
++			if (tracing::inTracer()) {
++				tracing::unregisterDestructor(value_ptr.getState());
++			}
++		}
++#endif
++	}
++
++	static void copy_construct(ValueType* dst,
++	                           ValueType* src) noexcept(std::is_nothrow_copy_constructible_v<ValueType>) {
+ 		new (dst) ValueType(*src);
+ 	}
+ 
+-	static void copy_assign(ValueType* dst, ValueType* src) {
++	static void copy_assign(ValueType* dst, ValueType* src) noexcept(std::is_nothrow_copy_assignable_v<ValueType>) {
+ 		*dst = *src;
+ 	}
+ 
+@@ -202,7 +223,8 @@ private:
+ 	// A concrete instantiation (e.g. construct_with<int32_t, float>) is a plain function
+ 	// pointer that invoke() can trace as a regular runtime call.
+ 	template <typename... RawArgs>
+-	static void construct_with(ValueType* ptr, RawArgs... args) {
++	static void construct_with(ValueType* ptr,
++	                           RawArgs... args) noexcept(std::is_nothrow_constructible_v<ValueType, RawArgs...>) {
+ 		new (ptr) ValueType(args...);
+ 	}
+ 
+@@ -214,6 +236,7 @@ private:
+ 			return;
+ 		}
+ 		if constexpr (!std::is_trivially_destructible_v<ValueType>) {
++			unregister_destructor();
+ 			invoke(destruct, value_ptr);
+ 		}
+ 		// Pair the aligned operator new in nautilus_alloca's interpreter
+@@ -236,6 +259,7 @@ public:
+ 		if constexpr (!std::is_trivially_default_constructible_v<ValueType>) {
+ 			invoke(val<ValueType>::construct, value_ptr);
+ 		}
++		register_destructor();
+ 	}
+ 
+ 	// Copy-constructs from another val<ValueType>.
+@@ -246,6 +270,7 @@ public:
+ 		} else {
+ 			invoke(copy_construct, value_ptr, other.value_ptr);
+ 		}
++		register_destructor();
+ 	}
+ 
+ 	// Move-constructs from another val<ValueType>.
+@@ -256,7 +281,9 @@ public:
+ 	// The source is left in a moved-from state and its destructor becomes a no-op.
+ #ifdef ENABLE_TRACING
+ 	val(val<ValueType>&& other) noexcept : value_ptr(other.value_ptr.value, other.value_ptr.getState()) {
++		other.unregister_destructor();
+ 		other.moved_ = true;
++		register_destructor();
+ 	}
+ #else
+ 	val(val<ValueType>&& other) noexcept : value_ptr(other.value_ptr.value) {
+@@ -273,7 +300,10 @@ public:
+ 	    requires(sizeof...(ValArgs) > 0 &&
+ 	             !(sizeof...(ValArgs) == 1 && (std::same_as<std::remove_cvref_t<ValArgs>, val<ValueType>> || ...)))
+ 	val(ValArgs&&... args) : value_ptr(details::nautilus_alloca<ValueType>()) {
+-		invoke(construct_with<details::unwrap_val_t<ValArgs>...>, value_ptr, std::forward<ValArgs>(args)...);
++		FunctionAttributes attrs;
++		attrs.noUnwind = std::is_nothrow_constructible_v<ValueType, details::unwrap_val_t<ValArgs>...>;
++		invoke(attrs, construct_with<details::unwrap_val_t<ValArgs>...>, value_ptr, std::forward<ValArgs>(args)...);
++		register_destructor();
+ 	}
+ 
+ 	// Copy-assigns from another val<ValueType>.
+@@ -294,9 +324,11 @@ public:
+ 			return *this;
+ 		}
+ 		release_storage();
++		other.unregister_destructor();
+ 		value_ptr = other.value_ptr;
+ 		moved_ = false;
+ 		other.moved_ = true;
++		register_destructor();
+ 		return *this;
+ 	}
+ 
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+index 46ceb90a2c057669ab1644b84180787b38e9a50a..9b0662d8139887d222543471ed98ce9b8f42415a 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -877,7 +877,8 @@ void MLIRLoweringProvider::visitProxyCall(ir::ProxyCallOperation* proxyCallOp, V
+ 	}
+ 
+ 	// Try to find an existing function declaration (prefer func dialect)
+-	if (auto func = theModule.lookupSymbol<mlir::func::FuncOp>(functionName)) {
++	if (auto func = theModule.lookupSymbol<mlir::func::FuncOp>(functionName);
++	    func && !proxyCallOp->requiresExceptionHandling()) {
+ 		// Function already exists in func dialect - use func::CallOp
+ 		if (proxyCallOp->getStamp() != Type::v) {
+ 			auto res = builder->create<mlir::func::CallOp>(getNameLoc("funcCall"), func, functionArgs);
+@@ -889,8 +890,71 @@ void MLIRLoweringProvider::visitProxyCall(ir::ProxyCallOperation* proxyCallOp, V
+ 	}
+ 
+ 	// Function doesn't exist yet - create external function declaration using func dialect
+-	insertExternalFunction(functionName, proxyCallOp->getFunctionPtr(), getMLIRType(proxyCallOp->getStamp()),
+-	                       getMLIRType(proxyCallOp->getInputArguments()), proxyCallOp->getFunctionAttributes());
++	if (!theModule.lookupSymbol<mlir::func::FuncOp>(functionName)) {
++		insertExternalFunction(functionName, proxyCallOp->getFunctionPtr(), getMLIRType(proxyCallOp->getStamp()),
++		                       getMLIRType(proxyCallOp->getInputArguments()), proxyCallOp->getFunctionAttributes());
++	}
++
++	if (proxyCallOp->requiresExceptionHandling()) {
++		const auto location = getNameLoc("invoke");
++		auto callee = mlir::FlatSymbolRefAttr::get(context, functionName);
++		auto* currentBlock = builder->getInsertionBlock();
++		auto* region = currentBlock->getParent();
++		auto* normalBlock = new mlir::Block();
++		auto* unwindBlock = new mlir::Block();
++		region->getBlocks().insert(std::next(mlir::Region::iterator(currentBlock)), normalBlock);
++		region->push_back(unwindBlock);
++
++		llvm::SmallVector<mlir::Type> resultTypes;
++		if (proxyCallOp->getStamp() != Type::v) {
++			resultTypes.push_back(getMLIRType(proxyCallOp->getStamp()));
++		}
++		auto invoke = builder->create<mlir::LLVM::InvokeOp>(location, resultTypes, callee, functionArgs, normalBlock,
++		                                                  mlir::ValueRange {}, unwindBlock, mlir::ValueRange {});
++
++		// The Itanium C++ ABI represents the active exception as {ptr, i32}.
++		// The landing pad is cleanup-only: destructors run in reverse construction
++		// order and llvm.resume continues unwinding to the native caller.
++		builder->setInsertionPointToStart(unwindBlock);
++		auto ptrType = mlir::LLVM::LLVMPointerType::get(context);
++		auto selectorType = builder->getI32Type();
++		auto exceptionType = mlir::LLVM::LLVMStructType::getLiteral(context, {ptrType, selectorType});
++		auto landingPad =
++		    builder->create<mlir::LLVM::LandingpadOp>(location, exceptionType, true, mlir::ValueRange {});
++
++		for (auto it = proxyCallOp->getDestructors().rbegin(); it != proxyCallOp->getDestructors().rend(); ++it) {
++			FunctionAttributes destructorAttrs;
++			destructorAttrs.noUnwind = true;
++			auto destructorSymbol = mlir::FlatSymbolRefAttr::get(context, it->functionName);
++			if (!theModule.lookupSymbol<mlir::func::FuncOp>(it->functionName)) {
++				destructorSymbol = insertExternalFunction(it->functionName, it->functionPtr, getMLIRType(Type::v),
++				                                          {ptrType}, destructorAttrs);
++			}
++			auto address = frame.getValue(it->address->getIdentifier());
++			builder->create<mlir::func::CallOp>(location, destructorSymbol, mlir::TypeRange {},
++			                                    mlir::ValueRange {address});
++		}
++		builder->create<mlir::LLVM::ResumeOp>(location, landingPad.getResult());
++
++		// convert-func-to-llvm forwards this discardable attribute onto the
++		// resulting llvm.func. Declare the ABI personality directly in the LLVM
++		// dialect so the final module has a typed symbol to reference.
++		auto parentFunction = currentBlock->getParentOp();
++		parentFunction->setDiscardableAttr("personality",
++		                                   mlir::FlatSymbolRefAttr::get(context, "__gxx_personality_v0"));
++		if (!theModule.lookupSymbol<mlir::LLVM::LLVMFuncOp>("__gxx_personality_v0")) {
++			mlir::PatternRewriter::InsertionGuard insertGuard(*builder);
++			builder->restoreInsertionPoint(*globalInsertPoint);
++			auto personalityType = mlir::LLVM::LLVMFunctionType::get(builder->getI32Type(), {}, true);
++			builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), "__gxx_personality_v0", personalityType);
++		}
++
++		builder->setInsertionPointToStart(normalBlock);
++		if (proxyCallOp->getStamp() != Type::v) {
++			frame.setValue(proxyCallOp->getIdentifier(), invoke.getResult());
++		}
++		return;
++	}
+ 
+ 	// Now lookup the function we just created and call it using func::CallOp
+ 	auto func = theModule.lookupSymbol<mlir::func::FuncOp>(functionName);
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.cpp b/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.cpp
+index 694f5a11f764a995493618733bba8eb76fd8dee4..8581f06b9a736b75c0b5879ca393a6d1ddd0e24c 100644
+--- a/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.cpp
++++ b/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.cpp
+@@ -11,9 +11,11 @@ ProxyCallOperation::ProxyCallOperation(common::Arena& arena, OperationIdentifier
+ ProxyCallOperation::ProxyCallOperation(common::Arena& arena, const std::string& functionSymbol,
+                                        const std::string& functionName, void* functionPtr,
+                                        OperationIdentifier identifier, std::span<Operation* const> inputArguments,
+-                                       Type resultType, const FunctionAttributes fnAttrs)
++                                       Type resultType, const FunctionAttributes fnAttrs,
++                                       std::vector<Destructor> destructors, bool exceptionHandling)
+     : Operation(arena, Operation::OperationType::ProxyCallOp, identifier, resultType, inputArguments),
+-      mangedFunctionSymbol(functionSymbol), functionName(functionName), functionPtr(functionPtr), fnAttrs(fnAttrs) {
++      mangedFunctionSymbol(functionSymbol), functionName(functionName), functionPtr(functionPtr), fnAttrs(fnAttrs),
++      destructors(std::move(destructors)), exceptionHandling(exceptionHandling) {
+ }
+ 
+ std::span<Operation* const> ProxyCallOperation::getInputArguments() const {
+@@ -43,6 +45,14 @@ const FunctionAttributes& ProxyCallOperation::getFunctionAttributes() const {
+ 	return fnAttrs;
+ }
+ 
++const std::vector<ProxyCallOperation::Destructor>& ProxyCallOperation::getDestructors() const {
++	return destructors;
++}
++
++bool ProxyCallOperation::requiresExceptionHandling() const {
++	return exceptionHandling;
++}
++
+ bool ProxyCallOperation::classof(const Operation* op) {
+ 	return op->getOperationType() == OperationType::ProxyCallOp;
+ }
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.hpp b/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.hpp
+index 0019cfc6dd379270c61476f4677dea487cf6a111..e01561a6bd41e148223cfa491b843e12952f5c1b 100644
+--- a/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.hpp
++++ b/nautilus/src/nautilus/compiler/ir/operations/ProxyCallOperation.hpp
+@@ -8,12 +8,20 @@
+ namespace nautilus::compiler::ir {
+ class ProxyCallOperation : public Operation {
+ public:
++	struct Destructor {
++		Operation* address;
++		std::string functionSymbol;
++		std::string functionName;
++		void* functionPtr;
++	};
++
+ 	ProxyCallOperation(common::Arena& arena, OperationIdentifier identifier, std::span<Operation* const> inputArguments,
+ 	                   Type resultType);
+ 
+ 	ProxyCallOperation(common::Arena& arena, const std::string& functionSymbol, const std::string& functionName,
+ 	                   void* functionPtr, OperationIdentifier identifier, std::span<Operation* const> inputArguments,
+-	                   Type resultType, FunctionAttributes fnAttrs);
++	                   Type resultType, FunctionAttributes fnAttrs, std::vector<Destructor> destructors = {},
++	                   bool exceptionHandling = false);
+ 
+ 	~ProxyCallOperation() = default;
+ 
+@@ -26,6 +34,8 @@ public:
+ 	void* getFunctionPtr();
+ 
+ 	[[nodiscard]] const FunctionAttributes& getFunctionAttributes() const;
++	[[nodiscard]] const std::vector<Destructor>& getDestructors() const;
++	[[nodiscard]] bool requiresExceptionHandling() const;
+ 
+ 	static bool classof(const Operation* op);
+ 
+@@ -34,5 +44,7 @@ private:
+ 	const std::string functionName;
+ 	void* functionPtr;
+ 	FunctionAttributes fnAttrs;
++	std::vector<Destructor> destructors;
++	bool exceptionHandling = false;
+ };
+ } // namespace nautilus::compiler::ir
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+index 9025a98a919c43542dae8e3334bfa82a5ca8691b..1ade214162d15c32a7b44d7a1b364952263dea1c 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+@@ -8,6 +8,7 @@
+ #include "nautilus/tracing/TracingUtil.hpp"
+ #include "symbolic_execution/SymbolicExecutionContext.hpp"
+ #include "symbolic_execution/TraceTerminationException.hpp"
++#include <algorithm>
+ #include <cassert>
+ #include <cstddef>
+ #include <cxxabi.h>
+@@ -52,11 +53,28 @@ void ExceptionBasedTraceContext::resume() {
+ 
+ 	// Reset aliveVars to initial state (all counts to 0, hash to 0)
+ 	aliveVars.reset();
++	activeDestructors.clear();
+ 
+ 	// Note: state (with executionTrace and symbolicExecutionContext) is NOT reset here
+ 	// as it needs to persist across trace iterations
+ }
+ 
++void TraceContextBase::registerDestructor(const TypedValueRef& address, void* destructor) {
++	auto mangledName = getMangledName(destructor);
++	activeDestructors.push_back(FunctionCall::Destructor {.address = address,
++	                                                      .functionName = getFunctionName(destructor, mangledName),
++	                                                      .mangledName = std::move(mangledName),
++	                                                      .ptr = destructor});
++}
++
++void TraceContextBase::unregisterDestructor(const TypedValueRef& address) {
++	auto it = std::find_if(activeDestructors.rbegin(), activeDestructors.rend(),
++	                       [&](const FunctionCall::Destructor& destructor) { return destructor.address == address; });
++	if (it != activeDestructors.rend()) {
++		activeDestructors.erase(std::next(it).base());
++	}
++}
++
+ TypedValueRef& ExceptionBasedTraceContext::registerFunctionArgument(Type type, size_t index) {
+ 	return state->executionTrace.setArgument(type, index);
+ }
+@@ -135,7 +153,25 @@ TypedValueRef& ExceptionBasedTraceContext::traceCall(void* fptn, Type resultType
+ 		                                                                        .mangledName = mangledName,
+ 		                                                                        .ptr = fptn,
+ 		                                                                        .arguments = arguments,
+-		                                                                        .fnAttrs = fnAttrs});
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = {}});
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
++	});
++}
++
++TypedValueRef& ExceptionBasedTraceContext::traceCallWithExceptionHandling(
++    void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) {
++	auto mangledName = getMangledName(fptn);
++	auto functionName = getFunctionName(fptn, mangledName);
++	auto op = Op::CALL_WITH_EXCEPTION_HANDLING;
++	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
++		auto* functionArguments =
++		    state->executionTrace.getArena().create<FunctionCall>(FunctionCall {.functionName = functionName,
++		                                                                        .mangledName = mangledName,
++		                                                                        .ptr = fptn,
++		                                                                        .arguments = arguments,
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = activeDestructors});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+@@ -162,14 +198,15 @@ TypedValueRef& ExceptionBasedTraceContext::traceNautilusCall(const NautilusFunct
+ 		log::debug("Added function '{}' to functionsToTrace list. List now has {} functions", functionName,
+ 		           functionsToTrace.size());
+ 	}
+-	auto op = Op::CALL;
++	auto op = fnAttrs.noUnwind ? Op::CALL : Op::CALL_WITH_EXCEPTION_HANDLING;
+ 	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
+ 		auto* functionArguments =
+ 		    state->executionTrace.getArena().create<FunctionCall>(FunctionCall {.functionName = functionName,
+ 		                                                                        .mangledName = functionName,
+ 		                                                                        .ptr = (void*) definition,
+ 		                                                                        .arguments = arguments,
+-		                                                                        .fnAttrs = fnAttrs});
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = activeDestructors});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+@@ -191,7 +228,8 @@ TypedValueRef& ExceptionBasedTraceContext::traceNautilusFunctionPtr(const Nautil
+ 		                                                                        .mangledName = functionName,
+ 		                                                                        .ptr = (void*) definition,
+ 		                                                                        .arguments = {},
+-		                                                                        .fnAttrs = {}});
++		                                                                        .fnAttrs = {},
++		                                                                        .destructors = {}});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+index 4618d1700118ac49f68e40a5738de3d0533a2620..0109de6d310a12c848fd5642721f87a23c7e9d60 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+@@ -161,6 +161,8 @@ public:
+ 
+ 	std::string getMangledName(void* fnptr);
+ 	std::string getFunctionName(void* fnptr, const std::string& mangledName);
++	void registerDestructor(const TypedValueRef& address, void* destructor) override;
++	void unregisterDestructor(const TypedValueRef& address) override;
+ 
+ protected:
+ 	// Injected state - holds references to stack-allocated objects (ExecutionTrace, SymbolicExecutionContext)
+@@ -168,6 +170,7 @@ protected:
+ 	std::unique_ptr<TraceState> state;
+ 
+ 	std::unordered_map<void*, std::string> mangledNameCache;
++	std::vector<FunctionCall::Destructor> activeDestructors;
+ };
+ 
+ /**
+@@ -226,6 +229,9 @@ public:
+ 
+ 	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+ 	                         FunctionAttributes fnAttrs) override;
++	TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
++	                                              const std::vector<tracing::TypedValueRef>& arguments,
++	                                              FunctionAttributes fnAttrs) override;
+ 
+ 	TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                 const std::vector<tracing::TypedValueRef>& arguments,
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+index 693fa4d773fe1f7597be9009709d148e1704a64e..037db638f369b2372c57a3048b644ee067ee9d01 100644
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+@@ -470,6 +470,21 @@ struct formatter<nautilus::tracing::FunctionCall> : formatter<std::string_view>
+ 			fmt::format_to(out, "{}", call.arguments[i]);
+ 		}
+ 		fmt::format_to(out, ")");
++		if (!call.destructors.empty()) {
++			fmt::format_to(out, " unwind[");
++			for (size_t i = call.destructors.size(); i > 0; --i) {
++				if (i != call.destructors.size()) {
++					fmt::format_to(out, ",");
++				}
++				const auto& destructor = call.destructors[i - 1];
++				if (nautilus::log::options::getLogAddresses()) {
++					fmt::format_to(out, "{}({})", destructor.functionName, destructor.address);
++				} else {
++					fmt::format_to(out, "dtor_*({})", destructor.address);
++				}
++			}
++			fmt::format_to(out, "]");
++		}
+ 		return out;
+ 	}
+ };
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+index defad5c786581962e789fcac7c42c38f12c36d8f..ba48aaf45282ac2e46eccbf5809b080fccaffc2b 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+@@ -35,6 +35,7 @@ LazyTraceContext* LazyTraceContext::initialize(TagRecorder& tagRecorder, Executi
+ void LazyTraceContext::resume() {
+ 	staticVars.clear();
+ 	aliveVars.reset();
++	activeDestructors.clear();
+ 	paused_ = false;
+ }
+ 
+@@ -132,7 +133,29 @@ TypedValueRef& LazyTraceContext::traceCall(void* fptn, Type resultType,
+ 		                                                                        .mangledName = mangledName,
+ 		                                                                        .ptr = fptn,
+ 		                                                                        .arguments = arguments,
+-		                                                                        .fnAttrs = fnAttrs});
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = {}});
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
++	});
++}
++
++TypedValueRef& LazyTraceContext::traceCallWithExceptionHandling(void* fptn, Type resultType,
++                                                                const std::vector<tracing::TypedValueRef>& arguments,
++                                                                FunctionAttributes fnAttrs) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	auto mangledName = getMangledName(fptn);
++	auto functionName = getFunctionName(fptn, mangledName);
++	auto op = Op::CALL_WITH_EXCEPTION_HANDLING;
++	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
++		auto* functionArguments =
++		    state->executionTrace.getArena().create<FunctionCall>(FunctionCall {.functionName = functionName,
++		                                                                        .mangledName = mangledName,
++		                                                                        .ptr = fptn,
++		                                                                        .arguments = arguments,
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = activeDestructors});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+@@ -165,14 +188,15 @@ TypedValueRef& LazyTraceContext::traceNautilusCall(const NautilusFunctionDefinit
+ 		log::debug("Added function '{}' to functionsToTrace list. List now has {} functions", functionName,
+ 		           functionsToTrace.size());
+ 	}
+-	auto op = Op::CALL;
++	auto op = fnAttrs.noUnwind ? Op::CALL : Op::CALL_WITH_EXCEPTION_HANDLING;
+ 	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
+ 		auto* functionArguments =
+ 		    state->executionTrace.getArena().create<FunctionCall>(FunctionCall {.functionName = functionName,
+ 		                                                                        .mangledName = functionName,
+ 		                                                                        .ptr = (void*) definition,
+ 		                                                                        .arguments = arguments,
+-		                                                                        .fnAttrs = fnAttrs});
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = activeDestructors});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+@@ -197,7 +221,8 @@ TypedValueRef& LazyTraceContext::traceNautilusFunctionPtr(const NautilusFunction
+ 		                                                                        .mangledName = functionName,
+ 		                                                                        .ptr = (void*) definition,
+ 		                                                                        .arguments = {},
+-		                                                                        .fnAttrs = {}});
++		                                                                        .fnAttrs = {},
++		                                                                        .destructors = {}});
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
+ 	});
+ }
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+index bf64e27bb5514e1edc750119a49c185728b6cd24..a4bc951c13c91b4f88d34c96a709de68f674268a 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+@@ -48,6 +48,9 @@ public:
+ 	void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) override;
+ 	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+ 	                         FunctionAttributes fnAttrs) override;
++	TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
++	                                              const std::vector<tracing::TypedValueRef>& arguments,
++	                                              FunctionAttributes fnAttrs) override;
+ 	TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                 const std::vector<tracing::TypedValueRef>& arguments,
+ 	                                 FunctionAttributes fnAttrs) override;
+diff --git a/nautilus/src/nautilus/tracing/TraceOperation.hpp b/nautilus/src/nautilus/tracing/TraceOperation.hpp
+index b735bddb6f9436d5c8887499cc46e5100556fcb2..5a2da9f7867d2d70c9f1352c78da653e2c7d38ba 100644
+--- a/nautilus/src/nautilus/tracing/TraceOperation.hpp
++++ b/nautilus/src/nautilus/tracing/TraceOperation.hpp
+@@ -46,6 +46,13 @@ struct AllocaSpec {
+  * or deallocated while the trace or executable is in use.
+  */
+ struct FunctionCall {
++	struct Destructor {
++		TypedValueRef address;
++		std::string functionName;
++		std::string mangledName;
++		void* ptr;
++	};
++
+ 	std::string functionName;
+ 	std::string mangledName;
+ 	/**
+@@ -56,6 +63,7 @@ struct FunctionCall {
+ 	void* ptr;
+ 	std::vector<TypedValueRef> arguments;
+ 	FunctionAttributes fnAttrs;
++	std::vector<Destructor> destructors;
+ };
+ 
+ /// Represents an indirect call through a runtime function pointer value.
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+index 76b9e640fdc9f01b2817375a3b8264bb615aec32..db036c1f7ab7e585e5ed11226a17bc032a39e0e2 100644
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+@@ -104,6 +104,20 @@ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing:
+ 	return activeTracer->traceCall(fptn, resultType, arguments, fnAttrs);
+ }
+ 
++TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
++                                              const std::vector<tracing::TypedValueRef>& arguments,
++                                              FunctionAttributes fnAttrs) {
++	return activeTracer->traceCallWithExceptionHandling(fptn, resultType, arguments, fnAttrs);
++}
++
++void registerDestructor(const TypedValueRef& address, void* destructor) {
++	activeTracer->registerDestructor(address, destructor);
++}
++
++void unregisterDestructor(const TypedValueRef& address) {
++	activeTracer->unregisterDestructor(address);
++}
++
+ TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                  const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) {
+ 	return activeTracer->traceIndirectCall(fnPtrRef, resultType, arguments, fnAttrs);
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+index 99df9de4a78b75b74e2556cfc734e989aeb08f19..91e3bc60db2e062d698656c5f0ca8b6782a80127 100644
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+@@ -157,6 +157,9 @@ void SSACreationPhase::SSACreationPhaseContext::processBlock(Block& startBlock)
+ 					for (auto valueRef : (*fcallRefPtr)->arguments) {
+ 						processValueRef(block, valueRef, valueRef.type, i);
+ 					}
++					for (auto& destructor : (*fcallRefPtr)->destructors) {
++						processValueRef(block, destructor.address, destructor.address.type, i);
++					}
+ 				} else if (auto* indirectCallRefPtr = std::get_if<IndirectFunctionCall*>(&input)) {
+ 					IndirectFunctionCall& indirectCallRef = **indirectCallRefPtr;
+ 					processValueRef(block, indirectCallRef.fnPtr, indirectCallRef.fnPtr.type, i);
+@@ -307,6 +310,12 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
+ 								funcArg.ref = foundAssignment->second;
+ 							}
+ 						}
++						for (auto& destructor : (*fcallRefPtr)->destructors) {
++							auto foundAssignment = assignmentMap.find(destructor.address.ref);
++							if (foundAssignment != assignmentMap.end()) {
++								destructor.address.ref = foundAssignment->second;
++							}
++						}
+ 					} else if (auto* indirectCallRefPtr = std::get_if<IndirectFunctionCall*>(&input)) {
+ 						IndirectFunctionCall& indirectCallRef = **indirectCallRefPtr;
+ 						auto foundFnPtr = assignmentMap.find(indirectCallRef.fnPtr.ref);
+diff --git a/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp b/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
+index 54224a25dc4d4d4807e0e4c765ea3f1719d6c58f..457b9309eff8cbdbd4ef7453b58bee301950a304 100644
+--- a/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
++++ b/nautilus/src/nautilus/tracing/phases/SSAVerifier.cpp
+@@ -84,6 +84,9 @@ SSAVerificationResult VerifySSA(const ExecutionTrace& trace) {
+ 					for (const auto& arg : (*fcallPtr)->arguments) {
+ 						checkRef(arg, "function call argument");
+ 					}
++					for (const auto& destructor : (*fcallPtr)->destructors) {
++						checkRef(destructor.address, "function call destructor address");
++					}
+ 				}
+ 				// None, ConstantLiteral, BranchProbability need no ref checks
+ 			}
+diff --git a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+index 548a4fef30c4f50568d3df778286a1cf33b4c1a7..21af2c68d0471cfad8ac2f10a2c7b2d42b194a78 100644
+--- a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+@@ -248,6 +248,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(ValueFrame&
+ 		return;
+ 	};
+ 	case Op::CALL:
++	case Op::CALL_WITH_EXCEPTION_HANDLING:
+ 		processCall(frame, currentIrBlock, operation);
+ 		return;
+ 	case Op::INDIRECT_CALL:
+@@ -432,9 +433,20 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(ValueFrame& fram
+ 
+ 	auto resultType = operation.resultType;
+ 	auto resultIdentifier = createValueIdentifier(operation.resultRef);
++	auto destructors = std::vector<ProxyCallOperation::Destructor> {};
++	destructors.reserve(functionCallTarget.destructors.size());
++	for (const auto& destructor : functionCallTarget.destructors) {
++		destructors.push_back(ProxyCallOperation::Destructor {
++		    .address = frame.getValue(createValueIdentifier(destructor.address)),
++		    .functionSymbol = destructor.mangledName,
++		    .functionName = destructor.functionName,
++		    .functionPtr = destructor.ptr,
++		});
++	}
+ 	auto proxyCallOperation = currentBlock->addTaggedOperation<ProxyCallOperation>(
+ 	    operation.tag.getTag(), functionCallTarget.mangledName, functionCallTarget.functionName, functionCallTarget.ptr,
+-	    resultIdentifier, inputArguments, resultType, functionCallTarget.fnAttrs);
++	    resultIdentifier, inputArguments, resultType, functionCallTarget.fnAttrs, std::move(destructors),
++	    operation.op == Op::CALL_WITH_EXCEPTION_HANDLING);
+ 	if (resultType != Type::v) {
+ 		frame.setValue(resultIdentifier, proxyCallOperation);
+ 	}
+
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+index 2c06215..9e494b1 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+@@ -89,10 +89,16 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	// We avoid constructing llvm::orc::TMOwningSimpleCompiler directly because
+ 	// LLVM is compiled with -fno-rtti and exporting RTTI for its polymorphic
+ 	// types across TU boundaries would require us to match.
+-	auto jitOrErr = llvm::orc::LLJITBuilder()
+-	                    .setJITTargetMachineBuilder(std::move(*tmBuilderOrError))
+-	                    .setObjectLinkingLayerCreator(objectLinkingLayerCreator)
+-	                    .create();
++	auto jitBuilder = llvm::orc::LLJITBuilder();
++	jitBuilder.setJITTargetMachineBuilder(std::move(*tmBuilderOrError));
++
++	// RuntimeDyld drops the weak DW.ref personality symbol emitted for AArch64
++	// exception frames. Let LLJIT select JITLink on AArch64, which retains the
++	// indirection and registers the generated EH frames correctly.
++	if (!targetTriple.isAArch64()) {
++		jitBuilder.setObjectLinkingLayerCreator(objectLinkingLayerCreator);
++	}
++	auto jitOrErr = jitBuilder.create();
+ 	if (!jitOrErr) {
+ 		return jitOrErr.takeError();
+ 	}
