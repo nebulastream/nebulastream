@@ -1,8 +1,3 @@
----
-title: "NebuLi: Single-Node Deployment"
-weight: 50
----
-
 NebulaStream provides two primary frontend interfaces for single-node deployments:
 
 1. **`nes-repl-embedded`** - Single-node embedded worker with local query execution via interactive REPL
@@ -148,4 +143,4 @@ SHOW QUERIES;
 }
 ```
 
-For distributed, multi-worker deployments, see [NebuLi: Distributed Deployment]({{< ref "Distributed" >}}).
+For distributed, multi-worker deployments, see [Distributed Deployment]({{< ref "Distributed" >}}).
