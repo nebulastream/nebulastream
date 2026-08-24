@@ -15,10 +15,16 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <functional>
+#include <iomanip>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <random>
+#include <set>
 #include <span>
+#include <sstream>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -525,6 +531,145 @@ RC_GTEST_PROP(ChainedHashMapPropertyTest, bloomFilterMatchesDisabledInterpreter,
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
     bloomFilterMatchesDisabledProperty(TestUtils::EngineMode::Interpreter);
+}
+
+/// Regression test for the AVX-512-only miscompilation of the compiled lookup (nautilus JIT on
+/// skylake-avx512 and newer AVX-512 targets, LLVM 19-24 at every optimization level): the chain-walk's
+/// loop-carried i1 match result is built from a vector icmp (vpcmpeqw -> k-register -> kmovd), whose
+/// byte carries garbage in bits 1..7, and one of the chain-end exit edges returns that byte register
+/// without normalizing it. The result: a lookup for a key whose payloads are EQUAL to a stored entry's
+/// but whose null flag DIFFERS returns "found". Passes natively everywhere; under `sde64 -skx --
+/// ./chained-hashmap-unit-tests --gtest_filter='ChainedHashMapStressRepro.*'` (or on AVX-512 hardware)
+/// it fails without the compareKeys null-flag early-return fix and passes with it.
+TEST(ChainedHashMapStressRepro, falsePositiveMatrix)
+{
+    Logger::setupLogging("ChainedHashMapMatrix.log", LogLevel::LOG_WARNING);
+    const std::vector<DataType> fieldTypes{
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::IS_NULLABLE},
+        DataType{DataType::Type::INT16, DataType::NULLABLE::NOT_NULLABLE}};
+    const auto makeAnyKey
+        = [](const std::optional<uint16_t>& first, int16_t second) { return TestUtils::AnyVec{std::any{first}, std::any{second}}; };
+
+    for (const bool withBloom : {true, false})
+    {
+        auto bufferManager = TestUtils::createBufferManager(2097152, TestUtils::pooledBufferCountFor(2097152));
+        const std::optional<Nautilus::Interface::BloomFilterParams> bloom
+            = withBloom ? std::optional{Nautilus::Interface::BloomFilterParams{4, 5e-4}} : std::nullopt;
+        TestUtils::TestableChainedHashMap chm{fieldTypes, *bufferManager, TestUtils::EngineMode::Compiler, 128, 2, 512, bloom};
+
+        chm.put(makeAnyKey(std::nullopt, 1), {});
+        ASSERT_EQ(chm.size(), 1);
+
+        {
+            auto page = chm.raw().getPage(0);
+            const auto* bytes = page.getAvailableMemoryArea<const uint8_t>().data();
+            std::ostringstream hex;
+            for (int i = 0; i < 32; ++i)
+            {
+                hex << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(bytes[i]) << (i % 8 == 7 ? " | " : " ");
+            }
+            std::cout << "bloom=" << withBloom << " stored entry bytes: " << hex.str() << '\n';
+        }
+
+        EXPECT_TRUE(chm.at(makeAnyKey(std::nullopt, 1)).has_value()) << "bloom=" << withBloom << " (null,1) must be found";
+        EXPECT_FALSE(chm.at(makeAnyKey(0, 1)).has_value()) << "bloom=" << withBloom << " (0,1) must be absent";
+        EXPECT_FALSE(chm.at(makeAnyKey(2, 1)).has_value()) << "bloom=" << withBloom << " (2,1) must be absent";
+        EXPECT_FALSE(chm.at(makeAnyKey(0, 2)).has_value()) << "bloom=" << withBloom << " (0,2) must be absent";
+        EXPECT_FALSE(chm.at(makeAnyKey(std::nullopt, 2)).has_value()) << "bloom=" << withBloom << " (null,2) must be absent";
+    }
+
+    /// Mirror direction: stored non-null (0,1), null candidate.
+    for (const bool withBloom : {true, false})
+    {
+        auto bufferManager = TestUtils::createBufferManager(2097152, TestUtils::pooledBufferCountFor(2097152));
+        const std::optional<Nautilus::Interface::BloomFilterParams> bloom
+            = withBloom ? std::optional{Nautilus::Interface::BloomFilterParams{4, 5e-4}} : std::nullopt;
+        TestUtils::TestableChainedHashMap chm{fieldTypes, *bufferManager, TestUtils::EngineMode::Compiler, 128, 2, 512, bloom};
+
+        chm.put(makeAnyKey(0, 1), {});
+        ASSERT_EQ(chm.size(), 1);
+        EXPECT_TRUE(chm.at(makeAnyKey(0, 1)).has_value()) << "mirror bloom=" << withBloom << " (0,1) must be found";
+        EXPECT_FALSE(chm.at(makeAnyKey(std::nullopt, 1)).has_value()) << "mirror bloom=" << withBloom << " (null,1) must be absent";
+        EXPECT_FALSE(chm.at(makeAnyKey(1, 1)).has_value()) << "mirror bloom=" << withBloom << " (1,1) must be absent";
+    }
+
+    /// Single nullable key field, stored (null): the smallest failing shape.
+    const std::vector<DataType> oneField{DataType{DataType::Type::UINT16, DataType::NULLABLE::IS_NULLABLE}};
+    const auto makeKey1 = [](const std::optional<uint16_t>& v) { return TestUtils::AnyVec{std::any{v}}; };
+    for (const bool withBloom : {true, false})
+    {
+        auto bufferManager = TestUtils::createBufferManager(2097152, TestUtils::pooledBufferCountFor(2097152));
+        const std::optional<Nautilus::Interface::BloomFilterParams> bloom
+            = withBloom ? std::optional{Nautilus::Interface::BloomFilterParams{4, 5e-4}} : std::nullopt;
+        TestUtils::TestableChainedHashMap chm{oneField, *bufferManager, TestUtils::EngineMode::Compiler, 128, 1, 512, bloom};
+
+        chm.put(makeKey1(std::nullopt), {});
+        ASSERT_EQ(chm.size(), 1);
+        EXPECT_TRUE(chm.at(makeKey1(std::nullopt)).has_value()) << "1f bloom=" << withBloom << " (null) must be found";
+        EXPECT_FALSE(chm.at(makeKey1(0)).has_value()) << "1f bloom=" << withBloom << " (0) must be absent";
+        EXPECT_FALSE(chm.at(makeKey1(7)).has_value()) << "1f bloom=" << withBloom << " (7) must be absent";
+    }
+}
+
+/// Focused stress reproduction of the merge-queue failure seen in CI (seed=7646007045148759454):
+/// pins the shrunk counterexample's configuration family — 2 key fields (UINT16 nullable, INT16),
+/// no value fields, numBuckets=128, entriesPerPage=512, BloomFilter 64 bits / 11 hashes — and hammers
+/// it with a tiny key domain (heavy duplication, ~50% nulls), checking every possible key's containment
+/// against an exact reference after each insert round. STRESS_ROUNDS and STRESS_SEED env vars control it.
+TEST(ChainedHashMapStressRepro, nullableKeysBloomFocused)
+{
+    Logger::setupLogging("ChainedHashMapStressRepro.log", LogLevel::LOG_WARNING);
+    const uint64_t rounds = std::getenv("STRESS_ROUNDS") ? std::stoull(std::getenv("STRESS_ROUNDS")) : 200;
+    const uint64_t seed = std::getenv("STRESS_SEED") ? std::stoull(std::getenv("STRESS_SEED")) : std::random_device{}();
+    std::mt19937_64 rng(seed);
+
+    const std::vector<DataType> fieldTypes{
+        DataType{DataType::Type::UINT16, DataType::NULLABLE::IS_NULLABLE},
+        DataType{DataType::Type::INT16, DataType::NULLABLE::NOT_NULLABLE}};
+    constexpr uint64_t bufferSize = 2097152;
+    constexpr uint64_t numBuckets = 128;
+    constexpr size_t numKeyFields = 2;
+    constexpr uint64_t entriesPerPage = 512;
+    const Nautilus::Interface::BloomFilterParams bloomParams{4, 5e-4}; /// 64 bits, 11 hashes — same as CI failure
+
+    using RefKey = std::pair<std::optional<uint16_t>, int16_t>;
+    constexpr std::array<std::optional<uint16_t>, 4> uint16Domain{std::nullopt, 0, 1, 2};
+    constexpr std::array<int16_t, 3> int16Domain{0, 1, 2};
+
+    const auto makeAnyKey
+        = [](const std::optional<uint16_t>& first, int16_t second) { return TestUtils::AnyVec{std::any{first}, std::any{second}}; };
+
+    for (uint64_t round = 0; round < rounds; ++round)
+    {
+        auto bufferManager = TestUtils::createBufferManager(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+        TestUtils::TestableChainedHashMap chm{
+            fieldTypes, *bufferManager, TestUtils::EngineMode::Compiler, numBuckets, numKeyFields, entriesPerPage, bloomParams};
+        std::set<RefKey> reference;
+
+        for (int iteration = 0; iteration < 2; ++iteration)
+        {
+            for (int i = 0; i < 12; ++i)
+            {
+                const auto first = uint16Domain.at(rng() % uint16Domain.size());
+                const auto second = int16Domain.at(rng() % int16Domain.size());
+                chm.put(makeAnyKey(first, second), {});
+                reference.emplace(first, second);
+            }
+            ASSERT_EQ(chm.size(), reference.size()) << "round " << round << " seed " << seed;
+            /// Exhaustive containment check over the whole 12-key domain.
+            for (const auto& first : uint16Domain)
+            {
+                for (const auto& second : int16Domain)
+                {
+                    const bool expected = reference.contains({first, second});
+                    const auto actual = chm.at(makeAnyKey(first, second));
+                    ASSERT_EQ(actual.has_value(), expected)
+                        << "round " << round << " seed " << seed << " key=(" << (first ? std::to_string(*first) : "null") << "," << second
+                        << ") iteration " << iteration;
+                }
+            }
+        }
+    }
 }
 
 }

@@ -384,10 +384,19 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
     {
         /// We need to take the null values into account as they are a separate group.
         /// Thus, a simple if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier)) is not enough
+        /// Note: the null-flag check is an early-return branch, not a branchless `result and nullsMatch`
+        /// accumulation. The branchless form compiles to an i1 that is loop-carried across the chain walk
+        /// and returned on a chain-end exit edge; on AVX-512 targets the x86 backend (LLVM 19-24, every
+        /// optimization level) lowers the vector key comparison to vpcmpeqw -> k-register -> kmovd and on
+        /// one of those exit edges returns the byte register holding that i1 without normalizing it,
+        /// turning the lookup into a false positive for keys that differ only in nullness. The branch
+        /// changes the generated code shape so the value never survives in that register.
         const auto& keyValue = keys.read(fieldIdentifier);
         const auto entryValue = entryRef.getKey(fieldIdentifier);
-        const auto nullsMatch = keyValue.isNull() == entryValue.isNull();
-        result = result and nullsMatch;
+        if (keyValue.isNull() != entryValue.isNull())
+        {
+            return {false};
+        }
 
         if (type.isType(DataType::Type::VARSIZED))
         {
