@@ -24,4 +24,10 @@ message SerializableQueryPlan{
   repeated string reflectedOperators = 1;
   repeated uint64 rootOperatorIds = 2;
   optional SerializableQueryId queryId = 3;
+
+  message SingleBlob {
+    uint64 id = 1;
+    bytes data = 2;
+  }
+  repeated SingleBlob blobs = 4;
 }

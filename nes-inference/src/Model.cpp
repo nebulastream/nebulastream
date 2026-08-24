@@ -15,6 +15,7 @@
 #include <Model.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -32,7 +33,7 @@ namespace detail
 {
 struct ReflectedImportedModel
 {
-    std::optional<std::string> mlir;
+    std::optional<uint64_t> blobId;
     std::optional<std::string> functionName;
     std::optional<std::vector<size_t>> inputShape;
     std::optional<std::vector<size_t>> outputShape;
@@ -51,11 +52,8 @@ struct
 
 Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const ReflectionContext& context) const
 {
-    const auto data = model.getData();
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char for textual MLIR serialization
-    std::string mlir(reinterpret_cast<const char*>(data.data()), data.size());
     return context.reflect(detail::ReflectedImportedModel{
-        .mlir = std::make_optional(std::move(mlir)),
+        .blobId = std::make_optional(writer.write(model.getData())),
         .functionName = std::make_optional(model.getFunctionName()),
         .inputShape = std::make_optional(model.getInputShape()),
         .outputShape = std::make_optional(model.getOutputShape())});
@@ -64,11 +62,13 @@ Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const
 ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto reflected = context.unreflect<detail::ReflectedImportedModel>(rfl);
-    const auto mlir = reflected.mlir.value_or(std::string{});
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) char-to-byte for buffer construction
-    const auto* mlirBytes = reinterpret_cast<const std::byte*>(mlir.data());
+    if (!reflected.blobId.has_value())
+    {
+        throw NES::CannotDeserialize("ImportedModel is missing its blobId");
+    }
+
     return ImportedModel{
-        detail::RefCountedByteBuffer::fromBytes({mlirBytes, mlir.size()}),
+        detail::RefCountedByteBuffer::fromBytes(reader.read(*reflected.blobId)),
         reflected.functionName.value_or(std::string{}),
         reflected.inputShape.value_or(std::vector<size_t>{}),
         reflected.outputShape.value_or(std::vector<size_t>{})};
@@ -79,7 +79,7 @@ Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model, c
     return context.reflect(detail::ReflectedRegisteredModel{
         .name = std::make_optional(model.getName()),
         .path = std::make_optional(model.getPath().string()),
-        .imported = std::make_optional(Reflector<ImportedModel>{}(model.getImported(), context)),
+        .imported = std::make_optional(context.reflect(model.getImported())),
         .inputs = std::make_optional(model.getSchema().inputs),
         .outputs = std::make_optional(model.getSchema().outputs)});
 }

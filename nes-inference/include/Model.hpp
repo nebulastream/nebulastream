@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Util/Reflection/BinaryStore.hpp>
 
 #include <Util/Reflection.hpp>
 
@@ -157,12 +158,20 @@ public:
 template <>
 struct Reflector<ImportedModel>
 {
+    using ContextType = BlobWriter;
+    ContextType writer;
+    explicit Reflector(BlobWriter writer) : writer(std::move(writer)) {}
+
     Reflected operator()(const ImportedModel& model, const ReflectionContext& context) const;
 };
 
 template <>
 struct Unreflector<ImportedModel>
 {
+    using ContextType = BlobReader;
+    ContextType reader;
+    explicit Unreflector(BlobReader reader) : reader(std::move(reader)) {}
+
     ImportedModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 

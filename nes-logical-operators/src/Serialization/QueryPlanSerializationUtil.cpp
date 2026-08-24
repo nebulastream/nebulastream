@@ -36,6 +36,7 @@
 #include <ErrorHandling.hpp>
 #include <SerializableQueryId.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <Util/Reflection/BinaryStore.hpp>
 
 #include <Serialization/OperatorMapping.hpp>
 
@@ -54,6 +55,10 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     }
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
+
+    const auto blobStore = std::make_shared<BinaryStore>();
+    const ReflectionContext context{BlobWriter{blobStore}};
+
     for (auto itr : BFSRange(rootOperator))
     {
         if (alreadySerialized.contains(itr.getId()))
@@ -70,11 +75,19 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
             .type = std::string{itr->getName()},
             .operatorId = itr->getOperatorId(),
             .childrenIds = std::move(childrenIds),
-            .config = itr->reflect(ReflectionContext{}),
+            .config = itr->reflect(context),
             .traitSet = itr->getTraitSet()};
 
-        const auto serializedString = rfl::json::write(*ReflectionContext{}.reflect(reflectedOperator));
+        const auto serializedString = rfl::json::write(*context.reflect(reflectedOperator));
         serializableQueryPlan.add_reflectedoperators(serializedString);
+    }
+
+    /// comment
+    for (const auto& [id, blob] : blobStore->entries())
+    {
+        auto* entry = serializableQueryPlan.add_blobs();
+        entry->set_id(id);
+        entry->set_data(reinterpret_cast<const char*>(blob.data()), blob.size());
     }
 
     /// Serialize the root operator ids
