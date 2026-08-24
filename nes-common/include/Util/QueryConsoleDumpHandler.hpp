@@ -18,7 +18,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 #include <Util/PlanRenderer.hpp>
 
@@ -49,6 +51,11 @@ public:
 
     void dump(const Operator& node) { dumpRecursive(node, 0, out, multiline, verbosity); }
 
+    void dump(const Operator& node, std::unordered_set<Operator>& alreadySeen)
+    {
+        dumpRecursive(node, 0, out, multiline, verbosity, alreadySeen);
+    }
+
     static void
     dumpRecursive(const Operator& op, const uint64_t level, std::ostream& out, const bool multiline, const ExplainVerbosity& verbosity)
     {
@@ -63,6 +70,35 @@ public:
             else
             {
                 dumpRecursive(child, level + 1, out, multiline, verbosity);
+            }
+        }
+    }
+
+    static void dumpRecursive( /// NOLINT(misc-no-recursion)
+        const Operator& op,
+        const uint64_t level,
+        std::ostream& out,
+        const bool multiline,
+        const ExplainVerbosity& verbosity,
+        std::unordered_set<Operator>& alreadySeen)
+    {
+        static constexpr std::string_view SharedSubPlanMarker = " [shared]";
+        const std::string indent(level * 2, ' ');
+        if (!alreadySeen.insert(op).second)
+        {
+            out << indent << (multiline ? "+ " : "") << op.explain(verbosity) << SharedSubPlanMarker << '\n';
+            return;
+        }
+        out << indent << (multiline ? "+ " : "") << op.explain(verbosity) << '\n';
+        for (auto& child : op.getChildren())
+        {
+            if constexpr (is_shared_ptr_v<std::decay_t<decltype(child)>>)
+            {
+                dumpRecursive(*child, level + 1, out, multiline, verbosity, alreadySeen);
+            }
+            else
+            {
+                dumpRecursive(child, level + 1, out, multiline, verbosity, alreadySeen);
             }
         }
     }
