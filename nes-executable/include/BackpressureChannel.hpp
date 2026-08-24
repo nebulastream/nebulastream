@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <memory>
 #include <stop_token>
 #include <utility>
@@ -40,7 +39,7 @@ class BackpressureController
     explicit BackpressureController(std::shared_ptr<Channel> channel);
 
     std::shared_ptr<Channel> channel;
-    /// Applying twice from the same controller is a no-op, as it was when a channel had a single controller.
+    /// Applying twice from the same controller is a no-op
     bool applyingPressure = false;
     friend std::pair<BackpressureController, BackpressureListener> createBackpressureChannel();
     friend std::pair<std::vector<BackpressureController>, BackpressureListener> createBackpressureChannel(size_t numberOfControllers);
@@ -48,7 +47,6 @@ class BackpressureController
 public:
     ~BackpressureController();
 
-    /// A Backpressure Controller owns its own share of the channel, thus copying is not enabled.
     BackpressureController(const BackpressureController& other) = delete;
     BackpressureController& operator=(const BackpressureController& other) = delete;
 
