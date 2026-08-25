@@ -22,6 +22,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
 #include <Util/DumpMode.hpp>
@@ -50,7 +51,7 @@ public:
         = {"total_memory_in_bytes",
            "268435456",
            "Total memory budget in bytes for the global buffer pool (pooled + unpooled).",
-           {std::make_shared<NumberValidation>()}};
+           {std::make_shared<NumberValidation>(), std::make_shared<NonZeroValidation>()}};
 
     /// Share (0.0-1.0) of total_memory_in_bytes reserved for unpooled (variable-sized) buffers, used by operator state
     /// (hash maps, paged vectors, var-sized data). On breach, the requesting query fails with CannotAllocateBuffer

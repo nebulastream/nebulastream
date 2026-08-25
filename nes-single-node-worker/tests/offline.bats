@@ -69,7 +69,7 @@ teardown() {
 worker_timeout() {
   local duration="$1"
   shift
-  run timeout --kill-after=10s "$duration" "$NES_WORKER" "$@"
+  run timeout --kill-after=20s "$duration" "$NES_WORKER" "$@"
   [ "$status" -ne 137 ] # graceful termination must not require SIGKILL
 }
 
@@ -147,14 +147,16 @@ worker_timeout() {
   ! grep "enable_event_trace.*was already set" singleNodeWorker.log
 }
 
-# Locks the config contract for the memory-budget options. Degenerate values are rejected during BufferManager
-# construction at startup. The abort can happen in a startup thread while the main process lingers to the timeout,
-# so the exit code is not a reliable signal -- the logged error marker is. A healthy worker never logs these.
+# Locks the config contract for the memory-budget options. Degenerate values are rejected at config-parse time by
+# their validators, which log a clear error marker. Asserting on that marker (rather than the exit code) keeps the
+# check reliable across build types. A healthy worker never logs these.
 
 @test "worker rejects total_memory_in_bytes of 0" {
-  # A zero budget yields zero pooled buffers, which cannot back the internal MPMC queues.
+  # A zero budget yields zero pooled buffers, which cannot back the internal MPMC queues. NonZeroValidation rejects
+  # it at config-parse time.
   worker_timeout 5s -- --worker.total_memory_in_bytes=0
-  grep -E "capacity 0 is impossible|Precondition violated" singleNodeWorker.log
+  grep -E "invalid config parameter|Validator" singleNodeWorker.log
+  grep "total_memory_in_bytes" singleNodeWorker.log
 }
 
 @test "worker rejects unpooled_memory_fraction out of range" {

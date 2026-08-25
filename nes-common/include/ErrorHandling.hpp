@@ -130,13 +130,15 @@ inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, cons
     /// This documents (and checks) requirements for calling a function. If violated, the function was called incorrectly.
     /// @param condition must be true to correctly call function guarded by precondition
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional reference like `{0}`.
+    /// Log the marker before generating the (potentially slow) symbolized stacktrace so it reaches
+    /// the log even if the process is killed mid-symbolization (e.g. a `timeout` SIGKILL at startup).
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
-                auto trace = NES::formatStacktrace(cpptrace::generate_trace(), true); \
-                NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
+                NES_ERROR("Precondition violated: ({}): " formatString, #condition __VA_OPT__(, ) __VA_ARGS__); \
+                NES_ERROR("\u001B[0m\n\n{}", NES::formatStacktrace(cpptrace::generate_trace(), true)); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
                     if (!logger->isConsoleLoggingEnabled()) \
@@ -152,13 +154,15 @@ inline std::string formatStacktrace(const cpptrace::stacktrace& stacktrace, cons
     /// This documents what is assumed to be true at this particular point in a program. If violated, there is a misunderstanding and maybe a bug.
     /// @param condition is assumed to be true
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
+    /// Log the marker before generating the (potentially slow) symbolized stacktrace so it reaches
+    /// the log even if the process is killed mid-symbolization (e.g. a `timeout` SIGKILL at startup)
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
-                auto trace = NES::formatStacktrace(cpptrace::generate_trace(), true); \
-                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
+                NES_ERROR("Invariant violated: ({}): " formatString, #condition __VA_OPT__(, ) __VA_ARGS__); \
+                NES_ERROR("\u001B[0m\n\n{}", NES::formatStacktrace(cpptrace::generate_trace(), true)); \
                 if (auto logger = ::NES::Logger::getInstance()) \
                 { \
                     if (!logger->isConsoleLoggingEnabled()) \
