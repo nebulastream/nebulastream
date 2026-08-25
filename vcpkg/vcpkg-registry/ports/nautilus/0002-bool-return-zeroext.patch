@@ -1,0 +1,17 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -608,7 +608,12 @@ void MLIRLoweringProvider::visitAnd(ir::AndOperation* andOperation, ValueFrame&
+ 
+ 	// Only set result attributes if the function returns a value
+ 	if (functionOp.getOutputArg() != Type::v) {
+-		if (isUnsignedInteger(functionOp.getStamp())) {
++		// A bool (Type::b) is semantically an unsigned 1-bit integer and must be
++		// zero-extended so its i1 result has defined (0/1) upper bits at the ABI
++		// boundary. Without zeroext the x86 i1 return has undefined upper bits;
++		// the AVX-512 mask->bool lowering (kmovd) leaves them non-zero, so a
++		// `false` result is read as `true` by the C++ FFI that consumes it.
++		if (isUnsignedInteger(functionOp.getStamp()) || functionOp.getStamp() == Type::b) {
+ 			mlirFunction.setResultAttr(0, "llvm.zeroext", mlir::UnitAttr::get(context));
+ 		} else if (isSignedInteger(functionOp.getStamp())) {
+ 			mlirFunction.setResultAttr(0, "llvm.signext", mlir::UnitAttr::get(context));
