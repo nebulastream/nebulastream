@@ -12,24 +12,29 @@
     limitations under the License.
 */
 
-/// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
-/// NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <optional>
 #include <sstream>
+#include <stop_token>
 #include <string>
 #include <vector>
+#include <pthread.h>
+/// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
+/// NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <signal.h>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <folly/Synchronized.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
@@ -38,9 +43,58 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
 #include <Version.hpp>
+#include <scope_guard.hpp>
 
 namespace
 {
+
+class Cleanup
+{
+    static constexpr int SIGNAL_EXIT_CODE_OFFSET = 128;
+
+    struct Internal
+    {
+        std::optional<int> terminationSignal;
+        grpc::Server* server = nullptr;
+    };
+
+    folly::Synchronized<Internal> cleanupMutex;
+
+public:
+    std::optional<int> clearServerAndGetTerminationSignal()
+    {
+        auto cleanup = cleanupMutex.wlock();
+        cleanup->server = nullptr;
+        auto result = cleanup->terminationSignal;
+        cleanup->terminationSignal.reset();
+        return result;
+    }
+
+    std::optional<int> setServerIfNotTerminated(grpc::Server* server)
+    {
+        auto cleanup = cleanupMutex.wlock();
+        if (cleanup->terminationSignal)
+        {
+            return cleanup->terminationSignal;
+        }
+        cleanup->server = server;
+        return std::nullopt;
+    }
+
+    void requestTermination(int signal)
+    {
+        auto cleanup = cleanupMutex.wlock();
+        cleanup->terminationSignal = signal + SIGNAL_EXIT_CODE_OFFSET;
+        if (cleanup->server != nullptr)
+        {
+            cleanup->server->Shutdown();
+        }
+    }
+};
+
+/// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+Cleanup cleanup;
+
 /// Block termination signals before any worker threads are created. All subsequently created threads inherit this mask, allowing
 /// a dedicated thread to synchronously wait for the signals without doing non-async-signal-safe work in a signal handler.
 /// sigset_t is provided by <signal.h>, but clang-tidy's include-cleaner does not recognize the indirect platform typedef.
@@ -53,23 +107,38 @@ bool blockTerminationSignals(sigset_t& terminationSignals)
     return pthread_sigmask(SIG_BLOCK, &terminationSignals, nullptr) == 0;
 }
 
-NES::Thread shutdownHook(grpc::Server& server, const sigset_t terminationSignals)
+/// Waits from the start of the process and can terminate even if the GRPC server is not running yet
+NES::Thread terminationThread(const sigset_t terminationSignals)
 {
     return {
         "shutdown-hook",
-        [&, terminationSignals]() mutable
+        [terminationSignals](const std::stop_token& stopToken) mutable
         {
+            /// Wake sigwait with a thread-directed signal when the thread is asked to stop during a clean shutdown.
+            const auto waitingThread = pthread_self();
+            const std::stop_callback stopCallback(
+                stopToken,
+                [waitingThread]
+                {
+                    if (const auto error = pthread_kill(waitingThread, SIGINT); error != 0)
+                    {
+                        NES_ERROR("Failed to wake the termination thread: {} ({})", NES::getErrorMessage(error), error);
+                    }
+                });
+
             int signal{};
             const auto error = sigwait(&terminationSignals, &signal);
             if (error != 0)
             {
-                NES_ERROR("Failed to wait for a termination signal: {}", error)
+                NES_ERROR("Failed to wait for a termination signal: {} ({})", NES::getErrorMessage(error), error);
+                return;
             }
-            else
+            if (stopToken.stop_requested())
             {
-                NES_INFO("Received signal {}. Shutting down.", signal);
+                return;
             }
-            server.Shutdown();
+            NES_INFO("Received signal {}. Shutting down.", signal);
+            cleanup.requestTermination(signal);
         }};
 }
 }
@@ -81,15 +150,26 @@ int main(const int argc, const char* argv[])
         NES::printVersion(NES::SingleNodeWorkerBinaryName);
         return 0;
     }
+    NES::setupSignalHandlers();
+    sigset_t terminationSignals{};
+    if (!blockTerminationSignals(terminationSignals))
+    {
+        return 1;
+    }
+    NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+    SCOPE_EXIT
+    {
+        if (const auto logger = NES::Logger::getInstance())
+        {
+            logger->forceFlush();
+        }
+    };
+
+    /// Register termination handler right now so that the process can be terminated before the rest of the system has started up.
+    const auto terminationHandler = terminationThread(terminationSignals);
+
     CPPTRACE_TRY
     {
-        NES::setupSignalHandlers();
-        sigset_t terminationSignals{};
-        if (!blockTerminationSignals(terminationSignals))
-        {
-            return 1;
-        }
-        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         /// Register built-in plugins before any registry lookup.
         NES::loadBuiltinPlugins();
 
@@ -155,12 +235,18 @@ int main(const int argc, const char* argv[])
                 return 1;
             }
 
-            const auto hook = shutdownHook(*server, terminationSignals);
+            if (auto terminationSignal = cleanup.setServerIfNotTerminated(server.get()))
+            {
+                return *terminationSignal;
+            }
             NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
             server->Wait();
+            if (auto terminationSignal = cleanup.clearServerAndGetTerminationSignal())
+            {
+                return *terminationSignal;
+            }
             NES_INFO("GRPC Server was shutdown. Terminating the SingleNodeWorker");
         }
-        NES::Logger::getInstance()->forceFlush();
         return 0;
     }
     CPPTRACE_CATCH(...)

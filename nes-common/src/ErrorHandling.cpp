@@ -135,26 +135,37 @@ std::string formatLogMessage(const std::exception& e)
 
 void tryLogCurrentException()
 {
+    /// Log the concise error headline (code + message) BEFORE resolving the stacktrace. Symbolizing a trace against a
+    /// large, statically linked binary can take many seconds; emitting the headline first guarantees the error marker
+    /// reaches the log even if the process is terminated (e.g. a `timeout` SIGKILL) part-way through symbolization.
     try
     {
         throw;
     }
     catch (const Exception& e)
     {
-        auto msg = formatLogMessage(e);
-        NES_ERROR("{}", msg)
+        const auto headline = fmt::format("failed to process with error code ({}) : {}", e.code(), e.what());
+        NES_ERROR("{}", headline)
         if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
         {
-            fmt::print(stderr, "{}\n", msg);
+            fmt::print(stderr, "{}\n", headline);
+        }
+        if constexpr (logWithStacktrace)
+        {
+            NES_ERROR("{}{}", ansiColorReset, formatStacktrace(e.trace(), true))
         }
     }
     catch (const std::exception& e)
     {
-        auto msg = formatLogMessage(e);
-        NES_ERROR("{}", msg);
+        const auto headline = fmt::format("failed to process with error : {}", e.what());
+        NES_ERROR("{}", headline);
         if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
         {
-            fmt::print(stderr, "{}\n", msg);
+            fmt::print(stderr, "{}\n", headline);
+        }
+        if constexpr (logWithStacktrace)
+        {
+            NES_ERROR("{}{}", ansiColorReset, formatStacktrace(cpptrace::from_current_exception(), true));
         }
     }
     catch (...) /// NOLINT(no-raw-catch-all)
