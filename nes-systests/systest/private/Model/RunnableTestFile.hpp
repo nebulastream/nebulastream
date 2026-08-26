@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -133,5 +134,9 @@ struct RunnableTestFile
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;
 };
+
+/// Drops every case outside the selection. An empty selection selects everything.
+/// A differential block is one case with two query numbers, so either number keeps it.
+void keepSelectedCases(RunnableTestFile& runnable, const std::unordered_set<SystestQueryId>& selected);
 
 }
