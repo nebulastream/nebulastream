@@ -14,22 +14,26 @@
 
 #include <Rewriter/NamePrefixer.hpp>
 
+#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <filesystem>
 #include <optional>
 #include <ranges>
+#include <regex>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
+#include <vector>
 
-#include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
+#include <ParserRuleContext.h>
 #include <TokenStreamRewriter.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <Identifiers/Identifier.hpp>
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -66,8 +70,12 @@ TestFileKey::TestFileKey(std::string key) : key{std::move(key)}
 {
 }
 
-/// `weakly_canonical` returns a normalized absolute path: /repo/./systests becomes /repo/systests.
-DiscoveryRoot::DiscoveryRoot(const std::filesystem::path& root) : canonicalRoot{std::filesystem::weakly_canonical(root)}
+/// The root is stored absolute, because subtracting a relative root from an absolute file gives an empty result,
+/// which would key every file of the run by its absolute path.
+/// `absolute` resolves against the current directory without touching the filesystem, and `weakly_canonical`
+/// normalizes the result: /repo/./systests becomes /repo/systests.
+DiscoveryRoot::DiscoveryRoot(const std::filesystem::path& root)
+    : canonicalRoot{std::filesystem::weakly_canonical(std::filesystem::absolute(root))}
 {
 }
 
@@ -75,25 +83,25 @@ TestFileKey DiscoveryRoot::keyOf(const std::filesystem::path& testFile, const si
 {
     PRECONDITION(part < parts, "part {} of test file {} does not exist, the file has {} parts", part, testFile.string(), parts);
     /// Normalize both paths before subtraction.
-    /// Relating an absolute path to a relative one gives an empty result instead of an error, leading to collisions.
-    /// The command line decides the discovery root (which may be absolute or relative), while a discovered test file is always absolute.
+    /// Relating an absolute path to a relative one gives an empty result, leading to collisions.
+    /// The cli decides the discovery root (which may be absolute or relative), while a discovered test file is always absolute.
     const auto canonicalPath = std::filesystem::weakly_canonical(testFile);
-    /// Pure path arithmetic, does not interact with the filesystem.
-    auto relative = canonicalPath.lexically_relative(canonicalRoot);
-    /// A file above or unrelated to the root has no position under the root and therefore no key.
-    if (relative.empty() or *relative.begin() == std::filesystem::path{".."})
+    auto keyPath = canonicalPath.lexically_relative(canonicalRoot);
+    /// A file above or unrelated to the root has no position under the root, so its absolute path is the key.
+    /// Subtracting the root leaves only `..` and name components, never a leading separator,
+    /// and only a separator encodes to `_D_`, so the keys of an outside and an inside file cannot collide.
+    if (keyPath.empty() or *keyPath.begin() == std::filesystem::path{".."})
     {
-        throw TestException("test file {} is not located under the discovery root {}", testFile.string(), canonicalRoot.string());
+        keyPath = canonicalPath;
     }
-    relative.replace_extension();
+    keyPath.replace_extension();
 
-    /// The relative path without its extension is the raw key, so the directory keeps files sharing a stem apart.
+    /// The path without its extension is the raw key, so the directory keeps files sharing a stem apart.
     /// The per-character encoding is reversible, so no two paths share a key.
     /// Two paths differing only in case share a key, because an unquoted identifier folds case anyway.
-    const auto folded = toUpperCase(relative.generic_string());
+    const auto folded = toUpperCase(keyPath.generic_string());
     auto key = folded | std::views::transform(encodeKeyCharacter) | std::views::join | std::ranges::to<std::string>();
     /// An unquoted identifier may not start with a digit, so a leading digit is encoded like a special character.
-    /// No path encodes to a leading token on its own, because a relative path does not start with a separator.
     if (std::isdigit(static_cast<unsigned char>(key.front())) != 0)
     {
         key = fmt::format("_{:02X}_{}", static_cast<unsigned char>(key.front()), key.substr(1));
@@ -104,9 +112,51 @@ TestFileKey DiscoveryRoot::keyOf(const std::filesystem::path& testFile, const si
     return TestFileKey{parts == 1 ? key : fmt::format("{}_C{}", key, part)};
 }
 
-std::string stripPrefix(const std::string_view text, const std::string_view namePrefix)
+std::string restoreNames(const std::string_view text, const OriginalNames& names)
 {
-    return replaceAll(text, namePrefix, "");
+    if (names.empty())
+    {
+        return std::string{text};
+    }
+    auto prefixed = names | std::views::keys | std::ranges::to<std::vector<std::string>>();
+    /// The only moves happen inside the library's sort, where the analyzer loses track and reports a moved-from string at the comparison.
+    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
+    std::ranges::sort(prefixed, [](const auto& left, const auto& right) { return left.size() > right.size(); });
+    const auto escape = [](const std::string& name)
+    {
+        static const std::regex Special{R"([.^$|()\[\]{}*+?\\])"};
+        return std::regex_replace(name, Special, R"(\$&)");
+    };
+    const std::regex pattern{fmt::format(R"(\b(?:{})(?![A-Za-z0-9_]))", fmt::join(prefixed | std::views::transform(escape), "|"))};
+
+    std::string restored;
+    const std::string input{text};
+    auto rest = input.cbegin();
+    for (std::smatch match; std::regex_search(rest, input.cend(), match, pattern); rest = match[0].second)
+    {
+        restored.append(rest, match[0].first);
+        restored.append(names.at(match[0].str()));
+    }
+    restored.append(rest, input.cend());
+    return restored;
+}
+
+void PrefixedNameOwners::claim(const OriginalNames& names, const std::filesystem::path& testFile)
+{
+    for (const auto& [spelling, originalName] : names)
+    {
+        if (const auto [owner, inserted] = ownerBySpelling.try_emplace(spelling, Owner{.testFile = testFile, .originalName = originalName});
+            not inserted)
+        {
+            throw TestException(
+                "test files {} and {} both declare a name spelled {} after prefixing: {} and {}",
+                owner->second.testFile.string(),
+                testFile.string(),
+                spelling,
+                owner->second.originalName,
+                originalName);
+        }
+    }
 }
 
 NameRegistry::NameRegistry(const TestFileKey& testFileKey) : key{testFileKey.value()}
@@ -145,12 +195,21 @@ Identifier NameRegistry::declare(const std::string_view name)
 
 PrefixedNames NameRegistry::seal() &&
 {
-    return PrefixedNames{std::move(prefixedByName), fmt::format("{}_", key)};
+    return PrefixedNames{std::move(prefixedByName)};
 }
 
-PrefixedNames::PrefixedNames(PrefixedByName prefixedByName, std::string prefix)
-    : prefixedByName{std::move(prefixedByName)}, namePrefix{std::move(prefix)}
+PrefixedNames::PrefixedNames(PrefixedByName prefixedByName) : prefixedByName{std::move(prefixedByName)}
 {
+}
+
+OriginalNames PrefixedNames::originalNames() const
+{
+    OriginalNames originals;
+    for (const auto& [original, prefixed] : prefixedByName)
+    {
+        originals.emplace(prefixed.asCanonicalString(), original.asCanonicalString());
+    }
+    return originals;
 }
 
 std::optional<Identifier> PrefixedNames::prefixed(const std::string_view name) const
@@ -168,47 +227,73 @@ std::optional<Identifier> PrefixedNames::prefixed(const std::string_view name) c
     return std::nullopt;
 }
 
-void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names)
+void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names)
 {
-    /// The grammar interprets a plugin type as a plain identifier, so only the parse tree can distinguish them.
-    std::unordered_set<size_t> typeTokens;
-    const auto keepType = [&typeTokens](const AntlrSQLParser::IdentifierContext* type)
+    const auto prefix = [&](antlr4::ParserRuleContext* identifier)
     {
-        if (type != nullptr)
+        if (identifier == nullptr)
         {
-            typeTokens.insert(type->getStart()->getTokenIndex());
+            return;
+        }
+        if (const auto prefixed = names.prefixed(identifier->getText()))
+        {
+            rewriter.replace(identifier->getStart(), std::string{prefixed->getOriginalString()});
         }
     };
+    /// A declared name has no dot, so a reference is a single part.
+    const auto prefixParts = [&](const AntlrSQLParser::MultipartIdentifierContext* multipart)
+    {
+        for (auto* part : multipart->parts)
+        {
+            prefix(part->identifier());
+        }
+    };
+
+    for (const auto* source : findAll<AntlrSQLParser::CreateLogicalSourceDefinitionContext>(parse.tree()))
+    {
+        prefix(source->sourceName);
+    }
     for (const auto* source : findAll<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree()))
     {
-        keepType(source->type);
+        prefix(source->logicalSource);
     }
     for (const auto* sink : findAll<AntlrSQLParser::CreateSinkDefinitionContext>(parse.tree()))
     {
-        keepType(sink->type);
+        prefix(sink->sinkName);
     }
-    for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parse.tree()))
+    for (const auto* model : findAll<AntlrSQLParser::CreateModelDefinitionContext>(parse.tree()))
     {
-        keepType(source->type);
+        prefix(model->modelName);
     }
-    for (const auto* sink : findAll<AntlrSQLParser::AnonymousSinkContext>(parse.tree()))
+    for (auto* source : findAll<AntlrSQLParser::NamedSourceContext>(parse.tree()))
     {
-        keepType(sink->type);
+        prefixParts(source->multipartIdentifier());
     }
-
-    for (auto* token : parse.tokenStream().getTokens())
+    for (const auto* inference : findAll<AntlrSQLParser::ModelInferenceSourceContext>(parse.tree()))
     {
-        if (const auto type = token->getType(); type != AntlrSQLLexer::IDENTIFIER and type != AntlrSQLLexer::BACKQUOTED_IDENTIFIER)
+        prefix(inference->modelName);
+    }
+    for (auto* input : findAll<AntlrSQLParser::ModelInferenceStreamNameContext>(parse.tree()))
+    {
+        prefixParts(input->multipartIdentifier());
+    }
+    for (auto* sink : findAll<AntlrSQLParser::SinkContext>(parse.tree()))
+    {
+        prefix(sink->identifier());
+    }
+    /// A qualified field reference spells the source before the dot, and the parser checks that spelling against the source.
+    for (const auto* dereference : findAll<AntlrSQLParser::DereferenceContext>(parse.tree()))
+    {
+        if (auto* qualifier = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(dereference->base))
         {
-            continue;
+            prefix(qualifier->identifier());
         }
-        if (typeTokens.contains(token->getTokenIndex()))
+    }
+    for (auto* star : findAll<AntlrSQLParser::StarContext>(parse.tree()))
+    {
+        if (auto* qualified = star->qualifiedName(); qualified != nullptr)
         {
-            continue;
-        }
-        if (const auto prefixed = names.prefixed(token->getText()))
-        {
-            rewriter.replace(token, std::string{prefixed->getOriginalString()});
+            prefix(qualified->identifier(0));
         }
     }
 }

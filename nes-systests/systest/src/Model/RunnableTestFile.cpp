@@ -12,15 +12,6 @@
     limitations under the License.
 */
 
-#include <InlineDataRegistry.hpp>
+/// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
 
-namespace NES
-{
-
-InlineDataRegistry& InlineDataRegistry::instance()
-{
-    static InlineDataRegistry inst;
-    return inst;
-}
-
-}
+#include <Model/RunnableTestFile.hpp>

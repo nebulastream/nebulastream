@@ -69,7 +69,7 @@ Emitter::Emitter(const RewriteContext& context, Declarations declarations)
     , sinkRewriter{context, this->declarations.names, this->declarations.sinkByName}
 {
     runnable.name = context.name;
-    runnable.namePrefix = this->declarations.names.prefix();
+    runnable.originalNames = this->declarations.names.originalNames();
 }
 
 RunnableTestFile Emitter::emit(ClassifiedTestFile classified) &&
@@ -215,6 +215,17 @@ void Emitter::emitQuery(SelectStatement query)
 void Emitter::emitExplain(ExplainStatement explain)
 {
     SqlParse parse{explain.sql};
+    /// The VISUAL format, which is also the default, centres the plan on the width of each operator label.
+    /// The check restores the declared names afterwards, but the layout was computed for the prefixed ones.
+    auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat();
+    const auto isVisual = [](AntlrSQLParser::ExplainFormatContext* format)
+    { return format->identifier() != nullptr and Identifier::parse(format->identifier()->getText()) == Identifier::parse("visual"); };
+    if (format == nullptr or isVisual(format))
+    {
+        throw TestException(
+            "An EXPLAIN check has to state FORMAT TEXT or FORMAT VERBOSE, because the VISUAL layout depends on the prefixed names: {}",
+            explain.sql);
+    }
     antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
     prefixNames(parse, rewriter, declarations.names);
 
