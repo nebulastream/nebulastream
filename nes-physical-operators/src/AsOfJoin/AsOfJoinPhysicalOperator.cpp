@@ -32,18 +32,18 @@
 #include <nautilus/val_ptr.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
-#include "Interface/Record.hpp"
-#include "PhysicalOperator.hpp"
-#include "Functions/PhysicalFunction.hpp"
-#include "Interface/BufferRef/TupleBufferRef.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "Watermark/TimeFunction.hpp"
+#include <static.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include "DataTypes/Schema.hpp"
 #include "ErrorHandling.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Interface/BufferRef/TupleBufferRef.hpp"
 #include "Interface/NESStrongTypeRef.hpp"
-#include <val_arith.hpp>
-#include <static.hpp>
-#include <val_bool.hpp>
+#include "Interface/Record.hpp"
+#include "PhysicalOperator.hpp"
+#include "Watermark/TimeFunction.hpp"
 
 namespace NES
 {
@@ -294,8 +294,8 @@ void AsOfJoinPhysicalOperator<PredicateFree>::probeLeftRecord(
         handler,
         leftTimestampValue);
 
-    // Traverse newest-to-oldest so the first qualifying row is the ASOF predecessor. The handler's timestamp index makes this independent
-    // of concurrent right-input insertion order and preserves the original first-row tie-break for equal timestamps.
+    /// Traverse newest-to-oldest so the first qualifying row is the ASOF predecessor. The handler's timestamp index makes this independent
+    /// of concurrent right-input insertion order and preserves the original first-row tie-break for equal timestamps.
     for (nautilus::val<uint64_t> position = startPosition;
          position < numberOfRightRows && *selectedRightIndexState == nautilus::val<uint64_t>{UINT64_MAX};
          position = position + nautilus::val<uint64_t>{1})
@@ -419,7 +419,7 @@ void AsOfJoinPhysicalOperator<PredicateFree>::compactRightState(
     if constexpr (!PredicateFree)
     {
         const auto& keyField = rightKeyField.value();
-        // ponytail: quadratic compaction avoids a second generic key index; replace it with keyed state if profiling warrants it.
+        /// ponytail: quadratic compaction avoids a second generic key index; replace it with keyed state if profiling warrants it.
         const auto shouldRetain = [&](const nautilus::val<uint64_t>& index)
         {
             const auto record = rightState.at(index);

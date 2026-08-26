@@ -911,22 +911,21 @@ void oversizedArenaValueIsAttachedWithoutCopy(TestUtils::EngineMode mode)
     PagedVector::init(pagedVectorBuffer, bufferManager->getBufferSize(), layout->getSchema().getSizeInBytes());
 
     const nautilus::engine::NautilusEngine engine{TestUtils::makeEngine(mode)};
-    auto pushArenaValue = engine.registerFunction(
-        std::function(
-            [layout, fieldName](
-                /// NOLINTBEGIN(performance-unnecessary-value-param)
-                nautilus::val<TupleBuffer*> pagedVector,
-                nautilus::val<AbstractBufferProvider*> provider,
-                nautilus::val<Arena*> arena
-                /// NOLINTEND(performance-unnecessary-value-param)
-            )
-            {
-                auto value = ArenaRef{arena}.allocateVariableSizedData(payloadSize);
-                nautilus::invoke(+[](int8_t* data) { std::memset(data, 'x', payloadSize); }, value.getContent());
-                Record record;
-                record.write(fieldName, VarVal{value});
-                PagedVectorRef{BorrowedNautilusBuffer::from(pagedVector), layout}.pushBack(record, provider);
-            }));
+    auto pushArenaValue = engine.registerFunction(std::function(
+        [layout, fieldName](
+            /// NOLINTBEGIN(performance-unnecessary-value-param)
+            nautilus::val<TupleBuffer*> pagedVector,
+            nautilus::val<AbstractBufferProvider*> provider,
+            nautilus::val<Arena*> arena
+            /// NOLINTEND(performance-unnecessary-value-param)
+        )
+        {
+            auto value = ArenaRef{arena}.allocateVariableSizedData(payloadSize);
+            nautilus::invoke(+[](int8_t* data) { std::memset(data, 'x', payloadSize); }, value.getContent());
+            Record record;
+            record.write(fieldName, VarVal{value});
+            PagedVectorRef{BorrowedNautilusBuffer::from(pagedVector), layout}.pushBack(record, provider);
+        }));
 
     const std::byte* sourceAddress = nullptr;
     {

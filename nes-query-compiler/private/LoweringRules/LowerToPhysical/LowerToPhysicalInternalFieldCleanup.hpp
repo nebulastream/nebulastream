@@ -25,6 +25,7 @@ namespace NES
 struct LowerToPhysicalInternalFieldCleanup final : AbstractLoweringRule
 {
     explicit LowerToPhysicalInternalFieldCleanup(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
     LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

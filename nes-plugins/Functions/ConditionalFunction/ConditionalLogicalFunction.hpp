@@ -46,9 +46,9 @@ public:
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
-    [[nodiscard]] static ConditionalLogicalFunction withChildren(const std::vector<LogicalFunction>& children) ;
+    [[nodiscard]] static ConditionalLogicalFunction withChildren(const std::vector<LogicalFunction>& children);
 
-    [[nodiscard]] static std::string_view getType() ;
+    [[nodiscard]] static std::string_view getType();
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:

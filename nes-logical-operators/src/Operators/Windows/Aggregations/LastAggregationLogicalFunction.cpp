@@ -1,28 +1,37 @@
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <Operators/Windows/Aggregations/LastAggregationLogicalFunction.hpp>
 
 #include <cstddef>
 #include <functional>
-#include <string_view>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <fmt/format.h>
+#include <folly/hash/Hash.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
 #include "DataTypes/DataType.hpp"
-#include "Util/PlanRenderer.hpp"
 #include "DataTypes/Schema.hpp"
-#include "Schema/Field.hpp"
 #include "DataTypes/SchemaFwd.hpp"
-#include <Serialization/LogicalFunctionReflection.hpp>
-#include <folly/hash/Hash.h>
-#include <fmt/format.h>
+#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
+#include "Schema/Field.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -99,8 +108,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterLastAggregationLogicalFunc
 }
 }
 
-size_t std::hash<NES::LastAggregationLogicalFunction>::operator()(
-    const NES::LastAggregationLogicalFunction& aggregationFunction) const noexcept
+size_t
+std::hash<NES::LastAggregationLogicalFunction>::operator()(const NES::LastAggregationLogicalFunction& aggregationFunction) const noexcept
 {
     return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::LastAggregationLogicalFunction::getName());
 }

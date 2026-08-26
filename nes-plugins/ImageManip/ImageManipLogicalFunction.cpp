@@ -206,7 +206,7 @@ const auto imageManipUnreflectionRegistration = []
     return true;
 }();
 
-///NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+///NOLINTNEXTLINE(misc-use-internal-linkage)
 void registerImageManipLogicalFunctionUnreflectors()
 {
     static_cast<void>(imageManipUnreflectionRegistration);

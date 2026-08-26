@@ -50,8 +50,8 @@ namespace
 {
 std::atomic_uint64_t nextArrayAggComparatorIdentifier{0};
 
-Record::RecordFieldIdentifier getArrayAggFieldIdentifier(
-    const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout, const size_t fieldIndex)
+Record::RecordFieldIdentifier
+getArrayAggFieldIdentifier(const std::shared_ptr<PagedVectorTupleLayout>& tupleLayout, const size_t fieldIndex)
 {
     INVARIANT(tupleLayout != nullptr, "ARRAY_AGG PagedVector tuple layout must not be null");
     INVARIANT(tupleLayout->getSchema().size() == 2, "ARRAY_AGG PagedVector layout must contain a timestamp and input field");
@@ -83,13 +83,12 @@ void ArrayAggAggregationPhysicalFunction::setup(CompilationContext& compilationC
     {
         return;
     }
-    comparatorOwners.emplace_back(
-        PagedVectorRef::registerComparator(
-            compilationContext,
-            comparatorIdentifier,
-            tupleLayout,
-            [timestampFieldIdentifier = timestampFieldIdentifier](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
-            { return (lhs.read(timestampFieldIdentifier) < rhs.read(timestampFieldIdentifier)).getRawValueAs<nautilus::val<bool>>(); }));
+    comparatorOwners.emplace_back(PagedVectorRef::registerComparator(
+        compilationContext,
+        comparatorIdentifier,
+        tupleLayout,
+        [timestampFieldIdentifier = timestampFieldIdentifier](const Record& lhs, const Record& rhs) -> nautilus::val<bool>
+        { return (lhs.read(timestampFieldIdentifier) < rhs.read(timestampFieldIdentifier)).getRawValueAs<nautilus::val<bool>>(); }));
 }
 
 void ArrayAggAggregationPhysicalFunction::lift(

@@ -38,16 +38,16 @@
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include "Identifiers/Identifier.hpp"
-#include "DataTypes/Schema.hpp"
-#include "Schema/Field.hpp"
-#include "DataTypes/SchemaFwd.hpp"
-#include "Operators/LogicalOperatorFwd.hpp"
-#include "Functions/LogicalFunction.hpp"
 #include "DataTypes/DataType.hpp"
+#include "DataTypes/Schema.hpp"
+#include "DataTypes/SchemaFwd.hpp"
+#include "Functions/LogicalFunction.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Schema/Field.hpp"
 #include "Traits/TraitSet.hpp"
 #include "Util/PlanRenderer.hpp"
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {
@@ -56,9 +56,8 @@ namespace
 std::vector<Identifier> createTableFieldNames(const Identifier& markField, const size_t count)
 {
     return std::views::iota(size_t{0}, count)
-        | std::views::transform(
-            [&markField](const size_t index)
-            { return Identifier::parse(fmt::format("__nes_mark_apply_table_{}_{}", markField, index)); })
+        | std::views::transform([&markField](const size_t index)
+                                { return Identifier::parse(fmt::format("__nes_mark_apply_table_{}_{}", markField, index)); })
         | std::ranges::to<std::vector>();
 }
 
@@ -69,8 +68,8 @@ Schema<Field, Ordered> getOrderedOutputSchema(const LogicalOperator& visiting)
         | std::ranges::to<std::unordered_map>();
     if (const auto reorderer = visiting.tryGetAs<Reorderer>())
     {
-        return reorderer.value()->get().getOrderedOutputSchema(
-            [&childrenWithOutputOrder](const LogicalOperator& child) { return childrenWithOutputOrder.at(child); });
+        return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder](const LogicalOperator& child)
+                                                               { return childrenWithOutputOrder.at(child); });
     }
     const auto outputSchema = visiting.getOutputSchema();
     std::vector<Field> ordered;
@@ -96,10 +95,7 @@ Schema<Field, Ordered> getOrderedOutputSchema(const LogicalOperator& visiting)
 }
 
 MarkApplyLogicalOperator::MarkApplyLogicalOperator(
-    WeakLogicalOperator self,
-    std::vector<LogicalFunction> probeValues,
-    Identifier markField,
-    std::vector<Identifier> correlationFields)
+    WeakLogicalOperator self, std::vector<LogicalFunction> probeValues, Identifier markField, std::vector<Identifier> correlationFields)
     : ManagedByOperator(std::move(self))
     , probeValues(std::move(probeValues))
     , markField(std::move(markField))
@@ -126,11 +122,10 @@ MarkApplyLogicalOperator::MarkApplyLogicalOperator(
     inferLocalSchema();
 }
 
-TypedLogicalOperator<MarkApplyLogicalOperator> MarkApplyLogicalOperator::create(
-    std::vector<LogicalFunction> probeValues, Identifier markField, std::vector<Identifier> correlationFields)
+TypedLogicalOperator<MarkApplyLogicalOperator>
+MarkApplyLogicalOperator::create(std::vector<LogicalFunction> probeValues, Identifier markField, std::vector<Identifier> correlationFields)
 {
-    return TypedLogicalOperator<MarkApplyLogicalOperator>{
-        std::move(probeValues), std::move(markField), std::move(correlationFields)};
+    return TypedLogicalOperator<MarkApplyLogicalOperator>{std::move(probeValues), std::move(markField), std::move(correlationFields)};
 }
 
 TypedLogicalOperator<MarkApplyLogicalOperator> MarkApplyLogicalOperator::create(
@@ -155,21 +150,20 @@ void MarkApplyLogicalOperator::inferLocalSchema()
     auto tableFields = getOrderedOutputSchema(children.value()[1]) | std::ranges::to<std::vector>();
     if (tableFields.size() != probeValues.size())
     {
-        throw CannotInferSchema(
-            "IN probe has {} columns but its subquery returns {} columns", probeValues.size(), tableFields.size());
+        throw CannotInferSchema("IN probe has {} columns but its subquery returns {} columns", probeValues.size(), tableFields.size());
     }
 
-    const auto alreadyRenamed = std::ranges::equal(
-        tableFields | std::views::transform([](const Field& field) { return field.getLastName(); }), tableFieldNames);
+    const auto alreadyRenamed
+        = std::ranges::equal(tableFields | std::views::transform([](const Field& field) { return field.getLastName(); }), tableFieldNames);
     if (!alreadyRenamed)
     {
         auto projections = std::views::zip(tableFieldNames, tableFields)
             | std::views::transform(
-                [](const auto& pair) -> ProjectionLogicalOperator::UnboundProjection
-                { return {std::get<0>(pair), FieldAccessLogicalFunction{std::get<1>(pair)}}; })
+                               [](const auto& pair) -> ProjectionLogicalOperator::UnboundProjection
+                               { return {std::get<0>(pair), FieldAccessLogicalFunction{std::get<1>(pair)}}; })
             | std::ranges::to<std::vector>();
-        children.value()[1] = ProjectionLogicalOperator::create(
-            children.value()[1], std::move(projections), ProjectionLogicalOperator::Asterisk{false});
+        children.value()[1]
+            = ProjectionLogicalOperator::create(children.value()[1], std::move(projections), ProjectionLogicalOperator::Asterisk{false});
         tableFields = getOrderedOutputSchema(children.value()[1]) | std::ranges::to<std::vector>();
     }
 
@@ -186,10 +180,9 @@ void MarkApplyLogicalOperator::inferLocalSchema()
         std::vector{inputSchema | std::ranges::to<std::vector>(), tableFields} | std::views::join | std::ranges::to<std::vector>()};
     comparisonFunction = comparison.withInferredDataType(comparisonSchema);
 
-    auto outputFields = inputSchema | std::views::transform([](const Field& field) { return field.unbound(); })
-        | std::ranges::to<std::vector>();
-    outputFields.emplace_back(
-        markField, DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, DataType::NULLABLE::IS_NULLABLE));
+    auto outputFields
+        = inputSchema | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
+    outputFields.emplace_back(markField, DataTypeProvider::provideDataType(DataType::Type::BOOLEAN, DataType::NULLABLE::IS_NULLABLE));
     auto inferredOutputSchema = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
     if (!inferredOutputSchema.has_value())
     {
@@ -300,19 +293,17 @@ Reflected Reflector<TypedLogicalOperator<MarkApplyLogicalOperator>>::operator()(
         .correlationFields = op->getCorrelationFields()});
 }
 
-Unreflector<TypedLogicalOperator<MarkApplyLogicalOperator>>::Unreflector(ContextType operatorMapping)
-    : plan(std::move(operatorMapping))
+Unreflector<TypedLogicalOperator<MarkApplyLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
 {
 }
 
-TypedLogicalOperator<MarkApplyLogicalOperator> Unreflector<TypedLogicalOperator<MarkApplyLogicalOperator>>::operator()(
-    const Reflected& reflected, const ReflectionContext& context) const
+TypedLogicalOperator<MarkApplyLogicalOperator>
+Unreflector<TypedLogicalOperator<MarkApplyLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     const auto data = context.unreflect<detail::ReflectedMarkApplyLogicalOperator>(reflected);
     const auto children = plan->getChildrenFor(data.operatorId, context);
     PRECONDITION(children.size() == 2, "Reflected mark apply requires exactly two children");
-    return MarkApplyLogicalOperator::create(
-        std::array{children[0], children[1]}, data.probeValues, data.markField, data.correlationFields);
+    return MarkApplyLogicalOperator::create(std::array{children[0], children[1]}, data.probeValues, data.markField, data.correlationFields);
 }
 
 }

@@ -44,11 +44,11 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
-#include "Operators/LogicalOperatorFwd.hpp"
 #include "Identifiers/Identifiers.hpp"
 #include "Interface/Record.hpp"
-#include "WindowTypes/Measures/TimeCharacteristic.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
 #include "Runtime/Execution/OperatorHandler.hpp"
+#include "WindowTypes/Measures/TimeCharacteristic.hpp"
 
 namespace NES
 {

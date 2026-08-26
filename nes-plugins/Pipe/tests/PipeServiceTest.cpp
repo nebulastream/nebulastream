@@ -37,8 +37,7 @@ constexpr uint32_t POOLED_BUFFER_SIZE = 256;
 constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
 constexpr BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
-constexpr size_t TOTAL_MEMORY_IN_BYTES
-    = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
 }
 
 class PipeServiceTest : public ::testing::Test
@@ -49,8 +48,7 @@ protected:
         schemaA = std::make_shared<const PipeSchema>(PipeSchema{
             UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
             UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}});
-        schemaB = std::make_shared<const PipeSchema>(
-            PipeSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::FLOAT64}});
+        schemaB = std::make_shared<const PipeSchema>(PipeSchema{UnqualifiedUnboundField{Identifier::parse("x"), DataType::Type::FLOAT64}});
         bufferManager = BufferManager::create(
             TOTAL_MEMORY_IN_BYTES,
             UNPOOLED_MEMORY_FRACTION,

@@ -25,22 +25,19 @@
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include "Functions/LogicalFunction.hpp"
-#include "Operators/LogicalOperatorFwd.hpp"
 #include "DataTypes/DataType.hpp"
 #include "DataTypes/Schema.hpp"
-#include "Schema/Field.hpp"
 #include "DataTypes/SchemaFwd.hpp"
+#include "Functions/LogicalFunction.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Schema/Field.hpp"
 #include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
 
 QuantifiedComparisonLogicalFunction::QuantifiedComparisonLogicalFunction(
-    std::vector<LogicalFunction> probeValues,
-    LogicalOperator subqueryRoot,
-    const Comparison comparison,
-    const Quantifier quantifier)
+    std::vector<LogicalFunction> probeValues, LogicalOperator subqueryRoot, const Comparison comparison, const Quantifier quantifier)
     : probeValues(std::move(probeValues))
     , subqueryRoot(std::move(subqueryRoot))
     , comparison(comparison)
@@ -81,8 +78,7 @@ DataType QuantifiedComparisonLogicalFunction::getDataType() const
     return dataType;
 }
 
-LogicalFunction
-QuantifiedComparisonLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+LogicalFunction QuantifiedComparisonLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
     copy.probeValues = probeValues
@@ -96,8 +92,7 @@ std::vector<LogicalFunction> QuantifiedComparisonLogicalFunction::getChildren() 
     return probeValues;
 }
 
-QuantifiedComparisonLogicalFunction
-QuantifiedComparisonLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+QuantifiedComparisonLogicalFunction QuantifiedComparisonLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == probeValues.size(), "The quantified comparison arity must not change");
     return QuantifiedComparisonLogicalFunction{children, subqueryRoot, comparison, quantifier};
@@ -110,12 +105,12 @@ std::string_view QuantifiedComparisonLogicalFunction::getType()
 
 std::string QuantifiedComparisonLogicalFunction::explain(const ExplainVerbosity verbosity) const
 {
-    const auto values
-        = probeValues | std::views::transform([verbosity](const auto& value) { return value.explain(verbosity); });
+    const auto values = probeValues | std::views::transform([verbosity](const auto& value) { return value.explain(verbosity); });
     return fmt::format("({}) = ANY(SUBQUERY {})", fmt::join(values, ", "), subqueryRoot.getId());
 }
 
-Reflected Reflector<QuantifiedComparisonLogicalFunction>::operator()(const QuantifiedComparisonLogicalFunction&, const ReflectionContext&) const
+Reflected
+Reflector<QuantifiedComparisonLogicalFunction>::operator()(const QuantifiedComparisonLogicalFunction&, const ReflectionContext&) const
 {
     PRECONDITION(false, "Quantified comparisons must be extracted before reflection");
     std::unreachable();
@@ -128,7 +123,8 @@ Unreflector<QuantifiedComparisonLogicalFunction>::operator()(const Reflected&, c
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterQuantifiedComparisonLogicalFunction(const LogicalFunctionRegistryArguments&)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+LogicalFunctionGeneratedRegistrar::RegisterQuantifiedComparisonLogicalFunction(LogicalFunctionRegistryArguments)
 {
     PRECONDITION(false, "QuantifiedComparisonLogicalFunction is created directly by the SQL parser");
     std::unreachable();

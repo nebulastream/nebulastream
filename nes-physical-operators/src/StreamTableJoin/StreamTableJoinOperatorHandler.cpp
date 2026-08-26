@@ -30,13 +30,14 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include "Identifiers/Identifiers.hpp"
-#include "Time/Timestamp.hpp"
 #include "Sequencing/SequenceData.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {
 
-StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(const std::vector<OriginId>& tableOrigins, const std::vector<OriginId>& inputOrigins)
+StreamTableJoinOperatorHandler::StreamTableJoinOperatorHandler(
+    const std::vector<OriginId>& tableOrigins, const std::vector<OriginId>& inputOrigins)
     : tableOrigins(tableOrigins), tableWatermarks(tableOrigins), outputWatermarks(inputOrigins)
 {
     PRECONDITION(!this->tableOrigins.empty(), "Stream-table join requires at least one table origin");

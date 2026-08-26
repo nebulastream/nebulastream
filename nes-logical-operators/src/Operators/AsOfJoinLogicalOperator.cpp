@@ -217,12 +217,11 @@ AsOfJoinLogicalOperator AsOfJoinLogicalOperator::withInferredSchema() const
 Reflected Reflector<TypedLogicalOperator<AsOfJoinLogicalOperator>>::operator()(
     const TypedLogicalOperator<AsOfJoinLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(
-        detail::ReflectedAsOfJoinLogicalOperator{
-            .operatorId = op.getId(),
-            .joinFunction = op->getJoinFunction(),
-            .timeCharacteristics = op->getTimeCharacteristics(),
-            .rightIsTable = op->isRightTable()});
+    return context.reflect(detail::ReflectedAsOfJoinLogicalOperator{
+        .operatorId = op.getId(),
+        .joinFunction = op->getJoinFunction(),
+        .timeCharacteristics = op->getTimeCharacteristics(),
+        .rightIsTable = op->isRightTable()});
 }
 
 Unreflector<TypedLogicalOperator<AsOfJoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))

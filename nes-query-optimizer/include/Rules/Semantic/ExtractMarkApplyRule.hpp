@@ -34,9 +34,9 @@ public:
 
     [[nodiscard]] static const std::type_info& getType();
     [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] static std::set<std::type_index> needs() ;
-    [[nodiscard]] static std::set<std::type_index> neededBy() ;
-    [[nodiscard]] static LogicalPlan apply(const LogicalPlan& queryPlan) ;
+    [[nodiscard]] static std::set<std::type_index> needs();
+    [[nodiscard]] static std::set<std::type_index> neededBy();
+    [[nodiscard]] static LogicalPlan apply(const LogicalPlan& queryPlan);
     bool operator==(const ExtractMarkApplyRule& other) const;
 };
 

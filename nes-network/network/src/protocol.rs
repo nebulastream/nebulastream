@@ -224,7 +224,7 @@ pub type IdentificationReceiverWriter<W> = Framed<
     Cbor<IdentificationResponse, IdentificationResponse>,
 >;
 
-fn data_channel_codec() -> LengthDelimitedCodec{
+fn data_channel_codec() -> LengthDelimitedCodec {
     let mut codec = LengthDelimitedCodec::new();
     codec.set_max_frame_length(128 * 1024 * 1024);
     codec

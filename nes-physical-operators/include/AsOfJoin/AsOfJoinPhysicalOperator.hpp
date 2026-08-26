@@ -25,11 +25,11 @@
 #include <Interface/Record.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
-#include "Interface/RecordBuffer.hpp"
-#include "Runtime/Execution/OperatorHandler.hpp"
-#include "Interface/TimestampRef.hpp"
-#include "Time/Timestamp.hpp"
 #include <val_bool.hpp>
+#include "Interface/RecordBuffer.hpp"
+#include "Interface/TimestampRef.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {

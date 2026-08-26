@@ -24,10 +24,10 @@
 
 #include <BaseUnitTest.hpp>
 #include <OptimizerTestUtils.hpp>
-#include "Util/Logger/impl/NesLogger.hpp"
+#include "Functions/LogicalFunction.hpp"
 #include "Util/Logger/LogLevel.hpp"
 #include "Util/Logger/Logger.hpp"
-#include "Functions/LogicalFunction.hpp"
+#include "Util/Logger/impl/NesLogger.hpp"
 
 namespace NES
 {

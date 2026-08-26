@@ -21,8 +21,8 @@
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include "Runtime/TupleBuffer.hpp"
 #include "PipelineExecutionContext.hpp"
+#include "Runtime/TupleBuffer.hpp"
 
 namespace NES
 {

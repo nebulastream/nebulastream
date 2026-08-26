@@ -84,6 +84,7 @@ INGORED_ENDINGS = {
     "gitattributes",
     "html",
     "scss",
+    "conf",
 }
 
 VENDORED_FILES = {
@@ -96,6 +97,13 @@ VENDORED_FILES = {
     "vcpkg/vcpkg-registry/ports/libuuid/config.linux.h",
     "vcpkg/vcpkg-registry/ports/libuuid/portfile.cmake",
     "vcpkg/vcpkg-registry/ports/libuuid/unofficial-libuuid-config.cmake.in",
+    "vcpkg/vcpkg-registry/ports/aravis/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/libpng-config.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/vcpkg-cmake-wrapper.cmake",
+    "vcpkg/vcpkg-registry/ports/opencv4/0020-fix-narrow-filesystem.diff",
+    "vcpkg/vcpkg-registry/ports/opencv4/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/opencv4/usage.in",
 }
 
 if __name__ == "__main__":
@@ -112,7 +120,7 @@ if __name__ == "__main__":
 
         if filename in VENDORED_FILES:
             pass
-        elif suffix in {"cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
+        elif suffix in {"c", "cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text):

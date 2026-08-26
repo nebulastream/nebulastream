@@ -36,8 +36,8 @@
 #include <Util/Reflection.hpp>
 #include <Util/Variant.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include "Identifiers/Identifiers.hpp"
 #include "DataTypes/UnboundField.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {
@@ -79,10 +79,8 @@ public:
         std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
         JoinType joinType);
 
-    static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
-        LogicalFunction joinFunction,
-        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics,
-        JoinType joinType);
+    static TypedLogicalOperator<StreamTableJoinLogicalOperator>
+    create(LogicalFunction joinFunction, std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics, JoinType joinType);
 
     static TypedLogicalOperator<StreamTableJoinLogicalOperator> create(
         std::array<LogicalOperator, 2> children,

@@ -41,8 +41,8 @@ LoweringRuleResultSubgraph LowerToPhysicalInternalFieldCleanup::apply(LogicalOpe
     const auto inputSchema = createPhysicalOutputSchema(cleanup->getChild().getTraitSet());
     const auto outputSchema = createPhysicalOutputSchema(traitSet);
     const auto memoryLayout = traitSet.get<MemoryLayoutTypeTrait>()->memoryLayout;
-    auto visibleFields = outputSchema | std::views::transform([](const auto& field) -> QualifiedIdentifier
-                                                              { return field.getFullyQualifiedName(); })
+    auto visibleFields = outputSchema
+        | std::views::transform([](const auto& field) -> QualifiedIdentifier { return field.getFullyQualifiedName(); })
         | std::ranges::to<std::vector>();
     auto scan = ScanPhysicalOperator(
         LowerSchemaProvider::lowerSchema(conf.pageSize.getValue(), inputSchema, memoryLayout), std::move(visibleFields));

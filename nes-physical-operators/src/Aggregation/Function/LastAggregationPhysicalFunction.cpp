@@ -1,6 +1,15 @@
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <Aggregation/Function/LastAggregationPhysicalFunction.hpp>
@@ -10,15 +19,15 @@
 #include <memory>
 #include <utility>
 
-#include <AggregationPhysicalFunctionRegistry.hpp>
 #include <DataTypes/DataTypesUtil.hpp>
-#include <ErrorHandling.hpp>
-#include <ExecutionContext.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>
+#include <AggregationPhysicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -27,8 +36,8 @@
 #include "Functions/PhysicalFunction.hpp"
 #include "Interface/Record.hpp"
 #include "Interface/TimestampRef.hpp"
-#include "Time/Timestamp.hpp"
 #include "Runtime/AbstractBufferProvider.hpp"
+#include "Time/Timestamp.hpp"
 
 namespace NES
 {
@@ -75,8 +84,8 @@ void LastAggregationPhysicalFunction::lift(
             parentBuffer,
             pagedVectorBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(memory + nautilus::val<uint64_t>{bufferIndexOffset}));
-        PagedVectorRef{BorrowedNautilusBuffer::from(pagedVectorBuffer.asArg()), tupleLayout}
-            .pushBack(record, pipelineMemoryProvider.bufferProvider);
+        PagedVectorRef{BorrowedNautilusBuffer::from(pagedVectorBuffer.asArg()), tupleLayout}.pushBack(
+            record, pipelineMemoryProvider.bufferProvider);
         VarVal{timestamp.convertToValue()}.writeToMemory(memory + nautilus::val<uint64_t>{timestampOffset});
         VarVal{nautilus::val<bool>{true}}.writeToMemory(memory + nautilus::val<uint64_t>{seenOffset});
     }
@@ -118,8 +127,8 @@ void LastAggregationPhysicalFunction::combine(
             destinationBuffer.asArg(),
             static_cast<nautilus::val<uint32_t*>>(destinationMemory + nautilus::val<uint64_t>{bufferIndexOffset}));
         auto sourceValues = PagedVectorRef{BorrowedNautilusBuffer::from(sourceBuffer.asArg()), tupleLayout};
-        PagedVectorRef{BorrowedNautilusBuffer::from(destinationBuffer.asArg()), tupleLayout}
-            .pushBack(sourceValues.at(sourceValues.getNumberOfRecords() - nautilus::val<uint64_t>{1}), pipelineMemoryProvider.bufferProvider);
+        PagedVectorRef{BorrowedNautilusBuffer::from(destinationBuffer.asArg()), tupleLayout}.pushBack(
+            sourceValues.at(sourceValues.getNumberOfRecords() - nautilus::val<uint64_t>{1}), pipelineMemoryProvider.bufferProvider);
         VarVal{sourceTimestamp}.writeToMemory(destinationMemory + nautilus::val<uint64_t>{timestampOffset});
         VarVal{nautilus::val<bool>{true}}.writeToMemory(destinationMemory + nautilus::val<uint64_t>{seenOffset});
     }

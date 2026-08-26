@@ -35,6 +35,10 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include "Identifiers/Identifiers.hpp"
+#include "Interface/Record.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 namespace NES
 {
@@ -60,8 +64,8 @@ LoweringRuleResultSubgraph LowerToPhysicalMarkApply::apply(LogicalOperator logic
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
-    auto physicalComparison = QueryCompilation::FunctionProvider::lowerFunction(
-        apply->getComparisonFunction(), FieldMappingTrait{std::move(combinedMappings)});
+    auto physicalComparison
+        = QueryCompilation::FunctionProvider::lowerFunction(apply->getComparisonFunction(), FieldMappingTrait{std::move(combinedMappings)});
 
     auto inputTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(inputSchema);
     auto tableTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(tableSchema);

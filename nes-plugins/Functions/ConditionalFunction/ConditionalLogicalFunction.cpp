@@ -30,8 +30,8 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include "Schema/Field.hpp"
 #include "DataTypes/SchemaFwd.hpp"
+#include "Schema/Field.hpp"
 
 namespace NES
 {
@@ -104,12 +104,12 @@ std::vector<LogicalFunction> ConditionalLogicalFunction::getChildren() const
     return children;
 }
 
-ConditionalLogicalFunction ConditionalLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) 
+ConditionalLogicalFunction ConditionalLogicalFunction::withChildren(const std::vector<LogicalFunction>& children)
 {
     return ConditionalLogicalFunction(children);
 }
 
-std::string_view ConditionalLogicalFunction::getType() 
+std::string_view ConditionalLogicalFunction::getType()
 {
     return NAME;
 }
@@ -125,14 +125,14 @@ std::string ConditionalLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return result;
 }
 
-Reflected Reflector<ConditionalLogicalFunction>::operator()(
-    const ConditionalLogicalFunction& function, const ReflectionContext& context) const
+Reflected
+Reflector<ConditionalLogicalFunction>::operator()(const ConditionalLogicalFunction& function, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedConditionalLogicalFunction{.children = function.children});
 }
 
-ConditionalLogicalFunction Unreflector<ConditionalLogicalFunction>::operator()(
-    const Reflected& reflected, const ReflectionContext& context) const
+ConditionalLogicalFunction
+Unreflector<ConditionalLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [children] = context.unreflect<detail::ReflectedConditionalLogicalFunction>(reflected);
 

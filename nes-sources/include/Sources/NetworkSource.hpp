@@ -58,6 +58,7 @@ public:
     void close() override;
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
+
     [[nodiscard]] bool preservesBufferOriginId() const override { return true; }
 
     [[nodiscard]] std::string_view getType() const override { return name(); }

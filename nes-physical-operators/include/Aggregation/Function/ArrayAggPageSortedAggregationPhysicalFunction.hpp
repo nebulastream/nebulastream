@@ -15,14 +15,14 @@
 
 #include <cstddef>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include "DataTypes/DataType.hpp"
-#include "Functions/PhysicalFunction.hpp"
-#include "Interface/Record.hpp"
 #include <val_base.hpp>
 #include <val_ptr.hpp>
-#include "Runtime/TupleBuffer.hpp"
+#include "DataTypes/DataType.hpp"
 #include "ExecutionContext.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Interface/Record.hpp"
 #include "Interface/TimestampRef.hpp"
+#include "Runtime/TupleBuffer.hpp"
 #include "Time/Timestamp.hpp"
 
 namespace NES

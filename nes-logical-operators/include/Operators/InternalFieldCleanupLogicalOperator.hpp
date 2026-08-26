@@ -30,11 +30,11 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "DataTypes/SchemaFwd.hpp"
+#include "DataTypes/UnboundField.hpp"
+#include "Identifiers/Identifiers.hpp"
 #include "Operators/LogicalOperatorFwd.hpp"
 #include "Schema/Field.hpp"
-#include "DataTypes/SchemaFwd.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "DataTypes/UnboundField.hpp"
 
 namespace NES
 {
@@ -46,12 +46,10 @@ class InternalFieldCleanupLogicalOperator final : public Reorderer, public Manag
 {
 public:
     explicit InternalFieldCleanupLogicalOperator(WeakLogicalOperator self, std::vector<Identifier> internalFields);
-    explicit InternalFieldCleanupLogicalOperator(
-        WeakLogicalOperator self, LogicalOperator child, std::vector<Identifier> internalFields);
+    explicit InternalFieldCleanupLogicalOperator(WeakLogicalOperator self, LogicalOperator child, std::vector<Identifier> internalFields);
 
     static TypedLogicalOperator<InternalFieldCleanupLogicalOperator> create(std::vector<Identifier> internalFields);
-    static TypedLogicalOperator<InternalFieldCleanupLogicalOperator>
-    create(LogicalOperator child, std::vector<Identifier> internalFields);
+    static TypedLogicalOperator<InternalFieldCleanupLogicalOperator> create(LogicalOperator child, std::vector<Identifier> internalFields);
 
     [[nodiscard]] const std::vector<Identifier>& getInternalFields() const;
     [[nodiscard]] LogicalOperator getChild() const;
@@ -93,7 +91,8 @@ struct Unreflector<TypedLogicalOperator<InternalFieldCleanupLogicalOperator>>
 {
     using ContextType = std::shared_ptr<ReflectedPlan>;
     explicit Unreflector(ContextType operatorMapping);
-    TypedLogicalOperator<InternalFieldCleanupLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<InternalFieldCleanupLogicalOperator>
+    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 
 private:
     ContextType plan;

@@ -30,20 +30,19 @@
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include "Operators/LogicalOperatorFwd.hpp"
-#include "Identifiers/Identifier.hpp"
-#include "Schema/Field.hpp"
 #include "DataTypes/Schema.hpp"
 #include "DataTypes/SchemaFwd.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Operators/LogicalOperatorFwd.hpp"
+#include "Schema/Field.hpp"
 #include "Traits/TraitSet.hpp"
 #include "Util/PlanRenderer.hpp"
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES
 {
 
-InternalFieldCleanupLogicalOperator::InternalFieldCleanupLogicalOperator(
-    WeakLogicalOperator self, std::vector<Identifier> internalFields)
+InternalFieldCleanupLogicalOperator::InternalFieldCleanupLogicalOperator(WeakLogicalOperator self, std::vector<Identifier> internalFields)
     : ManagedByOperator(std::move(self)), internalFields(std::move(internalFields))
 {
 }
@@ -118,11 +117,10 @@ Schema<Field, Ordered> InternalFieldCleanupLogicalOperator::getOrderedOutputSche
     return orderProvider(child.value())
         | std::views::filter([&](const Field& field) { return !std::ranges::contains(internalFields, field.getLastName()); })
         | std::views::transform([](const Field& field) { return field.unbound(); }) | RangeBinder{self.lock()}
-        | std::ranges::to<Schema<Field, Ordered>>();
+    | std::ranges::to<Schema<Field, Ordered>>();
 }
 
-InternalFieldCleanupLogicalOperator
-InternalFieldCleanupLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
+InternalFieldCleanupLogicalOperator InternalFieldCleanupLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
     PRECONDITION(children.size() == 1, "Internal-field cleanup requires exactly one child");
     auto copy = *this;
@@ -130,8 +128,7 @@ InternalFieldCleanupLogicalOperator::withChildrenUnsafe(std::vector<LogicalOpera
     return copy;
 }
 
-InternalFieldCleanupLogicalOperator
-InternalFieldCleanupLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+InternalFieldCleanupLogicalOperator InternalFieldCleanupLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = withChildrenUnsafe(std::move(children));
     copy.inferLocalSchema();
@@ -165,8 +162,8 @@ InternalFieldCleanupLogicalOperator InternalFieldCleanupLogicalOperator::withInf
 Reflected Reflector<TypedLogicalOperator<InternalFieldCleanupLogicalOperator>>::operator()(
     const TypedLogicalOperator<InternalFieldCleanupLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedInternalFieldCleanupLogicalOperator{
-        .operatorId = op.getId(), .internalFields = op->getInternalFields()});
+    return context.reflect(
+        detail::ReflectedInternalFieldCleanupLogicalOperator{.operatorId = op.getId(), .internalFields = op->getInternalFields()});
 }
 
 Unreflector<TypedLogicalOperator<InternalFieldCleanupLogicalOperator>>::Unreflector(ContextType operatorMapping)
@@ -186,8 +183,8 @@ Unreflector<TypedLogicalOperator<InternalFieldCleanupLogicalOperator>>::operator
 
 }
 
-std::size_t std::hash<NES::InternalFieldCleanupLogicalOperator>::operator()(
-    const NES::InternalFieldCleanupLogicalOperator& op) const noexcept
+std::size_t
+std::hash<NES::InternalFieldCleanupLogicalOperator>::operator()(const NES::InternalFieldCleanupLogicalOperator& op) const noexcept
 {
     return folly::hash::hash_combine_generic(NES::Hash{}, op.internalFields);
 }

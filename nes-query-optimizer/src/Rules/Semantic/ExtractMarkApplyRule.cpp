@@ -35,13 +35,13 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <PlanRuleRegistry.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <PlanRuleRegistry.hpp>
+#include "DataTypes/DataType.hpp"
 #include "Functions/LogicalFunction.hpp"
 #include "Operators/LogicalOperatorFwd.hpp"
-#include "DataTypes/DataType.hpp"
 
 namespace NES
 {
@@ -84,13 +84,10 @@ Extraction extractFunction(const LogicalFunction& function, LogicalOperator inpu
 
         const auto marker = nextMarkerField();
         auto subquery = rewriteOperator(quantified.value()->getSubqueryRoot());
-        auto apply = MarkApplyLogicalOperator::create(std::move(probeValues), marker)
-                         .withChildrenUnsafe({std::move(input), std::move(subquery)});
+        auto apply
+            = MarkApplyLogicalOperator::create(std::move(probeValues), marker).withChildrenUnsafe({std::move(input), std::move(subquery)});
         markerFields.push_back(marker);
-        return {
-            .function = UnboundFieldAccessLogicalFunction{marker},
-            .input = std::move(apply),
-            .markerFields = std::move(markerFields)};
+        return {.function = UnboundFieldAccessLogicalFunction{marker}, .input = std::move(apply), .markerFields = std::move(markerFields)};
     }
 
     std::vector<LogicalFunction> rewrittenChildren;
@@ -116,16 +113,14 @@ LogicalOperator cleanMarkers(LogicalOperator input, std::vector<Identifier> mark
 
 LogicalOperator rewriteOperator(const LogicalOperator& visiting)
 {
-    auto children = visiting.getChildren()
-        | std::views::transform([](const LogicalOperator& child) { return rewriteOperator(child); })
+    auto children = visiting.getChildren() | std::views::transform([](const LogicalOperator& child) { return rewriteOperator(child); })
         | std::ranges::to<std::vector>();
 
     if (const auto selection = visiting.tryGetAs<SelectionLogicalOperator>())
     {
         PRECONDITION(children.size() == 1, "Selection must have exactly one child");
         auto extraction = extractFunction(selection.value()->getPredicate(), std::move(children.front()));
-        auto rewritten = SelectionLogicalOperator::create(std::move(extraction.function))
-                             .withChildrenUnsafe({std::move(extraction.input)});
+        auto rewritten = SelectionLogicalOperator::create(std::move(extraction.function)).withChildrenUnsafe({std::move(extraction.input)});
         return cleanMarkers(std::move(rewritten), std::move(extraction.markerFields));
     }
 
@@ -167,14 +162,14 @@ LogicalOperator rewriteOperator(const LogicalOperator& visiting)
         }
 
         auto candidatePairs = JoinLogicalOperator::create(
-            ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true"},
-            join.value()->getWindowType(),
-            JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT,
-            join.value()->getJoinTimeCharacteristics())
+                                  ConstantValueLogicalFunction{DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true"},
+                                  join.value()->getWindowType(),
+                                  JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT,
+                                  join.value()->getJoinTimeCharacteristics())
                                   .withChildrenUnsafe({std::move(children[0]), std::move(children[1])});
         auto extraction = extractFunction(predicate, std::move(candidatePairs));
-        auto matchedPairs = SelectionLogicalOperator::create(std::move(extraction.function))
-                                .withChildrenUnsafe({std::move(extraction.input)});
+        auto matchedPairs
+            = SelectionLogicalOperator::create(std::move(extraction.function)).withChildrenUnsafe({std::move(extraction.input)});
         return cleanMarkers(std::move(matchedPairs), std::move(extraction.markerFields));
     }
 
@@ -192,21 +187,20 @@ std::string_view ExtractMarkApplyRule::getName()
     return NAME;
 }
 
-std::set<std::type_index> ExtractMarkApplyRule::needs() 
+std::set<std::type_index> ExtractMarkApplyRule::needs()
 {
     return {};
 }
 
-std::set<std::type_index> ExtractMarkApplyRule::neededBy() 
+std::set<std::type_index> ExtractMarkApplyRule::neededBy()
 {
     return {typeid(LogicalSourceExpansionRule)};
 }
 
-LogicalPlan ExtractMarkApplyRule::apply(const LogicalPlan& queryPlan) 
+LogicalPlan ExtractMarkApplyRule::apply(const LogicalPlan& queryPlan)
 {
     return queryPlan.withRootOperators(
-        queryPlan.getRootOperators()
-        | std::views::transform([](const LogicalOperator& root) { return rewriteOperator(root); })
+        queryPlan.getRootOperators() | std::views::transform([](const LogicalOperator& root) { return rewriteOperator(root); })
         | std::ranges::to<std::vector>());
 }
 
@@ -215,7 +209,8 @@ bool ExtractMarkApplyRule::operator==(const ExtractMarkApplyRule&) const
     return true;
 }
 
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterExtractMarkApplyPlanRule(const PlanRuleRegistryArguments&)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterExtractMarkApplyPlanRule(PlanRuleRegistryArguments)
 {
     return ExtractMarkApplyRule{};
 }

@@ -18,8 +18,8 @@
 #include <memory>
 #include <optional>
 #include <Runtime/UnpooledBufferManager.hpp>
-#include "Runtime/TupleBuffer.hpp"
 #include "Runtime/BufferRecycler.hpp"
+#include "Runtime/TupleBuffer.hpp"
 
 namespace NES
 {

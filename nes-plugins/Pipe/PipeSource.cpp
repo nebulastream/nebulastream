@@ -32,6 +32,8 @@
 #include <PipeService.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include "Runtime/AbstractBufferProvider.hpp"
+#include "Sources/Source.hpp"
 
 namespace NES
 {
@@ -145,11 +147,13 @@ DescriptorConfig::Config PipeSource::validateAndFormat(std::unordered_map<std::s
     return DescriptorConfig::validateAndFormat<ConfigParametersPipeSource>(std::move(config), NAME);
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 SourceValidationRegistryReturnType RegisterPipeSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     return PipeSource::validateAndFormat(sourceConfig.config);
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterPipeSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<PipeSource>(sourceRegistryArguments.sourceDescriptor);

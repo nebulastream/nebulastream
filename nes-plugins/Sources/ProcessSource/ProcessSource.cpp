@@ -21,7 +21,9 @@
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <format>
 #include <memory>
 #include <optional>
@@ -34,9 +36,9 @@
 #include <utility>
 #include <fcntl.h>
 #include <poll.h>
-#include <time.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -71,8 +73,9 @@ ProcessSource::ProcessSource(const SourceDescriptor& sourceDescriptor)
     : RawSource(RawSource::requiredTailPaddingFor(sourceDescriptor.getInputFormatterDescriptor().getInputFormatterType()))
     , command(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::COMMAND))
     , sourceId(sourceDescriptor.getPhysicalSourceId().getRawValue())
-    , refreshInterval(std::chrono::milliseconds{
-          static_cast<int64_t>(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::REFRESH_INTERVAL_MS))})
+    , refreshInterval(
+          std::chrono::milliseconds{
+              static_cast<int64_t>(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::REFRESH_INTERVAL_MS))})
     , flushInterval(
           std::chrono::milliseconds{static_cast<int64_t>(sourceDescriptor.getFromConfig(ConfigParametersProcessSource::FLUSH_INTERVAL_MS))})
 {
@@ -374,7 +377,8 @@ SourceValidationRegistryReturnType RegisterProcessSourceValidation(SourceValidat
     return ProcessSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterProcessSource(const SourceRegistryArguments& sourceRegistryArguments)
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterProcessSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<ProcessSource>(sourceRegistryArguments.sourceDescriptor);
 }

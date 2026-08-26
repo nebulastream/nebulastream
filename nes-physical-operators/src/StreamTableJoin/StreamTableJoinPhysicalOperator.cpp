@@ -30,19 +30,19 @@
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
-#include "Interface/Record.hpp"
-#include "PhysicalOperator.hpp"
-#include "Functions/PhysicalFunction.hpp"
-#include "Interface/BufferRef/TupleBufferRef.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "Watermark/TimeFunction.hpp"
+#include <static.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include "DataTypes/Schema.hpp"
 #include "ErrorHandling.hpp"
+#include "Functions/PhysicalFunction.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Interface/BufferRef/TupleBufferRef.hpp"
 #include "Interface/NESStrongTypeRef.hpp"
-#include <val_arith.hpp>
+#include "Interface/Record.hpp"
 #include "Interface/TimestampRef.hpp"
-#include <val_bool.hpp>
-#include <static.hpp>
+#include "PhysicalOperator.hpp"
+#include "Watermark/TimeFunction.hpp"
 
 namespace NES
 {

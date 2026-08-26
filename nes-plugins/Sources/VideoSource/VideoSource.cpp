@@ -1,20 +1,34 @@
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <VideoSource.hpp>
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <ranges>
+#include <memory>
+#include <ostream>
 #include <span>
+#include <stop_token>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
+#include <arv.h>
+#include <glib.h>
+#include <glibconfig.h>
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -24,6 +38,11 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include "Configurations/Descriptor.hpp"
+#include "Runtime/AbstractBufferProvider.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Sources/Source.hpp"
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
@@ -89,13 +108,13 @@ public:
 
     ~StreamBuffer()
     {
-        if (buffer)
+        if (buffer != nullptr)
         {
             arv_stream_push_buffer(stream, buffer);
         }
     }
 
-    [[nodiscard]] ArvBufferStatus status() const { return buffer ? arv_buffer_get_status(buffer) : ARV_BUFFER_STATUS_TIMEOUT; }
+    [[nodiscard]] ArvBufferStatus status() const { return (buffer != nullptr) ? arv_buffer_get_status(buffer) : ARV_BUFFER_STATUS_TIMEOUT; }
 
     [[nodiscard]] uint64_t timestamp() const { return arv_buffer_get_timestamp(buffer); }
 
@@ -119,7 +138,7 @@ private:
 
 void checkError(std::string_view operation, GError* error)
 {
-    if (error)
+    if (error != nullptr)
     {
         const std::string message = error->message;
         g_error_free(error);
@@ -152,7 +171,7 @@ void VideoSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 
     arv_camera_set_integer(camera.get(), "FLK_TI_StreamDataSourceSelector", sourceSelector, &error);
     checkError("selecting camera stream", error);
-    if (arv_camera_is_gv_device(camera.get()))
+    if (arv_camera_is_gv_device(camera.get()) != 0)
     {
         arv_camera_gv_set_packet_size(camera.get(), 1444, &error);
         checkError("setting GigE packet size", error);
@@ -186,14 +205,14 @@ Source::FillTupleBufferResult VideoSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
     while (!stopToken.stop_requested())
     {
-        StreamBuffer image{stream.get()};
+        const StreamBuffer image{stream.get()};
         if (image.status() == ARV_BUFFER_STATUS_TIMEOUT)
         {
             continue;
         }
         if (image.status() != ARV_BUFFER_STATUS_SUCCESS)
         {
-            if (ARV_IS_GV_STREAM(stream.get()))
+            if (ARV_IS_GV_STREAM(stream.get()) != 0)
             {
                 guint64 resentPackets = 0;
                 guint64 missingPackets = 0;
@@ -253,6 +272,7 @@ SourceValidationRegistryReturnType RegisterVideoSourceValidation(SourceValidatio
     return VideoSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterVideoSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<VideoSource>(sourceRegistryArguments.sourceDescriptor);

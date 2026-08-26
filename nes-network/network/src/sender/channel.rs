@@ -285,7 +285,8 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             }
             Err(e) => {
                 // feed() failed — buffer stays in pending_writes for retry
-                let size = buffer.data.len() + buffer.child_buffers.iter().map(|c| c.len()).sum::<usize>();
+                let size =
+                    buffer.data.len() + buffer.child_buffers.iter().map(|c| c.len()).sum::<usize>();
                 warn!(
                     "Sending {:?} failed: {e}. BufferSize: {size}",
                     sequence_number,

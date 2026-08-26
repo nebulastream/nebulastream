@@ -203,7 +203,7 @@ bool recycleTupleBuffer(void* bufferPointer)
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     /// For a pooled buffer the data region is preceded by a redzone and the control block
     /// (see BufferManager::initialize). CONTROL_BLOCK_REDZONE_SIZE is 0 without ASan.
-    auto *block
+    auto* block
         = reinterpret_cast<detail::BufferControlBlock*>(buffer - detail::CONTROL_BLOCK_REDZONE_SIZE - sizeof(detail::BufferControlBlock));
     return block->release();
 }

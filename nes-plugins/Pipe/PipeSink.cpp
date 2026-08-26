@@ -14,22 +14,27 @@
 #include <PipeSink.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
-#include <cpptrace/from_current.hpp>
+#include <cpptrace/from_current.hpp> ///NOLINT(misc-include-cleaner)
+#include <cpptrace/from_current_macros.hpp>
 #include <ErrorHandling.hpp>
 #include <PipeService.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include "Sinks/Sink.hpp"
 
 namespace NES
 {

@@ -79,8 +79,7 @@ bool ArrayAggAggregationLogicalFunction::operator==(const ArrayAggAggregationLog
     return inputFunction == other.inputFunction;
 }
 
-ArrayAggAggregationLogicalFunction
-ArrayAggAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
+ArrayAggAggregationLogicalFunction ArrayAggAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
     const auto inputType = newInputFunction->getDataType();
@@ -117,6 +116,5 @@ AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGenerated
 size_t std::hash<NES::ArrayAggAggregationLogicalFunction>::operator()(
     const NES::ArrayAggAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return folly::hash::hash_combine(
-        aggregationFunction.getInputFunction(), NES::ArrayAggAggregationLogicalFunction::getName());
+    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), NES::ArrayAggAggregationLogicalFunction::getName());
 }
