@@ -134,16 +134,12 @@ void SinkLogicalOperator::inferLocalSchema()
 
     auto inputSchema = child->getOutputSchema();
     auto unboundInputSchema = unbind(inputSchema);
-    /// Set unordered schema for sinks not declared with a target schema.
-    /// Schema<Field, Unordered> order is determined in a stage
-    if (std::holds_alternative<AnonymousSinkDescriptor>(sinkDescriptor->underlying))
+    /// An anonymous sink without an explicit schema gets the childs fields, and a later stage decides their order.
+    if (auto* anonymousSinkDescriptor = std::get_if<AnonymousSinkDescriptor>(&sinkDescriptor->underlying);
+        anonymousSinkDescriptor != nullptr and std::holds_alternative<std::monostate>(anonymousSinkDescriptor->getSchema()))
     {
-        auto& anonymousSinkDescriptor = std::get<AnonymousSinkDescriptor>(sinkDescriptor->underlying);
-        if (std::holds_alternative<std::monostate>(anonymousSinkDescriptor.getSchema()))
-        {
-            anonymousSinkDescriptor.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
-                unboundInputSchema | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
-        }
+        anonymousSinkDescriptor->schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
+            unboundInputSchema | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
     }
     else
     {

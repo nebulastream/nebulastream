@@ -27,8 +27,7 @@ target_include_directories(nes-sources PUBLIC
 
 # Runtime registries: a source plugin registers itself with add_registry_entry(<Registry> <name>).
 # Entries are expressed through the plugin's TYPE (included via HEADER_TEMPLATE): construction and
-# validation instantiate the factory templates from the registry headers; the systest adaptors are
-# static members of the source class.
+# validation instantiate the factory templates from the registry headers.
 create_runtime_registry(Source nes-sources
         ENTRY_TEMPLATE "makeSourceFactory<\${PLUGIN_NAME}Source>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
@@ -36,17 +35,6 @@ create_runtime_registry(Source nes-sources
 
 create_runtime_registry(SourceValidation nes-sources
         ENTRY_TEMPLATE "makeSourceValidator<\${PLUGIN_NAME}Source>()"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
-
-# Systest adaptor registries
-create_runtime_registry(InlineData nes-sources
-        ENTRY_TEMPLATE "&\${PLUGIN_NAME}Source::provideInlineData"
-        HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
-        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
-
-create_runtime_registry(FileData nes-sources
-        ENTRY_TEMPLATE "&\${PLUGIN_NAME}Source::provideFileData"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Source.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 

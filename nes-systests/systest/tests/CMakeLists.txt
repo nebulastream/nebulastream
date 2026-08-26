@@ -32,12 +32,13 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
         "Runner/SystestRunnerTest.cpp"
-        "SystestStateTests.cpp"
+        "Model/KeepSelectedCasesTests.cpp"
         "Model/TestCaseIdTests.cpp"
         "WorkingDirectoryGuardTests.cpp")
 
 add_nes_test_systest(testfile-builder-test
-        "Parser/TestFileBuilderTests.cpp")
+        "Parser/TestFileBuilderTests.cpp"
+        "Parser/TestFilePartitionTests.cpp")
 
 add_nes_test_systest(systest-name-qualifier-test
         "Rewriter/NameQualifierTests.cpp")

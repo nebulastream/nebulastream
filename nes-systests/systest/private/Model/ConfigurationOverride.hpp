@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -26,10 +27,14 @@ namespace NES
 {
 
 /// The worker settings that one configuration block of a test file overrides, as raw key value pairs.
-/// Lookup, iteration, and equality behave as on the `std::unordered_map` that holds the pairs.
+/// Construction from pairs, lookup, iteration, and equality behave as on the `std::unordered_map` that holds them.
 class ConfigurationOverride
 {
 public:
+    ConfigurationOverride() = default;
+
+    ConfigurationOverride(std::initializer_list<std::pair<const std::string, std::string>> parameters) : overrideParameters{parameters} { }
+
     std::string& operator[](std::string_view key);
     [[nodiscard]] const std::string& at(std::string_view key) const;
     [[nodiscard]] bool contains(std::string_view key) const;
