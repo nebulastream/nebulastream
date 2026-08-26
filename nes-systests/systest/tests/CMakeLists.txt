@@ -32,7 +32,7 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserInvalidTestFilesTests.cpp"
         "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
-        "Runner/SystestRunnerTest.cpp"
+        "ResultChecker/OutcomeCheckerTests.cpp"
         "Model/KeepSelectedStatementsTests.cpp"
         "Model/TestCaseIdTests.cpp"
         "WorkingDirectoryGuardTests.cpp")
@@ -44,8 +44,8 @@ add_nes_test_systest(testfile-builder-test
 add_nes_test_systest(systest-name-prefixer-test
         "Rewriter/NamePrefixerTests.cpp")
 
-add_nes_test_systest(systest-sql-rewriter-test
-        "Rewriter/SqlRewriterTests.cpp")
+add_nes_test_systest(systest-test-file-rewriter-test
+        "Rewriter/TestFileRewriterTests.cpp")
 
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")

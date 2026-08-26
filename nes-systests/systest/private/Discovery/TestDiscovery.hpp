@@ -42,7 +42,7 @@ struct DiscoveredTestFile
         std::optional<std::unordered_set<SystestQueryId>> enabledQueries = std::nullopt);
     [[nodiscard]] std::string getLogFilePath() const;
 
-    [[nodiscard]] TestName name() const { return testName; }
+    [[nodiscard]] TestName getName() const { return testName; }
 
     std::filesystem::path file;
     TestName testName;
