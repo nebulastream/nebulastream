@@ -14,6 +14,7 @@
 
 #include <Model/TestCaseId.hpp>
 
+#include <algorithm>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -21,17 +22,15 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <Identifiers/Identifiers.hpp>
-
 namespace NES
 {
 
 std::ostream& operator<<(std::ostream& os, const TestCaseId& id)
 {
     os << id.originFile;
-    if (id.queryIdInFile != INVALID<SystestQueryId>)
+    if (id.queryIdInFile.has_value())
     {
-        os << ':' << id.queryIdInFile.getRawValue();
+        os << ':' << id.queryIdInFile->getRawValue();
     }
     if (not id.overrides.empty())
     {
@@ -41,6 +40,8 @@ std::ostream& operator<<(std::ostream& os, const TestCaseId& id)
         {
             pairs.push_back(fmt::format("{}={}", key, value));
         }
+        /// An unordered map holds the overrides, so a sorted print keeps report lines diffable.
+        std::ranges::sort(pairs);
         os << fmt::format(" [{}]", fmt::join(pairs, ", "));
     }
     return os;

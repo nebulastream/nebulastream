@@ -78,7 +78,7 @@ function setup_distributed() {
       local host=$(yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
       yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
       # Each worker container reserves its declared total_memory_in_bytes on this single host, so accumulate the
-      # per-worker budgets (topologies that declare none contribute nothing) to check their sum against host RAM below.
+      # per-worker budgets (topologies that declare none contribute nothing) to compare their sum with host RAM below.
       if grep -q 'total_memory_in_bytes' "$config_dir/$host.yaml"; then
         local budget=$(yq -r '.worker.total_memory_in_bytes' "$config_dir/$host.yaml")
         required_bytes=$((required_bytes + budget))

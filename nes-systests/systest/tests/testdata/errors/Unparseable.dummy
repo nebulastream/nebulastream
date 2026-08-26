@@ -1,0 +1,8 @@
+# name: Unparseable
+# description: a file that fails to parse, so the run reports the file and not a query
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+THIS IS NOT A STATEMENT AT ALL ;;;
+SELECT id FROM s INTO sink;
+----
+1

@@ -72,19 +72,17 @@ struct ExplainStatement
 
 using TestStatement = std::variant<CreateStatement, SelectStatement, DifferentialStatement, ExplainStatement>;
 
-/// The query numbers defined by CLI arguments.
-/// CREATE has none, a differential block two.
+/// A CREATE has no query number, a differential block two.
 [[nodiscard]] std::vector<SystestQueryId> getQueryNumbersOf(const TestStatement& statement);
 
-/// The worker settings that a test case states; an EXPLAIN states none and runs under the default settings.
-/// A CREATE has no settings of its own, because every partition repeats it.
+/// Empty for CREATE (every partition repeats it) and EXPLAIN (unsupported as of now).
 [[nodiscard]] ConfigurationOverride getOverridesOf(const TestStatement& statement);
 
-/// An empty selection selects everything.
-/// CREATEs are always kept, because every remaining statement may depend on them.
+/// An empty selection keeps every statement.
+/// CREATEs are always preserved, since any query may read them.
 void retainSelectedStatements(std::vector<TestStatement>& statements, const std::unordered_set<SystestQueryId>& selected);
 
-/// A partition that keeps only its CREATEs after the selection has nothing to run.
+/// False when only CREATEs exist.
 [[nodiscard]] bool hasTestCases(const std::vector<TestStatement>& statements);
 
 /// The statements of one test file, in file order.

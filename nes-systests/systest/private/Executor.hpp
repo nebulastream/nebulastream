@@ -14,44 +14,42 @@
 
 #pragma once
 
-#include <cstdint>
-#include <filesystem>
-#include <optional>
 #include <string>
+#include <string_view>
+#include <variant>
 #include <vector>
 
 #include <Config/Config.hpp>
-#include <Config/RunPolicy.hpp>
-#include <Runner/SystestRunner.hpp>
+#include <Model/Verdict.hpp>
 #include <ErrorHandling.hpp>
-#include <Progress.hpp>
-#include <SystestState.hpp>
-
-struct SystestExecutorResult
-{
-    enum class ReturnType : uint8_t
-    {
-        FAILED,
-        SUCCESS,
-    };
-    ReturnType returnType;
-    std::string outputMessage;
-    std::optional<NES::ErrorCode> errorCode = std::nullopt;
-};
 
 namespace NES
 {
 
-class SystestExecutor
+struct RunSucceeded
+{
+    std::string report;
+};
+
+struct RunFailed
+{
+    std::string report;
+    ErrorCode errorCode;
+};
+
+using RunOutcome = std::variant<RunSucceeded, RunFailed>;
+
+[[nodiscard]] RunOutcome summarize(const std::vector<ReportEntry>& entries, std::string_view appendix = {});
+
+/// Runs one invocation of the systest target: discover -> rewrite test files -> bind -> submit -> check -> report.
+class Executor
 {
 public:
-    explicit SystestExecutor(SystestConfiguration config);
-    SystestExecutorResult executeSystests();
+    explicit Executor(SystestConfiguration config);
+    [[nodiscard]] RunOutcome execute() const;
 
 private:
-    void runEndlessMode(const std::vector<SystestQuery>& queries, const RunPolicy& policy);
-
     SystestConfiguration config;
-    SystestProgressTracker progressTracker;
 };
+
 }

@@ -12,6 +12,30 @@
     limitations under the License.
 */
 
-/// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
-
 #include <Model/RunnableTestFile.hpp>
+
+#include <string>
+#include <variant>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Overloaded.hpp>
+
+namespace NES
+{
+
+const std::string& getSqlOf(const SetupStatement& statement)
+{
+    return std::visit([](const auto& alternative) -> const std::string& { return alternative.sql; }, statement);
+}
+
+SystestQueryId getTestCaseNumber(const RewrittenTestCase& testCase)
+{
+    return std::visit(
+        Overloaded{
+            [](const RewrittenQuery& query) { return query.id; },
+            [](const RewrittenDifferential& differential) { return differential.firstId; },
+            [](const RewrittenExplain& explain) { return explain.id; }},
+        testCase.action);
+}
+
+}

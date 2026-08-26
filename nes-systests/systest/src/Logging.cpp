@@ -21,11 +21,13 @@
 #include <string>
 #include <system_error>
 #include <unistd.h>
+
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
 #include <Config/Config.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 
 namespace NES
 {
@@ -85,8 +87,7 @@ void setupLogging(const SystestConfiguration& config)
     else
     {
         absoluteLogPath = config.logFilePath.getValue();
-        const std::filesystem::path parentDir = absoluteLogPath.parent_path();
-        if (not exists(parentDir) or not is_directory(parentDir))
+        if (const std::filesystem::path parentDir = absoluteLogPath.parent_path(); not exists(parentDir) or not is_directory(parentDir))
         {
             fmt::println(std::cerr, "Error creating log file during logger setup: directory does not exist: file://{}", parentDir.string());
             std::exit(1); /// NOLINT(concurrency-mt-unsafe)

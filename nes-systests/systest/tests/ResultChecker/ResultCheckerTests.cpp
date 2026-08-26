@@ -52,7 +52,7 @@ AnyCheck makeExplainCheck(std::vector<std::string> expected, std::string actualO
     return ExplainLinesCheck{.expected = std::move(expected), .actual = std::move(actualOutput)};
 }
 
-Schema<UnqualifiedUnboundField, Ordered> schemaOf(const std::string& fieldName)
+Schema<UnqualifiedUnboundField, Ordered> createSchemaOf(const std::string& fieldName)
 {
     return Schema<UnqualifiedUnboundField, Ordered>{
         std::vector{UnqualifiedUnboundField{Identifier::parse(fieldName), DataTypeProvider::provideDataType(DataType::Type::UINT64)}}};
@@ -73,16 +73,16 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("ResultCheckerTest.log", LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(ResultCheckerTest, ChecksResultRowsAgainstTheDeclaredSchema)
+TEST_F(ResultCheckerTest, ChecksResultRowsWithTheDeclaredSchema)
 {
     const auto resultFile = writeResultFile("resultchecker_rows.csv", "id:UINT64:NOT_NULLABLE\n1\n2\n3\n");
 
-    EXPECT_TRUE((QueryResultCheck{.resultFile = resultFile, .expectedSchema = schemaOf("id"), .expectedTuples = {"1", "2", "3"}}
+    EXPECT_TRUE((QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2", "3"}}
                      .check()
                      .has_value()));
 
     const auto verdict
-        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = schemaOf("id"), .expectedTuples = {"1", "2", "4"}}.check();
+        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2", "4"}}.check();
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("Result Mismatch"));
 }
@@ -93,7 +93,8 @@ TEST_F(ResultCheckerTest, ReportsASchemaTheSinkDidNotWrite)
 {
     const auto resultFile = writeResultFile("resultchecker_schema.csv", "id:UINT64:NOT_NULLABLE\n1\n");
 
-    const auto verdict = QueryResultCheck{.resultFile = resultFile, .expectedSchema = schemaOf("value"), .expectedTuples = {"1"}}.check();
+    const auto verdict
+        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("value"), .expectedTuples = {"1"}}.check();
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("Schema Mismatch"));
 }
@@ -101,7 +102,7 @@ TEST_F(ResultCheckerTest, ReportsASchemaTheSinkDidNotWrite)
 TEST_F(ResultCheckerTest, ReportsAMissingResultFile)
 {
     const auto verdict
-        = QueryResultCheck{.resultFile = "/does/not/exist.csv", .expectedSchema = schemaOf("id"), .expectedTuples = {"1"}}.check();
+        = QueryResultCheck{.resultFile = "/does/not/exist.csv", .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1"}}.check();
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("result file was not written"));
 }
@@ -138,16 +139,17 @@ TEST_F(ResultCheckerTest, ReportsWhichSideOfADifferentialBlockHasNoOutput)
 TEST_F(ResultCheckerTest, DistinguishesAnEmptyResultFromAMissingHeader)
 {
     const auto headerOnly = writeResultFile("resultchecker_header_only.csv", "id:UINT64:NOT_NULLABLE\n");
-    EXPECT_TRUE((QueryResultCheck{.resultFile = headerOnly, .expectedSchema = schemaOf("id"), .expectedTuples = {}}.check().has_value()));
+    EXPECT_TRUE(
+        (QueryResultCheck{.resultFile = headerOnly, .expectedSchema = createSchemaOf("id"), .expectedTuples = {}}.check().has_value()));
 
     const auto empty = writeResultFile("resultchecker_empty.csv", "");
-    const auto emptyVerdict = QueryResultCheck{.resultFile = empty, .expectedSchema = schemaOf("id"), .expectedTuples = {}}.check();
+    const auto emptyVerdict = QueryResultCheck{.resultFile = empty, .expectedSchema = createSchemaOf("id"), .expectedTuples = {}}.check();
     ASSERT_FALSE(emptyVerdict.has_value());
     EXPECT_TRUE(emptyVerdict.error().detail.contains("result file is empty"));
 
     const auto noFields = writeResultFile("resultchecker_no_fields.csv", "\n1\n");
     const auto noFieldsVerdict
-        = QueryResultCheck{.resultFile = noFields, .expectedSchema = schemaOf("id"), .expectedTuples = {"1"}}.check();
+        = QueryResultCheck{.resultFile = noFields, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1"}}.check();
     ASSERT_FALSE(noFieldsVerdict.has_value());
     EXPECT_TRUE(noFieldsVerdict.error().detail.contains("empty schema header"));
 }
@@ -156,7 +158,7 @@ TEST_F(ResultCheckerTest, DistinguishesAnEmptyResultFromAMissingHeader)
 TEST_F(ResultCheckerTest, ReportsAMalformedHeaderAsAVerdict)
 {
     const auto malformed = writeResultFile("resultchecker_malformed_header.csv", "id:UINT64\n1\n");
-    const auto verdict = QueryResultCheck{.resultFile = malformed, .expectedSchema = schemaOf("id"), .expectedTuples = {"1"}}.check();
+    const auto verdict = QueryResultCheck{.resultFile = malformed, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1"}}.check();
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("malformed schema header"));
     EXPECT_TRUE(verdict.error().detail.contains("name:TYPE:NULLABILITY"));
@@ -273,7 +275,8 @@ TEST_F(ResultCheckerTest, ReportsAResultMismatchAsBefore)
 {
     const auto resultFile = writeResultFile("resultchecker_golden_rows.csv", "id:UINT64:NOT_NULLABLE\n1\n3\n4\n");
 
-    const auto verdict = QueryResultCheck{.resultFile = resultFile, .expectedSchema = schemaOf("id"), .expectedTuples = {"1", "2"}}.check();
+    const auto verdict
+        = QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1", "2"}}.check();
 
     ASSERT_FALSE(verdict.has_value());
     EXPECT_EQ(verdict.error().detail, R"(Result Mismatch
@@ -291,7 +294,7 @@ TEST_F(ResultCheckerTest, RunCheckDispatchesToEveryAlternative)
     const auto resultFile = writeResultFile("resultchecker_dispatch.csv", "id:UINT64:NOT_NULLABLE\n1\n");
 
     EXPECT_TRUE(
-        runCheck(QueryResultCheck{.resultFile = resultFile, .expectedSchema = schemaOf("id"), .expectedTuples = {"1"}}).has_value());
+        runCheck(QueryResultCheck{.resultFile = resultFile, .expectedSchema = createSchemaOf("id"), .expectedTuples = {"1"}}).has_value());
     EXPECT_TRUE(runCheck(DifferentialCheck{.firstResultFile = resultFile, .secondResultFile = resultFile}).has_value());
     EXPECT_TRUE(runCheck(ExplainLinesCheck{.expected = {"SINK"}, .actual = "SINK\n"}).has_value());
     EXPECT_TRUE(runCheck(ExplainRegexCheck{.expected = {"<REGEX>SINK</REGEX>"}, .actual = "SINK\n"}).has_value());

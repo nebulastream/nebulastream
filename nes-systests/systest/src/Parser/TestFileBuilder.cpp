@@ -62,7 +62,7 @@ private:
     std::vector<ConfigurationOverride> local;
 };
 
-/// An EXPLAIN answers with the plan it prints, so an expected error is rejected.
+/// An EXPLAIN returns the plan it prints, so an expected error is rejected.
 ExpectedPlan expectedPlan(const Expectation& expected)
 {
     if (const auto* lines = std::get_if<ExpectedRows>(&expected))

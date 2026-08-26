@@ -34,7 +34,7 @@ namespace NES
 {
 
 /// One physical source after rewriting.
-/// The input file is the file whose bytes the source reads, when there is one.
+/// The input file (if present) is what is read by the source.
 struct RewrittenSource
 {
     SetupStatement statement;
@@ -42,7 +42,7 @@ struct RewrittenSource
 };
 
 /// Rewrites the physical source declarations of one test file.
-/// It counts them, so each generated data file gets a unique name.
+/// Counts them, so each generated data file gets a unique name.
 class SourceRewriter
 {
 public:
@@ -53,7 +53,7 @@ public:
     [[nodiscard]] RewrittenSource rewrite(SqlParse& parse, PhysicalSourceDeclaration declaration);
 
 private:
-    [[nodiscard]] std::string setClauseFor(
+    [[nodiscard]] std::string renderSetClauseFor(
         SqlParse& parse,
         AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
         const std::optional<std::filesystem::path>& dataFile) const;
@@ -63,15 +63,14 @@ private:
     size_t ordinal = 0;
 };
 
-/// Resolves the relative data file path of a source written into a query against the test data directory.
-/// The worker resolves a relative path against its own working directory, which is not where the test data is.
+/// Makes the relative data file path of a source written into a query absolute, under the test data directory.
+/// The worker resolves a relative path from its own working directory, which may not match where the test data is.
 void makeAnonymousSourcePathsAbsolute(
     const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);
 
-/// Adds to a source written into a query the defaults that a declared physical source gets, unless the test set them.
+/// Adds the config to an anonymous source.
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
-/// One config option of a physical source, before it is rendered into SQL.
 struct SourceOption
 {
     std::string group;
@@ -80,8 +79,8 @@ struct SourceOption
 };
 
 /// Adds config options to a physical source statement that the rewriter already emitted.
-/// The runner needs this for a value that is known only once the run started, such as the server port.
-/// A value that the test wrote explicitly wins over a default.
+/// The runner needs this for the server port, which is known only once the run started.
+/// An explicitly set option takes precedence over the default.
 std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options);
 
 }
