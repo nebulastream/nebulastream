@@ -14,22 +14,27 @@
 
 #include <Rewriter/NamePrefixer.hpp>
 
+#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <filesystem>
 #include <optional>
 #include <ranges>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <TokenStreamRewriter.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <Identifiers/Identifier.hpp>
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -104,9 +109,34 @@ TestFileKey DiscoveryRoot::keyOf(const std::filesystem::path& testFile, const si
     return TestFileKey{parts == 1 ? key : fmt::format("{}_C{}", key, part)};
 }
 
-std::string stripPrefix(const std::string_view text, const std::string_view namePrefix)
+std::string restoreNames(const std::string_view text, const OriginalNames& names)
 {
-    return replaceAll(text, namePrefix, "");
+    if (names.empty())
+    {
+        return std::string{text};
+    }
+    /// Longer names first, so a name that has another registered name as its prefix wins the alternation.
+    auto prefixed = names | std::views::keys | std::ranges::to<std::vector<std::string>>();
+    /// The only moves happen inside the library's sort, where the analyzer loses track and reports a moved-from string at the comparison.
+    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
+    std::ranges::sort(prefixed, [](const auto& left, const auto& right) { return left.size() > right.size(); });
+    const auto escape = [](const std::string& name)
+    {
+        static const std::regex Special{R"([.^$|()\[\]{}*+?\\])"};
+        return std::regex_replace(name, Special, R"(\$&)");
+    };
+    const std::regex pattern{fmt::format(R"(\b(?:{})(?![A-Za-z0-9_]))", fmt::join(prefixed | std::views::transform(escape), "|"))};
+
+    std::string restored;
+    const std::string input{text};
+    auto rest = input.cbegin();
+    for (std::smatch match; std::regex_search(rest, input.cend(), match, pattern); rest = match[0].second)
+    {
+        restored.append(rest, match[0].first);
+        restored.append(names.at(match[0].str()));
+    }
+    restored.append(rest, input.cend());
+    return restored;
 }
 
 NameRegistry::NameRegistry(const TestFileKey& testFileKey) : key{testFileKey.value()}
@@ -145,12 +175,21 @@ Identifier NameRegistry::declare(const std::string_view name)
 
 PrefixedNames NameRegistry::seal() &&
 {
-    return PrefixedNames{std::move(prefixedByName), fmt::format("{}_", key)};
+    return PrefixedNames{std::move(prefixedByName)};
 }
 
-PrefixedNames::PrefixedNames(PrefixedByName prefixedByName, std::string prefix)
-    : prefixedByName{std::move(prefixedByName)}, namePrefix{std::move(prefix)}
+PrefixedNames::PrefixedNames(PrefixedByName prefixedByName) : prefixedByName{std::move(prefixedByName)}
 {
+}
+
+OriginalNames PrefixedNames::originalNames() const
+{
+    OriginalNames originals;
+    for (const auto& [original, prefixed] : prefixedByName)
+    {
+        originals.emplace(prefixed.asCanonicalString(), original.asCanonicalString());
+    }
+    return originals;
 }
 
 std::optional<Identifier> PrefixedNames::prefixed(const std::string_view name) const
@@ -170,13 +209,13 @@ std::optional<Identifier> PrefixedNames::prefixed(const std::string_view name) c
 
 void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names)
 {
-    /// The grammar interprets a plugin type as a plain identifier, so only the parse tree can distinguish them.
-    std::unordered_set<size_t> typeTokens;
-    const auto keepType = [&typeTokens](const AntlrSQLParser::IdentifierContext* type)
+    /// The grammar spells a plugin type and a function name as plain identifiers, so only the parse tree can tell them apart.
+    std::unordered_set<size_t> keptTokens;
+    const auto keepType = [&keptTokens](const AntlrSQLParser::IdentifierContext* type)
     {
         if (type != nullptr)
         {
-            typeTokens.insert(type->getStart()->getTokenIndex());
+            keptTokens.insert(type->getStart()->getTokenIndex());
         }
     };
     for (const auto* source : findAll<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree()))
@@ -195,6 +234,14 @@ void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const P
     {
         keepType(sink->type);
     }
+    /// A source named like a function would otherwise rename every call of it.
+    for (auto* call : findAll<AntlrSQLParser::FunctionCallContext>(parse.tree()))
+    {
+        if (const auto* function = call->functionName(); function != nullptr)
+        {
+            keptTokens.insert(function->getStart()->getTokenIndex());
+        }
+    }
 
     for (auto* token : parse.tokenStream().getTokens())
     {
@@ -202,7 +249,7 @@ void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const P
         {
             continue;
         }
-        if (typeTokens.contains(token->getTokenIndex()))
+        if (keptTokens.contains(token->getTokenIndex()))
         {
             continue;
         }
