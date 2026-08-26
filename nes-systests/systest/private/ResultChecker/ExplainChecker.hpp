@@ -32,7 +32,7 @@ struct ExplainLinesCheck
     [[nodiscard]] Verdict check() const;
 };
 
-/// One explain check whose expected lines are `<REGEX>` and `<!REGEX>` assertions, each matched against the printed plan.
+/// One explain check whose expected lines are `<REGEX>` and `<!REGEX>` assertions, each matched on the printed plan.
 struct ExplainRegexCheck
 {
     std::vector<std::string> expected;

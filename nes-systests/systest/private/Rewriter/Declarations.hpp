@@ -23,14 +23,14 @@ namespace NES
 {
 
 /// What is catalog-visible for one test file: each name's prefixed spelling, and each declared sink's definition.
-/// The declaring phase produces this, and the emitting phase rewrites every statement against it.
+/// The declaring phase produces this, and the emitting phase rewrites every statement with it.
 struct Declarations
 {
     PrefixedNames names;
     SinkByName sinkByName;
 };
 
-/// Registers every catalog-visible name of the file before the emitting phase rewrites any statement against it.
+/// Registers every catalog-visible name of the file before the emitting phase rewrites any statement.
 /// Rewriting substitutes only registered names, so declaring everything first lets a statement refer to a name declared further down.
 Declarations declareAll(const ClassifiedTestFile& classified, const TestFileKey& testFileKey);
 

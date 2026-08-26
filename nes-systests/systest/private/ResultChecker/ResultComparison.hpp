@@ -33,7 +33,7 @@ struct ComparisonOutcome
     std::string resultError;
 };
 
-/// Compares an expected schema and rows against the actual ones, in any tuple order.
+/// Compares an expected schema and rows with the actual ones, in any tuple order.
 /// Field names and types align the schemas, and every value compares exactly except a float, which compares within a relative epsilon.
 [[nodiscard]] ComparisonOutcome compare(
     const Schema<UnqualifiedUnboundField, Ordered>& expectedSchema,

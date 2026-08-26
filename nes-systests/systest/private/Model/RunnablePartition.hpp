@@ -12,25 +12,18 @@
     limitations under the License.
 */
 
-#include <Rewriter/SqlRewriter.hpp>
+#pragma once
 
-#include <utility>
-
-#include <Model/ParsedTestFile.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnableTestFile.hpp>
-#include <Rewriter/ClassifiedStatement.hpp>
-#include <Rewriter/Declarations.hpp>
-#include <Rewriter/Emitter.hpp>
-#include <Rewriter/RewriteContext.hpp>
 
 namespace NES
 {
 
-RunnableTestFile rewriteTestFile(ParsedTestFile testFile, const RewriteContext& context)
+struct RunnablePartition
 {
-    auto classified = classifyStatements(std::move(testFile));
-    auto declarations = declareAll(classified, context.testFileKey);
-    return Emitter{context, std::move(declarations)}.emit(std::move(classified));
-}
+    ConfigurationOverride overrides;
+    RunnableTestFile file;
+};
 
 }

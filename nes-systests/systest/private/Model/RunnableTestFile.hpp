@@ -23,7 +23,6 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
-#include <Util/Overloaded.hpp>
 
 namespace NES
 {
@@ -49,46 +48,36 @@ struct PlainStatement
     std::string sql;
 };
 
-/// A physical source with inline rows.
 struct StatementWithInlineData
 {
     std::string sql;
     InlineData data;
 };
 
-/// A TCP source with data served to a server.
-/// The runner starts the server and merges its endpoint into this statement's sql before submitting.
 struct StatementWithServedData
 {
     std::string sql;
     ServedData data;
 };
 
-/// Statement to submit before the test cases with the staged data.
 using SetupStatement = std::variant<PlainStatement, StatementWithInlineData, StatementWithServedData>;
 
-/// The statement text of any setup alternative.
-inline const std::string& sqlOf(const SetupStatement& statement)
-{
-    return std::visit([](const auto& alternative) -> const std::string& { return alternative.sql; }, statement);
-}
+[[nodiscard]] const std::string& getSqlOf(const SetupStatement& statement);
 
-/// One query to submit.
 struct RewrittenQuery
 {
     std::string sql;
-    /// The query's number in the test file, so a reported result points back at it.
     SystestQueryId id;
     /// Absent when there is nothing to compare: the sink discards its input (e.g., `VoidSink`), or the statement does not
     /// parse and never runs.
     std::optional<std::filesystem::path> resultFile;
     std::vector<std::filesystem::path> inputFiles;
 
-    Expectation expectation;
+    Expectation expected;
 };
 
 /// Both halves of a differential block, which asserts only that the two results agree.
-/// Each half writes a result file of its own, because one shared file would compare a result against itself.
+/// Each half writes a result file of its own, because one shared file would compare a result with itself.
 struct RewrittenDifferential
 {
     std::string firstSql;
@@ -113,24 +102,17 @@ struct RewrittenTestCase
     std::variant<RewrittenQuery, RewrittenDifferential, RewrittenExplain> action;
 };
 
-inline SystestQueryId testCaseNumber(const RewrittenTestCase& testCase)
-{
-    return std::visit(
-        Overloaded{
-            [](const RewrittenQuery& query) { return query.id; },
-            [](const RewrittenDifferential& differential) { return differential.firstId; },
-            [](const RewrittenExplain& explain) { return explain.id; }},
-        testCase.action);
-}
+[[nodiscard]] SystestQueryId getTestCaseNumber(const RewrittenTestCase& testCase);
 
-/// Maps a prefixed name back to the name the test declared.
+/// Prefixed name to declared name, e.g., `JOIN_STREAM` to `stream`.
 using OriginalNames = std::unordered_map<std::string, std::string>;
 
-/// The rewriter produces this and the runner consumes it.
 struct RunnableTestFile
 {
-    /// Name for reporting failure/progress.
+    /// The name that report and progress lines print.
     std::string name;
+    /// Partition key, e.g., `JOIN_C1`, keeping query ids unique across one file's partitions.
+    std::string key;
     OriginalNames originalNames;
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;

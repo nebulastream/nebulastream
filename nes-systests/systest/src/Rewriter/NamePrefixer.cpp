@@ -70,45 +70,35 @@ TestFileKey::TestFileKey(std::string key) : key{std::move(key)}
 {
 }
 
-/// The root is stored absolute, because subtracting a relative root from an absolute file gives an empty result,
-/// which would key every file of the run by its absolute path.
-/// `absolute` resolves against the current directory without touching the filesystem, and `weakly_canonical`
-/// normalizes the result: /repo/./systests becomes /repo/systests.
-DiscoveryRoot::DiscoveryRoot(const std::filesystem::path& root)
+/// Keeps the root absolute: subtracting a relative root from an absolute path yields an empty path.
+TestFileKeyFactory::TestFileKeyFactory(const std::filesystem::path& root)
     : canonicalRoot{std::filesystem::weakly_canonical(std::filesystem::absolute(root))}
 {
 }
 
-TestFileKey DiscoveryRoot::keyOf(const std::filesystem::path& testFile, const size_t part, const size_t parts) const
+TestFileKey TestFileKeyFactory::deriveKeyOf(const std::filesystem::path& testFile, const size_t part, const size_t parts) const
 {
     PRECONDITION(part < parts, "part {} of test file {} does not exist, the file has {} parts", part, testFile.string(), parts);
-    /// Normalize both paths before subtraction.
-    /// Relating an absolute path to a relative one gives an empty result, leading to collisions.
-    /// The cli decides the discovery root (which may be absolute or relative), while a discovered test file is always absolute.
     const auto canonicalPath = std::filesystem::weakly_canonical(testFile);
     auto keyPath = canonicalPath.lexically_relative(canonicalRoot);
-    /// A file above or unrelated to the root has no position under the root, so its absolute path is the key.
-    /// Subtracting the root leaves only `..` and name components, never a leading separator,
-    /// and only a separator encodes to `_D_`, so the keys of an outside and an inside file cannot collide.
+    /// Inside keys never start with `_D_` (a separator), so outside keys cannot collide.
     if (keyPath.empty() or *keyPath.begin() == std::filesystem::path{".."})
     {
         keyPath = canonicalPath;
     }
     keyPath.replace_extension();
 
-    /// The path without its extension is the raw key, so the directory keeps files sharing a stem apart.
     /// The per-character encoding is reversible, so no two paths share a key.
-    /// Two paths differing only in case share a key, because an unquoted identifier folds case anyway.
+    /// Paths differing only in case share a key, as unquoted identifiers ignore case anyway.
     const auto folded = toUpperCase(keyPath.generic_string());
     auto key = folded | std::views::transform(encodeKeyCharacter) | std::views::join | std::ranges::to<std::string>();
-    /// An unquoted identifier may not start with a digit, so a leading digit is encoded like a special character.
+    /// An unquoted identifier may not start with a digit, so the encoding treats a leading digit like a special character.
     if (std::isdigit(static_cast<unsigned char>(key.front())) != 0)
     {
         key = fmt::format("_{:02X}_{}", static_cast<unsigned char>(key.front()), key.substr(1));
     }
     /// A file with a single part keeps its own key, and every further part gets a suffix of its own.
-    /// No encoded path ends in a bare part suffix, because a lone underscore only occurs inside a token,
-    /// so a file named like another file's part cannot take that part's key.
+    /// Lone underscores occur only inside tokens, so no file key mimics a part suffix.
     return TestFileKey{parts == 1 ? key : fmt::format("{}_C{}", key, part)};
 }
 
@@ -119,7 +109,7 @@ std::string restoreNames(const std::string_view text, const OriginalNames& names
         return std::string{text};
     }
     auto prefixed = names | std::views::keys | std::ranges::to<std::vector<std::string>>();
-    /// The only moves happen inside the library's sort, where the analyzer loses track and reports a moved-from string at the comparison.
+    /// The analyzer loses track inside the library's sort and reports a false moved-from string.
     /// NOLINTNEXTLINE(clang-analyzer-cplusplus.Move)
     std::ranges::sort(prefixed, [](const auto& left, const auto& right) { return left.size() > right.size(); });
     const auto escape = [](const std::string& name)
@@ -148,12 +138,13 @@ void PrefixedNameOwners::claim(const OriginalNames& names, const std::filesystem
         if (const auto [owner, inserted] = ownerBySpelling.try_emplace(spelling, Owner{.testFile = testFile, .originalName = originalName});
             not inserted)
         {
+            const auto& [_, existing] = *owner;
             throw TestException(
                 "test files {} and {} both declare a name spelled {} after prefixing: {} and {}",
-                owner->second.testFile.string(),
+                existing.testFile.string(),
                 testFile.string(),
                 spelling,
-                owner->second.originalName,
+                existing.originalName,
                 originalName);
         }
     }
@@ -202,7 +193,7 @@ PrefixedNames::PrefixedNames(PrefixedByName prefixedByName) : prefixedByName{std
 {
 }
 
-OriginalNames PrefixedNames::originalNames() const
+OriginalNames PrefixedNames::collectOriginalNames() const
 {
     OriginalNames originals;
     for (const auto& [original, prefixed] : prefixedByName)
@@ -281,7 +272,7 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(sink->identifier());
     }
-    /// A qualified field reference spells the source before the dot, and the parser checks that spelling against the source.
+    /// A qualified field reference writes the source name before the dot, and the parser checks that it matches the source.
     for (const auto* dereference : findAll<AntlrSQLParser::DereferenceContext>(parse.tree()))
     {
         if (auto* qualifier = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(dereference->base))

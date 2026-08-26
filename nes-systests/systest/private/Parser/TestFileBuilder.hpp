@@ -22,7 +22,7 @@
 namespace NES
 {
 
-/// Builds the structured form of a test file by registering callbacks against the parser.
+/// Builds the structured form of a test file by registering callbacks with the parser.
 /// Parses no statement of its own.
 /// Registers only callbacks on the parser and then runs it, so the parser must not have been run yet.
 [[nodiscard]] ParsedTestFile buildTestFile(SystestParser& parser, const std::filesystem::path& path);

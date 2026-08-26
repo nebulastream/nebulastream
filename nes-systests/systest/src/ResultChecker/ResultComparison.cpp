@@ -408,7 +408,7 @@ enum class FieldMatchResult : uint8_t
     AT_LEAST_ONE_FIELD_MISMATCHED,
 };
 
-/// Compares the expected fields of one row against the actual ones.
+/// Compares the expected fields of one row with the actual ones.
 /// Reports that all matched, that the ones with a counterpart matched, or that at least one differed.
 FieldMatchResult compareMatchableExpectedFields(
     const ExpectedToActualFieldMap& expectedToActualFieldMap,

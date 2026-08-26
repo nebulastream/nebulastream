@@ -91,7 +91,7 @@ TEST_F(TestFileParserTest, CarriesAGlobalConfigurationToEveryQueryBelowIt)
 }
 
 /// A configuration line may list values rather than one, and each is a setting the query runs under.
-/// JoinNull relies on this: it asserts the join answers the same with the bloom filter on and off.
+/// JoinNull relies on this: it asserts the join returns the same rows with the bloom filter on and off.
 TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
 {
     const auto [path, statements]
@@ -212,7 +212,7 @@ TEST_F(TestFileParserTest, RejectsAQueryWithoutAResult)
         Exception);
 }
 
-/// An EXPLAIN answers with the plan it prints rather than with rows, so it is read as its own statement and the block
+/// An EXPLAIN returns the plan it prints rather than rows, so it is read as its own statement and the block
 /// below it is the plan it expects.
 TEST_F(TestFileParserTest, ReadsAnExplainWithThePlanItExpects)
 {
