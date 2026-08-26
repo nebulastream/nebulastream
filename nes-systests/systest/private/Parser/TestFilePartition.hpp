@@ -22,8 +22,7 @@
 namespace NES
 {
 
-/// One configuration override and the statements of a test file.
-/// Each partition runs on its own worker, because a worker takes its configuration at startup and cannot change it later.
+/// Each partition runs on its own worker, because a worker takes its configuration only at startup.
 struct TestFilePartition
 {
     ConfigurationOverride overrides;
@@ -31,7 +30,7 @@ struct TestFilePartition
 };
 
 /// Splits a test file into one partition per distinct configuration override, in declaration order.
-/// Every partition repeats the CREATE statements of the file, followed by the statements of the override.
+/// E.g., CREATE a, Q1 [x=1], Q2 [x=2], Q3 [x=1] -> {CREATE a, Q1, Q3} and {CREATE a, Q2}.
 [[nodiscard]] std::vector<TestFilePartition> partitionByOverrides(const ParsedTestFile& testFile);
 
 }

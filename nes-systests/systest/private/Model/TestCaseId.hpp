@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <ostream>
 #include <string>
 
@@ -30,11 +31,12 @@ namespace NES
 struct TestCaseId
 {
     std::string originFile;
-    SystestQueryId queryIdInFile = INVALID<SystestQueryId>;
+    /// Absent for a whole-file entry, e.g., a file that failed to parse.
+    std::optional<SystestQueryId> queryIdInFile;
     ConfigurationOverride overrides;
 };
 
-/// Prints `file:N`, followed by ` [key=value, ...]` when the run has overrides.
+/// Prints `file:N`, or `file` alone without a query number, followed by ` [key=value, ...]` when the run has overrides.
 std::ostream& operator<<(std::ostream& os, const TestCaseId& id);
 
 }

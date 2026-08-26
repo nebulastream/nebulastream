@@ -115,7 +115,7 @@ SinkRewriter::inlineSink(SqlParse& parse, AntlrSQLParser::SinkContext* sink, con
                 "A sink written into a query must not choose its result file, because the checker reads the file the rewriter chose: {}",
                 sink->getText());
         }
-        return inlined(anonymous->type->getText(), anonymous->parameters, parse.textOf(anonymous->parameters), candidateResultFile);
+        return inlined(anonymous->type->getText(), anonymous->parameters, parse.getTextOf(anonymous->parameters), candidateResultFile);
     }
     throw TestException(
         "A query sink that is neither a declared sink nor one written into the query is not supported: {}", sink->getText());
@@ -142,7 +142,7 @@ std::string SinkRewriter::declaredSinkStatement(SqlParse& parse, AntlrSQLParser:
         options.push_back(Sql::option(Sql::Sink, Sql::OutputFormat, Sql::Csv));
     }
     /// The options that the test wrote go last, so its own choices read after the defaults that this added.
-    if (const auto declaredText = parse.textOf(declared); not declaredText.empty())
+    if (const auto declaredText = parse.getTextOf(declared); not declaredText.empty())
     {
         options.push_back(declaredText);
     }
