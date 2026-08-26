@@ -112,7 +112,7 @@ setup()         { nes_offline_setup; }
 
   assert_equal "$(extract_explain "${lines[$i_logical_text]}")" "$(cat <<'EOF'
 == Initial Logical Plan ==
-ANONYMOUS_SINK(AnonymousSink)
+ANONYMOUS_SINK(VOID)
   PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2, VALUE2, TIMESTAMP2])
     PROJECTION(fields: [*])
       Join(INNER_JOIN, ID = ID2)
@@ -163,7 +163,7 @@ EOF
   assert_equal "$(extract_explain "${lines[$i_logical_visual]}")" "$(cat <<'EOF'
 == Initial Logical Plan ==
 
-                ANONYMOUS_SINK(AnonymousSink)
+                    ANONYMOUS_SINK(VOID)
                               │
 PROJECTION(fields: [START, END, ID, VALUE, TIMESTAMP, ID2...
                               │

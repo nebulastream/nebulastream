@@ -104,9 +104,9 @@ std::string AnonymousSinkLogicalOperator::explain(ExplainVerbosity verbosity, Op
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("ANONYMOUS_SINK(opId: {}, name: {}, traitSet: {})", id, NAME, traitSet.explain(verbosity));
+        return fmt::format("ANONYMOUS_SINK(opId: {}, sinkType: {}, traitSet: {})", id, sinkType, traitSet.explain(verbosity));
     }
-    return fmt::format("ANONYMOUS_SINK({})", NAME);
+    return fmt::format("ANONYMOUS_SINK({})", sinkType);
 }
 
 std::string_view AnonymousSinkLogicalOperator::getName() noexcept
