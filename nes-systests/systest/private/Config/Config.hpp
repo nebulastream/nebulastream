@@ -69,7 +69,6 @@ public:
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     BoolOption remoteWorker = {"remote_worker", "false", "use remote worker"};
     StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
-    BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"endless_mode", "false", "continuously issue queries to the worker"};
 
     bool excludeGroupsConfiguredInDisableConfig = false;

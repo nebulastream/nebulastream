@@ -53,7 +53,7 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                     Identifier::parse(declaration.definition->sinkName->getText()),
                     SinkDefinition{
                         .type = declaration.definition->type->getText(),
-                        .schema = create.parse->textOf(declaration.definition->schemaDefinition())});
+                        .schema = create.parse->getTextOf(declaration.definition->schemaDefinition())});
             }},
         create.declaration);
 }

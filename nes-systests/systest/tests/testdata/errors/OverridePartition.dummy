@@ -1,0 +1,18 @@
+# name: OverridePartition
+# description: the second query asks for its own worker settings and expects wrong rows, so its failure proves the override group ran
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+----
+1
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+SELECT id FROM s INTO sinkA;
+----
+2

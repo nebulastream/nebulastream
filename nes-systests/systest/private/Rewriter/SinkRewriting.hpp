@@ -29,7 +29,6 @@
 namespace NES
 {
 
-/// What a declared sink contributes when it is inlined into a query.
 struct SinkDefinition
 {
     std::string type;
@@ -38,31 +37,28 @@ struct SinkDefinition
 
 using SinkByName = std::unordered_map<Identifier, SinkDefinition>;
 
-/// The result file is absent when the sink writes none (e.g., Checksum, Void).
+/// The result file is absent for some sink types that occur in the tests (e.g., Checksum, Void).
 struct RewrittenSink
 {
     std::string sql;
     std::optional<std::filesystem::path> resultFile;
 };
 
-/// Returns the query sink, and rejects a query that writes into none or more than one.
-/// A query needs exactly one, because the runner reads back a single result file per query.
+/// Returns the query sink from the AST, and rejects a query that declares less or more than one.
 AntlrSQLParser::SinkContext* requireSingleSink(const SqlParse& parse, const std::string& sql);
 
-/// The sink side of one rewrite: inlines a sink into the query that writes to it, and builds the declarations that a
-/// test file with an EXPLAIN submits.
+/// Inlines the sink into the query statement, and rewrites the sink declarations of EXPLAIN test cases.
 class SinkRewriter
 {
 public:
     SinkRewriter(const RewriteContext& context, const PrefixedNames& names, const SinkByName& sinkByName);
 
-    /// Replaces a query's sink, declared or written into the query, with an anonymous sink that writes to the candidate result file.
-    /// The candidate is chosen per query, so two queries never write the same file.
+    /// Replaces a query's sink (declared or anonymous) with an anonymous sink.
+    /// The candidate result file is chosen per query, so two queries never write the same file.
     [[nodiscard]] RewrittenSink
     inlineSink(SqlParse& parse, AntlrSQLParser::SinkContext* sink, const std::filesystem::path& candidateResultFile) const;
 
     /// Builds the declaration to submit for a declared sink of a test file that contains an EXPLAIN.
-    /// A sink is validated as it is declared, so a File sink needs its mandatory options even though an EXPLAIN writes no row.
     [[nodiscard]] std::string declaredSinkStatement(SqlParse& parse, AntlrSQLParser::CreateSinkDefinitionContext* definition) const;
 
 private:

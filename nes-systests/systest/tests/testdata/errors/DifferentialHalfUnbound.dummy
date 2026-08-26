@@ -1,0 +1,17 @@
+# name: DifferentialHalfUnbound
+# description: the second half of the block reads a source that was never declared, so the block fails to bind and the query after it still passes
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+====
+SELECT id FROM missing INTO sinkA;
+
+SELECT id FROM s INTO sinkA;
+----
+1
