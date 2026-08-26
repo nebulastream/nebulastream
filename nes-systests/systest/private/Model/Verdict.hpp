@@ -14,8 +14,20 @@
 
 #pragma once
 
+#include <chrono>
+#include <exception>
 #include <expected>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+
+#include <fmt/format.h>
+
+#include <Model/ConfigurationOverride.hpp>
+#include <Model/TestCaseId.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -31,7 +43,45 @@ struct Success
 {
 };
 
-/// The outcome of one check.
 using Verdict = std::expected<Success, Mismatch>;
+
+struct Skipped
+{
+    std::string reason;
+};
+
+using CaseOutcome = std::variant<Verdict, Skipped>;
+
+[[nodiscard]] inline bool hasPassed(const CaseOutcome& outcome)
+{
+    return std::holds_alternative<Verdict>(outcome) and std::get<Verdict>(outcome).has_value();
+}
+
+struct StatementTiming
+{
+    /// Worker-recorded time from running to stopped.
+    std::chrono::milliseconds execution{};
+};
+
+/// One report line, for a test case or for a whole file that failed.
+struct ReportEntry
+{
+    TestCaseId id;
+    CaseOutcome outcome;
+};
+
+/// A report entry for a file that failed before it had test cases.
+/// An empty message falls back to the error code, so the reason is never blank.
+[[nodiscard]] inline ReportEntry createFailedFileEntry(
+    std::string originFile, ConfigurationOverride overrides, const std::string_view activity, const std::exception& exception)
+{
+    const std::string_view message{exception.what()};
+    const auto* nesException = dynamic_cast<const Exception*>(&exception);
+    const auto code = nesException != nullptr ? nesException->code() : ErrorCode::UnknownException;
+    return ReportEntry{
+        .id = TestCaseId{.originFile = std::move(originFile), .queryIdInFile = std::nullopt, .overrides = std::move(overrides)},
+        .outcome = Verdict{
+            std::unexpected{Mismatch{fmt::format("{}: {}", activity, message.empty() ? fmt::format("{}", code) : std::string{message})}}}};
+}
 
 }

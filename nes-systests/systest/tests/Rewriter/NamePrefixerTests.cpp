@@ -59,14 +59,12 @@ TEST(RestoreNamesTest, KeepsTextWithoutRegisteredNames)
 }
 
 /// A declared name may start with the key itself, so stripping the prefix textually would eat into the name.
-/// Restoring the registered name as a whole keeps the declared spelling, and the restored text is not matched again.
 TEST(RestoreNamesTest, RestoresANameThatStartsLikeThePrefix)
 {
     const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}, {"ORDERS_INPUT", "INPUT"}};
     EXPECT_EQ(restoreNames("SOURCE(ORDERS_ORDERS_INPUT) SOURCE(ORDERS_INPUT)", names), "SOURCE(ORDERS_INPUT) SOURCE(INPUT)");
 }
 
-/// A field is never prefixed, so a field whose name starts like the prefix has to stay as printed.
 TEST(RestoreNamesTest, LeavesAnUnregisteredNameAlone)
 {
     const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}};
@@ -75,7 +73,21 @@ TEST(RestoreNamesTest, LeavesAnUnregisteredNameAlone)
         "PROJECTION(fields: [ORDERS_TOTAL, ORDERS_ORDERS_INPUT2])");
 }
 
-/// Asserts that the directory prefix separates duplicate file stems (i.e. without the .test extension).
+/// A quoted name may hold regex syntax such as `+`.
+TEST(RestoreNamesTest, MatchesAQuotedNameWithRegexSyntaxLiterally)
+{
+    const OriginalNames names{{"TESTKEY_a+b", "a+b"}, {"TESTKEY_Input Stream", "Input Stream"}};
+    EXPECT_EQ(
+        restoreNames("SOURCE(TESTKEY_a+b) SOURCE(TESTKEY_aab) SINK(TESTKEY_Input Stream)", names),
+        "SOURCE(a+b) SOURCE(TESTKEY_aab) SINK(Input Stream)");
+}
+
+TEST(RestoreNamesTest, RestoresTheQualifierOfAFieldReference)
+{
+    const OriginalNames names{{"TESTKEY_S", "S"}};
+    EXPECT_EQ(restoreNames("PROJECTION(fields: [TESTKEY_S.ID])", names), "PROJECTION(fields: [S.ID])");
+}
+
 TEST_F(NamePrefixerTest, DuplicateStemsKeyApartByDirectory)
 {
     static constexpr std::array DuplicatedStems
@@ -92,8 +104,8 @@ TEST_F(NamePrefixerTest, DuplicateStemsKeyApartByDirectory)
     for (const auto* stem : DuplicatedStems)
     {
         const auto fileName = std::string{stem} + ".test";
-        const auto inBenchmark = root.keyOf(rootPath / "benchmark" / fileName, 0, 1).value();
-        const auto inBenchmarkSmall = root.keyOf(rootPath / "benchmark_small" / fileName, 0, 1).value();
+        const auto inBenchmark = root.deriveKeyOf(rootPath / "benchmark" / fileName, 0, 1).value();
+        const auto inBenchmarkSmall = root.deriveKeyOf(rootPath / "benchmark_small" / fileName, 0, 1).value();
         EXPECT_NE(inBenchmark, inBenchmarkSmall) << "stem '" << stem << "' collides across directories";
     }
 }
@@ -101,15 +113,15 @@ TEST_F(NamePrefixerTest, DuplicateStemsKeyApartByDirectory)
 TEST_F(NamePrefixerTest, VariantSuffixKeepsKeysApart)
 {
     EXPECT_NE(
-        root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value(),
-        root.keyOf(rootPath / "benchmark/Nexmark_with_varsized.test", 0, 1).value());
+        root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value(),
+        root.deriveKeyOf(rootPath / "benchmark/Nexmark_with_varsized.test", 0, 1).value());
 }
 
 /// A corpus stem that starts with a digit and holds hyphens is not a legal unquoted identifier.
 TEST_F(NamePrefixerTest, IllegalStemsSanitizedToLegalIdentifiers)
 {
     EXPECT_EQ(
-        root.keyOf(rootPath / "regression/2025-09-10_BrokenNotFieldAccInJoin.test", 0, 1).value(),
+        root.deriveKeyOf(rootPath / "regression/2025-09-10_BrokenNotFieldAccInJoin.test", 0, 1).value(),
         "REGRESSION_D_2025_2D_09_2D_10__BROKENNOTFIELDACCINJOIN");
 }
 
@@ -117,40 +129,36 @@ TEST_F(NamePrefixerTest, IllegalStemsSanitizedToLegalIdentifiers)
 TEST_F(NamePrefixerTest, LeadingDigitStemGetsLegalLeadingCharacter)
 {
     EXPECT_EQ(
-        root.keyOf(rootPath / "2025-09-10_BrokenNotFieldAccInJoin.test", 0, 1).value(), "_32_025_2D_09_2D_10__BROKENNOTFIELDACCINJOIN");
+        root.deriveKeyOf(rootPath / "2025-09-10_BrokenNotFieldAccInJoin.test", 0, 1).value(),
+        "_32_025_2D_09_2D_10__BROKENNOTFIELDACCINJOIN");
 }
 
 /// The encoding distinguishes distinct paths even when they differ only in characters that an identifier cannot hold.
 /// A run with those files would otherwise reject one of them because of duplication.
 TEST_F(NamePrefixerTest, KeysStayApartForPathsThatSanitizeAlike)
 {
-    EXPECT_NE(root.keyOf(rootPath / "foo-bar.test", 0, 1).value(), root.keyOf(rootPath / "foo_bar.test", 0, 1).value());
-    EXPECT_NE(root.keyOf(rootPath / "foo-bar.test", 0, 1).value(), root.keyOf(rootPath / "foo/bar.test", 0, 1).value());
-    EXPECT_NE(root.keyOf(rootPath / "foo_bar.test", 0, 1).value(), root.keyOf(rootPath / "foo/bar.test", 0, 1).value());
-    EXPECT_NE(root.keyOf(rootPath / "a_/b.test", 0, 1).value(), root.keyOf(rootPath / "a/_b.test", 0, 1).value());
+    EXPECT_NE(root.deriveKeyOf(rootPath / "foo-bar.test", 0, 1).value(), root.deriveKeyOf(rootPath / "foo_bar.test", 0, 1).value());
+    EXPECT_NE(root.deriveKeyOf(rootPath / "foo-bar.test", 0, 1).value(), root.deriveKeyOf(rootPath / "foo/bar.test", 0, 1).value());
+    EXPECT_NE(root.deriveKeyOf(rootPath / "foo_bar.test", 0, 1).value(), root.deriveKeyOf(rootPath / "foo/bar.test", 0, 1).value());
+    EXPECT_NE(root.deriveKeyOf(rootPath / "a_/b.test", 0, 1).value(), root.deriveKeyOf(rootPath / "a/_b.test", 0, 1).value());
 }
 
 /// A file with a single part keeps its own key, and every further part gets a suffix of its own.
 TEST_F(NamePrefixerTest, PartKeysStayDistinct)
 {
-    EXPECT_EQ(root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value(), "BENCHMARK_D_NEXMARK");
-    EXPECT_EQ(root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 2).value(), "BENCHMARK_D_NEXMARK_C0");
-    EXPECT_EQ(root.keyOf(rootPath / "benchmark/Nexmark.test", 1, 2).value(), "BENCHMARK_D_NEXMARK_C1");
+    EXPECT_EQ(root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value(), "BENCHMARK_D_NEXMARK");
+    EXPECT_EQ(root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 2).value(), "BENCHMARK_D_NEXMARK_C0");
+    EXPECT_EQ(root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 1, 2).value(), "BENCHMARK_D_NEXMARK_C1");
 }
 
-/// A file named like another file's part does not take that part's key.
 /// No encoded path ends in a bare part suffix, because a lone underscore only occurs inside a token.
 TEST_F(NamePrefixerTest, PartKeysCannotCollideWithFileKeys)
 {
-    EXPECT_NE(root.keyOf(rootPath / "x_c0.test", 0, 1).value(), root.keyOf(rootPath / "x.test", 0, 2).value());
+    EXPECT_NE(root.deriveKeyOf(rootPath / "x_c0.test", 0, 1).value(), root.deriveKeyOf(rootPath / "x.test", 0, 2).value());
 }
 
-/// A discovery root given as a relative path addresses the same files as the absolute path to it, and a discovered test file is
-/// always absolute.
-/// Both have to produce the same key, or the key of every file in the run depends on how the run was invoked.
-///
-/// A relative path only resolves while the process runs where that directory exists, so the test moves there
-/// rather than assuming the directory that the run happened to start in.
+/// Otherwise every key would depend on how the run was invoked.
+/// The test changes into the root's parent, because a relative root resolves against the current directory.
 TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysLikeTheAbsoluteOne)
 {
     const Testing::TemporaryDirectory sandbox;
@@ -162,14 +170,13 @@ TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysLikeTheAbsoluteOne)
     const auto absoluteRoot = std::filesystem::current_path() / relativeRoot;
     const auto testFile = absoluteRoot / "benchmark" / "Nexmark.test";
 
-    EXPECT_EQ(DiscoveryRoot{relativeRoot}.keyOf(testFile, 0, 1).value(), "BENCHMARK_D_NEXMARK");
-    EXPECT_EQ(DiscoveryRoot{relativeRoot}.keyOf(testFile, 0, 1).value(), DiscoveryRoot{absoluteRoot}.keyOf(testFile, 0, 1).value());
+    EXPECT_EQ(DiscoveryRoot{relativeRoot}.deriveKeyOf(testFile, 0, 1).value(), "BENCHMARK_D_NEXMARK");
+    EXPECT_EQ(
+        DiscoveryRoot{relativeRoot}.deriveKeyOf(testFile, 0, 1).value(), DiscoveryRoot{absoluteRoot}.deriveKeyOf(testFile, 0, 1).value());
 
     std::filesystem::current_path(previous);
 }
 
-/// A relative root resolves against the current directory whether or not it exists, so a missing root still keys
-/// the files under it by their position, not by their absolute paths.
 TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysTheSameWhenItDoesNotExist)
 {
     const Testing::TemporaryDirectory sandbox;
@@ -179,17 +186,18 @@ TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysTheSameWhenItDoesNotExist)
     const std::filesystem::path relativeRoot{"absent"};
     const auto testFile = std::filesystem::current_path() / relativeRoot / "benchmark" / "Nexmark.test";
 
-    EXPECT_EQ(DiscoveryRoot{relativeRoot}.keyOf(testFile, 0, 1).value(), "BENCHMARK_D_NEXMARK");
+    EXPECT_EQ(DiscoveryRoot{relativeRoot}.deriveKeyOf(testFile, 0, 1).value(), "BENCHMARK_D_NEXMARK");
 
     std::filesystem::current_path(previous);
 }
 
-/// A file under the root never produces a leading separator token, so an outside file's key cannot collide with it.
 TEST_F(NamePrefixerTest, KeysATestFileOutsideTheDiscoveryRootByItsAbsolutePath)
 {
-    EXPECT_EQ(root.keyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK");
-    EXPECT_EQ(root.keyOf("/elsewhere/benchmark/Nexmark.test", 1, 3).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK_C1");
-    EXPECT_NE(root.keyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(), root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value());
+    EXPECT_EQ(root.deriveKeyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK");
+    EXPECT_EQ(root.deriveKeyOf("/elsewhere/benchmark/Nexmark.test", 1, 3).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK_C1");
+    EXPECT_NE(
+        root.deriveKeyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(),
+        root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value());
 }
 
 /// A spelling that only one file claims passes, and so does one that two parts of a file claim under their own keys.
@@ -205,7 +213,7 @@ TEST_F(NamePrefixerTest, RejectsASpellingThatTwoFilesDeclare)
 /// A repeat returns the same spelling rather than registering a second entry.
 TEST_F(NamePrefixerTest, DeclareIsCaseInsensitiveAndIdempotent)
 {
-    NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
+    NameRegistry registry{root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     const auto lower = registry.declare("bid");
     EXPECT_EQ(lower.getOriginalString(), "BENCHMARK_D_NEXMARK_BID");
     EXPECT_EQ(registry.declare("BID"), lower);
@@ -215,27 +223,25 @@ TEST_F(NamePrefixerTest, DeclareIsCaseInsensitiveAndIdempotent)
 /// A name that the test quoted keeps its case and punctuation, and only quotes preserve that in a statement.
 TEST_F(NamePrefixerTest, QuotesAPrefixedNameThatWasQuoted)
 {
-    NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
+    NameRegistry registry{root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     EXPECT_EQ(registry.declare(R"("INPUT STREAM")").getOriginalString(), R"("BENCHMARK_D_NEXMARK_INPUT STREAM")");
     EXPECT_EQ(registry.declare("bid").getOriginalString(), "BENCHMARK_D_NEXMARK_BID");
 }
 
-/// The sealed names remember the declared spelling of every prefixed name, so a consumer can restore a printed plan.
 TEST_F(NamePrefixerTest, SealMapsPrefixedNamesBackToTheDeclaredSpelling)
 {
-    NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
+    NameRegistry registry{root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     registry.declare("bid");
     registry.declare(R"("Input Stream")");
     EXPECT_EQ(
-        std::move(registry).seal().originalNames(),
+        std::move(registry).seal().collectOriginalNames(),
         (OriginalNames{{"BENCHMARK_D_NEXMARK_BID", "BID"}, {"BENCHMARK_D_NEXMARK_Input Stream", "Input Stream"}}));
 }
 
-/// The grammar admits any text between quotes, so a test file can declare a name that no identifier can hold.
-/// The file is malformed, and the registry reports it rather than passing the name on to the catalog.
+/// The grammar admits any quoted text, and the registry rejects it before the catalog sees it.
 TEST_F(NamePrefixerTest, RejectsADeclaredNameThatIsNotALegalIdentifier)
 {
-    NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
+    NameRegistry registry{root.deriveKeyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     EXPECT_THROW(registry.declare(R"("")"), Exception);
     EXPECT_THROW(registry.declare(R"("a.b")"), Exception);
 }

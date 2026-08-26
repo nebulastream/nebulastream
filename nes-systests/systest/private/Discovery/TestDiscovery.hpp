@@ -27,8 +27,8 @@
 namespace NES
 {
 
-/// A test file's name: its path relative the discovery root without extension.
-/// E.g., `operator/join/JoinNull` becomes `nes-systests/operator/join/JoinNull.test`.
+/// A file's name: its path relative to the discovery root, without extension.
+/// E.g., `nes-systests/operator/join/JoinNull.test` becomes `operator/join/JoinNull`.
 /// The name labels the file in the report and in the result file path.
 /// Strong types, so a name or a group is not confused with a path or with each other.
 using TestName = NESStrongStringType<struct TestName_, "INVALID">;
@@ -42,11 +42,11 @@ struct DiscoveredTestFile
         std::optional<std::unordered_set<SystestQueryId>> enabledQueries = std::nullopt);
     [[nodiscard]] std::string getLogFilePath() const;
 
-    [[nodiscard]] TestName name() const { return testName; }
+    [[nodiscard]] TestName getName() const { return testName; }
 
     std::filesystem::path file;
     TestName testName;
-    /// The query numbers to run. Every query of the file runs when this is not set.
+    /// Absent when every query runs.
     std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
     std::vector<TestGroup> groups;
 };

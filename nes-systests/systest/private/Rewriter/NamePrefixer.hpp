@@ -45,25 +45,21 @@ private:
 };
 
 /// The directory that every test file of one run is keyed relative to, in canonical form.
-/// The `keyOf` member function is the only legal way (compiler-enforced) from a test file path to a `TestFileKey`.
+/// Only this class turns a test file path into a key, and the compiler enforces that.
 class DiscoveryRoot
 {
 public:
     explicit DiscoveryRoot(const std::filesystem::path& root);
 
-    /// Derives the key of one part of a test file from the file's location under the root.
-    /// The directory is part of the key, so two files sharing a stem in different directories get distinct keys.
-    /// The derivation is injective, so no two different files of one run can share a key and collide.
-    /// A test file yields one runnable test per config combination, so each part needs a unique key.
-    /// A file with a single part keeps its own key, so the SQL that it emits does not change.
-    /// A file that is not under the root is keyed by its absolute path, so a directly given file runs from anywhere.
-    ///
-    /// Example, with `/root/nes-systests` as the discovery root:
+    /// Derives the key of one part of a test file from its path under the root.
+    /// No two files or parts of one run share a key.
+    /// Outside the root, the absolute path is the key, so a directly given file runs from anywhere.
+    /// E.g., with root `/root/nes-systests`:
     ///     /root/nes-systests/benchmark/Nexmark.test           part 0 of 1 -> BENCHMARK_D_NEXMARK
     ///     /root/nes-systests/benchmark/Nexmark.test           part 1 of 3 -> BENCHMARK_D_NEXMARK_C1
     ///     /root/nes-systests/regression/2025-09-10_Join.test  part 0 of 1 -> REGRESSION_D_2025_2D_09_2D_10__JOIN
     ///     /elsewhere/Nexmark.test                             part 0 of 1 -> _D_ELSEWHERE_D_NEXMARK
-    [[nodiscard]] TestFileKey keyOf(const std::filesystem::path& testFile, size_t part, size_t parts) const;
+    [[nodiscard]] TestFileKey deriveKeyOf(const std::filesystem::path& testFile, size_t part, size_t parts) const;
 
 private:
     std::filesystem::path canonicalRoot;
@@ -78,12 +74,11 @@ using PrefixedByName = std::unordered_map<Identifier, Identifier>;
 class PrefixedNames
 {
 public:
-    /// Returns the prefixed spelling of a registered name, and nullopt for a name that is not registered.
-    /// The rewriter substitutes catalog-visible names and leaves column names, aliases and keywords untouched.
+    /// nullopt for a name that the test file did not declare.
     [[nodiscard]] std::optional<Identifier> prefixed(std::string_view name) const;
 
-    /// The original spelling of every prefixed name, so a consumer can read a printed plan as the test wrote it.
-    [[nodiscard]] OriginalNames originalNames() const;
+    /// Prefixed name to declared name, to print plans as the test wrote them.
+    [[nodiscard]] OriginalNames collectOriginalNames() const;
 
 private:
     friend class NameRegistry;
@@ -92,9 +87,8 @@ private:
     PrefixedByName prefixedByName;
 };
 
-/// Records which test file of one invocation declared each prefix.
-/// The key encoding keeps two files apart, but the declared name follows the key as written,
-/// so `d_b_s` in `a.test` and `s` in `a/b.test` both spell `A_D_B_S`.
+/// Rejects a prefixed name that two test files produce.
+/// E.g., `d_b_s` in `a.test` and `s` in `a/b.test` both become `A_D_B_S`.
 class PrefixedNameOwners
 {
 public:
@@ -131,16 +125,13 @@ private:
     PrefixedByName prefixedByName;
 };
 
-/// Replaces every prefixed name in a text with the originally written text.
-/// Only whole identifiers that are registered names change.
-/// One pass over the text, so a restored name is never matched again: with key `ORDERS`, `ORDERS_ORDERS_INPUT` becomes
-/// `ORDERS_INPUT` even when a source `input` is registered as well.
+/// Replaces registered prefixed names in text with declared names, whole identifiers only.
+/// A single pass never matches a restored name again.
+/// E.g., key `ORDERS` with `input` registered turns `ORDERS_ORDERS_INPUT` into `ORDERS_INPUT`, not `input`.
 std::string restoreNames(std::string_view text, const OriginalNames& names);
 
-/// Replaces every reference to a name that the test file declared with its prefixed spelling.
-/// Only the grammar positions that hold a source, sink or model name change,
-/// so a column/alias/plugin/function are untouched:
-/// `SELECT s FROM s` renames only the second `s`.
+/// Prefixes every reference to a name that the test file declared.
+/// Only source, sink and model positions change: `SELECT s FROM s` renames only the second `s`.
 void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names);
 
 }

@@ -14,6 +14,7 @@ add_source_files(nes-systest-lib
         Check.cpp
         DifferentialChecker.cpp
         QueryResultChecker.cpp
+        OutcomeChecker.cpp
         ExplainChecker.cpp
         ResultComparison.cpp
         QueryResult.cpp

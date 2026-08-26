@@ -82,7 +82,7 @@ public:
     [[nodiscard]] antlr4::CommonTokenStream& tokenStream() { return tokens; }
 
     /// Returns a subtree exactly as the statement wrote it, whitespace and quoting included.
-    [[nodiscard]] std::string textOf(antlr4::ParserRuleContext* node) { return node != nullptr ? tokens.getText(node) : std::string{}; }
+    [[nodiscard]] std::string getTextOf(antlr4::ParserRuleContext* node) { return node != nullptr ? tokens.getText(node) : std::string{}; }
 
 private:
     /// Installs the throwing listener on the lexer and the parser, then parses the whole statement.
@@ -182,8 +182,7 @@ void insertSetClause(antlr4::TokenStreamRewriter& rewriter, Definition* definiti
 /// Returns whether a config option has exactly the given group and key.
 /// The comparison canonicalizes both names as the binder does, so a quoted and an unquoted spelling of one name match.
 /// Comparing the parsed name rather than the statement text also stops a value that reads like the name from matching.
-inline bool
-namesOption(const AntlrSQLParser::NamedConfigExpressionContext* option, const std::string_view group, const std::string_view key)
+inline bool isOption(const AntlrSQLParser::NamedConfigExpressionContext* option, const std::string_view group, const std::string_view key)
 {
     const auto& parts = option->name->strictIdentifier();
     return parts.size() == 2 and Sql::sameName(parts.at(0)->getText(), group) and Sql::sameName(parts.at(1)->getText(), key);
@@ -195,12 +194,12 @@ inline bool
 declaresOption(AntlrSQLParser::NamedConfigExpressionSeqContext* options, const std::string_view group, const std::string_view key)
 {
     return options != nullptr
-        and std::ranges::any_of(options->namedConfigExpression(), [&](auto* option) { return namesOption(option, group, key); });
+        and std::ranges::any_of(options->namedConfigExpression(), [&](auto* option) { return isOption(option, group, key); });
 }
 
 /// Returns the node holding a config option's value when that value is a string literal, and null for a number or a schema.
 /// The node rather than the text, so the caller can replace the value in place.
-inline AntlrSQLParser::StringLiteralContext* stringValueOf(AntlrSQLParser::NamedConfigExpressionContext* option)
+inline AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::NamedConfigExpressionContext* option)
 {
     return dynamic_cast<AntlrSQLParser::StringLiteralContext*>(option->constant());
 }
@@ -221,7 +220,7 @@ declaredOptionValue(AntlrSQLParser::NamedConfigExpressionSeqContext* options, co
     }
     for (auto* option : options->namedConfigExpression())
     {
-        if (auto* value = stringValueOf(option); value != nullptr and namesOption(option, group, key))
+        if (auto* value = getStringValueOf(option); value != nullptr and isOption(option, group, key))
         {
             return unquote(value->getText());
         }

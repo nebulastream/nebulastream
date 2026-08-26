@@ -27,6 +27,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <argparse/argparse.hpp>
+#include <fmt/format.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
+
 #include <Config/Config.hpp>
 #include <Configurations/Util.hpp>
 #include <Discovery/TestDiscovery.hpp>
@@ -34,10 +40,6 @@
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <argparse/argparse.hpp>
-#include <fmt/format.h>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>

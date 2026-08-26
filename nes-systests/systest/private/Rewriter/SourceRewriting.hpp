@@ -53,7 +53,7 @@ public:
     [[nodiscard]] RewrittenSource rewrite(SqlParse& parse, PhysicalSourceDeclaration declaration);
 
 private:
-    [[nodiscard]] std::string setClauseFor(
+    [[nodiscard]] std::string renderSetClauseFor(
         SqlParse& parse,
         AntlrSQLParser::NamedConfigExpressionSeqContext* declared,
         const std::optional<std::filesystem::path>& dataFile) const;
@@ -71,7 +71,6 @@ void makeAnonymousSourcePathsAbsolute(
 /// Adds to a source written into a query the defaults that a declared physical source gets, unless the test set them.
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
-/// One config option of a physical source, before it is rendered into SQL.
 struct SourceOption
 {
     std::string group;
@@ -79,8 +78,7 @@ struct SourceOption
     std::string value;
 };
 
-/// Adds config options to a physical source statement that the rewriter already emitted.
-/// The runner needs this for a value that is known only once the run started, such as the server port.
+/// Adds run-time options, e.g., the server port, to an emitted physical source statement.
 /// A value that the test wrote explicitly wins over a default.
 std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options);
 

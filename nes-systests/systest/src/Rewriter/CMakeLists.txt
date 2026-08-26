@@ -16,6 +16,6 @@ add_source_files(nes-systest-lib
         NamePrefixer.cpp
         SinkRewriting.cpp
         SourceRewriting.cpp
-        SqlRewriter.cpp
+        TestFileRewriter.cpp
         Declarations.cpp
 )
