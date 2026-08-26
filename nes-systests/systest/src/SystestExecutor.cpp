@@ -212,12 +212,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
         const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
         auto discoveredTestFiles = discoverTestFiles(config);
-        Systest::SystestBinder binder{
-            config.workingDir.getValue(),
-            config.testDataDir.getValue(),
-            config.configDir.getValue(),
-            config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
-            config.clusterConfig};
+        Systest::SystestBinder binder{config};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {

@@ -14,31 +14,35 @@
 
 #pragma once
 #include <cstddef>
-#include <filesystem>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Model/RewrittenTest.hpp>
 #include <Util/Pointers.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-/// The systest binder uses the SystestParser to create SystestQuery objects that contain everything to run and validate systest queries.
-/// It has to do more than a traditional binder to be able to extract some information required for validation,
-/// such as the file output schema of the sinks.
+
+/// Drops the cases a run did not select, keeping every one the selection depends on.
+/// A case that has to follow the one above it needs that one to still be there, so the chain stays contiguous and the
+/// dependency still points at it.
+/// A differential block is one case covering both its query numbers, so selecting either number keeps the block.
+/// An empty selection selects everything.
+void keepSelectedQueries(RewrittenTest& runnable, const std::unordered_set<SystestQueryId>& selected);
+
+/// The plan compiler between the rewriter and the runner.
+/// It parses and partitions each test file, rewrites the statements upfront, and compiles the rewritten SQL into
+/// optimized plans: the CREATE statements go into the invocation's shared catalogs, and each query becomes a
+/// runnable plan that the runner submits and checks.
 class SystestBinder
 {
 public:
-    /// In the future we might need to inject a factory for the LegacyOptimizer when it requires more setup than the catalogs
-    explicit SystestBinder(
-        const std::filesystem::path& workingDir,
-        const std::filesystem::path& testDataDir,
-        const std::filesystem::path& configDir,
-        const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfig);
+    explicit SystestBinder(const SystestConfiguration& config);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t>

@@ -46,8 +46,6 @@
 #include <Model/Expectation.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -55,9 +53,9 @@
 #include <ResultChecker/DifferentialChecker.hpp>
 #include <ResultChecker/ExplainChecker.hpp>
 #include <ResultChecker/QueryResultChecker.hpp>
+#include <Rewriter/NameQualifier.hpp>
 #include <Runner/QuerySubmitter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
@@ -105,27 +103,6 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
     return runningQuery->verdict.has_value() and runningQuery->verdict->has_value();
 }
 
-/// A sink that discards its input writes no result file, so a query that ends in one has nothing to check.
-bool writesIntoDiscardingSink(const SystestQuery& query)
-{
-    if (not query.planInfoOrException.has_value())
-    {
-        return false;
-    }
-    const auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query.planInfoOrException.value().queryPlan.getGlobalPlan());
-    if (sinkOperators.empty())
-    {
-        return false;
-    }
-    const auto sinkOperator = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>();
-    if (not sinkOperator.has_value())
-    {
-        return false;
-    }
-    const auto sinkDescriptor = sinkOperator.value()->getSinkDescriptor();
-    return sinkDescriptor.has_value() and toUpperCase(sinkDescriptor.value().getSinkType()) == "VOID";
-}
-
 /// Checks a query that reached a successful terminal state against what the test expects of its result.
 Verdict checkSucceededQuery(const SystestQuery& query)
 {
@@ -135,25 +112,35 @@ Verdict checkSucceededQuery(const SystestQuery& query)
             Mismatch{fmt::format("expected error {} but query succeeded", std::get<ExpectedError>(query.expectation).code)});
     }
 
-    if (writesIntoDiscardingSink(query))
+    if (query.differentialQueryPlan.has_value())
     {
-        NES_INFO("Skipping result check for {}:{} because it writes to a Void sink.", query.testName, query.queryIdInFile);
+        INVARIANT(
+            query.resultFile.has_value() and query.differentialResultFile.has_value(),
+            "a differential pair has to carry both result files");
+        return runCheck(DifferentialCheck{.firstResultFile = *query.resultFile, .secondResultFile = *query.differentialResultFile});
+    }
+
+    /// A query without a result file writes none, such as one into a discarding sink, so there is nothing to check.
+    /// Expected rows on such a query would never be compared, so they fail it instead of passing it silently.
+    if (not query.resultFile.has_value())
+    {
+        if (const auto* rows = std::get_if<ExpectedRows>(&query.expectation); rows != nullptr and not rows->rows.empty())
+        {
+            return std::unexpected(Mismatch{"the test expects rows, but the query writes no result file to compare them against"});
+        }
+        NES_INFO("Skipping result check for {}:{} because it writes no result file.", query.testName, query.queryIdInFile);
         return Success{};
     }
 
-    if (query.differentialQueryPlan.has_value())
-    {
-        return runCheck(
-            DifferentialCheck{.firstResultFile = query.resultFile(), .secondResultFile = query.resultFileForDifferentialQuery()});
-    }
-
     return runCheck(QueryResultCheck{
-        .resultFile = query.resultFile(),
+        .resultFile = *query.resultFile,
         .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
         .expectedTuples = NES::get<ExpectedRows>(query.expectation).rows});
 }
 
 /// Checks the plan an EXPLAIN printed, which the binder computed, because an EXPLAIN never reaches the worker.
+/// The printed plan carries the qualified names, so the qualifying prefix comes off before the comparison and the
+/// plan reads as the test wrote it.
 Verdict checkExplainedQuery(const SystestQuery& query)
 {
     if (std::holds_alternative<ExpectedError>(query.expectation))
@@ -164,7 +151,7 @@ Verdict checkExplainedQuery(const SystestQuery& query)
 
     INVARIANT(query.actualExplainOutput.has_value(), "checking an EXPLAIN requires a computed explain output");
     const auto expectedLines = NES::get<ExpectedPlan>(query.expectation).lines;
-    const auto& actual = query.actualExplainOutput.value();
+    const auto actual = unqualified(query.actualExplainOutput.value(), query.qualifyingPrefix);
     if (hasExplainRegexTags(expectedLines))
     {
         return runCheck(ExplainRegexCheck{.expected = expectedLines, .actual = actual});
@@ -289,6 +276,9 @@ std::vector<RunningQuery> runQueries(
 
     std::unordered_map<DistributedQueryId, std::shared_ptr<RunningQuery>> active;
     std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot> finishedDifferentialQueries;
+    /// Queries whose outcome no longer matters: the other half of their differential pair already failed and was reported.
+    /// Their terminal state only cleans them up, so the pair reports one verdict and the run still drains every started query.
+    std::unordered_set<DistributedQueryId> discardedQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
 
     const auto canRunQuery = [&completedQueries](const SystestQuery& query) -> bool
@@ -356,12 +346,23 @@ std::vector<RunningQuery> runQueries(
                 }
                 else
                 {
+                    /// A half that did start still reaches a terminal state, so it gets discarded rather than checked.
+                    if (reg)
+                    {
+                        discardedQueries.insert(*reg);
+                    }
+                    if (regDiff)
+                    {
+                        discardedQueries.insert(*regDiff);
+                    }
+                    auto failure = not reg ? std::move(reg).error() : std::move(regDiff).error();
                     processQueryWithError(
                         std::make_shared<RunningQuery>(nextQuery, nextQuery.planInfoOrException.value().queryPlan.getQueryId()),
                         progressTracker,
                         failed,
-                        DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
+                        DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{failure}}}),
                         queryPerformanceMessage);
+                    moveDependentsToPending(nextQuery);
                 }
             }
             else if (nextQuery.planInfoOrException.has_value())
@@ -379,6 +380,7 @@ std::vector<RunningQuery> runQueries(
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
                         queryPerformanceMessage);
+                    moveDependentsToPending(nextQuery);
                 }
             }
             else
@@ -391,6 +393,7 @@ std::vector<RunningQuery> runQueries(
                     DistributedException(std::unordered_map<Host, std::vector<Exception>>{
                         {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
                     queryPerformanceMessage);
+                moveDependentsToPending(nextQuery);
             }
         }
         return hasOneMoreQueryToStart;
@@ -400,6 +403,12 @@ std::vector<RunningQuery> runQueries(
     {
         for (const auto& queryStatus : querySubmitter.finishedQueries())
         {
+            if (discardedQueries.erase(queryStatus.queryId) > 0)
+            {
+                active.erase(queryStatus.queryId);
+                continue;
+            }
+
             auto it = active.find(queryStatus.queryId);
             if (it == active.end())
             {
@@ -411,7 +420,21 @@ std::vector<RunningQuery> runQueries(
             if (queryStatus.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
                 processQueryWithError(it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage);
-                active.erase(it);
+                moveDependentsToPending(runningQuery->systestQuery);
+                /// The pair has its verdict, so the other half only has to drain.
+                /// A half that already finished leaves right away, and one still running gets discarded when it arrives.
+                if (const auto partner = runningQuery->differentialQueryPair)
+                {
+                    if (finishedDifferentialQueries.erase(*partner) > 0)
+                    {
+                        active.erase(*partner);
+                    }
+                    else
+                    {
+                        discardedQueries.insert(*partner);
+                    }
+                }
+                active.erase(queryStatus.queryId);
                 continue;
             }
 
@@ -521,14 +544,14 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 namespace
 {
 /// Size and no. tuples of all input files of the query, so that the throughput can be derived from the elapsed time.
+/// The list holds one entry per source reference, so a query that reads a file through two references counts it twice.
 void recordProcessedInput(RunningQuery& runningQuery)
 {
     size_t bytesProcessed = 0;
     size_t tuplesProcessed = 0;
-    for (const auto& [sourcePath, sourceOccurrencesInQuery] :
-         runningQuery.systestQuery.planInfoOrException.value().sourcesToFilePathsAndCounts | std::views::values)
+    for (const auto& sourcePath : runningQuery.systestQuery.inputFiles)
     {
-        if (not(std::filesystem::exists(sourcePath.getRawValue()) and sourcePath.getRawValue().has_filename()))
+        if (not(std::filesystem::exists(sourcePath) and sourcePath.has_filename()))
         {
             NES_ERROR("Source path is empty or does not exist.");
             bytesProcessed = 0;
@@ -536,11 +559,11 @@ void recordProcessedInput(RunningQuery& runningQuery)
             break;
         }
 
-        bytesProcessed += (std::filesystem::file_size(sourcePath.getRawValue()) * sourceOccurrencesInQuery);
+        bytesProcessed += std::filesystem::file_size(sourcePath);
 
         /// Counting the lines, i.e., \n in the sourcePath
-        std::ifstream inFile(sourcePath.getRawValue());
-        tuplesProcessed += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
+        std::ifstream inFile(sourcePath);
+        tuplesProcessed += std::count(std::istreambuf_iterator(inFile), std::istreambuf_iterator<char>(), '\n');
     }
     runningQuery.bytesProcessed = bytesProcessed;
     runningQuery.tuplesProcessed = tuplesProcessed;
