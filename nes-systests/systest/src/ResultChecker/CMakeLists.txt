@@ -13,6 +13,7 @@
 add_source_files(nes-systest-lib
         Check.cpp
         DifferentialChecker.cpp
+        OutcomeChecker.cpp
         ExplainChecker.cpp
         ResultChecker.cpp
         ResultComparison.cpp

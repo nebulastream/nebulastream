@@ -15,7 +15,8 @@ function(add_nes_test_systest)
     set(TARGET_NAME ${ARGV0})
     target_link_libraries(${TARGET_NAME} nes-systest-lib)
     target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
     target_compile_definitions(${TARGET_NAME} PRIVATE SYSTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
 endfunction()
 
@@ -29,12 +30,14 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
         "Parser/SystestParserInvalidTestFilesTests.cpp"
         "Parser/SystestParserValidTestFilesTests.cpp"
-        "ResultChecker/ResultCheckerTests.cpp"
-        "Runner/SystestRunnerTest.cpp")
+        "ResultChecker/ResultCheckerTests.cpp")
 
 add_nes_test_systest(testfile-parser-test
         "Parser/TestFileParserTests.cpp"
         "Parser/TestFilePartitionTests.cpp")
+
+add_nes_test_systest(systest-schedule-test
+        "Runner/ScheduleTests.cpp")
 
 add_nes_test_systest(systest-name-qualifier-test
         "Rewriter/NameQualifierTests.cpp")

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include <fmt/base.h>
@@ -24,11 +25,15 @@
 namespace NES
 {
 
-/// Identifies one case in a run's reports: the test file that it came from, and the query's number within that file.
-/// A report line carries this rather than the file path, because one run reports many cases from the same file.
+/// Identifies one case in a run's report.
+/// A report line prints this instead of only the file path, because one run reports potentially many cases from the same file.
+/// Moreover, a file splits into parts when its queries ask for different worker settings,
+/// and the variant distinguishes between those parts.
+/// An entry about a whole file, such as a failed setup, holds the invalid query number and prints without a query id.
 struct TestCaseId
 {
     std::string file;
+    uint32_t variant = 0;
     SystestQueryId query = INVALID<SystestQueryId>;
 
     bool operator==(const TestCaseId& other) const = default;
@@ -41,13 +46,17 @@ struct fmt::formatter<NES::TestCaseId>
 {
     static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin()) { return ctx.begin(); }
 
-    static auto format(const NES::TestCaseId& id, format_context& ctx) -> decltype(ctx.out())
+    [[nodiscard]] static auto format(const NES::TestCaseId& id, const format_context& ctx) -> decltype(ctx.out())
     {
         auto out = fmt::format_to(ctx.out(), "{}", id.file);
+        if (id.variant > 0)
+        {
+            out = format_to(out, "[{}]", id.variant);
+        }
         if (id.query != NES::INVALID<NES::SystestQueryId>)
         {
             /// Two digits, so the numbers of one file line up in the report. A file with more queries widens the column.
-            out = fmt::format_to(out, ":{:02}", id.query.getRawValue());
+            out = format_to(out, ":{:02}", id.query.getRawValue());
         }
         return out;
     }
