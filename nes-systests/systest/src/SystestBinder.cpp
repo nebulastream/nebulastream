@@ -63,7 +63,6 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -97,7 +96,7 @@ Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema(const DistributedLogic
 
 /// Throws the failure of a catalog submission, so one CREATE that the catalog rejects fails its whole test file.
 template <typename Result>
-void throwOnError(std::expected<Result, Exception> result)
+void raiseOnError(std::expected<Result, Exception> result)
 {
     if (not result.has_value())
     {
@@ -107,7 +106,7 @@ void throwOnError(std::expected<Result, Exception> result)
 
 /// A case whose plan cannot be compiled still becomes a query, so the run reports the failure against that case.
 template <typename Compile>
-std::expected<SystestQuery::PlanInfo, Exception> compileOrError(Compile&& compile)
+std::expected<PlanInfo, Exception> compileOrError(Compile&& compile)
 {
     try
     {
@@ -117,31 +116,6 @@ std::expected<SystestQuery::PlanInfo, Exception> compileOrError(Compile&& compil
     {
         return std::unexpected{e};
     }
-}
-
-/// The fields that every kind of case shares. A compile function sets only what its kind adds.
-SystestQuery makeQuery(
-    const DiscoveredTestFile& testfile,
-    const SystestQueryId id,
-    std::string sql,
-    std::expected<SystestQuery::PlanInfo, Exception> planInfoOrException,
-    Expectation expectation)
-{
-    return SystestQuery{
-        .testName = testfile.name(),
-        .queryIdInFile = id,
-        .testFilePath = testfile.file,
-        .queryDefinition = std::move(sql),
-        .planInfoOrException = std::move(planInfoOrException),
-        .expectation = std::move(expectation),
-        .additionalSourceThreads = {},
-        .configurationOverride = {},
-        .differentialQueryPlan = std::nullopt,
-        .actualExplainOutput = std::nullopt,
-        .resultFile = std::nullopt,
-        .differentialResultFile = std::nullopt,
-        .qualifyingPrefix = {},
-        .inputFiles = {}};
 }
 
 }
@@ -175,36 +149,7 @@ struct SystestBinder::Impl
         }
     }
 
-    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const std::vector<DiscoveredTestFile>& discoveredTestFiles)
-    {
-        std::vector<SystestQuery> queries;
-        uint64_t loadedFiles = 0;
-
-        for (const auto& testfile : discoveredTestFiles)
-        {
-            std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
-            try
-            {
-                for (auto testsForFile = loadOptimizeQueriesFromTestFile(testfile); auto& query : testsForFile)
-                {
-                    queries.emplace_back(std::move(query));
-                }
-                ++loadedFiles;
-            }
-            catch (const std::exception& exception)
-            {
-                /// A failing file must not abort the whole invocation.
-                tryLogCurrentException();
-                std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.getLogFilePath(), exception.what());
-            }
-        }
-        std::cout << fmt::format(
-            "Loaded {}/{} test files containing a total of {} queries\n", loadedFiles, discoveredTestFiles.size(), queries.size())
-                  << std::flush;
-        return std::make_pair(queries, loadedFiles);
-    }
-
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const DiscoveredTestFile& testfile)
+    std::vector<RewrittenPart> rewrite(const DiscoveredTestFile& testfile)
     {
         SystestParser parser;
         parser.registerSubstitutionRule(
@@ -246,7 +191,8 @@ struct SystestBinder::Impl
         auto parts = partitionByOverrides(parsedFile);
         const auto selected = testfile.enabledQueries.value_or(std::unordered_set<SystestQueryId>{});
 
-        std::vector<SystestQuery> queries;
+        std::vector<RewrittenPart> rewritten;
+        rewritten.reserve(parts.size());
         std::unordered_set<SystestQueryId> foundQueries;
         for (size_t index = 0; index < parts.size(); ++index)
         {
@@ -262,6 +208,7 @@ struct SystestBinder::Impl
                     .testDataDir = testDataDir,
                     .sourceHost = clusterConfiguration.allowSourcePlacement.at(0),
                     .sinkHost = clusterConfiguration.allowSinkPlacement.at(0)});
+            runnable.key = partKey.value();
             for (const auto& testCase : runnable.cases)
             {
                 /// Both numbers of a differential block select it, so both count as found.
@@ -277,10 +224,7 @@ struct SystestBinder::Impl
             {
                 continue;
             }
-            for (auto& query : compile(runnable, overrides, testfile, partKey.value()))
-            {
-                queries.push_back(std::move(query));
-            }
+            rewritten.push_back(RewrittenPart{.settings = overrides, .test = std::move(runnable)});
         }
 
         for (const auto badTestNumber : selected)
@@ -293,41 +237,36 @@ struct SystestBinder::Impl
                     testfile.file.string());
             }
         }
-        return queries;
+        return rewritten;
     }
 
-private:
-    /// Compiles one rewritten test file part: its setup goes into the catalogs, and each case becomes a query to run.
-    /// The part key goes into each query's distributed id, because the coordinator rejects two plans with one id and
+    /// Compiles one rewritten test file part: its setup goes into the catalogs, and each case becomes the statements to submit.
+    /// The part key goes into each statement's distributed id, because the coordinator rejects two plans with one id and
     /// the parts of a file repeat its query numbers.
-    [[nodiscard]] std::vector<SystestQuery> compile(
-        RunnableTestFile& runnable, const ConfigurationOverride& overrides, const DiscoveredTestFile& testfile, const std::string& partKey)
+    [[nodiscard]] PlannedTest compile(const RunnableTestFile& runnable)
     {
-        const auto sourceThreads = std::make_shared<std::vector<std::jthread>>();
-        for (auto& setup : runnable.setupStatements)
+        PlannedTest compiled;
+        /// The staged SQL is what reaches the catalogs, so a served source includes the endpoint that its server bound.
+        for (auto setup : runnable.setupStatements)
         {
-            stage(setup, *sourceThreads);
+            stage(setup, compiled.servers);
             submitToCatalogs(sqlOf(setup));
         }
 
-        std::vector<SystestQuery> queries;
-        queries.reserve(runnable.cases.size());
+        compiled.cases.reserve(runnable.cases.size());
         for (const auto& [action] : runnable.cases)
         {
-            auto query = std::visit(
+            compiled.cases.push_back(std::visit(
                 Overloaded{
-                    [&](const RewrittenQuery& runnableQuery) { return compileQuery(runnableQuery, testfile, partKey); },
-                    [&](const RewrittenDifferential& block) { return compileDifferential(block, testfile, partKey); },
-                    [&](const RewrittenExplain& explain) { return compileExplain(explain, testfile); }},
-                action);
-            query.configurationOverride = overrides;
-            query.qualifyingPrefix = runnable.qualifyingPrefix;
-            query.additionalSourceThreads = sourceThreads;
-            queries.push_back(std::move(query));
+                    [&](const RewrittenQuery& query) { return compileQuery(query, runnable.key); },
+                    [&](const RewrittenDifferential& block) { return compileDifferential(block, runnable.key); },
+                    [&](const RewrittenExplain& explain) { return compileExplain(explain); }},
+                action));
         }
-        return queries;
+        return compiled;
     }
 
+private:
     /// Stages a setup statement's data before the statement reaches the catalogs.
     /// A served source gets the endpoint that its server bound merged into its statement. The server thread has to
     /// outlive the queries that read from it, so it is kept with the test file's queries.
@@ -339,9 +278,9 @@ private:
                 [](const StatementWithInlineData& withInline) { writeInlineData(withInline.data); },
                 [&](StatementWithServedData& withServed)
                 {
-                    auto [thread, options] = serve(std::move(withServed.data));
-                    withServed.sql = addSourceOptions(withServed.sql, options);
-                    sourceThreads.push_back(std::move(thread));
+                    auto server = serve(std::move(withServed.data));
+                    withServed.sql = addSourceOptions(withServed.sql, server.options);
+                    sourceThreads.push_back(std::move(server.thread));
                 }},
             setup);
     }
@@ -351,15 +290,15 @@ private:
         const auto binding = bindStatement(sql);
         std::visit(
             Overloaded{
-                [&](const CreateLogicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
-                [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
-                [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
-                [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
+                [&](const CreateLogicalSourceStatement& statement) { raiseOnError(sourceHandler(statement)); },
+                [&](const CreatePhysicalSourceStatement& statement) { raiseOnError(sourceHandler(statement)); },
+                [&](const CreateSinkStatement& statement) { raiseOnError(sinkHandler(statement)); },
+                [&](const CreateModelStatement& statement) { raiseOnError(modelHandler(statement)); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
     }
 
-    [[nodiscard]] Statement bindStatement(const std::string& sql) const
+    [[nodiscard]] NES::Statement bindStatement(const std::string& sql) const
     {
         const auto managedParser = AntlrSQLQueryParser::ManagedAntlrParser::create(sql);
         const auto parseResult = managedParser->parseSingle();
@@ -375,72 +314,58 @@ private:
         return std::move(binding).value();
     }
 
-    /// Parses one rewritten statement into a plan under the given distributed id, and optimizes it.
-    [[nodiscard]] DistributedLogicalPlan compilePlan(const std::string& sql, const std::string& distributedId) const
+    /// Compiles one query into the plan to submit.
+    [[nodiscard]] std::vector<PlannedStatement> compileQuery(const RewrittenQuery& query, const std::string& partKey) const
     {
-        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
-        plan.setQueryId(QueryId::createDistributed(DistributedQueryId(distributedId)));
-        return queryOptimizer.optimize(plan);
+        auto plan = compileOrError([&] { return optimizeInto(query.sql, fmt::format("{}:{}", partKey, query.id.getRawValue())); });
+        return {PlannedStatement{.plan = std::move(plan), .explained = std::nullopt}};
     }
 
-    [[nodiscard]] SystestQuery
-    compileQuery(const RewrittenQuery& runnableQuery, const DiscoveredTestFile& testfile, const std::string& partKey) const
+    /// Compiles both halves of a differential block, which run one after the other and are compared against each other.
+    /// A half that does not compile makes the block fail, so the first failure is reported for the pair.
+    [[nodiscard]] std::vector<PlannedStatement> compileDifferential(const RewrittenDifferential& block, const std::string& partKey) const
     {
-        auto planInfoOrException = compileOrError(
-            [&]
-            {
-                auto optimized = compilePlan(runnableQuery.sql, fmt::format("{}:{}", partKey, runnableQuery.id.getRawValue()));
-                auto schema = sinkOutputSchema(optimized);
-                return SystestQuery::PlanInfo{std::move(optimized), std::move(schema)};
-            });
-
-        auto query = makeQuery(testfile, runnableQuery.id, runnableQuery.sql, std::move(planInfoOrException), runnableQuery.expectation);
-        query.resultFile = runnableQuery.resultFile;
-        query.inputFiles = runnableQuery.inputFiles;
-        return query;
-    }
-
-    [[nodiscard]] SystestQuery
-    compileDifferential(const RewrittenDifferential& block, const DiscoveredTestFile& testfile, const std::string& partKey) const
-    {
-        std::optional<DistributedLogicalPlan> differentialPlan;
-        auto planInfoOrException = compileOrError(
-            [&]
-            {
-                const auto number = block.firstId.getRawValue();
-                auto optimized = compilePlan(block.firstSql, fmt::format("{}:{}", partKey, number));
-                differentialPlan = compilePlan(block.secondSql, fmt::format("{}:{}-differential", partKey, number));
-                auto schema = sinkOutputSchema(optimized);
-                return SystestQuery::PlanInfo{std::move(optimized), std::move(schema)};
-            });
-
-        auto query = makeQuery(testfile, block.firstId, block.firstSql, std::move(planInfoOrException), Expectation{ExpectedRows{}});
-        query.differentialQueryPlan = std::move(differentialPlan);
-        query.resultFile = block.firstResultFile;
-        query.differentialResultFile = block.secondResultFile;
-        return query;
+        try
+        {
+            auto first = optimizeInto(block.firstSql, fmt::format("{}:{}", partKey, block.firstId.getRawValue()));
+            auto second = optimizeInto(block.secondSql, fmt::format("{}:{}-differential", partKey, block.firstId.getRawValue()));
+            std::vector<PlannedStatement> compiled;
+            compiled.push_back(PlannedStatement{.plan = std::move(first), .explained = std::nullopt});
+            compiled.push_back(PlannedStatement{.plan = std::move(second), .explained = std::nullopt});
+            return compiled;
+        }
+        catch (Exception& exception)
+        {
+            return {PlannedStatement{.plan = std::unexpected{exception}, .explained = std::nullopt}};
+        }
     }
 
     /// Answers an EXPLAIN here rather than at run time, because only this component holds the optimizer that the
     /// OPTIMIZED and DISTRIBUTED stages need.
     /// It never reaches a worker and has no plan to run.
-    [[nodiscard]] SystestQuery compileExplain(const RewrittenExplain& explain, const DiscoveredTestFile& testfile) const
+    [[nodiscard]] std::vector<PlannedStatement> compileExplain(const RewrittenExplain& explain) const
     {
-        std::optional<std::string> actualExplainOutput;
-        std::expected<SystestQuery::PlanInfo, Exception> planInfoOrException
-            = std::unexpected{TestException("EXPLAIN statements are not executed and have no plan info")};
+        std::optional<std::string> explained;
+        std::expected<PlanInfo, Exception> plan = std::unexpected{TestException("an EXPLAIN is not executed and has no plan")};
         try
         {
-            actualExplainOutput = explainOutput(explain.sql);
+            explained = explainOutput(explain.sql);
         }
-        catch (Exception& e)
+        catch (Exception& exception)
         {
-            planInfoOrException = std::unexpected{e};
+            plan = std::unexpected{exception};
         }
+        return {PlannedStatement{.plan = std::move(plan), .explained = std::move(explained)}};
+    }
 
-        auto query = makeQuery(testfile, explain.id, explain.sql, std::move(planInfoOrException), explain.expected);
-        query.actualExplainOutput = std::move(actualExplainOutput);
-        return query;
+    /// Parses and optimizes one statement under the given distributed query id, which correlates it with its answer.
+    [[nodiscard]] PlanInfo optimizeInto(const std::string& sql, const std::string& queryId) const
+    {
+        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        plan.setQueryId(QueryId::createDistributed(DistributedQueryId(queryId)));
+        auto optimized = queryOptimizer.optimize(plan);
+        auto schema = sinkOutputSchema(optimized);
+        return PlanInfo{.plan = std::move(optimized), .sinkOutputSchema = std::move(schema)};
     }
 
     [[nodiscard]] std::string explainOutput(const std::string& sql) const
@@ -477,9 +402,14 @@ SystestBinder::SystestBinder(const SystestConfiguration& config) : impl(std::mak
 {
 }
 
-std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const std::vector<DiscoveredTestFile>& discoveredTestFiles)
+std::vector<RewrittenPart> SystestBinder::rewrite(const DiscoveredTestFile& testfile)
 {
-    return impl->loadOptimizeQueries(discoveredTestFiles);
+    return impl->rewrite(testfile);
+}
+
+PlannedTest SystestBinder::plan(const RunnableTestFile& runnable)
+{
+    return impl->compile(runnable);
 }
 
 SystestBinder::~SystestBinder() = default;
