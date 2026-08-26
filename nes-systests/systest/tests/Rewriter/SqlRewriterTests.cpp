@@ -482,10 +482,9 @@ TEST_F(SqlRewriterTest, KeepsTheOptionsOfASelfContainedSourceWrittenIntoTheQuery
                      "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(
-        queryOf(queries.at(0))
-            .sql.starts_with(
-                R"(SELECT id FROM Generator('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA, 'localhost:8080' AS "SOURCE"."HOST") INTO )"));
+    EXPECT_TRUE(queryOf(queries.at(0))
+                    .sql.starts_with(R"(SELECT id FROM Generator('SEQUENCE UINT64 0 10 1' AS "SOURCE".GENERATOR_SCHEMA, )"
+                                     R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE") INTO )"));
 }
 
 /// An absolute path already resolves the same way wherever it is read, so it is left untouched.
@@ -499,10 +498,9 @@ TEST_F(SqlRewriterTest, KeepsAnAbsoluteFileOfASourceWrittenIntoTheQuery)
                      "1\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_TRUE(
-        queryOf(queries.at(0))
-            .sql.starts_with(
-                R"(SELECT id FROM File('/elsewhere/stream8.csv' AS "SOURCE".FILE_PATH, 'localhost:8080' AS "SOURCE"."HOST") INTO )"));
+    EXPECT_TRUE(queryOf(queries.at(0))
+                    .sql.starts_with(R"(SELECT id FROM File('/elsewhere/stream8.csv' AS "SOURCE".FILE_PATH, )"
+                                     R"('localhost:8080' AS "SOURCE"."HOST", 'CSV' AS "INPUT_FORMATTER"."TYPE") INTO )"));
 }
 
 /// A self-contained physical source draws its data from its own options rather than an attached data set.

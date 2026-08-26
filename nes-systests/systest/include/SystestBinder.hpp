@@ -14,31 +14,24 @@
 
 #pragma once
 #include <cstddef>
-#include <filesystem>
 #include <utility>
 #include <vector>
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Util/Pointers.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
 {
-/// The systest binder uses the SystestParser to create SystestQuery objects that contain everything to run and validate systest queries.
-/// It has to do more than a traditional binder to be able to extract some information required for validation,
-/// such as the file output schema of the sinks.
+/// The plan compiler between the rewriter and the runner.
+/// It parses and partitions each test file, rewrites the statements upfront, and compiles the rewritten SQL into
+/// optimized plans: the CREATE statements go into the invocation's shared catalogs, and each query becomes a
+/// runnable plan that the runner submits and checks.
 class SystestBinder
 {
 public:
-    /// In the future we might need to inject a factory for the LegacyOptimizer when it requires more setup than the catalogs
-    explicit SystestBinder(
-        const std::filesystem::path& workingDir,
-        const std::filesystem::path& testDataDir,
-        const std::filesystem::path& configDir,
-        const QueryOptimizerConfiguration& queryOptimizerConfiguration,
-        SystestClusterConfiguration clusterConfig);
+    explicit SystestBinder(const SystestConfiguration& config);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const DiscoveredTestFiles& discoveredTestFiles);

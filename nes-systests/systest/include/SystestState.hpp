@@ -57,90 +57,25 @@ using TestGroup = std::string;
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
 
-class SourceInputFile
-{
-public:
-    using Underlying = std::filesystem::path;
-
-    explicit constexpr SourceInputFile(Underlying value) : value(std::move(value)) { }
-
-    friend std::ostream& operator<<(std::ostream& os, const SourceInputFile& timestamp) { return os << timestamp.value; }
-
-    [[nodiscard]] Underlying getRawValue() const { return value; }
-
-    friend std::strong_ordering operator<=>(const SourceInputFile& lhs, const SourceInputFile& rhs) = default;
-
-private:
-    Underlying value;
-};
-
 struct SystestQuery
 {
-    static std::filesystem::path
-    resultFile(const std::filesystem::path& workingDir, std::string_view testName, SystestQueryId queryIdInTestFile);
-
-    static std::filesystem::path sourceFile(const std::filesystem::path& workingDir, std::string_view testName, uint64_t sourceId);
-    [[nodiscard]] std::filesystem::path resultFile() const;
-    [[nodiscard]] std::filesystem::path resultFileForDifferentialQuery() const;
-
     TestName testName;
     SystestQueryId queryIdInFile = INVALID_SYSTEST_QUERY_ID;
     std::filesystem::path testFilePath;
-    std::filesystem::path workingDir;
     std::string queryDefinition;
 
     struct PlanInfo
     {
         DistributedLogicalPlan queryPlan;
-        std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourcesToFilePathsAndCounts;
         /// The schema of the data written to a CSV file.
         /// It's different, for example, for the checksum sink because the schema written to the CSV is not the input schema to the sink.
         Schema<UnqualifiedUnboundField, Ordered> sinkOutputSchema;
 
         PlanInfo() = delete;
 
-        PlanInfo(
-            DistributedLogicalPlan plan,
-            std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
-            Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
-            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
-        {
-        }
-
         PlanInfo(DistributedLogicalPlan plan, Schema<UnqualifiedUnboundField, Ordered> sinkSchema)
             : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema))
         {
-        }
-
-        PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
-        {
-            copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
-        }
-
-        PlanInfo& operator=(const PlanInfo& other)
-        {
-            if (this == &other)
-            {
-                return *this;
-            }
-            queryPlan = other.queryPlan;
-            sinkOutputSchema = other.sinkOutputSchema;
-            copySourceMappingFrom(other.sourcesToFilePathsAndCounts);
-            return *this;
-        }
-
-        PlanInfo(PlanInfo&&) noexcept = default;
-        PlanInfo& operator=(PlanInfo&&) noexcept = default;
-
-    private:
-        void copySourceMappingFrom(const std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>& original)
-        {
-            sourcesToFilePathsAndCounts.clear();
-            sourcesToFilePathsAndCounts.reserve(original.size());
-            for (const auto& [descriptor, fileInfo] : original)
-            {
-                sourcesToFilePathsAndCounts.emplace(descriptor, fileInfo);
-            }
         }
     };
 
@@ -151,6 +86,13 @@ struct SystestQuery
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
     std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     std::optional<std::string> actualExplainOutput;
+    /// The file that the query's sink writes, which the rewriter chose when it inlined the sink.
+    /// Absent when the query writes none, such as a query into a discarding sink, and then there is nothing to check.
+    std::optional<std::filesystem::path> resultFile;
+    /// The second result file of a differential pair, which the comparison reads against the first.
+    std::optional<std::filesystem::path> differentialResultFile;
+    /// The data files that the query's sources read, once per reference, which a measurement derives throughput from.
+    std::vector<std::filesystem::path> inputFiles;
 };
 
 struct RunningQuery

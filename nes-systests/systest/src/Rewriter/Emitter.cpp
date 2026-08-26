@@ -87,13 +87,13 @@ void Emitter::emitCreate(PreparedCreate& prepared)
 {
     std::visit(
         Overloaded{
-            [&](const CreateLogicalSourceStatement&)
+            [&](const Systest::CreateLogicalSourceStatement&)
             {
                 /// Rewrite all identifiers in the statement with their qualified spellings
                 runnable.createStmts.push_back(
                     RewrittenCreateStatement{.sql = rewriteIdentifiers(prepared.create->sql, names), .staged = std::nullopt});
             },
-            [&](const CreatePhysicalSourceStatement& declaration)
+            [&](const Systest::CreatePhysicalSourceStatement& declaration)
             {
                 auto [statement, inputFile] = sourceRewriter.rewrite(*prepared.parsed, declaration);
                 runnable.createStmts.push_back(std::move(statement));
@@ -105,8 +105,9 @@ void Emitter::emitCreate(PreparedCreate& prepared)
                     inputFilesBySource[Identifier::parse(names.qualified(logical).value_or(logical))].push_back(*inputFile);
                 }
             },
-            [&](const CreateModelStatement& declaration) { runnable.createStmts.push_back(modelStatement(*prepared.parsed, declaration)); },
-            [&](const CreateSinkStatement& declaration)
+            [&](const Systest::CreateModelStatement& declaration)
+            { runnable.createStmts.push_back(modelStatement(*prepared.parsed, declaration)); },
+            [&](const Systest::CreateSinkStatement& declaration)
             {
                 /// A test file that inlines its sinks emits nothing here, because the declaring phase already held this one.
                 /// A test file that contains an EXPLAIN needs the declared sink in the catalog, so a plan that names it
@@ -120,7 +121,7 @@ void Emitter::emitCreate(PreparedCreate& prepared)
         prepared.classified);
 }
 
-RewrittenCreateStatement Emitter::modelStatement(ParsedStatement& parsed, const CreateModelStatement& declaration) const
+RewrittenCreateStatement Emitter::modelStatement(ParsedStatement& parsed, const Systest::CreateModelStatement& declaration) const
 {
     antlr4::TokenStreamRewriter rewriter{&parsed.tokenStream()};
     if (const std::filesystem::path declared{unquote(declaration.definition->modelPath->getText())}; declared.is_relative())
@@ -155,7 +156,7 @@ Emitter::rewriteQuery(const std::string& sql, const SystestQueryId id, Expectati
     antlr4::TokenStreamRewriter rewriter{&parsed.tokenStream()};
 
     makeAnonymousSourcePathsAbsolute(parsed, rewriter, target.testDataDir);
-    placeAnonymousSources(parsed, rewriter, target.sourceHost);
+    completeAnonymousSources(parsed, rewriter, target.sourceHost);
 
     const auto queryNumber = id.getRawValue();
     const auto candidateResultFile = target.workingDir / fmt::format("{}{}_{}.csv", target.testFileKey, resultDiscriminator, queryNumber);
@@ -196,6 +197,11 @@ void Emitter::emitExplain(const Systest::ExplainStatement& explain)
 {
     auto qualified = rewriteIdentifiers(explain.sql, names);
     ParsedStatement parsed{qualified};
+    antlr4::TokenStreamRewriter rewriter{&parsed.tokenStream()};
+
+    /// The explained query binds and optimizes as a regular query does, so its sources need the same completion.
+    makeAnonymousSourcePathsAbsolute(parsed, rewriter, target.testDataDir);
+    completeAnonymousSources(parsed, rewriter, target.sourceHost);
 
     /// A sink that the test declared keeps its name, because the expected plan prints that name and the emitted
     /// declaration makes it resolve.
@@ -203,12 +209,11 @@ void Emitter::emitExplain(const Systest::ExplainStatement& explain)
     /// has not bound yet.
     if (auto* sink = requireSingleSink(parsed, explain.sql); sink->identifier() == nullptr)
     {
-        antlr4::TokenStreamRewriter rewriter{&parsed.tokenStream()};
         const auto candidate = target.workingDir / fmt::format("{}_{}.csv", target.testFileKey, explain.id.getRawValue());
         auto [inlined, resultFile, rowsAreJson] = sinkRewriter.inlineSink(parsed, sink, candidate);
         rewriter.replace(sink->getStart(), sink->getStop(), inlined);
-        qualified = rewriter.getText();
     }
+    qualified = rewriter.getText();
 
     /// An EXPLAIN starts no query, so it writes no result file and takes no query name.
     runnable.cases.push_back(RewrittenCase{

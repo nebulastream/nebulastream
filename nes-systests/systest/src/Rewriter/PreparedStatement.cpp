@@ -36,7 +36,7 @@ ClassifiedCreate classify(const ParsedStatement& parsed, const Systest::CreateSt
 {
     if (auto* physicalSource = findFirst<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parsed.tree()))
     {
-        return CreatePhysicalSourceStatement{.definition = physicalSource, .attached = create.attach};
+        return Systest::CreatePhysicalSourceStatement{.definition = physicalSource, .attached = create.attach};
     }
     if (create.attach.has_value())
     {
@@ -45,15 +45,15 @@ ClassifiedCreate classify(const ParsedStatement& parsed, const Systest::CreateSt
 
     if (auto* logicalSource = findFirst<AntlrSQLParser::CreateLogicalSourceDefinitionContext>(parsed.tree()))
     {
-        return CreateLogicalSourceStatement{.definition = logicalSource};
+        return Systest::CreateLogicalSourceStatement{.definition = logicalSource};
     }
     if (auto* sink = findFirst<AntlrSQLParser::CreateSinkDefinitionContext>(parsed.tree()))
     {
-        return CreateSinkStatement{.definition = sink};
+        return Systest::CreateSinkStatement{.definition = sink};
     }
     if (auto* model = findFirst<AntlrSQLParser::CreateModelDefinitionContext>(parsed.tree()))
     {
-        return CreateModelStatement{.definition = model};
+        return Systest::CreateModelStatement{.definition = model};
     }
     throw TestException("Unsupported CREATE statement: {}", create.sql);
 }

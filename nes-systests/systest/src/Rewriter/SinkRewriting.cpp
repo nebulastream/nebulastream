@@ -45,6 +45,13 @@ bool writesResultFile(const std::string_view sinkType)
     return Identifier::parse(std::string{sinkType}) != Identifier::parse(std::string{Sql::Void});
 }
 
+/// Returns whether a sink of this type writes a checksum instead of the rows.
+/// Such a sink quotes its strings, because the expected checksums were computed over quoted strings.
+bool writesChecksum(const std::string_view sinkType)
+{
+    return Identifier::parse(std::string{sinkType}) == Identifier::parse(std::string{Sql::Checksum});
+}
+
 }
 
 /// Returns the sink that a query writes into, and rejects a query that writes into none or more than one.
@@ -78,6 +85,10 @@ InlinedSink SinkRewriter::inlineDeclaredSink(const SinkDefinition& declaration, 
         options.push_back(Sql::option(Sql::Sink, Sql::FilePath, resultFile->string()));
         options.push_back(Sql::option(Sql::Sink, Sql::OutputFormat, Sql::Csv));
     }
+    if (writesChecksum(declaration.type))
+    {
+        options.push_back(Sql::option(Sql::OutputFormatter, Sql::QuoteStrings, "true"));
+    }
     options.push_back(Sql::schemaOption(Sql::Sink, declaration.schema));
     /// A declared sink writes CSV, which is the format that the rewriter chooses for it.
     return {.sql = Sql::sink(declaration.type, Sql::optionList(options)), .resultFile = std::move(resultFile), .rowsAreJson = false};
@@ -98,6 +109,10 @@ InlinedSink SinkRewriter::inlineQuerySink(
         {
             options.push_back(Sql::option(Sql::Sink, Sql::OutputFormat, Sql::Csv));
         }
+    }
+    if (writesChecksum(sinkType) and not declaredOptionValue(anonymous->parameters, Sql::OutputFormatter, Sql::QuoteStrings).has_value())
+    {
+        options.push_back(Sql::option(Sql::OutputFormatter, Sql::QuoteStrings, "true"));
     }
     if (const auto declaredText = parsed.textOf(anonymous->parameters); not declaredText.empty())
     {

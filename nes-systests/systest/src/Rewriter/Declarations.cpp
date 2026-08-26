@@ -36,20 +36,20 @@ void declareNames(PreparedCreate& prepared, NameRegistry& registry, SinkByName& 
 {
     std::visit(
         Overloaded{
-            [&](const CreateLogicalSourceStatement& declaration)
+            [&](const Systest::CreateLogicalSourceStatement& declaration)
             {
                 /// Qualifying the logical source name keeps it apart from the names of other test files.
                 registry.declare(declaration.definition->sourceName->getText());
             },
             /// A physical source declares no name of its own.
             /// It references a logical source that another statement declares.
-            [](const CreatePhysicalSourceStatement&) {},
-            [&](const CreateModelStatement& declaration)
+            [](const Systest::CreatePhysicalSourceStatement&) {},
+            [&](const Systest::CreateModelStatement& declaration)
             {
                 /// A query that infers with a model refers to it, so a model qualifies like a source.
                 registry.declare(declaration.definition->modelName->getText());
             },
-            [&](const CreateSinkStatement& declaration)
+            [&](const Systest::CreateSinkStatement& declaration)
             {
                 /// A test file that contains an EXPLAIN submits its sink declarations, so a plan that names a declared
                 /// sink prints the name that the test gave it. An inlined sink prints as its type instead.

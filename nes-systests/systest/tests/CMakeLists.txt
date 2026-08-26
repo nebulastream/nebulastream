@@ -30,11 +30,11 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserInvalidTestFilesTests.cpp"
         "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
-        "Runner/SystestRunnerTest.cpp"
-        "SystestStateTests.cpp")
+        "Runner/SystestRunnerTest.cpp")
 
 add_nes_test_systest(testfile-parser-test
-        "Parser/TestFileParserTests.cpp")
+        "Parser/TestFileParserTests.cpp"
+        "Parser/TestFilePartitionTests.cpp")
 
 add_nes_test_systest(systest-name-qualifier-test
         "Rewriter/NameQualifierTests.cpp")

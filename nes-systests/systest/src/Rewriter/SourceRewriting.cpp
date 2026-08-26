@@ -97,7 +97,7 @@ std::string spliceSetClause(
 
 /// The file that is served to a source that reads from a socket, when the test pointed at one rather than declaring its rows inline.
 /// A measurement counts what a source reads, and it reads the same bytes whether they arrive over a socket or not.
-std::optional<std::filesystem::path> servedFile(const CreatePhysicalSourceStatement& declaration, const RewriteTarget& target)
+std::optional<std::filesystem::path> servedFile(const Systest::CreatePhysicalSourceStatement& declaration, const RewriteTarget& target)
 {
     const auto* attachedFile = declaration.attached.has_value() ? std::get_if<AttachedFile>(&*declaration.attached) : nullptr;
     if (attachedFile == nullptr or not readsFromSocket(declaration.definition->type->getText()))
@@ -113,7 +113,7 @@ SourceRewriter::SourceRewriter(const RewriteTarget& target, const QualifiedNames
 {
 }
 
-RewrittenSource SourceRewriter::rewrite(ParsedStatement& parsed, const CreatePhysicalSourceStatement& declaration)
+RewrittenSource SourceRewriter::rewrite(ParsedStatement& parsed, const Systest::CreatePhysicalSourceStatement& declaration)
 {
     const auto sourceNumber = ordinal++;
 
@@ -192,16 +192,24 @@ void makeAnonymousSourcePathsAbsolute(
     }
 }
 
-void placeAnonymousSources(const ParsedStatement& parsed, antlr4::TokenStreamRewriter& rewriter, const Host& host)
+void completeAnonymousSources(const ParsedStatement& parsed, antlr4::TokenStreamRewriter& rewriter, const Host& host)
 {
     for (const auto* source : findAll<AntlrSQLParser::AnonymousSourceContext>(parsed.tree()))
     {
-        if (const auto declared = source->parameters->namedConfigExpression();
-            std::ranges::any_of(declared, [](auto* option) { return namesOption(option, Sql::Source, Sql::Host); }))
+        const auto declared = source->parameters->namedConfigExpression();
+        std::vector<std::string> missing;
+        if (not std::ranges::any_of(declared, [](auto* option) { return namesOption(option, Sql::Source, Sql::Host); }))
         {
-            continue;
+            missing.push_back(Sql::option(Sql::Source, Sql::Host, host.view()));
         }
-        rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::option(Sql::Source, Sql::Host, host.view())));
+        if (not std::ranges::any_of(declared, [](auto* option) { return namesOption(option, Sql::InputFormatter, Sql::Type); }))
+        {
+            missing.push_back(Sql::option(Sql::InputFormatter, Sql::Type, Sql::Csv));
+        }
+        if (not missing.empty())
+        {
+            rewriter.insertAfter(source->parameters->getStop(), fmt::format(", {}", Sql::optionList(missing)));
+        }
     }
 }
 

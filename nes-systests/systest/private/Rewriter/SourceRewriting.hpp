@@ -45,7 +45,7 @@ public:
     SourceRewriter(const RewriteTarget& target, const QualifiedNames& names);
 
     /// Builds the physical source statement to submit, plus the CSV to write when the test declared its rows inline.
-    [[nodiscard]] RewrittenSource rewrite(ParsedStatement& parsed, const CreatePhysicalSourceStatement& declaration);
+    [[nodiscard]] RewrittenSource rewrite(ParsedStatement& parsed, const Systest::CreatePhysicalSourceStatement& declaration);
 
 private:
     /// Builds the SET clause of a physical source.
@@ -68,10 +68,11 @@ private:
 void makeAnonymousSourcePathsAbsolute(
     const ParsedStatement& parsed, antlr4::TokenStreamRewriter& rewriter, const std::filesystem::path& testDataDir);
 
-/// Pins a source that is written into a query to the run's source worker.
-/// The coordinator resolves an omitted host to the worker that answers, as the default, and a run placed on a topology answers none, so
-/// such a source would have nowhere to run.
-/// A source that states its own host keeps it.
-void placeAnonymousSources(const ParsedStatement& parsed, antlr4::TokenStreamRewriter& rewriter, const Host& host);
+/// Completes a source that is written into a query with the options that every runnable source needs.
+/// It pins the source to the run's source worker, because the coordinator resolves an omitted host to the worker that
+/// answers, and a run placed on a topology answers none, so such a source would have nowhere to run.
+/// It defaults the input format to CSV, because a source without one is rejected when its descriptor is created.
+/// An option that the test wrote itself stays as written.
+void completeAnonymousSources(const ParsedStatement& parsed, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
 }

@@ -57,7 +57,7 @@ private:
     /// Builds the model statement to submit, pointing at the file that holds the model.
     /// A test gives that path relative to the test data directory, but the worker loading it resolves a relative path against its own
     /// working directory, so the path has to be absolute.
-    [[nodiscard]] RewrittenCreateStatement modelStatement(ParsedStatement& parsed, const CreateModelStatement& declaration) const;
+    [[nodiscard]] RewrittenCreateStatement modelStatement(ParsedStatement& parsed, const Systest::CreateModelStatement& declaration) const;
 
     const RewriteTarget& target;
     QualifiedNames names;

@@ -51,43 +51,6 @@
 namespace NES::Systest
 {
 
-std::filesystem::path
-SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_view testName, const SystestQueryId queryIdInTestFile)
-{
-    auto resultPath = workingDir / "results" / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
-    const auto resultDir = resultPath.parent_path();
-    if (not is_directory(resultDir))
-    {
-        create_directories(resultDir);
-        std::cout << "Created working directory: file://" << resultDir.string() << "\n";
-    }
-
-    return resultPath;
-}
-
-std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& workingDir, std::string_view testName, const uint64_t sourceId)
-{
-    auto sourcePath = workingDir / "sources" / std::filesystem::path(fmt::format("{}_{}.csv", testName, sourceId));
-    const auto sourceDir = sourcePath.parent_path();
-    if (not is_directory(sourceDir))
-    {
-        create_directories(sourceDir);
-        std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
-    }
-
-    return sourcePath;
-}
-
-std::filesystem::path SystestQuery::resultFile() const
-{
-    return resultFile(workingDir, testName, queryIdInFile);
-}
-
-std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
-{
-    return resultFile(workingDir, testName + "differential", queryIdInFile);
-}
-
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
     INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");

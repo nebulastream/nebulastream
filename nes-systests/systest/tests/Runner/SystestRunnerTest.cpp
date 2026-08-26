@@ -94,13 +94,13 @@ NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
     std::optional<std::pair<NES::Systest::TestName, NES::SystestQueryId>> runAfter,
-    NES::SystestQueryId queryId)
+    NES::SystestQueryId queryId,
+    std::optional<std::filesystem::path> resultFile = std::nullopt)
 {
     return NES::Systest::SystestQuery{
         .testName = "test_query",
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
-        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectation = std::move(expected),
@@ -108,7 +108,10 @@ NES::Systest::SystestQuery makeQuery(
         .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .runAfter = std::move(runAfter),
-        .actualExplainOutput = std::nullopt};
+        .actualExplainOutput = std::nullopt,
+        .resultFile = std::move(resultFile),
+        .differentialResultFile = std::nullopt,
+        .inputFiles = {}};
 }
 }
 
@@ -210,8 +213,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, std::nullopt, dummyQueryId)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, std::nullopt, dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -249,7 +251,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
             std::nullopt,
             dummyQueryId)},
@@ -339,27 +341,31 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
+    const auto resultDir = std::filesystem::temp_directory_path();
     auto query1 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         ExpectedRows{},
         std::nullopt,
-        SystestQueryId(1));
+        SystestQueryId(1),
+        resultDir / "systest-runner-test_1.csv");
 
     auto query2 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         ExpectedRows{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
-        SystestQueryId(2));
+        SystestQueryId(2),
+        resultDir / "systest-runner-test_2.csv");
 
     auto query3 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         ExpectedRows{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
-        SystestQueryId(3));
+        SystestQueryId(3),
+        resultDir / "systest-runner-test_3.csv");
 
-    std::ofstream(query1.resultFile()) << "\n";
-    std::ofstream(query2.resultFile()) << "\n";
-    std::ofstream(query3.resultFile()) << "\n";
+    std::ofstream(*query1.resultFile) << "\n";
+    std::ofstream(*query2.resultFile) << "\n";
+    std::ofstream(*query3.resultFile) << "\n";
 
     const auto result = runQueries({query1, query2, query3}, 4, submitter, progressTracker, discardPerformanceMessage);
 

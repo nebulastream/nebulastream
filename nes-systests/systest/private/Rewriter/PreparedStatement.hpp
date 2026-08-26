@@ -26,14 +26,17 @@
 namespace NES
 {
 
+/// The declaration structs are declared beside the other statement model types, because the statement binder
+/// declares same-named types directly in the enclosing namespace and one program must not hold both definitions.
+namespace Systest
+{
+
 /// What a CREATE declares, which decides what the rewriter emits in its place.
 /// Only a physical source takes attached data, so only that alternative holds a field for it.
 struct CreateLogicalSourceStatement
 {
     AntlrSQLParser::CreateLogicalSourceDefinitionContext* definition;
 };
-
-;
 
 struct CreatePhysicalSourceStatement
 {
@@ -42,25 +45,24 @@ struct CreatePhysicalSourceStatement
     std::optional<AttachedData> attached;
 };
 
-;
-
 struct CreateSinkStatement
 {
     AntlrSQLParser::CreateSinkDefinitionContext* definition;
 };
-
-;
 
 struct CreateModelStatement
 {
     AntlrSQLParser::CreateModelDefinitionContext* definition;
 };
 
-;
+}
 
 /// What one CREATE statement declares, classified from its parse tree.
-using ClassifiedCreate
-    = std::variant<CreateLogicalSourceStatement, CreatePhysicalSourceStatement, CreateSinkStatement, CreateModelStatement>;
+using ClassifiedCreate = std::variant<
+    Systest::CreateLogicalSourceStatement,
+    Systest::CreatePhysicalSourceStatement,
+    Systest::CreateSinkStatement,
+    Systest::CreateModelStatement>;
 
 /// One CREATE statement, its parse tree, and what that tree says the statement declares.
 /// A pointer holds the parse, because a parse refers to its own members and cannot be moved.

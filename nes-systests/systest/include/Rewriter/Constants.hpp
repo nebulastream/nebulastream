@@ -35,6 +35,7 @@ constexpr auto Source = "SOURCE";
 constexpr auto Sink = "SINK";
 constexpr auto Query = "QUERY";
 constexpr auto InputFormatter = "INPUT_FORMATTER";
+constexpr auto OutputFormatter = "OUTPUT_FORMATTER";
 
 /// Config keys within the groups.
 constexpr auto FilePath = "FILE_PATH";
@@ -43,6 +44,7 @@ constexpr auto OutputFormat = "OUTPUT_FORMAT";
 constexpr auto Type = "TYPE";
 constexpr auto Name = "NAME";
 constexpr auto Schema = "SCHEMA";
+constexpr auto QuoteStrings = "QUOTE_STRINGS";
 
 /// Format that the rewriter uses when a sink or source chose none.
 constexpr auto Csv = "CSV";
@@ -53,6 +55,11 @@ constexpr auto Json = "JSON";
 /// Sink type that discards its input.
 /// The rewriter recognizes it because such a sink takes no arguments, and produces no result to check.
 constexpr auto Void = "Void";
+
+/// Sink type that writes a checksum over its rows instead of the rows.
+/// The rewriter recognizes it because the expected checksums were computed over quoted strings, so it quotes them
+/// unless the test chose otherwise.
+constexpr auto Checksum = "CHECKSUM";
 
 /// The rewriter recognizes it because a server sends its attached data, and the port is known only once the server binds.
 constexpr auto Tcp = "TCP";
