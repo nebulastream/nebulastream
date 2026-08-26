@@ -58,6 +58,22 @@ template <typename T>
     return rhsDigits;
 }
 
+/// Equality of two equal-length byte runs whose length is a small compile-time constant (the rendered
+/// decimal width of a 64-bit integer, <= 24 = the caller's digit buffer). memcpy-into-words + integer
+/// compares on purpose: memcpy folds to plain loads in the Nautilus JIT, whereas memcmp(...)==0 does
+/// NOT -- LibCallSimplifier only inlines memcmp for <=4 bytes and otherwise emits a `bcmp` call the
+/// JIT's codegen never expands (a per-row libc call). Three uint64 words cover the full 20-digit
+/// UINT64 range; the zero-init tail words fold away when n < 24, narrowing this to ceil(n/8) i64
+/// compares (one i64 for the common <=8-byte field).
+[[gnu::always_inline]] static inline bool wordEqual(const void* a, const void* b, const uint64_t n)
+{
+    uint64_t x[3] = {0, 0, 0};
+    uint64_t y[3] = {0, 0, 0};
+    std::memcpy(x, a, n);
+    std::memcpy(y, b, n);
+    return x[0] == y[0] && x[1] == y[1] && x[2] == y[2];
+}
+
 template <typename T>
 NAUTILUS_TAGGED_INLINE(lazy_overload)
 static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
@@ -65,7 +81,7 @@ static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T r
     char buf[24];
     const char* rhsDigits = renderConstantDigits(buf, rhs);
     const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
-    return lazySize == rhsLen && std::memcmp(lazyPtr, rhsDigits, rhsLen) == 0;
+    return lazySize == rhsLen && wordEqual(lazyPtr, rhsDigits, rhsLen);
 }
 
 template <typename T>

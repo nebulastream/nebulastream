@@ -45,6 +45,18 @@ template <typename T>
     return rhsDigits;
 }
 
+/// memcpy-into-words + integer compare (covers the full 20-digit UINT64 range in <= 3 i64 compares);
+/// see the twin in INTLazyValueRepresentation.cpp for why memcpy, not memcmp==0 (which the Nautilus
+/// JIT leaves as an unexpanded bcmp call for constants wider than 4 bytes).
+[[gnu::always_inline]] static inline bool wordEqual(const void* a, const void* b, const uint64_t n)
+{
+    uint64_t x[3] = {0, 0, 0};
+    uint64_t y[3] = {0, 0, 0};
+    std::memcpy(x, a, n);
+    std::memcpy(y, b, n);
+    return x[0] == y[0] && x[1] == y[1] && x[2] == y[2];
+}
+
 template <typename T>
 NAUTILUS_TAGGED_INLINE(lazy_overload)
 static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
@@ -52,7 +64,7 @@ static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T r
     char buf[24];
     const char* rhsDigits = renderConstantDigits(buf, rhs);
     const auto rhsLen = static_cast<uint64_t>(buf + sizeof(buf) - rhsDigits);
-    return lazySize == rhsLen && std::memcmp(lazyPtr, rhsDigits, rhsLen) == 0;
+    return lazySize == rhsLen && wordEqual(lazyPtr, rhsDigits, rhsLen);
 }
 
 template <typename T>

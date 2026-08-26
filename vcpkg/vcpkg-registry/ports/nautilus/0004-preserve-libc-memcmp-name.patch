@@ -1,0 +1,58 @@
+--- a/nautilus/src/nautilus/llvm-passes/InliningUtils.cpp
++++ b/nautilus/src/nautilus/llvm-passes/InliningUtils.cpp
+@@ -22,6 +22,14 @@
+ 
+ namespace nautilus::passes {
+ 
++// Keep the canonical name of libc compare functions (memcmp / bcmp) that LLVM can
++// fold into inline word compares via ExpandMemCmp / LibCallSimplifier. These must
++// not be address-renamed during bitcode splicing; the JIT resolves them by name
++// against the current process, so a named call to @memcmp still links.
++static bool isFoldableLibcName(llvm::StringRef name) {
++	return name == "memcmp" || name == "bcmp";
++}
++
+ std::string getUUIDString() {
+ 	static std::random_device rd;
+ 	static std::mt19937 gen(rd());
+@@ -101,6 +109,11 @@
+ 	}
+ 
+ 	for (auto& function : wrapperModule->functions()) {
++		// Preserve foldable libc names (memcmp / bcmp): keep the declaration named
++		// and out of the symbol map so LLVM name/TLI-based folding still recognizes it.
++		if (function.isDeclaration() && isFoldableLibcName(function.getName())) {
++			continue;
++		}
+ 		if (&function != clonedTarget && !function.isIntrinsic()) {
+ 			auto originalFunction = dyn_cast<llvm::GlobalValue>(v2vInverted[&function]);
+ 			auto uniqueName = getUniqueName(originalFunction, symbolMap, originalModule);
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMInliningUtils.cpp
+@@ -14,6 +14,14 @@
+ 
+ namespace nautilus::compiler::mlir {
+ 
++// Keep the canonical name of libc compare functions (memcmp / bcmp) that LLVM can
++// fold into inline word compares via ExpandMemCmp / LibCallSimplifier. These must
++// not be hex-renamed during bitcode splicing; the JIT resolves them by name against
++// the current process, so a named call to @memcmp still links.
++static bool isFoldableLibcName(llvm::StringRef name) {
++	return name == "memcmp" || name == "bcmp";
++}
++
+ void* hexToPtr(const llvm::StringRef& hexString) {
+ 	if (hexString.starts_with("0x")) {
+ 		uintptr_t addr;
+@@ -47,6 +55,11 @@
+ 	// rewrite names of function dependencies to runtime addresses for linkage + recursive inlining
+ 	for (auto& func : *moduleOrErr.get()) {
+ 		if (func.isDeclaration() && !func.isIntrinsic()) {
++			// Do not hex-rename foldable libc names (memcmp / bcmp): keep them named so
++			// LLVM folding recognizes them and the JIT resolves them by name at link time.
++			if (isFoldableLibcName(func.getName())) {
++				continue;
++			}
+ 			auto it = InlineFunctionRegistry::instance().getSymbolTable().find(func.getName().str());
+ 			if (it != InlineFunctionRegistry::instance().getSymbolTable().end()) {
+ 				auto hexStr = ptrToHex(it->second);

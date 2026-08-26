@@ -19,6 +19,7 @@ vcpkg_from_github(
 		0001-disable-ubsan-function-call-check.patch
 		0002-add-constant-byte-globals.patch
 		0003-nonvolatile-mem-intrinsics.patch
+		0004-preserve-libc-memcmp-name.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
