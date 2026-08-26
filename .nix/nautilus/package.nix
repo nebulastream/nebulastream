@@ -82,7 +82,7 @@ let
         "-DENABLE_SIMD_PLUGIN=OFF"
         "-DENABLE_STD_PLUGIN=ON"
         "-DENABLE_SPECIALIZATION_PLUGIN=OFF"
-        "-DENABLE_INLINING_PLUGIN=OFF"
+        "-DENABLE_INLINING_PLUGIN=ON"
         "-DENABLE_GPU_PLUGIN=OFF"
         "-DENABLE_TESTS=OFF"
         "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"

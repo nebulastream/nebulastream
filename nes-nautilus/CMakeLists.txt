@@ -19,7 +19,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-schema nes-memory nes-output-formatters)
-
+nautilus_inline(nes-nautilus)
 
 add_tests_if_enabled(tests)
 

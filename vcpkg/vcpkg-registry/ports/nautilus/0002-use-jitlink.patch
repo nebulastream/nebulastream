@@ -1,0 +1,662 @@
+Backport of upstream Nautilus commit 9ee2f9e1ae95884b395e18b747bed03ad1ae7137
+("Port MLIR JIT object linking from RuntimeDyld to JITLink").
+
+diff --git a/docs/options.md b/docs/options.md
+index 89a6afe5..56eb5122 100644
+--- a/docs/options.md
++++ b/docs/options.md
+@@ -42,6 +42,3 @@ See [engine.md](engine.md) for how to create modules and override options per mo
+ | bc.registerAllocator=[true,false]           | true     | Module  | Enables the linear register allocator in the bytecode backend.                                                                                        |
+ | asmjit.enableIntrinsics=[true,false]        | true     | Module  | Registers the AsmJit intrinsic plugins for this compilation.                                                                                          |
+ | asmjit.enablePostRAPeephole=[true,false]    | true     | Module  | Enables post-register-allocation peephole optimizations in the AsmJit backend.                                                                        |
+-
+-> **Note:** The JIT event listeners registered via `Options::addMLIRJitEventListener` are an engine-scoped resource
+-> (their lifetime is tied to the engine) and are inherited by every module.
+diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
+index 54f2d0a6..83c991a4 100644
+--- a/nautilus/include/nautilus/options.hpp
++++ b/nautilus/include/nautilus/options.hpp
+@@ -5,14 +5,6 @@
+ #include <string>
+ #include <unordered_map>
+ #include <variant>
+-#include <vector>
+-
+-// Forward-declared so the Nautilus public header does not pull in LLVM.
+-// Only the MLIR backend dereferences these pointers; if MLIR is disabled,
+-// the list simply stays empty.
+-namespace llvm {
+-class JITEventListener;
+-} // namespace llvm
+ 
+ namespace nautilus::engine {
+ 
+@@ -29,10 +21,9 @@ class ModuleOptions;
+  * `mlir.optimizationLevel`, ...) can be overridden for an individual compiled
+  * module via @ref ModuleOptions, which a module inherits from the engine and
+  * may override. The remaining options (`engine.backend`,
+- * `engine.compilationStrategy`, `engine.tier0/tier1.backend`,
+- * `engine.compilation`, and the JIT event listeners) configure the
+- * engine-owned, built-once compiler and are therefore not overridable per
+- * module.
++ * `engine.compilationStrategy`, `engine.tier0/tier1.backend`, and
++ * `engine.compilation`) configure the engine-owned, built-once compiler and
++ * are therefore not overridable per module.
+  */
+ class EngineOptions {
+ 
+@@ -54,22 +45,9 @@ public:
+ 		return defaultValue;
+ 	}
+ 
+-	// Register a JITEventListener to attach to the MLIR backend's JIT.
+-	// The caller retains ownership; the listener must outlive every
+-	// Executable produced by an Engine configured with this Options.
+-	void addMLIRJitEventListener(llvm::JITEventListener* listener) {
+-		if (listener != nullptr) {
+-			mlir_jit_event_listeners_.push_back(listener);
+-		}
+-	}
+-
+-	const std::vector<llvm::JITEventListener*>& getMLIRJitEventListeners() const {
+-		return mlir_jit_event_listeners_;
+-	}
+-
+ 	/**
+-	 * @brief Apply every option value (and JIT listener) set in @p other on
+-	 * top of this one; values present in @p other win.
++	 * @brief Apply every option value set in @p other on top of this one;
++	 * values present in @p other win.
+ 	 *
+ 	 * Used to layer per-module overrides on top of the engine-wide defaults.
+ 	 */
+@@ -77,14 +55,11 @@ public:
+ 		for (const auto& entry : other.options) {
+ 			options[entry.first] = entry.second;
+ 		}
+-		for (auto* listener : other.mlir_jit_event_listeners_) {
+-			addMLIRJitEventListener(listener);
+-		}
+ 	}
+ 
+ 	/**
+ 	 * @brief Derive a ModuleOptions seeded with all of this engine's option
+-	 * values (and JIT listeners).
++	 * values.
+ 	 *
+ 	 * A module starts from these inherited values and may override the
+ 	 * per-compile subset before compiling. Overriding an engine-only option
+@@ -95,7 +70,6 @@ public:
+ 
+ private:
+ 	std::unordered_map<std::string, OptionValue> options;
+-	std::vector<llvm::JITEventListener*> mlir_jit_event_listeners_;
+ };
+ 
+ /**
+@@ -105,7 +79,7 @@ private:
+  * its values from the engine (see @ref EngineOptions::deriveModuleOptions) and
+  * the caller may override the per-compile subset via setOption() or by passing
+  * an instance to NautilusEngine::createModule(). It derives from EngineOptions
+- * purely so it reuses the same value/listener storage and so every existing
++ * purely so it reuses the same value storage and so every existing
+  * consumer that accepts a `const Options&` transparently accepts module
+  * options.
+  */
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+index 9c4e1b3c..3efc049b 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+@@ -31,7 +31,7 @@ if (ENABLE_MLIR_BACKEND)
+             # LLVM libs for our direct LLJIT build.
+             LLVMOrcJIT
+             LLVMExecutionEngine
+-            LLVMRuntimeDyld                         # SectionMemoryManager
++            LLVMJITLink                            # JITLink-based object linking
+             ${nautilus_llvm_native_libs}
+             # Dialects
+             MLIRMathToLLVM
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index 8e2c1fa2..e9fa1a6a 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -14,7 +14,6 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+                                                        llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                                                        const std::vector<std::string>& jitProxyFunctionSymbols,
+                                                        const std::vector<void*>& jitProxyFunctionTargetAddresses,
+-                                                       const std::vector<llvm::JITEventListener*>& eventListeners,
+                                                        llvm::CodeGenOptLevel codeGenOptLevel) {
+ 
+ 	// Register the translation from MLIR to LLVM IR, which must happen before we
+@@ -25,7 +24,6 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 	MLIRJit::Options jitOptions;
+ 	jitOptions.codeGenOptLevel = codeGenOptLevel;
+ 	jitOptions.transformer = optPipeline;
+-	jitOptions.eventListeners = eventListeners;
+ 
+ 	auto maybeJit = MLIRJit::create(*mlirModule, jitOptions);
+ 	assert(maybeJit && "failed to construct an execution engine");
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+index b0ee19a7..437041f2 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+@@ -2,7 +2,6 @@
+ 
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
+ #include "nautilus/compiler/backends/mlir/jit/MLIRJit.hpp"
+-#include <llvm/ExecutionEngine/JITEventListener.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/Support/CodeGen.h>
+ #include <mlir/IR/BuiltinOps.h>
+@@ -25,7 +24,6 @@ public:
+ 	                 llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+ 	                 const std::vector<std::string>& jitProxyFunctionSymbols,
+ 	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
+-	                 const std::vector<llvm::JITEventListener*>& eventListeners,
+ 	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive);
+ };
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index a7de81ff..518fb422 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -14,7 +14,6 @@
+ #include "nautilus/compiler/ir/IRGraph.hpp"
+ #include <chrono>
+ #include <fstream>
+-#include <llvm/ExecutionEngine/JITEventListener.h>
+ #include <llvm/Support/TargetSelect.h>
+ #include <mlir/Dialect/Arith/IR/Arith.h>
+ #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
+@@ -132,17 +131,6 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	// compiled execute function.
+ 	const auto jitStart = std::chrono::steady_clock::now();
+ 
+-	// Compose event listeners: user-provided plus, when debug is enabled
+-	// with auto-register, LLVM's GDB JIT interface listener.  The GDB
+-	// listener is a stateless process-wide singleton so repeated calls
+-	// are cheap and safe.
+-	std::vector<llvm::JITEventListener*> eventListeners = options.getMLIRJitEventListeners();
+-	if (debugInfo.enable && debugInfo.autoRegisterGdbListener) {
+-		if (auto* gdb = llvm::JITEventListener::createGDBRegistrationListener()) {
+-			eventListeners.push_back(gdb);
+-		}
+-	}
+-
+ 	// With debug info active the IR optimizer is clamped to -O0; match
+ 	// that in the JIT's MC layer at -O1-equivalent (`Less`) so the
+ 	// register allocator does not fold distinct $N SSA values into the
+@@ -150,9 +138,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	// spills every SSA value and confuses LLVM's DWARF asmprinter when
+ 	// dbg.value operands live on the stack rather than in registers.
+ 	const auto jitCodeGenLevel = debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
+-	auto engine =
+-	    JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                  loweringProvider->getJitProxyTargetAddresses(), eventListeners, jitCodeGenLevel);
++	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
++	                                            loweringProvider->getJitProxyTargetAddresses(), jitCodeGenLevel);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+ 		auto result = engine->lookupPacked("execute");
+ 		if (!result) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.cpp b/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.cpp
+index 5dcd8a05..c7c768be 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.cpp
+@@ -43,7 +43,6 @@ DebugInfoOptions debugInfoOptionsFromEngineOptions(const engine::Options& option
+ 	opts.sourceFile = options.getOptionOrDefault<std::string>("mlir.debug.source_file", "");
+ 	opts.producer = options.getOptionOrDefault<std::string>("mlir.debug.producer", "Nautilus JIT");
+ 	opts.dwarfVersion = options.getOptionOrDefault("mlir.debug.dwarf_version", 4);
+-	opts.autoRegisterGdbListener = options.getOptionOrDefault("mlir.debug.auto_register_gdb", true);
+ 
+ 	if (opts.enable && opts.sourceFile.empty()) {
+ 		const std::string ext = (opts.sourceMode == "nautilus-ir") ? "ir" : "mlir";
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.hpp b/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.hpp
+index b6e7dc90..c97aa3d7 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/debug/DebugInfoOptions.hpp
+@@ -30,12 +30,6 @@ struct DebugInfoOptions {
+ 	// DWARF version emitted as an LLVM module flag.  4 is most compatible
+ 	// with older GDBs; LLVM's modern default is 5.
+ 	int dwarfVersion = 4;
+-
+-	// When true, the backend automatically attaches
+-	// llvm::JITEventListener::createGDBRegistrationListener() to the OrcJIT.
+-	// Turn off if you want to manage the listener list yourself via
+-	// engine::Options::addMLIRJitEventListener().
+-	bool autoRegisterGdbListener = true;
+ };
+ 
+ // Build a DebugInfoOptions from the string-keyed engine::Options.
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+index 2c062153..80a092ec 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+@@ -1,10 +1,9 @@
+-
+ #include "nautilus/compiler/backends/mlir/jit/MLIRJit.hpp"
+ #include "nautilus/compiler/backends/mlir/jit/PackFunctionArguments.hpp"
+ #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
+ #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
++#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
+ #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+-#include <llvm/ExecutionEngine/SectionMemoryManager.h>
+ #include <llvm/IR/LLVMContext.h>
+ #include <llvm/Support/Error.h>
+ #include <llvm/TargetParser/Triple.h>
+@@ -23,8 +22,7 @@ llvm::Error makeStringError(const llvm::Twine& message) {
+ 
+ } // namespace
+ 
+-MLIRJit::MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit, llvm::orc::RTDyldObjectLinkingLayer* objectLayer)
+-    : jit_(std::move(jit)), objectLayer_(objectLayer) {
++MLIRJit::MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit) : jit_(std::move(jit)) {
+ }
+ 
+ MLIRJit::~MLIRJit() = default;
+@@ -55,24 +53,14 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 
+ 	detail::packFunctionArguments(llvmModule.get());
+ 
+-	const auto dataLayout = llvmModule->getDataLayout();
+-	const auto targetTriple = llvmModule->getTargetTriple();
+-
+-	// Stash the layer pointer from inside the object-layer creator so we can
+-	// reach it after LLJIT construction for addEventListener().
+-	llvm::orc::RTDyldObjectLinkingLayer* rawLayer = nullptr;
+-
++	// Instantiate a JITLink-based object linking layer. Only machine code with
++	// reliable exception-handling unwind info (personality + LSDA) is linked;
++	// the legacy RuntimeDyld layer cannot relocate these and causes crashes or
++	// misordered cleanups when exceptions cross JIT frames.
+ 	auto objectLinkingLayerCreator =
+-	    [&rawLayer, &options,
+-	     &targetTriple](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
+-		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
+-		    session, [](const llvm::MemoryBuffer&) { return std::make_unique<llvm::SectionMemoryManager>(); });
+-
+-		for (auto* listener : options.eventListeners) {
+-			if (listener != nullptr) {
+-				layer->registerJITEventListener(*listener);
+-			}
+-		}
++	    [&targetTriple = llvmModule->getTargetTriple()](
++	        llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++		auto layer = std::make_unique<llvm::orc::ObjectLinkingLayer>(session);
+ 
+ 		// COFF binaries (Windows) need special handling for exported symbol
+ 		// visibility. Mirrors upstream mlir::ExecutionEngine.
+@@ -81,7 +69,6 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 			layer->setAutoClaimResponsibilityForObjectSymbols(true);
+ 		}
+ 
+-		rawLayer = layer.get();
+ 		return layer;
+ 	};
+ 
+@@ -120,7 +107,8 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+ #endif
+-	auto generatorOrErr = llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(dataLayout.getGlobalPrefix());
++	auto generatorOrErr =
++	    llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(jit->getDataLayout().getGlobalPrefix());
+ #if defined(__GNUC__) && !defined(__clang__)
+ #pragma GCC diagnostic pop
+ #endif
+@@ -137,7 +125,7 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 		}
+ 	}
+ 
+-	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(jit), rawLayer));
++	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(jit)));
+ }
+ 
+ void MLIRJit::registerSymbols(llvm::function_ref<llvm::orc::SymbolMap(llvm::orc::MangleAndInterner)> symbolMapFn) {
+@@ -165,10 +153,4 @@ llvm::Expected<void (*)(void**)> MLIRJit::lookupPacked(llvm::StringRef name) {
+ 	return reinterpret_cast<void (*)(void**)>(*result);
+ }
+ 
+-void MLIRJit::addEventListener(llvm::JITEventListener* listener) {
+-	if (listener != nullptr && objectLayer_ != nullptr) {
+-		objectLayer_->registerJITEventListener(*listener);
+-	}
+-}
+-
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+index bed4e5ef..1109d19f 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+@@ -1,17 +1,14 @@
+ #pragma once
+ 
+ #include <llvm/ADT/STLFunctionalExtras.h>
+-#include <llvm/ExecutionEngine/JITEventListener.h>
+ #include <llvm/ExecutionEngine/Orc/Core.h>
+ #include <llvm/ExecutionEngine/Orc/LLJIT.h>
+ #include <llvm/ExecutionEngine/Orc/Mangling.h>
+-#include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/Support/CodeGen.h>
+ #include <llvm/Support/Error.h>
+ #include <memory>
+ #include <mlir/IR/BuiltinOps.h>
+-#include <vector>
+ 
+ namespace nautilus::compiler::mlir {
+ 
+@@ -19,20 +16,20 @@ namespace nautilus::compiler::mlir {
+  * Nautilus-owned JIT engine for a single compiled MLIR module.
+  *
+  * Replaces mlir::ExecutionEngine so we control the pieces that upstream
+- * hides behind a private LLJIT member: in particular, arbitrary
+- * JITEventListener attachment against the object-linking layer (upstream
+- * exposes only a boolean for the built-in perf/gdb listeners) and direct
+- * access to the underlying LLJIT for extension use.
++ * hides behind a private LLJIT member: in particular, direct access to the
++ * underlying LLJIT for extension use.
++ *
++ * The object linking layer is JITLink-based (ObjectLinkingLayer) rather than
++ * the legacy RuntimeDyld. JITLink is required for correct exception-handling
++ * unwind info relocations (personality & LSDA / .eh_frame entries), without
++ * which C++ exceptions that propagate through JIT-compiled frames crash or
++ * run cleanups in the wrong order.
+  */
+ class MLIRJit {
+ public:
+ 	struct Options {
+ 		llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
+ 		llvm::function_ref<llvm::Error(llvm::Module*)> transformer = nullptr;
+-		// Listeners attached to the object-linking layer before the module is
+-		// materialized. Supports custom profiling (VTune, perf maps, in-process
+-		// callbacks) which upstream mlir::ExecutionEngine disallows.
+-		std::vector<llvm::JITEventListener*> eventListeners;
+ 	};
+ 
+ 	~MLIRJit();
+@@ -48,22 +45,19 @@ public:
+ 	llvm::Expected<void*> lookup(llvm::StringRef name);
+ 	llvm::Expected<void (*)(void**)> lookupPacked(llvm::StringRef name);
+ 
+-	// Escape hatches. Upstream mlir::ExecutionEngine refuses to expose these;
+-	// the reason for this class's existence is that they are public here.
++	// Escape hatch. Upstream mlir::ExecutionEngine refuses to expose its
++	// LLJIT; the reason for this class's existence is that it is public here.
+ 	llvm::orc::LLJIT& getLLJIT() {
+ 		return *jit_;
+ 	}
+ 	llvm::orc::ExecutionSession& getExecutionSession() {
+ 		return jit_->getExecutionSession();
+ 	}
+-	// Attach a listener after construction. The listener must outlive this JIT.
+-	void addEventListener(llvm::JITEventListener* listener);
+ 
+ private:
+-	MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit, llvm::orc::RTDyldObjectLinkingLayer* objectLayer);
++	MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit);
+ 
+ 	std::unique_ptr<llvm::orc::LLJIT> jit_;
+-	llvm::orc::RTDyldObjectLinkingLayer* objectLayer_ = nullptr;
+ };
+ 
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/test/execution-tests/CMakeLists.txt b/nautilus/test/execution-tests/CMakeLists.txt
+index c1cee94d..3c7a4fb4 100644
+--- a/nautilus/test/execution-tests/CMakeLists.txt
++++ b/nautilus/test/execution-tests/CMakeLists.txt
+@@ -18,8 +18,6 @@ set(NAUTILUS_EXECUTION_TEST_SOURCES
+ 
+ if (ENABLE_MLIR_BACKEND)
+     list(APPEND NAUTILUS_EXECUTION_TEST_SOURCES
+-            MLIRJitEventListenerTest.cpp
+-            MLIRJitEventListenerTestFixture.cpp
+             DebugInfoExecutionTest.cpp)
+ endif ()
+ 
+@@ -29,18 +27,6 @@ target_link_libraries(nautilus-execution-tests PUBLIC nautilus Catch2::Catch2Wit
+ if (ENABLE_LOGGING)
+     target_link_libraries(nautilus-execution-tests PRIVATE spdlog::spdlog)
+ endif ()
+-if (ENABLE_MLIR_BACKEND)
+-    # The fixture TU subclasses llvm::JITEventListener. Match how LLVM itself
+-    # is built (-fno-rtti) so the derived vtable does not reference typeinfo
+-    # symbols that the LLVM libs never export. The test TU itself still needs
+-    # RTTI (val<T> uses typeid).
+-    find_package(MLIR QUIET CONFIG)
+-    if (MLIR_INCLUDE_DIRS)
+-        target_include_directories(nautilus-execution-tests SYSTEM PRIVATE ${MLIR_INCLUDE_DIRS})
+-    endif ()
+-    set_source_files_properties(MLIRJitEventListenerTestFixture.cpp
+-            PROPERTIES COMPILE_OPTIONS -fno-rtti)
+-endif ()
+ target_include_directories(nautilus-execution-tests PRIVATE
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../common>
+         $<INSTALL_INTERFACE:src/nautilus/>)
+diff --git a/nautilus/test/execution-tests/MLIRJitEventListenerTest.cpp b/nautilus/test/execution-tests/MLIRJitEventListenerTest.cpp
+deleted file mode 100644
+index 893f1964..00000000
+--- a/nautilus/test/execution-tests/MLIRJitEventListenerTest.cpp
++++ /dev/null
+@@ -1,67 +0,0 @@
+-#include "nautilus/config.hpp"
+-
+-#if defined(ENABLE_TRACING) && defined(ENABLE_MLIR_BACKEND)
+-
+-#include "ExecutionTest.hpp"
+-#include "MLIRJitEventListenerTestFixture.hpp"
+-#include "nautilus/Engine.hpp"
+-#include <catch2/catch_all.hpp>
+-
+-namespace nautilus::engine {
+-
+-namespace {
+-
+-val<int32_t> listenerAddOne(val<int32_t> x) {
+-	return x + 1;
+-}
+-
+-} // namespace
+-
+-TEST_CASE("MLIR JIT event listener receives object-loaded notifications") {
+-	nautilus::testing::CountingJITEventListenerHandle handle;
+-
+-	Options options;
+-	options.setOption("engine.backend", std::string("mlir"));
+-	options.addMLIRJitEventListener(handle.listener());
+-
+-	{
+-		NautilusEngine engine(options);
+-		auto fn = engine.registerFunction(listenerAddOne);
+-		REQUIRE(fn(41) == 42);
+-	}
+-
+-	REQUIRE(handle.numObjectsLoaded() > 0);
+-}
+-
+-TEST_CASE("MLIR JIT event listener: multiple listeners all receive events") {
+-	nautilus::testing::CountingJITEventListenerHandle first;
+-	nautilus::testing::CountingJITEventListenerHandle second;
+-
+-	Options options;
+-	options.setOption("engine.backend", std::string("mlir"));
+-	options.addMLIRJitEventListener(first.listener());
+-	options.addMLIRJitEventListener(second.listener());
+-
+-	{
+-		NautilusEngine engine(options);
+-		auto fn = engine.registerFunction(listenerAddOne);
+-		REQUIRE(fn(0) == 1);
+-	}
+-
+-	REQUIRE(first.numObjectsLoaded() > 0);
+-	REQUIRE(second.numObjectsLoaded() == first.numObjectsLoaded());
+-}
+-
+-TEST_CASE("MLIR JIT event listener: null entries are ignored") {
+-	Options options;
+-	options.setOption("engine.backend", std::string("mlir"));
+-	options.addMLIRJitEventListener(nullptr);
+-
+-	NautilusEngine engine(options);
+-	auto fn = engine.registerFunction(listenerAddOne);
+-	REQUIRE(fn(7) == 8);
+-}
+-
+-} // namespace nautilus::engine
+-
+-#endif // ENABLE_TRACING && ENABLE_MLIR_BACKEND
+diff --git a/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.cpp b/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.cpp
+deleted file mode 100644
+index b52e8755..00000000
+--- a/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.cpp
++++ /dev/null
+@@ -1,54 +0,0 @@
+-// This TU is intentionally built with -fno-rtti (see CMakeLists.txt), matching
+-// how LLVM itself is built. The listener subclass's vtable would otherwise
+-// reference typeinfo symbols that LLVM does not export.
+-
+-#include "MLIRJitEventListenerTestFixture.hpp"
+-
+-#include <atomic>
+-#include <llvm/ExecutionEngine/JITEventListener.h>
+-
+-namespace nautilus::testing {
+-
+-namespace {
+-
+-class CountingJITEventListener : public llvm::JITEventListener {
+-public:
+-	std::atomic<int> num_objects_loaded {0};
+-	std::atomic<int> num_objects_freed {0};
+-
+-	void notifyObjectLoaded(ObjectKey, const llvm::object::ObjectFile&,
+-	                        const llvm::RuntimeDyld::LoadedObjectInfo&) override {
+-		num_objects_loaded.fetch_add(1);
+-	}
+-
+-	void notifyFreeingObject(ObjectKey) override {
+-		num_objects_freed.fetch_add(1);
+-	}
+-};
+-
+-} // namespace
+-
+-struct CountingJITEventListenerHandle::Impl {
+-	CountingJITEventListener listener;
+-};
+-
+-CountingJITEventListenerHandle::CountingJITEventListenerHandle() : impl_(new Impl()) {
+-}
+-
+-CountingJITEventListenerHandle::~CountingJITEventListenerHandle() {
+-	delete impl_;
+-}
+-
+-llvm::JITEventListener* CountingJITEventListenerHandle::listener() const {
+-	return &impl_->listener;
+-}
+-
+-int CountingJITEventListenerHandle::numObjectsLoaded() const {
+-	return impl_->listener.num_objects_loaded.load();
+-}
+-
+-int CountingJITEventListenerHandle::numObjectsFreed() const {
+-	return impl_->listener.num_objects_freed.load();
+-}
+-
+-} // namespace nautilus::testing
+diff --git a/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.hpp b/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.hpp
+deleted file mode 100644
+index d584824e..00000000
+--- a/nautilus/test/execution-tests/MLIRJitEventListenerTestFixture.hpp
++++ /dev/null
+@@ -1,30 +0,0 @@
+-#pragma once
+-
+-namespace llvm {
+-class JITEventListener;
+-} // namespace llvm
+-
+-namespace nautilus::testing {
+-
+-// Owns a JITEventListener subclass that counts object-loaded / freed
+-// notifications. The subclass itself is defined in a separate TU built with
+-// -fno-rtti (to match how LLVM is built); this lets Catch2 tests keep RTTI
+-// enabled for typeid-based val<T> machinery while still poking into LLVM's
+-// listener interface.
+-class CountingJITEventListenerHandle {
+-public:
+-	CountingJITEventListenerHandle();
+-	~CountingJITEventListenerHandle();
+-	CountingJITEventListenerHandle(const CountingJITEventListenerHandle&) = delete;
+-	CountingJITEventListenerHandle& operator=(const CountingJITEventListenerHandle&) = delete;
+-
+-	llvm::JITEventListener* listener() const;
+-	int numObjectsLoaded() const;
+-	int numObjectsFreed() const;
+-
+-private:
+-	struct Impl;
+-	Impl* impl_;
+-};
+-
+-} // namespace nautilus::testing
+diff --git a/nautilus/test/execution-tests/ModuleLifecycleTest.cpp b/nautilus/test/execution-tests/ModuleLifecycleTest.cpp
+index 645cd2c5..a20f11d9 100644
+--- a/nautilus/test/execution-tests/ModuleLifecycleTest.cpp
++++ b/nautilus/test/execution-tests/ModuleLifecycleTest.cpp
+@@ -6,10 +6,6 @@
+ #include <catch2/catch_all.hpp>
+ #include <cstdint>
+ 
+-#if defined(ENABLE_MLIR_BACKEND)
+-#include "MLIRJitEventListenerTestFixture.hpp"
+-#endif
+-
+ namespace nautilus::engine {
+ 
+ namespace {
+@@ -70,43 +66,6 @@ TEST_CASE("Per-module option overrides on a shared engine") {
+ 	REQUIRE(compiledB.getFunction<int64_t(int64_t, int64_t)>("execute")(1, 2) == 3);
+ }
+ 
+-#if defined(ENABLE_MLIR_BACKEND)
+-
+-// With the MLIR backend, a JIT event listener lets us observe that every
+-// object loaded for a dropped module is also freed: the freed count converges
+-// to the loaded count once all modules have been destroyed, proving JIT memory
+-// is reclaimed per module while the engine lives on.
+-TEST_CASE("MLIR: dropped modules free their JIT objects on a shared engine") {
+-	nautilus::testing::CountingJITEventListenerHandle handle;
+-
+-	Options options;
+-	options.setOption("engine.backend", std::string("mlir"));
+-	options.addMLIRJitEventListener(handle.listener());
+-
+-	NautilusEngine engine(options);
+-
+-	constexpr int iterations = 50;
+-	for (int i = 0; i < iterations; ++i) {
+-		auto module = engine.createModule();
+-		module.registerFunction("execute", lifecycleAddOne);
+-		auto compiled = module.compile();
+-		REQUIRE(compiled.getFunction<int32_t(int32_t)>("execute")(i) == i + 1);
+-	}
+-
+-	// Every loaded object belongs to a module that has now been dropped, so all
+-	// of them must have been freed.
+-	REQUIRE(handle.numObjectsLoaded() > 0);
+-	REQUIRE(handle.numObjectsFreed() == handle.numObjectsLoaded());
+-
+-	// The engine is still usable after all modules were freed.
+-	auto module = engine.createModule();
+-	module.registerFunction("execute", lifecycleAddOne);
+-	auto compiled = module.compile();
+-	REQUIRE(compiled.getFunction<int32_t(int32_t)>("execute")(100) == 101);
+-}
+-
+-#endif // ENABLE_MLIR_BACKEND
+-
+ } // namespace nautilus::engine
+ 
+ #endif // ENABLE_TRACING
