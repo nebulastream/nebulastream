@@ -13,4 +13,5 @@
 add_source_files(nes-systest-lib
         SystestParser.cpp
         TestFileBuilder.cpp
+        TestFilePartition.cpp
 )

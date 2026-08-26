@@ -124,7 +124,8 @@ void TCPDataServer::handleConnection(const std::shared_ptr<tcp::socket>& socket,
             catch (const std::exception&)
             {
                 boost::system::error_code boostErrorCode;
-                INVARIANT(socket->close(boostErrorCode), "Failed to close socket of TCPDataServer: {}", boostErrorCode.message());
+                const auto closeResult = socket->close(boostErrorCode);
+                INVARIANT(not closeResult.failed(), "Failed to close socket of TCPDataServer: {}", closeResult.message());
             }
         });
 }
