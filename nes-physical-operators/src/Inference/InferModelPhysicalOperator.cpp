@@ -45,8 +45,8 @@
 namespace NES::detail
 {
 
-/// Per-operator pool of IREE sessions, one per worker thread. Owns the
-/// compiled model (for deferred init at setup) and the thread-local session
+/// Per-operator pool of inference runtimes, one per worker thread. Owns the
+/// compiled model (for deferred init at setup) and the thread-local runtime
 /// vector.
 struct ThreadLocalRuntimeWrapper
 {

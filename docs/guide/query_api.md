@@ -664,7 +664,11 @@ OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
 
 - The `INPUT` fields must match the model's input tensor shape and types. Each field maps to one element of the input tensor.
 - The `OUTPUT` fields must match the model's output tensor shape and types.
-- Only `.onnx` model files are supported. Models are compiled to IREE bytecode at first use.
+- The following model formats are supported:
+    - ONNX
+    - TensorFlow (TF frozen graph / graph text, SavedModel, MetaGraph)
+    - LiteRT (formerly TFLite)
+    - PaddlePaddle
 - Only `FLOAT32` tensor element types are currently supported.
 
 **Using a model in a query:**
@@ -694,7 +698,7 @@ When the model input is defined as `VARSIZED`, a single binary blob (e.g., raw t
 SELECT * FROM MODEL_INFERENCE(model_b, MODEL_INFERENCE(model_a, stream)) INTO result;
 ```
 
-💡 `MODEL_INFERENCE` requires the IREE runtime library and the IREE compiler tools (`iree-import-onnx`, `iree-compile`) to be installed. If the tools are not available, model compilation will fail at query time.
+💡 `CREATE MODEL` requires the OpenVINO model converter (`ovc`) to be installed on the process that handles the statement. If it is not available, model registration will fail.
 
 ---
 ## Functions

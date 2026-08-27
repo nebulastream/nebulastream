@@ -1,0 +1,23 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -163,5 +163,7 @@ endif()
+ endif()
+
+ include(cmake/extra_modules.cmake)
+-add_subdirectory(docs)
++if(ENABLE_DOCS)
++    add_subdirectory(docs)
++endif()
+ add_subdirectory(tools)
+diff --git a/cmake/extra_modules.cmake b/cmake/extra_modules.cmake
+--- a/cmake/extra_modules.cmake
++++ b/cmake/extra_modules.cmake
+@@ -141,6 +141,6 @@
+     # add template plugin
+     if(ENABLE_TEMPLATE)
+         list(APPEND extra_modules "${OpenVINO_SOURCE_DIR}/src/plugins/template")
++        list(APPEND extra_modules "${OpenVINO_SOURCE_DIR}/src/core/template_extension")
+     endif()
+-    list(APPEND extra_modules "${OpenVINO_SOURCE_DIR}/src/core/template_extension")
+

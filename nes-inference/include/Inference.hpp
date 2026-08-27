@@ -33,7 +33,7 @@ struct CompileError
     std::string message;
 };
 
-/// Import a model from a file. Only ONNX is supported.
+/// Import a model from a file.
 std::expected<ImportedModel, ImportError> importModel(const std::filesystem::path& modelPath);
 
 /// Compile a previously imported model so it can be executed by the runtime.
