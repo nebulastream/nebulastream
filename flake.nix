@@ -490,6 +490,7 @@
               pkgs.gnugrep
               pkgs.gawk
               pkgs.python3
+              pkgs.rustfmt
               pkgs.util-linux
             ]
             ++ llvmTools;
