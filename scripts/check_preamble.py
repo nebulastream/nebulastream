@@ -80,6 +80,12 @@ INGORED_ENDINGS = {
     "nes",
     "jsonl",
     "onnx",
+    "pb",
+    "pbtxt",
+    "meta",
+    "tflite",
+    "pdmodel",
+    "pdiparams",
     "gitkeep",
     "gitattributes",
     "html",
@@ -87,6 +93,10 @@ INGORED_ENDINGS = {
 }
 
 VENDORED_FILES = {
+    # TensorFlow SavedModel checkpoint shards have no usable suffix (`.index`,
+    # `.data-00000-of-00001`); they are binary fixtures for ModelLoaderTest.
+    "nes-inference/tests/testdata/tiny_savedmodel/variables/variables.index",
+    "nes-inference/tests/testdata/tiny_savedmodel/variables/variables.data-00000-of-00001",
     "cmake/CodeCoverage.cmake",
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew",
     "nes-systests/utils/SystestPlugin/NES-Systest-Runner/gradlew.bat",
