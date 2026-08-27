@@ -41,6 +41,8 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
     PRECONDITION(logicalOperator.tryGetAs<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
 
     const auto unionOp = logicalOperator.getAs<UnionLogicalOperator>();
+    const auto unionChildren = unionOp.getChildren();
+    INVARIANT(unionChildren.size() >= 2, "Union must have at least two children before physical lowering, got {}", unionChildren.size());
 
     const auto traitSet = unionOp->getTraitSet();
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
@@ -49,7 +51,7 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
 
     const auto outputSchema = createPhysicalOutputSchema(traitSet);
 
-    auto renames = unionOp.getChildren()
+    auto renames = unionChildren
         | std::views::transform(
                        [&](const auto& childOperator)
                        {
