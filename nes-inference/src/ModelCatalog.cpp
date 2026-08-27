@@ -85,48 +85,32 @@ void ModelCatalog::registerModel(std::string name, std::filesystem::path path, M
     validateSide(schema.outputs, imported->getOutputShape(), "output");
 
     auto registered = RegisteredModel{name, std::move(path), std::move(*imported), std::move(schema)};
-    entries.insert_or_assign(std::move(name), std::move(registered));
+    catalog.registerEntry(std::move(name), std::move(registered));
 }
 
 void ModelCatalog::removeModel(const std::string& modelName)
 {
-    entries.erase(modelName);
+    catalog.removeEntry(modelName);
 }
 
 bool ModelCatalog::hasModel(const std::string& modelName) const
 {
-    return entries.contains(modelName);
+    return catalog.hasEntry(modelName);
 }
 
 std::vector<std::string> ModelCatalog::getModelNames() const
 {
-    std::vector<std::string> names;
-    names.reserve(entries.size());
-    for (const auto& [name, _] : entries)
-    {
-        names.push_back(name);
-    }
-    return names;
+    return catalog.getNames();
 }
 
 std::vector<RegisteredModel> ModelCatalog::getRegisteredModels() const
 {
-    std::vector<RegisteredModel> models;
-    models.reserve(entries.size());
-    for (const auto& [_, model] : entries)
-    {
-        models.push_back(model);
-    }
-    return models;
+    return catalog.getEntries();
 }
 
 RegisteredModel ModelCatalog::load(const std::string& modelName) const
 {
-    if (auto it = entries.find(modelName); it != entries.end())
-    {
-        return it->second;
-    }
-    throw UnknownModelName("Model '{}' was never registered", modelName);
+    return catalog.load(modelName, [&] { return NES::UnknownModelName("Model '{}' was never registered", modelName); });
 }
 
 }

@@ -35,6 +35,21 @@ target_link_libraries(nes-single-node-worker-lib
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
+
+# UdfBridgeRegistry resolves LANGUAGE clauses to <worker executable dir>/nes-udf-bridges/<file> at
+# runtime; stage the built bridge there via symlink (mirrors the systest staging in
+# nes-systests/systest/CMakeLists.txt). nes-udf/bridge (configured after this dir) declares the
+# nes-python-udf-bridge target and the add_dependencies on it; add_custom_command(TARGET ...) must
+# be called from the directory that created nes-single-node-worker, so this independently re-checks
+# for Python's embed dev files rather than testing `if (TARGET nes-python-udf-bridge)`, which would
+# not yet exist at this point in the configure order.
+find_package(Python3 COMPONENTS Development.Embed QUIET)
+if (Python3_FOUND)
+    add_custom_command(TARGET nes-single-node-worker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-python-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-python-udf-bridge>")
+endif ()
+
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test

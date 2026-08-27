@@ -16,13 +16,13 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/NamedCatalog.hpp>
 #include <Util/Reflection.hpp>
 #include <Model.hpp>
 
@@ -96,10 +96,13 @@ struct Unreflector<RegisteredModel>
 
 /// Manages model registration and stores imported model bodies keyed by name.
 /// Compilation to executable bytecode is deferred until worker-side lowering.
-/// Not thread-safe — concurrent access requires external synchronization.
+///
+/// Storage/lookup is delegated to the generic NamedCatalog; this class owns only
+/// the model-specific registration validation (see ModelCatalog.cpp), mirroring
+/// UdfCatalog. Not thread-safe — concurrent access requires external synchronization.
 class ModelCatalog
 {
-    std::unordered_map<std::string, RegisteredModel> entries;
+    NamedCatalog<RegisteredModel> catalog;
 
 public:
     void registerModel(std::string name, std::filesystem::path path, ModelSchema schema);

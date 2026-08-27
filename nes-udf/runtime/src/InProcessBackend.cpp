@@ -129,10 +129,11 @@ InProcessBackend::~InProcessBackend()
     {
         reinterpret_cast<CleanupUdfFn>(cleanupFn)(udfHandle);
     }
-    if (libHandle != nullptr)
-    {
-        dlclose(libHandle);
-    }
+    /// Deliberately never dlclose(libHandle): a language bridge (e.g. the Python one) may initialize a
+    /// heavyweight embedded runtime once per process (Py_InitializeEx) and never finalize it. Unmapping
+    /// such a .so while that runtime's global/thread-state is still live crashes at process exit (the
+    /// runtime's own atexit/cleanup machinery dereferences code/data that dlclose just unmapped). The OS
+    /// reclaims the mapping on normal process exit, so leaking the handle here is intentional.
 }
 
 void InProcessBackend::invokeUdf(

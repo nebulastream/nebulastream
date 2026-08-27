@@ -159,8 +159,8 @@ TEST_F(UdfCatalogTest, DescriptorSurvivesReflectionRoundTrip)
         "to_euro", libPath, "currency.to_euro", {dt(DataType::Type::FLOAT64), dt(DataType::Type::VARSIZED)}, dt(DataType::Type::FLOAT64));
     const auto original = catalog.load("to_euro");
 
-    const Reflected reflected = Reflector<UdfDescriptor>{}(original);
     const ReflectionContext context;
+    const Reflected reflected = context.reflect(original);
     const auto roundTripped = context.unreflect<UdfDescriptor>(reflected);
 
     EXPECT_EQ(original, roundTripped);

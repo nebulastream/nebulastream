@@ -24,14 +24,11 @@ if (TARGET Python3::Python)
     endif ()
     # UdfBridgeRegistry resolves LANGUAGE clauses to <worker executable dir>/nes-udf-bridges/<file> at
     # runtime, so the worker needs the bridge built alongside it too, and installed to that fixed
-    # relative location (see the install() rule below). The nes-worker Docker image (see
-    # cmake/PackageDockerImages.cmake) COPYs this same build-tree-relative nes-udf-bridges/ directory,
-    # so stage the bridge there via symlink, mirroring the systest staging above.
+    # relative location (see the install() rule below and nes-single-node-worker/CMakeLists.txt,
+    # which stages it via symlink -- add_custom_command(TARGET ...) must be called from the same
+    # directory that created the target, so the staging step itself can't live here).
     if (TARGET nes-single-node-worker)
         add_dependencies(nes-single-node-worker nes-python-udf-bridge)
-        add_custom_command(TARGET nes-single-node-worker POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
-                COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-python-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-python-udf-bridge>")
     endif ()
     install(TARGETS nes-python-udf-bridge
             RUNTIME DESTINATION bin/nes-udf-bridges
