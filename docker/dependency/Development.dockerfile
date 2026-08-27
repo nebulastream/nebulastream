@@ -114,6 +114,12 @@ RUN python3 -m venv /opt/iree && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     iree-compile --version
 
+# Install PyPy for the PyPy-backed UDF bridge (nes-udf/bridge-pypy). Optional and auto-detected via
+# find_program(pypy3), same as IREE above -- absence just disables the feature, nothing fails.
+RUN apt-get update && apt-get install -y pypy3-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    pypy3 --version
+
 # Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
 # container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
 # first and only uses CORROSION_SRC when the probe fails. Tracks the nebulastream fork that

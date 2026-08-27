@@ -32,3 +32,8 @@ RUN apt-get update && apt-get install -y python3 python3-venv && \
     ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
     ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
     apt clean && rm -rf /var/lib/apt/lists/*
+
+# Runtime library for the PyPy-backed UDF bridge (nes-udf/bridge-pypy); see Development.dockerfile
+# for the build-time pypy3-dev install.
+RUN apt-get update && apt-get install -y pypy3 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*

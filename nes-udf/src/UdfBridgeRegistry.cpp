@@ -31,6 +31,7 @@ namespace
 /// UdfCatalog::registerUdf's existing check -- not this table.
 const std::unordered_map<std::string_view, std::string_view> kBuiltinBridges{
     {"python", "libnes-python-udf-bridge.so"},
+    {"pypy", "libnes-pypy-udf-bridge.so"},
 };
 }
 

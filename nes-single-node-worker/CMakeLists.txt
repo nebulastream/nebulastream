@@ -50,6 +50,16 @@ if (Python3_FOUND)
             COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-python-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-python-udf-bridge>")
 endif ()
 
+# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
+# the same reason as the Python3 check above.
+include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
+nes_find_pypy()
+if (NES_PYPY_FOUND)
+    add_custom_command(TARGET nes-single-node-worker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
+endif ()
+
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test

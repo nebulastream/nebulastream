@@ -21,5 +21,6 @@ target_link_libraries(nes-udf PUBLIC nes-data-types PRIVATE nes-common)
 
 add_subdirectory(runtime)
 add_subdirectory(bridge)
+add_subdirectory(bridge-pypy)
 
 add_tests_if_enabled(tests)

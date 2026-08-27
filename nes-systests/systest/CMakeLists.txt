@@ -81,6 +81,16 @@ if (Python3_FOUND)
             COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-python-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-python-udf-bridge>")
 endif ()
 
+# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
+# the same reason as the Python3 check above.
+include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
+nes_find_pypy()
+if (NES_PYPY_FOUND)
+    add_custom_command(TARGET systest POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
+endif ()
+
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)
     set(sliceCacheValues false true)
@@ -101,6 +111,11 @@ endif ()
 if (NOT Python3_FOUND)
     list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdf)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdf)
+endif ()
+# The PyPyUdf group needs the PyPy bridge; skip it where pypy3 is absent.
+if (NOT NES_PYPY_FOUND)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PyPyUdf)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PyPyUdf)
 endif ()
 
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an
