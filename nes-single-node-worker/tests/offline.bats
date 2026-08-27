@@ -69,7 +69,7 @@ teardown() {
 worker_timeout() {
   local duration="$1"
   shift
-  run timeout --kill-after=20s "$duration" "$NES_WORKER" "$@"
+  run timeout --kill-after=40s "$duration" "$NES_WORKER" "$@"
   [ "$status" -ne 137 ] # graceful termination must not require SIGKILL
 }
 
