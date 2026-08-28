@@ -25,6 +25,18 @@ teardown()      { nes_distributed_teardown; }
   [ "$status" -eq 0 ]
 }
 
+#bats test_tags=IREE
+@test "launch model inference query from topology" {
+  setup_distributed tests/good/infer-model.yaml
+
+  run docker_nes_cli -t tests/good/infer-model.yaml start
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
+  query_id=$output
+
+  wait_until_status tests/good/infer-model.yaml Stopped "$query_id"
+}
+
 @test "launch multiple query from topology" {
   setup_distributed tests/good/multiple-select-gen-into-void.yaml
 
