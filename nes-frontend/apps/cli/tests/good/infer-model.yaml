@@ -12,7 +12,7 @@
 
 query: |
   SELECT *
-  FROM stream
+  FROM MODEL_INFERENCE(iris, stream)
   INTO VOID_SINK
 
 models:
@@ -30,14 +30,12 @@ sinks:
   - name: VOID_SINK
     host: worker-1:8080
     schema:
+      - name: id
+        type: UINT64
       - name: p1
-        type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
+        type: VARSIZED
+      - name: o1
+        type: VARSIZED
     type: Void
     config: { }
     parser_config: { }
@@ -45,14 +43,10 @@ sinks:
 logical:
   - name: stream
     schema:
+      - name: id
+        type: UINT64
       - name: p1
-        type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
+        type: VARSIZED
 
 physical:
   - logical: stream
@@ -67,10 +61,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        NORMAL_DISTRIBUTION FLOAT32 0 1
-        NORMAL_DISTRIBUTION FLOAT32 0 1
-        NORMAL_DISTRIBUTION FLOAT32 0 1
-        NORMAL_DISTRIBUTION FLOAT32 0 1
+        SEQUENCE UINT64 0 1 1
+        RANDOMSTR 400 400
 
 workers:
   - host: worker-1:8080
