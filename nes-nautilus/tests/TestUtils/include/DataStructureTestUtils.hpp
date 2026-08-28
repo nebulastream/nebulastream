@@ -23,6 +23,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -53,6 +54,9 @@ enum class EngineMode : std::uint8_t
 
 /// Builds a NautilusEngine configured for either interpreted or compiled execution (mlir/legacy backend).
 nautilus::engine::NautilusEngine makeEngine(EngineMode mode);
+
+/// Builds a NautilusEngine with the selected trace mode and optionally enables tracing/MLIR dumps.
+nautilus::engine::NautilusEngine makeEngine(EngineMode mode, std::string_view traceMode, bool dumpAfterTracing);
 
 /// Cap upfront pool allocation so a large buffer size doesn't allocate gigabytes.
 constexpr uint64_t MAX_POOL_BYTES = 64ULL * 1024 * 1024;

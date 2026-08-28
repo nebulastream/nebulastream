@@ -62,13 +62,24 @@ std::shared_ptr<BufferManager> createBufferManager(const uint64_t bufferSize, co
         std::make_shared<NesDefaultMemoryAllocator>());
 }
 
-nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
+nautilus::engine::NautilusEngine makeEngine(const EngineMode mode)
+{
+    return makeEngine(mode, {}, false);
+}
+
+nautilus::engine::NautilusEngine makeEngine(const EngineMode mode, const std::string_view traceMode, const bool dumpAfterTracing)
 {
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", mode == EngineMode::Compiler);
-    options.setOption("engine.backend", std::string("mlir"));
-    options.setOption("engine.compilationStrategy", std::string("legacy"));
+    options.setOption("engine.backend", std::string{"mlir"});
+    options.setOption("engine.compilationStrategy", std::string{"legacy"});
     options.setOption("mlir.enableMultithreading", false);
+    if (!traceMode.empty())
+    {
+        options.setOption("engine.traceMode", std::string{traceMode});
+    }
+    options.setOption("dump.after_tracing", dumpAfterTracing);
+    options.setOption("dump.after_mlir_generation", dumpAfterTracing);
     return {options};
 }
 
