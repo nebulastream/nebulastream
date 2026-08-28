@@ -1,8 +1,3 @@
----
-title: "Extensibility, Plugins, and Registries"
-weight: 40
----
-
 # On Extensibility, Plugins, and Registries in NebulaStream
 At NebulaStream, we aim to make the system as extensible as reasonably possible.
 This approach follows the open-closed principle, meaning the system should be open to extension, but closed to modification.
@@ -77,7 +72,7 @@ add_registry_entry(PhysicalFunction Sub)
 Internal plugins compile their sources directly into the component's library (via
 `add_source_files`) and only differ from optional plugins in where the sources live.
 
-# Registries
+## Registries
 Registries are runtime factories for registered plugins (see `nes-common/include/Util/RuntimeRegistry.hpp`
 and `cmake/RuntimeRegistrationUtil.cmake`). Each extensible component has a `registry/include`
 directory with the registry headers — e.g., `SourceRegistry.hpp`:
