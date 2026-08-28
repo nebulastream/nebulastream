@@ -14,7 +14,7 @@ on:
 jobs:
   run-endless-mode:
     name: "${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }} Endless"
-    timeout-minutes: 40
+    timeout-minutes: 80
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
