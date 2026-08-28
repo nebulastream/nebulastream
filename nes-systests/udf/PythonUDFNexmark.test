@@ -1,0 +1,60 @@
+# name: udf/PythonUDFNexmark.test
+# description: scalar UDF applied to the price field of real Nexmark bid datasets, through both
+# Python bridges (BRIDGE 'cpython' and BRIDGE 'pypy'), both executing the same currency.apply_discount
+# function. Small-scale (bid_modified_100K.csv, 4445 rows) filters on base columns (auctionId/bidder/
+# price) -- PredicatePushdownRule pushes that below the UDF projection, so only the matching rows ever
+# reach the UDF, which is fine here since this block is just a correctness check.
+# Large-scale (bid_653M.csv) filters on discountedPrice (the UDF's own output) instead, via a subquery.
+# A field computed by a projection is never pushable, and since the WHERE is one top-level OR (not AND,
+# the only connective splitPredicate decomposes), the whole predicate stays above the projection -- so
+# the UDF genuinely runs on every row before any filtering happens, exercising PyPy's warm-up ->
+# steady-state JIT transition on the full file instead of on 1-2 rows.
+# groups: [PythonUdf, PyPyUdf, large]
+
+CREATE LOGICAL SOURCE bidModified100K(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
+CREATE PHYSICAL SOURCE FOR bidModified100K TYPE File;
+ATTACH FILE small/nexmark/bid_modified_100K.csv
+
+# CPython bridge small scale
+CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'currency.apply_discount';
+
+SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidModified100K
+WHERE (auctionId = 0 AND bidder = 0 AND price = 117.0) OR (auctionId = 1 AND bidder = 0 AND price = 208.0)
+INTO FILE();
+----
+0,0,105.3
+1,0,187.2
+
+# PyPy bridge, same query, same expected result
+CREATE FUNCTION discount_price_pypy (price FLOAT64) RETURNS FLOAT64 BRIDGE 'pypy' ENTRYPOINT 'currency.apply_discount';
+
+SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidModified100K
+WHERE (auctionId = 0 AND bidder = 0 AND price = 117.0) OR (auctionId = 1 AND bidder = 0 AND price = 208.0)
+INTO FILE();
+----
+0,0,105.3
+1,0,187.2
+
+# Large scale nexmark with udf tests
+CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+# CPython bridge, large-scale -- filter is on discountedPrice (post-UDF), not price, so it can't be
+# pushed below the projection: the UDF runs on every row of bidLarge first.
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# PyPy bridge, large-scale -- same reasoning
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0

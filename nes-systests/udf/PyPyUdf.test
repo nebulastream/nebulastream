@@ -1,9 +1,9 @@
 # name: udf/PyPyUdf.test
-# description: scalar UDFs registered via LANGUAGE 'pypy' -- same currency.py, same NES_UDF_PATH,
-# same UdfAbi.h contract as the PythonUdf group, just resolved to the PyPy bridge instead of CPython's.
+# description: scalar UDFs registered via BRIDGE 'pypy'. Same currency.py, NES_UDF_PATH, and UdfAbi.h
+# contract as the PythonUdf group, resolved to the PyPy bridge instead of CPython's.
 # groups: [PyPyUdf]
 
-# --- PyPy UDF via LANGUAGE, no FROM: the bridge path is auto-resolved ---
+# --- PyPy UDF via BRIDGE, no FROM: the bridge path is auto-resolved ---
 CREATE LOGICAL SOURCE nums(a INT64 NOT NULL, b INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR nums TYPE File;
 ATTACH INLINE
@@ -11,7 +11,7 @@ ATTACH INLINE
 10,20
 100,200
 
-CREATE FUNCTION add_pypy (a INT64, b INT64) RETURNS INT64 LANGUAGE 'pypy' ENTRYPOINT 'currency.add';
+CREATE FUNCTION add_pypy (a INT64, b INT64) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'currency.add';
 
 SELECT a, b, add_pypy(a, b) AS c FROM nums INTO FILE();
 ----
@@ -19,7 +19,7 @@ SELECT a, b, add_pypy(a, b) AS c FROM nums INTO FILE();
 10,20,30
 100,200,300
 
-# --- A PyPy-resolved UDF that raises still fails the query with the UDF error code; the worker
+# --- A BRIDGE-resolved UDF that raises still fails the query with the UDF error code; the worker
 # survives -- proving containment is unaffected by which bridge/interpreter is behind the ABI ---
 CREATE LOGICAL SOURCE ints(x INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR ints TYPE File;
@@ -27,7 +27,7 @@ ATTACH INLINE
 1
 2
 
-CREATE FUNCTION boom_pypy (x INT64) RETURNS INT64 LANGUAGE 'pypy' ENTRYPOINT 'currency.boom';
+CREATE FUNCTION boom_pypy (x INT64) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'currency.boom';
 
 SELECT boom_pypy(x) AS y FROM ints INTO FILE();
 ----

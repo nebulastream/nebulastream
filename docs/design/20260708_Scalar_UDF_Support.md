@@ -304,24 +304,24 @@ OQ3: Error semantics — v1 fails the *query* on a UDF error; do we also want an
 
 OQ4: Where does `dlopen` run — lowering is assumed worker-side (like model compilation); confirm the `.so` path resolves on the worker in all deployment topologies.
 
-OQ5: Interpreter choice per UDF — v1 ships exactly one Python bridge (CPython). See "Extension — Alternative Interpreter Backend (PyPy)" below for a second bridge selectable via `LANGUAGE`, and whether/when it should graduate from an opt-in alternative to a default recommendation.
+OQ5: Interpreter choice per UDF — v1 ships exactly one Python bridge (CPython). See "Extension — Alternative Interpreter Backend (PyPy)" below for a second bridge selectable via `BRIDGE`, and whether/when it should graduate from an opt-in alternative to a default recommendation.
 
 # Extension — Alternative Interpreter Backend (PyPy)
 
-v1 embeds CPython, a pure bytecode interpreter: every `execute_udf_row` call re-interprets the UDF's bytecode from scratch (see the per-tuple trace in `PythonUdfBridge.cpp`). For a short-lived query this is fine — it's already at steady-state cost on the first call. For a long-running continuous query invoking the same UDF once per tuple, potentially indefinitely, this is exactly the shape a *tracing* JIT wants: a hot function called enormously many times with stable argument types (fixed by the SQL schema). PyPy is a from-scratch alternative Python implementation whose JIT does exactly this — interpret until a function crosses a hotness threshold, then trace and compile that path to native code, with runtime guards that can fall back to interpretation if an assumption breaks.
+v1 embeds CPython, a pure bytecode interpreter: `execute_udf_row` re-interprets the UDF's bytecode on every call (see the per-tuple trace in `CPythonUdfBridge.cpp`). That's fine for a short query — it's already at steady-state cost on call one. For a long-running continuous query calling the same UDF once per tuple, it's exactly what a *tracing* JIT wants: a hot function, called many times, with stable argument types (fixed by the SQL schema). PyPy's JIT does this — interpret until a function crosses a hotness threshold, then compile that path to native code, with guards that fall back to interpretation if an assumption breaks.
 
-**Important correctness note** (see also the discussion at the top of this section): this is not "fully compiled, no interpretation." It is warm-up (interpreted) followed by steady-state (compiled, guarded) — a real per-call cost reduction for a long-running query, not a categorical elimination of interpretation.
+**Note**: not "fully compiled, no interpretation" — warm-up (interpreted), then steady-state (compiled, guarded). A real per-call win for a long-running query, not a categorical one.
 
 ## How it fits the existing design
 
-`UdfBackend` and the bridge-`.so` boundary were already designed to be language-agnostic (`G2`) — a PyPy bridge is a **second sibling bridge `.so`**, not a new component in the engine. Concretely:
+`UdfBackend` and the bridge-`.so` boundary are already language-agnostic (`G2`) — a PyPy bridge is a second sibling `.so`, not a new engine component:
 - `UdfCatalog`, `UDFResolutionRule`, `UDFCallLogicalFunction`, `UDFPhysicalFunction`, `InProcessBackend` — **unchanged**. They only ever see a `.so` path and the fixed three-symbol ABI (`UdfAbi.h`); which interpreter lives behind it is invisible to all of them.
-- The only new wiring is a `UdfBridgeRegistry::kBuiltinBridges` entry (`nes-udf/src/UdfBridgeRegistry.cpp`) mapping `LANGUAGE 'pypy'` to a second shipped path, `libnes-pypy-udf-bridge.so`.
-- Because selection is per-`CREATE FUNCTION` via `LANGUAGE`, the same logical UDF can be registered twice (once per bridge) and benchmarked side by side with zero engine changes — the two bridges are meant to coexist, not replace one another.
+- The only new wiring is a `UdfBridgeRegistry::kBuiltinBridges` entry (`nes-udf/src/UdfBridgeRegistry.cpp`) mapping `BRIDGE 'pypy'` to a second shipped path, `libnes-pypy-udf-bridge.so`.
+- Selection is per-`CREATE FUNCTION` via `BRIDGE`, so the same logical UDF can be registered twice (once per bridge) and benchmarked side by side with no engine changes.
 
 ## Embedding mechanism differs from CPython
 
-CPython is embedded directly via its C API (`Py_InitializeEx`, `PyImport_ImportModule`, `PyObject_CallObject`, as `PythonUdfBridge.cpp` does today). PyPy does **not** implement that API for hosting purposes — `cpyext` is for loading C extensions *into* PyPy, not the reverse. PyPy's supported embedding path is `cffi`'s **embedding mode**: ordinary Python (no RPython restriction — RPython is only the language PyPy's own interpreter/JIT is implemented in, irrelevant to user/glue code) decorated with `@ffi.def_extern()`, ahead-of-time compiled by PyPy's own tooling into a standalone `.so` exporting whatever C functions were declared. The same recipe produces a CPython-backed or PyPy-backed embeddable `.so` depending only on whether the generation step is run with `python` or `pypy3` — the mechanism is interpreter-agnostic, only the runtime underneath differs.
+CPython is embedded directly via its C API (`Py_InitializeEx`, `PyImport_ImportModule`, `PyObject_CallObject`, as `CPythonUdfBridge.cpp` does). PyPy doesn't implement that API for hosting — `cpyext` loads C extensions *into* PyPy, not the reverse. Its embedding path is `cffi`'s **embedding mode**: ordinary Python decorated with `@ffi.def_extern()` (RPython is the language PyPy's own interpreter is written in — irrelevant to this glue code), compiled ahead-of-time by PyPy's own tooling into a standalone `.so`. The same recipe produces a CPython- or PyPy-backed `.so` depending only on whether generation runs under `python` or `pypy3`.
 
 ## CPython bridge vs. PyPy bridge
 
@@ -338,7 +338,7 @@ CPython is embedded directly via its C API (`Py_InitializeEx`, `PyImport_ImportM
 | Isolation model | in-process `dlopen`, `UdfBackend` seam | identical — no change to the isolation story either way |
 | Best fit | short/ad hoc queries, needs full CPython/C-extension compatibility | long-running continuous queries hammering the same UDF |
 
-Since both would sit behind the identical `UdfBackend`/ABI seam and be selected per-UDF via `LANGUAGE`, there is no reason to pick one over the other permanently — the plan is to ship both and let the query's shape decide.
+Both sit behind the same `UdfBackend`/ABI seam and are selected per-UDF via `BRIDGE`, so there's no need to pick one permanently — ship both, let the query's shape decide.
 
 # Appendix — implementation outline
 

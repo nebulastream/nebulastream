@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # PyPy bridge implementing the NebulaStream scalar-UDF C ABI (UdfAbi.h), via cffi's embedding mode.
-# Same ABI, same marshalling semantics as PythonUdfBridge.cpp -- ported to Python because PyPy has no
+# Same ABI, same marshalling semantics as CPythonUdfBridge.cpp -- ported to Python because PyPy has no
 # CPython-style Py_Initialize embedding API, only cffi embedding. Run this script with pypy3 to
 # generate the C source CMake then compiles into libnes-pypy-udf-bridge.so.
 #
@@ -43,7 +43,7 @@ ffibuilder.embedding_init_code("""
     import sys
     import threading
 
-    # Make the UDF modules importable, mirroring PythonUdfBridge.cpp's initPythonOnce.
+    # Make the UDF modules importable, mirroring CPythonUdfBridge.cpp's initPythonOnce.
     sys.path.insert(0, os.environ.get("NES_UDF_PATH", "."))
 
     _libc = ffi.dlopen(None)

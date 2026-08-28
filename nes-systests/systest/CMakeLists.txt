@@ -53,13 +53,13 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
-# The Python UDF bridge (built by nes-udf/bridge only where Python's embed dev files exist) is
+# The CPython UDF bridge (built by nes-udf/bridge-cpython only where Python's embed dev files exist) is
 # dlopen'd by the `PythonUdf` systest group. `.test` files reference it via the PY_BRIDGE_DIR
 # substitution keyword; the binder puts nes-systests/udf/pyudfs on NES_UDF_PATH so `import`s resolve.
 find_package(Python3 COMPONENTS Development.Embed QUIET)
 if (Python3_FOUND)
     target_compile_definitions(nes-systest-lib PUBLIC
-            SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-python-udf-bridge>"
+            SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-cpython-udf-bridge>"
             SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs")
 else ()
     target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_BRIDGE_DIR="" SYSTEST_PY_UDF_PATH="")
@@ -71,14 +71,13 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
-# `LANGUAGE`-based CREATE FUNCTION statements resolve the bridge path the same way production does
-# (relative to the running executable's own directory, see UdfBridgeRegistry) rather than through the
-# PY_BRIDGE_DIR substitution above. Stage the built bridge at that same fixed relative location next to
-# `systest` itself, so systests exercise the real resolution path end-to-end instead of a test-only one.
+# `BRIDGE`-based CREATE FUNCTION statements resolve the path relative to the running executable (see
+# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the built bridge next to
+# `systest` at that same location so these tests exercise the real resolution path.
 if (Python3_FOUND)
     add_custom_command(TARGET systest POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
-            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-python-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-python-udf-bridge>")
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
 endif ()
 
 # Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for

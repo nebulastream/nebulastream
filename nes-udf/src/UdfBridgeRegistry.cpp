@@ -25,12 +25,11 @@ namespace NES
 
 namespace
 {
-/// Language name -> shipped bridge filename, relative to <currentExecutableDirectory()>/nes-udf-bridges/.
-/// Deliberately unconditional and compile-time-known: whether the bridge was actually built into this
-/// deployment (e.g. Python's Development.Embed wasn't found) is a file-existence question, left to
-/// UdfCatalog::registerUdf's existing check -- not this table.
+/// Bridge name -> shipped bridge filename, relative to <currentExecutableDirectory()>/nes-udf-bridges/.
+/// Whether the bridge was actually built (e.g. Python3 Development.Embed missing) is a file-existence
+/// check left to UdfCatalog::registerUdf, not this table.
 const std::unordered_map<std::string_view, std::string_view> kBuiltinBridges{
-    {"python", "libnes-python-udf-bridge.so"},
+    {"cpython", "libnes-cpython-udf-bridge.so"},
     {"pypy", "libnes-pypy-udf-bridge.so"},
 };
 }
@@ -40,12 +39,12 @@ std::filesystem::path currentExecutableDirectory()
     return std::filesystem::read_symlink("/proc/self/exe").parent_path();
 }
 
-std::filesystem::path resolveBuiltinUdfBridgePath(const std::string_view language)
+std::filesystem::path resolveBuiltinUdfBridgePath(const std::string_view bridge)
 {
-    const auto it = kBuiltinBridges.find(language);
+    const auto it = kBuiltinBridges.find(bridge);
     if (it == kBuiltinBridges.end())
     {
-        throw NES::UnsupportedUdfLanguage("'{}' is not a built-in UDF language", language);
+        throw NES::UnsupportedUdfLanguage("'{}' is not a built-in UDF bridge", bridge);
     }
     return currentExecutableDirectory() / "nes-udf-bridges" / it->second;
 }

@@ -60,3 +60,10 @@ def shout(text):
 def boom(_x):
     """Always raises — used to prove a UDF failure surfaces as a query error."""
     raise ValueError("intentional Python UDF failure")
+
+
+def apply_discount(price):
+    """Apply a fixed 10% discount to a bid price (FLOAT64 -> FLOAT64)."""
+    if price is None:
+        return None
+    return price * 0.9

@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The PyPy UDF bridge is an optional runtime artifact (a .so users dlopen via CREATE FUNCTION),
-# not linked into the engine. It embeds PyPy via cffi, so it only builds where pypy3 is installed --
-# same "auto-detect, no CMake option" contract as the CPython bridge next door.
+# The PyPy UDF bridge is an optional runtime artifact (a .so users dlopen via CREATE FUNCTION), not
+# linked into the engine. It embeds PyPy via cffi, so it only builds where pypy3 is installed, same
+# as the CPython bridge next door.
 include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
 nes_find_pypy()
 if (NES_PYPY_FOUND)
@@ -35,7 +35,7 @@ if (NES_PYPY_FOUND)
     if (TARGET systest)
         add_dependencies(systest nes-pypy-udf-bridge)
     endif ()
-    # See nes-udf/bridge/CMakeLists.txt for why the worker-side staging step lives in
+    # See nes-udf/bridge-cpython/CMakeLists.txt for why the worker-side staging step lives in
     # nes-single-node-worker/CMakeLists.txt instead of here.
     if (TARGET nes-single-node-worker)
         add_dependencies(nes-single-node-worker nes-pypy-udf-bridge)

@@ -298,17 +298,16 @@ public:
     {
         const auto functionName = bindIdentifier(functionDefAST->udfName->strictIdentifier());
 
-        /// FROM (the bridge .so path) and LANGUAGE (a name NES resolves to a shipped bridge) are both
-        /// optional in the grammar; at least one must be given, and FROM wins if both are. Resolving
-        /// LANGUAGE here keeps CreateFunctionStatement.path a plain, already-resolved string, so
-        /// nothing downstream (UdfStatementHandler, UdfCatalog) needs to know LANGUAGE ever existed.
-        if (functionDefAST->functionPath == nullptr && functionDefAST->language == nullptr)
+        /// FROM (a literal .so path) and BRIDGE (a name resolved to a shipped bridge) are both optional;
+        /// at least one is required, FROM wins if both given. Resolving BRIDGE here keeps
+        /// CreateFunctionStatement.path a plain string -- downstream code never needs to know BRIDGE exists.
+        if (functionDefAST->functionPath == nullptr && functionDefAST->bridge == nullptr)
         {
-            throw InvalidStatement("CREATE FUNCTION requires FROM, LANGUAGE, or both");
+            throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
         }
         const auto path = functionDefAST->functionPath != nullptr
             ? bindStringLiteral(functionDefAST->functionPath)
-            : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->language)).string();
+            : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
 
         /// Argument names in the DDL are documentation only — a scalar UDF matches

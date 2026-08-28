@@ -427,32 +427,32 @@ TEST_F(StatementBinderTest, BindShowFunctions)
     EXPECT_TRUE(std::holds_alternative<ShowFunctionsStatement>(*statement));
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithLanguage)
+TEST_F(StatementBinderTest, BindCreateFunctionWithBridge)
 {
     const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
-                                        "LANGUAGE 'python' ENTRYPOINT 'currency.add'";
+                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
 
     const auto& create = std::get<CreateFunctionStatement>(*statement);
-    EXPECT_EQ(create.path, resolveBuiltinUdfBridgePath("python").string());
+    EXPECT_EQ(create.path, resolveBuiltinUdfBridgePath("cpython").string());
     EXPECT_EQ(create.entrypoint, "currency.add");
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndLanguagePrefersFrom)
+TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndBridgePrefersFrom)
 {
     const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
-                                        "FROM '/opt/udfs/libcurrency.so' LANGUAGE 'python' ENTRYPOINT 'currency.add'";
+                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
     EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).path, "/opt/udfs/libcurrency.so");
 }
 
-TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownLanguageThrows)
+TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownBridgeThrows)
 {
-    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 LANGUAGE 'cobol' ENTRYPOINT 'm.f'";
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cobol' ENTRYPOINT 'm.f'";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);

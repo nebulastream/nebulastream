@@ -10,16 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Locates an installed pypy3 (nix devshell, apt's pypy3/pypy3-dev, or any other install -- same
-# "just find it, no CMake option" contract as Python3's Development.Embed). A macro, not a function,
-# so each of nes-udf/bridge-pypy, nes-single-node-worker, and nes-systests/systest can call it and get
-# its own NES_PYPY_* variables in their own scope, mirroring how each of them independently re-runs
-# find_package(Python3 COMPONENTS Development.Embed QUIET) rather than sharing one result.
+# Locates an installed pypy3 (nix devshell, apt pypy3/pypy3-dev, or any other install). A macro so
+# each caller (nes-udf/bridge-pypy, nes-single-node-worker, nes-systests/systest) gets its own
+# NES_PYPY_* variables in scope.
 #
-# .nix/nix-cmake.sh builds inside a `nix develop --ignore-environment` shell, which does not inherit
-# PATH -- a system-installed pypy3 is invisible to a plain find_program there. NES_PYPY3_EXECUTABLE
-# (passed through the isolation by .nix/nix-run.sh's KEEP_VARS, same as SCCACHE_*/AWS_*) lets it
-# through explicitly instead of widening the sandbox.
+# .nix/nix-cmake.sh builds inside `nix develop --ignore-environment`, which drops PATH, so a
+# system pypy3 is invisible to find_program there. Set NES_PYPY3_EXECUTABLE to point at one
+# explicitly (passed through by .nix/nix-run.sh).
 #
 # Sets NES_PYPY_FOUND, and on success NES_PYPY_EXECUTABLE / NES_PYPY_RUNTIME_LIB / NES_PYPY_INCLUDE_DIR.
 macro(nes_find_pypy)
@@ -49,12 +46,12 @@ macro(nes_find_pypy)
                 OUTPUT_VARIABLE NES_PYPY_PREFIX
                 OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        # The runtime .so's directory differs by how PyPy was packaged (nixpkgs: lib/, the official
-        # pypy.org tarball: bin/) -- search both instead of assuming one.
+        # PyPy's runtime .so location depends on packaging: nixpkgs uses lib/, the pypy.org tarball
+        # bin/, Debian/Ubuntu's apt packages the multiarch triplet dir (e.g. /usr/lib/x86_64-linux-gnu/).
+        # HINTS covers the first two; CMake's default search (no NO_DEFAULT_PATH) covers the third.
         find_library(NES_PYPY_RUNTIME_LIB
                 NAMES pypy${NES_PYPY_ABI_VERSION}-c
-                PATHS ${NES_PYPY_PREFIX}/bin ${NES_PYPY_PREFIX}/lib
-                NO_DEFAULT_PATH)
+                HINTS ${NES_PYPY_PREFIX}/bin ${NES_PYPY_PREFIX}/lib)
         if (NES_PYPY_RUNTIME_LIB)
             set(NES_PYPY_FOUND TRUE)
         endif ()
