@@ -15,10 +15,8 @@
 #include <Plans/LogicalPlan.hpp>
 
 #include <algorithm>
-#include <cstddef>
 #include <optional>
 #include <ostream>
-#include <set>
 #include <sstream>
 #include <stack>
 #include <string>
@@ -137,24 +135,31 @@ std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOp
     return parents;
 }
 
+std::vector<LogicalOperator> planOperators(const LogicalPlan& plan)
+{
+    std::vector<LogicalOperator> operators;
+    std::unordered_set<LogicalOperator> visited;
+    for (const auto& root : plan.getRootOperators())
+    {
+        for (const auto& op : BFSRange(root))
+        {
+            if (visited.insert(op).second)
+            {
+                operators.push_back(op);
+            }
+        }
+    }
+    return operators;
+}
+
 std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
 {
     std::stringstream stringstream;
-    if (verbosity == ExplainVerbosity::Short)
+    std::unordered_set<LogicalOperator> alreadyDumped;
+    auto dumpHandler = NES::QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, verbosity);
+    for (const auto& rootOperator : plan.getRootOperators())
     {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Short);
-        for (const auto& rootOperator : plan.getRootOperators())
-        {
-            dumpHandler.dump({rootOperator});
-        }
-    }
-    else
-    {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false, ExplainVerbosity::Debug);
-        for (const auto& rootOperator : plan.getRootOperators())
-        {
-            dumpHandler.dump({rootOperator});
-        }
+        dumpHandler.dump(rootOperator, alreadyDumped);
     }
     return stringstream.str();
 }
@@ -163,18 +168,15 @@ std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan)
 {
     /// Find all the leaf nodes in the query plan
     std::vector<LogicalOperator> leafOperators;
-    /// Maintain a list of visited nodes as there are multiple root nodes
-    std::set<OperatorId> visitedOpIds;
+    std::unordered_set<LogicalOperator> visited;
     for (const auto& rootOperator : plan.getRootOperators())
     {
         for (auto itr : BFSRange<LogicalOperator>(rootOperator))
         {
-            if (visitedOpIds.contains(itr.getId()))
+            if (not visited.insert(itr).second)
             {
-                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            visitedOpIds.insert(itr.getId());
             if (itr.getChildren().empty())
             {
                 leafOperators.push_back(itr);

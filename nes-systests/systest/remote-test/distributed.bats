@@ -157,15 +157,46 @@ if [ "$ENABLE_IREE_TESTS" != "ON" ]; then
   EXTRA_EXCLUDE_GROUPS+=(Inference)
 fi
 
+# The Distributed group pins sinks to workers by name, so it only runs against a topology that both permits sink
+# placement on more than one worker and uses those names. 8-node.yaml allows sink placement on sink-node alone, so
+# the group stays out of the sweeps below and gets its own case against two-node-with-interpreter.yaml.
+EXCLUDE_GROUPS=(large tcp Distributed "${EXTRA_EXCLUDE_GROUPS[@]}")
+
 @test "two node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  run docker_systest -e "${EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
-  run docker_systest -e large tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  run docker_systest -e "${EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  [ "$status" -eq 0 ]
+}
+
+# One sink next to the source and one a node away, so a shared sub-plan feeds a local sink and a network sink at
+# once. The sweeps above place every sink on one node and never produce that mix.
+@test "distributed multi-sink" {
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
+  run docker_systest -t $NES_DIR/nes-systests/sinks/MultiSinkDistributed.test --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
+  [ "$status" -eq 0 ]
+}
+
+# Both sinks a node away, on two different workers, so the shared sub-plan crosses the boundary once per sink and
+# the node holding it runs two channels relaying the same upstream origins. Needs the third node: on two, one of
+# the sinks is always co-located with the source.
+@test "distributed multi-sink on distinct sink nodes" {
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/three-node.yaml
+  run docker_systest -t $NES_DIR/nes-systests/sinks/MultiSinkDistinctSinkNodes.test --clusterConfig $NES_DIR/nes-systests/configs/topologies/three-node.yaml --remote
+  [ "$status" -eq 0 ]
+}
+
+# The same three nodes in a line, with the sinks on the second and third. The plan still forks on the source node,
+# but the far sink is now two hops away and its branch runs through the worker holding the near sink, which
+# therefore carries a plan ending in a sink and a plan relaying onward at the same time.
+@test "distributed multi-sink on a linear topology" {
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/three-node-line.yaml
+  run docker_systest -t $NES_DIR/nes-systests/sinks/MultiSinkLinearTopology.test --clusterConfig $NES_DIR/nes-systests/configs/topologies/three-node-line.yaml --remote
   [ "$status" -eq 0 ]
 }
 

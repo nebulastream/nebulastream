@@ -44,7 +44,7 @@ NES::Systest::RunningQuery makeExplainRunningQuery(std::vector<std::string> expe
         .workingDir = {},
         .queryDefinition = "EXPLAIN (OPTIMIZED, FORMAT TEXT) SELECT id FROM stream INTO sink;",
         .planInfoOrException = std::unexpected<NES::Exception>{NES::TestException("unused")},
-        .expectedResultsOrExpectedError = std::move(expectedResultLines),
+        .expectedResultsOrExpectedError = std::vector<std::vector<std::string>>{std::move(expectedResultLines)},
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
