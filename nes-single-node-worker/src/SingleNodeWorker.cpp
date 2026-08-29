@@ -111,7 +111,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
             }
         }
 
-        const LogContext context("queryId", plan.getQueryId());
+        const LogContext context("queryId", "{}", plan.getQueryId());
 
         listener->onEvent(SubmitQuerySystemEvent{plan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         const DumpMode dumpMode(

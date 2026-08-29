@@ -325,11 +325,63 @@ public:
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         auto [complete, failure, success] = std::move(callback).take();
-        /// Create a new callback that wraps the reference count reducer
+        /// Wrap the caller's callbacks with the engine-mandatory reference-count reducer (onComplete) and
+        /// query-failure injector (onFailure). These wrappers travel WITH the callback across continuations
+        /// (the callback is moved into any re-queued task), so the pending-task count is decremented exactly
+        /// once when the logical task chain finishes -- do NOT key this off WorkTask::pipeline (copied per
+        /// continuation -> would over-decrement).
+        ///
+        /// Fast path: in the common case the caller supplies no inner onComplete/onFailure (passthrough emits
+        /// TaskCallback{}), so we capture ONLY the node weak_ptr. That closure is small enough to live in
+        /// absl::AnyInvocable's inline storage -- eliminating the two per-task HEAP allocations the wrapping
+        /// helpers otherwise incur (measured ~14-25% of the single source-emitter thread's CPU at small
+        /// buffers, where task-admission is the throughput wall). Only when an inner callback is actually
+        /// present do we fall back to the general wrapping helpers.
+        TaskCallback::onComplete reducer;
+        if (complete.callback) [[unlikely]]
+        {
+            reducer = injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete.callback));
+        }
+        else
+        {
+            reducer = [ENGINE_IF_LOG_DEBUG(qid, ) node = std::weak_ptr(node)]() mutable
+            {
+                if (const auto existingNode = node.lock())
+                {
+                    [[maybe_unused]] const auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
+                    ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
+                    INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
+                }
+                else
+                {
+                    ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
+                }
+            };
+        }
+        TaskCallback::onFailure failer;
+        if (failure.callback) [[unlikely]]
+        {
+            failer = injectQueryFailure(node, std::move(failure.callback));
+        }
+        else
+        {
+            failer = [node = std::weak_ptr(node)](Exception exception) mutable
+            {
+                if (const auto strongReference = node.lock())
+                {
+                    strongReference->fail(std::move(exception));
+                }
+                else
+                {
+                    ENGINE_LOG_ERROR(
+                        "Query Failure could not be reported as query has already been terminated. Original Error: {}", exception.what());
+                }
+            };
+        }
         auto wrappedCallback = TaskCallback{
-            TaskCallback::OnComplete(injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete.callback))),
+            TaskCallback::OnComplete(std::move(reducer)),
             std::move(success),
-            TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
+            TaskCallback::OnFailure(std::move(failer)),
         };
 
         auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
@@ -546,7 +598,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     /// successor pipelines (incl. the sink). Isolates the per-buffer emit/sink-task cost from the
     /// scan/parse/operator cost. NOT for production -- it breaks query results.
     static const bool disableEmit = std::getenv("NES_DISABLE_EMIT") != nullptr;
-    LogContext logContext("Task", fmt::format("{}-{}", task.queryId, task.pipelineId));
+    LogContext logContext("Task", "{}-{}", task.queryId, task.pipelineId);
     if (terminating)
     {
         ENGINE_LOG_WARNING("Skipped Task for {}-{} during termination", task.queryId, task.pipelineId);
@@ -608,7 +660,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
 bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", startPipeline.queryId, startPipeline.pipelineId));
+    LogContext logContext("Task", "{}-{}", startPipeline.queryId, startPipeline.pipelineId);
     if (terminating)
     {
         ENGINE_LOG_WARNING("Pipeline Start {}-{} was skipped during Termination", startPipeline.queryId, startPipeline.pipelineId);
@@ -650,7 +702,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
 
 bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask& pendingPipelineStop) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", pendingPipelineStop.queryId, pendingPipelineStop.pipeline->id));
+    LogContext logContext("Task", "{}-{}", pendingPipelineStop.queryId, pendingPipelineStop.pipeline->id);
     INVARIANT(
         pendingPipelineStop.pipeline->pendingTasks >= 0,
         "Pending Pipeline Stop must have pending tasks, but had {} pending tasks.",
@@ -694,7 +746,7 @@ bool ThreadPool::WorkerThread::operator()(PendingPipelineStopTask& pendingPipeli
 
 bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id));
+    LogContext logContext("Task", "{}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     DefaultPEC pec(
         pool.numberOfThreads(),
@@ -742,7 +794,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 
 bool ThreadPool::WorkerThread::operator()(StopQueryTask& stopQuery) const
 {
-    LogContext logContext("Task", fmt::format("{}", stopQuery.queryId));
+    LogContext logContext("Task", "{}", stopQuery.queryId);
     ENGINE_LOG_INFO("Terminate Query Task for Query {}", stopQuery.queryId);
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
@@ -755,7 +807,7 @@ bool ThreadPool::WorkerThread::operator()(StopQueryTask& stopQuery) const
 
 bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
 {
-    LogContext logContext("Task", fmt::format("{}", startQuery.queryId));
+    LogContext logContext("Task", "{}", startQuery.queryId);
     ENGINE_LOG_INFO("Start Query Task for Query {}", startQuery.queryId);
     if (auto queryCatalog = startQuery.catalog.lock())
     {
@@ -768,7 +820,7 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
 
 bool ThreadPool::WorkerThread::operator()(StopSourceTask& stopSource) const
 {
-    LogContext logContext("Task", fmt::format("{}", stopSource.queryId));
+    LogContext logContext("Task", "{}", stopSource.queryId);
     if (auto source = stopSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Stop Source Task for Query {} Source {}", stopSource.queryId, source->getOriginId());
@@ -802,7 +854,7 @@ bool ThreadPool::WorkerThread::operator()(StopSourceTask& stopSource) const
 
 bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
 {
-    LogContext logContext("Task", fmt::format("{}", failSource.queryId));
+    LogContext logContext("Task", "{}", failSource.queryId);
     if (auto source = failSource.target.lock())
     {
         ENGINE_LOG_DEBUG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());

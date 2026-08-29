@@ -13,7 +13,10 @@
 */
 
 #include <csignal>
+#include <cstdlib>
 #include <semaphore>
+#include <string>
+#include <string_view>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -61,7 +64,40 @@ int main(const int argc, const char* argv[])
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
-        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        /// Log level is DEBUG by default, but can be overridden via NES_LOG_LEVEL (NONE|ERROR|WARNING|INFO|
+        /// DEBUG|TRACE) -- e.g. NES_LOG_LEVEL=WARNING for clean benchmark profiling, since the DEBUG default
+        /// emits per-buffer/per-task ENGINE_LOG_DEBUG lines (source-emit, task callbacks) that pollute the
+        /// engine hot-path profile.
+        auto logLevel = NES::LogLevel::LOG_DEBUG;
+        if (const char* const envLogLevel = std::getenv("NES_LOG_LEVEL"))
+        {
+            const std::string_view requested{envLogLevel};
+            if (requested == "NONE")
+            {
+                logLevel = NES::LogLevel::LOG_NONE;
+            }
+            else if (requested == "ERROR")
+            {
+                logLevel = NES::LogLevel::LOG_ERROR;
+            }
+            else if (requested == "WARNING" || requested == "WARN")
+            {
+                logLevel = NES::LogLevel::LOG_WARNING;
+            }
+            else if (requested == "INFO")
+            {
+                logLevel = NES::LogLevel::LOG_INFO;
+            }
+            else if (requested == "DEBUG")
+            {
+                logLevel = NES::LogLevel::LOG_DEBUG;
+            }
+            else if (requested == "TRACE")
+            {
+                logLevel = NES::LogLevel::LOG_TRACE;
+            }
+        }
+        NES::Logger::setupLogging("singleNodeWorker.log", logLevel);
         if (std::signal(SIGINT, signalHandler) == SIG_ERR)
         {
             NES_ERROR("Failed to set SIGINT signal handler")

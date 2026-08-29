@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <atomic>
+#include <string>
+#include <utility>
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
 #include <spdlog/mdc.h>
@@ -99,6 +103,15 @@ private:
     std::atomic<bool> isShutdown{false};
     std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };
+
+/// Process-wide cached copy of the current log level, published by Logger::changeLogLevel and read on hot
+/// paths (LogContext) with a single relaxed atomic load -- avoids copying the logger singleton's shared_ptr
+/// per task just to gate diagnostic-context work. Defaults to LOG_INFO until the logger is configured.
+inline std::atomic<LogLevel>& cachedLogLevel() noexcept
+{
+    static std::atomic<LogLevel> level{LogLevel::LOG_INFO};
+    return level;
+}
 }
 
 namespace Logger
@@ -108,18 +121,35 @@ void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout
 std::shared_ptr<detail::Logger> getInstance();
 }
 
+/// Pushes a diagnostic context (spdlog MDC) so log lines emitted within its scope carry it. This is
+/// constructed on hot paths (e.g. one per task in the query engine), so the value is formatted LAZILY and
+/// only when a level that could actually consume it is active: at DEBUG/TRACE we populate the MDC, otherwise
+/// we skip the format + the two thread-local map operations entirely. Formatting the arguments (e.g. a query
+/// UUID) is otherwise pure per-task overhead at INFO/WARN/ERROR, where the compiled-out ENGINE_LOG_DEBUG
+/// lines that would read the context never fire. Pass a format string + args (NOT a pre-formatted string) so
+/// the fmt::format is deferred behind the gate.
 struct LogContext
 {
     std::string context;
+    bool active;
 
-    template <typename Formatable>
-    requires(fmt::is_formattable<Formatable>::value)
-    explicit LogContext(std::string context, Formatable&& f) : context(std::move(context))
+    template <typename... Args>
+    explicit LogContext(std::string context, fmt::format_string<Args...> format, Args&&... args)
+        : context(std::move(context)), active(detail::cachedLogLevel().load(std::memory_order_relaxed) >= LogLevel::LOG_DEBUG)
     {
-        spdlog::mdc::put(this->context, fmt::format("{}", std::forward<Formatable>(f)));
+        if (active)
+        {
+            spdlog::mdc::put(this->context, fmt::format(format, std::forward<Args>(args)...));
+        }
     }
 
-    ~LogContext() { spdlog::mdc::remove(context); }
+    ~LogContext()
+    {
+        if (active)
+        {
+            spdlog::mdc::remove(context);
+        }
+    }
 };
 
 }

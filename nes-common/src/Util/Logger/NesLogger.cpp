@@ -189,6 +189,9 @@ void Logger::changeLogLevel(LogLevel newLevel)
     }
     impl->set_level(spdNewLogLevel);
     std::swap(newLevel, currentLogLevel);
+    /// Publish to the cheap process-wide cache read on hot paths (LogContext) without touching the logger
+    /// singleton's shared_ptr. Relaxed is fine: level changes are rare and need no ordering vs log emission.
+    detail::cachedLogLevel().store(currentLogLevel, std::memory_order_relaxed);
 }
 
 struct LoggerHolder
