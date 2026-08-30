@@ -133,13 +133,29 @@ O(1) lock-free pop the fixed pool uses (the scan adds no measurable latency, §P
 pooled and bounded. *Against:* there are N classes to provision, most unused on any one workload, so the
 provisioning policy carries real weight (§PoC quantifies this — with eager provisioning it is a footgun).
 
+**What A1 gives up (so the tradeoff is explicit).** A1 is not a general allocator with only upside. It
+deliberately drops the things that make a general allocator complex: it serves ~14 *fixed* power-of-two
+sizes, not arbitrary sizes; it never coalesces or splits blocks; and it keeps O(1) reference-counted
+recycling per class. The price of dropping those is paid in **provisioning**. Because each class is a
+separate lock-free pool, a workload whose state concentrates in one class must have that class provisioned
+large enough — and that is a two-sided knob: too small and the class exhausts and the query is terminated;
+too large and the class's lock-free queue exceeds its own allocation limit (see the join in the engine
+comparison, which needs the default class elastic *and* a per-class ceiling tuned between those two walls).
+A2 and A3 avoid that knob with a single flat budget. So A1 buys memory efficiency and a reused hot path at
+the cost of a per-class provisioning burden that A2/A3 do not carry; that is the trade the recommendation
+accepts.
+
 **A2 — One fixed size, composed (the DuckDB route).** Keep a single buffer size and represent anything
 larger as a chain/tree of fixed buffers. *For:* no size-class provisioning, no internal fragmentation, one
-hot path, nothing new to reason about in the allocator. *Against:* every consumer that needs a *contiguous*
-larger region — a `VARSIZED` value, a hash-map page, a buffer serialized to the network — must handle
-composition and non-contiguity. That pushes chunking logic into operators, code generation, and the wire,
-and it does not help where contiguity is actually required. The complexity is moved, not removed; it is a
-real and defensible choice, but it is not free.
+hot path, nothing new to reason about in the allocator — a genuinely simpler *buffer manager*. *Against:*
+the simplicity is only local; it moves complexity into every consumer that needs a *contiguous* larger
+region. In NES today those are concrete and several: the `ChainedHashMap` pages behind keyed aggregation
+and joins, `PagedVector` segments, `Arena`/`VarVal` `VARSIZED` values, `NLJSlice` state, and a buffer
+serialized to the wire. Each would have to allocate a run of fixed blocks and gather/scatter across the
+non-contiguous boundary itself, and composition does not help where physical contiguity is actually
+required (a hash probe cannot straddle a block boundary for free). So A2 does not remove the complexity — it
+distributes it across those consumers. It is a real and defensible tradeoff *if* the team values a
+dead-simple buffer manager over simple consumers; the measured comparison below is what it costs in memory.
 
 **A3 — Virtual-memory over-allocation with a resident budget (vmcache/Umbra-lite).** Reserve a large
 virtual region, keep a tight budget of *resident* pages, fault in on access. *For:* one unified budget, no
