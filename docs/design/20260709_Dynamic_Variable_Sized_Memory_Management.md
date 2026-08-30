@@ -269,6 +269,21 @@ memory tracks the working set; choose `EagerPerClass`, and you pay for classes y
 pipelines is unchanged; the value is memory placement — variable sizes pooled and bounded — at no
 throughput cost.
 
+**Emit right-sizing — measured, and workload-dependent.** `InputSized` vs eager emit, `NES_EMIT_STATS`
+(total emit-buffer bytes; deterministic):
+
+| query | eager | InputSized | saved |
+|---|--:|--:|--:|
+| projection — YSB 50 M map (under-filled output) | 14.17 GiB | 10.63 GiB | **25 %** |
+| aggregation — YSB 50 M window (full output) | 5.16 GiB | 5.16 GiB | 0 % |
+
+Both are throughput-neutral (map 17.5 vs 17.4 s). The benefit is real but not universal: it applies exactly
+where output buffers are under-filled — a projection or low-cardinality stage that emits far fewer bytes
+than an operator buffer holds — and is zero when buffers are already full (the aggregation's partial emits
+here). The extreme case (a stage emitting a handful of tuples) saves proportionally more; these two YSB
+queries both fill buffers well, so 25 % is a conservative floor, not the ceiling. This is why emit is scoped
+as one bounded rule (size to the output, capped at the operator buffer) rather than a headline result.
+
 **Query shapes — where the second subsystem appears.** Three queries of increasing state, each run with
 classes off and under the three provisioning policies (256 B … 1 MiB classes), measured by peak pooled
 bytes and the classes actually touched (`NES_BM_STATS`).
