@@ -25,6 +25,7 @@
 #include <mutex>
 #include <semaphore>
 #include <stop_token>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -198,6 +199,7 @@ SourceReturnType::EmitFunction emitFunction(
     /// A non-prefill / slow source stays at capacity 1 (publish per buffer) so a consumer never waits on an unpublished
     /// partial batch.
     const size_t batchCapacity = preFillsBuffers ? sourceEmitBatchSize() : 1;
+    const size_t inflightLimit = std::max<size_t>(1, numberOfInflightBuffers);
     auto batch = std::make_shared<SourceEmitBatch>(emitter, batchCapacity);
     return [&controller,
             successors = std::move(successors),
@@ -205,7 +207,9 @@ SourceReturnType::EmitFunction emitFunction(
             &emitter,
             queryId,
             availableBuffer = std::move(availableBuffer),
-            batch = std::move(batch)](const OriginId sourceId, SourceReturnType::SourceReturnType event, const std::stop_token& stopToken)
+            batch = std::move(batch),
+            preFillsBuffers,
+            inflightLimit](const OriginId sourceId, SourceReturnType::SourceReturnType event, const std::stop_token& stopToken)
                -> SourceReturnType::EmitResult
     {
         return std::visit(
@@ -279,11 +283,45 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
-                        /// Backpressure: reserve an in-flight slot. Fast path is a non-blocking try_acquire that
-                        /// needs no per-buffer stop_callback. On the slow path (pool momentarily exhausted) we FIRST
-                        /// publish the accumulated-but-unreleased batch so those tasks can run and return their slots
-                        /// -- otherwise we could block forever waiting for a slot that only frees once an unpublished
-                        /// task completes -- then block on acquire with the stop_callback that releases on stop.
+                        if (preFillsBuffers)
+                        {
+                            /// Prefill batching fast path. Backpressure is enforced via the successor's pendingTasks
+                            /// atomic (which buildWorkTask already increments per task and the inline completion reducer
+                            /// decrements) INSTEAD of a per-buffer availableBuffer semaphore. This lets the task carry an
+                            /// EMPTY TaskCallback -> buildWorkTask takes the inline fast-path reducer that fits in
+                            /// AnyInvocable's 16-byte inline storage, eliminating the per-buffer HEAP ALLOCATION the
+                            /// availableBuffer-release closure otherwise forced (measured +13-20% on the emitter-bound
+                            /// small-buffer regime, where the semaphore never actually backpressures anyway). pendingTasks
+                            /// already counts built-but-unpublished tasks, so it bounds total in-flight to ~inflightLimit.
+                            if (successor->pendingTasks.load(std::memory_order_acquire) >= static_cast<ssize_t>(inflightLimit))
+                            {
+                                /// At the in-flight bound: publish the accumulated batch so workers can drain it, then
+                                /// wait for pendingTasks to fall (a completing task decrements it). In the emitter-bound
+                                /// regime this never triggers (workers outpace the source); it only spins when the source
+                                /// genuinely outruns the workers (large buffers), where it has no work to do anyway.
+                                batch->flush();
+                                while (successor->pendingTasks.load(std::memory_order_acquire) >= static_cast<ssize_t>(inflightLimit))
+                                {
+                                    if (stopToken.stop_requested())
+                                    {
+                                        return SourceReturnType::EmitResult::STOP_REQUESTED;
+                                    }
+                                    std::this_thread::yield();
+                                }
+                            }
+                            emitter.emitWorkUnpublished(queryId, successor, data.buffer, TaskCallback{});
+                            if (++batch->pending >= batch->capacity)
+                            {
+                                batch->flush();
+                            }
+                            continue;
+                        }
+                        /// Non-prefill (capacity 1) path: bound in-flight with the availableBuffer semaphore and release
+                        /// it per task on completion. Fast path is a non-blocking try_acquire that needs no per-buffer
+                        /// stop_callback. On the slow path (pool momentarily exhausted) we FIRST publish the
+                        /// accumulated-but-unreleased batch so those tasks can run and return their slots -- otherwise we
+                        /// could block forever waiting for a slot that only frees once an unpublished task completes --
+                        /// then block on acquire with the stop_callback that releases on stop.
                         if (!availableBuffer->try_acquire())
                         {
                             batch->flush();
