@@ -36,11 +36,11 @@ metrics, and any future spilling or NUMA work — each handled twice. Serving va
 collapses the common case onto one predictable subsystem, leaving the unpooled path a rare tail for
 requests above the largest class.
 
-**P3 — the network receive path uses the unpooled allocator.** The wire carries buffer sizes (Rust slices
-and vectors store their length) and does not transmit unused bytes, so it needs no change. But a
-variable-sized child buffer arriving on a pipeline boundary is served from the unpooled path today.
-§Proposed Solution routes it to a fitting size class instead — an allocator choice, not a wire-format
-change.
+**P3 — variable-sized buffers arriving over the network land on the unpooled path.** A variable-sized child
+buffer received at a pipeline boundary is allocated from the unpooled path today, inheriting P1 and P2 on
+the receive side. (The wire format itself is not the problem — it already carries the buffer size, since
+Rust slices and vectors store their length and unused bytes are not transmitted — so this is purely which
+allocator the receiver uses.)
 
 # Goals
 
@@ -48,10 +48,14 @@ change.
   longer hits the unpooled path and the two subsystems collapse to one (P1, P2).
 - **G2** — Keep the existing hot path: lock-free, reference-counted recycling, no per-buffer heap control
   block. The scheme must reuse it, not replace it. (Constrains G1.)
-- **G3** — Bound the *extra* memory the scheme reserves. A workload that uses few sizes must not pay for
-  many. Reserved capacity and resident memory are separate quantities and both must be controlled.
-- **G4** — Ship incrementally and backward-compatibly: with the feature off, the engine behaves exactly as
-  today; each piece is independently reviewable and testable.
+- **G3** — Bound the extra memory the size-class pools reserve, so a workload that uses only a few sizes
+  does not pay for the classes it never touches. Two quantities must both stay bounded: *reserved capacity*
+  (virtual memory the pools claim up front) and *resident memory* (physical pages actually faulted in) — a
+  class can reserve address space cheaply as long as it stays resident-light until used.
+- **G4** — Ship incrementally: the size-class path lands behind `enable_buffer_size_classes` (default off)
+  so it can be reviewed, tested, and rolled out one piece at a time; with it off the engine behaves exactly
+  as today. The flag is a rollout switch, not a permanent mode — the goal is to make size classes the
+  default once the pieces land, not to keep two code paths forever.
 
 # Non-Goals
 
@@ -66,10 +70,61 @@ change.
 - **NG4** — Columnar runtime capacity, and any cross-node / cluster-wide budget.
 - **NG5** — Changing the reference-counting or ownership model.
 
+# Proposed Solution
+
+Generalize the single pool into segregated power-of-two classes. Each class is a `FixedSizeClassPool` — the
+engine's existing MPMC queue plus a deque of stable-address segments — so the per-class hot path is
+byte-for-byte today's pooled path (G2). `getBuffer(size)` computes the smallest fitting class
+(`classIndexForSize`, a linear scan over the classes), pops from that class's queue, and **promotes** to a
+larger pooled class if the best-fit is momentarily empty. **The unpooled path stays**, but only as the tail
+for a request larger than the maximum class (which #1701/#1702 already bound); everything up to the maximum
+class is now pooled. With no size-class configuration there is exactly one class — the operator buffer
+size — and behaviour is unchanged.
+
+```mermaid
+flowchart LR
+    R["getBuffer(size)"] --> C{"smallest fitting<br/>class?"}
+    C -->|"size ≤ max class"| P["pooled class pop<br/>(promote to next<br/>class if empty)"]
+    C -->|"size &gt; max class"| U["unpooled tail<br/>(bounded, #1701/#1702)"]
+    subgraph Pools["size-class pools (each = today's lock-free pooled path)"]
+      P256["256 B"]
+      P4K["4 KiB<br/>(default / operator size)"]
+      P1M["… 1 MiB"]
+    end
+    P --> Pools
+```
+
+**Interface.** No breaking change to `BufferManager`'s public interface. `getBuffer(size)` already exists;
+this proposal changes what backs it (a fitting size class instead of the unpooled path) and adds
+configuration (`enable_buffer_size_classes`, the class `min`/`max`, and the provisioning policy). The
+`TupleBuffer` handle, reference counting, and recycling are unchanged (NG5).
+
+**Which classes.** Powers of two from a configurable minimum to a maximum (our runs: 256 B … 1 MiB).
+Sub-page classes are pointless for large payloads but useful for small emit outputs (a three-field result
+belongs in a 256 B buffer, not a 4 KiB one), so we expose `min`/`max` and default the minimum to 256 B.
+
+**Classes grow on demand; they are not fully preallocated.** A class is not a fixed slab sized at startup —
+under the default `LazyElastic` policy each class reserves a small floor and *faults in additional regions
+as it is used*, up to a per-class ceiling. This is why the peak footprint tracks the working set rather than
+the sum of every class at full size (the alternative, `EagerPerClass`, does preallocate every class fully —
+and §PoC shows why that is a footgun). `BufferProvisioningPolicy`: `LazyElastic` (default, grows lazily),
+`EagerPerClass` (all classes preallocated), `TotalBudgetSplit` (one byte budget split across classes).
+
+**Emit is a consumer of the small classes, not a provisioning policy.** A pipeline that emits a few tuples
+currently pins a full operator-size output buffer; with sub-page classes available it can instead request a
+buffer sized to the actual output (`InputSized`, #1711) — e.g. a 256 B class for a three-field result. The
+mechanism is one rule (size to the output row count, capped at the operator buffer size), not a menu of
+strategies; a quantile-based size is added only if evidence shows it beats the row-count bound. The
+same rule covers a projection that *grows* the schema: the emit buffer follows the actual output schema.
+
+**Network.** A variable-sized child buffer arriving on a pipeline boundary is served from a fitting size
+class (`getBuffer(child.size())`) instead of the unpooled path. This is purely an allocator choice at the
+receiver; the wire format already carries the size (§P3) and is unchanged.
+
 # Alternatives
 
-The decision is narrow: how to serve a variable-sized request while keeping the pooled hot path. Three
-options, weighed below.
+The proposed solution (A1) is one of three ways to serve a variable-sized request while keeping the pooled
+hot path. This section records why A1 over the other two (A2, A3), with a measured comparison.
 
 **A1 — Segregated power-of-two size classes (proposed).** One pool per class, each an instance of the
 existing lock-free machinery; round a request up to the smallest fitting class. *For:* reuses the hot path
@@ -148,33 +203,6 @@ without committing to composition-everywhere (A2) or fault-handling and swizzlin
 needed. A1 does not dominate on every axis: A2 wins where composition across consumers is acceptable, and
 **A3 is the better long-term target once spilling** (NG2) introduces a resident-page budget. The A1-vs-A3
 question re-opens with the spilling design.
-
-# Proposed Solution
-
-Generalize the single pool into segregated power-of-two classes. Each class is a `FixedSizeClassPool` — the
-engine's existing MPMC queue plus a deque of stable-address segments — so the per-class hot path is
-byte-for-byte today's pooled path (G2). `getBuffer(size)` computes the smallest fitting class
-(`classIndexForSize`, a linear scan over the classes), pops from that class's queue, and **promotes** to a
-larger pooled class if the best-fit is momentarily empty; only a request above the maximum class reaches
-the unpooled tail (which #1701/#1702 already bound). With no size-class configuration there is exactly one
-class — the operator buffer size — and behaviour is unchanged (G4).
-
-**Which classes.** Powers of two from a configurable minimum to a maximum (our runs: 256 B … 1 MiB).
-Sub-page classes are pointless for large payloads but useful for small emit outputs (a three-field result
-belongs in a 256 B buffer, not a 4 KiB one), so we expose `min`/`max` and default the minimum to 256 B.
-
-**Provisioning is the G3 knob** (`BufferProvisioningPolicy`): `LazyElastic` (default) reserves a small
-floor per class and faults in regions on demand; `EagerPerClass` reserves every class fully; `TotalBudgetSplit`
-divides a fixed total. §PoC shows why `LazyElastic` is the default and `EagerPerClass` is a footgun.
-
-**Emit — one policy.** Size the output buffer to the input record count (an upper bound on output), capped
-at the operator buffer size (`InputSized`, #1711). A single policy keeps emit behavior easy to reason
-about; a quantile-based size (trading occasional chunking for space) is added only if evidence shows it
-beats the input-count bound. A projection that *grows* the schema is the same mechanism from the other
-side: the emit buffer is sized to the actual output schema rather than assumed equal to the input buffer.
-
-**Network — allocator only.** Serve an arriving variable-sized child from `getBuffer(child.size())` (a
-fitting class) instead of the unpooled path. The wire is unchanged.
 
 # Proof of Concept (reproducible)
 
