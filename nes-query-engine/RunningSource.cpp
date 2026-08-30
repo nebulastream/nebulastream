@@ -16,7 +16,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -140,9 +142,50 @@ struct DefaultPEC final : PipelineExecutionContext
 
 namespace
 {
+/// Source-emit batch size (env NES_SOURCE_EMIT_BATCH, default 1 = publish every buffer immediately == the pre-batching
+/// behavior). With value K>1 the source queues up to K per-buffer tasks into the admission queue unpublished, then wakes
+/// K workers with a single counting_semaphore::release(K) -- amortizing the per-buffer task-admission machinery and
+/// creating the burst worker concurrency the SequenceShredder needs to contend. Read once (a source stream property).
+size_t sourceEmitBatchSize()
+{
+    static const size_t value = []
+    {
+        const char* env = std::getenv("NES_SOURCE_EMIT_BATCH");
+        return std::max<size_t>(1, env != nullptr ? std::strtoul(env, nullptr, 10) : 1);
+    }();
+    return value;
+}
+
+/// Per-source accumulator for batched task admission (see WorkEmitter::emitWorkUnpublished). The source queues up to
+/// `capacity` tasks WITHOUT publishing them, then flush() releases all of their permits in one burst. `pending` is only
+/// ever touched by the single source thread. The destructor is the safety net: every queued task already incremented
+/// its node's pendingTasks at build time, so if the source thread exits without an explicit flush (e.g. an external stop
+/// before end-of-stream skips the EoS handler) the tail MUST still be published -- otherwise a graceful pipeline stop
+/// would wait on pendingTasks forever. flush() is idempotent and a no-op when pending == 0.
+struct SourceEmitBatch
+{
+    WorkEmitter& emitter;
+    size_t capacity;
+    size_t pending{0};
+
+    SourceEmitBatch(WorkEmitter& emitter, size_t capacity) : emitter(emitter), capacity(capacity) { }
+
+    void flush()
+    {
+        if (pending > 0)
+        {
+            emitter.publishAdmittedWork(pending);
+            pending = 0;
+        }
+    }
+
+    ~SourceEmitBatch() { flush(); }
+};
+
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,
+    bool preFillsBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
@@ -150,10 +193,20 @@ SourceReturnType::EmitFunction emitFunction(
 {
     auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
         std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
-               const OriginId sourceId,
-               SourceReturnType::SourceReturnType event,
-               const std::stop_token& stopToken) -> SourceReturnType::EmitResult
+    /// Source-emit batching is gated on prefill sources only (see SourceRuntimeConfiguration::preFillsBuffers): they
+    /// deliver buffers saturated and drain-then-EoS, so a partial batch is always resolved by the EoS/destructor flush.
+    /// A non-prefill / slow source stays at capacity 1 (publish per buffer) so a consumer never waits on an unpublished
+    /// partial batch.
+    const size_t batchCapacity = preFillsBuffers ? sourceEmitBatchSize() : 1;
+    auto batch = std::make_shared<SourceEmitBatch>(emitter, batchCapacity);
+    return [&controller,
+            successors = std::move(successors),
+            source,
+            &emitter,
+            queryId,
+            availableBuffer = std::move(availableBuffer),
+            batch = std::move(batch)](const OriginId sourceId, SourceReturnType::SourceReturnType event, const std::stop_token& stopToken)
+               -> SourceReturnType::EmitResult
     {
         return std::visit(
             Overloaded{
@@ -226,8 +279,14 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
+                        /// Backpressure: reserve an in-flight slot. Fast path is a non-blocking try_acquire that
+                        /// needs no per-buffer stop_callback. On the slow path (pool momentarily exhausted) we FIRST
+                        /// publish the accumulated-but-unreleased batch so those tasks can run and return their slots
+                        /// -- otherwise we could block forever waiting for a slot that only frees once an unpublished
+                        /// task completes -- then block on acquire with the stop_callback that releases on stop.
+                        if (!availableBuffer->try_acquire())
                         {
-                            /// release the semaphore in case the source wants to terminate
+                            batch->flush();
                             const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
                             availableBuffer->acquire();
                             if (stopToken.stop_requested())
@@ -235,18 +294,18 @@ SourceReturnType::EmitFunction emitFunction(
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
-                        /// The admission queue might be full, we have to reattempt
-                        while (not emitter.emitWork(
+                        /// Queue the task WITHOUT publishing it; the whole batch is published with a single burst
+                        /// release once it fills (below), at end-of-stream, or in the batch destructor.
+                        /// emitWorkUnpublished blocks internally until the admission write succeeds (the admission
+                        /// queue is far larger than the in-flight limit), so it does not return false here.
+                        emitter.emitWorkUnpublished(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
-                            PipelineExecutionContext::ContinuationPolicy::NEVER))
+                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })});
+                        if (++batch->pending >= batch->capacity)
                         {
-                            if (stopToken.stop_requested())
-                            {
-                                return SourceReturnType::EmitResult::STOP_REQUESTED;
-                            }
+                            batch->flush();
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
@@ -254,12 +313,15 @@ SourceReturnType::EmitFunction emitFunction(
                 },
                 [&](SourceReturnType::EoS)
                 {
+                    /// Publish the tail before the stop task so all data tasks are admitted ahead of it.
+                    batch->flush();
                     ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
                     controller.initializeSourceStop(queryId, sourceId, source);
                     return SourceReturnType::EmitResult::SUCCESS;
                 },
                 [&](SourceReturnType::Error error)
                 {
+                    batch->flush();
                     controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));
                     return SourceReturnType::EmitResult::SUCCESS;
                 }},
@@ -295,12 +357,14 @@ std::shared_ptr<RunningSource> RunningSource::create(
     WorkEmitter& emitter)
 {
     const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
+    const auto preFillsBuffers = source->getRuntimeConfiguration().preFillsBuffers;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(
+            emitFunction(queryId, maxInflightBuffers, preFillsBuffers, runningSource, std::move(successors), controller, emitter));
     }
     return runningSource;
 }

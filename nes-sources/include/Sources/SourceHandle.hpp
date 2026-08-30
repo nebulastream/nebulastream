@@ -38,6 +38,12 @@ struct SourceRuntimeConfiguration
 {
     size_t inflightBufferLimit;
     InputFormatterThreadingMode inputFormatterThreadingMode;
+    /// True for sources that pre-fill ready buffers and hand them out back-to-back (InMemory prefill, io_uring
+    /// variants). Only these are eligible for source-emit batching (NES_SOURCE_EMIT_BATCH>1): they deliver buffers
+    /// saturated and drain-then-EoS, so an accumulated batch is a transient the EoS flush always resolves. A
+    /// non-prefill / slow source would leave a partial batch unpublished while a consumer waits on it, so it stays at
+    /// batch size 1 (publish per buffer = the pre-batching behavior). See RunningSource emitFunction.
+    bool preFillsBuffers = false;
 };
 
 /// Interface class to handle sources.

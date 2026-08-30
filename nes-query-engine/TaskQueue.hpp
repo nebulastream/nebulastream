@@ -123,6 +123,43 @@ public:
         return false;
     }
 
+    /// Batched-admission sibling of addAdmissionTaskBlocking: writes the task to the admission queue but does NOT
+    /// publish it (no permit release), so no worker can dequeue it yet. Accumulate several unpublished writes, then
+    /// call releaseAdmissionPermits(N) ONCE to hand out N permits with a single counting_semaphore notify -> up to N
+    /// parked workers wake in a burst (vs N separate notifies). The invariant
+    /// (internal.size() + admission.size() >= tasksAvailable) is preserved: we only ADD to admission.size() here, the
+    /// matching permits are added later. Returns false only if canceled via the stop token before the write succeeded.
+    template <typename T = TaskType>
+    bool addAdmissionTaskBlockingNoPublish(const std::stop_token& stoken, T&& task)
+    {
+        while (!stoken.stop_requested())
+        {
+            /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
+            if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Publish `count` tasks previously written via addAdmissionTaskBlockingNoPublish. A single release(count) hands
+    /// out count permits with one notify, waking up to count parked workers at once -- the burst concurrency the
+    /// SequenceShredder needs to actually contend (a source that publishes one-at-a-time keeps worker concurrency at
+    /// ~1 and the shredder mutex uncontended).
+    void releaseAdmissionPermits(size_t count)
+    {
+        if (count == 0)
+        {
+            return;
+        }
+        tasksAvailable.release(static_cast<std::ptrdiff_t>(count));
+        if (statsEnabled) [[unlikely]]
+        {
+            statOutstanding.fetch_add(static_cast<int64_t>(count), std::memory_order_relaxed);
+        }
+    }
+
     /// Write a Task to the internal task queue. The internal task queue is unbounded thus this operation will always succeed
     template <typename T = TaskType>
     void addInternalTaskNonBlocking(T&& task)

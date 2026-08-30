@@ -50,6 +50,19 @@ public:
         TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
+
+    /// Batched-admission variant of emitWork for the source-emit path (source/io threads only): builds the WorkTask
+    /// exactly like emitWork and writes it into the admission queue, but does NOT publish it (no worker can dequeue it
+    /// yet). Call publishAdmittedWork(N) once after queueing a batch of N to release all N permits in a single burst,
+    /// waking up to N parked workers at once. pendingTasks is incremented at build time here as in emitWork, so every
+    /// task built MUST eventually be published (the source's batch accumulator flushes on batch-full, on end-of-stream,
+    /// and unconditionally in its destructor) -- an unpublished task would strand pendingTasks and hang a graceful stop.
+    /// Returns false only if canceled.
+    virtual bool emitWorkUnpublished(QueryId, const std::shared_ptr<RunningQueryPlanNode>& target, TupleBuffer, TaskCallback) = 0;
+
+    /// Release the permits for `count` tasks previously queued via emitWorkUnpublished (one burst notify).
+    virtual void publishAdmittedWork(size_t count) = 0;
+
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;

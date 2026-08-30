@@ -315,12 +315,10 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread(const Host& host, bool pinThreads, size_t cpuThreadOffset, size_t ownShard);
 
-    bool emitWork(
-        QueryId qid,
-        const std::shared_ptr<RunningQueryPlanNode>& node,
-        TupleBuffer buffer,
-        TaskCallback callback,
-        const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
+    /// Builds the engine-internal WorkTask for `node`: bumps pendingTasks and wraps the caller's callbacks with the
+    /// mandatory reference-count reducer / query-failure injector. Shared by emitWork (immediate publish) and
+    /// emitWorkUnpublished (batched publish) so both routes construct identical tasks. See the fast-path note below.
+    WorkTask buildWorkTask(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TupleBuffer buffer, TaskCallback callback)
     {
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
@@ -384,7 +382,17 @@ public:
             TaskCallback::OnFailure(std::move(failer)),
         };
 
-        auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
+        return WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
+    }
+
+    bool emitWork(
+        QueryId qid,
+        const std::shared_ptr<RunningQueryPlanNode>& node,
+        TupleBuffer buffer,
+        TaskCallback callback,
+        const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
+    {
+        auto task = buildWorkTask(qid, node, std::move(buffer), std::move(callback));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread (a source/io thread): enqueue into the shard of the emitter's
@@ -403,6 +411,30 @@ public:
                 return true;
         }
         std::unreachable();
+    }
+
+    /// Batched-admission entry for the source (see WorkEmitter::emitWorkUnpublished): builds the task and writes it to
+    /// the admission queue WITHOUT releasing a permit. Only valid from non-worker (source/io) threads -- the source
+    /// path is the only batching caller, and it always admits (never continues in place on a worker).
+    bool
+    emitWorkUnpublished(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TupleBuffer buffer, TaskCallback callback) override
+    {
+        PRECONDITION(
+            WorkerThread::id == INVALID<WorkerThreadId>, "emitWorkUnpublished (batched admission) is only valid on a source/io thread");
+        auto task = buildWorkTask(qid, node, std::move(buffer), std::move(callback));
+        return queueAdmissionBlockingNoPublish(CcxAffinity::shardOrDefault(numShards), std::move(task));
+    }
+
+    void publishAdmittedWork(size_t count) override
+    {
+        if (ccxQueues)
+        {
+            shardedQueue->releaseAdmissionPermits(count);
+        }
+        else
+        {
+            singleQueue->releaseAdmissionPermits(count);
+        }
     }
 
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
@@ -536,6 +568,17 @@ private:
             return shardedQueue->addAdmissionTaskBlocking({}, shard, std::move(task));
         }
         return singleQueue->addAdmissionTaskBlocking({}, std::move(task));
+    }
+
+    /// No-publish sibling of queueAdmissionBlocking: writes the task but withholds the permit (published later in one
+    /// batched releaseAdmissionPermits via publishAdmittedWork).
+    bool queueAdmissionBlockingNoPublish(const size_t shard, Task&& task)
+    {
+        if (ccxQueues)
+        {
+            return shardedQueue->addAdmissionTaskBlockingNoPublish({}, shard, std::move(task));
+        }
+        return singleQueue->addAdmissionTaskBlockingNoPublish({}, std::move(task));
     }
 
     void queueInternal(Task&& task)

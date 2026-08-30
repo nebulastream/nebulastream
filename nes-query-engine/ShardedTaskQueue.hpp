@@ -227,6 +227,39 @@ public:
         return false;
     }
 
+    /// Batched-admission sibling of addAdmissionTaskBlocking (see TaskQueue::addAdmissionTaskBlockingNoPublish): writes
+    /// into the emitter's own shard but does NOT publish (no permit release). All tasks in one batch come from the same
+    /// source thread -> same shard, so one releaseAdmissionPermits(N) after the batch is correct. Returns false only if
+    /// canceled before the write succeeded.
+    template <typename T = TaskType>
+    bool addAdmissionTaskBlockingNoPublish(const std::stop_token& stoken, const size_t shard, T&& task)
+    {
+        auto& queue = shards[std::min(shard, shards.size() - 1)];
+        while (!stoken.stop_requested())
+        {
+            /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
+            if (queue.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
+            {
+                if (statsEnabled) [[unlikely]]
+                {
+                    shardStats[std::min(shard, shards.size() - 1)].enqueued.fetch_add(1, std::memory_order_relaxed);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Publish `count` previously-written (NoPublish) tasks: one global release(count) hands out count permits with a
+    /// single notify (the semaphore is global; only the writes are per-shard).
+    void releaseAdmissionPermits(size_t count)
+    {
+        if (count > 0)
+        {
+            tasksAvailable.release(static_cast<std::ptrdiff_t>(count));
+        }
+    }
+
     /// Write a Task to the global internal task queue (unbounded, always succeeds).
     template <typename T = TaskType>
     void addInternalTaskNonBlocking(T&& task)

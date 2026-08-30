@@ -168,7 +168,9 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
         }
 
         SourceRuntimeConfiguration runtimeConfig{
-            .inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
+            .inflightBufferLimit = maxInflightBuffers,
+            .inputFormatterThreadingMode = inputFormatterThreadingMode,
+            .preFillsBuffers = preFills};
 
         return std::visit(
             Overloaded{
