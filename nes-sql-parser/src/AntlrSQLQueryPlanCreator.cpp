@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstddef>
@@ -69,6 +70,7 @@
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
@@ -81,6 +83,32 @@
 
 namespace NES::Parsers
 {
+
+namespace
+{
+/// Renders an aggregation back as SQL (COUNT(VALUE)) so error messages quote the caller's own expression.
+/// An argument that was desugared into a pre-aggregation projection is rendered as the expression the caller wrote,
+/// not as the generated _AGG_INPUT_N field.
+std::string
+describeAggregation(const WindowAggregationLogicalFunction& aggregation, const std::vector<AntlrSQLHelper::Projection>& desugaredArguments)
+{
+    const auto input = aggregation.getInputFunction();
+    const auto field = [&]
+    {
+        if (const auto* unbound = std::get_if<TypedLogicalFunction<UnboundFieldAccessLogicalFunction>>(&input))
+        {
+            const auto desugared = std::ranges::find_if(
+                desugaredArguments, [&unbound](const auto& projection) { return projection.first == (*unbound)->getFieldName(); });
+            if (desugared != std::ranges::end(desugaredArguments))
+            {
+                return desugared->second.explain(ExplainVerbosity::Short);
+            }
+        }
+        return std::visit([](const auto& access) { return access->explain(ExplainVerbosity::Short); }, input);
+    }();
+    return fmt::format("{}({})", toUpperCase(aggregation.getName()), field);
+}
+}
 
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
@@ -701,6 +729,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helpers.top().windowAggs.pop_back();
             aggFunc.second = bindIdentifier(context);
             helpers.top().windowAggs.push_back(aggFunc);
+            helpers.top().userAggregationAliases.push_back(aggFunc.second.value());
             helpers.top().addProjection(aggFunc.second, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
         }
         else
@@ -994,12 +1023,41 @@ void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpression
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
+    helpers.top().aggCountBeforeHaving = helpers.top().windowAggs.size();
     AntlrSQLBaseListener::enterHavingClause(context);
 }
 
 void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = false;
+    /// An aggregation written inside HAVING is a second aggregation, not a reference to the projected one.
+    /// Refuse it and report the alias that already exists.
+    const auto& aggregations = helpers.top().windowAggs;
+    if (aggregations.size() > helpers.top().aggCountBeforeHaving)
+    {
+        const auto& havingAggregation = aggregations[helpers.top().aggCountBeforeHaving].first;
+        const auto expression = describeAggregation(havingAggregation, helpers.top().preAggregationProjections);
+        const auto projectedAlias = [&]() -> std::optional<Identifier>
+        {
+            for (const auto& [aggregation, alias] : aggregations | std::views::take(helpers.top().aggCountBeforeHaving))
+            {
+                if (aggregation == havingAggregation and alias.has_value()
+                    and std::ranges::contains(helpers.top().userAggregationAliases, alias.value()))
+                {
+                    return alias;
+                }
+            }
+            return std::nullopt;
+        }();
+        if (projectedAlias.has_value())
+        {
+            throw InvalidQuerySyntax(
+                "HAVING must use the projected alias: write {} instead of {}", projectedAlias.value().getOriginalString(), expression);
+        }
+        throw InvalidQuerySyntax(
+            "HAVING can only use fields the SELECT list projects: add {} AS <alias> to the SELECT list and use <alias> in HAVING",
+            expression);
+    }
     if (helpers.top().functionBuilder.size() != 1)
     {
         throw InvalidQuerySyntax("There was more than one function in the functionBuilder in exitHavingClause.");

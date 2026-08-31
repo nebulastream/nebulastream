@@ -39,7 +39,10 @@ namespace NES::Parsers
 
 class AntlrSQLHelper
 {
+public:
     using Projection = std::pair<std::optional<Identifier>, LogicalFunction>;
+
+private:
     std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
     std::vector<LogicalFunction> havingClauses;
     std::optional<Identifier> source;
@@ -76,6 +79,7 @@ public:
 
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
+    std::vector<Identifier> userAggregationAliases;
     std::vector<SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
@@ -101,6 +105,10 @@ public:
     /// E.g., AVG(i + UINT64(1)) becomes: Projection(*, i + UINT64(1) AS _AGG_INPUT_0) → AVG(_AGG_INPUT_0).
     std::vector<Projection> preAggregationProjections;
     size_t aggExprCounter = 0;
+
+    /// Number of aggregations collected before the HAVING clause was entered, so that aggregations written
+    /// inside HAVING can be distinguished from the ones the SELECT list already projects.
+    size_t aggCountBeforeHaving = 0;
 
     /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
     bool isModelInference = false;
