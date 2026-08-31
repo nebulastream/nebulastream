@@ -1100,6 +1100,25 @@ TEST_F(StatementBinderTest, LowercaseFullJoinParsesToOuterFullJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
 }
 
+TEST_F(StatementBinderTest, BindQueryWithUnsupportedPredicateNamesEveryKeywordOfThePredicate)
+{
+    const std::vector<std::pair<std::string, std::string>> predicates{
+        {"b IS TRUE", "IS TRUE is not supported"},
+        {"b IS NOT TRUE", "IS NOT TRUE is not supported"},
+        {"b IS DISTINCT FROM UINT32(5)", "IS DISTINCT FROM is not supported"},
+        {"b LIKE VARSIZED('a%')", "LIKE is not supported"},
+        {"b NOT LIKE VARSIZED('a%')", "NOT LIKE is not supported"}};
+
+    for (const auto& [predicate, expectedMessage] : predicates)
+    {
+        SCOPED_TRACE(predicate);
+        const auto statement = binder->parseAndBindSingle(fmt::format("SELECT a FROM inputStream WHERE {} INTO outputStream", predicate));
+        ASSERT_FALSE(statement.has_value());
+        EXPECT_EQ(statement.error().code(), ErrorCode::UnsupportedQuery);
+        EXPECT_TRUE(std::string{statement.error().what()}.contains(expectedMessage));
+    }
+}
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 }
 }
