@@ -78,6 +78,7 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
         child.length());
 
     std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
+    childBuffer->setNumberOfTuples(child.size());
     [[maybe_unused]] auto childIndex
         = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
 }

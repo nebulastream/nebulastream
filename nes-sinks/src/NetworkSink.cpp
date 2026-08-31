@@ -131,7 +131,10 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
         {
             auto childBuffer = currentBuffer->loadChildBuffer(ChildBufferIndex(childIdx));
             auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
-            children.emplace_back(childMemory);
+            const auto usedChildBytes = childBuffer.getNumberOfTuples();
+            const auto childPayload
+                = (usedChildBytes > 0 and usedChildBytes <= childMemory.size()) ? childMemory.subspan(0, usedChildBytes) : childMemory;
+            children.emplace_back(childPayload);
         }
 
         std::span usedBufferMemory(
