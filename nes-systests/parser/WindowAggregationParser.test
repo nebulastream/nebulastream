@@ -67,7 +67,7 @@ WHERE id > 15
 WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
 INTO sinkStream;
 ----
-ERROR 2000 # invalid query syntax
+ERROR 2000
 
 # Negative test: Missing WINDOW definition
 SELECT SUM(value) as sumValue
@@ -76,4 +76,4 @@ WHERE id > 15
 GROUP BY id
 INTO sinkStream;
 ----
-ERROR 2000 # invalid query syntax
+ERROR 2000
