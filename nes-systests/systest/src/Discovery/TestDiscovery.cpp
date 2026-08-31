@@ -16,27 +16,29 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>
+#include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <memory>
+#include <iterator>
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <span>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <Config/Config.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
-#include <SystestState.hpp>
+
+#include <Config/Config.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Strings.hpp>
+#include <ErrorHandling.hpp>
 
 namespace
 {
@@ -74,12 +76,12 @@ DiscoveryFilters createDiscoveryFilters(const NES::SystestConfiguration& config)
         .disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues(), [](const auto& option) { return option.getValue(); })};
 }
 
-bool hasMatchingGroup(const NES::Systest::TestFile& testFile, const std::unordered_set<std::string>& groups)
+bool hasMatchingGroup(const NES::DiscoveredTestFile& testFile, const std::unordered_set<std::string>& groups)
 {
-    return std::ranges::any_of(testFile.groups, [&](const auto& group) { return groups.contains(NES::toLowerCase(group)); });
+    return std::ranges::any_of(testFile.groups, [&](const auto& group) { return groups.contains(NES::toLowerCase(group.getRawValue())); });
 }
 
-bool matchesDisabledTestFile(const NES::Systest::TestFile& testFile, const std::unordered_set<std::string>& disabledTestFiles)
+bool matchesDisabledTestFile(const NES::DiscoveredTestFile& testFile, const std::unordered_set<std::string>& disabledTestFiles)
 {
     const auto lowerPath = NES::toLowerCase(testFile.file.string());
     const auto lowerFileName = NES::toLowerCase(testFile.file.filename().string());
@@ -96,7 +98,7 @@ bool matchesDisabledTestFile(const NES::Systest::TestFile& testFile, const std::
         });
 }
 
-std::optional<std::string> getIncludedGroupSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+std::optional<std::string> getIncludedGroupSkipReason(const NES::DiscoveredTestFile& testFile, const DiscoveryFilters& filters)
 {
     if (filters.includedGroups.empty() || hasMatchingGroup(testFile, filters.includedGroups))
     {
@@ -105,7 +107,7 @@ std::optional<std::string> getIncludedGroupSkipReason(const NES::Systest::TestFi
     return fmt::format("Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), filters.includedGroups);
 }
 
-std::optional<std::string> getExcludedGroupSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+std::optional<std::string> getExcludedGroupSkipReason(const NES::DiscoveredTestFile& testFile, const DiscoveryFilters& filters)
 {
     if (!hasMatchingGroup(testFile, filters.excludedGroups))
     {
@@ -121,7 +123,7 @@ std::optional<std::string> getExcludedGroupSkipReason(const NES::Systest::TestFi
         sourceSuffix);
 }
 
-std::optional<std::string> getDisabledTestFileSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+std::optional<std::string> getDisabledTestFileSkipReason(const NES::DiscoveredTestFile& testFile, const DiscoveryFilters& filters)
 {
     if (!matchesDisabledTestFile(testFile, filters.disabledTestFiles))
     {
@@ -131,7 +133,7 @@ std::optional<std::string> getDisabledTestFileSkipReason(const NES::Systest::Tes
         "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n", testFile.getLogFilePath());
 }
 
-std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile, const DiscoveryFilters& filters)
+std::optional<std::string> getSkipReason(const NES::DiscoveredTestFile& testFile, const DiscoveryFilters& filters)
 {
     if (const auto skipReason = getIncludedGroupSkipReason(testFile, filters))
     {
@@ -148,45 +150,36 @@ std::optional<std::string> getSkipReason(const NES::Systest::TestFile& testFile,
     return std::nullopt;
 }
 
-NES::Systest::TestName testNameFromRelativePath(std::filesystem::path relativePath)
+/// Whether `path` is located at or below `root`.
+bool isBelow(const std::filesystem::path& path, const std::filesystem::path& root)
+{
+    const auto relative = std::filesystem::weakly_canonical(path).lexically_relative(std::filesystem::weakly_canonical(root));
+    return not relative.empty() && *relative.begin() != "..";
+}
+
+std::filesystem::path normalizedDirectory(const std::filesystem::path& directory)
+{
+    auto normalized = std::filesystem::weakly_canonical(directory);
+    return normalized.has_filename() ? normalized : normalized.parent_path();
+}
+
+NES::TestName testNameFromRelativePath(std::filesystem::path relativePath)
 {
     relativePath.replace_extension();
-    return relativePath.generic_string();
+    return NES::TestName{relativePath.generic_string()};
 }
 
-NES::Systest::TestName testNameStem(const NES::Systest::TestFile& testFile)
+}
+
+namespace NES
 {
-    return std::filesystem::path(testFile.name()).filename().string();
-}
 
-/// Use the filename stem when it is unique, retaining the relative path to disambiguate duplicate stems.
-void shortenUniqueTestNames(NES::Systest::TestFileMap& testFiles)
-{
-    std::unordered_map<NES::Systest::TestName, size_t> testNameCounts;
-    for (const auto& testFile : testFiles | std::views::values)
-    {
-        ++testNameCounts[testNameStem(testFile)];
-    }
-
-    for (auto& testFile : testFiles | std::views::values)
-    {
-        auto stem = testNameStem(testFile);
-        if (testNameCounts.at(stem) == 1)
-        {
-            testFile.testName = std::move(stem);
-        }
-    }
-}
-}
-
-namespace NES::Systest
-{
 namespace
 {
-
-TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const std::optional<std::string>& fileExtension)
+std::vector<std::filesystem::path>
+findTestFilesBelow(const std::filesystem::path& searchRoot, const std::optional<std::string>& fileExtension)
 {
-    TestFileMap testFiles;
+    std::vector<std::filesystem::path> files;
 
     auto toLowerCopy = [](const std::string& str)
     {
@@ -197,22 +190,87 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
     const auto desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
 
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
-             | std::views::filter([](const auto& entry) { return entry.is_regular_file(); }))
+    for (const auto& entry :
+         std::filesystem::recursive_directory_iterator(searchRoot, std::filesystem::directory_options::skip_permission_denied)
+             | std::views::filter([](const auto& path_) { return path_.is_regular_file(); }))
     {
-        const std::string entryExt = toLowerCopy(entry.path().extension().string());
-        if (!fileExtension || entryExt == desiredExtension)
+        if (const std::string entryExt = toLowerCopy(entry.path().extension().string()); !fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(
-                entry.path(),
-                testNameFromRelativePath(entry.path().lexically_relative(path)),
-                std::make_shared<SourceCatalog>(),
-                std::make_shared<SinkCatalog>());
-            testFiles.insert({testfile.file, testfile});
+            files.push_back(std::filesystem::weakly_canonical(entry.path()));
         }
     }
-    return testFiles;
+    return files;
 }
+
+TestName
+nameFor(const std::filesystem::path& file, const std::filesystem::path& discoverRoot, std::span<const std::filesystem::path> searchRoots)
+{
+    if (isBelow(file, discoverRoot))
+    {
+        return testNameFromRelativePath(file.lexically_relative(discoverRoot));
+    }
+    auto namingRoot = file.parent_path();
+    for (const auto& searchRoot : searchRoots)
+    {
+        if (isBelow(file, searchRoot) and isBelow(namingRoot, searchRoot))
+        {
+            namingRoot = searchRoot;
+        }
+    }
+    return testNameFromRelativePath(file.lexically_relative(namingRoot.parent_path()));
+}
+
+std::vector<TestGroup> readGroups(const DiscoveredTestFile& testfile)
+{
+    constexpr auto groupsPrefix = std::string_view{"# groups:"};
+
+    std::vector<TestGroup> groups;
+    if (std::ifstream ifstream(testfile.file); ifstream.is_open())
+    {
+        std::string line;
+        while (std::getline(ifstream, line))
+        {
+            if (line.starts_with(groupsPrefix))
+            {
+                const auto content = std::string_view(line).substr(groupsPrefix.size());
+                const auto open = content.find('[');
+                const auto close = content.find(']');
+                /// A wrong header group declaration is an error, as the file is otherwise excluded from runs without noticing.
+                /// Text after the closing bracket is allowed, as some files put an issue reference there.
+                if (open == std::string_view::npos || close == std::string_view::npos || close < open)
+                {
+                    throw TestException(
+                        "malformed groups line in file://{}: '{}', expected '# groups: [a, b]'", testfile.file.string(), line);
+                }
+                for (auto inner = content.substr(open + 1, close - open - 1);
+                     auto part : inner | std::views::split(',') | std::views::transform([](auto group) { return std::string_view(group); })
+                         | std::views::transform(
+                                     [](auto group)
+                                     { return group | std::views::filter([](char character) { return !std::isspace(character); }); }))
+                {
+                    auto group = std::ranges::to<std::string>(part);
+                    if (group.empty())
+                    {
+                        throw TestException("empty group name in file://{}: '{}'", testfile.file.string(), line);
+                    }
+                    groups.emplace_back(std::move(group));
+                }
+                break;
+            }
+        }
+        ifstream.close();
+    }
+    return groups;
+}
+
+}
+
+DiscoveredTestFile::DiscoveredTestFile(
+    const std::filesystem::path& file, TestName testName, std::optional<std::unordered_set<SystestQueryId>> enabledQueries)
+    : file(weakly_canonical(file)), testName(std::move(testName)), enabledQueries(std::move(enabledQueries)), groups(readGroups(*this)) { };
+
+namespace
+{
 
 struct TestGroupFiles
 {
@@ -220,15 +278,15 @@ struct TestGroupFiles
     std::vector<std::filesystem::path> files;
 };
 
-std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
+std::vector<TestGroupFiles> collectTestGroups(const std::vector<DiscoveredTestFile>& testFiles)
 {
     std::unordered_map<std::string, std::vector<std::filesystem::path>> groupFilesMap;
 
-    for (const auto& [testName, testFile] : testMap)
+    for (const auto& testFile : testFiles)
     {
         for (const auto& groupName : testFile.groups)
         {
-            groupFilesMap[groupName].push_back(testFile.file);
+            groupFilesMap[groupName.getRawValue()].push_back(testFile.file);
         }
     }
 
@@ -243,52 +301,63 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 
 }
 
-TestFileMap loadTestFileMap(const SystestConfiguration& config)
+std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
+    const auto discoverRoot = normalizedDirectory(config.testDiscoverRoot.getValue());
 
     if (not config.directlySpecifiedTestFiles.getValue().empty())
     {
-        const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
-
-        if (config.testQueryNumbers.empty())
+        std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
+        if (not config.testQueryNumbers.empty())
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
-            {
-                std::cout << fmt::format(
-                    "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
-                    testfile.getLogFilePath());
-            }
-            return TestFileMap{{testfile.file, testfile}};
+            enabledQueries = std::ranges::to<std::unordered_set<SystestQueryId>>(
+                config.testQueryNumbers.getValues()
+                | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         }
-
-        const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
-            config.testQueryNumbers.getValues()
-            | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
-        const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        const auto file = std::filesystem::weakly_canonical(config.directlySpecifiedTestFiles.getValue());
+        const DiscoveredTestFile testfile{file, nameFor(file, discoverRoot, {}), std::move(enabledQueries)};
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
                 "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
                 testfile.getLogFilePath());
         }
-        return TestFileMap{{testfile.file, testfile}};
+        return {testfile};
     }
 
-    TestFileMap testMap;
-    for (const auto& discoverDir : config.testDiscoverDirs.getValues())
+    /// A relative directory would not match the absolute root, and a trailing separator would make its parent the
+    /// directory itself, so both are normalised away first.
+    auto searchRoots = config.testDiscoverDirs.getValues()
+        | std::views::transform([](const auto& option) { return normalizedDirectory(option.getValue()); })
+        | std::ranges::to<std::vector<std::filesystem::path>>();
+    if (searchRoots.empty())
     {
-        auto tests = discoverTestsRecursively(discoverDir.getValue(), config.testFileExtension.getValue());
-        testMap.merge(tests);
+        searchRoots.push_back(discoverRoot);
     }
-
-    std::erase_if(
-        testMap,
-        [&](const auto& nameAndFile)
+    std::vector<std::filesystem::path> files;
+    /// Two search directories may nest, and a file below both would otherwise be discovered and run twice.
+    std::unordered_set<std::string> seen;
+    for (const auto& searchRoot : searchRoots)
+    {
+        for (auto& file : findTestFilesBelow(searchRoot, config.testFileExtension.getValue()))
         {
-            const auto& [name, testFile] = nameAndFile;
+            if (seen.insert(file.string()).second)
+            {
+                files.push_back(std::move(file));
+            }
+        }
+    }
+    std::vector<DiscoveredTestFile> testFiles;
+    testFiles.reserve(files.size());
+    for (const auto& file : files)
+    {
+        testFiles.emplace_back(file, nameFor(file, discoverRoot, searchRoots));
+    }
+    std::erase_if(
+        testFiles,
+        [&](const DiscoveredTestFile& testFile)
+        {
             if (const auto skipReason = getSkipReason(testFile, filters))
             {
                 std::cout << *skipReason;
@@ -296,27 +365,40 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             }
             return false;
         });
-    shortenUniqueTestNames(testMap);
+    /// Names below the root are distinct by construction. Two directories outside the root can still yield one name, and
+    /// two files under one name would share a result file, so the run stops here with both paths rather than later with
+    /// a registration error.
+    std::unordered_map<TestName, std::filesystem::path> fileByName;
+    for (const auto& testFile : testFiles)
+    {
+        if (const auto [existing, inserted] = fileByName.emplace(testFile.testName, testFile.file); not inserted)
+        {
+            throw TestException(
+                "the test files file://{} and file://{} would both run under the name '{}'; pass a discovery root that contains both",
+                existing->second.string(),
+                testFile.file.string(),
+                testFile.testName);
+        }
+    }
 
-    return testMap;
+    return testFiles;
 }
 
-std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
+std::ostream& operator<<(std::ostream& os, const std::vector<DiscoveredTestFile>& testFiles)
 {
-    if (testMap.empty())
+    if (testFiles.empty())
     {
         os << "No matching test files found\n";
     }
     else
     {
         os << "Discovered Test Files:\n";
-        for (const auto& testFile : testMap)
+        for (const auto& testFile : testFiles)
         {
-            os << "\t" << testFile.first << "\tfile://" << testFile.second.file.c_str() << "\n";
+            os << "\tfile://" << testFile.file.c_str() << "\n";
         }
 
-        auto testGroups = collectTestGroups(testMap);
-        if (not testGroups.empty())
+        if (auto testGroups = collectTestGroups(testFiles); not testGroups.empty())
         {
             os << "\nDiscovered Test Groups:\n";
             for (const auto& [name, files] : testGroups)
@@ -332,4 +414,28 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
     return os;
 }
 
+std::string DiscoveredTestFile::getLogFilePath() const
+{
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe) The environment is read while the run is still single threaded.
+    if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
+    {
+        const auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
+
+        auto filePathIter = file.begin();
+        if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
+        {
+            filePathIter = std::next(it);
+        }
+
+        std::filesystem::path resultPath(hostNebulaStreamRoot);
+        for (; filePathIter != file.end(); ++filePathIter)
+        {
+            resultPath /= *filePathIter;
+        }
+
+        return resultPath.string();
+    }
+
+    return std::filesystem::path(file);
+}
 }

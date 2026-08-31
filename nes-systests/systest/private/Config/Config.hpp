@@ -39,15 +39,13 @@ struct SystestClusterConfiguration
 class SystestConfiguration final : public BaseConfiguration
 {
 public:
-    SystestConfiguration()
-    {
-        /// Default discover directory; replaced when directories are passed via -t/--testLocations.
-        testDiscoverDirs.add(TEST_DISCOVER_DIR);
-    }
+    SystestConfiguration() = default;
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse when parsing the command line
+    StringOption testDiscoverRoot
+        = {"test_discover_root", TEST_DISCOVER_DIR, "Directory that a test name is relative to. Fixed at build time: " TEST_DISCOVER_DIR};
     SequenceOption<StringOption> testDiscoverDirs
-        = {"test_discover_dirs", "Directories to discover test files in. Default: " TEST_DISCOVER_DIR};
+        = {"test_discover_dirs", "Directories to discover test files in. Default: the discovery root"};
     StringOption testDataDir
         = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     StringOption configDir

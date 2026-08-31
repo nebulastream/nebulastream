@@ -40,7 +40,7 @@ namespace
 NES::Systest::RunningQuery makeExplainRunningQuery(std::vector<std::string> expectedResultLines, std::string actualExplainOutput)
 {
     NES::Systest::SystestQuery query{
-        .testName = "regex_explain",
+        .testName = NES::TestName{"regex_explain"},
         .queryIdInFile = NES::SystestQueryId(1),
         .testFilePath = SYSTEST_DATA_DIR "regex_explain.dummy",
         .workingDir = {},

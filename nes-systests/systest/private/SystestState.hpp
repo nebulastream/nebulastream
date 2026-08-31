@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/UnboundField.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Model/ConfigurationOverride.hpp>
@@ -50,8 +51,6 @@ namespace NES::Systest
 
 class SystestRunner;
 
-using TestName = std::string;
-using TestGroup = std::string;
 
 static constexpr SystestQueryId INVALID_SYSTEST_QUERY_ID = INVALID<SystestQueryId>;
 static constexpr SystestQueryId INITIAL_SYSTEST_QUERY_ID = INITIAL<SystestQueryId>;
@@ -166,42 +165,6 @@ struct RunningQuery
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;
 };
-
-struct TestFile
-{
-    explicit TestFile(
-        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        TestName testName,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    explicit TestFile(
-        const std::filesystem::path& file,
-        std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-        TestName testName,
-        std::shared_ptr<SourceCatalog> sourceCatalog,
-        std::shared_ptr<SinkCatalog> sinkCatalog);
-    [[nodiscard]] std::string getLogFilePath() const;
-
-    [[nodiscard]] TestName name() const { return testName; }
-
-    std::filesystem::path file;
-    TestName testName;
-    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
-    std::vector<TestGroup> groups;
-    std::vector<SystestQuery> queries;
-    std::shared_ptr<SourceCatalog> sourceCatalog;
-    std::shared_ptr<SinkCatalog> sinkCatalog;
-};
-
-/// intermediate representation storing all considered test files
-using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
 
 }
 
