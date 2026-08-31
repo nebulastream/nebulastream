@@ -4,3 +4,12 @@
 *.zip binary
 *.nes binary
 *.bin binary
+# Inference model fixtures (nes-inference/tests/testdata)
+*.pb binary
+*.pbtxt binary
+*.meta binary
+*.tflite binary
+*.pdmodel binary
+*.pdiparams binary
+# TensorFlow SavedModel checkpoint shards have no usable suffix
+nes-inference/tests/testdata/tiny_savedmodel/variables/* binary
