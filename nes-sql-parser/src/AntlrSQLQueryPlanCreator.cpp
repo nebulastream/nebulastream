@@ -56,6 +56,7 @@
 #include <Functions/LogicalFunctionProvider.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
@@ -287,6 +288,31 @@ void validateSourceQualifiers(const AntlrSQLHelper& helper)
         if (qualifier != expectedQualifier.value())
         {
             throw InvalidQuerySyntax("Unknown source qualifier {}, expected {}", qualifier, expectedQualifier.value());
+        }
+    }
+}
+
+void validateAggregatedSelectList(AntlrSQLHelper& helper)
+{
+    const auto isAvailableAfterAggregation = [&helper](const Identifier& field)
+    {
+        return field == Identifier::parse("start") or field == Identifier::parse("end")
+            or std::ranges::any_of(helper.groupByFields, [&field](const auto& key) { return key.getFieldName() == field; })
+            or std::ranges::any_of(
+                   helper.windowAggs, [&field](const auto& agg) { return agg.second.has_value() and agg.second.value() == field; });
+    };
+
+    for (const auto& projection : helper.getProjections() | std::views::values)
+    {
+        for (const auto& function : BFSRange{projection})
+        {
+            if (const auto access = function.tryGetAs<UnboundFieldAccessLogicalFunction>();
+                access.has_value() and not isAvailableAfterAggregation(access.value()->getFieldName()))
+            {
+                throw InvalidQuerySyntax(
+                    R"(column "{}" must appear in the GROUP BY clause or be used in an aggregate function)",
+                    access.value()->getFieldName().getOriginalString());
+            }
         }
     }
 }
@@ -823,6 +849,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
                 currentWindowTimestampOpt.has_value() ? "two" : "none");
         }
         auto characteristic = std::get<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value());
+        validateAggregatedSelectList(helpers.top());
         auto aggregations = helpers.top().windowAggs
             | std::views::transform(
                                 [](auto& agg)
