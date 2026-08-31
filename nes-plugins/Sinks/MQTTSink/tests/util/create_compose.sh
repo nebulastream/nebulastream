@@ -30,6 +30,11 @@ if [ -z "$CLI_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$TEST_DIR" ]; then
+  echo "ERROR: TEST_DIR is not set"
+  exit 1
+fi
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
