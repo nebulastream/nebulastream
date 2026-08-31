@@ -16,17 +16,20 @@ on:
         type: string
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      head_sha: ${{ inputs.head_sha }}
-
+  # Resolves head_sha to an immutable commit sha once, up front. Callers pass a mutable ref -- the
+  # nightly passes "main", the on-demand workflow a branch name -- and every job below checks out
+  # independently. If the ref moves mid-run, the dependency hash is computed from one commit while
+  # the build runs against another, which surfaces as a VCPKG hash mismatch and a broken build.
   sanitize-tag:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.sanitize.outputs.tag }}
+      sha: ${{ steps.resolve.outputs.commit }}
     steps:
+      - id: resolve
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.head_sha }}
       - name: Sanitize dockerhub tag for Docker compatibility
         id: sanitize
         shell: bash
@@ -36,6 +39,13 @@ jobs:
           SANITIZED=$(echo "$TAG" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)
           echo "Sanitized tag: '$TAG' -> '$SANITIZED'"
           echo "tag=$SANITIZED" >> "$GITHUB_OUTPUT"
+
+  get-dev-images:
+    needs: [ sanitize-tag ]
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.sanitize-tag.outputs.sha }}
 
   build-image:
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
@@ -47,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ needs.sanitize-tag.outputs.sha }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Login to Docker Hub
