@@ -33,6 +33,7 @@
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
+#include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -88,7 +89,11 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredType(co
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
     if (!newInputFunction->getDataType().isNumeric())
     {
-        throw CannotInferStamp("Cannot calculate minimum value on non-numeric function {}.", *newInputFunction);
+        throw UnsupportedQuery(
+            "{} is only supported on numeric fields, but field {} has type {}",
+            NAME,
+            newInputFunction->getField().getLastName(),
+            magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     return MinAggregationLogicalFunction{newInputFunction, newInputFunction->getDataType()};
 }

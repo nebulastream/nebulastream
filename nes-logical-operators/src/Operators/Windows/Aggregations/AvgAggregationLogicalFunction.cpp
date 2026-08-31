@@ -34,6 +34,7 @@
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
+#include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
@@ -85,7 +86,11 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredType(co
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
     if (!newInputFunction->getDataType().isNumeric())
     {
-        throw CannotInferStamp("Cannot calculate average over non-numeric function (got {})", newInputFunction->getDataType());
+        throw UnsupportedQuery(
+            "{} is only supported on numeric fields, but field {} has type {}",
+            NAME,
+            newInputFunction->getField().getLastName(),
+            magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     auto newAggFunction = AvgAggregationLogicalFunction{newInputFunction};
     newAggFunction.nullable = newInputFunction->getDataType().nullable;

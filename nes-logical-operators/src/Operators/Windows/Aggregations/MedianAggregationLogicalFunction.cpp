@@ -24,6 +24,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 #include <utility>
@@ -86,7 +87,11 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredT
     auto newInputFunction = inferFieldAccess(inputFunction, schema);
     if (!newInputFunction->getDataType().isNumeric())
     {
-        throw CannotInferStamp("Cannot calculate median over non numeric field (got {}).", newInputFunction->getDataType());
+        throw UnsupportedQuery(
+            "{} is only supported on numeric fields, but field {} has type {}",
+            NAME,
+            newInputFunction->getField().getLastName(),
+            magic_enum::enum_name(newInputFunction->getDataType().type));
     }
     MedianAggregationLogicalFunction newAgg{newInputFunction};
     newAgg.nullable = newInputFunction->getDataType().nullable;

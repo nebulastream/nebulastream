@@ -26,23 +26,40 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
+#include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
+#include <magic_enum/magic_enum.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
+namespace
+{
+Identifier fieldNameOf(const AggregationFieldAccess& inputFunction)
+{
+    return std::visit(
+        Overloaded{
+            [](const TypedLogicalFunction<UnboundFieldAccessLogicalFunction>& unbound) { return unbound->getFieldName(); },
+            [](const TypedLogicalFunction<FieldAccessLogicalFunction>& bound) { return bound->getField().getLastName(); }},
+        inputFunction);
+}
+}
+
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAccess inputFunction)
     : inputFunction(inputFunction)
-    , aggregateType(inferFromInput(std::visit([](const auto& input) { return input->getDataType(); }, inputFunction)))
+    , aggregateType(
+          inferFromInput(std::visit([](const auto& input) { return input->getDataType(); }, inputFunction), fieldNameOf(inputFunction)))
 {
 }
 
@@ -66,7 +83,7 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
 /// PostgreSQL: integers are promoted to the widest available integer type (sum(int2/int4) -> int8), while floats keep their type
 /// (sum(real) -> real) since they saturate to infinity instead of wrapping around. Sums exceeding the 64-bit integer range still
 /// wrap around silently.
-DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
+DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType, const Identifier& inputFieldName)
 {
     if (inputType.type == DataType::Type::UNDEFINED)
     {
@@ -87,13 +104,14 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
     {
         return inputType;
     }
-    throw CannotInferStamp("aggregations on non numeric fields is not supported (got {})", inputType);
+    throw UnsupportedQuery(
+        "{} is only supported on numeric fields, but field {} has type {}", NAME, inputFieldName, magic_enum::enum_name(inputType.type));
 }
 
 SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
 {
     const auto newInputFunction = inferFieldAccess(inputFunction, schema);
-    const DataType outputType = inferFromInput(newInputFunction->getDataType());
+    const DataType outputType = inferFromInput(newInputFunction->getDataType(), newInputFunction->getField().getLastName());
     return SumAggregationLogicalFunction{newInputFunction, outputType};
 }
 

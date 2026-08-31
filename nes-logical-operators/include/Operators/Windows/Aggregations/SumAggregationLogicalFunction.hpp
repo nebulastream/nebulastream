@@ -22,6 +22,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -51,7 +52,7 @@ public:
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
 private:
-    [[nodiscard]] static DataType inferFromInput(DataType inputType);
+    [[nodiscard]] static DataType inferFromInput(DataType inputType, const Identifier& inputFieldName);
 
     AggregationFieldAccess inputFunction;
     DataType aggregateType;
