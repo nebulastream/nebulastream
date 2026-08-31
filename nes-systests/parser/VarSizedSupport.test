@@ -36,3 +36,15 @@ SELECT * FROM streamWithText INTO sinkStreamWithText;
 2,3,test1,test1
 6,4,test1,test2
 8,5,test1,test2
+
+# LIKE should be refused by name.
+SELECT text1 FROM streamWithText WHERE text1 LIKE VARSIZED('test%') INTO sinkStreamWithText;
+----
+ERROR 2008 "LIKE is not supported"
+
+# Control for the case above: IN over the same column should be supported.
+SELECT id, value, text1, text2 FROM streamWithText
+WHERE text1 IN (VARSIZED('test3')) INTO sinkStreamWithText;
+----
+11,2,test3,test2
+11,3,test3,test1

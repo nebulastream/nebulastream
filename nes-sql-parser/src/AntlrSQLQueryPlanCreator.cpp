@@ -507,7 +507,13 @@ void AntlrSQLQueryPlanCreator::exitBoolComparison(AntlrSQLParser::BoolComparison
     }
     else
     {
-        throw UnsupportedQuery("Predicate is currently not supported: {}", comparison->getText());
+        /// `kind` stores the operator token (LIKE, RLIKE, DISTINCT, ...) to include in the error output.
+        INVARIANT(comparison->kind != nullptr, "Predicates without a kind token are handled above, but got {}", comparison->getText());
+        const auto keyword = toUpperCase(comparison->kind->getText());
+        const auto* const isPrefix = comparison->IS() != nullptr ? "IS " : "";
+        const auto* const negation = comparison->NOT() != nullptr ? "NOT " : "";
+        const auto* const distinctSuffix = comparison->DISTINCT() != nullptr ? " FROM" : "";
+        throw UnsupportedQuery("{}{}{}{} is not supported: {}", isPrefix, negation, keyword, distinctSuffix, comparison->getText());
     }
 
     functions.push_back(std::move(function));
