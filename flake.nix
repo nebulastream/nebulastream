@@ -228,7 +228,6 @@
                 pkgs.libffi
                 pkgs.libxml2
                 pkgs.python3
-                pkgs.pypy3
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
@@ -700,7 +699,6 @@
           gdb
           llvm.lldb
           python3
-          pypy3
         ];
 
         packageInstallPhase = ''

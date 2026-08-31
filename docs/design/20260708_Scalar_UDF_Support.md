@@ -304,11 +304,13 @@ OQ3: Error semantics — v1 fails the *query* on a UDF error; do we also want an
 
 OQ4: Where does `dlopen` run — lowering is assumed worker-side (like model compilation); confirm the `.so` path resolves on the worker in all deployment topologies.
 
-OQ5: Interpreter choice per UDF — v1 ships exactly one Python bridge (CPython). See "Extension — Alternative Interpreter Backend (PyPy)" below for a second bridge selectable via `BRIDGE`, and whether/when it should graduate from an opt-in alternative to a default recommendation.
+OQ5: Interpreter choice per UDF — resolved. Both a CPython bridge and a PyPy bridge (`BRIDGE 'pypy'`) now ship; see "Extension — Alternative Interpreter Backend (PyPy)" below. Whether PyPy should graduate from an opt-in alternative to a default recommendation is still open, pending real benchmark numbers.
 
 # Extension — Alternative Interpreter Backend (PyPy)
 
-v1 embeds CPython, a pure bytecode interpreter: `execute_udf_row` re-interprets the UDF's bytecode on every call (see the per-tuple trace in `CPythonUdfBridge.cpp`). That's fine for a short query — it's already at steady-state cost on call one. For a long-running continuous query calling the same UDF once per tuple, it's exactly what a *tracing* JIT wants: a hot function, called many times, with stable argument types (fixed by the SQL schema). PyPy's JIT does this — interpret until a function crosses a hotness threshold, then compile that path to native code, with guards that fall back to interpretation if an assumption breaks.
+**Status: implemented and shipped.** Both bridges are built when their respective interpreter is available (`Python3 Development.Embed` / `pypy3`, both `find_program`/`find_package`-detected, no build flag), and `nes-systests/udf/PyPyUdf.test` (`PyPyUdf` systest group) exercises the PyPy path end to end. Verified working both in the project's Docker image and in a local nix-toolchain build against a system-installed (apt) `pypy3` — the latter needed three narrow fixes in `cmake/FindNesPyPy.cmake` / `nes-udf/bridge-pypy/CMakeLists.txt` for nix-devshell-environment and Debian-multiarch-packaging quirks (stale `sysconfig` env vars shadowing PyPy's own config, a runtime-lib search path miss, and `DT_RUNPATH` not applying transitively to the PyPy `.so`'s own further dependencies) — none of which reflect a problem with the design itself.
+
+CPython is a pure bytecode interpreter: `execute_udf_row` re-interprets the UDF's bytecode on every call (see the per-tuple trace in `CPythonUdfBridge.cpp`). That's fine for a short query — it's already at steady-state cost on call one. For a long-running continuous query calling the same UDF once per tuple, it's exactly what a *tracing* JIT wants: a hot function, called many times, with stable argument types (fixed by the SQL schema). PyPy's JIT does this — interpret until a function crosses a hotness threshold, then compile that path to native code, with guards that fall back to interpretation if an assumption breaks.
 
 **Note**: not "fully compiled, no interpretation" — warm-up (interpreted), then steady-state (compiled, guarded). A real per-call win for a long-running query, not a categorical one.
 
@@ -325,7 +327,7 @@ CPython is embedded directly via its C API (`Py_InitializeEx`, `PyImport_ImportM
 
 ## CPython bridge vs. PyPy bridge
 
-| | CPython bridge (v1, shipped) | PyPy bridge (proposed) |
+| | CPython bridge (shipped) | PyPy bridge (shipped) |
 |---|---|---|
 | Per-call cost, steady state | full bytecode interpretation, every call | native compiled code, every call (after JIT warm-up) |
 | Cost on a short/one-shot query | already at steady state on call 1 | pays interpretation until hot; may never amortize |
@@ -333,7 +335,7 @@ CPython is embedded directly via its C API (`Py_InitializeEx`, `PyImport_ImportM
 | GIL | serializes all UDF calls process-wide | still present — PyPy has its own GIL; no improvement here |
 | Python/C-extension compatibility | full CPython semantics | very high, but not 100% identical (weaker C-extension ecosystem historically) |
 | Host embedding API | native `Py_Initialize*`/`PyObject_Call*` | `cffi` embedding mode (different toolchain, different build recipe) |
-| Build dependency | `Python3 Development.Embed`, `find_package`-able via nix/apt | `pypy3`, `find_program`-able the same way (nixpkgs `pkgs.pypy3`, apt `pypy3`/`pypy3-dev`) |
+| Build dependency | `Python3 Development.Embed`, `find_package`-able via nix/apt; a nix devshell buildInput | `pypy3`, `find_program`-detected, but deliberately **not** a nix devshell buildInput (this project's pinned nixpkgs revision has no binary cache hit, forcing a slow from-source bootstrap build) — expected to be a locally/system-installed tool (apt `pypy3`/`pypy3-dev`, or any other install), like IREE/Bats |
 | Deployment artifact | one bridge `.so`, dynamically linked against the system's `libpython3.so` | one bridge `.so`, dynamically linked against the system's `libpypy3.x-c.so` -- same shape, no bundling either side |
 | Isolation model | in-process `dlopen`, `UdfBackend` seam | identical — no change to the isolation story either way |
 | Best fit | short/ad hoc queries, needs full CPython/C-extension compatibility | long-running continuous queries hammering the same UDF |
