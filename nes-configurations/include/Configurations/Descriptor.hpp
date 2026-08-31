@@ -14,15 +14,18 @@
 
 #pragma once
 
+#include <algorithm>
 #include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -33,6 +36,7 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
@@ -161,7 +165,13 @@ public:
         {
             if (not SpecificConfiguration::parameterMap.contains(key))
             {
-                throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
+                auto accepted = SpecificConfiguration::parameterMap | std::views::keys | std::ranges::to<std::vector>();
+                std::ranges::sort(accepted);
+                throw InvalidConfigParameter(fmt::format(
+                    "Unknown configuration parameter: {}. Accepted parameters for {} are: {}.",
+                    key,
+                    implementationName,
+                    fmt::join(accepted, ", ")));
             }
         }
         /// Next, try to validate all config parameters.

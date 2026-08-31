@@ -18,5 +18,6 @@ add_nes_unit_test(
     "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp"
     "UnitTests/Configurations/ExplicitlySetTrackingTests.cpp"
     "UnitTests/Configurations/SequenceOptionTests.cpp"
+    "UnitTests/Configurations/SinkConfigTest.cpp"
     "UnitTests/Validation/EndpointValidationTest.cpp")
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
