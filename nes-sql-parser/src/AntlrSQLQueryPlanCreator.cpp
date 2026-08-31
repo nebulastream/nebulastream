@@ -1405,7 +1405,13 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 }
                 else
                 {
-                    throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
+                    auto registeredNamesAggregation
+                        = AggregationLogicalFunctionRegistry::instance().getRegisteredNames() | std::ranges::to<std::vector>();
+                    std::ranges::sort(registeredNamesAggregation);
+                    throw InvalidQuerySyntax(
+                        "Unknown function: {}. Supported aggregation functions are {}.",
+                        funcName,
+                        fmt::join(registeredNamesAggregation, ", "));
                 }
             }
     }
