@@ -59,6 +59,50 @@ INTO sinkStream;
 2000,3000,16,2
 1500,2500,16,2
 
+# HAVING that repeats the aggregate expression should be refused.
+# The error message should hint to use an alias from the SELECT list.
+SELECT start, end, id, SUM(value) as sumValue
+FROM stream
+WHERE id > 15
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+GROUP BY id
+HAVING SUM(value) > UINT64(0)
+INTO sinkStream;
+----
+ERROR 2000 "HAVING must use the projected alias: write sumValue instead of SUM(VALUE)"
+
+SELECT start, end, id, SUM(value)
+FROM stream
+WHERE id > 15
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+GROUP BY id
+HAVING SUM(value) > UINT64(0)
+INTO sinkStream;
+----
+ERROR 2000 "add SUM(VALUE) AS <alias> to the SELECT list"
+
+SELECT start, end, id, SUM(value + UINT64(1)) AS sumValue
+FROM stream
+WHERE id > 15
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+GROUP BY id
+HAVING SUM(value + UINT64(1)) > UINT64(0)
+INTO sinkStream;
+----
+ERROR 2000 "add SUM(VALUE + 1) AS <alias> to the SELECT list"
+
+# Control for the case above: HAVING on the projected alias should be accepted.
+SELECT start, end, id, SUM(value) as sumValue
+FROM stream
+WHERE id > 15
+WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+GROUP BY id
+HAVING sumValue > UINT64(0)
+INTO sinkStream;
+----
+2000,3000,16,2
+1500,2500,16,2
+
 # Negative test: GroupBy before where
 SELECT SUM(value) as sumValue
 FROM stream
