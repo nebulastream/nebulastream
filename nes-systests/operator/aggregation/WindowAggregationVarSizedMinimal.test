@@ -17,4 +17,3 @@ FROM stream GROUP BY (key) WINDOW TUMBLING(ts, size 100 ms) INTO FILE ();
 0,100,apple,1
 0,100,book,1
 0,100,cat,1
-
