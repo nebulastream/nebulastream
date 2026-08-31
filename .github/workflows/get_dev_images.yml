@@ -133,15 +133,13 @@ jobs:
         with:
           ref: ${{ inputs.head_sha }}
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: false
-      - uses: docker/build-push-action@v6
+        uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{ matrix.arch }}
@@ -178,23 +176,21 @@ jobs:
         with:
           ref: ${{ inputs.head_sha }}
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: false
+        uses: docker/setup-buildx-action@v4
       - name: Build Base Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
           context: .
           file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
@@ -213,7 +209,7 @@ jobs:
             VCPKG_CACHE_BUCKET=${{secrets.VCPKG_CACHE_BUCKET}}
             VCPKG_CACHE_REGION=${{secrets.VCPKG_CACHE_REGION}}
       - name: Build Development Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
@@ -221,7 +217,7 @@ jobs:
           context: .
           file: docker/dependency/Development.dockerfile
       - name: Build CI Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
@@ -230,7 +226,7 @@ jobs:
           file: docker/dependency/DevelopmentCI.dockerfile
       - name: Build benchmark image
         if: ${{matrix.sanitizer == 'none'}}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
@@ -249,14 +245,12 @@ jobs:
           ref: ${{ inputs.head_sha }}
       - name: Login to Docker Hub
         if: ${{ !github.event.act }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: false
+        uses: docker/setup-buildx-action@v4
 
       - name: Sanitize branch name for Docker tag
         id: sanitize
