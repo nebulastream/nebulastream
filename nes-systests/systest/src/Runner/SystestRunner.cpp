@@ -123,16 +123,24 @@ void processQueryWithError(
                     }));
 
                 /// The test passes if the expected error code is among the thrown exceptions. Additional errors are tolerated, because
-                /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines
+                /// a failure on one pipeline can raise secondary/cascading errors on connected pipelines.
+                /// If the test also states an expected message, that message must appear verbatim in the matching exception,
+                /// so that tests can pin down the wording an error reports and not just its code.
                 const auto expectedErrorOccurred = std::ranges::any_of(
                     allExceptionByAddress | std::views::values,
-                    [&](const auto& exceptionRef) { return exceptionRef.get().code() == expectedError->code; });
+                    [&](const auto& exceptionRef)
+                    {
+                        return exceptionRef.get().code() == expectedError->code
+                            and (not expectedError->message.has_value()
+                                 or std::string_view{exceptionRef.get().what()}.find(expectedError->message.value())
+                                     != std::string_view::npos);
+                    });
 
                 if (!expectedErrorOccurred)
                 {
                     return fmt::format(
                         "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
-                        expectedError->message,
+                        expectedError->message.value_or(""),
                         expectedError->code,
                         actualException);
                 }
