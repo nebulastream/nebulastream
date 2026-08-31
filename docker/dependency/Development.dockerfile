@@ -28,11 +28,19 @@ ENV BATS_LIB_PATH=/usr/lib/bats
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
   https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar /opt/antlr-${ANTLR4_VERSION}-complete.jar
 
-RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
-    && cmake -B ClangBuildAnalyzer/build -S ClangBuildAnalyzer -DCMAKE_INSTALL_PREFIX=/usr \
-    && cmake --build ClangBuildAnalyzer/build -j\
-    && cmake --install ClangBuildAnalyzer/build \
-    && rm -rf ClangBuildAnalyzer \
+# Fetched as a release tarball rather than cloned: GitHub throttles anonymous git traffic from the
+# dep-builder, and a 401 there makes git prompt for a username and fail with a misleading error.
+ARG CLANG_BUILD_ANALYZER_VERSION=1.6.0
+ADD --checksum=sha256:868a8d34ecb9b65da4e5874342062a12c081ce4385c7ddd6ce7d557a0c5c292d \
+  https://github.com/aras-p/ClangBuildAnalyzer/archive/refs/tags/v${CLANG_BUILD_ANALYZER_VERSION}.tar.gz \
+  /tmp/ClangBuildAnalyzer.tar.gz
+
+RUN mkdir -p /tmp/ClangBuildAnalyzer \
+    && tar -xf /tmp/ClangBuildAnalyzer.tar.gz -C /tmp/ClangBuildAnalyzer --strip-components=1 \
+    && cmake -B /tmp/ClangBuildAnalyzer/build -S /tmp/ClangBuildAnalyzer -DCMAKE_INSTALL_PREFIX=/usr \
+    && cmake --build /tmp/ClangBuildAnalyzer/build -j \
+    && cmake --install /tmp/ClangBuildAnalyzer/build \
+    && rm -rf /tmp/ClangBuildAnalyzer /tmp/ClangBuildAnalyzer.tar.gz \
     && ClangBuildAnalyzer --version
 
 # Install GDB Libc++ Pretty Printer

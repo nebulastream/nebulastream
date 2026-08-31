@@ -54,6 +54,10 @@ ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 # authenticated tier with 429/ServiceUnavailable. vcpkg shells out to the aws CLI per package and
 # treats a non-zero exit as a cache miss, so AWS_RETRY_MODE/AWS_MAX_ATTEMPTS let the CLI back off
 # instead of silently rebuilding the package from source.
+#
+# The vcpkg clone below must stay a full clone. Port versions in the builtin registry are recorded
+# as git-tree SHAs from the commits that introduced them, not from the baseline, so a shallow clone
+# fails with "vcpkg was cloned as a shallow repository" on the first port whose version predates it.
 RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_SECRET_KEY \
     --mount=type=secret,id=VCPKG_CACHE_ENDPOINT \
