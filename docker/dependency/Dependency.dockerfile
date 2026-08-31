@@ -49,6 +49,11 @@ ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 #   1. S3 credentials provided: authenticated readwrite cache
 #   2. Only VCPKG_CACHE_PUBLIC_URL provided: read-only HTTP cache (public bucket)
 #   3. Nothing provided: no cloud cache, local build only
+#
+# The 12 dependency-image matrix jobs share host-triplet cache objects, so the bucket throttles the
+# authenticated tier with 429/ServiceUnavailable. vcpkg shells out to the aws CLI per package and
+# treats a non-zero exit as a cache miss, so AWS_RETRY_MODE/AWS_MAX_ATTEMPTS let the CLI back off
+# instead of silently rebuilding the package from source.
 RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_SECRET_KEY \
     --mount=type=secret,id=VCPKG_CACHE_ENDPOINT \
@@ -63,6 +68,8 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
         export AWS_ENDPOINT_URL_S3=$(cat /run/secrets/VCPKG_CACHE_ENDPOINT); \
         export AWS_REGION=$(cat /run/secrets/VCPKG_CACHE_REGION); \
         BUCKET=$(cat /run/secrets/VCPKG_CACHE_BUCKET); \
+        export AWS_RETRY_MODE=standard; \
+        export AWS_MAX_ATTEMPTS=10; \
         export VCPKG_BINARY_SOURCES="clear;x-aws,s3://${BUCKET}/,readwrite"; \
     elif [ -n "${VCPKG_CACHE_PUBLIC_URL}" ]; then \
         echo "Public cache URL found. Using read-only HTTP cache..."; \
