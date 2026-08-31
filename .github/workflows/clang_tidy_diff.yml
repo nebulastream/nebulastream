@@ -91,6 +91,9 @@ jobs:
         with:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
+            # clang-tidy-diff crashes with FileNotFoundError when the -export-fixes directory is missing,
+            # masking the actual findings behind the crash.
+            mkdir -p clang-tidy-result
             git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -j $(nproc)
       # Findings are printed by clang-tidy-diff in the steps above and exported here for download.
       # A failing step means clang-tidy flagged something in .clang-tidy's WarningsAsErrors list.
