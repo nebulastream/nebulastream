@@ -51,6 +51,10 @@ ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 #   3. Nothing provided: no cloud cache, local build only
 #
 # We enable retry due to rate limits.
+#
+# The vcpkg clone below must stay a full clone. Port versions in the builtin registry are recorded
+# as git-tree SHAs from the commits that introduced them, not from the baseline, so a shallow clone
+# fails with "vcpkg was cloned as a shallow repository" on the first port whose version predates it.
 RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_SECRET_KEY \
     --mount=type=secret,id=VCPKG_CACHE_ENDPOINT \
