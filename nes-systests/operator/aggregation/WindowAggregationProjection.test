@@ -143,3 +143,21 @@ INTO sinkStreamNested;
 1,4
 1,2
 
+# A column that is neither grouped nor aggregated is rejected while the query is still being parsed.
+SELECT id, COUNT(id) AS count_id
+FROM stream
+WHERE id > UINT64(15)
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sinkStreamNested;
+----
+ERROR 2000 "column "id" must appear in the GROUP BY clause or be used in an aggregate function"
+
+# Control for the case above: with the column in GROUP BY the same query should be accepted.
+SELECT id, COUNT(id) AS count_id
+FROM stream
+WHERE id > UINT64(15)
+GROUP BY id
+WINDOW TUMBLING(timestamp, size 1 sec)
+INTO sinkStreamNested;
+----
+16,1
