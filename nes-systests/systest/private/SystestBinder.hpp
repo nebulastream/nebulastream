@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Util/Pointers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
@@ -40,7 +41,8 @@ public:
         SystestClusterConfiguration clusterConfig);
 
     /// @return the loaded systest queries and the number of loaded files
-    [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles);
+    [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t>
+    loadOptimizeQueries(const std::vector<DiscoveredTestFile>& discoveredTestFiles);
 
     ~SystestBinder();
 

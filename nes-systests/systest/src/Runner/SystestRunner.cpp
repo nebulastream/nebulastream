@@ -444,7 +444,7 @@ void printQueryResultToStdOut(
     SystestProgressTracker& progressTracker,
     const std::string_view queryPerformanceMessage)
 {
-    const auto queryNameLength = runningQuery.systestQuery.testName.size();
+    const auto queryNameLength = runningQuery.systestQuery.testName.view().size();
     const auto queryNumberAsString = runningQuery.systestQuery.queryIdInFile.toString();
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter());
@@ -546,7 +546,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         recordProcessedInput(runningQuery);
         const auto executionTimeInSeconds = runningQuery.getElapsedTime().count();
         benchmarkResults.push_back(
-            {.queryName = runningQuery.systestQuery.testName,
+            {.queryName = runningQuery.systestQuery.testName.getRawValue(),
              .time = executionTimeInSeconds,
              .bytesPerSecond = static_cast<double>(runningQuery.bytesProcessed.value_or(NAN)) / executionTimeInSeconds,
              .tuplesPerSecond = static_cast<double>(runningQuery.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds});

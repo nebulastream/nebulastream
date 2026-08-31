@@ -14,6 +14,7 @@
 
 #include <Config/ConfigParser.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
@@ -24,6 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Config/Config.hpp>
 #include <Configurations/Util.hpp>
@@ -217,16 +219,16 @@ void addTestQueryNumbers(NES::SystestConfiguration& config, const std::string& t
     }
 }
 
-std::filesystem::path parseTestLocationPath(const std::string& testFileDefinition, NES::SystestConfiguration& config)
+/// Splits `path` or `path:test_numbers` into the two.
+std::pair<std::filesystem::path, std::string> splitTestLocation(const std::string& testFileDefinition)
 {
     const size_t delimiterPos = testFileDefinition.find(':');
     if (delimiterPos == std::string::npos)
     {
-        return {testFileDefinition};
+        return {std::filesystem::path{testFileDefinition}, std::string{}};
     }
 
-    addTestQueryNumbers(config, testFileDefinition.substr(delimiterPos + 1));
-    return {testFileDefinition.substr(0, delimiterPos)};
+    return {std::filesystem::path{testFileDefinition.substr(0, delimiterPos)}, testFileDefinition.substr(delimiterPos + 1)};
 }
 
 std::vector<std::filesystem::path> findAllInTree(const std::filesystem::path& wanted, const std::filesystem::path& root)
@@ -243,15 +245,19 @@ std::vector<std::filesystem::path> findAllInTree(const std::filesystem::path& wa
     return hits;
 }
 
-void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES::SystestConfiguration& config)
+void applyDiscoveredTestLocation(
+    const std::filesystem::path& testFilePath, const std::vector<std::filesystem::path>& searchDirs, NES::SystestConfiguration& config)
 {
-    /// Search all discover directories for a matching file name
+    /// A bare file name is looked up in every directory that the run searches, so a test can be given without its folder.
     std::vector<std::filesystem::path> allMatches;
-    for (const auto& dir : config.testDiscoverDirs.getValues())
+    for (const auto& searchDir : searchDirs)
     {
-        auto matches = findAllInTree(testFilePath.filename(), dir.getValue());
+        auto matches = findAllInTree(testFilePath.filename(), searchDir);
         allMatches.insert(allMatches.end(), matches.begin(), matches.end());
     }
+    std::ranges::sort(allMatches);
+    const auto duplicates = std::ranges::unique(allMatches);
+    allMatches.erase(duplicates.begin(), duplicates.end());
 
     if (allMatches.empty())
     {
@@ -280,32 +286,51 @@ void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration
         return;
     }
 
-    /// Directories given on the command line replace the default discover directory rather than extending it,
-    /// so `-t dirA dirB` discovers in dirA and dirB only. The default is dropped on the first directory seen.
-    bool defaultDiscoverDirReplaced = false;
-
-    const auto testLocations = program.get<std::vector<std::string>>("--testLocations");
-    for (const auto& location : testLocations)
+    std::vector<std::filesystem::path> directories;
+    std::vector<std::pair<std::filesystem::path, std::string>> files;
+    for (const auto& location : program.get<std::vector<std::string>>("--testLocations"))
     {
-        const auto testFilePath = parseTestLocationPath(location, config);
-        if (std::filesystem::is_directory(testFilePath))
+        if (auto split = splitTestLocation(location); std::filesystem::is_directory(split.first))
         {
-            if (not defaultDiscoverDirReplaced)
-            {
-                config.testDiscoverDirs.clear();
-                defaultDiscoverDirReplaced = true;
-            }
-            config.testDiscoverDirs.add(testFilePath.string());
-            continue;
+            directories.push_back(std::move(split.first));
+        }
+        else
+        {
+            files.push_back(std::move(split));
+        }
+    }
+
+    /// A bare file name is looked up in the search directories, which are fixed before any lookup. Collecting them
+    /// first keeps the result independent of argument order, which matters when a directory lies outside the root or
+    /// resolves a name that is ambiguous under it.
+    for (const auto& directory : directories)
+    {
+        config.testDiscoverDirs.add(directory.string());
+    }
+
+    auto searchDirs = config.testDiscoverDirs.getValues()
+        | std::views::transform([](const auto& option) { return std::filesystem::path{option.getValue()}; })
+        | std::ranges::to<std::vector<std::filesystem::path>>();
+    if (searchDirs.empty())
+    {
+        searchDirs.emplace_back(config.testDiscoverRoot.getValue());
+    }
+
+    for (const auto& [testFilePath, testNumbers] : files)
+    {
+        if (not testNumbers.empty())
+        {
+            addTestQueryNumbers(config, testNumbers);
         }
 
         if (std::filesystem::is_regular_file(testFilePath))
         {
             config.directlySpecifiedTestFiles = testFilePath;
-            continue;
         }
-
-        applyDiscoveredTestLocation(testFilePath, config);
+        else
+        {
+            applyDiscoveredTestLocation(testFilePath, searchDirs, config);
+        }
     }
 }
 
@@ -472,7 +497,7 @@ void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfigu
 {
     if (program.is_used("--list"))
     {
-        std::cout << NES::Systest::loadTestFileMap(config);
+        std::cout << NES::discoverTestFiles(config);
         std::exit(0); ///NOLINT(concurrency-mt-unsafe)
     }
 

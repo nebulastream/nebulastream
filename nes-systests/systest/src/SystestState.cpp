@@ -80,80 +80,13 @@ std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& work
 
 std::filesystem::path SystestQuery::resultFile() const
 {
-    return resultFile(workingDir, testName, queryIdInFile);
+    return resultFile(workingDir, testName.view(), queryIdInFile);
 }
 
 std::filesystem::path SystestQuery::resultFileForDifferentialQuery() const
 {
-    return resultFile(workingDir, testName + "differential", queryIdInFile);
+    return resultFile(workingDir, testName.getRawValue() + "differential", queryIdInFile);
 }
-
-std::vector<TestGroup> readGroups(const TestFile& testfile)
-{
-    std::vector<TestGroup> groups;
-    if (std::ifstream ifstream(testfile.file); ifstream.is_open())
-    {
-        std::string line;
-        while (std::getline(ifstream, line))
-        {
-            if (line.starts_with("# groups:"))
-            {
-                auto content = std::string_view(line).substr(9);
-                auto open = content.find('[');
-                auto close = content.find(']');
-                auto inner = content.substr(open + 1, close - open - 1);
-                for (auto part : inner | std::views::split(',') | std::views::transform([](auto r) { return std::string_view(r); })
-                         | std::views::transform([](auto sv) { return sv | std::views::filter([](char c) { return !std::isspace(c); }); }))
-                {
-                    groups.emplace_back(std::ranges::to<std::string>(part));
-                }
-                break;
-            }
-        }
-        ifstream.close();
-    }
-    return groups;
-}
-
-TestFile::TestFile(
-    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-    : TestFile(file, file.stem().string(), std::move(sourceCatalog), std::move(sinkCatalog))
-{
-}
-
-TestFile::TestFile(
-    const std::filesystem::path& file,
-    TestName testName,
-    std::shared_ptr<SourceCatalog> sourceCatalog,
-    std::shared_ptr<SinkCatalog> sinkCatalog)
-    : file(weakly_canonical(file))
-    , testName(std::move(testName))
-    , groups(readGroups(*this))
-    , sourceCatalog(std::move(sourceCatalog))
-    , sinkCatalog(std::move(sinkCatalog)) { };
-
-TestFile::TestFile(
-    const std::filesystem::path& file,
-    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-    std::shared_ptr<SourceCatalog> sourceCatalog,
-    std::shared_ptr<SinkCatalog> sinkCatalog)
-    : TestFile(
-          file, std::move(onlyEnableQueriesWithTestQueryNumber), file.stem().string(), std::move(sourceCatalog), std::move(sinkCatalog))
-{
-}
-
-TestFile::TestFile(
-    const std::filesystem::path& file,
-    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
-    TestName testName,
-    std::shared_ptr<SourceCatalog> sourceCatalog,
-    std::shared_ptr<SinkCatalog> sinkCatalog)
-    : file(weakly_canonical(file))
-    , testName(std::move(testName))
-    , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
-    , groups(readGroups(*this))
-    , sourceCatalog(std::move(sourceCatalog))
-    , sinkCatalog(std::move(sinkCatalog)) { };
 
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
@@ -204,27 +137,4 @@ std::string RunningQuery::getThroughput() const
     return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
 }
 
-std::string TestFile::getLogFilePath() const
-{
-    if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
-    {
-        auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
-
-        auto filePathIter = file.begin();
-        if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
-        {
-            filePathIter = std::next(it);
-        }
-
-        std::filesystem::path resultPath(hostNebulaStreamRoot);
-        for (; filePathIter != file.end(); ++filePathIter)
-        {
-            resultPath /= *filePathIter;
-        }
-
-        return resultPath.string();
-    }
-
-    return std::filesystem::path(file);
-}
 }

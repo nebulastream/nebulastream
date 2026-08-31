@@ -521,10 +521,11 @@ TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
     SystestConfiguration config{};
     const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
-    const auto testMap = Systest::loadTestFileMap(config);
-    ASSERT_EQ(testMap.size(), 1);
-    const auto& testFile = testMap.begin()->second;
-    const std::vector<std::string> expectedGroups = {"Aggregation", "WindowOperators", "CompilationIntensive"};
+    const auto discovered = discoverTestFiles(config);
+    ASSERT_EQ(discovered.size(), 1);
+    const auto& testFile = discovered.front();
+    const std::vector<TestGroup> expectedGroups
+        = {TestGroup{"Aggregation"}, TestGroup{"WindowOperators"}, TestGroup{"CompilationIntensive"}};
     ASSERT_EQ(testFile.groups, expectedGroups);
 }
 

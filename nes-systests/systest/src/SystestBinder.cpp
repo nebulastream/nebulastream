@@ -41,6 +41,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Discovery/TestFileReader.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -476,13 +477,13 @@ struct SystestBinder::Impl
         }
     }
 
-    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+    std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const std::vector<DiscoveredTestFile>& discoveredTestFiles)
     {
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
 
-        for (const auto& testfile : discoveredTestFiles | std::views::values)
+        for (const auto& testfile : discoveredTestFiles)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
             try
@@ -505,21 +506,24 @@ struct SystestBinder::Impl
         return std::make_pair(queries, loadedFiles);
     }
 
-    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
+    std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const DiscoveredTestFile& testfile)
     {
-        SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
+        /// Each test file declares its sources and sinks in its own terms, so each one binds against its own catalogs.
+        const auto sourceCatalog = std::make_shared<SourceCatalog>();
+        const auto sinkCatalog = std::make_shared<SinkCatalog>();
+
+        SLTSinkFactory sinkProvider{sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name().view(), sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration, sourceCatalog, sinkCatalog, copyPtr(workerCatalog), modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
         {
-            const bool includeBuilder = testfile.onlyEnableQueriesWithTestQueryNumber.empty()
-                || testfile.onlyEnableQueriesWithTestQueryNumber.contains(builder.getSystemTestQueryId());
+            const bool includeBuilder
+                = not testfile.enabledQueries.has_value() || testfile.enabledQueries->contains(builder.getSystemTestQueryId());
             if (!includeBuilder)
             {
                 continue;
@@ -534,16 +538,20 @@ struct SystestBinder::Impl
         }
 
         /// Warn about queries specified via the command line that were not found in the test file
-        std::ranges::for_each(
-            testfile.onlyEnableQueriesWithTestQueryNumber
-                | std::views::filter([&foundQueries](const SystestQueryId testNumber) { return not foundQueries.contains(testNumber); }),
-            [&testfile](const auto badTestNumber)
-            {
-                std::cerr << fmt::format(
-                    "Warning: Query number {} specified via command line argument but not found in file://{}",
-                    badTestNumber,
-                    testfile.file.string());
-            });
+        if (testfile.enabledQueries.has_value())
+        {
+            std::ranges::for_each(
+                *testfile.enabledQueries
+                    | std::views::filter([&foundQueries](const SystestQueryId testNumber)
+                                         { return not foundQueries.contains(testNumber); }),
+                [&testfile](const auto badTestNumber)
+                {
+                    std::cerr << fmt::format(
+                        "Warning: Query number {} specified via command line argument but not found in file://{}",
+                        badTestNumber,
+                        testfile.file.string());
+                });
+        }
 
         return buildSystests;
     }
@@ -1057,7 +1065,7 @@ struct SystestBinder::Impl
         for (auto& builder : builders)
         {
             builder.setPaths(testFilePath, workingDir);
-            builder.setName(std::string{testFileName});
+            builder.setName(TestName{std::string{testFileName}});
             builder.setAdditionalSourceThreads(sourceThreads);
         }
         return builders;
@@ -1083,7 +1091,7 @@ SystestBinder::SystestBinder(
 {
 }
 
-std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const TestFileMap& discoveredTestFiles)
+std::pair<std::vector<SystestQuery>, size_t> SystestBinder::loadOptimizeQueries(const std::vector<DiscoveredTestFile>& discoveredTestFiles)
 {
     return impl->loadOptimizeQueries(discoveredTestFiles);
 }

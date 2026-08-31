@@ -92,11 +92,11 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
-    std::optional<std::pair<NES::Systest::TestName, NES::SystestQueryId>> runAfter,
+    std::optional<std::pair<NES::TestName, NES::SystestQueryId>> runAfter,
     NES::SystestQueryId queryId)
 {
     return NES::Systest::SystestQuery{
-        .testName = "test_query",
+        .testName = NES::TestName{"test_query"},
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
         .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
@@ -281,7 +281,7 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
-    auto runAfter = std::make_pair(std::string{"test_query"}, SystestQueryId(std::numeric_limits<uint64_t>::max()));
+    auto runAfter = std::make_pair(TestName{"test_query"}, SystestQueryId(std::numeric_limits<uint64_t>::max()));
 
     EXPECT_ANY_THROW(
         const auto result = runQueries(
@@ -347,13 +347,13 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     auto query2 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         ExpectedRows{},
-        std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
+        std::make_pair(TestName{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
         SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
         ExpectedRows{},
-        std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
+        std::make_pair(TestName{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));
 
     std::ofstream(query1.resultFile()) << "\n";
