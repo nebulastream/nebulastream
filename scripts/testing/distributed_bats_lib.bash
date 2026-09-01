@@ -30,9 +30,9 @@
 #                                            (used by cli/MQTT* suites)
 #
 #   Layer-2 callers pass the client binary path to nes_distributed_setup_file
-#   (e.g. "$NES_CLI"); the lib derives the test label / image-name prefixes /
-#   app-image env-var name from `basename` of that path. Testdata is the
-#   directory containing the .bats file.
+#   (e.g. "$NES_CLI") plus a suite name when more than one suite drives that
+#   binary; see nes_derive_image_names. Testdata is the directory containing the
+#   .bats file.
 
 # Load the standard bats helper libraries when sourced from inside a bats test
 # (bats injects `bats_load_library`). They are resolved via BATS_LIB_PATH, which
@@ -250,19 +250,33 @@ assert_json_contains() {
 # Layer 2 — preset for cli/repl/MQTT distributed suites
 # ---------------------------------------------------------------------------
 
-nes_distributed_setup_file() {
-  # Pass the client binary path (e.g. "$NES_CLI"). Convention: nes-cli ->
-  # distributed-cli / nes-worker-cli-test / nes-cli-image / CLI_IMAGE.
+# Derive this suite's docker identity from the client binary path and a suite
+# name (default: binary name without `nes-`). Suites sharing a binary need
+# distinct names: setup_file force-removes everything matching these, so a
+# shared identity wipes a sibling suite's running stack.
+nes_derive_image_names() {
   local bin_path="$1"
   local bin_name
   bin_name=$(basename "$bin_path")
-  local suffix="${bin_name#nes-}"
-  local test_label="distributed-${suffix}"
-  local worker_prefix="nes-worker-${suffix}-test"
-  local app_prefix="${bin_name}-image"
-  export NES_BATS_APP_IMAGE_VAR="${suffix^^}_IMAGE"
+  local bin_suffix="${bin_name#nes-}"
+  local suite="${2:-$bin_suffix}"
 
-  nes_cleanup_leaked_resources "$test_label" "${worker_prefix}-*" "${app_prefix}-*"
+  export NES_BATS_TEST_LABEL="distributed-${suite}"
+  export NES_BATS_WORKER_PREFIX="nes-worker-${suite}-test"
+  export NES_BATS_APP_PREFIX="nes-${suite}-image"
+  export NES_BATS_APP_IMAGE_VAR="${bin_suffix^^}_IMAGE"
+}
+
+nes_distributed_setup_file() {
+  # Pass the client binary path (e.g. "$NES_CLI") and, when more than one suite
+  # drives that binary, a suite name.
+  local bin_path="$1"
+  local bin_name
+  bin_name=$(basename "$bin_path")
+  nes_derive_image_names "$bin_path" "${2:-}"
+
+  nes_cleanup_leaked_resources "$NES_BATS_TEST_LABEL" \
+    "${NES_BATS_WORKER_PREFIX}-*" "${NES_BATS_APP_PREFIX}-*"
 
   nes_require_env NES_WORKER
   nes_require_env NES_TEST_TMP_DIR
@@ -272,9 +286,9 @@ nes_distributed_setup_file() {
 
   # Per-test images use random suffixes so parallel checkouts don't collide.
   # Docker's COPY layer is content-addressed, so unchanged binaries hit cache.
-  nes_build_runtime_image WORKER_IMAGE "$worker_prefix" \
+  nes_build_runtime_image WORKER_IMAGE "$NES_BATS_WORKER_PREFIX" \
     "$NES_WORKER" nes-single-node-worker
-  nes_build_app_image "$NES_BATS_APP_IMAGE_VAR" "$app_prefix" \
+  nes_build_app_image "$NES_BATS_APP_IMAGE_VAR" "$NES_BATS_APP_PREFIX" \
     "$bin_path" "$bin_name"
 
   echo "# Using client binary: $bin_path" >&3
