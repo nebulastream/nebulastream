@@ -285,11 +285,12 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
 NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
-    /// window$val_i8_i8:INT32:IS_NULLABLE, window$val_i8_i8_plus_1:INT16:NOT_NULLABLE
+    /// window$val_i8_i8:INT32:IS_NULLABLE, "window$val_i8_i8_plus_1":INT16:NOT_NULLABLE
+    ///
+    /// A quoted identifier may contain the ',' and the ':' separators of this format.
+    /// Both splits therefore have to ignore separators inside a pair of quotes.
     auto fields
-        = std::ranges::split_view(fieldNamesRawLine, ',')
-        | std::views::transform([](auto splitNameAndType) { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
-        | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); })
+        = NES::splitOnMultipleDelimiters(fieldNamesRawLine, {','}, {'"'})
         | std::views::transform(
               [](const auto& field)
               {
@@ -300,10 +301,10 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const st
                   const auto [nameTrimmed, typeTrimmed, isNullable]
                       = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
                   {
-                      std::vector<std::string_view> fieldAndTypeVector;
-                      for (const auto subrange : std::ranges::split_view(field, ':'))
+                      auto fieldAndTypeVector = NES::splitOnMultipleDelimiters(field, {':'}, {'"'});
+                      for (auto& fieldOrType : fieldAndTypeVector)
                       {
-                          fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
+                          fieldOrType = NES::trimWhiteSpaces(fieldOrType);
                       }
                       INVARIANT(
                           fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
@@ -329,7 +330,7 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const st
                   {
                       throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
                   }
-                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(fmt::format("\"{}\"", nameTrimmed)), dataType};
+                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(std::string{nameTrimmed}), dataType};
               });
     return fields | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 }
@@ -447,8 +448,8 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
             return expectedIdentifier == actualIdentifier;
         }
 
-        /// CSV headers do not retain whether an identifier was quoted. Some sinks also change the
-        /// display case of unquoted names, so compare those names using SQL's canonical form.
+        /// Sinks may write an unquoted name in the display case it was declared with rather than in SQL's canonical
+        /// upper case, so compare unquoted names using the canonical form.
         return expectedIdentifier.asCanonicalString() == NES::toUpperCase(actualIdentifier.asCanonicalString());
     };
 

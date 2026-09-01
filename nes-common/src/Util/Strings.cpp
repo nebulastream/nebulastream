@@ -20,6 +20,7 @@
 #include <optional>
 #include <ranges>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -355,6 +356,52 @@ std::vector<std::string_view> splitOnMultipleDelimiters(std::string_view input, 
             | std::views::join | std::ranges::to<std::vector<std::string_view>>();
     }
 
+    return result;
+}
+
+std::vector<std::string_view>
+splitOnMultipleDelimiters(std::string_view input, const std::vector<char>& delimiters, const std::vector<char>& encapsulators)
+{
+    /// Delimiters and encapsulators should not intersect.
+    if (std::ranges::any_of(delimiters, [&](char delim) { return std::ranges::find(encapsulators, delim) != encapsulators.end(); }))
+    {
+        throw std::invalid_argument("The vectors of delimiters and encapsulators must not intersect.");
+    }
+
+    std::vector<std::string_view> result;
+
+    const auto isDelimiter = [&delimiters](const char character) { return std::ranges::contains(delimiters, character); };
+    const auto isEncapsulator = [&encapsulators](const char character) { return std::ranges::contains(encapsulators, character); };
+
+    size_t tokenStart = 0;
+    std::optional<char> openEncapsulator;
+    for (std::size_t pos = 0; pos < input.size(); ++pos)
+    {
+        const char current = input[pos];
+        if (openEncapsulator.has_value())
+        {
+            if (current == *openEncapsulator)
+            {
+                openEncapsulator.reset();
+            }
+        }
+        else if (isEncapsulator(current))
+        {
+            openEncapsulator = current;
+        }
+        else if (isDelimiter(current))
+        {
+            if (pos > tokenStart)
+            {
+                result.emplace_back(input.substr(tokenStart, pos - tokenStart));
+            }
+            tokenStart = pos + 1;
+        }
+    }
+    if (tokenStart < input.size())
+    {
+        result.emplace_back(input.substr(tokenStart));
+    }
     return result;
 }
 
