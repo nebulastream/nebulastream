@@ -27,12 +27,14 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Statistic/ReservoirProbeLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Statistics/Statistic.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
@@ -73,6 +75,22 @@ public:
         std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
         std::vector<UnboundFieldAccessLogicalFunction> onKeys,
         Windowing::TimeCharacteristic timeCharacteristic);
+
+    /// @brief Adds a StatisticBuildLogicalOperator (currently: reservoir sample) over a time-based window,
+    /// followed by a StatisticStoreWriterLogicalOperator that persists the built statistic in the worker's
+    /// statistic store and re-emits the statistic metadata.
+    static LogicalPlan addStatisticBuild(
+        LogicalPlan queryPlan,
+        const Windowing::TimeBasedWindowType& windowType,
+        Windowing::TimeCharacteristic timeCharacteristic,
+        StatisticId statisticId,
+        uint64_t sampleSize,
+        uint64_t seed);
+
+    /// @brief Adds a ReservoirProbeLogicalOperator that looks up reservoir samples in the worker's statistic
+    /// store and unpacks them into records according to the declared sample fields.
+    static LogicalPlan
+    addReservoirProbe(LogicalPlan queryPlan, StatisticId statisticId, std::vector<ReservoirProbeLogicalOperator::SampleField> sampleFields);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftLogicalPlan the left query plan to combine by the union

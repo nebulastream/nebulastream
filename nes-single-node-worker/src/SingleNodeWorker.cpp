@@ -31,6 +31,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 
+#include <Statistics/DefaultStatisticStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
@@ -74,7 +75,9 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    /// One statistic store per worker: statistic build queries write into it, probe queries read from it.
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(
+        configuration.workerConfiguration.defaultQueryExecution, std::make_shared<DefaultStatisticStore>());
 
     if (!configuration.dataAddress.getValue().empty())
     {

@@ -49,6 +49,8 @@ public:
 
     AnyVec readAt(uint64_t index);
 
+    void replaceAt(uint64_t index, const AnyVec& record);
+
     std::vector<AnyVec> toVector();
 
     void concatMove(TestablePagedVector& other);
@@ -71,6 +73,7 @@ private:
     std::unique_ptr<nautilus::engine::NautilusEngine> engine;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, AbstractBufferProvider*, AnyVec*)>> pushbackFn;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, AnyVec*)>> readAtFn;
+    std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, uint64_t, AbstractBufferProvider*, AnyVec*)>> replaceAtFn;
     std::optional<nautilus::engine::CompiledFunction<void(TupleBuffer*, std::vector<AnyVec>*)>> readAll;
 };
 

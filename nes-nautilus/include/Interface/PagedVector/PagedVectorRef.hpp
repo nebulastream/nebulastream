@@ -100,6 +100,12 @@ public:
     /// The entryPos refers to the record's global position in the paged vector and is not page-specific.
     [[nodiscard]] Record at(const nautilus::val<uint64_t>& entryPos) const;
 
+    /// Overwrites the record at entryPos in place; the total number of records stays unchanged.
+    /// A varsized field gets a fresh slot in the containing page's varsized child buffers, and the slot previously
+    /// referenced by the replaced record stays allocated until the page buffer is released.
+    void replaceRecord(
+        const Record& record, const nautilus::val<uint64_t>& entryPos, const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+
     [[nodiscard]] PagedVectorRefIter begin() const;
     [[nodiscard]] PagedVectorRefIterSentinel end() const;
 

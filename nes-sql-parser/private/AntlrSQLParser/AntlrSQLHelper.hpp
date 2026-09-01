@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -23,10 +24,12 @@
 #include <variant>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Statistic/ReservoirProbeLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Statistics/Statistic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
@@ -76,6 +79,24 @@ public:
 
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
+
+    /// Set when the query contains a RESERVOIR(statisticId, sampleSize) statistic build aggregation
+    struct ReservoirBuildInfo
+    {
+        StatisticId statisticId;
+        uint64_t sampleSize;
+    };
+
+    std::optional<ReservoirBuildInfo> reservoirBuild;
+
+    /// Set when the query contains a RESERVOIR_PROBE(statisticId, fieldName, typeName, ...) call
+    struct ReservoirProbeInfo
+    {
+        StatisticId statisticId;
+        std::vector<ReservoirProbeLogicalOperator::SampleField> sampleFields;
+    };
+
+    std::optional<ReservoirProbeInfo> reservoirProbe;
     std::vector<SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;

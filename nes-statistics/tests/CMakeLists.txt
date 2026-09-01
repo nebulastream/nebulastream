@@ -10,16 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
-add_source_files(nes-logical-operators WindowMetaData.cpp)
 
-
-add_unreflection_entry(LogicalOperator WindowedAggregation)
-add_unreflection_entry(LogicalOperator Join)
-add_unreflection_entry(LogicalOperator StatisticBuild)
-
-add_source_files(nes-logical-operators
-        WindowedAggregationLogicalOperator.cpp
-        JoinLogicalOperator.cpp
-        StatisticBuildLogicalOperator.cpp
-)
+add_nes_test(default-statistic-store-test DefaultStatisticStoreTest.cpp)
+target_link_libraries(default-statistic-store-test nes-statistics)

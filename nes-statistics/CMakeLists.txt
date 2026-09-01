@@ -10,16 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
-add_source_files(nes-logical-operators WindowMetaData.cpp)
 
-
-add_unreflection_entry(LogicalOperator WindowedAggregation)
-add_unreflection_entry(LogicalOperator Join)
-add_unreflection_entry(LogicalOperator StatisticBuild)
-
-add_source_files(nes-logical-operators
-        WindowedAggregationLogicalOperator.cpp
-        JoinLogicalOperator.cpp
-        StatisticBuildLogicalOperator.cpp
+add_library(nes-statistics
+        src/DefaultStatisticStore.cpp
 )
+
+target_include_directories(nes-statistics
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+)
+find_package(folly REQUIRED)
+target_link_libraries(nes-statistics PUBLIC nes-common PRIVATE folly::folly)
+add_tests_if_enabled(tests)
