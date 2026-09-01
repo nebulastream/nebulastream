@@ -37,11 +37,13 @@ struct SingleNodeWorkerConfiguration
         std::string dataAddress,
         std::string grpcAddressUri,
         bool enableGoogleEventTrace,
+        bool enableTaskStatistics,
         WorkerConfiguration workerConfiguration,
         LogLevel logLevel)
         : dataAddress(std::move(dataAddress))
         , grpcAddressUri(std::move(grpcAddressUri))
         , enableGoogleEventTrace(enableGoogleEventTrace)
+        , enableTaskStatistics(enableTaskStatistics)
         , workerConfiguration(std::move(workerConfiguration))
         , logLevel(logLevel)
     {
@@ -55,6 +57,9 @@ struct SingleNodeWorkerConfiguration
 
     /// Enable Google Event Trace logging (Chrome tracing format)
     bool enableGoogleEventTrace;
+
+    /// Publish query engine task events, so that they can be read by an EngineEvents source
+    bool enableTaskStatistics;
 
     WorkerConfiguration workerConfiguration;
     LogLevel logLevel;

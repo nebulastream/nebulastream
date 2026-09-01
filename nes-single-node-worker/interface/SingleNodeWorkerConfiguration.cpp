@@ -83,13 +83,18 @@ const ConfigField<bool> ENABLE_GOOGLE_EVENT_TRACE{
     Identifier::parse("enable_event_trace"),
     "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis.",
     false};
+
+const ConfigField<bool> ENABLE_TASK_STATISTICS{
+    Identifier::parse("enable_task_statistics"),
+    "Publish query engine task events, which a physical source of type EngineEvents can read to make engine statistics queryable.",
+    false};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
 
 Schema<QualifiedErasedConfigField, Ordered> SingleNodeWorkerConfiguration::getConfigSchema()
 {
-    return createConfigSchema(DATA_ADDRESS, GRPC_ADDRESS_URI, LOG_LEVEL, ENABLE_GOOGLE_EVENT_TRACE, WorkerConfiguration::getConfigSchema());
+    return createConfigSchema(DATA_ADDRESS, GRPC_ADDRESS_URI, LOG_LEVEL, ENABLE_GOOGLE_EVENT_TRACE, ENABLE_TASK_STATISTICS, WorkerConfiguration::getConfigSchema());
 }
 
 SingleNodeWorkerConfiguration SingleNodeWorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -98,6 +103,7 @@ SingleNodeWorkerConfiguration SingleNodeWorkerConfiguration::fromConfig(const In
         config.get(DATA_ADDRESS),
         config.get(GRPC_ADDRESS_URI),
         config.get(ENABLE_GOOGLE_EVENT_TRACE),
+        config.get(ENABLE_TASK_STATISTICS),
         WorkerConfiguration::fromConfig(config),
         config.get(LOG_LEVEL)};
 }
