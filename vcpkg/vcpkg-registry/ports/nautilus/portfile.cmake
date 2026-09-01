@@ -18,6 +18,9 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-bool-return-zeroext.patch
+		0003-report-per-function-tracing-time.patch
+		0004-split-mlir-jit-statistics.patch
+		0005-configurable-function-inlining.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

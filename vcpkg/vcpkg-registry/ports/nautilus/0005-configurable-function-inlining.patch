@@ -1,0 +1,71 @@
+diff --git a/docs/functions.md b/docs/functions.md
+index 050798b..f1bedc7 100644
+--- a/docs/functions.md
++++ b/docs/functions.md
+@@ -162,6 +162,25 @@ val<int> add(val<int> a, val<int> b) {
+ static auto nautilusAdd = NautilusFunction{"add", add};
+ ```
+ 
++### Controlling Inlining
++
++Inlining is optimizer-controlled by default. To prevent a particular
++`NautilusFunction` from being inlined by either the MLIR or LLVM optimizer, set
++its `noinline` attribute before it is first traced:
++
++```cpp
++static auto nautilusAdd = NautilusFunction{"add", add};
++
++void configureFunctions() {
++    nautilusAdd.setNoInline();
++}
++```
++
++Calling `setNoInline(false)` restores the default optimizer-controlled behavior.
++The generic `setAttribute(key, value)` method is also available for backend
++attributes; `setNoInline()` is the type-safe convenience method for the
++supported `noinline` attribute.
++
+ Call it like a regular function inside traced code:
+ 
+ ```cpp
+diff --git a/nautilus/include/nautilus/nautilus_function.hpp b/nautilus/include/nautilus/nautilus_function.hpp
+index 309ee06..b06d26a 100644
+--- a/nautilus/include/nautilus/nautilus_function.hpp
++++ b/nautilus/include/nautilus/nautilus_function.hpp
+@@ -152,6 +152,19 @@ public:
+ 		return definition_.name();
+ 	}
+ 
++	/// Adds a backend attribute to this compiled function.
++	/// Attributes must be configured before the function is first traced.
++	NautilusFunction& setAttribute(std::string key, std::string value) {
++		definition_.setAttribute(key, value);
++		return *this;
++	}
++
++	/// Controls whether the MLIR and LLVM optimizers may inline this function.
++	/// Passing false restores the default optimizer-controlled behavior.
++	NautilusFunction& setNoInline(bool noInline = true) {
++		return setAttribute("noinline", noInline ? "true" : "false");
++	}
++
+ 	/// Returns a val wrapping the compiled function pointer for this NautilusFunction.
+ 	/// During tracing: emits a FUNC_ADDR operation that registers the function for compilation.
+ 	/// Outside tracing: JIT-compiles the function on demand and returns the compiled pointer.
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+index 9e9f84d..0970cb2 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -602,6 +602,12 @@ void MLIRLoweringProvider::visitAnd(ir::AndOperation* andOperation, ValueFrame&
+ 	// every llvm.func that lacks one — correct for both functions.
+ 
+ 	auto mlirFunction = builder->create<mlir::func::FuncOp>(loc, functionOp.getName(), functionInOutTypes);
++	const auto noInline = functionOp.getAttribute("noinline");
++	if (noInline && *noInline == "true") {
++		// func.no_inline is respected by the MLIR inliner and is preserved as
++		// LLVM's noinline function attribute during func-to-LLVM conversion.
++		mlirFunction.setNoInline(true);
++	}
+ 
+ 	// Avoid function name mangling.
+ 	mlirFunction->setAttr("llvm.emit_c_interface", mlir::UnitAttr::get(context));

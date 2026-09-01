@@ -1,0 +1,204 @@
+diff --git a/nautilus/src/nautilus/compiler/LegacyCompiler.cpp b/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
+index f84f61b..ae5da35 100644
+--- a/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
+@@ -129,8 +129,9 @@ std::shared_ptr<ir::IRGraph> LegacyCompiler::compileToIR(std::list<CompilableFunc
+ 	// destroyed by the time we get here, so no live pointers remain.
+ 	arena_->softReset();
+ 	std::shared_ptr<tracing::TraceModule> traceModule =
+-	    (traceMode == TRACE_MODE_LAZY) ? tracing::LazyTraceContext::Trace(functions, moduleOptions, *arena_)
+-	                                   : tracing::ExceptionBasedTraceContext::Trace(functions, moduleOptions, *arena_);
++	    (traceMode == TRACE_MODE_LAZY)
++	        ? tracing::LazyTraceContext::Trace(functions, moduleOptions, *arena_, statistics)
++	        : tracing::ExceptionBasedTraceContext::Trace(functions, moduleOptions, *arena_, statistics);
+ 	if (statistics != nullptr) {
+ 		statistics->recordTimingMs("tracing.ms", tracingStart);
+ 	}
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+index 2904ea3..2849a88 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+@@ -1,6 +1,7 @@
+ 
+ #include "ExceptionBasedTraceContext.hpp"
+ #include "TraceOperation.hpp"
++#include "nautilus/CompilationStatistics.hpp"
+ #include "nautilus/CompilableFunction.hpp"
+ #include "nautilus/common/FunctionAttributes.hpp"
+ #include "nautilus/logging.hpp"
+@@ -339,12 +340,14 @@ void ExceptionBasedTraceContext::traceReturnOperation(Type type, const TypedValue
+ }
+ 
+ std::unique_ptr<TraceModule> ExceptionBasedTraceContext::Trace(std::list<compiler::CompilableFunction>& functions,
+-                                                               const engine::Options& options, Arena& arena) {
+-	return traceContext.startTrace(functions, options, arena);
++                                                               const engine::Options& options, Arena& arena,
++                                                               compiler::CompilationStatistics* statistics) {
++	return traceContext.startTrace(functions, options, arena, statistics);
+ }
+ 
+ std::unique_ptr<TraceModule> ExceptionBasedTraceContext::startTrace(std::list<compiler::CompilableFunction>& functions,
+-                                                                    const engine::Options& options, Arena& arena) {
++                                                                    const engine::Options& options, Arena& arena,
++                                                                    compiler::CompilationStatistics* statistics) {
+ 	log::debug("Initialize Tracing");
+ 	auto traceModule = std::make_unique<TraceModule>();
+ 	functionsToTrace = functions;
+@@ -363,6 +366,8 @@ std::unique_ptr<TraceModule> ExceptionBasedTraceContext::startTrace(std::list<comp
+ 			continue;
+ 		}
+ 
++		compiler::ScopedTimer functionTimer(statistics, "tracing.functions." + currentFunction.getName() + ".ms");
++
+ 		auto& executionTrace = traceModule->addNewFunction(currentFunction.getName(), arena);
+ 		// Tag the first popped function as the entry point. Everything else in
+ 		// the queue was `invoke`d by some other traced function; that alone
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+index c461b2f..6797e84 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+@@ -18,6 +18,9 @@
+ namespace nautilus {
+ class NautilusFunctionDefinition;
+ }
++namespace nautilus::compiler {
++class CompilationStatistics;
++}
+ 
+ namespace nautilus::tracing {
+ class ExecutionTrace;
+@@ -205,9 +208,11 @@ public:
+ 	 * @return unique_ptr to TraceModule containing all function traces
+ 	 */
+ 	std::unique_ptr<TraceModule> startTrace(std::list<compiler::CompilableFunction>& functionsToTrace,
+-	                                        const engine::Options& options, Arena& arena);
++	                                        const engine::Options& options, Arena& arena,
++	                                        compiler::CompilationStatistics* statistics = nullptr);
+ 	static std::unique_ptr<TraceModule> Trace(std::list<compiler::CompilableFunction>& functionsToTrace,
+-	                                          const engine::Options& options, Arena& arena);
++	                                          const engine::Options& options, Arena& arena,
++	                                          compiler::CompilationStatistics* statistics = nullptr);
+ 
+ 	TypedValueRef& traceCopy(const TypedValueRef& ref) override;
+ 
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+index 6e7df64..68f0485 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+@@ -1,6 +1,7 @@
+ 
+ #include "LazyTraceContext.hpp"
+ #include "TraceOperation.hpp"
++#include "nautilus/CompilationStatistics.hpp"
+ #include "nautilus/CompilableFunction.hpp"
+ #include "nautilus/common/FunctionAttributes.hpp"
+ #include "nautilus/logging.hpp"
+@@ -349,12 +350,14 @@ std::unique_ptr<ExecutionTrace> LazyTraceContext::trace(std::function<void()>& tra
+ }
+ 
+ std::unique_ptr<TraceModule> LazyTraceContext::Trace(std::list<compiler::CompilableFunction>& functions,
+-                                                     const engine::Options& options, Arena& arena) {
+-	return completingTraceContext.startTrace(functions, options, arena);
++                                                     const engine::Options& options, Arena& arena,
++                                                     compiler::CompilationStatistics* statistics) {
++	return completingTraceContext.startTrace(functions, options, arena, statistics);
+ }
+ 
+ std::unique_ptr<TraceModule> LazyTraceContext::startTrace(std::list<compiler::CompilableFunction>& functions,
+-                                                          const engine::Options& options, Arena& arena) {
++                                                          const engine::Options& options, Arena& arena,
++                                                          compiler::CompilationStatistics* statistics) {
+ 	log::debug("Initialize Lazy Tracing");
+ 	auto traceModule = std::make_unique<TraceModule>();
+ 	functionsToTrace = functions;
+@@ -373,6 +376,8 @@ std::unique_ptr<TraceModule> LazyTraceContext::startTrace(std::list<compiler::Compi
+ 			continue;
+ 		}
+ 
++		compiler::ScopedTimer functionTimer(statistics, "tracing.functions." + currentFunction.getName() + ".ms");
++
+ 		auto& executionTrace = traceModule->addNewFunction(currentFunction.getName(), arena);
+ 		// Tag the first popped function as the entry point. Everything else in
+ 		// the queue was `invoke`d by some other traced function; that alone
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+index 9402035..49d523a 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+@@ -101,9 +101,11 @@ public:
+ 	 * @return unique_ptr to TraceModule containing all function traces.
+ 	 */
+ 	std::unique_ptr<TraceModule> startTrace(std::list<compiler::CompilableFunction>& functions,
+-	                                        const engine::Options& options, Arena& arena);
++	                                        const engine::Options& options, Arena& arena,
++	                                        compiler::CompilationStatistics* statistics = nullptr);
+ 	static std::unique_ptr<TraceModule> Trace(std::list<compiler::CompilableFunction>& functions,
+-	                                          const engine::Options& options, Arena& arena);
++	                                          const engine::Options& options, Arena& arena,
++	                                          compiler::CompilationStatistics* statistics = nullptr);
+ 
+ 	LazyTraceContext() = default;
+ 
+diff --git a/nautilus/test/execution-tests/CompilationStatisticsTest.cpp b/nautilus/test/execution-tests/CompilationStatisticsTest.cpp
+index 0694aac..14eb912 100644
+--- a/nautilus/test/execution-tests/CompilationStatisticsTest.cpp
++++ b/nautilus/test/execution-tests/CompilationStatisticsTest.cpp
+@@ -26,6 +26,10 @@ val<int32_t> statsAddOne(val<int32_t> x) {
+ 	return x + 1;
+ }
+ 
++val<int32_t> statsTimesTwo(val<int32_t> x) {
++	return x * 2;
++}
++
+ } // namespace
+ 
+ TEST_CASE("CompilationStatistics: compiled module exposes pipeline stats") {
+@@ -50,6 +54,11 @@ TEST_CASE("CompilationStatistics: compiled module exposes pipeline stats") {
+ 	auto stats = fn.getStatistics();
+ 	REQUIRE(stats != nullptr);
+ 
++	const auto* executeTraceTime = stats->find("tracing.functions.execute.ms");
++	REQUIRE(executeTraceTime != nullptr);
++	REQUIRE(std::holds_alternative<double>(*executeTraceTime));
++	REQUIRE(std::get<double>(*executeTraceTime) >= 0.0);
++
+ 	// Frontend stage timings are always recorded.
+ 	for (const auto* key : {"tracing.ms", "ssaCreation.ms", "irGeneration.ms", "frontend.totalMs"}) {
+ 		INFO("missing key: " << key);
+@@ -77,6 +86,36 @@ TEST_CASE("CompilationStatistics: compiled module exposes pipeline stats") {
+ 	REQUIRE(stats->contains("compilation.unitId"));
+ }
+ 
++TEST_CASE("CompilationStatistics: reports trace time for each module function") {
++	auto backend = getAnyBackend();
++	if (backend.empty()) {
++		SKIP("No compilation backend available");
++	}
++
++	Options options;
++	options.setOption("engine.backend", backend);
++	options.setOption("engine.compilationStrategy", std::string("legacy"));
++
++	NautilusEngine engine(options);
++	auto module = engine.createModule();
++	module.registerFunction("addOne", statsAddOne);
++	module.registerFunction("timesTwo", statsTimesTwo);
++	auto compiled = module.compile();
++
++	REQUIRE(compiled.getFunction<int32_t(int32_t)>("addOne")(3) == 4);
++	REQUIRE(compiled.getFunction<int32_t(int32_t)>("timesTwo")(3) == 6);
++
++	auto stats = compiled.getStatistics();
++	REQUIRE(stats != nullptr);
++	for (const auto* key : {"tracing.functions.addOne.ms", "tracing.functions.timesTwo.ms"}) {
++		INFO("missing key: " << key);
++		const auto* value = stats->find(key);
++		REQUIRE(value != nullptr);
++		REQUIRE(std::holds_alternative<double>(*value));
++		REQUIRE(std::get<double>(*value) >= 0.0);
++	}
++}
++
+ TEST_CASE("CompilationStatistics: interpreted module has no stats") {
+ 	Options options;
+ 	options.setOption("engine.Compilation", false);

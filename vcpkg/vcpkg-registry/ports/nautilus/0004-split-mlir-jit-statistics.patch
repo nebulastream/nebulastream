@@ -1,0 +1,271 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index 8e2c1fa..1a378fb 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -1,8 +1,10 @@
+ 
+ #include "nautilus/compiler/backends/mlir/JITCompiler.hpp"
+ #include "fmt/format.h"
++#include "nautilus/CompilationStatistics.hpp"
+ #include "nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
++#include <chrono>
+ #include <mlir/ExecutionEngine/OptUtils.h>
+ #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+@@ -15,7 +17,8 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+                                                        const std::vector<std::string>& jitProxyFunctionSymbols,
+                                                        const std::vector<void*>& jitProxyFunctionTargetAddresses,
+                                                        const std::vector<llvm::JITEventListener*>& eventListeners,
+-                                                       llvm::CodeGenOptLevel codeGenOptLevel) {
++                                                       llvm::CodeGenOptLevel codeGenOptLevel,
++                                                       CompilationStatistics* statistics) {
+ 
+ 	// Register the translation from MLIR to LLVM IR, which must happen before we
+ 	// can JIT-compile.
+@@ -26,6 +29,7 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 	jitOptions.codeGenOptLevel = codeGenOptLevel;
+ 	jitOptions.transformer = optPipeline;
+ 	jitOptions.eventListeners = eventListeners;
++	jitOptions.statistics = statistics;
+ 
+ 	auto maybeJit = MLIRJit::create(*mlirModule, jitOptions);
+ 	assert(maybeJit && "failed to construct an execution engine");
+@@ -50,7 +54,11 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 		return symbolMap;
+ 	};
+ 	auto& jit = maybeJit.get();
++	const auto symbolRegistrationStart = std::chrono::steady_clock::now();
+ 	jit->registerSymbols(runtimeSymbolMap);
++	if (statistics != nullptr) {
++		statistics->recordTimingMs("jit.registerSymbols.ms", symbolRegistrationStart);
++	}
+ 	return std::move(jit);
+ }
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+index b0ee19a..dc3bb07 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+@@ -26,6 +26,7 @@ public:
+ 	                 const std::vector<std::string>& jitProxyFunctionSymbols,
+ 	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
+ 	                 const std::vector<llvm::JITEventListener*>& eventListeners,
+-	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive);
++	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive,
++	                 CompilationStatistics* statistics = nullptr);
+ };
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index a7de81f..718a4a3 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -119,6 +119,9 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	}
+ 	if (statistics != nullptr) {
+ 		statistics->recordTimingMs("mlir.pipeline.ms", pipelineStart);
++		int64_t postPipelineOpCount = 0;
++		(*mlirModule)->walk([&](::mlir::Operation*) { ++postPipelineOpCount; });
++		statistics->set("mlir.postPipeline.ops", postPipelineOpCount);
+ 	}
+ 
+ 	// 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+@@ -150,9 +153,9 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	// spills every SSA value and confuses LLVM's DWARF asmprinter when
+ 	// dbg.value operands live on the stack rather than in registers.
+ 	const auto jitCodeGenLevel = debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
+-	auto engine =
+-	    JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                  loweringProvider->getJitProxyTargetAddresses(), eventListeners, jitCodeGenLevel);
++	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
++	                                            loweringProvider->getJitProxyTargetAddresses(), eventListeners,
++	                                            jitCodeGenLevel, statistics);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+ 		auto result = engine->lookupPacked("execute");
+ 		if (!result) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+index 2c06215..b7b2a41 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+@@ -1,6 +1,8 @@
+ 
+ #include "nautilus/compiler/backends/mlir/jit/MLIRJit.hpp"
++#include "nautilus/CompilationStatistics.hpp"
+ #include "nautilus/compiler/backends/mlir/jit/PackFunctionArguments.hpp"
++#include <chrono>
+ #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
+ #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+ #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+@@ -14,6 +16,39 @@ namespace nautilus::compiler::mlir {
+ 
+ namespace {
+ 
++struct LLVMIRSnapshot {
++	int64_t functions = 0;
++	int64_t definedFunctions = 0;
++	int64_t blocks = 0;
++	int64_t instructions = 0;
++};
++
++LLVMIRSnapshot computeLLVMIRSnapshot(const llvm::Module& module) {
++	LLVMIRSnapshot snapshot;
++	for (const auto& function : module) {
++		++snapshot.functions;
++		if (!function.isDeclaration()) {
++			++snapshot.definedFunctions;
++		}
++		for (const auto& block : function) {
++			++snapshot.blocks;
++			snapshot.instructions += static_cast<int64_t>(block.size());
++		}
++	}
++	return snapshot;
++}
++
++void recordLLVMIRSnapshot(CompilationStatistics* statistics, const std::string& prefix, const llvm::Module& module) {
++	if (statistics == nullptr) {
++		return;
++	}
++	const auto snapshot = computeLLVMIRSnapshot(module);
++	statistics->set(prefix + ".functions", snapshot.functions);
++	statistics->set(prefix + ".definedFunctions", snapshot.definedFunctions);
++	statistics->set(prefix + ".blocks", snapshot.blocks);
++	statistics->set(prefix + ".instructions", snapshot.instructions);
++}
++
+ // Non-templated error factory. We deliberately avoid llvm::make_error<StringError>
+ // because it instantiates llvm::ErrorInfo<...> in our TU and requires typeinfo
+ // for llvm::ErrorInfoBase, which LLVM (built with -fno-rtti) does not export.
+@@ -33,11 +68,17 @@ MLIRJit& MLIRJit::operator=(MLIRJit&&) noexcept = default;
+ 
+ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module, const Options& options) {
+ 	auto ctx = std::make_unique<llvm::LLVMContext>();
++	const auto translationStart = std::chrono::steady_clock::now();
+ 	auto llvmModule = ::mlir::translateModuleToLLVMIR(module, *ctx);
+ 	if (!llvmModule) {
+ 		return makeStringError("could not convert to LLVM IR");
+ 	}
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.mlirToLLVM.ms", translationStart);
++	}
++	recordLLVMIRSnapshot(options.statistics, "llvm.beforePacking", *llvmModule);
+ 
++	const auto targetSetupStart = std::chrono::steady_clock::now();
+ 	auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
+ 	if (!tmBuilderOrError) {
+ 		return tmBuilderOrError.takeError();
+@@ -52,8 +93,16 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	}
+ 	llvmModule->setDataLayout((*tmOrError)->createDataLayout());
+ 	llvmModule->setTargetTriple((*tmOrError)->getTargetTriple());
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.targetSetup.ms", targetSetupStart);
++	}
+ 
++	const auto packingStart = std::chrono::steady_clock::now();
+ 	detail::packFunctionArguments(llvmModule.get());
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.packWrappers.ms", packingStart);
++	}
++	recordLLVMIRSnapshot(options.statistics, "llvm.afterPacking", *llvmModule);
+ 
+ 	const auto dataLayout = llvmModule->getDataLayout();
+ 	const auto targetTriple = llvmModule->getTargetTriple();
+@@ -89,6 +138,7 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	// We avoid constructing llvm::orc::TMOwningSimpleCompiler directly because
+ 	// LLVM is compiled with -fno-rtti and exporting RTTI for its polymorphic
+ 	// types across TU boundaries would require us to match.
++	const auto createEngineStart = std::chrono::steady_clock::now();
+ 	auto jitOrErr = llvm::orc::LLJITBuilder()
+ 	                    .setJITTargetMachineBuilder(std::move(*tmBuilderOrError))
+ 	                    .setObjectLinkingLayerCreator(objectLinkingLayerCreator)
+@@ -97,18 +147,34 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 		return jitOrErr.takeError();
+ 	}
+ 	auto jit = std::move(*jitOrErr);
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.createEngine.ms", createEngineStart);
++	}
+ 
+ 	llvm::orc::ThreadSafeModule tsm(std::move(llvmModule), std::move(ctx));
+ 	if (options.transformer) {
+-		auto transformErr =
+-		    tsm.withModuleDo([&options](llvm::Module& m) -> llvm::Error { return options.transformer(&m); });
++		auto transformErr = tsm.withModuleDo([&options](llvm::Module& m) -> llvm::Error {
++			const auto optimizationStart = std::chrono::steady_clock::now();
++			auto error = options.transformer(&m);
++			if (options.statistics != nullptr) {
++				options.statistics->recordTimingMs("jit.llvmOptimization.ms", optimizationStart);
++			}
++			if (!error) {
++				recordLLVMIRSnapshot(options.statistics, "llvm.afterOptimization", m);
++			}
++			return error;
++		});
+ 		if (transformErr) {
+ 			return transformErr;
+ 		}
+ 	}
++	const auto addModuleStart = std::chrono::steady_clock::now();
+ 	if (auto err = jit->addIRModule(std::move(tsm))) {
+ 		return err;
+ 	}
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.addModule.ms", addModuleStart);
++	}
+ 
+ 	// Resolve symbols that are statically linked in the current process.
+ 	auto& mainJD = jit->getMainJITDylib();
+@@ -120,6 +186,7 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+ #endif
++	const auto symbolResolverStart = std::chrono::steady_clock::now();
+ 	auto generatorOrErr = llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(dataLayout.getGlobalPrefix());
+ #if defined(__GNUC__) && !defined(__clang__)
+ #pragma GCC diagnostic pop
+@@ -128,13 +195,20 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 		return generatorOrErr.takeError();
+ 	}
+ 	mainJD.addGenerator(std::move(*generatorOrErr));
++	if (options.statistics != nullptr) {
++		options.statistics->recordTimingMs("jit.symbolResolver.ms", symbolResolverStart);
++	}
+ 
+ 	// Execute the module's global constructors. Upstream skips this on AArch64
+ 	// due to a known LLVM bug (llvm/llvm-project#71963); mirror that.
+ 	if (!jit->getTargetTriple().isAArch64()) {
++		const auto initializeStart = std::chrono::steady_clock::now();
+ 		if (auto err = jit->initialize(mainJD)) {
+ 			return err;
+ 		}
++		if (options.statistics != nullptr) {
++			options.statistics->recordTimingMs("jit.initialize.ms", initializeStart);
++		}
+ 	}
+ 
+ 	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(jit), rawLayer));
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+index bed4e5e..0a14aa8 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+@@ -13,6 +13,10 @@
+ #include <mlir/IR/BuiltinOps.h>
+ #include <vector>
+ 
++namespace nautilus::compiler {
++class CompilationStatistics;
++}
++
+ namespace nautilus::compiler::mlir {
+ 
+ /**
+@@ -29,6 +33,7 @@ public:
+ 	struct Options {
+ 		llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
+ 		llvm::function_ref<llvm::Error(llvm::Module*)> transformer = nullptr;
++		CompilationStatistics* statistics = nullptr;
+ 		// Listeners attached to the object-linking layer before the module is
+ 		// materialized. Supports custom profiling (VTune, perf maps, in-process
+ 		// callbacks) which upstream mlir::ExecutionEngine disallows.
+
