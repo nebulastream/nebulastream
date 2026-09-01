@@ -3,17 +3,17 @@
 # groups: [milestone, benchmark, benchmark_small, Aggregation, Join]
 
 # Source definitions
-CREATE LOGICAL SOURCE bid(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
 CREATE PHYSICAL SOURCE FOR bid TYPE File;
 ATTACH FILE small/nexmark/bid_modified_100K.csv
-CREATE LOGICAL SOURCE auction(timestamp UINT64, id INT32, initialbid INT32, reserve INT32, expires INT64, seller INT32, category INT32);
+CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires INT64, seller INT32, category INT32);
 CREATE PHYSICAL SOURCE FOR auction TYPE File;
 ATTACH FILE small/nexmark/auction_modified_100K.csv
 
 CREATE SINK q1CheckSum(price FLOAT64)  TYPE Checksum;
-CREATE SINK q2CheckSum(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64)  TYPE Checksum;
+CREATE SINK q2CheckSum(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64)  TYPE Checksum;
 CREATE SINK q5Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, auctionId INT32, num UINT64 NOT NULL, max_tmp UINT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q8VariantChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, bid_timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64, auction_timestamp UINT64, id INT32, initialbid INT32, reserve INT32, expires INT64, seller INT32, category INT32)  TYPE Checksum;
+CREATE SINK q8VariantChecksum(start UINT64 NOT NULL, end UINT64 NOT NULL, bid_timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64, auction_timestamp UINT64 NOT NULL, id INT32, initialbid INT32, reserve INT32, expires INT64, seller INT32, category INT32)  TYPE Checksum;
 
 # Query 0
 SELECT * FROM bid INTO q2CheckSum;

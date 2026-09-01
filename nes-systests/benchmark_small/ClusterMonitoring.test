@@ -3,7 +3,7 @@
 # groups: [milestone, benchmark, benchmark_small]
 
 # Source definitions
-CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT64, ram FLOAT64, disk FLOAT64, constraints BOOLEAN);
+CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64 NOT NULL, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT64, ram FLOAT64, disk FLOAT64, constraints BOOLEAN);
 CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
 ATTACH FILE small/cluster_monitoring/google-cluster-data-lightsaber_100K.csv
 

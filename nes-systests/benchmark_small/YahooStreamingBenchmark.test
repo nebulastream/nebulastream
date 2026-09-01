@@ -3,11 +3,11 @@
 # groups: [milestone, benchmark, benchmark_small, Aggregation]
 
 # Source definitions
-CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64 NOT NULL, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
 ATTACH FILE small/ysb/ysb1k_100K.csv
 
-CREATE LOGICAL SOURCE ysb10k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+CREATE LOGICAL SOURCE ysb10k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64 NOT NULL, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
 CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
 ATTACH FILE small/ysb/ysb10k_100K.csv
 
