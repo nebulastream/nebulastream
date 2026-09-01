@@ -165,10 +165,11 @@ refer to another, possibly-spilled buffer through a central table of swizzled po
 tree-like today (parent→child child-buffers), so swizzling is not yet forced; if we move to DAG ownership
 we cannot avoid it.
 
-**Measured comparison.** The implementation and all files referenced in this document (the size-class
-buffer manager, the A2/A3 allocators, and this microbenchmark) live on the implementation branch
-`mem/integration` (PR #1706), not on this doc-only branch. All three are implemented as an allocator
-microbenchmark (`nes-memory/benchmarks/BufferManagerBenchmark.cpp`) and run on `sr630-wn-a-11` (Benchmark build, 1M
+**Measured comparison.** The size-class buffer manager and this microbenchmark live on the implementation
+branch [`feature/variable-size-buffer-size-classes`](https://github.com/nebulastream/nebulastream/blob/feature/variable-size-buffer-size-classes/nes-memory/benchmarks/BufferManagerBenchmark.cpp),
+not on this doc-only branch; the A2/A3 engine allocators used below are an extension on top of it. All three
+are implemented as an allocator microbenchmark (`nes-memory/benchmarks/BufferManagerBenchmark.cpp`) and run
+on `sr630-wn-a-11` (Benchmark build, 1M
 `alloc + touch-every-byte + free` per thread). Two request sizes bracket the design: 1 KiB (fits one
 class/block) and 48 KiB (spans many). Latency is ns/op at 8 threads (lower is better); memory is physical
 bytes reserved per allocation ÷ bytes requested.
@@ -370,5 +371,7 @@ NES_BM_STATS=1 $S -t $JOIN --data <TESTDATA> -- --worker.query_engine.number_of_
 #   A3: --worker.variable_size_allocator=VmCache
 ```
 
-All commands above run against the implementation branch `mem/integration` (PR #1706); build that branch to
-reproduce the numbers in this document.
+All commands above run against the implementation branch
+[`feature/variable-size-buffer-size-classes`](https://github.com/nebulastream/nebulastream/tree/feature/variable-size-buffer-size-classes)
+(the A2/A3 `variable_size_allocator` modes are a small extension on top); build that branch to reproduce the
+numbers in this document.
