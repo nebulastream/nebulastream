@@ -14,24 +14,30 @@
 
 #pragma once
 
+#include <memory>
 #include <utility>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <LoweringRuleRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Lowers a StatisticBuildLogicalOperator into the same build/probe physical operator pair as a windowed
-/// aggregation, with a single directly-constructed ReservoirSamplePhysicalFunction as the aggregation function.
-struct LowerToPhysicalStatisticBuild : AbstractLoweringRule
+/// Lowers a ReservoirProbeLogicalOperator into a single StatisticStoreReaderPhysicalOperator that unpacks
+/// reservoir samples from the worker's statistic store.
+struct LowerToPhysicalReservoirProbe : AbstractLoweringRule
 {
-    explicit LowerToPhysicalStatisticBuild(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+    explicit LowerToPhysicalReservoirProbe(LoweringRuleRegistryArguments arguments)
+        : conf(std::move(arguments.conf)), statisticStore(std::move(arguments.statisticStore))
+    {
+    }
 
     LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
     QueryExecutionConfiguration conf;
+    std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 
 }

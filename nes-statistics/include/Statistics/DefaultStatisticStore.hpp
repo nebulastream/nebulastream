@@ -18,9 +18,9 @@
 #include <unordered_map>
 #include <vector>
 #include <StatisticStore/AbstractStatisticStore.hpp>
-#include <Statistic.hpp>
 #include <Time/Timestamp.hpp>
 #include <folly/Synchronized.h>
+#include <Statistic.hpp>
 
 namespace NES
 {

@@ -62,8 +62,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticStoreWriter::apply(LogicalOpe
     auto handlerId = getNextOperatorHandlerId();
     auto handler = std::make_shared<StatisticStoreOperatorHandler>(statisticStore);
 
-    auto physicalOperator = StatisticStoreWriterPhysicalOperator(
-        handlerId, statisticId, statisticStoreWriter->getTypeName(), std::move(fieldIdentifiers));
+    auto physicalOperator
+        = StatisticStoreWriterPhysicalOperator(handlerId, statisticId, statisticStoreWriter->getTypeName(), std::move(fieldIdentifiers));
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(physicalOperator),

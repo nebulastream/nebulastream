@@ -47,8 +47,7 @@ class StatisticStoreWriterLogicalOperator final : public ManagedByOperator
 {
 public:
     StatisticStoreWriterLogicalOperator(WeakLogicalOperator self, StatisticId statisticId, std::string typeName);
-    StatisticStoreWriterLogicalOperator(
-        WeakLogicalOperator self, LogicalOperator child, StatisticId statisticId, std::string typeName);
+    StatisticStoreWriterLogicalOperator(WeakLogicalOperator self, LogicalOperator child, StatisticId statisticId, std::string typeName);
 
     static TypedLogicalOperator<StatisticStoreWriterLogicalOperator> create(StatisticId statisticId, std::string typeName);
     static TypedLogicalOperator<StatisticStoreWriterLogicalOperator>

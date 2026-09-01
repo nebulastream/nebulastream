@@ -10,7 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 add_source_files(nes-physical-operators
+        ReservoirMerge.cpp
+        ReservoirSampleBlob.cpp
+        ReservoirSamplePhysicalFunction.cpp
+        StatisticStoreReaderPhysicalOperator.cpp
         StatisticStoreWriterPhysicalOperator.cpp
 )

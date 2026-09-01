@@ -79,8 +79,8 @@ void StatisticStoreWriterLogicalOperator::inferLocalSchema()
     /// The writer consumes the output schema of a StatisticBuildLogicalOperator.
     /// The data field name is per-statisticId (e.g. STATISTICDATA_1).
     const auto dataFieldName = statisticDataFieldName(statisticId);
-    for (const auto& requiredField : std::array<std::string, 4>{
-             "STATISTICSTART", "STATISTICEND", dataFieldName, "STATISTICNUMBEROFSEENMEASUREMENTS"})
+    for (const auto& requiredField :
+         std::array<std::string, 4>{"STATISTICSTART", "STATISTICEND", dataFieldName, "STATISTICNUMBEROFSEENMEASUREMENTS"})
     {
         if (not inputSchema.getFieldByName(Identifier::parse(requiredField)).has_value())
         {

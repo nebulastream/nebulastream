@@ -22,6 +22,11 @@
 #include <CompiledQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
+namespace NES
+{
+class AbstractStatisticStore;
+}
+
 namespace NES::QueryCompilation
 {
 
@@ -52,6 +57,7 @@ public:
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;
+    /// The worker's statistic store, shared with the node engine; consumed by the statistic lowering rules.
     std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 

@@ -10,9 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 add_unreflection_entry(LogicalOperator StatisticStoreWriter)
+add_unreflection_entry(LogicalOperator ReservoirProbe)
 
 add_source_files(nes-logical-operators
         StatisticStoreWriterLogicalOperator.cpp
+        ReservoirProbeLogicalOperator.cpp
 )

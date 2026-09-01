@@ -19,6 +19,11 @@
 #include <PhysicalPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
+namespace NES
+{
+class AbstractStatisticStore;
+}
+
 namespace NES::LowerToPhysicalOperators
 {
 PhysicalPlan apply(

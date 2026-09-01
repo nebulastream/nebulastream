@@ -56,6 +56,7 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Statistic/ReservoirProbeLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -78,6 +79,7 @@
 #include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
+#include <Statistic.hpp>
 
 namespace NES::Parsers
 {
@@ -190,6 +192,73 @@ bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
 LogicalFunction createRawLiteralFunction(std::string literal)
 {
     return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
+}
+
+/// The RESERVOIR SQL surface does not expose the seed; eviction and merge decisions use this fixed seed.
+constexpr uint64_t DEFAULT_RESERVOIR_SEED = 42;
+
+uint64_t
+parseUnsignedConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
+{
+    const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
+    if (not constant)
+    {
+        throw InvalidQuerySyntax("Expected an unsigned integer constant for {} at {}", description, queryText);
+    }
+    const auto parsed = NES::from_chars<uint64_t>(constant.value()->getConstantValue());
+    if (not parsed.has_value())
+    {
+        throw InvalidQuerySyntax(
+            "Expected an unsigned integer constant for {}, but got {} at {}", description, constant.value()->getConstantValue(), queryText);
+    }
+    return parsed.value();
+}
+
+/// RESERVOIR(statisticId, sampleSize): builds a reservoir sample over the whole input records of a window
+AntlrSQLHelper::ReservoirBuildInfo bindReservoirBuild(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
+{
+    if (arguments.size() != 2)
+    {
+        throw InvalidQuerySyntax("RESERVOIR expects exactly two arguments (statisticId, sampleSize) at {}", queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR statisticId", queryText);
+    const auto sampleSize = parseUnsignedConstantArgument(arguments[1], "the RESERVOIR sampleSize", queryText);
+    if (statisticId == StatisticId::INVALID or sampleSize == 0)
+    {
+        throw InvalidQuerySyntax("RESERVOIR requires a valid statisticId and a sampleSize greater than zero at {}", queryText);
+    }
+    return {.statisticId = StatisticId(statisticId), .sampleSize = sampleSize};
+}
+
+/// RESERVOIR_PROBE(statisticId, fieldName, typeName, ...): unpacks reservoir samples from the statistic store.
+/// The declared fields must match the build query's input schema in order and type; type names have to be spelled
+/// like the DataType names but must not be all-uppercase (the lexer would tokenize those as keywords).
+AntlrSQLHelper::ReservoirProbeInfo bindReservoirProbe(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
+{
+    if (arguments.size() < 3 or arguments.size() % 2 == 0)
+    {
+        throw InvalidQuerySyntax("RESERVOIR_PROBE expects a statisticId followed by (fieldName, typeName) pairs at {}", queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR_PROBE statisticId", queryText);
+
+    std::vector<ReservoirProbeLogicalOperator::SampleField> sampleFields;
+    for (size_t argumentIdx = 1; argumentIdx < arguments.size(); argumentIdx += 2)
+    {
+        const auto fieldAccess = arguments[argumentIdx].tryGetAs<UnboundFieldAccessLogicalFunction>();
+        const auto typeAccess = arguments[argumentIdx + 1].tryGetAs<UnboundFieldAccessLogicalFunction>();
+        if (not fieldAccess or not typeAccess)
+        {
+            throw InvalidQuerySyntax("RESERVOIR_PROBE expects (fieldName, typeName) pairs at {}", queryText);
+        }
+        const auto typeName = toUpperCase(std::string{typeAccess.value()->getFieldName().getOriginalString()});
+        const auto dataType = DataTypeProvider::tryProvideDataType(typeName);
+        if (not dataType.has_value())
+        {
+            throw InvalidQuerySyntax("RESERVOIR_PROBE got an unknown data type {} at {}", typeName, queryText);
+        }
+        sampleFields.emplace_back(fieldAccess.value()->getFieldName(), dataType.value());
+    }
+    return {.statisticId = StatisticId(statisticId), .sampleFields = std::move(sampleFields)};
 }
 
 LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
@@ -783,7 +852,35 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
 
     auto windowTypeOpt = helpers.top().windowType;
-    if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
+    if (helpers.top().reservoirBuild.has_value())
+    {
+        if (!windowTypeOpt.has_value() || !helpers.top().joinKeyRelationHelper.empty())
+        {
+            throw InvalidQuerySyntax("RESERVOIR requires a time-based window and cannot be combined with a join");
+        }
+        if (!helpers.top().windowAggs.empty() || !helpers.top().groupByFields.empty())
+        {
+            throw InvalidQuerySyntax("RESERVOIR cannot be combined with other aggregation functions or GROUP BY");
+        }
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax(
+                "RESERVOIR requires exactly one time characteristic, got {}", currentWindowTimestampOpt.has_value() ? "two" : "none");
+        }
+        auto characteristic = std::get<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value());
+        queryPlan = LogicalPlanBuilder::addStatisticBuild(
+            queryPlan,
+            windowTypeOpt.value(),
+            std::move(characteristic),
+            helpers.top().reservoirBuild->statisticId,
+            helpers.top().reservoirBuild->sampleSize,
+            DEFAULT_RESERVOIR_SEED);
+        /// The statistic store writer already emits exactly the statistic metadata fields
+        helpers.top().asterisk = true;
+    }
+    else if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
     {
         const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
         if (!currentWindowTimestampOpt.has_value()
@@ -810,6 +907,14 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             aggregations | std::ranges::to<std::vector>(),
             helpers.top().groupByFields,
             std::move(characteristic));
+    }
+
+    if (helpers.top().reservoirProbe.has_value())
+    {
+        queryPlan = LogicalPlanBuilder::addReservoirProbe(
+            queryPlan, helpers.top().reservoirProbe->statisticId, std::move(helpers.top().reservoirProbe->sampleFields));
+        /// The probe operator already emits exactly the statistic metadata plus the declared sample fields
+        helpers.top().asterisk = true;
     }
 
     auto projections = helpers.top().getProjections()
@@ -1274,8 +1379,40 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 std::nullopt);
             isAggregation = true;
             break;
-        default:
+        default: {
             helpers.top().hasUnnamedAggregation = false;
+            if (funcName == "RESERVOIR" or funcName == "RESERVOIR_PROBE")
+            {
+                const auto numArgs = context->argument.size();
+                if (numArgs > helpers.top().functionBuilder.size())
+                {
+                    throw InvalidQuerySyntax(
+                        "Function '{}' expects {} arguments but only {} are available",
+                        funcName,
+                        numArgs,
+                        helpers.top().functionBuilder.size());
+                }
+                const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                const std::vector<LogicalFunction> reservoirArgs(argsBegin, helpers.top().functionBuilder.end());
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                if (funcName == "RESERVOIR")
+                {
+                    if (helpers.top().reservoirBuild.has_value())
+                    {
+                        throw InvalidQuerySyntax("Only one RESERVOIR aggregation is supported per query at {}", context->getText());
+                    }
+                    helpers.top().reservoirBuild = bindReservoirBuild(reservoirArgs, context->getText());
+                }
+                else
+                {
+                    if (helpers.top().reservoirProbe.has_value())
+                    {
+                        throw InvalidQuerySyntax("Only one RESERVOIR_PROBE is supported per query at {}", context->getText());
+                    }
+                    helpers.top().reservoirProbe = bindReservoirProbe(reservoirArgs, context->getText());
+                }
+                break;
+            }
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
@@ -1317,6 +1454,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                     throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
                 }
             }
+        }
     }
 
     /// For aggregation functions, generate an auto-name for the result field and replace the raw

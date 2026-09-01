@@ -1,0 +1,87 @@
+# name: operator/aggregation/statistics/ReservoirSample.test
+# description: Tests the RESERVOIR statistic build and RESERVOIR_PROBE over the worker's statistic store
+# groups: [Aggregation, WindowOperators, Statistics]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,1000
+12,1,1001
+4,1,1002
+1,2,2000
+11,2,2001
+16,2,2002
+1,3,3000
+11,3,3001
+1,3,3003
+1,3,3200
+1,4,4000
+1,5,5000
+1,6,6000
+1,7,7000
+1,8,8000
+1,9,9000
+1,10,10000
+1,11,11000
+1,12,12000
+1,13,13000
+1,14,14000
+1,15,15000
+1,16,16000
+1,17,17000
+1,18,18000
+1,19,19000
+1,20,20000
+1,21,21000
+
+CREATE SINK sinkStreamBuild(statisticId UINT64 NOT NULL, statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticNumberOfSeenMeasurements UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkStream(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File;
+
+# Build only: the sample itself stays in the statistic store; the sink receives the statistic metadata.
+# The reservoir holds at most 4 of the window's tuples, but the metadata is unaffected by evictions.
+SELECT RESERVOIR(43, 4) FROM stream WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStreamBuild;
+----
+43 0 5000 11
+43 5000 10000 5
+43 10000 15000 5
+43 15000 20000 5
+43 20000 25000 2
+
+# Build and probe: the sample size exceeds every window's tuple count, so no tuple is ever evicted and the
+# probe returns every input tuple exactly once.
+SELECT statisticStart, statisticEnd, id, value, timestamp FROM (
+    SELECT RESERVOIR_PROBE(42, id, uint64, value, uint64, timestamp, uint64)
+    FROM (
+        SELECT RESERVOIR(42, 800) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkStream;
+----
+0 5000 1 1 1000
+0 5000 12 1 1001
+0 5000 4 1 1002
+0 5000 1 2 2000
+0 5000 11 2 2001
+0 5000 16 2 2002
+0 5000 1 3 3000
+0 5000 11 3 3001
+0 5000 1 3 3003
+0 5000 1 3 3200
+0 5000 1 4 4000
+5000 10000 1 5 5000
+5000 10000 1 6 6000
+5000 10000 1 7 7000
+5000 10000 1 8 8000
+5000 10000 1 9 9000
+10000 15000 1 10 10000
+10000 15000 1 11 11000
+10000 15000 1 12 12000
+10000 15000 1 13 13000
+10000 15000 1 14 14000
+15000 20000 1 15 15000
+15000 20000 1 16 16000
+15000 20000 1 17 17000
+15000 20000 1 18 18000
+15000 20000 1 19 19000
+20000 25000 1 20 20000
+20000 25000 1 21 21000

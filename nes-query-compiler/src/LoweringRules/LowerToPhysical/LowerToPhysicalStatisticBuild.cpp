@@ -39,13 +39,17 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <LoweringRules/LowerToPhysical/StatisticFieldResolution.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Statistic/LogicalStatisticFields.hpp>
+#include <Operators/Windows/Aggregations/ReservoirSampleAggregationLogicalFunction.hpp>
 #include <Operators/Windows/StatisticBuildLogicalOperator.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Statistics/ReservoirSamplePhysicalFunction.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -55,6 +59,7 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -72,9 +77,56 @@ namespace NES
 
 namespace
 {
-std::vector<std::shared_ptr<AggregationPhysicalFunction>>
-getAggregationPhysicalFunctions(const StatisticBuildLogicalOperator& logicalOperator, const QueryExecutionConfiguration& /*configuration*/)
+std::shared_ptr<AggregationPhysicalFunction> createReservoirSamplePhysicalFunction(
+    const StatisticBuildLogicalOperator& logicalOperator,
+    const ReservoirSampleAggregationLogicalFunction& reservoirSample,
+    const StatisticId statisticId,
+    const Schema<QualifiedUnboundField, Ordered>& physicalOutputSchema)
 {
+    const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild().getTraitSet());
+    for (const auto& field : physicalInputSchema)
+    {
+        if (field.getDataType().nullable)
+        {
+            throw NotImplemented(
+                "Reservoir samples do not support nullable input fields yet, but the input contains {}. "
+                "Cast or filter the field to a non-nullable type before the RESERVOIR aggregation.",
+                field);
+        }
+    }
+
+    const auto firstInputField = *physicalInputSchema.begin();
+    PhysicalFunction unusedInputFunction = FieldAccessPhysicalFunction{firstInputField.getFullyQualifiedName()};
+    auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
+    const auto numberOfSeenMeasurementsFieldName
+        = (*std::ranges::begin(logicalOperator.getNumberOfSeenMeasurementsField().getFullyQualifiedName())).asCanonicalString();
+
+    return std::make_shared<ReservoirSamplePhysicalFunction>(
+        firstInputField.getDataType(),
+        DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
+        std::move(unusedInputFunction),
+        resolvePhysicalFieldName(physicalOutputSchema, statisticDataFieldName(statisticId)),
+        tupleLayout,
+        resolvePhysicalFieldName(physicalOutputSchema, numberOfSeenMeasurementsFieldName),
+        reservoirSample.getSampleSize(),
+        reservoirSample.getSeed());
+}
+
+std::vector<std::shared_ptr<AggregationPhysicalFunction>> getAggregationPhysicalFunctions(
+    const StatisticBuildLogicalOperator& logicalOperator,
+    const Schema<QualifiedUnboundField, Ordered>& physicalOutputSchema,
+    const QueryExecutionConfiguration& /*configuration*/)
+{
+    const auto& statisticAggregations = logicalOperator.getStatisticAggregations();
+    if (statisticAggregations.size() == 1)
+    {
+        if (const auto reservoirSample = statisticAggregations.front().function.tryGetAs<ReservoirSampleAggregationLogicalFunction>())
+        {
+            return {createReservoirSamplePhysicalFunction(
+                logicalOperator, **reservoirSample, statisticAggregations.front().statisticId, physicalOutputSchema)};
+        }
+    }
+
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
 
@@ -138,10 +190,9 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticBuild::apply(LogicalOperator 
     auto handlerId = getNextOperatorHandlerId();
     auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
     auto windowType = aggregation->getWindowType();
-    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
-
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
     const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
+    auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, physicalOutputSchema, conf);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
@@ -155,8 +206,12 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticBuild::apply(LogicalOperator 
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
 
-    const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(
-        physicalInputSchema, std::vector<QualifiedIdentifier>{}, std::vector<QualifiedIdentifier>{});
+    const std::vector<FieldOffsets> fieldKeys;
+    const std::vector<FieldOffsets> fieldValues{FieldOffsets{
+        .fieldIdentifier = resolvePhysicalFieldName(
+            physicalOutputSchema, statisticDataFieldName(aggregation->getStatisticAggregations().front().statisticId)),
+        .type = DataTypeProvider::provideDataType(DataType::Type::UINT64),
+        .fieldOffset = sizeof(ChainedHashMapEntry)}};
 
     const auto windowMetaData = WindowMetaData{aggregation->getWindowStartField(), aggregation->getWindowEndField()};
 

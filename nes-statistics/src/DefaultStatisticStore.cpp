@@ -18,8 +18,8 @@
 #include <iterator>
 #include <optional>
 #include <vector>
-#include <Statistic.hpp>
 #include <Time/Timestamp.hpp>
+#include <Statistic.hpp>
 
 namespace NES
 {
@@ -31,8 +31,7 @@ bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, Stat
     return true;
 }
 
-bool DefaultStatisticStore::deleteStatistics(
-    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
+bool DefaultStatisticStore::deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.wlock();
     auto& statisticsVec = (*statisticsLocked)[statisticId];
@@ -51,8 +50,8 @@ bool DefaultStatisticStore::deleteStatistics(
     return foundAny;
 }
 
-std::vector<Statistic> DefaultStatisticStore::getStatistics(
-    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
+std::vector<Statistic>
+DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
     const auto idIt = statisticsLocked->find(statisticId);
@@ -69,8 +68,8 @@ std::vector<Statistic> DefaultStatisticStore::getStatistics(
     return foundStatistics;
 }
 
-std::optional<Statistic> DefaultStatisticStore::getSingleStatistic(
-    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
+std::optional<Statistic>
+DefaultStatisticStore::getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
     const auto idIt = statisticsLocked->find(statisticId);

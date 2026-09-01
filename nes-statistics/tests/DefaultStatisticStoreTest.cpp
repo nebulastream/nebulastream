@@ -19,9 +19,9 @@
 #include <vector>
 
 #include <Statistics/DefaultStatisticStore.hpp>
-#include <Statistic.hpp>
 #include <Time/Timestamp.hpp>
 #include <gtest/gtest.h>
+#include <Statistic.hpp>
 
 namespace NES
 {
@@ -70,8 +70,7 @@ TEST(DefaultStatisticStoreTest, getStatisticsReturnsAllInRange)
     std::vector<Statistic> inserted;
     for (uint64_t windowStart = 0; windowStart < 5000; windowStart += 1000)
     {
-        inserted.push_back(
-            createDummyStatistic(statisticId, Timestamp(windowStart), Timestamp(windowStart + 1000)));
+        inserted.push_back(createDummyStatistic(statisticId, Timestamp(windowStart), Timestamp(windowStart + 1000)));
         ASSERT_TRUE(store.insertStatistic(statisticId, inserted.back()));
     }
 
@@ -87,9 +86,8 @@ TEST(DefaultStatisticStoreTest, deleteStatisticsRemovesOnlyRange)
     const StatisticId statisticId{1};
     for (uint64_t windowStart = 0; windowStart < 5000; windowStart += 1000)
     {
-        ASSERT_TRUE(store.insertStatistic(
-            statisticId,
-            createDummyStatistic(statisticId, Timestamp(windowStart), Timestamp(windowStart + 1000))));
+        ASSERT_TRUE(
+            store.insertStatistic(statisticId, createDummyStatistic(statisticId, Timestamp(windowStart), Timestamp(windowStart + 1000))));
     }
 
     ASSERT_TRUE(store.deleteStatistics(statisticId, Timestamp(1000), Timestamp(3000)));

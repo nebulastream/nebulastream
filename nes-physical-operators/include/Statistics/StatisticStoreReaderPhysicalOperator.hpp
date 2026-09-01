@@ -15,35 +15,34 @@
 #pragma once
 
 #include <optional>
-#include <string>
-#include <Identifiers/StatisticIdentifiers.hpp>
+#include <vector>
 #include <Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Statistics/ReservoirSampleBlob.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
-/// Writes the statistic blob built by the upstream statistic build into the worker's statistic store and re-emits
-/// the statistic metadata record [statisticId, statisticStart, statisticEnd, statisticNumberOfSeenMeasurements].
-class StatisticStoreWriterPhysicalOperator final : public PhysicalOperatorConcept
+/// For every input record (statistic metadata), looks up the reservoir sample blob for
+/// (statisticId, statisticStart, statisticEnd) in the worker's statistic store and emits one record per sampled
+/// tuple, decoded according to the declared sample fields and enriched with the statistic metadata.
+class StatisticStoreReaderPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     struct FieldIdentifiers
     {
+        Record::RecordFieldIdentifier inputStatisticId;
         Record::RecordFieldIdentifier inputStatisticStart;
         Record::RecordFieldIdentifier inputStatisticEnd;
-        Record::RecordFieldIdentifier inputStatisticData;
-        Record::RecordFieldIdentifier inputNumberOfSeenMeasurements;
-        Record::RecordFieldIdentifier outputStatisticId;
         Record::RecordFieldIdentifier outputStatisticStart;
         Record::RecordFieldIdentifier outputStatisticEnd;
-        Record::RecordFieldIdentifier outputNumberOfSeenMeasurements;
+        Record::RecordFieldIdentifier outputNumberOfSeenTuples;
     };
 
-    StatisticStoreWriterPhysicalOperator(
-        OperatorHandlerId operatorHandlerId, StatisticId statisticId, std::string typeName, FieldIdentifiers fieldIdentifiers);
+    StatisticStoreReaderPhysicalOperator(
+        OperatorHandlerId operatorHandlerId, FieldIdentifiers fieldIdentifiers, std::vector<ReservoirSampleField> sampleFields);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
@@ -52,9 +51,8 @@ public:
 
 private:
     OperatorHandlerId operatorHandlerId;
-    StatisticId statisticId;
-    std::string typeName;
     FieldIdentifiers fieldIdentifiers;
+    std::vector<ReservoirSampleField> sampleFields;
 
     std::optional<PhysicalOperator> child;
 };

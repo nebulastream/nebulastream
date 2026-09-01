@@ -22,8 +22,8 @@
 #include <string>
 
 #include <Identifiers/StatisticIdentifiers.hpp>
-#include <Util/Logger/Formatter.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 

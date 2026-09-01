@@ -25,13 +25,13 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Statistic.hpp>
 #include <Statistics/StatisticStoreOperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <Statistic.hpp>
 #include <val.hpp>
 
 namespace NES
@@ -75,10 +75,7 @@ void insertStatisticIntoStoreProxy(
 }
 
 StatisticStoreWriterPhysicalOperator::StatisticStoreWriterPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId,
-    const StatisticId statisticId,
-    std::string typeName,
-    FieldIdentifiers fieldIdentifiers)
+    const OperatorHandlerId operatorHandlerId, const StatisticId statisticId, std::string typeName, FieldIdentifiers fieldIdentifiers)
     : operatorHandlerId(operatorHandlerId)
     , statisticId(statisticId)
     , typeName(std::move(typeName))

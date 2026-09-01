@@ -35,15 +35,12 @@ public:
 
     virtual bool insertStatistic(const StatisticId& statisticId, Statistic statistic) = 0;
 
-    virtual bool
-    deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
+    virtual bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
+
+    virtual std::vector<Statistic> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
+
+    virtual std::optional<Statistic> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
         = 0;
-
-    virtual std::vector<Statistic>
-    getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
-
-    virtual std::optional<Statistic>
-    getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     virtual std::vector<IdStatisticPair> getAllStatistics() = 0;
 };
