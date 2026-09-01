@@ -110,7 +110,7 @@ cat <<EOF
 networks:
   default:
     labels:
-      nes-test: distributed-repl
+      nes-test: ${NES_BATS_TEST_LABEL:-distributed-repl}
 volumes:
   $TEST_VOLUME:
     external: true

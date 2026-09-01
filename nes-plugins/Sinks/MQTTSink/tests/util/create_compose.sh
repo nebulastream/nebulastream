@@ -175,7 +175,7 @@ cat <<EOF
 networks:
   default:
     labels:
-      nes-test: distributed-cli
+      nes-test: ${NES_BATS_TEST_LABEL:-distributed-mqtt-sink}
 volumes:
   $TEST_VOLUME:
     external: true

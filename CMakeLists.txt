@@ -261,6 +261,12 @@ foreach (NES_DIR ${NES_DIRECTORIES_ALL})
     endif ()
 endforeach ()
 
+# Registered here, not in a suite directory, because it checks all suites at once.
+add_e2e_test(
+    NAME bats-lib-test
+    BATS_FILE scripts/testing/tests/bats_lib.bats
+)
+
 # Other configurations
 project_enable_format()
 project_enable_tidy()

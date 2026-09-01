@@ -14,7 +14,7 @@
 
 source "$NES_BATS_LIB"
 
-setup_file()    { nes_distributed_setup_file "$NES_CLI"; }
+setup_file()    { nes_distributed_setup_file "$NES_CLI" cli; }
 teardown_file() { nes_distributed_teardown_file; }
 setup()         { nes_distributed_setup; }
 teardown()      { nes_distributed_teardown; }
