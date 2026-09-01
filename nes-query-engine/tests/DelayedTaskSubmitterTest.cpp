@@ -15,6 +15,7 @@
 #include <DelayedTaskSubmitter.hpp>
 
 #include <atomic>
+#include <barrier>
 #include <chrono>
 #include <cstddef>
 #include <memory>
@@ -39,10 +40,25 @@
 
 namespace NES::Testing
 {
-
-static QueryId randomQueryId()
+namespace
+{
+QueryId randomQueryId()
 {
     return QueryId::createLocal(LocalQueryId(generateUUID()));
+}
+
+WorkTask createTrackedTask(std::atomic<int>& completeCount, std::atomic<int>& failureCount)
+{
+    return {
+        randomQueryId(),
+        PipelineId(1),
+        std::weak_ptr<RunningQueryPlanNode>(),
+        TupleBuffer(),
+        TaskCallback(
+            TaskCallback::OnComplete([&completeCount] { ++completeCount; }),
+
+            TaskCallback::OnFailure([&failureCount](const Exception&) { ++failureCount; }))};
+}
 }
 
 /// While the test attempts to bypass handling real time by using a TestClock, this test cannot ensure that the condition variable
@@ -265,14 +281,7 @@ TEST_F(DelayedTaskSubmitterTest, testDestructorCleanup)
         auto submitter = DelayedTaskSubmitter([&submittedCount](Task /*task*/) noexcept { ++submittedCount; });
 
         /// Submit a task with long delay and custom onComplete and onFailure callbacks
-        auto task = WorkTask(
-            randomQueryId(),
-            PipelineId(1),
-            std::weak_ptr<RunningQueryPlanNode>(),
-            TupleBuffer(),
-            TaskCallback(
-                TaskCallback::OnComplete([&completeCount] { ++completeCount; }),
-                TaskCallback::OnFailure([&failureCount](const Exception&) { ++failureCount; })));
+        auto task = createTrackedTask(completeCount, failureCount);
         submitter.submitTaskIn(std::move(task), std::chrono::milliseconds(1000));
         TestClock::advance(std::chrono::milliseconds(100), true);
         /// Destructor should be called here, cleaning up pending tasks
@@ -281,7 +290,65 @@ TEST_F(DelayedTaskSubmitterTest, testDestructorCleanup)
     TestClock::advance(std::chrono::milliseconds(1000), true);
     /// Task should not be executed since submitter was destroyed, but the failure callback should be called
     EXPECT_EQ(submittedCount.load(), 0);
-    EXPECT_EQ(completeCount.load(), 0);
+    EXPECT_EQ(completeCount.load(), 1);
+    EXPECT_EQ(failureCount.load(), 1);
+}
+
+TEST_F(DelayedTaskSubmitterTest, testShutdownFailsPendingTask)
+{
+    std::atomic submittedCount{0};
+    std::atomic failureCount{0};
+    std::atomic completeCount{0};
+
+    auto submitter = DelayedTaskSubmitter([&submittedCount](Task /*task*/) noexcept { ++submittedCount; });
+    submitter.submitTaskIn(createTrackedTask(completeCount, failureCount), std::chrono::hours(1));
+
+    submitter.shutdown();
+
+    EXPECT_EQ(submittedCount.load(), 0);
+    EXPECT_EQ(completeCount.load(), 1);
+    EXPECT_EQ(failureCount.load(), 1);
+}
+
+TEST_F(DelayedTaskSubmitterTest, testConcurrentShutdown)
+{
+    auto submitter = DelayedTaskSubmitter([](Task /*task*/) noexcept { });
+
+    constexpr size_t numberOfShutdownThreads = 10;
+    std::atomic<size_t> completedShutdowns{0};
+    std::barrier shutdownBarrier(numberOfShutdownThreads + 1);
+
+    std::vector<std::jthread> shutdownThreads;
+    shutdownThreads.reserve(numberOfShutdownThreads);
+    for (size_t index = 0; index < numberOfShutdownThreads; ++index)
+    {
+        shutdownThreads.emplace_back(
+            [&submitter, &shutdownBarrier, &completedShutdowns]
+            {
+                shutdownBarrier.arrive_and_wait();
+                submitter.shutdown();
+                ++completedShutdowns;
+            });
+    }
+    shutdownBarrier.arrive_and_wait();
+    shutdownThreads.clear();
+
+    EXPECT_EQ(completedShutdowns.load(), numberOfShutdownThreads);
+}
+
+TEST_F(DelayedTaskSubmitterTest, testSubmissionAfterShutdownFailsSynchronously)
+{
+    std::atomic submittedCount{0};
+    std::atomic failureCount{0};
+    std::atomic completeCount{0};
+
+    auto submitter = DelayedTaskSubmitter([&submittedCount](Task /*task*/) noexcept { ++submittedCount; });
+    submitter.shutdown();
+
+    submitter.submitTaskIn(createTrackedTask(completeCount, failureCount), std::chrono::milliseconds(1));
+
+    EXPECT_EQ(submittedCount.load(), 0);
+    EXPECT_EQ(completeCount.load(), 1);
     EXPECT_EQ(failureCount.load(), 1);
 }
 

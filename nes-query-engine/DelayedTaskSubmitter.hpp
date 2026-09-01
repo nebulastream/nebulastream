@@ -52,38 +52,61 @@ private:
         bool operator()(const ScheduledTask& left, const ScheduledTask& right) const { return left.deadline > right.deadline; }
     };
 
+    using TaskQueue = std::priority_queue<ScheduledTask, std::vector<ScheduledTask>, TaskComparator>;
+
+    struct State
+    {
+        TaskQueue taskQueue;
+        bool acceptingTasks = true;
+    };
+
     SubmitFn submitFn;
 
     std::condition_variable_any cv;
-    folly::Synchronized<std::priority_queue<ScheduledTask, std::vector<ScheduledTask>, TaskComparator>, std::mutex> taskQueueMtx;
+    folly::Synchronized<State, std::mutex> stateMtx;
 
     /// The DelayedTaskSubmitter is implemented as its own dedicated thread. Most of the time is spent blocking on an empty task queue
     /// or waiting until the deadline has passed to submit the next task.
+    std::once_flag shutdownOnce;
     Thread workerThread;
 
     void workerLoop(const std::stop_token& stop);
+    static void failTaskDuringShutdown(Task& task);
 
 public:
     explicit DelayedTaskSubmitter(SubmitFn submitFn);
 
     /// Template function to accept any std::chrono::duration type
+    /// The task will be submitted via the submit function after a delay.
+    /// If the DelayedTaskSubmitter is shutdown the task will trigger onFailure and onComplete.
     template <typename Rep, typename Period>
     void submitTaskIn(Task task, std::chrono::duration<Rep, Period> delay)
     {
         auto deadline = ClockType::now() + delay;
 
-        auto taskQueue = taskQueueMtx.lock();
-        const bool isEarliest = taskQueue->empty() || deadline < taskQueue->top().deadline;
-        taskQueue->emplace(ScheduledTask{std::move(task), deadline});
+        auto state = stateMtx.lock();
+        if (!state->acceptingTasks)
+        {
+            state.unlock();
+            failTaskDuringShutdown(task);
+            return;
+        }
+
+        const bool isEarliest = state->taskQueue.empty() || deadline < state->taskQueue.top().deadline;
+        state->taskQueue.emplace(ScheduledTask{std::move(task), deadline});
 
         /// Wake up the worker thread if this task has an earlier deadline or if the taskqueue was empty.
         /// This is necessary, as we need to set the cv_wait_until to ensure no task being missed.
         if (isEarliest)
         {
-            taskQueue.unlock();
+            state.unlock();
             cv.notify_one();
         }
     }
+
+    /// Stops the submitter thread and fails all outstanding tasks. Concurrent calls block until the single shutdown operation has
+    /// completed. Tasks submitted after shutdown are failed synchronously by submitTaskIn().
+    void shutdown();
 
     /// Non-copyable and non-movable
     DelayedTaskSubmitter(const DelayedTaskSubmitter&) = delete;
@@ -91,6 +114,7 @@ public:
     DelayedTaskSubmitter(DelayedTaskSubmitter&&) = delete;
     DelayedTaskSubmitter& operator=(DelayedTaskSubmitter&&) = delete;
 
+    /// The destructor will shutdown the DelayedTaskSubmitter failing any pending tasks.
     ~DelayedTaskSubmitter();
 };
 
@@ -103,18 +127,18 @@ DelayedTaskSubmitter<CT>::DelayedTaskSubmitter(SubmitFn submitFn)
 template <typename CT>
 void DelayedTaskSubmitter<CT>::workerLoop(const std::stop_token& stop)
 {
-    auto taskQueue = taskQueueMtx.lock();
+    auto state = stateMtx.lock();
     while (!stop.stop_requested())
     {
-        if (taskQueue->empty())
+        if (state->taskQueue.empty())
         {
             /// Wait for tasks to be added or shutdown signal
-            cv.wait(taskQueue.as_lock(), stop, [&taskQueue] { return !taskQueue->empty(); });
+            cv.wait(state.as_lock(), stop, [&state] { return !state->taskQueue.empty(); });
             continue;
         }
 
         auto now = ClockType::now();
-        const auto& nextTask = taskQueue->top();
+        const auto& nextTask = state->taskQueue.top();
 
         if (nextTask.deadline <= now)
         {
@@ -124,40 +148,71 @@ void DelayedTaskSubmitter<CT>::workerLoop(const std::stop_token& stop)
             /// Since we have exclusive access to the queue, and we are removing the task from the queue anyways and the underlying memory has to be mutable, stripping away the constness is ok (I think).
             /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
             auto task = std::move(const_cast<ScheduledTask&>(nextTask).task);
-            taskQueue->pop();
+            state->taskQueue.pop();
 
             /// Release lock while calling submit function to avoid blocking other operations
-            taskQueue.unlock();
+            state.unlock();
             submitFn(std::move(task));
-            taskQueue = taskQueueMtx.lock();
+            state = stateMtx.lock();
         }
         else
         {
             auto nextDeadline = nextTask.deadline;
             /// Wait until the next task deadline or until notified of new more urgent task
             cv.wait_until(
-                taskQueue.as_lock(),
+                state.as_lock(),
                 stop,
                 nextDeadline,
-                [&taskQueue, nextDeadline] { return !taskQueue->empty() && taskQueue->top().deadline < nextDeadline; });
+                [&state, nextDeadline] { return !state->taskQueue.empty() && state->taskQueue.top().deadline < nextDeadline; });
         }
     }
 }
 
 template <typename CT>
+void DelayedTaskSubmitter<CT>::failTaskDuringShutdown(Task& task)
+{
+    failTask(task, SkippingDelayedTaskDuringShutdown());
+    completeTask(task);
+}
+
+template <typename CT>
+void DelayedTaskSubmitter<CT>::shutdown()
+{
+    std::call_once(
+        shutdownOnce,
+        [this]
+        {
+            {
+                auto state = stateMtx.lock();
+                state->acceptingTasks = false;
+            }
+
+            /// Joining guarantees that no task submission into the engine task queue is still in flight when shutdown returns.
+            workerThread = {};
+
+            /// Run callbacks without holding the state mutex. Callbacks can re-enter submitTaskIn(), which will synchronously reject the
+            /// task because acceptingTasks is false.
+            while (true)
+            {
+                auto state = stateMtx.lock();
+                if (state->taskQueue.empty())
+                {
+                    break;
+                }
+
+                /// Priority queue's API only returns a const reference. We have exclusive access and immediately remove the element.
+                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+                auto task = std::move(const_cast<ScheduledTask&>(state->taskQueue.top()).task);
+                state->taskQueue.pop();
+                state.unlock();
+                failTaskDuringShutdown(task);
+            }
+        });
+}
+
+template <typename CT>
 DelayedTaskSubmitter<CT>::~DelayedTaskSubmitter()
 {
-    /// Signal shutdown and wake up worker threads.
-    workerThread = {};
-
-    /// Throw away all pending tasks, as the engine is about to shutdown and trying to actually execute these tasks is unlikely to
-    /// succeed, in addition to potentially creating infinite cycles.
-    auto taskQueue = taskQueueMtx.lock();
-    while (!taskQueue->empty())
-    {
-        auto task = std::move(const_cast<ScheduledTask&>(taskQueue->top()).task);
-        taskQueue->pop();
-        failTask(task, SkippingDelayedTaskDuringShutdown());
-    }
+    shutdown();
 }
 }

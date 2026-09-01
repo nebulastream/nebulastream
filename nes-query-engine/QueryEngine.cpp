@@ -418,6 +418,17 @@ public:
     {
     }
 
+    ~ThreadPool() override
+    {
+        /// Request shutdown for every worker before joining any individual thread. This lets all workers leave their normal processing
+        /// loop and synchronously coordinate shutdown of the delayed task submitter before they perform the final task queue drain.
+        for (auto& worker : pool)
+        {
+            worker.requestStop();
+        }
+        pool.clear();
+    }
+
     /// Reserves the initial WorkerThreadId for the terminator thread, which is the thread which is calling shutdown.
     /// This allows the thread to access into the internal task queue, which is prohibited for non-worker threads.
     /// The terminator thread does not count towards the numberOfThreads
@@ -647,17 +658,6 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         },
         [&](const TupleBuffer&, std::chrono::milliseconds duration)
         {
-            if (terminating)
-            {
-                /// A stage that cannot finish its stop (e.g. a network sink whose peer never accepted the channel) would otherwise
-                /// add this task into the queue forever, and the worker threads would never see an empty queue.
-                ENGINE_LOG_WARNING("Dropping pipeline stop retry during query engine termination");
-                /// Dropping the task destroys the node it still owns. Clear the termination flag first so the node satisfies the
-                /// ~RunningQueryPlanNode invariant instead of aborting on the `!requiresTermination` assertion.
-                stopPipelineTask.pipeline->requiresTermination = false;
-                return;
-            }
-
             StopPipelineTask repeatedTask(
                 stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));
             if (duration.count() > 0)
@@ -766,6 +766,10 @@ void ThreadPool::addThread(const Host& host)
                     handleTask(worker, std::move(*task));
                 }
             }
+
+            /// The task delayer could add another task after the workers observe an empty task queue. Synchronously shutting it down first
+            /// guarantees that no delayed submission is in flight and that later delayed submissions are failed instead of queued.
+            delayedTaskSubmitter.shutdown();
 
             ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
             /// Worker in termination mode will not emit further work and eventually clear the task queue and terminate.
