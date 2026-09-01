@@ -499,6 +499,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     if (auto pipeline = task.pipeline.lock())
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
+        std::optional<std::pair<TupleBuffer, std::chrono::milliseconds>> requiresTaskRepetition;
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -519,21 +520,30 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             },
             [&](const TupleBuffer& tupleBuffer, std::chrono::milliseconds duration)
             {
-                if (duration.count() > 0)
-                {
-                    pool.delayedTaskSubmitter.submitTaskIn(
-                        WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)), duration);
-                }
-                else
-                {
-                    pool.addInternalTask(WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)));
-                }
-                pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                INVARIANT(!requiresTaskRepetition.has_value(), "Pipeline attempts to repeat the task multiple times");
+                requiresTaskRepetition = std::make_pair(tupleBuffer, duration);
             }
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
+
+        if (requiresTaskRepetition)
+        {
+            auto [repeatedBuffer, duration] = std::move(requiresTaskRepetition).value();
+            const auto numberOfTuples = repeatedBuffer.getNumberOfTuples();
+            Task repeatedTask = WorkTask(task.queryId, pipeline->id, pipeline, std::move(repeatedBuffer), std::move(task.callback));
+            if (duration.count() > 0)
+            {
+                pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
+            }
+            else
+            {
+                pool.addInternalTask(std::move(repeatedTask));
+            }
+            pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, numberOfTuples});
+        }
+
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
@@ -634,6 +644,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 {
     LogContext logContext("Task", fmt::format("{}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id));
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    std::optional<std::chrono::milliseconds> requiresTaskRepetition;
     DefaultPEC pec(
         pool.numberOfThreads(),
         WorkerThread::id,
@@ -658,22 +669,28 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         },
         [&](const TupleBuffer&, std::chrono::milliseconds duration)
         {
-            StopPipelineTask repeatedTask(
-                stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback));
-            if (duration.count() > 0)
-            {
-                pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
-            }
-            else
-            {
-                pool.addInternalTask(std::move(repeatedTask));
-            }
+            INVARIANT(!requiresTaskRepetition.has_value(), "Pipeline attempts to repeat the task multiple times");
+            requiresTaskRepetition = duration;
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);
+
+    if (requiresTaskRepetition)
+    {
+        const auto duration = requiresTaskRepetition.value();
+        StopPipelineTask repeatedTask{stopPipelineTask.queryId, std::move(stopPipelineTask.pipeline), std::move(stopPipelineTask.callback)};
+        if (duration.count() > 0)
+        {
+            pool.delayedTaskSubmitter.submitTaskIn(std::move(repeatedTask), duration);
+        }
+        else
+        {
+            pool.addInternalTask(std::move(repeatedTask));
+        }
+    }
     pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
