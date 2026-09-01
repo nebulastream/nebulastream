@@ -29,6 +29,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
+#include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
@@ -98,7 +99,8 @@ LogicalPlan UDFResolutionRule::apply(const LogicalPlan& queryPlan) const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> UDFResolutionRule::needs() const
 {
-    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
+    return {
+        typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(InferModelResolutionRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
