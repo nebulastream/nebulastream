@@ -14,6 +14,7 @@ add_subdirectory(Sequencing)
 add_subdirectory(Util)
 add_subdirectory(Identifiers)
 add_subdirectory(Plugins)
+add_subdirectory(Feeds)
 
 add_source_files(nes-common
         Thread.cpp

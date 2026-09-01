@@ -48,6 +48,13 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
+    /// Publish query engine task events, so that they can be read by an EngineEvents source
+    BoolOption enableTaskStatistics
+        = {"enable_task_statistics",
+           "false",
+           "Publish query engine task events, which a physical source of type EngineEvents can read to make engine "
+           "statistics queryable."};
+
 protected:
     std::vector<BaseOption*> getOptions() override;
 
