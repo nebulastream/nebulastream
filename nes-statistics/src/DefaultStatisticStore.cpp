@@ -19,7 +19,7 @@
 #include <optional>
 #include <vector>
 #include <Statistic.hpp>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES
 {
@@ -32,7 +32,7 @@ bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, Stat
 }
 
 bool DefaultStatisticStore::deleteStatistics(
-    const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
+    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.wlock();
     auto& statisticsVec = (*statisticsLocked)[statisticId];
@@ -52,7 +52,7 @@ bool DefaultStatisticStore::deleteStatistics(
 }
 
 std::vector<Statistic> DefaultStatisticStore::getStatistics(
-    const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
+    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
     const auto idIt = statisticsLocked->find(statisticId);
@@ -70,7 +70,7 @@ std::vector<Statistic> DefaultStatisticStore::getStatistics(
 }
 
 std::optional<Statistic> DefaultStatisticStore::getSingleStatistic(
-    const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
+    const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
     const auto idIt = statisticsLocked->find(statisticId);

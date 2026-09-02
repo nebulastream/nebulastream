@@ -19,7 +19,7 @@
 #include <vector>
 #include <StatisticStore/AbstractStatisticStore.hpp>
 #include <Statistic.hpp>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Time/Timestamp.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES
@@ -29,9 +29,9 @@ class DefaultStatisticStore final : public AbstractStatisticStore
 {
 public:
     bool insertStatistic(const StatisticId& statisticId, Statistic statistic) override;
-    bool deleteStatistics(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs) override;
-    std::vector<Statistic> getStatistics(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs) override;
-    std::optional<Statistic> getSingleStatistic(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs) override;
+    bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
+    std::vector<Statistic> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
+    std::optional<Statistic> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
     std::vector<IdStatisticPair> getAllStatistics() override;
 
 private:

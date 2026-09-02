@@ -27,7 +27,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Statistic.hpp>
 #include <Statistics/StatisticStoreOperatorHandler.hpp>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -65,8 +65,8 @@ void insertStatisticIntoStoreProxy(
         Statistic{
             StatisticId(statisticId),
             std::string(reinterpret_cast<const char*>(typeNamePtr), typeNameSize),
-            Windowing::TimeMeasure(startTs),
-            Windowing::TimeMeasure(endTs),
+            Timestamp(startTs),
+            Timestamp(endTs),
             numberOfSeenMeasurements,
             std::move(statisticData),
             statisticDataSize});
