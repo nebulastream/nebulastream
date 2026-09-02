@@ -28,7 +28,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
 

@@ -32,7 +32,7 @@ endif ()
 if (NES_DOCKER_AVAILABLE)
     if (NOT DEFINED VCPKG_HASH OR VCPKG_HASH STREQUAL "")
         execute_process(
-            COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
+            COMMAND ${CMAKE_SOURCE_DIR}/scripts/hash_dependencies.sh
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             OUTPUT_VARIABLE VCPKG_HASH
             OUTPUT_STRIP_TRAILING_WHITESPACE

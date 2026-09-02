@@ -33,7 +33,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 
 #include <DataTypes/UnboundField.hpp>

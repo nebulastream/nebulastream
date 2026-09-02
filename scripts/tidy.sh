@@ -95,12 +95,11 @@ DECOLOR=(sed -r 's/\x1B\[[0-9;]*[mK]//g')
 # "missing generated header" symptom below.
 set +e
 if [ "$MODE" = "full" ]; then
-    # Analyze every entry of the compilation database. Generated sources (any
-    # '*_generated_src/' directory) and the Rust bindings are not ours to lint,
-    # so they are filtered out via negative lookaheads -- the translation units
-    # through the positional regex, their includes via -header-filter.
-    HEADER_FILTER='^(?!.*nes-rust-bindings/).*'
-    SOURCE_FILTER='^(?!.*_generated_src/)(?!.*nes-rust-bindings/).+$'
+    # Analyze every handwritten C++ entry in the compilation database. Exclude
+    # generated sources and cxxbridge output by their build-tree structure, so
+    # adding a Rust crate never requires updating this filter.
+    HEADER_FILTER='^(?!.*corrosion_generated/cxxbridge/).*'
+    SOURCE_FILTER='^(?!.*_generated_src/)(?!.*corrosion_generated/cxxbridge/).+$'
 
     echo -e "${COLOR_BOLD}clang-tidy: analyzing every translation unit in ${COMPILE_DB_DIR}${COLOR_RESET}"
     echo
@@ -116,8 +115,9 @@ else
     NES_TIDY_DIFF_BASE="${NES_TIDY_DIFF_BASE:-HEAD}"
 
     # Path exclusions mirror the CI invocation (.github/workflows/clang_tidy_diff.yml):
-    # generated/vendored sources are not ours to lint.
-    EXCLUDES=(':!*.inc' ':!*nes-rust-bindings' ':!vcpkg/**')
+    # generated/vendored sources are not ours to lint. Rust files do not match
+    # clang-tidy-diff's C/C++ extensions and need no per-crate exclusions.
+    EXCLUDES=(':!*.inc' ':!vcpkg/**')
 
     # Build the `git diff` selector once, so the summary and the actual run cover
     # exactly the same set of changes. -U0 keeps the diff to changed lines only,

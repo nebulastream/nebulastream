@@ -234,6 +234,7 @@ if (NES_ENABLES_TESTS)
                 LABELS "DockerCompose"
         )
     endif ()
+
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)

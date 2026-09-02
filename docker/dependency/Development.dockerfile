@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # The development image adds common development tools we use during development and the CI uses for the pre-build-check
 ARG TAG=latest
-FROM nebulastream/nes-development-dependency:${TAG}
+FROM nebulastream/nes-development-dependency:${TAG} AS development-base
 
 ARG ANTLR4_VERSION=4.13.2
 
@@ -70,7 +70,7 @@ EOF
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.90.0
+    RUST_VERSION=1.97.1
 
 RUN set -eux; \
     \
@@ -101,16 +101,10 @@ RUN set -eux; \
     \
     rustup install nightly; \
     rustup component add rustfmt; \
-    rustup component add rust-src --toolchain nightly; \
+    rustup component add rustfmt rust-src --toolchain nightly; \
     rustup --version; \
     cargo --version; \
     rustc --version;
-
-# Installing the stable and nightly rust toolchain
-ENV RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.90.0
 
 # Pre-clone Corrosion at the exact ref CMake will request, so offline configures inside the
 # container can fall back to it when GitHub is unreachable. EnableRust.cmake probes GitHub
@@ -119,37 +113,37 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 ENV CORROSION_GIT_REPO=https://github.com/nebulastream/corrosion.git \
     CORROSION_VERSION=v0.6.1-always-dirty-fix \
     CORROSION_SRC=/opt/corrosion
-RUN git clone --depth 1 --branch ${CORROSION_VERSION} \
+RUN GIT_TERMINAL_PROMPT=0 git -c http.version=HTTP/1.1 clone --depth 1 --branch ${CORROSION_VERSION} \
         ${CORROSION_GIT_REPO} ${CORROSION_SRC} && \
     chmod -R a+rX ${CORROSION_SRC}
 
-# Pre-fetch every crate pinned in nes-network/Cargo.lock into $CARGO_HOME so cargo can build
-# offline. Only manifests + lockfile are copied (filtered by .dockerignore); stub lib sources
-# let cargo resolve the workspace without the real source tree.
-COPY nes-network /tmp/nes-network
+# Vendor the dependencies of both the NES workspace and nightly's standard library. The latter
+# keeps sanitizer builds using `-Zbuild-std` offline as well. The build context is limited to
+# Cargo files and Rust sources by Development.dockerfile.dockerignore.
+FROM development-base AS cargo-builder
+COPY . /tmp/cargo-build/
 RUN set -eux; \
-    find /tmp/nes-network -name Cargo.toml | while read m; do \
-        d=$(dirname "$m"); \
-        mkdir -p "$d/src"; \
-        echo 'fn _stub() {}' > "$d/src/lib.rs"; \
-        echo 'fn _stub() {}' > "$d/lib.rs"; \
-    done; \
-    cd /tmp/nes-network && cargo fetch --locked; \
-    # Corrosion runs `cargo install cxxbridge-cmd --version <cxx-version> --locked` at build \
-    # time to generate the cxx C++/Rust bindings. Pre-install it here with the same `--locked` \
-    # so its .crate sources and the transitive deps pinned by cxxbridge-cmd's bundled \
-    # Cargo.lock end up in $CARGO_HOME for offline builds. Without `--locked` here, cargo \
-    # resolves transitive deps freely and may cache different patch versions than the \
-    # `--locked` install at runtime asks for, leading to offline download failures. \
-    # The version is read from Cargo.lock so the cxxbridge-cmd version always matches the \
-    # workspace-pinned cxx crate. \
+    cd /tmp/cargo-build; \
+    mkdir -p /opt/nes; \
+    NIGHTLY_SYSROOT=$(rustc +nightly --print sysroot); \
+    cargo +nightly vendor \
+        --locked \
+        --versioned-dirs \
+        --sync "${NIGHTLY_SYSROOT}/lib/rustlib/src/rust/library/Cargo.toml" \
+        /opt/nes/cargo-vendor \
+        > /opt/nes/cargo-vendor-config.toml; \
+    printf '\n[net]\noffline = true\n' >> /opt/nes/cargo-vendor-config.toml; \
     CXX_VERSION=$(awk '/^name = "cxx"$/{f=1; next} f && /^version = /{gsub(/"/,"",$3); print $3; exit}' Cargo.lock); \
     test -n "$CXX_VERSION"; \
-    echo "Pre-installing cxxbridge-cmd ${CXX_VERSION}"; \
-    cargo install cxxbridge-cmd --version "${CXX_VERSION}" --locked --root /tmp/cxxbridge-stage; \
-    rm -rf /tmp/cxxbridge-stage; \
-    cd / && rm -rf /tmp/nes-network; \
-    chmod -R a+rwX ${CARGO_HOME}
+    cargo install cxxbridge-cmd \
+        --version "${CXX_VERSION}" \
+        --locked \
+        --root /opt/nes/cxxbridge; \
+    chmod -R a+rX /opt/nes/cargo-vendor /opt/nes/cxxbridge; \
+    chmod a+r /opt/nes/cargo-vendor-config.toml
+
+FROM development-base
+ENV NES_CARGO_VENDOR_CONFIG=${CARGO_HOME}/config.toml
 
 # Install OpenVINO converter tools for ML inference model import.
 ARG OPENVINO_VERSION=2025.3.0
@@ -176,3 +170,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     docker --version && \
     docker compose version
+
+COPY --from=cargo-builder /opt/nes/cargo-vendor /opt/nes/cargo-vendor
+COPY --from=cargo-builder /opt/nes/cargo-vendor-config.toml ${NES_CARGO_VENDOR_CONFIG}
+COPY --from=cargo-builder /opt/nes/cxxbridge/bin/cxxbridge ${CARGO_HOME}/bin/cxxbridge
