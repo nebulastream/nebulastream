@@ -53,9 +53,18 @@ function(add_rust_cargo_test crate)
         list(APPEND _test_env ${NES_RUST_ENV_VARS})
     endif ()
 
+    set(_test_cargo_flags "")
+    if (NES_RUST_CARGO_FLAGS)
+        separate_arguments(_test_cargo_flags NATIVE_COMMAND "${NES_RUST_CARGO_FLAGS}")
+    endif ()
+
     add_test(
             NAME "rust-${crate}"
-            COMMAND "${_CORROSION_CARGO}" test -p ${crate} --color=always
+            COMMAND "${_CORROSION_CARGO}" test
+                    ${_test_cargo_flags}
+                    --target "${Rust_CARGO_TARGET_CACHED}"
+                    -p ${crate}
+                    --color=always
             WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     )
     set_tests_properties("rust-${crate}" PROPERTIES
