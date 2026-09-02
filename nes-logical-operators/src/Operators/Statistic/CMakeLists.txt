@@ -10,20 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(src)
-get_source(nes-statistics NES_STATISTICS_SOURCE_FILES)
 
-add_library(nes-statistics ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PUBLIC nes-common)
+add_unreflection_entry(LogicalOperator StatisticStoreWriter)
 
-target_include_directories(nes-statistics PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-statistics REUSE_FROM nes-common)
-endif ()
-
-if (NES_ENABLES_TESTS)
-    add_subdirectory(tests)
-endif ()
+add_source_files(nes-logical-operators
+        StatisticStoreWriterLogicalOperator.cpp
+)

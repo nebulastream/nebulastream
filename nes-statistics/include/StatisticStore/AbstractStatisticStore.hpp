@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <Identifiers/StatisticIdentifiers.hpp>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Time/Timestamp.hpp>
 #include <Statistic.hpp>
 
 namespace NES
@@ -36,14 +36,14 @@ public:
     virtual bool insertStatistic(const StatisticId& statisticId, Statistic statistic) = 0;
 
     virtual bool
-    deleteStatistics(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
+    deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
         = 0;
 
     virtual std::vector<Statistic>
-    getStatistics(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs) = 0;
+    getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     virtual std::optional<Statistic>
-    getSingleStatistic(const StatisticId& statisticId, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs) = 0;
+    getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
     virtual std::vector<IdStatisticPair> getAllStatistics() = 0;
 };
