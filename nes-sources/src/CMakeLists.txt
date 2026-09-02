@@ -26,6 +26,7 @@ add_source_files(nes-sources
         SourceCatalog.cpp
         FileSource.cpp
         NetworkSource.cpp
+        EventFeedSource.cpp
 )
 
 add_registry_entry(Source File)

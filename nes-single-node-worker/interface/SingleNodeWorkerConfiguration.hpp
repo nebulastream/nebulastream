@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <iosfwd>
 #include <memory>
 #include <string>
@@ -22,6 +23,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
 
 namespace NES
 {
@@ -54,6 +56,20 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Publish query engine task events, which a physical source of type EngineEvents can read to make engine "
            "statistics queryable."};
+
+    /// Publish buffer pool statistics, so that they can be read by a BufferEvents source
+    BoolOption enableBufferStatistics
+        = {"enable_buffer_statistics",
+           "false",
+           "Publish buffer pool statistics, which a physical source of type BufferEvents can read to make buffer "
+           "pressure queryable."};
+
+    ScalarOption<uint64_t> bufferStatisticsIntervalMs
+        = {"buffer_statistics_interval_ms",
+           "100",
+           "How often a buffer statistics row is published, in milliseconds. Buffer events are counted rather "
+           "than published one by one, so this is what determines the resolution of the published stream.",
+           {std::make_shared<NonZeroValidation>()}};
 
 protected:
     std::vector<BaseOption*> getOptions() override;
