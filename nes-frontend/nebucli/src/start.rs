@@ -78,9 +78,10 @@ struct SchemaField {
 }
 
 /// Normalize an identifier to uppercase, matching the C++ SQL parser behavior
-/// for unquoted identifiers. Backtick-quoted identifiers preserve their casing.
+/// for unquoted identifiers. Quoted identifiers preserve their casing.
 fn bind_identifier(name: &str) -> String {
-    if name.starts_with('`') && name.ends_with('`') && name.len() > 2 {
+    let quoted = |quote: char| name.starts_with(quote) && name.ends_with(quote) && name.len() > 2;
+    if quoted('`') || quoted('"') {
         name[1..name.len() - 1].to_string()
     } else {
         name.to_uppercase()
