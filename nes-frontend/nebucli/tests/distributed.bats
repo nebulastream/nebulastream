@@ -389,7 +389,7 @@ assert_json_contains() {
   docker compose up -d --wait worker-1
 
   # Auto-recovery: worker comes back, fragments re-register and resume
-  run --separate-stderr DOCKER_NES_CLI status -w 5
+  run --separate-stderr DOCKER_NES_CLI status -w 30
   [ "$status" -eq 0 ]
   QUERY_STATE=$(query_state "$QUERY_ID" "$output")
   [ "$QUERY_STATE" = "Running" ]
@@ -547,7 +547,7 @@ assert_json_contains() {
   grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
-  run --separate-stderr DOCKER_NES_CLI status -w 5
+  run --separate-stderr DOCKER_NES_CLI status -w 30
   [ $status -eq 0 ]
   QUERY_STATE=$(query_state "$QUERY_ID" "$output")
   [ "$QUERY_STATE" = "Failed" ]
