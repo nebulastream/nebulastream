@@ -23,7 +23,7 @@
 
 #include <Identifiers/StatisticIdentifiers.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <Time/Timestamp.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 
@@ -39,8 +39,8 @@ public:
     Statistic(
         const StatisticId statisticId,
         std::string typeName,
-        const Windowing::TimeMeasure& startTs,
-        const Windowing::TimeMeasure& endTs,
+        const Timestamp& startTs,
+        const Timestamp& endTs,
         const uint64_t numberOfSeenMeasurements,
         std::shared_ptr<std::byte[]> statisticData,
         const uint64_t statisticDataSize)
@@ -61,9 +61,9 @@ public:
 
     [[nodiscard]] const std::string& getTypeName() const { return typeName; }
 
-    [[nodiscard]] Windowing::TimeMeasure getStartTs() const { return startTs; }
+    [[nodiscard]] Timestamp getStartTs() const { return startTs; }
 
-    [[nodiscard]] Windowing::TimeMeasure getEndTs() const { return endTs; }
+    [[nodiscard]] Timestamp getEndTs() const { return endTs; }
 
     [[nodiscard]] const int8_t* getStatisticData() const { return reinterpret_cast<const int8_t*>(statisticData.get()); }
 
@@ -85,8 +85,8 @@ public:
 private:
     StatisticId statisticId;
     std::string typeName;
-    Windowing::TimeMeasure startTs;
-    Windowing::TimeMeasure endTs;
+    Timestamp startTs;
+    Timestamp endTs;
     uint64_t numberOfSeenMeasurements;
     std::shared_ptr<std::byte[]> statisticData;
     uint64_t statisticDataSize;
