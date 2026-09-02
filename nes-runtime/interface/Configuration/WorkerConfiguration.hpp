@@ -103,6 +103,13 @@ public:
            "Buffers preallocated per size class for the EagerPerClass policy.",
            {std::make_shared<NumberValidation>()}};
 
+    /// Which allocator serves variable-sized (non-default-size) buffer requests: the A1/A2/A3 alternatives.
+    /// ComposeFixed and VmCache force the size-class path off and back the unpooled path with their arena.
+    EnumOption<VariableSizeAllocator> variableSizeAllocator
+        = {"variable_size_allocator",
+           VariableSizeAllocator::Default,
+           fmt::format("Allocator for variable-sized buffer requests (A1/A2/A3): {}", enumPipeList<VariableSizeAllocator>())};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -120,7 +127,8 @@ private:
             &bufferSizeClassMaxBytes,
             &bufferSizeClassProvisioning,
             &bufferSizeClassBudgetBytes,
-            &bufferSizeClassBuffersPerClass};
+            &bufferSizeClassBuffersPerClass,
+            &variableSizeAllocator};
     }
 };
 }

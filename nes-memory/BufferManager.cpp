@@ -212,6 +212,18 @@ void BufferManager::initialize(const std::optional<SizeClassConfig>& sizeClasses
             }
             specs[classSize] = spec;
         }
+
+        /// Under LazyElastic, also let the *default* class grow on demand beyond its initial count instead of
+        /// being fixed at numOfBuffers. Otherwise a large-state query (e.g. a windowed join buffering millions
+        /// of default-size tuples) would require eagerly preallocating the whole peak up front. The initial
+        /// count stays as requested; growth faults in additional regions lazily up to the per-class ceiling.
+        if (sc.policy == BufferProvisioningPolicy::LazyElastic)
+        {
+            auto& def = specs[bufferSize];
+            def.elastic = true;
+            def.growthChunkBuffers = std::max<size_t>(sc.growthChunkBuffers, 65536);
+            def.capacity = std::max({sc.maxBuffersPerClass, def.initialCount, def.growthChunkBuffers});
+        }
     }
 
     /// Verify the eager preallocation fits into physical memory.

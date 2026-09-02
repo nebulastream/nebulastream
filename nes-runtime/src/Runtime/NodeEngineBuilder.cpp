@@ -20,7 +20,9 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Runtime/Allocator/ComposeFixedMemoryResource.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/VmCacheMemoryResource.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -53,16 +55,45 @@ std::optional<SizeClassConfig> NodeEngineBuilder::makeSizeClassConfig(const Work
     config.policy = workerConfiguration.bufferSizeClassProvisioning.getValue();
     config.totalBudgetBytes = workerConfiguration.bufferSizeClassBudgetBytes.getValue();
     config.buffersPerClass = workerConfiguration.bufferSizeClassBuffersPerClass.getValue();
+    /// For LazyElastic, buffer_size_class_buffers_per_class (when set) also raises the per-class *growth
+    /// ceiling*, so a large-state query can grow its hot classes on demand instead of hitting the default
+    /// 4096-buffer cap. Lazy, so a high ceiling only faults in what is actually used.
+    if (config.policy == BufferProvisioningPolicy::LazyElastic && config.buffersPerClass > 0)
+    {
+        config.maxBuffersPerClass = config.buffersPerClass;
+    }
     return config;
 }
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
+    /// Select the allocator for variable-sized requests (the A1/A2/A3 design alternatives). ComposeFixed and
+    /// VmCache back the variable-sized path with a large mmap arena (MAP_NORESERVE, so resident tracks touched
+    /// pages) and force the size-class path off; the arena size is itself the budget for those modes.
+    static constexpr size_t VARIABLE_ARENA_BYTES = std::size_t{64} << 30;
+    std::shared_ptr<std::pmr::memory_resource> variableAllocator;
+    std::optional<SizeClassConfig> sizeClassConfig;
+    switch (workerConfiguration.variableSizeAllocator.getValue())
+    {
+        case VariableSizeAllocator::ComposeFixed:
+            variableAllocator = std::make_shared<ComposeFixedMemoryResource>(
+                VARIABLE_ARENA_BYTES, workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
+            sizeClassConfig = std::nullopt;
+            break;
+        case VariableSizeAllocator::VmCache:
+            variableAllocator = std::make_shared<VmCacheMemoryResource>(VARIABLE_ARENA_BYTES);
+            sizeClassConfig = std::nullopt;
+            break;
+        case VariableSizeAllocator::Default:
+            variableAllocator = std::make_shared<NesDefaultMemoryAllocator>();
+            sizeClassConfig = makeSizeClassConfig(workerConfiguration);
+            break;
+    }
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
         workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
-        std::make_shared<NesDefaultMemoryAllocator>(),
-        makeSizeClassConfig(workerConfiguration));
+        variableAllocator,
+        sizeClassConfig);
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);

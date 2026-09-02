@@ -47,6 +47,19 @@ enum class BufferProvisioningPolicy : uint8_t
     LazyElastic
 };
 
+/// Selects how a *variable-sized* buffer request is served (the A1/A2/A3 design alternatives). The
+/// default-size pooled hot path is unaffected; this only changes the backing allocator for sizes that
+/// do not match the operator buffer size.
+enum class VariableSizeAllocator : uint8_t
+{
+    /// A1 — the default path: segregated power-of-two size classes (when enabled) over the default allocator.
+    Default,
+    /// A2 — one fixed block size, larger requests composed from a contiguous run of blocks (DuckDB route).
+    ComposeFixed,
+    /// A3 — virtual-memory over-allocation with a page-resident budget reclaimed via madvise (vmcache/Umbra-lite).
+    VmCache
+};
+
 /// Opt-in configuration enabling additional power-of-two size classes alongside the default buffer
 /// size. Classes are minClassSize, 2*minClassSize, ... up to maxClassSize (both powers of two).
 struct SizeClassConfig
