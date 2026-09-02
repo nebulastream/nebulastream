@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import argparse
 import glob
+import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Any, Iterable
@@ -25,10 +27,23 @@ from typing import Any, Iterable
 try:
     import tomllib
 except ModuleNotFoundError:
-    print(
-        "Python 3.11 or newer is required to validate Rust workspace dependencies.",
-        file=sys.stderr,
-    )
+    interpreter = None
+    if not os.environ.get("NES_RUST_POLICY_REEXEC"):
+        for minor in range(11, 30):
+            interpreter = shutil.which(f"python3.{minor}")
+            if interpreter:
+                print(
+                    f"Default python3 {sys.version_info.major}.{sys.version_info.minor} has no required tomllib, "
+                    f"using python3 3.{minor} instead...",
+                    file=sys.stderr,
+                )
+                os.environ["NES_RUST_POLICY_REEXEC"] = "1"
+                os.execv(interpreter, [interpreter, *sys.argv])
+    if interpreter is None:
+        print(
+            "Python 3.11 or newer is required to validate Rust workspace dependencies.",
+            file=sys.stderr,
+        )
     sys.exit(2)
 
 
