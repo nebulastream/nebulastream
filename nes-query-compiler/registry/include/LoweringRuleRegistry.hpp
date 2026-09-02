@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <StatisticStore/AbstractStatisticStore.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
@@ -29,6 +30,7 @@ using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
 struct LoweringRuleRegistryArguments
 {
     QueryExecutionConfiguration conf;
+    std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 
 using LoweringRuleFn = std::function<LoweringRuleRegistryReturnType(LoweringRuleRegistryArguments)>;

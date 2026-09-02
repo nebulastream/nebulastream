@@ -20,7 +20,7 @@ target_link_libraries(nes-query-compiler-interface INTERFACE nes-configurations)
 # sources are added below once src/ has registered them.
 add_library(nes-query-compiler STATIC)
 set_target_properties(nes-query-compiler PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-runtime nes-input-formatter-provider PRIVATE nes-schema)
+target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-runtime nes-input-formatter-provider nes-statistics PRIVATE nes-schema)
 target_include_directories(nes-query-compiler PUBLIC
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)

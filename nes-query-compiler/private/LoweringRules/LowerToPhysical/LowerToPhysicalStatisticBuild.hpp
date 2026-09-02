@@ -13,16 +13,23 @@
 */
 
 #pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <StatisticStore/AbstractStatisticStore.hpp>
-#include <PhysicalPlan.hpp>
+
+#include <utility>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
-namespace NES::LowerToPhysicalOperators
+namespace NES
 {
-PhysicalPlan apply(
-    const LogicalPlan& queryPlan,
-    const QueryExecutionConfiguration& conf,
-    std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+
+struct LowerToPhysicalStatisticBuild : AbstractLoweringRule
+{
+    explicit LowerToPhysicalStatisticBuild(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
+
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+
+private:
+    QueryExecutionConfiguration conf;
+};
+
 }
