@@ -11,23 +11,40 @@
 # limitations under the License.
 
 [package]
-name = "controller"
+name = "coordinator"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 model.workspace = true
+controller.workspace = true
+madsim.workspace = true
+tonic = { version = "0.5.1", package = "madsim-tonic" }
+async-channel.workspace = true
 tokio = { version = "0.2", package = "madsim-tokio", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
 tracing.workspace = true
-thiserror.workspace = true
-tonic = { version = "0.5.1", package = "madsim-tonic" }
-prost.workspace = true
-tokio-retry.workspace = true
 anyhow.workspace = true
+thiserror.workspace = true
 chrono.workspace = true
-futures.workspace = true
 sea-orm.workspace = true
-serde_json.workspace = true
+futures.workspace = true
 
 [build-dependencies]
 tonic-build = { version = "0.5", package = "madsim-tonic-build" }
+
+[dev-dependencies]
+sea-orm.workspace = true
+# Pull in model's Arbitrary impls / generators for the simulation tests.
+model = { workspace = true, features = ["testing"] }
+proptest.workspace = true
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+toml.workspace = true
+serde = { workspace = true }
+async-trait.workspace = true
+inventory.workspace = true
+libtest-mimic.workspace = true
+
+[[test]]
+name = "simulation"
+path = "tests/simulation/main.rs"
+harness = false

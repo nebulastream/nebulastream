@@ -103,6 +103,7 @@ def validate(root: Path) -> list[str]:
         return ["root Cargo.toml does not define [workspace.dependencies]"]
 
     used_dependencies: set[str] = set()
+    facade_specs: dict[str, tuple[str, dict[str, Any]]] = {}
     errors: list[str] = []
     try:
         member_manifests = workspace_manifests(root, workspace)
@@ -121,6 +122,22 @@ def validate(root: Path) -> list[str]:
             for dependency_name, specification in dependencies.items():
                 location = f"{relative_path} [{section_name}].{dependency_name}"
                 if not isinstance(specification, dict) or specification.get("workspace") is not True:
+                    # The simulation facades cannot be inherited from the
+                    # workspace table: inheritance cannot rename a package, and
+                    # the workspace entries must stay the real crates for the
+                    # non-simulated members. They are the only allowed inline
+                    # dependencies, and every crate must declare them
+                    # identically.
+                    package = (
+                        specification.get("package", "") if isinstance(specification, dict) else ""
+                    )
+                    if isinstance(package, str) and package.startswith("madsim-"):
+                        first = facade_specs.setdefault(dependency_name, (location, specification))
+                        if first[1] != specification:
+                            errors.append(
+                                f"{location} declares {package} differently than {first[0]}"
+                            )
+                        continue
                     errors.append(f"{location} must be declared as {{ workspace = true }}")
                     continue
                 if dependency_name not in workspace_dependencies:

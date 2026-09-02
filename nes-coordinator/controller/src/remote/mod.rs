@@ -60,6 +60,12 @@ pub mod worker_rpc_service {
                     distributed_query_id: String::new(),
                 }
             }
+
+            /// Reverse of the constructor above; ids that did not come from
+            /// a fragment id parse to nothing.
+            pub fn fragment_id(&self) -> Option<i64> {
+                self.local_query_id.parse().ok()
+            }
         }
     }
     tonic::include_proto!("_");
