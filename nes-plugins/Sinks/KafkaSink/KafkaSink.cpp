@@ -50,8 +50,8 @@ KafkaSink::KafkaSink(BackpressureController backpressureController, const SinkDe
     , maxOutstandingMessages(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::MAX_OUTSTANDING_MESSAGES))
     , deliveryTimeoutMs(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::DELIVERY_TIMEOUT_MS))
     , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
+          sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::BACKPRESSURE_UPPER_THRESHOLD),
+          sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::BACKPRESSURE_LOWER_THRESHOLD))
 {
 }
 
