@@ -74,16 +74,17 @@ docker_nes_repl() {
   run docker_nes_repl tests/sql-file-tests/good/quoted_identifiers_distributed.sql
   [ "$status" -eq 0 ]
 
+  results=$(printf '%s' "$output" | jq -s '.')
   assert_json_contains \
-    '[{"source_name":"quotedSource","schema":[{"name":"mixedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
-    "${lines[1]}"
+    '{"CreatedLogicalSource":{"name":"quotedSource","schema":[{"name":"mixedValue"},{"name":"A"}]}}' \
+    "$(echo "$results" | jq '.[1]')"
   assert_json_contains \
-    '[{"source_name":"quotedSource","schema":[{"name":"mixedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
-    "${lines[2]}"
+    '{"CreatedPhysicalSource":{"logical_source":"quotedSource"}}' \
+    "$(echo "$results" | jq '.[2]')"
   assert_json_contains \
-    '[{"sink_name":"quotedSink","schema":[{"name":"projectedValue","type":"UINT64"},{"name":"A","type":"UINT64"}]}]' \
-    "${lines[3]}"
-  echo "${lines[4]}" | jq -e '.[0].query_id | length > 0'
+    '{"CreatedSink":{"name":"quotedSink","schema":[{"name":"projectedValue"},{"name":"A"}]}}' \
+    "$(echo "$results" | jq '.[3]')"
+  echo "$results" | jq -e '.[4].CreatedQuery[0].id == 1'
 }
 
 #bats test_tags=INFERENCE
