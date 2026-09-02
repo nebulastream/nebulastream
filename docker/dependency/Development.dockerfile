@@ -113,15 +113,8 @@ RUN set -eux; \
 ENV CORROSION_GIT_REPO=https://github.com/nebulastream/corrosion.git \
     CORROSION_VERSION=v0.6.1-always-dirty-fix \
     CORROSION_SRC=/opt/corrosion
-RUN export GIT_TERMINAL_PROMPT=0; \
-    for attempt in 1 2 3 4 5; do \
-        git -c protocol.version=0 clone --depth 1 --branch ${CORROSION_VERSION} \
-            ${CORROSION_GIT_REPO} ${CORROSION_SRC} && break; \
-        rm -rf ${CORROSION_SRC}; \
-        echo "corrosion clone failed, retry ${attempt}/5"; \
-        sleep $((attempt * 15)); \
-    done; \
-    test -d ${CORROSION_SRC}/.git && \
+RUN GIT_TERMINAL_PROMPT=0 git -c http.version=HTTP/1.1 clone --depth 1 --branch ${CORROSION_VERSION} \
+        ${CORROSION_GIT_REPO} ${CORROSION_SRC} && \
     chmod -R a+rX ${CORROSION_SRC}
 
 # Vendor the dependencies of both the NES workspace and nightly's standard library. The latter
