@@ -169,10 +169,9 @@ TEST_F(ModelValidationTest, RejectsOutputFieldCountMismatch)
 
 /// A dynamic batch dimension resolves to 1, so the model registers against a schema
 /// describing a single sample.
-TEST_F(ModelCatalogTest, RegistersModelWithDynamicBatchDimension)
+TEST_F(ModelValidationTest, RegistersModelWithDynamicBatchDimension)
 {
-    ModelCatalog catalog;
-    ASSERT_NO_THROW(catalog.registerModel(
+    ASSERT_NO_THROW(RegisteredModel::create(
         "m",
         dynamicBatchPath(),
         ModelSchema{.inputs = fields(100, DataType::Type::FLOAT32), .outputs = fields(100, DataType::Type::FLOAT32)}));
@@ -180,11 +179,10 @@ TEST_F(ModelCatalogTest, RegistersModelWithDynamicBatchDimension)
 
 /// The declared schema is still validated against the resolved shape: a schema written
 /// for a batch of 4 no longer matches once the dynamic dimension has become 1.
-TEST_F(ModelCatalogTest, RejectsSchemaThatDoesNotMatchResolvedBatchDimension)
+TEST_F(ModelValidationTest, RejectsSchemaThatDoesNotMatchResolvedBatchDimension)
 {
-    ModelCatalog catalog;
     ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
+        RegisteredModel::create(
             "m",
             dynamicBatchPath(),
             ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
@@ -192,11 +190,10 @@ TEST_F(ModelCatalogTest, RejectsSchemaThatDoesNotMatchResolvedBatchDimension)
 }
 
 /// A model wanting several samples per invocation cannot be driven one tuple at a time.
-TEST_F(ModelCatalogTest, RejectsModelWithFixedBatchDimension)
+TEST_F(ModelValidationTest, RejectsModelWithFixedBatchDimension)
 {
-    ModelCatalog catalog;
     ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerModel(
+        RegisteredModel::create(
             "m",
             fixedBatchPath(),
             ModelSchema{.inputs = fields(400, DataType::Type::FLOAT32), .outputs = fields(400, DataType::Type::FLOAT32)}),
