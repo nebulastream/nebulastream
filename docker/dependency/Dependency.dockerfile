@@ -83,7 +83,14 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     if [ "$STDLIB" = "libcxx" ]; then VCPKG_STDLIB="libcxx"; else VCPKG_STDLIB="local"; fi; \
     \
     cd /vcpkg_input; \
-    git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
+    export GIT_TERMINAL_PROMPT=0; \
+    for attempt in 1 2 3 4 5; do \
+        git -c protocol.version=0 clone https://github.com/microsoft/vcpkg.git vcpkg_repository && break; \
+        rm -rf vcpkg_repository; \
+        echo "vcpkg clone failed, retry ${attempt}/5"; \
+        sleep $((attempt * 15)); \
+    done; \
+    test -d vcpkg_repository/.git; \
     git -C vcpkg_repository checkout "$(grep -o "\"builtin-baseline\": \"[0-9a-f]*\"" vcpkg.json | cut -d\" -f4)"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
     ./vcpkg_repository/vcpkg install \
