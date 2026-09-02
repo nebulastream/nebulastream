@@ -1,22 +1,52 @@
 # CI Build & Test Matrix Configuration
 #
-# Each entry defines a build configuration and which test groups to run.
-# Test groups: unit, systest, docker
+# Single source of truth for both the PR and nightly matrices. Each entry
+# defines a build configuration and which test groups to run. Test groups:
+# unit, systest, docker.
 #
 # Fields (arch, stdlib, build_type, sanitizer) can be arrays — the script
 # expands them into the cross product. Use 'exclude' to filter combos.
-# The 'name' field supports {arch}, {stdlib}, {build_type}, {sanitizer} placeholders.
+# The 'name' field supports {arch}, {stdlib}, {build_type}, {sanitizer}
+# placeholders.
 #
 # The 'runner' field is required and references a key in the 'runners' map.
-# It supports {field} placeholders, e.g. 'github-{arch}' resolves to 'github-x64'.
+# It supports {field} placeholders, e.g. 'github-{arch}' resolves to
+# 'github-x64'.
 #
 # To split test groups across parallel workers, create multiple entries
 # with the same build config but different 'tests' lists.
+#
+# --- pr vs. nightly ---
+#
+# Every job runs in both the "pr" and "nightly" profiles by default. Two
+# mechanisms narrow that down, both keyed by profile name:
+#
+#   profiles: [nightly]
+#     Restricts a whole job to the listed profile(s) only — use this for
+#     jobs that should exist in one profile and not the other at all.
+#
+#   overrides:
+#     nightly:
+#       build_type: [...]
+#     Shallow-merges the given keys on top of the job's common fields when
+#     generating for that profile, replacing them wholesale (no deep-merge,
+#     no list-append). Use this when a job exists in both profiles but a
+#     field (e.g. build_type coverage) differs between them.
+#
+# default_cmake_flags apply to every job in every profile. profile_cmake_flags
+# adds/overrides flags for one specific profile only (e.g. nightly enabling
+# slower, more thorough test flags). Per-job cmake_flags still win over both.
+
+profiles: [pr, nightly]
 
 default_cmake_flags:
   ALL_HASHMAP_TESTS: "1"
   NES_LOG_LEVEL: DEBUG
   NES_SPLIT_TEST_BINARIES: "OFF"
+
+profile_cmake_flags:
+  nightly:
+    ALL_SLICE_CACHE_TESTS: "ON"
 
 runners:
   github-x64: ubuntu-24.04
@@ -87,6 +117,8 @@ jobs:
 
   # === Optimized builds (no sanitizer, combined — all fast enough) ===
 
+  # pr also covers Benchmark here; nightly drops it from this entry (it is
+  # still covered by nightly's wider build-only matrix below).
   - name: "{arch} {stdlib} {build_type} (unit+systest+docker)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
@@ -97,6 +129,9 @@ jobs:
     exclude:
       - arch: arm64
         stdlib: libstdcxx
+    overrides:
+      nightly:
+        build_type: [RelWithDebInfo, Release]
 
   # === Special flag builds ===
 
@@ -120,8 +155,22 @@ jobs:
       NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
     tests: [systest, docker]
 
+  # Validates a full build without compiler-cache assistance. Keep this on the
+  # self-hosted runner because every translation unit must be compiled locally.
+  - name: "{arch} {stdlib} {build_type} clean build (unit+systest+docker)"
+    arch: x64
+    stdlib: libcxx
+    build_type: Debug
+    sanitizer: none
+    runner: self-hosted-{arch}
+    cmake_flags:
+      USE_BUILD_CACHE: "OFF"
+    tests: [unit, systest, docker]
+
   # === Build-only (no tests, validates compilation) ===
 
+  # nightly widens build_type coverage to also compile-check Benchmark and
+  # RelWithDebInfo, not just Debug.
   - name: "{arch} {stdlib} {build_type} (build only)"
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
@@ -134,3 +183,35 @@ jobs:
     exclude:
       - arch: arm64
         stdlib: libstdcxx
+    overrides:
+      nightly:
+        build_type: [Debug, Benchmark, Release, RelWithDebInfo]
+
+  # === Nightly-only: tuple-buffer-leak debugging without sanitizer ===
+
+  - name: "{arch} {stdlib} {build_type} tuple buffer leak (unit+systest+docker)"
+    profiles: [nightly]
+    arch: x64
+    stdlib: [libcxx, libstdcxx]
+    build_type: RelWithDebInfo
+    sanitizer: none
+    runner: self-hosted-x64
+    cmake_flags:
+      NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
+    tests: [unit, systest, docker]
+
+  # === Nightly-only: tuple-buffer-leak debugging across all sanitizers ===
+
+  - name: "{arch} {stdlib} {build_type} {sanitizer} tuple buffer leak (unit+systest+docker)"
+    profiles: [nightly]
+    arch: x64
+    stdlib: [libcxx, libstdcxx]
+    build_type: RelWithDebInfo
+    sanitizer: [address, undefined, thread]
+    runner: self-hosted-x64
+    cmake_flags:
+      NES_DEBUG_TUPLE_BUFFER_LEAKS: "ON"
+    tests: [unit, systest, docker]
+    exclude:
+      - stdlib: libcxx
+        sanitizer: thread

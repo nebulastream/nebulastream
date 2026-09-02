@@ -98,6 +98,14 @@ docker run \
      ctest --test-dir build-docker -j
 ```
 
+### Packaging binaries into Docker images
+
+The `package-docker-images-all` CMake target builds the runtime base and packages every executable image;
+`package-docker-<nes-cli|nes-repl|nes-repl-embedded|nes-worker>` packages a single one. They require a reachable Docker
+daemon — inside the development container that means mounting the docker socket, as for the docker-based
+e2e tests — and are excluded from the default build. See
+[packaging Docker images](packaging_docker_images.md) for individual targets and tag configuration.
+
 ### Code style & static analysis
 
 Code style and static analysis are available as CMake targets, so you do not need to invoke `clang-format` or

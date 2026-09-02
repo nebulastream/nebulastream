@@ -27,7 +27,6 @@
 #include <DataTypes/DataTypesUtil.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/Record.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -70,37 +69,30 @@ requires(
 ParseResultFixed<T>*
 parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, RawBufferIndex* rawBufferIndex, const InputFormatIndexer* indexer);
 
-inline simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-    simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+/// Navigates to the field's value via simdjson's JSON Pointer API (the pointer is precomputed in
+/// SIMDJSONInputFormatIndexer). at_pointer rewinds the document, which resets the parser's internal
+/// string buffer; string values extracted earlier in the same tuple would dangle, which is why
+/// parseJsonVarSizedProxy copies var-sized values out (see SIMDJSONRawBufferIndex::storeVarSizedValue).
+/// For nullable fields, a missing field, a missing parent object, or an explicit JSON null all map to
+/// NULL (nullopt). For non-nullable fields, a missing field/parent throws FieldNotFound.
+template <bool Nullable>
+std::optional<simdjson::simdjson_result<simdjson::ondemand::value>>
+navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view jsonPointer)
 {
-    const auto simdJsonResult = simdJsonReference[fieldName];
-    if (not simdJsonResult.has_value())
+    auto simdJsonResult = doc.at_pointer(jsonPointer);
+    if constexpr (Nullable)
+    {
+        if (not simdJsonResult.has_value() or simdJsonResult.is_null())
+        {
+            return std::nullopt;
+        }
+    }
+    else if (not simdJsonResult.has_value())
     {
         throw FieldNotFound(
-            "SimdJson has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(simdJsonResult.error()));
+            "SimdJson has not found the field at {} with error: {}", jsonPointer, magic_enum::enum_name(simdJsonResult.error()));
     }
     return simdJsonResult;
-}
-
-inline bool checkIsNullJsonProxy(
-    const FieldIndex fieldIndex, const SIMDJSONRawBufferIndex* simdJsonRawBufferIndex, const SIMDJSONInputFormatIndexer* simdIndexer)
-{
-    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
-    const std::string_view fieldName = fieldNameStr;
-    auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
-
-    /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
-    if (not currentDoc[fieldName].has_value())
-    {
-        return true;
-    }
-
-    /// Second, we need to check if the key is equal to one of the null values
-    if (accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
-    {
-        return true;
-    }
-    return false;
 }
 
 VarVal parseJsonVarSized(
@@ -201,31 +193,26 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
     thread_local static ParseResultFixed<T> result;
     result.isNull = false;
 
-    /// Checking if the field is null but only if the field is nullable
-    if constexpr (Nullable)
-    {
-        if (checkIsNullJsonProxy(fieldIndex, simdJsonRawBufferIndex, simdIndexer))
-        {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
-        }
-    }
-
-    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
-    const std::string_view fieldName = fieldNameStr;
+    const auto jsonPointer = simdIndexer->getJsonPointerAt(fieldIndex);
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
-    auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+    auto navigated = navigateToField<Nullable>(currentDoc, jsonPointer);
+    if (not navigated.has_value())
+    {
+        result.isNull = true;
+        result.value = T{0};
+        return &result;
+    }
+    auto& simdJsonResult = navigated.value();
     /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
     if constexpr (std::same_as<T, bool>)
     {
-        const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
+        const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_bool(), simdJsonResult, "bool", jsonPointer);
         return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::same_as<T, char>)
     {
         const auto parsedValue
-            = parseSIMDJsonValueOrThrow<std::string_view, Nullable>(simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
+            = parseSIMDJsonValueOrThrow<std::string_view, Nullable>(simdJsonResult.get_string(), simdJsonResult, "char", jsonPointer);
         if (not parsedValue.has_value())
         {
             result.isNull = true;
@@ -239,24 +226,24 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, RawBufferIndex* r
     else if constexpr (std::signed_integral<T>)
     {
         const auto parsedValue
-            = parseSIMDJsonValueOrThrow<int64_t, Nullable>(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName);
+            = parseSIMDJsonValueOrThrow<int64_t, Nullable>(simdJsonResult.get_int64(), simdJsonResult, "integer", jsonPointer);
         return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::unsigned_integral<T>)
     {
         const auto parsedValue
-            = parseSIMDJsonValueOrThrow<uint64_t, Nullable>(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName);
+            = parseSIMDJsonValueOrThrow<uint64_t, Nullable>(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", jsonPointer);
         return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::is_same_v<T, double>)
     {
-        const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_double(), simdJsonResult, "double", fieldName);
+        const auto parsedValue = parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_double(), simdJsonResult, "double", jsonPointer);
         return returnNullValueOrParsed(parsedValue, result);
     }
     else if constexpr (std::is_same_v<T, float>)
     {
         const auto parsedValue
-            = parseSIMDJsonValueOrThrow<double, Nullable>(simdJsonResult.get_double(), simdJsonResult, "float", fieldName);
+            = parseSIMDJsonValueOrThrow<double, Nullable>(simdJsonResult.get_double(), simdJsonResult, "float", jsonPointer);
         return returnNullValueOrParsed(parsedValue, result);
     }
     else
@@ -285,24 +272,26 @@ ParsedResultVariableSized* parseJsonVarSizedProxy(FieldIndex fieldIndex, RawBuff
     /// the size of the var sized and the pointer to it
     thread_local ParsedResultVariableSized result{};
 
-    /// Checking if the field is null but only if the field is nullable
-    if constexpr (Nullable)
-    {
-        if (checkIsNullJsonProxy(fieldIndex, simdJsonRawBufferIndex, simdIndexer))
-        {
-            constexpr auto sizeOfValue = 0;
-            result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = sizeOfValue, .isNull = true};
-            return &result;
-        }
-    }
+    const auto jsonPointer = simdIndexer->getJsonPointerAt(fieldIndex);
     auto currentDoc = *simdJsonRawBufferIndex->getDocStreamIterator();
-    const auto fieldNameStr = simdIndexer->getFieldNameInJsonAt(fieldIndex).asCanonicalString();
-    const std::string_view fieldName = fieldNameStr;
+    auto navigated = navigateToField<Nullable>(currentDoc, jsonPointer);
+    if (not navigated.has_value())
+    {
+        result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = 0, .isNull = true};
+        return &result;
+    }
+    const auto parsedValue
+        = parseSIMDJsonValueOrThrow<std::string_view, Nullable>(navigated->get_string(), *navigated, "string", jsonPointer);
+    if (not parsedValue.has_value())
+    {
+        result = ParsedResultVariableSized{.varSizedPointer = nullptr, .size = 0, .isNull = true};
+        return &result;
+    }
 
-    /// Get the value from the document and convert it to a span of bytes
-    const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-
-    result = ParsedResultVariableSized{.varSizedPointer = value.data(), .size = value.size(), .isNull = false};
+    /// at_pointer for a later field of this tuple rewinds the parser and reuses its string buffer,
+    /// so copy the value to keep it valid until the tuple has been emitted.
+    const std::string& stored = simdJsonRawBufferIndex->storeVarSizedValue(parsedValue.value());
+    result = ParsedResultVariableSized{.varSizedPointer = stored.data(), .size = stored.size(), .isNull = false};
     return &result;
 }
 

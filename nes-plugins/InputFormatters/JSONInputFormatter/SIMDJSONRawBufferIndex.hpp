@@ -16,8 +16,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -72,6 +74,11 @@ public:
 
     [[nodiscard]] simdjson::ondemand::document_stream::iterator getDocStreamIterator() const { return docStreamIterator; }
 
+    /// Copies a var-sized value out of simdjson's string buffer: at_pointer for a later field of the
+    /// same tuple rewinds the parser and overwrites that buffer. A deque never relocates stored
+    /// strings; cleared per raw buffer in indexJSON, so growth is bounded by the batch size.
+    const std::string& storeVarSizedValue(const std::string_view value) { return varSizedValues.emplace_back(value); }
+
 private:
     bool isAtLastTuple{false};
     FieldIndex offsetOfFirstTuple{};
@@ -79,6 +86,7 @@ private:
     std::shared_ptr<simdjson::ondemand::parser> parser;
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;
+    std::deque<std::string> varSizedValues;
 };
 
 }

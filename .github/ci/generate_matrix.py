@@ -15,8 +15,8 @@
 """Generate GitHub Actions matrix JSON from a YAML matrix config.
 
 Usage:
-    python generate_matrix.py --config pr_matrix.yaml            # pretty-print
-    python generate_matrix.py --config pr_matrix.yaml --output-github  # set GitHub Actions output
+    python generate_matrix.py --config matrix.yaml --profile pr            # pretty-print
+    python generate_matrix.py --config matrix.yaml --profile nightly --output-github
 
 The script reads a YAML config (same directory) and produces a JSON array.
 Each element maps directly to one GitHub Actions job.
@@ -28,6 +28,17 @@ semantics as GitHub Actions matrix excludes.
 
 The "name" field supports {field} placeholders that are replaced with
 the actual values from each expanded combination.
+
+A single config file can serve multiple profiles (e.g. "pr" and "nightly").
+Each job runs in every profile by default. Two profile-keyed knobs narrow
+that down:
+
+  - job["profiles"]: restricts the whole job to the listed profile(s).
+  - job["overrides"][profile]: shallow-merges fields onto the job's common
+    fields for that profile only (e.g. a different build_type list).
+
+profile_cmake_flags[profile] adds/overrides cmake flags for one profile on
+top of default_cmake_flags, before per-job cmake_flags are applied.
 """
 
 import argparse
@@ -127,9 +138,36 @@ def expand_job(job, runners, default_cmake_flags=""):
     return entries
 
 
-def generate_matrix(config):
+def select_profile(job, profile):
+    """Return the job as it applies to `profile`, or None if it doesn't apply.
+
+    Common fields come first; profile-specific differences are branched in
+    via `overrides[profile]`, shallow-merged on top.
+    """
+    allowed_profiles = job.get("profiles")
+    if allowed_profiles is not None and profile not in allowed_profiles:
+        return None
+
+    resolved = dict(job)
+    resolved.update(job.get("overrides", {}).get(profile, {}))
+    return resolved
+
+
+def generate_matrix(config, profile):
+    known_profiles = config.get("profiles", [])
+    if profile not in known_profiles:
+        print(
+            f"ERROR: unknown profile '{profile}', expected one of {known_profiles}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     runners = config["runners"]
     default_cmake_flags = config.get("default_cmake_flags", {})
+    profile_cmake_flags = config.get("profile_cmake_flags", {}).get(profile, {})
+    merged_default_flags = dict(default_cmake_flags)
+    merged_default_flags.update(profile_cmake_flags)
+
     matrix = []
 
     for job in config["jobs"]:
@@ -137,7 +175,11 @@ def generate_matrix(config):
         if "arch" not in job:
             continue
 
-        matrix.extend(expand_job(job, runners, default_cmake_flags))
+        resolved_job = select_profile(job, profile)
+        if resolved_job is None:
+            continue
+
+        matrix.extend(expand_job(resolved_job, runners, merged_default_flags))
 
     return matrix
 
@@ -153,12 +195,17 @@ def main():
     parser.add_argument(
         "--config",
         required=True,
-        help="Config file name in .github/ci/ (e.g. pr_matrix.yaml)",
+        help="Config file name in .github/ci/ (e.g. matrix.yaml)",
+    )
+    parser.add_argument(
+        "--profile",
+        required=True,
+        help="Profile to generate (e.g. pr or nightly)",
     )
     args = parser.parse_args()
 
     config = load_config(args.config)
-    matrix = generate_matrix(config)
+    matrix = generate_matrix(config, args.profile)
 
     matrix_json = json.dumps(matrix, separators=(",", ":"))
 

@@ -10,15 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Hash)
-add_subdirectory(HashMap)
-add_subdirectory(BufferRef)
-add_subdirectory(BTree)
-add_subdirectory(PagedVector)
-
 add_source_files(nes-nautilus
-        Record.cpp
-        RecordBuffer.cpp
-        NautilusBuffer.cpp
-        VariableSizedAccess.cpp
+        BTree.cpp
+        BTreeRef.cpp
 )
