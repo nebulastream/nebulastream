@@ -16,6 +16,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalSelection.cpp
         LowerToPhysicalProjection.cpp
         LowerToPhysicalWindowedAggregation.cpp
+        LowerToPhysicalStatisticBuild.cpp
         LowerToPhysicalUnion.cpp
         LowerToPhysicalSink.cpp
         LowerToPhysicalSource.cpp
@@ -29,6 +30,7 @@ add_registry_entry(LoweringRule HashJoin)
 add_registry_entry(LoweringRule Selection)
 add_registry_entry(LoweringRule Projection)
 add_registry_entry(LoweringRule WindowedAggregation)
+add_registry_entry(LoweringRule StatisticBuild)
 add_registry_entry(LoweringRule Union)
 add_registry_entry(LoweringRule Sink)
 add_registry_entry(LoweringRule Source KEY SourceDescriptor)

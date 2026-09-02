@@ -13,16 +13,19 @@
 */
 
 #pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <StatisticStore/AbstractStatisticStore.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
 
-namespace NES::LowerToPhysicalOperators
+#include <cstddef>
+#include <cstdint>
+#include <Identifiers/NESStrongType.hpp>
+
+namespace NES
 {
-PhysicalPlan apply(
-    const LogicalPlan& queryPlan,
-    const QueryExecutionConfiguration& conf,
-    std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+
+using StatisticId = NESStrongType<uint64_t, struct StatisticId_, 0, 1>;
+
+inline size_t operator%(const StatisticId id, const size_t containerSize)
+{
+    return id.getRawValue() % containerSize;
+}
+
 }
