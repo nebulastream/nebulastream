@@ -154,6 +154,9 @@ endif ()
 
 if (NOT "${ADDITIONAL_RUSTFLAGS}" STREQUAL "")
     list(APPEND ENV_VARS_LIST RUSTFLAGS=${ADDITIONAL_RUSTFLAGS})
+    # Cargo invokes rustdoc separately for doctests, and rustdoc does not inherit
+    # RUSTFLAGS. Keep doctest crates ABI-compatible with sanitized dependencies.
+    list(APPEND ENV_VARS_LIST RUSTDOCFLAGS=${ADDITIONAL_RUSTFLAGS})
 endif ()
 
 set(NES_RUST_CARGO_FLAGS "${ADDITIONAL_CARGOFLAGS}" CACHE INTERNAL "Cargo flags for Rust crate builds")
