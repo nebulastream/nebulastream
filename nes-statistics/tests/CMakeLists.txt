@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-statistics
-        Statistic.cpp
-        DefaultStatisticStore.cpp
-)
+
+add_nes_test(default-statistic-store-test DefaultStatisticStoreTest.cpp)
+target_link_libraries(default-statistic-store-test nes-statistics)

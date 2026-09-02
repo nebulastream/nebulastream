@@ -17,6 +17,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalProjection.cpp
         LowerToPhysicalWindowedAggregation.cpp
         LowerToPhysicalStatisticBuild.cpp
+        LowerToPhysicalStatisticStoreWriter.cpp
         LowerToPhysicalUnion.cpp
         LowerToPhysicalSink.cpp
         LowerToPhysicalSource.cpp
@@ -37,3 +38,4 @@ add_registry_entry(LoweringRule Source KEY SourceDescriptor)
 add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
 add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
 add_registry_entry(LoweringRule InferModel)
+add_registry_entry(LoweringRule StatisticStoreWriter)

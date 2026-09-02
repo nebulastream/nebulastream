@@ -23,3 +23,7 @@ target_include_directories(nes-statistics PUBLIC
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-statistics REUSE_FROM nes-common)
 endif ()
+
+if (NES_ENABLES_TESTS)
+    add_subdirectory(tests)
+endif ()

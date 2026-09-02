@@ -10,7 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-statistics
-        Statistic.cpp
-        DefaultStatisticStore.cpp
+
+add_unreflection_entry(LogicalOperator StatisticStoreWriter)
+
+add_source_files(nes-logical-operators
+        StatisticStoreWriterLogicalOperator.cpp
 )
