@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#pragma once
-#include <memory>
-#include <Plans/LogicalPlan.hpp>
-#include <StatisticStore/AbstractStatisticStore.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <Statistic.hpp>
 
-namespace NES::LowerToPhysicalOperators
+#include <ostream>
+
+namespace NES
 {
-PhysicalPlan apply(
-    const LogicalPlan& queryPlan,
-    const QueryExecutionConfiguration& conf,
-    std::shared_ptr<AbstractStatisticStore> statisticStore = nullptr);
+
+std::ostream& operator<<(std::ostream& os, const Statistic& statistic)
+{
+    return os << "Statistic(id=" << statistic.getStatisticId() << ", type=" << statistic.getTypeName()
+              << ", start=" << statistic.getStartTs() << ", end=" << statistic.getEndTs()
+              << ", measurements=" << statistic.getNumberOfSeenMeasurements() << ", dataSize=" << statistic.getStatisticDataSize() << ")";
+}
+
 }
