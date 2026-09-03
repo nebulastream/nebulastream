@@ -1128,6 +1128,13 @@ struct SystestBinder::Impl
              }});
         parser.registerSubstitutionRule(
             {.keyword = "PY_BRIDGE_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_BRIDGE_DIR; }});
+        /// PY_UDF_VENV_DIR is local to PythonUdfVenv.test (unlike the generic rules above): it only resolves
+        /// nes-systests/udf/small_venv, a fixture that test alone uses, so it is not registered for every file.
+        if (testFilePath.filename() == "PythonUdfVenv.test")
+        {
+            parser.registerSubstitutionRule(
+                {.keyword = "PY_UDF_VENV_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_UDF_VENV_DIR; }});
+        }
 
         if (!parser.loadString(NES::readTestFile(testFilePath)))
         {

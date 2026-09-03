@@ -1,0 +1,26 @@
+# name: udf/PythonUdfVenv.test
+# description: a Python UDF importing `inflection`, a package installed only in the in-tree venv at
+# nes-systests/udf/small_venv (created via `python3 -m venv --without-pip`, `inflection` installed
+# via `pip install --target`) -- never system-wide. GLOBALCONFIGURATION sets worker.python_udf.venv
+# for every query below, so this test needs no external flag/venv setup, unlike a machine-local venv.
+# Portable across CPython minors: the bridge scans small_venv/lib/ for whichever pythonX.Y dir is
+# there rather than assuming it matches its own build, so this works regardless of the running
+# system's Python version -- `inflection` is pure Python, so no compiled-extension ABI is at stake.
+# groups: [PythonUdfVenv]
+
+GLOBALCONFIGURATION worker.python_udf.venv: PY_UDF_VENV_DIR
+
+CREATE LOGICAL SOURCE names(id INT64 NOT NULL, name VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR names TYPE File;
+ATTACH INLINE
+1,device_type
+2,active_record
+3,order_item
+
+CREATE FUNCTION camelize_py (name VARSIZED) RETURNS VARSIZED BRIDGE 'cpython' ENTRYPOINT 'venv_probe.camelize';
+
+SELECT id, camelize_py(name) AS camel FROM names INTO FILE();
+----
+1,DeviceType
+2,ActiveRecord
+3,OrderItem

@@ -56,13 +56,17 @@ target_compile_definitions(nes-systest-lib PUBLIC
 # The CPython UDF bridge (built by nes-udf/bridge-cpython only where Python's embed dev files exist) is
 # dlopen'd by the `PythonUdf` systest group. `.test` files reference it via the PY_BRIDGE_DIR
 # substitution keyword; the binder puts nes-systests/udf/pyudfs on NES_UDF_PATH so `import`s resolve.
+# PY_UDF_VENV_DIR resolves to nes-systests/udf/small_venv -- an in-tree venv (see PythonUdfVenv.test)
+# demonstrating worker.python_udf.venv (A7 in docs/design/20260708_Scalar_UDF_Support.md) with no
+# machine-specific path needed in the .test file itself.
 find_package(Python3 COMPONENTS Development.Embed QUIET)
 if (Python3_FOUND)
     target_compile_definitions(nes-systest-lib PUBLIC
             SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-cpython-udf-bridge>"
-            SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs")
+            SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs"
+            SYSTEST_PY_UDF_VENV_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../udf/small_venv")
 else ()
-    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_BRIDGE_DIR="" SYSTEST_PY_UDF_PATH="")
+    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_BRIDGE_DIR="" SYSTEST_PY_UDF_PATH="" SYSTEST_PY_UDF_VENV_DIR="")
 endif ()
 
 # Add the systest executable
@@ -100,8 +104,10 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the IREE toolchain;
 # when ENABLE_IREE_TESTS is OFF (e.g. iree-import-onnx / iree-compile not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
+# The PythonUdfVenv group needs --pythonVenv pointed at a populated venv (see SystestConfiguration::pythonVenv);
+# like `large`, it is permanently opt-in and never runs as part of the default invocations below.
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)

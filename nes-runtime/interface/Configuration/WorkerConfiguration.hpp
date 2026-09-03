@@ -33,6 +33,26 @@
 
 namespace NES
 {
+
+/// Third-party Python packages a Python UDF needs (e.g. onnxruntime) that aren't on the system's Python. Unset
+/// `venv` (the default) leaves the Python UDF bridges' embedded interpreters exactly as if this config did not
+/// exist -- system-local Python and its own site-packages only. See docs/design/20260708_Scalar_UDF_Support.md, A7.
+class PythonUdfConfiguration final : public BaseConfiguration
+{
+public:
+    PythonUdfConfiguration() = default;
+    PythonUdfConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+
+    StringOption venv
+        = {"venv",
+           "",
+           "Path to a `python -m venv` directory (created from the same CPython/PyPy build the Python UDF bridge "
+           "links against) whose site-packages is added to the embedded interpreter. Default: system-local Python only"};
+
+private:
+    std::vector<BaseOption*> getOptions() override { return {&venv}; }
+};
+
 class WorkerConfiguration final : public BaseConfiguration
 {
 public:
@@ -40,6 +60,7 @@ public:
     WorkerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     QueryEngineConfiguration queryEngine = {"query_engine", "Configuration for the query engine"};
+    PythonUdfConfiguration pythonUdf = {"python_udf", "Configuration for Python-authored scalar UDFs"};
     QueryExecutionConfiguration defaultQueryExecution = {"default_query_execution", "Default configuration for query executions"};
     QueryOptimizerConfiguration defaultQueryOptimization = {"default_query_optimization", "Default configuration for query optimizations"};
     WorkerNetworkConfiguration network = {"network", "Default configuration for network sources and sinks"};
@@ -89,6 +110,7 @@ private:
     {
         return {
             &queryEngine,
+            &pythonUdf,
             &defaultQueryExecution,
             &defaultQueryOptimization,
             &network,

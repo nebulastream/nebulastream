@@ -43,6 +43,18 @@ ffibuilder.embedding_init_code("""
     import sys
     import threading
 
+    # Opt-in venv for third-party packages, mirroring CPythonUdfBridge.cpp's initPythonOnce. Unset (the
+    # default) leaves system-local PyPy/site-packages exactly as before. Scan for the venv's one
+    # version-specific dir instead of assuming it matches this bridge's own PyPy build -- a pure-Python
+    # venv then works regardless of version drift; a compiled extension inside still needs a matching ABI.
+    _venv = os.environ.get("NES_UDF_VENV", "")
+    if _venv:
+        _venv_lib = os.path.join(_venv, "lib")
+        for _entry in sorted(os.listdir(_venv_lib)) if os.path.isdir(_venv_lib) else []:
+            if _entry.startswith(("python", "pypy")) and os.path.isdir(os.path.join(_venv_lib, _entry)):
+                sys.path.insert(0, os.path.join(_venv_lib, _entry, "site-packages"))
+                break
+
     # Make the UDF modules importable, mirroring CPythonUdfBridge.cpp's initPythonOnce.
     sys.path.insert(0, os.environ.get("NES_UDF_PATH", "."))
 

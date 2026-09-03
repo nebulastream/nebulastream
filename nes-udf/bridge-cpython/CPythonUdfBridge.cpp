@@ -24,8 +24,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <mutex>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <vector>
 
@@ -59,7 +61,39 @@ char* dupString(const std::string& text)
 void initPythonOnce()
 {
     Py_InitializeEx(0);
-    /* Make the UDF modules importable. NES_UDF_PATH points at the dir containing them. */
+
+    /* Opt-in venv for third-party packages (e.g. onnxruntime) not on the system Python's site-packages.
+     * NES_UDF_VENV names a `python -m venv` directory; unset (the default) leaves the embedded interpreter
+     * exactly as if this code did not exist -- system-local Python and its own site-packages only.
+     *
+     * A `python -m venv` names its one version-specific dir after whichever interpreter created it (e.g.
+     * lib/python3.12), which need not match this bridge's own linked Python -- scan for it rather than
+     * assume the two agree, so a pure-Python-only venv (no compiled extensions) works regardless of which
+     * CPython minor built the bridge. A *compiled* extension inside the venv still needs a matching ABI;
+     * scanning does not (and cannot) relax that -- it only stops an unrelated version-number mismatch from
+     * hiding an otherwise-portable pure-Python package. */
+    if (const char* venv = std::getenv("NES_UDF_VENV"); venv != nullptr && *venv != '\0')
+    {
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::path(venv) / "lib", ec))
+        {
+            if (ec || !entry.is_directory() || !entry.path().filename().string().starts_with("python"))
+            {
+                continue;
+            }
+            const auto sitePackages = (entry.path() / "site-packages").string();
+            if (PyObject* sysPath = PySys_GetObject("path"))
+            {
+                PyObject* pyEntry = PyUnicode_FromString(sitePackages.c_str());
+                PyList_Insert(sysPath, 0, pyEntry);
+                Py_DECREF(pyEntry);
+            }
+            break;
+        }
+    }
+
+    /* Make the UDF modules importable. NES_UDF_PATH points at the dir containing them. Inserted last so it
+     * ends up frontmost -- a user's own UDF module always shadows a same-named venv package. */
     const char* env = std::getenv("NES_UDF_PATH");
     const std::string path = (env != nullptr && *env != '\0') ? env : ".";
     if (PyObject* sysPath = PySys_GetObject("path"))
