@@ -24,7 +24,6 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
 #include <Thread.hpp>
 
 namespace NES
