@@ -32,7 +32,7 @@ public:
     /// statisticListener because buffer events are not per query and fire on the buffer handoff path: passing
     /// null keeps that path free of a virtual call.
     explicit NodeEngineBuilder(
-        const WorkerConfiguration& workerConfiguration,
+        WorkerConfiguration workerConfiguration,
         std::shared_ptr<StatisticListener> statisticListener,
         /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): defaulted so that the many existing callers stay untouched.
         std::shared_ptr<BufferProviderStatisticListener> bufferEventListener = nullptr);

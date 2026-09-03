@@ -20,8 +20,10 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Listeners/StatisticListener.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/BufferProviderStatisticListener.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <QueryEngine.hpp>
@@ -31,10 +33,10 @@ namespace NES
 
 
 NodeEngineBuilder::NodeEngineBuilder(
-    const WorkerConfiguration& workerConfiguration,
+    WorkerConfiguration workerConfiguration,
     std::shared_ptr<StatisticListener> statisticsListener,
     std::shared_ptr<BufferProviderStatisticListener> bufferEventListener)
-    : workerConfiguration(workerConfiguration)
+    : workerConfiguration(std::move(workerConfiguration))
     , statisticsListener(std::move(statisticsListener))
     , bufferEventListener(std::move(bufferEventListener))
 {

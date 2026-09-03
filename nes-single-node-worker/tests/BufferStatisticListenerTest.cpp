@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -37,7 +38,7 @@ constexpr std::chrono::milliseconds FLUSH_INTERVAL{100};
 const Host WORKER{"localhost:8080"};
 
 /// Index of every column of the published row, so an assertion reads as the column name rather than a number.
-enum Column : size_t
+enum Column : std::uint8_t
 {
     TS_US = 0,
     INTERVAL_MS,
@@ -192,12 +193,12 @@ TEST_F(BufferStatisticListenerTest, PublishesNothingWhileNobodyReads)
 {
     /// Deliberately far too small for the number of intervals below, so that a listener which published
     /// regardless of whether anyone reads would overflow the feed and be caught by the drop count.
-    constexpr size_t TINY_CAPACITY = 4;
+    constexpr size_t tinyCapacity = 4;
     constexpr std::chrono::milliseconds fastInterval{5};
     constexpr std::chrono::milliseconds unreadFor{100};
     constexpr std::chrono::milliseconds popTimeout{5000};
 
-    BufferStatisticListener listener(WORKER, TINY_CAPACITY, fastInterval);
+    BufferStatisticListener listener(WORKER, tinyCapacity, fastInterval);
     listener.start();
     std::this_thread::sleep_for(unreadFor);
 
