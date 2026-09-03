@@ -1,0 +1,34 @@
+# name: value_deserializers/ValueDeserializerOverrides.test
+# description: Tests the VALUE_DESERIALIZERS config parameter to configure the deserializer type of individual fields
+# groups: [Formatter]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+
+# 'coarse' and 'precise' share the same datatype, but only 'coarse' is deserialized with the FLOAT32 deserializer.
+# 16777217 is the smallest positive integer that a FLOAT32 cannot represent, so deserializing it as FLOAT32 rounds it to 16777216.
+CREATE LOGICAL SOURCE sensors(sensor_id UINT64 NOT NULL, coarse FLOAT64 NOT NULL, precise FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR sensors TYPE File SET(
+'coarse:DefaultF32,precise:DefaultF64' as "INPUT_FORMATTER".VALUE_DESERIALIZERS
+);
+ATTACH INLINE
+1,16777217.0,16777217.0
+2,16777217.0,16777217.0
+
+# The configured field name contains a typo and therefore names no field of the schema.
+CREATE LOGICAL SOURCE typoSensors(sensor_id UINT64 NOT NULL, coarse FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR typoSensors TYPE File SET(
+'coarze:DefaultF32' as "INPUT_FORMATTER".VALUE_DESERIALIZERS
+);
+ATTACH INLINE
+1,16777217.0
+
+# Description: The configured deserializer applies to 'coarse' only, 'precise' keeps the default of its datatype.
+SELECT * FROM sensors INTO FILE();
+----
+1,16777216.0,16777217.0
+2,16777216.0,16777217.0
+
+# Description: A field name that names no field of the schema is reported instead of being silently ignored.
+SELECT * FROM typoSensors INTO FILE();
+----
+ERROR 1000
