@@ -20,31 +20,40 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
-#include <Configurations/Validation/EndpointValidation.hpp>
+#include <string_view>
+
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/UUID.hpp>
 #include <network/lib.h>
 #include <rust/cxx.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
+struct NetworkSourceConfig
+{
+    /// UUID identifying the receiver channel of this source.
+    std::string channel;
+    /// host:port endpoint the receiver network service binds to.
+    std::string bind;
+    /// Per-channel receiver queue size override. 0 means use the worker-level default.
+    size_t receiverQueueSize;
+
+    static std::expected<NetworkSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
+
 class NetworkSource final : public Source
 {
 public:
-    static const std::string& name()
-    {
-        static const std::string Instance = "Network";
-        return Instance;
-    }
+    constexpr static std::string_view NAME = "Network";
 
-    explicit NetworkSource(const SourceDescriptor& sourceDescriptor);
+    explicit NetworkSource(const NetworkSourceConfig& config);
     ~NetworkSource() override = default;
 
     NetworkSource(const NetworkSource&) = delete;
@@ -58,72 +67,16 @@ public:
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
-
     std::string channelId;
     size_t receiverQueueSize;
     std::optional<rust::Box<ReceiverDataChannel>> channel;
     rust::Box<ReceiverNetworkService> receiverServer;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
-
-/// NOLINTBEGIN(cert-err58-cpp)
-struct ConfigParametersNetworkSource
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
-        "CHANNEL",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            auto value = DescriptorConfig::tryGet(CHANNEL, config);
-            if (value && !stringToUUID(*value))
-            {
-                NES_ERROR("NetworkSource: channel must be a valid UUID, got: {}", *value);
-                return std::nullopt;
-            }
-            return value;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
-        "BIND",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        {
-            auto value = DescriptorConfig::tryGet(BIND, config);
-            if (value && !EndpointValidation{}.isValid(*value))
-            {
-                NES_ERROR("NetworkSource: bind must be host:port format, got: {}", *value);
-                return std::nullopt;
-            }
-            return value;
-        }};
-
-    /// Per-channel receiver queue size override. 0 means use the worker-level default.
-    /// When a user explicitly sets receiver_queue_size=0, the lambda rejects it with an error.
-    /// The default value (0) is returned directly by the config system, bypassing the lambda.
-    static inline const DescriptorConfig::ConfigParameter<size_t> RECEIVER_QUEUE_SIZE{
-        "RECEIVER_QUEUE_SIZE",
-        size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
-        {
-            auto value = DescriptorConfig::tryGet(RECEIVER_QUEUE_SIZE, config);
-            if (value && *value == 0)
-            {
-                NES_ERROR("NetworkSource: receiver_queue_size must be > 0 when explicitly set");
-                return std::nullopt;
-            }
-            return value;
-        }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
-};
-
-/// NOLINTEND(cert-err58-cpp)
 
 }

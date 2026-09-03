@@ -15,19 +15,23 @@
 #include <CSVInputFormatIndexer.hpp>
 
 #include <cstddef>
+#include <expected>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
-#include <Configurations/Descriptor.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Strings.hpp>
+#include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsetRawBufferIndex.hpp>
-#include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>
 #include <RawTupleBuffer.hpp>
 
@@ -147,9 +151,52 @@ std::unique_ptr<RawBufferIndex> CSVInputFormatIndexer::indexRawBuffer(const std:
     return fieldOffsets;
 }
 
-DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+namespace
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
+
+/// ConfigField factory for a single-byte delimiter parameter; unescapes textual escape sequences
+/// such as "\n" or "\t" first.
+std::expected<char, Exception> parseDelimiter(const ConfigLiteral& literal)
+{
+    return NES::tryGetOr<std::string>(literal, expectedType<std::string>())
+        .and_then(
+            [](const std::string& value) -> std::expected<char, Exception>
+            {
+                const auto unescaped = unescapeSpecialCharacters(value);
+                if (unescaped.size() != 1)
+                {
+                    return std::unexpected{InvalidConfigParameter("Expected a single (possibly escaped) character, got {}", value)};
+                }
+                return unescaped.front();
+            });
+}
+
+/// Config fields of the CSV input formatter, shared by getConfigSchema (declaration) and
+/// CSVInputFormatterConfig::fromConfig (typed extraction).
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<bool> ALLOW_COMMAS_IN_STRINGS{
+    Identifier::parse("ALLOW_COMMAS_IN_STRINGS"), "A boolean indicating whether there can be commas in varsized fields.", true};
+
+const ConfigField<char> TUPLE_DELIMITER{
+    Identifier::parse("TUPLE_DELIMITER"), "A single character by which to delimit tuples.", parseDelimiter, '\n', "\\n"};
+
+const ConfigField<char> FIELD_DELIMITER{
+    Identifier::parse("FIELD_DELIMITER"), "A single character by which to delimit fields.", parseDelimiter, ','};
+/// NOLINTEND(cert-err58-cpp)
+
+}
+
+Schema<QualifiedErasedConfigField, Ordered> CSVInputFormatIndexer::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("CSV_INPUT_FORMATTER"), ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+}
+
+std::expected<CSVInputFormatterConfig, Exception> CSVInputFormatterConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return CSVInputFormatterConfig{
+        .allowCommasInStrings = config.get(ALLOW_COMMAS_IN_STRINGS),
+        .tupleDelimiter = config.get(TUPLE_DELIMITER),
+        .fieldDelimiter = config.get(FIELD_DELIMITER)};
 }
 
 std::ostream& CSVInputFormatIndexer::toString(std::ostream& str) const

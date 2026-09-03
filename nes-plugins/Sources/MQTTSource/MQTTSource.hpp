@@ -15,34 +15,49 @@
 #pragma once
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+
+#include <Configurations/InstantiatedConfigValue.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
 #include <mqtt/client.h>
+#include <ErrorHandling.hpp>
 #include <PayloadStash.hpp>
 
 namespace NES
 {
+
+constexpr std::string_view GENERATE_CLIENT_ID_TOKEN = "HACK_GENERATED_TOKEN_SENTINEL_VALUE";
+
+struct MQTTSourceConfig
+{
+    std::string serverURI;
+    std::string clientId;
+    std::string topic;
+    int64_t qos{};
+    int64_t flushIntervalMs{};
+    std::string implicitMessageDelimiter;
+    bool logMessages{};
+
+    static std::expected<MQTTSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 
 class MQTTSource : public Source
 {
 public:
     static constexpr std::string_view NAME = "MQTT";
 
-    explicit MQTTSource(const SourceDescriptor& sourceDescriptor);
+    explicit MQTTSource(const MQTTSourceConfig& config);
     ~MQTTSource() override = default;
 
     MQTTSource(const MQTTSource&) = delete;
@@ -50,15 +65,11 @@ public:
     MQTTSource(MQTTSource&&) = delete;
     MQTTSource& operator=(MQTTSource&&) = delete;
 
-    /// Open connection to MQTT broker.
     void open(std::shared_ptr<AbstractBufferProvider>) override;
-
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-
-    /// Close connection to MQTT broker.
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -76,65 +87,6 @@ private:
     PayloadStash payloadStash;
 
     void writePayloadToBuffer(std::string_view payload, TupleBuffer& tb, size_t& tbOffset);
-};
-
-constexpr std::string_view GENERATE_CLIENT_ID_TOKEN = "HACK_GENERATED_TOKEN_SENTINEL_VALUE";
-
-/// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT config parameters.
-struct ConfigParametersMQTTSource
-{
-    ///NOLINTBEGIN(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
-        "SERVER_URI",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
-        "CLIENT_ID",
-        std::string(GENERATE_CLIENT_ID_TOKEN),
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
-        { return DescriptorConfig::tryGet(CLIENT_ID, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> TOPIC{
-        "TOPIC",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TOPIC, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<size_t> FLUSH_INTERVAL_MS{
-        "FLUSH_INTERVAL_MS",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<int32_t> QOS{
-        "QOS",
-        1,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint8_t>
-        {
-            auto qos = from_chars<uint8_t>(config.at(QOS));
-            if (!qos || (qos.value() != 0 && qos.value() != 1 && qos.value() != 2))
-            {
-                NES_ERROR("MQTTSource: QualityOfService is: {}, but must be 0, 1, or 2.", config.at(QOS));
-                return std::nullopt;
-            }
-            return qos;
-        }};
-
-    static inline const DescriptorConfig::ConfigParameter<std::string> IMPLICIT_MESSAGE_DELIMITER{
-        "IMPLICIT_MESSAGE_DELIMITER",
-        std::string{"\n"},
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(IMPLICIT_MESSAGE_DELIMITER, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<bool> LOG_MESSAGES{
-        "LOG_MESSAGES",
-        false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LOG_MESSAGES, config); }};
-
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, SERVER_URI, CLIENT_ID, QOS, TOPIC, FLUSH_INTERVAL_MS, IMPLICIT_MESSAGE_DELIMITER, LOG_MESSAGES);
-
-    ///NOLINTEND(cert-err58-cpp)
 };
 
 }

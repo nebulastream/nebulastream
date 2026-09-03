@@ -12,15 +12,19 @@
     limitations under the License.
 */
 
-#include <SourceValidationRegistry.hpp>
+#pragma once
+
+#include <string>
 
 namespace NES
 {
 
-SourceValidationRegistry& SourceValidationRegistry::instance()
-{
-    static SourceValidationRegistry inst;
-    return inst;
-}
+class InstantiatedConfig;
 
+struct FileSourceConfig
+{
+    std::filesystem::path filePath;
+
+    static std::expected<FileSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 }
