@@ -18,6 +18,9 @@ edition = "2021"
 [lib]
 crate-type = ["staticlib"]
 
+[features]
+fault-testing = ["network_bindings/fault-testing"]
+
 [dependencies]
 cxx = "1.0"
 network_bindings = { path = "network" }

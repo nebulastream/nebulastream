@@ -19,3 +19,4 @@ pub mod protocol;
 pub mod receiver;
 pub mod sender;
 mod util;
+pub mod fault_testing;

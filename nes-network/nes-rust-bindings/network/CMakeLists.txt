@@ -23,4 +23,4 @@ target_include_directories(nes-network-bindings
         PRIVATE .
         PUBLIC include
 )
-target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common nes-network-interface)
+target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common nes-network-interface nes-fault-testing)

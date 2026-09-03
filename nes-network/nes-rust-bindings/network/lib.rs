@@ -74,6 +74,16 @@ pub mod ffi {
         fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
         #[allow(non_snake_case)]
         fn identifyThread(thread_name: &str, worker_id: &str);
+        #[allow(non_snake_case)]
+        fn initActiveFaultContext(host: String);
+        #[allow(non_snake_case)]
+        fn checkIo() -> bool;
+        #[allow(non_snake_case)]
+        fn failpoint(name: &str) -> bool;
+        #[allow(non_snake_case)]
+        fn deferredFailpoint(name: &str) -> u8;
+        #[allow(non_snake_case)]
+        fn applyFaultAction(action: u8);
     }
 
     extern "Rust" {
@@ -212,7 +222,10 @@ fn init_sender_service(
         let mut builder = tokio::runtime::Builder::new_multi_thread();
         builder
             .thread_name("net-sender")
-            .on_thread_start(move || ffi::identifyThread("net-sender", &worker_id))
+            .on_thread_start(move || {
+                ffi::initActiveFaultContext(worker_id.clone());
+                ffi::identifyThread("net-sender", &worker_id)
+            })
             .enable_io()
             .enable_time();
         if options.sender_io_threads > 0 {
@@ -271,7 +284,10 @@ fn init_receiver_service(
         let mut builder = tokio::runtime::Builder::new_multi_thread();
         builder
             .thread_name("net-receiver")
-            .on_thread_start(move || ffi::identifyThread("net-receiver", &worker_id))
+            .on_thread_start(move || {
+                ffi::initActiveFaultContext(worker_id.clone());
+                ffi::identifyThread("net-receiver", &worker_id);
+            })
             .enable_io()
             .enable_time();
         if options.receiver_io_threads > 0 {

@@ -94,6 +94,10 @@ corrosion_import_crate(
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
 
+if (NES_ENABLE_FAULT_TESTING)
+    corrosion_set_features(nes_rust_bindings FEATURES fault-testing)
+endif ()
+
 # Arguments are passed to cargo via an environment which we attach to the  nes_rust_bindings target and is loaded by corrosion
 list(JOIN CXXFLAGS_LIST " " ADDITIONAL_CXXFLAGS)
 list(JOIN RUSTFLAGS_LIST " " ADDITIONAL_RUSTFLAGS)

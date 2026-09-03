@@ -22,7 +22,7 @@
 //! to be agnostic to the underlying transport mechanism.
 
 use crate::memcom;
-use crate::memcom::{SimplexStreamWriter, memcom_bind, memcom_connect};
+use crate::memcom::{SimplexStreamWriter, memcom_bind, memcom_connect, FaultInjectingReader, FaultInjectingWriter};
 use crate::protocol::{ConnectionIdentifier, ThisConnectionIdentifier};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
@@ -169,8 +169,8 @@ impl MemCom {
 }
 
 impl CommunicationListener for MemComListener {
-    type Reader = ReadHalf<SimplexStream>;
-    type Writer = SimplexStreamWriter;
+    type Reader = FaultInjectingReader<ReadHalf<SimplexStream>>;
+    type Writer = FaultInjectingWriter<SimplexStreamWriter>;
     async fn listen(&mut self) -> Result<Channel<Self::Reader, Self::Writer>> {
         let duplex = self
             .incoming_connections
@@ -185,8 +185,8 @@ impl CommunicationListener for MemComListener {
 }
 impl Communication for MemCom {
     type Listener = MemComListener;
-    type Reader = ReadHalf<SimplexStream>;
-    type Writer = SimplexStreamWriter;
+    type Reader = FaultInjectingReader<ReadHalf<SimplexStream>>;
+    type Writer = FaultInjectingWriter<SimplexStreamWriter>;
     async fn bind(
         &mut self,
         this_connection_identifier: ThisConnectionIdentifier,
@@ -198,7 +198,7 @@ impl Communication for MemCom {
     async fn connect(
         &self,
         identifier: &ConnectionIdentifier,
-    ) -> Result<Channel<ReadHalf<SimplexStream>, SimplexStreamWriter>> {
+    ) -> Result<Channel<Self::Reader, Self::Writer>> {
         let channel = memcom_connect(identifier).await?;
         Ok(Channel {
             reader: channel.read,

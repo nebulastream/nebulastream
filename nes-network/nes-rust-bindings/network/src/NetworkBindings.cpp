@@ -17,12 +17,14 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
+#include <FaultSimulator.hpp>
 #include <NetworkOptions.hpp>
 #include <Thread.hpp>
 
@@ -87,4 +89,30 @@ void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT
 {
     NES::Thread::ThreadName = static_cast<std::string>(threadName);
     NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(host));
+}
+
+void initActiveFaultContext(rust::String host)
+{
+    NES::initActiveFaultContext(NES::Host(host.c_str()));
+}
+
+bool checkIo()
+{
+    return NES::checkIO();
+}
+
+bool failpoint(rust::str name)
+{
+    return NES::failpoint(std::string_view(name.data(), name.size()));
+}
+
+std::uint8_t deferredFailpoint(rust::str name)
+{
+    const auto action = NES::getActiveFaultContext()->evalAction(std::string_view(name.data(), name.size()));
+    return static_cast<std::uint8_t>(action.value_or(NES::FaultAction::NONE));
+}
+
+void applyFaultAction(std::uint8_t action)
+{
+    NES::getActiveFaultContext()->applyAction(static_cast<NES::FaultAction>(action));
 }

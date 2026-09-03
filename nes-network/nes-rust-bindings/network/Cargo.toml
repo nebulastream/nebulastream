@@ -18,6 +18,9 @@ edition = "2024"
 [lib]
 path = "lib.rs"
 
+[features]
+fault-testing = ["nes_network/fault-testing"]
+
 [dependencies]
 # Generate C++ bindings
 cxx = "1.0"
