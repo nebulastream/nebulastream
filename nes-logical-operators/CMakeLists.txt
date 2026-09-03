@@ -40,7 +40,7 @@ target_sources(nes-logical-operators PRIVATE ${NES_LOGICAL_OPERATORS_SOURCE_FILE
 
 find_package(reflectcpp REQUIRED)
 
-target_link_libraries(nes-logical-operators PUBLIC nes-schema nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference PRIVATE reflectcpp::reflectcpp)
+target_link_libraries(nes-logical-operators PUBLIC nes-schema nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference nes-statistics PRIVATE reflectcpp::reflectcpp)
 
 # Factory registries
 # Runtime registries: entries are static create members on the plugin classes.

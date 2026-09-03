@@ -10,16 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
-add_source_files(nes-logical-operators WindowMetaData.cpp)
 
-
-add_unreflection_entry(LogicalOperator WindowedAggregation)
-add_unreflection_entry(LogicalOperator Join)
-add_unreflection_entry(LogicalOperator StatisticBuild)
-
-add_source_files(nes-logical-operators
-        WindowedAggregationLogicalOperator.cpp
-        JoinLogicalOperator.cpp
-        StatisticBuildLogicalOperator.cpp
+add_source_files(nes-physical-operators
+        ReservoirMerge.cpp
+        ReservoirSampleBlob.cpp
+        ReservoirSamplePhysicalFunction.cpp
+        StatisticStoreReaderPhysicalOperator.cpp
+        StatisticStoreWriterPhysicalOperator.cpp
 )

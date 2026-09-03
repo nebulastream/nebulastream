@@ -352,6 +352,31 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
     return tupleLayout->readRecord(recordAddress, makeVarSizedLoadFunction(pageBuffer));
 }
 
+void PagedVectorRef::replaceRecord(
+    const Record& record, const nautilus::val<uint64_t>& entryPos, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    /// Resolve the page and materialize the page buffer (needed for varsized child allocations); return the in-page index.
+    OwnedNautilusBuffer pageBuffer;
+    auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
+
+    auto recordAddress = invoke(
+        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
+        {
+            const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
+            const auto pageBufferAddress = pageBuffer->getAvailableMemoryArea<>();
+            auto* base = std::to_address(pageBufferAddress.begin());
+            const auto offset = PagedVector::Page::getHeaderSize() + (pagedVector.getTupleSize() * entryBufferPos);
+            return std::next(std::bit_cast<int8_t*>(base), static_cast<std::ptrdiff_t>(offset));
+        },
+        pagedVectorBuffer.asArg(),
+        pageBuffer.asArg(),
+        entryBufferPos);
+
+    /// Overwrite the record in place; the tuple count of the page stays unchanged. The alloc function targets the
+    /// resolved page (each page owns the varsized data of its records), so a varsized field gets a fresh slot there.
+    tupleLayout->writeRecord(record, recordAddress, makeVarSizedAllocFunction(pageBuffer, bufferProvider));
+}
+
 PagedVectorRefIter PagedVectorRef::begin() const
 {
     if (getNumberOfRecords() == 0)

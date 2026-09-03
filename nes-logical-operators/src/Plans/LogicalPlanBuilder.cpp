@@ -41,13 +41,17 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Statistic/ReservoirProbeLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/StatisticBuildLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Statistics/Statistic.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
@@ -123,6 +127,29 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
         queryPlan,
         WindowedAggregationLogicalOperator::create(
             std::move(keysWithNames), std::move(windowAggs), windowType, std::move(timeCharacteristic)));
+}
+
+LogicalPlan LogicalPlanBuilder::addStatisticBuild(
+    LogicalPlan queryPlan,
+    const Windowing::TimeBasedWindowType& windowType,
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const StatisticId statisticId,
+    const uint64_t sampleSize,
+    const uint64_t seed)
+{
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+
+    queryPlan = checkAndAddWatermarkAssigner(queryPlan, timeCharacteristic);
+    queryPlan = promoteOperatorToRoot(
+        queryPlan, StatisticBuildLogicalOperator::create(statisticId, sampleSize, seed, windowType, std::move(timeCharacteristic)));
+    return promoteOperatorToRoot(queryPlan, StatisticStoreWriterLogicalOperator::create(statisticId, StatisticType::ReservoirSample));
+}
+
+LogicalPlan LogicalPlanBuilder::addReservoirProbe(
+    LogicalPlan queryPlan, const StatisticId statisticId, std::vector<ReservoirProbeLogicalOperator::SampleField> sampleFields)
+{
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+    return promoteOperatorToRoot(queryPlan, ReservoirProbeLogicalOperator::create(statisticId, std::move(sampleFields)));
 }
 
 LogicalPlan LogicalPlanBuilder::addUnion(LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
