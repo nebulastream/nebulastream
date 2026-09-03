@@ -15,20 +15,26 @@
 #include <MQTTSink.hpp>
 
 #include <cstddef>
+#include <cstdint>
+#include <expected>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <ostream>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <MQTTAsync.h>
-#include <Configurations/Descriptor.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
+#include <Util/Variant.hpp>
 #include <mqtt/async_client.h>
 #include <mqtt/buffer_ref.h>
 #include <mqtt/connect_options.h>
@@ -52,19 +58,69 @@ std::string generateClientId(std::string clientId)
     }
     return clientId;
 }
+
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<std::string> SERVER_URI{Identifier::parse("SERVER_URI"), "The MQTT broker URI"};
+
+const ConfigField<std::string> CLIENT_ID{
+    Identifier::parse("CLIENT_ID"), "The MQTT client ID (leave default to auto-generate)", std::string{GENERATE_CLIENT_ID_TOKEN}};
+
+const ConfigField<std::string> TOPIC{Identifier::parse("TOPIC"), "The MQTT topic to publish to"};
+
+const ConfigField<int64_t> QOS{
+    Identifier::parse("QOS"),
+    "MQTT QoS level (0, 1, or 2)",
+    [](const ConfigLiteral& literal) -> std::expected<int64_t, Exception>
+    {
+        auto value = tryGetOr<int64_t>(literal, expectedType<int64_t>());
+        if (!value)
+        {
+            return std::unexpected{value.error()};
+        }
+        if (*value != 0 && *value != 1 && *value != 2)
+        {
+            return std::unexpected{InvalidConfigParameter("MQTTSink: QoS must be 0, 1, or 2")};
+        }
+        return value;
+    },
+    int64_t{1}};
+
+const ConfigField<bool> RETAINED{Identifier::parse("RETAINED"), "Whether published messages should be retained by the broker", false};
+
+const ConfigField<int64_t> MAX_OUTSTANDING_MESSAGES{
+    Identifier::parse("MAX_OUTSTANDING_MESSAGES"),
+    "Maximum number of unacknowledged QoS>=1 messages; no effect under QoS 0",
+    [](const ConfigLiteral& literal) { return tryGetOr<int64_t>(literal, expectedType<int64_t>()); },
+    int64_t{128}};
+/// NOLINTEND(cert-err58-cpp)
 }
 
-MQTTSink::MQTTSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+Schema<QualifiedErasedConfigField, Ordered> MQTTSink::getConfigSchema()
+{
+    return createConfigSchema(Identifier::parse("MQTT_SINK"), SERVER_URI, CLIENT_ID, TOPIC, QOS, RETAINED, MAX_OUTSTANDING_MESSAGES);
+}
+
+std::expected<MQTTSinkConfig, Exception> MQTTSinkConfig::fromConfig(const InstantiatedConfig& config)
+{
+    return MQTTSinkConfig{
+        .serverURI = config.get(SERVER_URI),
+        .clientId = config.get(CLIENT_ID),
+        .topic = config.get(TOPIC),
+        .qos = config.get(QOS),
+        .retained = config.get(RETAINED),
+        .maxOutstandingMessages = config.get(MAX_OUTSTANDING_MESSAGES),
+    };
+}
+
+MQTTSink::MQTTSink(BackpressureController backpressureController, const MQTTSinkConfig& config, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , serverURI(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::SERVER_URI))
-    , clientId(generateClientId(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::CLIENT_ID)))
-    , topic(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::TOPIC))
-    , qos(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::QOS))
-    , retained(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::RETAINED))
-    , maxOutstandingMessages(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::MAX_OUTSTANDING_MESSAGES))
-    , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
+    , serverURI(config.serverURI)
+    , clientId(generateClientId(config.clientId))
+    , topic(config.topic)
+    , qos(static_cast<int32_t>(config.qos))
+    , retained(config.retained)
+    , maxOutstandingMessages(static_cast<int32_t>(config.maxOutstandingMessages))
+    , backpressureHandler(sinkDescriptor.getBackpressureUpperThreshold(), sinkDescriptor.getBackpressureLowerThreshold())
 {
 }
 
@@ -199,11 +255,6 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
     }
     NES_INFO("MQTT Sink completed.");
     client.reset();
-}
-
-DescriptorConfig::Config MQTTSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersMQTTSink>(std::move(config), NAME);
 }
 
 }

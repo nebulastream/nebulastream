@@ -18,21 +18,25 @@ add_library(nes-sinks STATIC)
 set_target_properties(nes-sinks PROPERTIES LINKER_LANGUAGE CXX)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-target_link_libraries(nes-sinks PUBLIC nes-common nes-schema nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
+target_link_libraries(nes-sinks PUBLIC nes-common nes-schema nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings nes-output-formatter-provider)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Runtime registries: a sink plugin registers itself with add_registry_entry(<Registry> <name>).
-# Entries are expressed through the plugin's TYPE (included via HEADER_TEMPLATE) and the factory
-# templates from the registry headers.
+# By convention the plugin provides a class ${name}Sink with a static getConfigSchema(), and a
+# config struct ${name}SinkConfig with a static fromConfig(const InstantiatedConfig&).
 create_runtime_registry(Sink nes-sinks
-        ENTRY_TEMPLATE "makeSinkFactory<\${PLUGIN_NAME}Sink>()"
+        ENTRY_TEMPLATE "makeSinkFactory<\${PLUGIN_NAME}Sink, \${PLUGIN_NAME}SinkConfig>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
 
-create_runtime_registry(SinkValidation nes-sinks
-        ENTRY_TEMPLATE "makeSinkValidator<\${PLUGIN_NAME}Sink>()"
+create_runtime_registry(SinkConfigSchema nes-sinks
+        ENTRY_TEMPLATE "[] { return \${PLUGIN_NAME}Sink::getConfigSchema(); }"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
+
+create_runtime_registry(SinkConfig nes-sinks
+        ENTRY_TEMPLATE "makeSinkConfigEntry<\${PLUGIN_NAME}SinkConfig>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}Sink.hpp")
 
 add_subdirectory(src)

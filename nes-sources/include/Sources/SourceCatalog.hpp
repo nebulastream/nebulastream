@@ -28,8 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <Configurations/ConfigField.hpp>
-#include <Configurations/Descriptor.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>

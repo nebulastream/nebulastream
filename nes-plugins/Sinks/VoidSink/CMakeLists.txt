@@ -19,4 +19,5 @@ target_include_directories(void_sink_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 link_plugin_library(nes-sinks void_sink_plugin)
 add_registry_entry(Sink Void)
-add_registry_entry(SinkValidation Void)
+add_registry_entry(SinkConfigSchema Void)
+add_registry_entry(SinkConfig Void)
