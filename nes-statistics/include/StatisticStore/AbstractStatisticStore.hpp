@@ -20,7 +20,7 @@
 
 #include <Identifiers/StatisticIdentifiers.hpp>
 #include <Time/Timestamp.hpp>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 
 namespace NES
 {
@@ -28,18 +28,18 @@ namespace NES
 class AbstractStatisticStore
 {
 public:
-    using IdStatisticPair = std::pair<StatisticId, Statistic>;
+    using IdStatisticPair = std::pair<StatisticId, StatisticTuple>;
 
     AbstractStatisticStore() = default;
     virtual ~AbstractStatisticStore() = default;
 
-    virtual bool insertStatistic(const StatisticId& statisticId, Statistic statistic) = 0;
+    virtual bool insertStatistic(const StatisticId& statisticId, StatisticTuple statistic) = 0;
 
     virtual bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
-    virtual std::vector<Statistic> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
+    virtual std::vector<StatisticTuple> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) = 0;
 
-    virtual std::optional<Statistic> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
+    virtual std::optional<StatisticTuple> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
         = 0;
 
     virtual std::vector<IdStatisticPair> getAllStatistics() = 0;

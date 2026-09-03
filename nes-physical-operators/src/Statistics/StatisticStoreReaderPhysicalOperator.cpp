@@ -29,7 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 #include <val_arith.hpp>
 #include <val_ptr.hpp>
 

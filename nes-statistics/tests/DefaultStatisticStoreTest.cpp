@@ -21,14 +21,14 @@
 #include <Statistics/DefaultStatisticStore.hpp>
 #include <Time/Timestamp.hpp>
 #include <gtest/gtest.h>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 
 namespace NES
 {
 namespace
 {
 
-Statistic createDummyStatistic(const StatisticId statisticId, const Timestamp startTs, const Timestamp endTs)
+StatisticTuple createDummyStatistic(const StatisticId statisticId, const Timestamp startTs, const Timestamp endTs)
 {
     static std::mt19937 gen(42);
 
@@ -67,7 +67,7 @@ TEST(DefaultStatisticStoreTest, getStatisticsReturnsAllInRange)
 {
     DefaultStatisticStore store;
     const StatisticId statisticId{1};
-    std::vector<Statistic> inserted;
+    std::vector<StatisticTuple> inserted;
     for (uint64_t windowStart = 0; windowStart < 5000; windowStart += 1000)
     {
         inserted.push_back(createDummyStatistic(statisticId, Timestamp(windowStart), Timestamp(windowStart + 1000)));

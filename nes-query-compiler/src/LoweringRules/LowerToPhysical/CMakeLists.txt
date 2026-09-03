@@ -25,6 +25,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
+        LowerToPhysicalScalarStatisticProbe.cpp
 )
 
 add_registry_entry(LoweringRule NLJoin)
@@ -35,6 +36,7 @@ add_registry_entry(LoweringRule WindowedAggregation)
 add_registry_entry(LoweringRule StatisticBuild)
 add_registry_entry(LoweringRule StatisticStoreWriter)
 add_registry_entry(LoweringRule ReservoirProbe)
+add_registry_entry(LoweringRule ScalarStatisticProbe)
 add_registry_entry(LoweringRule Union)
 add_registry_entry(LoweringRule Sink)
 add_registry_entry(LoweringRule Source KEY SourceDescriptor)

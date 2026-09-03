@@ -1,0 +1,24 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+
+add_library(grpc_sink_plugin STATIC GrpcSink.cpp)
+target_link_libraries(grpc_sink_plugin PRIVATE nes-sinks)
+# PUBLIC: GrpcSink.hpp includes StatisticService.grpc.pb.h, so the registration glue (which includes the
+# plugin header) needs nes-grpc's include directories propagated.
+target_link_libraries(grpc_sink_plugin PUBLIC nes-grpc)
+target_include_directories(grpc_sink_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+link_plugin_library(nes-sinks grpc_sink_plugin)
+add_registry_entry(Sink Grpc)
+add_registry_entry(SinkValidation Grpc)

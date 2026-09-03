@@ -79,7 +79,7 @@
 #include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 #include <ParserUtil.hpp>
-#include <Statistic.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES::Parsers
 {

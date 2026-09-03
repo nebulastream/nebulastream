@@ -37,7 +37,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
-#include <Statistic.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES
 {

@@ -16,4 +16,5 @@ add_source_files(nes-physical-operators
         ReservoirSamplePhysicalFunction.cpp
         StatisticStoreReaderPhysicalOperator.cpp
         StatisticStoreWriterPhysicalOperator.cpp
+        StatisticStoreReader.cpp
 )

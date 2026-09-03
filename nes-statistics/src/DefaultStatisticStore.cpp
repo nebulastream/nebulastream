@@ -19,12 +19,12 @@
 #include <optional>
 #include <vector>
 #include <Time/Timestamp.hpp>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 
 namespace NES
 {
 
-bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, Statistic statistic)
+bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, StatisticTuple statistic)
 {
     const auto statisticsLocked = statistics.wlock();
     (*statisticsLocked)[statisticId].emplace_back(std::move(statistic));
@@ -36,7 +36,7 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticId& statisticId, con
     const auto statisticsLocked = statistics.wlock();
     auto& statisticsVec = (*statisticsLocked)[statisticId];
 
-    std::vector<Statistic> kept;
+    std::vector<StatisticTuple> kept;
     kept.reserve(statisticsVec.size());
     for (auto& statistic : statisticsVec)
     {
@@ -50,7 +50,7 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticId& statisticId, con
     return foundAny;
 }
 
-std::vector<Statistic>
+std::vector<StatisticTuple>
 DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
@@ -60,15 +60,15 @@ DefaultStatisticStore::getStatistics(const StatisticId& statisticId, const Times
         return {};
     }
 
-    std::vector<Statistic> foundStatistics;
+    std::vector<StatisticTuple> foundStatistics;
     std::ranges::copy_if(
         idIt->second,
         std::back_inserter(foundStatistics),
-        [startTs, endTs](const Statistic& statistic) { return startTs <= statistic.getStartTs() and statistic.getEndTs() <= endTs; });
+        [startTs, endTs](const StatisticTuple& statistic) { return startTs <= statistic.getStartTs() and statistic.getEndTs() <= endTs; });
     return foundStatistics;
 }
 
-std::optional<Statistic>
+std::optional<StatisticTuple>
 DefaultStatisticStore::getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.rlock();
@@ -81,7 +81,7 @@ DefaultStatisticStore::getSingleStatistic(const StatisticId& statisticId, const 
 
     const auto it = std::ranges::find_if(
         statisticsVec,
-        [startTs, endTs](const Statistic& statistic) { return startTs == statistic.getStartTs() and statistic.getEndTs() == endTs; });
+        [startTs, endTs](const StatisticTuple& statistic) { return startTs == statistic.getStartTs() and statistic.getEndTs() == endTs; });
     return it != statisticsVec.end() ? std::make_optional(*it) : std::nullopt;
 }
 

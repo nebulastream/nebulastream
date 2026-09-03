@@ -41,7 +41,7 @@
 #include <fmt/ranges.h>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
-#include <Statistic.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES
 {

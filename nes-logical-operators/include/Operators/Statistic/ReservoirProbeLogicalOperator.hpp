@@ -38,7 +38,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <Statistic.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES
 {

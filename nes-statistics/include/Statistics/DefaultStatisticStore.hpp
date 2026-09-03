@@ -20,7 +20,7 @@
 #include <StatisticStore/AbstractStatisticStore.hpp>
 #include <Time/Timestamp.hpp>
 #include <folly/Synchronized.h>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 
 namespace NES
 {
@@ -28,14 +28,14 @@ namespace NES
 class DefaultStatisticStore final : public AbstractStatisticStore
 {
 public:
-    bool insertStatistic(const StatisticId& statisticId, Statistic statistic) override;
+    bool insertStatistic(const StatisticId& statisticId, StatisticTuple statistic) override;
     bool deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
-    std::vector<Statistic> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
-    std::optional<Statistic> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
+    std::vector<StatisticTuple> getStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
+    std::optional<StatisticTuple> getSingleStatistic(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs) override;
     std::vector<IdStatisticPair> getAllStatistics() override;
 
 private:
-    folly::Synchronized<std::unordered_map<StatisticId, std::vector<Statistic>>> statistics;
+    folly::Synchronized<std::unordered_map<StatisticId, std::vector<StatisticTuple>>> statistics;
 };
 
 }

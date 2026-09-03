@@ -32,7 +32,7 @@ namespace
 void drawDistinctPositions(const uint64_t populationSize, const uint64_t count, std::mt19937_64& gen, uint64_t*& positionsOut)
 {
     std::vector<uint64_t> positions(populationSize);
-    std::ranges::iota(positions, 0);
+    std::iota(positions.begin(), positions.end(), 0);
     for (uint64_t i = 0; i < count; ++i)
     {
         std::uniform_int_distribution<uint64_t> dis(i, populationSize - 1);

@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 
 #include <ostream>
 
 namespace NES
 {
 
-std::ostream& operator<<(std::ostream& os, const Statistic& statistic)
+std::ostream& operator<<(std::ostream& os, const StatisticTuple& statistic)
 {
-    return os << "Statistic(id=" << statistic.getStatisticId() << ", type=" << statistic.getTypeName()
+    return os << "StatisticTuple(id=" << statistic.getStatisticId() << ", type=" << statistic.getTypeName()
               << ", start=" << statistic.getStartTs() << ", end=" << statistic.getEndTs()
               << ", measurements=" << statistic.getNumberOfSeenMeasurements() << ", dataSize=" << statistic.getStatisticDataSize() << ")";
 }

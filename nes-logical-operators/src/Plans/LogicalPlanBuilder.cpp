@@ -58,7 +58,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
-#include <Statistic.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 
 namespace NES
 {

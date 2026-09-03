@@ -31,7 +31,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
-#include <Statistic.hpp>
+#include <StatisticTuple.hpp>
 #include <val.hpp>
 
 namespace NES
@@ -62,7 +62,7 @@ void insertStatisticIntoStoreProxy(
 
     opHandler->getStatisticStore()->insertStatistic(
         StatisticId(statisticId),
-        Statistic{
+        StatisticTuple{
             StatisticId(statisticId),
             std::string(reinterpret_cast<const char*>(typeNamePtr), typeNameSize),
             Timestamp(startTs),

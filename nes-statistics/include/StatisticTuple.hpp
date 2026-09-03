@@ -22,6 +22,7 @@
 #include <string>
 
 #include <Identifiers/StatisticIdentifiers.hpp>
+#include <Statistic/StatisticTypes.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
@@ -33,10 +34,15 @@ namespace NES
 /// A statistic captures some property of a stream (or another component) over a period of time.
 /// Since statistics are built and probed by compiled queries, the synopsis itself is kept as an opaque, shared byte array;
 /// its layout is only understood by the physical function identified by `typeName`.
-class Statistic
+class StatisticTuple
 {
 public:
-    Statistic(
+    /// Aliases back to the nes-common definitions so that 'StatisticTuple::StatisticId' and
+    /// 'StatisticTuple::StatisticType' keep working.
+    using StatisticId = NES::StatisticId;
+    using StatisticType = NES::StatisticType;
+
+    StatisticTuple(
         const StatisticId statisticId,
         std::string typeName,
         const Timestamp& startTs,
@@ -54,10 +60,10 @@ public:
     {
     }
 
-    Statistic(const Statistic&) = default;
-    Statistic& operator=(const Statistic&) = delete;
-    Statistic(Statistic&&) = default;
-    Statistic& operator=(Statistic&&) = delete;
+    StatisticTuple(const StatisticTuple&) = default;
+    StatisticTuple& operator=(const StatisticTuple&) = delete;
+    StatisticTuple(StatisticTuple&&) = default;
+    StatisticTuple& operator=(StatisticTuple&&) = delete;
 
     [[nodiscard]] const std::string& getTypeName() const { return typeName; }
 
@@ -73,14 +79,14 @@ public:
 
     [[nodiscard]] StatisticId getStatisticId() const { return statisticId; }
 
-    bool operator==(const Statistic& other) const
+    bool operator==(const StatisticTuple& other) const
     {
         return statisticId == other.statisticId and typeName == other.typeName and startTs == other.startTs and endTs == other.endTs
             and numberOfSeenMeasurements == other.numberOfSeenMeasurements and statisticDataSize == other.statisticDataSize
             and std::equal(statisticData.get(), statisticData.get() + statisticDataSize, other.statisticData.get());
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Statistic& statistic);
+    friend std::ostream& operator<<(std::ostream& os, const StatisticTuple& statistic);
 
 private:
     StatisticId statisticId;
@@ -94,4 +100,4 @@ private:
 
 }
 
-FMT_OSTREAM(NES::Statistic);
+FMT_OSTREAM(NES::StatisticTuple);
