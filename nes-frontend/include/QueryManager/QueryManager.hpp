@@ -19,6 +19,7 @@
 #include <expected>
 #include <thread>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -46,6 +47,9 @@ public:
     [[nodiscard]] virtual std::expected<QueryId, Exception> start(LogicalPlan) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     virtual std::expected<void, Exception> terminate(QueryId) = 0;
+    virtual std::expected<void, Exception> resetWorker() = 0;
+    virtual std::expected<void, Exception> registerFailpoints(std::string& config) = 0;
+    virtual std::expected<std::vector<std::string>, Exception> checkFailpointsTriggered() = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
     [[nodiscard]] virtual std::expected<VersionInfo, Exception> version() const = 0;
@@ -133,6 +137,8 @@ public:
     /// Compiles and starts the distributed query on all assigned workers. Blocks until the query state has advanced past Registered.
     [[nodiscard]] std::expected<DistributedQueryId, std::vector<Exception>> start(const DistributedLogicalPlan& plan);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> registerFailpoints(std::string& config);
+    std::expected<std::vector<std::string>, std::vector<Exception>> checkFailpointsTriggered();
     std::expected<void, std::vector<Exception>> superviseNonBlocking(DistributedQueryId distributedQueryId);
     [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query);
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries();

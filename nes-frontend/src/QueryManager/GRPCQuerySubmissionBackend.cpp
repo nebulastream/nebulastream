@@ -208,6 +208,21 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::terminate(QueryId que
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
+std::expected<void, Exception> GRPCQuerySubmissionBackend::resetWorker()
+{
+    throw std::runtime_error("resetWorker not yet implemented for this grpc");
+}
+
+std::expected<void, Exception> GRPCQuerySubmissionBackend::registerFailpoints(std::string& _)
+{
+    throw std::runtime_error("registerFailpoints not yet implemented for this grpc");
+}
+
+std::expected<std::vector<std::string>, Exception> GRPCQuerySubmissionBackend::checkFailpointsTriggered()
+{
+    throw std::runtime_error("checkFailpointsTriggered not yet implemented for grpc");
+}
+
 BackendProvider createGRPCBackend()
 {
     return [](const WorkerConfig& config) { return std::make_unique<GRPCQuerySubmissionBackend>(config); };

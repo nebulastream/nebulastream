@@ -71,7 +71,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::string& faultSimulationConfig = {});
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries

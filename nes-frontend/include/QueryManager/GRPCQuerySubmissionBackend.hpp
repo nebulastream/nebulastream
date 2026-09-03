@@ -40,6 +40,9 @@ public:
     [[nodiscard]] std::expected<QueryId, Exception> start(LogicalPlan) override;
     std::expected<void, Exception> stop(QueryId) override;
     std::expected<void, Exception> terminate(QueryId) override;
+    std::expected<void, Exception> resetWorker() override;
+    std::expected<void, Exception> registerFailpoints(std::string& config) override;
+    std::expected<std::vector<std::string>, Exception> checkFailpointsTriggered() override;
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
     [[nodiscard]] std::expected<VersionInfo, Exception> version() const override;

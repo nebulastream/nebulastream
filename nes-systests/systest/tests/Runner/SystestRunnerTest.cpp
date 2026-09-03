@@ -141,6 +141,10 @@ class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 public:
     MOCK_METHOD((std::expected<QueryId, Exception>), start, (LogicalPlan), (override));
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), terminate, (QueryId), (override));
+    MOCK_METHOD((std::expected<void, Exception>), resetWorker, (), (override));
+    MOCK_METHOD((std::expected<void, Exception>), registerFailpoints, ((std::string&) ), (override));
+    MOCK_METHOD((std::expected<std::vector<std::string>, Exception>), checkFailpointsTriggered, (), (override));
     MOCK_METHOD((std::expected<LocalQueryStatusSnapshot, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
     MOCK_METHOD((std::expected<VersionInfo, Exception>), version, (), (const, override));

@@ -261,7 +261,7 @@ void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES:
 
     if (allMatches.size() == 1)
     {
-        config.directlySpecifiedTestFiles = allMatches.front();
+        config.directlySpecifiedTestFiles.add(allMatches.front());
         return;
     }
 
@@ -301,7 +301,7 @@ void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration
 
         if (std::filesystem::is_regular_file(testFilePath))
         {
-            config.directlySpecifiedTestFiles = testFilePath;
+            config.directlySpecifiedTestFiles.add(testFilePath);
             continue;
         }
 

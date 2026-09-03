@@ -30,6 +30,7 @@ option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
 option(ALL_SLICE_CACHE_TESTS "Run system tests with and without slice cache." OFF)
+option(NES_ENABLE_FAULT_TESTING "Enable fault injection failpoints + simulation" ON)
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
@@ -118,6 +119,10 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
 if (ENABLE_FTIME_TRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
     message(STATUS "Use ftime-trace")
+endif ()
+
+if (NES_ENABLE_FAULT_TESTING)
+    add_compile_definitions(FAULT_TESTING)
 endif ()
 
 

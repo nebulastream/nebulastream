@@ -246,27 +246,38 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
     const auto filters = createDiscoveryFilters(config);
 
-    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    if (not config.directlySpecifiedTestFiles.getValues().empty())
     {
-        const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
+        const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValues();
 
         if (config.testQueryNumbers.empty())
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
+            TestFileMap res;
+            for (auto& file : directlySpecifiedTestFiles)
             {
-                std::cout << fmt::format(
-                    "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
-                    testfile.getLogFilePath());
+                const auto testfile = TestFile(file.getValue(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+                if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
+                {
+                    std::cout << fmt::format(
+                        "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
+                        testfile.getLogFilePath());
+                }
+                res.insert({testfile.file, testfile});
             }
-            return TestFileMap{{testfile.file, testfile}};
+            return res;
+        }
+
+        if (directlySpecifiedTestFiles.size() > 1)
+        {
+            std::cout << "Only 1 testfile is allowed when query numbers are provided" << std::endl;
+            std::exit(EXIT_FAILURE);
         }
 
         const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
             config.testQueryNumbers.getValues()
             | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            = TestFile(directlySpecifiedTestFiles.at(0).getValue(), testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(

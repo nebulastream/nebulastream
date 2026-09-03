@@ -53,9 +53,8 @@ public:
     StringOption configDir
         = {"config_dir", TEST_CONFIGURATION_DIR, "Directory to lookup configuration files. Default: " TEST_CONFIGURATION_DIR};
     StringOption logFilePath = {"logFilePath", "Path to the log file"};
-    StringOption directlySpecifiedTestFiles
+    SequenceOption<StringOption> directlySpecifiedTestFiles
         = {"directly_specified_test_files",
-           "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     SequenceOption<UIntOption> testQueryNumbers
         = {"test_query_numbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
@@ -71,6 +70,7 @@ public:
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
     BoolOption remoteWorker = {"remote_worker", "false", "use remote worker"};
     StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
+    StringOption faultSimulationConfig = {"fault_sim_config", "fault simulation config"};
     BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 

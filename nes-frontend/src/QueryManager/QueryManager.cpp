@@ -384,6 +384,38 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
     return {};
 }
 
+std::expected<void, std::vector<Exception>> QueryManager::registerFailpoints(std::string& config)
+{
+    for (auto& [host, backend] : backends)
+    {
+        if (!backend->registerFailpoints(config))
+        {
+            throw std::runtime_error("This shouldnt happen. Are there failpoints active after the end of the query?");
+        }
+    }
+    return {};
+}
+
+std::expected<std::vector<std::string>, std::vector<Exception>> QueryManager::checkFailpointsTriggered()
+{
+    std::vector<std::string> pendingGlobal;
+    for (auto& [host, backend] : backends)
+    {
+        auto res = backend->checkFailpointsTriggered();
+        if (res.has_value())
+        {
+            for (auto& name : *res)
+            {
+                pendingGlobal.push_back(name);
+            }
+        } else
+        {
+            throw std::runtime_error("This shouldnt happen. Are there failpoints active after the end of the query?");
+        }
+    }
+    return pendingGlobal;
+}
+
 std::expected<void, std::vector<Exception>> QueryManager::superviseNonBlocking(DistributedQueryId distributedQueryId)
 {
     auto queryResult = getQuery(distributedQueryId);

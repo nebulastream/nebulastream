@@ -1,0 +1,204 @@
+testcases:
+  # --------------------Query Management Tests--------------------------
+
+  # Disconnect a worker mid execution
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: task.handle
+        action: DISCONNECT
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Crash an intermediate worker mid execution
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: task.handle
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Crash a source worker mid execution
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: sink-node:8080
+        name: task.handle
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+ # Crash a sink worker mid execution
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: source-node-1:8080
+        name: task.handle
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Disconnect a worker after processing a query restart but before replying to coordinator
+  # i.e. query is running again but coordinator sees a failed start message
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/16-node-single-operator.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: task.handle
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 7000
+      - host: merge-node-1:8080
+        name: worker.before_query_start_response
+        action: DISCONNECT
+        trigger:
+          type: TIME
+          after_ms: 6999
+
+
+  # ----------------------- Protocol Tests -----------------------------
+  # Crash during disk write in upstream backup
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: backup.during_disk_write
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Crash before sending ACK for persisted buffers
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: receiver.before_ack
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Disconnect before sending ACK for persisted buffers
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: receiver.before_ack
+        action: DISCONNECT
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Crash before writing stop to disk
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: backup.before_stop_write
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 1
+
+  # Crash before sending ACK for stop after persisting to disk
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: receiver.before_stop_ack
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 1
+
+  # Disconnect before sending ACK for stop after persisting to disk
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: receiver.before_stop_ack
+        action: DISCONNECT
+        trigger:
+          type: COUNT
+          count: 1
+
+  # Introduce exaggerated task queue chaos (i.e. out-of-order processing of sequence numbers made visible)
+  # Crash join node mid execution to see if emitted sequence numbers remain consistent
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+      - ../systests/aggregation.test
+    failpoints:
+      - host: global
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: task_queue.reorder_random
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 8000
+
+  # Drop random output buffers from the join operator during the first epoch. Some sequence numbers are dropped entirely,
+  # some only partially (some chunks). Some are transmitted completely
+  # Second epoch transmits all sequence numbers without dropping
+  # Does not model a realistic failure scenario, but validates the correct handling of dropped buffers during deduplication,
+  # especially if the exact chunking differs between the two epochs due to induced out of order processing
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/join.test
+      - ../systests/aggregation.test
+    failpoints:
+      - host: global
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: sender.drop_random
+        action: UDF
+        trigger:
+          type: TIMEFRAME
+          start_ms: 1000
+          end_ms: 8000
+      - host: merge-node-1:8080
+        name: task.handle
+        action: CRASH
+        trigger:
+          type: TIME
+          after_ms: 9000

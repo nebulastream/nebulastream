@@ -34,6 +34,7 @@
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <FaultSimulator.hpp>
 #include <Thread.hpp>
 #include <scope_guard.hpp>
 
@@ -151,9 +152,11 @@ void dataSourceThread(
     Source* source,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
+    const Host host,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
+    initActiveFaultContext(host);
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -210,6 +213,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
+        getActiveFaultContext()->host,
         localBufferManager);
     thread = std::move(sourceThread);
     return true;

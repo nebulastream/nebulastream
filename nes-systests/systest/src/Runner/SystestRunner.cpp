@@ -417,6 +417,14 @@ std::vector<RunningQuery> runQueries(
                     {
                         return *err;
                     }
+
+                    #ifdef FAULT_TESTING
+                    auto pendingFailpointErr = querySubmitter.checkFailpointsTriggered();
+                    if (pendingFailpointErr)
+                    {
+                        return pendingFailpointErr.value();
+                    }
+                    #endif
                     return std::string{};
                 },
                 queryPerformanceMessage);
@@ -488,11 +496,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::string& faultSimulationConfig)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)), faultSimulationConfig);
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

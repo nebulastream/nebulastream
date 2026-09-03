@@ -26,7 +26,9 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Overloaded.hpp>
 #include <folly/concurrency/UnboundedQueue.h>
+#include <grpcpp/support/status_code_enum.h>
 #include <ErrorHandling.hpp>
+#include <FaultSimulator.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorker.hpp>
@@ -65,6 +67,16 @@ struct WorkerStatusQuery
     std::chrono::system_clock::time_point after;
 };
 
+struct ResetWorkerCommand
+{
+    bool isCrashSimulation;
+};
+
+struct RegisterFailpointsCommand
+{
+    std::string config;
+};
+
 struct StartQueryReply
 {
     std::expected<QueryId, Exception> reply;
@@ -85,10 +97,50 @@ struct WorkerStatusReply
     std::expected<WorkerStatus, Exception> reply;
 };
 
-using Request = std::variant<Stop, StartQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery>;
+struct ResetWorkerReply
+{
+    std::expected<void, Exception> reply;
+};
+
+struct RegisterFailpointsReply
+{
+    std::expected<void, Exception> reply;
+};
+
+using Request
+    = std::variant<Stop, StartQuery, StopQuery, QueryStatusQuery, WorkerStatusQuery, ResetWorkerCommand, RegisterFailpointsCommand>;
 /// `std::monostate` first so the variant is default-constructible — needed because
 /// folly's `dequeue(T&)` writes into an existing slot. It is never actually pushed.
-using Reply = std::variant<std::monostate, StartQueryReply, StopQueryReply, QueryStatusReply, WorkerStatusReply>;
+using Reply = std::variant<
+    std::monostate,
+    StartQueryReply,
+    StopQueryReply,
+    QueryStatusReply,
+    WorkerStatusReply,
+    ResetWorkerReply,
+    RegisterFailpointsReply>;
+
+template <typename F>
+auto withKillSwitch(F&& f)
+{
+    using Result = std::invoke_result_t<F>;
+    auto killed = [] { return Result{std::unexpected(Exception{"connection was killed", grpc::StatusCode::UNAVAILABLE})}; };
+
+    if (getActiveFaultContext()->simulator.check())
+    {
+        return killed();
+    }
+
+    Result result = std::invoke(std::forward<F>(f));
+
+    if (getActiveFaultContext()->simulator.check())
+    {
+        return killed();
+    }
+
+    return result;
+}
+
 }
 
 /// All shared state between callers and the single worker thread lives here:
@@ -110,7 +162,10 @@ public:
 
     std::expected<QueryId, Exception> start(LogicalPlan plan) { return submit<StartQueryReply>(StartQuery{.plan = std::move(plan)}); }
 
-    std::expected<void, Exception> stop(QueryId id, bool graceful) { return submit<StopQueryReply>(StopQuery{.id = std::move(id), .graceful = graceful}); }
+    std::expected<void, Exception> stop(QueryId id, bool graceful)
+    {
+        return submit<StopQueryReply>(StopQuery{.id = std::move(id), .graceful = graceful});
+    }
 
     std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId id) const
     {
@@ -122,6 +177,17 @@ public:
         return submit<WorkerStatusReply>(WorkerStatusQuery{.after = after});
     }
 
+    std::expected<void, Exception> resetWorker(bool isCrashSimulation)
+    {
+        return submit<ResetWorkerReply>(ResetWorkerCommand{isCrashSimulation});
+    }
+
+    std::expected<void, Exception> registerFailpoints(std::string& failpointsConfig)
+    {
+        return submit<RegisterFailpointsReply>(RegisterFailpointsCommand{failpointsConfig});
+    }
+
+
 private:
     static void runWorker(
         const std::stop_token& stopToken,
@@ -130,6 +196,7 @@ private:
         const WorkerConfig& config,
         const SingleNodeWorkerConfiguration& workerConfiguration)
     {
+        initActiveFaultContext(config.host);
         /// Start with the per-worker topology config, then overlay only
         /// explicitly-set CLI values so that CLI args take highest priority
         /// but topology values aren't clobbered by CLI defaults.
@@ -155,12 +222,41 @@ private:
             Reply reply = std::visit(
                 Overloaded{
                     [](Stop) -> Reply { std::unreachable(); },
-                    [&](StartQuery& request) -> Reply { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; },
-                    [&](const StopQuery& request) -> Reply { return StopQueryReply{.reply = worker.stopQuery(request.id, request.graceful)}; },
-                    [&](const QueryStatusQuery& request) -> Reply { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; },
+                    [&](StartQuery& request) -> Reply
+                    { return withKillSwitch([&] { return StartQueryReply{.reply = worker.startQuery(std::move(request.plan))}; }); },
+                    [&](const StopQuery& request) -> Reply
+                    { return withKillSwitch([&] { return StopQueryReply{.reply = worker.stopQuery(request.id, request.graceful)}; }); },
+                    [&](const QueryStatusQuery& request) -> Reply
+                    { return withKillSwitch([&] { return QueryStatusReply{.reply = worker.getQueryStatus(request.id)}; }); },
                     [&](const WorkerStatusQuery& request) -> Reply
-                    { return WorkerStatusReply{.reply = worker.getWorkerStatus(request.after)}; },
-                },
+                    { return withKillSwitch([&] { return WorkerStatusReply{.reply = worker.getWorkerStatus(request.after)}; }); },
+                    [&](const ResetWorkerCommand& request) -> Reply
+                    {
+                        if (request.isCrashSimulation)
+                        {
+                            worker = SingleNodeWorker(mergedConfig, config.host);
+                            return ResetWorkerReply{};
+                        }
+                        else
+                        {
+                            INVARIANT(false, "change this invariant if we ever actually use reset messages");
+                            return withKillSwitch(
+                                [&]
+                                {
+                                    worker = SingleNodeWorker(mergedConfig, config.host);
+                                    return ResetWorkerReply{};
+                                });
+                        }
+                    },
+                    [&](const RegisterFailpointsCommand& request) -> Reply
+                    {
+                        return withKillSwitch(
+                            [&]
+                            {
+                                getActiveFaultContext()->configure(request.config);
+                                return RegisterFailpointsReply{};
+                            });
+                    }},
                 request);
             replies.enqueue(std::move(reply));
         }
@@ -197,10 +293,13 @@ namespace NES
 
 EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
     WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration)
-    : channel(std::make_unique<detail::Channel>(std::move(config), std::move(workerConfiguration)))
+    : host(config.host), channel(std::make_unique<detail::Channel>(config, std::move(workerConfiguration)))
 {
+    FaultContextRegistry::instance().getFaultContext(config.host)->firstStartup = std::chrono::system_clock::now();
+    FaultContextRegistry::instance().getFaultContext(config.host)->simulator.setCrashCallback([&] { this->channel->resetWorker(true); });
 }
 
+// TODO clear fault sim callback??
 EmbeddedWorkerQuerySubmissionBackend::~EmbeddedWorkerQuerySubmissionBackend() = default;
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::start(LogicalPlan plan)
@@ -216,6 +315,21 @@ std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryI
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::terminate(QueryId queryId)
 {
     return channel->stop(queryId, false);
+}
+
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::resetWorker()
+{
+    return channel->resetWorker(false);
+}
+
+std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::registerFailpoints(std::string& config)
+{
+    return channel->registerFailpoints(config);
+}
+
+std::expected<std::vector<std::string>, Exception> EmbeddedWorkerQuerySubmissionBackend::checkFailpointsTriggered()
+{
+    return FaultContextRegistry::instance().getFaultContext(host)->pendingFailpoints();
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const

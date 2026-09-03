@@ -15,6 +15,7 @@
 #pragma once
 
 #include <expected>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <QueryManager/QueryManager.hpp>
@@ -30,10 +31,11 @@ namespace NES::Systest
 class QuerySubmitter
 {
 public:
-    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
+    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::string faultSimulationConfig = {});
     std::expected<DistributedQueryId, Exception> startQuery(const DistributedLogicalPlan& plan);
     void stopQuery(const DistributedQueryId& query);
     DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
+    std::optional<std::string> checkFailpointsTriggered();
 
     /// Blocks until atleast one query has finished (or potentially failed)
     std::vector<DistributedQueryStatusSnapshot> finishedQueries();
@@ -41,5 +43,6 @@ public:
 private:
     UniquePtr<QueryManager> queryManager;
     std::unordered_set<DistributedQueryId> ids;
+    std::string faultSimulationConfig;
 };
 }

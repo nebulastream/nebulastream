@@ -36,7 +36,8 @@
 namespace NES::Systest
 {
 
-QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager, std::string faultSimulationConfig)
+    : queryManager(std::move(queryManager)), faultSimulationConfig(std::move(faultSimulationConfig))
 {
 }
 
@@ -66,6 +67,15 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
         return std::unexpected(CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker));
     }
 
+    #ifdef FAULT_TESTING
+    auto fpRegistered = queryManager->registerFailpoints(faultSimulationConfig);
+    if (!fpRegistered.has_value())
+    {
+        throw TestException("Could not get register failpoints");
+    }
+    #endif
+
+
     auto result = queryManager->start(plan);
 
 
@@ -77,6 +87,28 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
     ids.emplace(*result);
     queryManager->superviseNonBlocking(*result);
     return result.value();
+}
+
+std::optional<std::string> QuerySubmitter::checkFailpointsTriggered()
+{
+    auto pendingFailpoints = queryManager->checkFailpointsTriggered();
+    if (!pendingFailpoints.has_value())
+    {
+        throw TestException("Could not check triggered failpoints");
+    }
+    if (!pendingFailpoints->empty())
+    {
+        std::string result = "the following failpoints were not triggered: ";
+        for (std::size_t i = 0; i < pendingFailpoints.value().size(); ++i) {
+            if (i != 0) {
+                result += ", ";
+            }
+            result += pendingFailpoints.value()[i];
+        }
+
+        return result;
+    }
+    return std::nullopt;
 }
 
 void QuerySubmitter::stopQuery(const DistributedQueryId& query)
