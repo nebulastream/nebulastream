@@ -735,7 +735,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (
         AntlrSQLParser::RuleNamedExpression == parentRuleIndex and helpers.top().isInFunctionCall() and not helpers.top().isJoinRelation
-        and not helpers.top().isInAggFunction())
+        and not helpers.top().hasUnnamedAggregation)
     {
         /// handle renames of identifiers
         if (helpers.top().isArithmeticBinary)
@@ -751,7 +751,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helpers.top().addProjection(bindIdentifier(context), attribute);
         }
     }
-    else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
+    else if (helpers.top().hasUnnamedAggregation and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
         const auto expression = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
