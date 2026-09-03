@@ -11,16 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <optional>
 #include <string>
-#include <string_view>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
 
-namespace NES::InputFormatterValidationProvider
+namespace NES
 {
-/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view inputFormat, std::unordered_map<std::string, std::string> stringConfig);
+
+class InstantiatedConfig;
+
+struct FileSourceConfig
+{
+    std::filesystem::path filePath;
+
+    static std::expected<FileSourceConfig, Exception> fromConfig(const InstantiatedConfig& config);
+};
 }

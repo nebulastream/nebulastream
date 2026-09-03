@@ -18,27 +18,33 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <random>
 #include <stop_token>
 #include <thread>
 #include <unordered_set>
-#include <Configurations/Descriptor.hpp>
+#include <utility>
+#include <Configurations/ConfigField.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Pointers.hpp>
 #include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -54,41 +60,58 @@ public:
     void SetUp() override { BaseUnitTest::SetUp(); }
 };
 
+namespace
+{
+std::expected<SourceDescriptor, Exception>
+addFilePhysicalSource(SharedPtr<SourceCatalog>& sourceCatalog, const LogicalSource& logicalSource, const Identifier& sourceType)
+{
+    const Schema<LiteralConfigValue, Ordered> values{
+        LiteralConfigValue{QualifiedIdentifier::parse("file_path"), "/dev/null"},
+        LiteralConfigValue{QualifiedIdentifier::parse("host"), "localhost"},
+        LiteralConfigValue{QualifiedIdentifier::parse("type"), "CSV"}};
+    auto configSchema = SourceCatalog::getConfigSchema(sourceType, Identifier::parse("CSV"));
+    if (not configSchema.has_value())
+    {
+        return std::unexpected{configSchema.error()};
+    }
+    auto resolved = configSchema->resolveConfigs(values);
+    if (not resolved.has_value())
+    {
+        return std::unexpected{resolved.error()};
+    }
+    auto [generalConfig, pluginConfig, inputFormatterDescriptor, declaredSchema] = std::move(resolved).value();
+    return sourceCatalog->registerWithLogicalSource(
+        PhysicalSourceBuilder{
+            std::move(generalConfig), std::move(pluginConfig), std::move(inputFormatterDescriptor), copyPtr(sourceCatalog)},
+        logicalSource.getLogicalSourceName());
+}
+}
+
 /// clang tidy doesn't recognize the .has_value in the ASSERT_TRUE
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 {
-    auto sourceCatalog = SourceCatalog{};
+    auto sourceCatalog = SourceCatalog::create();
     const auto schema = Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
+    const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
-    ASSERT_TRUE(sourceCatalog.containsLogicalSource(*sourceOpt));
+    ASSERT_TRUE(sourceCatalog->containsLogicalSource(*sourceOpt));
 }
 
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
-    auto sourceCatalog = SourceCatalog{};
+    auto sourceCatalog = SourceCatalog::create();
     auto schema = Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
+    const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
-    const auto physical1Opt = sourceCatalog.addPhysicalSource(
-        *sourceOpt,
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
-    const auto physical2Opt = sourceCatalog.addPhysicalSource(
-        *sourceOpt,
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
+    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -98,73 +121,57 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
     ASSERT_EQ(physical1.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue()});
     ASSERT_EQ(physical2.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue() + 1});
 
-    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
-    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
-    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).value(), physical1);
-    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).value(), physical2);
+    ASSERT_TRUE(sourceCatalog->getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
+    ASSERT_TRUE(sourceCatalog->getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
+    ASSERT_EQ(sourceCatalog->getPhysicalSource(physical1.getPhysicalSourceId()).value(), physical1);
+    ASSERT_EQ(sourceCatalog->getPhysicalSource(physical2.getPhysicalSourceId()).value(), physical2);
 
     auto expectedSources = std::unordered_set{physical1, physical2};
-    const auto expect12Opt = sourceCatalog.getPhysicalSources(*sourceOpt);
+    const auto expect12Opt = sourceCatalog->getPhysicalSources(*sourceOpt);
     ASSERT_TRUE(expect12Opt.has_value());
     ASSERT_THAT(expect12Opt.value(), testing::ContainerEq(expectedSources));
 
-    ASSERT_TRUE(sourceCatalog.removePhysicalSource(physical1));
+    ASSERT_TRUE(sourceCatalog->removePhysicalSource(physical1));
 
-    const auto physical3Opt = sourceCatalog.addPhysicalSource(
-        *sourceOpt,
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+    const auto physical3Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("File"));
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
     ASSERT_EQ(physical3.getPhysicalSourceId(), PhysicalSourceId{INITIAL_PHYSICAL_SOURCE_ID.getRawValue() + 2});
-    ASSERT_TRUE(sourceCatalog.getPhysicalSource(physical3.getPhysicalSourceId()).has_value());
-    ASSERT_EQ(sourceCatalog.getPhysicalSource(physical3.getPhysicalSourceId()).value(), physical3);
+    ASSERT_TRUE(sourceCatalog->getPhysicalSource(physical3.getPhysicalSourceId()).has_value());
+    ASSERT_EQ(sourceCatalog->getPhysicalSource(physical3.getPhysicalSourceId()).value(), physical3);
 
-    const auto actualPhysicalSources = sourceCatalog.getPhysicalSources(*sourceOpt);
+    const auto actualPhysicalSources = sourceCatalog->getPhysicalSources(*sourceOpt);
 
     expectedSources = std::unordered_set{physical2, physical3};
-    ASSERT_THAT(sourceCatalog.getPhysicalSources(*sourceOpt), expectedSources);
+    ASSERT_THAT(sourceCatalog->getPhysicalSources(*sourceOpt), expectedSources);
 }
 
 TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 {
-    auto sourceCatalog = SourceCatalog{};
+    auto sourceCatalog = SourceCatalog::create();
     auto schema = Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
+    const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
-    const auto physical1Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, Identifier::parse("THIS_DOES_NOT_EXIST"), Host("localhost"), {}, {});
+    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, *sourceOpt, Identifier::parse("THIS_DOES_NOT_EXIST"));
     ASSERT_FALSE(physical1Opt.has_value());
 }
 
 TEST_F(SourceCatalogTest, RemoveLogicalSource)
 {
-    auto sourceCatalog = SourceCatalog{};
+    auto sourceCatalog = SourceCatalog::create();
     auto schema = Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
 
-    const auto sourceOpt = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema);
+    const auto sourceOpt = sourceCatalog->addLogicalSource(Identifier::parse("testSource"), schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto& logicalSource = sourceOpt.value();
-    const auto physical1Opt = sourceCatalog.addPhysicalSource(
-        logicalSource,
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
-    const auto physical2Opt = sourceCatalog.addPhysicalSource(
-        logicalSource,
-        Identifier::parse("File"),
-        Host("localhost"),
-        {{Identifier::parse("file_path"), "/dev/null"}},
-        {{Identifier::parse("type"), "CSV"}});
+    const auto physical1Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("File"));
+    const auto physical2Opt = addFilePhysicalSource(sourceCatalog, logicalSource, Identifier::parse("File"));
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -173,15 +180,15 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
 
     auto expectedSources = std::unordered_set{physical1, physical2};
 
-    const auto actualSourcesOpt = sourceCatalog.getPhysicalSources(logicalSource);
+    const auto actualSourcesOpt = sourceCatalog->getPhysicalSources(logicalSource);
     ASSERT_TRUE(actualSourcesOpt.has_value());
     ASSERT_THAT(actualSourcesOpt.value(), testing::ContainerEq(expectedSources));
 
-    ASSERT_TRUE(sourceCatalog.removeLogicalSource(logicalSource));
+    ASSERT_TRUE(sourceCatalog->removeLogicalSource(logicalSource));
 
-    ASSERT_FALSE(sourceCatalog.containsLogicalSource(logicalSource));
-    ASSERT_FALSE(sourceCatalog.getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
-    ASSERT_FALSE(sourceCatalog.getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
+    ASSERT_FALSE(sourceCatalog->containsLogicalSource(logicalSource));
+    ASSERT_FALSE(sourceCatalog->getPhysicalSource(physical1.getPhysicalSourceId()).has_value());
+    ASSERT_FALSE(sourceCatalog->getPhysicalSource(physical2.getPhysicalSourceId()).has_value());
 }
 
 TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
@@ -192,7 +199,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
     constexpr size_t numPhysicalAddThreads = 10;
     constexpr size_t operationsPerThread = 1000;
     constexpr unsigned int concurrentLogicalSourceNames = 3;
-    auto sourceCatalog = SourceCatalog{};
+    auto sourceCatalog = SourceCatalog::create();
     auto schema = Schema<UnqualifiedUnboundField, Ordered>{
         UnqualifiedUnboundField{Identifier::parse("stringField"), DataType::Type::VARSIZED},
         UnqualifiedUnboundField{Identifier::parse("intField"), DataType::Type::INT32}};
@@ -218,19 +225,14 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         {
             auto logicalSourceName = Identifier::parse(fmt::format("testSource{}", num));
 
-            auto logicalSourceOpt = sourceCatalog.getLogicalSource(logicalSourceName);
+            auto logicalSourceOpt = sourceCatalog->getLogicalSource(logicalSourceName);
             if (not logicalSourceOpt.has_value())
             {
-                logicalSourceOpt = sourceCatalog.addLogicalSource(logicalSourceName, schema);
+                logicalSourceOpt = sourceCatalog->addLogicalSource(logicalSourceName, schema);
             }
             if (logicalSourceOpt.has_value())
             {
-                auto physicalSourceOpt = sourceCatalog.addPhysicalSource(
-                    *logicalSourceOpt,
-                    Identifier::parse("File"),
-                    Host("localhost"),
-                    {{Identifier::parse("file_path"), "/dev/null"}},
-                    {{Identifier::parse("type"), "CSV"}});
+                auto physicalSourceOpt = addFilePhysicalSource(sourceCatalog, *logicalSourceOpt, Identifier::parse("File"));
                 if (physicalSourceOpt.has_value())
                 {
                     successfulPhysicalAdds.fetch_add(1);
@@ -263,9 +265,9 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         {
             int num = range(gen);
             auto logicalSourceName = Identifier::parse(fmt::format("testSource{}", num));
-            if (auto logicalSourceOpt = sourceCatalog.getLogicalSource(logicalSourceName))
+            if (auto logicalSourceOpt = sourceCatalog->getLogicalSource(logicalSourceName))
             {
-                bool unused = sourceCatalog.removeLogicalSource(*logicalSourceOpt);
+                const bool unused = sourceCatalog->removeLogicalSource(*logicalSourceOpt);
             }
         }
     };
