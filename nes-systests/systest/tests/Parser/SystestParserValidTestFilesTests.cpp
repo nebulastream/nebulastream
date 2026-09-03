@@ -525,7 +525,7 @@ TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
     const auto discovered = discoverTestFiles(config);
     ASSERT_EQ(discovered.size(), 1);
-    const auto testFile = discovered.front();
+    const auto& testFile = discovered.front();
     const std::vector<std::string> expectedGroups = {"Aggregation", "WindowOperators", "CompilationIntensive"};
     ASSERT_EQ(testFile.groups, expectedGroups);
 }
