@@ -30,6 +30,7 @@
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferProviderStatisticListener.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,16 +48,24 @@ BufferManager::BufferManager(
     const uint32_t numOfBuffers,
     std::shared_ptr<std::pmr::memory_resource> memoryResource,
     const size_t unpooledMemoryLimitInBytes,
-    const uint32_t alignment)
+    const uint32_t alignment,
+    std::shared_ptr<BufferProviderStatisticListener> eventListener)
     : availableBuffers(numOfBuffers)
-    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes))
+    , unpooledChunksManager(std::make_shared<UnpooledChunksManager>(memoryResource, unpooledMemoryLimitInBytes, eventListener))
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
     , alignment(alignment)
     , memoryResource(std::move(memoryResource))
+    , eventListener(std::move(eventListener))
 {
     PRECONDITION(numOfBuffers > 0, "BufferManager requires at least one pooled buffer, but the configured budget yields {}", numOfBuffers);
     initialize();
+    /// Emitted from the constructor body rather than from initialize(), so that it does not depend on where
+    /// the listener member ends up in the declaration order.
+    if (this->eventListener) [[unlikely]]
+    {
+        this->eventListener->onEvent(BufferPoolCreated{numOfBuffers, bufferSize, unpooledMemoryLimitInBytes});
+    }
 }
 
 std::shared_ptr<BufferManager> BufferManager::create(
@@ -64,7 +73,8 @@ std::shared_ptr<BufferManager> BufferManager::create(
     const double unpooledMemoryFraction,
     const BufferAlignment alignment,
     const uint32_t bufferSize,
-    const std::shared_ptr<std::pmr::memory_resource>& memoryResource)
+    const std::shared_ptr<std::pmr::memory_resource>& memoryResource,
+    std::shared_ptr<BufferProviderStatisticListener> eventListener)
 {
     PRECONDITION(
         unpooledMemoryFraction >= 0.0 and unpooledMemoryFraction <= 1.0,
@@ -80,7 +90,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
         pooledMemoryInBytes / bufferSize);
     const auto numOfBuffers = static_cast<uint32_t>(pooledMemoryInBytes / bufferSize);
     return std::make_shared<BufferManager>(
-        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue());
+        Private{}, bufferSize, numOfBuffers, memoryResource, unpooledMemoryLimitInBytes, alignment.getRawValue(), std::move(eventListener));
 }
 
 BufferManager::~BufferManager()
@@ -94,6 +104,14 @@ void BufferManager::destroy()
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
     {
+        /// Reported before the leak check below, which terminates the process on a leak. This is the last
+        /// chance for a listener to see the final state of the pool.
+        if (eventListener) [[unlikely]]
+        {
+            const auto available = getNumberOfAvailableBuffers();
+            eventListener->onEvent(BufferPoolDestroyed{allBuffers.size() - std::min(allBuffers.size(), available)});
+        }
+
         bool success = true;
         if (allBuffers.size() != getNumberOfAvailableBuffers())
         {
@@ -215,10 +233,18 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     detail::MemorySegment* memSegment = nullptr;
     if (!availableBuffers.read(memSegment))
     {
+        if (eventListener) [[unlikely]]
+        {
+            eventListener->onEvent(PooledBufferRequestFailed{std::chrono::milliseconds{0}});
+        }
         return std::nullopt;
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
+        if (eventListener) [[unlikely]]
+        {
+            eventListener->onEvent(PooledBufferAcquired{getNumberOfAvailableBuffers()});
+        }
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -230,10 +256,18 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
     const auto deadline = std::chrono::steady_clock::now() + timeoutMs;
     if (!availableBuffers.tryReadUntil(deadline, memSegment))
     {
+        if (eventListener) [[unlikely]]
+        {
+            eventListener->onEvent(PooledBufferRequestFailed{timeoutMs});
+        }
         return std::nullopt;
     }
     if (memSegment->controlBlock->prepare(shared_from_this()))
     {
+        if (eventListener) [[unlikely]]
+        {
+            eventListener->onEvent(PooledBufferAcquired{getNumberOfAvailableBuffers()});
+        }
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
@@ -251,6 +285,10 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
     USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
     INVARIANT(couldRecycleBuffer, "should always succeed");
+    if (eventListener) [[unlikely]]
+    {
+        eventListener->onEvent(PooledBufferRecycled{getNumberOfAvailableBuffers()});
+    }
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)
