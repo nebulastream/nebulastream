@@ -22,10 +22,8 @@ if (TARGET Python3::Python)
     if (TARGET systest)
         add_dependencies(systest nes-cpython-udf-bridge)
     endif ()
-    # UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's own executable dir, so the
-    # bridge must be built alongside it (install() below) and staged via symlink in
-    # nes-single-node-worker/CMakeLists.txt -- add_custom_command(TARGET ...) only works from the
-    # directory that created the target, so the staging step can't live here.
+    # Staged via symlink in nes-single-node-worker/CMakeLists.txt instead of here: add_custom_command(TARGET ...)
+    # only works from the directory that created the target.
     if (TARGET nes-single-node-worker)
         add_dependencies(nes-single-node-worker nes-cpython-udf-bridge)
     endif ()

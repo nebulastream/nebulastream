@@ -32,13 +32,9 @@
 namespace NES
 {
 
-/// A call to a user-defined scalar function: `udfName(arg0, arg1, ...)`.
-///
-/// Created name-only by the SQL parser (the built-in function registry misses the
-/// name), then resolved by the UDFResolutionRule, which attaches the catalog
-/// `UdfDescriptor` (signature + `.so` path + entry point). The resolved descriptor
-/// travels with the function across coordinator→worker serialization, so the worker
-/// never needs the catalog.
+/// A call to a user-defined scalar function: `udfName(arg0, arg1, ...)`. Created name-only by the SQL
+/// parser, then resolved by UDFResolutionRule, which attaches the catalog `UdfDescriptor`. The resolved
+/// descriptor travels with the function across coordinator→worker serialization, so the worker never needs the catalog.
 class UDFCallLogicalFunction final
 {
 public:
@@ -64,10 +60,8 @@ public:
 
     [[nodiscard]] const std::optional<UdfDescriptor>& getDescriptor() const { return descriptor; }
 
-    /// UDFCall functions are never created through the function registry: the SQL parser constructs the
-    /// name-only placeholder directly, the UDFResolutionRule resolves it, and serialization round-trips
-    /// through the unreflection registry (which carries the full descriptor). This entry exists only to
-    /// satisfy the plugin convention.
+    /// Never actually invoked -- the parser constructs the placeholder directly and UDFResolutionRule
+    /// resolves it. Exists only to satisfy the function-registry plugin convention.
     static LogicalFunctionRegistryReturnType createUDFCall(LogicalFunctionRegistryArguments arguments);
 
 private:

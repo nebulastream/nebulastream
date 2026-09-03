@@ -10,14 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Locates an installed pypy3 (nix devshell, apt pypy3/pypy3-dev, or any other install). A macro so
-# each caller (nes-udf/bridge-pypy, nes-single-node-worker, nes-systests/systest) gets its own
-# NES_PYPY_* variables in scope.
-#
-# .nix/nix-cmake.sh builds inside `nix develop --ignore-environment`, which drops PATH, so a
-# system pypy3 is invisible to find_program there. Set NES_PYPY3_EXECUTABLE to point at one
-# explicitly (passed through by .nix/nix-run.sh).
-#
+# Locates an installed pypy3 (nix devshell, apt pypy3/pypy3-dev, or any other install). A macro so each
+# caller (nes-udf/bridge-pypy, nes-single-node-worker, nes-systests/systest) gets its own NES_PYPY_* vars.
+# .nix/nix-cmake.sh runs under `nix develop --ignore-environment`, which drops PATH, so set
+# NES_PYPY3_EXECUTABLE explicitly there (passed through by .nix/nix-run.sh).
 # Sets NES_PYPY_FOUND, and on success NES_PYPY_EXECUTABLE / NES_PYPY_RUNTIME_LIB / NES_PYPY_INCLUDE_DIR.
 macro(nes_find_pypy)
     if (DEFINED ENV{NES_PYPY3_EXECUTABLE} AND NOT "$ENV{NES_PYPY3_EXECUTABLE}" STREQUAL "")
@@ -31,12 +27,9 @@ macro(nes_find_pypy)
         set(NES_PYPY_EXECUTABLE "NES_PYPY_EXECUTABLE-NOTFOUND")
     endif ()
     if (NES_PYPY_EXECUTABLE)
-        # The nix devshell sets PYTHONPATH (for lldb's and CPython's own site-packages) and
-        # _PYTHON_SYSCONFIGDATA_NAME (pointing at CPython 3.13's arch-specific sysconfigdata module)
-        # inside the shell itself, so --ignore-environment can't strip them. Left alone, PyPy's own
-        # sysconfig._init_posix() honors _PYTHON_SYSCONFIGDATA_NAME and, via PYTHONPATH, actually
-        # finds and imports CPython's sysconfigdata module instead of its own dynamic
-        # `_sysconfigdata`, silently reporting CPython's paths -- so run pypy3 with a clean env.
+        # The nix devshell sets PYTHONPATH and _PYTHON_SYSCONFIGDATA_NAME inside the shell itself, so
+        # --ignore-environment can't strip them. Left alone, PyPy's sysconfig honors those and silently
+        # imports CPython's sysconfigdata instead of its own -- so run pypy3 with a clean env.
         set(NES_PYPY_ENV_COMMAND ${CMAKE_COMMAND} -E env --unset=PYTHONPATH --unset=PYTHONHOME --unset=_PYTHON_SYSCONFIGDATA_NAME --)
         execute_process(
                 COMMAND ${NES_PYPY_ENV_COMMAND} ${NES_PYPY_EXECUTABLE} -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
@@ -58,11 +51,9 @@ macro(nes_find_pypy)
                 OUTPUT_VARIABLE NES_PYPY_MULTIARCH
                 OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        # PyPy's runtime .so location depends on packaging: nixpkgs uses lib/, the pypy.org tarball
-        # bin/, Debian/Ubuntu's apt packages put it under the multiarch triplet dir (e.g.
-        # /usr/lib/x86_64-linux-gnu/) -- this project's Nix-provided CMake doesn't set
-        # CMAKE_LIBRARY_ARCHITECTURE the way distro cmake does, so the default search won't find it;
-        # hint at it explicitly using sysconfig's MULTIARCH.
+        # PyPy's runtime .so location depends on packaging (nixpkgs: lib/, tarball: bin/, apt: the
+        # multiarch triplet dir); our Nix-provided CMake doesn't set CMAKE_LIBRARY_ARCHITECTURE, so
+        # hint at it explicitly via sysconfig's MULTIARCH.
         find_library(NES_PYPY_RUNTIME_LIB
                 NAMES pypy${NES_PYPY_ABI_VERSION}-c
                 HINTS ${NES_PYPY_PREFIX}/bin ${NES_PYPY_PREFIX}/lib ${NES_PYPY_PREFIX}/lib/${NES_PYPY_MULTIARCH})

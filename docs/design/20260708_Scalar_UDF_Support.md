@@ -2,35 +2,36 @@
 
 NebulaStream can evaluate a fixed catalog of built-in scalar functions (`Add`, `Concat`, `CHAR_LENGTH`, `FROM_BASE64`, ...) inside `SELECT` and `WHERE` expressions.
 It can also register and run ML models through the `nes-inference` feature (`CREATE MODEL` + `MODEL_INFERENCE(...)`).
-It has no way to run a *user-defined scalar function*.
+It has no way to run a *user-defined functions* (UDF). More specifically, Scalar UDFs are functions that take as input one tuple at a time and return a single value.
 
-P1: Adding even a trivial scalar transform requires modifying and recompiling the engine.
-A new built-in means authoring a `LogicalFunction`/`PhysicalFunction` pair in C++, wiring an `add_plugin(...)` entry, and rebuilding.
-A user who only wants `to_euro(amount, ccy)` cannot get it without a source change to NebulaStream.
+This document summarizes the key challenges and design goals specifically for supporting scalar UDFs in NES. This is considered version v1 for adding UDF support in NES.
 
-P2: There is no path for functions authored in another language.
+P1: Adding any type of new function in NES requires modifying and recompiling the engine.
+Functions require a `LogicalFunction`/`PhysicalFunction` pair in C++, along with an `add_plugin(...)` entry for enabling/disabling the plugin function and then rebuilding altogether.
+Hence, a user who requires some simple -yet external- functionality such as currency conversion (e.g. `to_euro(amount, ccy)`) cannot get it without a source change to NebulaStream.
+
+P2: New functions added in NES must be written in the engine's native language, which is C++. There is no path for functions authored in another language and yet many users either prefer or need code written in non-C++ languages to support their use-cases.
 Data-science users typically express business logic in Python, but NebulaStream exposes no boundary at which such code can be plugged in.
 
-P3: Foreign, user-supplied code fails at runtime in ways the engine currently has no facility to contain.
+P3: Plugging in external, user-supplied code might fail at runtime in ways the engine currently has no facility to contain.
 A UDF can raise, receive bad input, or even crash the process.
 The engine must surface recoverable failures as query errors — with a diagnostic reaching the user — without the worker dying, and today no such loading-and-containment facility exists.
 
 # Goals
 
-G1 (addresses P1, P2): A user registers a precompiled `.so` scalar UDF through SQL DDL and calls it by name in any scalar expression, with no engine recompilation.
-Registration declares the UDF's signature (argument types + return type), the path to the `.so`, and the entry point inside it.
+G1 (addresses P1, P2): A user registers a precompiled `.so` bridge to a scalar UDF through SQL DDL and calls it by name in any scalar expression, with no engine recompilation.
+Registration declares the UDF's signature (argument types + return type), the path to the `.so` bridge, and the entry point (method) inside it.
 Calling the UDF requires *no* query-side grammar change — `myUdf(a, b)` rides the existing generic function-call path.
 
 G2 (addresses P2): The engine boundary is a language-agnostic C ABI.
-The registered `.so` need only export three C symbols.
-Python is the first supported author language, via a bridge `.so` that embeds an interpreter behind that ABI.
+The registered `.so` bridge needs only to export three C symbols.
+At this moment, Python is the first target language, via a bridge `.so` that embeds an interpreter behind that ABI.
 
 G3 (addresses P3): A recoverable UDF failure fails only the query, never the worker.
 The failure carries a dedicated error code (`UdfExecutionError`) plus the underlying diagnostic (e.g. the Python traceback), and is delivered to the client.
 This is assertable by negative systests (`ERROR 3007`).
 
 G4: The feature mirrors the existing `nes-inference` structure — catalog, DDL, a name→resolved logical node, deferred load at lowering, and `nautilus::invoke` into a runtime object.
-Reusing established patterns minimizes new concepts and reviewer surface.
 
 # Non-Goals
 
@@ -42,13 +43,15 @@ NG2: Vectorized / batched execution is out of scope.
 v1 is scalar, one row in and one value out.
 The per-row GIL and per-row call-overhead ceilings, and the column-batch ABI that would relieve them, are deferred.
 
-NG3: Aggregate, table, and window UDFs are out of scope — only scalar UDFs.
+NG3: Aggregate, table, and window UDFs are out of scope — only scalar UDFs for v1.
 
 NG4: Full NES type coverage is out of scope for v1.
 v1 supports `BOOLEAN`, the integer widths (`INT8..INT64`, `UINT8..UINT64`), the float widths (`FLOAT32/64`), and `VARSIZED`.
 `TIMESTAMP`, decimal, and `CHAR` are deferred and rejected at registration.
 
-NG5: Sandboxing untrusted UDF code beyond process isolation (resource limits, seccomp, filesystem/network confinement) is out of scope.
+NG5: Sandboxing untrusted UDF code and privacy rules beyond process isolation (resource limits, seccomp, filesystem/network confinement) is out of scope.
+
+NG6: Per-UDF interpreter/environment selection is out of scope for v1. Each bridge embeds exactly one interpreter, resolved once at build time; a third-party-dependency venv (A7) is process-wide, not per-`CREATE FUNCTION`.
 
 # Alternatives
 
@@ -132,7 +135,20 @@ A6b (`CREATE FUNCTION` DDL): a new DDL statement mirroring `CREATE MODEL`, plus 
 This is the only grammar change, and it is confined to the DDL — calling a UDF still needs none.
 
 Chosen: A6b, for parity with `CREATE MODEL` and an interactive registration experience.
-(A programmatic seeding path can be added later without conflict.)
+A6a will also be integrated at some point because it enables more flexible usability, earlier warm-up for UDFBackend and more options to the optimzer.
+
+## A7 — Third-party UDF dependencies: ship them vs. let the user point at a venv
+
+A Python UDF (e.g. one running ONNX inference) may need packages beyond the stdlib (`onnxruntime`, `numpy`). Docker/nix ship none today.
+
+A7a (bake into Docker/nix): add the package to the base images and the nix devshell.
+Disadvantage: grows every image/closure for a dependency only some UDFs need, and pins its version to the engine's release cadence instead of the user's.
+
+A7b (process-wide venv override): a `NES_UDF_VENV` env var (or worker config), read once at bridge init alongside `NES_UDF_PATH`, prepending `<venv>/lib/pythonX.Y/site-packages` to `sys.path`. A venv reuses the base interpreter's `libpython`, so this needs no ABI/grammar/catalog change — same mechanism as `NES_UDF_PATH` today. Constraint: the venv must match the ABI of whichever CPython/PyPy build the bridge links against, in-process embedding cannot get around that. One venv covers every Python UDF in that worker process; `sys.modules` is process-global, so two UDFs needing conflicting versions of the same package cannot both be satisfied this way.
+
+A7c (per-UDF `VENV` clause): extend `CREATE FUNCTION` with `VENV '<path>'`, threaded through `UdfDescriptor` and the ABI's `initialize_udf`, so different UDFs can name different venvs. Same ABI-match constraint as A7b, and the same `sys.modules` collision the moment two venvs diverge on a shared module name — the extra flexibility only partially escapes A7b's ceiling, at the cost of grammar + ABI + catalog changes.
+
+Chosen: A7b for v1. No grammar/ABI/catalog change, mirrors `NES_UDF_PATH` exactly, sufficient for the common case of one worker process and one set of Python dependencies. A7c stays a documented option if per-UDF isolation is later needed.
 
 # Solution Background
 

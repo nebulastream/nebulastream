@@ -10,12 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Example scalar UDFs authored in plain Python.
-
-Registered via `CREATE FUNCTION ... FROM '<python-bridge>.so' ENTRYPOINT 'currency.<fn>'`.
-The bridge passes each argument as a Python object (VARSIZED arrives as `bytes`); returning
-`None` maps to SQL NULL.
-"""
+"""Example scalar UDFs, registered via CREATE FUNCTION ... ENTRYPOINT 'currency.<fn>'; a `None` return maps to SQL NULL."""
 
 # Test rates chosen to be exactly representable so results format cleanly.
 _RATES = {b"EUR": 1.0, b"USD": 1.25, b"GBP": 0.5}
@@ -34,21 +29,12 @@ def add(a, b):
 
 
 def strict_probe(x):
-    """Strict short-circuit probe: always returns the constant 42, never NULL, and never inspects x.
-
-    Under STRICT UDF semantics a NULL argument must short-circuit to SQL NULL *without* invoking the
-    UDF, so a NULL input row must yield NULL here — not 42. (If the engine wrongly invoked us, we would
-    return 42, since we ignore x entirely.)
-    """
+    """Always returns 42 and ignores x; a NULL input must short-circuit to SQL NULL without calling this."""
     return 42
 
 
 def half_if_even(n):
-    """Halve an even integer; return None (=> SQL NULL) for an odd one.
-
-    All inputs are non-NULL, so this exercises a UDF *producing* NULL via a Python `None` return,
-    independent of any NULL on the input side.
-    """
+    """Halve an even integer; return None (=> SQL NULL) for an odd one."""
     return n // 2 if n % 2 == 0 else None
 
 
@@ -67,3 +53,9 @@ def apply_discount(price):
     if price is None:
         return None
     return price * 0.9
+
+def id_to_name(id):
+    """Map each digit of an id to a letter, 0->A .. 9->J (INT32 -> VARSIZED)."""
+    if id is None:
+        return None
+    return ''.join(chr(ord('A') + int(digit)) for digit in str(id))

@@ -25,9 +25,8 @@
 namespace NES
 {
 
-/// In-process backend: `dlopen`s the registered `.so` in the worker and calls the UDF C ABI directly.
-/// Recoverable UDF failures throw UdfExecutionError; a fatal crash in the `.so` takes down the worker
-/// (the documented v1 limitation closed by a future SidecarBackend).
+/// In-process backend: `dlopen`s the registered `.so` and calls the UDF C ABI directly. Recoverable
+/// failures throw UdfExecutionError; a fatal crash in the `.so` takes down the worker (closed by a future SidecarBackend).
 class InProcessBackend final : public UdfBackend
 {
 public:

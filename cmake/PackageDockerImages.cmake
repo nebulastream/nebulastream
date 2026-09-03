@@ -35,10 +35,8 @@ function(nes_add_docker_image IMAGE TARGET)
         set(STATE "")
     endif ()
 
-    # UdfBridgeRegistry resolves BRIDGE clauses to <executable dir>/nes-udf-bridges/<file> at
-    # runtime (see nes-udf/bridge-cpython/CMakeLists.txt and nes-udf/bridge-pypy/CMakeLists.txt, which
-    # stage the built bridges there in the build tree). Best-effort: each bridge is only built when its
-    # toolchain is present. A single COPY covers both bridges, since they share nes-udf-bridges/.
+    # UdfBridgeRegistry resolves BRIDGE clauses to <executable dir>/nes-udf-bridges/<file>. Best-effort:
+    # each bridge is only built when its toolchain is present; a single COPY covers both, sharing that dir.
     set(BRIDGE_COPY "")
     set(BRIDGE_DOCKERIGNORE "")
     if (TARGET nes-cpython-udf-bridge OR TARGET nes-pypy-udf-bridge)

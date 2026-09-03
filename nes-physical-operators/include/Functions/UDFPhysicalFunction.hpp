@@ -27,12 +27,9 @@
 namespace NES
 {
 
-/// Executes a scalar user-defined function. Evaluates its argument functions, marshals them into a
-/// staging buffer, and calls the loaded UdfBackend once per record via nautilus::invoke. v1 supports
-/// fixed-width scalar arguments and a scalar result (VARSIZED is rejected at lowering).
-///
-/// The backend is held by shared_ptr so its address is stable across the nautilus::invoke boundary,
-/// mirroring InferModelPhysicalOperator's runtime wrapper.
+/// Executes a scalar UDF: evaluates its argument functions, marshals them into a staging buffer, and
+/// calls the loaded UdfBackend once per record via nautilus::invoke. The backend is held by shared_ptr
+/// so its address is stable across that boundary, mirroring InferModelPhysicalOperator.
 class UDFPhysicalFunction final
 {
 public:

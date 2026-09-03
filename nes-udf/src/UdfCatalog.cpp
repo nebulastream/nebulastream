@@ -39,9 +39,7 @@ void UdfCatalog::registerUdf(
         throw NES::InvalidStatement("UDF library path is not a regular file: {}", path);
     }
 
-    /// The backend maps each declared type to/from the UDF C ABI. Reject types
-    /// the ABI cannot carry up front so `descriptor ↔ signature` compatibility is
-    /// an invariant everything downstream (logical inference, lowering) can trust.
+    /// Reject ABI-incompatible types up front so descriptor/signature compatibility is an invariant downstream code can trust.
     const auto validateType = [&](const DataType& type, const std::string_view role)
     {
         if (!isSupportedUdfType(type.type))

@@ -13,20 +13,10 @@
 */
 
 /* CPython bridge implementing the NebulaStream scalar-UDF C ABI (UdfAbi.h).
- *
- * This is ONE reusable .so that serves ALL Python UDFs: the ENTRYPOINT string is a
- * "module.function" that the bridge imports and calls per row. A user authors a UDF as a
- * plain Python function and registers it with
- *   CREATE FUNCTION f(...) RETURNS ... FROM '<this bridge>.so' ENTRYPOINT 'module.function';
- *
- * The interpreter embeds CPython. It has a GIL, so we initialise once, release the GIL, and
- * bracket every entry point in PyGILState_Ensure/Release — calls are safe (but serialised) from
- * any engine thread. A Python-level exception is caught, formatted, and returned as UDF_ERROR,
- * so the worker survives. A *hard* failure (os._exit, a segfault in a C extension) is not
- * containable in-process — that is what the (future) sidecar backend is for.
- *
- * Ported from ../udf/poc_dlopen/bridge/udf_bridge.cpp and adapted to the clean ABI (explicit null
- * flags, full type table, length-delimited/binary-safe VARSIZED as Python `bytes`).
+ * One .so serves all Python UDFs; ENTRYPOINT is a "module.function" string resolved per UDF.
+ * Embeds CPython, which has a GIL: init once, release it, and bracket every entry point in
+ * PyGILState_Ensure/Release. A Python exception becomes UDF_ERROR; a hard failure (segfault,
+ * os._exit) is not contained here -- that's the job of the future sidecar backend.
  */
 
 #include <Python.h>

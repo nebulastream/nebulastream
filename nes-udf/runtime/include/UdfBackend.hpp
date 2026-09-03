@@ -22,16 +22,13 @@ namespace NES
 
 class UdfDescriptor;
 
-/// The seam between the engine and however a scalar UDF is actually loaded and run.
+/// The seam between the engine and however a scalar UDF is actually loaded and run. v1 provides
+/// InProcessBackend (dlopen in the worker); a future SidecarBackend can run the UDF in a separate
+/// process to contain fatal crashes, with no change to callers of this interface.
 ///
-/// v1 provides InProcessBackend (dlopen in the worker). A future SidecarBackend can run the UDF in
-/// a separate process to contain fatal crashes, satisfying this same interface with no change to the
-/// physical function, lowering, catalog, or DDL layers.
-///
-/// Argument marshalling (both entry points): `argValues` is a flat buffer of `argc` 8-byte slots. For
-/// a fixed-width argument the slot holds the value; for a VARSIZED argument it holds a pointer to the
-/// raw bytes, whose length is the matching 8-byte slot in `argLens`. `argNulls` is `argc` bytes; a
-/// non-zero byte marks the argument SQL NULL.
+/// Argument marshalling (both entry points): `argValues` is a flat buffer of `argc` 8-byte slots --
+/// the value itself for a fixed-width argument, or a pointer to raw bytes (length in the matching
+/// `argLens` slot) for VARSIZED. `argNulls` is `argc` bytes; non-zero marks the argument SQL NULL.
 class UdfBackend
 {
 public:

@@ -1,6 +1,5 @@
 # name: udf/PyPyUdf.test
-# description: scalar UDFs registered via BRIDGE 'pypy'. Same currency.py, NES_UDF_PATH, and UdfAbi.h
-# contract as the PythonUdf group, resolved to the PyPy bridge instead of CPython's.
+# description: scalar UDFs registered via BRIDGE 'pypy', same contract as the PythonUdf group but resolved to the PyPy bridge
 # groups: [PyPyUdf]
 
 # --- PyPy UDF via BRIDGE, no FROM: the bridge path is auto-resolved ---

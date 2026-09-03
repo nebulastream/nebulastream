@@ -41,9 +41,7 @@ DataType dt(const DataType::Type type)
 
 }
 
-/// Fixture that owns a real on-disk placeholder for the UDF `.so`. Registration
-/// only checks that the path names an existing regular file (loading is deferred
-/// to lowering), so an empty temp file is a sufficient stand-in.
+/// Owns a real on-disk placeholder .so: registration only checks the path exists, so an empty file suffices.
 class UdfCatalogTest : public ::testing::Test
 {
 protected:

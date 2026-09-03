@@ -24,8 +24,7 @@ namespace NES
 /// locating shipped UDF bridge `.so` files at a fixed, deployment-relative path.
 [[nodiscard]] std::filesystem::path currentExecutableDirectory();
 
-/// Resolves a `BRIDGE` clause value (e.g. "python") to the shipped bridge path:
-/// `<currentExecutableDirectory()>/nes-udf-bridges/<bridge filename>`. Does not check that the file
+/// Resolves a `BRIDGE` clause value (e.g. "python") to the shipped bridge path. Doesn't check the file
 /// exists -- UdfCatalog::registerUdf does, so a missing bridge and a bad FROM path fail the same way.
 /// Throws NES::UnsupportedUdfLanguage if `bridge` names no built-in bridge.
 [[nodiscard]] std::filesystem::path resolveBuiltinUdfBridgePath(std::string_view bridge);

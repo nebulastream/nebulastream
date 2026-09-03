@@ -97,9 +97,7 @@ struct Unreflector<RegisteredModel>
 /// Manages model registration and stores imported model bodies keyed by name.
 /// Compilation to executable bytecode is deferred until worker-side lowering.
 ///
-/// Storage/lookup is delegated to the generic NamedCatalog; this class owns only
-/// the model-specific registration validation (see ModelCatalog.cpp), mirroring
-/// UdfCatalog. Not thread-safe — concurrent access requires external synchronization.
+/// Storage/lookup is delegated to NamedCatalog; this class owns only registration validation, mirroring UdfCatalog. Not thread-safe.
 class ModelCatalog
 {
     NamedCatalog<RegisteredModel> catalog;

@@ -25,15 +25,10 @@
 namespace NES
 {
 
-/// Stores registered scalar UDFs keyed by name. Loading the `.so` and preparing
-/// it for execution is deferred to worker-side lowering — the catalog only holds
-/// validated metadata (path, entry point, signature).
+/// Stores registered scalar UDFs keyed by name; only validated metadata (path, entry point, signature) --
+/// loading the `.so` is deferred to worker-side lowering. Storage/lookup is delegated to NamedCatalog.
 ///
-/// Not thread-safe — registration is serialized through DDL statement handling,
-/// mirroring ModelCatalog. Concurrent access requires external synchronization.
-///
-/// Storage/lookup is delegated to the generic NamedCatalog; this class owns only
-/// the UDF-specific registration validation (see UdfCatalog.cpp).
+/// Not thread-safe — registration is serialized through DDL statement handling, mirroring ModelCatalog.
 class UdfCatalog
 {
     NamedCatalog<UdfDescriptor> catalog;

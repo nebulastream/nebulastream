@@ -116,10 +116,8 @@ VarVal UDFPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
         }
     }
 
-    /// Strict-UDF semantics (RETURNS NULL ON NULL INPUT): if any argument is NULL, the result is NULL and
-    /// the UDF is not invoked. This spares every UDF author from handling None and keeps a UDF like
-    /// currency.add (which would raise on None) well-defined on NULL input. The per-argument null plumbing
-    /// above is retained so the ABI stays capable of a future non-strict (CALLED ON NULL INPUT) mode.
+    /// Strict-UDF semantics: any NULL argument short-circuits to a NULL result without invoking the UDF
+    /// (spares UDF authors from handling None). Per-argument null plumbing stays wired for a future non-strict mode.
     if (anyArgNull)
     {
         if (returnType.type == DataType::Type::VARSIZED)

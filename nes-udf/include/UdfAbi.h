@@ -14,21 +14,14 @@
 
 #pragma once
 
-/// The NebulaStream scalar-UDF C ABI.
-///
-/// A registered UDF `.so` exposes exactly the three symbols declared below.
-/// The engine never calls the UDF author's code directly — it calls this ABI,
-/// which a language bridge (e.g. an embedded Python interpreter) implements.
-/// The ABI is therefore language-agnostic: any `.so` that exports these three
-/// symbols can serve scalar UDFs.
+/// The NebulaStream scalar-UDF C ABI: a registered UDF `.so` exposes exactly the three symbols below,
+/// implemented by a language bridge (e.g. an embedded Python interpreter). Any `.so` exporting them can serve scalar UDFs.
 ///
 /// Contract highlights (see docs/design/20260708_Scalar_UDF_Support.md):
 ///   - NULL is carried by explicit per-value flags, never an in-band sentinel.
 ///   - VARSIZED values are length-delimited (binary-safe), never NUL-terminated.
-///   - A recoverable failure returns UDF_ERROR with a malloc'd *errormessage
-///     that the caller frees; the engine turns it into a query error and the
-///     worker survives. A fatal fault (segfault / abort) is NOT contained by
-///     this ABI — that is the job of the (future) out-of-process backend.
+///   - A recoverable failure returns UDF_ERROR with a malloc'd *errormessage (caller frees); a fatal
+///     fault (segfault/abort) is NOT contained here -- that's the job of the future out-of-process backend.
 
 #ifdef __cplusplus
 extern "C"

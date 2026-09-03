@@ -36,10 +36,9 @@ add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
 
-# UdfBridgeRegistry resolves BRIDGE clauses to <worker executable dir>/nes-udf-bridges/<file> at
-# runtime, so stage the built bridge there via symlink (mirrors nes-systests/systest/CMakeLists.txt).
-# nes-udf/bridge-cpython is configured after this dir, so nes-cpython-udf-bridge isn't a target yet
-# here -- re-check for Python's embed dev files instead of `if (TARGET nes-cpython-udf-bridge)`.
+# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the built
+# bridge there via symlink. nes-udf/bridge-cpython is configured after this dir, so re-check for
+# Python's embed dev files instead of `if (TARGET nes-cpython-udf-bridge)`.
 find_package(Python3 COMPONENTS Development.Embed QUIET)
 if (Python3_FOUND)
     add_custom_command(TARGET nes-single-node-worker POST_BUILD

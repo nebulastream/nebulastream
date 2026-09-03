@@ -324,10 +324,8 @@ UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
 }
 }
 
-/// Translates a `CREATE FUNCTION` SQL statement into a registration in the UDF catalog.
-/// Reject duplicate names first; the catalog then validates the path and the declared
-/// argument/return types before storing the descriptor. Loading the `.so` is deferred to
-/// worker-side lowering.
+/// Translates a `CREATE FUNCTION` statement into a UDF catalog registration. Rejects duplicate names
+/// first; the catalog then validates path and argument/return types. Loading the `.so` is deferred to lowering.
 std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::operator()(const CreateFunctionStatement& statement)
 {
     if (udfCatalog->hasUdf(statement.name))

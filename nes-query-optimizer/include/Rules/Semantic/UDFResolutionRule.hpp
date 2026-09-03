@@ -28,10 +28,8 @@
 namespace NES
 {
 
-/// Resolves name-only UDFCallLogicalFunction placeholders (created by the SQL parser) by attaching
-/// the catalog UdfDescriptor. Runs before type inference so the resolved signature is available when
-/// each function infers its result type. For the MVP it rewrites the functions of Selection (WHERE)
-/// and Projection (SELECT) operators, where scalar UDF calls appear.
+/// Resolves name-only UDFCallLogicalFunction placeholders (from the SQL parser) by attaching the catalog
+/// UdfDescriptor, before type inference. For the MVP it rewrites only Selection (WHERE) and Projection (SELECT) functions.
 class UDFResolutionRule
 {
 public:

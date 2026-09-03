@@ -57,11 +57,8 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
                     std::ranges::size(children) == 1,
                     "Expected InferModelName Logical Operator to have one child, but has {}",
                     std::ranges::size(children));
-                /// Deferred, like LogicalSourceExpansionRule's Union/SourceDescriptor construction below: attach
-                /// the child via withChildrenUnsafe rather than the schema-inferring 2-arg constructor. At this
-                /// point in the pipeline the child's own schema may itself still be unresolved (e.g. a source not
-                /// yet given a schema, or a Projection/Selection holding a UDFCall UDFResolutionRule -- which runs
-                /// after this rule -- hasn't attached a descriptor to yet). Real inference happens once, in
+                /// withChildrenUnsafe, not the schema-inferring constructor: the child's schema may still be
+                /// unresolved here (e.g. UDFResolutionRule hasn't run yet). Real inference happens once in
                 /// TypeInferenceRule, after both catalog-resolution rules have run.
                 return LogicalOperator{TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog->load(modelName)}.withChildrenUnsafe(
                     {std::move(children.at(0))})};

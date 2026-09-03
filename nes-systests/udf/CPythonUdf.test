@@ -61,10 +61,7 @@ SELECT boom_py(x) AS y FROM ints INTO FILE();
 ----
 ERROR 3007
 
-# --- STRICT NULL input (scalar return): a NULL argument short-circuits to SQL NULL WITHOUT invoking
-# the UDF. currency.strict_probe ignores its argument and always returns 42, so a NULL row producing
-# NULL (rather than 42) proves the UDF was skipped. A nullable column with an empty CSV field is NULL;
-# the NOT NULL id column keeps rows from being empty lines.
+# --- STRICT NULL input (scalar): NULL short-circuits without invoking the UDF; strict_probe always returns 42, so NULL (not 42) proves it was skipped ---
 CREATE LOGICAL SOURCE probe(id INT64 NOT NULL, x INT64);
 CREATE PHYSICAL SOURCE FOR probe TYPE File;
 ATTACH INLINE
@@ -78,9 +75,7 @@ SELECT id, strict_probe_py(x) AS y FROM probe INTO FILE();
 1,42
 2,NULL
 
-# --- STRICT NULL input (VARSIZED return): the same short-circuit for a VARSIZED-returning UDF. A NULL
-# VARSIZED argument yields NULL; currency.shout would raise on None (None has no .upper()), so NULL
-# rather than a query error confirms the UDF was not called.
+# --- STRICT NULL input (VARSIZED): same short-circuit; shout would raise on None, so NULL (not an error) confirms it was skipped ---
 CREATE LOGICAL SOURCE greets(id INT64 NOT NULL, w VARSIZED);
 CREATE PHYSICAL SOURCE FOR greets TYPE File;
 ATTACH INLINE
@@ -94,8 +89,7 @@ SELECT id, shout_nullable_py(w) AS u FROM greets INTO FILE();
 1,HI
 2,NULL
 
-# --- UDF-produced NULL: every input is non-NULL, but the UDF returns Python None for an odd number,
-# which maps to SQL NULL. This exercises the result-null path independently of any NULL input.
+# --- UDF-produced NULL: all inputs non-NULL; half_if_even returns None for odd n, exercising the result-null path ---
 CREATE LOGICAL SOURCE evens(n INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR evens TYPE File;
 ATTACH INLINE

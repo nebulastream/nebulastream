@@ -26,8 +26,7 @@ namespace NES
 namespace
 {
 /// Bridge name -> shipped bridge filename, relative to <currentExecutableDirectory()>/nes-udf-bridges/.
-/// Whether the bridge was actually built (e.g. Python3 Development.Embed missing) is a file-existence
-/// check left to UdfCatalog::registerUdf, not this table.
+/// Whether it was actually built is a file-existence check left to UdfCatalog::registerUdf.
 const std::unordered_map<std::string_view, std::string_view> kBuiltinBridges{
     {"cpython", "libnes-cpython-udf-bridge.so"},
     {"pypy", "libnes-pypy-udf-bridge.so"},

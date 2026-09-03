@@ -18,8 +18,7 @@ SELECT a, b, add_cpython_bridge(a, b) AS c FROM nums INTO FILE();
 10,20,30
 100,200,300
 
-# --- A BRIDGE-resolved UDF that raises still fails the query with the UDF error code; the worker
-# survives -- proving execution is unaffected by how the bridge path was resolved (BRIDGE vs FROM) ---
+# --- A BRIDGE-resolved UDF that raises still fails with the UDF error code, same as FROM-resolved ---
 CREATE LOGICAL SOURCE ints(x INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR ints TYPE File;
 ATTACH INLINE

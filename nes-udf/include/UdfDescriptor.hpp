@@ -27,18 +27,13 @@ namespace NES
 
 class UdfCatalog;
 
-/// Whether a NES data type may appear as a scalar-UDF argument or return type.
-/// v1 supports the numeric widths, BOOLEAN, and VARSIZED; CHAR and UNDEFINED are
-/// rejected at registration (see docs/design/20260708_Scalar_UDF_Support.md, NG4).
+/// Whether a NES data type may appear as a scalar-UDF argument or return type. v1 supports the numeric
+/// widths, BOOLEAN, and VARSIZED; CHAR and UNDEFINED are rejected at registration (see docs/design/20260708_Scalar_UDF_Support.md, NG4).
 [[nodiscard]] bool isSupportedUdfType(DataType::Type type);
 
-/// A registered scalar UDF: the user-given name, the path to the `.so` exposing
-/// the UDF C ABI, the entry point inside it (e.g. a "module.function" string),
-/// and the declared signature (ordered argument types + return type).
-///
-/// Constructible only through `UdfCatalog::registerUdf` (which validates) or
-/// through reflection (which trusts the coordinator-side checks). There is no
-/// public constructor — callers route through those paths.
+/// A registered scalar UDF: name, path to the `.so` exposing the UDF C ABI, entry point inside it
+/// (e.g. "module.function"), and the declared signature. No public constructor -- only reachable
+/// through `UdfCatalog::registerUdf` (which validates) or reflection (which trusts prior validation).
 class UdfDescriptor
 {
     std::string name;

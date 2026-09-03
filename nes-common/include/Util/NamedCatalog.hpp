@@ -22,13 +22,11 @@
 namespace NES
 {
 
-/// Generic name-keyed storage for a "register by name, resolve by name" catalog (e.g. a UDF or
-/// model catalog): register/remove/has/list/load over an in-memory map. Deliberately holds no
-/// validation logic and no opinion on what a "not found" error looks like -- callers own both,
-/// so this stays reusable across catalogs whose entries and error types differ.
+/// Generic name-keyed storage for a "register by name, resolve by name" catalog (e.g. UDF or model):
+/// register/remove/has/list/load over an in-memory map. No validation logic, no "not found" error
+/// opinion -- callers own both, so this stays reusable across catalogs with different entry/error types.
 ///
-/// Not thread-safe -- callers are expected to serialize registration externally (e.g. through DDL
-/// statement handling), the same contract every catalog built on top of this already documents.
+/// Not thread-safe -- callers serialize registration externally (e.g. through DDL statement handling).
 template <typename DescriptorT>
 class NamedCatalog
 {
