@@ -346,7 +346,7 @@ SQL
   # As above: the statistics query never ends on its own, so the wait is bounded from outside and GNU
   # timeout reports 124 for the SIGTERM it sends.
   run timeout -s TERM 15 "$NES_REPL" -d --on-exit=WAIT_FOR_QUERY_TERMINATION \
-      -- --enable_buffer_statistics=true --buffer_statistics_interval_ms=50 <buffer_stats.sql
+      --worker enable_buffer_statistics=true --worker buffer_statistics_interval_ms=50 <buffer_stats.sql
   [ "$status" -eq 124 ]
 
   [ -s buffer_stats.csv ]
