@@ -73,6 +73,6 @@ public:
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;
-    [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }

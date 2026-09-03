@@ -206,9 +206,12 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
             const auto status = delegate.getWorkerStatus(
                 std::chrono::system_clock::time_point(std::chrono::milliseconds(request->after_unix_timestamp_in_milli_seconds())));
 
-            serializeWorkerStatus(status, response);
-
-            return grpc::Status::OK;
+            if (status)
+            {
+                serializeWorkerStatus(status.value(), response);
+                return grpc::Status::OK;
+            }
+            return grpc::Status{grpc::UNKNOWN, "Unknown error"};
         },
         context);
 }

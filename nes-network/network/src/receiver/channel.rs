@@ -13,6 +13,7 @@
 */
 use super::control::*;
 use crate::protocol::*;
+use crate::receiver::ReceiverChannelFTOptions;
 use crate::receiver::backup::{recover_log, spawn_writer};
 use futures::SinkExt;
 use std::sync::Arc;
@@ -26,7 +27,7 @@ use tokio_serde::formats::Cbor;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span, error, info, info_span, trace, warn};
-use crate::receiver::ReceiverChannelFTOptions;
+use crate::failpoint;
 
 pub(super) type Result<T> = std::result::Result<T, Error>;
 pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -129,6 +130,12 @@ async fn channel_handler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                 if closing {
                     *closed = true;
                 }
+
+                failpoint!("receiver.before_ack");
+                if closing{
+                    failpoint!("receiver.before_stop_ack");
+                }
+
                 let Some(result) = cancellation_token.run_until_cancelled(
                     connection_writer.send(ack_msg)
                 ).await else {

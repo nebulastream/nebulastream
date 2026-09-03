@@ -5,11 +5,15 @@ use serde::Deserialize;
 use std::fs::{OpenOptions};
 use std::io::BufReader;
     use std::path::PathBuf;
-    use tokio::fs::File as TokioFile;
+use futures::future::err;
+use log::warn;
+use tokio::fs::File as TokioFile;
 use tokio::fs::OpenOptions as TokioOpenOptions;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::mpsc::{Receiver, UnboundedSender};
 use tokio_util::sync::CancellationToken;
+use crate::{apply_fault_action, check_io, deferred_failpoint, failpoint, fault_testing};
+use crate::fault_testing::{FaultAction};
 
 pub(super) type Result<T> = std::result::Result<T, Error>;
     
@@ -116,8 +120,8 @@ pub fn spawn_writer(
 
                     // Push write to OS without forcing to disk immediately
                     if let Err(e) = write_buffer_to_disk(&buffer, &mut file).await {
-                        panic!("failed to write buffer {e}");
-                        continue;
+                        warn!("failed to write buffer {e}");
+                        return;
                     }
                     pending_acks.push((sequence, buffer.closing));
 
@@ -148,7 +152,7 @@ async fn sync_and_ack(
     if let Err(e) = file.sync_data().await {
         panic!("failed to sync file");
     }
-
+    
     for (sequence, closing) in pending_acks.drain(..) {
         if let Err(e) = writer_ack_tx
             .send((DataChannelResponse::AckData(sequence), closing))
@@ -162,9 +166,27 @@ async fn write_buffer_to_disk(
     buffer: &TupleBuffer,
     file: &mut TokioFile,
 ) -> crate::receiver::channel::Result<()> {
-    let encoded = serde_cbor::to_vec(buffer)?;
+
+    let mut encoded = serde_cbor::to_vec(buffer)?;
+
+    failpoint!("backup.before_disk_write");
+    if buffer.closing{
+        failpoint!("backup.before_stop_write");
+    }
+
+    if let(Some(action)) = deferred_failpoint!("backup.during_disk_write"){
+        encoded.truncate(encoded.len()/2);
+        file.write_all(&encoded).await?;
+        file.flush().await;
+        file.sync_data().await;
+        assert_eq!(action, FaultAction::Crash);
+        apply_fault_action!(action);
+    }
+
+    if check_io!(){
+        return Err("".into());
+    }
 
     file.write_all(&encoded).await?;
-
     Ok(())
 }
