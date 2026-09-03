@@ -104,10 +104,14 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the IREE toolchain;
 # when ENABLE_IREE_TESTS is OFF (e.g. iree-import-onnx / iree-compile not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-# The PythonUdfVenv group needs --pythonVenv pointed at a populated venv (see SystestConfiguration::pythonVenv);
-# like `large`, it is permanently opt-in and never runs as part of the default invocations below.
-set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv)
+# The PythonUdfVenv group needs worker.python_udf.venv pointed at a populated venv (see
+# nes-systests/udf/small_venv, set inline by PythonUdfVenv.test itself via GLOBALCONFIGURATION).
+# PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
+# packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
+# PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
+# All three are permanently opt-in, like `large`, and never run as part of the default invocations below.
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)

@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Proves NES_UDF_VENV site-packages injection: `inflection` lives only in the venv passed via
---pythonVenv, never system-wide, so this import succeeding is evidence the venv was actually used.
-"""
+"""`inflection` lives only in the venv (see NES_UDF_VENV), never system-wide."""
 
 import inflection
 
