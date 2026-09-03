@@ -13,11 +13,14 @@
 */
 
 #pragma once
+#include <array>
 #include <concepts>
 #include <cstddef>
 #include <functional>
 #include <ostream>
+#include <ranges>
 #include <span>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -75,6 +78,12 @@ using UnqualifiedUnboundField = UnboundFieldBase<1>;
 
 static_assert(std::convertible_to<UnqualifiedUnboundField, QualifiedUnboundField>);
 
+struct ReflectedUnqualifiedUnboundField
+{
+    std::string name;
+    DataType dataType;
+};
+
 template <size_t IdListExtent>
 struct ReflectedUnboundFieldBase
 {
@@ -87,7 +96,15 @@ struct Reflector<UnboundFieldBase<IdListExtent>>
 {
     Reflected operator()(const UnboundFieldBase<IdListExtent>& field, const ReflectionContext& context) const
     {
-        return context.reflect(ReflectedUnboundFieldBase<IdListExtent>{field.getFullyQualifiedName(), field.getDataType()});
+        if constexpr (IdListExtent == 1)
+        {
+            return context.reflect(ReflectedUnqualifiedUnboundField{
+                (*std::ranges::begin(field.getFullyQualifiedName())).asCanonicalString(), field.getDataType()});
+        }
+        else
+        {
+            return context.reflect(ReflectedUnboundFieldBase<IdListExtent>{field.getFullyQualifiedName(), field.getDataType()});
+        }
     }
 };
 
@@ -96,8 +113,18 @@ struct Unreflector<UnboundFieldBase<IdListExtent>>
 {
     UnboundFieldBase<IdListExtent> operator()(const Reflected& rfl, const ReflectionContext& context) const
     {
-        const auto unreflected = context.unreflect<ReflectedUnboundFieldBase<IdListExtent>>(rfl);
-        return UnboundFieldBase<IdListExtent>(unreflected.name, unreflected.dataType);
+        if constexpr (IdListExtent == 1)
+        {
+            const auto unreflected = context.unreflect<ReflectedUnqualifiedUnboundField>(rfl);
+            return UnboundFieldBase<1>(
+                QualifiedIdentifierBase<1>::create(std::array<Identifier, 1>{Identifier::fromCanonical(unreflected.name)}),
+                unreflected.dataType);
+        }
+        else
+        {
+            const auto unreflected = context.unreflect<ReflectedUnboundFieldBase<IdListExtent>>(rfl);
+            return UnboundFieldBase<IdListExtent>(unreflected.name, unreflected.dataType);
+        }
     }
 };
 }

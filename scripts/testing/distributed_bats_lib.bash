@@ -345,6 +345,10 @@ docker_nes_cli() {
   tail -f /dev/null | docker compose exec -T nes-cli nes-cli "$@"
 }
 
+newest_query_id() {
+  docker_nes_cli status | jq -r '.[].id' | tail -n 1
+}
+
 wait_until_status() {
   local topology_file=$1
   local desired_status=$2
@@ -365,9 +369,9 @@ wait_until_status() {
 
   for i in $(seq 1 80); do
     sleep 1
-    run docker_nes_cli -t "$topology_file" status "$query_id"
+    run --separate-stderr docker_nes_cli -s "$topology_file" status -w 5 "$query_id"
     [ "$status" -eq 0 ]
-    query_status=$(echo "$output" | jq -r --arg query_id "$query_id" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+    query_status=$(echo "$output" | jq -r --argjson query_id "$query_id" '.[] | select(.id == $query_id) | .state')
     if [ -n "$healthy_service_regex" ]; then
       local compose_status service health matching_services=0 unhealthy_services=
       if ! compose_status=$(docker compose ps --all --format '{{.Service}} {{.Health}}'); then

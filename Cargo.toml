@@ -23,6 +23,20 @@ members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-coordinator/bridge",
+    "nes-frontend/nebucli",
+]
+# The bridge and nebucli crates link against the C++ tree, so a bare
+# `cargo build` at the workspace root would need the CMake build to exist.
+# Keep them out of the default set; CMake drives them explicitly.
+default-members = [
+    "nes-network/network",
+    "nes-network/network-bindings",
+    "nes-common/rust/spdlog-bindings",
+    "nes-coordinator/model",
+    "nes-coordinator/migration",
+    "nes-coordinator/controller",
+    "nes-coordinator/coordinator",
 ]
 
 [workspace.package]
@@ -35,10 +49,13 @@ nes_network = { path = "nes-network/network" }
 migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
+coordinator = { path = "nes-coordinator/coordinator" }
+coordinator_bridge = { path = "nes-coordinator/bridge" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
 async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
@@ -64,6 +81,7 @@ sea-orm-migration = { version = "=1.1.1", features = [
 ] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0"
+serde_yaml = "0.9"
 sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
 strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"
@@ -78,6 +96,7 @@ tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
 toml = "1.1.2"
 tracing = "0.1.44"
+tracing-appender = "0.2"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
 

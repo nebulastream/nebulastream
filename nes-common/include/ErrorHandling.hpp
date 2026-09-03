@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstdio>
+
+#include <cstdint>
 #include <cstdlib>
 #include <optional>
 #include <ostream>

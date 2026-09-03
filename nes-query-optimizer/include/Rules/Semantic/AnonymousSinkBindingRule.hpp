@@ -18,11 +18,10 @@
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
-#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sinks/SinkCatalog.hpp>
+#include <Catalog.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -35,7 +34,7 @@ class AnonymousSinkBindingRule
 public:
     static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
 
-    explicit AnonymousSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit AnonymousSinkBindingRule(std::shared_ptr<Catalog> catalog) : catalog(std::move(catalog)) { }
 
     static constexpr std::string_view NAME = "AnonymousSinkBindingRule";
 
@@ -43,7 +42,7 @@ public:
     [[nodiscard]] std::set<std::type_index> neededBy() const;
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const std::shared_ptr<Catalog> catalog;
 };
 
 static_assert(RuleConcept<AnonymousSinkBindingRule, LogicalPlan>);

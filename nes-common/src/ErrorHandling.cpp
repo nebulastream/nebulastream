@@ -171,10 +171,6 @@ void tryLogCurrentException()
     catch (...) /// NOLINT(no-raw-catch-all)
     {
         NES_ERROR("failed to process with unknown error\n")
-        if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
-        {
-            fmt::print(stderr, "failed to process with unknown error\n");
-        }
     }
 }
 

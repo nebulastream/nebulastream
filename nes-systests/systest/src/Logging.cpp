@@ -20,17 +20,22 @@
 #include <iostream>
 #include <string>
 #include <system_error>
+
 #include <unistd.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
 #include <Config/Config.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
 
 namespace NES
 {
 namespace
 {
+
+/// Points the `latest.log` symlink at the file this run writes.
+/// A failure costs only that shortcut, so this reports it and the run continues.
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
 {
     std::error_code errorCode;
@@ -59,9 +64,10 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
         std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
     }
 }
+
 }
 
-void setupLogging(const SystestConfiguration& config)
+void setupLogging(const Config& config)
 {
     std::filesystem::path absoluteLogPath;
     const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
@@ -94,7 +100,7 @@ void setupLogging(const SystestConfiguration& config)
     }
 
     fmt::println(std::cout, "Find the log at: file://{}", absoluteLogPath.string());
-    Logger::setupLogging(absoluteLogPath.string(), LogLevel::LOG_DEBUG, false);
+    Logger::setupLogging(absoluteLogPath.string(), config.debugLogging.getValue() ? LogLevel::LOG_DEBUG : LogLevel::LOG_INFO, false);
 
     const auto symlinkPath = logDir / "latest.log";
     createSymlink(absoluteLogPath, symlinkPath);

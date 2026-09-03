@@ -46,11 +46,13 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sour
 
 void FileSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
-    this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
+    /// Opening the path directly reports why it failed.
+    /// Resolving it first and opening the result loses that: a path that does not resolve yields a null pointer, and constructing a
+    /// stream from one reports a bad address whatever the actual reason was.
+    this->inputFile = std::ifstream(this->filePath, std::ios::binary);
     if (not this->inputFile)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), getErrorMessageFromERRNO());
+        throw CannotOpenSource("could not open {}: {}", this->filePath, getErrorMessageFromERRNO());
     }
 }
 
