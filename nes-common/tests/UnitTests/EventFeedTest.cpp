@@ -18,7 +18,6 @@
 #include <optional>
 #include <string_view>
 #include <tuple>
-#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
