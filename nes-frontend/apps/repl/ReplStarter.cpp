@@ -16,12 +16,14 @@
 #include <csignal>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <sstream>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -31,6 +33,8 @@
 #include <vector>
 #include <unistd.h>
 
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -48,6 +52,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Signal.hpp>
+#include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <cpptrace/utils.hpp>
@@ -63,9 +68,9 @@
 #include <Thread.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 #ifdef EMBED_ENGINE
-    #include <Configurations/Util.hpp>
     #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
     #include <WorkerConfig.hpp>
@@ -169,20 +174,21 @@ int main(int argc, char** argv)
             .help(
                 "Fail and return non-zero exit code on first error, ignore error and continue, or continue and return non-zero exit code");
         program.add_argument("-f").default_value("TEXT").choices("TEXT", "JSON").help("Output format");
-        /// query optimizer config
-        program.add_argument("--optimizer")
-            .default_value<std::vector<std::string>>({})
-            .append()
-            .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
-
-
-#ifdef EMBED_ENGINE
-        /// single node worker config
+        /// Worker/optimizer config in one schema: the frontend optimizer config
+        /// (optimizer.*) and, with the embedded engine, the worker subtree.
+        program.add_argument("-w", "--workerConfig")
+            .help("worker/optimizer config file (.yaml) with fully qualified keys (worker.*, optimizer.*, ...); must be disjoint from "
+                  "the config options after `--`");
         program.add_argument("--")
-            .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
+            .help("worker/optimizer config arguments, e.g., `-- --optimizer.join_strategy=HASH_JOIN "
+                  "--worker.query_engine.number_of_worker_threads=10` (worker options require the embedded engine)")
             .default_value(std::vector<std::string>{})
             .remaining();
-#endif
+        {
+            std::ostringstream workerOptimizerConfigHelp;
+            NES::generateHelp(workerOptimizerConfigHelp, NES::WorkerOptimizerConfig::getConfigSchema());
+            program.add_epilog("worker/optimizer config options (pass after --):\n" + workerOptimizerConfigHelp.str());
+        }
 
         try
         {
@@ -222,29 +228,43 @@ int main(int argc, char** argv)
             return NES::ErrorBehaviour::FAIL_FAST;
         }();
 
-        NES::QueryOptimizerConfiguration queryOptimizerConfig;
-
-        if (program.is_used("--optimizer"))
+        /// Parse the `--` config args once and resolve the whole worker/optimizer config; fully qualified
+        /// names keep the config roots disjoint (see WorkerOptimizerConfig).
+        auto workerOptimizerLiterals = NES::parseCommandLineConfig(program.get<std::vector<std::string>>("--"));
+        if (program.is_used("-w"))
         {
-            auto optimizerConfigVec = program.get<std::vector<std::string>>("--optimizer");
-            std::unordered_map<std::string, std::string> optimizerRawConfig;
-
-            for (const auto& optimizerConfigString : optimizerConfigVec)
+            /// The file and the `--` arguments are both run configuration: they must be
+            /// disjoint, regardless of whether the values agree.
+            try
             {
-                if (auto pos = optimizerConfigString.find("="); pos != std::string::npos)
+                auto merged = NES::mergeConfigLayers(
+                    {NES::ConfigLayer{
+                         .name = "config file", .literals = NES::flattenYAMLConfig(std::filesystem::path{program.get<std::string>("-w")})},
+                     NES::ConfigLayer{.name = "command line", .literals = std::move(workerOptimizerLiterals)}});
+                if (!merged.overwrites.empty())
                 {
-                    const std::string identifier = optimizerConfigString.substr(0, pos);
-                    const std::string value = optimizerConfigString.substr(pos + 1);
-                    optimizerRawConfig[identifier] = value;
+                    throw NES::InvalidConfigParameter(
+                        "The config file and the command line options must not both set the same option, but both set: {}",
+                        fmt::join(
+                            merged.overwrites
+                                | std::views::transform([](const auto& overwrite)
+                                                        { return NES::toLowerCase(fmt::format("{}", overwrite.name)); }),
+                            ", "));
                 }
-                else
-                {
-                    NES_ERROR("Invalid optimizer argument. Requires argument like 'CONFIG=VALUE' but got '{}'", optimizerConfigString)
-                    return 1;
-                }
+                workerOptimizerLiterals = std::move(merged.literals);
             }
-            queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
+            catch (const NES::Exception& e)
+            {
+                std::cerr << e.what() << '\n';
+                return 1;
+            }
         }
+        auto workerOptimizerConfig = NES::resolveConfiguration<NES::WorkerOptimizerConfig>(workerOptimizerLiterals);
+        if (!workerOptimizerConfig.has_value())
+        {
+            throw NES::InvalidConfigParameter("{}", workerOptimizerConfig.error());
+        }
+        const auto queryOptimizerConfig = workerOptimizerConfig->queryOptimizer;
 
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
@@ -257,33 +277,59 @@ int main(int argc, char** argv)
 
 #ifdef EMBED_ENGINE
         enable_memcom();
-        auto confVec = program.get<std::vector<std::string>>("--");
-
-        const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
-        std::vector<const char*> singleNodeArgV;
-        singleNodeArgV.reserve(singleNodeArgC + 1);
-        singleNodeArgV.push_back("nes-single-node-worker"); /// dummy option as arg expects first arg to be the program name
-        for (auto& arg : confVec)
-        {
-            singleNodeArgV.push_back(arg.c_str());
-        }
-        auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
-                                          .value_or(NES::SingleNodeWorkerConfiguration{});
+        /// The embedded backend receives the literal schema so it can merge it with per-worker
+        /// topology config (CLI wins); the resolved worker root serves the grpc/data reads below.
+        const auto& singleNodeWorkerConfig = workerOptimizerConfig->worker;
 
         /// Derive a routable Host from the gRPC bind address.
         /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
-        const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri.getValue();
+        const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri;
         const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
-        const auto dataAddr = singleNodeWorkerConfig.dataAddress.getValue();
+        const auto dataAddr = singleNodeWorkerConfig.dataAddress;
         const NES::WorkerConfig workerConfig{
             .host = NES::Host(grpcAddr),
             .dataAddress = dataAddr,
             .maxOperators = NES::Capacity(NES::CapacityKind::Unlimited{}),
             .downstream = {},
-            .config = singleNodeWorkerConfig,
+            .config = {}, /// the CLI worker/optimizer literals reach every embedded worker via the resolver below
         };
         workerCatalog->addWorker(workerConfig.host, workerConfig.dataAddress, workerConfig.maxOperators, workerConfig.downstream);
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
+        /// Embedded workers resolve their config from two layers (lowest priority first): the CLI
+        /// worker/optimizer literals, then the per-worker registration config (topology wins). Conflicting
+        /// values are an error in the repl — there is no override switch here.
+        auto resolveWorkerConfiguration = [workerOptimizerLiterals](const NES::WorkerConfig& worker)
+        {
+            auto [literals, overwrites] = NES::mergeConfigLayers(
+                {NES::ConfigLayer{.name = "command line", .literals = workerOptimizerLiterals},
+                 NES::ConfigLayer{.name = "worker registration", .literals = worker.config}});
+            if (!overwrites.empty())
+            {
+                throw NES::InvalidConfigParameter(
+                    "Conflicting configuration values for worker {}: {}",
+                    worker.host.getRawValue(),
+                    fmt::join(
+                        overwrites
+                            | std::views::transform(
+                                [](const NES::ConfigOverwrite& overwrite)
+                                {
+                                    return fmt::format(
+                                        "{} ({} vs. {})", overwrite.name, overwrite.overwrittenValue, overwrite.appliedValue);
+                                }),
+                        ", "));
+            }
+            auto resolved = NES::resolveConfiguration<NES::WorkerOptimizerConfig>(literals);
+            if (!resolved)
+            {
+                throw NES::InvalidConfigParameter("{}", resolved.error());
+            }
+            NES_INFO(
+                "Configuration of embedded worker {}:\n{}",
+                worker.host.getRawValue(),
+                NES::formatEffectiveConfig(literals, NES::WorkerOptimizerConfig::getConfigSchema()));
+            return std::move(resolved)->worker;
+        };
+        queryManager
+            = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(std::move(resolveWorkerConfiguration)));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
 #else

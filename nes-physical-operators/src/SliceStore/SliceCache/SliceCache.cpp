@@ -35,10 +35,9 @@ SliceCache::SliceCache(const SliceCache& cache)
 
 std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration)
 {
-    if (sliceCacheConfiguration.enableSliceCache.getValue())
+    if (sliceCacheConfiguration.enableSliceCache)
     {
-        return std::make_unique<SliceCacheSecondChance>(
-            sliceCacheConfiguration.numberOfEntries.getValue(), sizeof(SliceCacheEntrySecondChance));
+        return std::make_unique<SliceCacheSecondChance>(sliceCacheConfiguration.numberOfEntries, sizeof(SliceCacheEntrySecondChance));
     }
     return std::make_unique<SliceCacheNone>();
 }

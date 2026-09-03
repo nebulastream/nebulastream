@@ -21,11 +21,15 @@
 #include <memory>
 #include <ranges>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -450,18 +454,62 @@ std::expected<ShowVersionStatementResult, Exception> TopologyStatementHandler::o
 
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
 {
-    SingleNodeWorkerConfiguration config;
-    if (!statement.config.empty())
+    /// The statement carries a flat map of fully qualified dotted config keys (a leading "--" is
+    /// tolerated for CLI-style input) to raw string values. Turn them into typed config literals;
+    /// they are resolved against the worker's declared schema when the worker is instantiated.
+    std::vector<LiteralConfigValue> configLiterals;
+    std::vector<Exception> invalidIdentifiers;
+    std::vector<std::pair<std::string, Exception>> configLiteralErrors;
+    configLiterals.reserve(statement.config.size());
+    for (const auto& [key, value] : statement.config)
     {
-        config.overwriteConfigWithCommandLineInput(statement.config);
+        constexpr std::string_view cliPrefix = "--";
+        auto name = key.starts_with(cliPrefix) ? key.substr(cliPrefix.size()) : key;
+        auto idExp = QualifiedIdentifier::tryParse(name);
+        if (!idExp.has_value())
+        {
+            invalidIdentifiers.emplace_back(std::move(idExp.error()));
+        }
+        auto parsedConfigLiteral = parseConfigLiteral(value);
+        if (!parsedConfigLiteral.has_value())
+        {
+            configLiteralErrors.emplace_back(std::move(name), std::move(parsedConfigLiteral.error()));
+        }
+        if (parsedConfigLiteral.has_value() && idExp.has_value())
+        {
+            configLiterals.emplace_back(std::move(idExp.value()), std::move(parsedConfigLiteral.value()));
+        }
     }
+    std::stringstream errorStringBuilder{};
+    if (!invalidIdentifiers.empty())
+    {
+        errorStringBuilder << fmt::format("Invalid qualified identifiers encountered: {}", fmt::join(invalidIdentifiers, ", "));
+    }
+    if (!configLiteralErrors.empty())
+    {
+        if (!invalidIdentifiers.empty())
+        {
+            errorStringBuilder << "\n";
+        }
+        errorStringBuilder << fmt::format(
+            "Invalid config literals encountered: ",
+            fmt::join(
+                configLiteralErrors
+                    | std::views::transform([](const auto& pair) { return fmt::format("(At {}: {}", pair.first, pair.second.what()); }),
+                ", "));
+    }
+    if (auto errorString = errorStringBuilder.str(); !errorString.empty())
+    {
+        return std::unexpected{InvalidConfigParameter(std::move(errorString))};
+    }
+
     auto added = workerCatalog->addWorker(
         Host(statement.host),
         statement.dataAddress,
         statement.capacity.has_value() ? Capacity(CapacityKind::Limited{statement.capacity.value()}) : Capacity(CapacityKind::Unlimited{}),
         statement.downstream | std::views::transform([](auto downstream) { return Host(std::move(downstream)); })
             | std::ranges::to<std::vector>(),
-        std::move(config));
+        createConfigLiteralSchema(std::move(configLiterals)));
     if (!added)
     {
         return std::unexpected(InvalidTopology("Duplicate worker host '{}'", statement.host));

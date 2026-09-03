@@ -14,70 +14,68 @@
 
 #include <QueryEngineConfiguration.hpp>
 
-#include <cstddef>
-#include <memory>
-#include <string>
+#include <cstdint>
+#include <expected>
 #include <thread>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Strings.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Util/Variant.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
+
+namespace
 {
-    struct Validator : ConfigurationValidation
+
+/// NOLINTBEGIN(cert-err58-cpp)
+const ConfigField<uint64_t> NUMBER_OF_WORKER_THREADS{
+    Identifier::parse("number_of_worker_threads"),
+    "Number of worker threads used within the QueryEngine",
+    [](const ConfigLiteral& literal)
     {
-        [[nodiscard]] bool isValid(const std::string& stringValue) const override
-        {
-            size_t value{};
-            if (auto parsed = from_chars<size_t>(stringValue))
-            {
-                value = *parsed;
-            }
-            else
-            {
-                NES_ERROR("Invalid WorkerThread configuration: {}.", stringValue.data());
-                return false;
-            }
+        return tryGetOr<int64_t>(literal, expectedType<uint64_t>())
+            .and_then(narrowConfigValue<int64_t, uint64_t>)
+            .and_then(
+                [](const uint64_t value) -> std::expected<uint64_t, Exception>
+                {
+                    if (value == 0)
+                    {
+                        return std::unexpected{InvalidConfigParameter("Number of worker threads cannot be zero")};
+                    }
+                    if (value > std::thread::hardware_concurrency())
+                    {
+                        return std::unexpected{InvalidConfigParameter(
+                            "Cannot use more worker threads than available CPUs: {} vs. {} available CPUs",
+                            value,
+                            std::thread::hardware_concurrency())};
+                    }
+                    return value;
+                });
+    },
+    uint64_t{4}};
 
-            if (value == 0)
-            {
-                NES_ERROR("Invalid WorkerThread configuration: {}. Cannot be zero", stringValue.data());
-                return false;
-            }
+const ConfigField<uint64_t> ADMISSION_QUEUE_SIZE{
+    Identifier::parse("admission_queue_size"),
+    "Size of the bounded admission queue used within the QueryEngine",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    uint64_t{1000}};
+/// NOLINTEND(cert-err58-cpp)
 
-            if (value > std::thread::hardware_concurrency())
-            {
-                NES_ERROR(
-                    "Cannot use more worker thread than available cpus: {} vs. {} available CPUs",
-                    value,
-                    std::thread::hardware_concurrency());
-                return false;
-            }
-
-            return true;
-        }
-    };
-
-    return std::make_shared<Validator>();
 }
 
-std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::queueSizeValidator()
+Schema<QualifiedErasedConfigField, Ordered> QueryEngineConfiguration::getConfigSchema()
 {
-    struct Validator : ConfigurationValidation
-    {
-        [[nodiscard]] bool isValid(const std::string& stringValue) const override
-        {
-            if (!from_chars<size_t>(stringValue))
-            {
-                NES_ERROR("Invalid TaskQueueSize configuration: {}.", stringValue.data());
-                return false;
-            }
-            return true;
-        }
-    };
+    return createConfigSchema(Identifier::parse("query_engine"), NUMBER_OF_WORKER_THREADS, ADMISSION_QUEUE_SIZE);
+}
 
-    return std::make_shared<Validator>();
+QueryEngineConfiguration QueryEngineConfiguration::fromConfig(const InstantiatedConfig& config)
+{
+    return {config.get(NUMBER_OF_WORKER_THREADS), config.get(ADMISSION_QUEUE_SIZE)};
 }
 }

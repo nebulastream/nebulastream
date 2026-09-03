@@ -68,10 +68,10 @@ public:
 TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
 {
     SystestConfiguration config{};
-    config.testDiscoverDirs.add(SYSTEST_DATA_DIR);
+    config.testsDiscoverDirs = {SYSTEST_DATA_DIR};
     const auto testFileName = fmt::format("MultipleCorrectAndIncorrect{}", EXTENSION);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName));
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
+    config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}", SYSTEST_DATA_DIR, testFileName);
+    config.workingDir = fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR);
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
             .host = Host("localhost:8080"),
@@ -103,10 +103,10 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     const auto& [directory, testFile] = GetParam();
     const auto testFileName = testFile + std::string(".dummy");
     SystestConfiguration config{};
-    config.testDiscoverDirs.add(SYSTEST_DATA_DIR);
-    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
-    config.testFileExtension.setValue(std::string(EXTENSION));
-    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
+    config.testsDiscoverDirs = {SYSTEST_DATA_DIR};
+    config.directlySpecifiedTestFiles = fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName);
+    config.testFileExtension = std::string(EXTENSION);
+    config.workingDir = fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile);
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
             .host = Host("localhost:8080"),

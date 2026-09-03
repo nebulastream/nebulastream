@@ -14,16 +14,20 @@
 
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <stop_token>
 #include <string>
+#include <utility>
 #include <vector>
 #include <pthread.h>
 /// The POSIX signal APIs used below are not provided by the C++ <csignal> header.
 /// NOLINTNEXTLINE(modernize-deprecated-headers)
 #include <signal.h>
+#include <Configurations/ConfigParsing.hpp>
 #include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plugins/BuiltinPlugins.hpp>
@@ -32,8 +36,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Signal.hpp>
+#include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <folly/Synchronized.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
@@ -175,14 +182,14 @@ int main(const int argc, const char* argv[])
 
         argparse::ArgumentParser program("nes-single-node-worker");
         program.add_argument("-w", "--workerConfig")
-            .help("worker config file (.yaml); options given after `--` override values from the file");
+            .help("worker config file (.yaml) with fully qualified keys; must be disjoint from the config options after `--`");
         program.add_argument("--")
             .help("worker config options, e.g. `-- --grpc=[::]:8080 --worker.query_engine.number_of_worker_threads=4`")
             .default_value(std::vector<std::string>{})
             .remaining();
         {
             std::ostringstream configOptionsHelp;
-            NES::generateHelp<NES::SingleNodeWorkerConfiguration>(configOptionsHelp);
+            NES::generateHelp(configOptionsHelp, NES::SingleNodeWorkerConfiguration::getConfigSchema());
             program.add_epilog("worker config options (pass after --):\n" + configOptionsHelp.str());
         }
         try
@@ -195,36 +202,42 @@ int main(const int argc, const char* argv[])
             return 1;
         }
 
-        /// Re-assemble an argv for the option parser from the config file given via `-w` and the
-        /// options captured after `--`.
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) argv[0] is the program name from main's argv
-        std::vector<std::string> configArgs{argv[0]};
+        auto passedConfig = NES::parseCommandLineConfig(program.get<std::vector<std::string>>("--"));
         if (program.is_used("-w"))
         {
-            configArgs.push_back("--configPath=" + program.get<std::string>("-w"));
+            /// The config file and the `--` arguments are both run configuration: they must be
+            /// disjoint, regardless of whether the values agree.
+            auto merged = NES::mergeConfigLayers(
+                {NES::ConfigLayer{
+                     .name = "config file", .literals = NES::flattenYAMLConfig(std::filesystem::path{program.get<std::string>("-w")})},
+                 NES::ConfigLayer{.name = "command line", .literals = std::move(passedConfig)}});
+            if (!merged.overwrites.empty())
+            {
+                throw NES::InvalidConfigParameter(
+                    "The config file and the command line options must not both set the same option, but both set: {}",
+                    fmt::join(
+                        merged.overwrites
+                            | std::views::transform([](const auto& overwrite)
+                                                    { return NES::toLowerCase(fmt::format("{}", overwrite.name)); }),
+                        ", "));
+            }
+            passedConfig = std::move(merged.literals);
         }
-        const auto remainingArgs = program.get<std::vector<std::string>>("--");
-        configArgs.insert(configArgs.end(), remainingArgs.begin(), remainingArgs.end());
-        std::vector<const char*> configArgv;
-        configArgv.reserve(configArgs.size());
-        for (const auto& arg : configArgs)
+        auto resolvedConfiguration = NES::resolveConfiguration<NES::SingleNodeWorkerConfiguration>(passedConfig);
+        if (!resolvedConfiguration.has_value())
         {
-            configArgv.push_back(arg.c_str());
+            throw NES::InvalidConfigParameter("{}", resolvedConfiguration.error());
         }
-
-        auto configuration
-            = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(static_cast<int>(configArgv.size()), configArgv.data());
-        if (!configuration)
+        NES_INFO(
+            "Loaded configuration:\n{}", NES::formatEffectiveConfig(passedConfig, NES::SingleNodeWorkerConfiguration::getConfigSchema()));
+        const auto configuration = std::move(resolvedConfiguration).value();
         {
-            return 0;
-        }
-        {
-            NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
-            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
+            NES::Thread::initializeThread(NES::Host(configuration.dataAddress), "main");
+            NES::GRPCServer workerService{NES::SingleNodeWorker(configuration, NES::Host(configuration.dataAddress))};
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration.grpcAddressUri, grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
             grpc::EnableDefaultHealthCheckService(true);
 
@@ -239,7 +252,7 @@ int main(const int argc, const char* argv[])
             {
                 return *terminationSignal;
             }
-            NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
+            NES_INFO("Server listening on {}", configuration.grpcAddressUri);
             server->Wait();
             if (auto terminationSignal = cleanup.clearServerAndGetTerminationSignal())
             {

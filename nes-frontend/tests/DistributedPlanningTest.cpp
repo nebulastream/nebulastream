@@ -24,6 +24,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <Configurations/Util.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -249,7 +251,8 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
     renderTopology(workers->getTopology(), std::cout);
 
-    auto optimizer = std::make_unique<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{}, sources, sinks, workers, modelCatalog);
+    auto optimizer = std::make_unique<NES::QueryOptimizer>(
+        NES::defaultConfiguration<NES::QueryOptimizerConfiguration>(), sources, sinks, workers, modelCatalog);
     return {.queryOptimizer = std::move(optimizer), .plan = std::get<NES::ExplainQueryStatement>(statements.back()).plan};
 }
 

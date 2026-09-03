@@ -14,33 +14,28 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <cstdint>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES
 {
-class QueryEngineConfiguration final : public BaseConfiguration
+struct QueryEngineConfiguration
 {
-    /// validators to prevent nonsensical values for the number of threads and task queue size
-    static std::shared_ptr<ConfigurationValidation> numberOfThreadsValidator();
-    static std::shared_ptr<ConfigurationValidation> queueSizeValidator();
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-public:
-    QueryEngineConfiguration() = default;
+    QueryEngineConfiguration() = delete;
 
-    QueryEngineConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
+    QueryEngineConfiguration(uint64_t numberOfWorkerThreads, uint64_t admissionQueueSize)
+        : numberOfWorkerThreads(numberOfWorkerThreads), admissionQueueSize(admissionQueueSize)
+    {
+    }
 
-    UIntOption numberOfWorkerThreads
-        = {"number_of_worker_threads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
-    UIntOption admissionQueueSize
-        = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
+    uint64_t numberOfWorkerThreads;
+    uint64_t admissionQueueSize;
 
-protected:
-    std::vector<BaseOption*> getOptions() override { return {&numberOfWorkerThreads, &admissionQueueSize}; }
+    static QueryEngineConfiguration fromConfig(const InstantiatedConfig& config);
 };
 }

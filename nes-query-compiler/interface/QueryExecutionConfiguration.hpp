@@ -15,15 +15,10 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/BaseOption.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
-#include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/NonZeroValidation.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/ConfigField.hpp>
+#include <Configurations/InstantiatedConfigValue.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <BloomFilterConfiguration.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -31,60 +26,39 @@
 namespace NES
 {
 
-static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 1024;
-static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
-static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
-static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
-
-class QueryExecutionConfiguration : public BaseConfiguration
+struct QueryExecutionConfiguration
 {
-public:
-    QueryExecutionConfiguration() = default;
-    QueryExecutionConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
-    EnumOption<ExecutionMode> executionMode
-        = {"execution_mode",
-           ExecutionMode::COMPILER,
-           "Execution mode for the query compiler"
-           "[COMPILER|INTERPRETER]."};
-    UIntOption numberOfPartitions
-        = {"number_of_partitions",
-           std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
-           "Number of buckets in a hash table. Fixed at query-compilation time and never grown: the hash maps do not rehash, so too low "
-           "a value lengthens the chains, while too high a one costs a chain pointer per hash map, worker thread and slice.",
-           {std::make_shared<NumberValidation>(), std::make_shared<NonZeroValidation>()}};
-    UIntOption pageSize
-        = {"page_size",
-           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
-           "Page size of any other paged data structure",
-           {std::make_shared<NumberValidation>()}};
-    UIntOption numberOfRecordsPerKey
-        = {"number_of_records_per_key",
-           std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
-           "Expected number of records per key, for example in a hash join. If set too low or high affects the performance.",
-           {std::make_shared<NumberValidation>()}};
-    UIntOption operatorBufferSize
-        = {"operator_buffer_size",
-           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
-           "Buffer size of a operator e.g. during scan",
-           {std::make_shared<NumberValidation>()}};
+    QueryExecutionConfiguration() = delete;
 
-    SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
-
-    BloomFilterConfiguration bloomFilterConfiguration = {"bloom_filter", "Configuration for the hash maps' in-map BloomFilter"};
-
-private:
-    std::vector<BaseOption*> getOptions() override
+    QueryExecutionConfiguration(
+        ExecutionMode executionMode,
+        uint64_t numberOfPartitions,
+        uint64_t pageSize,
+        uint64_t numberOfRecordsPerKey,
+        uint64_t operatorBufferSize,
+        SliceCacheConfiguration sliceCacheConfiguration,
+        BloomFilterConfiguration bloomFilterConfiguration)
+        : executionMode(executionMode)
+        , numberOfPartitions(numberOfPartitions)
+        , pageSize(pageSize)
+        , numberOfRecordsPerKey(numberOfRecordsPerKey)
+        , operatorBufferSize(operatorBufferSize)
+        , sliceCacheConfiguration(sliceCacheConfiguration)
+        , bloomFilterConfiguration(bloomFilterConfiguration)
     {
-        return {
-            &executionMode,
-            &pageSize,
-            &numberOfPartitions,
-            &numberOfRecordsPerKey,
-            &operatorBufferSize,
-            &sliceCacheConfiguration,
-            &bloomFilterConfiguration};
     }
+
+    ExecutionMode executionMode;
+    uint64_t numberOfPartitions;
+    uint64_t pageSize;
+    uint64_t numberOfRecordsPerKey;
+    uint64_t operatorBufferSize;
+    SliceCacheConfiguration sliceCacheConfiguration;
+    BloomFilterConfiguration bloomFilterConfiguration;
+
+    static QueryExecutionConfiguration fromConfig(const InstantiatedConfig& config);
 };
 
 }
