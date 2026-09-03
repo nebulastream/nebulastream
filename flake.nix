@@ -4,15 +4,23 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
-    { nixpkgs, flake-utils, ... }:
+    { nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ (import rust-overlay) ];
+        };
         lib = pkgs.lib;
+        rustToolchain = pkgs.rust-bin.stable.latest.default;
         llvm = pkgs.llvmPackages_19;
         clangToolsVersion = lib.getVersion llvm.clang-tools;
         llvmToolchainVersion = lib.versions.major clangToolsVersion;
@@ -673,9 +681,7 @@
           git
           ccache
           mold
-          rustc
-          cargo
-          rustfmt
+          rustToolchain
         ];
 
         # LLVM toolchain with versioned symlinks for vcpkg

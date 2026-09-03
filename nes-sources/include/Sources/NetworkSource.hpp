@@ -29,7 +29,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
-#include <network/lib.h>
+#include <nes-network-bindings/lib.h>
 #include <rust/cxx.h>
 
 namespace NES
