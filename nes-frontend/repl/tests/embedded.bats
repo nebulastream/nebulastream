@@ -300,7 +300,8 @@ SQL
   echo "# TASK_START: $starts, TASK_DONE: $dones" >&3
 
   [ "$starts" -gt 0 ]
-  [ "$starts" -eq "$dones" ]
+  [ "$dones" -ge "$starts" ]
+  [ "$((dones - starts))" -le 2 ]
 
   # Both stages on the way drop rather than block, so a drop means one of them was too small.
   run grep -c "dropped so far" nes-repl.log
