@@ -305,25 +305,36 @@ std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& co
 {
     const auto filters = createDiscoveryFilters(config);
     const auto discoverRoot = normalizedDirectory(config.testDiscoverRoot.getValue());
-
-    if (not config.directlySpecifiedTestFiles.getValue().empty())
+    if (not config.directlySpecifiedTestFiles.getValues().empty())
     {
-        std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
-        if (not config.testQueryNumbers.empty())
+        const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValues();
+        std::vector<DiscoveredTestFile> testfiles;
+
+        for (auto& file : directlySpecifiedTestFiles)
         {
-            enabledQueries = std::ranges::to<std::unordered_set<SystestQueryId>>(
-                config.testQueryNumbers.getValues()
-                | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
+            std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
+            if (not config.testQueryNumbers.empty())
+            {
+                if (directlySpecifiedTestFiles.size() > 1)
+                {
+                    std::cout << "Only 1 testfile is allowed when query numbers are provided" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
+                enabledQueries = std::ranges::to<std::unordered_set<SystestQueryId>>(
+                    config.testQueryNumbers.getValues()
+                    | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
+            }
+            auto path = std::filesystem::weakly_canonical(file.getValue());
+            const DiscoveredTestFile testfile{path, nameFor(path, discoverRoot, {}), std::move(enabledQueries)};
+            if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
+            {
+                std::cout << fmt::format(
+                    "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
+                    testfile.getLogFilePath());
+            }
+            testfiles.emplace_back(testfile);
         }
-        const auto file = std::filesystem::weakly_canonical(config.directlySpecifiedTestFiles.getValue());
-        const DiscoveredTestFile testfile{file, nameFor(file, discoverRoot, {}), std::move(enabledQueries)};
-        if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
-        {
-            std::cout << fmt::format(
-                "Including file://{} because it was explicitly selected via --testLocations, overriding disabled_test_files\n",
-                testfile.getLogFilePath());
-        }
-        return {testfile};
+        return testfiles;
     }
 
     /// A relative directory would not match the absolute root, and a trailing separator would make its parent the

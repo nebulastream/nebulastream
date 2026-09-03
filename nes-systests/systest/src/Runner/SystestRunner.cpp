@@ -126,13 +126,22 @@ bool writesIntoDiscardingSink(const SystestQuery& query)
 }
 
 /// Checks a query that reached a successful terminal state against what the test expects of its result.
-Verdict checkSucceededQuery(const SystestQuery& query)
+Verdict checkSucceededQuery(const SystestQuery& query, QuerySubmitter& querySubmitter)
 {
+
     if (std::holds_alternative<ExpectedError>(query.expectation))
     {
         return std::unexpected(
             Mismatch{fmt::format("expected error {} but query succeeded", std::get<ExpectedError>(query.expectation).code)});
     }
+
+    #ifdef FAULT_TESTING
+    auto pendingFailpointErr = querySubmitter.checkFailpointsTriggered();
+    if (pendingFailpointErr)
+    {
+        return std::unexpected(Mismatch(pendingFailpointErr.value()));
+    }
+    #endif
 
     if (writesIntoDiscardingSink(query))
     {
@@ -364,7 +373,7 @@ std::vector<RunningQuery> runQueries(
                     }
 
                     reportResult(
-                        runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery), queryPerformanceMessage);
+                        runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery, querySubmitter), queryPerformanceMessage);
 
                     if (otherRunningQueryIt != active.end())
                     {
@@ -377,9 +386,8 @@ std::vector<RunningQuery> runQueries(
 
                 continue;
             }
-
             /// Regular query (not differential), process immediately
-            reportResult(runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery), queryPerformanceMessage);
+            reportResult(runningQuery, progressTracker, failed, checkSucceededQuery(runningQuery->systestQuery, querySubmitter), queryPerformanceMessage);
             active.erase(it);
         }
     }
@@ -434,11 +442,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker,
-    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage,
+    const std::string& faultSimulationConfig)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)), faultSimulationConfig);
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

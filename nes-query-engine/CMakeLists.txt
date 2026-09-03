@@ -13,7 +13,7 @@
 # Add interface library
 add_library(nes-query-engine-interface interface/QueryEngineConfiguration.cpp)
 target_include_directories(nes-query-engine-interface PUBLIC interface)
-target_link_libraries(nes-query-engine-interface PUBLIC nes-common nes-configurations nes-query-optimizer-interface)
+target_link_libraries(nes-query-engine-interface PUBLIC nes-common nes-configurations nes-query-optimizer-interface nes-fault-testing)
 
 add_library(nes-query-engine Callback.cpp QueryEngine.cpp RunningQueryPlan.cpp RunningSource.cpp QueryEngineConfiguration.cpp Task.cpp)
 target_include_directories(nes-query-engine

@@ -129,7 +129,8 @@ void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& baseConfiguration,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const std::string& faultSimulationConfig)
 {
     while (true)
     {
@@ -150,7 +151,7 @@ void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const
 
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-            QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
+            QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)), faultSimulationConfig);
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
@@ -196,7 +197,13 @@ void SystestExecutor::runEndlessMode(const std::vector<SystestQuery>& queries, c
     else
     {
         runEndlessLocal(
-            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration, progressTracker);
+            queriesByOverride,
+            rng,
+            numberConcurrentQueries,
+            config.clusterConfig,
+            singleNodeWorkerConfiguration,
+            progressTracker,
+            config.faultSimulationConfig.getValue());
     }
 }
 
@@ -266,6 +273,10 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                 : QueryPerformanceMessageBuilder{discardPerformanceMessage};
+            if (config.faultSimulationConfig.isExplicitlySet())
+            {
+                throw std::runtime_error("remote fault sim not yet implemented");
+            }
             auto failed
                 = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
@@ -356,7 +367,13 @@ SystestExecutorResult SystestExecutor::executeSystests()
                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                         : QueryPerformanceMessageBuilder{discardPerformanceMessage};
                     auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
+                        queriesForConfig,
+                        numberConcurrentQueries,
+                        config.clusterConfig,
+                        configCopy,
+                        progressTracker,
+                        performanceMessage,
+                        config.faultSimulationConfig.getValue());
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

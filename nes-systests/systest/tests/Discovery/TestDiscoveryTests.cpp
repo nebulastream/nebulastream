@@ -167,7 +167,7 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFileOverridesDisabledTestFiles)
     writeTextFile(joinFile, "# groups:[Join]\n");
 
     SystestConfiguration config;
-    config.directlySpecifiedTestFiles = joinFile.string();
+    config.directlySpecifiedTestFiles.add(joinFile.string());
     config.disabledTestFiles.add("join.test");
 
     const auto discovered = discoverTestFiles(config);
@@ -205,7 +205,7 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesKeepTheNamesOfAFullRun)
 
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
-    config.directlySpecifiedTestFiles = testFile.string();
+    config.directlySpecifiedTestFiles.add(testFile.string());
 
     const auto directlySpecified = discoverTestFiles(config);
     config.testQueryNumbers.add(1);
@@ -232,7 +232,7 @@ TEST_F(TestDiscoveryTest, RelativeDirectlySpecifiedTestFilesResolveAgainstTheWor
 
     SystestConfiguration config;
     config.testDiscoverRoot = tempDir.get().string();
-    config.directlySpecifiedTestFiles = relativeFile.string();
+    config.directlySpecifiedTestFiles.add(relativeFile.string());
 
     const auto discovered = discoverTestFiles(config);
 
@@ -250,7 +250,7 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesOutsideTheRootAreNamedFromTh
 
     SystestConfiguration config;
     config.testDiscoverRoot = root.get().string();
-    config.directlySpecifiedTestFiles = testFile.string();
+    config.directlySpecifiedTestFiles.add(testFile.string());
 
     const auto discovered = discoverTestFiles(config);
 
