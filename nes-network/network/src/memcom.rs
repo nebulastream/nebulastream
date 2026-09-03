@@ -13,13 +13,17 @@
 */
 
 use crate::protocol::ConnectionIdentifier;
+use crate::{check_io, fault_testing};
 use futures::task::noop_waker_ref;
 use pin_project::{pin_project, pinned_drop};
 use std::collections::HashMap;
 use std::pin::Pin;
-use std::sync;
+use std::sync::Arc;
 use std::task::{Context, Poll};
-use tokio::io::{AsyncWrite, ReadHalf, SimplexStream, WriteHalf};
+use std::{io, sync};
+use tokio::io::{
+    AsyncRead, AsyncWrite, AsyncWriteExt, ReadBuf, ReadHalf, SimplexStream, WriteHalf,
+};
 use tokio::sync::mpsc::error::SendError;
 use tokio_retry2::strategy::{ExponentialBackoff, jitter};
 use tokio_retry2::{Retry, RetryError};
@@ -35,10 +39,91 @@ const SIMPLEX_BUFFER_SIZE: usize = 1024 * 1024;
 const INITIAL_RETRY_DELAY_MS: u64 = 2;
 const MAX_RETRY_DELAY_MS: u64 = 32;
 const MAX_RETRIES: usize = 10;
+
+#[derive(Debug)]
+pub struct FaultInjectingReader<R> {
+    inner: R,
+}
+
+#[derive(Debug)]
+pub struct FaultInjectingWriter<W> {
+    inner: W,
+}
+
+impl<R> FaultInjectingReader<R> {
+    pub fn new(inner: R) -> Self {
+        Self { inner }
+    }
+}
+
+impl<W> FaultInjectingWriter<W> {
+    pub fn new(inner: W) -> Self {
+        Self { inner }
+    }
+}
+
+impl<R> AsyncRead for FaultInjectingReader<R>
+where
+    R: AsyncRead + Unpin + Send,
+{
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<io::Result<()>> {
+        if check_io!() {
+            return Poll::Ready(Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "connection killed",
+            )));
+        }
+        Pin::new(&mut self.inner).poll_read(cx, buf)
+    }
+}
+
+impl<W> AsyncWrite for FaultInjectingWriter<W>
+where
+    W: AsyncWrite + Unpin + Send,
+{
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        if check_io!() {
+            return Poll::Ready(Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "connection killed",
+            )));
+        }
+        Pin::new(&mut self.inner).poll_write(cx, buf)
+    }
+
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        if check_io!() {
+            return Poll::Ready(Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "connection killed",
+            )));
+        }
+        Pin::new(&mut self.inner).poll_flush(cx)
+    }
+
+    fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+        if check_io!() {
+            return Poll::Ready(Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "connection killed",
+            )));
+        }
+        Pin::new(&mut self.inner).poll_shutdown(cx)
+    }
+}
+
 #[derive(Debug)]
 pub struct Channel {
-    pub read: ReadHalf<SimplexStream>,
-    pub write: SimplexStreamWriter,
+    pub read: FaultInjectingReader<ReadHalf<SimplexStream>>,
+    pub write: FaultInjectingWriter<SimplexStreamWriter>,
 }
 /// By default, a SimplexStream does not shut down the ReadHalf.
 /// SimplexStreamWriter is a wrapper around WriteHalf<SimplexStream> that calls shutdown on drop
@@ -126,20 +211,24 @@ impl MemCom {
         let (server_read, client_write) = tokio::io::simplex(SIMPLEX_BUFFER_SIZE);
 
         let server_channel = Channel {
-            read: server_read,
-            write: SimplexStreamWriter::new(server_write),
+            read: FaultInjectingReader::new(server_read),
+            write: FaultInjectingWriter::new(SimplexStreamWriter::new(server_write)),
         };
 
         let client_channel = Channel {
-            read: client_read,
-            write: SimplexStreamWriter::new(client_write),
+            read: FaultInjectingReader::new(client_read),
+            write: FaultInjectingWriter::new(SimplexStreamWriter::new(client_write)),
         };
 
         async fn try_connect(
             this: &MemCom,
             connection: &ConnectionIdentifier,
         ) -> core::result::Result<tokio::sync::mpsc::Sender<Channel>, RetryError<Error>> {
-            let channel = this.listening.read().await.get(connection).cloned();
+            let channel = if check_io!() {
+                None
+            } else {
+                this.listening.read().await.get(connection).cloned()
+            };
             let Some(channel) = channel else {
                 warn!("Could not connect to {}. Retrying...", connection);
                 return RetryError::to_transient("Worker not found in registry".into());

@@ -15,6 +15,8 @@
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
+use rand::Rng;
+use rand::RngExt;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};

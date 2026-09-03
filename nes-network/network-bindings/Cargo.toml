@@ -18,6 +18,9 @@ edition.workspace = true
 [lib]
 crate-type = ["rlib", "staticlib"]
 
+[features]
+fault-testing = ["nes_network/fault-testing"]
+
 [dependencies]
 cxx = { workspace = true }
 tokio = { workspace = true }

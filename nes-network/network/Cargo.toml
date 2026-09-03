@@ -18,10 +18,14 @@ edition.workspace = true
 [lib]
 name = "nes_network"
 
+[features]
+fault-testing = []
+
 [dependencies]
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 async-channel = { workspace = true }
+cxx = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
@@ -31,3 +35,5 @@ tokio-retry2 = { workspace = true }
 futures = { workspace = true }
 url = { workspace = true }
 pin-project = { workspace = true }
+log = { workspace = true }
+rand = { workspace = true }

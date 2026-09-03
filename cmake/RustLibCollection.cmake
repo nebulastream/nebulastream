@@ -241,7 +241,11 @@ function(_target_link_rust_impl exe_target)
                     "Rust crate '${crate}' required by ${exe_target} was not registered "
                     "with register_rust_crate(). Add a register_rust_crate() call in EnableRust.cmake.")
         endif ()
-        string(APPEND dep_lines "${crate} = { path = \"${crate_path}\" }\n")
+        set(_crate_features "")
+        if (NES_ENABLE_FAULT_TESTING AND crate STREQUAL "nes_network_bindings")
+            set(_crate_features ", features = [\"fault-testing\"]")
+        endif ()
+        string(APPEND dep_lines "${crate} = { path = \"${crate_path}\"${_crate_features} }\n")
         string(APPEND extern_lines "extern crate ${crate};\n")
     endforeach ()
 

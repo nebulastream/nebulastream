@@ -126,6 +126,10 @@ corrosion_import_crate(
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
 
+if (NES_ENABLE_FAULT_TESTING)
+    corrosion_set_features(nes_network_bindings FEATURES fault-testing)
+endif ()
+
 # Detect the CXX version from the unified workspace so umbrella crates can pin it.
 # Umbrella crates live outside the workspace, so they need an explicit version pin
 # to match the cxxbridge CLI that generated the C++ bridge code.

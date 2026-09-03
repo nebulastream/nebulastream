@@ -47,3 +47,8 @@ private:
 /// This function is required to allow threads from rust to set thread local variables required for logger context.
 /// I.e., threads created by the tokio runtime need to be associated with a worker and a thread name
 void identifyThread(rust::str threadName, rust::str host);
+void initActiveFaultContext(rust::String host);
+bool checkIo();
+bool failpoint(rust::str name);
+std::uint8_t deferredFailpoint(rust::str name);
+void applyFaultAction(std::uint8_t action);
