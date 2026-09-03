@@ -36,23 +36,19 @@ Registering a rule plugin consists of:
 The following is the commented `CMakeLists.txt` file for the RedundantUnionRemovalRule plugin. 
 
 ```cmake
-# Load Plugin Registry Utils
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+# Load runtime registry utils
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-# 1) Register Plugin 
-add_plugin_as_library(
-        RedundantUnionRemoval               # Plugin Name 
-        PlanRule                            # Registry Name
-        RedundantUnionRemovalRulePlugin     # Plugin library Name
-        RedundantUnionRemovalRule.cpp)      # List of source files
+# 1) Build the plugin implementation library
+add_library(RedundantUnionRemovalRulePlugin STATIC RedundantUnionRemovalRule.cpp)
+target_link_libraries(RedundantUnionRemovalRulePlugin PRIVATE nes-query-optimizer)
+target_include_directories(RedundantUnionRemovalRulePlugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
+# 2) Register the rule with the PlanRule registry
+link_plugin_library(nes-query-optimizer RedundantUnionRemovalRulePlugin)
+add_registry_entry(PlanRule RedundantUnionRemovalRule KEY RedundantUnionRemoval)
 
-target_include_directories(RedundantUnionRemovalRulePlugin
-        PUBLIC include
-        PRIVATE .
-)
-
-# 2) Register Tests
+# 3) Register Tests
 if (NES_ENABLES_TESTS)
     add_nes_unit_test(RedundantUnionRemovalRuleTest RedundantUnionRemovalRuleTest.cpp)
     target_link_libraries(RedundantUnionRemovalRuleTest nes-query-optimizer nes-logical-operators nes-test-util nes-query-optimizer-test-utils-lib)
@@ -60,7 +56,12 @@ if (NES_ENABLES_TESTS)
 endif ()
 ```
 
-To activate the plugin, you must add the line `activate_optional_plugin("Rules/RedundantUnionRemovalRule" ON)` to `nes-plugins/CMakeLists.txt`.  
+The plugin name `RedundantUnionRemovalRule` must match the C++ type: the `PlanRule` registry derives
+the header `RedundantUnionRemovalRule.hpp` and the entry expression `&RedundantUnionRemovalRule::create`
+from `${PLUGIN_NAME}`. `KEY RedundantUnionRemoval` sets the registry lookup key under which the
+optimizer instantiates the rule (it defaults to the plugin name if omitted).
+
+To activate the plugin, you must add the line `add_plugin("Rules/RedundantUnionRemovalRule")` to `nes-plugins/CMakeLists.txt`.  
 
 
 For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
@@ -145,6 +146,7 @@ First, we define the header `RedundantUnionRemovalRule.hpp`.
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <PlanRuleRegistry.hpp>
 
 namespace NES
 {
@@ -154,6 +156,7 @@ namespace NES
 class RedundantUnionRemovalRule
 {
 public:
+    static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments arguments);
     static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
 
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
@@ -165,7 +168,8 @@ static_assert(RuleConcept<RedundantUnionRemovalRule, LogicalPlan>);
 }
 ```
 
-We first declare the required constant `NAME` and the required method `LogicalPlan apply(LogicalPlan)`. 
+We first declare the static `create` function through which the registry instantiates the rule (see the
+end of this section), the required constant `NAME`, and the required method `LogicalPlan apply(LogicalPlan)`. 
 Then, because we want to control where the rule is placed within the dependency graph, we declare the methods
 `std::set<std::type_index> needs() const` and 
 `std::set<std::type_index> neededBy() const`. 
@@ -238,15 +242,15 @@ std::set<std::type_index> RedundantUnionRemovalRule::neededBy() const
 }
 ```
 
-To ensure that the NebulaStream optimizer is able to instantiate the newly created rule, we define the registration function.
+To ensure that the NebulaStream optimizer is able to instantiate the newly created rule, we define the static `create`
+function declared in the header. The `PlanRule` registry's entry expression is `&<PLUGIN_NAME>::create`, so every rule
+plugin must expose a static member with the signature
+`static PlanRuleRegistryReturnType create(PlanRuleRegistryArguments)`.
 While the `PlanRuleRegistryArguments` gives us access to multiple catalogs and also the optimizer configuration, 
 we do not need either for the given rule, and thus can safely ignore it. 
-The name of the registration must follow the pattern
-`PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::Register<PLUGIN_NAME>PlanRule(PlanRuleRegistryArguments)`, 
-where `<PLUGIN_NAME>` is equal to the plugin name defined in the plugin's CMakeLists.txt file. 
 
 ```cpp
-PlanRuleRegistryReturnType PlanRuleGeneratedRegistrar::RegisterRedundantUnionRemovalPlanRule(PlanRuleRegistryArguments)
+PlanRuleRegistryReturnType RedundantUnionRemovalRule::create(PlanRuleRegistryArguments)
 {
     return RedundantUnionRemovalRule{};
 }
