@@ -34,7 +34,6 @@
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
 #include <Thread.hpp>
 
 namespace NES
@@ -85,7 +84,7 @@ formatRow(const std::string_view eventType, const EventBase& event, const uint64
         eventType,
         timestampToMicroseconds(event.timestamp),
         event.threadId.getRawValue(),
-        event.queryId.getLocalQueryId().getRawValue(),
+        event.queryId.getRawValue(),
         pipelineId,
         taskId,
         tuples);

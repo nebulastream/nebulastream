@@ -33,7 +33,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -112,7 +113,7 @@ public:
 /// clang tidy doesn't recognize the ASSERT_TRUE guarding the optional accesses below
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
-/// The path a query takes: the descriptor goes through the catalog and the SourceProvider, which resolves
+/// The path a query takes: the descriptor goes through the SourceProvider, which resolves
 /// 'EngineEvents' in the SourceRegistry, and the resulting source hands the feed's rows to the query engine.
 TEST_F(EngineEventsSourceTest, SourceEmitsWhatTheWorkerPushedIntoItsFeed)
 {
@@ -122,16 +123,15 @@ TEST_F(EngineEventsSourceTest, SourceEmitsWhatTheWorkerPushedIntoItsFeed)
     EXPECT_TRUE(producer->tryPush("TASK_DONE,1001,2,1,4,5,0"));
     const std::string expected = "TASK_START,1000,2,1,4,5,64\nTASK_DONE,1001,2,1,4,5,0\n";
 
-    SourceCatalog catalog;
-    const auto logicalSource = catalog.addLogicalSource(Identifier::parse("engineStats"), statisticsSchema());
-    ASSERT_TRUE(logicalSource.has_value());
-
-    const auto descriptor = catalog.addPhysicalSource(
-        *logicalSource,
+    const LogicalSource logicalSource{Identifier::parse("engineStats"), statisticsSchema()};
+    const auto descriptor = SourceDescriptor::create(
+        PhysicalSourceId{1},
+        logicalSource,
         Identifier::parse("EngineEvents"),
         host,
         {{Identifier::parse("flush_interval_ms"), "10"}},
-        {{Identifier::parse("type"), "CSV"}});
+        {{Identifier::parse("type"), "CSV"}},
+        false);
     ASSERT_TRUE(descriptor.has_value()) << "Creating the physical source failed";
 
     auto bufferManager = BufferManager::create(
