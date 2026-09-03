@@ -28,6 +28,7 @@
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <FaultSimulator.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -212,6 +213,7 @@ void failTask(Task& task, Exception exception);
 
 void handleTask(const auto& handler, Task task)
 {
+    FAILPOINT("task.handle");
     cpptrace::try_catch(
         [&]
         {

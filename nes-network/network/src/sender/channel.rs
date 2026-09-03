@@ -15,6 +15,7 @@
 use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
+use rand::Rng;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -23,6 +24,7 @@ use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span, debug, info, info_span, trace, warn};
+use crate::failpoint;
 
 use super::control::*;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -184,7 +186,27 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         channel_control_message: ChannelCommand,
     ) -> InternalResult<()> {
         match channel_control_message {
-            ChannelCommand::Data(data) => self.pending_writes.push_back(data),
+            ChannelCommand::Data(data) => {
+
+                if !data.closing && failpoint!("sender.drop_random") {
+                    // 1/3 of sequence numbers are dropped entirely
+                    // 1/3 of sequence numbers have some of their chunks dropped
+                    // 1/3 of sequence numbers go through completely
+                    let n: i32 = rand::rng().random();
+                    match data.sequence_number % 3 {
+                        0 => return Ok(()),
+                        1 => {
+                            if data.chunk_number % 2 == 1 {
+                                return Ok(());
+                            }
+                        },
+                        2 => {},
+                        _ => unreachable!(),
+                    }
+                }
+
+                self.pending_writes.push_back(data)
+            }
             ChannelCommand::Flush(done) => {
                 Self::cancellable(&self.cancellation_token, self.writer.flush())
                     .await?

@@ -39,6 +39,7 @@
 #include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <FaultSimulator.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
@@ -51,6 +52,9 @@ extern void initNetworkServices(const std::string& connectionAddr, const NES::Ho
 
 namespace NES
 {
+
+const auto killedException = std::unexpected(Exception{"connection was killed", 14});
+
 
 SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
@@ -96,6 +100,10 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
 {
     CPPTRACE_TRY
     {
+        if (FAILPOINT("worker.before_query_start"))
+        {
+            return killedException;
+        }
         /// Check if the plan already has a local query ID, generate one if needed
         /// but preserve the distributed query ID if present
         if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
@@ -123,6 +131,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->startQuery(plan.getQueryId(), std::move(result));
+        FAILPOINT("worker.before_query_start_response");
         return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
@@ -136,8 +145,13 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, bool
 {
     CPPTRACE_TRY
     {
+        if (FAILPOINT("worker.before_query_stop"))
+        {
+            return killedException;
+        }
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId, graceful);
+        FAILPOINT("worker.before_query_stop_response");
         return {};
     }
     CPPTRACE_CATCH(...)
@@ -156,6 +170,7 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
         {
             return std::unexpected{QueryNotFound("{}", queryId)};
         }
+        FAILPOINT("worker.before_query_status_response");
         return status.value();
     }
     CPPTRACE_CATCH(...)
@@ -165,7 +180,7 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
     std::unreachable();
 }
 
-WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+std::expected<WorkerStatus, Exception> SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
     const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
     const auto summaries = nodeEngine->getQueryLog()->getStatus();
@@ -213,6 +228,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
             }
         }
     }
+    FAILPOINT("worker.before_worker_status_response");
     return status;
 }
 

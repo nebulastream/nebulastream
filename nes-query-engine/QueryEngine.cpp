@@ -45,6 +45,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <FaultSimulator.hpp>
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryEngineConfiguration.hpp>
@@ -340,6 +341,11 @@ public:
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
+            if (FAILPOINT("task_queue.reorder_random"))
+            {
+                auto delay = std::chrono::milliseconds(1 + std::rand() % 100);
+                delayedAdmissionTaskSubmitter.submitTaskIn(std::move(task), delay);
+            }
             taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
@@ -424,6 +430,8 @@ public:
         , bufferProvider(std::move(bufferProvider))
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
+        , delayedAdmissionTaskSubmitter([this](Task&& task) noexcept { taskQueue.addAdmissionTaskBlocking({}, std::move(task)); })
+
     {
     }
 
@@ -472,6 +480,8 @@ private:
 
     TaskQueue<Task> taskQueue;
     DelayedTaskSubmitter<> delayedTaskSubmitter;
+    DelayedTaskSubmitter<> delayedAdmissionTaskSubmitter;
+
 
     /// Class Invariant: numberOfThreads == pool.size().
     /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
@@ -719,9 +729,11 @@ bool ThreadPool::WorkerThread::operator()(StartQueryTask& startQuery) const
     {
         auto flags = pool.terminationFlags.wlock();
         auto it = flags->find(startQuery.queryId);
-        if (it == flags->end()) {
+        if (it == flags->end())
+        {
             flags->emplace(startQuery.queryId, false);
-        } else
+        }
+        else
         {
             it->second.store(false);
         }
@@ -785,8 +797,9 @@ void ThreadPool::addThread(const Host& host)
     pool.emplace_back(
         fmt::format("WorkerThread-{}", numberOfThreads_),
         host,
-        [this, id = numberOfThreads_++](const std::stop_token& stopToken)
+        [this, id = numberOfThreads_++, host](const std::stop_token& stopToken)
         {
+            initActiveFaultContext(host);
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
@@ -830,7 +843,6 @@ QueryEngine::QueryEngine(
 void QueryEngine::stop(QueryId queryId, bool graceful)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    // TODO ok? I think we need this if the node is stalled due to backpressure
     if (!graceful)
     {
         auto flags = threadPool->terminationFlags.wlock();
