@@ -82,7 +82,7 @@ void EmitOperatorHandler::setChunkNumber(
     }
 }
 
-void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
+void EmitOperatorHandler::start(PipelineExecutionContext&)
 {
 }
 

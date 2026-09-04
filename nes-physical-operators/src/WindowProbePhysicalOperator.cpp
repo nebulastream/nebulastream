@@ -56,7 +56,7 @@ void setupProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelin
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null!");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->start(*pipelineCtx, 0);
+    opHandler->start(*pipelineCtx);
 }
 
 void terminateProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)

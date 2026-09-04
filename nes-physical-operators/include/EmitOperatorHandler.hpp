@@ -60,7 +60,7 @@ class EmitOperatorHandler final : public OperatorHandler
 public:
     void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);
 
-    void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     folly::Synchronized<std::map<SequenceNumberForOriginId, SequenceState>> sequenceStates;
