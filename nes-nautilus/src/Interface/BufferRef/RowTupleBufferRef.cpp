@@ -77,8 +77,12 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
 {
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
-    /// Check if index is in-bounds
-    if (recordIndex < capacity)
+    /// Check if index is in-bounds. #1703: derive the capacity from the buffer's actual size at runtime
+    /// (rather than the compile-time-baked bufferSize/tupleSize) so the same compiled pipeline can write into a
+    /// variable-sized (size-class) buffer. tupleSize is a schema-derived compile-time constant; for a default-size
+    /// buffer this runtime capacity equals the previous baked `capacity`, so fixed-size pipelines are unaffected.
+    const auto runtimeCapacity = recordBuffer.getBufferSize() / tupleSize;
+    if (recordIndex < runtimeCapacity)
     {
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
