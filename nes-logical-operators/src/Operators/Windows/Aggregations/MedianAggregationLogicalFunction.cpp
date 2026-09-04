@@ -114,7 +114,7 @@ AggregationLogicalFunctionRegistryReturnType MedianAggregationLogicalFunction::c
 {
     if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidLogicalFunctionArgument("MedianAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
     return MedianAggregationLogicalFunction{arguments.on.at(0)};
 }

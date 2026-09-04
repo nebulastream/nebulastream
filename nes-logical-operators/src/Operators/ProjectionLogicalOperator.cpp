@@ -339,7 +339,7 @@ Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const R
     auto children = plan->getChildrenFor(id, context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("ProjectionLogicalOperator must have exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("ProjectionLogicalOperator must have exactly one child, but got {}", children.size());
     }
 
     return ProjectionLogicalOperator::create(children.at(0), std::move(projections), ProjectionLogicalOperator::Asterisk(asterisk));
