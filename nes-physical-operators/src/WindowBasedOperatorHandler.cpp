@@ -41,7 +41,7 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 {
 }
 
-void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
+void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
 }

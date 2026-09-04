@@ -43,7 +43,7 @@ public:
 
     virtual ~OperatorHandler() = default;
 
-    virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
+    virtual void start(PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };

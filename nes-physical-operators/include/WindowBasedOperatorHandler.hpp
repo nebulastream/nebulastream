@@ -64,7 +64,7 @@ public:
 
     ~WindowBasedOperatorHandler() override = default;
 
-    void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
