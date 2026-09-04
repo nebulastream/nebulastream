@@ -1,4 +1,4 @@
-# name: udf/PyPyUdf.test
+1# name: udf/PyPyUdf.test
 # description: scalar UDFs registered via BRIDGE 'pypy', same contract as the PythonUdf group but resolved to the PyPy bridge
 # groups: [PyPyUdf]
 

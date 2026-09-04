@@ -114,7 +114,11 @@ InProcessBackend::InProcessBackend(const UdfDescriptor& descriptor) : argCount(d
     {
         const std::string message = errorMessage != nullptr ? errorMessage : "unknown error";
         std::free(errorMessage);
-        dlclose(libHandle);
+        /// Not dlclose()'d -- see the "Never dlclose" comment on the destructor below. initializeFn may
+        /// have already initialized an embedded runtime (e.g. Py_InitializeEx) that never gets finalized;
+        /// unmapping the .so here wipes its "already initialized" state (e.g. the bridge's std::once_flag)
+        /// without the runtime itself knowing, so the next dlopen of this same path re-runs init on an
+        /// already-live-but-orphaned runtime and crashes.
         throw CannotLoadUdf("Failed to initialize UDF '{}': {}", descriptor.getEntrypoint(), message);
     }
 
