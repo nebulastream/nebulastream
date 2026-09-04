@@ -1,0 +1,59 @@
+# name: parser/RenameAfterAgg.test
+# description: Checks if the AntlrSQLQueryPlanCreator correctly assigns AS renames
+# groups: [Parser]
+
+CREATE LOGICAL SOURCE input(
+    id UINT64 NOT NULL,
+    value UINT64 NOT NULL,
+    ts UINT64 NOT NULL
+);
+
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1,10,1000
+1,20,1010
+
+CREATE SINK output(
+    id UINT64 NOT NULL,
+    sumValue UINT64 NOT NULL,
+    startValue UINT64 NOT NULL
+) TYPE File;
+
+CREATE SINK output2(
+    id UINT64 NOT NULL,
+    sumValue UINT64 NOT NULL,
+    start UINT64 NOT NULL
+) TYPE File;
+
+SELECT id, SUM(value) AS sumValue, start as startValue
+FROM input
+GROUP BY id
+WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+INTO output;
+----
+1 10 995
+1 10 1000
+1 20 1005
+1 20 1010
+
+SELECT id, start as startValue, SUM(value) AS sumValue
+FROM input
+GROUP BY id
+WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+INTO output;
+----
+1 10 995
+1 10 1000
+1 20 1005
+1 20 1010
+
+SELECT id, SUM(value) AS sumValue, start
+FROM input
+GROUP BY id
+WINDOW SLIDING(ts, size 10 ms, advance by 5 ms)
+INTO output2;
+----
+1 10 995
+1 10 1000
+1 20 1005
+1 20 1010
