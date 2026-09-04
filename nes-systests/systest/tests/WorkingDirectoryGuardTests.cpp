@@ -20,11 +20,10 @@
 
 #include <gtest/gtest.h>
 
-#include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
+#include <Config/Config.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <Logging.hpp>
 #include <TemporaryDirectory.hpp>
 #include <WorkingDirectoryGuard.hpp>
 
@@ -46,7 +45,7 @@ namespace NES
 class WorkingDirectoryGuardTest : public Testing::BaseUnitTest
 {
 public:
-    static void SetUpTestSuite() { Logger::setupLogging("WorkingDirectoryGuardTest.log", LogLevel::LOG_DEBUG); }
+    static void SetUpTestSuite() { setupLogging(SystestConfiguration{}); }
 };
 
 TEST_F(WorkingDirectoryGuardTest, EmptiesTheDirectoryAndLeavesNoArtifacts)
@@ -54,7 +53,7 @@ TEST_F(WorkingDirectoryGuardTest, EmptiesTheDirectoryAndLeavesNoArtifacts)
     const Testing::TemporaryDirectory tempDir;
     const auto workingDir = tempDir.get() / "work";
     std::filesystem::create_directories(workingDir / "stale");
-    std::ofstream{workingDir / "stale.csv"};
+    const std::ofstream staleFile{workingDir / "stale.csv"};
 
     const WorkingDirectoryGuard guard{workingDir.string() + "/"};
 
