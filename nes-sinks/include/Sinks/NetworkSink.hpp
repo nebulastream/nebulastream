@@ -107,9 +107,30 @@ struct ConfigParametersNetworkSink
         size_t{0},
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
 
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
+        "BACKPRESSURE_UPPER_THRESHOLD",
+        1000,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
+        "BACKPRESSURE_LOWER_THRESHOLD",
+        200,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SinkDescriptor::parameterMap, DATA_ENDPOINT, CHANNEL, BIND, SENDER_QUEUE_SIZE, MAX_PENDING_ACKS);
+            SinkDescriptor::parameterMap,
+            DATA_ENDPOINT,
+            CHANNEL,
+            BIND,
+            SENDER_QUEUE_SIZE,
+            MAX_PENDING_ACKS,
+            BACKPRESSURE_UPPER_THRESHOLD,
+            BACKPRESSURE_LOWER_THRESHOLD);
 };
 
 /// NOLINTEND(cert-err58-cpp)
