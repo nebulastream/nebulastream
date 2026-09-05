@@ -51,7 +51,9 @@ public:
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<int8_t*>& /*recordBufferPtr*/,
         const nautilus::val<uint64_t>& /*recordIndex*/,
-        const InputFormatIndexer& indexer,
+        const InputFormatIndexer&,
+        const nautilus::val<const InputFormatIndexer*>& runtimeIndexer,
+        const nautilus::val<const std::vector<std::string>*>&,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
         const TupleBufferRef& bufferRef) const override;
 

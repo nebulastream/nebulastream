@@ -21,6 +21,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <fmt/format.h>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
@@ -31,6 +32,7 @@ namespace NES
 {
 
 class CompilationContext;
+class PipelineExecutionContext;
 
 /// Handle to a function that an operator registered in its pipeline's nautilus module during setup().
 /// All functions of a pipeline are compiled together into exactly one module, so the handle only becomes
@@ -73,6 +75,8 @@ class CompilationContext
 {
     /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    PipelineExecutionContext& pipelineExecutionContext; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    RuntimeStateRegistry& runtimeStateRegistry; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
     uint64_t functionNameCounter = 0;
     /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
@@ -80,7 +84,21 @@ class CompilationContext
     bool compiled = false;
 
 public:
-    explicit CompilationContext(nautilus::engine::NautilusModule& module) : module(module) { }
+    CompilationContext(
+        nautilus::engine::NautilusModule& module,
+        PipelineExecutionContext& pipelineExecutionContext,
+        RuntimeStateRegistry& runtimeStateRegistry)
+        : module(module), pipelineExecutionContext(pipelineExecutionContext), runtimeStateRegistry(runtimeStateRegistry)
+    {
+    }
+
+    [[nodiscard]] PipelineExecutionContext& getPipelineExecutionContext() const { return pipelineExecutionContext; }
+
+    uint64_t registerRuntimeState(const RuntimeStateType type, void* const address)
+    {
+        PRECONDITION(!compiled, "registerRuntimeState() must not be called after the module has been compiled");
+        return runtimeStateRegistry.registerState(type, address);
+    }
 
     template <typename R, typename... FunctionArguments>
     auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)

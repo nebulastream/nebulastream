@@ -67,6 +67,7 @@ public:
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual NautilusBuffer getDataStructureRef(
+        const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry,
@@ -79,6 +80,7 @@ public:
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
     void setStartOfEntries(const std::span<std::byte>& startOfSliceCache);
+    [[nodiscard]] SliceCacheEntry* getStartOfEntries() const;
 
 protected:
     SliceCacheEntry* startOfSliceCache;

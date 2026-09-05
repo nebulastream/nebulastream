@@ -57,7 +57,7 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const QualifiedIdentifier& fieldName,
-    const std::vector<std::string>& nullValues,
+    const nautilus::val<const std::vector<std::string>*>& nullValues,
     QuotationType quotationType);
 
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
@@ -111,19 +111,17 @@ VarVal parseFixedSizeIntoVarVal(
     const bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::vector<std::string>& nullValues)
+    const nautilus::val<const std::vector<std::string>*>& nullValues)
 {
     /// As this is a C++ variable, this branch does not impact our tracing or the execution.
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        const auto parseResult = nautilus::invoke(parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nullValues);
         const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = nautilus::invoke(
-        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+    const auto parseResult = nautilus::invoke(parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nullValues);
     const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
     return VarVal{nautilusValue, nullable, false};
 }

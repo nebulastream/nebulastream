@@ -55,8 +55,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer
-        = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
+    const auto hashMapBuffer = sliceStoreRef->getDataStructureRef(
+        timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider, ctx.runtimeStateRegistry);
     ChainedHashMapRef hashMap{hashMapBuffer.asArg(), hashMapConfig};
 
     /// Calling the key functions to add/update the keys to the record

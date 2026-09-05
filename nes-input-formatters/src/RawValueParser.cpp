@@ -54,7 +54,7 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const QualifiedIdentifier& fieldName,
-    const std::vector<std::string>& nullValues,
+    const nautilus::val<const std::vector<std::string>*>& nullValues,
     const QuotationType quotationType)
 {
     switch (dataType.type)
@@ -136,11 +136,7 @@ void parseRawValueIntoRecord(
             if (dataType.nullable)
             {
                 isNull = nautilus::invoke(
-                    {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = false},
-                    checkIsNullProxy,
-                    fieldAddress,
-                    fieldSize,
-                    nautilus::val<const std::vector<std::string>*>{&nullValues});
+                    {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = false}, checkIsNullProxy, fieldAddress, fieldSize, nullValues);
             }
 
             switch (quotationType)

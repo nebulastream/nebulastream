@@ -45,23 +45,21 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(this->bufferRef);
 
-    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
+    if (not inputFormatterBufferRef->indexBuffer(
+            recordBuffer, executionCtx.pipelineMemoryProvider.arena, executionCtx.runtimeInputFormatterRegistry))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
     }
 
-    /// call open on all child operators
     openChild(executionCtx, recordBuffer);
 
-    /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
@@ -74,15 +72,45 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         rawScan(executionCtx, recordBuffer);
         return;
     }
-    /// call open on all child operators
     openChild(executionCtx, recordBuffer);
-    /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = uint64_t{0}; i < numberOfRecords; i = i + uint64_t{1})
     {
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+}
+
+bool ScanPhysicalOperator::hasRuntimeInputFormatter() const
+{
+    return std::dynamic_pointer_cast<InputFormatter>(bufferRef) != nullptr;
+}
+
+std::uintptr_t ScanPhysicalOperator::getRuntimeInputFormatterHandle() const
+{
+    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
+    {
+        return inputFormatterBufferRef->getRuntimeInputFormatterHandle();
+    }
+    return 0;
+}
+
+std::uintptr_t ScanPhysicalOperator::getRuntimeIndexerMetaDataHandle() const
+{
+    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
+    {
+        return inputFormatterBufferRef->getRuntimeIndexerMetaDataHandle();
+    }
+    return 0;
+}
+
+std::uintptr_t ScanPhysicalOperator::getRuntimeNullValuesHandle() const
+{
+    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
+    {
+        return inputFormatterBufferRef->getRuntimeNullValuesHandle();
+    }
+    return 0;
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

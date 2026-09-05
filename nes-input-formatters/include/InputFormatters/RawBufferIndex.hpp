@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -60,6 +61,8 @@ public:
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const InputFormatIndexer& indexer,
+        const nautilus::val<const InputFormatIndexer*>& runtimeIndexer,
+        const nautilus::val<const std::vector<std::string>*>& runtimeNullValues,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
         const TupleBufferRef& bufferRef) const
         = 0;

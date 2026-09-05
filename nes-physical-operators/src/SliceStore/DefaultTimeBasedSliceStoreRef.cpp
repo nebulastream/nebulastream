@@ -26,6 +26,7 @@
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -44,12 +45,11 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const DefaultTimeBasedSliceStoreRef* sliceStoreRef,
-    DefaultTimeBasedSliceStore* sliceStore,
     AbstractBufferProvider* bufferProvider)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "The operator handler should not be null");
     PRECONDITION(sliceStoreRef != nullptr, "The slice store ref should not be null");
-    PRECONDITION(sliceStore != nullptr, "The slice store should not be null");
+    PRECONDITION(sliceStoreRef->sliceStore != nullptr, "The slice store should not be null");
     PRECONDITION(bufferProvider != nullptr, "The buffer provider should not be null");
 
     auto* windowHandler = dynamic_cast<WindowBasedOperatorHandler*>(operatorHandlerPtr);
@@ -59,7 +59,7 @@ void defaultTimeBasedSliceStoreRefCacheMissProxy(
     const auto createFunction = sliceStoreRef->createSlicesFunction(*windowHandler, *bufferProvider);
 
     /// Look up or create the slice in the slice store
-    const auto slices = sliceStore->getSlicesOrCreate(timestamp, createFunction);
+    const auto slices = sliceStoreRef->sliceStore->getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(slices.size() == 1, "Expected exactly one slice for the given timestamp, but got {}", slices.size());
 
     /// Use the data structure extractor to get the operator-specific data structure, then store its pointer for usage in nautilus
@@ -93,14 +93,35 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 {
 }
 
+const DefaultTimeBasedSliceStoreRef*
+resolveRuntimeSliceStoreRef(const RuntimeStateRegistry* runtimeStateRegistry, const uint64_t runtimeStateSlot)
+{
+    PRECONDITION(runtimeStateRegistry != nullptr, "Runtime state registry should not be null");
+    auto* const state = runtimeStateRegistry->getState(runtimeStateSlot, RuntimeStateType::SLICE_STORE_REF);
+    PRECONDITION(state != nullptr, "Missing slice store runtime state for slot {}", runtimeStateSlot);
+    return static_cast<const DefaultTimeBasedSliceStoreRef*>(state);
+}
+
+SliceCacheEntry* resolveRuntimeSliceCacheStart(const DefaultTimeBasedSliceStoreRef* sliceStoreRef)
+{
+    PRECONDITION(sliceStoreRef != nullptr, "The slice store ref should not be null");
+    auto* const cacheStart = sliceStoreRef->sliceCache->getStartOfEntries();
+    PRECONDITION(cacheStart != nullptr, "The slice cache should be initialized");
+    return cacheStart;
+}
+
 NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<OperatorHandler*>& operatorHandler,
-    nautilus::val<AbstractBufferProvider*> bufferProvider)
+    nautilus::val<AbstractBufferProvider*> bufferProvider,
+    const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry)
 {
-    nautilus::val<DefaultTimeBasedSliceStore*> sliceStoreVal{sliceStore};
+    const auto runtimeSliceStoreRef
+        = nautilus::invoke(resolveRuntimeSliceStoreRef, runtimeStateRegistry, nautilus::val<uint64_t>{runtimeStateSlot});
+    const auto runtimeCacheStart = nautilus::invoke(resolveRuntimeSliceCacheStart, runtimeSliceStoreRef);
     return sliceCache->getDataStructureRef(
+        runtimeCacheStart,
         timestamp,
         workerThreadId,
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
@@ -111,8 +132,7 @@ NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
                 operatorHandler,
                 timestamp,
                 workerThreadId,
-                nautilus::val<const DefaultTimeBasedSliceStoreRef*>(this),
-                sliceStoreVal,
+                runtimeSliceStoreRef,
                 bufferProvider);
         },
         bufferProvider);
@@ -132,13 +152,10 @@ void setupSliceStoreProxy(
     self->sliceCache->setStartOfEntries(startOfEntries);
 }
 
-void DefaultTimeBasedSliceStoreRef::setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx)
+void DefaultTimeBasedSliceStoreRef::setupSliceStore(CompilationContext& compilationContext)
 {
-    nautilus::invoke(
-        setupSliceStoreProxy,
-        nautilus::val<DefaultTimeBasedSliceStore*>{sliceStore},
-        pipelineCtx,
-        nautilus::val<DefaultTimeBasedSliceStoreRef*>{this});
+    setupSliceStoreProxy(sliceStore, std::addressof(compilationContext.getPipelineExecutionContext()), this);
+    runtimeStateSlot = compilationContext.registerRuntimeState(RuntimeStateType::SLICE_STORE_REF, this);
 }
 
 }

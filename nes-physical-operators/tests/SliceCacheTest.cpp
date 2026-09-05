@@ -320,14 +320,16 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
     using CompiledCacheFunction = std::function<nautilus::val<SliceCacheEntry::DataStructure>(
-        nautilus::val<uint64_t>, nautilus::val<SliceCacheEntry::DataStructure>, nautilus::val<bool*>)>;
+        nautilus::val<SliceCacheEntry*>, nautilus::val<uint64_t>, nautilus::val<SliceCacheEntry::DataStructure>, nautilus::val<bool*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<uint64_t>& timestampRaw,
+        [&](const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
+            const nautilus::val<uint64_t>& timestampRaw,
             const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
             const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
         {
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             auto resultBuf = sliceCache->getDataStructureRef(
+                runtimeCacheStart,
                 timestamp,
                 nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
@@ -351,7 +353,8 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
     for (const auto& op : operations)
     {
         callbackCalled = false;
-        const auto* const rawResult = sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult, &callbackCalled);
+        const auto* const rawResult
+            = sliceCacheCallableFunction(sliceCache->getStartOfEntries(), op.timestamp.getRawValue(), op.expectedResult, &callbackCalled);
 
         EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
 
@@ -374,13 +377,15 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
 
     bool callbackCalled = false;
     using CompiledCacheFunction = std::function<nautilus::val<SliceCacheEntry::DataStructure>(
+        nautilus::val<SliceCacheEntry*>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<SliceCacheEntry::DataStructure>,
         nautilus::val<bool*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<Timestamp::Underlying>& timestampRaw,
+        [&](const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
+            const nautilus::val<Timestamp::Underlying>& timestampRaw,
             const nautilus::val<Timestamp::Underlying>& sliceStartRaw,
             const nautilus::val<Timestamp::Underlying>& sliceEndRaw,
             const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
@@ -388,6 +393,7 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
         {
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             auto resultBuf = sliceCache->getDataStructureRef(
+                runtimeCacheStart,
                 timestamp,
                 nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
@@ -423,7 +429,12 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
         /// Track whether the replacement callback was invoked to distinguish hits from misses
         callbackCalled = false;
         const auto* const rawResult = sliceCacheCallableFunction(
-            op.timestamp.getRawValue(), op.sliceStart.getRawValue(), op.sliceEnd.getRawValue(), op.expectedResult, &callbackCalled);
+            sliceCache->getStartOfEntries(),
+            op.timestamp.getRawValue(),
+            op.sliceStart.getRawValue(),
+            op.sliceEnd.getRawValue(),
+            op.expectedResult,
+            &callbackCalled);
 
         /// Perform the same lookup in the reference cache
         auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
