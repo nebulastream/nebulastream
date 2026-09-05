@@ -3,7 +3,7 @@
 # groups: [milestone, benchmark, benchmark_small]
 
 # Source definitions
-CREATE LOGICAL SOURCE lrb(creationTS UINT64, vehicle INT16, speed FLOAT32, highway INT16, lane INT16, direction INT16, position INT32);
+CREATE LOGICAL SOURCE lrb(creationTS UINT64 NOT NULL, vehicle INT16, speed FLOAT32, highway INT16, lane INT16, direction INT16, position INT32);
 CREATE PHYSICAL SOURCE FOR lrb TYPE File;
 ATTACH FILE small/lrb/linear_road_benchmark_100K.csv
 

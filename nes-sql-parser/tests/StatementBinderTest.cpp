@@ -30,6 +30,7 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
+#include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -1028,6 +1029,33 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, WindowedJoinAfterIntervalJoinInSameRelationStaysAWindowedJoin)
+{
+    /// The interval bounds belong to their own JOIN clause. If they leak, the following LEFT JOIN is taken for an
+    /// interval join and rejected, because interval joins only support INNER.
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) ON s1key = s2key "
+                              "INTERVAL (ts1, ts2, 0 MS, 3 MS) "
+                              "LEFT JOIN (SELECT * FROM s3) ON s1key = s3key "
+                              "WINDOW TUMBLING (ts1, ts3, SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    ASSERT_EQ(1, getOperatorByType<IntervalJoinLogicalOperator>(plan).size());
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, IntervalJoinBoundExceedingSigned64BitIntegerIsRejected)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) ON s1key = s2key "
+                              "INTERVAL (ts1, ts2, 0 MS, 99999999999999999999 MS) INTO sink";
+    EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query), Exception);
+
+    /// Fits into an int64_t, but not once converted to milliseconds.
+    const std::string overflowingUnit = "SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2) ON s1key = s2key "
+                                        "INTERVAL (ts1, ts2, 0 MS, 3000000000000000 DAY) INTO sink";
+    EXPECT_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(overflowingUnit), Exception);
 }
 
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)

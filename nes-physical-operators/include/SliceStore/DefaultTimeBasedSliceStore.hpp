@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 #include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <SliceStore/SlicedWindowStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
 #include <Identifiers/Identifiers.hpp>
@@ -52,7 +52,7 @@ struct SlicesAndState
     WindowInfoState windowState;
 };
 
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class DefaultTimeBasedSliceStore final : public SlicedWindowStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration);
@@ -71,7 +71,7 @@ public:
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 
-    /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration;
+    /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration,
     /// the caller only supplies the two operator-specific callbacks.
     std::unique_ptr<SliceStoreRef> createSliceStoreRef(
         DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator);

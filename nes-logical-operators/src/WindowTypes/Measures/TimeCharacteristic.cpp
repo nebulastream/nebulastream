@@ -26,6 +26,7 @@
 
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -35,6 +36,7 @@
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <folly/hash/Hash.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {
@@ -120,6 +122,25 @@ TimeCharacteristicWrapper::Type TimeCharacteristicWrapper::getType() const
         underlying);
 }
 
+namespace
+{
+/// A NULL timestamp would silently read as 0 and place the tuple at the start of time, so reject it up front.
+BoundEventTimeCharacteristic bindEventTime(const LogicalFunction& erasedFieldAccess, const TimeUnit& unit)
+{
+    const auto fieldAccess = erasedFieldAccess.tryGetAs<FieldAccessLogicalFunction>();
+    if (not fieldAccess.has_value())
+    {
+        throw CannotInferSchema("Event-time characteristic must resolve to a field access");
+    }
+    const auto field = (*fieldAccess)->getField();
+    if (field.getDataType().nullable)
+    {
+        throw CannotInferSchema("Timestamp field {} must not be nullable", field.getFullyQualifiedName());
+    }
+    return BoundEventTimeCharacteristic{.field = *fieldAccess, .unit = unit};
+}
+}
+
 BoundTimeCharacteristic TimeCharacteristicWrapper::withInferredSchema(const Schema<Field, Unordered>& schema) const
 {
     return std::visit(
@@ -131,19 +152,13 @@ BoundTimeCharacteristic TimeCharacteristicWrapper::withInferredSchema(const Sche
                     { return BoundTimeCharacteristic{ingestionTimeCharacteristic}; },
                     [&](const UnboundEventTimeCharacteristic& unboundEventTimeCharacteristic)
                     {
-                        const auto erasedFieldAccess = unboundEventTimeCharacteristic.field.withInferredDataType(schema);
-                        const auto fieldAccessOpt = erasedFieldAccess.tryGetAs<FieldAccessLogicalFunction>();
-
-                        return BoundTimeCharacteristic{
-                            BoundEventTimeCharacteristic{.field = fieldAccessOpt.value(), .unit = unboundEventTimeCharacteristic.unit}};
+                        return BoundTimeCharacteristic{bindEventTime(
+                            unboundEventTimeCharacteristic.field.withInferredDataType(schema), unboundEventTimeCharacteristic.unit)};
                     },
                     [&](const BoundEventTimeCharacteristic& boundEventTimeCharacteristic)
                     {
-                        const auto erasedFieldAccess = boundEventTimeCharacteristic.field.withInferredDataType(schema);
-                        const auto fieldAccessOpt = erasedFieldAccess.tryGetAs<FieldAccessLogicalFunction>();
-
-                        return BoundTimeCharacteristic{
-                            BoundEventTimeCharacteristic{.field = fieldAccessOpt.value(), .unit = boundEventTimeCharacteristic.unit}};
+                        return BoundTimeCharacteristic{bindEventTime(
+                            boundEventTimeCharacteristic.field.withInferredDataType(schema), boundEventTimeCharacteristic.unit)};
                     },
                 },
                 unboundBound);

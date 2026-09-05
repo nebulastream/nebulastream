@@ -3,11 +3,11 @@
 # groups: [milestone, benchmark, benchmark_small, Aggregation]
 
 # Source definitions
-CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64 NOT NULL, ip_address VARSIZED);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
 ATTACH FILE small/ysb/ysb1k_with_varsized_100K.csv
 
-CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64 NOT NULL, ip_address VARSIZED);
 CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
 ATTACH FILE small/ysb/ysb10k_with_varsized_100K.csv
 
