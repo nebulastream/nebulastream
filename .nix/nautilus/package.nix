@@ -51,8 +51,9 @@ let
       src = nautilusSrc;
 
       patches = [
-        ./patches/0001-disable-ubsan-function-call-check.patch
+        ../../vcpkg/vcpkg-registry/ports/nautilus/0001-disable-ubsan-function-call-check.patch
         ./patches/0002-auto-guard-throwing-invokes.patch
+        ../../vcpkg/vcpkg-registry/ports/nautilus/0005-object-code-cache.patch
       ];
 
       nativeBuildInputs = [
