@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -26,6 +27,17 @@
 
 namespace NES
 {
+class PhysicalPlanSignature final
+{
+public:
+    explicit PhysicalPlanSignature(std::string value);
+
+    [[nodiscard]] const std::string& getRawValue() const;
+
+private:
+    std::string value;
+};
+
 /// Stores the physical (executable) plan. This plan holds the output of the query optimizer and the input to the
 /// query compiler. It holds the roots of the plan as PhysicalOperatorWrapper containing the actual PhysicalOperator
 /// and additional information needed during query compilation.
@@ -41,12 +53,15 @@ public:
     [[nodiscard]] const Roots& getRootOperators() const;
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
+    [[nodiscard]] const PhysicalPlanSignature& getSignature() const;
+    void setSignature(PhysicalPlanSignature signature);
 
 private:
     QueryId queryId;
     Roots rootOperators;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize;
+    std::optional<PhysicalPlanSignature> signature;
 
     [[nodiscard]] std::string toString() const;
 

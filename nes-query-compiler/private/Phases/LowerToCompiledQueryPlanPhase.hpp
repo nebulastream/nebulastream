@@ -15,7 +15,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -24,13 +26,19 @@
 #include <CompiledQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
 
+namespace NES::QueryCompilation
+{
+class CompilationCache;
+}
+
 namespace NES
 {
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
+    explicit LowerToCompiledQueryPlanPhase(
+        DumpMode dumpQueryCompilationIntermediateRepresentations, QueryCompilation::CompilationCache* compilationCache)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), compilationCache(compilationCache)
     {
     }
 
@@ -56,5 +64,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
+    QueryCompilation::CompilationCache* compilationCache;
 };
 }

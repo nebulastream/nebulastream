@@ -21,3 +21,4 @@ add_subdirectory(Rules)
 add_subdirectory(Util)
 
 add_nes_optimizer_test(PlanRewriteUtilsTest PlanRewriteUtilsTest.cpp)
+add_nes_optimizer_test(OptimizedLogicalPlanSignatureUtilTest OptimizedLogicalPlanSignatureUtilTest.cpp)

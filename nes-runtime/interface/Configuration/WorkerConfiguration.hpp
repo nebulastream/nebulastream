@@ -85,6 +85,14 @@ public:
 
     BoolOption dumpGraph = {"dump_graph", "false", "If to dump graph of the compilation results"};
 
+    BoolOption enableCompilationCache
+        = {"enable_compilation_cache", "false", "Enable Nautilus compilation cache for generated query pipelines."};
+
+    StringOption compilationCacheDir
+        = {"compilation_cache_dir",
+           "/tmp/nes-compilation-cache",
+           "Directory used by the Nautilus compilation cache to store cached compilation artifacts."};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -98,7 +106,9 @@ private:
             &bufferAlignmentInBytes,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
-            &dumpGraph};
+            &dumpGraph,
+            &enableCompilationCache,
+            &compilationCacheDir};
     }
 };
 }
