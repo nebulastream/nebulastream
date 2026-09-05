@@ -49,6 +49,11 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
+    [[nodiscard]] bool hasRuntimeOutputFormatter() const;
+    [[nodiscard]] std::uintptr_t getRuntimeFieldDelimiterHandle() const;
+    [[nodiscard]] std::uintptr_t getRuntimeTupleDelimiterHandle() const;
+    [[nodiscard]] uint64_t getRuntimeOutputFormatterFieldCount() const;
+    [[nodiscard]] std::uintptr_t getRuntimeFieldNameHandle(uint64_t fieldIndex) const;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

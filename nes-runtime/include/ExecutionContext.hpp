@@ -31,8 +31,11 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
+#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/RuntimeOutputFormatterRegistry.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Arena.hpp>
@@ -86,6 +89,14 @@ struct ExecutionContext final
 {
     explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
+    explicit ExecutionContext(
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
+        const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry,
+        const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry,
+        const nautilus::val<Arena*>& arena,
+        const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots = nullptr);
+
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
 
@@ -106,6 +117,9 @@ struct ExecutionContext final
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
+    const nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry;
+    const nautilus::val<const RuntimeOutputFormatterRegistry*> runtimeOutputFormatterRegistry;
+    const nautilus::val<const RuntimeStateRegistry*> runtimeStateRegistry;
     nautilus::val<WorkerThreadId> workerThreadId;
     nautilus::val<PipelineId> pipelineId;
     PipelineMemoryProvider pipelineMemoryProvider;
@@ -117,6 +131,7 @@ struct ExecutionContext final
     nautilus::val<bool> lastChunk;
 
 private:
+    const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots;
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     OpenReturnState openReturnState{OpenReturnState::CONTINUE};
 };

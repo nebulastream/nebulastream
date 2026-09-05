@@ -35,6 +35,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <Model.hpp>
 #include <PhysicalOperator.hpp>
@@ -79,6 +80,14 @@ namespace
 
 using detail::ThreadLocalRuntimeWrapper;
 
+ThreadLocalRuntimeWrapper* resolveRuntime(const RuntimeStateRegistry* runtimeStateRegistry, const uint64_t runtimeStateSlot)
+{
+    PRECONDITION(runtimeStateRegistry != nullptr, "Runtime state registry should not be null");
+    auto* const state = runtimeStateRegistry->getState(runtimeStateSlot, RuntimeStateType::INFERENCE_RUNTIME);
+    PRECONDITION(state != nullptr, "Missing inference runtime state for slot {}", runtimeStateSlot);
+    return static_cast<ThreadLocalRuntimeWrapper*>(state);
+}
+
 void setupSessions(ThreadLocalRuntimeWrapper* twl, PipelineExecutionContext* pec)
 {
     twl->setup(pec->getNumberOfWorkerThreads());
@@ -121,12 +130,14 @@ InferModelPhysicalOperator::InferModelPhysicalOperator(
 void InferModelPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     setupChild(executionCtx, compilationContext);
-    nautilus::invoke(setupSessions, nautilus::val<ThreadLocalRuntimeWrapper*>(threadLocal.get()), executionCtx.pipelineContext);
+    runtimeStateSlot = compilationContext.registerRuntimeState(RuntimeStateType::INFERENCE_RUNTIME, static_cast<void*>(threadLocal.get()));
+    const auto runtime = nautilus::invoke(resolveRuntime, executionCtx.runtimeStateRegistry, nautilus::val<uint64_t>{runtimeStateSlot});
+    nautilus::invoke(setupSessions, runtime, executionCtx.pipelineContext);
 }
 
 void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto runtime = nautilus::val<ThreadLocalRuntimeWrapper*>(threadLocal.get());
+    const auto runtime = nautilus::invoke(resolveRuntime, ctx.runtimeStateRegistry, nautilus::val<uint64_t>{runtimeStateSlot});
     const auto inputBuffer = nautilus::invoke(getInputBuffer, runtime, ctx.workerThreadId);
 
     if (varsizedInput)

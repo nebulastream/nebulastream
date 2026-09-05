@@ -38,13 +38,14 @@ std::unique_ptr<SliceCache> SliceCacheNone::clone() const
 }
 
 NautilusBuffer SliceCacheNone::getDataStructureRef(
+    const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
     const nautilus::val<Timestamp>&,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const SliceCacheReplaceEntry& replaceEntry,
     nautilus::val<AbstractBufferProvider*>)
 {
     /// Each worker thread uses its own entry to avoid data races.
-    nautilus::val<SliceCacheEntry*> threadEntry = nautilus::val<SliceCacheEntry*>{startOfSliceCache} + workerThreadId.convertToValue();
+    nautilus::val<SliceCacheEntry*> threadEntry = runtimeCacheStart + workerThreadId.convertToValue();
     /// As this slice cache does nothing, we simply replace the single entry and return the data structure
     replaceEntry(threadEntry);
 

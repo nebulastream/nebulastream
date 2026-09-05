@@ -26,6 +26,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/RuntimeOutputFormatterRegistry.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
@@ -82,6 +83,38 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenForThisRecord};
 }
 
+TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
+    nautilus::val<uint64_t>& bytesWritten,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const
+{
+    nautilus::val<bool> successful{true};
+    nautilus::val<uint64_t> writtenForThisRecord{0};
+    if (bytesWritten >= bufferSize)
+    {
+        successful = false;
+    }
+    else
+    {
+        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto recordAddress = bufferAddress + bytesWritten;
+
+        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+        {
+            const auto& [name, type] = fields.at(i);
+            const auto fieldAddress = recordAddress + writtenForThisRecord;
+            const nautilus::val remainingBytes{bufferSize - bytesWritten - writtenForThisRecord};
+            const auto& value = rec.read(name);
+            const auto amountWritten = formatter->writeFormattedValue(
+                value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider, runtimeOutputFormatterRegistry);
+            writtenForThisRecord += amountWritten;
+        }
+    }
+    return {.successful = successful, .writtenRecords = writtenForThisRecord};
+}
+
 std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllFieldNames() const
 {
     return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
@@ -90,6 +123,38 @@ std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllField
 std::vector<DataType> OutputFormatterBufferRef::getAllDataTypes() const
 {
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+}
+
+std::uintptr_t OutputFormatterBufferRef::getRuntimeFieldDelimiterHandle() const
+{
+    if (const auto* runtimeFieldDelimiterPointer = formatter->getRuntimeFieldDelimiterPointer(); runtimeFieldDelimiterPointer)
+    {
+        return reinterpret_cast<std::uintptr_t>(runtimeFieldDelimiterPointer);
+    }
+    return 0;
+}
+
+std::uintptr_t OutputFormatterBufferRef::getRuntimeTupleDelimiterHandle() const
+{
+    if (const auto* runtimeTupleDelimiterPointer = formatter->getRuntimeTupleDelimiterPointer(); runtimeTupleDelimiterPointer)
+    {
+        return reinterpret_cast<std::uintptr_t>(runtimeTupleDelimiterPointer);
+    }
+    return 0;
+}
+
+uint64_t OutputFormatterBufferRef::getRuntimeFieldCount() const
+{
+    return formatter->getRuntimeFieldCount();
+}
+
+std::uintptr_t OutputFormatterBufferRef::getRuntimeFieldNameHandle(const uint64_t fieldIndex) const
+{
+    if (const auto* runtimeFieldNamePointer = formatter->getRuntimeFieldNamePointer(fieldIndex); runtimeFieldNamePointer)
+    {
+        return reinterpret_cast<std::uintptr_t>(runtimeFieldNamePointer);
+    }
+    return 0;
 }
 
 }

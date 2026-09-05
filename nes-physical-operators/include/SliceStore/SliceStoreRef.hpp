@@ -20,12 +20,14 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
+class CompilationContext;
 class WindowBasedOperatorHandler;
 
 /// Abstract interface for accessing operator-specific data structures from a SliceStore.
@@ -43,14 +45,15 @@ public:
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,
-        nautilus::val<AbstractBufferProvider*> bufferProvider)
+        nautilus::val<AbstractBufferProvider*> bufferProvider,
+        const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry)
         = 0;
 
     /// Necessary, as our PhysicalOperators get copied during the pipelining phase, but we need to ensure uniqueness for the slice store ref
     virtual std::unique_ptr<SliceStoreRef> clone() = 0;
 
     /// Initializes the slice store ref (e.g., allocates cache memory). Called during setup().
-    virtual void setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx) = 0;
+    virtual void setupSliceStore(CompilationContext& compilationContext) = 0;
 };
 
 }

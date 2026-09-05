@@ -59,4 +59,9 @@ void SliceCache::setStartOfEntries(const std::span<std::byte>& startOfSliceCache
     this->startOfSliceCache = reinterpret_cast<SliceCacheEntry*>(startOfSliceCache.data());
 }
 
+SliceCacheEntry* SliceCache::getStartOfEntries() const
+{
+    return startOfSliceCache;
+}
+
 }
