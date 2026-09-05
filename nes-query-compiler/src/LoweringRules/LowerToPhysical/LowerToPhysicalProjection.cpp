@@ -91,8 +91,8 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto traitSet = projectionLogicalOperator.getTraitSet();
     const auto childTraitSet = projection->getChild().getTraitSet();
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
-    const auto inputSchema = createPhysicalOutputSchema(childTraitSet);
+    const auto outputSchema = createPhysicalSchema(traitSet);
+    const auto inputSchema = createPhysicalSchema(childTraitSet);
 
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;

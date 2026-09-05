@@ -39,8 +39,8 @@ LoweringRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
-    const auto inputSchema = createPhysicalOutputSchema(assignOp->getChild().getTraitSet());
+    const auto outputSchema = createPhysicalSchema(traitSet);
+    const auto inputSchema = createPhysicalSchema(assignOp->getChild().getTraitSet());
 
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     auto wrapper

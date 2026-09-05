@@ -49,14 +49,14 @@ LoweringRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOp
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
+    const auto outputSchema = createPhysicalSchema(traitSet);
 
     auto renames = unionChildren
         | std::views::transform(
                        [&](const auto& childOperator)
                        {
                            const auto childTraitSet = childOperator->getTraitSet();
-                           const auto childOutputSchema = createPhysicalOutputSchema(childTraitSet);
+                           const auto childOutputSchema = createPhysicalSchema(childTraitSet);
                            constexpr auto extractNames = [](const Schema<QualifiedUnboundField, Ordered>& schema)
                            {
                                return schema | std::views::transform([](const auto& field) { return field.getFullyQualifiedName(); })

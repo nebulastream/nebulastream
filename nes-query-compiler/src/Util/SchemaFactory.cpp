@@ -49,7 +49,7 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromTraits(
     return schema;
 }
 
-Schema<QualifiedUnboundField, Ordered> createPhysicalOutputSchema(const TraitSet& traitSet)
+Schema<QualifiedUnboundField, Ordered> createPhysicalSchema(const TraitSet& traitSet)
 {
     const auto outputFieldMappingOpt = traitSet.get<FieldMappingTrait>();
 

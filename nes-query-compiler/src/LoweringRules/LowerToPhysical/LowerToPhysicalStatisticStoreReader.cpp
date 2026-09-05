@@ -51,8 +51,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticStoreReader::apply(LogicalOpe
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
-    const auto inputSchema = createPhysicalOutputSchema(probe->getChild().getTraitSet());
+    const auto outputSchema = createPhysicalSchema(traitSet);
+    const auto inputSchema = createPhysicalSchema(probe->getChild().getTraitSet());
 
     auto handlerId = getNextOperatorHandlerId();
     auto handler = std::make_shared<StatisticStoreOperatorHandler>(globalStatisticStore());

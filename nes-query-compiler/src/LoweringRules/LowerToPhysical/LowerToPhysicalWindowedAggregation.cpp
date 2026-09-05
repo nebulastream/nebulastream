@@ -87,7 +87,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto memoryLayoutTypeTrait = logicalOperator.getChild()->getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
+    const auto physicalInputSchema = createPhysicalSchema(logicalOperator.getChild()->getTraitSet());
     auto tupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(physicalInputSchema);
     auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
 
@@ -148,8 +148,8 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto windowType = aggregation->getWindowType();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
 
-    const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
-    const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
+    const auto physicalInputSchema = createPhysicalSchema(childTraitSet);
+    const auto physicalOutputSchema = createPhysicalSchema(traitSet);
 
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),

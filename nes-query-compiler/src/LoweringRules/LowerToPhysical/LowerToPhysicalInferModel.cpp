@@ -82,8 +82,8 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
 
-    const auto physicalOutputSchema = createPhysicalOutputSchema(logicalOperator.getTraitSet());
-    const auto physicalInputSchema = createPhysicalOutputSchema(inferModelOp.get().getChildren().at(0).getTraitSet());
+    const auto physicalOutputSchema = createPhysicalSchema(logicalOperator.getTraitSet());
+    const auto physicalInputSchema = createPhysicalSchema(inferModelOp.get().getChildren().at(0).getTraitSet());
 
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
