@@ -42,8 +42,6 @@ class QuerySubmitter;
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
 static constexpr auto padSizeSuccess = 120;
-/// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries per file
-static constexpr auto padSizeQueryNumber = 2;
 /// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
 static constexpr auto padSizeQueryCounter = 3;
 
@@ -108,9 +106,6 @@ struct BenchmarkResult
 /// SELECT * FROM s....
 /// Expected ............ | Actual 1, 2,3
 void printQueryResultToStdOut(
-    const RunningQuery& runningQuery,
-    const std::string& errorMessage,
-    SystestProgressTracker& progressTracker,
-    std::string_view queryPerformanceMessage);
+    const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, std::string_view queryPerformanceMessage);
 
 }
