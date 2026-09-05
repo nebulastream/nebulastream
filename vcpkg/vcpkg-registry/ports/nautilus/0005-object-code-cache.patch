@@ -1,0 +1,2498 @@
+diff --git a/nautilus/include/nautilus/CompilableFunction.hpp b/nautilus/include/nautilus/CompilableFunction.hpp
+index e78a4809..1aa5ea8d 100644
+--- a/nautilus/include/nautilus/CompilableFunction.hpp
++++ b/nautilus/include/nautilus/CompilableFunction.hpp
+@@ -1,8 +1,12 @@
+ #pragma once
++
++#include "nautilus/tracing/Types.hpp"
+ #include <functional>
++#include <optional>
+ #include <string>
+ #include <string_view>
+ #include <unordered_map>
++#include <vector>
+ 
+ namespace nautilus::compiler {
+ 
+@@ -10,9 +14,18 @@ class CompilableFunction {
+ 	using wrapper_function = std::function<void()>;
+ 
+ public:
++	struct Signature {
++		Type returnType;
++		std::vector<Type> argumentTypes;
++
++		bool operator==(const Signature&) const = default;
++	};
++
+ 	CompilableFunction(std::string_view name, wrapper_function function,
+-	                   std::unordered_map<std::string, std::string> attributes = {})
+-	    : name(name), function(function), attributes(std::move(attributes)) {
++	                   std::unordered_map<std::string, std::string> attributes = {},
++	                   std::optional<Signature> signature = std::nullopt)
++	    : name(name), function(std::move(function)), attributes(std::move(attributes)),
++	      signature(std::move(signature)) {
+ 	}
+ 
+ 	const std::string& getName() const {
+@@ -27,11 +40,15 @@ public:
+ 	const std::unordered_map<std::string, std::string>& getAttributes() const {
+ 		return attributes;
+ 	}
++	const std::optional<Signature>& getSignature() const {
++		return signature;
++	}
+ 
+ private:
+ 	std::string name;
+ 	wrapper_function function;
+ 	std::unordered_map<std::string, std::string> attributes;
++	std::optional<Signature> signature;
+ };
+ 
+ } // namespace nautilus::compiler
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index d80a0810..43bc3902 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -36,6 +36,15 @@ auto createTraceableArgument() {
+ 	return val<typename ArgValueType::raw_type>(valueRef);
+ }
+ 
++template <typename R>
++constexpr Type functionReturnType() {
++	if constexpr (std::is_void_v<R>) {
++		return Type::v;
++	} else {
++		return tracing::TypeResolver<typename R::raw_type>::to_type();
++	}
++}
++
+ #ifdef ENABLE_TRACING
+ 
+ template <size_t... Indices, typename R, typename... FunctionArguments>
+@@ -307,7 +316,11 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (compiled_) {
+ 			auto wrapper = details::createFunctionWrapper(std::move(func));
+-			functions_.emplace_back(name, std::move(wrapper));
++			auto signature = compiler::CompilableFunction::Signature {
++			    details::functionReturnType<R>(),
++			    {tracing::TypeResolver<typename val<FunctionArguments>::raw_type>::to_type()...}};
++			functions_.emplace_back(name, std::move(wrapper), std::unordered_map<std::string, std::string> {},
++			                        std::move(signature));
+ 		}
+ #endif
+ 	}
+@@ -324,7 +337,11 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (compiled_) {
+ 			auto wrapper = details::createFunctionWrapper(fnptr);
+-			functions_.emplace_back(name, std::move(wrapper));
++			auto signature = compiler::CompilableFunction::Signature {
++			    details::functionReturnType<R>(),
++			    {tracing::TypeResolver<typename val<FunctionArguments>::raw_type>::to_type()...}};
++			functions_.emplace_back(name, std::move(wrapper), std::unordered_map<std::string, std::string> {},
++			                        std::move(signature));
+ 		}
+ #endif
+ 	}
+diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
+index 54f2d0a6..c07486f5 100644
+--- a/nautilus/include/nautilus/options.hpp
++++ b/nautilus/include/nautilus/options.hpp
+@@ -67,6 +67,10 @@ public:
+ 		return mlir_jit_event_listeners_;
+ 	}
+ 
++	const std::unordered_map<std::string, OptionValue>& getOptionValues() const {
++		return options;
++	}
++
+ 	/**
+ 	 * @brief Apply every option value (and JIT listener) set in @p other on
+ 	 * top of this one; values present in @p other win.
+diff --git a/nautilus/src/nautilus/common/CMakeLists.txt b/nautilus/src/nautilus/common/CMakeLists.txt
+index ba47df58..7366cc36 100644
+--- a/nautilus/src/nautilus/common/CMakeLists.txt
++++ b/nautilus/src/nautilus/common/CMakeLists.txt
+@@ -1,3 +1,4 @@
+  add_source_files(nautilus
+          TypedValueRefHolder.cpp
++         ExecutableImage.cpp
+          File.cpp)
+diff --git a/nautilus/src/nautilus/common/ExecutableImage.cpp b/nautilus/src/nautilus/common/ExecutableImage.cpp
+new file mode 100644
+index 00000000..e0497e09
+--- /dev/null
++++ b/nautilus/src/nautilus/common/ExecutableImage.cpp
+@@ -0,0 +1,163 @@
++#include "nautilus/common/ExecutableImage.hpp"
++
++#ifdef __linux__
++#include <elf.h>
++#include <link.h>
++#endif
++
++#include <algorithm>
++#include <cstddef>
++#include <cstdint>
++#include <cstring>
++#include <limits>
++#include <utility>
++
++namespace nautilus::common {
++
++#ifdef __linux__
++namespace {
++
++constexpr std::size_t align4(std::size_t value) {
++	return (value + 3U) & ~std::size_t {3U};
++}
++
++std::optional<std::string> imageBuildId(const dl_phdr_info& image) {
++	static constexpr char digits[] = "0123456789abcdef";
++	for (ElfW(Half) i = 0; i < image.dlpi_phnum; ++i) {
++		const auto& header = image.dlpi_phdr[i];
++		if (header.p_type != PT_NOTE || header.p_memsz < sizeof(ElfW(Nhdr))) {
++			continue;
++		}
++		const auto* begin = reinterpret_cast<const std::byte*>(image.dlpi_addr + header.p_vaddr);
++		const auto* cursor = begin;
++		const auto* end = begin + header.p_memsz;
++		while (static_cast<std::size_t>(end - cursor) >= sizeof(ElfW(Nhdr))) {
++			ElfW(Nhdr) note {};
++			std::memcpy(&note, cursor, sizeof(note));
++			cursor += sizeof(note);
++			const auto nameSize = align4(note.n_namesz);
++			const auto valueSize = align4(note.n_descsz);
++			if (nameSize > static_cast<std::size_t>(end - cursor) ||
++			    valueSize > static_cast<std::size_t>(end - cursor) - nameSize) {
++				break;
++			}
++			const auto* name = reinterpret_cast<const char*>(cursor);
++			const auto* value = cursor + nameSize;
++			if (note.n_type == NT_GNU_BUILD_ID && note.n_namesz >= 3 && std::memcmp(name, "GNU", 3) == 0 &&
++			    note.n_descsz != 0) {
++				std::string result;
++				result.reserve(note.n_descsz * 2U);
++				for (ElfW(Word) byteIndex = 0; byteIndex < note.n_descsz; ++byteIndex) {
++					const auto byte = std::to_integer<uint8_t>(value[byteIndex]);
++					result.push_back(digits[byte >> 4U]);
++					result.push_back(digits[byte & 0x0fU]);
++				}
++				return result;
++			}
++			cursor += nameSize + valueSize;
++		}
++	}
++	return std::nullopt;
++}
++
++bool containsExecutableAddress(const dl_phdr_info& image, uintptr_t address) {
++	for (ElfW(Half) i = 0; i < image.dlpi_phnum; ++i) {
++		const auto& header = image.dlpi_phdr[i];
++		if (header.p_type != PT_LOAD || (header.p_flags & PF_X) == 0) {
++			continue;
++		}
++		const auto start = static_cast<uintptr_t>(image.dlpi_addr) + header.p_vaddr;
++		if (header.p_memsz <= std::numeric_limits<uintptr_t>::max() - start && address >= start &&
++		    address < start + header.p_memsz) {
++			return true;
++		}
++	}
++	return false;
++}
++
++struct LocateContext {
++	uintptr_t address;
++	std::optional<ExecutableImageLocation> result;
++};
++
++int locateCallback(dl_phdr_info* image, std::size_t, void* opaque) {
++	auto& context = *static_cast<LocateContext*>(opaque);
++	if (!containsExecutableAddress(*image, context.address)) {
++		return 0;
++	}
++	auto buildId = imageBuildId(*image);
++	if (!buildId || context.address < static_cast<uintptr_t>(image->dlpi_addr)) {
++		return 0;
++	}
++	context.result =
++	    ExecutableImageLocation {std::move(*buildId), context.address - static_cast<uintptr_t>(image->dlpi_addr)};
++	return 1;
++}
++
++struct ResolveContext {
++	const ExecutableImageLocation& location;
++	void* result = nullptr;
++	std::size_t matches = 0;
++};
++
++int resolveCallback(dl_phdr_info* image, std::size_t, void* opaque) {
++	auto& context = *static_cast<ResolveContext*>(opaque);
++	auto buildId = imageBuildId(*image);
++	if (!buildId || *buildId != context.location.buildId ||
++	    context.location.loadOffset > std::numeric_limits<uintptr_t>::max() - image->dlpi_addr) {
++		return 0;
++	}
++	const auto address = static_cast<uintptr_t>(image->dlpi_addr) + context.location.loadOffset;
++	if (!containsExecutableAddress(*image, address)) {
++		return 0;
++	}
++	context.result = reinterpret_cast<void*>(address);
++	context.matches++;
++	return 0;
++}
++
++} // namespace
++#endif
++
++std::optional<ExecutableImageLocation> locateExecutableAddress(const void* address) {
++#ifdef __linux__
++	if (address == nullptr) {
++		return std::nullopt;
++	}
++	LocateContext context {reinterpret_cast<uintptr_t>(address), std::nullopt};
++	dl_iterate_phdr(locateCallback, &context);
++	return context.result;
++#else
++	(void) address;
++	return std::nullopt;
++#endif
++}
++
++void* resolveExecutableAddress(const ExecutableImageLocation& location) {
++#ifdef __linux__
++	ResolveContext context {location};
++	dl_iterate_phdr(resolveCallback, &context);
++	return context.matches == 1 ? context.result : nullptr;
++#else
++	(void) location;
++	return nullptr;
++#endif
++}
++
++std::string stableExecutableAddressName(const void* address) {
++	auto location = locateExecutableAddress(address);
++	if (!location) {
++		return {};
++	}
++	static constexpr char digits[] = "0123456789abcdef";
++	std::string offset;
++	auto value = location->loadOffset;
++	do {
++		offset.push_back(digits[value & 0x0fU]);
++		value >>= 4U;
++	} while (value != 0);
++	std::reverse(offset.begin(), offset.end());
++	return "__nautilus_elf_" + location->buildId + "_" + offset;
++}
++
++} // namespace nautilus::common
+diff --git a/nautilus/src/nautilus/common/ExecutableImage.hpp b/nautilus/src/nautilus/common/ExecutableImage.hpp
+new file mode 100644
+index 00000000..3bd7af69
+--- /dev/null
++++ b/nautilus/src/nautilus/common/ExecutableImage.hpp
+@@ -0,0 +1,20 @@
++#pragma once
++
++#include <cstdint>
++#include <optional>
++#include <string>
++
++namespace nautilus::common {
++
++struct ExecutableImageLocation {
++	std::string buildId;
++	uint64_t loadOffset;
++
++	bool operator==(const ExecutableImageLocation&) const = default;
++};
++
++std::optional<ExecutableImageLocation> locateExecutableAddress(const void* address);
++void* resolveExecutableAddress(const ExecutableImageLocation& location);
++std::string stableExecutableAddressName(const void* address);
++
++} // namespace nautilus::common
+diff --git a/nautilus/src/nautilus/compiler/CMakeLists.txt b/nautilus/src/nautilus/compiler/CMakeLists.txt
+index b29bb7bb..ddc57f4d 100644
+--- a/nautilus/src/nautilus/compiler/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/CMakeLists.txt
+@@ -1,5 +1,6 @@
+ 
+ add_subdirectory(backends)
++add_subdirectory(cache)
+ 
+ if (ENABLE_TRACING)
+     add_subdirectory(ir)
+diff --git a/nautilus/src/nautilus/compiler/LegacyCompiler.cpp b/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
+index ea2b887f..9763e442 100644
+--- a/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/LegacyCompiler.cpp
+@@ -3,6 +3,7 @@
+ #include "nautilus/Executable.hpp"
+ #include "nautilus/compiler/DumpHandler.hpp"
+ #include "nautilus/compiler/backends/CompilationBackend.hpp"
++#include "nautilus/compiler/cache/PersistentModuleCache.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
+ #include "nautilus/config.hpp"
+ #include "nautilus/exceptions/RuntimeException.hpp"
+@@ -202,9 +203,15 @@ std::unique_ptr<Executable> LegacyCompiler::compile(std::list<CompilableFunction
+ 	auto statistics = std::make_shared<CompilationStatistics>();
+ 	const auto compilationStart = std::chrono::steady_clock::now();
+ 
+-	auto ir = compileToIR(functions, moduleOptions, statistics.get());
+ 	const auto backendName = getName();
+-	auto executable = compileIR(ir, backendName, moduleOptions, statistics.get());
++	std::unique_ptr<Executable> executable;
++#ifdef ENABLE_MLIR_BACKEND
++	executable = compileWithPersistentModuleCache(*this, functions, moduleOptions, statistics.get());
++#endif
++	if (!executable) {
++		auto ir = compileToIR(functions, moduleOptions, statistics.get());
++		executable = compileIR(ir, backendName, moduleOptions, statistics.get());
++	}
+ 
+ 	statistics->recordTimingMs("compilation.totalMs", compilationStart);
+ 
+diff --git a/nautilus/src/nautilus/compiler/TieredCompiler.cpp b/nautilus/src/nautilus/compiler/TieredCompiler.cpp
+index 0a90db24..3bbd9de6 100644
+--- a/nautilus/src/nautilus/compiler/TieredCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/TieredCompiler.cpp
+@@ -58,6 +58,15 @@ std::unique_ptr<Executable> TieredJITCompiler::compile(wrapper_function function
+ 
+ std::unique_ptr<Executable> TieredJITCompiler::compile(std::list<CompilableFunction>& functions,
+                                                        const engine::ModuleOptions& moduleOptions) const {
++#ifdef ENABLE_MLIR_BACKEND
++	// A persistent native/MLIR cache is an MLIR compilation strategy of its
++	// own. Route it through the single-tier compiler so a warm hit can return
++	// before tracing instead of first producing a tier-0 executable.
++	if (!moduleOptions.getOptionOrDefault<std::string>("engine.Blob.CacheDir", std::string {}).empty() &&
++	    !moduleOptions.getOptionOrDefault<std::string>("engine.Blob.CacheKey", std::string {}).empty()) {
++		return baseCompiler_.compile(functions, moduleOptions);
++	}
++#endif
+ 	// One shared statistics object covers the entire tier-0 compile so the
+ 	// user's CompiledModule::getStatistics() reflects tracing + IR passes +
+ 	// tier-0 backend work in a single report.
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+index 9c4e1b3c..a51c0c5a 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+@@ -27,6 +27,8 @@ if (ENABLE_MLIR_BACKEND)
+             MLIRBuiltinToLLVMIRTranslation          # registerBuiltinDialectTranslation
+             MLIRLLVMToLLVMIRTranslation             # registerLLVMDialectTranslation
+             MLIRExecutionEngineUtils                # makeOptimizingTransformer (OptUtils)
++            MLIRBytecodeWriter
++            MLIRParser
+             MLIRFuncAllExtensions
+             # LLVM libs for our direct LLJIT build.
+             LLVMOrcJIT
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index 8e2c1fa2..c76458b3 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -3,19 +3,67 @@
+ #include "fmt/format.h"
+ #include "nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
++#include "nautilus/exceptions/RuntimeException.hpp"
++#include <llvm/Support/Error.h>
++#include <llvm/Support/MemoryBuffer.h>
+ #include <mlir/ExecutionEngine/OptUtils.h>
+ #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Export.h>
+ 
+ namespace nautilus::compiler::mlir {
++namespace {
++
++std::unique_ptr<MLIRJit> configureJit(llvm::Expected<std::unique_ptr<MLIRJit>> maybeJit,
++                                      const std::vector<std::string>& jitProxyFunctionSymbols,
++                                      const std::vector<void*>& jitProxyFunctionTargetAddresses) {
++	if (jitProxyFunctionSymbols.size() != jitProxyFunctionTargetAddresses.size()) {
++		throw RuntimeException("MLIR JIT symbol and address vectors differ in size");
++	}
++	if (!maybeJit) {
++		throw RuntimeException("Could not construct MLIR JIT: " + llvm::toString(maybeJit.takeError()));
++	}
++
++	auto jit = std::move(*maybeJit);
++	const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
++		auto symbolMap = llvm::orc::SymbolMap();
++		for (std::size_t index = 0; index < jitProxyFunctionSymbols.size(); ++index) {
++			auto* address = jitProxyFunctionTargetAddresses[index];
++			if (address == nullptr) {
++				continue;
++			}
++			symbolMap[interner(jitProxyFunctionSymbols[index])] = {llvm::orc::ExecutorAddr::fromPtr(address),
++			                                                       llvm::JITSymbolFlags::Exported};
++		}
++
++		// Let plugins contribute additional (name -> address) entries to the
++		// ORC symbol map (e.g. the inlining plugin adds the hex-formatted
++		// runtime addresses of inlinable helpers so linked bitcode resolves).
++		if (const auto& hook = getLLVMBackendHooks().jitSymbolContributor) {
++			hook([&](const std::string& name, void* address) {
++				symbolMap[interner(name)] = {llvm::orc::ExecutorAddr::fromPtr(address), llvm::JITSymbolFlags::Exported};
++			});
++		}
++		return symbolMap;
++	};
++	if (auto error = jit->registerSymbols(runtimeSymbolMap)) {
++		throw RuntimeException("Could not register MLIR JIT symbols: " + llvm::toString(std::move(error)));
++	}
++	if (auto error = jit->initialize()) {
++		throw RuntimeException("Could not initialize MLIR JIT: " + llvm::toString(std::move(error)));
++	}
++	return jit;
++}
++
++} // namespace
+ 
+ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mlir::ModuleOp>& mlirModule,
+                                                        llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                                                        const std::vector<std::string>& jitProxyFunctionSymbols,
+                                                        const std::vector<void*>& jitProxyFunctionTargetAddresses,
+                                                        const std::vector<llvm::JITEventListener*>& eventListeners,
+-                                                       llvm::CodeGenOptLevel codeGenOptLevel) {
++                                                       llvm::CodeGenOptLevel codeGenOptLevel,
++                                                       std::shared_ptr<MLIRJit::ObjectCapture> objectCapture) {
+ 
+ 	// Register the translation from MLIR to LLVM IR, which must happen before we
+ 	// can JIT-compile.
+@@ -25,32 +73,22 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 	MLIRJit::Options jitOptions;
+ 	jitOptions.codeGenOptLevel = codeGenOptLevel;
+ 	jitOptions.transformer = optPipeline;
++	jitOptions.objectCapture = std::move(objectCapture);
+ 	jitOptions.eventListeners = eventListeners;
++	return configureJit(MLIRJit::create(*mlirModule, jitOptions), jitProxyFunctionSymbols,
++	                    jitProxyFunctionTargetAddresses);
++}
+ 
+-	auto maybeJit = MLIRJit::create(*mlirModule, jitOptions);
+-	assert(maybeJit && "failed to construct an execution engine");
+-
+-	// We register all external functions (symbols) that we do not inline.
+-	const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+-		auto symbolMap = llvm::orc::SymbolMap();
+-		for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
+-			auto address = jitProxyFunctionTargetAddresses.at(i);
+-			symbolMap[interner(jitProxyFunctionSymbols.at(i))] = {llvm::orc::ExecutorAddr::fromPtr(address),
+-			                                                      llvm::JITSymbolFlags::Exported};
+-		}
+-
+-		// Let plugins contribute additional (name -> address) entries to the
+-		// ORC symbol map (e.g. the inlining plugin adds the hex-formatted
+-		// runtime addresses of inlinable helpers so linked bitcode resolves).
+-		if (const auto& hook = getLLVMBackendHooks().jitSymbolContributor) {
+-			hook([&](const std::string& name, void* addr) {
+-				symbolMap[interner(name)] = {llvm::orc::ExecutorAddr::fromPtr(addr), llvm::JITSymbolFlags::Exported};
+-			});
+-		}
+-		return symbolMap;
+-	};
+-	auto& jit = maybeJit.get();
+-	jit->registerSymbols(runtimeSymbolMap);
+-	return std::move(jit);
++std::unique_ptr<MLIRJit> JITCompiler::jitLoadObject(std::string_view object,
++                                                    const std::vector<std::string>& jitProxyFunctionSymbols,
++                                                    const std::vector<void*>& jitProxyFunctionTargetAddresses,
++                                                    const std::vector<llvm::JITEventListener*>& eventListeners) {
++	MLIRJit::Options jitOptions;
++	jitOptions.eventListeners = eventListeners;
++	auto objectBuffer =
++	    llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(object.data(), object.size()), "cached-module.o");
++	return configureJit(MLIRJit::createFromObject(std::move(objectBuffer), jitOptions), jitProxyFunctionSymbols,
++	                    jitProxyFunctionTargetAddresses);
+ }
++
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+index b0ee19a7..29aded56 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+@@ -5,8 +5,10 @@
+ #include <llvm/ExecutionEngine/JITEventListener.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/Support/CodeGen.h>
++#include <memory>
+ #include <mlir/IR/BuiltinOps.h>
+ #include <mlir/Pass/Pass.h>
++#include <string_view>
+ #include <vector>
+ 
+ namespace nautilus::compiler::mlir {
+@@ -26,6 +28,12 @@ public:
+ 	                 const std::vector<std::string>& jitProxyFunctionSymbols,
+ 	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
+ 	                 const std::vector<llvm::JITEventListener*>& eventListeners,
+-	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive);
++	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive,
++	                 std::shared_ptr<MLIRJit::ObjectCapture> objectCapture = nullptr);
++
++	static std::unique_ptr<MLIRJit> jitLoadObject(std::string_view object,
++	                                              const std::vector<std::string>& jitProxyFunctionSymbols,
++	                                              const std::vector<void*>& jitProxyFunctionTargetAddresses,
++	                                              const std::vector<llvm::JITEventListener*>& eventListeners);
+ };
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index a7de81ff..c1c59354 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -1,5 +1,4 @@
+ 
+-
+ #include "nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp"
+ #include "nautilus/CompilationStatistics.hpp"
+ #include "nautilus/compiler/backends/mlir/JITCompiler.hpp"
+@@ -12,10 +11,17 @@
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRBackendIntrinsic.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
++#include "nautilus/exceptions/RuntimeException.hpp"
++#include <algorithm>
+ #include <chrono>
+ #include <fstream>
+ #include <llvm/ExecutionEngine/JITEventListener.h>
++#include <llvm/Support/Error.h>
++#include <llvm/Support/MemoryBuffer.h>
++#include <llvm/Support/SourceMgr.h>
+ #include <llvm/Support/TargetSelect.h>
++#include <llvm/Support/raw_ostream.h>
++#include <mlir/Bytecode/BytecodeWriter.h>
+ #include <mlir/Dialect/Arith/IR/Arith.h>
+ #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
+ #include <mlir/Dialect/Func/Extensions/AllExtensions.h>
+@@ -24,11 +30,166 @@
+ #include <mlir/Dialect/LLVMIR/Transforms/InlinerInterfaceImpl.h>
+ #include <mlir/Dialect/Math/IR/Math.h>
+ #include <mlir/IR/MLIRContext.h>
++#include <mlir/IR/Verifier.h>
++#include <mlir/Parser/Parser.h>
+ #include <mlir/Target/LLVMIR/Dialect/All.h>
+ #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+ #include <mlir/Transforms/Inliner.h>
++#include <unordered_set>
++
+ namespace nautilus::compiler::mlir {
++namespace {
++
++::mlir::DialectRegistry createDialectRegistry() {
++	::mlir::DialectRegistry registry;
++	registry.insert<::mlir::arith::ArithDialect, ::mlir::cf::ControlFlowDialect, ::mlir::math::MathDialect,
++	                ::mlir::LLVM::LLVMDialect, ::mlir::func::FuncDialect>();
++	::mlir::func::registerAllExtensions(registry);
++	registerBuiltinDialectTranslation(registry);
++	registerLLVMDialectTranslation(registry);
++	::mlir::LLVM::registerInlinerInterface(registry);
++	return registry;
++}
++
++void appendField(std::string& output, std::string_view field) {
++	output += std::to_string(field.size());
++	output.push_back(':');
++	output.append(field);
++}
++
++std::string printType(::mlir::Type type) {
++	std::string result;
++	llvm::raw_string_ostream output(result);
++	type.print(output);
++	output.flush();
++	return result;
++}
++
++std::string printAttribute(::mlir::Attribute attribute) {
++	std::string result;
++	llvm::raw_string_ostream output(result);
++	attribute.print(output);
++	output.flush();
++	return result;
++}
++
++std::string buildModuleManifest(::mlir::ModuleOp module) {
++	std::string manifest = "nautilus.mlir.module.v1";
++	std::vector<::mlir::NamedAttribute> moduleAttributes(module->getAttrs().begin(), module->getAttrs().end());
++	std::ranges::sort(moduleAttributes, {}, [](const auto& attribute) { return attribute.getName().strref(); });
++	for (const auto& attribute : moduleAttributes) {
++		appendField(manifest, attribute.getName().strref());
++		appendField(manifest, printAttribute(attribute.getValue()));
++	}
++
++	std::vector<std::string> functions;
++	for (auto function : module.getOps<::mlir::LLVM::LLVMFuncOp>()) {
++		std::string entry;
++		appendField(entry, function.getSymName());
++		appendField(entry, printType(function.getFunctionType()));
++		appendField(entry, function->getRegion(0).empty() ? "external" : "defined");
++		appendField(entry, std::to_string(static_cast<uint32_t>(function.getCConv())));
++		appendField(entry, std::to_string(static_cast<uint32_t>(function.getLinkage())));
++		std::vector<::mlir::NamedAttribute> attributes(function->getAttrs().begin(), function->getAttrs().end());
++		std::ranges::sort(attributes, {}, [](const auto& attribute) { return attribute.getName().strref(); });
++		for (const auto& attribute : attributes) {
++			appendField(entry, attribute.getName().strref());
++			appendField(entry, printAttribute(attribute.getValue()));
++		}
++		functions.push_back(std::move(entry));
++	}
++	std::ranges::sort(functions);
++	for (const auto& function : functions) {
++		appendField(manifest, function);
++	}
++	return manifest;
++}
++
++void validateExports(::mlir::ModuleOp module, const std::vector<std::string>& exportNames) {
++	if (exportNames.empty()) {
++		throw RuntimeException("Cached MLIR module has no exports");
++	}
++	std::unordered_set<std::string> names;
++	for (const auto& name : exportNames) {
++		if (name.empty() || !names.insert(name).second) {
++			throw RuntimeException("Cached MLIR export manifest is invalid");
++		}
++		auto function = module.lookupSymbol<::mlir::LLVM::LLVMFuncOp>(name);
++		if (!function || function->getRegion(0).empty()) {
++			throw RuntimeException("Cached MLIR module is missing export '" + name + "'");
++		}
++	}
++}
++
++void validateExternalSymbols(::mlir::ModuleOp module, const std::vector<std::string>& externalSymbols,
++                             const std::vector<void*>& externalAddresses) {
++	if (externalSymbols.size() != externalAddresses.size()) {
++		throw RuntimeException("Cached MLIR external symbol vectors differ in size");
++	}
++	std::unordered_set<std::string> expected;
++	for (std::size_t index = 0; index < externalSymbols.size(); ++index) {
++		if (externalSymbols[index].empty() || externalAddresses[index] == nullptr ||
++		    !expected.insert(externalSymbols[index]).second) {
++			throw RuntimeException("Cached MLIR external symbol manifest is invalid");
++		}
++	}
++	for (auto function : module.getOps<::mlir::LLVM::LLVMFuncOp>()) {
++		if (function->getRegion(0).empty() && !expected.erase(function.getSymName().str())) {
++			throw RuntimeException("Cached MLIR module contains an undeclared external symbol");
++		}
++	}
++	if (!expected.empty()) {
++		throw RuntimeException("Cached MLIR external symbol is not declared by the module");
++	}
++}
++
++std::vector<llvm::JITEventListener*> getEventListeners(const engine::Options& options,
++                                                       const DebugInfoOptions& debugInfo) {
++	std::vector<llvm::JITEventListener*> listeners = options.getMLIRJitEventListeners();
++	if (debugInfo.enable && debugInfo.autoRegisterGdbListener) {
++		if (auto* gdb = llvm::JITEventListener::createGDBRegistrationListener()) {
++			listeners.push_back(gdb);
++		}
++	}
++	return listeners;
++}
++
++llvm::CodeGenOptLevel getCodeGenLevel(const DebugInfoOptions& debugInfo) {
++	return debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
++}
++
++void materializeExports(MLIRJit& jit, const std::vector<std::string>& exportNames) {
++	for (const auto& name : exportNames) {
++		auto result = jit.lookup(name);
++		if (!result) {
++			throw RuntimeException("Could not materialize MLIR export '" + name +
++			                       "': " + llvm::toString(result.takeError()));
++		}
++	}
++}
++
++std::string serializeBytecode(::mlir::ModuleOp module) {
++	std::string bytecode;
++	llvm::raw_string_ostream output(bytecode);
++	if (::mlir::failed(::mlir::writeBytecodeToFile(module.getOperation(), output))) {
++		throw RuntimeException("Could not serialize MLIR bytecode");
++	}
++	output.flush();
++	return bytecode;
++}
++
++void dumpMLIR(::mlir::ModuleOp module, const DumpHandler& dumpHandler) {
++	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
++		::mlir::OpPrintingFlags flags;
++		std::string result;
++		auto output = llvm::raw_string_ostream(result);
++		module.print(output, flags);
++		return result;
++	});
++}
++
++} // namespace
+ 
+ MLIRCompilationBackend::MLIRCompilationBackend() {
+ 	// Initialize information about the local machine in LLVM.
+@@ -43,37 +204,36 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+                                                             const DumpHandler& dumpHandler,
+                                                             const engine::Options& options,
+                                                             CompilationStatistics* statistics) const {
+-	const auto backendStart = std::chrono::steady_clock::now();
++	return compileIR(ir, nullptr, dumpHandler, options, statistics, nullptr);
++}
+ 
+-	// 1. Create the MLIRLoweringProvider and lower the given Nautilus IR. Return
+-	// an MLIR module.
+-	::mlir::DialectRegistry registry;
+-	registry.insert<::mlir::arith::ArithDialect, ::mlir::cf::ControlFlowDialect, ::mlir::math::MathDialect,
+-	                ::mlir::LLVM::LLVMDialect, ::mlir::func::FuncDialect>();
+-	::mlir::func::registerAllExtensions(registry);
+-	registerBuiltinDialectTranslation(registry);
+-	registerLLVMDialectTranslation(registry);
++std::unique_ptr<Executable> MLIRCompilationBackend::compileWithCacheArtifacts(
++    const std::shared_ptr<ir::IRGraph>& ir, const std::vector<std::string>& exportNames, const DumpHandler& dumpHandler,
++    const engine::Options& options, CompilationStatistics* statistics, MLIRCacheArtifacts& artifacts) const {
++	return compileIR(ir, &exportNames, dumpHandler, options, statistics, &artifacts);
++}
+ 
+-	::mlir::LLVM::registerInlinerInterface(registry);
++std::unique_ptr<Executable>
++MLIRCompilationBackend::compileIR(const std::shared_ptr<ir::IRGraph>& ir, const std::vector<std::string>* exportNames,
++                                  const DumpHandler& dumpHandler, const engine::Options& options,
++                                  CompilationStatistics* statistics, MLIRCacheArtifacts* artifacts) const {
++	const auto backendStart = std::chrono::steady_clock::now();
++	if (ir == nullptr) {
++		throw RuntimeException("MLIR compilation requires Nautilus IR");
++	}
+ 
++	auto registry = createDialectRegistry();
+ 	::mlir::MLIRContext context(registry);
+-	if (not options.getOptionOrDefault("mlir.enableMultithreading", true)) {
++	if (!options.getOptionOrDefault("mlir.enableMultithreading", true)) {
+ 		context.disableMultithreading();
+ 	}
+ 
+-	// Register all intrinsics in the intrinsic manager
+ 	MLIRIntrinsicManager intrinsicManager;
+ 	if (options.getOptionOrDefault("mlir.enableIntrinsics", true)) {
+ 		MLIRIntrinsicPluginRegistry::instance().registerAllIntrinsics(intrinsicManager);
+ 	}
+ 
+-	// Build debug-info options once; downstream steps read from this struct.
+ 	const auto debugInfo = debugInfoOptionsFromEngineOptions(options);
+-
+-	// Prepare the Nautilus-IR "source file" used for debugging in
+-	// "nautilus-ir" mode.  The file must exist before lowering runs so
+-	// the FileLineColLocs attached by MLIRLoweringProvider point at real
+-	// content that GDB/LLDB can read on `list`.
+ 	std::shared_ptr<IRSourceMap> irSourceMap;
+ 	if (debugInfo.enable && debugInfo.sourceMode == "nautilus-ir") {
+ 		irSourceMap = std::make_shared<IRSourceMap>(dumpIRWithSourceMap(*ir));
+@@ -92,27 +252,16 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	auto mlirModule = loweringProvider->generateModuleFromIR(ir);
+ 	if (*mlirModule == nullptr) {
+ 		throw RuntimeException("verification of MLIR module failed!");
+-	};
++	}
+ 	if (statistics != nullptr) {
+ 		statistics->recordTimingMs("mlir.loweringFromIR.ms", loweringStart);
+-		// Count ops by walking the module once — cheap and bounded by
+-		// the already-generated IR.
+ 		int64_t opCount = 0;
+ 		(*mlirModule)->walk([&](::mlir::Operation*) { ++opCount; });
+ 		statistics->set("mlir.module.ops", opCount);
+ 	}
+ 
+-	// 2.a dump MLIR to console or a file
+-	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
+-		::mlir::OpPrintingFlags flags;
+-		std::string result;
+-		auto output = llvm::raw_string_ostream(result);
+-		mlirModule->print(output, flags);
+-		return result;
+-	});
++	dumpMLIR(*mlirModule, dumpHandler);
+ 
+-	// 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering
+-	// and optimization passes.
+ 	const auto pipelineStart = std::chrono::steady_clock::now();
+ 	if (mlir::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, debugInfo)) {
+ 		throw RuntimeException("Could not lower and optimize MLIR module.");
+@@ -121,49 +270,153 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 		statistics->recordTimingMs("mlir.pipeline.ms", pipelineStart);
+ 	}
+ 
+-	// 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
++	auto externalSymbols = loweringProvider->getJitProxyFunctionSymbols();
++	auto externalAddresses = loweringProvider->getJitProxyTargetAddresses();
++	if (externalSymbols.size() != externalAddresses.size()) {
++		throw RuntimeException("MLIR external symbol vectors differ in size");
++	}
++
++	std::shared_ptr<MLIRJit::ObjectCapture> objectCapture;
++	if (artifacts != nullptr) {
++		if (exportNames == nullptr) {
++			throw RuntimeException("Cache artifact compilation requires an export manifest");
++		}
++		validateExports(*mlirModule, *exportNames);
++		validateExternalSymbols(*mlirModule, externalSymbols, externalAddresses);
++		const auto serializationStart = std::chrono::steady_clock::now();
++		artifacts->moduleManifest = buildModuleManifest(*mlirModule);
++		artifacts->bytecode = serializeBytecode(*mlirModule);
++		artifacts->externalSymbols = externalSymbols;
++		artifacts->externalAddresses = externalAddresses;
++		objectCapture = std::make_shared<MLIRJit::ObjectCapture>();
++		if (statistics != nullptr) {
++			statistics->recordTimingMs("mlir.bytecodeWrite.ms", serializationStart);
++			statistics->set("mlir.bytecode.bytes", static_cast<int64_t>(artifacts->bytecode.size()));
++		}
++	}
++
+ 	const auto optPipelineStart = std::chrono::steady_clock::now();
+ 	auto optPipeline = LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHandler);
+ 	if (statistics != nullptr) {
+ 		statistics->recordTimingMs("llvm.optimizerBuild.ms", optPipelineStart);
+ 	}
+ 
+-	// 4. JIT compile LLVM IR module and return engine that provides access
+-	// compiled execute function.
+ 	const auto jitStart = std::chrono::steady_clock::now();
+-
+-	// Compose event listeners: user-provided plus, when debug is enabled
+-	// with auto-register, LLVM's GDB JIT interface listener.  The GDB
+-	// listener is a stateless process-wide singleton so repeated calls
+-	// are cheap and safe.
+-	std::vector<llvm::JITEventListener*> eventListeners = options.getMLIRJitEventListeners();
+-	if (debugInfo.enable && debugInfo.autoRegisterGdbListener) {
+-		if (auto* gdb = llvm::JITEventListener::createGDBRegistrationListener()) {
+-			eventListeners.push_back(gdb);
++	auto eventListeners = getEventListeners(options, debugInfo);
++	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, externalSymbols, externalAddresses,
++	                                            eventListeners, getCodeGenLevel(debugInfo), objectCapture);
++	if (exportNames != nullptr) {
++		materializeExports(*engine, *exportNames);
++	} else if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
++		std::vector<std::string> names;
++		for (const auto* function : ir->getFunctionOperations()) {
++			names.push_back(function->getName());
+ 		}
++		materializeExports(*engine, names);
++	}
++	if (artifacts != nullptr) {
++		if (auto object = objectCapture->getObject()) {
++			artifacts->object = std::move(*object);
++		}
++	}
++	if (statistics != nullptr) {
++		statistics->recordTimingMs("jit.compile.ms", jitStart);
++		statistics->recordTimingMs("backend.totalMs", backendStart);
++	}
++	return std::make_unique<MLIRExecutable>(std::move(engine));
++}
++
++std::unique_ptr<Executable> MLIRCompilationBackend::compileCachedBytecode(
++    std::string_view bytecode, std::string_view moduleManifest, const std::vector<std::string>& externalSymbols,
++    const std::vector<void*>& externalAddresses, const std::vector<std::string>& exportNames,
++    const DumpHandler& dumpHandler, const engine::Options& options, CompilationStatistics* statistics,
++    MLIRCacheArtifacts* regeneratedArtifacts) const {
++	const auto backendStart = std::chrono::steady_clock::now();
++	auto registry = createDialectRegistry();
++	::mlir::MLIRContext context(registry);
++	if (!options.getOptionOrDefault("mlir.enableMultithreading", true)) {
++		context.disableMultithreading();
+ 	}
+ 
+-	// With debug info active the IR optimizer is clamped to -O0; match
+-	// that in the JIT's MC layer at -O1-equivalent (`Less`) so the
+-	// register allocator does not fold distinct $N SSA values into the
+-	// same physical register.  `None` triggers fast-regalloc which
+-	// spills every SSA value and confuses LLVM's DWARF asmprinter when
+-	// dbg.value operands live on the stack rather than in registers.
+-	const auto jitCodeGenLevel = debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
++	const auto loadStart = std::chrono::steady_clock::now();
++	auto input =
++	    llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(bytecode.data(), bytecode.size()), "cached-module.mlirbc");
++	llvm::SourceMgr sourceManager;
++	sourceManager.AddNewSourceBuffer(std::move(input), llvm::SMLoc());
++	::mlir::ParserConfig parserConfig(&context);
++	auto mlirModule = ::mlir::parseSourceFile<::mlir::ModuleOp>(sourceManager, parserConfig);
++	if (!mlirModule || ::mlir::failed(::mlir::verify(*mlirModule))) {
++		throw RuntimeException("Could not load cached MLIR bytecode");
++	}
++	validateExports(*mlirModule, exportNames);
++	validateExternalSymbols(*mlirModule, externalSymbols, externalAddresses);
++	if (moduleManifest.empty() || buildModuleManifest(*mlirModule) != moduleManifest) {
++		throw RuntimeException("Cached MLIR module manifest mismatch");
++	}
++	if (statistics != nullptr) {
++		statistics->recordTimingMs("mlir.bytecodeLoad.ms", loadStart);
++		statistics->set("mlir.bytecode.bytes", static_cast<int64_t>(bytecode.size()));
++	}
++	dumpMLIR(*mlirModule, dumpHandler);
++
++	const auto optPipelineStart = std::chrono::steady_clock::now();
++	auto optPipeline = LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHandler);
++	if (statistics != nullptr) {
++		statistics->recordTimingMs("llvm.optimizerBuild.ms", optPipelineStart);
++	}
++
++	std::shared_ptr<MLIRJit::ObjectCapture> objectCapture;
++	if (regeneratedArtifacts != nullptr) {
++		objectCapture = std::make_shared<MLIRJit::ObjectCapture>();
++	}
++	const auto debugInfo = debugInfoOptionsFromEngineOptions(options);
++	const auto jitStart = std::chrono::steady_clock::now();
+ 	auto engine =
+-	    JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                  loweringProvider->getJitProxyTargetAddresses(), eventListeners, jitCodeGenLevel);
+-	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+-		auto result = engine->lookupPacked("execute");
+-		if (!result) {
+-			llvm::errs() << "Could not compile function" << result.takeError() << "\n";
++	    JITCompiler::jitCompileModule(mlirModule, optPipeline, externalSymbols, externalAddresses,
++	                                  getEventListeners(options, debugInfo), getCodeGenLevel(debugInfo), objectCapture);
++	materializeExports(*engine, exportNames);
++	if (regeneratedArtifacts != nullptr) {
++		regeneratedArtifacts->bytecode.assign(bytecode);
++		regeneratedArtifacts->moduleManifest.assign(moduleManifest);
++		regeneratedArtifacts->externalSymbols = externalSymbols;
++		regeneratedArtifacts->externalAddresses = externalAddresses;
++		if (auto object = objectCapture->getObject()) {
++			regeneratedArtifacts->object = std::move(*object);
+ 		}
+ 	}
+ 	if (statistics != nullptr) {
+ 		statistics->recordTimingMs("jit.compile.ms", jitStart);
+ 		statistics->recordTimingMs("backend.totalMs", backendStart);
+ 	}
+-	// 5. Get execution function from engine. Create and return execution context.
++	return std::make_unique<MLIRExecutable>(std::move(engine));
++}
++
++std::unique_ptr<Executable> MLIRCompilationBackend::compileCachedObject(std::string_view object,
++                                                                        const std::vector<std::string>& externalSymbols,
++                                                                        const std::vector<void*>& externalAddresses,
++                                                                        const std::vector<std::string>& exportNames,
++                                                                        const engine::Options& options,
++                                                                        CompilationStatistics* statistics) const {
++	const auto backendStart = std::chrono::steady_clock::now();
++	if (externalSymbols.size() != externalAddresses.size() || exportNames.empty()) {
++		throw RuntimeException("Cached object manifest is invalid");
++	}
++	std::unordered_set<std::string> symbols;
++	for (std::size_t index = 0; index < externalSymbols.size(); ++index) {
++		if (externalSymbols[index].empty() || externalAddresses[index] == nullptr ||
++		    !symbols.insert(externalSymbols[index]).second) {
++			throw RuntimeException("Cached object external symbol manifest is invalid");
++		}
++	}
++	const auto jitStart = std::chrono::steady_clock::now();
++	const auto debugInfo = debugInfoOptionsFromEngineOptions(options);
++	auto engine =
++	    JITCompiler::jitLoadObject(object, externalSymbols, externalAddresses, getEventListeners(options, debugInfo));
++	materializeExports(*engine, exportNames);
++	if (statistics != nullptr) {
++		statistics->recordTimingMs("jit.objectLoad.ms", jitStart);
++		statistics->recordTimingMs("backend.totalMs", backendStart);
++	}
+ 	return std::make_unique<MLIRExecutable>(std::move(engine));
+ }
+ 
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp
+index 5b214f57..b4fb6012 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp
+@@ -1,9 +1,20 @@
+ #pragma once
+ 
+ #include "nautilus/compiler/backends/CompilationBackend.hpp"
++#include <string>
++#include <string_view>
++#include <vector>
+ 
+ namespace nautilus::compiler::mlir {
+ 
++struct MLIRCacheArtifacts {
++	std::string bytecode;
++	std::string object;
++	std::string moduleManifest;
++	std::vector<std::string> externalSymbols;
++	std::vector<void*> externalAddresses;
++};
++
+ /**
+  * @brief Compilation backend that uses MLIR.
+  */
+@@ -13,6 +24,30 @@ public:
+ 	std::unique_ptr<Executable> compile(const std::shared_ptr<ir::IRGraph>& ir, const DumpHandler& dumpHandler,
+ 	                                    const engine::Options& options,
+ 	                                    CompilationStatistics* statistics = nullptr) const override;
++
++	std::unique_ptr<Executable>
++	compileWithCacheArtifacts(const std::shared_ptr<ir::IRGraph>& ir, const std::vector<std::string>& exportNames,
++	                          const DumpHandler& dumpHandler, const engine::Options& options,
++	                          CompilationStatistics* statistics, MLIRCacheArtifacts& artifacts) const;
++
++	std::unique_ptr<Executable> compileCachedBytecode(std::string_view bytecode, std::string_view moduleManifest,
++	                                                  const std::vector<std::string>& externalSymbols,
++	                                                  const std::vector<void*>& externalAddresses,
++	                                                  const std::vector<std::string>& exportNames,
++	                                                  const DumpHandler& dumpHandler, const engine::Options& options,
++	                                                  CompilationStatistics* statistics,
++	                                                  MLIRCacheArtifacts* regeneratedArtifacts = nullptr) const;
++
++	std::unique_ptr<Executable>
++	compileCachedObject(std::string_view object, const std::vector<std::string>& externalSymbols,
++	                    const std::vector<void*>& externalAddresses, const std::vector<std::string>& exportNames,
++	                    const engine::Options& options, CompilationStatistics* statistics) const;
++
++private:
++	std::unique_ptr<Executable> compileIR(const std::shared_ptr<ir::IRGraph>& ir,
++	                                      const std::vector<std::string>* exportNames, const DumpHandler& dumpHandler,
++	                                      const engine::Options& options, CompilationStatistics* statistics,
++	                                      MLIRCacheArtifacts* artifacts) const;
+ };
+ 
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+index 2c062153..7fbfa681 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
+@@ -7,6 +7,7 @@
+ #include <llvm/ExecutionEngine/SectionMemoryManager.h>
+ #include <llvm/IR/LLVMContext.h>
+ #include <llvm/Support/Error.h>
++#include <llvm/Support/MemoryBuffer.h>
+ #include <llvm/TargetParser/Triple.h>
+ #include <mlir/Target/LLVMIR/Export.h>
+ 
+@@ -21,50 +22,23 @@ llvm::Error makeStringError(const llvm::Twine& message) {
+ 	return llvm::createStringError(llvm::inconvertibleErrorCode(), message);
+ }
+ 
+-} // namespace
+-
+-MLIRJit::MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit, llvm::orc::RTDyldObjectLinkingLayer* objectLayer)
+-    : jit_(std::move(jit)), objectLayer_(objectLayer) {
+-}
+-
+-MLIRJit::~MLIRJit() = default;
+-MLIRJit::MLIRJit(MLIRJit&&) noexcept = default;
+-MLIRJit& MLIRJit::operator=(MLIRJit&&) noexcept = default;
+-
+-llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module, const Options& options) {
+-	auto ctx = std::make_unique<llvm::LLVMContext>();
+-	auto llvmModule = ::mlir::translateModuleToLLVMIR(module, *ctx);
+-	if (!llvmModule) {
+-		return makeStringError("could not convert to LLVM IR");
+-	}
++struct JitComponents {
++	std::unique_ptr<llvm::orc::LLJIT> jit;
++	llvm::orc::RTDyldObjectLinkingLayer* objectLayer;
++};
+ 
++llvm::Expected<JitComponents> createJit(const MLIRJit::Options& options) {
+ 	auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
+ 	if (!tmBuilderOrError) {
+ 		return tmBuilderOrError.takeError();
+ 	}
+ 	tmBuilderOrError->setCodeGenOptLevel(options.codeGenOptLevel);
++	const auto targetTriple = tmBuilderOrError->getTargetTriple();
+ 
+-	// Build a one-shot TargetMachine only to seed the module's data layout and
+-	// triple; LLJIT constructs its own TargetMachines via the builder below.
+-	auto tmOrError = tmBuilderOrError->createTargetMachine();
+-	if (!tmOrError) {
+-		return tmOrError.takeError();
+-	}
+-	llvmModule->setDataLayout((*tmOrError)->createDataLayout());
+-	llvmModule->setTargetTriple((*tmOrError)->getTargetTriple());
+-
+-	detail::packFunctionArguments(llvmModule.get());
+-
+-	const auto dataLayout = llvmModule->getDataLayout();
+-	const auto targetTriple = llvmModule->getTargetTriple();
+-
+-	// Stash the layer pointer from inside the object-layer creator so we can
+-	// reach it after LLJIT construction for addEventListener().
+ 	llvm::orc::RTDyldObjectLinkingLayer* rawLayer = nullptr;
+-
+ 	auto objectLinkingLayerCreator =
+ 	    [&rawLayer, &options,
+-	     &targetTriple](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++	     targetTriple](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
+ 		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
+ 		    session, [](const llvm::MemoryBuffer&) { return std::make_unique<llvm::SectionMemoryManager>(); });
+ 
+@@ -73,6 +47,13 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 				layer->registerJITEventListener(*listener);
+ 			}
+ 		}
++		if (options.objectCapture != nullptr) {
++			layer->setNotifyLoaded([capture = options.objectCapture](llvm::orc::MaterializationResponsibility&,
++			                                                         const llvm::object::ObjectFile& object,
++			                                                         const llvm::RuntimeDyld::LoadedObjectInfo&) {
++				capture->record(object.getMemoryBufferRef().getBuffer());
++			});
++		}
+ 
+ 		// COFF binaries (Windows) need special handling for exported symbol
+ 		// visibility. Mirrors upstream mlir::ExecutionEngine.
+@@ -85,42 +66,25 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 		return layer;
+ 	};
+ 
+-	// Let LLJIT build its own ConcurrentIRCompiler from the JITTargetMachineBuilder.
+-	// We avoid constructing llvm::orc::TMOwningSimpleCompiler directly because
+-	// LLVM is compiled with -fno-rtti and exporting RTTI for its polymorphic
+-	// types across TU boundaries would require us to match.
+-	auto jitOrErr = llvm::orc::LLJITBuilder()
+-	                    .setJITTargetMachineBuilder(std::move(*tmBuilderOrError))
+-	                    .setObjectLinkingLayerCreator(objectLinkingLayerCreator)
+-	                    .create();
++	llvm::orc::LLJITBuilder builder;
++	builder.setJITTargetMachineBuilder(std::move(*tmBuilderOrError))
++	    .setObjectLinkingLayerCreator(objectLinkingLayerCreator);
++	auto jitOrErr = builder.create();
+ 	if (!jitOrErr) {
+ 		return jitOrErr.takeError();
+ 	}
+ 	auto jit = std::move(*jitOrErr);
+ 
+-	llvm::orc::ThreadSafeModule tsm(std::move(llvmModule), std::move(ctx));
+-	if (options.transformer) {
+-		auto transformErr =
+-		    tsm.withModuleDo([&options](llvm::Module& m) -> llvm::Error { return options.transformer(&m); });
+-		if (transformErr) {
+-			return transformErr;
+-		}
+-	}
+-	if (auto err = jit->addIRModule(std::move(tsm))) {
+-		return err;
+-	}
+-
+-	// Resolve symbols that are statically linked in the current process.
++	// Resolve symbols that are statically linked in the current process. Cache
++	// imports are still installed as absolute symbols before materialization;
++	// this generator covers compiler helpers such as memcpy and libm calls.
+ 	auto& mainJD = jit->getMainJITDylib();
+-	// GCC 12+ at -O3 (and with asan) raises a spurious -Wmaybe-uninitialized
+-	// inside the inlined move constructor of llvm::unique_function for the
+-	// defaulted AddAbsoluteSymbolsFn parameter. The warning is a known
+-	// false positive in gcc's inliner; suppress locally.
+ #if defined(__GNUC__) && !defined(__clang__)
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+ #endif
+-	auto generatorOrErr = llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(dataLayout.getGlobalPrefix());
++	auto generatorOrErr =
++	    llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(jit->getDataLayout().getGlobalPrefix());
+ #if defined(__GNUC__) && !defined(__clang__)
+ #pragma GCC diagnostic pop
+ #endif
+@@ -129,21 +93,92 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+ 	}
+ 	mainJD.addGenerator(std::move(*generatorOrErr));
+ 
+-	// Execute the module's global constructors. Upstream skips this on AArch64
+-	// due to a known LLVM bug (llvm/llvm-project#71963); mirror that.
+-	if (!jit->getTargetTriple().isAArch64()) {
+-		if (auto err = jit->initialize(mainJD)) {
+-			return err;
++	return JitComponents {std::move(jit), rawLayer};
++}
++
++} // namespace
++
++void MLIRJit::ObjectCapture::record(llvm::StringRef object) {
++	std::lock_guard guard(mutex_);
++	objects_.emplace_back(object);
++}
++
++std::optional<std::string> MLIRJit::ObjectCapture::getObject() const {
++	std::lock_guard guard(mutex_);
++	if (objects_.size() != 1) {
++		return std::nullopt;
++	}
++	return objects_.front();
++}
++
++MLIRJit::MLIRJit(std::unique_ptr<llvm::orc::LLJIT> jit, llvm::orc::RTDyldObjectLinkingLayer* objectLayer)
++    : jit_(std::move(jit)), objectLayer_(objectLayer) {
++}
++
++MLIRJit::~MLIRJit() = default;
++MLIRJit::MLIRJit(MLIRJit&&) noexcept = default;
++MLIRJit& MLIRJit::operator=(MLIRJit&&) noexcept = default;
++
++llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module, const Options& options) {
++	auto ctx = std::make_unique<llvm::LLVMContext>();
++	auto llvmModule = ::mlir::translateModuleToLLVMIR(module, *ctx);
++	if (!llvmModule) {
++		return makeStringError("could not convert to LLVM IR");
++	}
++
++	auto componentsOrError = createJit(options);
++	if (!componentsOrError) {
++		return componentsOrError.takeError();
++	}
++	auto components = std::move(*componentsOrError);
++	llvmModule->setDataLayout(components.jit->getDataLayout());
++	llvmModule->setTargetTriple(components.jit->getTargetTriple());
++
++	detail::packFunctionArguments(llvmModule.get());
++
++	llvm::orc::ThreadSafeModule tsm(std::move(llvmModule), std::move(ctx));
++	if (options.transformer) {
++		auto transformErr =
++		    tsm.withModuleDo([&options](llvm::Module& llvmIR) -> llvm::Error { return options.transformer(&llvmIR); });
++		if (transformErr) {
++			return transformErr;
+ 		}
+ 	}
++	if (auto error = components.jit->addIRModule(std::move(tsm))) {
++		return std::move(error);
++	}
+ 
+-	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(jit), rawLayer));
++	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(components.jit), components.objectLayer));
+ }
+ 
+-void MLIRJit::registerSymbols(llvm::function_ref<llvm::orc::SymbolMap(llvm::orc::MangleAndInterner)> symbolMapFn) {
++llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::createFromObject(std::unique_ptr<llvm::MemoryBuffer> object,
++                                                                   const Options& options) {
++	if (object == nullptr || object->getBuffer().empty()) {
++		return makeStringError("cached object is empty");
++	}
++	auto componentsOrError = createJit(options);
++	if (!componentsOrError) {
++		return componentsOrError.takeError();
++	}
++	auto components = std::move(*componentsOrError);
++	if (auto error = components.jit->addObjectFile(std::move(object))) {
++		return std::move(error);
++	}
++	return std::unique_ptr<MLIRJit>(new MLIRJit(std::move(components.jit), components.objectLayer));
++}
++
++llvm::Error
++MLIRJit::registerSymbols(llvm::function_ref<llvm::orc::SymbolMap(llvm::orc::MangleAndInterner)> symbolMapFn) {
+ 	auto& mainJD = jit_->getMainJITDylib();
+-	llvm::cantFail(mainJD.define(llvm::orc::absoluteSymbols(
+-	    symbolMapFn(llvm::orc::MangleAndInterner(mainJD.getExecutionSession(), jit_->getDataLayout())))));
++	return mainJD.define(llvm::orc::absoluteSymbols(
++	    symbolMapFn(llvm::orc::MangleAndInterner(mainJD.getExecutionSession(), jit_->getDataLayout()))));
++}
++
++llvm::Error MLIRJit::initialize() {
++	if (!jit_->getTargetTriple().isAArch64()) {
++		return jit_->initialize(jit_->getMainJITDylib());
++	}
++	return llvm::Error::success();
+ }
+ 
+ llvm::Expected<void*> MLIRJit::lookup(llvm::StringRef name) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+index bed4e5ef..ffb1eb2b 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.hpp
+@@ -11,8 +11,15 @@
+ #include <llvm/Support/Error.h>
+ #include <memory>
+ #include <mlir/IR/BuiltinOps.h>
++#include <mutex>
++#include <optional>
++#include <string>
+ #include <vector>
+ 
++namespace llvm {
++class MemoryBuffer;
++} // namespace llvm
++
+ namespace nautilus::compiler::mlir {
+ 
+ /**
+@@ -26,9 +33,20 @@ namespace nautilus::compiler::mlir {
+  */
+ class MLIRJit {
+ public:
++	class ObjectCapture {
++	public:
++		void record(llvm::StringRef object);
++		[[nodiscard]] std::optional<std::string> getObject() const;
++
++	private:
++		mutable std::mutex mutex_;
++		std::vector<std::string> objects_;
++	};
++
+ 	struct Options {
+ 		llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
+ 		llvm::function_ref<llvm::Error(llvm::Module*)> transformer = nullptr;
++		std::shared_ptr<ObjectCapture> objectCapture;
+ 		// Listeners attached to the object-linking layer before the module is
+ 		// materialized. Supports custom profiling (VTune, perf maps, in-process
+ 		// callbacks) which upstream mlir::ExecutionEngine disallows.
+@@ -42,8 +60,11 @@ public:
+ 	MLIRJit& operator=(MLIRJit&&) noexcept;
+ 
+ 	static llvm::Expected<std::unique_ptr<MLIRJit>> create(::mlir::ModuleOp module, const Options& options);
++	static llvm::Expected<std::unique_ptr<MLIRJit>> createFromObject(std::unique_ptr<llvm::MemoryBuffer> object,
++	                                                                 const Options& options);
+ 
+-	void registerSymbols(llvm::function_ref<llvm::orc::SymbolMap(llvm::orc::MangleAndInterner)> symbolMapFn);
++	llvm::Error registerSymbols(llvm::function_ref<llvm::orc::SymbolMap(llvm::orc::MangleAndInterner)> symbolMapFn);
++	llvm::Error initialize();
+ 
+ 	llvm::Expected<void*> lookup(llvm::StringRef name);
+ 	llvm::Expected<void (*)(void**)> lookupPacked(llvm::StringRef name);
+diff --git a/nautilus/src/nautilus/compiler/cache/CMakeLists.txt b/nautilus/src/nautilus/compiler/cache/CMakeLists.txt
+new file mode 100644
+index 00000000..a2a0743c
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/cache/CMakeLists.txt
+@@ -0,0 +1,3 @@
++if (ENABLE_MLIR_BACKEND)
++    add_source_files(nautilus PersistentModuleCache.cpp)
++endif ()
+diff --git a/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.cpp b/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.cpp
+new file mode 100644
+index 00000000..d53ffc53
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.cpp
+@@ -0,0 +1,792 @@
++#include "nautilus/compiler/cache/PersistentModuleCache.hpp"
++#include "nautilus/CompilableFunction.hpp"
++#include "nautilus/CompilationStatistics.hpp"
++#include "nautilus/Executable.hpp"
++#include "nautilus/common/ExecutableImage.hpp"
++#include "nautilus/compiler/DumpHandler.hpp"
++#include "nautilus/compiler/LegacyCompiler.hpp"
++#include "nautilus/compiler/backends/CompilationBackend.hpp"
++#include "nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp"
++#include "nautilus/compiler/ir/IRGraph.hpp"
++#include "nautilus/compiler/ir/operations/ConstPtrOperation.hpp"
++#include "nautilus/compiler/ir/operations/FunctionOperation.hpp"
++#include "nautilus/options.hpp"
++#include <algorithm>
++#include <array>
++#include <bit>
++#include <cerrno>
++#include <chrono>
++#include <cstdint>
++#include <filesystem>
++#include <fstream>
++#include <limits>
++#include <llvm/Config/llvm-config.h>
++#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
++#include <llvm/Support/Error.h>
++#include <llvm/Support/SHA256.h>
++#include <llvm/Target/TargetMachine.h>
++#include <memory>
++#include <mutex>
++#include <optional>
++#include <span>
++#include <stdexcept>
++#include <string>
++#include <string_view>
++#include <system_error>
++#include <thread>
++#include <type_traits>
++#include <unordered_map>
++#include <unordered_set>
++#include <utility>
++#include <variant>
++#include <vector>
++
++#ifdef __linux__
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <unistd.h>
++#endif
++
++namespace nautilus::compiler {
++namespace {
++
++constexpr std::string_view CACHE_MAGIC = "NMCACHE3";
++constexpr uint32_t CACHE_VERSION = 1;
++constexpr uint64_t MAX_MANIFEST_SIZE = uint64_t {64} << 20U;
++constexpr uint64_t MAX_ARTIFACT_SIZE = uint64_t {1} << 30U;
++
++class CacheFailure final : public std::runtime_error {
++public:
++	explicit CacheFailure(std::string message) : std::runtime_error(std::move(message)) {
++	}
++};
++
++class Writer {
++public:
++	void u8(uint8_t value) {
++		data_.push_back(static_cast<char>(value));
++	}
++
++	void u32(uint32_t value) {
++		for (uint32_t shift = 0; shift < 32; shift += 8) {
++			u8(static_cast<uint8_t>(value >> shift));
++		}
++	}
++
++	void u64(uint64_t value) {
++		for (uint32_t shift = 0; shift < 64; shift += 8) {
++			u8(static_cast<uint8_t>(value >> shift));
++		}
++	}
++
++	void bytes(std::span<const uint8_t> value) {
++		data_.append(reinterpret_cast<const char*>(value.data()), value.size());
++	}
++
++	void string(std::string_view value) {
++		u64(value.size());
++		data_.append(value.data(), value.size());
++	}
++
++	std::string take() {
++		return std::move(data_);
++	}
++
++private:
++	std::string data_;
++};
++
++class Reader {
++public:
++	explicit Reader(std::string_view data) : data_(data) {
++	}
++
++	uint8_t u8() {
++		require(1);
++		return static_cast<uint8_t>(data_[position_++]);
++	}
++
++	uint32_t u32() {
++		uint32_t value = 0;
++		for (uint32_t shift = 0; shift < 32; shift += 8) {
++			value |= static_cast<uint32_t>(u8()) << shift;
++		}
++		return value;
++	}
++
++	uint64_t u64() {
++		uint64_t value = 0;
++		for (uint32_t shift = 0; shift < 64; shift += 8) {
++			value |= static_cast<uint64_t>(u8()) << shift;
++		}
++		return value;
++	}
++
++	std::string string() {
++		const auto length = u64();
++		if (length > MAX_ARTIFACT_SIZE || length > remaining()) {
++			throw CacheFailure("invalid cache string length");
++		}
++		std::string value(data_.substr(position_, static_cast<std::size_t>(length)));
++		position_ += static_cast<std::size_t>(length);
++		return value;
++	}
++
++	std::span<const uint8_t> bytes(std::size_t length) {
++		require(length);
++		const auto* begin = reinterpret_cast<const uint8_t*>(data_.data() + position_);
++		position_ += length;
++		return {begin, length};
++	}
++
++	void finish() const {
++		if (position_ != data_.size()) {
++			throw CacheFailure("trailing cache bytes");
++		}
++	}
++
++private:
++	std::size_t remaining() const {
++		return data_.size() - position_;
++	}
++
++	void require(std::size_t length) const {
++		if (length > remaining()) {
++			throw CacheFailure("truncated cache record");
++		}
++	}
++
++	std::string_view data_;
++	std::size_t position_ = 0;
++};
++
++std::array<uint8_t, 32> digestBytes(std::string_view value) {
++	llvm::SHA256 sha;
++	sha.update(llvm::StringRef(value.data(), value.size()));
++	return sha.final();
++}
++
++std::string digest(std::string_view value) {
++	const auto bytes = digestBytes(value);
++	static constexpr char digits[] = "0123456789abcdef";
++	std::string result;
++	result.reserve(bytes.size() * 2U);
++	for (const auto byte : bytes) {
++		result.push_back(digits[byte >> 4U]);
++		result.push_back(digits[byte & 0x0fU]);
++	}
++	return result;
++}
++
++bool isDigest(std::string_view value) {
++	return value.size() == 64 && std::ranges::all_of(value, [](char character) {
++		       return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f');
++	       });
++}
++
++void writeOptionValue(Writer& writer, const engine::OptionValue& value) {
++	std::visit(
++	    [&](const auto& typedValue) {
++		    using T = std::decay_t<decltype(typedValue)>;
++		    if constexpr (std::is_same_v<T, int>) {
++			    writer.u8(1);
++			    writer.u64(static_cast<uint64_t>(static_cast<int64_t>(typedValue)));
++		    } else if constexpr (std::is_same_v<T, double>) {
++			    writer.u8(2);
++			    writer.u64(std::bit_cast<uint64_t>(typedValue));
++		    } else if constexpr (std::is_same_v<T, std::string>) {
++			    writer.u8(3);
++			    writer.string(typedValue);
++		    } else if constexpr (std::is_same_v<T, bool>) {
++			    writer.u8(4);
++			    writer.u8(typedValue ? 1 : 0);
++		    }
++	    },
++	    value);
++}
++
++std::optional<std::string> createKeyManifest(const std::list<CompilableFunction>& functions,
++                                             const engine::ModuleOptions& options, std::string_view explicitKey) {
++	if (functions.empty() || explicitKey.empty() || options.getOptionOrDefault("mlir.inline_invoke_calls", false)) {
++		return std::nullopt;
++	}
++
++	std::vector<const CompilableFunction*> canonicalFunctions;
++	canonicalFunctions.reserve(functions.size());
++	for (const auto& function : functions) {
++		if (function.getName().empty() || !function.getSignature()) {
++			return std::nullopt;
++		}
++		canonicalFunctions.push_back(&function);
++	}
++	std::ranges::sort(canonicalFunctions, {}, [](const auto* function) { return function->getName(); });
++	for (std::size_t index = 1; index < canonicalFunctions.size(); ++index) {
++		if (canonicalFunctions[index - 1]->getName() == canonicalFunctions[index]->getName()) {
++			return std::nullopt;
++		}
++	}
++
++	auto targetBuilder = llvm::orc::JITTargetMachineBuilder::detectHost();
++	if (!targetBuilder) {
++		(void) llvm::toString(targetBuilder.takeError());
++		return std::nullopt;
++	}
++	auto targetMachine = targetBuilder->createTargetMachine();
++	if (!targetMachine) {
++		(void) llvm::toString(targetMachine.takeError());
++		return std::nullopt;
++	}
++
++	Writer writer;
++	writer.u32(CACHE_VERSION);
++	writer.string("nautilus.persistent.module-cache.v1");
++	writer.string(explicitKey);
++	writer.string("mlir");
++	writer.string(LLVM_VERSION_STRING);
++	writer.string(targetBuilder->getTargetTriple().str());
++	writer.string(targetBuilder->getCPU());
++	writer.string(targetBuilder->getFeatures().getString());
++	writer.string((*targetMachine)->createDataLayout().getStringRepresentation());
++	writer.string(options.getOptionOrDefault("mlir.debug.enable", false) ? "codegen-less" : "codegen-aggressive");
++	writer.u64(sizeof(void*));
++	writer.u8(std::endian::native == std::endian::little ? 1 : 2);
++	writer.u64(__cplusplus);
++#ifdef __clang_version__
++	writer.string(__clang_version__);
++#elif defined(__GNUC__)
++	writer.string(__VERSION__);
++#else
++	writer.string("unknown-cxx-compiler");
++#endif
++#ifdef NDEBUG
++	writer.string("release");
++#else
++	writer.string("debug");
++#endif
++
++	writer.u32(static_cast<uint32_t>(canonicalFunctions.size()));
++	for (const auto* function : canonicalFunctions) {
++		writer.string(function->getName());
++		writer.u8(static_cast<uint8_t>(function->getSignature()->returnType));
++		writer.u32(static_cast<uint32_t>(function->getSignature()->argumentTypes.size()));
++		for (const auto type : function->getSignature()->argumentTypes) {
++			writer.u8(static_cast<uint8_t>(type));
++		}
++		std::vector<std::pair<std::string, std::string>> attributes(function->getAttributes().begin(),
++		                                                            function->getAttributes().end());
++		std::ranges::sort(attributes);
++		writer.u32(static_cast<uint32_t>(attributes.size()));
++		for (const auto& [name, value] : attributes) {
++			writer.string(name);
++			writer.string(value);
++		}
++	}
++
++	std::vector<std::pair<std::string, engine::OptionValue>> optionValues;
++	for (const auto& [name, value] : options.getOptionValues()) {
++		if (name == "engine.Blob.CacheDir" || name == "engine.Blob.CacheKey") {
++			continue;
++		}
++		optionValues.emplace_back(name, value);
++	}
++	std::ranges::sort(optionValues, {}, [](const auto& entry) { return entry.first; });
++	writer.u32(static_cast<uint32_t>(optionValues.size()));
++	for (const auto& [name, value] : optionValues) {
++		writer.string(name);
++		writeOptionValue(writer, value);
++	}
++	return writer.take();
++}
++
++std::vector<std::string> exportNames(const std::list<CompilableFunction>& functions) {
++	std::vector<std::string> names;
++	names.reserve(functions.size());
++	for (const auto& function : functions) {
++		names.push_back(function.getName());
++	}
++	std::ranges::sort(names);
++	return names;
++}
++
++struct ImportRecord {
++	std::string symbol;
++	common::ExecutableImageLocation image;
++
++	bool operator==(const ImportRecord&) const = default;
++};
++
++struct Manifest {
++	std::string keyManifest;
++	std::string moduleManifest;
++	std::string objectDigest;
++	std::string bytecodeDigest;
++	std::vector<ImportRecord> imports;
++};
++
++std::vector<ImportRecord> createImportRecords(const mlir::MLIRCacheArtifacts& artifacts) {
++	if (artifacts.externalSymbols.size() != artifacts.externalAddresses.size()) {
++		throw CacheFailure("external symbol vector mismatch");
++	}
++	std::vector<ImportRecord> imports;
++	imports.reserve(artifacts.externalSymbols.size());
++	for (std::size_t index = 0; index < artifacts.externalSymbols.size(); ++index) {
++		if (artifacts.externalSymbols[index].empty() || artifacts.externalAddresses[index] == nullptr) {
++			throw CacheFailure("invalid external symbol");
++		}
++		auto image = common::locateExecutableAddress(artifacts.externalAddresses[index]);
++		if (!image) {
++			throw CacheFailure("external symbol is not in a relocatable executable image: " +
++			                   artifacts.externalSymbols[index]);
++		}
++		imports.push_back(ImportRecord {artifacts.externalSymbols[index], std::move(*image)});
++	}
++	std::ranges::sort(imports, {}, [](const auto& import) { return import.symbol; });
++	for (std::size_t index = 1; index < imports.size(); ++index) {
++		if (imports[index - 1].symbol == imports[index].symbol) {
++			if (imports[index - 1].image != imports[index].image) {
++				throw CacheFailure("external symbol has conflicting addresses");
++			}
++			imports.erase(imports.begin() + static_cast<std::ptrdiff_t>(index));
++			--index;
++		}
++	}
++	return imports;
++}
++
++std::string encodeManifest(const Manifest& manifest) {
++	Writer payload;
++	payload.u32(CACHE_VERSION);
++	payload.string(manifest.keyManifest);
++	payload.string(manifest.moduleManifest);
++	payload.string(manifest.objectDigest);
++	payload.string(manifest.bytecodeDigest);
++	payload.u8(1); // This cache version only publishes pointer-safe modules.
++	payload.u32(static_cast<uint32_t>(manifest.imports.size()));
++	for (const auto& import : manifest.imports) {
++		payload.string(import.symbol);
++		payload.string(import.image.buildId);
++		payload.u64(import.image.loadOffset);
++	}
++	auto payloadBytes = payload.take();
++
++	Writer envelope;
++	envelope.bytes({reinterpret_cast<const uint8_t*>(CACHE_MAGIC.data()), CACHE_MAGIC.size()});
++	envelope.u64(payloadBytes.size());
++	const auto checksum = digestBytes(payloadBytes);
++	envelope.bytes(checksum);
++	envelope.bytes({reinterpret_cast<const uint8_t*>(payloadBytes.data()), payloadBytes.size()});
++	return envelope.take();
++}
++
++Manifest decodeManifest(std::string_view envelopeBytes, std::string_view expectedKeyManifest) {
++	Reader envelope(envelopeBytes);
++	const auto magic = envelope.bytes(CACHE_MAGIC.size());
++	if (!std::equal(magic.begin(), magic.end(), reinterpret_cast<const uint8_t*>(CACHE_MAGIC.data()))) {
++		throw CacheFailure("invalid cache manifest magic");
++	}
++	const auto payloadLength = envelope.u64();
++	if (payloadLength > MAX_MANIFEST_SIZE) {
++		throw CacheFailure("invalid cache manifest size");
++	}
++	const auto checksum = envelope.bytes(32);
++	const auto payload = envelope.bytes(static_cast<std::size_t>(payloadLength));
++	envelope.finish();
++	const std::string_view payloadView(reinterpret_cast<const char*>(payload.data()), payload.size());
++	const auto calculatedChecksum = digestBytes(payloadView);
++	if (!std::equal(checksum.begin(), checksum.end(), calculatedChecksum.begin())) {
++		throw CacheFailure("cache manifest checksum mismatch");
++	}
++
++	Reader reader(payloadView);
++	if (reader.u32() != CACHE_VERSION) {
++		throw CacheFailure("cache manifest version mismatch");
++	}
++	Manifest manifest;
++	manifest.keyManifest = reader.string();
++	manifest.moduleManifest = reader.string();
++	manifest.objectDigest = reader.string();
++	manifest.bytecodeDigest = reader.string();
++	if (reader.u8() != 1 || manifest.keyManifest != expectedKeyManifest || manifest.moduleManifest.empty() ||
++	    (!manifest.objectDigest.empty() && !isDigest(manifest.objectDigest)) || !isDigest(manifest.bytecodeDigest)) {
++		throw CacheFailure("cache manifest is incompatible");
++	}
++	const auto importCount = reader.u32();
++	if (importCount > 100000) {
++		throw CacheFailure("invalid cache import count");
++	}
++	manifest.imports.reserve(importCount);
++	std::unordered_set<std::string> symbols;
++	for (uint32_t index = 0; index < importCount; ++index) {
++		ImportRecord import;
++		import.symbol = reader.string();
++		import.image.buildId = reader.string();
++		import.image.loadOffset = reader.u64();
++		if (import.symbol.empty() || import.image.buildId.empty() || !symbols.insert(import.symbol).second) {
++			throw CacheFailure("invalid cache import");
++		}
++		manifest.imports.push_back(std::move(import));
++	}
++	reader.finish();
++	return manifest;
++}
++
++std::optional<std::string> readFile(const std::filesystem::path& path, uint64_t maximumSize) {
++	std::ifstream input(path, std::ios::binary | std::ios::ate);
++	if (!input) {
++		std::error_code error;
++		if (!std::filesystem::exists(path, error) && !error) {
++			return std::nullopt;
++		}
++		throw CacheFailure("cache artifact read failed");
++	}
++	const auto end = input.tellg();
++	if (end < 0 || static_cast<uint64_t>(end) > maximumSize) {
++		throw CacheFailure("invalid cache artifact size");
++	}
++	std::string bytes(static_cast<std::size_t>(end), '\0');
++	input.seekg(0);
++	if (!bytes.empty()) {
++		input.read(bytes.data(), static_cast<std::streamsize>(bytes.size()));
++	}
++	if (!input) {
++		throw CacheFailure("cache artifact read failed");
++	}
++	return bytes;
++}
++
++#ifdef __linux__
++void writeAll(int descriptor, std::string_view data) {
++	std::size_t written = 0;
++	while (written < data.size()) {
++		const auto result = ::write(descriptor, data.data() + written, data.size() - written);
++		if (result < 0 && errno == EINTR) {
++			continue;
++		}
++		if (result <= 0) {
++			throw CacheFailure("cache artifact write failed");
++		}
++		written += static_cast<std::size_t>(result);
++	}
++}
++
++class OwnedDescriptor {
++public:
++	explicit OwnedDescriptor(int descriptor) : descriptor_(descriptor) {
++	}
++	~OwnedDescriptor() {
++		if (descriptor_ >= 0) {
++			::close(descriptor_);
++		}
++	}
++	OwnedDescriptor(const OwnedDescriptor&) = delete;
++	OwnedDescriptor& operator=(const OwnedDescriptor&) = delete;
++	int get() const {
++		return descriptor_;
++	}
++	int release() {
++		return std::exchange(descriptor_, -1);
++	}
++
++private:
++	int descriptor_;
++};
++
++void syncDirectory(const std::filesystem::path& directory) {
++	int flags = O_RDONLY | O_CLOEXEC;
++#ifdef O_DIRECTORY
++	flags |= O_DIRECTORY;
++#endif
++	OwnedDescriptor descriptor(::open(directory.c_str(), flags));
++	if (descriptor.get() < 0 || ::fsync(descriptor.get()) != 0) {
++		throw CacheFailure("cache directory sync failed");
++	}
++}
++#endif
++
++void atomicWrite(const std::filesystem::path& target, std::string_view bytes) {
++	std::error_code error;
++	std::filesystem::create_directories(target.parent_path(), error);
++	if (error) {
++		throw CacheFailure("cache directory creation failed");
++	}
++#ifdef __linux__
++	auto temporaryTemplate = target.string() + ".tmp.XXXXXX";
++	std::vector<char> temporaryBuffer(temporaryTemplate.begin(), temporaryTemplate.end());
++	temporaryBuffer.push_back('\0');
++	OwnedDescriptor descriptor(::mkstemp(temporaryBuffer.data()));
++	const std::filesystem::path temporary(temporaryBuffer.data());
++	if (descriptor.get() < 0 || ::fcntl(descriptor.get(), F_SETFD, FD_CLOEXEC) != 0 ||
++	    ::fchmod(descriptor.get(), S_IRUSR | S_IWUSR) != 0) {
++		::unlink(temporary.c_str());
++		throw CacheFailure("temporary cache artifact creation failed");
++	}
++	try {
++		writeAll(descriptor.get(), bytes);
++		if (::fsync(descriptor.get()) != 0) {
++			throw CacheFailure("cache artifact sync failed");
++		}
++		const int rawDescriptor = descriptor.release();
++		if (::close(rawDescriptor) != 0) {
++			throw CacheFailure("cache artifact close failed");
++		}
++		if (::rename(temporary.c_str(), target.c_str()) != 0) {
++			throw CacheFailure("cache artifact publication failed");
++		}
++		syncDirectory(target.parent_path());
++	} catch (...) {
++		::unlink(temporary.c_str());
++		throw;
++	}
++#else
++	const auto suffix = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "." +
++	                    std::to_string(std::hash<std::thread::id> {}(std::this_thread::get_id()));
++	const auto temporary = std::filesystem::path(target.string() + ".tmp." + suffix);
++	try {
++		std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
++		if (!output) {
++			throw CacheFailure("temporary cache artifact creation failed");
++		}
++		output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
++		output.close();
++		if (!output) {
++			throw CacheFailure("cache artifact write failed");
++		}
++		std::filesystem::rename(temporary, target, error);
++		if (error) {
++			throw CacheFailure("cache artifact publication failed");
++		}
++	} catch (...) {
++		std::filesystem::remove(temporary, error);
++		throw;
++	}
++#endif
++}
++
++std::shared_ptr<std::mutex> mutexForKey(const std::string& key) {
++	static std::mutex mapMutex;
++	static std::unordered_map<std::string, std::weak_ptr<std::mutex>> mutexes;
++	std::lock_guard guard(mapMutex);
++	if (auto existing = mutexes[key].lock()) {
++		return existing;
++	}
++	auto created = std::make_shared<std::mutex>();
++	mutexes[key] = created;
++	return created;
++}
++
++struct CachePaths {
++	std::filesystem::path object;
++	std::filesystem::path bytecode;
++	std::filesystem::path manifest;
++};
++
++CachePaths getPaths(const std::filesystem::path& directory, std::string_view keyDigest) {
++	const auto stem = directory / std::string(keyDigest);
++	return CachePaths {stem.string() + ".o", stem.string() + ".mlirbc", stem.string() + ".manifest"};
++}
++
++std::optional<Manifest> readManifest(const CachePaths& paths, std::string_view keyManifest) {
++	auto bytes = readFile(paths.manifest, MAX_MANIFEST_SIZE);
++	if (!bytes) {
++		return std::nullopt;
++	}
++	return decodeManifest(*bytes, keyManifest);
++}
++
++std::string readCheckedArtifact(const std::filesystem::path& path, std::string_view expectedDigest) {
++	auto bytes = readFile(path, MAX_ARTIFACT_SIZE);
++	if (!bytes || digest(*bytes) != expectedDigest) {
++		throw CacheFailure("cache artifact checksum mismatch");
++	}
++	return std::move(*bytes);
++}
++
++bool resolveImports(const std::vector<ImportRecord>& imports, std::vector<std::string>& symbols,
++                    std::vector<void*>& addresses) {
++	symbols.clear();
++	addresses.clear();
++	symbols.reserve(imports.size());
++	addresses.reserve(imports.size());
++	for (const auto& import : imports) {
++		auto* address = common::resolveExecutableAddress(import.image);
++		if (address == nullptr) {
++			return false;
++		}
++		symbols.push_back(import.symbol);
++		addresses.push_back(address);
++	}
++	return true;
++}
++
++bool containsDirectPointerConstant(const ir::IRGraph& graph) {
++	for (const auto* function : graph.getFunctionOperations()) {
++		for (const auto* block : function->getBasicBlocks()) {
++			for (const auto* operation : block->getOperations()) {
++				const auto* pointer = operation->dynCast<ir::ConstPtrOperation>();
++				if (pointer != nullptr && pointer->getValue() != nullptr) {
++					return true;
++				}
++			}
++		}
++	}
++	return false;
++}
++
++const mlir::MLIRCompilationBackend& getMLIRBackend() {
++	const auto* backend = CompilationBackendRegistry::getInstance()->getBackend("mlir");
++	const auto* typedBackend = dynamic_cast<const mlir::MLIRCompilationBackend*>(backend);
++	if (typedBackend == nullptr) {
++		throw CacheFailure("MLIR backend is unavailable");
++	}
++	return *typedBackend;
++}
++
++void publish(const CachePaths& paths, const std::string& keyManifest, const mlir::MLIRCacheArtifacts& artifacts,
++             const std::vector<ImportRecord>& imports) {
++	if (artifacts.bytecode.empty() || artifacts.moduleManifest.empty()) {
++		throw CacheFailure("cache compilation produced no MLIR bytecode");
++	}
++	Manifest manifest {keyManifest, artifacts.moduleManifest,
++	                   artifacts.object.empty() ? std::string {} : digest(artifacts.object), digest(artifacts.bytecode),
++	                   imports};
++	atomicWrite(paths.bytecode, artifacts.bytecode);
++	if (!artifacts.object.empty()) {
++		atomicWrite(paths.object, artifacts.object);
++	}
++	// The manifest is the commit record. Publishing it last prevents readers
++	// from accepting a partially-written generation.
++	atomicWrite(paths.manifest, encodeManifest(manifest));
++}
++
++void markCacheState(CompilationStatistics* statistics, std::string objectState, std::string bytecodeState,
++                    bool tracingRan, std::string fallback) {
++	if (statistics == nullptr) {
++		return;
++	}
++	statistics->set("cache.eligible", int64_t {1});
++	statistics->set("cache.object", std::move(objectState));
++	statistics->set("cache.mlir", std::move(bytecodeState));
++	statistics->set("cache.tracingRan", int64_t {tracingRan ? 1 : 0});
++	statistics->set("cache.fallback", std::move(fallback));
++}
++
++} // namespace
++
++std::unique_ptr<Executable> compileWithPersistentModuleCache(const LegacyCompiler& compiler,
++                                                             std::list<CompilableFunction>& functions,
++                                                             const engine::ModuleOptions& moduleOptions,
++                                                             CompilationStatistics* statistics) {
++	const auto cacheDirectory = moduleOptions.getOptionOrDefault<std::string>("engine.Blob.CacheDir", std::string {});
++	const auto explicitKey = moduleOptions.getOptionOrDefault<std::string>("engine.Blob.CacheKey", std::string {});
++	if (cacheDirectory.empty() || explicitKey.empty() || compiler.getName() != "mlir") {
++		return nullptr;
++	}
++
++	auto keyManifest = createKeyManifest(functions, moduleOptions, explicitKey);
++	if (!keyManifest) {
++		return nullptr;
++	}
++	const auto keyDigest = digest(*keyManifest);
++	const auto paths = getPaths(cacheDirectory, keyDigest);
++	std::error_code directoryError;
++	std::filesystem::create_directories(std::filesystem::path(cacheDirectory), directoryError);
++	if (directoryError) {
++		return nullptr;
++	}
++
++	auto keyMutex = mutexForKey(std::filesystem::absolute(paths.manifest).lexically_normal().string());
++	std::unique_lock keyLock(*keyMutex);
++	const auto exports = exportNames(functions);
++	const auto& backend = getMLIRBackend();
++	std::string objectState = "miss";
++	std::string bytecodeState = "miss";
++	std::string fallback = "none";
++
++	std::optional<Manifest> manifest;
++	try {
++		manifest = readManifest(paths, *keyManifest);
++	} catch (const std::exception&) {
++		fallback = "invalid_manifest";
++	}
++
++	if (manifest) {
++		std::vector<std::string> symbols;
++		std::vector<void*> addresses;
++		if (resolveImports(manifest->imports, symbols, addresses)) {
++			if (!manifest->objectDigest.empty()) {
++				try {
++					auto object = readCheckedArtifact(paths.object, manifest->objectDigest);
++					auto executable =
++					    backend.compileCachedObject(object, symbols, addresses, exports, moduleOptions, statistics);
++					objectState = "hit";
++					markCacheState(statistics, objectState, "not_checked", false, fallback);
++					return executable;
++				} catch (const std::exception&) {
++					objectState = "invalid";
++					fallback = "invalid_object";
++				}
++			}
++
++			try {
++				auto bytecode = readCheckedArtifact(paths.bytecode, manifest->bytecodeDigest);
++				auto dumpHandler = DumpHandler(moduleOptions, "cache-mlir-" + keyDigest.substr(0, 12));
++				mlir::MLIRCacheArtifacts regenerated;
++				auto executable =
++				    backend.compileCachedBytecode(bytecode, manifest->moduleManifest, symbols, addresses, exports,
++				                                  dumpHandler, moduleOptions, statistics, &regenerated);
++				executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
++				bytecodeState = "hit";
++				if (!regenerated.object.empty()) {
++					try {
++						publish(paths, *keyManifest, regenerated, manifest->imports);
++						objectState = objectState == "invalid" ? "invalid_rewritten" : "miss_written";
++					} catch (const std::exception&) {
++						fallback = "object_repair_failed";
++					}
++				}
++				markCacheState(statistics, objectState, bytecodeState, false, fallback);
++				return executable;
++			} catch (const std::exception&) {
++				bytecodeState = "invalid";
++				if (fallback == "none") {
++					fallback = "invalid_mlir";
++				}
++			}
++		} else {
++			fallback = "unresolved_import";
++		}
++	}
++
++	auto ir = compiler.compileToIR(functions, moduleOptions, statistics);
++	if (containsDirectPointerConstant(*ir)) {
++		markCacheState(statistics, objectState, bytecodeState, true, "non_relocatable_pointer");
++		return compiler.compileIR(ir, "mlir", moduleOptions, statistics);
++	}
++
++	auto dumpHandler = DumpHandler(moduleOptions, "cache-build-" + keyDigest.substr(0, 12));
++	mlir::MLIRCacheArtifacts artifacts;
++	std::unique_ptr<Executable> executable;
++	try {
++		executable = backend.compileWithCacheArtifacts(ir, exports, dumpHandler, moduleOptions, statistics, artifacts);
++		executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
++	} catch (const std::exception& exception) {
++		markCacheState(statistics, objectState, bytecodeState, true,
++		               "artifact_generation_failed:" + std::string(exception.what()));
++		return compiler.compileIR(ir, "mlir", moduleOptions, statistics);
++	}
++
++	try {
++		auto imports = createImportRecords(artifacts);
++		publish(paths, *keyManifest, artifacts, imports);
++		objectState = artifacts.object.empty() ? "not_emitted" : "written";
++		bytecodeState = "written";
++	} catch (const std::exception& exception) {
++		if (fallback == "none") {
++			fallback = "artifact_publication_failed:" + std::string(exception.what());
++		}
++	}
++	markCacheState(statistics, objectState, bytecodeState, true, fallback);
++	return executable;
++}
++
++} // namespace nautilus::compiler
+diff --git a/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.hpp b/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.hpp
+new file mode 100644
+index 00000000..19c63b96
+--- /dev/null
++++ b/nautilus/src/nautilus/compiler/cache/PersistentModuleCache.hpp
+@@ -0,0 +1,20 @@
++#pragma once
++
++#include <list>
++#include <memory>
++
++namespace nautilus::engine {
++class ModuleOptions;
++}
++
++namespace nautilus::compiler {
++class CompilableFunction;
++class CompilationStatistics;
++class Executable;
++class LegacyCompiler;
++
++std::unique_ptr<Executable>
++compileWithPersistentModuleCache(const LegacyCompiler& compiler, std::list<CompilableFunction>& functions,
++                                 const engine::ModuleOptions& moduleOptions, CompilationStatistics* statistics);
++
++} // namespace nautilus::compiler
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+index 9025a98a..234decae 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+@@ -2,6 +2,7 @@
+ #include "ExceptionBasedTraceContext.hpp"
+ #include "TraceOperation.hpp"
+ #include "nautilus/CompilableFunction.hpp"
++#include "nautilus/common/ExecutableImage.hpp"
+ #include "nautilus/common/FunctionAttributes.hpp"
+ #include "nautilus/logging.hpp"
+ #include "nautilus/nautilus_function.hpp"
+@@ -13,7 +14,6 @@
+ #include <cxxabi.h>
+ #include <dlfcn.h>
+ #include <fmt/format.h>
+-#include <sstream>
+ 
+ namespace fmt {
+ template <>
+@@ -424,11 +424,13 @@ std::string TraceContextBase::getMangledName(void* fnptr) {
+ 		mangledNameCache[fnptr] = info.dli_sname;
+ 		return info.dli_sname;
+ 	}
+-	std::stringstream ss;
+-	ss << fnptr;
+-	std::string ptrStr = ss.str();
+-	mangledNameCache[fnptr] = ptrStr;
+-	return ptrStr;
++	if (auto stableName = common::stableExecutableAddressName(fnptr); !stableName.empty()) {
++		mangledNameCache[fnptr] = stableName;
++		return stableName;
++	}
++	auto redactedName = "__nautilus_external_" + std::to_string(mangledNameCache.size());
++	mangledNameCache[fnptr] = redactedName;
++	return redactedName;
+ }
+ 
+ std::string TraceContextBase::getFunctionName(void* fnptr, const std::string& mangledName) {
+diff --git a/nautilus/test/execution-tests/CMakeLists.txt b/nautilus/test/execution-tests/CMakeLists.txt
+index c1cee94d..d7736657 100644
+--- a/nautilus/test/execution-tests/CMakeLists.txt
++++ b/nautilus/test/execution-tests/CMakeLists.txt
+@@ -18,6 +18,7 @@ set(NAUTILUS_EXECUTION_TEST_SOURCES
+ 
+ if (ENABLE_MLIR_BACKEND)
+     list(APPEND NAUTILUS_EXECUTION_TEST_SOURCES
++            CompilationCacheTest.cpp
+             MLIRJitEventListenerTest.cpp
+             MLIRJitEventListenerTestFixture.cpp
+             DebugInfoExecutionTest.cpp)
+diff --git a/nautilus/test/execution-tests/CompilationCacheTest.cpp b/nautilus/test/execution-tests/CompilationCacheTest.cpp
+new file mode 100644
+index 00000000..77740760
+--- /dev/null
++++ b/nautilus/test/execution-tests/CompilationCacheTest.cpp
+@@ -0,0 +1,257 @@
++#include "catch2/catch_test_macros.hpp"
++#include "nautilus/CompilationStatistics.hpp"
++#include "nautilus/Engine.hpp"
++#include "nautilus/function.hpp"
++#include "nautilus/val.hpp"
++#include <atomic>
++#include <chrono>
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <string>
++#ifdef __linux__
++#include <sys/wait.h>
++#include <unistd.h>
++#endif
++
++namespace nautilus::engine {
++namespace {
++
++class TemporaryCacheDirectory {
++public:
++	TemporaryCacheDirectory() {
++		static std::atomic<uint64_t> sequence {0};
++		path_ = std::filesystem::temp_directory_path() /
++		        ("nautilus-module-cache-test-" +
++		         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "-" +
++		         std::to_string(sequence.fetch_add(1)));
++		std::filesystem::create_directories(path_);
++	}
++
++	~TemporaryCacheDirectory() {
++		std::error_code error;
++		std::filesystem::remove_all(path_, error);
++	}
++
++	const std::filesystem::path& path() const {
++		return path_;
++	}
++
++private:
++	std::filesystem::path path_;
++};
++
++std::filesystem::path findArtifact(const std::filesystem::path& directory, std::string_view extension) {
++	for (const auto& entry : std::filesystem::directory_iterator(directory)) {
++		if (entry.path().extension() == extension) {
++			return entry.path();
++		}
++	}
++	return {};
++}
++
++std::string cacheStat(const CompiledModule& module, const std::string& name) {
++	auto statistics = module.getStatistics();
++	REQUIRE(statistics != nullptr);
++	const auto* value = statistics->find(name);
++	REQUIRE(value != nullptr);
++	return std::get<std::string>(*value);
++}
++
++int64_t cacheIntStat(const CompiledModule& module, const std::string& name) {
++	auto statistics = module.getStatistics();
++	REQUIRE(statistics != nullptr);
++	const auto* value = statistics->find(name);
++	REQUIRE(value != nullptr);
++	return std::get<int64_t>(*value);
++}
++
++CompiledModule compileAbsoluteValueModule(const std::filesystem::path& cacheDirectory) {
++	Options options;
++	options.setOption("engine.backend", std::string("mlir"));
++	options.setOption("engine.Blob.CacheDir", cacheDirectory.string());
++	options.setOption("engine.Blob.CacheKey", std::string("fresh-process-proxy-module-v1"));
++	options.setOption("mlir.enableMultithreading", false);
++
++	NautilusEngine engine(options);
++	auto module = engine.createModule();
++	module.registerFunction<val<int32_t>(val<int32_t>)>("absolute_value", [](val<int32_t> value) {
++		auto* absoluteValue = static_cast<int (*)(int)>(&std::abs);
++		return invoke(absoluteValue, value);
++	});
++	return module.compile();
++}
++
++} // namespace
++
++TEST_CASE("MLIR persistent module cache prefers native objects and retains bytecode fallback") {
++	TemporaryCacheDirectory cache;
++	std::atomic<int> traces {0};
++
++	Options options;
++	options.setOption("engine.backend", std::string("mlir"));
++	options.setOption("engine.Blob.CacheDir", cache.path().string());
++	options.setOption("engine.Blob.CacheKey", std::string("multi-function-module-v1"));
++	options.setOption("mlir.enableMultithreading", false);
++
++	auto compile = [&](bool reverseOrder) {
++		NautilusEngine engine(options);
++		auto module = engine.createModule();
++		auto increment = [&](val<int32_t> value) {
++			traces.fetch_add(1);
++			return value + 1;
++		};
++		auto add = [&](val<int64_t> left, val<int64_t> right) {
++			traces.fetch_add(1);
++			return left + right;
++		};
++		if (reverseOrder) {
++			module.registerFunction<val<int64_t>(val<int64_t>, val<int64_t>)>("add", add);
++			module.registerFunction<val<int32_t>(val<int32_t>)>("increment", increment);
++		} else {
++			module.registerFunction<val<int32_t>(val<int32_t>)>("increment", increment);
++			module.registerFunction<val<int64_t>(val<int64_t>, val<int64_t>)>("add", add);
++		}
++		return module.compile();
++	};
++
++	{
++		auto module = compile(false);
++		REQUIRE(module.getFunction<int32_t(int32_t)>("increment")(4) == 5);
++		REQUIRE(module.getFunction<int64_t(int64_t, int64_t)>("add")(20, 22) == 42);
++		REQUIRE(cacheStat(module, "cache.object") == "written");
++		REQUIRE(cacheStat(module, "cache.mlir") == "written");
++	}
++	const auto coldTraceCount = traces.load();
++	REQUIRE(coldTraceCount >= 2);
++
++	const auto objectPath = findArtifact(cache.path(), ".o");
++	const auto bytecodePath = findArtifact(cache.path(), ".mlirbc");
++	const auto manifestPath = findArtifact(cache.path(), ".manifest");
++	REQUIRE(!objectPath.empty());
++	REQUIRE(!bytecodePath.empty());
++	REQUIRE(!manifestPath.empty());
++
++	{
++		auto module = compile(true);
++		REQUIRE(module.getFunction<int32_t(int32_t)>("increment")(8) == 9);
++		REQUIRE(module.getFunction<int64_t(int64_t, int64_t)>("add")(1, 2) == 3);
++		REQUIRE(cacheStat(module, "cache.object") == "hit");
++		REQUIRE(traces.load() == coldTraceCount);
++	}
++
++	{
++		std::ofstream corrupt(objectPath, std::ios::binary | std::ios::trunc);
++		corrupt << "not an object";
++	}
++	{
++		auto module = compile(false);
++		REQUIRE(module.getFunction<int32_t(int32_t)>("increment")(10) == 11);
++		REQUIRE(cacheStat(module, "cache.mlir") == "hit");
++		REQUIRE(traces.load() == coldTraceCount);
++	}
++	{
++		auto module = compile(false);
++		REQUIRE(module.getFunction<int64_t(int64_t, int64_t)>("add")(40, 2) == 42);
++		REQUIRE(cacheStat(module, "cache.object") == "hit");
++		REQUIRE(traces.load() == coldTraceCount);
++	}
++}
++
++TEST_CASE("MLIR persistent module cache rebinds proxy functions without persisting their addresses") {
++	TemporaryCacheDirectory cache;
++	std::atomic<int> traces {0};
++	Options options;
++	options.setOption("engine.backend", std::string("mlir"));
++	options.setOption("engine.Blob.CacheDir", cache.path().string());
++	options.setOption("engine.Blob.CacheKey", std::string("proxy-module-v1"));
++	options.setOption("mlir.enableMultithreading", false);
++
++	auto compile = [&]() {
++		NautilusEngine engine(options);
++		auto module = engine.createModule();
++		module.registerFunction<val<int32_t>(val<int32_t>)>("call_proxy", [&](val<int32_t> value) {
++			traces.fetch_add(1);
++			auto* absoluteValue = static_cast<int (*)(int)>(&std::abs);
++			return invoke(absoluteValue, value);
++		});
++		return module.compile();
++	};
++
++	{
++		auto module = compile();
++		REQUIRE(module.getFunction<int32_t(int32_t)>("call_proxy")(-42) == 42);
++	}
++	const auto coldTraceCount = traces.load();
++	{
++		auto module = compile();
++		REQUIRE(module.getFunction<int32_t(int32_t)>("call_proxy")(-22) == 22);
++		REQUIRE(cacheStat(module, "cache.object") == "hit");
++		REQUIRE(traces.load() == coldTraceCount);
++	}
++}
++
++#ifdef __linux__
++TEST_CASE("MLIR persistent module cache loads native objects in a fresh process") {
++	static constexpr auto CHILD_CACHE_DIRECTORY = "NAUTILUS_CACHE_CHILD_DIRECTORY";
++	if (const auto* cacheDirectory = std::getenv(CHILD_CACHE_DIRECTORY)) {
++		auto module = compileAbsoluteValueModule(cacheDirectory);
++		REQUIRE(module.getFunction<int32_t(int32_t)>("absolute_value")(-42) == 42);
++		REQUIRE(cacheStat(module, "cache.object") == "hit");
++		REQUIRE(cacheIntStat(module, "cache.tracingRan") == 0);
++		return;
++	}
++
++	TemporaryCacheDirectory cache;
++	{
++		auto module = compileAbsoluteValueModule(cache.path());
++		REQUIRE(module.getFunction<int32_t(int32_t)>("absolute_value")(-21) == 21);
++		REQUIRE(cacheStat(module, "cache.object") == "written");
++	}
++
++	const auto executable = std::filesystem::read_symlink("/proc/self/exe");
++	const auto child = ::fork();
++	REQUIRE(child >= 0);
++	if (child == 0) {
++		if (::setenv(CHILD_CACHE_DIRECTORY, cache.path().c_str(), 1) != 0) {
++			::_exit(125);
++		}
++		::execl(executable.c_str(), executable.c_str(),
++		        "MLIR persistent module cache loads native objects in a fresh process", "--reporter", "compact",
++		        static_cast<char*>(nullptr));
++		::_exit(126);
++	}
++
++	int status = 0;
++	REQUIRE(::waitpid(child, &status, 0) == child);
++	REQUIRE(WIFEXITED(status));
++	REQUIRE(WEXITSTATUS(status) == 0);
++}
++#endif
++
++TEST_CASE("MLIR persistent module cache rejects direct pointer constants") {
++	TemporaryCacheDirectory cache;
++	std::atomic<int> traces {0};
++	int value = 42;
++	Options options;
++	options.setOption("engine.backend", std::string("mlir"));
++	options.setOption("engine.Blob.CacheDir", cache.path().string());
++	options.setOption("engine.Blob.CacheKey", std::string("direct-pointer-module-v1"));
++	options.setOption("mlir.enableMultithreading", false);
++
++	for (int iteration = 0; iteration < 2; ++iteration) {
++		NautilusEngine engine(options);
++		auto module = engine.createModule();
++		module.registerFunction<val<int32_t>()>("load_pointer", [&]() {
++			traces.fetch_add(1);
++			return *val<int32_t*>(&value);
++		});
++		auto compiled = module.compile();
++		REQUIRE(compiled.getFunction<int32_t()>("load_pointer")() == 42);
++		REQUIRE(cacheStat(compiled, "cache.fallback") == "non_relocatable_pointer");
++	}
++	REQUIRE(traces.load() >= 2);
++	REQUIRE(findArtifact(cache.path(), ".manifest").empty());
++}
++
++} // namespace nautilus::engine

@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-bool-return-zeroext.patch
+		0005-object-code-cache.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

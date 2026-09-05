@@ -32,3 +32,8 @@ elseif(NES_USE_MOLD_IF_AVAILABLE)
     message(STATUS "Neither mold nor lld available; falling back to default linker (likely GNU ld). Link may fail on unreflection registries.")
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Cached modules rebind imported functions by ELF build ID and image offset.
+    add_link_options("-Wl,--build-id=sha1")
+endif()
+
