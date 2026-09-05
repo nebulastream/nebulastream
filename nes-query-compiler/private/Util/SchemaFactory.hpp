@@ -28,6 +28,6 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromTraits(
     const std::unordered_map<UnqualifiedUnboundField, QualifiedIdentifier>& fieldMappings,
     const Schema<UnqualifiedUnboundField, Ordered>& fieldOrdering);
 
-Schema<QualifiedUnboundField, Ordered> createPhysicalOutputSchema(const TraitSet& traitSet);
+Schema<QualifiedUnboundField, Ordered> createPhysicalSchema(const TraitSet& traitSet);
 
 }

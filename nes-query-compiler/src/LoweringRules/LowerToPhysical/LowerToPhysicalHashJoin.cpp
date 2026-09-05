@@ -209,7 +209,7 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
     const std::vector<FieldNamesExtension>& fieldNameExtensions,
     const MemoryLayoutType& memoryLayoutType)
 {
-    auto currentFields = createPhysicalOutputSchema(inputOperator.getTraitSet()) | std::ranges::to<std::vector<QualifiedUnboundField>>();
+    auto currentFields = createPhysicalSchema(inputOperator.getTraitSet()) | std::ranges::to<std::vector<QualifiedUnboundField>>();
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
     for (const auto& [oldField, newField] : fieldNameExtensions)
     {
@@ -292,7 +292,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     const auto& rightOperator = children[1];
 
     const auto logicalOutputSchema = join.getOutputSchema();
-    const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
+    const auto physicalOutputSchema = createPhysicalSchema(traitSet);
     auto outputOriginId = (*outputOriginIds)[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = join->getWindowType();

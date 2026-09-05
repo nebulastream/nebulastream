@@ -40,8 +40,8 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
-    const auto inputSchema = createPhysicalOutputSchema(assignerOp->getChild().getTraitSet());
+    const auto outputSchema = createPhysicalSchema(traitSet);
+    const auto inputSchema = createPhysicalSchema(assignerOp->getChild().getTraitSet());
 
     const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(
         assignerOp->getOnField(), *assignerOp->getChild()->getTraitSet().get<FieldMappingTrait>());

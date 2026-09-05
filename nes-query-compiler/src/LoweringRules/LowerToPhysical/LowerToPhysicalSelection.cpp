@@ -43,8 +43,8 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    const auto outputSchema = createPhysicalOutputSchema(traitSet);
-    const auto inputSchema = createPhysicalOutputSchema(selection->getChild()->getTraitSet());
+    const auto outputSchema = createPhysicalSchema(traitSet);
+    const auto inputSchema = createPhysicalSchema(selection->getChild()->getTraitSet());
 
     auto physicalOperator = SelectionPhysicalOperator(func);
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(

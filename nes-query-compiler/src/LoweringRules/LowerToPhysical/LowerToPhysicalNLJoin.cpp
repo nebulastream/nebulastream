@@ -102,9 +102,9 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto handlerId = getNextOperatorHandlerId();
 
-    auto leftInputSchema = createPhysicalOutputSchema(children[0]->getTraitSet());
-    auto rightInputSchema = createPhysicalOutputSchema(children[1]->getTraitSet());
-    auto outputSchema = createPhysicalOutputSchema(traitSet);
+    auto leftInputSchema = createPhysicalSchema(children[0]->getTraitSet());
+    auto rightInputSchema = createPhysicalSchema(children[1]->getTraitSet());
+    auto outputSchema = createPhysicalSchema(traitSet);
     auto outputOriginId = (*outputOriginIds)[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = join->getWindowType();
