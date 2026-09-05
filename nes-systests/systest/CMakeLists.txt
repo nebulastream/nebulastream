@@ -93,6 +93,7 @@ get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 find_package(reflectcpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-schema nes-frontend-embedded-lib nes-single-node-worker-lib nes-sql-parser nes-query-optimizer reflectcpp::reflectcpp PRIVATE nes-input-formatters argparse::argparse tcp_source_plugin_library)
@@ -110,6 +111,16 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 target_include_directories(systest PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+set(COMPILATION_CACHE_ACCEPTANCE_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/CompilationCacheAcceptance.py)
+add_custom_target(systest-compilation-cache-acceptance
+        COMMAND ${Python3_EXECUTABLE} ${COMPILATION_CACHE_ACCEPTANCE_SCRIPT}
+        --systest $<TARGET_FILE:systest>
+        --suite ${CMAKE_CURRENT_SOURCE_DIR}/..
+        --data ${EXPANDED_TEST_DATA_PATH}
+        --run-root ${CMAKE_CURRENT_BINARY_DIR}/compilation-cache-acceptance
+        DEPENDS systest test-data
+        USES_TERMINAL)
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)
