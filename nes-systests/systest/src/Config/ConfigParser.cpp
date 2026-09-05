@@ -15,6 +15,7 @@
 #include <Config/ConfigParser.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -93,6 +94,7 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
     program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
     program.add_argument("--shuffle").flag().help("run queries in random order");
+    program.add_argument("--shuffle-seed").help("seed used by --shuffle").scan<'u', uint32_t>();
     program.add_argument("-n", "--numberConcurrentQueries")
         .help("number of concurrent queries. Default: 6")
         .default_value(6)
@@ -338,6 +340,15 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--shuffle"))
     {
         config.randomQueryOrder = true;
+    }
+    if (program.is_used("--shuffle-seed"))
+    {
+        if (not program.is_used("--shuffle"))
+        {
+            std::cerr << "--shuffle-seed requires --shuffle\n";
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+        config.randomQueryOrderSeed = program.get<uint32_t>("--shuffle-seed");
     }
 
     config.remoteWorker = program.get<bool>("--remote");

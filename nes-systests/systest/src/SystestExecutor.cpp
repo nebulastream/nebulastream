@@ -69,6 +69,15 @@ namespace
 {
 using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
 
+std::mt19937 makeShuffleEngine(const SystestConfiguration& config)
+{
+    if (config.randomQueryOrderSeed)
+    {
+        return std::mt19937(*config.randomQueryOrderSeed);
+    }
+    return std::mt19937(std::random_device{}());
+}
+
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
 {
     if (failedQueries.empty())
@@ -183,7 +192,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
         queriesByOverride[query.configurationOverride].push_back(query);
     }
 
-    std::mt19937 rng(std::random_device{}());
+    auto rng = makeShuffleEngine(config);
 
     if (config.remoteWorker.getValue())
     {
@@ -249,7 +258,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         if (config.randomQueryOrder)
         {
-            std::mt19937 rng(std::random_device{}());
+            auto rng = makeShuffleEngine(config);
             std::ranges::shuffle(queries, rng);
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();

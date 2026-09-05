@@ -104,6 +104,15 @@ jobs:
             ctest --test-dir build -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
 
       - uses: ./.github/steps/run-in-container
+        name: Verify 100% Warm Compilation Cache Hits
+        if: ${{ matrix.run_systest && matrix.arch == 'x64' && matrix.stdlib == 'libcxx' && matrix.sanitizer == 'none' && matrix.build_type == 'Release' }}
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          run: |
+            source .github/.env/test-${{ matrix.sanitizer }}.env
+            cmake --build build --target systest-compilation-cache-acceptance
+
+      - uses: ./.github/steps/run-in-container
         name: Run Docker Tests
         if: ${{ matrix.run_docker }}
         with:
