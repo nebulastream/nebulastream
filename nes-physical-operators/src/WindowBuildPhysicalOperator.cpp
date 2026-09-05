@@ -83,12 +83,12 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
+void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
+    sliceStoreRef->setupSliceStore(compilationContext);
+
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(registerActivePipeline, operatorHandlerMemRef);
-
-    sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
 }
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

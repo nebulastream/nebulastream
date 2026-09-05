@@ -58,7 +58,27 @@ PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
 }
 
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
+    : ExecutionContext(
+          pipelineContext,
+          nautilus::val<const RuntimeInputFormatterRegistry*>{nullptr},
+          nautilus::val<const RuntimeOutputFormatterRegistry*>{nullptr},
+          nautilus::val<const RuntimeStateRegistry*>{nullptr},
+          arena,
+          nullptr)
+{
+}
+
+ExecutionContext::ExecutionContext(
+    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+    const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
+    const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry,
+    const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry,
+    const nautilus::val<Arena*>& arena,
+    const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots)
     : pipelineContext(pipelineContext)
+    , runtimeInputFormatterRegistry(runtimeInputFormatterRegistry)
+    , runtimeOutputFormatterRegistry(runtimeOutputFormatterRegistry)
+    , runtimeStateRegistry(runtimeStateRegistry)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineId(nautilus::invoke(getPipelineIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
@@ -68,6 +88,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , operatorHandlerSlots(operatorHandlerSlots)
 {
 }
 
@@ -137,7 +158,14 @@ static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* 
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
 {
-    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex.getRawValue());
+    auto runtimeHandlerIndex = handlerIndex;
+    if (operatorHandlerSlots != nullptr)
+    {
+        const auto slot = operatorHandlerSlots->find(handlerIndex);
+        PRECONDITION(slot != operatorHandlerSlots->end(), "Missing runtime slot for operator handler {}", handlerIndex.getRawValue());
+        runtimeHandlerIndex = slot->second;
+    }
+    const auto handlerIndexValue = nautilus::val<uint64_t>(runtimeHandlerIndex.getRawValue());
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 

@@ -54,7 +54,21 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
+    [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
+        const VarVal& value,
+        const DataType& fieldType,
+        uint64_t fieldIndex,
+        const nautilus::val<int8_t*>& fieldPointer,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const override;
+
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
+
+    [[nodiscard]] const char* getRuntimeFieldDelimiterPointer() const override { return fieldDelimiter.c_str(); }
+
+    [[nodiscard]] const char* getRuntimeTupleDelimiterPointer() const override { return tupleDelimiter.c_str(); }
 
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);

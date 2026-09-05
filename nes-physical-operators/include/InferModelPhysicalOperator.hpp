@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -62,6 +63,7 @@ private:
     size_t outputSize;
     bool varsizedInput;
     bool varsizedOutput;
+    mutable uint64_t runtimeStateSlot = 0;
     std::optional<PhysicalOperator> child;
 };
 

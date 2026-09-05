@@ -163,6 +163,30 @@ void writeValue(
         }
     }
 }
+
+uint64_t writeNullValueToBuffer(
+    const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, int8_t* bufferStartingAddress)
+{
+    return writeValueToBuffer("null", remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
+uint64_t writeRecordDelimiterToBuffer(
+    const bool isLastField,
+    const uint64_t remainingSpace,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider,
+    int8_t* bufferStartingAddress)
+{
+    return writeValueToBuffer(isLastField ? "}\n" : ",", remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
+const char* getRuntimeFieldNameProxy(const RuntimeOutputFormatterRegistry* runtimeOutputFormatterRegistry, const uint64_t fieldIndex)
+{
+    PRECONDITION(runtimeOutputFormatterRegistry != nullptr, "runtime output formatter registry is null");
+    const auto runtimeFieldNameHandle = runtimeOutputFormatterRegistry->getFieldNameHandle(fieldIndex);
+    PRECONDITION(runtimeFieldNameHandle != 0, "Missing runtime output formatter field name for field {}", fieldIndex);
+    return reinterpret_cast<const char*>(runtimeFieldNameHandle);
+}
 }
 
 JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames)
@@ -181,12 +205,39 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
+    const nautilus::val<const char*> fieldName{canonicalFieldNames.at(fieldIndex).c_str()};
+    return writeFormattedValueWithFieldName(
+        value, fieldType, fieldIndex, fieldPointer, remainingSize, recordBuffer, bufferProvider, fieldName);
+}
+
+nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
+    const VarVal& value,
+    const DataType& fieldType,
+    uint64_t fieldIndex,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const
+{
+    const auto fieldName = nautilus::invoke(getRuntimeFieldNameProxy, runtimeOutputFormatterRegistry, nautilus::val<uint64_t>{fieldIndex});
+    return writeFormattedValueWithFieldName(
+        value, fieldType, fieldIndex, fieldPointer, remainingSize, recordBuffer, bufferProvider, fieldName);
+}
+
+nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValueWithFieldName(
+    const VarVal& value,
+    const DataType& fieldType,
+    uint64_t fieldIndex,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<const char*>& fieldName) const
+{
     nautilus::val<uint64_t> written{0};
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
-    /// The identifier of the current field, which should be prepended to the value
-    /// Important field name must be valid at execution time, thats why we don't calculate the canonicalisation during tracing but in ctor
-    const nautilus::val<const char*> fieldName{canonicalFieldNames.at(fieldIndex).c_str()};
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
         writePreValueContents,
@@ -205,12 +256,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         if (value.isNull())
         {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeValueToBuffer,
-                nautilus::val<const char*>{"null"},
-                currentRemainingSize,
-                recordBuffer.getReference(),
-                bufferProvider,
-                fieldPointer + written);
+                writeNullValueToBuffer, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
         }
@@ -224,14 +270,14 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
     }
 
-    /// Either write a , or a }\n depending on if this is the last value of the record
-    const auto delimiter = nautilus::select(
-        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1,
-        nautilus::val<const char*>{"}\n"},
-        nautilus::val<const char*>{","});
-
+    const auto isLastField = nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1;
     written += nautilus::invoke(
-        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
+        writeRecordDelimiterToBuffer,
+        isLastField,
+        currentRemainingSize,
+        recordBuffer.getReference(),
+        bufferProvider,
+        fieldPointer + written);
     return written;
 }
 

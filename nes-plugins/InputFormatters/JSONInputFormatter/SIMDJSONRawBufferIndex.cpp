@@ -138,7 +138,9 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<int8_t*>&,
     const nautilus::val<uint64_t>&,
-    const InputFormatIndexer& indexer,
+    const InputFormatIndexer&,
+    const nautilus::val<const InputFormatIndexer*>& runtimeIndexer,
+    const nautilus::val<const std::vector<std::string>*>&,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
     const TupleBufferRef& bufferRef) const
 {
@@ -155,8 +157,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
         const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
-        writeValueToRecord(
-            fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, nautilus::val<const InputFormatIndexer*>(&indexer));
+        writeValueToRecord(fieldDataType, record, fieldName, fieldIndex, rawBufferIndex, runtimeIndexer);
     }
     /// Increment iterator and return record
     nautilus::invoke(

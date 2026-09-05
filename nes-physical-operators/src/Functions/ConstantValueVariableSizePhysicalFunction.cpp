@@ -33,11 +33,13 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
     std::memcpy(data.data(), value, size);
 }
 
-VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
+VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef& arena) const
 {
-    /// NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
-    VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
-    /// NOLINTEND(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
+    const auto result = arena.allocateVariableSizedData(nautilus::val<uint64_t>(data.size()));
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        VarVal{nautilus::val<int8_t>(data[i])}.writeToMemory(result.getContent() + nautilus::val<uint64_t>(i));
+    }
     return result;
 }
 
