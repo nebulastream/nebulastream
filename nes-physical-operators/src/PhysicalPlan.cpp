@@ -13,8 +13,8 @@
 */
 #include <PhysicalPlan.hpp>
 
-#include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -30,12 +30,25 @@
 
 namespace NES
 {
+
+PhysicalPlanSignature::PhysicalPlanSignature(std::string value) : value(std::move(value))
+{
+}
+
+const std::string& PhysicalPlanSignature::getRawValue() const
+{
+    return value;
+}
+
 PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
     ExecutionMode executionMode,
     uint64_t operatorBufferSize)
-    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
+    : queryId(id)
+    , rootOperators(std::move(rootOperators))
+    , executionMode(executionMode)
+    , operatorBufferSize(operatorBufferSize)
 {
     for (const auto& rootOperator : this->rootOperators)
     {
@@ -74,6 +87,17 @@ ExecutionMode PhysicalPlan::getExecutionMode() const
 uint64_t PhysicalPlan::getOperatorBufferSize() const
 {
     return operatorBufferSize;
+}
+
+const PhysicalPlanSignature& PhysicalPlan::getSignature() const
+{
+    PRECONDITION(signature.has_value(), "PhysicalPlan requires a precomputed signature");
+    return *signature;
+}
+
+void PhysicalPlan::setSignature(PhysicalPlanSignature signature)
+{
+    this->signature = std::move(signature);
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan)
