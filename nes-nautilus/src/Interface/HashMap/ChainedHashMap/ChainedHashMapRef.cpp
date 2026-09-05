@@ -30,6 +30,7 @@
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/HashMap/HashMapRef.hpp>
+#include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -131,11 +132,11 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    BorrowedNautilusBuffer hashMapBuffer,
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue)
     : entryRef(entryRef)
-    , hashMapBuffer(hashMapBuffer)
+    , hashMapBuffer(std::move(hashMapBuffer))
     , memoryProviderKeys(std::move(fieldsKey))
     , memoryProviderValues(std::move(fieldsValue))
 {
@@ -143,11 +144,11 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<TupleBuffer*>& hashMapBuffer,
+    BorrowedNautilusBuffer hashMapBuffer,
     ChainedEntryMemoryProvider memoryProviderKeys,
     ChainedEntryMemoryProvider memoryProviderValues)
     : entryRef(entryRef)
-    , hashMapBuffer(hashMapBuffer)
+    , hashMapBuffer(std::move(hashMapBuffer))
     , memoryProviderKeys(std::move(memoryProviderKeys))
     , memoryProviderValues(std::move(memoryProviderValues))
 {
@@ -158,6 +159,7 @@ ChainedHashMapRef::ChainedEntryRef& ChainedHashMapRef::ChainedEntryRef::operator
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(ChainedEntryRef&& other) noexcept
     : entryRef(other.entryRef)
+    , hashMapBuffer(std::move(other.hashMapBuffer))
     , memoryProviderKeys(std::move(other.memoryProviderKeys))
     , memoryProviderValues(std::move(other.memoryProviderValues))
 {
@@ -264,9 +266,9 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
     const nautilus::val<uint64_t> tupleIndex = 0;
     const nautilus::val<uint64_t> indexOnPage = 0;
     const nautilus::val<uint64_t> pageIndex = 0;
-    nautilus::val<EntryIterator::DynamicArgsWrapper> args;
+    nautilus::val<EntryIterator::PageCounts> args;
     const auto currentEntry = nautilus::invoke(
-        +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, EntryIterator::DynamicArgsWrapper* args)
+        +[](const TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, EntryIterator::PageCounts* args)
         {
             const auto chm = ChainedHashMap::load(*buffer);
             /// get number of pages in chained hash map
@@ -282,13 +284,13 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
             /// get entry
             return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
         },
-        buffer,
+        buffer.asArg(),
         pageIndex,
         indexOnPage,
         &args);
 
     /// Guard that checks whether the hashmap is non-empty.
-    if (args.get(&EntryIterator::DynamicArgsWrapper::numPages) != 0)
+    if (args.get(&EntryIterator::PageCounts::numPages) != 0)
     {
         return {
             buffer,
@@ -296,9 +298,9 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
             nautilus::val<uint64_t>{config.entrySize},
             tupleIndex,
             indexOnPage,
-            args.get(&EntryIterator::DynamicArgsWrapper::numTuplesInPage),
+            args.get(&EntryIterator::PageCounts::numTuplesInPage),
             pageIndex,
-            args.get(&EntryIterator::DynamicArgsWrapper::numPages)};
+            args.get(&EntryIterator::PageCounts::numPages)};
     }
     /// Empty hash map, return the end() iterator.
     return end();
@@ -308,12 +310,12 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
     const auto numberOfTuples = invoke(
-        +[](TupleBuffer* buffer)
+        +[](const TupleBuffer* buffer)
         {
             const auto chm = ChainedHashMap::load(*buffer);
             return chm.getTotalNumberOfRecords();
         },
-        buffer);
+        buffer.asArg());
     return {buffer, nullptr, nautilus::val<uint64_t>{config.entrySize}, numberOfTuples, -1, -1, -1, -1};
 }
 
@@ -338,7 +340,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
             }
             return chm.getChain(pos);
         },
-        buffer,
+        buffer.asArg(),
         entryPos);
 }
 
@@ -361,7 +363,7 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
             auto chm = ChainedHashMap::load(*buffer);
             return chm.insertEntry(hashValue, bufferProviderVal, entrySize, entriesPerPage, pageSize, mask);
         },
-        buffer,
+        buffer.asArg(),
         hash,
         bufferProvider,
         nautilus::val<uint64_t>{config.entrySize},
@@ -407,7 +409,8 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
     return result;
 }
 
-ChainedHashMapRef::ChainedHashMapRef(const nautilus::val<TupleBuffer*>& buffer, ChainedHashMapConfig config)
+/// Copied, not moved: the bloom-filter setup below still reads `buffer` after the base is initialised.
+ChainedHashMapRef::ChainedHashMapRef(BorrowedNautilusBuffer buffer, ChainedHashMapConfig config)
     : HashMapRef(buffer), config(std::move(config))
 {
     PRECONDITION(this->config.hashFunction != nullptr, "A ChainedHashMapConfig must carry the map's hash function");
@@ -425,7 +428,7 @@ ChainedHashMapRef::ChainedHashMapRef(const nautilus::val<TupleBuffer*>& buffer, 
                     auto chm = ChainedHashMap::load(*buffer);
                     return chm.getBloomFilterMemArea(numberOfChains, bloomBytes);
                 },
-                buffer,
+                buffer.asArg(),
                 nautilus::val<uint64_t>{ChainedHashMap::calculateNumberOfChains(this->config.numberOfBuckets)},
                 nautilus::val<uint64_t>{this->config.bloomFilterMemAreaSize()}),
             *this->config.bloomFilterParams);
@@ -448,7 +451,7 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 }
 
 ChainedHashMapRef::EntryIterator::EntryIterator(
-    const nautilus::val<TupleBuffer*>& buffer,
+    BorrowedNautilusBuffer buffer,
     const nautilus::val<ChainedHashMapEntry*>& currentEntry,
     const nautilus::val<uint64_t>& entrySize,
     const nautilus::val<uint64_t>& tupleIndex,
@@ -456,7 +459,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<uint64_t>& numberOfTuplesInCurrentPage,
     const nautilus::val<uint64_t>& pageIndex,
     const nautilus::val<uint64_t>& numberOfPages)
-    : buffer(buffer)
+    : buffer(std::move(buffer))
     , currentEntry(currentEntry)
     , entrySize(entrySize)
     , tupleIndex(tupleIndex)
@@ -480,9 +483,9 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
             return *this;
         }
         ++pageIndex;
-        nautilus::val<DynamicArgsWrapper> args;
+        nautilus::val<PageCounts> args;
         currentEntry = nautilus::invoke(
-            +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, DynamicArgsWrapper* args)
+            +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, PageCounts* args)
             {
                 const auto chm = ChainedHashMap::load(*buffer);
                 /// get number of pages in chained hash map
@@ -494,11 +497,11 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
                 /// get entry
                 return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
             },
-            buffer,
+            buffer.asArg(),
             pageIndex,
             indexOnPage,
             &args);
-        numberOfTuplesInCurrentPage = args.get(&DynamicArgsWrapper::numTuplesInPage);
+        numberOfTuplesInCurrentPage = args.get(&PageCounts::numTuplesInPage);
         return *this;
     }
     currentEntry = static_cast<nautilus::val<int8_t*>>(currentEntry) + entrySize;
