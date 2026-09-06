@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -25,8 +26,11 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -73,6 +77,20 @@ public:
         std::vector<WindowedAggregationLogicalOperator::ProjectedAggregation> windowAggs,
         std::vector<UnboundFieldAccessLogicalFunction> onKeys,
         Windowing::TimeCharacteristic timeCharacteristic);
+
+    static LogicalPlan addStatisticBuild(
+        LogicalPlan queryPlan,
+        const Windowing::TimeBasedWindowType& windowType,
+        Windowing::TimeCharacteristic timeCharacteristic,
+        StatisticId statisticId,
+        const WindowAggregationLogicalFunction& statisticFunction);
+
+    static LogicalPlan addStatisticProbe(
+        LogicalPlan queryPlan,
+        StatisticId statisticId,
+        const StatisticBlobType& blobType,
+        std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields,
+        StatisticWindowMatch windowMatch = StatisticWindowMatch::ExactWindow);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftLogicalPlan the left query plan to combine by the union

@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -23,6 +24,10 @@
 #include <variant>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
+#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticWindowMatch.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -76,6 +81,25 @@ public:
 
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
+
+    struct StatisticBuildInfo
+    {
+        StatisticId statisticId;
+        WindowAggregationLogicalFunction statisticFunction;
+        std::string functionName;
+    };
+
+    std::optional<StatisticBuildInfo> statisticBuild;
+
+    struct StatisticProbeInfo
+    {
+        StatisticId statisticId;
+        StatisticBlobType blobType;
+        std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields;
+        StatisticWindowMatch windowMatch;
+    };
+
+    std::optional<StatisticProbeInfo> statisticProbe;
     std::vector<SinkDescriptor> sinkDescriptor;
     std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;

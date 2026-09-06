@@ -99,6 +99,7 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual AggregationFieldAccess getInputFunction() const = 0;
 
     [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
+    [[nodiscard]] virtual bool requiresAllInputFields() const noexcept = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const = 0;
 
     friend bool operator==(const ErasedWindowAggregationFunction& lhs, const ErasedWindowAggregationFunction& rhs)
@@ -269,6 +270,8 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept { return self->shallIncludeNullValues(); }
 
+    [[nodiscard]] bool requiresAllInputFields() const noexcept { return self->requiresAllInputFields(); }
+
     [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const
     {
         return self->withInferredType(schema);
@@ -305,6 +308,18 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
     [[nodiscard]] Reflected reflect(const ReflectionContext& context) const override { return context.reflect(impl); }
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept override { return impl.shallIncludeNullValues(); }
+
+    [[nodiscard]] bool requiresAllInputFields() const noexcept override
+    {
+        if constexpr (requires { impl.requiresAllInputFields(); })
+        {
+            return impl.requiresAllInputFields();
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     [[nodiscard]] size_t hash() const override { return std::hash<FunctionType>{}(impl); }
 
