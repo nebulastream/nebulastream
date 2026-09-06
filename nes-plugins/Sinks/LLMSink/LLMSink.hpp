@@ -14,33 +14,41 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <curl/curl.h>
 
-#include <folly/Synchronized.h>
-
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/Format.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <BackpressureChannel.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
 
-/// Sink that sends off newline delimited json tuples to an LLM via HTTP endpoint at a certain port of an ip-address via POST.
-/// Currently, does not wait for any response, just sends and continues.
-/// Should probably use HTTPS at some point
+/// Sink that POSTs newline-delimited JSON tuples to the LLM Operator's HTTP API.
+///
+/// Protocol (three endpoints under the configured ENDPOINT prefix):
+///   start()   -> POST {url}/initialize  with the QUERY config blob verbatim
+///   execute() -> POST {url}/process     with one JSON object per line
+///   stop()    -> POST {url}/stop        with {"query_id": ...}
+///
+/// Since the output-formatting rework, formatting happens in the *emit* phase
+/// (see nes-plugins/OutputFormatters/), so the TupleBuffer arriving in
+/// execute() already holds formatted bytes -- this sink only has to ship them.
+/// Configure `SINK.OUTPUT_FORMAT = 'JSON'` so those bytes are NDJSON, which is
+/// what /process parses (it splits the body on '\n').
+///
+/// Unlike FileSink this deliberately does NOT emit a schema header line: the
+/// operator expects data rows only.
 class LLMSink final : public Sink
 {
 public:
@@ -62,37 +70,47 @@ public:
 protected:
     std::ostream& toString(std::ostream& str) const override;
 
-
 private:
+    /// POSTs `body` to `{url}/{path}` as application/x-ndjson. Throws on a curl
+    /// error or a non-2xx status: the original version dropped every
+    /// curl_easy_perform return code, so an operator that was down looked
+    /// exactly like a query that was succeeding.
+    void post(std::string_view path, const std::string& body) const;
+
     std::string url;
     std::string query;
     CURL* curl;
     bool isOpen = false;
-    std::unique_ptr<Format> formatter;
 };
 
+/// Defines the names, (optional) default values, (optional) validation & config functions for all LLM sink config parameters.
+/// Keys are UPPERCASE to match the convention of the other sinks on main (cf. ConfigParametersMQTTSink).
 struct ConfigParametersLLM
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> IPADDRESS{
-        "ip_address",
+    ///NOLINTBEGIN(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> IP_ADDRESS{
+        "IP_ADDRESS",
         "localhost",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(IPADDRESS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(IP_ADDRESS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> PORT{
-        "port", "3000", [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PORT, config); }};
+        "PORT", "3000", [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(PORT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> ENDPOINT{
-        "endpoint",
+        "ENDPOINT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ENDPOINT, config); }};
 
+    /// The registration blob forwarded verbatim to /initialize. Must be a JSON
+    /// object carrying at least query_id, type, config and endpoint_id.
     static inline const DescriptorConfig::ConfigParameter<std::string> QUERY{
-        "query",
+        "QUERY",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(QUERY, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, IPADDRESS, PORT, ENDPOINT, QUERY);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, IP_ADDRESS, PORT, ENDPOINT, QUERY);
+    ///NOLINTEND(cert-err58-cpp)
 };
 
 }

@@ -33,6 +33,7 @@
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -45,8 +46,6 @@
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 #include <LLMRDataServer.hpp>
 
 namespace NES
@@ -54,10 +53,10 @@ namespace NES
 
 LLMRSource::LLMRSource(const SourceDescriptor& sourceDescriptor)
     : errBuffer{}
+    , llmQueryId(sourceDescriptor.getFromConfig(ConfigParametersLLMR::LLM_QUERY_ID))
     , socketHost(sourceDescriptor.getFromConfig(ConfigParametersLLMR::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersLLMR::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersLLMR::TYPE))
-    , llmQueryId(sourceDescriptor.getFromConfig(ConfigParametersLLMR::LLM_QUERY_ID))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersLLMR::DOMAIN))
     , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersLLMR::SEPARATOR))
     , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersLLMR::SOCKET_BUFFER_SIZE))
@@ -75,10 +74,10 @@ std::ostream& LLMRSource::toString(std::ostream& str) const
     str << "\n  generated buffers: " << this->generatedBuffers;
     str << "\n  connection: " << this->connection;
     str << "\n  timeout: " << connectionTimeout << " seconds";
+    str << "\n  llmQueryId: " << llmQueryId;
     str << "\n  socketHost: " << socketHost;
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
-    str << "\n  llmQueryId: " << llmQueryId;
     str << "\n  socketDomain: " << socketDomain;
     str << "\n  tupleDelimiter: " << tupleDelimiter;
     str << "\n  socketBufferSize: " << socketBufferSize;
@@ -202,11 +201,18 @@ void LLMRSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
     fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
 
-    std::string handshake =std::string(llmQueryId) + "\n";
+    /// THE difference versus TCPSource: the LLM Operator serves every query's
+    /// results on one port and demultiplexes purely on this first line, so it
+    /// must be sent before any data can arrive. There is no ack to wait for.
+    const std::string handshake = llmQueryId + "\n";
+    if (const ssize_t sent = send(sockfd, handshake.c_str(), handshake.size(), 0); sent != static_cast<ssize_t>(handshake.size()))
+    {
+        ::close(sockfd);
+        throw CannotOpenSource(
+            "LLMRSource: failed to send LLM_QUERY_ID handshake '{}' ({} of {} bytes)", llmQueryId, sent, handshake.size());
+    }
 
-    send(sockfd, handshake.c_str(), handshake.size(), 0);
-
-    NES_TRACE("LLMRSource::open: Connected to server.");
+    NES_TRACE("LLMRSource::open: Connected to server, sent handshake for query id {}.", llmQueryId);
 }
 
 Source::FillTupleBufferResult LLMRSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
@@ -256,7 +262,7 @@ bool LLMRSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
             NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
             if (numReceivedBytes == 0)
             {
-                NES_INFO("TCP Source detected EoS");
+                NES_INFO("LLMR Source detected EoS");
                 readWasValid = false;
                 break;
             }
@@ -292,35 +298,30 @@ void LLMRSource::close()
     }
 }
 
-SourceValidationRegistryReturnType RegisterLLMRSourceValidation(SourceValidationRegistryArguments sourceConfig)
+InlineDataRegistryReturnType LLMRSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
-    return LLMRSource::validateAndFormat(std::move(sourceConfig.config));
-}
-
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterLLMRSource(SourceRegistryArguments sourceRegistryArguments)
-{
-    return std::make_unique<LLMRSource>(sourceRegistryArguments.sourceDescriptor);
-}
-
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterLLMRInlineData(InlineDataRegistryArguments systestAdaptorArguments)
-{
-    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
+    std::unordered_map<Identifier, std::string> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersLLMR::PORT))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(Identifier::parse(ConfigParametersLLMR::PORT)))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersLLMR::HOST))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(Identifier::parse(ConfigParametersLLMR::HOST)))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
 
     auto mockLLMRServer = std::make_unique<LLMRDataServer>(std::move(systestAdaptorArguments.tuples));
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersLLMR::PORT, std::to_string(mockLLMRServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersLLMR::HOST, "localhost");
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersLLMR::LLM_QUERY_ID, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        Identifier::parse(ConfigParametersLLMR::PORT), std::to_string(mockLLMRServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(Identifier::parse(ConfigParametersLLMR::HOST), "localhost");
+    /// LLM_QUERY_ID is mandatory, so systests need a value; LLMRDataServer serves
+    /// a single stream and ignores the id. (The March version emplaced
+    /// "localhost" here -- a copy/paste of the HOST line, not a query id.)
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        Identifier::parse(ConfigParametersLLMR::LLM_QUERY_ID), "systest");
 
     auto serverThread = std::jthread([server = std::move(mockLLMRServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
@@ -328,27 +329,33 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterLLMRInlineDat
     return systestAdaptorArguments.physicalSourceConfig;
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterLLMRFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType LLMRSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
+    std::unordered_map<Identifier, std::string> defaultSourceConfig{{Identifier::parse("flush_interval_ms"), "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersLLMR::PORT))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(Identifier::parse(ConfigParametersLLMR::PORT)))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersLLMR::HOST))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(Identifier::parse(ConfigParametersLLMR::HOST)))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
 
 
-    auto mockTCPServer = std::make_unique<LLMRDataServer>(systestAdaptorArguments.testFilePath);
+    auto mockLLMRServer = std::make_unique<LLMRDataServer>(systestAdaptorArguments.testFilePath);
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersLLMR::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersLLMR::HOST, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        Identifier::parse(ConfigParametersLLMR::PORT), std::to_string(mockLLMRServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(Identifier::parse(ConfigParametersLLMR::HOST), "localhost");
+    /// LLM_QUERY_ID is mandatory, so systests need a value; LLMRDataServer serves
+    /// a single stream and ignores the id. (The March version emplaced
+    /// "localhost" here -- a copy/paste of the HOST line, not a query id.)
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
+        Identifier::parse(ConfigParametersLLMR::LLM_QUERY_ID), "systest");
 
-    auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+    auto serverThread = std::jthread([server = std::move(mockLLMRServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
 
     return systestAdaptorArguments.physicalSourceConfig;

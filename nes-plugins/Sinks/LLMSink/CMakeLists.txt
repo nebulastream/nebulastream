@@ -10,19 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
+
+add_library(llm_sink_plugin_library STATIC LLMSink.cpp)
+target_link_libraries(llm_sink_plugin_library PRIVATE nes-sinks)
+target_include_directories(llm_sink_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+
 find_package(CURL REQUIRED)
+target_link_libraries(llm_sink_plugin_library PRIVATE CURL::libcurl)
 
-add_plugin_as_library(LLM Sink nes-sinks-registry llm_sink_plugin LLMSink.cpp)
-add_plugin_as_library(LLM SinkValidation nes-sinks-registry llm_sink_validation_plugin LLMSink.cpp)
-
-target_include_directories(llm_sink_plugin
-        PUBLIC include
-        PRIVATE .
-)
-target_include_directories(llm_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
-)
-
-target_link_libraries(llm_sink_plugin PRIVATE CURL::libcurl)
+link_plugin_library(nes-sinks llm_sink_plugin_library)
+add_registry_entry(Sink LLM)
+add_registry_entry(SinkValidation LLM)

@@ -14,99 +14,99 @@
 
 #include <LLMSink.hpp>
 
-#include <cstddef>
 #include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <span>
-#include <stdexcept>
+#include <optional>
 #include <string>
-#include <system_error>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
-#include <SinksParsing/JSONFormat.hpp>
 #include <curl/curl.h>
 #include <curl/easy.h>
-#include <nlohmann/json.hpp>  // or your favorite JSON library
-using json = nlohmann::json;
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
-#include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+namespace
+{
+/// Swallow the operator's response body instead of letting curl print it to stdout.
+size_t discardResponse(char*, const size_t size, const size_t nmemb, void*)
+{
+    return size * nmemb;
+}
+}
 
 LLMSink::LLMSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController)), curl(nullptr)
 {
     url = fmt::format(
         "http://{}:{}/{}",
-        sinkDescriptor.getFromConfig(ConfigParametersLLM::IPADDRESS),
+        sinkDescriptor.getFromConfig(ConfigParametersLLM::IP_ADDRESS),
         sinkDescriptor.getFromConfig(ConfigParametersLLM::PORT),
         sinkDescriptor.getFromConfig(ConfigParametersLLM::ENDPOINT));
 
     query = sinkDescriptor.getFromConfig(ConfigParametersLLM::QUERY);
-    /// We default to json output format here since it seems to be more accesible for further usage of the data
-    formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
 }
 
 std::ostream& LLMSink::toString(std::ostream& str) const
 {
-    str << fmt::format("LLMSink(url: {})", url);
-    str << fmt::format("LLMSink(query: {})", url);
-
+    str << fmt::format("LLMSink(url: {}, query: {})", url, query);
     return str;
+}
+
+void LLMSink::post(const std::string_view path, const std::string& body) const
+{
+    const std::string target = fmt::format("{}/{}", url, path);
+
+    curl_slist* headers = curl_slist_append(nullptr, "Content-Type: application/x-ndjson");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_URL, target.c_str());
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(body.size()));
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discardResponse);
+
+    const CURLcode result = curl_easy_perform(curl);
+    long status = 0;
+    if (result == CURLE_OK)
+    {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    }
+    curl_slist_free_all(headers);
+
+    /// The original version discarded this return code entirely, so an
+    /// unreachable operator was indistinguishable from a healthy query.
+    if (result != CURLE_OK)
+    {
+        throw CannotOpenSink("LLMSink: POST {} failed: {}", target, curl_easy_strerror(result));
+    }
+    if (status < 200 || status >= 300)
+    {
+        throw CannotOpenSink("LLMSink: POST {} returned HTTP {}", target, status);
+    }
 }
 
 void LLMSink::start(PipelineExecutionContext&)
 {
-    NES_DEBUG("Setting up http sink: {}", *this);
+    NES_DEBUG("Setting up LLM sink: {}", *this);
     curl = curl_easy_init();
     PRECONDITION(curl, "curl_easy_init failed");
     isOpen = true;
 
-    std::string fBuffer= query+ "\n";
-
-    // Create the payload
-    /*json payload;
-    payload["query_id"] = "1";
-    payload["type"] = "SEM_MAP";
-    payload["config"] = {
-        {"prompt_template", "Classify sentiment of the following text:{HEARTRATES$DESCRIPTION}. Response only in JSON format. Example:{{\"sentiment\": \"negative\"}}"},
-        {"output_column", "sentiment"},
-        {"depends_on", json::array({"HEARTRATES$DESCRIPTION"})}
-    };
-    payload["model"] = "ollama";
-
-    // Convert to string (NDJSON = newline-delimited JSON, so one object per line)
-     fBuffer = payload.dump()
-    */
-    // Your existing curl code
-    curl_slist* headers = nullptr;
-    headers = curl_slist_append(headers, "Content-Type: application/x-ndjson");
-
-    std::string init_url = url + "/initialize";
-
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_URL, init_url.c_str());
-    curl_easy_setopt(curl, CURLOPT_POST, 1);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fBuffer.c_str());
-
-    curl_easy_perform(curl);
-    curl_slist_free_all(headers);
+    /// The QUERY blob is forwarded verbatim; the operator parses it as one
+    /// NDJSON line, hence the trailing newline.
+    post("initialize", query + "\n");
 }
 
 void LLMSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
@@ -114,43 +114,32 @@ void LLMSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCont
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in LLMSink.");
     PRECONDITION(isOpen, "Sink was not opened");
 
-    /// Format buffer
-    const auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-
-    curl_slist* headers = nullptr;
-    /// Set newline delimited json as content type
-    headers = curl_slist_append(headers, "Content-Type: application/x-ndjson");
-
-    std::string data_url = url + "/process";
-    /// Setup the url, headers and message
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_URL, data_url.c_str());
-    curl_easy_setopt(curl, CURLOPT_POST, 1);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fBuffer.c_str());
-
-    /// Send of message and free headers
-    curl_easy_perform(curl);
-    curl_slist_free_all(headers);
+    /// Formatting already happened in the emit phase, so the buffer (and its
+    /// children) hold ready-to-send bytes. With SINK.OUTPUT_FORMAT = 'JSON'
+    /// that is NDJSON, exactly what /process expects.
+    BufferIterator iterator{inputTupleBuffer};
+    for (auto element = iterator.getNextElement(); element.has_value(); element = iterator.getNextElement())
+    {
+        const std::string body(element->buffer.getAvailableMemoryArea<char>().data(), element->contentLength);
+        post("process", body);
+    }
 }
 
 void LLMSink::stop(PipelineExecutionContext&)
 {
-    NES_DEBUG("Closing http sink.");
+    NES_DEBUG("Closing LLM sink.");
+    /// Deliberately does NOT POST /stop. That endpoint calls
+    /// Coordinator.unregister_query, which cancels rows still in flight inside
+    /// the operator -- and NES stops the sink as soon as the source is
+    /// exhausted, i.e. typically while the last batch is still being processed.
+    /// Tearing the query down is left to the operator's own lifecycle.
     curl_easy_cleanup(curl);
+    curl = nullptr;
+    isOpen = false;
 }
 
 DescriptorConfig::Config LLMSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersLLM>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterLLMSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return LLMSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
-SinkRegistryReturnType RegisterLLMSink(SinkRegistryArguments sinkRegistryArguments)
-{
-    return std::make_unique<LLMSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
 }

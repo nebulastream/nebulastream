@@ -35,19 +35,29 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
 namespace NES
 {
 
-/// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
+/// NOTE: LLMRSource is a near-verbatim CLONE of nes-plugins/Sources/TCPSource.
+/// The only behavioural difference is the LLM_QUERY_ID handshake (see
+/// LLMRSource::open): the LLM Operator multiplexes several queries over one
+/// TCP port and routes a connection by the query id it receives as the first
+/// line. Everything else -- socket setup, buffer filling, systest adaptors --
+/// is TCPSource's. Because this is a clone rather than a subclass, it must be
+/// RE-SYNCED whenever TCPSource changes upstream.
+
+/// Defines the names, (optional) default values, (optional) validation & config functions, for all LLMR config parameters.
 struct ConfigParametersLLMR
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
-        "socket_host",
+        "SOCKET_HOST",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
-        "socket_port",
+        "SOCKET_PORT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
@@ -65,7 +75,7 @@ struct ConfigParametersLLMR
             return portNumber;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
-        "socket_domain",
+        "SOCKET_DOMAIN",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -83,7 +93,7 @@ struct ConfigParametersLLMR
             return std::nullopt;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
-        "socket_type",
+        "SOCKET_TYPE",
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
@@ -118,41 +128,47 @@ struct ConfigParametersLLMR
                 socketTypeString)
             return std::nullopt;
         }};
-    static inline const DescriptorConfig::ConfigParameter<std::string> LLM_QUERY_ID{
-        "llm_query_id",
-        "LLM_1",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LLM_QUERY_ID, config); }};
     static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tuple_delimiter",
+        "TUPLE_DELIMITER",
         '\n',
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flush_interval_ms",
+        "FLUSH_INTERVAL_MS",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socket_buffer_size",
+        "SOCKET_BUFFER_SIZE",
         1024,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytes_sed_for_socket_buffer_size_transfer",
+        "BYTES_SED_FOR_SOCKET_BUFFER_SIZE_TRANSFER",
         0,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "connect_timeout_seconds",
+        "CONNECT_TIMEOUT_SECONDS",
         10,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
+
+    /// Identifies which registered query's result stream this source wants.
+    /// Sent verbatim (plus a newline) as the first bytes after connecting;
+    /// must match the `query_id` of the SINK.QUERY blob the LLMSink registered.
+    /// Mandatory: there is no sensible default, and a wrong id silently yields
+    /// an empty stream.
+    static inline const DescriptorConfig::ConfigParameter<std::string> LLM_QUERY_ID{
+        "LLM_QUERY_ID",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LLM_QUERY_ID, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
+            LLM_QUERY_ID,
             HOST,
             PORT,
             DOMAIN,
             TYPE,
             SEPARATOR,
-            LLM_QUERY_ID,
             FLUSH_INTERVAL_MS,
             SOCKET_BUFFER_SIZE,
             SOCKET_BUFFER_TRANSFER_SIZE,
@@ -172,7 +188,7 @@ class LLMRSource : public Source
 public:
     static const std::string& name()
     {
-        static const std::string Instance = "TCP";
+        static const std::string Instance = "LLMR";
         return Instance;
     }
 
@@ -186,12 +202,16 @@ public:
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
-    /// Open TCP connection.
+    /// Open the TCP connection and send the LLM_QUERY_ID handshake.
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
-    /// Close TCP connection.
+    /// Close the TCP connection.
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    /// Systest adaptors: materialize inline/file test data by spinning up a LLMRDataServer.
+    static InlineDataRegistryReturnType provideInlineData(InlineDataRegistryArguments systestAdaptorArguments);
+    static FileDataRegistryReturnType provideFileData(FileDataRegistryArguments systestAdaptorArguments);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -205,10 +225,10 @@ private:
     /// buffer for thread-safe strerror_r
     std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
 
+    std::string llmQueryId;
     std::string socketHost;
     std::string socketPort;
     int socketType;
-    std::string llmQueryId;
     int socketDomain;
     char tupleDelimiter;
     size_t socketBufferSize;

@@ -10,9 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(LLMR Source nes-sources-registry llm_source_plugin_library LLMRSource.cpp LLMRDataServer.cpp)
-add_plugin_as_library(LLMR SourceValidation nes-sources-registry llm_source_validation_plugin_library LLMRSource.cpp)
-add_plugin_as_library(LLMR InlineData nes-sources-registry llm_inline_data_plugin_library LLMRSource.cpp)
-add_plugin_as_library(LLMR FileData nes-sources-registry llm_file_data_plugin_library LLMRSource.cpp)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
-target_include_directories(llm_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+add_library(llmr_source_plugin_library STATIC LLMRSource.cpp LLMRDataServer.cpp)
+target_link_libraries(llmr_source_plugin_library PRIVATE nes-sources)
+target_include_directories(llmr_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
+
+link_plugin_library(nes-sources llmr_source_plugin_library)
+add_registry_entry(Source LLMR)
+add_registry_entry(SourceValidation LLMR)
+add_registry_entry(InlineData LLMR)
+add_registry_entry(FileData LLMR)

@@ -28,6 +28,8 @@
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/impl/write.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/read_until.hpp>
+#include <boost/asio/streambuf.hpp>
 #include <boost/system/detail/error_code.hpp>
 
 #include <ErrorHandling.hpp>
@@ -115,6 +117,15 @@ void LLMRDataServer::handleConnection(const std::shared_ptr<tcp::socket>& socket
 
             try
             {
+                /// Consume the LLM_QUERY_ID handshake line the client sends on
+                /// connect (see LLMRSource::open). The real LLM Operator reads
+                /// this line and routes on it; a mock that never reads it
+                /// leaves those bytes in the socket, which desyncs the stream
+                /// for ATTACH INLINE / FILE systests. The value is irrelevant
+                /// here -- this server serves exactly one query's data.
+                boost::asio::streambuf handshake;
+                boost::asio::read_until(*socket, handshake, '\n');
+
                 /// Serve the data to the client
                 dataProvider(*socket);
 
