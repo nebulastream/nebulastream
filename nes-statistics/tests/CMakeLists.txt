@@ -14,3 +14,11 @@
 add_nes_test(statistic-store-test StatisticStoreTest.cpp)
 target_link_libraries(statistic-store-test nes-statistics)
 target_include_directories(statistic-store-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_nes_test(statistic-task-queue-test StatisticTaskQueueTest.cpp)
+target_link_libraries(statistic-task-queue-test nes-statistics nes-single-node-worker-lib nes-coordinator-bridge)
+target_include_directories(statistic-task-queue-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_nes_test(statistic-transport-test StatisticTransportTest.cpp)
+target_link_libraries(statistic-transport-test nes-statistics nes-single-node-worker-lib nes-coordinator-bridge)
+target_include_directories(statistic-transport-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
