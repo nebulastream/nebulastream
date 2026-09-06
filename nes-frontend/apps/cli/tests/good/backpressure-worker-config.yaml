@@ -84,3 +84,8 @@ workers:
         network:
           sender_queue_size: 2
           max_pending_acks: 2
+
+optimizer:
+  network:
+    backpressure_upper_threshold: 10
+    backpressure_lower_threshold: 10
