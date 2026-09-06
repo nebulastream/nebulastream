@@ -407,6 +407,14 @@ pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogi
         }
     }
 
+    if (std::ranges::any_of(newAggregations, [](const auto& agg) { return agg.function.requiresAllInputFields(); }))
+    {
+        newRequired.clear();
+        for (const auto& field : op->getChild().getOutputSchema())
+        {
+            newRequired.insert(field);
+        }
+    }
 
     return {.operatorContext = {newAggregations}, .downContexts = {{op->getChild(), newRequired}}};
 }
