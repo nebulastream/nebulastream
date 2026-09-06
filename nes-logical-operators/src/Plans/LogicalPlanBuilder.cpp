@@ -30,6 +30,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -41,7 +42,15 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+
+#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Operators/Statistic/StatisticFieldNames.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticWindowMatch.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/ReservoirSampleAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -122,6 +131,40 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
         queryPlan,
         WindowedAggregationLogicalOperator::create(
             std::move(keysWithNames), std::move(windowAggs), windowType, std::move(timeCharacteristic)));
+}
+
+LogicalPlan LogicalPlanBuilder::addStatisticBuild(
+    LogicalPlan queryPlan,
+    const Windowing::TimeBasedWindowType& windowType,
+    Windowing::TimeCharacteristic timeCharacteristic,
+    const StatisticId statisticId,
+    const WindowAggregationLogicalFunction& statisticFunction)
+{
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+
+    const CountAggregationLogicalFunction measurementCount{statisticFunction.getInputFunction(), true};
+    std::vector windowAggs{
+        WindowedAggregationLogicalOperator::ProjectedAggregation{
+            .function = statisticFunction, .name = Identifier::parse(statisticDataFieldName(statisticId))},
+        WindowedAggregationLogicalOperator::ProjectedAggregation{
+            .function = WindowAggregationLogicalFunction{measurementCount},
+            .name = Identifier::parse(std::string{StatisticFieldNames::NUMBER_OF_SEEN_MEASUREMENTS})}};
+
+    queryPlan = addWindowAggregation(std::move(queryPlan), windowType, std::move(windowAggs), {}, std::move(timeCharacteristic));
+    return promoteOperatorToRoot(
+        queryPlan, StatisticStoreWriterLogicalOperator::create(statisticId, StatisticBlobType{statisticFunction.getName()}));
+}
+
+LogicalPlan LogicalPlanBuilder::addStatisticProbe(
+    LogicalPlan queryPlan,
+    const StatisticId statisticId,
+    const StatisticBlobType& blobType,
+    std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields,
+    const StatisticWindowMatch windowMatch)
+{
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+    return promoteOperatorToRoot(
+        queryPlan, StatisticStoreReaderLogicalOperator::create(statisticId, blobType, std::move(payloadFields), windowMatch));
 }
 
 LogicalPlan LogicalPlanBuilder::addUnion(LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
