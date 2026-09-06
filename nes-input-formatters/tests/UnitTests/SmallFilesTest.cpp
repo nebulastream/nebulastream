@@ -242,8 +242,8 @@ public:
             numberOfExpectedRawBuffers,
             rawBuffers.size());
 
-        /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>((rawBuffers.size() + 1) * 2);
+        /// We assume that we don't need more than three times the number of buffers to represent the formatted data than we need to represent the raw data
+        const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>((rawBuffers.size() + 1) * 3);
 
         return SetupResult{
             .schema = schema,
