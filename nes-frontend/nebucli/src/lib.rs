@@ -43,6 +43,10 @@ struct Cli {
     #[arg(short = 's', long = "setup")]
     setup: Option<String>,
 
+    /// Port the statistic service listens on; 0 picks a free one
+    #[arg(long = "statistic-service-port", default_value_t = 0)]
+    statistic_service_port: u16,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -136,7 +140,12 @@ fn run_inner() -> anyhow::Result<()> {
     } else {
         WorkerMode::Remote
     };
-    let handle = coordinator_bridge::start_coordinator(&db, mode, &optimizer_config)?;
+    let handle = coordinator_bridge::start_coordinator(
+        &db,
+        mode,
+        &optimizer_config,
+        cli.statistic_service_port,
+    )?;
 
     match cli.command {
         Command::Start {
