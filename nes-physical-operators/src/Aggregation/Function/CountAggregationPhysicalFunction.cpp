@@ -126,7 +126,7 @@ CountAggregationPhysicalFunction::create(AggregationPhysicalFunctionRegistryArgu
         std::move(arguments.resultType),
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
-        arguments.includeNullValues);
+        arguments.logicalFunction.shallIncludeNullValues());
 }
 
 }

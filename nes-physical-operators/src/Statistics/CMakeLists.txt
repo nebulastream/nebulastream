@@ -10,9 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(StatisticStore)
-add_subdirectory(Statistics)
-
-add_source_files(nes-statistics
-        StatisticTuple.cpp
+add_source_files(nes-physical-operators
+        ReservoirMerge.cpp
+        ReservoirSampleAggregationPhysicalFunction.cpp
+        StatisticStoreReaderPhysicalOperator.cpp
+        StatisticStoreWriterPhysicalOperator.cpp
 )
+
+add_registry_entry(AggregationPhysicalFunction ReservoirSample)

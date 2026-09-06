@@ -105,73 +105,110 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
     };
 }
 
+/// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the exception spec; INVARIANT may throw on bad input.
+int8_t* allocateVarSized(TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize)
+{
+    INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
+    INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
+
+    auto numChildren = pageBuffer->getNumberOfChildBuffers();
+    if (numChildren > 0)
+    {
+        auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
+        TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
+        const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
+        const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
+        if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
+        {
+            lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+            *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
+                lastVarSizedBufferIndex,
+                VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
+                VariableSizedAccess::Size{allocationSize}};
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
+            return reinterpret_cast<int8_t*>(lastVarSizedBuffer
+                                                 .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+                                                 .subspan(lastVarSizedBufferNumTuples)
+                                                 .data());
+        }
+    }
+    TupleBuffer newVarSizedBuffer;
+    if (allocationSize <= bufferProvider->getBufferSize())
+    {
+        newVarSizedBuffer = bufferProvider->getBufferBlocking();
+    }
+    else
+    {
+        /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
+        auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
+        if (not unpooledBuffer.has_value())
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
+        }
+        newVarSizedBuffer = std::move(unpooledBuffer.value());
+    }
+    auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
+    newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+    *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
+        = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
+    newVarSizedBuffer.setNumberOfTuples(allocationSize);
+    /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
+    return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
+}
+
+/// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the exception spec; INVARIANT may throw on bad input.
+int8_t* replaceVarSized(TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize)
+{
+    INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+    const auto previous = *reinterpret_cast<const VariableSizedAccess*>(fieldSlot);
+    const auto childIndex = previous.getIndex();
+    if (previous.getSize().getRawSize() >= allocationSize and childIndex.getRawValue() < pageBuffer->getNumberOfChildBuffers())
+    {
+        TupleBuffer varSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
+        const uint64_t offset = previous.getOffset().getRawOffset();
+        if (offset + allocationSize <= varSizedBuffer.getBufferSize())
+        {
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
+            *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
+                = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{offset}, VariableSizedAccess::Size{allocationSize}};
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
+            return reinterpret_cast<int8_t*>(varSizedBuffer
+                                                 .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+                                                 .subspan(offset)
+                                                 .data());
+        }
+    }
+    return allocateVarSized(pageBuffer, bufferProvider, fieldSlot, allocationSize);
+}
+
 /// Factory method that returns the lambda function to write a record at a specific memory address in a paged vector page.
 /// The lastPageBuffer argument is the capture variable pointing to the last page of the paged vector.
 /// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
-auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+auto makeVarSizedWriteFunction(
+    const NautilusBuffer& lastPageBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    int8_t* (*proxy)(TupleBuffer*, AbstractBufferProvider*, int8_t*, uint64_t))
 {
     return /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-        /// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the lambda's exception spec; INVARIANT may throw on bad input.
-        [lastPageBuffer,
-         bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
+        [lastPageBuffer, bufferProvider, proxy](
+            const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
     {
-        return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-            +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*
-            {
-                INVARIANT(pageBuffer != nullptr, "Page buffer must not be null");
-                INVARIANT(bufferProvider != nullptr, "BufferProvider must not be null");
-
-                auto numChildren = pageBuffer->getNumberOfChildBuffers();
-                if (numChildren > 0)
-                {
-                    auto lastVarSizedBufferIndex = ChildBufferIndex{static_cast<uint32_t>(numChildren - 1)};
-                    TupleBuffer lastVarSizedBuffer = pageBuffer->loadChildBuffer(lastVarSizedBufferIndex);
-                    const uint64_t lastVarSizedBufferSize = lastVarSizedBuffer.getBufferSize();
-                    const uint64_t lastVarSizedBufferNumTuples = lastVarSizedBuffer.getNumberOfTuples();
-                    if (lastVarSizedBufferNumTuples + allocationSize <= lastVarSizedBufferSize)
-                    {
-                        lastVarSizedBuffer.setNumberOfTuples(allocationSize + lastVarSizedBufferNumTuples);
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                        *reinterpret_cast<VariableSizedAccess*>(fieldSlot) = VariableSizedAccess{
-                            lastVarSizedBufferIndex,
-                            VariableSizedAccess::Offset{lastVarSizedBufferNumTuples},
-                            VariableSizedAccess::Size{allocationSize}};
-                        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): TupleBuffer hands out int8_t spans by design.
-                        return reinterpret_cast<int8_t*>(lastVarSizedBuffer
-                                                             .getAvailableMemoryArea<>() /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-                                                             .subspan(lastVarSizedBufferNumTuples)
-                                                             .data());
-                    }
-                }
-                TupleBuffer newVarSizedBuffer;
-                if (allocationSize <= bufferProvider->getBufferSize())
-                {
-                    newVarSizedBuffer = bufferProvider->getBufferBlocking();
-                }
-                else
-                {
-                    /// The pooled buffer size can't hold this value; fall back to an unpooled buffer sized to fit it exactly.
-                    auto unpooledBuffer = bufferProvider->getUnpooledBuffer(allocationSize);
-                    if (not unpooledBuffer.has_value())
-                    {
-                        throw BufferAllocationFailure("No unpooled TupleBuffer available for oversized varsized value.");
-                    }
-                    newVarSizedBuffer = std::move(unpooledBuffer.value());
-                }
-                auto childIndex = pageBuffer->storeChildBuffer(newVarSizedBuffer);
-                newVarSizedBuffer = pageBuffer->loadChildBuffer(childIndex);
-                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): fieldSlot is the typed VariableSizedAccess slot.
-                *reinterpret_cast<VariableSizedAccess*>(fieldSlot)
-                    = VariableSizedAccess{childIndex, VariableSizedAccess::Offset{0}, VariableSizedAccess::Size{allocationSize}};
-                newVarSizedBuffer.setNumberOfTuples(allocationSize);
-                /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks,cppcoreguidelines-pro-type-reinterpret-cast)
-                return reinterpret_cast<int8_t*>(newVarSizedBuffer.getAvailableMemoryArea<>().data());
-            },
-            lastPageBuffer.asArg(),
-            bufferProvider,
-            fieldSlot,
-            allocationSize);
+        /// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
+        return invoke(proxy, lastPageBuffer.asArg(), bufferProvider, fieldSlot, allocationSize);
     };
+}
+
+auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    return makeVarSizedWriteFunction(lastPageBuffer, bufferProvider, allocateVarSized);
+}
+
+auto makeVarSizedReplaceFunction(const NautilusBuffer& pageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    return makeVarSizedWriteFunction(pageBuffer, bufferProvider, replaceVarSized);
 }
 }
 
@@ -330,13 +367,10 @@ void PagedVectorRef::pushBack(const Record& record, const nautilus::val<Abstract
         lastPageBuffer.asArg());
 }
 
-Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
+nautilus::val<int8_t*>
+PagedVectorRef::resolveRecordAddress(const NautilusBuffer& pageBuffer, const nautilus::val<uint64_t>& entryBufferPos) const
 {
-    /// Resolve the page and materialize the page buffer (needed for varsized child loads); return the in-page index.
-    OwnedNautilusBuffer pageBuffer;
-    auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
-
-    auto recordAddress = invoke(
+    return invoke(
         +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* pageBuffer, const uint64_t entryBufferPos) -> int8_t*
         {
             const PagedVector pagedVector = PagedVector::load(*pagedVectorBuffer);
@@ -348,8 +382,29 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
         pagedVectorBuffer.asArg(),
         pageBuffer.asArg(),
         entryBufferPos);
+}
+
+Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
+{
+    /// Resolve the page and materialize the page buffer (needed for varsized child loads); return the in-page index.
+    OwnedNautilusBuffer pageBuffer;
+    auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
+
+    auto recordAddress = resolveRecordAddress(pageBuffer, entryBufferPos);
 
     return tupleLayout->readRecord(recordAddress, makeVarSizedLoadFunction(pageBuffer));
+}
+
+void PagedVectorRef::replaceRecord(
+    const Record& record, const nautilus::val<uint64_t>& entryPos, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+{
+    /// Resolve the page and materialize the page buffer (needed for varsized child allocations); return the in-page index.
+    OwnedNautilusBuffer pageBuffer;
+    auto entryBufferPos = invoke(loadPageForEntryProxy, pagedVectorBuffer.asArg(), entryPos, pageBuffer.asArg());
+
+    auto recordAddress = resolveRecordAddress(pageBuffer, entryBufferPos);
+
+    tupleLayout->writeRecord(record, recordAddress, makeVarSizedReplaceFunction(pageBuffer, bufferProvider));
 }
 
 PagedVectorRefIter PagedVectorRef::begin() const
@@ -446,5 +501,4 @@ nautilus::val<bool> PagedVectorRefIterSentinel::operator!=(const PagedVectorRefI
 {
     return other != *this;
 }
-
 }

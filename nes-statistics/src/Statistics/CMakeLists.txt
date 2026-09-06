@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(StatisticStore)
-add_subdirectory(Statistics)
-
 add_source_files(nes-statistics
-        StatisticTuple.cpp
+        ReservoirSampleBlob.cpp
+        StatisticIterator.cpp
+        ScalarStatisticIterator.cpp
+        ReservoirSampleStatisticIterator.cpp
 )

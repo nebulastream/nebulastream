@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Util/RuntimeRegistry.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -33,13 +34,11 @@ struct LoweringRuleRegistryArguments
 
 using LoweringRuleFn = std::function<LoweringRuleRegistryReturnType(LoweringRuleRegistryArguments)>;
 
-/// Creates the registry entry for a lowering rule: rules are constructed from the query
-/// execution configuration.
 template <typename LoweringRuleImpl>
 LoweringRuleFn makeLoweringRule()
 {
     return [](LoweringRuleRegistryArguments arguments) -> LoweringRuleRegistryReturnType
-    { return std::make_unique<LoweringRuleImpl>(arguments.conf); };
+    { return std::make_unique<LoweringRuleImpl>(std::move(arguments.conf)); };
 }
 
 class LoweringRuleRegistry : public RuntimeRegistry<LoweringRuleRegistry, std::string, LoweringRuleFn, /*CaseSensitive*/ false>
