@@ -168,10 +168,27 @@ relationPrimary
     | inlineTable                             #inlineTableDefault2
     | anonymousSource                         #anonymousDefinedSource
     | modelInferenceSource                    #modelInferenceRelation
+    | alignSource                             #alignedRelation
     ;
 
 modelInferenceSource
     : MODEL_INFERENCE '(' modelName=identifier ',' modelInferenceInput ')'
+    ;
+
+alignSource
+    : ALIGN '(' left=alignInput ',' leftTimestamp=identifier ','
+          right=alignInput ',' rightTimestamp=identifier
+          (',' alignStrategySpec=alignStrategy)? ')'
+    ;
+
+alignInput
+    : multipartIdentifier                     #alignStreamName
+    | '(' query ')'                           #alignSubquery
+    | alignSource                             #alignNestedSource
+    ;
+
+alignStrategy
+    : LTE | NN | FULL | EAGER
     ;
 
 modelInferenceInput
@@ -555,6 +572,9 @@ EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
 MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
+ALIGN: 'ALIGN';
+NN: 'NN';
+EAGER: 'EAGER' | 'eager';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
 

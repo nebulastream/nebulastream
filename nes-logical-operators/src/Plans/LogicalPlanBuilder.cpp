@@ -20,6 +20,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -157,6 +158,28 @@ LogicalPlan LogicalPlanBuilder::addJoin(
         JoinLogicalOperator::create(joinFunction, std::move(windowType), joinType, std::move(joinTimeCharacteristicOpt).value()),
         leftLogicalPlan,
         rightLogicalPlan);
+    return leftLogicalPlan;
+}
+
+LogicalPlan LogicalPlanBuilder::addAlign(
+    LogicalPlan leftLogicalPlan,
+    LogicalPlan rightLogicalPlan,
+    AlignLogicalOperator::AlignStrategy strategy,
+    Windowing::TimeCharacteristic leftCharacteristic,
+    Windowing::TimeCharacteristic rightCharacteristic)
+{
+    INVARIANT(!rightLogicalPlan.getRootOperators().empty(), "RootOperators of rightLogicalPlan are empty");
+
+    leftLogicalPlan = checkAndAddWatermarkAssigner(leftLogicalPlan, leftCharacteristic);
+    rightLogicalPlan = checkAndAddWatermarkAssigner(rightLogicalPlan, rightCharacteristic);
+
+    auto timestampFields
+        = JoinLogicalOperator::createJoinTimeCharacteristic(std::array{leftCharacteristic, rightCharacteristic});
+    PRECONDITION(timestampFields.has_value(), "Align time characteristics must be either both bound or unbound");
+
+    NES_TRACE("LogicalPlanBuilder: add align operator to query plan");
+    leftLogicalPlan = addBinaryOperatorAndUpdateSource(
+        AlignLogicalOperator::create(strategy, std::move(timestampFields).value()), leftLogicalPlan, rightLogicalPlan);
     return leftLogicalPlan;
 }
 

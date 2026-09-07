@@ -1,0 +1,46 @@
+# name: align/AlignNNNested.test
+# description: A single query nesting one NN ALIGN() call as the left input of another
+# groups: [Align]
+
+CREATE LOGICAL SOURCE alignNestedLeft(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignNestedLeft TYPE File;
+ATTACH INLINE
+1,10,10
+1,30,30
+1,32,32
+1,50,50
+1,55,55
+1,58,58
+1,61,61
+1,100,100
+
+CREATE LOGICAL SOURCE alignNestedRight(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignNestedRight TYPE File;
+ATTACH INLINE
+2,5,5
+2,15,15
+2,31,31
+2,45,45
+2,60,60
+2,62,62
+
+CREATE LOGICAL SOURCE alignNestedThird(id3 UINT64 NOT NULL, value3 UINT64 NOT NULL, ts3 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignNestedThird TYPE File;
+ATTACH INLINE
+3,100,5
+3,200,40
+3,300,53
+3,400,70
+3,500,95
+
+CREATE SINK sinkAlignNested(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, id3 UINT64 NOT NULL, value3 UINT64 NOT NULL) TYPE File;
+
+SELECT * FROM ALIGN(ALIGN(alignNestedLeft, ts1, alignNestedRight, ts2, NN), ts1, alignNestedThird, ts3, NN) INTO sinkAlignNested;
+----
+1 10 10 2 5 3 100
+1 30 30 2 31 3 200
+1 32 32 2 31 3 200
+1 50 50 2 45 3 300
+1 55 55 2 60 3 300
+1 58 58 2 60 3 300
+1 61 61 2 60 3 300
