@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/AlignLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -92,6 +93,13 @@ public:
         const LogicalFunction& joinFunction,
         Windowing::TimeBasedWindowType windowType,
         JoinLogicalOperator::JoinType joinType,
+        Windowing::TimeCharacteristic leftCharacteristic,
+        Windowing::TimeCharacteristic rightCharacteristic);
+
+    static LogicalPlan addAlign(
+        LogicalPlan leftLogicalPlan,
+        LogicalPlan rightLogicalPlan,
+        AlignLogicalOperator::AlignStrategy strategy,
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
 

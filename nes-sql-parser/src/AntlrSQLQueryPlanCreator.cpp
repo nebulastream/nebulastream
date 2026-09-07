@@ -728,7 +728,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (
         helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference
-        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+        and not helpers.top().isAlignRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));
@@ -1553,5 +1553,95 @@ void AntlrSQLQueryPlanCreator::exitModelInferenceRelation(AntlrSQLParser::ModelI
     helpers.top().queryPlans.push_back(std::move(plan));
     helpers.top().isModelInference = false;
     AntlrSQLBaseListener::exitModelInferenceRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterAlignedRelation(AntlrSQLParser::AlignedRelationContext* context)
+{
+    helpers.top().isAlignRelation = true;
+    AntlrSQLBaseListener::enterAlignedRelation(context);
+}
+
+namespace
+{
+LogicalPlan buildAlignSourcePlan(AntlrSQLParser::AlignSourceContext* ctx, std::vector<LogicalPlan>& queryPlans);
+
+LogicalPlan buildAlignInputPlan(AntlrSQLParser::AlignInputContext* ctx, std::vector<LogicalPlan>& queryPlans)
+{
+    if (auto* streamName = dynamic_cast<AntlrSQLParser::AlignStreamNameContext*>(ctx))
+    {
+        std::string name;
+        for (auto* part : streamName->multipartIdentifier()->parts)
+        {
+            if (!name.empty())
+            {
+                name += "$";
+            }
+            name += fmt::format("{}", bindIdentifier(part->identifier()));
+        }
+        return LogicalPlanBuilder::createLogicalPlan(bindIdentifier(std::move(name)));
+    }
+    if (auto* nested = dynamic_cast<AntlrSQLParser::AlignNestedSourceContext*>(ctx))
+    {
+        return buildAlignSourcePlan(nested->alignSource(), queryPlans);
+    }
+    if (dynamic_cast<AntlrSQLParser::AlignSubqueryContext*>(ctx))
+    {
+        if (queryPlans.empty())
+        {
+            throw InvalidQuerySyntax("ALIGN subquery plan not found");
+        }
+        auto plan = std::move(queryPlans.front());
+        queryPlans.erase(queryPlans.begin());
+        return plan;
+    }
+    throw InvalidQuerySyntax("ALIGN: unrecognized input type");
+}
+
+AlignLogicalOperator::AlignStrategy bindAlignStrategy(AntlrSQLParser::AlignStrategyContext* ctx)
+{
+    if (ctx == nullptr)
+    {
+        return AlignLogicalOperator::AlignStrategy::NN;
+    }
+    if (ctx->LTE() != nullptr)
+    {
+        return AlignLogicalOperator::AlignStrategy::LE;
+    }
+    if (ctx->EAGER() != nullptr)
+    {
+        return AlignLogicalOperator::AlignStrategy::EagerLE;
+    }
+    if (ctx->NN() != nullptr)
+    {
+        return AlignLogicalOperator::AlignStrategy::NN;
+    }
+    if (ctx->FULL() != nullptr)
+    {
+        return AlignLogicalOperator::AlignStrategy::FullMatch;
+    }
+    throw InvalidQuerySyntax("ALIGN: unrecognized alignment strategy {}", ctx->getText());
+}
+
+LogicalPlan buildAlignSourcePlan(AntlrSQLParser::AlignSourceContext* ctx, std::vector<LogicalPlan>& queryPlans)
+{
+    auto leftPlan = buildAlignInputPlan(ctx->left, queryPlans);
+    auto rightPlan = buildAlignInputPlan(ctx->right, queryPlans);
+    auto strategy = bindAlignStrategy(ctx->alignStrategySpec);
+    Windowing::TimeCharacteristic leftCharacteristic
+        = Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction{bindIdentifier(ctx->leftTimestamp)}};
+    Windowing::TimeCharacteristic rightCharacteristic
+        = Windowing::UnboundEventTimeCharacteristic{.field = UnboundFieldAccessLogicalFunction{bindIdentifier(ctx->rightTimestamp)}};
+
+    return LogicalPlanBuilder::addAlign(
+        std::move(leftPlan), std::move(rightPlan), strategy, std::move(leftCharacteristic), std::move(rightCharacteristic));
+}
+}
+
+void AntlrSQLQueryPlanCreator::exitAlignedRelation(AntlrSQLParser::AlignedRelationContext* context)
+{
+    auto plan = buildAlignSourcePlan(context->alignSource(), helpers.top().queryPlans);
+    helpers.top().queryPlans.push_back(std::move(plan));
+    helpers.top().isAlignRelation = false;
+    AntlrSQLBaseListener::exitAlignedRelation(context);
 }
 }

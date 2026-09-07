@@ -1,0 +1,65 @@
+# name: align/AlignEagerLE.test
+# description: Eager (state-replace, no finality proof) LE strategy - result is a genuine race between the two source pipelines, may flake
+# groups: [Align]
+
+CREATE LOGICAL SOURCE alignEagerSearchedFirst(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignEagerSearchedFirst TYPE File;
+ATTACH INLINE
+2,5,5
+2,15,15
+2,31,31
+2,45,45
+2,60,60
+2,62,62
+
+CREATE LOGICAL SOURCE alignEagerDrivingSecond(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignEagerDrivingSecond TYPE File;
+ATTACH INLINE
+1,10,10
+1,30,30
+1,32,32
+1,50,50
+1,55,55
+1,58,58
+1,61,61
+1,100,100
+
+CREATE SINK sinkAlignEagerSearchedFirst(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL) TYPE File;
+
+CREATE LOGICAL SOURCE alignEagerDrivingFirst(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignEagerDrivingFirst TYPE File;
+ATTACH INLINE
+1,10,10
+1,30,30
+1,32,32
+1,50,50
+1,55,55
+1,58,58
+1,61,61
+1,100,100
+
+CREATE LOGICAL SOURCE alignEagerSearchedSecond(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, ts2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR alignEagerSearchedSecond TYPE File;
+ATTACH INLINE
+2,5,5
+2,15,15
+2,31,31
+2,45,45
+2,60,60
+2,62,62
+
+CREATE SINK sinkAlignEagerDrivingFirst(id UINT64 NOT NULL, value UINT64 NOT NULL, ts1 UINT64 NOT NULL, id2 UINT64 NOT NULL, value2 UINT64 NOT NULL) TYPE File;
+
+SELECT * FROM ALIGN(alignEagerDrivingSecond, ts1, alignEagerSearchedFirst, ts2, EAGER) INTO sinkAlignEagerSearchedFirst;
+----
+1 10 10 2 62
+1 30 30 2 62
+1 32 32 2 62
+1 50 50 2 62
+1 55 55 2 62
+1 58 58 2 62
+1 61 61 2 62
+1 100 100 2 62
+
+SELECT * FROM ALIGN(alignEagerDrivingFirst, ts1, alignEagerSearchedSecond, ts2, EAGER) INTO sinkAlignEagerDrivingFirst;
+----

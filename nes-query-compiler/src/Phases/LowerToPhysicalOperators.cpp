@@ -20,8 +20,10 @@
 #include <utility>
 #include <vector>
 #include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Operators/AlignLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Traits/AlignStrategyTrait.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -65,6 +67,32 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
                 throw UnknownOptimizerRule("ImplementationTrait cannot be choiceless for join", logicalOperator.getName());
             }
         }
+    }
+    if (logicalOperatorName == "Align")
+    {
+        const auto traitSet = logicalOperator.getTraitSet();
+        const auto alignStrategyTraitOpt = getTrait<AlignStrategyTrait>(traitSet);
+        PRECONDITION(alignStrategyTraitOpt.has_value(), "Align operator must have an align strategy trait");
+        const auto ruleKey = [&]
+        {
+            switch (alignStrategyTraitOpt.value()->strategy)
+            {
+                case AlignLogicalOperator::AlignStrategy::LE:
+                    return "AlignLE";
+                case AlignLogicalOperator::AlignStrategy::EagerLE:
+                    return "AlignEagerLE";
+                case AlignLogicalOperator::AlignStrategy::NN:
+                    return "AlignNN";
+                case AlignLogicalOperator::AlignStrategy::FullMatch:
+                    return "AlignFullMatch";
+            }
+            throw UnknownOptimizerRule("Unknown align strategy for logical operator '{}'", logicalOperator.getName());
+        }();
+        if (const auto rule = LoweringRuleRegistry::instance().find(std::string(ruleKey)))
+        {
+            return (*rule)(registryArgument);
+        }
+        throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
     }
     if (const auto rule = LoweringRuleRegistry::instance().find(std::string(logicalOperatorName)))
     {

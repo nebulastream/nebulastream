@@ -22,10 +22,19 @@ add_source_files(nes-query-compiler
         LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
+        LowerToPhysicalAlignDirectedCommon.cpp
+        LowerToPhysicalAlignLE.cpp
+        LowerToPhysicalAlignEagerLE.cpp
+        LowerToPhysicalAlignNN.cpp
+        LowerToPhysicalAlignFullMatch.cpp
 )
 
 add_registry_entry(LoweringRule NLJoin)
 add_registry_entry(LoweringRule HashJoin)
+add_registry_entry(LoweringRule AlignLE)
+add_registry_entry(LoweringRule AlignEagerLE)
+add_registry_entry(LoweringRule AlignNN)
+add_registry_entry(LoweringRule AlignFullMatch)
 add_registry_entry(LoweringRule Selection)
 add_registry_entry(LoweringRule Projection)
 add_registry_entry(LoweringRule WindowedAggregation)
