@@ -120,8 +120,15 @@ add_custom_target(systest-compilation-cache-acceptance
         --data ${EXPANDED_TEST_DATA_PATH}
         --topology ${CMAKE_CURRENT_SOURCE_DIR}/../configs/topologies/single-node.yaml
         --run-root ${CMAKE_CURRENT_BINARY_DIR}/compilation-cache-acceptance
+        --inference $<IF:$<BOOL:${ENABLE_INFERENCE_TESTS}>,enabled,disabled>
+        --join-strategies HASH_JOIN NESTED_LOOP_JOIN
         DEPENDS systest test-data
         USES_TERMINAL)
+
+add_test(NAME compilation-cache-acceptance-parser
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover
+        -s ${CMAKE_CURRENT_SOURCE_DIR}/tests -p test_compilation_cache_acceptance.py)
+set_tests_properties(compilation-cache-acceptance-parser PROPERTIES LABELS "Systest")
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)

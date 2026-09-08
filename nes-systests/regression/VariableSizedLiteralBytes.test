@@ -1,0 +1,33 @@
+CREATE LOGICAL SOURCE input(id UINT64 NOT NULL, label VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1,alpha
+2,beta
+
+SELECT id, VARSIZED('') AS empty_text, 'x' AS short_text, 'aaabaaa' AS repeated_text, 'Grüße🌍' AS utf8_text
+FROM input INTO FILE('JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"EMPTY_TEXT":"","SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
+{"ID":2,"EMPTY_TEXT":"","SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
+
+SELECT id, 'aaaa' AS literal FROM input INTO FILE('CSV' AS "SINK".OUTPUT_FORMAT);
+----
+1,aaaa
+2,aaaa
+
+SELECT id, 'bbbb' AS literal FROM input INTO FILE('CSV' AS "SINK".OUTPUT_FORMAT);
+----
+1,bbbb
+2,bbbb
+
+SELECT id, CASE WHEN id = 1 THEN 'left' ELSE 'right' END AS side, CONCAT(label, '!!') AS text
+FROM input INTO FILE('JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"SIDE":"left","TEXT":"alpha!!"}
+{"ID":2,"SIDE":"right","TEXT":"beta!!"}
+
+SELECT id, '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' AS literal
+FROM input INTO FILE('CSV' AS "SINK".OUTPUT_FORMAT);
+----
+1,0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+2,0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
