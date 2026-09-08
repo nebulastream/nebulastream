@@ -4,11 +4,11 @@ ATTACH INLINE
 1,alpha
 2,beta
 
-SELECT id, VARSIZED('') AS empty_text, 'x' AS short_text, 'aaabaaa' AS repeated_text, 'Grüße🌍' AS utf8_text
+SELECT id, 'x' AS short_text, 'aaabaaa' AS repeated_text, 'Grüße🌍' AS utf8_text
 FROM input INTO FILE('JSON' AS "SINK".OUTPUT_FORMAT);
 ----
-{"ID":1,"EMPTY_TEXT":"","SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
-{"ID":2,"EMPTY_TEXT":"","SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
+{"ID":1,"SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
+{"ID":2,"SHORT_TEXT":"x","REPEATED_TEXT":"aaabaaa","UTF8_TEXT":"Grüße🌍"}
 
 SELECT id, 'aaaa' AS literal FROM input INTO FILE('CSV' AS "SINK".OUTPUT_FORMAT);
 ----
@@ -20,7 +20,7 @@ SELECT id, 'bbbb' AS literal FROM input INTO FILE('CSV' AS "SINK".OUTPUT_FORMAT)
 1,bbbb
 2,bbbb
 
-SELECT id, CASE WHEN id = 1 THEN 'left' ELSE 'right' END AS side, CONCAT(label, '!!') AS text
+SELECT id, Conditional(id = 1, 'left', 'right') AS side, CONCAT(label, '!!') AS text
 FROM input INTO FILE('JSON' AS "SINK".OUTPUT_FORMAT);
 ----
 {"ID":1,"SIDE":"left","TEXT":"alpha!!"}

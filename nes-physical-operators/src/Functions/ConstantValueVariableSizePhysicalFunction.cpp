@@ -21,6 +21,7 @@
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
+#include <nautilus/static.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
@@ -36,7 +37,7 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef& arena) const
 {
     const auto result = arena.allocateVariableSizedData(nautilus::val<uint64_t>(data.size()));
-    for (size_t i = 0; i < data.size(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < data.size(); ++i)
     {
         VarVal{nautilus::val<int8_t>(data[i])}.writeToMemory(result.getContent() + nautilus::val<uint64_t>(i));
     }
