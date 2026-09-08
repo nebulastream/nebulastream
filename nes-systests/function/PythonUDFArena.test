@@ -1,0 +1,52 @@
+# name: function/PythonUDFArena.test
+# description: Grows a Codon list through the NES arena-backed allocation and realloc ABI
+# groups: [Function, PythonUDF, CompilerOnly]
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+CREATE LOGICAL SOURCE numbers(n UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+10000
+
+SELECT PYTHON((n): $python$
+    values = []
+    for value in range(n):
+        values.append(value)
+    return len(values)
+$python$) AS UINT64 AS result
+FROM numbers
+INTO file();
+----
+10000
+
+CREATE LOGICAL SOURCE rejected_numbers(n UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR rejected_numbers TYPE File;
+ATTACH INLINE
+1
+
+SELECT PYTHON((n): $python$
+    from internal.gc import add_roots, alloc_uncollectable
+    allocation = alloc_uncollectable(8)
+    add_roots(allocation, allocation)
+    return n
+$python$) AS UINT64 AS result
+FROM rejected_numbers
+INTO file();
+----
+ERROR QueryCompilerError
+
+CREATE LOGICAL SOURCE unsupported_runtime(n UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR unsupported_runtime TYPE File;
+ATTACH INLINE
+1
+
+SELECT PYTHON((n): $python$
+from time import sleep
+sleep(0.0)
+return n
+$python$) AS UINT64 AS result
+FROM unsupported_runtime
+INTO file();
+----
+ERROR QueryCompilerError

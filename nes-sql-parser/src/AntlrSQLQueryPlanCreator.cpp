@@ -54,6 +54,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -1431,6 +1432,29 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
     }
+}
+
+void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunctionContext* context)
+{
+    std::vector<std::string> parameterNames;
+    std::vector<LogicalFunction> arguments;
+    for (auto* parameter : context->parameters->ident)
+    {
+        const auto identifier = bindIdentifier(parameter->identifier());
+        parameterNames.emplace_back(identifier.getOriginalString());
+        arguments.emplace_back(UnboundFieldAccessLogicalFunction(identifier));
+    }
+
+    auto body = context->body->getText();
+    constexpr std::string_view Delimiter = "$python$";
+    PRECONDITION(body.size() >= Delimiter.size() * 2, "Malformed Python UDF body");
+    body = body.substr(Delimiter.size(), body.size() - Delimiter.size() * 2);
+
+    helpers.top().functionBuilder.emplace_back(PythonLogicalFunction(
+        std::move(parameterNames),
+        std::move(body),
+        bindDataType(context->returnType, DataType::NULLABLE::NOT_NULLABLE),
+        std::move(arguments)));
 }
 
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)

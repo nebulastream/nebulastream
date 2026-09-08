@@ -101,7 +101,9 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto physicalInputType = fieldAccessFunction->getDataType();
         auto physicalFinalType = descriptor.function->getAggregateType();
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(
-            fieldAccessFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
+            fieldAccessFunction,
+            *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>(),
+            configuration.getPythonUdfImportPaths());
         const auto resultFieldIdentifier = descriptor.name;
         auto name = descriptor.function->getName();
 
@@ -164,7 +166,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(
-            nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>()));
+            nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>(), conf.getPythonUdfImportPaths()));
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;

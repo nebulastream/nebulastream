@@ -73,6 +73,7 @@ class CompilationContext
 {
     /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    nautilus::engine::NautilusEngine& engine; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
     uint64_t functionNameCounter = 0;
     /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
@@ -80,7 +81,15 @@ class CompilationContext
     bool compiled = false;
 
 public:
-    explicit CompilationContext(nautilus::engine::NautilusModule& module) : module(module) { }
+    CompilationContext(nautilus::engine::NautilusModule& module, nautilus::engine::NautilusEngine& engine) : module(module), engine(engine)
+    {
+    }
+
+    void registerUDF(std::string_view symbolName, std::string bitcode)
+    {
+        PRECONDITION(!compiled, "registerUDF() must not be called after the module has been compiled");
+        engine.registerUDF(symbolName, std::move(bitcode));
+    }
 
     template <typename R, typename... FunctionArguments>
     auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)

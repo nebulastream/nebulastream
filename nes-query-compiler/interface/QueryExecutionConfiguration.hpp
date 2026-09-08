@@ -22,6 +22,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -69,6 +70,20 @@ public:
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
 
+    SequenceOption<StringOption> pythonUdfImportPaths
+        = {"python_udf_import_paths", "Directories from which inline Python UDFs may import user-provided modules"};
+
+    [[nodiscard]] std::vector<std::string> getPythonUdfImportPaths() const
+    {
+        std::vector<std::string> paths;
+        paths.reserve(pythonUdfImportPaths.size());
+        for (const auto& path : pythonUdfImportPaths.getValues())
+        {
+            paths.emplace_back(path.getValue());
+        }
+        return paths;
+    }
+
     SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
 
     BloomFilterConfiguration bloomFilterConfiguration = {"bloom_filter", "Configuration for the hash maps' in-map BloomFilter"};
@@ -82,6 +97,7 @@ private:
             &numberOfPartitions,
             &numberOfRecordsPerKey,
             &operatorBufferSize,
+            &pythonUdfImportPaths,
             &sliceCacheConfiguration,
             &bloomFilterConfiguration};
     }

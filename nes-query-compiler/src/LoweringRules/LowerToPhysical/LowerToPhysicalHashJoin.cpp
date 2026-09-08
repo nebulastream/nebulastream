@@ -207,7 +207,8 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
 std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
     const LogicalOperator& inputOperator,
     const std::vector<FieldNamesExtension>& fieldNameExtensions,
-    const MemoryLayoutType& memoryLayoutType)
+    const MemoryLayoutType& memoryLayoutType,
+    const QueryExecutionConfiguration& conf)
 {
     auto currentFields = createPhysicalOutputSchema(inputOperator.getTraitSet()) | std::ranges::to<std::vector<QualifiedUnboundField>>();
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
@@ -221,8 +222,8 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
         /// Creating a new physical function that reads from the old field and casts it to the new data type
         const FieldAccessLogicalFunction fieldAccessOldField(oldField);
         const CastToTypeLogicalFunction castToTypeFunction(newField.getDataType(), fieldAccessOldField);
-        const PhysicalFunction castedPhysicalFunction
-            = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction, *inputOperator.getTraitSet().get<FieldMappingTrait>());
+        const PhysicalFunction castedPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(
+            castToTypeFunction, *inputOperator.getTraitSet().get<FieldMappingTrait>(), conf.getPythonUdfImportPaths());
 
         /// Get a copy of the current input schema before adding to the inputSchemaOfMap the newly added field
         auto inputSchema = Schema<QualifiedUnboundField, Ordered>{currentFields};
@@ -309,7 +310,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
-    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
+    auto physicalJoinFunction
+        = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping, conf.getPythonUdfImportPaths());
     const auto inputOriginIds = join.getChildren()
         | std::views::transform(
                                     [](const auto& child)
@@ -322,8 +324,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     /// Our current hash join implementation uses a hash table that requires each key to be 100% identical in terms of no. fields and data types.
     /// Therefore, we need to create map operators that extend and cast the fields to the correct data types.
     auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
-    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
-    auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
+    auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType, conf);
+    auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType, conf);
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newLeftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newRightInputSchema);
     auto [leftHashMapConfig, leftKeyFunctions] = createChainedHashMapConfig(leftJoinFields, newLeftInputSchema, conf);

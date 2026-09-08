@@ -27,6 +27,7 @@
 #include <cpptrace/from_current.hpp>
 #include <cpptrace/from_current_macros.hpp>
 #include <fmt/format.h>
+#include <nautilus/inline.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
 #include <Engine.hpp>
@@ -120,7 +121,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     CPPTRACE_TRY
     {
         auto module = engine.createModule();
-        CompilationContext compilationCtx{module};
+        CompilationContext compilationCtx{module, engine};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
         compiledModule = module.compile();

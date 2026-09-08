@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		0002-bool-return-zeroext.patch
+		0002-Add-engine-scoped-LLVM-bitcode-UDFs.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -39,7 +40,8 @@ vcpkg_cmake_configure(
 		-DENABLE_SIMD_PLUGIN=OFF
 		-DENABLE_STD_PLUGIN=ON
 		-DENABLE_SPECIALIZATION_PLUGIN=OFF
-		-DENABLE_INLINING_PLUGIN=OFF
+		-DENABLE_INLINING_PLUGIN=ON
+		-DENABLE_INLINING_PASS=OFF
 		-DENABLE_GPU_PLUGIN=OFF
 		-DENABLE_STACKTRACE=OFF
 		-DUSE_EXTERNAL_MLIR=ON

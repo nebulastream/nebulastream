@@ -1,0 +1,37 @@
+{
+  "name": "codon-compiler",
+  "version": "0.19.6",
+  "port-version": 7,
+  "description": "Compiler-only Codon frontend and LLVM backend for NebulaStream UDFs",
+  "homepage": "https://github.com/exaloop/codon",
+  "license": "Apache-2.0",
+  "supports": "x64 | (arm64 & !windows)",
+  "features": {
+    "llvm": {
+      "description": "Build LLVM through vcpkg instead of discovering an external LLVM installation",
+      "dependencies": [
+        {
+          "name": "llvm",
+          "default-features": false,
+          "features": [
+            "target-x86",
+            "target-aarch64"
+          ]
+        }
+      ]
+    }
+  },
+  "dependencies": [
+    "codon-cpp-peglib",
+    "fast-float",
+    "fmt",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

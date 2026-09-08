@@ -1,0 +1,21 @@
+# name: function/PythonUDFImport.test
+# description: Imports a user-provided Codon module from a configured Python UDF search path
+# groups: [Function, PythonUDF, CompilerOnly]
+
+GlobalConfiguration worker.default_query_execution.python_udf_import_paths: [TESTDATA/python_udf]
+
+CREATE LOGICAL SOURCE numbers(a UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((a): $python$
+    from udf_helpers import add_bonus
+    return add_bonus(a)
+$python$) AS UINT64 AS result
+FROM numbers
+INTO file();
+----
+42

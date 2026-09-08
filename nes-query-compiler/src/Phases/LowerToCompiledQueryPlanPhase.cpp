@@ -96,6 +96,8 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// strategy and the backend explicitly rather than relying on the "non-empty backend implies legacy" shortcut.
     options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("engine.backend", std::string("mlir"));
+    /// Python UDFs are linked through the inlining plugin's pre-optimization LLVM hook.
+    options.setOption("mlir.inline_invoke_calls", true);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {

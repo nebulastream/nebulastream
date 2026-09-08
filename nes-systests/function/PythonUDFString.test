@@ -1,0 +1,35 @@
+# name: function/PythonUDFString.test
+# description: Passes variable-sized strings through the Codon ABI and copies allocated string results into the NES arena
+# groups: [Function, PythonUDF, CompilerOnly]
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+CREATE LOGICAL SOURCE words(lhs VARSIZED NOT NULL, separator VARSIZED NOT NULL, rhs VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR words TYPE File;
+ATTACH INLINE
+hello,-,world
+Nebula,/,Stream
+pointer,+,size
+
+SELECT PYTHON((lhs, separator, rhs): $python$
+return lhs + separator + rhs
+$python$) AS VARSIZED AS result
+FROM words
+INTO file();
+----
+hello-world
+Nebula/Stream
+pointer+size
+
+CREATE LOGICAL SOURCE conversions(number UINT64 NOT NULL, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR conversions TYPE File;
+ATTACH INLINE
+42,2.5
+
+SELECT PYTHON((number, text): $python$
+return str(number) + ":" + str(float(text))
+$python$) AS VARSIZED AS result
+FROM conversions
+INTO file();
+----
+42:2.5

@@ -28,6 +28,8 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
+#include <Functions/PythonPhysicalFunction.hpp>
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
@@ -36,14 +38,15 @@
 
 namespace NES::QueryCompilation
 {
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
+PhysicalFunction FunctionProvider::lowerFunction(
+    LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
+        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait, pythonUdfImportPaths));
         inputTypes.emplace_back(child.getDataType());
     }
 
@@ -59,12 +62,24 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     {
         return lowerConstantFunction(constantValueFunction->get());
     }
+    if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
+    {
+        return PhysicalFunction{PythonPhysicalFunction(
+                                    pythonFunction.value()->getParameterNames(),
+                                    pythonFunction.value()->getBody(),
+                                    childFunctions,
+                                    inputTypes,
+                                    logicalFunction.getDataType(),
+                                    pythonUdfImportPaths)}
+            .withSetupChildren(std::move(childFunctions));
+    }
 
     /// 3. Calling the registry to create an executable function.
     if (const auto factory = PhysicalFunctionRegistry::instance().find(std::string(logicalFunction.getType())))
     {
         return (*factory)(PhysicalFunctionRegistryArguments{
-            .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()});
+                              .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()})
+            .withSetupChildren(std::move(childFunctions));
     }
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
