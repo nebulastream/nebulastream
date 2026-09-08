@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
@@ -30,7 +32,8 @@ class FunctionProvider
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
     /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
-    static PhysicalFunction lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait);
+    static PhysicalFunction lowerFunction(
+        LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths);
 
 private:
     static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);

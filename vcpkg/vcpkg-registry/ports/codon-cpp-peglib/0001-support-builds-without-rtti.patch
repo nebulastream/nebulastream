@@ -1,0 +1,211 @@
+diff --git a/peglib.h b/peglib.h
+index e3126a3..66e2db2 100644
+--- a/peglib.h
++++ b/peglib.h
+@@ -986,6 +986,18 @@ public:
+  */
+ class Ope {
+ public:
++  enum class Kind {
++    Other,
++    Sequence,
++    PrioritizedChoice,
++    Repetition,
++    Dictionary,
++    LiteralString,
++    TokenBoundary,
++    Holder,
++    Reference,
++  };
++
+   std::string code; // Codon: block C++ code (code in { ... })
+ 
+ public:
+@@ -997,10 +1009,20 @@ public:
+   virtual size_t parse_core(const char *s, size_t n, SemanticValues &vs,
+                             Context &c, std::any &dt) const = 0;
+   virtual void accept(Visitor &v) = 0;
++  virtual Kind kind() const { return Kind::Other; }
++
++  template <typename T> T *as() {
++    return kind() == T::KindValue ? static_cast<T *>(this) : nullptr;
++  }
++  template <typename T> const T *as() const {
++    return kind() == T::KindValue ? static_cast<const T *>(this) : nullptr;
++  }
+ };
+ 
+ class Sequence : public Ope {
+ public:
++  static constexpr Kind KindValue = Kind::Sequence;
++  Kind kind() const override { return KindValue; }
+   template <typename... Args>
+   Sequence(const Args &...args)
+       : opes_{static_cast<std::shared_ptr<Ope>>(args)...} {}
+@@ -1028,6 +1050,8 @@ public:
+ 
+ class PrioritizedChoice : public Ope {
+ public:
++  static constexpr Kind KindValue = Kind::PrioritizedChoice;
++  Kind kind() const override { return KindValue; }
+   template <typename... Args>
+   PrioritizedChoice(bool for_label, const Args &...args)
+       : opes_{static_cast<std::shared_ptr<Ope>>(args)...},
+@@ -1084,6 +1108,8 @@ public:
+ 
+ class Repetition : public Ope {
+ public:
++  static constexpr Kind KindValue = Kind::Repetition;
++  Kind kind() const override { return KindValue; }
+   Repetition(const std::shared_ptr<Ope> &ope, size_t min, size_t max)
+       : ope_(ope), min_(min), max_(max) {}
+ 
+@@ -1197,6 +1223,8 @@ public:
+ 
+ class Dictionary : public Ope, public std::enable_shared_from_this<Dictionary> {
+ public:
++  static constexpr Kind KindValue = Kind::Dictionary;
++  Kind kind() const override { return KindValue; }
+   Dictionary(const std::vector<std::string> &v, bool ignore_case)
+       : trie_(v, ignore_case) {}
+ 
+@@ -1211,6 +1239,8 @@ public:
+ class LiteralString : public Ope,
+                       public std::enable_shared_from_this<LiteralString> {
+ public:
++  static constexpr Kind KindValue = Kind::LiteralString;
++  Kind kind() const override { return KindValue; }
+   LiteralString(std::string &&s, bool ignore_case)
+       : lit_(s), ignore_case_(ignore_case), is_word_(false) {}
+ 
+@@ -1376,6 +1406,8 @@ public:
+ 
+ class TokenBoundary : public Ope {
+ public:
++  static constexpr Kind KindValue = Kind::TokenBoundary;
++  Kind kind() const override { return KindValue; }
+   TokenBoundary(const std::shared_ptr<Ope> &ope) : ope_(ope) {}
+ 
+   size_t parse_core(const char *s, size_t n, SemanticValues &vs, Context &c,
+@@ -1437,6 +1469,8 @@ public:
+ 
+ class Holder : public Ope {
+ public:
++  static constexpr Kind KindValue = Kind::Holder;
++  Kind kind() const override { return KindValue; }
+   Holder(Definition *outer) : outer_(outer) {}
+ 
+   size_t parse_core(const char *s, size_t n, SemanticValues &vs, Context &c,
+@@ -1461,6 +1495,8 @@ using Grammar = std::unordered_map<std::string, Definition>;
+ 
+ class Reference : public Ope, public std::enable_shared_from_this<Reference> {
+ public:
++  static constexpr Kind KindValue = Kind::Reference;
++  Kind kind() const override { return KindValue; }
+   Reference(const Grammar &grammar, const std::string &name, const char *s,
+             bool is_macro, const std::vector<std::shared_ptr<Ope>> &args)
+       : grammar_(grammar), name_(name), s_(s), is_macro_(is_macro), args_(args),
+@@ -2743,7 +2779,7 @@ inline void Context::trace_leave(const Ope &ope, const char *a_s, size_t n,
+ inline bool Context::is_traceable(const Ope &ope) const {
+   if (tracer_enter && tracer_leave) {
+     if (ignore_trace_state) { return false; }
+-    return !dynamic_cast<const peg::Reference *>(&ope);
++    return !ope.as<peg::Reference>();
+   }
+   return false;
+ }
+@@ -2883,11 +2919,11 @@ inline size_t Holder::parse_core(const char *s, size_t n, SemanticValues &vs,
+ 
+       auto ope_ptr = ope_.get();
+       {
+-        auto tok_ptr = dynamic_cast<const peg::TokenBoundary *>(ope_ptr);
++        auto tok_ptr = ope_ptr->as<peg::TokenBoundary>();
+         if (tok_ptr) { ope_ptr = tok_ptr->ope_.get(); }
+       }
+-      if (!dynamic_cast<const peg::PrioritizedChoice *>(ope_ptr) &&
+-          !dynamic_cast<const peg::Dictionary *>(ope_ptr)) {
++      if (!ope_ptr->as<peg::PrioritizedChoice>() &&
++          !ope_ptr->as<peg::Dictionary>()) {
+         chvs.choice_count_ = 0;
+         chvs.choice_ = 0;
+       }
+@@ -3024,12 +3060,12 @@ PrecedenceClimbing::get_reference_for_binop(Context &c) const {
+   if (rule_.is_macro) {
+     // Reference parameter in macro
+     const auto &args = c.top_args();
+-    auto iarg = dynamic_cast<Reference &>(*binop_).iarg_;
++    auto iarg = static_cast<Reference &>(*binop_).iarg_;
+     auto arg = args[iarg];
+-    return *dynamic_cast<Reference &>(*arg).rule_;
++    return *static_cast<Reference &>(*arg).rule_;
+   }
+ 
+-  return *dynamic_cast<Reference &>(*binop_).rule_;
++  return *static_cast<Reference &>(*binop_).rule_;
+ }
+ 
+ inline size_t PrecedenceClimbing::parse_expression(const char *s, size_t n,
+@@ -3110,11 +3146,11 @@ inline size_t PrecedenceClimbing::parse_expression(const char *s, size_t n,
+ inline size_t Recovery::parse_core(const char *s, size_t n,
+                                    SemanticValues & /*vs*/, Context &c,
+                                    std::any & /*dt*/) const {
+-  const auto &rule = dynamic_cast<Reference &>(*ope_);
++  const auto &rule = static_cast<Reference &>(*ope_);
+ 
+   // Custom error message
+   if (c.log) {
+-    auto label = dynamic_cast<Reference *>(rule.args_[0].get());
++    auto label = rule.args_[0]->as<Reference>();
+     if (label && !label->rule_->error_message.empty()) {
+       c.error_info.message_pos = s;
+       c.error_info.message = label->rule_->error_message;
+@@ -4081,16 +4117,16 @@ private:
+                                     const PrecedenceClimbing::BinOpeInfo &info,
+                                     const char *s, Log log) {
+     try {
+-      auto &seq = dynamic_cast<Sequence &>(*rule.get_core_operator());
++      auto &seq = static_cast<Sequence &>(*rule.get_core_operator());
+       auto atom = seq.opes_[0];
+-      auto &rep = dynamic_cast<Repetition &>(*seq.opes_[1]);
+-      auto &seq1 = dynamic_cast<Sequence &>(*rep.ope_);
++      auto &rep = static_cast<Repetition &>(*seq.opes_[1]);
++      auto &seq1 = static_cast<Sequence &>(*rep.ope_);
+       auto binop = seq1.opes_[0];
+       auto atom1 = seq1.opes_[1];
+ 
+-      auto atom_name = dynamic_cast<Reference &>(*atom).name_;
+-      auto binop_name = dynamic_cast<Reference &>(*binop).name_;
+-      auto atom1_name = dynamic_cast<Reference &>(*atom1).name_;
++      auto atom_name = static_cast<Reference &>(*atom).name_;
++      auto binop_name = static_cast<Reference &>(*binop).name_;
++      auto atom1_name = static_cast<Reference &>(*atom1).name_;
+ 
+       if (!rep.is_zom() || atom_name != atom1_name || atom_name == binop_name) {
+         if (log) {
+@@ -4903,7 +4939,7 @@ inline void enable_tracing(parser &parser, std::ostream &os) {
+         {
+           name = peg::TraceOpeName::get(const_cast<peg::Ope &>(ope));
+ 
+-          auto lit = dynamic_cast<const peg::LiteralString *>(&ope);
++          auto lit = ope.template as<peg::LiteralString>();
+           if (lit) { name += " '" + peg::escape_characters(lit->lit_) + "'"; }
+         }
+         os << "E " << pos + 1 << backtrack << "\t" << indent << "┌" << name
+@@ -4963,7 +4999,7 @@ inline void enable_profiling(parser &parser, std::ostream &os) {
+ 
+   parser.enable_trace(
+       [&](auto &ope, auto, auto, auto &, auto &, auto &, std::any &trace_data) {
+-        if (auto holder = dynamic_cast<const peg::Holder *>(&ope)) {
++        if (auto holder = ope.template as<peg::Holder>()) {
+           auto &stats = *std::any_cast<Stats *>(trace_data);
+ 
+           auto &name = holder->name();
+@@ -4976,7 +5012,7 @@ inline void enable_profiling(parser &parser, std::ostream &os) {
+       },
+       [&](auto &ope, auto, auto, auto &, auto &, auto &, auto len,
+           std::any &trace_data) {
+-        if (auto holder = dynamic_cast<const peg::Holder *>(&ope)) {
++        if (auto holder = ope.template as<peg::Holder>()) {
+           auto &stats = *std::any_cast<Stats *>(trace_data);
+ 
+           auto &name = holder->name();

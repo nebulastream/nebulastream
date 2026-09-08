@@ -34,6 +34,9 @@ add_source_files(nes-physical-operators
         CastFromUnixTimestampPhysicalFunction.cpp
         CastVarSizedToNumericPhysicalFunction.cpp
         ExtractFromTimestampPhysicalFunction.cpp
+        PythonUDF/PythonPhysicalFunction.cpp
+        PythonUDF/PythonUdfFilesystem.cpp
+        PythonUDF/PythonUdfRuntime.cpp
 )
 
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)

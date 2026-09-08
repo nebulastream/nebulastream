@@ -31,8 +31,14 @@ create_runtime_registry(AggregationPhysicalFunction nes-physical-operators
 add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 target_sources(nes-physical-operators PRIVATE ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
+# The compiler-only Codon package is built without RTTI. Keep its filesystem
+# adapter in an isolated translation unit that uses the same RTTI setting.
+set_source_files_properties(
+        "src/Functions/PythonUDF/PythonUdfFilesystem.cpp"
+        PROPERTIES COMPILE_OPTIONS -fno-rtti)
 find_package(OpenSSL REQUIRED)
-target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-input-formatters nes-inference-runtime OpenSSL::Crypto)
+find_package(codon-compiler CONFIG REQUIRED)
+target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-codon-plugin nes-input-formatters nes-inference-runtime OpenSSL::Crypto codon::compiler)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

@@ -1,0 +1,868 @@
+From b68ae532a45701ec87e508a98c021d5a68c28e6b Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Fri, 4 Sep 2026 16:06:31 +0200
+Subject: [PATCH] Add engine-scoped LLVM bitcode UDFs
+
+---
+ nautilus/include/nautilus/Engine.hpp          |  29 ++-
+ nautilus/include/nautilus/function.hpp        |  61 ++++++
+ nautilus/include/nautilus/options.hpp         |  65 ++++++
+ .../nautilus/tracing/TracingInterface.hpp     |   6 +
+ .../include/nautilus/tracing/TracingUtil.hpp  |   2 +
+ .../compiler/backends/mlir/JITCompiler.cpp    |   7 +
+ .../backends/mlir/LLVMBackendHooks.hpp        |   6 +-
+ .../backends/mlir/LLVMIROptimizer.cpp         |   2 +-
+ .../tracing/ExceptionBasedTraceContext.cpp    |  12 ++
+ .../tracing/ExceptionBasedTraceContext.hpp    |   2 +
+ .../src/nautilus/tracing/LazyTraceContext.cpp |  15 ++
+ .../src/nautilus/tracing/LazyTraceContext.hpp |   2 +
+ nautilus/src/nautilus/tracing/TracingUtil.cpp |   5 +
+ plugins/inlining/src/InliningPluginInit.cpp   |  15 +-
+ plugins/inlining/src/LLVMInliningUtils.cpp    | 202 ++++++++++--------
+ plugins/inlining/src/LLVMInliningUtils.hpp    |   3 +-
+ 16 files changed, 333 insertions(+), 101 deletions(-)
+
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index d80a0810..46a35a5d 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -175,6 +175,20 @@ public:
+ 	NautilusEngine(NautilusEngine&&) noexcept;
+ 	NautilusEngine& operator=(NautilusEngine&&) noexcept = delete;
+ 
++	/**
++	 * Register an LLVM bitcode UDF for this engine. The symbol must be the
++	 * module's only externally visible definition; all helper definitions must
++	 * have internal or private linkage. Registering the same name more than
++	 * once in one engine throws std::invalid_argument.
++	 */
++	void registerUDF(std::string_view symbolName, std::string bitcode) {
++		udfRegistry_.registerUDF(symbolName, std::move(bitcode));
++	}
++
++	[[nodiscard]] bool containsUDF(std::string_view symbolName) const {
++		return udfRegistry_.contains(symbolName);
++	}
++
+ 	/// Register and compile a single function pointer. Defined after NautilusModule.
+ 	template <typename R, is_val... FunctionArguments>
+ 	auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const;
+@@ -233,6 +247,7 @@ private:
+ 	 */
+ 	std::unique_ptr<common::ArenaPool> irArenaPool_;
+ 	std::unique_ptr<compiler::JITCompiler> jit_;
++	UDFRegistry udfRegistry_;
+ 	const Options options;
+ };
+ 
+@@ -255,11 +270,13 @@ private:
+ class NautilusModule {
+ public:
+ #ifdef ENABLE_TRACING
+-	NautilusModule(const compiler::JITCompiler& jit, bool compiled, ModuleOptions moduleOptions)
+-	    : moduleOptions_(std::move(moduleOptions)), jit_(jit), compiled_(compiled) {
++	NautilusModule(const compiler::JITCompiler& jit, const UDFRegistry& udfRegistry, bool compiled,
++	               ModuleOptions moduleOptions)
++	    : moduleOptions_(std::move(moduleOptions)), jit_(jit), udfRegistry_(udfRegistry), compiled_(compiled) {
+ 	}
+ #else
+-	NautilusModule(const compiler::JITCompiler& /*jit*/, bool /*compiled*/, ModuleOptions moduleOptions)
++	NautilusModule(const compiler::JITCompiler& /*jit*/, const UDFRegistry& /*udfRegistry*/, bool /*compiled*/,
++	               ModuleOptions moduleOptions)
+ 	    : moduleOptions_(std::move(moduleOptions)) {
+ 	}
+ #endif
+@@ -337,6 +354,7 @@ public:
+ 	CompiledModule compile() {
+ #ifdef ENABLE_TRACING
+ 		if (compiled_) {
++			moduleOptions_.setUDFRegistrySnapshot(udfRegistry_.snapshot());
+ 			auto executable = jit_.compile(functions_, moduleOptions_);
+ 			auto module = CompiledModule(std::move(executable), std::move(interpretedFunctions_));
+ 
+@@ -358,19 +376,20 @@ private:
+ 	ModuleOptions moduleOptions_;
+ #ifdef ENABLE_TRACING
+ 	const compiler::JITCompiler& jit_;
++	const UDFRegistry& udfRegistry_;
+ 	bool compiled_;
+ 	std::list<compiler::CompilableFunction> functions_;
+ #endif
+ };
+ 
+ inline NautilusModule NautilusEngine::createModule() const {
+-	return NautilusModule(*jit_, isCompiled(), options.deriveModuleOptions());
++	return NautilusModule(*jit_, udfRegistry_, isCompiled(), options.deriveModuleOptions());
+ }
+ 
+ inline NautilusModule NautilusEngine::createModule(ModuleOptions overrides) const {
+ 	auto moduleOptions = options.deriveModuleOptions();
+ 	moduleOptions.applyOverrides(overrides);
+-	return NautilusModule(*jit_, isCompiled(), std::move(moduleOptions));
++	return NautilusModule(*jit_, udfRegistry_, isCompiled(), std::move(moduleOptions));
+ }
+ 
+ namespace details {
+diff --git a/nautilus/include/nautilus/function.hpp b/nautilus/include/nautilus/function.hpp
+index 38e202a5..76e6cbac 100644
+--- a/nautilus/include/nautilus/function.hpp
++++ b/nautilus/include/nautilus/function.hpp
+@@ -4,6 +4,9 @@
+ #include "nautilus/val.hpp"
+ #include "nautilus/val_ptr.hpp"
+ #include <functional>
++#include <stdexcept>
++#include <string>
++#include <string_view>
+ #include <type_traits>
+ #include <utility>
+ 
+@@ -62,12 +65,65 @@ private:
+ 	R (*fnptr)(FunctionArguments...);
+ };
+ 
++/// A compiler-resolved function identified by its LLVM symbol rather than a
++/// host function pointer. Symbolic calls can only be evaluated while Nautilus
++/// is tracing; a compiler plugin must provide their implementation before the
++/// generated program is executed.
++template <typename R>
++class CallableNamedRuntimeFunction {
++public:
++	explicit CallableNamedRuntimeFunction(std::string_view symbolName, FunctionAttributes fnAttrs = {})
++	    : symbolName(symbolName), fnAttrs(fnAttrs) {
++		if (symbolName.empty()) {
++			throw std::invalid_argument("A symbolic function name must not be empty");
++		}
++	}
++
++	template <typename... ValueArguments>
++	    requires(!std::is_void_v<R>)
++	val<R> operator()(ValueArguments&&... args) {
++#ifdef ENABLE_TRACING
++		if (tracing::inTracer()) {
++			auto arguments = getArgumentReferences(std::forward<ValueArguments>(args)...);
++			auto result = tracing::traceCall(symbolName, tracing::TypeResolver<R>::to_type(), arguments, fnAttrs);
++			return val<R>(result);
++		}
++#endif
++		throw std::logic_error("A symbolic function can only be invoked while tracing");
++	}
++
++	template <typename... ValueArguments>
++	    requires std::is_void_v<R>
++	void operator()(ValueArguments&&... args) {
++#ifdef ENABLE_TRACING
++		if (tracing::inTracer()) {
++			auto arguments = getArgumentReferences(std::forward<ValueArguments>(args)...);
++			tracing::traceCall(symbolName, Type::v, arguments, fnAttrs);
++			return;
++		}
++#endif
++		throw std::logic_error("A symbolic function can only be invoked while tracing");
++	}
++
++private:
++	std::string symbolName;
++	FunctionAttributes fnAttrs;
++};
++
+ /// Invoke calls without attributes
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
+ }
+ 
++/// Invoke a compiler-resolved function by LLVM symbol name. The return type
++/// is explicit because there is no C++ function pointer from which to infer it:
++/// `invoke<int64_t>("python_udf", value)`.
++template <typename R, typename... ValueArguments>
++auto invoke(std::string_view symbolName, ValueArguments&&... args) {
++	return CallableNamedRuntimeFunction<R>(symbolName)(std::forward<ValueArguments>(args)...);
++}
++
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
+ 	auto fnptr = func.template target<R(FunctionArguments...)>();
+@@ -86,6 +142,11 @@ auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...),
+ 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
+ }
+ 
++template <typename R, typename... ValueArguments>
++auto invoke(const FunctionAttributes fnAttrs, std::string_view symbolName, ValueArguments&&... args) {
++	return CallableNamedRuntimeFunction<R>(symbolName, fnAttrs)(std::forward<ValueArguments>(args)...);
++}
++
+ template <typename R, typename... FunctionArguments, typename... ValueArguments>
+ auto invoke(const FunctionAttributes fnAttrs, std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
+ 	auto fnptr = func.template target<R(FunctionArguments...)>();
+diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
+index 54f2d0a6..1d76d2a3 100644
+--- a/nautilus/include/nautilus/options.hpp
++++ b/nautilus/include/nautilus/options.hpp
+@@ -1,9 +1,14 @@
+ #pragma once
+ 
+ #include <iostream>
++#include <memory>
++#include <mutex>
+ #include <optional>
++#include <stdexcept>
+ #include <string>
++#include <string_view>
+ #include <unordered_map>
++#include <utility>
+ #include <variant>
+ #include <vector>
+ 
+@@ -16,6 +21,57 @@ class JITEventListener;
+ 
+ namespace nautilus::engine {
+ 
++/**
++ * Engine-scoped registry for externally supplied LLVM bitcode functions.
++ *
++ * A snapshot is attached to every compilation, so later registrations on the
++ * same engine cannot change the meaning of a compilation already in flight.
++ */
++class UDFRegistry {
++public:
++	using Entries = std::unordered_map<std::string, std::string>;
++	using Snapshot = std::shared_ptr<const Entries>;
++
++	UDFRegistry() = default;
++
++	UDFRegistry(const UDFRegistry&) = delete;
++	UDFRegistry& operator=(const UDFRegistry&) = delete;
++
++	UDFRegistry(UDFRegistry&& other) noexcept {
++		std::lock_guard lock(other.mutex_);
++		entries_ = std::move(other.entries_);
++	}
++
++	UDFRegistry& operator=(UDFRegistry&&) = delete;
++
++	void registerUDF(std::string_view symbolName, std::string bitcode) {
++		if (symbolName.empty()) {
++			throw std::invalid_argument("UDF symbol name must not be empty");
++		}
++
++		std::lock_guard lock(mutex_);
++		const auto name = std::string(symbolName);
++		auto [_, inserted] = entries_.try_emplace(name, std::move(bitcode));
++		if (!inserted) {
++			throw std::invalid_argument("UDF '" + name + "' is already registered in this engine");
++		}
++	}
++
++	[[nodiscard]] bool contains(std::string_view symbolName) const {
++		std::lock_guard lock(mutex_);
++		return entries_.contains(std::string(symbolName));
++	}
++
++	[[nodiscard]] Snapshot snapshot() const {
++		std::lock_guard lock(mutex_);
++		return std::make_shared<const Entries>(entries_);
++	}
++
++private:
++	mutable std::mutex mutex_;
++	Entries entries_;
++};
++
+ using OptionValue = std::variant<int, double, std::string, bool>;
+ 
+ class ModuleOptions;
+@@ -67,6 +123,14 @@ public:
+ 		return mlir_jit_event_listeners_;
+ 	}
+ 
++	void setUDFRegistrySnapshot(UDFRegistry::Snapshot snapshot) {
++		udfRegistrySnapshot_ = std::move(snapshot);
++	}
++
++	[[nodiscard]] const UDFRegistry::Snapshot& getUDFRegistrySnapshot() const {
++		return udfRegistrySnapshot_;
++	}
++
+ 	/**
+ 	 * @brief Apply every option value (and JIT listener) set in @p other on
+ 	 * top of this one; values present in @p other win.
+@@ -96,6 +160,7 @@ public:
+ private:
+ 	std::unordered_map<std::string, OptionValue> options;
+ 	std::vector<llvm::JITEventListener*> mlir_jit_event_listeners_;
++	UDFRegistry::Snapshot udfRegistrySnapshot_;
+ };
+ 
+ /**
+diff --git a/nautilus/include/nautilus/tracing/TracingInterface.hpp b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+index b293244b..b52c04c9 100644
+--- a/nautilus/include/nautilus/tracing/TracingInterface.hpp
++++ b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+@@ -7,6 +7,7 @@
+ #include "nautilus/tracing/Types.hpp"
+ #include <cstddef>
+ #include <functional>
++#include <string_view>
+ #include <vector>
+ 
+ namespace nautilus {
+@@ -65,6 +66,11 @@ public:
+ 	virtual TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<TypedValueRef>& arguments,
+ 	                                 FunctionAttributes fnAttrs) = 0;
+ 
++	/// Trace a symbolic runtime function call. The symbol must be supplied by
++	/// a compiler plugin before the generated code is executed.
++	virtual TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
++	                                 const std::vector<TypedValueRef>& arguments, FunctionAttributes fnAttrs) = 0;
++
+ 	/// Trace a call through a runtime function pointer value (indirect call).
+ 	virtual TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                         const std::vector<TypedValueRef>& arguments,
+diff --git a/nautilus/include/nautilus/tracing/TracingUtil.hpp b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+index 43299ada..2ee5c0e2 100644
+--- a/nautilus/include/nautilus/tracing/TracingUtil.hpp
++++ b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+@@ -66,6 +66,8 @@ TypedValueRef traceCopy(const TypedValueRef& ref);
+ 
+ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+                          FunctionAttributes fnAttrs);
++TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
++                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs);
+ 
+ TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                  const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs);
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index 8e2c1fa2..5b13e51e 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -35,6 +35,13 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 		auto symbolMap = llvm::orc::SymbolMap();
+ 		for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
+ 			auto address = jitProxyFunctionTargetAddresses.at(i);
++			// A symbolic invoke has no host address. Its declaration is resolved
++			// by a compiler plugin linking a definition into the module. Registering
++			// an absolute symbol at address zero would both shadow that definition
++			// and make ORC reject it as a duplicate.
++			if (address == nullptr) {
++				continue;
++			}
+ 			symbolMap[interner(jitProxyFunctionSymbols.at(i))] = {llvm::orc::ExecutorAddr::fromPtr(address),
+ 			                                                      llvm::JITSymbolFlags::Exported};
+ 		}
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
+index 84529e5c..91c81e9e 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
+@@ -4,6 +4,10 @@
+ #include <optional>
+ #include <string>
+ 
++namespace nautilus::engine {
++class EngineOptions;
++}
++
+ namespace llvm {
+ class Module;
+ } // namespace llvm
+@@ -21,7 +25,7 @@ using SymbolContributor = std::function<void(const std::string& name, void* addr
+ struct LLVMBackendHooks {
+ 	// Runs on the generated llvm::Module once, immediately before the LLVM
+ 	// optimizer pipeline is applied.
+-	std::function<void(llvm::Module&)> preOptModuleTransform;
++	std::function<void(llvm::Module&, const engine::EngineOptions&)> preOptModuleTransform;
+ 
+ 	// Invoked inside the JIT's symbol-map closure. The contributor adds
+ 	// (name, address) pairs into the ORC symbol map.
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+index 9e7bdd49..0ed9ca32 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+@@ -85,7 +85,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
+ 		// (e.g. the inlining plugin's JIT-time LLVM inliner).
+ 		if (options.getOptionOrDefault("mlir.inline_invoke_calls", false)) {
+ 			if (const auto& hook = getLLVMBackendHooks().preOptModuleTransform) {
+-				hook(*llvmIRModule);
++				hook(*llvmIRModule, options);
+ 			}
+ 		}
+ 
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+index 9025a98a..aa15b847 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+@@ -140,6 +140,18 @@ TypedValueRef& ExceptionBasedTraceContext::traceCall(void* fptn, Type resultType
+ 	});
+ }
+ 
++TypedValueRef& ExceptionBasedTraceContext::traceCall(std::string_view symbolName, Type resultType,
++                                                     const std::vector<tracing::TypedValueRef>& arguments,
++                                                     FunctionAttributes fnAttrs) {
++	auto name = std::string(symbolName);
++	auto op = Op::CALL;
++	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
++		auto* functionArguments = state->executionTrace.getArena().create<FunctionCall>(FunctionCall {
++		    .functionName = name, .mangledName = name, .ptr = nullptr, .arguments = arguments, .fnAttrs = fnAttrs});
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
++	});
++}
++
+ TypedValueRef& ExceptionBasedTraceContext::traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                                              const std::vector<tracing::TypedValueRef>& arguments,
+                                                              FunctionAttributes fnAttrs) {
+diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+index 4618d170..0ee2691a 100644
+--- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+@@ -226,6 +226,8 @@ public:
+ 
+ 	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+ 	                         FunctionAttributes fnAttrs) override;
++	TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
++	                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) override;
+ 
+ 	TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                 const std::vector<tracing::TypedValueRef>& arguments,
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+index defad5c7..32c21544 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+@@ -137,6 +137,21 @@ TypedValueRef& LazyTraceContext::traceCall(void* fptn, Type resultType,
+ 	});
+ }
+ 
++TypedValueRef& LazyTraceContext::traceCall(std::string_view symbolName, Type resultType,
++                                           const std::vector<tracing::TypedValueRef>& arguments,
++                                           FunctionAttributes fnAttrs) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	auto op = Op::CALL;
++	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
++		auto name = std::string(symbolName);
++		auto* functionArguments = state->executionTrace.getArena().create<FunctionCall>(FunctionCall {
++		    .functionName = name, .mangledName = name, .ptr = nullptr, .arguments = arguments, .fnAttrs = fnAttrs});
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
++	});
++}
++
+ TypedValueRef& LazyTraceContext::traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                                    const std::vector<tracing::TypedValueRef>& arguments,
+                                                    FunctionAttributes fnAttrs) {
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+index bf64e27b..29f74429 100644
+--- a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+@@ -48,6 +48,8 @@ public:
+ 	void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) override;
+ 	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
+ 	                         FunctionAttributes fnAttrs) override;
++	TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
++	                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) override;
+ 	TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+ 	                                 const std::vector<tracing::TypedValueRef>& arguments,
+ 	                                 FunctionAttributes fnAttrs) override;
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+index 76b9e640..ca9cee19 100644
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+@@ -104,6 +104,11 @@ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing:
+ 	return activeTracer->traceCall(fptn, resultType, arguments, fnAttrs);
+ }
+ 
++TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
++                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) {
++	return activeTracer->traceCall(symbolName, resultType, arguments, fnAttrs);
++}
++
+ TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
+                                  const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) {
+ 	return activeTracer->traceIndirectCall(fnPtrRef, resultType, arguments, fnAttrs);
+diff --git a/plugins/inlining/src/InliningPluginInit.cpp b/plugins/inlining/src/InliningPluginInit.cpp
+index e711a79e..c45b5086 100644
+--- a/plugins/inlining/src/InliningPluginInit.cpp
++++ b/plugins/inlining/src/InliningPluginInit.cpp
+@@ -10,6 +10,7 @@
+ // the static archive. That in turn carries the file-scope static registrar
+ // below into the final link, so the hooks actually get installed.
+ #include "nautilus/inline.hpp"
++#include "nautilus/options.hpp"
+ 
+ #ifdef NAUTILUS_INLINING_MLIR_ENABLED
+ #include "LLVMInliningUtils.hpp"
+@@ -30,8 +31,8 @@ struct InliningPluginRegistrar {
+ 
+ 		// Hook 1: run the JIT-time inliner on the generated llvm::Module
+ 		// immediately before the LLVM optimizer pipeline.
+-		hooks.preOptModuleTransform = [](llvm::Module& module) {
+-			nautilus::compiler::mlir::inlineFunctions(module);
++		hooks.preOptModuleTransform = [](llvm::Module& module, const nautilus::engine::EngineOptions& options) {
++			nautilus::compiler::mlir::inlineFunctions(module, options.getUDFRegistrySnapshot());
+ 		};
+ 
+ 		// Hook 2: contribute the inline registry's (name -> address) pairs
+@@ -47,13 +48,9 @@ struct InliningPluginRegistrar {
+ 			}
+ 		};
+ 
+-		// Hook 3: when lowering an external proxy call whose target has
+-		// registered bitcode, emit the hex-formatted pointer address as the
+-		// MLIR function name so the JIT-time inliner can pick it up. The
+-		// name must match the format produced by `ptrToHex` elsewhere in
+-		// the plugin so that `hexToPtr` round-trips and `jitSymbolContributor`
+-		// resolves the same symbol — using `ptrToHex` here keeps those
+-		// formats in lock-step.
++		// Hook 3: pointer-backed inline functions keep using their address as
++		// the proxy name. Name-backed UDF calls retain their original name;
++		// their declaration is resolved when the UDF module is merged.
+ 		hooks.proxyCallNameOverride = [](void* functionPtr) -> std::optional<std::string> {
+ 			if (!InlineFunctionRegistry::instance().containsFunctionBitcode(functionPtr)) {
+ 				return std::nullopt;
+diff --git a/plugins/inlining/src/LLVMInliningUtils.cpp b/plugins/inlining/src/LLVMInliningUtils.cpp
+index 5474a792..b21f55b4 100644
+--- a/plugins/inlining/src/LLVMInliningUtils.cpp
++++ b/plugins/inlining/src/LLVMInliningUtils.cpp
+@@ -3,17 +3,102 @@
+ #include "nautilus/inline.hpp"
+ #include "llvm/ADT/StringSet.h"
+ #include "llvm/IR/DebugInfo.h"
+-#include "llvm/IR/IRBuilder.h"
+ #include "llvm/Linker/Linker.h"
+-#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+-#include <llvm/IR/InstrTypes.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/IRReader/IRReader.h>
+-#include <llvm/Support/FileCollector.h>
+-#include <llvm/Transforms/Utils/Cloning.h>
++#include <llvm/Support/Error.h>
++#include <llvm/Support/MemoryBuffer.h>
++#include <stdexcept>
+ 
+ namespace nautilus::compiler::mlir {
+ 
++namespace {
++
++[[noreturn]] void throwInvalidUDF(llvm::StringRef entryPoint, llvm::StringRef reason) {
++	throw std::runtime_error(fmt::format("Invalid LLVM module for UDF '{}': {}", entryPoint, reason));
++}
++
++std::unique_ptr<llvm::Module> parseUDFModule(llvm::StringRef entryPoint, const std::string& bitcode,
++                                             llvm::LLVMContext& context) {
++	auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(bitcode.data(), bitcode.size()), "", false);
++	auto moduleOrError = llvm::parseBitcodeFile(buffer->getMemBufferRef(), context);
++	if (!moduleOrError) {
++		throwInvalidUDF(entryPoint, llvm::toString(moduleOrError.takeError()));
++	}
++	return std::move(*moduleOrError);
++}
++
++void validateUDFModule(llvm::StringRef entryPoint, const llvm::Module& udfModule, const llvm::Module& targetModule) {
++	const auto* entryFunction = udfModule.getFunction(entryPoint);
++	if (entryFunction == nullptr || entryFunction->isDeclaration()) {
++		throwInvalidUDF(entryPoint, "the named entry point is not defined");
++	}
++	if (entryFunction->hasLocalLinkage()) {
++		throwInvalidUDF(entryPoint, "the entry point must have external linkage");
++	}
++
++	for (const auto& function : udfModule) {
++		if (!function.isDeclaration() && &function != entryFunction && !function.hasLocalLinkage()) {
++			throwInvalidUDF(entryPoint,
++			                fmt::format("helper function '{}' must be internal or private", function.getName()));
++		}
++	}
++	for (const auto& global : udfModule.globals()) {
++		if (!global.isDeclaration() && !global.hasLocalLinkage() && !global.getName().starts_with("llvm.")) {
++			throwInvalidUDF(entryPoint, fmt::format("global '{}' must be internal or private", global.getName()));
++		}
++	}
++	for (const auto& alias : udfModule.aliases()) {
++		if (!alias.hasLocalLinkage()) {
++			throwInvalidUDF(entryPoint, fmt::format("alias '{}' must be internal or private", alias.getName()));
++		}
++	}
++	for (const auto& ifunc : udfModule.ifuncs()) {
++		if (!ifunc.hasLocalLinkage()) {
++			throwInvalidUDF(entryPoint,
++			                fmt::format("indirect function '{}' must be internal or private", ifunc.getName()));
++		}
++	}
++
++	if (const auto* existing = targetModule.getFunction(entryPoint)) {
++		if (!existing->isDeclaration()) {
++			throwInvalidUDF(entryPoint, "the generated module already defines that symbol");
++		}
++		if (existing->getFunctionType() != entryFunction->getFunctionType()) {
++			throwInvalidUDF(entryPoint, "the entry-point signature does not match the invoke declaration");
++		}
++	}
++}
++
++void mergeUDFModules(llvm::Module& targetModule, const engine::UDFRegistry::Snapshot& registry) {
++	if (registry == nullptr) {
++		return;
++	}
++
++	for (const auto& [entryPoint, bitcode] : *registry) {
++		auto udfModule = parseUDFModule(entryPoint, bitcode, targetModule.getContext());
++		validateUDFModule(entryPoint, *udfModule, targetModule);
++
++		// The UDF is compiled for this process. Adopt the generated module's
++		// target metadata and let LLVM uniquify local helper symbols.
++		udfModule->setTargetTriple(targetModule.getTargetTriple());
++		udfModule->setDataLayout(targetModule.getDataLayout().getStringRepresentation());
++		if (llvm::Linker::linkModules(targetModule, std::move(udfModule))) {
++			throwInvalidUDF(entryPoint, "LLVM could not merge the module");
++		}
++
++		auto* mergedEntry = targetModule.getFunction(entryPoint);
++		if (mergedEntry == nullptr || mergedEntry->isDeclaration()) {
++			throwInvalidUDF(entryPoint, "the entry point disappeared while merging the module");
++		}
++		mergedEntry->addFnAttr(llvm::Attribute::AlwaysInline);
++		mergedEntry->removeFnAttr(llvm::Attribute::NoInline);
++		mergedEntry->removeFnAttr(llvm::Attribute::OptimizeNone);
++	}
++}
++
++} // namespace
++
+ void* hexToPtr(const llvm::StringRef& hexString) {
+ 	if (hexString.starts_with("0x")) {
+ 		uintptr_t addr;
+@@ -28,26 +113,21 @@ std::string ptrToHex(const void* ptr) {
+ 	return fmt::format("0x{:X}", reinterpret_cast<uintptr_t>(ptr));
+ }
+ 
+-// look up invoked function in the bitcode registry and retrieve if available
+ std::optional<std::unique_ptr<llvm::Module>>
+ loadBitcodeIfAvailable(void* fnPtr, llvm::LLVMContext& ctx, const std::unordered_map<std::string, void*>& symbolTable) {
+-	// look up the function pointer in the bitcode registry
+ 	auto bitcodeStr = InlineFunctionRegistry::instance().getBitcode(fnPtr);
+ 	if (!bitcodeStr.has_value()) {
+-		return std::nullopt; // function not found in registry, cant inline
++		return std::nullopt;
+ 	}
+ 
+-	// deserialize bitcode module
+ 	auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(bitcodeStr->data(), bitcodeStr->size()), "", false);
+-	llvm::Expected<std::unique_ptr<llvm::Module>> moduleOrErr = llvm::parseBitcodeFile(buffer->getMemBufferRef(), ctx);
++	auto moduleOrErr = llvm::parseBitcodeFile(buffer->getMemBufferRef(), ctx);
+ 	if (!moduleOrErr) {
+ 		logAllUnhandledErrors(moduleOrErr.takeError(), llvm::errs(), "Bitcode parse error: ");
+-		return std::nullopt; // if deserialization fails, fall back to regular invocation
++		return std::nullopt;
+ 	}
+ 
+ 	auto& inlineModule = **moduleOrErr;
+-
+-	// rewrite names of function dependencies to runtime addresses for linkage + recursive inlining
+ 	for (auto& func : inlineModule) {
+ 		if (!func.isDeclaration() || func.isIntrinsic()) {
+ 			continue;
+@@ -67,7 +147,6 @@ loadBitcodeIfAvailable(void* fnPtr, llvm::LLVMContext& ctx, const std::unordered
+ 		}
+ 	}
+ 
+-	// same for external global variables
+ 	for (auto& globalVar : inlineModule.globals()) {
+ 		if (!globalVar.isDeclaration()) {
+ 			continue;
+@@ -91,54 +170,36 @@ loadBitcodeIfAvailable(void* fnPtr, llvm::LLVMContext& ctx, const std::unordered
+ }
+ 
+ void fixFunctionNameConflicts(const llvm::Module& moduleToOptimize, llvm::Module& inlineModule) {
+-	/* inlining may introduce symbol conflicts that don't occur in the host program
+-	 * e.g. two internally linked functions from different source files with the same mangled name
+-	 * If that's the case, we need to update function names to avoid conflicts
+-	 * target functions that refer to the same host function are correctly deduplicated before using the function ptr
+-	 */
+-	// Snapshot the host module's function names once. Each subsequent rename
+-	// checks the set in O(1); with n `is_target` functions this replaces the
+-	// previous O(n * hostFnCount) scan.
+ 	llvm::StringSet<> hostFunctionNames;
+ 	for (const auto& func : moduleToOptimize) {
+ 		hostFunctionNames.insert(func.getName());
+ 	}
+ 
+-	for (auto& func1 : inlineModule) {
+-		if (!func1.hasFnAttribute("is_target")) {
+-			continue;
+-		}
+-		if (!hostFunctionNames.contains(func1.getName())) {
++	for (auto& func : inlineModule) {
++		if (!func.hasFnAttribute("is_target") || !hostFunctionNames.contains(func.getName())) {
+ 			continue;
+ 		}
+-		auto originalName = func1.getName().str();
++		auto originalName = func.getName().str();
+ 		for (int i = 0;; ++i) {
+ 			auto newName = originalName + "_" + std::to_string(i);
+ 			if (!hostFunctionNames.contains(newName)) {
+-				func1.setName(newName);
++				func.setName(newName);
+ 				break;
+ 			}
+ 		}
+ 	}
+ }
+ 
+-// Safety cap for the fixed-point inlining loop below. Recursive inlining
+-// converges in practice well under this bound; if it doesn't, we prefer to
+-// emit a diagnostic and fall back to the partially-inlined state rather
+-// than hang the JIT.
+ constexpr int MAX_INLINE_ITERATIONS = 32;
+ 
+-void inlineFunctions(llvm::Module& moduleToOptimize) {
+-	// Snapshot the symbol table once per inlining call: the table is
+-	// populated by static initializers at program startup and by
+-	// `dlopen`-loaded shared object ctors; snapshotting avoids holding the
+-	// registry mutex across llvm::Linker and keeps repeated lookups cheap.
+-	const auto symbolTable = InlineFunctionRegistry::instance().getSymbolTable();
++void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry) {
++	// A symbolic invoke already emitted a declaration with the UDF's public
++	// entry-point name. Merging resolves it; local helper names stay isolated.
++	mergeUDFModules(moduleToOptimize, udfRegistry);
+ 
+-	// repeat until module wasnt modified during an iteration
+-	// this is key for recursive inlining, where inlinable candidates may appear later during processing
++	const auto symbolTable = InlineFunctionRegistry::instance().getSymbolTable();
+ 	std::unordered_map<void*, llvm::Function*> inlinedFunctions {};
+-	bool doAnotherIteration; // true if there could still be inlinable functions
++	bool doAnotherIteration;
+ 	int iteration = 0;
+ 	do {
+ 		if (++iteration > MAX_INLINE_ITERATIONS) {
+@@ -148,95 +209,68 @@ void inlineFunctions(llvm::Module& moduleToOptimize) {
+ 		}
+ 		doAnotherIteration = false;
+ 		std::vector<llvm::Function*> functionListView;
+-		for (auto& F : moduleToOptimize) {
+-			functionListView.push_back(&F);
++		for (auto& function : moduleToOptimize) {
++			functionListView.push_back(&function);
+ 		}
+ 
+-		// iterate over all function calls in the LLVM module
+-		for (auto originalFunction : functionListView) {
++		for (auto* originalFunction : functionListView) {
+ 			if (originalFunction->isIntrinsic() || !originalFunction->isDeclaration()) {
+ 				continue;
+ 			}
+ 
+-			// try to parse function name into a function pointer
+-			// (the name of an inlinable function will represent the runtime address of the function in hex notation)
+ 			void* fnPtr = hexToPtr(originalFunction->getName());
+ 			if (!fnPtr) {
+-				continue; // not a valid pointer, cant be inlined
++				continue;
+ 			}
+-
+-			// deduplicate functions that were previously retrieved already
+ 			if (auto it = inlinedFunctions.find(fnPtr); it != inlinedFunctions.end()) {
+ 				originalFunction->replaceAllUsesWith(it->second);
+ 				originalFunction->removeFromParent();
+ 				continue;
+ 			}
+ 
+-			// try to load bitcode for the current function
+ 			auto optInlineModule = loadBitcodeIfAvailable(fnPtr, moduleToOptimize.getContext(), symbolTable);
+ 			if (!optInlineModule.has_value()) {
+ 				continue;
+ 			}
+ 			auto inlineModule = std::move(optInlineModule.value());
+-
+ 			fixFunctionNameConflicts(moduleToOptimize, *inlineModule);
+ 
+-			// find the function counterpart inside the deserialized llvm module
+-			std::string inlinableFunctionFName;
+-			for (auto& func : *inlineModule) {
+-				if (!func.isDeclaration() && func.hasFnAttribute("is_target")) {
+-					inlinableFunctionFName = func.getName().str();
++			std::string inlinableFunctionName;
++			for (auto& function : *inlineModule) {
++				if (!function.isDeclaration() && function.hasFnAttribute("is_target")) {
++					inlinableFunctionName = function.getName().str();
+ 					break;
+ 				}
+ 			}
+ 
+-			// suppress some warnings
+ 			inlineModule->setTargetTriple(moduleToOptimize.getTargetTriple());
+ 			inlineModule->setDataLayout(moduleToOptimize.getDataLayout().getStringRepresentation());
+-
+-			if (moduleToOptimize.getFunction(inlinableFunctionFName) != nullptr) {
+-				// Should not happen if fixFunctionNameConflicts did its job,
+-				// but if it does we prefer to skip this candidate (falling
+-				// back to the non-inlined proxy-call path) rather than abort
+-				// the entire JIT compile by throwing out of this hook.
+-				llvm::errs() << "Inlining skipped: symbol '" << inlinableFunctionFName << "' doubly defined.\n";
++			if (moduleToOptimize.getFunction(inlinableFunctionName) != nullptr) {
++				llvm::errs() << "Inlining skipped: symbol '" << inlinableFunctionName << "' doubly defined.\n";
+ 				continue;
+ 			}
+-
+-			// link original module with the inline function module (merges two llvm modules)
+ 			if (llvm::Linker::linkModules(moduleToOptimize, std::move(inlineModule))) {
+ 				llvm::errs() << "Failed to link modules\n";
+ 				continue;
+ 			}
+ 
+-			// find the inlinable function in the original module after linking
+-			llvm::Function* inlinableFunction = nullptr;
+-			for (auto& func : moduleToOptimize) {
+-				if (!func.isDeclaration() && func.getName().str() == inlinableFunctionFName) {
+-					inlinableFunction = &func;
+-					break;
+-				}
+-			}
+-			if (inlinableFunction == nullptr) {
+-				llvm::errs() << "Failed to find inline function after linking modules'" << inlinableFunctionFName
++			auto* inlinableFunction = moduleToOptimize.getFunction(inlinableFunctionName);
++			if (inlinableFunction == nullptr || inlinableFunction->isDeclaration()) {
++				llvm::errs() << "Failed to find inline function after linking modules '" << inlinableFunctionName
+ 				             << "'\n";
+ 				continue;
+ 			}
+-
+-			// set function attributes for inlining
+-			inlinableFunction->addFnAttr(
+-			    llvm::Attribute::AlwaysInline); // TODO maybe use inline hint + tuned threshold instead
++			inlinableFunction->addFnAttr(llvm::Attribute::AlwaysInline);
+ 			inlinableFunction->removeFnAttr(llvm::Attribute::NoInline);
+ 			inlinableFunction->removeFnAttr(llvm::Attribute::OptimizeNone);
+ 			inlinedFunctions.insert({fnPtr, inlinableFunction});
+ 
+-			// replace uses of original function with inlinable version and give inlining instruction to optimizer
+ 			originalFunction->replaceAllUsesWith(inlinableFunction);
+ 			originalFunction->removeFromParent();
+ 			doAnotherIteration = true;
+ 		}
+ 	} while (doAnotherIteration);
+ 
+-	StripDebugInfo(moduleToOptimize); // suppress more warnings from function cloning
++	StripDebugInfo(moduleToOptimize);
+ }
+ } // namespace nautilus::compiler::mlir
+diff --git a/plugins/inlining/src/LLVMInliningUtils.hpp b/plugins/inlining/src/LLVMInliningUtils.hpp
+index 53fa5b02..39a2ca84 100644
+--- a/plugins/inlining/src/LLVMInliningUtils.hpp
++++ b/plugins/inlining/src/LLVMInliningUtils.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include "nautilus/options.hpp"
+ #include <llvm/ADT/StringRef.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/Transforms/Utils/Cloning.h>
+@@ -14,6 +15,6 @@ void* hexToPtr(const llvm::StringRef& hexString);
+ std::string ptrToHex(const void* ptr);
+ 
+ // find inlinable functions in the module and replace them with defined function from the bitcode registry
+-void inlineFunctions(llvm::Module& moduleToOptimize);
++void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry);
+ 
+ } // namespace nautilus::compiler::mlir
+-- 
+2.50.0
+

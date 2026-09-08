@@ -121,7 +121,7 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the OpenVINO converter;
 # when ENABLE_INFERENCE_TESTS is OFF (e.g. `ovc` not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large)
+set(SYSTEST_EXCLUDE_GROUPS large CompilerOnly)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)

@@ -1,0 +1,207 @@
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index 46a35a5d0e..b6c4d842db 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -189,6 +189,11 @@ public:
+ 		return udfRegistry_.contains(symbolName);
+ 	}
+ 
++	/** Register a named host address for explicit resolution by this engine's JIT. */
++	void registerExternalSymbol(std::string_view symbolName, void* address) {
++		externalSymbolRegistry_.registerSymbol(symbolName, address);
++	}
++
+ 	/// Register and compile a single function pointer. Defined after NautilusModule.
+ 	template <typename R, is_val... FunctionArguments>
+ 	auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const;
+@@ -248,6 +253,7 @@ private:
+ 	std::unique_ptr<common::ArenaPool> irArenaPool_;
+ 	std::unique_ptr<compiler::JITCompiler> jit_;
+ 	UDFRegistry udfRegistry_;
++	ExternalSymbolRegistry externalSymbolRegistry_;
+ 	const Options options;
+ };
+ 
+@@ -270,12 +276,15 @@ private:
+ class NautilusModule {
+ public:
+ #ifdef ENABLE_TRACING
+-	NautilusModule(const compiler::JITCompiler& jit, const UDFRegistry& udfRegistry, bool compiled,
++	NautilusModule(const compiler::JITCompiler& jit, const UDFRegistry& udfRegistry,
++	               const ExternalSymbolRegistry& externalSymbolRegistry, bool compiled,
+ 	               ModuleOptions moduleOptions)
+-	    : moduleOptions_(std::move(moduleOptions)), jit_(jit), udfRegistry_(udfRegistry), compiled_(compiled) {
++	    : moduleOptions_(std::move(moduleOptions)), jit_(jit), udfRegistry_(udfRegistry),
++	      externalSymbolRegistry_(externalSymbolRegistry), compiled_(compiled) {
+ 	}
+ #else
+-	NautilusModule(const compiler::JITCompiler& /*jit*/, const UDFRegistry& /*udfRegistry*/, bool /*compiled*/,
++	NautilusModule(const compiler::JITCompiler& /*jit*/, const UDFRegistry& /*udfRegistry*/,
++	               const ExternalSymbolRegistry& /*externalSymbolRegistry*/, bool /*compiled*/,
+ 	               ModuleOptions moduleOptions)
+ 	    : moduleOptions_(std::move(moduleOptions)) {
+ 	}
+@@ -355,6 +364,7 @@ public:
+ #ifdef ENABLE_TRACING
+ 		if (compiled_) {
+ 			moduleOptions_.setUDFRegistrySnapshot(udfRegistry_.snapshot());
++			moduleOptions_.setExternalSymbolRegistrySnapshot(externalSymbolRegistry_.snapshot());
+ 			auto executable = jit_.compile(functions_, moduleOptions_);
+ 			auto module = CompiledModule(std::move(executable), std::move(interpretedFunctions_));
+ 
+@@ -377,19 +387,20 @@ private:
+ #ifdef ENABLE_TRACING
+ 	const compiler::JITCompiler& jit_;
+ 	const UDFRegistry& udfRegistry_;
++	const ExternalSymbolRegistry& externalSymbolRegistry_;
+ 	bool compiled_;
+ 	std::list<compiler::CompilableFunction> functions_;
+ #endif
+ };
+ 
+ inline NautilusModule NautilusEngine::createModule() const {
+-	return NautilusModule(*jit_, udfRegistry_, isCompiled(), options.deriveModuleOptions());
++	return NautilusModule(*jit_, udfRegistry_, externalSymbolRegistry_, isCompiled(), options.deriveModuleOptions());
+ }
+ 
+ inline NautilusModule NautilusEngine::createModule(ModuleOptions overrides) const {
+ 	auto moduleOptions = options.deriveModuleOptions();
+ 	moduleOptions.applyOverrides(overrides);
+-	return NautilusModule(*jit_, udfRegistry_, isCompiled(), std::move(moduleOptions));
++	return NautilusModule(*jit_, udfRegistry_, externalSymbolRegistry_, isCompiled(), std::move(moduleOptions));
+ }
+ 
+ namespace details {
+diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
+index 1d76d2a34d..f1437eaa22 100644
+--- a/nautilus/include/nautilus/options.hpp
++++ b/nautilus/include/nautilus/options.hpp
+@@ -72,6 +72,46 @@ private:
+ 	Entries entries_;
+ };
+ 
++/** Engine-scoped addresses made available to the native JIT linker. */
++class ExternalSymbolRegistry {
++public:
++	using Entries = std::unordered_map<std::string, void*>;
++	using Snapshot = std::shared_ptr<const Entries>;
++
++	ExternalSymbolRegistry() = default;
++	ExternalSymbolRegistry(const ExternalSymbolRegistry&) = delete;
++	ExternalSymbolRegistry& operator=(const ExternalSymbolRegistry&) = delete;
++
++	ExternalSymbolRegistry(ExternalSymbolRegistry&& other) noexcept {
++		std::lock_guard lock(other.mutex_);
++		entries_ = std::move(other.entries_);
++	}
++
++	ExternalSymbolRegistry& operator=(ExternalSymbolRegistry&&) = delete;
++
++	void registerSymbol(std::string_view symbolName, void* address) {
++		if (symbolName.empty() || address == nullptr) {
++			throw std::invalid_argument("External symbol requires a non-empty name and non-null address");
++		}
++
++		std::lock_guard lock(mutex_);
++		const auto name = std::string(symbolName);
++		const auto [entry, inserted] = entries_.try_emplace(name, address);
++		if (!inserted && entry->second != address) {
++			throw std::invalid_argument("External symbol '" + name + "' is already registered with another address");
++		}
++	}
++
++	[[nodiscard]] Snapshot snapshot() const {
++		std::lock_guard lock(mutex_);
++		return std::make_shared<const Entries>(entries_);
++	}
++
++private:
++	mutable std::mutex mutex_;
++	Entries entries_;
++};
++
+ using OptionValue = std::variant<int, double, std::string, bool>;
+ 
+ class ModuleOptions;
+@@ -131,6 +171,14 @@ public:
+ 		return udfRegistrySnapshot_;
+ 	}
+ 
++	void setExternalSymbolRegistrySnapshot(ExternalSymbolRegistry::Snapshot snapshot) {
++		externalSymbolRegistrySnapshot_ = std::move(snapshot);
++	}
++
++	[[nodiscard]] const ExternalSymbolRegistry::Snapshot& getExternalSymbolRegistrySnapshot() const {
++		return externalSymbolRegistrySnapshot_;
++	}
++
+ 	/**
+ 	 * @brief Apply every option value (and JIT listener) set in @p other on
+ 	 * top of this one; values present in @p other win.
+@@ -161,6 +209,7 @@ private:
+ 	std::unordered_map<std::string, OptionValue> options;
+ 	std::vector<llvm::JITEventListener*> mlir_jit_event_listeners_;
+ 	UDFRegistry::Snapshot udfRegistrySnapshot_;
++	ExternalSymbolRegistry::Snapshot externalSymbolRegistrySnapshot_;
+ };
+ 
+ /**
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+index 5b13e51e7f..37f61ce3b0 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
+@@ -14,6 +14,7 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+                                                        llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+                                                        const std::vector<std::string>& jitProxyFunctionSymbols,
+                                                        const std::vector<void*>& jitProxyFunctionTargetAddresses,
++                                                       const engine::ExternalSymbolRegistry::Snapshot& externalSymbols,
+                                                        const std::vector<llvm::JITEventListener*>& eventListeners,
+                                                        llvm::CodeGenOptLevel codeGenOptLevel) {
+ 
+@@ -45,6 +46,12 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+ 			symbolMap[interner(jitProxyFunctionSymbols.at(i))] = {llvm::orc::ExecutorAddr::fromPtr(address),
+ 			                                                      llvm::JITSymbolFlags::Exported};
+ 		}
++		if (externalSymbols) {
++			for (const auto& [name, address] : *externalSymbols) {
++				symbolMap[interner(name)] = {llvm::orc::ExecutorAddr::fromPtr(address),
++				                             llvm::JITSymbolFlags::Exported};
++			}
++		}
+ 
+ 		// Let plugins contribute additional (name -> address) entries to the
+ 		// ORC symbol map (e.g. the inlining plugin adds the hex-formatted
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+index b0ee19a783..0b70e1ff6d 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
+@@ -2,6 +2,7 @@
+ 
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
+ #include "nautilus/compiler/backends/mlir/jit/MLIRJit.hpp"
++#include "nautilus/options.hpp"
+ #include <llvm/ExecutionEngine/JITEventListener.h>
+ #include <llvm/IR/Module.h>
+ #include <llvm/Support/CodeGen.h>
+@@ -25,6 +26,7 @@ public:
+ 	                 llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+ 	                 const std::vector<std::string>& jitProxyFunctionSymbols,
+ 	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
++	                 const engine::ExternalSymbolRegistry::Snapshot& externalSymbols,
+ 	                 const std::vector<llvm::JITEventListener*>& eventListeners,
+ 	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive);
+ };
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index a7de81ff8c..b2c28f7629 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -152,7 +152,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	const auto jitCodeGenLevel = debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
+ 	auto engine =
+ 	    JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                  loweringProvider->getJitProxyTargetAddresses(), eventListeners, jitCodeGenLevel);
++	                                  loweringProvider->getJitProxyTargetAddresses(),
++	                                  options.getExternalSymbolRegistrySnapshot(), eventListeners, jitCodeGenLevel);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+ 		auto result = engine->lookupPacked("execute");
+ 		if (!result) {

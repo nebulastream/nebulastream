@@ -1,0 +1,45 @@
+# name: function/PythonUDFNullable.test
+# description: Passes nullable arguments as Python None and accepts None from explicitly nullable Python UDFs
+# groups: [Function, PythonUDF, NullHandling, CompilerOnly, CompilationIntensive]
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+CREATE LOGICAL SOURCE nullable_values(id UINT64 NOT NULL, number INT64, text VARSIZED);
+CREATE PHYSICAL SOURCE FOR nullable_values TYPE File;
+ATTACH INLINE
+1,5,hello
+2,,
+3,,x
+4,7,
+
+CREATE SINK nullable_sink(result INT64) TYPE File;
+CREATE SINK required_sink(result INT64 NOT NULL) TYPE File;
+
+# Both nullable scalar and VARSIZED arguments arrive as None. The UDF can also return None.
+SELECT PYTHON((number, text): $python$
+    if number is None and text is None:
+        return None
+    result = 0 if number is None else number
+    if text is not None:
+        result += len(text)
+    return result
+$python$) AS INT64 NULL AS result
+FROM nullable_values
+INTO nullable_sink;
+----
+10
+NULL
+1
+7
+
+# A nullable argument does not force a nullable result when the UDF handles None itself.
+SELECT PYTHON((number): $python$
+return 100 if number is None else number
+$python$) AS INT64 AS result
+FROM nullable_values
+INTO required_sink;
+----
+5
+100
+100
+7

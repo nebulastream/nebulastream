@@ -26,6 +26,12 @@
           "features": [
             "mlir"
           ]
+        },
+        {
+          "name": "codon-compiler",
+          "features": [
+            "llvm"
+          ]
         }
       ]
     }
@@ -39,6 +45,7 @@
     "boost-process",
     "boost-system",
     "boost-url",
+    "codon-compiler",
     "cpptrace",
     "date",
     "fmt",
