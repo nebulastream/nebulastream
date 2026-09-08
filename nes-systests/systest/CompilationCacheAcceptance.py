@@ -72,6 +72,7 @@ class AcceptanceFailure(RuntimeError):
 class Coverage:
     queries: Counter
     modules: Counter
+    planned_aborts: Counter
     events: list[dict[str, str]]
 
 
@@ -195,8 +196,9 @@ def display_query(result: dict) -> str:
 
 def parse_reports(log_path: Path, output_queries: Counter) -> Coverage:
     text = require_path(log_path, "module telemetry log").read_text(encoding="utf-8")
-    queries, modules, reported_queries = Counter(), Counter(), Counter()
+    queries, modules, planned_aborts, reported_queries = Counter(), Counter(), Counter(), Counter()
     plans = defaultdict(dict)
+    completed_plans = {}
     observed = {}
     events = []
     plan_reports = 0
@@ -223,12 +225,12 @@ def parse_reports(log_path: Path, output_queries: Counter) -> Coverage:
             if pipeline is None:
                 raise AcceptanceFailure(f"missing pipeline identity in {log_path}")
             identity = (local, pipeline.group(1))
-            if identity not in plans[query]:
+            if identity not in plans.get(query, {}) and (query, identity) not in completed_plans:
                 raise AcceptanceFailure(f"module without pipeline-plan telemetry for {query} in {log_path}")
-            if identity in observed:
+            if (query, identity) in observed:
                 raise AcceptanceFailure(f"duplicate module report for {query}, pipeline {identity} in {log_path}")
             fields = module_fields(record, log_path)
-            observed[identity] = fields
+            observed[(query, identity)] = fields
             events.append(fields)
         elif QUERY_MARKER in record:
             result = query_result(record, log_path)
@@ -247,10 +249,17 @@ def parse_reports(log_path: Path, output_queries: Counter) -> Coverage:
                 if result["kind"] == "explain" and expected:
                     raise AcceptanceFailure(f"unexpected execution for EXPLAIN query {branch} in {log_path}")
                 for pipeline, operators in expected.items():
-                    fields = observed.pop(pipeline, None)
-                    if fields is None:
-                        raise AcceptanceFailure(f"missing module report for {branch}, pipeline {pipeline} in {log_path}")
-                    modules[(identity, branch, operators, fields["key"])] += 1
+                    if (branch, pipeline) in completed_plans:
+                        raise AcceptanceFailure(f"pipeline associated with multiple query results for {branch} in {log_path}")
+                    completed_plans[(branch, pipeline)] = (identity, operators)
+    for (branch, pipeline), (identity, operators) in completed_plans.items():
+        fields = observed.pop((branch, pipeline), None)
+        if fields is None:
+            if identity[2] != "expected_error":
+                raise AcceptanceFailure(f"missing module report for {branch}, pipeline {pipeline} in {log_path}")
+            planned_aborts[(identity, branch, operators)] += 1
+        else:
+            modules[(identity, branch, operators, fields["key"])] += 1
     if not events:
         raise AcceptanceFailure(f"{log_path} emitted no module reports")
     if plans or observed:
@@ -259,7 +268,7 @@ def parse_reports(log_path: Path, output_queries: Counter) -> Coverage:
             or text.count(PLAN_MARKER) != plan_reports):
         raise AcceptanceFailure(f"malformed or unassociated telemetry in {log_path}")
     compare_coverage("query result telemetry", output_queries, reported_queries)
-    return Coverage(queries, modules, events)
+    return Coverage(queries, modules, planned_aborts, events)
 
 
 def compare_coverage(description: str, expected: Counter, actual: Counter) -> None:
@@ -304,6 +313,7 @@ def validate_reports(phase: str, log_path: Path, output_queries: Counter, cold: 
         assert_field(phase, events, "tracingRan", "0")
         compare_coverage(f"{phase} queries", cold.queries, coverage.queries)
         compare_coverage(f"{phase} per-query semantic modules", cold.modules, coverage.modules)
+        compare_coverage(f"{phase} per-query planned-abort pipelines", cold.planned_aborts, coverage.planned_aborts)
     return coverage
 
 
@@ -377,6 +387,7 @@ def main() -> int:
     run_root = prepare_run_root(root)
     corpus = prepare_corpus(suite, run_root, arguments.full_suite, arguments.inference)
     warm_modules = 0
+    warm_planned_aborts = 0
     for strategy in arguments.join_strategies:
         for slice_cache in arguments.slice_cache:
             configuration_root = run_root / f"{strategy}-slice-{slice_cache}"
@@ -389,13 +400,19 @@ def main() -> int:
                 )
                 coverage = validate_reports(phase, log_path, output_queries, cold)
                 validate_artifacts(configuration_root / "cache", coverage)
+                count = len(coverage.events)
                 if cold is None:
                     cold = coverage
+                    outcome = f"{count} observed cold modules"
                 else:
-                    count = len(coverage.events)
                     warm_modules += count
-                    print(f"{strategy}, slice-cache={slice_cache}, seed={seed}: {count}/{count} warm module hits", flush=True)
+                    warm_planned_aborts += coverage.planned_aborts.total()
+                    outcome = f"{count}/{count} observed warm module hits"
+                print(f"{strategy}, slice-cache={slice_cache}, seed={seed}: {coverage.queries.total()} passed queries; {outcome}; "
+                      f"{coverage.planned_aborts.total()} planned-but-uncompiled expected-error pipelines (not module hits)", flush=True)
     print(f"Compilation cache acceptance passed: {warm_modules}/{warm_modules} observed warm module hits, no tracing/fallback")
+    print(f"Planned-but-uncompiled expected-error pipelines across warm processes: {warm_planned_aborts} "
+          "(matched cold coverage; not module hits)")
     print(f"Evidence: {run_root}")
     return 0
 

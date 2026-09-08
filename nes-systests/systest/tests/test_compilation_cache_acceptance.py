@@ -222,6 +222,149 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
         self.assertEqual(coverage.queries.total(), 3)
         self.assertEqual(len(coverage.events), 1)
 
+    def test_passed_expected_error_planned_aborts_have_separate_semantic_coverage(self):
+        configuration = {"worker.option": "1"}
+        queries = Counter({"First:01": 1, "Error:01 [worker.option=1]": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold", (2, 3))
+                             + result("Error:1", configuration, kind="expected_error"), queries=queries)
+        warm = self.validate(plan("Error:1", "error-warm", (91, 92))
+                             + result("Error:1", configuration, kind="expected_error")
+                             + execution(local="fresh-uuid", cold=False), cold, queries)
+        identity = ("Error:1", (("worker.option", "1"),), "expected_error", False)
+        operators = ("NES::ScanPhysicalOperator", "NES::EmitPhysicalOperator")
+        self.assertEqual(cold.planned_aborts, Counter({(identity, "Error:1", operators): 2}))
+        self.assertEqual(cold.planned_aborts, warm.planned_aborts)
+        self.assertEqual(cold.modules, warm.modules)
+        self.assertEqual(warm.modules.total(), 1)
+        self.assertEqual(len(warm.events), 1)
+        self.assertEqual(warm.queries.total(), 2)
+
+    def test_expected_error_reports_after_result_are_observed_not_aborted(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold", (2, 3, 4))
+                             + module("Error:1", "error-cold", 2, KEY_B) + result("Error:1", kind="expected_error")
+                             + module("Error:1", "error-cold", 3, KEY_B, False), queries=queries)
+        warm = self.validate(plan("Error:1", "error-warm", (7, 8, 9))
+                             + module("Error:1", "error-warm", 7, KEY_B, False)
+                             + module("Error:1", "error-warm", 8, KEY_B, False)
+                             + result("Error:1", kind="expected_error") + execution(cold=False), cold, queries)
+        self.assertEqual(cold.planned_aborts, warm.planned_aborts)
+        self.assertEqual(warm.planned_aborts.total(), 1)
+        self.assertEqual(cold.modules, warm.modules)
+        self.assertEqual(warm.modules.total(), 3)
+        self.assertEqual(len(warm.events), 3)
+
+    def test_late_expected_error_reports_keep_their_configuration(self):
+        queries = Counter({"First:01": 1, "Error:01 [option=1]": 1, "Error:01 [option=2]": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-first", (2, 3))
+                             + result("Error:1", {"option": "1"}, kind="expected_error")
+                             + plan("Error:1", "error-second", (2, 3))
+                             + result("Error:1", {"option": "2"}, kind="expected_error")
+                             + module("Error:1", "error-first", 2, KEY_B)
+                             + module("Error:1", "error-second", 2, KEY_A, False), queries=queries)
+        warm = self.validate(execution(cold=False) + plan("Error:1", "fresh-second", (7, 8))
+                             + module("Error:1", "fresh-second", 7, KEY_A, False)
+                             + result("Error:1", {"option": "2"}, kind="expected_error")
+                             + plan("Error:1", "fresh-first", (9, 10))
+                             + module("Error:1", "fresh-first", 9, KEY_B, False)
+                             + result("Error:1", {"option": "1"}, kind="expected_error"), cold, queries)
+        self.assertEqual(cold.modules, warm.modules)
+        self.assertEqual(cold.planned_aborts, warm.planned_aborts)
+        self.assertEqual(warm.modules.total(), 3)
+        self.assertEqual(warm.planned_aborts.total(), 2)
+
+    def test_expected_error_compiled_cold_module_cannot_disappear_warm(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold", (2, 3))
+                             + result("Error:1", kind="expected_error")
+                             + module("Error:1", "error-cold", 2, KEY_B), queries=queries)
+        text = execution(cold=False) + plan("Error:1", "error-warm", (7, 8)) + result("Error:1", kind="expected_error")
+        self.log.write_text(text, encoding="utf-8")
+        warm = acceptance.parse_reports(self.log, queries)
+        self.assertNotEqual(cold.modules, warm.modules)
+        self.assertNotEqual(cold.planned_aborts, warm.planned_aborts)
+        self.assertEqual(len(warm.events), 1)
+        self.assertEqual(warm.planned_aborts.total(), 2)
+        with self.assertRaisesRegex(acceptance.AcceptanceFailure, "semantic modules.*coverage mismatch"):
+            self.validate(text, cold, queries)
+
+    def test_changed_planned_abort_multiplicity_fails(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold", (2, 3))
+                             + result("Error:1", kind="expected_error"), queries=queries)
+        for pipelines in ((), (7,), (7, 8, 9)):
+            text = execution(cold=False) + (plan("Error:1", "error-warm", pipelines) if pipelines else "")
+            text += result("Error:1", kind="expected_error")
+            with self.subTest(pipelines=pipelines), self.assertRaisesRegex(acceptance.AcceptanceFailure, "planned-abort.*coverage mismatch"):
+                self.validate(text, cold, queries)
+
+    def test_changed_planned_abort_operator_chain_fails(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold")
+                             + result("Error:1", kind="expected_error"), queries=queries)
+        changed = plan("Error:1", "error-warm").replace("NES::EmitPhysicalOperator", "NES::MapPhysicalOperator")
+        with self.assertRaisesRegex(acceptance.AcceptanceFailure, "planned-abort.*coverage mismatch"):
+            self.validate(execution(cold=False) + changed + result("Error:1", kind="expected_error"), cold, queries)
+
+    def test_planned_abort_multiplicity_is_per_query_and_configuration(self):
+        for by_configuration in (False, True):
+            with self.subTest(by_configuration=by_configuration):
+                other_query = "Error:1" if by_configuration else "Other:1"
+                first_config = {"option": "1"} if by_configuration else {}
+                other_config = {"option": "2"} if by_configuration else {}
+                queries = Counter({"First:01": 1, "Error:01 [option=1]": 1, "Error:01 [option=2]": 1}) if by_configuration else (
+                    Counter({"First:01": 1, "Error:01": 1, "Other:01": 1}))
+                cold = self.validate(execution() + plan("Error:1", "error-first", (2,))
+                                     + result("Error:1", first_config, kind="expected_error")
+                                     + plan(other_query, "error-second", (2, 3))
+                                     + result(other_query, other_config, kind="expected_error"), queries=queries)
+                text = execution(cold=False) + plan("Error:1", "fresh-first", (7, 8))
+                text += result("Error:1", first_config, kind="expected_error") + plan(other_query, "fresh-second", (9,))
+                text += result(other_query, other_config, kind="expected_error")
+                with self.assertRaisesRegex(acceptance.AcceptanceFailure, "planned-abort.*coverage mismatch"):
+                    self.validate(text, cold, queries)
+
+    def test_only_expected_error_plans_without_actual_modules_fail(self):
+        with self.assertRaisesRegex(acceptance.AcceptanceFailure, "emitted no module reports"):
+            self.validate(plan() + result(kind="expected_error"))
+
+    def test_missing_expected_error_result_is_fatal_with_or_without_plans(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        for error_plan in ("", plan("Error:1", "error-cold")):
+            with self.subTest(error_plan=error_plan), self.assertRaises(acceptance.AcceptanceFailure):
+                self.validate(execution() + error_plan, queries=queries)
+
+    def test_failed_expected_error_cannot_authorize_planned_aborts(self):
+        with self.assertRaisesRegex(acceptance.AcceptanceFailure, "query failed"):
+            self.validate(execution() + plan("Error:1", "error-cold")
+                          + result("Error:1", passed=False, kind="expected_error"), queries=Counter({"First:01": 1, "Error:01": 1}))
+
+    def test_late_expected_error_warm_reports_require_complete_hits_without_fallback(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        cold = self.validate(execution() + plan("Error:1", "error-cold", (2, 3))
+                             + module("Error:1", "error-cold", 2, KEY_B) + result("Error:1", kind="expected_error"), queries=queries)
+        cases = ({"eligible": "0"}, {"object": "miss"}, {"object": "written"}, {"object": "bypass"},
+                 {"tracingRan": "1"}, {"mlir": "hit"}, {"fallback": "invalid_object"}, {"fallback": None})
+        for fields in cases:
+            with self.subTest(fields=fields), self.assertRaises(acceptance.AcceptanceFailure):
+                self.validate(execution(cold=False) + plan("Error:1", "error-warm", (7, 8))
+                              + result("Error:1", kind="expected_error")
+                              + module("Error:1", "error-warm", 7, KEY_B, False, **fields), cold, queries)
+
+    def test_late_expected_error_duplicate_or_unplanned_module_fails(self):
+        queries = Counter({"First:01": 1, "Error:01": 1})
+        text = execution() + plan("Error:1", "error-cold") + result("Error:1", kind="expected_error")
+        for reports, message in ((module("Error:1", "error-cold", 2, KEY_B) * 2, "duplicate module report"),
+                                 (module("Error:1", "error-cold", 3, KEY_B), "without pipeline-plan telemetry")):
+            with self.subTest(message=message), self.assertRaisesRegex(acceptance.AcceptanceFailure, message):
+                self.validate(text + reports, queries=queries)
+
+    def test_pipeline_cannot_be_associated_with_multiple_expected_error_results(self):
+        text = execution() + plan("Error:1", "same-local") + result("Error:1", {"option": "1"}, kind="expected_error")
+        text += plan("Error:1", "same-local") + result("Error:1", {"option": "2"}, kind="expected_error")
+        with self.assertRaisesRegex(acceptance.AcceptanceFailure, "pipeline associated with multiple query results"):
+            self.validate(text, queries=Counter({"First:01": 1, "Error:01 [option=1]": 1, "Error:01 [option=2]": 1}))
+
     def test_expected_errors_do_not_filter_emitted_modules(self):
         text = plan() + module(fallback="invalid_object") + result(kind="expected_error")
         with self.assertRaisesRegex(acceptance.AcceptanceFailure, "fallback"):
@@ -300,6 +443,35 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
             self.assertIn("--shuffle-seed", command)
             self.assertIn("--worker.enable_compilation_cache=true", command)
             self.assertEqual(command[command.index("--numberConcurrentQueries") + 1], "6")
+
+    def test_cli_prints_planned_aborts_separately_from_real_module_hits(self):
+        suite = self.root / "suite"
+        suite.mkdir()
+        (suite / "Query.test").write_text("SELECT 1;\n", encoding="utf-8")
+        topology = self.root / "topology.yaml"
+        topology.write_text("nodes: []\n", encoding="utf-8")
+        argv = ["acceptance", "--systest", sys.executable, "--suite", str(suite), "--data", str(self.root),
+                "--topology", str(topology), "--run-root", str(self.root / "run"), "--inference", "disabled", "--full-suite",
+                "--seeds", "1", "2", "3", "--slice-cache", "true"]
+
+        def phase_reports(phase, seed, systest, corpus, data, topology, run_root, strategy, slice_cache):
+            log = run_root / f"{phase}.log"
+            text = execution(cold=phase == "cold") + plan("Error:1", "error-local", (2, 3))
+            log.write_text(text + result("Error:1", kind="expected_error"), encoding="utf-8")
+            for extension in ("manifest", "mlirbc", "o"):
+                (run_root / "cache" / f"{KEY_A}.{extension}").write_bytes(b"artifact")
+            return log, Counter({"First:01": 1, "Error:01": 1})
+
+        output = io.StringIO()
+        with patch.object(sys, "argv", argv), patch.object(acceptance, "run_phase", side_effect=phase_reports) as run:
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(acceptance.main(), 0)
+        self.assertEqual(run.call_count, 3)
+        printed = output.getvalue()
+        self.assertIn("2 passed queries; 1 observed cold modules; 2 planned-but-uncompiled expected-error pipelines (not module hits)", printed)
+        self.assertEqual(printed.count("1/1 observed warm module hits; 2 planned-but-uncompiled expected-error pipelines (not module hits)"), 2)
+        self.assertIn("2/2 observed warm module hits, no tracing/fallback", printed)
+        self.assertIn("expected-error pipelines across warm processes: 4 (matched cold coverage; not module hits)", printed)
 
     def test_curated_corpus_contains_required_coverage_and_real_paths(self):
         suite = Path(__file__).resolve().parents[2]
