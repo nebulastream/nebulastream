@@ -62,9 +62,29 @@ void truncateTrailingSpaces(const int8_t* ptr, const uint64_t size, TruncateSpac
 int32_t getDaysSinceUnixEpoch(const int8_t* datePtr, const uint64_t dateSize)
 {
     const std::string_view dateView{reinterpret_cast<const char*>(datePtr), dateSize};
-    const int32_t year = (dateView[0] - '0') * 1000 + (dateView[1] - '0') * 100 + (dateView[2] - '0') * 10 + (dateView[3] - '0');
-    const uint32_t month = (dateView[5] - '0') * 10 + (dateView[6] - '0');
-    const uint32_t day = (dateView[8] - '0') * 10 + (dateView[9] - '0');
+    int32_t year = 0;
+    uint32_t month = 0;
+    uint32_t day = 0;
+    uint32_t monthOffset = 5;
+    if (dateView[0] == '-' || dateView[0] == '+')
+    {
+        /// Year is of arbitrary length. Find offset of the first delimiting "-"
+        monthOffset = dateView.find('-', 1) + 1;
+        uint32_t digitMultiplier = 1;
+        /// The last digit of the year is located at monthOffset - 2
+        for (size_t i = monthOffset - 2; i > 0; --i)
+        {
+            year += (dateView[i] - '0') * digitMultiplier;
+            digitMultiplier *= 10;
+        }
+        year = dateView[0] == '-' ? year * -1 : year;
+    }
+    else
+    {
+        year = (dateView[0] - '0') * 1000 + (dateView[1] - '0') * 100 + (dateView[2] - '0') * 10 + (dateView[3] - '0');
+    }
+    month = (dateView[monthOffset] - '0') * 10 + (dateView[monthOffset + 1] - '0');
+    day = (dateView[monthOffset + 3] - '0') * 10 + (dateView[monthOffset + 4] - '0');
 
     const std::chrono::year_month_day date{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}};
     return std::chrono::sys_days{date}.time_since_epoch().count();
