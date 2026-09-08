@@ -36,7 +36,7 @@ class EmitPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
 
     void terminate(ExecutionContext&) const override { /*noop*/ }
 
@@ -49,11 +49,6 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
-    [[nodiscard]] bool hasRuntimeOutputFormatter() const;
-    [[nodiscard]] std::uintptr_t getRuntimeFieldDelimiterHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeTupleDelimiterHandle() const;
-    [[nodiscard]] uint64_t getRuntimeOutputFormatterFieldCount() const;
-    [[nodiscard]] std::uintptr_t getRuntimeFieldNameHandle(uint64_t fieldIndex) const;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

@@ -448,62 +448,20 @@ std::vector<Record::RecordFieldIdentifier> InputFormatter::getAllFieldNames() co
     std::unreachable();
 }
 
-std::uintptr_t InputFormatter::getRuntimeInputFormatterHandle() const
+void InputFormatter::registerRuntimeBindings(nautilus::RuntimeBindings& bindings)
 {
-    return reinterpret_cast<std::uintptr_t>(this);
+    indexerBinding = bindings.bind<const InputFormatIndexer>("input/indexer", inputFormatIndexer.get());
+    sequenceShredderBinding = bindings.bind("input/sequence-shredder", sequenceShredder.get());
+    nullValuesBinding = bindings.bind("input/null-values", std::addressof(inputFormatIndexer->getNullValues()));
 }
 
-std::uintptr_t InputFormatter::getRuntimeIndexerMetaDataHandle() const
-{
-    return reinterpret_cast<std::uintptr_t>(inputFormatIndexer.get());
-}
-
-std::uintptr_t InputFormatter::getRuntimeNullValuesHandle() const
-{
-    return reinterpret_cast<std::uintptr_t>(std::addressof(inputFormatIndexer->getNullValues()));
-}
-
-InputFormatter* InputFormatter::resolveRuntimeInputFormatter(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry)
-{
-    PRECONDITION(runtimeInputFormatterRegistry != nullptr, "runtime input formatter registry is null");
-    const auto runtimeInputFormatterHandle = runtimeInputFormatterRegistry->getInputFormatterHandle();
-    PRECONDITION(runtimeInputFormatterHandle != 0, "Missing runtime input formatter handle");
-    return reinterpret_cast<InputFormatter*>(runtimeInputFormatterHandle);
-}
-
-const InputFormatIndexer*
-InputFormatter::resolveRuntimeInputFormatIndexer(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry)
-{
-    PRECONDITION(runtimeInputFormatterRegistry != nullptr, "runtime input formatter registry is null");
-    const auto runtimeInputFormatIndexerHandle = runtimeInputFormatterRegistry->getIndexerMetaDataHandle();
-    PRECONDITION(runtimeInputFormatIndexerHandle != 0, "Missing runtime input format indexer handle");
-    return reinterpret_cast<const InputFormatIndexer*>(runtimeInputFormatIndexerHandle);
-}
-
-SequenceShredder* InputFormatter::resolveRuntimeSequenceShredder(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry)
-{
-    auto* const inputFormatter = resolveRuntimeInputFormatter(runtimeInputFormatterRegistry);
-    auto* const runtimeSequenceShredder = inputFormatter->sequenceShredder.get();
-    PRECONDITION(runtimeSequenceShredder != nullptr, "Missing runtime sequence shredder");
-    return runtimeSequenceShredder;
-}
-
-const std::vector<std::string>* InputFormatter::resolveRuntimeNullValues(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry)
-{
-    PRECONDITION(runtimeInputFormatterRegistry != nullptr, "runtime input formatter registry is null");
-    const auto runtimeNullValuesHandle = runtimeInputFormatterRegistry->getNullValuesHandle();
-    PRECONDITION(runtimeNullValuesHandle != 0, "Missing runtime null-values handle");
-    return reinterpret_cast<const std::vector<std::string>*>(runtimeNullValuesHandle);
-}
-
-nautilus::val<bool> InputFormatter::indexBuffer(
-    const RecordBuffer& recordBuffer,
-    const ArenaRef& arenaRef,
-    const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry) const
+nautilus::val<bool> InputFormatter::indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
 {
     setDefaultRawBufferIndicesForTracing(*this->inputFormatIndexer);
-    const auto runtimeIndexer = nautilus::invoke(resolveRuntimeInputFormatIndexer, runtimeInputFormatterRegistry);
-    const auto runtimeSequenceShredder = nautilus::invoke(resolveRuntimeSequenceShredder, runtimeInputFormatterRegistry);
+    const auto runtimeIndexer
+        = indexerBinding.isBound() ? indexerBinding.get() : nautilus::val<const InputFormatIndexer*>(inputFormatIndexer.get());
+    const auto runtimeSequenceShredder
+        = sequenceShredderBinding.isBound() ? sequenceShredderBinding.get() : nautilus::val<SequenceShredder*>(sequenceShredder.get());
     /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
     const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(nautilus::invoke(
         indexLeadingSpanningTupleAndBufferProxy,
@@ -527,9 +485,13 @@ void InputFormatter::readBuffer(
 {
     /// @Note: the order below is important
     const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResult);
-    const auto runtimeIndexer = nautilus::invoke(resolveRuntimeInputFormatIndexer, executionCtx.runtimeInputFormatterRegistry);
-    const auto runtimeSequenceShredder = nautilus::invoke(resolveRuntimeSequenceShredder, executionCtx.runtimeInputFormatterRegistry);
-    const auto runtimeNullValues = nautilus::invoke(resolveRuntimeNullValues, executionCtx.runtimeInputFormatterRegistry);
+    const auto runtimeIndexer
+        = indexerBinding.isBound() ? indexerBinding.get() : nautilus::val<const InputFormatIndexer*>(inputFormatIndexer.get());
+    const auto runtimeSequenceShredder
+        = sequenceShredderBinding.isBound() ? sequenceShredderBinding.get() : nautilus::val<SequenceShredder*>(sequenceShredder.get());
+    const auto runtimeNullValues = nullValuesBinding.isBound()
+        ? nullValuesBinding.get()
+        : nautilus::val<const std::vector<std::string>*>(std::addressof(inputFormatIndexer->getNullValues()));
 
     /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
     /// we count such a spanning tuple as a leading spanning tuple

@@ -26,9 +26,9 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
 #include <SequenceShredder.hpp>
@@ -88,10 +88,7 @@ public:
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
-    [[nodiscard]] nautilus::val<bool> indexBuffer(
-        const RecordBuffer& recordBuffer,
-        const ArenaRef& arenaRef,
-        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry) const;
+    [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const;
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer
     /// Relies on the index created in the first phase (indexBuffer), which it accesses through the static_thread local member
@@ -100,22 +97,18 @@ public:
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild);
 
-    [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeIndexerMetaDataHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeNullValuesHandle() const;
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings);
 
     std::ostream& toString(std::ostream& os) const;
 
 private:
-    static InputFormatter* resolveRuntimeInputFormatter(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry);
-    static const InputFormatIndexer* resolveRuntimeInputFormatIndexer(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry);
-    static SequenceShredder* resolveRuntimeSequenceShredder(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry);
-    static const std::vector<std::string>* resolveRuntimeNullValues(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry);
-
     std::unique_ptr<InputFormatIndexer> inputFormatIndexer;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::shared_ptr<TupleBufferRef> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder;
+    nautilus::RuntimeBinding<const InputFormatIndexer> indexerBinding;
+    nautilus::RuntimeBinding<SequenceShredder> sequenceShredderBinding;
+    nautilus::RuntimeBinding<const std::vector<std::string>> nullValuesBinding;
 };
 
 }

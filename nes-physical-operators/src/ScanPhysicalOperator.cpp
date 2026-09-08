@@ -45,8 +45,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(this->bufferRef);
 
-    if (not inputFormatterBufferRef->indexBuffer(
-            recordBuffer, executionCtx.pipelineMemoryProvider.arena, executionCtx.runtimeInputFormatterRegistry))
+    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
@@ -81,36 +80,13 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     }
 }
 
-bool ScanPhysicalOperator::hasRuntimeInputFormatter() const
+void ScanPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
-    return std::dynamic_pointer_cast<InputFormatter>(bufferRef) != nullptr;
-}
-
-std::uintptr_t ScanPhysicalOperator::getRuntimeInputFormatterHandle() const
-{
-    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
+    if (const auto inputFormatter = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
     {
-        return inputFormatterBufferRef->getRuntimeInputFormatterHandle();
+        inputFormatter->registerRuntimeBindings(compilationContext.runtimeBindings);
     }
-    return 0;
-}
-
-std::uintptr_t ScanPhysicalOperator::getRuntimeIndexerMetaDataHandle() const
-{
-    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
-    {
-        return inputFormatterBufferRef->getRuntimeIndexerMetaDataHandle();
-    }
-    return 0;
-}
-
-std::uintptr_t ScanPhysicalOperator::getRuntimeNullValuesHandle() const
-{
-    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
-    {
-        return inputFormatterBufferRef->getRuntimeNullValuesHandle();
-    }
-    return 0;
+    setupChild(executionCtx, compilationContext);
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

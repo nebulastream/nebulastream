@@ -32,10 +32,7 @@ public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    [[nodiscard]] bool hasRuntimeInputFormatter() const;
-    [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeIndexerMetaDataHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeNullValuesHandle() const;
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

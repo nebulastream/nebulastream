@@ -30,6 +30,7 @@
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <SliceCacheConfiguration.hpp>
 #include <val_concepts.hpp>
 
@@ -64,8 +65,7 @@ public:
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,
-        nautilus::val<AbstractBufferProvider*> bufferProvider,
-        const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry) override;
+        nautilus::val<AbstractBufferProvider*> bufferProvider) override;
 
     void setupSliceStore(CompilationContext& compilationContext) override;
     ~DefaultTimeBasedSliceStoreRef() override = default;
@@ -82,9 +82,6 @@ private:
         WorkerThreadId workerThreadId,
         const DefaultTimeBasedSliceStoreRef* sliceStoreRef,
         AbstractBufferProvider* bufferProvider);
-    friend const DefaultTimeBasedSliceStoreRef*
-    resolveRuntimeSliceStoreRef(const RuntimeStateRegistry* runtimeStateRegistry, uint64_t runtimeStateSlot);
-    friend SliceCacheEntry* resolveRuntimeSliceCacheStart(const DefaultTimeBasedSliceStoreRef* sliceStoreRef);
 
     DataStructureExtractor dataStructureExtractor;
     CreateSlicesFunction createSlicesFunction;
@@ -92,7 +89,8 @@ private:
     /// Having these as C++ values is fine, as they do not change between tracing and runtime of the query.
     std::unique_ptr<SliceCache> sliceCache;
     DefaultTimeBasedSliceStore* sliceStore;
-    uint64_t runtimeStateSlot = 0;
+    nautilus::RuntimeBinding<const DefaultTimeBasedSliceStoreRef> sliceStoreBinding;
+    nautilus::RuntimeBinding<SliceCacheEntry> cacheBinding;
 };
 
 }

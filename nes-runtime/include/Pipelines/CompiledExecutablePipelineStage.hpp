@@ -20,12 +20,10 @@
 #include <unordered_map>
 #include <vector>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
-#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/RuntimeOutputFormatterRegistry.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
@@ -35,8 +33,6 @@ namespace NES
 class DumpHelper;
 
 /// A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
-/// Each pipeline compiles into exactly one nautilus module that contains the main pipeline function
-/// alongside all functions that operators registered during setup().
 class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
@@ -52,25 +48,16 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    using PipelineSignature = void(
-        PipelineExecutionContext*,
-        const RuntimeInputFormatterRegistry*,
-        const RuntimeOutputFormatterRegistry*,
-        const RuntimeStateRegistry*,
-        const TupleBuffer*,
-        const Arena*);
+    using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
 
     nautilus::engine::NautilusEngine engine;
-    /// Both are created lazily in start(); neither type is default-constructible.
-    std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::unordered_map<OperatorHandlerId, OperatorHandlerId> operatorHandlerSlots;
-    RuntimeStateRegistry runtimeStateRegistry;
+    OperatorHandlerBindings operatorHandlerBindings;
     std::shared_ptr<Pipeline> pipeline;
 };
 

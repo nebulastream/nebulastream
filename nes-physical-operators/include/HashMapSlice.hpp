@@ -29,7 +29,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
-#include <CompilationContext.hpp>
 
 namespace NES
 {
@@ -61,8 +60,6 @@ enum class HashMapBufferState : uint8_t
 /// +---------------------+---------------------+---------------------+---------------------+---------------------+
 /// | Stream 1: [HashMap1][HashMap2][HashMap3]... | Stream 2: [HashMap1][HashMap2][HashMap3]... | ... | Stream N: [HashMap1][HashMap2][HashMap3]... |
 /// +---------------------+---------------------+---------------------+---------------------+---------------------+
-///
-/// As the hashmap might need to clean up its state, we expect multiple clean up functions as part of the @struct CreateNewHashMapSliceArgs
 class HashMapSlice : public Slice
 {
 public:

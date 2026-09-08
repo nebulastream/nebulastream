@@ -51,20 +51,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    [[nodiscard]] nautilus::val<uint64_t> writeFormattedValue(
-        const VarVal& value,
-        const DataType& fieldType,
-        uint64_t fieldIndex,
-        const nautilus::val<int8_t*>& fieldPointer,
-        const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const override;
-
-    [[nodiscard]] const char* getRuntimeFieldNamePointer(uint64_t fieldIndex) const override
-    {
-        return canonicalFieldNames.at(fieldIndex).c_str();
-    }
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -76,17 +63,8 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const JSONOutputFormatter& format);
 
 private:
-    [[nodiscard]] nautilus::val<uint64_t> writeFormattedValueWithFieldName(
-        const VarVal& value,
-        const DataType& fieldType,
-        uint64_t fieldIndex,
-        const nautilus::val<int8_t*>& fieldPointer,
-        const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<const char*>& fieldName) const;
-
     std::vector<std::string> canonicalFieldNames;
+    std::vector<nautilus::RuntimeBinding<const char>> fieldNameBindings;
 };
 
 }

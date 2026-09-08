@@ -63,19 +63,8 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
-    auto writeResult = [&]()
-    {
-        if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
-        {
-            return outputFormatterBufferRef->writeRecord(
-                emitState->outputIndex,
-                emitState->resultBuffer,
-                record,
-                ctx.pipelineMemoryProvider.bufferProvider,
-                ctx.runtimeOutputFormatterRegistry);
-        }
-        return bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-    }();
+    auto writeResult
+        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
     /// We emit and create a new record buffer
     if (!writeResult.successful)
@@ -86,20 +75,8 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
         emitState->outputIndex = uint64_t{0};
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
-        writeResult = [&]()
-        {
-            if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
-            {
-                return outputFormatterBufferRef->writeRecord(
-                    emitState->outputIndex,
-                    emitState->resultBuffer,
-                    record,
-                    ctx.pipelineMemoryProvider.bufferProvider,
-                    ctx.runtimeOutputFormatterRegistry);
-            }
-            return bufferRef->writeRecord(
-                emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-        }();
+        writeResult
+            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     }
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
@@ -165,45 +142,13 @@ EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, 
 {
 }
 
-bool EmitPhysicalOperator::hasRuntimeOutputFormatter() const
+void EmitPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
 {
-    return std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef) != nullptr;
-}
-
-std::uintptr_t EmitPhysicalOperator::getRuntimeFieldDelimiterHandle() const
-{
-    if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
+    compilationContext.registerOperatorHandler(operatorHandlerId);
+    if (const auto outputFormatter = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
     {
-        return outputFormatterBufferRef->getRuntimeFieldDelimiterHandle();
+        outputFormatter->registerRuntimeBindings(compilationContext.runtimeBindings);
     }
-    return 0;
-}
-
-std::uintptr_t EmitPhysicalOperator::getRuntimeTupleDelimiterHandle() const
-{
-    if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
-    {
-        return outputFormatterBufferRef->getRuntimeTupleDelimiterHandle();
-    }
-    return 0;
-}
-
-uint64_t EmitPhysicalOperator::getRuntimeOutputFormatterFieldCount() const
-{
-    if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
-    {
-        return outputFormatterBufferRef->getRuntimeFieldCount();
-    }
-    return 0;
-}
-
-std::uintptr_t EmitPhysicalOperator::getRuntimeFieldNameHandle(const uint64_t fieldIndex) const
-{
-    if (const auto outputFormatterBufferRef = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
-    {
-        return outputFormatterBufferRef->getRuntimeFieldNameHandle(fieldIndex);
-    }
-    return 0;
 }
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const

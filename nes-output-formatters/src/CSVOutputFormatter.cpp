@@ -139,15 +139,6 @@ uint64_t writeNullValueToBuffer(
     return writeValueToBuffer("NULL", remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
-const char* getRuntimeDelimiterProxy(const RuntimeOutputFormatterRegistry* runtimeOutputFormatterRegistry, const bool useTupleDelimiter)
-{
-    PRECONDITION(runtimeOutputFormatterRegistry != nullptr, "runtime output formatter registry is null");
-    const auto runtimeDelimiterHandle = useTupleDelimiter ? runtimeOutputFormatterRegistry->getTupleDelimiterHandle()
-                                                          : runtimeOutputFormatterRegistry->getFieldDelimiterHandle();
-    PRECONDITION(runtimeDelimiterHandle != 0, "Missing runtime output formatter delimiter");
-    return reinterpret_cast<const char*>(runtimeDelimiterHandle);
-}
-
 nautilus::val<uint64_t> writeFormattedValueWithDelimiter(
     const VarVal& value,
     const DataType& fieldType,
@@ -204,25 +195,18 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    const nautilus::val<const char*> delimiter{(fieldIndex + 1 == fieldNames.size() ? tupleDelimiter : fieldDelimiter).c_str()};
+    const bool isLastField = fieldIndex + 1 == fieldNames.size();
+    const auto& binding = isLastField ? tupleDelimiterBinding : fieldDelimiterBinding;
+    const auto delimiter
+        = binding.isBound() ? binding.get() : nautilus::val<const char*>((isLastField ? tupleDelimiter : fieldDelimiter).c_str());
     return writeFormattedValueWithDelimiter(
         value, fieldType, fieldPointer, remainingSize, recordBuffer, bufferProvider, quoteStrings, delimiter);
 }
 
-nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
-    const VarVal& value,
-    const DataType& fieldType,
-    uint64_t fieldIndex,
-    const nautilus::val<int8_t*>& fieldPointer,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const
+void CSVOutputFormatter::registerRuntimeBindings(nautilus::RuntimeBindings& bindings)
 {
-    const nautilus::val<bool> useTupleDelimiter{fieldIndex + 1 == fieldNames.size()};
-    const auto delimiter = nautilus::invoke(getRuntimeDelimiterProxy, runtimeOutputFormatterRegistry, useTupleDelimiter);
-    return writeFormattedValueWithDelimiter(
-        value, fieldType, fieldPointer, remainingSize, recordBuffer, bufferProvider, quoteStrings, delimiter);
+    fieldDelimiterBinding = bindings.bind("output/field-delimiter", fieldDelimiter.c_str());
+    tupleDelimiterBinding = bindings.bind("output/tuple-delimiter", tupleDelimiter.c_str());
 }
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)

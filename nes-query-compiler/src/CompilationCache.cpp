@@ -144,19 +144,19 @@ std::string CompilationCache::createCacheKeySeed(const PhysicalPlan& physicalPla
 
 std::string CompilationCache::createHandlerCacheSignature(const Pipeline& pipeline)
 {
-    std::vector<std::pair<uint64_t, std::string>> handlers;
+    std::vector<std::string> handlers;
     handlers.reserve(pipeline.getOperatorHandlers().size());
     for (const auto& [handlerId, handler] : pipeline.getOperatorHandlers())
     {
         const auto* const handlerPointer = handler.get();
         const auto typeName = handlerPointer == nullptr ? std::string{"<null>"} : std::string{typeid(*handlerPointer).name()};
-        handlers.emplace_back(handlerId.getRawValue(), typeName);
+        handlers.push_back(typeName);
     }
-    std::ranges::sort(handlers, {}, &std::pair<uint64_t, std::string>::first);
+    std::ranges::sort(handlers);
 
     std::ostringstream signature;
     signature << handlers.size() << '[';
-    for (const auto& [_, typeName] : handlers)
+    for (const auto& typeName : handlers)
     {
         signature << typeName.size() << ':' << typeName;
     }
