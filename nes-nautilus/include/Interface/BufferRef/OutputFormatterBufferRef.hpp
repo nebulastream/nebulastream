@@ -24,7 +24,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/RuntimeOutputFormatterRegistry.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 
@@ -71,16 +71,6 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    WriteRecordResult writeRecord(
-        nautilus::val<uint64_t>& bytesWritten,
-        const RecordBuffer& recordBuffer,
-        const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry) const;
-
-    [[nodiscard]] std::uintptr_t getRuntimeFieldDelimiterHandle() const;
-    [[nodiscard]] std::uintptr_t getRuntimeTupleDelimiterHandle() const;
-    [[nodiscard]] uint64_t getRuntimeFieldCount() const;
-    [[nodiscard]] std::uintptr_t getRuntimeFieldNameHandle(uint64_t fieldIndex) const;
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) const;
 };
 }

@@ -65,11 +65,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     auto nljPagedVectorBuffer = sliceStoreRef->getDataStructureRef(
-        timestamp,
-        executionCtx.workerThreadId,
-        operatorHandler,
-        executionCtx.pipelineMemoryProvider.bufferProvider,
-        executionCtx.runtimeStateRegistry);
+        timestamp, executionCtx.workerThreadId, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
     /// Write record to the pagedVector
     PagedVectorRef pagedVectorRef{BorrowedNautilusBuffer::from(nljPagedVectorBuffer.asArg()), tupleLayout};
     pagedVectorRef.pushBack(record, executionCtx.pipelineMemoryProvider.bufferProvider);

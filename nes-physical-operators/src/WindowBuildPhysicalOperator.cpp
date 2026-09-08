@@ -85,6 +85,7 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
+    executionCtx.registerOperatorHandler(compilationContext, operatorHandlerId);
     sliceStoreRef->setupSliceStore(compilationContext);
 
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);

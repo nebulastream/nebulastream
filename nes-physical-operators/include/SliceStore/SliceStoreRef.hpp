@@ -20,7 +20,6 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
@@ -45,8 +44,7 @@ public:
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const nautilus::val<OperatorHandler*>& operatorHandler,
-        nautilus::val<AbstractBufferProvider*> bufferProvider,
-        const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry)
+        nautilus::val<AbstractBufferProvider*> bufferProvider)
         = 0;
 
     /// Necessary, as our PhysicalOperators get copied during the pipelining phase, but we need to ensure uniqueness for the slice store ref

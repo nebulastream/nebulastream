@@ -21,8 +21,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <fmt/format.h>
+#include <nautilus/RuntimeBinding.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <Module.hpp>
@@ -75,8 +75,6 @@ class CompilationContext
 {
     /// We assume that a compilation context never outlives the module; both live in CompiledExecutablePipelineStage::start()
     nautilus::engine::NautilusModule& module; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-    PipelineExecutionContext& pipelineExecutionContext; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-    RuntimeStateRegistry& runtimeStateRegistry; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     std::vector<std::function<void(nautilus::engine::CompiledModule&)>> pendingResolvers;
     uint64_t functionNameCounter = 0;
     /// Set once resolveAfterCompilation() has run; registering further functions afterwards would append a resolver
@@ -87,18 +85,14 @@ public:
     CompilationContext(
         nautilus::engine::NautilusModule& module,
         PipelineExecutionContext& pipelineExecutionContext,
-        RuntimeStateRegistry& runtimeStateRegistry)
-        : module(module), pipelineExecutionContext(pipelineExecutionContext), runtimeStateRegistry(runtimeStateRegistry)
+        nautilus::RuntimeBindings& runtimeBindings)
+        : module(module), pipelineExecutionContext(pipelineExecutionContext), runtimeBindings(runtimeBindings)
     {
     }
 
-    [[nodiscard]] PipelineExecutionContext& getPipelineExecutionContext() const { return pipelineExecutionContext; }
-
-    uint64_t registerRuntimeState(const RuntimeStateType type, void* const address)
-    {
-        PRECONDITION(!compiled, "registerRuntimeState() must not be called after the module has been compiled");
-        return runtimeStateRegistry.registerState(type, address);
-    }
+    PipelineExecutionContext& pipelineExecutionContext;
+    nautilus::RuntimeBindings& runtimeBindings;
+    uint64_t runtimeBindingCounter = 0;
 
     template <typename R, typename... FunctionArguments>
     auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func, const std::string_view namePrefix)

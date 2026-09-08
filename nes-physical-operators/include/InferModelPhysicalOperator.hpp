@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <Interface/Record.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <CompilationContext.hpp>
@@ -63,7 +64,7 @@ private:
     size_t outputSize;
     bool varsizedInput;
     bool varsizedOutput;
-    mutable uint64_t runtimeStateSlot = 0;
+    mutable nautilus::RuntimeBinding<detail::ThreadLocalRuntimeWrapper> runtimeBinding;
     std::optional<PhysicalOperator> child;
 };
 

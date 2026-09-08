@@ -26,6 +26,7 @@
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <fmt/format.h>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -93,33 +94,14 @@ DefaultTimeBasedSliceStoreRef::DefaultTimeBasedSliceStoreRef(const DefaultTimeBa
 {
 }
 
-const DefaultTimeBasedSliceStoreRef*
-resolveRuntimeSliceStoreRef(const RuntimeStateRegistry* runtimeStateRegistry, const uint64_t runtimeStateSlot)
-{
-    PRECONDITION(runtimeStateRegistry != nullptr, "Runtime state registry should not be null");
-    auto* const state = runtimeStateRegistry->getState(runtimeStateSlot, RuntimeStateType::SLICE_STORE_REF);
-    PRECONDITION(state != nullptr, "Missing slice store runtime state for slot {}", runtimeStateSlot);
-    return static_cast<const DefaultTimeBasedSliceStoreRef*>(state);
-}
-
-SliceCacheEntry* resolveRuntimeSliceCacheStart(const DefaultTimeBasedSliceStoreRef* sliceStoreRef)
-{
-    PRECONDITION(sliceStoreRef != nullptr, "The slice store ref should not be null");
-    auto* const cacheStart = sliceStoreRef->sliceCache->getStartOfEntries();
-    PRECONDITION(cacheStart != nullptr, "The slice cache should be initialized");
-    return cacheStart;
-}
-
 NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp,
     const nautilus::val<WorkerThreadId>& workerThreadId,
     const nautilus::val<OperatorHandler*>& operatorHandler,
-    nautilus::val<AbstractBufferProvider*> bufferProvider,
-    const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry)
+    nautilus::val<AbstractBufferProvider*> bufferProvider)
 {
-    const auto runtimeSliceStoreRef
-        = nautilus::invoke(resolveRuntimeSliceStoreRef, runtimeStateRegistry, nautilus::val<uint64_t>{runtimeStateSlot});
-    const auto runtimeCacheStart = nautilus::invoke(resolveRuntimeSliceCacheStart, runtimeSliceStoreRef);
+    const auto runtimeSliceStoreRef = sliceStoreBinding.get();
+    const auto runtimeCacheStart = cacheBinding.get();
     return sliceCache->getDataStructureRef(
         runtimeCacheStart,
         timestamp,
@@ -154,8 +136,11 @@ void setupSliceStoreProxy(
 
 void DefaultTimeBasedSliceStoreRef::setupSliceStore(CompilationContext& compilationContext)
 {
-    setupSliceStoreProxy(sliceStore, std::addressof(compilationContext.getPipelineExecutionContext()), this);
-    runtimeStateSlot = compilationContext.registerRuntimeState(RuntimeStateType::SLICE_STORE_REF, this);
+    setupSliceStoreProxy(sliceStore, std::addressof(compilationContext.pipelineExecutionContext), this);
+    const auto ordinal = compilationContext.runtimeBindingCounter++;
+    sliceStoreBinding
+        = compilationContext.runtimeBindings.bind<const DefaultTimeBasedSliceStoreRef>(fmt::format("slice-store/{}/ref", ordinal), this);
+    cacheBinding = compilationContext.runtimeBindings.bind(fmt::format("slice-store/{}/cache", ordinal), sliceCache->getStartOfEntries());
 }
 
 }

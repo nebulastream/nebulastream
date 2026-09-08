@@ -24,9 +24,9 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/RuntimeOutputFormatterRegistry.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
+#include <nautilus/RuntimeBinding.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -62,28 +62,9 @@ public:
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
 
-    [[nodiscard]] virtual nautilus::val<uint64_t> writeFormattedValue(
-        const VarVal& value,
-        const DataType& fieldType,
-        uint64_t fieldIndex,
-        const nautilus::val<int8_t*>& fieldPointer,
-        const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-        const nautilus::val<const RuntimeOutputFormatterRegistry*>&) const
-    {
-        return writeFormattedValue(value, fieldType, fieldIndex, fieldPointer, remainingSize, recordBuffer, bufferProvider);
-    }
-
     virtual std::ostream& toString(std::ostream&) const = 0;
 
-    [[nodiscard]] virtual const char* getRuntimeFieldDelimiterPointer() const { return nullptr; }
-
-    [[nodiscard]] virtual const char* getRuntimeTupleDelimiterPointer() const { return nullptr; }
-
-    [[nodiscard]] uint64_t getRuntimeFieldCount() const { return fieldNames.size(); }
-
-    [[nodiscard]] virtual const char* getRuntimeFieldNamePointer(uint64_t) const { return nullptr; }
+    virtual void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 

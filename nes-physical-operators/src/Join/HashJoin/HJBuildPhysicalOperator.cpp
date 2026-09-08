@@ -59,8 +59,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer = sliceStoreRef->getDataStructureRef(
-        timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider, ctx.runtimeStateRegistry);
+    const auto hashMapBuffer
+        = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
 
     ChainedHashMapRef hashMap{borrowedHashMapBuffer, hashMapConfig};

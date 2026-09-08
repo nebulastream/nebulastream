@@ -76,6 +76,7 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 
 void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
+    executionCtx.registerOperatorHandler(compilationContext, operatorHandlerId);
     /// Giving child operators the change to setup
     setupChild(executionCtx, compilationContext);
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);

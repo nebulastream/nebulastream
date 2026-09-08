@@ -31,11 +31,9 @@
 #include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
-#include <Runtime/Execution/RuntimeStateRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/RuntimeOutputFormatterRegistry.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Arena.hpp>
@@ -47,6 +45,7 @@
 
 namespace NES
 {
+class CompilationContext;
 
 /// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
 /// allowing the operator to allocate two different types of memory, in regard to their lifetime.
@@ -89,17 +88,10 @@ struct ExecutionContext final
 {
     explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
-    explicit ExecutionContext(
-        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
-        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-        const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry,
-        const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry,
-        const nautilus::val<Arena*>& arena,
-        const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots = nullptr);
-
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
 
+    void registerOperatorHandler(CompilationContext& compilationContext, OperatorHandlerId handlerId);
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
@@ -117,9 +109,7 @@ struct ExecutionContext final
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
-    const nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry;
-    const nautilus::val<const RuntimeOutputFormatterRegistry*> runtimeOutputFormatterRegistry;
-    const nautilus::val<const RuntimeStateRegistry*> runtimeStateRegistry;
+    std::unordered_map<OperatorHandlerId, nautilus::RuntimeBinding<OperatorHandler>> operatorHandlerBindings;
     nautilus::val<WorkerThreadId> workerThreadId;
     nautilus::val<PipelineId> pipelineId;
     PipelineMemoryProvider pipelineMemoryProvider;
@@ -131,7 +121,6 @@ struct ExecutionContext final
     nautilus::val<bool> lastChunk;
 
 private:
-    const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots;
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     OpenReturnState openReturnState{OpenReturnState::CONTINUE};
 };

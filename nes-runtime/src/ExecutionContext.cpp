@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
@@ -30,7 +31,10 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <nautilus/RuntimeBinding.hpp>
 #include <nautilus/function.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -58,27 +62,7 @@ PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
 }
 
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
-    : ExecutionContext(
-          pipelineContext,
-          nautilus::val<const RuntimeInputFormatterRegistry*>{nullptr},
-          nautilus::val<const RuntimeOutputFormatterRegistry*>{nullptr},
-          nautilus::val<const RuntimeStateRegistry*>{nullptr},
-          arena,
-          nullptr)
-{
-}
-
-ExecutionContext::ExecutionContext(
-    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
-    const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-    const nautilus::val<const RuntimeOutputFormatterRegistry*>& runtimeOutputFormatterRegistry,
-    const nautilus::val<const RuntimeStateRegistry*>& runtimeStateRegistry,
-    const nautilus::val<Arena*>& arena,
-    const std::unordered_map<OperatorHandlerId, OperatorHandlerId>* operatorHandlerSlots)
     : pipelineContext(pipelineContext)
-    , runtimeInputFormatterRegistry(runtimeInputFormatterRegistry)
-    , runtimeOutputFormatterRegistry(runtimeOutputFormatterRegistry)
-    , runtimeStateRegistry(runtimeStateRegistry)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineId(nautilus::invoke(getPipelineIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
@@ -88,7 +72,6 @@ ExecutionContext::ExecutionContext(
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
-    , operatorHandlerSlots(operatorHandlerSlots)
 {
 }
 
@@ -149,24 +132,37 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
     localStateMap.emplace(operatorId, std::move(state));
 }
 
-static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
+void ExecutionContext::registerOperatorHandler(CompilationContext& compilationContext, const OperatorHandlerId handlerId)
 {
-    const auto& handlers = pipelineCtx->getOperatorHandlers();
-    const auto handler = handlers.find(index);
-    return handler == handlers.end() ? nullptr : handler->second.get();
+    if (!operatorHandlerBindings.contains(handlerId))
+    {
+        auto* handler = compilationContext.pipelineExecutionContext.getOperatorHandlers().at(handlerId).get();
+        operatorHandlerBindings.emplace(
+            handlerId,
+            compilationContext.runtimeBindings.bind<OperatorHandler>(fmt::format("handler/{}", operatorHandlerBindings.size()), handler));
+    }
 }
 
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
 {
-    auto runtimeHandlerIndex = handlerIndex;
-    if (operatorHandlerSlots != nullptr)
+    if (const auto binding = operatorHandlerBindings.find(handlerIndex); binding != operatorHandlerBindings.end())
     {
-        const auto slot = operatorHandlerSlots->find(handlerIndex);
-        PRECONDITION(slot != operatorHandlerSlots->end(), "Missing runtime slot for operator handler {}", handlerIndex.getRawValue());
-        runtimeHandlerIndex = slot->second;
+        return binding->second.get();
     }
-    const auto handlerIndexValue = nautilus::val<uint64_t>(runtimeHandlerIndex.getRawValue());
-    return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
+#ifdef ENABLE_TRACING
+    if (nautilus::tracing::inTracer())
+    {
+        throw std::logic_error("Operator handlers must be registered during setup before tracing");
+    }
+#endif
+    auto* nativeContext = nautilus::details::RawValueResolver<PipelineExecutionContext*>::getRawValue(pipelineContext);
+    if (nativeContext == nullptr)
+    {
+        throw std::logic_error("Missing native pipeline execution context");
+    }
+    const auto& handlers = nativeContext->getOperatorHandlers();
+    const auto handler = handlers.find(handlerIndex);
+    return nautilus::val<OperatorHandler*>(handler == handlers.end() ? nullptr : handler->second.get());
 }
 
 }
