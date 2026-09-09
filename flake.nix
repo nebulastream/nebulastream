@@ -263,6 +263,7 @@
                 pkgs.libuuid
                 pahoMqttPkg.c
                 pahoMqttPkg.cpp
+                pkgs.rdkafka
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;

@@ -287,6 +287,7 @@ Available sink types include:
 - `Print`: Writes results to standard output (stdout).
 - `Void` — Sink Void documentation coming soon.
 - `MQTT` — Sink MQTT documentation coming soon.
+- `Kafka` — Sink Kafka documentation coming soon.
 
 The `SET` clause specifies the output details.
 For a `File` sink, this includes the file path and the data format for the output.
