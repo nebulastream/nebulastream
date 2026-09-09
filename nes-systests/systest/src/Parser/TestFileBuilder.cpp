@@ -78,7 +78,6 @@ struct PendingQuery
     std::string sql;
     std::vector<ConfigurationOverride> overrides;
     bool isExplain = false;
-    bool sequential = false;
 };
 
 /// Collects the statements of one test file from the parser.
@@ -104,10 +103,7 @@ public:
 
     /// Reads the overrides in scope now, rather than when the result completes the query,
     /// because a configuration line that follows the query belongs to the next one.
-    void beginQuery(std::string sql, const bool sequential)
-    {
-        pendingQuery = PendingQuery{.sql = std::move(sql), .overrides = overrides.takeForNextQuery(), .sequential = sequential};
-    }
+    void beginQuery(std::string sql) { pendingQuery = PendingQuery{.sql = std::move(sql), .overrides = overrides.takeForNextQuery()}; }
 
     /// An EXPLAIN is not executed, its plan is created by optimizer configuration defined by the run.
     /// The configuration in scope has no effect on it, so we discard it here (instead of applying it to the next query).
@@ -123,7 +119,7 @@ public:
         {
             throw SLTUnexpectedToken("a result or an expected error must follow a query");
         }
-        auto [sql, queryOverrides, isExplain, sequential] = std::move(*pendingQuery);
+        auto [sql, queryOverrides, isExplain] = std::move(*pendingQuery);
         pendingQuery.reset();
 
         if (isExplain)
@@ -134,8 +130,7 @@ public:
         /// One statement per pairing of overrides, all with the same number, because they are one query of the file run more than once.
         for (auto& alternative : queryOverrides)
         {
-            statements.emplace_back(
-                SelectStatement{.sql = sql, .id = id, .expected = expected, .overrides = std::move(alternative), .sequential = sequential});
+            statements.emplace_back(SelectStatement{.sql = sql, .id = id, .expected = expected, .overrides = std::move(alternative)});
         }
     }
 
@@ -144,7 +139,6 @@ public:
     addDifferential(const std::string& firstSql, const std::string& secondSql, const SystestQueryId firstId, const SystestQueryId secondId)
     {
         auto blockOverrides = pendingQuery.has_value() ? std::move(pendingQuery->overrides) : std::vector{ConfigurationOverride{}};
-        const auto sequential = pendingQuery.has_value() and pendingQuery->sequential;
         pendingQuery.reset();
         /// One statement per pairing of overrides, as for a normal query statement.
         for (auto& alternative : blockOverrides)
@@ -154,8 +148,7 @@ public:
                 .firstId = firstId,
                 .secondSql = secondSql,
                 .secondId = secondId,
-                .overrides = std::move(alternative),
-                .sequential = sequential});
+                .overrides = std::move(alternative)});
         }
     }
 
@@ -183,8 +176,7 @@ ParsedTestFile buildTestFile(SystestParser& parser, const std::filesystem::path&
     parser.registerOnCreateCallback([&](std::string sql, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> attach)
                                     { builder.addCreate(std::move(sql), std::move(attach)); });
 
-    parser.registerOnQueryCallback([&](std::string sql, SystestQueryId, const bool sequential)
-                                   { builder.beginQuery(std::move(sql), sequential); });
+    parser.registerOnQueryCallback([&](std::string sql, SystestQueryId) { builder.beginQuery(std::move(sql)); });
 
     parser.registerOnExplainQueryCallback([&](std::string sql, SystestQueryId) { builder.beginExplain(std::move(sql)); });
 

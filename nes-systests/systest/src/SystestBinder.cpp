@@ -241,8 +241,6 @@ public:
 
     void setException(const Exception& exception) { this->exception = exception; }
 
-    void setRunAfter(std::pair<TestName, SystestQueryId> runAfter) { this->runAfter = runAfter; }
-
     std::expected<LogicalPlan, Exception> getBoundPlan() const
     {
         if (boundPlan.has_value())
@@ -390,7 +388,6 @@ public:
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = ConfigurationOverride{},
                  .differentialQueryPlan = std::nullopt,
-                 .runAfter = runAfter,
                  .actualExplainOutput = exception.has_value() ? std::nullopt : actualExplainOutput}};
         }
 
@@ -425,7 +422,6 @@ public:
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
                  .differentialQueryPlan = optimizedDifferentialQueryPlan,
-                 .runAfter = runAfter,
                  .actualExplainOutput = std::nullopt});
         }
         return queries;
@@ -450,7 +446,6 @@ private:
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
     std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
-    std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     std::optional<ExplainQueryStatement> explainStatement;
     std::optional<std::string> actualExplainOutput;
     bool built = false;
@@ -886,10 +881,6 @@ struct SystestBinder::Impl
         currentBuilder.setQueryDefinition(query.sql);
         currentBuilder.setConfigurationOverrides({query.overrides});
         currentBuilder.setExpectation(query.expected);
-        if (query.sequential)
-        {
-            currentBuilder.setRunAfter(std::make_pair(TestName(testFileName), SystestQueryId{query.id.getRawValue() - 1}));
-        }
         try
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query.sql);
@@ -957,11 +948,6 @@ struct SystestBinder::Impl
 
         SystestQueryBuilder currentTest{statement.firstId};
         currentTest.setConfigurationOverrides({statement.overrides});
-        if (statement.sequential)
-        {
-            currentTest.setRunAfter(std::make_pair(TestName(testFileName), SystestQueryId{statement.firstId.getRawValue() - 1}));
-        }
-
         try
         {
             auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(statement.firstSql);
