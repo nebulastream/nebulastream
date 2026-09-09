@@ -376,7 +376,7 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
                               "FROM input\n"
                               "INTO FILE(\n"
                               "'out.csv' AS FILE_SINK.FILE_PATH,\n"
-                              "'CSV' as OUTPUT_FORMATTER.\"TYPE\",\n"
+                              "'CSV' AS OUTPUT_FORMATTER.\"TYPE\","
                               "SCHEMA(id UINT64, text VARSIZED) AS \"SINK\".\"SCHEMA\")\n";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
@@ -1116,6 +1116,27 @@ TEST_F(StatementBinderTest, LowercaseFullJoinParsesToOuterFullJoinType)
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, BindConfigStatement)
+{
+    const std::string configStatement = "CONFIG SET(1 AS TEST.ONE, 'myString' AS test.TWO, 1.1 AS testi.mctest)";
+    const auto statement = binder->parseAndBindSingle(configStatement);
+
+    EXPECT_TRUE(statement.has_value());
+    EXPECT_TRUE(std::holds_alternative<SetConfigStatement>(statement.value()));
+
+    const auto [configurations] = std::get<SetConfigStatement>(statement.value());
+
+
+    EXPECT_EQ(3, configurations.size());
+
+    EXPECT_TRUE(configurations.contains(QualifiedIdentifier::parse("test.one")));
+    EXPECT_EQ(configurations.at(QualifiedIdentifier::parse("test.one")), "1");
+    EXPECT_TRUE(configurations.contains(QualifiedIdentifier::parse("test.two")));
+    EXPECT_EQ(configurations.at(QualifiedIdentifier::parse("test.two")), "myString");
+    EXPECT_TRUE(configurations.contains(QualifiedIdentifier::parse("testi.mctest")));
+    EXPECT_EQ(configurations.at(QualifiedIdentifier::parse("testi.mctest")), "1.100000");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

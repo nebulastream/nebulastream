@@ -27,6 +27,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/ConfigParsing.hpp>
 #include <Configurations/ConfigResolution.hpp>
@@ -57,8 +58,10 @@
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerCatalogEntry.hpp>
+#include "Configurations/Util.hpp"
 
 namespace NES
 {
@@ -514,6 +517,60 @@ std::expected<DropWorkerStatementResult, Exception> TopologyStatementHandler::op
         return DropWorkerStatementResult{workerConfigOpt->host};
     }
     return std::unexpected(UnknownWorker(": '{}'", statement.host));
+}
+
+ConfigStatementHandler::ConfigStatementHandler(SharedPtr<QueryOptimizer> optimizer) : optimizer(std::move(optimizer))
+{
+}
+
+std::expected<SetConfigStatementResult, Exception> ConfigStatementHandler::operator()(const SetConfigStatement& statement)
+{
+    const auto prefix = Identifier::parse("optimizer");
+    std::vector<LiteralConfigValue> optimizerConfigLiterals;
+
+    std::vector<Exception> errors;
+
+    for (const auto& [identifier, value] : statement.configurations)
+    {
+        auto literal = parseConfigLiteral(value);
+        if (!literal.has_value())
+        {
+            errors.emplace_back(literal.error());
+        }
+        else
+        {
+            optimizerConfigLiterals.emplace_back(identifier, std::move(literal.value()));
+        }
+    }
+    if (!errors.empty())
+    {
+        throw InvalidConfigParameter(
+            "Failed to process configuration: {}",
+            fmt::join(
+                errors,
+                "|"
+                ","));
+    }
+
+
+    /// TODO How to overwrite existing configurations?
+    auto configuration = resolveConfiguration<NES::QueryOptimizerConfiguration>(
+        NES::Schema<LiteralConfigValue, NES::Ordered>{std::move(optimizerConfigLiterals)});
+    if (!configuration)
+    {
+        throw InvalidConfigParameter("{}", configuration.error());
+    }
+
+
+    QueryOptimizerConfiguration config = configuration.value();
+
+    const auto result = this->optimizer.get()->updateConfig(config);
+
+    if (!result)
+    {
+        return std::unexpected(result.error());
+    }
+    return SetConfigStatementResult{std::move(config)};
 }
 
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)

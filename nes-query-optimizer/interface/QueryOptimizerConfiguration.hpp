@@ -15,6 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
@@ -37,13 +40,15 @@ struct QueryOptimizerConfiguration
 
     QueryOptimizerConfiguration() = delete;
 
-    QueryOptimizerConfiguration(StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network)
-        : joinStrategy(joinStrategy), network(network)
+    QueryOptimizerConfiguration(
+        StreamJoinStrategy joinStrategy, QueryOptimizerNetworkConfiguration network, std::vector<std::string> disabledRules)
+        : joinStrategy(joinStrategy), network(network), disabledRules(std::move(std::move(disabledRules)))
     {
     }
 
     StreamJoinStrategy joinStrategy;
     QueryOptimizerNetworkConfiguration network;
+    std::vector<std::string> disabledRules;
 
     static QueryOptimizerConfiguration fromConfig(const InstantiatedConfig& config);
 };

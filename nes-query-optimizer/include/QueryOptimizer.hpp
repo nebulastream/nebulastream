@@ -21,6 +21,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -45,6 +46,7 @@ public:
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
+    [[nodiscard]] std::expected<void, Exception> updateConfig(QueryOptimizerConfiguration updatedConfig);
 
 private:
     RuleBasedOptimizer ruleBasedOptimization;

@@ -34,6 +34,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
@@ -204,6 +205,11 @@ struct DropWorkerStatement
     std::string host;
 };
 
+struct SetConfigStatement
+{
+    std::unordered_map<QualifiedIdentifier, std::string> configurations;
+};
+
 using Statement = std::variant<
     WorkerStatusStatement,
     CreateWorkerStatement,
@@ -224,7 +230,8 @@ using Statement = std::variant<
     ShowSinksStatement,
     ShowModelsStatement,
     ShowVersionStatement,
-    DropQueryStatement>;
+    DropQueryStatement,
+    SetConfigStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)
 {
@@ -321,3 +328,4 @@ FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
 FMT_OSTREAM(NES::CreateWorkerStatement);
 FMT_OSTREAM(NES::DropWorkerStatement);
+FMT_OSTREAM(NES::SetConfigStatement);

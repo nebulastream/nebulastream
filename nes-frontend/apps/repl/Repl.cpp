@@ -51,6 +51,7 @@ struct Repl::Impl
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
     TopologyStatementHandler topologyStatementHandler;
+    ConfigStatementHandler configStatementHandler;
     ModelStatementHandler modelStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
@@ -76,6 +77,7 @@ struct Repl::Impl
         SinkStatementHandler sinkStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
         ModelStatementHandler modelStatementHandler,
+        ConfigStatementHandler configStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -85,6 +87,7 @@ struct Repl::Impl
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
         , topologyStatementHandler(std::move(topologyStatementHandler))
+        , configStatementHandler(std::move(configStatementHandler))
         , modelStatementHandler(std::move(modelStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
@@ -414,6 +417,10 @@ struct Repl::Impl
                 {
                     return queryStatementHandler->apply(stmt);
                 }
+                else if constexpr (requires { configStatementHandler.apply(stmt); })
+                {
+                    return configStatementHandler.apply(stmt);
+                }
                 else
                 {
                     static_assert(false, "All statement types need to have a handler");
@@ -560,6 +567,7 @@ Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
     TopologyStatementHandler topologyStatementHandler,
+    ConfigStatementHandler configStatementHandler,
     ModelStatementHandler modelStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
@@ -572,6 +580,7 @@ Repl::Repl(
           std::move(sinkStatementHandler),
           std::move(topologyStatementHandler),
           std::move(modelStatementHandler),
+          std::move(configStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,

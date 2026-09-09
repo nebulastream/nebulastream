@@ -40,6 +40,7 @@ public:
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
+        ConfigStatementHandler configStatementHandler,
         ModelStatementHandler modelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,

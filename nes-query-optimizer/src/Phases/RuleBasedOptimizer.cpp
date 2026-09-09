@@ -15,15 +15,21 @@
 
 #include <Phases/RuleBasedOptimizer.hpp>
 
+#include <algorithm>
 #include <memory>
+#include <string>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 #include <Rules/RuleManager.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -33,37 +39,16 @@ namespace NES
 {
 
 RuleBasedOptimizer::RuleBasedOptimizer(
-    QueryOptimizerConfiguration defaultQueryOptimization,
+    QueryOptimizerConfiguration config,
     std::shared_ptr<const SourceCatalog> sourceCatalog,
     std::shared_ptr<const SinkCatalog> sinkCatalog,
     std::shared_ptr<const ModelCatalog> modelCatalog)
-    : defaultQueryOptimization(std::move(defaultQueryOptimization))
+    : config(std::move(config))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
     , modelCatalog(std::move(modelCatalog))
 {
-    RuleManager<LogicalPlan> ruleManager;
-
-
-    const PlanRuleRegistryArguments arguments{
-        .defaultQueryOptimization = this->defaultQueryOptimization,
-        .sourceCatalog = this->sourceCatalog,
-        .sinkCatalog = this->sinkCatalog,
-        .modelCatalog = this->modelCatalog,
-    };
-
-    for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())
-    {
-        auto rule = PlanRuleRegistry::instance().find(ruleName);
-        if (!rule.has_value())
-        {
-            throw UnknownOptimizerRule("Did not find the rule {} in PlanRuleRegistry", ruleName);
-        }
-        ruleManager.addRule((*rule)(arguments));
-    }
-
-    NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
-    ruleSequence = ruleManager.getSequence();
+    this->updateRuleSequence();
 }
 
 LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan) const
@@ -73,6 +58,76 @@ LogicalPlan RuleBasedOptimizer::optimize(LogicalPlan plan) const
         plan = rule.apply(std::move(plan));
     }
     return plan;
+}
+
+std::vector<Rule<LogicalPlan>> RuleBasedOptimizer::getRuleSequence() const
+{
+    return this->ruleSequence;
+}
+
+std::expected<void, Exception> RuleBasedOptimizer::updateConfig(QueryOptimizerConfiguration updatedConfig)
+{
+    auto originalConfig = this->config;
+
+    try
+    {
+        this->config = std::move(updatedConfig);
+        updateRuleSequence();
+    }
+    catch (const Exception& e)
+    {
+        this->config = std::move(originalConfig);
+        return std::unexpected{e};
+    }
+
+    return {};
+}
+
+void RuleBasedOptimizer::updateRuleSequence()
+{
+    RuleManager<LogicalPlan> ruleManager;
+
+    const PlanRuleRegistryArguments arguments{
+        .defaultQueryOptimization = this->config,
+        .sourceCatalog = this->sourceCatalog,
+        .sinkCatalog = this->sinkCatalog,
+        .modelCatalog = this->modelCatalog,
+    };
+
+    const auto registeredRules = PlanRuleRegistry::instance().getRegisteredNames();
+
+
+    std::unordered_set<std::string> disabledRules;
+    for (const auto& disabledRule : this->config.disabledRules)
+    {
+        disabledRules.insert(toUpperCase(disabledRule));
+    }
+
+    for (const auto& disabledRule : disabledRules)
+    {
+        if (std::ranges::find(registeredRules, disabledRule) == registeredRules.end())
+        {
+            throw UnknownOptimizerRule("The disabled rule \"{}\" is not registered in PlanRuleRegistry", disabledRule);
+        }
+    }
+
+    for (auto ruleName : registeredRules)
+    {
+        if (disabledRules.contains(ruleName))
+        {
+            continue;
+        }
+
+        auto rule = PlanRuleRegistry::instance().find(ruleName);
+        if (!rule.has_value())
+        {
+            throw UnknownOptimizerRule("Did not find the rule {} in PlanRuleRegistry", ruleName);
+        }
+        ruleManager.addRule((*rule)(arguments));
+    }
+
+    NES_DEBUG("rule based optimizers rule sequence: {}", ruleManager.explain(ExplainVerbosity::Debug));
+    this->ruleSequence = ruleManager.getSequence();
 }
 
 }

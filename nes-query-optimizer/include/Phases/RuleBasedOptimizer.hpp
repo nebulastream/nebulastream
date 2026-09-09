@@ -21,6 +21,7 @@
 #include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
@@ -30,15 +31,19 @@ class RuleBasedOptimizer
 {
 public:
     explicit RuleBasedOptimizer(
-        QueryOptimizerConfiguration defaultQueryOptimization,
+        QueryOptimizerConfiguration config,
         std::shared_ptr<const SourceCatalog> sourceCatalog,
         std::shared_ptr<const SinkCatalog> sinkCatalog,
         std::shared_ptr<const ModelCatalog> modelCatalog);
 
     [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
+    [[nodiscard]] std::vector<Rule<LogicalPlan>> getRuleSequence() const;
+    [[nodiscard]] std::expected<void, Exception> updateConfig(QueryOptimizerConfiguration updatedConfig);
 
 private:
-    QueryOptimizerConfiguration defaultQueryOptimization;
+    void updateRuleSequence();
+
+    QueryOptimizerConfiguration config;
     std::vector<Rule<LogicalPlan>> ruleSequence;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
