@@ -375,8 +375,8 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
     const std::string query = "SELECT id, text \n"
                               "FROM input\n"
                               "INTO FILE(\n"
-                              "'out.csv' AS \"SINK\".FILE_PATH,\n"
-                              "'CSV' as \"SINK\".OUTPUT_FORMAT,\n"
+                              "'out.csv' AS FILE_SINK.FILE_PATH,\n"
+                              "'CSV' AS OUTPUT_FORMATTER.\"TYPE\","
                               "SCHEMA(id UINT64, text VARSIZED) AS \"SINK\".\"SCHEMA\")\n";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
