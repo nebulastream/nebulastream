@@ -39,7 +39,7 @@ size_t countFailedTests(const std::string_view failedTestString, const std::stri
 };
 }
 
-namespace NES::Systest
+namespace NES
 {
 
 struct E2ETestParameters

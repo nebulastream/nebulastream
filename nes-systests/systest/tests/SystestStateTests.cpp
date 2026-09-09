@@ -24,7 +24,7 @@
 #include <SystestState.hpp>
 #include <TemporaryDirectory.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 class SystestStateTest : public Testing::BaseUnitTest
 {

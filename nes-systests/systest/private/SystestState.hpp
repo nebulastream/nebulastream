@@ -47,7 +47,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 class SystestRunner;
@@ -170,11 +170,11 @@ struct RunningQuery
 }
 
 template <>
-struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
+struct fmt::formatter<NES::RunningQuery> : formatter<std::string>
 {
     static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
-    static auto format(const NES::Systest::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
+    static auto format(const NES::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
     {
         return fmt::format_to(
             ctx.out(),

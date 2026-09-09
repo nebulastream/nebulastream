@@ -48,7 +48,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 std::filesystem::path

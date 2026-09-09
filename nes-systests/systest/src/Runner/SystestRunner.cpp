@@ -67,7 +67,7 @@
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 namespace
 {
