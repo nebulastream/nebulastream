@@ -72,9 +72,9 @@ namespace NES
 {
 namespace
 {
-using OverrideQueriesMap = std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>>;
+using OverrideQueriesMap = std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>>;
 
-void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
+void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const size_t totalQueries)
 {
     if (failedQueries.empty())
     {
@@ -97,11 +97,11 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    Systest::SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker)
 {
     auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
+    QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createGRPCBackend()));
 
     while (true)
     {
@@ -116,8 +116,8 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         {
             auto shuffledQueries = entry.second;
             std::ranges::shuffle(shuffledQueries, rng);
-            const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+            const auto failedQueries
+                = runQueries(shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, discardPerformanceMessage);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -129,7 +129,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& baseConfiguration,
-    Systest::SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker)
 {
     while (true)
     {
@@ -150,13 +150,12 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
 
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-            Systest::QuerySubmitter querySubmitter(
-                std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
+            QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
-            const auto failedQueries = Systest::runQueries(
-                shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, Systest::discardPerformanceMessage);
+            const auto failedQueries
+                = runQueries(shuffledQueries, numberConcurrentQueries, querySubmitter, progressTracker, discardPerformanceMessage);
             exitOnFailureIfNeeded(failedQueries, shuffledQueries.size());
         }
     }
@@ -167,7 +166,7 @@ SystestExecutor::SystestExecutor(SystestConfiguration config) : config(std::move
 {
 }
 
-void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& queries, const RunPolicy& policy)
+void SystestExecutor::runEndlessMode(const std::vector<SystestQuery>& queries, const RunPolicy& policy)
 {
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
@@ -212,7 +211,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
         const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
         auto discoveredTestFiles = discoverTestFiles(config);
-        Systest::SystestBinder binder{
+        SystestBinder binder{
             config.workingDir.getValue(),
             config.testDataDir.getValue(),
             config.configDir.getValue(),
@@ -258,15 +257,15 @@ SystestExecutorResult SystestExecutor::executeSystests()
             std::ranges::shuffle(queries, rng);
         }
         const auto numberConcurrentQueries = policy.concurrency;
-        std::vector<Systest::RunningQuery> failedQueries;
+        std::vector<RunningQuery> failedQueries;
         if (config.remoteWorker.getValue())
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
-            const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+            const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+                ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
+                                                 { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                : QueryPerformanceMessageBuilder{discardPerformanceMessage};
             auto failed
                 = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
@@ -284,8 +283,8 @@ SystestExecutorResult SystestExecutor::executeSystests()
             }
             if (policy.measureReport.has_value())
             {
-                std::vector<Systest::BenchmarkResult> benchmarkResults;
-                std::vector<Systest::SystestQuery> benchmarkQueries;
+                std::vector<BenchmarkResult> benchmarkResults;
+                std::vector<SystestQuery> benchmarkQueries;
                 benchmarkQueries.reserve(queries.size());
 
                 for (const auto& query : queries)
@@ -309,7 +308,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
                 /// Benchmarked queries honour their configuration override just like the regular path does: queries
                 /// are grouped by override and each group runs against a worker configured with it.
-                std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> benchmarkQueriesByOverride;
+                std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> benchmarkQueriesByOverride;
                 for (const auto& query : benchmarkQueries)
                 {
                     benchmarkQueriesByOverride[query.configurationOverride].push_back(query);
@@ -337,7 +336,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
             }
             else
             {
-                std::unordered_map<ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
+                std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>> queriesByOverride;
                 for (const auto& query : queries)
                 {
                     queriesByOverride[query.configurationOverride].push_back(query);
@@ -352,10 +351,10 @@ SystestExecutorResult SystestExecutor::executeSystests()
                     {
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
-                    const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                        ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                        : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+                    const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+                        ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
+                                                         { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                        : QueryPerformanceMessageBuilder{discardPerformanceMessage};
                     auto failed = runQueriesAtLocalWorker(
                         queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());

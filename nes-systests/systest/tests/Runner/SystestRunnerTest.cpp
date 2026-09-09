@@ -89,12 +89,12 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
     return queryStatus;
 }
 
-NES::Systest::SystestQuery makeQuery(
-    const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
+NES::SystestQuery makeQuery(
+    const std::expected<NES::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
     NES::SystestQueryId queryId)
 {
-    return NES::Systest::SystestQuery{
+    return NES::SystestQuery{
         .testName = NES::TestName{"test_query"},
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
@@ -109,7 +109,7 @@ NES::Systest::SystestQuery makeQuery(
 }
 }
 
-namespace NES::Systest
+namespace NES
 {
 
 class SystestRunnerTest : public Testing::BaseUnitTest

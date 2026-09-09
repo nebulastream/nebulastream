@@ -82,7 +82,7 @@
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 /// Helper class to model the two-step process of creating sinks in systest. We cannot create sink descriptors directly from sink definitions, because

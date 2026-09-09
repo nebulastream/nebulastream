@@ -17,7 +17,7 @@
 #include <atomic>
 #include <cstddef>
 
-namespace NES::Systest
+namespace NES
 {
 
 class SystestProgressTracker

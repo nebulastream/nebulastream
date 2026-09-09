@@ -23,7 +23,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 /// Interface for submitting queries to a NebulaStream Worker.

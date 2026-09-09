@@ -14,7 +14,7 @@
 
 #include <Progress.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 SystestProgressTracker::SystestProgressTracker() = default;

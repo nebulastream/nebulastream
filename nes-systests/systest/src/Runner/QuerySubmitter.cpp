@@ -33,7 +33,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))

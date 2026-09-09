@@ -49,9 +49,9 @@ public:
     SystestExecutorResult executeSystests();
 
 private:
-    void runEndlessMode(const std::vector<Systest::SystestQuery>& queries, const RunPolicy& policy);
+    void runEndlessMode(const std::vector<SystestQuery>& queries, const RunPolicy& policy);
 
     SystestConfiguration config;
-    Systest::SystestProgressTracker progressTracker;
+    SystestProgressTracker progressTracker;
 };
 }

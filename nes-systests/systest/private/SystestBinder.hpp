@@ -24,7 +24,7 @@
 #include <QueryOptimizerConfiguration.hpp>
 #include <SystestState.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 /// The systest binder uses the SystestParser to create SystestQuery objects that contain everything to run and validate systest queries.
 /// It has to do more than a traditional binder to be able to extract some information required for validation,
