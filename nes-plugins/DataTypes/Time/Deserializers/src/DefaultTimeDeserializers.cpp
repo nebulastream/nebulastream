@@ -93,6 +93,7 @@ int32_t getDaysSinceUnixEpoch(const int8_t* datePtr, const uint64_t dateSize)
 int64_t getMicroSecondsSinceMidnight(const int8_t* timePtr, const uint64_t timeSize)
 {
     const std::string_view timeView{reinterpret_cast<const char*>(timePtr), timeSize};
+    /// Hour, minute, and second are strictly dictated to be 2 digits each, while the second part may have a fractional part appended
     /// Get the hour
     const uint32_t hour = (timeView[0] - '0') * 10 + (timeView[1] - '0');
     /// Get the minutes
@@ -101,8 +102,8 @@ int64_t getMicroSecondsSinceMidnight(const int8_t* timePtr, const uint64_t timeS
     const uint32_t seconds = (timeView[6] - '0') * 10 + (timeView[7] - '0');
 
     const std::string_view secondsView = timeView.substr(6);
-    /// Check for a point
-    const size_t dot = secondsView.find('.');
+    /// Check for a point or a comma. Iso allows both for delimiting the fractional part of seconds.
+    const size_t dot = secondsView.find_first_of(".,");
     uint32_t microseconds = 0;
     if (dot != std::string::npos)
     {
@@ -126,7 +127,8 @@ int64_t getMicroSecondsSinceMidnight(const int8_t* timePtr, const uint64_t timeS
 int64_t getMicroSecondsSinceUnixEpoch(const int8_t* timestampPtr, const uint64_t timestampSize)
 {
     const std::string_view timeStampView{reinterpret_cast<const char*>(timestampPtr), timestampSize};
-    const size_t gap = timeStampView.find(' ');
+    /// Both T and a space could be delimiters for the time part. While the former is more common, the latter is sometimes allowed in systems like PostgreSQL
+    const size_t gap = timeStampView.find_first_of(" T");
     const std::string_view datePart = timeStampView.substr(0, gap);
     const std::string_view timePart = timeStampView.substr(gap + 1);
 
