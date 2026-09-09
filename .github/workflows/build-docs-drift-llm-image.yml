@@ -1,0 +1,45 @@
+name: Build Docs Drift LLM Image
+description: |
+  Builds the local Ollama image (with both the qwen2.5-coder generation model
+  and the mxbai-embed-large embedding model baked in) used by
+  docs-diff-check.yml, and pushes it to GHCR. Only needs to run when the
+  Dockerfile or model choice changes - the resulting image is then
+  reused/cached across every scheduled docs-diff-check run.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - docker/docs-drift-llm/Dockerfile
+      - .github/workflows/build-docs-drift-llm-image.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/docs-drift-llm
+
+jobs:
+  build-and-push:
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: docker/docs-drift-llm
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:qwen2.5-coder-7b-mxbai-embed-large
