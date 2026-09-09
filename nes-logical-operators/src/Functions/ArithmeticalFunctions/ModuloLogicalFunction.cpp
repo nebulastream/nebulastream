@@ -111,7 +111,7 @@ LogicalFunctionRegistryReturnType ModuloLogicalFunction::createMod(LogicalFuncti
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
 }

@@ -158,7 +158,7 @@ Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(c
     auto [id, sourceDescriptor] = context.unreflect<detail::ReflectedSourceDescriptorLogicalOperator>(rfl);
     if (const auto children = plan->getChildrenFor(id, context); !children.empty())
     {
-        throw CannotDeserialize("SourceDescriptorLogicalOperator requires no children, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("SourceDescriptorLogicalOperator requires no children, but got {}", children.size());
     }
     return SourceDescriptorLogicalOperator::create(std::move(sourceDescriptor));
 }

@@ -162,7 +162,7 @@ Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
     auto children = plan->getChildrenFor(context.unreflect<OperatorId>(reflected), context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("IngestionTimeWatermarkAssignerLogicalOperator requires exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("IngestionTimeWatermarkAssignerLogicalOperator requires exactly one child, but got {}", children.size());
     }
     return IngestionTimeWatermarkAssignerLogicalOperator::create(children.at(0));
 }

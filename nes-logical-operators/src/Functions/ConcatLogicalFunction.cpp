@@ -111,7 +111,7 @@ LogicalFunctionRegistryReturnType ConcatLogicalFunction::createConcat(LogicalFun
 {
     if (arguments.children.size() < 2)
     {
-        throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());
     }
     return ConcatLogicalFunction(*(arguments.children.end() - 2), *(arguments.children.end() - 1));
 }

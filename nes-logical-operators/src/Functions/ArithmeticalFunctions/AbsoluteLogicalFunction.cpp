@@ -143,7 +143,7 @@ LogicalFunctionRegistryReturnType AbsoluteLogicalFunction::createAbs(LogicalFunc
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     return AbsoluteLogicalFunction(arguments.children[0]);
 }

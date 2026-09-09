@@ -122,7 +122,7 @@ AggregationLogicalFunctionRegistryReturnType CountAggregationLogicalFunction::cr
 {
     if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("CountAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidLogicalFunctionArgument("CountAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
     return CountAggregationLogicalFunction{arguments.on.at(0), arguments.includeNullValues};
 }

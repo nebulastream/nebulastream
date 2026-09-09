@@ -100,7 +100,7 @@ LogicalFunctionRegistryReturnType CastToTypeLogicalFunction::createCastToType(co
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
     std::unreachable();

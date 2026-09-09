@@ -178,7 +178,7 @@ Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Re
     auto children = plan->getChildrenFor(id, context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("SelectionLogicalOperator requires exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("SelectionLogicalOperator requires exactly one child, but got {}", children.size());
     }
     return SelectionLogicalOperator::create(children.at(0), predicate);
 }
