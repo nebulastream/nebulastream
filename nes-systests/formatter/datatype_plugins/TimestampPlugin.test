@@ -12,15 +12,25 @@ CREATE PHYSICAL SOURCE FOR timeSource2 TYPE FILE;
 ATTACH INLINE
 -20044-08-28,03:52:42,+20085-07-11 12:32:07.278912
 
+CREATE LOGICAL SOURCE timeSource3(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource3 TYPE FILE;
+ATTACH INLINE
+2004-08-28,03:52:42,2008-07-11T12:32:07,278912
+
 # Test CSV format deserialization of the timestamps
 SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
 ----
 2004-08-28,03:52:42,2008-07-11 12:32:07.278912
 
-# Test CSV format deserialization of the timestamps
+# Test CSV format deserialization of the timestamps with years out of 4 digit range
 SELECT * FROM timeSource2 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
 ----
 -20044-08-28,03:52:42,+20085-07-11 12:32:07.278912
+
+# Test CSV format deserialization of the timestamps with comma instead of point for second fractions and a T delimiting date and time for timestamps
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
 
 CREATE LOGICAL SOURCE timeSourceJSON(DATE Date NOT NULL, TIME Time NOT NULL, TIMESTAMP Timestamp NOT NULL);
 CREATE PHYSICAL SOURCE FOR timeSourceJSON TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
