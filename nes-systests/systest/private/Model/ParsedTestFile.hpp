@@ -55,8 +55,6 @@ struct SelectStatement
     SystestQueryId id;
     Expectation expected;
     ConfigurationOverride overrides;
-    /// Set by `SEQUENTIAL_EXECUTION`: the previous query has to finish before this one starts.
-    bool sequential = false;
 };
 
 /// Two queries whose results must match.
@@ -67,8 +65,6 @@ struct DifferentialStatement
     std::string secondSql;
     SystestQueryId secondId;
     ConfigurationOverride overrides;
-    /// Set by `SEQUENTIAL_EXECUTION`: the previous query has to finish before this block starts.
-    bool sequential = false;
 };
 
 /// One `EXPLAIN` and the plan text it expects.

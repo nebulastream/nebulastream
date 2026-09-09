@@ -148,7 +148,6 @@ struct SystestQuery
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<DistributedLogicalPlan> differentialQueryPlan;
-    std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     std::optional<std::string> actualExplainOutput;
 };
 
