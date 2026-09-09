@@ -38,6 +38,11 @@ nautilus::val<uint64_t> RecordBuffer::getNumRecords() const
     return buffer.getNumberOfRecords();
 }
 
+nautilus::val<uint64_t> RecordBuffer::getBufferSize() const
+{
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getBufferSize, tupleBufferRef);
+}
+
 void RecordBuffer::setNumRecords(const nautilus::val<uint64_t>& numRecordsValue)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setNumberOfTuples, buffer.asArg(), numRecordsValue);
