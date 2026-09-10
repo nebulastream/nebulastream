@@ -136,6 +136,10 @@ int main(const int argc, char** argv)
         program.add_argument("--db")
             .default_value(std::string{})
             .help("path to a persistent sqlite catalog; empty (the default) uses an ephemeral in-memory catalog");
+        program.add_argument("--worker")
+            .default_value<std::vector<std::string>>({})
+            .append()
+            .help("changes an option of the embedded worker. e.g. enable_task_statistics=true");
 
         try
         {
@@ -206,8 +210,21 @@ int main(const int argc, char** argv)
 #ifdef EMBED_ENGINE
         /// The embedded worker runs in-process; register it in the catalog so the coordinator can
         /// place fragments on it. Mirrors the old auto-registration of the single local worker.
-        static constexpr auto embeddedWorkerStatement = "CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS DATA)";
-        coordinator->submit_sql(rust::Str{embeddedWorkerStatement}, jsonOutput);
+        /// A worker matches its options by their literal path, so every --worker key goes in as written.
+        std::string embeddedWorkerOptions;
+        for (const auto& workerConfigString : program.get<std::vector<std::string>>("--worker"))
+        {
+            const auto pos = workerConfigString.find('=');
+            if (pos == std::string::npos)
+            {
+                NES_ERROR("Invalid worker argument. Requires argument like 'OPTION=VALUE' but got '{}'", workerConfigString)
+                return 1;
+            }
+            embeddedWorkerOptions += fmt::format(", '{}' AS {}", workerConfigString.substr(pos + 1), workerConfigString.substr(0, pos));
+        }
+        const auto embeddedWorkerStatement
+            = fmt::format("CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS DATA{})", embeddedWorkerOptions);
+        coordinator->submit_sql(rust::Str{embeddedWorkerStatement.data(), embeddedWorkerStatement.size()}, jsonOutput);
 #endif
 
         const NES::Repl replClient(*coordinator, errorBehaviour, jsonOutput, interactiveMode, SignalHandler::terminationToken());
