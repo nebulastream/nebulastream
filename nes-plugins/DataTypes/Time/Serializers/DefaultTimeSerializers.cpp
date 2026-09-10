@@ -53,7 +53,8 @@ uint64_t serializeDate(
     std::chrono::year_month_day ymd{date};
 
     /// For years of 5 or more digits, ISO requires a + in front
-    const std::string dateString = ymd.year() > std::chrono::year(9999) ? std::format("+{:%Y-%m-%d}", ymd) : std::format("{:%Y-%m-%d}", ymd);
+    const std::string dateString
+        = ymd.year() > std::chrono::year(9999) ? std::format("+{:%Y-%m-%d}", ymd) : std::format("{:%Y-%m-%d}", ymd);
     const std::string finalString = quoted ? "\"" + dateString + "\"" : dateString;
     return writeValueToBuffer(finalString.data(), finalString.size(), remainingSpace, buffer, bufferProvider, bufferStartingAddress);
 }
