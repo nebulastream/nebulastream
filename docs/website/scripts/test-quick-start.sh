@@ -15,7 +15,7 @@
 set -Eeuo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-quick_start_doc="$script_dir/../content/reference/GetStarted.md"
+quick_start_doc="$script_dir/../../getting-started/get_started.md"
 
 work_dir="$(mktemp -d)"
 compose_file="$work_dir/compose.yaml"

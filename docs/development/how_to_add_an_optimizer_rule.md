@@ -64,7 +64,7 @@ optimizer instantiates the rule (it defaults to the plugin name if omitted).
 To activate the plugin, you must add the line `add_plugin("Rules/RedundantUnionRemovalRule")` to `nes-plugins/CMakeLists.txt`.  
 
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see [development/extensibility.md](extensibility.md).
 
 ## 3. Interface
 

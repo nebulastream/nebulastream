@@ -1,8 +1,3 @@
----
-title: "How to add a Source"
-weight: 20
----
-
 # How to add a `Source` in NebulaStream
 
 In NebulaStream, sources are responsible for ingesting data into the system.
@@ -50,7 +45,7 @@ nes-plugins/
 
 Each source plugin builds one implementation library and registers entries with two runtime registries:
 1. `Source` — instantiates the source at runtime on workers.
-2. `SourceValidation` — validates the configuration during query planning in `nebuli` (our stateless coordinator).
+2. `SourceValidation` — validates the configuration during query planning in `nes-cli` (our stateless coordinator).
 
 In the `CMakeLists.txt` file of our directory, we tell CMake how we want our plugin to be built:
 
@@ -76,7 +71,7 @@ Notes:
 - The library name is freely chosen;
 - Use `FetchContent` for third-party dependencies not already included in our internal `vcpkg/vcpkg.json`.
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see `guide/extensibility.md`.
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see [development/extensibility.md](extensibility.md).
 We will look into the construction/validation more closely in the next section.
 
 ## 3. Validation & Construction

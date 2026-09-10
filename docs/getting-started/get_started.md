@@ -1,12 +1,7 @@
----
-title: "Quick Start"
-weight: 30
----
-
 ## Install NebulaStream
 
 The recommended way to run NebulaStream is with [Docker](https://www.docker.com/get-started/).
-A basic setup consists of two components: a [**NebulaStream worker**](), which executes the queries, and a [**NebulaStream client**](), which is used to submit queries to the worker.
+A basic setup consists of two components: a [**NebulaStream worker**](../guide/nebulastream-frontend.md#embedded-mode), which executes the queries, and a [**NebulaStream client**](../guide/nebulastream-frontend.md#overview), which is used to submit queries to the worker.
 
 
 ### Run a NebulaStream Worker
@@ -39,8 +34,8 @@ Note that the container ID can be different.
 
 ### Run Your First Query
 
-We will use the [NebulaStream CLI]() to submit a query to the running worker.
-To do this, the CLI requires a [topology file](), which defines the query configuration and deployment topology.
+We will use the [NebulaStream CLI](../guide/nebulastream-frontend.md#nes-cli-one-shot-topology-controller) to submit a query to the running worker.
+To do this, the CLI requires a [topology file](../guide/nebulastream-frontend.md#topology-file-format), which defines the query configuration and deployment topology.
 
 Create a file called `topology.yaml` and paste the following content:
 
@@ -94,9 +89,9 @@ workers:
 ### What Does This Query Do?
 
 This topology file describes a query to be executed on a single-node worker.
-The query reads records from [GENERATOR_SOURCE](), uses the field VALUE, multiplies it by 2, and writes the result as a new field called SCALED_VALUE into RESULTS, which is `/output/results.csv`.
+The query reads records from [GENERATOR_SOURCE](../guide/sources-and-sinks.md#generator), uses the field VALUE, multiplies it by 2, and writes the result as a new field called SCALED_VALUE into RESULTS, which is `/output/results.csv`.
 
-Check the [topology file format]() for further details on how to structure a topology file.
+Check the [topology file format](../guide/nebulastream-frontend.md#topology-file-format) for further details on how to structure a topology file.
 
 ### Submit the Query
 
@@ -112,7 +107,7 @@ Run the query using the following command:
 ```
 <!-- quick-start-submit-query:end -->
 
-If query registration is successful, CLI returns the [query ID]() and stops.
+If query registration is successful, CLI returns the [query ID](../guide/nebulastream-frontend.md#query-status-output) and stops.
 
 <details>
 <summary>Example Output of a Query Submission</summary>
@@ -122,7 +117,7 @@ soaring_thoroughbred_0926
 ```
 </details>
 
-### Check the output
+### Check the Output
 
 After a few seconds, inspect the output:
 
@@ -438,4 +433,3 @@ You can stop everything by shutting down the Compose stack.
 docker compose down
 ```
 <!-- quick-start-stop-compose:end -->
----

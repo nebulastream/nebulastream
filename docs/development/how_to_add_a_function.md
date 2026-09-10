@@ -97,7 +97,7 @@ A query refers to the function by that name, and lowering looks the physical fun
 See `nes-plugins/Functions/Conditional/CMakeLists.txt` for the complete build setup of the example plugin.
 To activate the plugin, add the line `add_plugin("Functions/Conditional")` to `nes-plugins/CMakeLists.txt`.
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see [development/extensibility.md](extensibility.md).
 
 ## 5. Interface
 
