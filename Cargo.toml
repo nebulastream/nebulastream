@@ -20,6 +20,7 @@ members = [
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
     "nes-physical-operators/rust/cast-to-unix-timestamp",
+    "nes-coordinator/migration",
 ]
 
 [workspace.package]
@@ -35,8 +36,21 @@ chrono = { version = "0.4.45", default-features = false, features = ["std"] }
 cxx = "1.0.194"
 futures = "0.3.31"
 pin-project = "1.1.10"
+sea-orm = { version = "=1.1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "debug-print",
+    "with-json",
+    "sqlite-use-returning-for-3_35",
+] }
+# Kept version-locked with sea-orm above (they share types); pin both here.
+sea-orm-migration = { version = "=1.1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+] }
 serde = { version = "1.0.217", features = ["derive"] }
-tokio = { version = "1.52.0", features = ["macros", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
 tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serde_json"] }
 tokio-stream = "0.1.17"
