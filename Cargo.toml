@@ -20,6 +20,7 @@ members = [
     "nes-network/network-bindings",
     "nes-common/rust/spdlog-bindings",
     "nes-physical-operators/rust/cast-to-unix-timestamp",
+    "nes-coordinator/model",
     "nes-coordinator/migration",
 ]
 
@@ -71,6 +72,7 @@ tokio-util = { version = "0.7.13", features = ["codec"] }
 tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
+uuid = { version = "1.26.1", features = ["v4"] }
 
 # The sqlx fork lets the coordinator's simulation tests run sqlx under `--cfg madsim`.
 # Without that cfg, the fork behaves like upstream.
