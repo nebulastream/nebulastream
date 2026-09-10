@@ -32,9 +32,19 @@ futures.workspace = true
 [build-dependencies]
 tonic-build = { version = "0.5", package = "madsim-tonic-build" }
 
-
 [dev-dependencies]
 sea-orm.workspace = true
 # Pull in model's Arbitrary impls / generators for the simulation tests.
 model = { workspace = true, features = ["testing"] }
 proptest.workspace = true
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+toml.workspace = true
+serde = { workspace = true }
+async-trait.workspace = true
+inventory.workspace = true
+libtest-mimic.workspace = true
+
+[[test]]
+name = "simulation"
+path = "tests/simulation/main.rs"
+harness = false
