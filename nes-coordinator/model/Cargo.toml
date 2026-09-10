@@ -24,7 +24,7 @@ serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
-tokio.workspace = true
+tokio = { version = "0.2", package = "madsim-tokio", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
 sqlx.workspace = true
 sea-orm-migration.workspace = true
 # Test-support only: gated behind the `testing` feature (and enabled for this
