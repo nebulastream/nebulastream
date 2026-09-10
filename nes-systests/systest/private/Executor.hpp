@@ -80,7 +80,8 @@ private:
     /// Files that could not be prepared or set up join the report as failures next to the cases that ran.
     [[nodiscard]] static ExecutorResult runOnce(TestRunner& runner, const RunPolicy& plan, PreparedRun prepared);
 
-    /// Submits the cases round after round, to keep a worker under load.
+    /// Submits the cases round after round, to measure them or to keep a worker under load.
+    /// A measuring run keeps each query's best round and ends in the written report rather than a tally.
     /// Setting up happens once, because a second CREATE of the same name is a catalog conflict rather than more load.
     /// Refuses files that could not be prepared or set up, because they are failures of the invocation rather than
     /// something to repeat, and stops on the first round that fails.

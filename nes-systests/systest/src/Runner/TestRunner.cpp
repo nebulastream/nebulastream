@@ -76,6 +76,18 @@ std::chrono::milliseconds executionTime(const DistributedQueryStatusSnapshot& sn
     return elapsed.count() > 0 ? elapsed : std::chrono::milliseconds::zero();
 }
 
+/// The time a finished query ran. A query that ran past the timeout reached no terminal state, so it took no measurable time.
+std::chrono::milliseconds executionTimeOf(const FinishedQuery& finished)
+{
+    return finished.outcome.has_value() ? executionTime(*finished.outcome) : std::chrono::milliseconds::zero();
+}
+
+/// Whether a finished query ran to completion, as opposed to failing or running past the timeout.
+bool completed(const FinishedQuery& finished)
+{
+    return finished.outcome.has_value() and finished.outcome->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
+}
+
 }
 
 struct TestRunner::Impl
@@ -85,6 +97,7 @@ struct TestRunner::Impl
         , clusterConfig(config.clusterConfig)
         , remote(config.remoteWorker.getValue())
         , baseWorker(config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{}))
+        , queryTimeout(std::chrono::seconds{config.queryTimeoutSeconds.getValue()})
     {
         if (not config.workerConfig.getValue().empty())
         {
@@ -108,7 +121,7 @@ struct TestRunner::Impl
         auto manager = remote
             ? std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend())
             : std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuredWith(baseWorker, settings)));
-        return QuerySubmitter{std::move(manager)};
+        return QuerySubmitter{std::move(manager), queryTimeout};
     }
 
     /// One case of one test file in the submitted group.
@@ -234,18 +247,18 @@ struct TestRunner::Impl
                 continue;
             }
 
-            for (auto& snapshot : submitter.finishedQueries())
+            for (auto& finished : submitter.finishedQueries())
             {
-                const auto inFlight = running.find(snapshot.queryId);
+                const auto inFlight = running.find(finished.id);
                 INVARIANT(inFlight != running.end(), "a finished query was submitted by this run");
                 auto flight = std::move(inFlight->second);
                 running.erase(inFlight);
 
                 const auto& statement = statementsOf(flight.job).at(flight.statement);
-                const auto execution = executionTime(snapshot);
-                const auto succeeded = snapshot.getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
+                const auto execution = executionTimeOf(finished);
+                const auto succeeded = completed(finished);
                 flight.outcomes.push_back(StatementOutcome{
-                    .reached = std::move(snapshot),
+                    .reached = std::move(finished.outcome),
                     .sinkOutputSchema = statement.plan.has_value() ? std::optional{statement.plan->sinkOutputSchema} : std::nullopt,
                     .explained = std::nullopt,
                     .execution = execution});
@@ -268,6 +281,8 @@ struct TestRunner::Impl
     SystestClusterConfiguration clusterConfig;
     bool remote;
     SingleNodeWorkerConfiguration baseWorker;
+    /// How long one submitted query may take to reach a terminal state. Zero waits forever.
+    std::chrono::milliseconds queryTimeout;
 
     /// What setting up produced, in the order of the ready list that the caller then submits.
     std::vector<Prepared> prepared;
