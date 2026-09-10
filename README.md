@@ -40,7 +40,7 @@ We advance this vision through five core technologies:
 - **Adaptive Resource Management** - Reacts to topology or workload changes without interrupting queries.
 
 The system architecture spans sensor to cloud:
-1. **Sources & Sinks** - Built-in connectors (e.g., JDBC, MQTT, TCP) and formats (e.g., CSV, JSON) with plugin hooks for custom components; extend them via the plugin framework in the [Extensibility guide](docs/guide/extensibility.md).
+1. **Sources & Sinks** - Built-in connectors (e.g., JDBC, MQTT, TCP) and formats (e.g., CSV, JSON) with plugin hooks for custom components; extend them via the plugin framework in the [Extensibility guide](docs/development/extensibility.md).
 2. **I/O Handling** - Thread-shared source processing and asynchronous callbacks minimize waiting time.
 3. **Query Submission** - SQL-like language with prebuilt operators such as join and aggregation, plus user-defined operator plugins.
 4. **Query Optimization** - Rule-based optimizer generates hardware-aware plans; users can extend the rule engine.
@@ -154,7 +154,7 @@ For further information about our frontends, check out the [Frontend Reference](
 ## Documentation
 - Design proposals and architectural notes: [Design index](docs/design/README.md)
 - Developer workflows and environment setup: [Development environment](docs/development/development.md), [Run workflows locally](docs/development/running_workflows_locally.md), [Packaging Docker images](docs/development/packaging_docker_images.md)
-- Implementation guides: [Add a source](docs/guide/how_to_add_a_source.md), [Add a sink](docs/guide/how_to_add_a_sink.md), [Add a function](docs/guide/how_to_add_a_function.md), [Add a placement strategy](docs/guide/how_to_add_a_placement_strategy.md)
+- Implementation guides: [Add a source](docs/development/how_to_add_a_source.md), [Add a sink](docs/development/how_to_add_a_sink.md), [Add a function](docs/development/how_to_add_a_function.md), [Add a placement strategy](docs/development/how_to_add_a_placement_strategy.md)
 - Technical deep dives: [Dependency architecture](docs/technical/dependency.md), [Query engine task queue](docs/technical/QueryEngine_TaskQueue.md), [Watermarking trigger details](docs/technical/watermarking_progress_window_triggering.md)
 - Organizational guidelines and processes: [Meetings overview](docs/organizational/meetings.md), [Nightly CI process](docs/organizational/processes/nightly_ci.md)
 

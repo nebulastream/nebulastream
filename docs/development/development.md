@@ -1,8 +1,3 @@
----
-title: "Build instructions"
-weight: 10
----
-
 # Development
 
 This document explains how to set up the development environment for NebulaStream.
