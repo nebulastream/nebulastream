@@ -115,8 +115,10 @@ END;
 --   2. Propagate timestamps: start = MIN(query_fragment.start), stop = MAX(query_fragment.stop).
 --      Each is written only once the derived query state can have it,
 --      so no timestamp leaks into an earlier state.
---   3. If the query ended up Failed,
---      aggregate the query_fragment errors into a {host_addr: [messages]} JSON object.
+--   3. If the query ended up Failed and carries no error yet,
+--      copy the first failed query_fragment's error and host onto it, as a {host_addr, error} JSON object.
+--      The earliest stop_timestamp is the first failure; a later one is a consequence of it
+--      (the other query_fragments being stopped, or a worker removed), so the assignment is final.
 CREATE TRIGGER IF NOT EXISTS derive_query_state_on_query_fragment_update
     AFTER UPDATE OF current_state ON query_fragment
 BEGIN
@@ -163,28 +165,16 @@ BEGIN
     WHERE id = NEW.query_id;
 
     UPDATE query SET
-        -- A query can place several query_fragments on one worker,
-        -- so group the messages per host into a list.
-        -- Keying a plain object on host_addr would emit duplicate keys,
-        -- and a map deserialize would keep only the last one and drop the other errors.
         error = (
-            SELECT json_group_object(host_addr, json(messages))
-            FROM (
-                SELECT
-                    f.host_addr AS host_addr,
-                    json_group_array(
-                        COALESCE(
-                            json_extract(f.error, '$.Internal.msg'),
-                            json_extract(f.error, '$.Transport.msg')
-                        )
-                    ) AS messages
-                FROM query_fragment f
-                WHERE f.query_id = NEW.query_id AND f.error IS NOT NULL
-                GROUP BY f.host_addr
-            )
+            SELECT json_object('host_addr', f.host_addr, 'error', json(f.error))
+            FROM query_fragment f
+            WHERE f.query_id = NEW.query_id AND f.current_state = 'Failed' AND f.error IS NOT NULL
+            ORDER BY f.stop_timestamp, f.id
+            LIMIT 1
         )
     WHERE id = NEW.query_id
-    AND (SELECT state FROM query WHERE id = NEW.query_id) = 'Failed';
+    AND (SELECT state FROM query WHERE id = NEW.query_id) = 'Failed'
+    AND error IS NULL;
 END;
 
 -- When the derive trigger above sets a query to Failed because one query_fragment failed,
@@ -203,8 +193,7 @@ END;
 -- every non-terminal query_fragment on that host is unrecoverable, so mark them Failed.
 -- The derive trigger above then propagates the failure to the owning queries.
 -- stop_timestamp and error are set together with current_state,
--- otherwise the row violates the application's invariant that a Failed query_fragment has both,
--- and the per-host error aggregation would leave this host out.
+-- otherwise the row violates the application's invariant that a Failed query_fragment has both.
 CREATE TRIGGER IF NOT EXISTS cascade_worker_removed_to_query_fragments
     AFTER UPDATE OF desired_state ON worker
     WHEN NEW.desired_state = 'Removed' AND OLD.desired_state != 'Removed'
