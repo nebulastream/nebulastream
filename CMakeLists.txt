@@ -235,6 +235,27 @@ if (NES_ENABLES_TESTS)
         )
     endif ()
 
+    # The coordinator simulation tests compile the coordinator crates against
+    # the deterministic madsim runtime, selected by the madsim cfg. They run
+    # after the per-crate Rust tests because all cargo invocations share one
+    # target directory.
+    add_test(
+            NAME rust-coordinator-simulation
+            COMMAND ${_CORROSION_CARGO} test -p coordinator --test simulation --locked --color=always
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+    get_property(_nes_rustc_for_sim CACHE Rust_COMPILER_CACHED PROPERTY VALUE)
+    # RUN_SERIAL: each trial has a real-time watchdog around a virtual-time
+    # simulation, so co-scheduled tests starving the CPU cause spurious
+    # timeouts. Running alone matches the isolated runner the suite was
+    # tuned on.
+    set_tests_properties(rust-coordinator-simulation PROPERTIES
+            ENVIRONMENT "RUSTUP_TOOLCHAIN=${Rust_TOOLCHAIN};RUSTC=${_nes_rustc_for_sim};PROTOC=$<TARGET_FILE:protobuf::protoc>;RUSTFLAGS=--cfg madsim"
+            LABELS "rust"
+            DEPENDS "rust-coordinator"
+            RUN_SERIAL TRUE
+    )
+
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
