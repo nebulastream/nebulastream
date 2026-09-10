@@ -55,12 +55,16 @@
 #include <Functions/LogicalFunctionProvider.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/ReservoirSampleAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -190,6 +194,181 @@ bool isInsideDataTypeConstructorArgument(antlr4::ParserRuleContext* context)
 LogicalFunction createRawLiteralFunction(std::string literal)
 {
     return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
+}
+
+/// The seed RESERVOIR uses when the query does not name one; eviction and merge decisions are driven by it.
+constexpr uint64_t DEFAULT_RESERVOIR_SEED = 42;
+
+uint64_t
+parseUnsignedConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
+{
+    const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
+    if (not constant)
+    {
+        throw InvalidQuerySyntax("Expected an unsigned integer constant for {} at {}", description, queryText);
+    }
+    const auto parsed = NES::from_chars<uint64_t>(constant.value()->getConstantValue());
+    if (not parsed.has_value())
+    {
+        throw InvalidQuerySyntax(
+            "Expected an unsigned integer constant for {}, but got {} at {}", description, constant.value()->getConstantValue(), queryText);
+    }
+    return parsed.value();
+}
+
+/// RESERVOIR(statisticId, sampleSize): builds a reservoir sample over the whole input records of a window
+AntlrSQLHelper::StatisticBuildInfo bindReservoirBuild(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
+{
+    if (arguments.size() < 2 or arguments.size() > 3)
+    {
+        throw InvalidQuerySyntax("RESERVOIR expects two or three arguments (statisticId, sampleSize[, seed]) at {}", queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR statisticId", queryText);
+    const auto sampleSize = parseUnsignedConstantArgument(arguments[1], "the RESERVOIR sampleSize", queryText);
+    if (statisticId == StatisticId::INVALID or sampleSize == 0)
+    {
+        throw InvalidQuerySyntax("RESERVOIR requires a valid statisticId and a sampleSize greater than zero at {}", queryText);
+    }
+    const auto seed
+        = arguments.size() == 3 ? parseUnsignedConstantArgument(arguments[2], "the RESERVOIR seed", queryText) : DEFAULT_RESERVOIR_SEED;
+    return {
+        .statisticId = StatisticId(statisticId),
+        .statisticFunction = WindowAggregationLogicalFunction{ReservoirSampleAggregationLogicalFunction{sampleSize, seed}},
+        .functionName = "RESERVOIR"};
+}
+
+std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadFields(
+    const std::vector<LogicalFunction>& arguments,
+    const size_t firstArgumentIdx,
+    const std::string_view functionName,
+    const std::string_view queryText)
+{
+    std::vector<StatisticStoreReaderLogicalOperator::PayloadField> payloadFields;
+    for (size_t argumentIdx = firstArgumentIdx; argumentIdx < arguments.size(); argumentIdx += 2)
+    {
+        const auto fieldAccess = arguments[argumentIdx].tryGetAs<UnboundFieldAccessLogicalFunction>();
+        const auto typeAccess = arguments[argumentIdx + 1].tryGetAs<UnboundFieldAccessLogicalFunction>();
+        if (not fieldAccess or not typeAccess)
+        {
+            throw InvalidQuerySyntax("{} expects (fieldName, typeName) pairs at {}", functionName, queryText);
+        }
+        const auto typeName = toUpperCase(std::string{typeAccess.value()->getFieldName().getOriginalString()});
+        const auto dataType = DataTypeProvider::tryProvideDataType(typeName);
+        if (not dataType.has_value())
+        {
+            throw InvalidQuerySyntax("{} got an unknown data type {} at {}", functionName, typeName, queryText);
+        }
+        payloadFields.emplace_back(fieldAccess.value()->getFieldName(), dataType.value());
+    }
+    return payloadFields;
+}
+
+AntlrSQLHelper::StatisticProbeInfo bindReservoirProbe(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
+{
+    if (arguments.size() < 3 or arguments.size() % 2 == 0)
+    {
+        throw InvalidQuerySyntax("RESERVOIR_PROBE expects a statisticId followed by (fieldName, typeName) pairs at {}", queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR_PROBE statisticId", queryText);
+    if (statisticId == StatisticId::INVALID)
+    {
+        throw InvalidQuerySyntax("RESERVOIR_PROBE requires a valid statisticId at {}", queryText);
+    }
+    return {
+        .statisticId = StatisticId(statisticId),
+        .blobType = StatisticBlobType{ReservoirSampleAggregationLogicalFunction::NAME},
+        .payloadFields = parsePayloadFields(arguments, 1, "RESERVOIR_PROBE", queryText),
+        .windowMatch = StatisticWindowMatch::ExactWindow};
+}
+
+std::string
+parseStringConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
+{
+    const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
+    if (not constant)
+    {
+        throw InvalidQuerySyntax("Expected a quoted string constant for {} at {}", description, queryText);
+    }
+    const auto raw = constant.value()->getConstantValue();
+    if (raw.size() < 2 or raw.front() != '\'' or raw.back() != '\'')
+    {
+        throw InvalidQuerySyntax("Expected a quoted string constant for {}, but got {} at {}", description, raw, queryText);
+    }
+    return raw.substr(1, raw.size() - 2);
+}
+
+WindowAggregationLogicalFunction
+bindStatisticAggregation(const std::string& metricName, const AggregationFieldAccess& field, const std::string_view queryText)
+{
+    const auto metric = toUpperCase(metricName);
+    if (metric == "AVG")
+    {
+        return WindowAggregationLogicalFunction{AvgAggregationLogicalFunction{field}};
+    }
+    if (metric == "MIN")
+    {
+        return WindowAggregationLogicalFunction{MinAggregationLogicalFunction{field}};
+    }
+    if (metric == "MAX")
+    {
+        return WindowAggregationLogicalFunction{MaxAggregationLogicalFunction{field}};
+    }
+    if (metric == "SUM")
+    {
+        return WindowAggregationLogicalFunction{SumAggregationLogicalFunction{field}};
+    }
+    if (metric == "COUNT")
+    {
+        return WindowAggregationLogicalFunction{CountAggregationLogicalFunction{field, true}};
+    }
+    throw InvalidQuerySyntax("STATISTIC_BUILD got an unknown metric {} at {}", metricName, queryText);
+}
+
+AntlrSQLHelper::StatisticBuildInfo bindStatisticBuild(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
+{
+    if (arguments.size() != 3)
+    {
+        throw InvalidQuerySyntax("STATISTIC_BUILD expects exactly three arguments (statisticId, metricName, field) at {}", queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the STATISTIC_BUILD statisticId", queryText);
+    if (statisticId == StatisticId::INVALID)
+    {
+        throw InvalidQuerySyntax("STATISTIC_BUILD requires a valid statisticId at {}", queryText);
+    }
+    const auto metricName = parseStringConstantArgument(arguments[1], "the STATISTIC_BUILD metric name", queryText);
+    const auto fieldAccess = arguments[2].tryGetAs<UnboundFieldAccessLogicalFunction>();
+    if (not fieldAccess)
+    {
+        throw InvalidQuerySyntax("STATISTIC_BUILD expects a field name as its third argument at {}", queryText);
+    }
+    return {
+        .statisticId = StatisticId(statisticId),
+        .statisticFunction = bindStatisticAggregation(metricName, arguments[2].getAs<UnboundFieldAccessLogicalFunction>(), queryText),
+        .functionName = "STATISTIC_BUILD"};
+}
+
+AntlrSQLHelper::StatisticProbeInfo bindStatisticProbe(
+    const std::vector<LogicalFunction>& arguments,
+    const std::string_view functionName,
+    const StatisticWindowMatch windowMatch,
+    const std::string_view queryText)
+{
+    if (arguments.size() < 4 or arguments.size() % 2 != 0)
+    {
+        throw InvalidQuerySyntax(
+            "{} expects a statisticId and a blob type followed by (fieldName, typeName) pairs at {}", functionName, queryText);
+    }
+    const auto statisticId = parseUnsignedConstantArgument(arguments[0], fmt::format("the {} statisticId", functionName), queryText);
+    if (statisticId == StatisticId::INVALID)
+    {
+        throw InvalidQuerySyntax("{} requires a valid statisticId at {}", functionName, queryText);
+    }
+    const auto blobType = parseStringConstantArgument(arguments[1], fmt::format("the {} blob type", functionName), queryText);
+    return {
+        .statisticId = StatisticId(statisticId),
+        .blobType = StatisticBlobType{blobType},
+        .payloadFields = parsePayloadFields(arguments, 2, functionName, queryText),
+        .windowMatch = windowMatch};
 }
 
 LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
@@ -783,7 +962,37 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
 
     auto windowTypeOpt = helpers.top().windowType;
-    if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
+    if (helpers.top().statisticBuild.has_value())
+    {
+        const auto& functionName = helpers.top().statisticBuild->functionName;
+        if (!windowTypeOpt.has_value() || !helpers.top().joinKeyRelationHelper.empty())
+        {
+            throw InvalidQuerySyntax("{} requires a time-based window and cannot be combined with a join", functionName);
+        }
+        if (!helpers.top().windowAggs.empty() || !helpers.top().groupByFields.empty())
+        {
+            throw InvalidQuerySyntax("{} cannot be combined with other aggregation functions or GROUP BY", functionName);
+        }
+        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax(
+                "{} requires exactly one time characteristic, got {}",
+                functionName,
+                currentWindowTimestampOpt.has_value() ? "two" : "none");
+        }
+        auto characteristic = std::get<Windowing::UnboundTimeCharacteristic>(currentWindowTimestampOpt.value());
+        queryPlan = LogicalPlanBuilder::addStatisticBuild(
+            queryPlan,
+            windowTypeOpt.value(),
+            std::move(characteristic),
+            helpers.top().statisticBuild->statisticId,
+            helpers.top().statisticBuild->statisticFunction);
+        /// The statistic store writer already emits exactly the statistic metadata fields
+        helpers.top().asterisk = true;
+    }
+    else if (windowTypeOpt.has_value() && helpers.top().joinKeyRelationHelper.empty())
     {
         const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
         if (!currentWindowTimestampOpt.has_value()
@@ -810,6 +1019,17 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             aggregations | std::ranges::to<std::vector>(),
             helpers.top().groupByFields,
             std::move(characteristic));
+    }
+
+    if (helpers.top().statisticProbe.has_value())
+    {
+        queryPlan = LogicalPlanBuilder::addStatisticProbe(
+            queryPlan,
+            helpers.top().statisticProbe->statisticId,
+            helpers.top().statisticProbe->blobType,
+            std::move(helpers.top().statisticProbe->payloadFields),
+            helpers.top().statisticProbe->windowMatch);
+        helpers.top().asterisk = true;
     }
 
     auto projections = helpers.top().getProjections()
@@ -1274,8 +1494,51 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 std::nullopt);
             isAggregation = true;
             break;
-        default:
+        default: {
             helpers.top().hasUnnamedAggregation = false;
+            if (funcName == "RESERVOIR" or funcName == "RESERVOIR_PROBE" or funcName == "STATISTIC_BUILD" or funcName == "STATISTIC_PROBE"
+                or funcName == "STATISTIC_PROBE_RANGE")
+            {
+                const auto numArgs = context->argument.size();
+                if (numArgs > helpers.top().functionBuilder.size())
+                {
+                    throw InvalidQuerySyntax(
+                        "Function '{}' expects {} arguments but only {} are available",
+                        funcName,
+                        numArgs,
+                        helpers.top().functionBuilder.size());
+                }
+                const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                const std::vector<LogicalFunction> statisticArgs(argsBegin, helpers.top().functionBuilder.end());
+                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                if (funcName == "RESERVOIR" or funcName == "STATISTIC_BUILD")
+                {
+                    if (helpers.top().statisticBuild.has_value())
+                    {
+                        throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
+                    }
+                    helpers.top().statisticBuild = funcName == "RESERVOIR" ? bindReservoirBuild(statisticArgs, context->getText())
+                                                                           : bindStatisticBuild(statisticArgs, context->getText());
+                }
+                else
+                {
+                    if (helpers.top().statisticProbe.has_value())
+                    {
+                        throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
+                    }
+                    if (funcName == "RESERVOIR_PROBE")
+                    {
+                        helpers.top().statisticProbe = bindReservoirProbe(statisticArgs, context->getText());
+                    }
+                    else
+                    {
+                        const auto windowMatch
+                            = funcName == "STATISTIC_PROBE_RANGE" ? StatisticWindowMatch::WithinRange : StatisticWindowMatch::ExactWindow;
+                        helpers.top().statisticProbe = bindStatisticProbe(statisticArgs, funcName, windowMatch, context->getText());
+                    }
+                }
+                break;
+            }
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
@@ -1317,6 +1580,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                     throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
                 }
             }
+        }
     }
 
     /// For aggregation functions, generate an auto-name for the result field and replace the raw
