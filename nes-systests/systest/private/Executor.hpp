@@ -74,6 +74,7 @@ private:
     [[nodiscard]] static ExecutorResult runOnce(TestRunner& runner, const RunPolicy& plan, PreparedRun prepared);
 
     /// Submits the test cases in rounds, as the plan states.
+    /// A measuring run keeps each query's best round and ends in the written report rather than a tally.
     /// Setting up happens once, because for another run we can resubmit already prepared plans to the worker.
     [[nodiscard]] static ExecutorResult runRounds(TestRunner& runner, const RunPolicy& plan, const PreparedRun& prepared);
 

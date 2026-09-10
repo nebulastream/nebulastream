@@ -60,8 +60,12 @@ public:
     StringOption testFileExtension = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
     StringOption workingDir = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
     BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
+    UIntOption shuffleSeed = {"shuffle_seed", "0", "the seed the test file order is shuffled with. 0 draws one and prints it"};
     UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
+    UIntOption queryTimeoutSeconds
+        = {"query_timeout_seconds", "300", "fail a query that has not reached a terminal state after this long. 0 waits forever"};
     BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
+    UIntOption benchmarkRounds = {"benchmark_rounds", "1", "how many times a benchmark repeats the queries, keeping each query's best"};
     SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};
     SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
     SequenceOption<StringOption> disabledTestFiles = {"disabled_test_files", "test files to disable"};
@@ -71,6 +75,8 @@ public:
     StringOption clusterConfigPath = {"cluster_config", TEST_CONFIGURATION_DIR "/topologies/two-node.yaml", "cluster configuration"};
     BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"endless_mode", "false", "continuously issue queries to the worker"};
+    UIntOption endlessRounds = {"endless_rounds", "0", "how many times endless mode repeats the queries. 0 is unlimited"};
+    UIntOption endlessSeconds = {"endless_seconds", "0", "how long endless mode keeps issuing queries. 0 is unlimited"};
 
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;
