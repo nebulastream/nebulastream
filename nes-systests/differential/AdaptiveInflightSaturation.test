@@ -1,0 +1,22 @@
+# name: differential/AdaptiveInflightSaturation.test
+# description: High-volume (flood-rate) generator exercising #1713 adaptive inflight provisioning under load. Run with
+#   --workerConfig enable_adaptive_inflight_buffers=true to drive the adaptive path; the differential form asserts the
+#   two equivalent filters still agree, guarding correctness of the adaptive path under high volume.
+#   NOTE: for a *cheap* filter the source is the bottleneck, so the per-source cap does not grow (no backpressure). To
+#   observe the AIMD cap climbing, pair adaptive mode with a downstream-bound query (heavy join/aggregation or a slow
+#   sink) so the source's in-flight slots actually fill -- see the #1713 AIMD unit test for the policy's grow/decay math.
+# groups: [Differential]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+    1 AS "SOURCE".SEED,
+    'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'emit_rate 1000000000' AS "SOURCE".GENERATOR_RATE_CONFIG,
+    'SEQUENCE UINT64 0 100000 1, SEQUENCE UINT64 0 100000 1, SEQUENCE UINT64 0 100000 1' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK saturationSink(out_id UINT64 NOT NULL, out_value UINT64 NOT NULL, out_timestamp UINT64 NOT NULL) TYPE File;
+
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE value >= UINT64(50000) INTO saturationSink;
+====
+SELECT id AS out_id, value AS out_value, timestamp AS out_timestamp FROM stream WHERE NOT (value < UINT64(50000)) INTO saturationSink;
