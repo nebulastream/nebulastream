@@ -20,5 +20,4 @@ DROP TRIGGER IF EXISTS validate_query_fragment_state_transition;
 DROP TRIGGER IF EXISTS cascade_worker_removed_to_query_fragments;
 DROP TRIGGER IF EXISTS prevent_physical_source_drop_with_active_queries;
 DROP TRIGGER IF EXISTS prevent_sink_drop_with_active_queries;
-DROP TRIGGER IF EXISTS cleanup_orphaned_source;
-DROP TRIGGER IF EXISTS cleanup_orphaned_sink;
+DROP TRIGGER IF EXISTS delete_dropped_query_on_termination;
