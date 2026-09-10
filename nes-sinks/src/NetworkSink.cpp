@@ -51,8 +51,8 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
     : Sink(std::move(backpressureController))
     , tupleSize(getSizeInBytes(*NES::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
     , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
+          sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_UPPER_THRESHOLD),
+          sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_LOWER_THRESHOLD))
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::DATA_ENDPOINT))
     , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
