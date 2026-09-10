@@ -11,7 +11,7 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_library(time_deserializers STATIC DefaultTimeDeserializers.cpp)
+add_library(time_deserializers STATIC DefaultTimeDeserializers.cpp UnixEpochTimeDeserializers.cpp)
 target_link_libraries(time_deserializers PRIVATE nes-input-formatters)
 target_include_directories(time_deserializers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -19,3 +19,4 @@ link_plugin_library(nes-input-formatters time_deserializers)
 add_registry_entry(ValueDeserializer DefaultDate HEADER DefaultTimeDeserializers.hpp)
 add_registry_entry(ValueDeserializer DefaultTime HEADER DefaultTimeDeserializers.hpp)
 add_registry_entry(ValueDeserializer DefaultTimestamp HEADER DefaultTimeDeserializers.hpp)
+add_registry_entry(ValueDeserializer UnixEpochTimestamp HEADER UnixEpochTimeDeserializers.hpp)
