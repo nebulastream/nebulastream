@@ -26,6 +26,7 @@
 #include <ranges>
 #include <thread>
 #include <utility>
+#include <Runtime/BufferProviderStatisticListener.hpp>
 #include <Runtime/MemoryUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,8 +38,12 @@
 namespace NES
 {
 UnpooledChunksManager::UnpooledChunksManager(
-    std::shared_ptr<std::pmr::memory_resource> memoryResource, const size_t unpooledMemoryBudgetInBytes)
-    : memoryResource(std::move(memoryResource)), unpooledMemoryBudgetInBytes(unpooledMemoryBudgetInBytes)
+    std::shared_ptr<std::pmr::memory_resource> memoryResource,
+    const size_t unpooledMemoryBudgetInBytes,
+    std::shared_ptr<BufferProviderStatisticListener> eventListener)
+    : memoryResource(std::move(memoryResource))
+    , unpooledMemoryBudgetInBytes(unpooledMemoryBudgetInBytes)
+    , eventListener(std::move(eventListener))
 {
 }
 
@@ -153,6 +158,12 @@ UnpooledChunksManager::allocateSpace(const std::thread::id threadId, const size_
     currentAllocatedChunk.usedSize += neededSize;
     currentAllocatedChunk.activeMemorySegments += 1;
     NES_TRACE("Created new chunk {} for tuple buffer {} of {}B", currentAllocatedChunk, fmt::ptr(localMemoryForNewTupleBuffer), neededSize);
+    if (eventListener) [[unlikely]]
+    {
+        /// Emitted while the per-thread chunk lock is still held. That lock is essentially uncontended, and
+        /// the listener contract forbids blocking, so this does not serialise other threads.
+        eventListener->onEvent(UnpooledChunkAllocated{newAllocationSize, currentlyAllocatedUnpooledBytes->load(std::memory_order_relaxed)});
+    }
     return {localKeyForUnpooledBufferChunk, localMemoryForNewTupleBuffer};
 }
 
@@ -173,6 +184,13 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
     /// constructing a TupleBuffer over a null payload.
     if (localMemoryForNewTupleBuffer == nullptr)
     {
+        if (eventListener) [[unlikely]]
+        {
+            /// Covers both refusal reasons of allocateSpace: the unpooled budget would be breached, or the
+            /// memory resource itself returned null.
+            eventListener->onEvent(
+                UnpooledBufferRequestFailed{neededSize, currentlyAllocatedUnpooledBytes->load(std::memory_order_relaxed)});
+        }
         return std::nullopt;
     }
 
@@ -187,7 +205,8 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
          copyOLastChunkPtr = localKeyForUnpooledBufferChunk,
          copyOfChunk = chunk,
          copyOfAlignment = alignment,
-         copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes](detail::MemorySegment* memorySegment, BufferRecycler*)
+         copyOfAllocatedBytes = currentlyAllocatedUnpooledBytes,
+         copyOfEventListener = eventListener](detail::MemorySegment* memorySegment, BufferRecycler*)
         {
             auto lockedLocalUnpooledBufferData = copyOfChunk->wlock();
             auto& curUnpooledChunk = lockedLocalUnpooledBufferData->chunks[copyOLastChunkPtr];
@@ -207,6 +226,11 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
                 copyOfMemoryResource->deallocate(
                     extractedChunkControlBlock.startOfChunk, extractedChunkControlBlock.totalSize, copyOfAlignment);
                 copyOfAllocatedBytes->fetch_sub(extractedChunkControlBlock.totalSize, std::memory_order_relaxed);
+                if (copyOfEventListener) [[unlikely]]
+                {
+                    copyOfEventListener->onEvent(
+                        UnpooledChunkReleased{extractedChunkControlBlock.totalSize, copyOfAllocatedBytes->load(std::memory_order_relaxed)});
+                }
             }
         });
 
@@ -219,6 +243,10 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     if (leakedMemSegment->controlBlock->prepare(bufferRecycler))
     {
+        if (eventListener) [[unlikely]]
+        {
+            eventListener->onEvent(UnpooledBufferAllocated{neededSize, currentlyAllocatedUnpooledBytes->load(std::memory_order_relaxed)});
+        }
         return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");

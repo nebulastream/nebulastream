@@ -24,20 +24,23 @@
 namespace NES
 {
 
-/// Reads the query engine's task events, which the worker's 'TaskStatisticListener' publishes as CSV rows.
-/// Engine statistics thereby become a stream that NebulaStream can query itself, rather than a trace file
-/// to be opened after the fact. See 'EventFeedSource' for how a feed reaches a query.
-class EngineEventsSource final : public EventFeedSource
+/// Reads what the worker's buffer providers are doing, which the worker's 'BufferStatisticListener'
+/// publishes as one CSV row per flush interval. Buffer pool pressure thereby becomes something
+/// NebulaStream can query itself. See 'EventFeedSource' for how a feed reaches a query.
+///
+/// Unlike the task events, the rows of this feed are a regular time series rather than one row per event,
+/// so a query reading it cannot amplify its own buffer usage into more rows.
+class BufferEventsSource final : public EventFeedSource
 {
 public:
-    constexpr static std::string_view NAME = "EngineEvents";
+    constexpr static std::string_view NAME = "BufferEvents";
 
-    explicit EngineEventsSource(const SourceDescriptor& sourceDescriptor);
+    explicit BufferEventsSource(const SourceDescriptor& sourceDescriptor);
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 };
 
-struct ConfigParametersEngineEvents
+struct ConfigParametersBufferEvents
 {
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, EventFeedSourceConfig::FLUSH_INTERVAL_MS);

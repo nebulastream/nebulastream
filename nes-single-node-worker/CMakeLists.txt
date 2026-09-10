@@ -35,6 +35,8 @@ target_link_libraries(nes-single-node-worker-lib
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
+
+add_tests_if_enabled(tests)
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test

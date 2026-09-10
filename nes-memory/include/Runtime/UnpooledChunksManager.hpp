@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Runtime/BufferProviderStatisticListener.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -54,6 +55,10 @@ class UnpooledChunksManager
     /// Total bytes currently allocated across all unpooled chunks. Held via shared_ptr so the per-segment recycle
     /// callback can decrement it even if this manager has been destroyed in the meantime.
     std::shared_ptr<std::atomic<size_t>> currentlyAllocatedUnpooledBytes = std::make_shared<std::atomic<size_t>>(0);
+
+    /// Optional observer of the unpooled allocations, null unless the worker enabled buffer statistics.
+    /// Copied into the per-segment recycle callback for the same reason as currentlyAllocatedUnpooledBytes.
+    std::shared_ptr<BufferProviderStatisticListener> eventListener;
 
     /// Helper struct that stores necessary information for accessing unpooled chunks
     /// Instead of allocating the exact needed space, we allocate a chunk of a space calculated by a rolling average of the last n sizes.
@@ -97,7 +102,11 @@ class UnpooledChunksManager
     std::shared_ptr<folly::Synchronized<UnpooledChunk>> getChunk(std::thread::id threadId);
 
 public:
-    explicit UnpooledChunksManager(std::shared_ptr<std::pmr::memory_resource> memoryResource, size_t unpooledMemoryBudgetInBytes);
+    explicit UnpooledChunksManager(
+        std::shared_ptr<std::pmr::memory_resource> memoryResource,
+        size_t unpooledMemoryBudgetInBytes,
+        /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations): defaulted so that the many existing callers stay untouched.
+        std::shared_ptr<BufferProviderStatisticListener> eventListener = nullptr);
     size_t getNumberOfUnpooledBuffers() const;
 
     /// Returns std::nullopt if the unpooled memory budget would be exceeded or the underlying allocation fails.

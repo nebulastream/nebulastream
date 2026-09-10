@@ -21,4 +21,4 @@ function(add_nes_source_test)
 endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
-add_nes_source_test(engine-events-source-test EngineEventsSourceTest.cpp)
+add_nes_source_test(event-feed-source-test EventFeedSourceTest.cpp)

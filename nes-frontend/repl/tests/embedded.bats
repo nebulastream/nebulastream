@@ -296,3 +296,91 @@ SQL
   [ "$output" -eq 0 ]
   grep -q "0 rows were dropped" nes-repl.log
 }
+
+
+# The buffer pool's own statistics, read back through a BufferEvents source while a second query puts the
+# pool under load. How many buffers a query churns through is not reproducible, so this asserts the
+# invariants that hold rather than a fixed result: rows are produced, the pool describes itself, the load
+# is visible in both the pooled and the unpooled columns, and no row contradicts the pool's size.
+@test "buffer manager events are queryable as a stream" {
+  cat > buffer_stats.sql <<'SQL'
+-- A Generator query, purely to put the buffer pool under load. The VARSIZED payload is what drives the
+-- unpooled columns; a fixed-size schema alone would leave them at zero. It finishes well before the REPL
+-- is torn down, so the statistics stream shows the pool under load and afterwards at rest.
+CREATE LOGICAL SOURCE endless(ts UINT64, payload VARSIZED);
+CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as INPUT_FORMATTER."TYPE",
+       8000 AS "SOURCE".MAX_RUNTIME_MS,
+       'emit_rate 500' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10000000 1, RANDOMSTR 512 8192' AS "SOURCE".GENERATOR_SCHEMA);
+CREATE SINK loadSink(ts UINT64, length UINT64) TYPE File
+       SET('load.csv' as "SINK".FILE_PATH, 'CSV' as "SINK".OUTPUT_FORMAT);
+
+-- The pool's own statistics. The source finds the feed of the worker it is placed on.
+CREATE LOGICAL SOURCE bufferStats(
+       ts_us UINT64, interval_ms UINT64, pooled_total UINT64, pooled_available UINT64,
+       pooled_available_min UINT64, pooled_acquired UINT64, pooled_recycled UINT64,
+       pooled_request_failures UINT64, unpooled_allocated UINT64, unpooled_bytes_requested UINT64,
+       unpooled_bytes_in_use UINT64, unpooled_chunks_allocated UINT64, unpooled_chunks_released UINT64,
+       unpooled_request_failures UINT64, rows_dropped UINT64);
+CREATE PHYSICAL SOURCE FOR bufferStats TYPE BufferEvents SET('CSV' as INPUT_FORMATTER."TYPE");
+CREATE SINK statsSink(
+       ts_us UINT64, interval_ms UINT64, pooled_total UINT64, pooled_available UINT64,
+       pooled_available_min UINT64, pooled_acquired UINT64, pooled_recycled UINT64,
+       pooled_request_failures UINT64, unpooled_allocated UINT64, unpooled_bytes_requested UINT64,
+       unpooled_bytes_in_use UINT64, unpooled_chunks_allocated UINT64, unpooled_chunks_released UINT64,
+       unpooled_request_failures UINT64, rows_dropped UINT64) TYPE File
+       SET('buffer_stats.csv' as "SINK".FILE_PATH, 'CSV' as "SINK".OUTPUT_FORMAT);
+
+-- The observer goes first, so that it sees the pool before the load query touches it.
+SELECT ts_us, interval_ms, pooled_total, pooled_available, pooled_available_min, pooled_acquired,
+       pooled_recycled, pooled_request_failures, unpooled_allocated, unpooled_bytes_requested,
+       unpooled_bytes_in_use, unpooled_chunks_allocated, unpooled_chunks_released,
+       unpooled_request_failures, rows_dropped
+       FROM bufferStats INTO statsSink;
+SELECT ts, OCTET_LENGTH(payload) as length FROM endless INTO loadSink;
+SQL
+
+  # As above: the statistics query never ends on its own, so the wait is bounded from outside and GNU
+  # timeout reports 124 for the SIGTERM it sends.
+  run timeout -s TERM 15 "$NES_REPL" -d --on-exit=WAIT_FOR_QUERY_TERMINATION \
+      --worker enable_buffer_statistics=true --worker buffer_statistics_interval_ms=50 <buffer_stats.sql
+  [ "$status" -eq 124 ]
+
+  [ -s buffer_stats.csv ]
+  # Sum and maximum of a 1-based column over the data rows, i.e. everything below the CSV header.
+  sum_col() { tail -n +2 buffer_stats.csv | awk -F, -v c="$1" '{ total += $c } END { printf "%d", total + 0 }'; }
+  max_col() { tail -n +2 buffer_stats.csv | awk -F, -v c="$1" '{ if ($c > m) m = $c } END { printf "%d", m + 0 }'; }
+
+  local rows pool acquired recycled unpooled chunks_allocated chunks_released overshoot
+  rows=$(tail -n +2 buffer_stats.csv | wc -l)
+  pool=$(max_col 3)
+  acquired=$(sum_col 6)
+  recycled=$(sum_col 7)
+  unpooled=$(sum_col 9)
+  chunks_allocated=$(sum_col 12)
+  chunks_released=$(sum_col 13)
+  # A row whose reported fill level exceeds the pool size would mean the gauges are wrong.
+  overshoot=$(tail -n +2 buffer_stats.csv | awk -F, -v t="$pool" '($4 > t) || ($5 > t) { n++ } END { printf "%d", n + 0 }')
+  echo "# rows: $rows, pool: $pool, acquired: $acquired, recycled: $recycled, unpooled: $unpooled" >&3
+
+  [ "$rows" -gt 0 ]
+  [ "$pool" -gt 0 ]
+  [ "$acquired" -gt 0 ]
+  # The VARSIZED payload does not fit a pooled buffer, so it has to show up in the unpooled columns.
+  [ "$unpooled" -gt 0 ]
+  [ "$chunks_allocated" -gt 0 ]
+  [ "$overshoot" -eq 0 ]
+  # Every acquired buffer is eventually recycled, but one acquired in the last interval before shutdown is
+  # recycled after the final row, so the two totals only have to agree within the pool size.
+  [ "$((acquired - recycled))" -le "$pool" ]
+  [ "$((recycled - acquired))" -le "$pool" ]
+  # That a chunk release is reported for every allocation is asserted deterministically in
+  # BufferManagerEventTest; here it can only be bounded, for the same reason as the acquire/recycle pair.
+  [ "$chunks_released" -le "$chunks_allocated" ]
+
+  # The feed drops rather than blocks, so a drop means it was too small for the row rate.
+  grep -q "Closing the BufferEvents source .* 0 rows were dropped" nes-repl.log
+}

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <EngineEventsSource.hpp>
+#include <BufferEventsSource.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -25,14 +25,14 @@
 namespace NES
 {
 
-EngineEventsSource::EngineEventsSource(const SourceDescriptor& sourceDescriptor)
-    : EventFeedSource(sourceDescriptor, FeedName::ENGINE_EVENTS, NAME)
+BufferEventsSource::BufferEventsSource(const SourceDescriptor& sourceDescriptor)
+    : EventFeedSource(sourceDescriptor, FeedName::BUFFER_EVENTS, NAME)
 {
 }
 
-DescriptorConfig::Config EngineEventsSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config BufferEventsSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersEngineEvents>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersBufferEvents>(std::move(config), NAME);
 }
 
 }

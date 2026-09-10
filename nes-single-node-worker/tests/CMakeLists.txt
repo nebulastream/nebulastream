@@ -10,11 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-single-node-worker
-        SingleNodeWorker.cpp
-        GrpcService.cpp
-        GoogleEventTracePrinter.cpp
-        CompositeStatisticListener.cpp
-        TaskStatisticListener.cpp
-        BufferStatisticListener.cpp
-)
+add_nes_test(buffer-statistic-listener-test BufferStatisticListenerTest.cpp)
+target_link_libraries(buffer-statistic-listener-test nes-single-node-worker-lib)

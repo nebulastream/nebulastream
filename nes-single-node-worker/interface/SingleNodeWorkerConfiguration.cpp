@@ -19,5 +19,12 @@
 
 std::vector<NES::BaseOption*> NES::SingleNodeWorkerConfiguration::getOptions()
 {
-    return {&workerConfiguration, &grpcAddressUri, &dataAddress, &enableGoogleEventTrace, &enableTaskStatistics};
+    return {
+        &workerConfiguration,
+        &grpcAddressUri,
+        &dataAddress,
+        &enableGoogleEventTrace,
+        &enableTaskStatistics,
+        &enableBufferStatistics,
+        &bufferStatisticsIntervalMs};
 }
