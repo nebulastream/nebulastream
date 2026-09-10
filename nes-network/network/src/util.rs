@@ -43,6 +43,10 @@ impl<T> ScopedTask<T> {
     pub fn new(task: tokio::task::JoinHandle<T>) -> Self {
         ScopedTask { task }
     }
+
+    pub fn is_finished(&self) -> bool {
+        self.task.is_finished()
+    }
 }
 
 impl<T> Drop for ScopedTask<T> {

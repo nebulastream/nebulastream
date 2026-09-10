@@ -335,6 +335,7 @@ async fn socket_listener<C: Communication + 'static>(
                 }
             }
         }));
+        active_connections.retain(|task: &ScopedTask<()>| !task.is_finished());
         active_connections.push(new_connection);
     }
 }
