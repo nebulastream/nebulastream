@@ -83,12 +83,15 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CLUSTER_ID: nes-kafka-sink-test
     healthcheck:
+      # Each check launches a fresh JVM (kafka-broker-api-versions.sh), so on a loaded CI runner
+      # a single check can itself take several seconds; give it a much longer budget than a
+      # plain TCP or grpc_health_probe check would need.
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-broker:9092"]
-      interval: 1s
+      interval: 2s
       start_interval: 500ms
       timeout: 5s
-      retries: 20
-      start_period: 20s
+      retries: 90
+      start_period: 60s
 
   kafka-client:
     image: apache/kafka:3.8.0
