@@ -15,11 +15,14 @@
 #include <NetworkBindings.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <string>
+#include <variant>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Overloaded.hpp>
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
@@ -31,6 +34,22 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
     const NES::Host& host,
     const NES::NetworkOptions& options)
 {
+    const auto tlsOptions = std::visit(
+        NES::Overloaded{
+            [](const NES::NoTLS&) { return new_no_tls_options(); },
+            [](const NES::TLS& tls)
+            {
+                if (tls.handshakeTimeout <= std::chrono::milliseconds::zero())
+                {
+                    throw NES::InvalidConfigParameter("TLS handshake timeout must be positive");
+                }
+                return new_tls_options(
+                    rust::String(tls.certificateFile.string()),
+                    rust::String(tls.privateKeyFile.string()),
+                    rust::String(tls.caFile.string()),
+                    static_cast<uint64_t>(tls.handshakeTimeout.count()));
+            }},
+        options.tls);
     const NetworkServiceOptions cxxOptions{
         .sender_queue_size = options.senderQueueSize,
         .max_pending_acks = options.maxPendingAcks,
@@ -38,8 +57,8 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
         .sender_io_threads = options.senderIOThreads,
         .receiver_io_threads = options.receiverIOThreads,
     };
-    init_receiver_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
-    init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
+    init_receiver_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions, *tlsOptions);
+    init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions, *tlsOptions);
 }
 
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)

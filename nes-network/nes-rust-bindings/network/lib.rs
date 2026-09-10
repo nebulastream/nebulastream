@@ -18,10 +18,25 @@ use nes_network::sender::{SenderChannel, TrySendDataResult};
 use nes_network::*;
 use std::collections::HashMap;
 use std::error::Error;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tracing::warn;
+
+/// TLS is configured at worker startup, never overridden by individual query channels.
+#[derive(Debug, Default)]
+pub enum NetworkTlsOptions {
+    #[default]
+    NoTls,
+    Tls {
+        certificate_file: PathBuf,
+        private_key_file: PathBuf,
+        ca_file: PathBuf,
+        handshake_timeout: Duration,
+    },
+}
 
 #[cxx::bridge]
 pub mod ffi {
@@ -69,22 +84,33 @@ pub mod ffi {
     }
 
     extern "Rust" {
+        type NetworkTlsOptions;
         type ReceiverNetworkService;
         type SenderNetworkService;
         type SenderDataChannel;
         type ReceiverDataChannel;
+
+        fn new_no_tls_options() -> Box<NetworkTlsOptions>;
+        fn new_tls_options(
+            certificate_file: String,
+            private_key_file: String,
+            ca_file: String,
+            handshake_timeout_ms: u64,
+        ) -> Result<Box<NetworkTlsOptions>>;
 
         fn enable_memcom();
         fn init_receiver_service(
             connection_addr: String,
             worker_id: String,
             options: &NetworkServiceOptions,
+            tls_options: &NetworkTlsOptions,
         ) -> Result<()>;
         fn receiver_instance(connection_addr: String) -> Result<Box<ReceiverNetworkService>>;
         fn init_sender_service(
             connection_addr: String,
             worker_id: String,
             options: &NetworkServiceOptions,
+            tls_options: &NetworkTlsOptions,
         ) -> Result<()>;
         fn sender_instance(connection_addr: String) -> Result<Box<SenderNetworkService>>;
 
@@ -123,11 +149,13 @@ pub mod ffi {
 enum ReceiverService {
     MemCom(Arc<receiver::NetworkService<channel::MemCom>>),
     Tcp(Arc<receiver::NetworkService<channel::TcpCommunication>>),
+    Tls(Arc<receiver::NetworkService<tls::TlsCommunication>>),
 }
 #[derive(Clone)]
 enum SenderService {
     MemCom(Arc<sender::NetworkService<channel::MemCom>>),
     Tcp(Arc<sender::NetworkService<channel::TcpCommunication>>),
+    Tls(Arc<sender::NetworkService<tls::TlsCommunication>>),
 }
 #[derive(Default)]
 struct Services {
@@ -178,10 +206,65 @@ struct ReceiverDataChannel {
     chan: Pin<Box<ReceiverChannel>>,
 }
 
+fn new_no_tls_options() -> Box<NetworkTlsOptions> {
+    Box::new(NetworkTlsOptions::NoTls)
+}
+
+fn new_tls_options(
+    certificate_file: String,
+    private_key_file: String,
+    ca_file: String,
+    handshake_timeout_ms: u64,
+) -> Result<Box<NetworkTlsOptions>, String> {
+    if certificate_file.is_empty() || private_key_file.is_empty() || ca_file.is_empty() {
+        return Err("TLS requires certificate_file, private_key_file and ca_file".to_owned());
+    }
+    if handshake_timeout_ms == 0 {
+        return Err("TLS handshake timeout must be positive".to_owned());
+    }
+    Ok(Box::new(NetworkTlsOptions::Tls {
+        certificate_file: PathBuf::from(certificate_file),
+        private_key_file: PathBuf::from(private_key_file),
+        ca_file: PathBuf::from(ca_file),
+        handshake_timeout: Duration::from_millis(handshake_timeout_ms),
+    }))
+}
+
+fn tls_transport(
+    options: &NetworkTlsOptions,
+    use_memcom: bool,
+) -> Result<Option<tls::TlsCommunication>, String> {
+    match options {
+        NetworkTlsOptions::NoTls => Ok(None),
+        NetworkTlsOptions::Tls {
+            certificate_file,
+            private_key_file,
+            ca_file,
+            handshake_timeout,
+        } => {
+            if use_memcom {
+                return Err(
+                    "TLS requires TCP transport; disable MemCom for TLS deployments/tests"
+                        .to_string(),
+                );
+            }
+            tls::TlsCommunication::from_pem_files(
+                certificate_file,
+                private_key_file,
+                ca_file,
+                *handshake_timeout,
+            )
+            .map(Some)
+            .map_err(|e| e.to_string())
+        }
+    }
+}
+
 fn init_sender_service(
     this_connection_addr: String,
     worker_id: String,
     options: &ffi::NetworkServiceOptions,
+    tls_options: &NetworkTlsOptions,
 ) -> Result<(), String> {
     let this_connection = ThisConnectionIdentifier::from_str(this_connection_addr.as_str())
         .map_err(|e| e.to_string())?;
@@ -198,6 +281,7 @@ fn init_sender_service(
         return Err("TCP mode allows only one sender service per process".to_string());
     }
 
+    let tls = tls_transport(tls_options, use_memcom)?;
     let old = services.senders.insert(this_connection.clone(), {
         let mut builder = tokio::runtime::Builder::new_multi_thread();
         builder
@@ -209,11 +293,17 @@ fn init_sender_service(
             builder.worker_threads(options.sender_io_threads as usize);
         }
         let runtime = builder.build().expect("Failed to create tokio runtime");
-        let service = if *USE_MEMCOM.lock().unwrap() {
+        let service = if use_memcom {
             SenderService::MemCom(sender::NetworkService::start(
                 runtime,
                 this_connection.clone(),
                 channel::MemCom::new(),
+            ))
+        } else if let Some(transport) = tls {
+            SenderService::Tls(sender::NetworkService::start(
+                runtime,
+                this_connection.clone(),
+                transport,
             ))
         } else {
             SenderService::Tcp(sender::NetworkService::start(
@@ -231,6 +321,7 @@ fn init_sender_service(
         let shutdown_result = match old_service {
             SenderService::MemCom(service) => service.shutdown(),
             SenderService::Tcp(service) => service.shutdown(),
+            SenderService::Tls(service) => service.shutdown(),
         };
         if let Err(e) = shutdown_result {
             warn!("Failed to shutdown old sender service: {e}");
@@ -244,6 +335,7 @@ fn init_receiver_service(
     connection_addr: String,
     worker_id: String,
     options: &ffi::NetworkServiceOptions,
+    tls_options: &NetworkTlsOptions,
 ) -> Result<(), String> {
     let this_connection =
         ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
@@ -257,6 +349,7 @@ fn init_receiver_service(
         return Err("TCP mode allows only one receiver service per process".to_string());
     }
 
+    let tls = tls_transport(tls_options, use_memcom)?;
     let old = services.receivers.insert(this_connection.clone(), {
         let mut builder = tokio::runtime::Builder::new_multi_thread();
         builder
@@ -268,11 +361,17 @@ fn init_receiver_service(
             builder.worker_threads(options.receiver_io_threads as usize);
         }
         let runtime = builder.build().expect("Failed to create tokio runtime");
-        let service = if *USE_MEMCOM.lock().unwrap() {
+        let service = if use_memcom {
             ReceiverService::MemCom(receiver::NetworkService::start(
                 runtime,
                 this_connection.clone(),
                 channel::MemCom::new(),
+            ))
+        } else if let Some(transport) = tls {
+            ReceiverService::Tls(receiver::NetworkService::start(
+                runtime,
+                this_connection.clone(),
+                transport,
             ))
         } else {
             ReceiverService::Tcp(receiver::NetworkService::start(
@@ -290,6 +389,7 @@ fn init_receiver_service(
         let shutdown_result = match old_service {
             ReceiverService::MemCom(service) => service.shutdown(),
             ReceiverService::Tcp(service) => service.shutdown(),
+            ReceiverService::Tls(service) => service.shutdown(),
         };
         if let Err(e) = shutdown_result {
             warn!("Failed to shutdown old receiver service: {e}");
@@ -351,6 +451,7 @@ fn register_receiver_channel(
             r.register_channel(channel_identifier.clone(), data_queue_size)
         }
         ReceiverService::Tcp(r) => r.register_channel(channel_identifier.clone(), data_queue_size),
+        ReceiverService::Tls(r) => r.register_channel(channel_identifier.clone(), data_queue_size),
     }
     .map_err(|_| "The receiver channel was shutdown unexpectedly.")?;
 
@@ -450,6 +551,9 @@ fn register_sender_channel(
         SenderService::Tcp(s) => {
             s.register_channel(connection_addr.clone(), channel_id.clone(), config)
         }
+        SenderService::Tls(s) => {
+            s.register_channel(connection_addr.clone(), channel_id.clone(), config)
+        }
     }
     .map_err(|_| "The NetworkingService was closed unexpectedly")?;
 
@@ -489,4 +593,44 @@ fn flush_sender_channel(channel: &SenderDataChannel) -> bool {
 #[allow(clippy::boxed_local)]
 fn close_sender_channel(channel: Box<SenderDataChannel>) {
     channel.chan.close();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn options() -> Box<NetworkTlsOptions> {
+        new_no_tls_options()
+    }
+
+    #[test]
+    fn plaintext_is_the_default() {
+        assert!(
+            tls_transport(&options(), false)
+                .expect("default TCP")
+                .is_none()
+        );
+        assert!(
+            tls_transport(&options(), true)
+                .expect("default MemCom")
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn configured_certificates_cannot_silently_use_plaintext() {
+        let options = new_tls_options(
+            "missing-worker.pem".to_owned(),
+            "missing-worker.key".to_owned(),
+            "missing-ca.pem".to_owned(),
+            10_000,
+        )
+        .expect("TLS options");
+        assert!(tls_transport(&options, false).is_err());
+        assert!(tls_transport(&options, true).is_err());
+        assert!(new_tls_options(String::new(), String::new(), String::new(), 10_000).is_err());
+        assert!(
+            new_tls_options("worker.pem".into(), "worker.key".into(), "ca.pem".into(), 0).is_err()
+        );
+    }
 }

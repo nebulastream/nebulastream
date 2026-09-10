@@ -21,6 +21,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <NetworkTlsConfiguration.hpp>
 
 namespace NES
 {
@@ -34,6 +35,8 @@ class WorkerNetworkConfiguration final : public BaseConfiguration
 public:
     WorkerNetworkConfiguration() = default;
     WorkerNetworkConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+
+    NetworkTlsConfiguration tls = {"tls", "TLS configuration for worker network connections"};
 
     /// Default size of the sender software queue per network channel.
     /// May be overridden per NetworkSink via query-specific configuration.
@@ -70,7 +73,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads};
+        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads, &tls};
     }
 };
 }

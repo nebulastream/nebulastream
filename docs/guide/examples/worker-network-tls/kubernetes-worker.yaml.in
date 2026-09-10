@@ -1,0 +1,162 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Render once for each worker; see ../../worker-network-tls.md.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${NES_WORKER}
+  namespace: ${NES_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: nes-worker
+spec:
+  secretName: ${NES_WORKER}-tls
+  issuerRef:
+    name: ${NES_ISSUER}
+    kind: ClusterIssuer
+    group: cert-manager.io
+  dnsNames:
+    - ${NES_WORKER}.${NES_NAMESPACE}.svc.${NES_CLUSTER_DOMAIN}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - server auth
+    - client auth
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${NES_WORKER}-config
+  namespace: ${NES_NAMESPACE}
+data:
+  worker.yaml: |
+    grpc: 0.0.0.0:8080
+    data_address: ${NES_WORKER}.${NES_NAMESPACE}.svc.${NES_CLUSTER_DOMAIN}:9090
+    worker:
+      total_memory_in_bytes: 268435456
+      query_engine:
+        number_of_worker_threads: 2
+      network:
+        sender_io_threads: 1
+        receiver_io_threads: 1
+        tls:
+          enabled: true
+          certificate_file: /etc/nes/identity/tls.crt
+          private_key_file: /etc/nes/identity/tls.key
+          ca_file: /etc/nes/trust/ca.crt
+          handshake_timeout_ms: 10000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${NES_WORKER}
+  namespace: ${NES_NAMESPACE}
+spec:
+  # The current NES data listener binds IPv4.
+  ipFamilyPolicy: SingleStack
+  ipFamilies: [IPv4]
+  selector:
+    app.kubernetes.io/name: nes-worker
+    app.kubernetes.io/instance: ${NES_WORKER}
+  ports:
+    - name: tcp-network
+      port: 9090
+      targetPort: 9090
+    - name: grpc-api
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${NES_WORKER}
+  namespace: ${NES_NAMESPACE}
+  labels:
+    app.kubernetes.io/name: nes-worker
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nes-worker
+      app.kubernetes.io/instance: ${NES_WORKER}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nes-worker
+        app.kubernetes.io/instance: ${NES_WORKER}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: worker
+          image: "${NES_WORKER_IMAGE}"
+          command: [nes-single-node-worker]
+          args: ["--configPath=/etc/nes/config/worker.yaml"]
+          workingDir: /var/lib/nes
+          ports:
+            - name: tcp-network
+              containerPort: 9090
+            - name: grpc-api
+              containerPort: 8080
+          startupProbe:
+            grpc:
+              port: 8080
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            grpc:
+              port: 8080
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: identity
+              mountPath: /etc/nes/identity
+              readOnly: true
+            - name: trust
+              mountPath: /etc/nes/trust
+              readOnly: true
+            - name: config
+              mountPath: /etc/nes/config
+              readOnly: true
+            - name: work
+              mountPath: /var/lib/nes
+      volumes:
+        - name: identity
+          secret:
+            secretName: ${NES_WORKER}-tls
+            defaultMode: 0440
+            items:
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        - name: trust
+          configMap:
+            name: nes-worker-ca
+            items:
+              - key: ca.crt
+                path: ca.crt
+        - name: config
+          configMap:
+            name: ${NES_WORKER}-config
+        - name: work
+          emptyDir: {}

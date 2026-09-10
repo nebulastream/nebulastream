@@ -63,6 +63,12 @@ add_e2e_test(
 )
 
 add_e2e_test(
+    NAME worker-mtls-e2e-test
+    BATS_FILE cli/tests/mtls.bats
+    DOCKER_COMPOSE
+)
+
+add_e2e_test(
     NAME distributed-repl-tests
     BATS_FILE repl/tests/distributed.bats
     DOCKER_COMPOSE

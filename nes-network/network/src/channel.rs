@@ -43,15 +43,33 @@ pub struct Channel<R: AsyncRead + Unpin + Send, W: AsyncWrite + Unpin + Send> {
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// An accepted connection whose transport handshake runs in its own connection task.
+/// Keeping this separate from accepting sockets prevents slow TLS peers from blocking the listener.
+pub trait IncomingConnection: Send + 'static {
+    type Reader: AsyncRead + Unpin + Send;
+    type Writer: AsyncWrite + Unpin + Send;
+    fn establish(self) -> impl Future<Output = Result<Channel<Self::Reader, Self::Writer>>> + Send;
+}
+
+impl<R: AsyncRead + Unpin + Send + 'static, W: AsyncWrite + Unpin + Send + 'static>
+    IncomingConnection for Channel<R, W>
+{
+    type Reader = R;
+    type Writer = W;
+
+    async fn establish(self) -> Result<Self> {
+        Ok(self)
+    }
+}
+
 /// A listener that accepts incoming connections and produces reader/writer pairs.
 ///
 /// Each implementation defines the specific reader and writer types for its connections.
 pub trait CommunicationListener: Send + Sync {
     type Reader: AsyncRead + Unpin + Send;
     type Writer: AsyncWrite + Unpin + Send;
-    fn listen(
-        &mut self,
-    ) -> impl std::future::Future<Output = Result<Channel<Self::Reader, Self::Writer>>> + Send;
+    type Incoming: IncomingConnection<Reader = Self::Reader, Writer = Self::Writer>;
+    fn listen(&mut self) -> impl std::future::Future<Output = Result<Self::Incoming>> + Send;
 }
 
 /// Main abstraction for communication backends.
@@ -94,6 +112,7 @@ impl TcpCommunication {
 impl CommunicationListener for TcpCommunicationListener {
     type Reader = OwnedReadHalf;
     type Writer = OwnedWriteHalf;
+    type Incoming = Channel<Self::Reader, Self::Writer>;
 
     async fn listen(&mut self) -> Result<Channel<Self::Reader, Self::Writer>> {
         let (stream, _) = self
@@ -171,6 +190,7 @@ impl MemCom {
 impl CommunicationListener for MemComListener {
     type Reader = ReadHalf<SimplexStream>;
     type Writer = SimplexStreamWriter;
+    type Incoming = Channel<Self::Reader, Self::Writer>;
     async fn listen(&mut self) -> Result<Channel<Self::Reader, Self::Writer>> {
         let duplex = self
             .incoming_connections

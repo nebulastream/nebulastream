@@ -14,10 +14,28 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
+#include <filesystem>
+#include <variant>
 
 namespace NES
 {
+
+struct NoTLS
+{
+};
+
+struct TLS
+{
+    std::filesystem::path certificateFile;
+    std::filesystem::path privateKeyFile;
+    std::filesystem::path caFile;
+    std::chrono::milliseconds handshakeTimeout = std::chrono::seconds{10}; /// NOLINT(readability-magic-numbers)
+};
+
+/// Worker-level transport configuration, loaded at service startup.
+using NetworkTlsOptions = std::variant<NoTLS, TLS>;
 
 /// Configuration options for the network services (sender and receiver).
 /// Passed to initNetworkServices() to configure per-worker defaults.
@@ -33,6 +51,7 @@ struct NetworkOptions
     uint32_t senderIOThreads = 1;
     /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
     uint32_t receiverIOThreads = 1;
+    NetworkTlsOptions tls;
 };
 
 }

@@ -50,6 +50,15 @@ impl Display for ThisConnectionIdentifier {
 }
 
 impl ConnectionIdentifier {
+    /// Original DNS name or IP address, before resolution, for TLS certificate verification.
+    pub fn host(&self) -> String {
+        match self.0.host().expect("Checked") {
+            Host::Domain(name) => name.to_owned(),
+            Host::Ipv4(ip) => ip.to_string(),
+            Host::Ipv6(ip) => ip.to_string(),
+        }
+    }
+
     pub async fn to_socket_address(&self) -> Result<SocketAddr> {
         let port = self.0.port().expect("Checked");
         match self.0.host().expect("Checked") {

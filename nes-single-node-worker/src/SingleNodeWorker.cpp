@@ -88,6 +88,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
                 .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
                 .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+                .tls = networkConfig.tls.toOptions(),
             });
     }
 }

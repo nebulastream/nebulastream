@@ -32,3 +32,11 @@ tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 futures = "0.3.31"
 url = { version = "2.5.4", features = ["serde"] }
 pin-project = "1.1.10"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+rustls-pemfile = "2.2"
+
+[dev-dependencies]
+tracing-subscriber = "0.3"
+tokio = { version = "1.40.0", features = ["rt-multi-thread"] }
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "ring", "pem"] }
+tempfile = "3"

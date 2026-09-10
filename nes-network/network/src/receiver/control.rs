@@ -13,7 +13,7 @@
 */
 
 use super::channel::*;
-use crate::channel::{Channel, Communication, CommunicationListener};
+use crate::channel::{Channel, Communication, CommunicationListener, IncomingConnection};
 use crate::protocol::*;
 use crate::util::*;
 use futures::SinkExt;
@@ -269,7 +269,7 @@ async fn socket_listener<C: Communication + 'static>(
         // so we can accept further connections without waiting for slow participants.
         // Effectively, this is accepting new connections in a tight loop and spawns a dedicated task
         // to handle the connection.
-        let Ok(stream) = communication_listener.listen().await else {
+        let Ok(incoming) = communication_listener.listen().await else {
             error!("Control socket was closed");
             return;
         };
@@ -280,6 +280,13 @@ async fn socket_listener<C: Communication + 'static>(
             let state = state.clone();
             let controller = controller.clone();
             async move {
+                let stream = match incoming.establish().await {
+                    Ok(stream) => stream,
+                    Err(e) => {
+                        warn!("Transport handshake failed: {e}");
+                        return;
+                    }
+                };
                 // Once a new connection has been accepted, the first step is to identify the
                 // connection. Because both Control and DataChannel connections are accepted via
                 // the same port, this is required to decide what the connection is expecting.
