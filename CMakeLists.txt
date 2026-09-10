@@ -281,6 +281,8 @@ if (CODE_COVERAGE)
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-plugins")
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-network")
+    # 'nes-coordinator' is not a target on its own, it holds Rust crates
+    list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-coordinator")
     foreach (NES_DIR ${NES_COVERAGE_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()
