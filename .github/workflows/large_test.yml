@@ -127,6 +127,13 @@ jobs:
           endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
           access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
           secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      - uses: ./.github/steps/prepare-github
+        name: Preparing Github Runners
+        with:
+          images: |
+            nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - name: Configure, build, and run systest remote test
         uses: ./.github/steps/run-in-container
         with:
