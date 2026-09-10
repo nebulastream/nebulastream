@@ -26,6 +26,11 @@ ATTACH INLINE
 10,7,1001
 20,9,2001
 
+CREATE LOGICAL SOURCE "measurements,stream" ("sensor,value" UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR "measurements,stream" TYPE File;
+ATTACH INLINE
+42
+
 CREATE SINK "projectionSink" ("renamedId" UINT64 NOT NULL, "doubledValue" UINT64 NOT NULL) TYPE File;
 CREATE SINK "nestedProjectionSink" ("renamedId" UINT64 NOT NULL) TYPE File;
 CREATE SINK "aggregationSink" ("groupKey" UINT64 NOT NULL, "sumValue" UINT64 NOT NULL) TYPE File;
@@ -103,3 +108,7 @@ SELECT A FROM "inputStream" INTO UPPERCASE_SINK;
 100
 200
 300
+
+SELECT "sensor,value" FROM "measurements,stream" INTO FILE();
+----
+42

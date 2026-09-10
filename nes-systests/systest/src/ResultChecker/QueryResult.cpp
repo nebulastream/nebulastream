@@ -43,9 +43,9 @@ namespace
 std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string_view field)
 {
     std::vector<std::string_view> parts;
-    for (const auto subrange : std::ranges::split_view(field, ':'))
+    for (const auto part : NES::splitOnMultipleDelimiters(field, {':'}, {'"'}))
     {
-        parts.emplace_back(trimWhiteSpaces(std::string_view(subrange)));
+        parts.emplace_back(trimWhiteSpaces(part));
     }
     if (parts.size() != 3)
     {
@@ -64,19 +64,17 @@ std::expected<UnqualifiedUnboundField, std::string> parseField(const std::string
         return std::unexpected(fmt::format("field '{}' has an unknown type '{}'", field, parts.at(1)));
     }
 
-    /// The header holds the name with the case that the sink wrote, so it parses as a quoted identifier to keep that case.
+    /// Case sensitive field names will arrive quoted here and therefore remain case sensitive. Case insensitive field names will be canonicalized into upper-case for comparison, so they are not quoted here.
     return UnqualifiedUnboundField{
-        Identifier::parse(fmt::format("\"{}\"", parts.at(0))),
-        DataTypeProvider::provideDataType(type.value_or(DataType::Type::VARSIZED), *nullable)};
+        Identifier::parse(std::string(parts.at(0))), DataTypeProvider::provideDataType(type.value_or(DataType::Type::VARSIZED), *nullable)};
 }
 
 /// One header line: comma separated fields. The first field that does not parse is the reason the header is rejected.
 std::expected<Schema<UnqualifiedUnboundField, Ordered>, std::string> parseHeader(const std::string_view headerLine)
 {
     std::vector<UnqualifiedUnboundField> fields;
-    for (const auto split : std::ranges::split_view(headerLine, ','))
+    for (const auto field : NES::splitOnMultipleDelimiters(headerLine, {','}, {'"'}))
     {
-        const auto field = std::string_view{split.begin(), split.end()};
         if (field.empty())
         {
             continue;
