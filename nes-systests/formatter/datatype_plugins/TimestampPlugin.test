@@ -17,8 +17,23 @@ CREATE PHYSICAL SOURCE FOR timeSource3 TYPE FILE;
 ATTACH INLINE
 2004-08-28,03:52:42,2008-07-11T12:32:07,278912
 
+CREATE LOGICAL SOURCE timeSource4(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource4 TYPE FILE SET('Timestamp:UnixEpochTimestamp' as "INPUT_FORMATTER".VALUE_DESERIALIZERS);
+ATTACH INLINE
+2004-08-28,03:52:42,1215779527278912
+
 # Test CSV format deserialization of the timestamps
 SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2004-08-28,03:52:42,2008-07-11 12:32:07.278912
+
+# Display timestamp as unix epoch timestamp
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT, 'Timestamp:UnixEpochTimestamp' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+----
+2004-08-28,03:52:42,1215779527278912
+
+# Receive timestamp as unix epoch timestamp
+SELECT * from timeSource4 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
 ----
 2004-08-28,03:52:42,2008-07-11 12:32:07.278912
 

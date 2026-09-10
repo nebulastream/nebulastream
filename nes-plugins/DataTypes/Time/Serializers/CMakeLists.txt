@@ -14,6 +14,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_plugin_as_library(DefaultDate ValueSerializer time_value_serializer_plugin src/DefaultTimeSerializers.cpp)
 add_plugin(DefaultTime ValueSerializer src/DefaultTimeSerializers.cpp)
 add_plugin(DefaultTimestamp ValueSerializer src/DefaultTimeSerializers.cpp)
+add_plugin(UnixEpochTimestamp ValueSerializer src/UnixEpochTimeSerializers.cpp)
 
 target_include_directories(time_value_serializer_plugin
         PUBLIC include

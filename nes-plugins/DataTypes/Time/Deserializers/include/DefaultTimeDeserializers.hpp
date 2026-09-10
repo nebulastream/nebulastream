@@ -28,7 +28,7 @@
 namespace NES
 {
 
-/// Assumes the dates to arrive in iso year-month-day format like 2026-08-12. Do not leave out leading zeros for month and day and represent years as 4 digits
+/// Assumes the dates to arrive in iso year-month-day format like 2026-08-12. Do not leave out leading zeros for month and day and represent years as 4 digits unless they have a + or - prepended
 class DefaultDateValueDeserializer final : public ValueDeserializer
 {
 public:
