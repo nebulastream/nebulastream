@@ -1,0 +1,139 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Two-worker demo: the SSC camera feed is inferred for faults right at the
+# edge (Raspberry Pi IoT Gateway, on the same local network as the MQTT
+# broker), correlated there with whether the factory is currently
+# processing anything, and only the derived RED/YELLOW alert rows cross
+# the network to the laptop's sink -- the raw ~1fps JPEG stream never
+# leaves the edge.
+#
+#   ┌──────────────────────────┐         ┌──────────────────────────┐         ┌─────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  edge (Raspberry Pi)     │  ──▶    │  laptop (coordinator)   │
+#   │ 192.168.0.10:1883        │ subscribe  192.168.0.5:8080          │ route   │  <LAPTOP_IP>:8080       │
+#   │ topics: i/cam,            │         │  S: CAM (MQTT)           │         │  K: FILE_SINK            │
+#   │         f/i/state/+        │         │  S: STATION_STATE (MQTT) │         │  → factory_alerts.csv   │
+#   └──────────────────────────┘         │  MODEL_INFERENCE +       │         └─────────────────────────┘
+#                                         │  windowed join           │
+#                                         └──────────────────────────┘
+#
+# Fault severity logic (see factory-fault-demo.sql -- two separate queries,
+# both writing into FactoryFaultSink, since this NES SQL dialect has no
+# CASE/IF expression to branch within one query -- confirmed empirically
+# with `nes-cli dump`; CASE/WHEN/THEN/ELSE/END are reserved lexer tokens in
+# nes-sql-parser/AntlrSQL.g4 but not wired into any parser rule):
+#   - model detects a fault AND the factory is idle   -> YELLOW
+#   - model detects a fault AND the factory is active -> RED
+# "Active" is not read off HBW alone (its own f/i/state/hbw topic is
+# event-driven and sparse -- easy to have no fresh reading inside a short
+# correlation window). Instead it's the OR of `active` across all 6
+# stations from the unfiltered f/i/state/+ topic, which is exactly how
+# the factory's own physical status-light tower is documented to work
+# (Training_Factory_Industry_40_24V-Factory_components.pdf, "Status
+# display of the factory": green = all stations waiting, yellow = at
+# least one station active, red = error acked via the dashboard). No
+# separate MQTT topic for that tower light itself is documented anywhere
+# -- this aggregate is the faithful proxy for it, and it's also a much
+# higher-frequency ("constantly emitting") signal than HBW alone, since
+# any of the 6 stations moving fires an update.
+
+sinks:
+  - name: FactoryFaultSink
+    host: <LAPTOP_IP>:8080 # TODO: set to the laptop's IP on the TP-Link_8C59 subnet before running
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"alert"'
+        type: VARSIZED
+    type: File # swap to type: Print for stdout instead of a CSV file
+    config:
+      output_format: CSV
+      file_path: factory_alerts.csv
+
+models:
+  # TODO: path + output schema are placeholders until the fault model is
+  # trained/exported. pixels mirrors CAM's base64 JPEG frame as a single
+  # bulk-byte tensor, same pattern as nes-systests/inference/InferModelMNIST.test.
+  - name: FACTORY_FAULT_MODEL
+    path: <PATH_TO_FAULT_MODEL_ONNX> # TODO: must exist on the edge worker (192.168.0.5), not the laptop
+    input:
+      - name: pixels
+        type: VARSIZED
+    output:
+      - name: fault_score
+        type: FLOAT32 # TODO: confirm this matches the model's actual output tensor once trained
+
+logical:
+  - name: CAM
+    # i/cam, TXT-native (works standalone, no Node-RED needed). Same
+    # schema as fischertechnik-cam.yaml.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+
+  - name: STATION_STATE
+    # f/i/state/+, unfiltered across all 6 stations (hbw, vgr, mpo, sld,
+    # dsi, dso) -- see header note above for why. Same schema as
+    # fischertechnik-run_all.yaml's STATION_STATE.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"station"'
+        type: VARSIZED
+      - name: '"code"'
+        type: UINT64
+      - name: '"description"'
+        type: VARSIZED
+      - name: '"active"'
+        type: BOOLEAN
+      - name: '"target"'
+        type: VARSIZED
+
+physical:
+  - logical: CAM
+    host: 192.168.0.5:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-cam
+      qos: 0
+      log_messages: true
+
+  - logical: STATION_STATE
+    host: 192.168.0.5:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: f/i/state/+
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-station-state
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: 192.168.0.5:8080
+    data_address: 192.168.0.5:9090
+    max_operators: 10000
+    downstream: [ "<LAPTOP_IP>:8080" ] # TODO: set to the laptop's IP before running
+  - host: <LAPTOP_IP>:8080 # TODO: set to the laptop's IP on the TP-Link_8C59 subnet before running
+    data_address: <LAPTOP_IP>:9090 # TODO: same
+    max_operators: 10000
