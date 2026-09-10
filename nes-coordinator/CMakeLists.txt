@@ -12,4 +12,5 @@
 
 
 # The catalog crates link no C++ sources, so their tests run through cargo directly.
+add_rust_cargo_test(model)
 add_rust_cargo_test(migration)
