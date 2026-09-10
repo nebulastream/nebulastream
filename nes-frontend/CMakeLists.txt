@@ -15,3 +15,4 @@ find_package(replxx CONFIG REQUIRED)
 
 add_subdirectory(repl)
 add_subdirectory(nebucli)
+add_subdirectory(statistic-cli)

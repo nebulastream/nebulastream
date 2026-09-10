@@ -46,8 +46,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticStoreWriter::apply(LogicalOpe
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();
     const auto memoryLayoutType = memoryLayoutTypeTrait->memoryLayout;
 
-    const auto physicalInputSchema = createPhysicalOutputSchema(statisticStoreWriter->getChild()->getTraitSet());
-    const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
+    const auto physicalInputSchema = createPhysicalSchema(statisticStoreWriter->getChild()->getTraitSet());
+    const auto physicalOutputSchema = createPhysicalSchema(traitSet);
 
     const auto statisticId = statisticStoreWriter->getStatisticId();
     const auto fieldNames = statisticStoreWriter->getFieldNames();

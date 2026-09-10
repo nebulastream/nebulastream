@@ -30,17 +30,11 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Sources/RowBufferPacking.hpp>
+
 namespace NES
 {
 
-namespace
-{
-/// Upper bound on how long a single attempt to take a row off the feed waits. While the buffer is still
-/// empty this also bounds how quickly the source reacts to a stop request.
-constexpr std::chrono::milliseconds POP_TIMEOUT{10};
-/// The InputFormatter splits rows on this character, matching the CSV formatter's TUPLE_DELIMITER default.
-constexpr char TUPLE_DELIMITER = '\n';
-}
 
 EventFeedSource::EventFeedSource(
     const SourceDescriptor& sourceDescriptor, const std::string_view feedName, const std::string_view sourceType)
@@ -80,70 +74,14 @@ void EventFeedSource::close()
 
 Source::FillTupleBufferResult EventFeedSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
-    const auto available = tupleBuffer.getAvailableMemoryArea<char>();
-    const auto deadline = std::chrono::steady_clock::now() + flushInterval;
-    size_t written = 0;
-
-    while (not stopToken.stop_requested())
-    {
-        if (not pendingRow.has_value())
-        {
-            auto popTimeout = POP_TIMEOUT;
-            if (written > 0)
-            {
-                /// Once the buffer holds something, the flush interval is what the caller was promised, so
-                /// the pop must not outlive it. Without this a flush interval shorter than POP_TIMEOUT would
-                /// be rounded up to the next pop that times out.
-                const auto remaining = deadline - std::chrono::steady_clock::now();
-                if (remaining <= decltype(remaining)::zero())
-                {
-                    break;
-                }
-                popTimeout = std::min(POP_TIMEOUT, std::chrono::ceil<std::chrono::milliseconds>(remaining));
-            }
-            pendingRow = (*consumer)->tryPop(popTimeout);
-        }
-
-        if (pendingRow.has_value())
-        {
-            /// The delimiter is part of what the InputFormatter has to see, so it counts towards the row size.
-            if (const size_t rowSize = pendingRow->size() + 1; rowSize <= available.size() - written)
-            {
-                std::ranges::copy(*pendingRow, std::next(available.begin(), static_cast<ptrdiff_t>(written)));
-                written += pendingRow->size();
-                available[written++] = TUPLE_DELIMITER;
-                ++emittedRows;
-                pendingRow.reset();
-            }
-            else if (written > 0)
-            {
-                /// Keep the row for the next buffer.
-                break;
-            }
-            else
-            {
-                NES_WARNING(
-                    "Dropping a row of {} bytes from the '{}' feed of worker {}, it does not fit into a TupleBuffer of {} bytes",
-                    pendingRow->size() + 1,
-                    feedName,
-                    host.getRawValue(),
-                    available.size());
-                pendingRow.reset();
-            }
-        }
-
-        /// Returning zero bytes would terminate the source, so an empty feed just means we keep waiting.
-        if (written > 0 && std::chrono::steady_clock::now() >= deadline)
-        {
-            break;
-        }
-    }
-
-    if (written == 0)
-    {
-        return FillTupleBufferResult::eos();
-    }
-    return FillTupleBufferResult::withBytes(written);
+    return packRowsIntoBuffer(
+        tupleBuffer,
+        stopToken,
+        flushInterval,
+        pendingRow,
+        emittedRows,
+        [this](const std::chrono::milliseconds timeout) { return (*consumer)->tryPop(timeout); },
+        fmt::format("the '{}' feed of worker {}", feedName, host.getRawValue()));
 }
 
 std::ostream& EventFeedSource::toString(std::ostream& str) const

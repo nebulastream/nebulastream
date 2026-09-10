@@ -518,6 +518,60 @@ void insertAndReadByIndexProperty(TestUtils::EngineMode mode)
     }
 }
 
+/// Insert N items, replace random positions with fresh records, verify that only replaced slots changed and the
+/// total number of records is unchanged.
+void replaceRecordProperty(TestUtils::EngineMode mode)
+{
+    const auto fieldTypes = *TestUtils::genDataTypeSchema(TestUtils::ALL_VALUE_TYPES, 1, TestUtils::MAX_SCHEMA_FIELDS);
+    const auto bufferSize = *rc::gen::elementOf(BUFFER_SIZE_POOL);
+    const auto pageBufferSize = bufferSize / *rc::gen::elementOf(BUFFER_TO_PAGE_SIZE_RATIOS);
+    RC_PRE(pageBufferSize >= MIN_PAGE_SIZE and pageBufferSize >= minimumPageSize(fieldTypes));
+
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(1, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto numberOfReplacements = *rc::gen::inRange<uint64_t>(1, TestUtils::MAX_ITEMS_PER_PROPERTY);
+    const auto oversizedBudget = std::make_shared<int>(*rc::gen::inRange(0, MAX_OVERSIZED_DRAWS_PER_PROPERTY + 1));
+
+    NES_INFO(
+        "Property replaceRecord: fields={}, N={}, replacements={}, bufferSize={}, pageBufferSize={}, oversizedBudget={}",
+        fieldTypes.size(),
+        numberOfItems,
+        numberOfReplacements,
+        bufferSize,
+        pageBufferSize,
+        *oversizedBudget);
+
+    auto bufferManager = DirtyBufferProvider::create(bufferSize, TestUtils::pooledBufferCountFor(bufferSize));
+    TestUtils::TestablePagedVector pagedVector{fieldTypes, *bufferManager, mode, pageBufferSize};
+
+    std::vector<TestUtils::AnyVec> reference;
+    reference.reserve(numberOfItems);
+    for (uint64_t i = 0; i < numberOfItems; ++i)
+    {
+        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
+        reference.push_back(record);
+        pagedVector.pushBack(record);
+    }
+
+    for (uint64_t i = 0; i < numberOfReplacements; ++i)
+    {
+        const auto position = *rc::gen::inRange<uint64_t>(0, numberOfItems);
+        auto record = *genAnyVec(fieldTypes, bufferSize, oversizedBudget);
+        reference[position] = record;
+        pagedVector.replaceAt(position, record);
+    }
+
+    RC_ASSERT(pagedVector.size() == reference.size());
+
+    verifyRandomAccess(pagedVector, reference, fieldTypes);
+
+    auto actual = pagedVector.toVector();
+    RC_ASSERT(actual.size() == reference.size());
+    for (size_t i = 0; i < actual.size(); ++i)
+    {
+        RC_ASSERT(TestUtils::anyVecsEqual(actual[i], reference[i], fieldTypes));
+    }
+}
+
 /// Create K PagedVectors, insert items, concatMove via movePagesFrom, verify against concatenated reference.
 void concatMoveProperty(TestUtils::EngineMode mode)
 {
@@ -755,6 +809,16 @@ RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexInterpreter, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
     insertAndReadByIndexProperty(TestUtils::EngineMode::Interpreter);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, replaceRecordCompiler, ())
+{
+    replaceRecordProperty(TestUtils::EngineMode::Compiler);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, replaceRecordInterpreter, ())
+{
+    replaceRecordProperty(TestUtils::EngineMode::Interpreter);
 }
 
 RC_GTEST_PROP(PagedVectorPropertyTest, concatMovePagedVectorCompiler, ())

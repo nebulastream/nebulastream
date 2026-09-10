@@ -1,0 +1,28 @@
+# name: operator/aggregation/statistics/ReservoirSampleDifferentDataTypes.test
+# description: Round-trips tuples of every fixed-size width plus VARSIZED fields through the reservoir sample blob
+# groups: [Aggregation, WindowOperators, Statistics]
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE stream(word VARSIZED NOT NULL, i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL, label VARSIZED NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+alpha,-1,-300,-70000,-5000000000,1,300,70000,5000000000,1.5,-2.25,x,1000
+b,127,32767,2147483647,9223372036854775807,255,65535,4294967295,18446744073709551615,0.5,0.125,a_much_longer_label_text,1500
+gamma,-128,-32768,-2147483648,-9223372036854775808,0,0,0,0,-0.5,1024.75,y,2000
+delta,5,6,7,8,9,10,11,12,3.25,4.5,zz,2500
+
+CREATE SINK sinkStream(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, word VARSIZED NOT NULL, i8 INT8 NOT NULL, i16 INT16 NOT NULL, i32 INT32 NOT NULL, i64 INT64 NOT NULL, u8 UINT8 NOT NULL, u16 UINT16 NOT NULL, u32 UINT32 NOT NULL, u64 UINT64 NOT NULL, f32 FLOAT32 NOT NULL, f64 FLOAT64 NOT NULL, label VARSIZED NOT NULL, ts UINT64 NOT NULL) TYPE File;
+
+# The sample size exceeds every window's tuple count, so the probe returns every input tuple exactly once.
+# Mixed field widths and VARSIZED fields at the start, in the middle and at the end exercise the blob's per-field cursor advance.
+SELECT statisticStart, statisticEnd, word, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, label, ts FROM (
+    SELECT RESERVOIR_PROBE(44, word, varsized, i8, int8, i16, int16, i32, int32, i64, int64, u8, uint8, u16, uint16, u32, uint32, u64, uint64, f32, float32, f64, float64, label, varsized, ts, uint64)
+    FROM (
+        SELECT RESERVOIR(44, 16) FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+) INTO sinkStream;
+----
+1000 2000 alpha -1 -300 -70000 -5000000000 1 300 70000 5000000000 1.5 -2.25 x 1000
+1000 2000 b 127 32767 2147483647 9223372036854775807 255 65535 4294967295 18446744073709551615 0.5 0.125 a_much_longer_label_text 1500
+2000 3000 gamma -128 -32768 -2147483648 -9223372036854775808 0 0 0 0 -0.5 1024.75 y 2000
+2000 3000 delta 5 6 7 8 9 10 11 12 3.25 4.5 zz 2500

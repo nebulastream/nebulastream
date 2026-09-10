@@ -50,6 +50,8 @@ function(add_rust_cargo_tests workspace_dir)
     set(_test_env "RUSTUP_TOOLCHAIN=${Rust_TOOLCHAIN}")
     get_property(_rustc CACHE Rust_COMPILER_CACHED PROPERTY VALUE)
     list(APPEND _test_env "RUSTC=${_rustc}")
+    get_filename_component(_rust_bin_dir "${_rustc}" DIRECTORY)
+    list(APPEND _test_env "RUSTDOC=${_rust_bin_dir}/rustdoc")
     # Crates with build scripts that compile protos need the same protoc the
     # C++ build uses. The generator expression resolves after the protobuf
     # package is found, which happens later in the configure run.

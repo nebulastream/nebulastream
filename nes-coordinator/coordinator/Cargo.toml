@@ -18,6 +18,7 @@ edition = "2024"
 [dependencies]
 model.workspace = true
 controller.workspace = true
+statistics.workspace = true
 madsim.workspace = true
 tonic = { version = "0.5.1", package = "madsim-tonic" }
 async-channel.workspace = true
