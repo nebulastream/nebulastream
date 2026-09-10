@@ -1,8 +1,3 @@
----
-title: "Testing"
-weight: 60
----
-
 NebulaStream uses a layered testing strategy.
 Each layer has a defined scope, and layers complement rather than replace each other.
 A unit test verifying component logic and a systest verifying end-to-end correctness are not interchangeable, so pick the layers your change actually needs rather than defaulting to one.
@@ -210,10 +205,10 @@ CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
 Additionally, a source can be defined inline within a SQL query.
 Instead of naming a source, you can create an anonymous source by writing `[TYPE]([OPTIONS])` (cmp. the example below).
 The accepted options are mostly the same as when creating a source via a `CREATE SOURCE` statement.
-The only difference is that a schema must be given via the options `SOURCE.SCHEMA` using the `SCHEMA` function.
+The only difference is that a schema must be given via the options `"SOURCE"."SCHEMA"` using the `SCHEMA` function.
 
 You cannot use the `ATTACH` statement to pipe a file or inline data into the source.
-To use a file input, use the `SOURCE.FILE_PATH` option. If no absolute path is given, the systest framework assumes
+To use a file input, use the `"SOURCE".FILE_PATH` option. If no absolute path is given, the systest framework assumes
 the test data directory of the systest as the root directory.
 
 Example:
@@ -243,7 +238,7 @@ CREATE SINK output3(new_column UINT64) TYPE Checksum;
 Additionally, sinks can be defined inline within a SQL query.
 Instead of naming the sink, you can create the anonymous sink by writing `[TYPE]([options])` (cmp. example below).
 The accepted options are mostly the same as when creating a sink via a `CREATE SINK` statement.
-The only difference is that a schema CAN OPTIONALLY be given via the options `SINK.SCHEMA` using the `SCHEMA` function.
+The only difference is that a schema CAN OPTIONALLY be given via the options `"SINK"."SCHEMA"` using the `SCHEMA` function.
 If no schema is given, the schema is inferred automatically.
 Anonymous sinks are also able to configure the output formatter via `OUTPUT_FORMATTER.*` parameters.
 
@@ -422,7 +417,7 @@ This allows tests to be topology-agnostic and run on both single-node and distri
 
 #### Explicit Worker Assignment
 
-Named physical sources and sinks support explicit placement via `SOURCE.HOST` and `SINK.HOST`. Anonymous sources support `SOURCE.HOST`; anonymous sinks use topology-based sink placement, so use a named sink when a sink must be pinned to a specific worker.
+Named physical sources and sinks support explicit placement via `"SOURCE".HOST` and `"SINK".HOST`. Anonymous sources support `"SOURCE".HOST`; anonymous sinks use topology-based sink placement, so use a named sink when a sink must be pinned to a specific worker.
 
 **Named Sources and Sinks:**
 

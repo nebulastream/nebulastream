@@ -1,8 +1,3 @@
----
-title: "How to add a Source"
-weight: 20
----
-
 # How to add a `Source` in NebulaStream
 
 In NebulaStream, sources are responsible for ingesting data into the system.
@@ -50,7 +45,7 @@ nes-plugins/
 
 Each source plugin must define two plugin libraries:
 1. The actual source plugin used at runtime by workers.
-2. A validation plugin used during query planning by `nebuli` (our stateless coordinator).
+2. A validation plugin used during query planning by `nes-cli` (our stateless coordinator).
 
 In the `CMakeLists.txt` file of our directory, we tell CMake how we want our plugin to be built:
 
