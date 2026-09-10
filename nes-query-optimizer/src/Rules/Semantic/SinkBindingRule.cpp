@@ -26,6 +26,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -41,7 +42,7 @@ std::set<std::type_index> SinkBindingRule::needs() const
 
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const
 {
-    return sinkCatalog == other.sinkCatalog;
+    return catalog == other.catalog;
 }
 
 LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
@@ -56,20 +57,14 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
 
                 /// Check to centralize the sink binding logic
                 /// TODO #897 move sink binding to new query binder
-
-
                 if (sinkOperator.value()->getSinkDescriptor().has_value())
                 {
                     /// SinkOperator already described inline.
                     return sinkOperator.value();
                 }
 
-                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->get().getSinkName());
-                if (not sinkDescriptor.has_value())
-                {
-                    throw UnknownSinkName("{}", sinkOperator->get().getSinkName());
-                }
-                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
+                const auto sinkDescriptor = catalog->getSinkDescriptor(sinkOperator->get().getSinkName().asCanonicalString());
+                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor);
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
 }
@@ -83,7 +78,7 @@ std::set<std::type_index> SinkBindingRule::neededBy() const
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 PlanRuleRegistryReturnType SinkBindingRule::create(PlanRuleRegistryArguments arguments)
 {
-    return SinkBindingRule{arguments.sinkCatalog};
+    return SinkBindingRule{arguments.catalog};
 }
 
 }

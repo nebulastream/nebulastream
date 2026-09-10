@@ -14,28 +14,33 @@
 
 #pragma once
 
-#include <atomic>
+#include <chrono>
 #include <cstddef>
 
-namespace NES::Systest
+#include <Model/RunnableTest.hpp>
+#include <Model/TestCaseId.hpp>
+#include <Model/Verdict.hpp>
+
+namespace NES
 {
 
-class SystestProgressTracker
+/// Prints one line per finished case, so a long run reports progress instead of printing nothing until it ends.
+/// Printing a total requires every test file to be prepared before the first case runs.
+/// Each line shows the test file it belongs to, because cases from several files finish interleaved.
+/// Not thread safe, because the runner checks and reports one case at a time from a single thread.
+class Progress
 {
 public:
-    SystestProgressTracker();
-    explicit SystestProgressTracker(size_t totalQueries);
+    explicit Progress(size_t totalCases);
 
-    void incrementQueryCounter();
-    [[nodiscard]] size_t getQueryCounter() const;
-    void setTotalQueries(size_t total);
-    [[nodiscard]] size_t getTotalQueries() const;
-    [[nodiscard]] double getProgressInPercent() const;
-    void reset();
+    /// Prints how many cases and test files the run holds.
+    void beginRun(size_t files) const;
+
+    void report(const TestCaseId& id, const RunnableCase& testCase, const Verdict& verdict, std::chrono::steady_clock::duration elapsed);
 
 private:
-    std::atomic<size_t> queryCounter{0};
-    size_t totalQueries = 0;
+    size_t done = 0;
+    size_t total;
 };
 
 }

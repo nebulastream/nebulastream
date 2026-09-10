@@ -271,6 +271,13 @@ rustflags = []
     file(MAKE_DIRECTORY "${umbrella_dir}/src")
     file(WRITE "${umbrella_dir}/src/lib.rs" "${extern_lines}")
 
+    # Seed the umbrella with the workspace lockfile so its standalone resolution
+    # reuses the exact versions the workspace built and tested against. A fresh
+    # resolution may otherwise pick newer transitive versions than the pinned
+    # direct dependencies were written for. Entries from the workspace [patch]
+    # section are not declared here and re-resolve to their registry versions.
+    file(COPY_FILE "${PROJECT_SOURCE_DIR}/Cargo.lock" "${umbrella_dir}/Cargo.lock" ONLY_IF_DIFFERENT)
+
     set(import_args
             MANIFEST_PATH "${umbrella_dir}/Cargo.toml"
             CRATES ${umbrella_name}

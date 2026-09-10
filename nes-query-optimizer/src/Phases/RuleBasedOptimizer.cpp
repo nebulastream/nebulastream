@@ -20,36 +20,25 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/RuleManager.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
-#include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
-RuleBasedOptimizer::RuleBasedOptimizer(
-    QueryOptimizerConfiguration defaultQueryOptimization,
-    std::shared_ptr<const SourceCatalog> sourceCatalog,
-    std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const ModelCatalog> modelCatalog)
-    : defaultQueryOptimization(std::move(defaultQueryOptimization))
-    , sourceCatalog(std::move(sourceCatalog))
-    , sinkCatalog(std::move(sinkCatalog))
-    , modelCatalog(std::move(modelCatalog))
+RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization, std::shared_ptr<Catalog> catalog)
+    : defaultQueryOptimization(std::move(defaultQueryOptimization)), catalog(std::move(catalog))
 {
     RuleManager<LogicalPlan> ruleManager;
 
 
     const PlanRuleRegistryArguments arguments{
         .defaultQueryOptimization = this->defaultQueryOptimization,
-        .sourceCatalog = this->sourceCatalog,
-        .sinkCatalog = this->sinkCatalog,
-        .modelCatalog = this->modelCatalog,
+        .catalog = this->catalog,
     };
 
     for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())

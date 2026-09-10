@@ -23,7 +23,6 @@ add_source_files(nes-sources
         FileDataRegistry.cpp
         SourceValidationProvider.cpp
         LogicalSource.cpp
-        SourceCatalog.cpp
         FileSource.cpp
         NetworkSource.cpp
 )

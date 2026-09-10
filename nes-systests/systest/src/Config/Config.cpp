@@ -15,23 +15,32 @@
 #include <Config/Config.hpp>
 
 #include <vector>
+
 #include <Configurations/BaseOption.hpp>
 
 namespace NES
 {
-std::vector<BaseOption*> SystestConfiguration::getOptions()
+std::vector<BaseOption*> Config::getOptions()
 {
     return {
-        &testDiscoverDirs,
+        &testsDiscoverDir,
+        &debugLogging,
         &directlySpecifiedTestFiles,
         &testFileExtension,
         &workingDir,
         &randomQueryOrder,
+        &shuffleSeed,
         &numberConcurrentQueries,
+        &queryTimeoutSeconds,
         &testGroups,
         &disabledTestFiles,
         &testDataDir,
+        &benchmark,
+        &benchmarkRounds,
+        &benchmarkReport,
         &endlessMode,
+        &endlessRounds,
+        &endlessSeconds,
         &excludeGroups,
         &remoteWorker,
         &clusterConfigPath};

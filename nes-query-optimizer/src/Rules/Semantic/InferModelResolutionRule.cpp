@@ -33,8 +33,8 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
-#include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
 
 namespace NES
@@ -49,16 +49,12 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
             if (const auto inferModelName = op.tryGetAs<InferModelNameLogicalOperator>())
             {
                 const auto& modelName = inferModelName->get().getModelName();
-                if (!modelCatalog->hasModel(modelName))
-                {
-                    throw UnknownModelName("Model '{}' is not registered", modelName);
-                }
                 PRECONDITION(
                     std::ranges::size(children) == 1,
                     "Expected InferModelName Logical Operator to have one child, but has {}",
                     std::ranges::size(children));
                 return LogicalOperator{
-                    TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog->load(modelName), std::move(children.at(0))}};
+                    TypedLogicalOperator<InferModelLogicalOperator>{catalog->getModel(modelName), std::move(children.at(0))}};
             }
             return op.withChildren(std::move(children));
         }};
@@ -81,7 +77,7 @@ std::set<std::type_index> InferModelResolutionRule::neededBy() const
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 PlanRuleRegistryReturnType InferModelResolutionRule::create(PlanRuleRegistryArguments arguments)
 {
-    return InferModelResolutionRule{arguments.modelCatalog};
+    return InferModelResolutionRule{arguments.catalog};
 }
 
 }

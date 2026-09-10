@@ -24,14 +24,14 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/UnboundField.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Reflection.hpp>
 
 namespace NES
 {
-
 namespace detail
 {
-
 struct ModelAccess;
 
 /// Ref-counted byte buffer shared by all `Model<Tag>` instances. Copying a
@@ -139,10 +139,15 @@ class Model
 
 public:
     Model() = delete;
+
     Model(const Model&) = default;
+
     Model(Model&&) noexcept = default;
+
     Model& operator=(const Model&) = default;
+
     Model& operator=(Model&&) noexcept = default;
+
     ~Model() = default;
 
     [[nodiscard]] const detail::OpenVinoModel& getBackendModel() const { return backendModel; }
@@ -186,4 +191,64 @@ struct Unreflector<ImportedModel>
     ImportedModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
+/// User-declared input and output field schemas of a model. Not a property of
+/// the MLIR/bytecode — it's catalog-side metadata, declared alongside the model
+/// in `CREATE MODEL` and passed through to the logical operator for schema
+/// inference.
+struct
+    ModelSchema /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding Schema (vector) trip the check; no real escape
+{
+    /// Ordered because the runtime indexes inputs/outputs positionally by tensor slot.
+    Schema<UnqualifiedUnboundField, Ordered> inputs;
+    Schema<UnqualifiedUnboundField, Ordered> outputs;
+
+    bool operator==(const ModelSchema&) const = default;
+};
+
+/// A catalog entry: the user-given name and source path together with the
+/// imported model and the validated schema.
+///
+/// Constructible only through the factory below, which imports and validates the
+/// model, or through reflection, which trusts the checks the coordinator already
+/// made. There is no public constructor, so neither path can be bypassed.
+class RegisteredModel
+{
+    std::string name;
+    std::filesystem::path path;
+    ImportedModel imported;
+    ModelSchema schema;
+
+    RegisteredModel(std::string name, std::filesystem::path path, ImportedModel importedModel, ModelSchema modelSchema)
+        : name(std::move(name)), path(std::move(path)), imported(std::move(importedModel)), schema(std::move(modelSchema))
+    {
+    }
+
+    friend struct Reflector<RegisteredModel>;
+    friend struct Unreflector<RegisteredModel>;
+
+public:
+    static RegisteredModel create(std::string name, std::filesystem::path path, ModelSchema schema);
+
+    [[nodiscard]] const std::string& getName() const { return name; }
+
+    [[nodiscard]] const std::filesystem::path& getPath() const { return path; }
+
+    [[nodiscard]] const ImportedModel& getImported() const { return imported; }
+
+    [[nodiscard]] const ModelSchema& getSchema() const { return schema; }
+
+    bool operator==(const RegisteredModel&) const = default;
+};
+
+template <>
+struct Reflector<RegisteredModel>
+{
+    Reflected operator()(const RegisteredModel& model, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<RegisteredModel>
+{
+    RegisteredModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
 }

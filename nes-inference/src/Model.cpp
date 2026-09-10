@@ -16,7 +16,9 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <functional>
 #include <limits>
+#include <numeric>
 #include <optional>
 #include <span>
 #include <string>
@@ -26,9 +28,11 @@
 
 #include <openssl/evp.h>
 
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <ModelCatalog.hpp>
+#include <Inference.hpp>
 
 namespace NES
 {
@@ -50,8 +54,8 @@ struct
     std::optional<std::string> name;
     std::optional<std::string> path;
     std::optional<Reflected> imported;
-    std::optional<ModelFieldList> inputs;
-    std::optional<ModelFieldList> outputs;
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> inputs;
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> outputs;
 };
 }
 
@@ -156,21 +160,77 @@ Reflected Reflector<RegisteredModel>::operator()(const RegisteredModel& model, c
 
 RegisteredModel Unreflector<RegisteredModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflected = context.unreflect<detail::ReflectedRegisteredModel>(rfl);
-    if (!reflected.name.has_value() || !reflected.path.has_value() || !reflected.imported.has_value() || !reflected.inputs.has_value()
-        || !reflected.outputs.has_value())
+    auto [name, path, imported, inputs, outputs] = context.unreflect<detail::ReflectedRegisteredModel>(rfl);
+    if (!name.has_value() || !path.has_value() || !imported.has_value() || !inputs.has_value() || !outputs.has_value())
     {
-        throw NES::CannotDeserialize("Failed to deserialize RegisteredModel");
+        throw CannotDeserialize("Failed to deserialize RegisteredModel");
     }
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the reflected form.
     /// Schema's user-declared destructor suppresses its implicit move ctor; std::move on the field initializers
     /// would just rebind to copy-from-const-ref. Pass by value.
-    ModelSchema schema{.inputs = reflected.inputs.value(), .outputs = reflected.outputs.value()};
+    ModelSchema schema{.inputs = inputs.value(), .outputs = outputs.value()};
     return RegisteredModel{
-        std::move(reflected.name).value(),
-        std::filesystem::path(std::move(reflected.path).value()),
-        context.unreflect<ImportedModel>(reflected.imported.value()),
+        std::move(name).value(),
+        std::filesystem::path(std::move(path).value()),
+        context.unreflect<ImportedModel>(imported.value()),
         std::move(schema)};
+}
+
+RegisteredModel RegisteredModel::create(std::string name, std::filesystem::path path, ModelSchema schema)
+{
+    if (!std::filesystem::exists(path))
+    {
+        throw InvalidStatement("Model path does not exist: {}", path);
+    }
+
+    /// Coordinator-side: only import the model — signature is scraped during
+    /// import. The compile step runs later on the worker, during lowering.
+    auto imported = importModel(path);
+    if (!imported)
+    {
+        throw CannotLoadModel("Failed to import model '{}': {}", name, imported.error().message);
+    }
+
+    /// The runtime is f32-only and the physical operator writes/reads one f32
+    /// slot per non-VARSIZED field. So declared fields must be FLOAT32, except
+    /// for the bulk-byte VARSIZED escape hatch — a single field that mirrors
+    /// the whole tensor verbatim. Validating this here makes
+    /// `model ↔ modelSchema` compatibility an invariant downstream.
+    const auto validateSide
+        = [&](const Schema<UnqualifiedUnboundField, Ordered>& fields, const std::vector<size_t>& tensorShape, std::string_view role)
+    {
+        bool hasVarsized = false;
+        for (const auto& field : fields)
+        {
+            const auto type = field.getDataType().type;
+            if (type != DataType::Type::FLOAT32 && type != DataType::Type::VARSIZED)
+            {
+                throw CannotLoadModel(
+                    "Model '{}' {} field '{}': type must be FLOAT32 or VARSIZED", name, role, field.getFullyQualifiedName());
+            }
+            if (type == DataType::Type::VARSIZED)
+            {
+                hasVarsized = true;
+            }
+        }
+        if (hasVarsized && fields.size() != 1)
+        {
+            throw CannotLoadModel("Model '{}' {}: VARSIZED requires exactly one {} field but got {}", name, role, role, fields.size());
+        }
+        if (!hasVarsized)
+        {
+            const size_t elementCount = std::accumulate(tensorShape.begin(), tensorShape.end(), size_t{1}, std::multiplies<>());
+            if (fields.size() != elementCount)
+            {
+                throw CannotLoadModel(
+                    "Model '{}' {}: declared {} field(s) but tensor has {} element(s)", name, role, fields.size(), elementCount);
+            }
+        }
+    };
+    validateSide(schema.inputs, imported->getInputShape(), "input");
+    validateSide(schema.outputs, imported->getOutputShape(), "output");
+
+    return {name, std::move(path), std::move(*imported), std::move(schema)};
 }
 
 }

@@ -48,25 +48,9 @@ AnonymousSourceBindingRule::bindAnonymousSources(const LogicalOperator& op, cons
         const auto type = anonymousSource.value()->getSourceType();
         const auto schema = anonymousSource.value()->getSourceSchema();
         const auto parserConfig = anonymousSource.value()->getParserConfig();
-        auto sourceConfig = anonymousSource.value()->getSourceConfig();
-
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because AnonymousSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find(Identifier::parse("host"));
-        if (hostIt == sourceConfig.end())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        const auto descriptorOpt = sourceCatalog->getAnonymousSource(type, schema, host, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
-        {
-            throw InvalidConfigParameter("Could not create an anonymous source descriptor because of invalid config parameters");
-        }
-        return LogicalOperator{SourceDescriptorLogicalOperator::create(std::move(descriptorOpt).value())};
+        const auto sourceConfig = anonymousSource.value()->getSourceConfig();
+        const auto descriptor = catalog->createAnonymousSource(ConnectorKind::Anonymous, type, schema, sourceConfig, parserConfig);
+        return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
     if (op.tryGetAs<SourceNameLogicalOperator>())
@@ -94,7 +78,7 @@ std::set<std::type_index> AnonymousSourceBindingRule::neededBy() const
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 PlanRuleRegistryReturnType AnonymousSourceBindingRule::create(PlanRuleRegistryArguments arguments)
 {
-    return AnonymousSourceBindingRule{arguments.sourceCatalog};
+    return AnonymousSourceBindingRule{arguments.catalog};
 }
 
 }

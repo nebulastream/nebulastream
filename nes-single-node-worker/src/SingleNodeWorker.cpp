@@ -42,7 +42,6 @@
 #include <GoogleEventTracePrinter.hpp>
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
@@ -96,20 +95,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::startQuery(LogicalPlan plan)
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a local query ID, generate one if needed
-        /// but preserve the distributed query ID if present
-        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
-        {
-            auto localId = LocalQueryId(generateUUID());
-            if (plan.getQueryId().isDistributed())
-            {
-                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
-            }
-            else
-            {
-                plan.setQueryId(QueryId::createLocal(localId));
-            }
-        }
+        INVARIANT(plan.getQueryId() != INVALID_QUERY_ID, "Plan must have a valid QueryId");
 
         const LogContext context("queryId", plan.getQueryId());
 

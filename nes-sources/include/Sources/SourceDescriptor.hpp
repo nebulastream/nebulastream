@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cctype>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -32,13 +31,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/ReflectionFwd.hpp>
-#include <fmt/core.h>
 #include <folly/hash/Hash.h>
 #include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
-class SourceCatalog;
 class OperatorSerializationUtil;
 
 class SourceDescriptor final : public Descriptor
@@ -64,24 +61,14 @@ public:
 
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
-
     [[nodiscard]] bool isAnonymousSource() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    friend class SourceCatalog;
     friend OperatorSerializationUtil;
     friend struct Unreflector<SourceDescriptor>;
     friend struct Reflector<SourceDescriptor>;
-
-    PhysicalSourceId physicalSourceId;
-    LogicalSource logicalSource;
-    std::string sourceType;
-    Host host;
-    InputFormatterDescriptor inputFormatterDescriptor;
-    bool isAnonymous = false;
-
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -92,6 +79,13 @@ private:
         DescriptorConfig::Config config,
         const InputFormatterDescriptor& inputFormatterDescriptor,
         bool isAnonymous);
+
+    PhysicalSourceId physicalSourceId;
+    LogicalSource logicalSource;
+    std::string sourceType;
+    Host host;
+    InputFormatterDescriptor inputFormatterDescriptor;
+    bool isAnonymous;
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -107,6 +101,15 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
+
+    static std::expected<SourceDescriptor, Exception> create(
+        PhysicalSourceId id,
+        LogicalSource logicalSource,
+        const Identifier& sourceType,
+        Host host,
+        std::unordered_map<Identifier, std::string> descriptorConfig,
+        const std::unordered_map<Identifier, std::string>& inputFormatterConfig,
+        bool isAnonymous);
 };
 
 template <>
@@ -136,7 +139,7 @@ namespace NES::detail
 {
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId;
+    int64_t physicalSourceId;
     LogicalSource logicalSource;
     std::string type;
     Host host;

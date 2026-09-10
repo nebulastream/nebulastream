@@ -134,52 +134,52 @@ void SinkLogicalOperator::inferLocalSchema()
 
     auto inputSchema = child->getOutputSchema();
     auto unboundInputSchema = unbind(inputSchema);
-    /// Set unordered schema for sinks not declared with a target schema.
+    /// A sink written into the query may leave its schema out, and the input then decides it.
     /// Schema<Field, Unordered> order is determined in a stage
-    if (std::holds_alternative<AnonymousSinkDescriptor>(sinkDescriptor->underlying))
+    if (auto* anonymousSinkDescriptor = std::get_if<AnonymousSinkDescriptor>(&sinkDescriptor->underlying);
+        anonymousSinkDescriptor != nullptr and std::holds_alternative<std::monostate>(anonymousSinkDescriptor->getSchema()))
     {
-        auto& anonymousSinkDescriptor = std::get<AnonymousSinkDescriptor>(sinkDescriptor->underlying);
-        if (std::holds_alternative<std::monostate>(anonymousSinkDescriptor.getSchema()))
-        {
-            anonymousSinkDescriptor.schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
-                unboundInputSchema | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
-        }
+        anonymousSinkDescriptor->schema = std::make_shared<const Schema<UnqualifiedUnboundField, Unordered>>(
+            unboundInputSchema | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>());
+        return;
     }
-    else
-    {
-        const auto expectedSchema = std::visit(
-            Overloaded{
-                [](const auto& schemaPtr) { return *schemaPtr | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>(); },
-                [](const std::monostate) -> Schema<UnqualifiedUnboundField, Unordered>
-                {
-                    INVARIANT(false, "Schema<Field, Unordered> was not set but previous checks succeeded");
-                    std::unreachable();
-                }},
-            sinkDescriptor->getSchema());
 
-        if (expectedSchema != unboundInputSchema)
-        {
-            const auto findMissing = [](const auto& full, const auto& partial)
+    /// Every other sink states the schema it accepts, wherever it was declared, and a query that produces something else is
+    /// rejected here.
+    /// Leaving a schema written into the query unchecked would let the mismatch reach the lowering of the sink, which cannot
+    /// report it against the query and asserts instead.
+    const auto expectedSchema = std::visit(
+        Overloaded{
+            [](const auto& schemaPtr) { return *schemaPtr | std::ranges::to<Schema<UnqualifiedUnboundField, Unordered>>(); },
+            [](const std::monostate) -> Schema<UnqualifiedUnboundField, Unordered>
             {
-                std::unordered_set<UnqualifiedUnboundField> missing;
-                for (const auto& field : full)
+                INVARIANT(false, "Schema<Field, Unordered> was not set but previous checks succeeded");
+                std::unreachable();
+            }},
+        sinkDescriptor->getSchema());
+
+    if (expectedSchema != unboundInputSchema)
+    {
+        const auto findMissing = [](const auto& full, const auto& partial)
+        {
+            std::unordered_set<UnqualifiedUnboundField> missing;
+            for (const auto& field : full)
+            {
+                if (const auto& found = partial[field.getFullyQualifiedName()];
+                    !found.has_value() || found->getDataType() != field.getDataType())
                 {
-                    if (const auto& found = partial[field.getFullyQualifiedName()];
-                        !found.has_value() || found->getDataType() != field.getDataType())
-                    {
-                        missing.insert(field);
-                    }
+                    missing.insert(field);
                 }
-                return missing;
-            };
-            auto expectedButNotInInput = findMissing(expectedSchema, unboundInputSchema);
-            auto inputButNotInExpected = findMissing(unboundInputSchema, expectedSchema);
-            throw CannotInferSchema(
-                "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and found "
-                "unexpected fields {}",
-                expectedButNotInInput | std::ranges::to<std::vector>(),
-                inputButNotInExpected | std::ranges::to<std::vector>());
-        }
+            }
+            return missing;
+        };
+        auto expectedButNotInInput = findMissing(expectedSchema, unboundInputSchema);
+        auto inputButNotInExpected = findMissing(unboundInputSchema, expectedSchema);
+        throw CannotInferSchema(
+            "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and found "
+            "unexpected fields {}",
+            expectedButNotInInput | std::ranges::to<std::vector>(),
+            inputButNotInExpected | std::ranges::to<std::vector>());
     }
 }
 

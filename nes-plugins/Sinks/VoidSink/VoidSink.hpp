@@ -50,23 +50,10 @@ protected:
 
 struct ConfigParametersVoid
 {
-    /// Void discards every tuple but still accepts the standard sink parameters (file_path,
-    /// output_format) so it can be used as a drop-in null target in systest's --workingDir flow,
-    /// which injects file_path into every sink.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
-
-    /// Optional (default empty): Void ignores the path entirely but must not *require* it, so that sinks
-    /// configured without a file_path (e.g. DistributedPlanningTest's empty config) still validate.
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
-        "",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
-
+    /// Void discards every tuple, so it takes no configuration.
+    /// It accepts neither a file path nor an output format, because it produces no output to write or to format.
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap();
 };
 }
 

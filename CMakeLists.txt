@@ -300,7 +300,6 @@ if (CODE_COVERAGE)
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
-    target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
 endif ()
 
 # Registers the `package-docker-images-all` target (and per-binary sub-targets) that

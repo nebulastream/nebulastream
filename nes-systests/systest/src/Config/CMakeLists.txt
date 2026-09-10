@@ -13,4 +13,5 @@
 add_source_files(nes-systest-lib
         Config.cpp
         ConfigParser.cpp
+        RunPlan.cpp
 )

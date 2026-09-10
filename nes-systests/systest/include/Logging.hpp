@@ -19,8 +19,10 @@
 namespace NES
 {
 
-/// Sets up the systest log file (a generated name under the build directory unless the configuration names one)
-/// and points the latest.log symlink at it.
-void setupLogging(const SystestConfiguration& config);
+/// Points the logger at this run's log file, prints that path, and updates the `latest.log` symlink next to it.
+/// The configuration supplies the path.
+/// When it supplies none, the path includes the process id and goes under the build directory, so two concurrent runs write to
+/// different files.
+void setupLogging(const Config& config);
 
 }

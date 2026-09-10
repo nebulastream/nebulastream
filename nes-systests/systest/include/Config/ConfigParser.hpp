@@ -19,8 +19,8 @@
 namespace NES
 {
 
-/// Parses the systest command line into a configuration.
-/// Exits the process for meta commands (--list, --help) and on invalid arguments.
-[[nodiscard]] SystestConfiguration parseConfig(int argc, const char** argv);
+/// Builds the configuration of one invocation from the command line, the disable config file and the referenced yaml files.
+/// Exits the process on a malformed command line, and on the meta commands that only print (help, and the list of discovered tests).
+[[nodiscard]] Config parseConfig(int argc, const char** argv);
 
 }

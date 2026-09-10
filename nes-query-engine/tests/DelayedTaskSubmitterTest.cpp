@@ -34,7 +34,6 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 
@@ -44,7 +43,8 @@ namespace
 {
 QueryId randomQueryId()
 {
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
+    static std::atomic<QueryId::Underlying> next{1};
+    return QueryId{next++};
 }
 
 WorkTask createTrackedTask(std::atomic<int>& completeCount, std::atomic<int>& failureCount)

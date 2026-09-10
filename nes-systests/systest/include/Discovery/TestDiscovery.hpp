@@ -14,16 +14,51 @@
 
 #pragma once
 
+#include <filesystem>
 #include <ostream>
-#include <Config/Config.hpp>
-#include <SystestState.hpp>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
-namespace NES::Systest
+#include <Config/Config.hpp>
+#include <Model/SystestQueryId.hpp>
+
+namespace NES
 {
 
-/// load test file map objects from files defined in systest config
-TestFileMap loadTestFileMap(const SystestConfiguration& config);
+using TestName = std::string;
+using TestGroup = std::string;
 
-std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
+/// One selected test file, the name it is reported and keyed under, the groups its header declares, and the query
+/// numbers the run is restricted to. An empty set of query numbers runs every query of the file.
+///
+/// The name is the file's path below the discovery root without its extension, so two files sharing a stem in
+/// different folders stay apart. A name whose stem is unique across the run is shortened back to that stem once
+/// discovery has finished, and a file named directly on the command line keeps its stem.
+struct DiscoveredTestFile
+{
+    explicit DiscoveredTestFile(const std::filesystem::path& file);
+    explicit DiscoveredTestFile(const std::filesystem::path& file, TestName testName);
+    explicit DiscoveredTestFile(const std::filesystem::path& file, std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber);
+    explicit DiscoveredTestFile(
+        const std::filesystem::path& file, std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber, TestName testName);
+    [[nodiscard]] std::string getLogFilePath() const;
+
+    [[nodiscard]] TestName name() const { return testName; }
+
+    std::filesystem::path file;
+    TestName testName;
+    std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber;
+    std::vector<TestGroup> groups;
+};
+
+/// The test files one invocation runs.
+using DiscoveredTestFiles = std::vector<DiscoveredTestFile>;
+
+std::ostream& operator<<(std::ostream& os, const DiscoveredTestFiles& testFiles);
+
+/// Selects the test files of one invocation.
+/// The command line either gives a file directly, or the discovery root supplies every file passing the group and disable filters.
+DiscoveredTestFiles discoverTestFiles(const Config& config);
 
 }

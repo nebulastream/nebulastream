@@ -48,7 +48,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
-    if (queryPlan.getQueryId().isValid())
+    if (queryPlan.getQueryId() != INVALID_QUERY_ID)
     {
         *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
     }
@@ -185,32 +185,19 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     return LogicalPlan(queryId, std::move(rootOperators));
 }
 
-NES::SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const QueryId& queryId)
+SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const QueryId& queryId)
 {
-    NES::SerializableQueryId proto;
-    proto.set_local_query_id(queryId.getLocalQueryId().getRawValue());
-    proto.set_distributed_query_id(queryId.getDistributedQueryId().getRawValue());
+    SerializableQueryId proto;
+    proto.set_id(queryId.getRawValue());
     return proto;
 }
 
-QueryId QueryPlanSerializationUtil::deserializeQueryId(const NES::SerializableQueryId& proto)
+QueryId QueryPlanSerializationUtil::deserializeQueryId(const SerializableQueryId& proto)
 {
-    auto localId = LocalQueryId(proto.local_query_id());
-    auto distributedId = DistributedQueryId(proto.distributed_query_id());
-    const bool hasLocal = localId != INVALID_LOCAL_QUERY_ID;
-    const bool hasDistributed = distributedId != DistributedQueryId(DistributedQueryId::INVALID);
-    if (hasLocal && hasDistributed)
+    if (proto.id() != 0)
     {
-        return QueryId::create(localId, distributedId);
+        return QueryId(proto.id());
     }
-    if (hasLocal)
-    {
-        return QueryId::createLocal(localId);
-    }
-    if (hasDistributed)
-    {
-        return QueryId::createDistributed(distributedId);
-    }
-    return QueryId::invalid();
+    return INVALID_QUERY_ID;
 }
 }
