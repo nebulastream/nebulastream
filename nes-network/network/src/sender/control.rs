@@ -496,17 +496,15 @@ fn create_connection_handler(
         {
             let target_connection = target_connection.clone();
             async move {
-                info!(
-                    "Connection is terminated: {:?}",
-                    connection_handler(
-                        this_connection,
-                        target_connection,
-                        control, // Pass controller clone so channel handlers can send RetryChannel commands
-                        rx,
-                        communication
-                    )
-                    .await
-                );
+                let result = connection_handler(
+                    this_connection,
+                    target_connection,
+                    control, // Pass controller clone so channel handlers can send RetryChannel commands
+                    rx,
+                    communication,
+                )
+                .await;
+                info!("Connection is terminated: {result:?}");
             }
         }
         .instrument(info_span!(

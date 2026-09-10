@@ -308,10 +308,9 @@ impl<C: Communication + 'static> NetworkService<C> {
                 let communication = communication.clone();
                 async move {
                     debug!("Starting sender network service");
-                    debug!(
-                        "sender network service stopped: {:?}",
-                        network_sender_dispatcher(this_connection, listener, communication).await
-                    );
+                    let result =
+                        network_sender_dispatcher(this_connection, listener, communication).await;
+                    debug!("sender network service stopped: {result:?}");
                 }
             }
             .instrument(info_span!("sender", this = %this_connection)),
