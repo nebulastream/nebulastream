@@ -83,4 +83,12 @@ ValueDeserializerGeneratedRegistrar::RegisterUnixEpochTimestampValueDeserializer
 {
     return std::make_unique<UnixEpochTimestampValueDeserializer>(false, false);
 }
+
+/// The deserializer merely delegates to the deserializer of the underlying integer field, so the same implementation serves the unsigned
+/// representation of timestamps, where that field is an UINT64 instead of an INT64.
+ValueDeserializerRegistryReturnType
+ValueDeserializerGeneratedRegistrar::RegisterUnixEpochUnsignedTimestampValueDeserializer(ValueDeserializerRegistryArguments)
+{
+    return std::make_unique<UnixEpochTimestampValueDeserializer>(false, false);
+}
 }

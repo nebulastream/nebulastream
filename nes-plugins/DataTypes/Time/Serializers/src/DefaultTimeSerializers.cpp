@@ -123,6 +123,40 @@ uint64_t serializeTimestamp(
     }
     return written;
 }
+
+uint64_t serializeUnsignedTimestamp(
+    const uint64_t microSecondsSinceUnixEpoch,
+    const bool quoted,
+    const uint64_t remainingSpace,
+    TupleBuffer* buffer,
+    AbstractBufferProvider* bufferProvider,
+    int8_t* bufferStartingAddress)
+{
+    /// Write leading quote if needed
+    uint64_t written = 0;
+    if (quoted)
+    {
+        written += writeValueToBuffer("\"", 1, remainingSpace - written, buffer, bufferProvider, bufferStartingAddress + written);
+    }
+    /// Write date
+    const int32_t daysSinceEpoch = static_cast<int32_t>(microSecondsSinceUnixEpoch / 86'400'000'000);
+    written += serializeDate(daysSinceEpoch, false, remainingSpace - written, buffer, bufferProvider, bufferStartingAddress + written);
+
+    /// Write blank
+    written += writeValueToBuffer(" ", 1, remainingSpace - written, buffer, bufferProvider, bufferStartingAddress + written);
+
+    /// Write time
+    const int64_t microSecondsSinceMidnight = static_cast<int64_t>(microSecondsSinceUnixEpoch % 86'400'000'000);
+    written += serializeTime(
+        microSecondsSinceMidnight, false, remainingSpace - written, buffer, bufferProvider, bufferStartingAddress + written);
+
+    /// Write ending quote if needed
+    if (quoted)
+    {
+        written += writeValueToBuffer("\"", 1, remainingSpace - written, buffer, bufferProvider, bufferStartingAddress + written);
+    }
+    return written;
+}
 }
 
 namespace NES
@@ -193,6 +227,28 @@ nautilus::val<uint64_t> DefaultTimestampValueSerializer::serializeAndWrite(
         startingAddress);
 }
 
+nautilus::val<uint64_t> DefaultUnsignedTimestampValueSerializer::serializeAndWrite(
+    const VarVal& value,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<int8_t*>& startingAddress,
+    const std::unordered_map<SerializerKey, std::string>&,
+    const DataType&) const
+{
+    const StructData castedVal = value.getRawValueAs<StructData>();
+    const VarVal microSecondsSinceUnixEpoch = castedVal.at(0);
+    const nautilus::val<uint64_t> msAsNVal = microSecondsSinceUnixEpoch.getRawValueAs<nautilus::val<uint64_t>>();
+    return nautilus::invoke(
+        DefaultTimeSerializer::serializeUnsignedTimestamp,
+        msAsNVal,
+        nautilus::val<bool>{quoted},
+        remainingSize,
+        recordBuffer.getReference(),
+        bufferProvider,
+        startingAddress);
+}
+
 ValueSerializerRegistryReturnType
 ValueSerializerGeneratedRegistrar::RegisterDefaultDateValueSerializer(ValueSerializerRegistryArguments args)
 {
@@ -209,5 +265,11 @@ ValueSerializerRegistryReturnType
 ValueSerializerGeneratedRegistrar::RegisterDefaultTimestampValueSerializer(ValueSerializerRegistryArguments args)
 {
     return std::make_unique<DefaultTimestampValueSerializer>(args.quoted);
+}
+
+ValueSerializerRegistryReturnType
+ValueSerializerGeneratedRegistrar::RegisterDefaultUnsignedTimestampValueSerializer(ValueSerializerRegistryArguments args)
+{
+    return std::make_unique<DefaultUnsignedTimestampValueSerializer>(args.quoted);
 }
 }

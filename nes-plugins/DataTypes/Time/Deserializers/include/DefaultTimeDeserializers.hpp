@@ -120,4 +120,36 @@ private:
     bool quoted;
     bool hasTrailingSpaces;
 };
+
+/// Same as the DefaultTimestampValueDeserializer, but for the unsigned representation of timestamps.
+/// Rejects points in time before the unix epoch, as they are not representable.
+class DefaultUnsignedTimestampValueDeserializer final : public ValueDeserializer
+{
+public:
+    explicit DefaultUnsignedTimestampValueDeserializer(const bool quoted, const bool hasTrailingSpaces)
+        : quoted(quoted), hasTrailingSpaces(hasTrailingSpaces)
+    {
+    }
+
+    [[nodiscard]] VarVal deserializeToVarVal(
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
+        const DataType& valueType,
+        ArenaRef& arena) const override;
+
+    void deserializeIntoBuffer(
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize,
+        const std::vector<std::string>& nullValues,
+        const std::unordered_map<DeserializerKey, std::string>& deserializerTypes,
+        const DataType& valueType,
+        ArenaRef& arena,
+        const nautilus::val<int8_t*>& bufferAddress) const override;
+
+private:
+    bool quoted;
+    bool hasTrailingSpaces;
+};
 }

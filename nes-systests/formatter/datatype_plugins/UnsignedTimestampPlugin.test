@@ -1,0 +1,48 @@
+# name: UnsignedTimestampPlugin.test
+# description: Tests the UnsignedTimestamp datatype of the "Time" plugin, which represents timestamps as microseconds since unix epoch in an unsigned integer
+# groups: [Formatter]
+
+CREATE LOGICAL SOURCE timeSource(timestamp UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource TYPE FILE;
+ATTACH INLINE
+2008-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSource2(TIMESTAMP UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource2 TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"TIMESTAMP":"+20085-07-11T12:32:07,278912"}
+
+CREATE LOGICAL SOURCE timeSource3(timestamp UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSource3 TYPE FILE SET('UnsignedTimestamp:UnixEpochUnsignedTimestamp' as "INPUT_FORMATTER".VALUE_DESERIALIZERS);
+ATTACH INLINE
+1215779527278912
+
+# Test CSV format deserialization of the timestamps
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2008-07-11 12:32:07.278912
+
+# Display timestamp as unix epoch timestamp
+SELECT * FROM timeSource INTO FILE('CSV' as "SINK".OUTPUT_FORMAT, 'UnsignedTimestamp:UnixEpochUnsignedTimestamp' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS);
+----
+1215779527278912
+
+# Receive timestamp as unix epoch timestamp
+SELECT * FROM timeSource3 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+2008-07-11 12:32:07.278912
+
+# Test CSV format deserialization of timestamps with years out of the 4 digit range
+SELECT * FROM timeSource2 INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
++20085-07-11 12:32:07.278912
+
+CREATE LOGICAL SOURCE timeSourceJSON(TIMESTAMP UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR timeSourceJSON TYPE FILE SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"TIMESTAMP": "2008-07-11 12:32:07.278912"}
+
+# Test JSON format (de)serialization of the timestamps
+SELECT * FROM timeSourceJSON INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"TIMESTAMP":"2008-07-11 12:32:07.278912"}
