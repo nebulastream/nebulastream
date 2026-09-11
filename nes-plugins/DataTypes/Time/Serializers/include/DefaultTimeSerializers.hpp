@@ -78,4 +78,23 @@ public:
 private:
     bool quoted;
 };
+
+/// Same as the DefaultTimestampValueSerializer, but for the unsigned representation of timestamps.
+class DefaultUnsignedTimestampValueSerializer final : public ValueSerializer
+{
+public:
+    explicit DefaultUnsignedTimestampValueSerializer(const bool quoted) : quoted(quoted) { }
+
+    [[nodiscard]] nautilus::val<uint64_t> serializeAndWrite(
+        const VarVal& value,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<int8_t*>& startingAddress,
+        const std::unordered_map<SerializerKey, std::string>& serializerTypes,
+        const DataType& valueType) const override;
+
+private:
+    bool quoted;
+};
 }

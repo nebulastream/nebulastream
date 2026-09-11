@@ -139,6 +139,18 @@ int64_t getMicroSecondsSinceUnixEpoch(const int8_t* timestampPtr, const uint64_t
     return daysSinceUnixEpoch * 86'400'000'000 + microSecondsSinceMidnight;
 }
 
+uint64_t getUnsignedMicroSecondsSinceUnixEpoch(const int8_t* timestampPtr, const uint64_t timestampSize)
+{
+    const int64_t microSecondsSinceUnixEpoch = getMicroSecondsSinceUnixEpoch(timestampPtr, timestampSize);
+    if (microSecondsSinceUnixEpoch < 0)
+    {
+        throw CannotFormatSourceData(
+            "Timestamp {} lies before the unix epoch and is thus not representable as an UnsignedTimestamp",
+            std::string_view{reinterpret_cast<const char*>(timestampPtr), timestampSize});
+    }
+    return static_cast<uint64_t>(microSecondsSinceUnixEpoch);
+}
+
 template <typename T>
 void writeFlatValToBuffer(int8_t* bufferAddress, T val)
 {
@@ -331,6 +343,62 @@ void DefaultTimestampValueDeserializer::deserializeIntoBuffer(
     nautilus::invoke(DefaultTimeDeserializer::writeFlatValToBuffer<int64_t>, bufferAddress, microSecondsSinceUnixEpoch);
 }
 
+VarVal DefaultUnsignedTimestampValueDeserializer::deserializeToVarVal(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
+    const DataType& valueType,
+    ArenaRef& arena) const
+{
+    /// Remove quotes and cut trailing spaces if needed
+    nautilus::val<const int8_t*> trueFieldAddress = fieldAddress;
+    nautilus::val<uint64_t> trueFieldSize = fieldSize;
+    if (hasTrailingSpaces)
+    {
+        nautilus::val<DefaultTimeDeserializer::TruncateSpacesResult> truncatedField;
+        nautilus::invoke(DefaultTimeDeserializer::truncateTrailingSpaces, fieldAddress, fieldSize, &truncatedField);
+        trueFieldAddress = truncatedField.get(&DefaultTimeDeserializer::TruncateSpacesResult::ptr);
+        trueFieldSize = truncatedField.get(&DefaultTimeDeserializer::TruncateSpacesResult::size);
+    }
+    trueFieldAddress = quoted ? trueFieldAddress + nautilus::val<uint64_t>{1} : trueFieldAddress;
+    trueFieldSize = quoted ? trueFieldSize - 2 : trueFieldSize;
+    const nautilus::val<uint64_t> microSecondsSinceUnixEpoch
+        = nautilus::invoke(DefaultTimeDeserializer::getUnsignedMicroSecondsSinceUnixEpoch, trueFieldAddress, trueFieldSize);
+
+    const nautilus::val<int8_t*> buffer = arena.allocateMemory(valueType.getSizeInBytesWithoutNull());
+    nautilus::invoke(DefaultTimeDeserializer::writeFlatValToBuffer<uint64_t>, buffer, microSecondsSinceUnixEpoch);
+    const StructData structData{buffer, valueType.fields};
+    return VarVal{structData, false, false};
+}
+
+void DefaultUnsignedTimestampValueDeserializer::deserializeIntoBuffer(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>&,
+    const std::unordered_map<DeserializerKey, std::string>&,
+    const DataType&,
+    ArenaRef&,
+    const nautilus::val<int8_t*>& bufferAddress) const
+{
+    /// Remove quotes and cut trailing spaces if needed
+    nautilus::val<const int8_t*> trueFieldAddress = fieldAddress;
+    nautilus::val<uint64_t> trueFieldSize = fieldSize;
+    if (hasTrailingSpaces)
+    {
+        nautilus::val<DefaultTimeDeserializer::TruncateSpacesResult> truncatedField;
+        nautilus::invoke(DefaultTimeDeserializer::truncateTrailingSpaces, fieldAddress, fieldSize, &truncatedField);
+        trueFieldAddress = truncatedField.get(&DefaultTimeDeserializer::TruncateSpacesResult::ptr);
+        trueFieldSize = truncatedField.get(&DefaultTimeDeserializer::TruncateSpacesResult::size);
+    }
+    trueFieldAddress = quoted ? trueFieldAddress + nautilus::val<uint64_t>{1} : trueFieldAddress;
+    trueFieldSize = quoted ? trueFieldSize - 2 : trueFieldSize;
+    const nautilus::val<uint64_t> microSecondsSinceUnixEpoch
+        = nautilus::invoke(DefaultTimeDeserializer::getUnsignedMicroSecondsSinceUnixEpoch, trueFieldAddress, trueFieldSize);
+
+    nautilus::invoke(DefaultTimeDeserializer::writeFlatValToBuffer<uint64_t>, bufferAddress, microSecondsSinceUnixEpoch);
+}
+
 ValueDeserializerRegistryReturnType
 ValueDeserializerGeneratedRegistrar::RegisterDefaultDateValueDeserializer(ValueDeserializerRegistryArguments args)
 {
@@ -347,5 +415,11 @@ ValueDeserializerRegistryReturnType
 ValueDeserializerGeneratedRegistrar::RegisterDefaultTimestampValueDeserializer(ValueDeserializerRegistryArguments args)
 {
     return std::make_unique<DefaultTimestampValueDeserializer>(args.quoted, args.hasTrailingSpaces);
+}
+
+ValueDeserializerRegistryReturnType
+ValueDeserializerGeneratedRegistrar::RegisterDefaultUnsignedTimestampValueDeserializer(ValueDeserializerRegistryArguments args)
+{
+    return std::make_unique<DefaultUnsignedTimestampValueDeserializer>(args.quoted, args.hasTrailingSpaces);
 }
 }
