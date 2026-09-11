@@ -132,6 +132,9 @@ struct RunnableTestFile
 {
     /// Name for reporting failure/progress.
     std::string name;
+    /// Identifies this part among all parts of a run, so the ids of its statements stay unique.
+    /// The parts of one file repeat its query numbers, so the number alone does not identify a statement.
+    std::string key;
     /// The prefix that qualifying put in front of every catalog-visible name, so a consumer comparing printed
     /// plans can strip it and read the names the test wrote originally.
     std::string qualifyingPrefix;
