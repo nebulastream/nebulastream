@@ -10,12 +10,6 @@ inputs:
   run:
     description: 'bash command(s) to run within the container'
     required: true
-  docker_username:
-    description: 'Docker Hub username for authenticated pulls inside the container'
-    required: false
-  docker_password:
-    description: 'Docker Hub password/token for authenticated pulls inside the container'
-    required: false
   additional_mounts:
     description: 'Additional Docker mounts, one source:destination[:options] entry per line'
     required: false
@@ -29,14 +23,6 @@ runs:
       env:
         ADDITIONAL_MOUNTS: ${{ inputs.additional_mounts }}
       run: |
-        DOCKER_LOGIN_ARGS=""
-        DOCKER_LOGIN_CMD=""
-        if [ -n "${{ inputs.docker_username }}" ] && [ -n "${{ inputs.docker_password }}" ]; then
-          DOCKER_LOGIN_ARGS="-e DOCKER_HUB_USER -e DOCKER_HUB_PASS"
-          DOCKER_LOGIN_CMD='echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin > /dev/null 2>&1 && '
-        fi
-        export DOCKER_HUB_USER="${{ inputs.docker_username }}"
-        export DOCKER_HUB_PASS="${{ inputs.docker_password }}"
         MOUNT_ARGS=()
         while IFS= read -r mount; do
           [ -z "$mount" ] || MOUNT_ARGS+=(-v "$mount")
@@ -45,11 +31,10 @@ runs:
              --pull=never \
              -v /var/run/docker.sock:/var/run/docker.sock \
              --group-add "$(stat -c '%g' /var/run/docker.sock)" \
-             $DOCKER_LOGIN_ARGS \
              "${MOUNT_ARGS[@]}" \
              -v "$(pwd):$(pwd)" -e "HOME=$(pwd)" --workdir "$(pwd)" -u "$(id -u):$(id -g)" \
              -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
              -e SCCACHE_STARTUP_TIMEOUT -e SCCACHE_IDLE_TIMEOUT \
              -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
              ${{inputs.image_name}} \
-              /usr/bin/bash -e -c "${DOCKER_LOGIN_CMD}"'${{inputs.run}}'
+              /usr/bin/bash -e -c '${{inputs.run}}'

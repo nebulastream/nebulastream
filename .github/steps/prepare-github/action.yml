@@ -21,11 +21,11 @@ runs:
   using: 'composite'
   steps:
     - name: Login to Docker Hub
-      shell: bash
-      run: |
-        if [ -n "${{ inputs.docker_username }}" ] && [ -n "${{ inputs.docker_password }}" ]; then
-          echo "${{ inputs.docker_password }}" | docker login -u "${{ inputs.docker_username }}" --password-stdin
-        fi
+      if: ${{ inputs.docker_username != '' && inputs.docker_password != '' }}
+      uses: ./.github/steps/docker-login
+      with:
+        username: ${{ inputs.docker_username }}
+        password: ${{ inputs.docker_password }}
     - name: Maximize build space
       shell: bash
       run: |
