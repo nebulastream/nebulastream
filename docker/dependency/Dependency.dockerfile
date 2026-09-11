@@ -83,6 +83,8 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     if [ "$STDLIB" = "libcxx" ]; then VCPKG_STDLIB="libcxx"; else VCPKG_STDLIB="local"; fi; \
     \
     cd /vcpkg_input; \
+    # An image build has no terminal, so git would wait on an auth challenge until the build times out.
+    export GIT_TERMINAL_PROMPT=0; \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
     git -C vcpkg_repository checkout "$(grep -o "\"builtin-baseline\": \"[0-9a-f]*\"" vcpkg.json | cut -d\" -f4)"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
