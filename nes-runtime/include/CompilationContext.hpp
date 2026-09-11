@@ -85,6 +85,8 @@ public:
     {
     }
 
+    [[nodiscard]] bool isCompiled() const { return engine.isCompiled(); }
+
     void registerUDF(std::string_view symbolName, std::string bitcode)
     {
         PRECONDITION(!compiled, "registerUDF() must not be called after the module has been compiled");

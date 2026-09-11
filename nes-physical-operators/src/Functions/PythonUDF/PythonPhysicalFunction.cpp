@@ -6,6 +6,7 @@
         http://www.apache.org/licenses/LICENSE-2.0
 */
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -42,6 +43,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/IPO/GlobalDCE.h>
 #include <llvm/Transforms/IPO/StripDeadPrototypes.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 #include <nautilus/select.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/tracing/TracingUtil.hpp>
@@ -54,6 +56,15 @@
 
 namespace NES
 {
+struct PythonUdfInterpreterExecutable
+{
+    using Function = nautilus::engine::ModuleFunction<uint8_t(PythonUdfAbiValue*, PythonUdfAbiValue*, UdfErrorHolder*)>;
+
+    explicit PythonUdfInterpreterExecutable(Function function) : function(std::move(function)) { }
+
+    Function function;
+};
+
 namespace
 {
 std::atomic_uint64_t nextPythonUdfId = 0;
@@ -65,6 +76,15 @@ double elapsedMilliseconds(const std::chrono::steady_clock::time_point start, co
 
 static_assert(offsetof(UdfErrorHolder, errorPtr) == 0);
 static_assert(offsetof(UdfErrorHolder, errorSize) == sizeof(int8_t*));
+static_assert(offsetof(PythonUdfAbiValue, data) == 0);
+static_assert(offsetof(PythonUdfAbiValue, size) == sizeof(int8_t*));
+static_assert(offsetof(PythonUdfAbiValue, isNull) == sizeof(int8_t*) + sizeof(uint64_t));
+static_assert(sizeof(PythonUdfAbiValue) == sizeof(int8_t*) + (2 * sizeof(uint64_t)));
+
+std::string interpreterSymbolName(const std::string& symbol)
+{
+    return symbol + "_interpreter";
+}
 
 std::string codonTypeName(const DataType& type)
 {
@@ -178,13 +198,12 @@ std::string createPythonUdfSource(
     for (size_t index = 0; index < parameterNames.size(); ++index)
     {
         const auto pythonType = pythonTypeName(argumentTypes[index]);
-        parameters.emplace_back(
-            fmt::format(
-                "{}: {}{}{}",
-                parameterNames[index],
-                argumentTypes[index].nullable ? "Optional[" : "",
-                pythonType,
-                argumentTypes[index].nullable ? "]" : ""));
+        parameters.emplace_back(fmt::format(
+            "{}: {}{}{}",
+            parameterNames[index],
+            argumentTypes[index].nullable ? "Optional[" : "",
+            pythonType,
+            argumentTypes[index].nullable ? "]" : ""));
         if (argumentTypes[index].type == DataType::Type::VARSIZED)
         {
             abiParameters.emplace_back(fmt::format("_arg{}_ptr: Ptr[byte]", index));
@@ -192,13 +211,12 @@ std::string createPythonUdfSource(
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
-                bodyArguments.emplace_back(
-                    fmt::format(
-                        "Optional[str]() if bool(_arg{}_is_null) else Optional[str](str(_arg{}_ptr, int(_arg{}_size)))",
-                        index,
-                        index,
-                        index,
-                        index));
+                bodyArguments.emplace_back(fmt::format(
+                    "Optional[str]() if bool(_arg{}_is_null) else Optional[str](str(_arg{}_ptr, int(_arg{}_size)))",
+                    index,
+                    index,
+                    index,
+                    index));
             }
             else
             {
@@ -211,14 +229,13 @@ std::string createPythonUdfSource(
             if (argumentTypes[index].nullable)
             {
                 abiParameters.emplace_back(fmt::format("_arg{}_is_null: u8", index));
-                bodyArguments.emplace_back(
-                    fmt::format(
-                        "Optional[{}]() if bool(_arg{}_is_null) else Optional[{}]({}(_arg{}))",
-                        pythonType,
-                        index,
-                        pythonType,
-                        pythonType,
-                        index));
+                bodyArguments.emplace_back(fmt::format(
+                    "Optional[{}]() if bool(_arg{}_is_null) else Optional[{}]({}(_arg{}))",
+                    pythonType,
+                    index,
+                    pythonType,
+                    pythonType,
+                    index));
             }
             else
             {
@@ -336,6 +353,97 @@ void replaceCodonStdoutLoads(llvm::Module& module)
     }
 }
 
+void addPythonUdfInterpreterAdapter(
+    llvm::Module& module, const std::string& symbol, const std::vector<DataType>& argumentTypes, const DataType& returnType)
+{
+    auto* typedEntryPoint = module.getFunction(symbol);
+    if (typedEntryPoint == nullptr || typedEntryPoint->isDeclaration())
+    {
+        throw QueryCompilerError("Codon did not emit exported function '{}'", symbol);
+    }
+
+    auto& context = module.getContext();
+    auto* pointerType = llvm::PointerType::getUnqual(context);
+    auto* int64Type = llvm::Type::getInt64Ty(context);
+    auto* int8Type = llvm::Type::getInt8Ty(context);
+    auto* abiValueType = llvm::StructType::create(context, {pointerType, int64Type, int8Type}, "nes.python_udf_abi_value");
+    auto* adapterType = llvm::FunctionType::get(int8Type, {pointerType, pointerType, pointerType}, false);
+    auto* adapter = llvm::Function::Create(adapterType, llvm::GlobalValue::ExternalLinkage, interpreterSymbolName(symbol), module);
+    auto* entryBlock = llvm::BasicBlock::Create(context, "entry", adapter);
+    llvm::IRBuilder<> builder(entryBlock);
+
+    auto adapterArgument = adapter->arg_begin();
+    llvm::Value* arguments = adapterArgument++;
+    llvm::Value* result = adapterArgument++;
+    llvm::Value* error = adapterArgument;
+    arguments->setName("arguments");
+    result->setName("result");
+    error->setName("error");
+
+    const auto fieldPointer = [&](llvm::Value* base, const size_t valueIndex, const unsigned fieldIndex)
+    {
+        auto* value = builder.CreateConstInBoundsGEP1_64(abiValueType, base, valueIndex);
+        return builder.CreateStructGEP(abiValueType, value, fieldIndex);
+    };
+    const auto loadField = [&](llvm::Value* base, const size_t valueIndex, const unsigned fieldIndex, llvm::Type* fieldType)
+    { return builder.CreateLoad(fieldType, fieldPointer(base, valueIndex, fieldIndex)); };
+
+    llvm::SmallVector<llvm::Value*> typedArguments;
+    typedArguments.reserve(typedEntryPoint->arg_size());
+    size_t typedArgumentIndex = 0;
+    for (size_t index = 0; index < argumentTypes.size(); ++index)
+    {
+        const auto& argumentType = argumentTypes[index];
+        auto* data = loadField(arguments, index, 0, pointerType);
+        if (argumentType.type == DataType::Type::VARSIZED)
+        {
+            typedArguments.emplace_back(data);
+            ++typedArgumentIndex;
+            typedArguments.emplace_back(loadField(arguments, index, 1, int64Type));
+            ++typedArgumentIndex;
+        }
+        else
+        {
+            if (typedArgumentIndex >= typedEntryPoint->arg_size())
+            {
+                throw QueryCompilerError("Codon emitted an invalid argument signature for Python UDF '{}'", symbol);
+            }
+            auto* scalarType = typedEntryPoint->getFunctionType()->getParamType(typedArgumentIndex++);
+            typedArguments.emplace_back(builder.CreateLoad(scalarType, data));
+        }
+        if (argumentType.nullable)
+        {
+            typedArguments.emplace_back(loadField(arguments, index, 2, int8Type));
+            ++typedArgumentIndex;
+        }
+    }
+
+    if (returnType.type == DataType::Type::VARSIZED)
+    {
+        typedArguments.emplace_back(fieldPointer(result, 0, 0));
+        typedArguments.emplace_back(fieldPointer(result, 0, 1));
+        typedArgumentIndex += 2;
+    }
+    else
+    {
+        typedArguments.emplace_back(loadField(result, 0, 0, pointerType));
+        ++typedArgumentIndex;
+    }
+    if (returnType.nullable)
+    {
+        typedArguments.emplace_back(fieldPointer(result, 0, 2));
+        ++typedArgumentIndex;
+    }
+    typedArguments.emplace_back(error);
+    ++typedArgumentIndex;
+
+    if (typedArgumentIndex != typedEntryPoint->arg_size())
+    {
+        throw QueryCompilerError("Codon emitted an invalid argument signature for Python UDF '{}'", symbol);
+    }
+    builder.CreateRet(builder.CreateCall(typedEntryPoint, typedArguments));
+}
+
 void internalizePythonUdfModule(llvm::Module& module, const std::string& symbol)
 {
     for (auto& function : module.functions())
@@ -424,7 +532,21 @@ void validatePythonUdfModule(const llvm::Module& module, const std::string& symb
     }
 }
 
-std::string compilePythonUdf(
+struct CompiledPythonUdf
+{
+    std::string pipelineBitcode;
+    std::string interpreterBitcode;
+};
+
+std::string writeBitcode(const llvm::Module& module)
+{
+    llvm::SmallVector<char, 0> bitcode;
+    llvm::raw_svector_ostream bitcodeStream(bitcode);
+    llvm::WriteBitcodeToFile(module, bitcodeStream);
+    return {bitcode.data(), bitcode.size()};
+}
+
+CompiledPythonUdf compilePythonUdf(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
     const std::string& body,
@@ -453,15 +575,19 @@ std::string compilePythonUdf(
                 "Could not read LLVM bitcode for Python UDF '{}': {}", symbol, llvm::toString(parsedModule.takeError()));
         }
         const auto cleanupStart = std::chrono::steady_clock::now();
-        auto module = std::move(*parsedModule);
-        replaceCodonStdoutLoads(*module);
-        internalizePythonUdfModule(*module, symbol);
-        validatePythonUdfModule(*module, symbol);
+        auto pipelineModule = std::move(*parsedModule);
+        replaceCodonStdoutLoads(*pipelineModule);
+        addPythonUdfInterpreterAdapter(*pipelineModule, symbol, argumentTypes, returnType);
+        auto interpreterModule = llvm::CloneModule(*pipelineModule);
+        internalizePythonUdfModule(*pipelineModule, symbol);
+        validatePythonUdfModule(*pipelineModule, symbol);
+        const auto interpreterSymbol = interpreterSymbolName(symbol);
+        internalizePythonUdfModule(*interpreterModule, interpreterSymbol);
+        validatePythonUdfModule(*interpreterModule, interpreterSymbol);
 
         const auto bitcodeStart = std::chrono::steady_clock::now();
-        llvm::SmallVector<char, 0> bitcode;
-        llvm::raw_svector_ostream bitcodeStream(bitcode);
-        llvm::WriteBitcodeToFile(*module, bitcodeStream);
+        auto pipelineBitcode = writeBitcode(*pipelineModule);
+        auto interpreterBitcode = writeBitcode(*interpreterModule);
         const auto compilationEnd = std::chrono::steady_clock::now();
         fmt::print(
             stderr,
@@ -475,7 +601,7 @@ std::string compilePythonUdf(
             codonResult.optimizeMilliseconds,
             elapsedMilliseconds(cleanupStart, bitcodeStart),
             elapsedMilliseconds(bitcodeStart, compilationEnd));
-        return {bitcode.data(), bitcode.size()};
+        return {std::move(pipelineBitcode), std::move(interpreterBitcode)};
     }
     catch (const Exception&)
     {
@@ -509,6 +635,7 @@ using PythonAbiValue = std::variant<
     nautilus::val<float*>,
     nautilus::val<double*>,
     nautilus::val<int8_t**>,
+    nautilus::val<PythonUdfAbiValue*>,
     nautilus::val<UdfErrorHolder*>>;
 
 template <typename R>
@@ -667,6 +794,165 @@ VarVal invokePython(const std::string& symbol, const DataType& returnType, Arena
     INVARIANT(result.has_value(), "Python UDF result was not initialized");
     return std::move(*result);
 }
+
+std::shared_ptr<PythonUdfInterpreterExecutable>
+compilePythonUdfInterpreter(const std::string& symbol, const std::string& interpreterBitcode)
+{
+    nautilus::engine::Options options;
+    options.setOption("engine.Compilation", true);
+    options.setOption("engine.backend", std::string{"mlir"});
+    options.setOption("engine.compilationStrategy", std::string{"legacy"});
+    options.setOption("mlir.enableMultithreading", false);
+    options.setOption("mlir.inline_invoke_calls", true);
+    nautilus::engine::NautilusEngine engine{options};
+    const auto udfSymbol = interpreterSymbolName(symbol);
+    engine.registerUDF(udfSymbol, interpreterBitcode);
+    for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
+    {
+        engine.registerExternalSymbol(name, address);
+    }
+    for (const auto& [name, address] : getCodonPluginNativeSymbols())
+    {
+        engine.registerExternalSymbol(name, address);
+    }
+
+    auto module = engine.createModule();
+    std::function<nautilus::val<uint8_t>(
+        nautilus::val<PythonUdfAbiValue*>, nautilus::val<PythonUdfAbiValue*>, nautilus::val<UdfErrorHolder*>)>
+        trampoline
+        = [udfSymbol](
+              nautilus::val<PythonUdfAbiValue*> arguments, nautilus::val<PythonUdfAbiValue*> result, nautilus::val<UdfErrorHolder*> error)
+    {
+        std::vector<PythonAbiValue> abiArguments;
+        abiArguments.emplace_back(arguments);
+        abiArguments.emplace_back(result);
+        abiArguments.emplace_back(error);
+        return dynamicInvoke<uint8_t>(udfSymbol, abiArguments);
+    };
+    static constexpr std::string_view trampolineName = "invokePythonUdf";
+    module.registerFunction(std::string{trampolineName}, std::move(trampoline));
+    auto compiledModule = module.compile();
+    return std::make_shared<PythonUdfInterpreterExecutable>(
+        compiledModule.getFunction<uint8_t(PythonUdfAbiValue*, PythonUdfAbiValue*, UdfErrorHolder*)>(std::string{trampolineName}));
+}
+
+struct alignas(uint64_t) PythonUdfScalarStorage
+{
+    std::array<std::byte, sizeof(uint64_t)> bytes{};
+};
+
+template <typename T>
+void storeInterpreterArgument(PythonUdfAbiValue& destination, PythonUdfScalarStorage& storage, const nautilus::val<T>& source)
+{
+    static_assert(sizeof(T) <= sizeof(storage.bytes));
+    const auto rawValue = nautilus::details::RawValueResolver<T>::getRawValue(source);
+    std::memcpy(storage.bytes.data(), &rawValue, sizeof(rawValue));
+    destination.data = reinterpret_cast<int8_t*>(storage.bytes.data());
+    destination.size = sizeof(rawValue);
+}
+
+void appendInterpreterArgument(
+    PythonUdfAbiValue& destination, PythonUdfScalarStorage& storage, const VarVal& argument, const DataType& type)
+{
+#define NES_STORE_INTERPRETER_ARGUMENT(TYPE, CPP_TYPE) \
+    case DataType::Type::TYPE: \
+        storeInterpreterArgument(destination, storage, argument.getRawValueAs<nautilus::val<CPP_TYPE>>()); \
+        break
+    switch (type.type)
+    {
+        NES_STORE_INTERPRETER_ARGUMENT(UINT8, uint8_t);
+        NES_STORE_INTERPRETER_ARGUMENT(UINT16, uint16_t);
+        NES_STORE_INTERPRETER_ARGUMENT(UINT32, uint32_t);
+        NES_STORE_INTERPRETER_ARGUMENT(UINT64, uint64_t);
+        NES_STORE_INTERPRETER_ARGUMENT(INT8, int8_t);
+        NES_STORE_INTERPRETER_ARGUMENT(INT16, int16_t);
+        NES_STORE_INTERPRETER_ARGUMENT(INT32, int32_t);
+        NES_STORE_INTERPRETER_ARGUMENT(INT64, int64_t);
+        NES_STORE_INTERPRETER_ARGUMENT(FLOAT32, float);
+        NES_STORE_INTERPRETER_ARGUMENT(FLOAT64, double);
+        case DataType::Type::BOOLEAN: {
+            const auto value = argument.getRawValueAs<nautilus::val<bool>>();
+            const uint8_t rawValue = nautilus::details::RawValueResolver<bool>::getRawValue(value) ? 1 : 0;
+            std::memcpy(storage.bytes.data(), &rawValue, sizeof(rawValue));
+            destination.data = reinterpret_cast<int8_t*>(storage.bytes.data());
+            destination.size = sizeof(rawValue);
+            break;
+        }
+        case DataType::Type::VARSIZED: {
+            const auto string = argument.getRawValueAs<VariableSizedData>();
+            destination.data = nautilus::details::RawValueResolver<int8_t*>::getRawValue(string.getContent());
+            destination.size = nautilus::details::RawValueResolver<uint64_t>::getRawValue(string.getSize());
+            break;
+        }
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+            throw UnknownDataType("Unsupported Python UDF argument type {}", type);
+    }
+    destination.isNull = type.nullable && nautilus::details::RawValueResolver<bool>::getRawValue(argument.isNull());
+#undef NES_STORE_INTERPRETER_ARGUMENT
+}
+
+template <typename T>
+T loadInterpreterScalarResult(const PythonUdfScalarStorage& storage)
+{
+    T result{};
+    std::memcpy(&result, storage.bytes.data(), sizeof(result));
+    return result;
+}
+
+VarVal invokePythonInterpreter(
+    const PythonUdfInterpreterExecutable& executable,
+    const std::vector<VarVal>& values,
+    const std::vector<DataType>& argumentTypes,
+    const DataType& returnType,
+    ArenaRef& arena)
+{
+    std::vector<PythonUdfScalarStorage> argumentStorage(values.size());
+    std::vector<PythonUdfAbiValue> abiArguments(values.size());
+    for (size_t index = 0; index < values.size(); ++index)
+    {
+        appendInterpreterArgument(abiArguments[index], argumentStorage[index], values[index], argumentTypes[index]);
+    }
+
+    PythonUdfScalarStorage resultStorage;
+    PythonUdfAbiValue result{reinterpret_cast<int8_t*>(resultStorage.bytes.data()), sizeof(resultStorage.bytes), 0};
+    UdfErrorHolder error{};
+    activatePythonUdfArena(nautilus::details::RawValueResolver<Arena*>::getRawValue(arena.getArena()));
+    checkPythonUdfStatus(executable.function(abiArguments.data(), &result, &error), &error);
+    const auto isNull = result.isNull != 0;
+
+#define NES_LOAD_INTERPRETER_RESULT(TYPE, CPP_TYPE) \
+    case DataType::Type::TYPE: \
+        return VarVal \
+        { \
+            loadInterpreterScalarResult<CPP_TYPE>(resultStorage), returnType.nullable, isNull \
+        }
+    switch (returnType.type)
+    {
+        NES_LOAD_INTERPRETER_RESULT(UINT8, uint8_t);
+        NES_LOAD_INTERPRETER_RESULT(UINT16, uint16_t);
+        NES_LOAD_INTERPRETER_RESULT(UINT32, uint32_t);
+        NES_LOAD_INTERPRETER_RESULT(UINT64, uint64_t);
+        NES_LOAD_INTERPRETER_RESULT(INT8, int8_t);
+        NES_LOAD_INTERPRETER_RESULT(INT16, int16_t);
+        NES_LOAD_INTERPRETER_RESULT(INT32, int32_t);
+        NES_LOAD_INTERPRETER_RESULT(INT64, int64_t);
+        NES_LOAD_INTERPRETER_RESULT(FLOAT32, float);
+        NES_LOAD_INTERPRETER_RESULT(FLOAT64, double);
+        case DataType::Type::BOOLEAN:
+            return VarVal{loadInterpreterScalarResult<uint8_t>(resultStorage) != 0, returnType.nullable, isNull};
+        case DataType::Type::VARSIZED: {
+            const auto copiedResult = arena.allocateVariableSizedData(nautilus::val<uint64_t>{result.size});
+            nautilus::memcpy(copiedResult.getContent(), nautilus::val<int8_t*>{result.data}, nautilus::val<uint64_t>{result.size});
+            return VarVal{copiedResult, returnType.nullable, isNull};
+        }
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+            throw UnknownDataType("Unsupported Python UDF return type {}", returnType);
+    }
+#undef NES_LOAD_INTERPRETER_RESULT
+    std::unreachable();
+}
 }
 
 PythonPhysicalFunction::PythonPhysicalFunction(
@@ -680,14 +966,21 @@ PythonPhysicalFunction::PythonPhysicalFunction(
     , argumentTypes(std::move(argumentTypes))
     , returnType(returnType)
     , symbolName(fmt::format("__nes_python_udf_{}", nextPythonUdfId.fetch_add(1)))
-    , llvmBitcode(compilePythonUdf(symbolName, parameterNames, body, this->argumentTypes, returnType, importPaths))
 {
     PRECONDITION(this->arguments.size() == this->argumentTypes.size(), "Python UDF argument and type counts differ");
     PRECONDITION(!this->arguments.empty(), "Python UDF requires at least one argument");
+    auto compiledUdf = compilePythonUdf(symbolName, parameterNames, body, this->argumentTypes, returnType, importPaths);
+    llvmBitcode = std::move(compiledUdf.pipelineBitcode);
+    interpreterLlvmBitcode = std::move(compiledUdf.interpreterBitcode);
 }
 
 void PythonPhysicalFunction::setupSelf(CompilationContext& compilationContext) const
 {
+    if (!compilationContext.isCompiled())
+    {
+        interpreterExecutable = compilePythonUdfInterpreter(symbolName, interpreterLlvmBitcode);
+        return;
+    }
     for (const auto& [name, address] : getPythonUdfRuntimeSymbols())
     {
         compilationContext.registerExternalSymbol(name, address);
@@ -706,6 +999,12 @@ VarVal PythonPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     for (const auto& argument : arguments)
     {
         values.emplace_back(argument.execute(record, arena));
+    }
+
+    if (!nautilus::tracing::inTracer())
+    {
+        INVARIANT(interpreterExecutable != nullptr, "Python UDF interpreter trampoline was not compiled during setup");
+        return invokePythonInterpreter(*interpreterExecutable, values, argumentTypes, returnType, arena);
     }
 
     std::vector<PythonAbiValue> abiArguments;

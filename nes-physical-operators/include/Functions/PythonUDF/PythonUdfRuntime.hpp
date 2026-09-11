@@ -15,6 +15,14 @@ struct UdfErrorHolder
     uint64_t errorSize;
 };
 
+/// Fixed ABI used by the small compiled trampoline when the surrounding pipeline runs in interpreter mode.
+struct PythonUdfAbiValue
+{
+    int8_t* data;
+    uint64_t size;
+    uint8_t isNull;
+};
+
 struct PythonUdfRuntimeSymbol
 {
     std::string_view name;

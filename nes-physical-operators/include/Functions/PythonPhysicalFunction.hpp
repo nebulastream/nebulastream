@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -15,6 +16,7 @@
 namespace NES
 {
 class CompilationContext;
+struct PythonUdfInterpreterExecutable;
 
 class PythonPhysicalFunction final
 {
@@ -36,6 +38,8 @@ private:
     DataType returnType;
     std::string symbolName;
     std::string llvmBitcode;
+    std::string interpreterLlvmBitcode;
+    mutable std::shared_ptr<PythonUdfInterpreterExecutable> interpreterExecutable;
 };
 
 static_assert(PhysicalFunctionConcept<PythonPhysicalFunction>);
