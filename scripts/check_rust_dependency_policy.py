@@ -25,8 +25,10 @@ from typing import Any, Iterable
 try:
     import tomllib
 except ModuleNotFoundError:
+    version = ".".join(str(part) for part in sys.version_info[:3])
     print(
-        "Python 3.11 or newer is required to validate Rust workspace dependencies.",
+        f"Python 3.11 or newer is required to validate Rust workspace dependencies, "
+        f"but {sys.executable} is {version}.",
         file=sys.stderr,
     )
     sys.exit(2)
