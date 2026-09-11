@@ -28,13 +28,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <FileDataRegistry.hpp>
-#include <InlineDataRegistry.hpp>
 
 namespace NES
 {
-
-static const auto SYSTEST_FILE_PATH_PARAMETER = Identifier::parse("FILE_PATH");
 
 class FileSource final : public Source
 {
@@ -58,10 +54,6 @@ public:
 
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
-    /// Systest adaptors: materialize inline/file test data into a runnable file source config.
-    static InlineDataRegistryReturnType provideInlineData(InlineDataRegistryArguments systestAdaptorArguments);
-    static FileDataRegistryReturnType provideFileData(FileDataRegistryArguments systestAdaptorArguments);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
