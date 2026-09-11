@@ -1,0 +1,20 @@
+name: Docker Login
+description: Log in to a Docker registry with exponential backoff and log out at the end of the job.
+
+inputs:
+  registry:
+    description: 'Docker registry to authenticate against'
+    required: false
+    default: 'docker.io'
+  username:
+    description: 'Docker registry username'
+    required: true
+  password:
+    description: 'Docker registry password or access token'
+    required: true
+
+runs:
+  using: 'node24'
+  main: 'main.cjs'
+  post: 'post.cjs'
+  post-if: 'always()'
