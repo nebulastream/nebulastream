@@ -438,6 +438,8 @@ std::string compilePythonUdf(
     const auto compilationStart = std::chrono::steady_clock::now();
     try
     {
+        loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
+        loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
         const auto sourcePath = (std::filesystem::temp_directory_path() / fmt::format("{}.py", symbol)).string();
         const auto codonResult = compileWithCodon(sourcePath, source, importPaths);

@@ -60,6 +60,19 @@
     "nautilus",
     "nlohmann-json",
     {
+      "name": "openblas",
+      "default-features": false
+    },
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "calib3d",
+        "jpeg",
+        "png"
+      ]
+    },
+    {
       "name": "openvino",
       "default-features": false,
       "features": [
