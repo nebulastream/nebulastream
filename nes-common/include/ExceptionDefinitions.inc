@@ -100,6 +100,7 @@ EXCEPTION(QueryStartFailed, 5002, "query start call failed")
 EXCEPTION(QueryStopFailed, 5003, "query stop call failed")
 EXCEPTION(QueryUnregistrationFailed, 5004, "query unregistration call failed")
 EXCEPTION(QueryStatusFailed, 5005, "query status call failed")
+EXCEPTION(QueryWaitTimeout, 5006, "timed out waiting for a query to reach the requested state")
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(FunctionNotImplemented, 9000, "function not implemented")

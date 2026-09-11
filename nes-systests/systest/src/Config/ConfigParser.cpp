@@ -95,12 +95,22 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
     program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
     program.add_argument("--shuffle").flag().help("run queries in random order");
+    program.add_argument("--shuffle-seed")
+        .help("the seed the test file order is shuffled with, so a shuffled run repeats that order. Implies --shuffle")
+        .scan<'i', int>();
     program.add_argument("-n", "--numberConcurrentQueries")
         .help("number of concurrent queries. Default: 6")
         .default_value(6)
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
+    program.add_argument("--query-timeout")
+        .help("fail a query that has not reached a terminal state after this many seconds. 0 waits forever. Default: 300")
+        .scan<'i', int>();
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
+    program.add_argument("--endless-rounds").help("how many times --endless repeats the queries. Unlimited by default").scan<'i', int>();
+    program.add_argument("--endless-seconds")
+        .help("how long --endless keeps issuing queries, in seconds. Unlimited by default")
+        .scan<'i', int>();
     program.add_argument("--optimizer")
         .default_value<std::vector<std::string>>({})
         .append()
@@ -113,6 +123,9 @@ void configureArgumentParser(ArgumentParser& program)
         .help("Benchmark (time) all specified queries and store results into 'BenchmarkResults.json' in the result directory")
         .default_value(false)
         .implicit_value(true);
+    program.add_argument("--benchmark-rounds")
+        .help("how many times -b repeats the queries, keeping each query's best time. Default: 1")
+        .scan<'i', int>();
     program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
 }
 
@@ -159,6 +172,11 @@ void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration
     }
 
     config.benchmark = true;
+    if (program.is_used("--benchmark-rounds"))
+    {
+        config.benchmarkRounds = program.get<int>("--benchmark-rounds");
+    }
+
     /// A measuring run is limited to one query at a time, so -b and -n above 1 contradict each other.
     if ((program.is_used("-n") || program.is_used("--numberConcurrentQueries")) && program.get<int>("--numberConcurrentQueries") > 1)
     {
@@ -363,6 +381,12 @@ void applyGroupSelection(const ArgumentParser& program, NES::SystestConfiguratio
 
 void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
+    if (program.is_used("--shuffle-seed"))
+    {
+        config.shuffleSeed = program.get<int>("--shuffle-seed");
+        config.randomQueryOrder = true;
+    }
+
     if (program.is_used("--shuffle"))
     {
         config.randomQueryOrder = true;
@@ -423,8 +447,25 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
         config.showQueryPerformance = true;
     }
 
+    if (program.is_used("--query-timeout"))
+    {
+        config.queryTimeoutSeconds = program.get<int>("--query-timeout");
+    }
+
     if (program.is_used("--endless"))
     {
+        config.endlessMode = true;
+    }
+
+    if (program.is_used("--endless-rounds"))
+    {
+        config.endlessRounds = program.get<int>("--endless-rounds");
+        config.endlessMode = true;
+    }
+
+    if (program.is_used("--endless-seconds"))
+    {
+        config.endlessSeconds = program.get<int>("--endless-seconds");
         config.endlessMode = true;
     }
 }
