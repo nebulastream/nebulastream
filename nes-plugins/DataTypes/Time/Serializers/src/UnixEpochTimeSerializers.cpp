@@ -68,4 +68,12 @@ ValueSerializerGeneratedRegistrar::RegisterUnixEpochTimestampValueSerializer(Val
 {
     return std::make_unique<UnixEpochTimestampValueSerializer>(false);
 }
+
+/// The serializer merely delegates to the serializer of the underlying integer field, so the same implementation serves the unsigned
+/// representation of timestamps, where that field is an UINT64 instead of an INT64.
+ValueSerializerRegistryReturnType
+ValueSerializerGeneratedRegistrar::RegisterUnixEpochUnsignedTimestampValueSerializer(ValueSerializerRegistryArguments)
+{
+    return std::make_unique<UnixEpochTimestampValueSerializer>(false);
+}
 }
