@@ -323,6 +323,17 @@ nes_distributed_teardown() {
   docker compose down -v || true
   if [ -n "${NES_COMPOSE_LOG_PID:-}" ]; then
     kill "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
+    # docker compose logs --follow can ignore SIGTERM while blocked on a daemon read;
+    # bound the wait so a stuck logger can't hang teardown (and the whole bats file).
+    local waited=0
+    while kill -0 "$NES_COMPOSE_LOG_PID" 2>/dev/null; do
+      if [ "$waited" -ge 50 ]; then
+        kill -9 "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
+        break
+      fi
+      sleep 0.1
+      waited=$((waited + 1))
+    done
     wait "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
     unset NES_COMPOSE_LOG_PID
   fi
