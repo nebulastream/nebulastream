@@ -25,11 +25,9 @@ add_registry_entry(Sink Kafka)
 add_registry_entry(SinkValidation Kafka)
 
 # These tests use docker CLI to run docker-compose from within the development container.
-# Chose JOBS 2 instead JOBS 4 causes CPU contention between concurrent Kafka broker containers on CI and
-# going fully sequential goes above the timeout thresholds
 add_e2e_test(
     NAME kafka-sink-test
     BATS_FILE tests/distributed.bats
     DOCKER_COMPOSE
-    JOBS 2
+    JOBS 4
 )
