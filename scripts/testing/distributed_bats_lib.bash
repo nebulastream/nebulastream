@@ -25,7 +25,7 @@
 #   Layer 2 — preset for the cli/repl/MQTT-style suites:
 #     nes_distributed_setup_file, nes_distributed_teardown_file
 #     nes_distributed_setup, nes_distributed_teardown
-#     setup_distributed, nes_distributed_start
+#     setup_distributed
 #     docker_nes_cli, wait_until_status [--require-healthy <regex>]
 #                                            (used by cli/MQTT* suites)
 #
@@ -321,46 +321,6 @@ nes_distributed_setup() {
 
 nes_distributed_teardown() {
   docker compose down -v || true
-  if [ -n "${NES_COMPOSE_LOG_PID:-}" ]; then
-    kill "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
-    # docker compose logs --follow can ignore SIGTERM while blocked on a daemon read;
-    # bound the wait so a stuck logger can't hang teardown (and the whole bats file).
-    local waited=0
-    while kill -0 "$NES_COMPOSE_LOG_PID" 2>/dev/null; do
-      if [ "$waited" -ge 50 ]; then
-        kill -9 "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
-        break
-      fi
-      sleep 0.1
-      waited=$((waited + 1))
-    done
-    wait "$NES_COMPOSE_LOG_PID" 2>/dev/null || true
-    unset NES_COMPOSE_LOG_PID
-  fi
-}
-
-# Create containers before attaching so the follower has services to watch,
-# including while startup waits for dependencies to become healthy.
-nes_distributed_start() {
-  local compose_output exit_code=0
-  compose_output=$(docker compose create 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    printf '%s\n' "$compose_output" > "$TEST_DIR/docker-compose.log"
-    echo "# [docker compose create] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-    return $exit_code
-  fi
-  # Close Bats' reporting pipe in the background process to avoid holding it open.
-  docker compose logs --follow --no-color --timestamps \
-    > "$TEST_DIR/docker-compose.log" 2>&1 3>&- &
-  NES_COMPOSE_LOG_PID=$!
-
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
-  return $exit_code
 }
 
 # Generate docker-compose.yaml from a topology file using the suite's local
@@ -368,7 +328,13 @@ nes_distributed_start() {
 # `cd`'d into a working directory containing tests/util/create_compose.sh.
 setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  nes_distributed_start
+  local compose_output exit_code=0
+  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
+  if [ "$exit_code" -ne 0 ]; then
+    echo "# [docker compose up] (status=$exit_code):" >&3
+    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+  fi
+  return $exit_code
 }
 
 docker_nes_cli() {
