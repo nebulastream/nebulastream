@@ -24,7 +24,16 @@ runs:
       shell: bash
       run: |
         if [ -n "${{ inputs.docker_username }}" ] && [ -n "${{ inputs.docker_password }}" ]; then
-          echo "${{ inputs.docker_password }}" | docker login -u "${{ inputs.docker_username }}" --password-stdin
+          delay=1
+          until echo "${{ inputs.docker_password }}" | docker login -u "${{ inputs.docker_username }}" --password-stdin; do
+            if ((delay > 60)); then
+              echo "Timed out logging in to Docker Hub" >&2
+              exit 1
+            fi
+            echo "Retrying Docker Hub login in ${delay}s" >&2
+            sleep "$delay"
+            delay=$((delay * 2))
+          done
         fi
     - name: Maximize build space
       shell: bash

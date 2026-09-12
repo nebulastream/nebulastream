@@ -18,6 +18,12 @@
         "paho-mqttpp3"
       ]
     },
+    "kafka": {
+      "description": "enables the kafka sink",
+      "dependencies": [
+        "librdkafka"
+      ]
+    },
     "mlir": {
       "description": "nautilus mlir backend",
       "dependencies": [
@@ -69,6 +75,7 @@
     "rapidcheck"
   ],
   "default-features": [
-    "mqtt"
+    "mqtt",
+    "kafka"
   ]
 }

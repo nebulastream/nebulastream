@@ -370,8 +370,8 @@ wait_until_status() {
     if [ -n "$healthy_service_regex" ]; then
       local compose_status service health matching_services=0 unhealthy_services=
       if ! compose_status=$(docker compose ps --all --format '{{.Service}} {{.Health}}'); then
-        echo "# Could not inspect Docker Compose service health" >&3
-        return 1
+        echo "# Could not inspect Docker Compose service health, retrying" >&3
+        continue
       fi
       while read -r service health; do
         if [[ "$service" =~ $healthy_service_regex ]]; then
@@ -382,9 +382,8 @@ wait_until_status() {
         fi
       done <<< "$compose_status"
       if [ "$matching_services" -eq 0 ] || [ -n "$unhealthy_services" ]; then
-        echo "# Services matching $healthy_service_regex are not healthy:${unhealthy_services:- none found}" >&3
-        docker compose ps --all >&3
-        return 1
+        echo "# Services matching $healthy_service_regex are not healthy, retrying:${unhealthy_services:- none found}" >&3
+        continue
       fi
     fi
     if [ "$query_status" = "$desired_status" ]; then

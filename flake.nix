@@ -263,6 +263,9 @@
                 pkgs.libuuid
                 pahoMqttPkg.c
                 pahoMqttPkg.cpp
+                pkgs.rdkafka
+                pkgs.curl
+                pkgs.cyrus_sasl
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
@@ -840,7 +843,7 @@
             ];
             runtimeLibraryPath = lib.makeLibraryPath (allBuildInputs ++ transitiveRuntimeDeps);
             runtimeLibraryPathCMake = lib.concatStringsSep ";" (
-              lib.unique (map (dep: "${dep}/lib") (allBuildInputs ++ transitiveRuntimeDeps))
+              lib.unique (map (dep: "${lib.getLib dep}/lib") (allBuildInputs ++ transitiveRuntimeDeps))
             );
             envVars =
               sanitizer.extraEnv
@@ -868,7 +871,7 @@
               cmakeFlags = cmakeFlagsList;
               shellHook = ''
                 unset NES_PREBUILT_VCPKG_ROOT
-                export LD_BINARY_PATH="${runtimeLibraryPath}''${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH}"
+                export LD_LIBRARY_PATH="${runtimeLibraryPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
               '' + ccacheShellHook;
             }
           );
