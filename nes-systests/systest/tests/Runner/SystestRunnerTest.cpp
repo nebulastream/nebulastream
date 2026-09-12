@@ -207,7 +207,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, {Schema<UnqualifiedUnboundField, Ordered>{}}}, {}, dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -246,7 +246,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, {}, {Schema<UnqualifiedUnboundField, Ordered>{}}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
             dummyQueryId)},
         1,

@@ -1,0 +1,67 @@
+# name: sinks/MultiSinkDistributed.test
+# description: Multi-sink queries with one sink next to the source and the other a node away, so the sub-plan they
+# share feeds a local sink and a network sink at once. Every other multi-sink test puts both sinks on one node,
+# where the shared operator feeds either two local sinks or two channels, never a mix of the two.
+#
+# The first query below asserts the decomposition itself, so that a placement change moving both sinks onto one
+# node fails here instead of quietly leaving the result checks to pass over coverage that is no longer there.
+# Note the single channel it pins down: the case where a shared operator feeds several channels needs both sinks
+# a node away, which is what MultiSinkDistinctSinkNodes.test covers.
+#
+# Only meaningful with --remote against a topology that permits sink placement on more than one worker; the group
+# below keeps it out of the local suite, and the "distributed multi-sink" case in remote-test/distributed.bats runs
+# it against two-node-with-interpreter.yaml. The 8-node topology allows sink placement on sink-node only, which is
+# why this file is not part of the general remote sweep.
+# groups: [Distributed]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+
+CREATE SINK sinkOnSinkNode(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File SET ('sink-node:8080' AS "SINK"."HOST");
+CREATE SINK sinkOnSourceNode(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File SET ('source-node:8080' AS "SINK"."HOST");
+CREATE SINK reorderedOnSourceNode(value UINT64 NOT NULL, id UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File SET ('source-node:8080' AS "SINK"."HOST");
+
+# One plan on the source node carrying both roots, which is the sub-plan being deployed once per node rather than
+# once per sink: a network sink relaying to the far worker, and the near sink itself, above the shared selection.
+EXPLAIN (DISTRIBUTED) FORMAT TEXT SELECT id, value, timestamp FROM stream WHERE value > 3 INTO sinkOnSinkNode, sinkOnSourceNode;
+----
+== Decomposed Plans ==
+-- 1 plan(s) on sink-node:8080 --
+0:
+SINK(SINKONSINKNODE)
+  SOURCE(NETWORK)
+-- 1 plan(s) on source-node:8080 --
+0:
+SINK(NETWORK)
+  PROJECTION(fields: [*])
+    SELECTION(VALUE > 3)
+      SOURCE(STREAM)
+SINK(SINKONSOURCENODE)
+  PROJECTION(fields: [*])
+    SELECTION(VALUE > 3) [shared]
+==END==
+
+# The selection is shared by both sinks, one of which is on a different worker than the other.
+SELECT id, value, timestamp FROM stream WHERE value > 3 INTO sinkOnSinkNode, sinkOnSourceNode;
+----
+1,4,45
+1,5,56
+----
+1,4,45
+1,5,56
+
+# The sinks want different field orders, so each gets its own projection above the shared selection, and the two
+# projections are placed on different workers.
+SELECT id, value, timestamp FROM stream WHERE value > 3 INTO sinkOnSinkNode, reorderedOnSourceNode;
+----
+1,4,45
+1,5,56
+----
+4,1,45
+5,1,56
