@@ -1,0 +1,233 @@
+# name: UnsignedTimestampWindowAggregation.test
+# description: Window aggregations over an event time field of the UnsignedTimestamp datatype ("Time" plugin), fed in the default and the
+#              ISO 8601 input format. These are ports of existing tests in nes-systests/operator/aggregation, with the UINT64 event time
+#              field replaced by an UnsignedTimestamp one. The inputs of those tests are milliseconds since the unix epoch, so the
+#              timestamps below are only millisecond accurate, even though UnsignedTimestamp could represent microseconds.
+#              Window start/end stay UINT64 milliseconds, so the expected results are identical to the ported tests.
+# groups: [Formatter, Aggregation, WindowOperators]
+
+
+# Ported from operator/aggregation/WindowAggregationCount.test, ts 10/20/60/110/160/210 ms after the epoch.
+# Default input format: date and time separated by a blank, fraction of a second separated by a dot.
+CREATE LOGICAL SOURCE countStream(value INT32, ts UnsignedTimestamp NOT NULL, id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR countStream TYPE File;
+ATTACH INLINE
+10,1970-01-01 00:00:00.010,1
+30,1970-01-01 00:00:00.020,2
+,1970-01-01 00:00:00.060,1
+40,1970-01-01 00:00:00.110,2
+50,1970-01-01 00:00:00.160,1
+,1970-01-01 00:00:00.210,2
+
+# Same tuples, but with the ISO 8601 'T' as the date-time delimiter.
+CREATE LOGICAL SOURCE countStreamIso(value INT32, ts UnsignedTimestamp NOT NULL, id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR countStreamIso TYPE File;
+ATTACH INLINE
+10,1970-01-01T00:00:00.010,1
+30,1970-01-01T00:00:00.020,2
+,1970-01-01T00:00:00.060,1
+40,1970-01-01T00:00:00.110,2
+50,1970-01-01T00:00:00.160,1
+,1970-01-01T00:00:00.210,2
+
+# Same tuples once more, as JSON. Quoting the value allows the second ISO 8601 fraction delimiter, the comma, which would
+# otherwise collide with the CSV field delimiter.
+CREATE LOGICAL SOURCE countStreamJson(value INT32, ts UnsignedTimestamp NOT NULL, id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR countStreamJson TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"VALUE":10,"TS":"1970-01-01T00:00:00,010","ID":1}
+{"VALUE":30,"TS":"1970-01-01T00:00:00,020","ID":2}
+{"VALUE":null,"TS":"1970-01-01T00:00:00,060","ID":1}
+{"VALUE":40,"TS":"1970-01-01T00:00:00,110","ID":2}
+{"VALUE":50,"TS":"1970-01-01T00:00:00,160","ID":1}
+{"VALUE":null,"TS":"1970-01-01T00:00:00,210","ID":2}
+
+# Ported from operator/aggregation/WindowAggregationDifferentDataTypes.test (a subset of its columns),
+# ts 100/125/150/200/250/300/325/350 ms after the epoch.
+CREATE LOGICAL SOURCE typesStream(i8 INT8 NOT NULL, i32 INT32 NOT NULL, u64 UINT64 NOT NULL, f64 FLOAT64 NOT NULL, ts UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR typesStream TYPE File;
+ATTACH INLINE
+1,3,8,10,1970-01-01 00:00:00.100
+2,4,9,11,1970-01-01 00:00:00.125
+0,0,0,0,1970-01-01 00:00:00.150
+-42,-32769,4294967296,23,1970-01-01 00:00:00.200
+1,1,1,1,1970-01-01 00:00:00.250
+-42,-32769,4294967296,23,1970-01-01 00:00:00.300
+1,3,8,10,1970-01-01 00:00:00.325
+2,4,9,11,1970-01-01 00:00:00.350
+
+# Ported from operator/aggregation/WindowWithoutAggregation.test.
+CREATE LOGICAL SOURCE windowOnlyStream(i UINT64 NOT NULL, timestamp UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR windowOnlyStream TYPE File;
+ATTACH INLINE
+1,1970-01-01 00:00:00.100
+2,1970-01-01 00:00:00.125
+1,1970-01-01 00:00:00.200
+2,1970-01-01 00:00:00.225
+1,1970-01-01 00:00:00.300
+2,1970-01-01 00:00:00.325
+
+# Timestamps at a realistic point in time, so that the window boundaries are actual unix epoch milliseconds
+# rather than small numbers. 2008-07-11 12:32:07.278 is 1215779527278 ms after the epoch.
+CREATE LOGICAL SOURCE absoluteStream(value UINT64 NOT NULL, ts UnsignedTimestamp NOT NULL);
+CREATE PHYSICAL SOURCE FOR absoluteStream TYPE File;
+ATTACH INLINE
+1,2008-07-11 12:32:07.278
+2,2008-07-11 12:32:07.500
+3,2008-07-11 12:32:08.100
+4,2008-07-11 12:32:08.900
+
+
+CREATE SINK sinkCountStar(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBoth(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL, valueCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBothKeyed(start UINT64 NOT NULL, end UINT64 NOT NULL, id INT32 NOT NULL, rowCount UINT64 NOT NULL, valueCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkMinMax(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_out INT8 NOT NULL, i32_out INT32 NOT NULL, u64_out UINT64 NOT NULL, f64_out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkSum(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_out INT64 NOT NULL, i32_out INT64 NOT NULL, u64_out UINT64 NOT NULL, f64_out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkAvg(start UINT64 NOT NULL, end UINT64 NOT NULL, i8_out FLOAT64 NOT NULL, i32_out FLOAT64 NOT NULL, u64_out FLOAT64 NOT NULL, f64_out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkStartEnd(start UINT64 NOT NULL, end UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkAbsolute(start UINT64 NOT NULL, end UINT64 NOT NULL, rowCount UINT64 NOT NULL, valueSum UINT64 NOT NULL) TYPE File;
+
+
+# Sanity check that the millisecond accurate timestamps survive the round trip through the default (de)serializers.
+SELECT * FROM windowOnlyStream INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+1,1970-01-01 00:00:00.100000
+2,1970-01-01 00:00:00.125000
+1,1970-01-01 00:00:00.200000
+2,1970-01-01 00:00:00.225000
+1,1970-01-01 00:00:00.300000
+2,1970-01-01 00:00:00.325000
+
+
+# COUNT(*) counts all rows including those with null values - tumbling window
+SELECT start, end, COUNT(*) AS rowCount
+FROM countStream WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountStar;
+----
+0,100,3
+100,200,2
+200,300,1
+
+
+# COUNT(*) vs COUNT(column_name) - tumbling window
+# COUNT(*) includes rows with null value, COUNT(value) does not
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStream WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+100,200,2,2
+200,300,1,0
+
+
+# The ISO 8601 date-time delimiter must yield the same windows as the default format
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStreamIso WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+100,200,2,2
+200,300,1,0
+
+
+# ... and so must the ISO 8601 comma as the fraction delimiter, read from JSON
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStreamJson WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+100,200,2,2
+200,300,1,0
+
+
+# COUNT(*) vs COUNT(column_name) with keyed tumbling window
+SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStream GROUP BY (id) WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBothKeyed;
+----
+0,100,1,2,1
+0,100,2,1,1
+100,200,2,1,1
+100,200,1,1,1
+200,300,2,1,0
+
+
+# COUNT(*) vs COUNT(column_name) - sliding window
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+50,150,2,1
+100,200,2,2
+150,250,2,1
+200,300,1,0
+
+
+# COUNT(*) vs COUNT(column_name) with keyed sliding window
+SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM countStream GROUP BY (id) WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+INTO sinkCountBothKeyed;
+----
+0,100,1,2,1
+0,100,2,1,1
+50,150,1,1,0
+50,150,2,1,1
+100,200,2,1,1
+100,200,1,1,1
+150,250,1,1,1
+150,250,2,1,0
+200,300,2,1,0
+
+
+# Checking if a sum over a tumbling window works for different data types
+SELECT start, end, SUM(i8) as i8_out, SUM(i32) as i32_out, SUM(u64) as u64_out, SUM(f64) as f64_out
+FROM typesStream WINDOW TUMBLING(ts, size 100 ms) INTO sinkSum;
+----
+100,200,3,7,17,21
+200,300,-41,-32768,4294967297,24
+300,400,-39,-32762,4294967313,44
+
+
+# Checking if a min over a tumbling window works for different data types
+SELECT start, end, MIN(i8) as i8_out, MIN(i32) as i32_out, MIN(u64) as u64_out, MIN(f64) as f64_out
+FROM typesStream WINDOW TUMBLING(ts, size 100 ms) INTO sinkMinMax;
+----
+100,200,0,0,0,0
+200,300,-42,-32769,1,1
+300,400,-42,-32769,8,10
+
+
+# Checking if a max over a tumbling window works for different data types
+SELECT start, end, MAX(i8) as i8_out, MAX(i32) as i32_out, MAX(u64) as u64_out, MAX(f64) as f64_out
+FROM typesStream WINDOW TUMBLING(ts, size 100 ms) INTO sinkMinMax;
+----
+100,200,2,4,9,11
+200,300,1,1,4294967296,23
+300,400,2,4,4294967296,23
+
+
+# Checking if an average over a tumbling window works for different data types
+SELECT start, end, AVG(i8) as i8_out, AVG(i32) as i32_out, AVG(u64) as u64_out, AVG(f64) as f64_out
+FROM typesStream WINDOW TUMBLING(ts, size 100 ms) INTO sinkAvg;
+----
+100,200,1,2.33333333333333,5.66666666666667,7
+200,300,-20.5,-16384,2147483648.5,12
+300,400,-13,-10920.6666666667,1431655771,14.6666666666667
+
+
+# Window clause without aggregation functions should collect tuples and emit start/end
+SELECT start, end FROM windowOnlyStream WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;
+----
+100,200
+200,300
+300,400
+
+
+# Timestamps at a realistic point in time, windowed with a one second tumbling window
+SELECT start, end, COUNT(*) AS rowCount, SUM(value) AS valueSum
+FROM absoluteStream WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkAbsolute;
+----
+1215779527000,1215779528000,2,3
+1215779528000,1215779529000,2,7
