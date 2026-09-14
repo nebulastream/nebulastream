@@ -42,6 +42,11 @@
 namespace NES
 {
 
+void MQTTSink::ConnectionCallback::connection_lost(const std::string& cause)
+{
+    *lostCause.wlock() = cause;
+}
+
 namespace
 {
 std::string generateClientId(std::string clientId)
@@ -85,6 +90,7 @@ void MQTTSink::start(PipelineExecutionContext&)
 {
     NES_INFO("Opening MQTTSink at {} using clientId: {}.", serverURI, clientId);
     client = std::make_unique<mqtt::async_client>(serverURI, clientId, maxOutstandingMessages);
+    client->set_callback(connectionCallback);
     try
     {
         mqtt::connect_options connectOptions;
@@ -106,7 +112,7 @@ void MQTTSink::start(PipelineExecutionContext&)
     }
 }
 
-MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
+SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
 {
     size_t messageSize = buffer.getNumberOfTuples();
     for (size_t index = 0; index < buffer.getNumberOfChildBuffers(); index++)
@@ -132,12 +138,11 @@ MQTTSink::PublishResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     {
         if (e.get_return_code() == MQTTASYNC_MAX_BUFFERED_MESSAGES)
         {
-            return PublishResult::Full;
+            return SendResult::Full;
         }
-        NES_ERROR("MQTTSink publish to topic {} failed: {}", topic, e.what());
-        return PublishResult::Closed;
+        throw CannotOpenSink("MQTTSink publish to topic {} failed: {}", topic, e.what());
     }
-    return PublishResult::Ok;
+    return SendResult::Ok;
 }
 
 void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
@@ -145,25 +150,30 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(client, "MQTTSink client is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in MQTTSink.");
 
+    if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
+    {
+        throw CannotOpenSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+    }
+
     auto currentBuffer = std::optional(inputTupleBuffer);
     while (currentBuffer)
     {
         switch (tryPublish(*currentBuffer))
         {
-            case PublishResult::Ok: {
+            case SendResult::Ok: {
                 currentBuffer = backpressureHandler.onSuccess(backpressureController);
                 continue;
             }
-            case PublishResult::Full: {
+            case SendResult::Full: {
                 if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
                 return;
             }
-            case PublishResult::Closed: {
-                [[maybe_unused]] auto droppedBuffer = backpressureHandler.onFull(*currentBuffer, backpressureController);
-                throw CannotOpenSink("MQTTSink connection to broker {} was closed", serverURI);
+            case SendResult::Closed: {
+                /// tryPublish() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
+                INVARIANT(false, "tryPublish unexpectedly returned SendResult::Closed");
             }
         }
     }
@@ -176,6 +186,10 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
         return;
     }
     INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
+    if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
+    {
+        throw CannotOpenSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+    }
     try
     {
         /// Wait for all in-flight QoS>=1 messages to be acknowledged before disconnecting.

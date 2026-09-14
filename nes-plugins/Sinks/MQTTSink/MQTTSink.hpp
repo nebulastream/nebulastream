@@ -30,7 +30,9 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <folly/Synchronized.h>
 #include <mqtt/async_client.h>
+#include <nes-network-bindings/lib.h>
 #include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -59,18 +61,20 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    /// Outcome of a single publish attempt. Mirrors NetworkSink's `SendResult`:
-    ///   Ok     - paho accepted the message into its outbound queue.
-    ///   Full   - paho's outbound queue is at capacity; caller should buffer & retry.
-    ///   Closed - non-recoverable paho error (disconnected, protocol, etc.); caller should fail the query.
-    enum class PublishResult : uint8_t
+    /// Reports connection loss reported by paho outside of a publish() call. paho only calls
+    /// connection_lost() for an unexpected drop, not for a clean disconnect() in stop().
+    class ConnectionCallback final : public mqtt::callback
     {
-        Ok,
-        Full,
-        Closed,
+    public:
+        void connection_lost(const std::string& cause) override;
+        folly::Synchronized<std::string> lostCause;
     };
 
-    PublishResult tryPublish(const TupleBuffer& buffer);
+    /// Outcome of a single publish attempt:
+    ///   Ok     - paho accepted the message into its outbound queue.
+    ///   Closed - non-recoverable paho error (disconnected, protocol, etc.); caller should fail the query.
+    ///   Full   - paho's outbound queue is at capacity; caller should buffer & retry.
+    SendResult tryPublish(const TupleBuffer& buffer);
 
     std::string serverURI;
     std::string clientId;
@@ -79,6 +83,7 @@ private:
     bool retained;
     int32_t maxOutstandingMessages;
 
+    ConnectionCallback connectionCallback;
     std::unique_ptr<mqtt::async_client> client;
     BackpressureHandler backpressureHandler;
 };
@@ -111,7 +116,7 @@ struct ConfigParametersMQTTSink
             auto qos = from_chars<uint8_t>(config.at(QOS));
             if (!qos || (qos.value() != 0 && qos.value() != 1 && qos.value() != 2))
             {
-                NES_ERROR("MQTTSink: QualityOfService is: {}, but must be 0, 1, or 2.", config.at(QOS));
+                NES_ERROR("QualityOfService is: {}, but must be 0, 1, or 2.", config.at(QOS));
                 return std::nullopt;
             }
             return qos;
@@ -127,11 +132,20 @@ struct ConfigParametersMQTTSink
     /// the BackpressureHandler. The same value is also passed to paho's create_options as a defensive
     /// hard cap on the internal outbound queue.
     /// QoS 0 has no acknowledgements, so this knob has no effect under QoS 0 (fire-and-forget by spec).
+    /// Must be positive, otherwise no message could ever be in flight.
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_OUTSTANDING_MESSAGES{
         "MAX_OUTSTANDING_MESSAGES",
         128,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(MAX_OUTSTANDING_MESSAGES, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int32_t>
+        {
+            auto value = DescriptorConfig::tryGet(MAX_OUTSTANDING_MESSAGES, config);
+            if (!value || value.value() <= 0)
+            {
+                NES_ERROR("MAX_OUTSTANDING_MESSAGES must be positive, got {}.", value.value_or(-1));
+                return std::nullopt;
+            }
+            return value;
+        }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
