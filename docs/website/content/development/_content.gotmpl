@@ -3,19 +3,18 @@
      mirrors docs/development (mounted at assets/development). To add a page: drop a
      plain .md file there, then add one row below. */}}
 {{ $pages := slice
+  (dict "path" "HowToContribute" "title" "How to Contribute" "weight" 5 "source" "development/how_to_contribute.md")
   (dict "path" "developer" "title" "Build instructions" "weight" 10 "source" "development/development.md")
-  (dict "path" "RunningWorkflowsLocally" "title" "Running Workflows Locally" "weight" 20 "source" "development/running_workflows_locally.md")
-  (dict "path" "PackagingDockerImages" "title" "Packaging Docker Images" "weight" 30 "source" "development/packaging_docker_images.md")
-  (dict "path" "FixClangTidyWarnings" "title" "Fix Clang-Tidy Warnings" "weight" 40 "source" "development/fix_clang_tidy_warnings.md")
-  (dict "path" "Serialization" "title" "Serialization" "weight" 50 "source" "development/serialization.md")
-  (dict "path" "Systests" "title" "System Tests" "weight" 60 "source" "development/systests.md")
-  (dict "path" "HowToAddASource" "title" "How to add a Source" "weight" 70 "source" "development/how_to_add_a_source.md")
-  (dict "path" "HowToAddASink" "title" "How to add a Sink" "weight" 80 "source" "development/how_to_add_a_sink.md")
-  (dict "path" "HowToAddAPlacementStrategy" "title" "How to add a Placement Strategy" "weight" 90 "source" "development/how_to_add_a_placement_strategy.md")
-  (dict "path" "HowToAddAnOptimizerRule" "title" "How to add an Optimizer Rule" "weight" 100 "source" "development/how_to_add_an_optimizer_rule.md")
-  (dict "path" "HowToAddAFunction" "title" "How to add a Function" "weight" 105 "source" "development/how_to_add_a_function.md")
-  (dict "path" "Extensibility" "title" "Extensibility, Plugins, and Registries" "weight" 110 "source" "development/extensibility.md")
-  (dict "path" "Testing" "title" "Testing" "weight" 120 "source" "development/testing.md")
+  (dict "path" "PackagingDockerImages" "title" "Packaging Docker Images" "weight" 20 "source" "development/packaging_docker_images.md")
+  (dict "path" "Extensibility" "title" "Extensibility, Plugins, and Registries" "weight" 30 "source" "development/extensibility.md")
+  (dict "path" "HowToAddASource" "title" "How to add a Source" "weight" 40 "source" "development/how_to_add_a_source.md")
+  (dict "path" "HowToAddASink" "title" "How to add a Sink" "weight" 50 "source" "development/how_to_add_a_sink.md")
+  (dict "path" "HowToAddAnOperator" "title" "How to add an Operator" "weight" 55 "source" "development/how_to_add_an_operator.md")
+  (dict "path" "HowToAddAPlacementStrategy" "title" "How to add a Placement Strategy" "weight" 60 "source" "development/how_to_add_a_placement_strategy.md")
+  (dict "path" "HowToAddAnOptimizerRule" "title" "How to add an Optimizer Rule" "weight" 70 "source" "development/how_to_add_an_optimizer_rule.md")
+  (dict "path" "HowToAddAFunction" "title" "How to add a Function" "weight" 75 "source" "development/how_to_add_a_function.md")
+  (dict "path" "Testing" "title" "Testing" "weight" 80 "source" "development/testing.md")
+  (dict "path" "CodingGuidelines" "title" "Coding Guidelines" "weight" 90 "source" "development/coding_guidelines.md")
 }}
 {{ range $pages }}
   {{ $resource := resources.Get .source }}

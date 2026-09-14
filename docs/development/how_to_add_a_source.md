@@ -78,7 +78,8 @@ Notes:
 - The output library name is freely chosen.
 - Use `FetchContent` for third-party dependencies not already included in our internal `vcpkg/vcpkg.json`.
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see `guide/extensibility.md`.
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see
+[Extensibility, Plugins, and Registries](extensibility.md).
 We will look into the construction/validation more closely in the next section.
 
 ## 3. Validation & Construction

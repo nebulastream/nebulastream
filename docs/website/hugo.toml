@@ -54,3 +54,6 @@ enableRobotsTXT = true
   [[module.mounts]]
     source = "../development"
     target = "assets/development"
+  [[module.mounts]]
+    source = "../technical"
+    target = "assets/technical"

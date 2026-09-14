@@ -63,7 +63,8 @@ endif ()
 To activate the plugin, you must add the line `activate_optional_plugin("Rules/RedundantUnionRemovalRule" ON)` to `nes-plugins/CMakeLists.txt`.  
 
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see
+[Extensibility, Plugins, and Registries](extensibility.md).
 
 ## 3. Interface
 
