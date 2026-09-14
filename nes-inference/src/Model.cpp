@@ -40,7 +40,7 @@ struct ReflectedImportedModel
     std::optional<std::string> modelGraph;
     std::optional<std::string> modelWeights;
     std::optional<std::string> functionName;
-    std::optional<std::vector<size_t>> inputShape;
+    std::optional<std::vector<std::vector<size_t>>> inputShape;
     std::optional<std::vector<size_t>> outputShape;
 };
 
@@ -128,7 +128,7 @@ Reflected Reflector<ImportedModel>::operator()(const ImportedModel& model, const
         .modelGraph = std::make_optional(bytesToBase64(model.getBackendModel().modelGraphView())),
         .modelWeights = std::make_optional(bytesToBase64(model.getBackendModel().modelWeightsView())),
         .functionName = std::make_optional(model.getFunctionName()),
-        .inputShape = std::make_optional(model.getInputShape()),
+        .inputShape = std::make_optional(model.getInputShapes()),
         .outputShape = std::make_optional(model.getOutputShape())});
 }
 
@@ -140,7 +140,7 @@ ImportedModel Unreflector<ImportedModel>::operator()(const Reflected& rfl, const
             .modelGraph = base64ToBytes(reflected.modelGraph.value_or(std::string{})),
             .modelWeights = base64ToBytes(reflected.modelWeights.value_or(std::string{}))},
         reflected.functionName.value_or(std::string{}),
-        reflected.inputShape.value_or(std::vector<size_t>{}),
+        reflected.inputShape.value_or(std::vector<std::vector<size_t>>{}),
         reflected.outputShape.value_or(std::vector<size_t>{})};
 }
 

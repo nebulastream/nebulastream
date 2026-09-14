@@ -23,8 +23,8 @@ namespace NES
 {
 struct RuntimeMetadata
 {
-    std::vector<size_t> inputShape;
-    size_t nDim = 0;
+    std::vector<std::vector<size_t>> inputShapes;
+    std::vector<size_t> nDim;
     std::string functionName;
     size_t inputSize = 0;
     size_t outputSize = 0;

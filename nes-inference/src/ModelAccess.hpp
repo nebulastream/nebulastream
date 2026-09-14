@@ -28,7 +28,7 @@ namespace NES::detail
 /// internal `src/` classes that actually construct models.
 struct ModelAccess
 {
-    static ImportedModel makeImported(OpenVinoModel model, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
+    static ImportedModel makeImported(OpenVinoModel model, std::string fnName, std::vector<std::vector<size_t>> inShape, std::vector<size_t> outShape)
     {
         return ImportedModel{std::move(model), std::move(fnName), std::move(inShape), std::move(outShape)};
     }

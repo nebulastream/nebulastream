@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -46,6 +47,10 @@ struct
     ModelFieldList outputs;
 
     bool operator==(const ModelSchema&) const = default;
+};
+
+enum class Role : std::uint8_t {
+    Input, Output
 };
 
 /// A catalog entry: the user-given name and source path together with the

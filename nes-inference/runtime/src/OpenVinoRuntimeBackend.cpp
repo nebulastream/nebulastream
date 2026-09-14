@@ -24,8 +24,11 @@
 #include <cstdint>
 #include <cstring>
 #include <ios>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
+#include <span>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -86,7 +89,11 @@ public:
         std::vector<std::uint8_t> modelBin(modelWeightsBytes.size());
         std::ranges::transform(modelWeightsBytes, modelBin.begin(), [](std::byte value) { return static_cast<std::uint8_t>(value); });
 
-        const ov::Shape modelInputShape(model.getInputShape().begin(), model.getInputShape().end());
+        std::map<size_t, ov::PartialShape> newShapes;
+        for (size_t i = 0; i < model.getInputShapes().size(); ++i)
+        {
+            newShapes[i] = ov::Shape(model.getInputShape(i).begin(), model.getInputShape(i).end());
+        }
         ov::Tensor weights(ov::element::u8, {modelBin.size()});
         if (!modelBin.empty())
         {
@@ -94,7 +101,7 @@ public:
         }
 
         auto openVinoModel = core.read_model(modelXml, weights);
-        openVinoModel->reshape(modelInputShape);
+        openVinoModel->reshape(newShapes);
 
         auto compiledModel = core.compile_model(
             openVinoModel,
@@ -127,30 +134,35 @@ RuntimeMetadata OpenVinoRuntimeBackend::setup(const CompiledModel& model)
     auto compiledModel = OpenVinoRuntime::instance().getOrCompile(model);
 
     inferRequest = compiledModel.create_infer_request();
-    inputElementType = compiledModel.input(0).get_element_type();
-    inputShape = compiledModel.input(0).get_shape();
     outputElementType = compiledModel.output(0).get_element_type();
     outputShape = compiledModel.output(0).get_shape();
+    //fill inputs
+    for (const auto& item : compiledModel.inputs()) {
+        inputElementType.push_back(item.get_element_type());
+        inputShapes.push_back(item.get_shape());
+    }
+
     /// When other element types are supported, use inputElementType.size()/outputElementType.size() instead of sizeof(float).
-    requiredInputSize = sizeof(float) * ov::shape_size(inputShape);
+    requiredInputSize = sizeof(float) * std::accumulate(
+                                                     inputShapes.begin(),
+                                                     inputShapes.end(),
+                                                     size_t{0},
+                                                     [](size_t sum, const ov::Shape& shape) {
+                                                         return sum + ov::shape_size(shape);
+                                                     });
     requiredOutputSize = sizeof(float) * ov::shape_size(outputShape);
 
     return RuntimeMetadata{
-        .inputShape = model.getInputShape(),
-        .nDim = model.getNDim(),
+        .inputShapes = model.getInputShapes(),
+        .nDim = model.getNDims(),
         .functionName = model.getFunctionName(),
         .inputSize = model.inputSize(),
-        .outputSize = model.outputSize()};
+        .outputSize = model.outputSize()
+    };
 }
 
 void OpenVinoRuntimeBackend::infer(std::byte* inputBuffer, size_t inputBufferSize, std::byte* outputBuffer, size_t outputBufferSize)
 {
-    if (inputBufferSize < requiredInputSize)
-    {
-        throw NES::InferenceRuntimeFailure(
-            "Model Execution failed. Buffer capacity {} B is insufficient for model input size {} B", inputBufferSize, requiredInputSize);
-    }
-
     if (outputBufferSize < requiredOutputSize)
     {
         throw NES::InferenceRuntimeFailure(
@@ -159,8 +171,18 @@ void OpenVinoRuntimeBackend::infer(std::byte* inputBuffer, size_t inputBufferSiz
             requiredOutputSize);
     }
 
-    const ov::Tensor inputTensor(inputElementType, inputShape, inputBuffer);
-    inferRequest.set_input_tensor(inputTensor);
+    std::span<std::byte> remaining{inputBuffer, inputBufferSize};
+    for (size_t i = 0; i < inputShapes.size(); ++i)
+    {
+        const size_t bytes = ov::shape_size(inputShapes[i]) * inputElementType[i].size();
+        if (remaining.size() < bytes)
+        {
+            throw NES::InferenceRuntimeFailure(
+                "Model Execution failed. Input tensor {} needs {} B, but only {} B of buffer capacity remain", i, bytes, remaining.size());
+        }
+        inferRequest.set_input_tensor(i, ov::Tensor(inputElementType[i], inputShapes[i], remaining.data()));
+        remaining = remaining.subspan(bytes);
+    }
 
     const ov::Tensor outputTensor(outputElementType, outputShape, outputBuffer);
     inferRequest.set_output_tensor(0, outputTensor);

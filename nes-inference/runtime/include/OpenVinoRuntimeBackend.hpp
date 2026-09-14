@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 #include <openvino/core/shape.hpp>
 #include <openvino/core/type/element_type.hpp>
 #include <openvino/runtime/infer_request.hpp>
@@ -31,8 +32,8 @@ public:
 
 private:
     ov::InferRequest inferRequest;
-    ov::element::Type inputElementType;
-    ov::Shape inputShape;
+    std::vector<ov::element::Type> inputElementType;
+    std::vector<ov::Shape> inputShapes;
     ov::element::Type outputElementType;
     ov::Shape outputShape;
     /// Byte sizes the model's own shape/dtype imply, computed once in `setup` and

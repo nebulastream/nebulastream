@@ -30,6 +30,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/std/cstring.h>
 #include <InferenceRuntime.hpp>
+#include <val_memcpy.hpp>
 #include <val_ptr.hpp>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -131,9 +132,14 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
 
     if (varsizedInput)
     {
-        const auto& value = record.read(inputFieldNames.at(0));
-        auto varSized = value.getRawValueAs<VariableSizedData>();
-        nautilus::memcpy(inputBuffer, varSized.getContent(), varSized.getSize());
+        auto memPos = inputBuffer;
+        for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); i++) {
+            const auto& value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
+            auto varSized = value.getRawValueAs<VariableSizedData>();
+            nautilus::memcpy(memPos, varSized.getContent(), varSized.getSize());
+            //update memPos
+            memPos = memPos + nautilus::val<uint64_t>(varSized.getSize());
+        }
     }
     else
     {

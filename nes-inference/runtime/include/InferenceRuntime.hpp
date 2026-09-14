@@ -60,8 +60,8 @@ private:
     struct Impl;
     std::unique_ptr<Impl> impl;
 
-    std::vector<size_t> inputShape;
-    size_t nDim = 0;
+    std::vector<std::vector<size_t>> inputShapes;
+    std::vector<size_t> nDim;
     std::string functionName;
 
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form

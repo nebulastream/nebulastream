@@ -64,7 +64,7 @@ void expectLoadsTinyModel(const std::string& fixture)
     const std::string path = std::string(INFERENCE_TEST_DATA) + "/" + fixture;
     auto result = importAndCompile(path);
     ASSERT_TRUE(result.has_value()) << "Failed to load " << fixture << ": " << (result ? "" : result.error());
-    EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 4}));
+    EXPECT_EQ(result->getInputShape(0), (std::vector<size_t>{1, 4}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 4}));
     EXPECT_EQ(result->inputSize(), 16U);
     EXPECT_EQ(result->outputSize(), 16U);
@@ -88,13 +88,13 @@ TEST(ModelLoaderTest, LoadsIdentityModel)
     const std::string path = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
     auto imported = importModel(path);
     ASSERT_TRUE(imported.has_value()) << "Failed to import model: " << imported.error().message;
-    EXPECT_EQ(imported->getInputShape(), (std::vector<size_t>{1, 100}));
+    EXPECT_EQ(imported->getInputShape(0), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(imported->getOutputShape(), (std::vector<size_t>{1, 100}));
     EXPECT_FALSE(imported->empty());
 
     auto compiled = compileModel(*imported);
     ASSERT_TRUE(compiled.has_value()) << "Failed to compile model: " << (compiled ? "" : compiled.error().message);
-    EXPECT_EQ(compiled->getInputShape(), (std::vector<size_t>{1, 100}));
+    EXPECT_EQ(compiled->getInputShape(0), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(compiled->getOutputShape(), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(compiled->inputSize(), 400U);
     EXPECT_EQ(compiled->outputSize(), 400U);
@@ -111,7 +111,7 @@ TEST(ModelLoaderTest, LoadsReductionModel)
     const std::string path = std::string(INFERENCE_TEST_DATA) + "/tiny_reduction.onnx";
     auto result = importAndCompile(path);
     ASSERT_TRUE(result.has_value()) << "Failed to load reduction model: " << (result ? "" : result.error());
-    EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 100}));
+    EXPECT_EQ(result->getInputShape(0), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 10}));
     EXPECT_EQ(result->inputSize(), 400U);
     EXPECT_EQ(result->outputSize(), 40U);
@@ -128,7 +128,7 @@ TEST(ModelLoaderTest, LoadsExpansionModel)
     const std::string path = std::string(INFERENCE_TEST_DATA) + "/tiny_expansion.onnx";
     auto result = importAndCompile(path);
     ASSERT_TRUE(result.has_value()) << "Failed to load expansion model: " << (result ? "" : result.error());
-    EXPECT_EQ(result->getInputShape(), (std::vector<size_t>{1, 10}));
+    EXPECT_EQ(result->getInputShape(0), (std::vector<size_t>{1, 10}));
     EXPECT_EQ(result->getOutputShape(), (std::vector<size_t>{1, 100}));
     EXPECT_EQ(result->inputSize(), 40U);
     EXPECT_EQ(result->outputSize(), 400U);

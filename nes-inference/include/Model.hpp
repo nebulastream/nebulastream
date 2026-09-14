@@ -110,7 +110,7 @@ class Model
 {
     detail::OpenVinoModel backendModel;
     std::string functionName;
-    std::vector<size_t> inputShape;
+    std::vector<std::vector<size_t>> inputShapes;
     std::vector<size_t> outputShape;
 
     template <typename OtherTag>
@@ -120,8 +120,8 @@ class Model
     friend struct Reflector<Model<Imported_>>;
     friend struct Unreflector<Model<Imported_>>;
 
-    Model(detail::OpenVinoModel model, std::string fnName, std::vector<size_t> inShape, std::vector<size_t> outShape)
-        : backendModel(std::move(model)), functionName(std::move(fnName)), inputShape(std::move(inShape)), outputShape(std::move(outShape))
+    Model(detail::OpenVinoModel model, std::string fnName, std::vector<std::vector<size_t>> inShapes, std::vector<size_t> outShape)
+        : backendModel(std::move(model)), functionName(std::move(fnName)), inputShapes(std::move(inShapes)), outputShape(std::move(outShape))
     {
     }
 
@@ -132,7 +132,7 @@ class Model
     explicit Model(Model<OtherTag> other)
         : backendModel(std::move(other.backendModel))
         , functionName(std::move(other.functionName))
-        , inputShape(std::move(other.inputShape))
+        , inputShapes(std::move(other.inputShapes))
         , outputShape(std::move(other.outputShape))
     {
     }
@@ -153,17 +153,36 @@ public:
 
     [[nodiscard]] const std::string& getFunctionName() const { return functionName; }
 
-    [[nodiscard]] const std::vector<size_t>& getInputShape() const { return inputShape; }
+    [[nodiscard]] const std::vector<std::vector<size_t>>& getInputShapes() const { return inputShapes; }
+
+    [[nodiscard]] const std::vector<size_t>& getInputShape(size_t i) const { return inputShapes.at(i); }
 
     [[nodiscard]] const std::vector<size_t>& getOutputShape() const { return outputShape; }
 
-    [[nodiscard]] size_t getNDim() const { return inputShape.size(); }
+    [[nodiscard]] size_t getNDim(size_t i) const { return getInputShape(i).size(); }
+
+    [[nodiscard]] std::vector<size_t> getNDims() const {
+        std::vector<size_t> dims;
+        const size_t size = getInputShapes().size();
+        dims.reserve(size);
+
+        for (size_t i = 0; i < size; ++i) {
+            dims.push_back(getNDim(i));
+        }
+
+        return dims;
+    }
 
     [[nodiscard]] size_t getOutputDims() const { return outputShape.size(); }
 
     [[nodiscard]] size_t inputSize() const
     {
-        return sizeof(float) * std::accumulate(inputShape.begin(), inputShape.end(), size_t{1}, std::multiplies<>());
+        size_t sum = 0;
+        for (const auto & inputShape : inputShapes) {
+            sum += sizeof(float) * std::accumulate(inputShape.begin(), inputShape.end(), size_t{1}, std::multiplies<>());
+        }
+
+        return sum;
     }
 
     [[nodiscard]] size_t outputSize() const

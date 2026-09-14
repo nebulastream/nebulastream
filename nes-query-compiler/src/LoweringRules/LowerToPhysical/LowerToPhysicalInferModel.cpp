@@ -71,7 +71,22 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     /// that a VARSIZED side has exactly one field, so checking the first field is sufficient.
     const auto& modelInputs = inferModelOp.get().getModel().getSchema().inputs;
     const auto& modelOutputs = inferModelOp.get().getModel().getSchema().outputs;
-    const bool varsizedInput = modelInputs.size() > 0 && modelInputs.begin()->getDataType().isType(DataType::Type::VARSIZED);
+
+    bool inputNotEmpty = modelInputs.size() > 0;
+    bool varsizedInput = false;
+    if (inputNotEmpty) {
+        const auto firstType = modelInputs.begin()->getDataType().type;
+        for (const auto & modelInput : modelInputs) {
+            const auto type = modelInput.getDataType().type;
+
+            if (type != firstType) {
+                throw CannotLoadModel("Failed to compile the model because multiple input tensors have different datatypes!");
+            }
+        }
+
+        varsizedInput = firstType == DataType::Type::VARSIZED;
+    }
+
     const bool varsizedOutput = modelOutputs.size() > 0 && modelOutputs.begin()->getDataType().isType(DataType::Type::VARSIZED);
     auto physicalOperator
         = InferModelPhysicalOperator(std::move(model), toIdList(modelInputs), toIdList(modelOutputs), varsizedInput, varsizedOutput);

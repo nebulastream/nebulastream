@@ -57,7 +57,7 @@ void InferenceRuntime::setup(const CompiledModel& model)
     impl->backend = createRuntimeBackend();
     auto metadata = impl->backend->setup(model);
 
-    this->inputShape = std::move(metadata.inputShape);
+    this->inputShapes = std::move(metadata.inputShapes);
     this->nDim = metadata.nDim;
     this->functionName = std::move(metadata.functionName);
 

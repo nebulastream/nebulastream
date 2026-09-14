@@ -291,34 +291,47 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
             std::memcpy(weightsTensor.data<std::uint8_t>(), weights.data(), weights.size());
         }
         auto model = core.read_model(xmlContent, weightsTensor);
-        if (model->inputs().size() != 1 || model->outputs().size() != 1)
+        if (model->outputs().size() != 1)
         {
-            return std::unexpected(ImportError{"OpenVINO inference supports exactly one model input and one model output"});
+            return std::unexpected(ImportError{"Multiple outputs detected. OpenVINO inference supports an arbitrary number of positive model inputs and exactly one model output"});
         }
 
-        const auto input = model->input(0);
-        const auto output = model->output(0);
-        if (auto valid = validateF32Tensor(input, "input"); !valid)
-        {
-            return std::unexpected(valid.error());
+        if (model->inputs().empty()) {
+            return std::unexpected(ImportError{"Number of inputs is zero. OpenVINO inference supports an arbitrary number of positive model inputs and exactly one model output"});
         }
+
+        const auto output = model->output(0);
+
+        std::vector<std::vector<size_t>> inShape;
+        for (const auto& input : model->inputs()) {
+            if (auto valid = validateF32Tensor(input, "input"); !valid)
+            {
+                return std::unexpected(valid.error());
+            }
+
+            auto inputShape = shapeFromPartial(input.get_partial_shape(), "input");
+            if (!inputShape)
+            {
+                return std::unexpected(inputShape.error());
+            }
+
+            if (auto validBatch = validateBatchDimension(*inputShape); !validBatch)
+            {
+                return std::unexpected(validBatch.error());
+            }
+
+            inShape.push_back(*inputShape);
+        }
+
         if (auto valid = validateF32Tensor(output, "output"); !valid)
         {
             return std::unexpected(valid.error());
         }
 
-        auto inputShape = shapeFromPartial(input.get_partial_shape(), "input");
-        if (!inputShape)
-        {
-            return std::unexpected(inputShape.error());
-        }
         /// Only the input side decides how many samples one invocation covers. An output
         /// whose leading dimension is larger than one is a per-sample result (detection
         /// boxes, say), not a batch, so it is left alone.
-        if (auto validBatch = validateBatchDimension(*inputShape); !validBatch)
-        {
-            return std::unexpected(validBatch.error());
-        }
+
         auto outputShape = shapeFromPartial(output.get_partial_shape(), "output");
         if (!outputShape)
         {
@@ -330,7 +343,7 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
                 .modelGraph = detail::RefCountedByteBuffer::fromBytes(*xmlBytes),
                 .modelWeights = detail::RefCountedByteBuffer::fromBytes(*binBytes)},
             {},
-            std::move(*inputShape),
+            std::move(inShape),
             std::move(*outputShape));
     }
     catch (const std::exception& exception)
