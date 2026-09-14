@@ -261,9 +261,9 @@ TEST_F(ResultCheckerTest, ReportsASchemaMismatchAsBefore)
     ASSERT_FALSE(verdict.has_value());
     EXPECT_EQ(verdict.error().detail, R"(Schema Mismatch
 ---------------
-QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false)), QualifiedUnboundField: (name: VALUE, type: DataType(type: UINT64 nullable: false)) != QualifiedUnboundField: (name: id, type: DataType(type: UINT64 nullable: false)), QualifiedUnboundField: (name: extra, type: DataType(type: UINT64 nullable: false))
+QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false)), QualifiedUnboundField: (name: VALUE, type: DataType(type: UINT64 nullable: false)) != QualifiedUnboundField: (name: ID, type: DataType(type: UINT64 nullable: false)), QualifiedUnboundField: (name: EXTRA, type: DataType(type: UINT64 nullable: false))
 - 'QualifiedUnboundField: (name: VALUE, type: DataType(type: UINT64 nullable: false))' is missing from actual result schema.
-+ 'QualifiedUnboundField: (name: extra, type: DataType(type: UINT64 nullable: false))' is unexpected field in actual result schema.
++ 'QualifiedUnboundField: (name: EXTRA, type: DataType(type: UINT64 nullable: false))' is unexpected field in actual result schema.
 
 All Results match)");
 }

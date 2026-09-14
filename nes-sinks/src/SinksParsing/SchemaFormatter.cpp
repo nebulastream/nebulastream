@@ -17,6 +17,7 @@
 #include <ranges>
 #include <string>
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -34,9 +35,14 @@ std::string SchemaFormatter::getFormattedSchema()
                 | std::views::transform(
                     [](const auto& field)
                     {
+                        const Identifier& identifier = field.getFullyQualifiedName();
+                        /// SystestResultCheck currently splits the output of this function on ',' to gain the identifier-datatype pairs.
+                        /// Without quotes, SystestResultCheck has no way to differentiate between the delimiting ',' and ',' that might appear within the quoted field identifier.
+                        /// Therefore, we reapply the quotes of case-sensitive identifiers here.
                         return fmt::format(
                             "{}:{}:{}",
-                            field.getFullyQualifiedName(),
+                            identifier.isCaseSensitive() ? fmt::format(R"("{}")", identifier.asCanonicalString())
+                                                         : identifier.asCanonicalString(),
                             magic_enum::enum_name(field.getDataType().type),
                             magic_enum::enum_name(
                                 field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
