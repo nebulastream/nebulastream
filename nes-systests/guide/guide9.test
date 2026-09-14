@@ -5,7 +5,7 @@
 CREATE LOGICAL SOURCE api_requests(
     endpoint VARSIZED NOT NULL,
     response_time FLOAT64 NOT NULL,
-    ts INT64 NOT NULL
+    ts UINT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR api_requests TYPE File;

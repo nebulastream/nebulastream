@@ -5,7 +5,7 @@
 CREATE LOGICAL SOURCE stock_quotes(
     ticker VARSIZED NOT NULL,
     price  FLOAT64 NOT NULL,
-    ts     INT64 NOT NULL
+    ts     UINT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR stock_quotes TYPE File;
