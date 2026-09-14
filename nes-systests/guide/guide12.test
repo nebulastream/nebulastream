@@ -5,13 +5,13 @@
 CREATE LOGICAL SOURCE orders(
     order_id    INT64 NOT NULL,
     customer_id INT64 NOT NULL,
-    ts_orders   INT64 NOT NULL
+    ts_orders   UINT64 NOT NULL
 );
 
 CREATE LOGICAL SOURCE payments(
     payments_order_id INT64 NOT NULL,
     amount            FLOAT64 NOT NULL,
-    ts_payments       INT64 NOT NULL
+    ts_payments       UINT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR orders TYPE File;
