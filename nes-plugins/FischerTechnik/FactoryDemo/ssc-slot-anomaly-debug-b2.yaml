@@ -1,0 +1,91 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# DEV/DEBUG ONLY: single-slot cut-down of ssc-slot-anomaly.yaml/.sql, just
+# the B2 slot (row B, col 2 -- the physical middle of the 3x3 HBW rack).
+# One MQTT source, one MODEL_INFERENCE call, one sink -- for isolating the
+# live "bad mem size" InferModel/OpenVINO failure (see conversation notes)
+# without the noise of 9 concurrent queries. Not meant to be deployed
+# alongside ssc-slot-anomaly.yaml (both would double-subscribe to i/cam
+# with different client_ids, which is fine, but there's no reason to run
+# both at once for debugging).
+#
+# ssc-slot-anomaly-debug-b2.sql's WHERE clause routes p_absent through
+# FT_LOG_SCORE(ts, slot, p_absent) (nes-plugins/Functions/FtLogScore)
+# before comparing it -- that function NES_INFO-logs every tuple's
+# (ts, slot, p_absent) as a side effect, then returns p_absent
+# unchanged, so the WHERE filtering is untouched. Deliberately wired into
+# the predicate rather than an extra SELECT column: an unused projected
+# column can get optimizer-pruned (silently dropping the log call), but a
+# value the WHERE clause itself consumes cannot. Watch for
+# "FT_LOG_SCORE ts=... slot=B2 anomaly_score=..." in the worker's stdout,
+# one line per i/cam frame this query sees, whether or not it passes the
+# threshold -- the CSV sink only ever gets the rows that do.
+#
+# v2 model: 2-class softmax head [p_present, p_absent] instead of v1's 1-unit
+# sigmoid head -- this is what fixed the "bad mem size" crash. See
+# ssc-slot-anomaly.yaml's header comment for the full root-cause writeup.
+
+sinks:
+  - name: SSC_SLOT_ANOMALY_DEBUG_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"slot"'
+        type: VARSIZED
+      - name: '"p_absent"'
+        type: FLOAT32
+    type: File
+    config:
+      output_format: CSV
+      file_path: ssc_slot_anomaly_debug_b2.csv
+
+models:
+  - name: BUCKET_SLOT_CNN
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn_v2.onnx
+    input:
+      - name: '"pixels"'
+        type: VARSIZED
+    output:
+      - name: '"p_present"'
+        type: FLOAT32
+      - name: '"p_absent"'
+        type: FLOAT32
+
+logical:
+  - name: SSC_CAM
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+
+physical:
+  - logical: SSC_CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-debug-b2
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

@@ -1,0 +1,8 @@
+SELECT
+  CASTTOUNIXTS("ts") AS "ts",
+  "data"
+FROM
+  SSC_CAM
+INTO
+  SSC_LOG_FRAMES_SINK
+;

@@ -137,4 +137,11 @@ for f in "${query_files[@]}"; do
 done
 [[ ${#queries[@]} -gt 0 ]] || { echo "Error: no queries found in the given query files" >&2; exit 1; }
 
+# Only needed on bare host runs where ovc isn't already on PATH (it is inside
+# nebulastream/nes-development:local, so nes-cli-compose-docker.sh never needs this).
+venv_activate="/home/thanasis/Documents/nes-tools/.venvFT/bin/activate"
+if [[ -f "$venv_activate" ]] && ! command -v ovc >/dev/null 2>&1; then
+  source "$venv_activate"
+fi
+
 "$nes_cli_bin" -t "$merged" "$subcommand" "${queries[@]}" "${extra_args[@]}"

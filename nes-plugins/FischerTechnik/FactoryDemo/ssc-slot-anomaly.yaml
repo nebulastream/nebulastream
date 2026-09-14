@@ -1,0 +1,325 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# SSC slot anomaly detection: runs the trained bucket_slot_cnn_v2.onnx model
+# (see Dropbox "FischerTechnik/SSC model/PROCESS.md" for how it was trained,
+# and "HBW-bucket-detection-plan.md" for the original design) against the live
+# SSC camera feed, one inference per HBW slot per frame, and logs an event to
+# disk ONLY when a slot's p_absent crosses the threshold -- not every frame
+# (contrast with ssc-log-frames.yaml, which logs every frame unconditionally).
+#
+# v2 model: 2-class softmax head [p_present, p_absent] instead of v1's 1-unit
+# sigmoid head. NES's OpenVinoRuntimeBackend (nes-inference) hits an intel_cpu
+# "bad mem size" exception on every real frame when a Gemm/FullyConnected
+# node's output width is exactly 1 -- confirmed via isolated repro outside
+# this project (minimal Gemm(32->1) model, no MQTT/conv/concurrency involved).
+# Any output width >= 2 avoids it. train_model.py was updated to match
+# (Linear(32,2) + CrossEntropyLoss + softmax-at-export instead of
+# Linear(32,1) + BCEWithLogitsLoss + sigmoid-at-export); retrained on the same
+# labels.json, same metrics (test acc 0.996, absent precision/recall/F1
+# 0.941/1.000/0.970 -- unchanged from v1's PROCESS.md numbers). v1's
+# bucket_slot_cnn.onnx is left in place, untouched, for reference.
+#
+# What "anomaly" means here: the model was trained as a binary bucket
+# present/absent classifier per slot crop, so p_absent is really "this slot
+# looks empty/absent". It does NOT yet distinguish "correctly empty" from
+# "fell off" -- that needs the STOCK-fusion join the plan doc describes
+# (cross-referencing f/i/stock's expected-occupied state), which is a
+# deliberate next step, not implemented here. Until then, every frame where a
+# normally-stocked slot reads empty will log as an anomaly.
+#
+# Requires the FT_PREPROCESS_SLOT function plugin (nes-plugins/Functions/
+# FtPreprocessSlot) to be built in -- it strips i/cam's data-URI prefix,
+# base64-decodes and JPEG-decodes the frame itself, crops to one slot's
+# fixed pixel ROI, resizes to 64x64 bilinear, normalizes, and packs
+# HWC->CHW float32, matching training's preprocess.py step for step.
+# Pass the raw "data" field straight in -- do NOT wrap it in FROM_BASE64
+# first; FROM_BASE64 decodes the data-URI prefix text too, which is not
+# valid base64 and corrupts the image (confirmed against the live broker).
+#
+# ssc-slot-anomaly.sql is ONE query: 9 per-slot MODEL_INFERENCE branches
+# (each with its own FT_PREPROCESS_SLOT(..., x, y, w, h) crop) combined via
+# UNION into a single (ts, slot, p_absent) stream, then one outer WHERE and
+# one INTO. NES has no per-element array iteration, so each slot still needs
+# its own FT_PREPROCESS_SLOT call -- but UNION means only ONE query gets
+# registered overall, not 9 independent ones (see below for why that matters).
+# 0.5 is the bare sigmoid decision boundary (p_absent is already
+# softmax-applied at export, see PROCESS.md), not a tuned production
+# threshold -- adjust once there's live data to tune against. NOTE: the
+# .sql file must not start with a comment -- nes-cli-compose.sh passes each
+# query as a raw argv string to nes-cli, and a leading "--" is parsed as an
+# unknown flag rather than a query (hit this directly running this file).
+#
+# TEMPORARY DIAGNOSTIC: the single outer WHERE clause routes p_absent through
+# FT_LOG_SCORE(ts, slot, p_absent) (same pattern as ssc-slot-anomaly-debug-b2)
+# so every frame's per-slot score prints to the worker's NES_INFO log,
+# whether or not it crosses the threshold -- added to debug why physically
+# removing a bucket wasn't producing a row in ssc_slot_anomalies.csv. Once
+# the pipeline is confirmed correct against live removal tests, strip the
+# FT_LOG_SCORE(...) wrapper back down to a bare "p_absent" > FLOAT32(...).
+#
+# 9 SEPARATE logical/physical MQTT sources below (SSC_CAM_A1 .. SSC_CAM_C3),
+# each with its OWN client_id, even though they all subscribe to the same
+# i/cam topic on the same broker -- a source referenced multiple times (here,
+# once per UNION branch) still gets its own independent connection, NOT a
+# shared/deduped one (confirmed both by NES's own systest, where "stream
+# UNION stream" duplicates every row, and live here: an earlier draft that
+# ran this as 9 SEPARATE queries against one shared physical source logged 9
+# separate "Opening MQTTSource ... clientId: X" lines, each new connection
+# kicking the previous one off since MQTT brokers boot any existing
+# connection when a new one connects with the same client_id -- only the
+# last-registered query (of 9) ever received a frame, the other 8 failed
+# immediately with "MQTT error [-11]"/"Disconnected"/"Connection lost").
+# Merging into one UNION query does NOT remove the need for 9 distinct
+# client_ids, but it DOES fix a second, separate bug that same earlier draft
+# had on the sink side: 9 independent queries sharing one sink NAME still
+# got 9 independent FileSink instances, each deleting-and-recreating the
+# file at registration (APPEND: 0 default) -- so the last-registered query's
+# sink unlinked the file out from under the other 8 queries' already-open
+# handles, silently losing their rows into orphaned inodes (confirmed live:
+# B2 logged anomaly_score ~0.99 after removing its bucket, but the CSV
+# stayed header-only). One UNION query means exactly one sink instance, so
+# that whole class of bug can't recur here.
+#
+#   ┌──────────────────────────┐         ┌──────────────────────────────┐
+#   │ TXT 4.0 controller       │  ──▶    │  worker-1  (cap: 10000)       │
+#   │ 192.168.0.10:1883        │ subscribe  S: MQTT_SOURCE x9              │
+#   │ topic: i/cam             │         │  9x: FT_PREPROCESS_SLOT ->    │
+#   │ (SSC, pan/tilt USB cam   │         │      MODEL_INFERENCE -> UNION │
+#   │  atop MPO)               │         │  K: FILE_SINK x1               │
+#   │                          │         │  → ssc_slot_anomalies.csv     │
+#   └──────────────────────────┘         └──────────────────────────────┘
+#
+# Slot ROIs below are copied verbatim from the Dropbox "SSC model/PROCESS.md"
+# training log's rois.json table -- they are only valid for the exact pan/tilt
+# framing that session was captured at (Training Config.xlsx: pan≈0.989,
+# tilt≈-0.253). If the SSC's pan/tilt has drifted since (it's joystick-shared),
+# re-derive the ROIs before trusting this query's output.
+
+sinks:
+  - name: SSC_SLOT_ANOMALY_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"slot"'
+        type: VARSIZED
+      - name: '"p_absent"'
+        type: FLOAT32
+    type: File
+    config:
+      output_format: CSV
+      file_path: ssc_slot_anomalies.csv
+
+models:
+  # Model path is resolved by nes-single-node-worker relative to ITS OWN cwd
+  # at runtime, not relative to this yaml file -- nes-cli-compose.sh merges
+  # topology yamls into a tempfile elsewhere, so a relative path here breaks
+  # depending on where nes-cli is invoked from. Absolute path, tied to this
+  # checkout; update if the repo moves.
+  - name: BUCKET_SLOT_CNN
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn_v2.onnx
+    # Quoted like every other schema field name in this file (NES::Identifier
+    # treats an unquoted YAML string as a case-INSENSITIVE identifier,
+    # canonicalized to uppercase -- it silently stopped matching this
+    # query's quoted, case-sensitive "pixels"/"p_absent" columns until
+    # these were quoted the same way; hit this directly running this file).
+    input:
+      - name: '"pixels"'
+        type: VARSIZED
+    output:
+      - name: '"p_present"'
+        type: FLOAT32
+      - name: '"p_absent"'
+        type: FLOAT32
+
+logical:
+  # ts=ISO-8601 UTC string (VARSIZED; cast to unix ms via CASTTOUNIXTS in
+  # ssc-slot-anomaly.sql, same as ssc-log-frames.yaml/fischertechnik-cam.yaml).
+  - name: SSC_CAM_A1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_A2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_A3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+
+physical:
+  - logical: SSC_CAM_A1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-a1
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_A2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-a2
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_A3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-a3
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_B1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-b1
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_B2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-b2
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_B3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-b3
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_C1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-c1
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_C2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-c2
+      qos: 0
+      log_messages: true
+  - logical: SSC_CAM_C3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-c3
+      qos: 0
+      log_messages: true
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000
