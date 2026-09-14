@@ -23,6 +23,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <magic_enum/magic_enum.hpp>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -102,7 +103,21 @@ void EventTimeWatermarkAssignerLogicalOperator::inferLocalSchema()
     PRECONDITION(child.has_value(), "Child not set when calling schema inference");
     const auto& inputSchema = child->getOutputSchema();
     onField = onField.withInferredDataType(inputSchema);
-    outputSchema = unbind(inputSchema);
+    /// Check if the field is either our UnsignedTimestanp plugin or an unsigned uint64 directly
+    const DataType& fieldType = onField.getDataType();
+    if (fieldType.type == DataType::Type::UINT64
+        || (fieldType.type == DataType::Type::STRUCT && fieldType.fields.size() == 1
+            && fieldType.fields[0].first == "microseconds_since_unix_epoch" && fieldType.fields[0].second.type == DataType::Type::UINT64))
+    {
+        outputSchema = unbind(inputSchema);
+    }
+    else
+    {
+        throw CannotInferSchema(
+            "The field provided as timestamp field does not have a valid timestamp type. Possible types: UINT64, Timestamp (DataType "
+            "Plugin). Got: {}",
+            magic_enum::enum_name(fieldType.type));
+    }
 }
 
 EventTimeWatermarkAssignerLogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema() const
@@ -173,8 +188,9 @@ Windowing::TimeUnit EventTimeWatermarkAssignerLogicalOperator::getUnit() const
 Reflected Reflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::operator()(
     const TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>& op, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
-        .operatorId = op.getId(), .onField = op->getOnField(), .timeUnit = op->getUnit()});
+    return context.reflect(
+        detail::ReflectedEventTimeWatermarkAssignerLogicalOperator{
+            .operatorId = op.getId(), .onField = op->getOnField(), .timeUnit = op->getUnit()});
 }
 
 Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::Unreflector(ContextType operatorMapping)
