@@ -25,6 +25,29 @@ docker_mqtt_produce() {
   docker compose exec mqtt-client mosquitto_pub -h mqtt-broker -t "$topic" -m "$@"
 }
 
+# Usage: docker_mqtt_produce_parallel <topic> <messages-per-publisher> <payload>...
+# Each payload gets its own publisher. Wait only for these publishers, leaving
+# background diagnostics running, and reap every publisher even if one fails.
+docker_mqtt_produce_parallel() {
+  local topic=$1 messages_per_publisher=$2
+  shift 2
+  local payload message_index pid exit_code=0
+  local pids=()
+  for payload in "$@"; do
+    (
+      for ((message_index = 0; message_index < messages_per_publisher; ++message_index)); do
+        docker_mqtt_produce "$topic" "$payload" || exit $?
+      done
+    ) &
+    pids+=("$!")
+  done
+
+  for pid in "${pids[@]}"; do
+    wait "$pid" || exit_code=$?
+  done
+  return "$exit_code"
+}
+
 docker_mqtt_subscribe() {
   local topic=$1
   shift
@@ -183,9 +206,11 @@ EOF
   query_id=$output
 
   sleep 1
-  #
-  for i in {1..68}; do (docker_mqtt_produce mqtt-source-test $'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32'&); done
-  wait
+  local payloads=()
+  for i in {1..68}; do
+    payloads+=($'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32')
+  done
+  docker_mqtt_produce_parallel mqtt-source-test 1 "${payloads[@]}"
   sleep 1
 
   [ "$(cat worker-1/results.csv | wc -l)" -eq 0 ]
@@ -218,30 +243,10 @@ EOF
 
   wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
 
-  # 30000 tuples
-  # 2 producers
-  for i in {1..2}; do
-    (
-        # 250 messages
-        for j in {1..250}; do
-            # 60 per message
-            docker_mqtt_produce mqtt-source-test $'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32'
-        done
-    )&
-  done
-
-  # 500 tuples
-  # 2 producers
-  for i in {1..2}; do
-    (
-        # 250 messages
-        for j in {1..250}; do
-            # 1 per message
-            docker_mqtt_produce mqtt-source-test 32
-        done
-    )&
-  done
-  wait
+  # Four publishers send 250 messages each: two with 60 tuples per message,
+  # and two with one tuple per message, for 30500 tuples in total.
+  local bulk_payload=$'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32'
+  docker_mqtt_produce_parallel mqtt-source-test 250 "$bulk_payload" "$bulk_payload" 32 32
 
   wait_until docker compose exec -T worker-1 sh -c '[ "$(wc -l < results.csv)" -eq 30501 ]'
   run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
