@@ -5,13 +5,13 @@
 CREATE LOGICAL SOURCE s(
     sid INT64 NOT NULL,
     sval INT64 NOT NULL,
-    ts_s   INT64 NOT NULL
+    ts_s   UINT64 NOT NULL
 );
 
 CREATE LOGICAL SOURCE t(
     tid INT64 NOT NULL,
     tval INT64 NOT NULL,
-    ts_t   INT64 NOT NULL
+    ts_t   UINT64 NOT NULL
 );
 
 CREATE PHYSICAL SOURCE FOR s TYPE File;
@@ -31,10 +31,10 @@ CREATE SINK sink(
     end   UINT64 NOT NULL,
     sid  INT64 NOT NULL,
     sval INT64 NOT NULL,
-    ts_s   INT64 NOT NULL,
+    ts_s   UINT64 NOT NULL,
     tid  INT64 NOT NULL,
     tval INT64 NOT NULL,
-    ts_t   INT64 NOT NULL
+    ts_t   UINT64 NOT NULL
 ) TYPE File;
 
 SELECT *
