@@ -1,0 +1,493 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Gated variant of ssc-slot-anomaly.yaml/.sql: a deterministic pan/tilt hard
+# gate sits in front of BUCKET_SLOT_CNN in every one of the 9 UNION branches.
+#
+# Why: the slot ROIs baked into every FT_PREPROCESS_SLOT call are pixel
+# boxes valid only at the exact pan/tilt the training frames were captured
+# at (confirmed live: a drifted SSC pan produced high "p_absent" on every
+# slot even with the HBW full, because every crop landed on background
+# instead of a bucket).
+#
+# How: each branch's raw camera frame is windowed-joined (WINDOW TUMBLING,
+# same pattern as factory-fault-demo.sql's STATION_STATE join) against that
+# branch's own PTU_POS_XX reading of i/ptu/pos. MIN(...) over the window
+# means ANY misaligned reading inside it fails the whole window, so only
+# frames in a window where every reading matched the known training
+# position (pan=0.988990783691406, tilt=-0.252666652202606, +-0.01) reach
+# FT_PREPROCESS_SLOT/BUCKET_SLOT_CNN at all. This is a WHERE on the join,
+# not an if/else -- NES has no branching that skips a MODEL_INFERENCE call
+# outright (see factory-fault-demo.yaml's note on CASE/Conditional).
+#
+# No ML visibility classifier here (dropped -- the pan/tilt check alone is
+# the guard; BUCKET_SLOT_CNN runs directly once a frame passes it).
+#
+# TODO before running:
+# - The pan/tilt +-0.01 tolerance is a placeholder threshold -- tune once
+#   real pan/tilt jitter at rest is known.
+# - The pan/tilt join's WINDOW TUMBLING(..., SIZE 2 SEC) is copied from
+#   factory-fault-demo.sql's STATION_STATE join as a starting point, not
+#   measured against this feed's actual i/cam vs i/ptu/pos update rates.
+#
+# Sink, client_ids and output file are suffixed "-gated"/"_gated" so this
+# can run alongside the ungated ssc-slot-anomaly.yaml without colliding on
+# MQTT client_id (which would boot the other query's connection) or on the
+# CSV sink file.
+#
+# i/ptu/pos is subscribed TEN separate times below: once per slot branch
+# (PTU_POS_A1..PTU_POS_C3, feeding the hard gate) plus once more (PTU_POS,
+# feeding the standalone alignment-print query further down in the .sql
+# file) -- each with its own client_id, same reason SSC_CAM_A1..C3 need
+# separate connections despite sharing one topic (see ssc-slot-anomaly.yaml
+# for the full root-cause writeup: a source referenced multiple times still
+# gets its own independent MQTT connection, and reusing one client_id across
+# connections boots the earlier one).
+
+sinks:
+  - name: SSC_SLOT_ANOMALY_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"slot"'
+        type: VARSIZED
+      - name: '"p_absent"'
+        type: FLOAT32
+    type: File
+    config:
+      output_format: CSV
+      file_path: ssc_slot_anomalies_gated.csv
+
+  - name: PTU_ALIGNMENT_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+      - name: '"alignment"'
+        type: VARSIZED
+    type: Print
+    config:
+      output_format: CSV
+
+models:
+  - name: BUCKET_SLOT_CNN
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn.onnx
+    input:
+      - name: '"pixels"'
+        type: VARSIZED
+    output:
+      - name: '"p_present"'
+        type: FLOAT32
+      - name: '"p_absent"'
+        type: FLOAT32
+
+logical:
+  - name: SSC_CAM_A1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_A2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_A3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_B3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: SSC_CAM_C3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+
+  - name: PTU_POS_A1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_A2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_A3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_B1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_B2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_B3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_C1
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_C2
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_C3
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+  - name: PTU_POS
+    # i/ptu/pos = pan/tilt position feedback for the SSC, same schema as
+    # fischertechnik-run_all.yaml's PTU_POS. Feeds the standalone
+    # alignment-print query only -- the hard gate uses PTU_POS_A1..C3 above.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+physical:
+  - logical: SSC_CAM_A1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-a1
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_A2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-a2
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_A3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-a3
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_B1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-b1
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_B2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-b2
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_B3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-b3
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_C1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-c1
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_C2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-c2
+      qos: 0
+      log_messages: false
+  - logical: SSC_CAM_C3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-c3
+      qos: 0
+      log_messages: false
+
+  - logical: PTU_POS_A1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-a1
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_A2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-a2
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_A3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-a3
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_B1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-b1
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_B2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-b2
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_B3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-b3
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_C1
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-c1
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_C2
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-c2
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_C3
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-c3
+      qos: 0
+      log_messages: false
+
+  - logical: PTU_POS
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-ptu-pos
+      qos: 0
+      log_messages: false
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000
