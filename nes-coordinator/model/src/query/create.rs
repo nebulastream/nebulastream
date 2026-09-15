@@ -16,7 +16,7 @@ use crate::Execute;
 use crate::error::{ErrorCode, catalog_write};
 use crate::identifier::{SinkId, SourceId};
 use crate::query::query_fragment::{self, CreateQueryFragment};
-use crate::query::{self, ActiveModel, query_sink, query_source};
+use crate::query::{ActiveModel, QueryWithFragments, query_sink, query_source};
 use anyhow::{Context, Result};
 use sea_orm::ActiveValue::{NotSet, Set};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
@@ -78,11 +78,8 @@ impl From<CreateQuery> for ActiveModel {
 }
 
 impl Execute for CreateQuery {
-    type Response = (query::Model, Vec<query_fragment::Model>);
-    async fn execute(
-        &self,
-        conn: &impl ConnectionTrait,
-    ) -> Result<(query::Model, Vec<query_fragment::Model>)> {
+    type Response = QueryWithFragments;
+    async fn execute(&self, conn: &impl ConnectionTrait) -> Result<QueryWithFragments> {
         anyhow::ensure!(
             !self.fragments.is_empty(),
             "a query must have at least one fragment"
@@ -135,6 +132,6 @@ impl Execute for CreateQuery {
             .all(conn)
             .await
             .context("failed to load created query fragments")?;
-        Ok((query, fragments))
+        Ok(QueryWithFragments { query, fragments })
     }
 }
