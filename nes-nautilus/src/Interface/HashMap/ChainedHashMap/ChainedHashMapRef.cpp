@@ -275,6 +275,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
             args->numPages = chm.getNumberOfPages();
             if (args->numPages == 0)
             {
+                args->numTuplesInPage = 0;
                 return static_cast<const std::byte*>(nullptr);
             }
             /// get first page
@@ -289,21 +290,15 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
         indexOnPage,
         &args);
 
-    /// Guard that checks whether the hashmap is non-empty.
-    if (args.get(&EntryIterator::PageCounts::numPages) != 0)
-    {
-        return {
-            buffer,
-            currentEntry,
-            nautilus::val<uint64_t>{config.entrySize},
-            tupleIndex,
-            indexOnPage,
-            args.get(&EntryIterator::PageCounts::numTuplesInPage),
-            pageIndex,
-            args.get(&EntryIterator::PageCounts::numPages)};
-    }
-    /// Empty hash map, return the end() iterator.
-    return end();
+    return {
+        buffer,
+        currentEntry,
+        nautilus::val<uint64_t>{config.entrySize},
+        tupleIndex,
+        indexOnPage,
+        args.get(&EntryIterator::PageCounts::numTuplesInPage),
+        pageIndex,
+        args.get(&EntryIterator::PageCounts::numPages)};
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
