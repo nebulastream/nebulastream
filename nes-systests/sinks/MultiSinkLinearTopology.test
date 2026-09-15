@@ -40,11 +40,11 @@ SINK(SINKONNODE2)
 -- 1 plan(s) on source-node:8080 --
 0:
 SINK(NETWORK)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 3)
       SOURCE(STREAM)
 SINK(NETWORK)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 3) [shared]
 ==END==
 

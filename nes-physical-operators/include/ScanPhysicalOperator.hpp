@@ -20,6 +20,7 @@
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -31,6 +32,12 @@ class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    /// Heads a branch of a fan-out point: the scan replaces the origin id of every buffer it opens with the one the
+    /// branch carries, which the handler holds. See OriginMappingOperatorHandler.
+    ScanPhysicalOperator(
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::vector<Record::RecordFieldIdentifier> projections,
+        OperatorHandlerId originMappingHandlerId);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
@@ -41,6 +48,8 @@ private:
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
     bool isRawScan = false;
+    /// Set only for a scan heading a branch of a fan-out point.
+    std::optional<OperatorHandlerId> originMappingHandlerId;
 
     void rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };

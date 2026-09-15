@@ -25,8 +25,8 @@ CREATE SINK sinkOnNode1(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UIN
 CREATE SINK sinkOnNode2(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File SET ('sink-node-2:8080' AS "SINK"."HOST");
 CREATE SINK reorderedOnNode2(value UINT64 NOT NULL, id UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE File SET ('sink-node-2:8080' AS "SINK"."HOST");
 
-# One plan on the source node driving two network sinks off the operator they share, one per sink node. Those two
-# channels relay the same upstream origins, which is the case that needs them remapped to origins of their own.
+# One plan on the source node driving two network sinks off the operator they share, one per sink node. Each of those
+# branches is headed by a split, so the two channels relay origins of their own rather than the same ones twice.
 EXPLAIN (DISTRIBUTED) FORMAT TEXT SELECT id, value, timestamp FROM stream WHERE value > 3 INTO sinkOnNode1, sinkOnNode2;
 ----
 == Decomposed Plans ==
@@ -41,11 +41,11 @@ SINK(SINKONNODE2)
 -- 1 plan(s) on source-node:8080 --
 0:
 SINK(NETWORK)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 3)
       SOURCE(STREAM)
 SINK(NETWORK)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 3) [shared]
 ==END==
 

@@ -29,11 +29,11 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/OriginSplitLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/PlanVisitor.hpp>
-#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Traits/OriginMappingTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -57,7 +57,26 @@ LogicalOperator propagateOriginIds(const LogicalOperator& op, const std::vector<
 
     auto traitSet = op.getTraitSet();
 
-    if (op.tryGetAs<OriginIdAssigner>().has_value())
+    if (op.tryGetAs<OriginSplitLogicalOperator>().has_value())
+    {
+        /// A branch of a fan-out point replaces every origin it reads with one of its own, so that branches stay apart
+        /// where they meet again. One id per origin read, because an emit keeps the sequence number of the buffer it
+        /// read and sequence numbers are unique only within an origin.
+        INVARIANT(childOriginIds.size() == 1, "An origin split has exactly one child, but got {}", childOriginIds.size());
+        std::vector<OriginId> branchOriginIds;
+        std::vector<std::pair<OriginId, OriginId>> originMapping;
+        for (const auto& upstreamOriginId : childOriginIds.at(0))
+        {
+            lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
+            branchOriginIds.push_back(lastOriginId);
+            originMapping.emplace_back(upstreamOriginId, lastOriginId);
+        }
+        const auto originIdsInserted = tryInsert(traitSet, OutputOriginIdsTrait{std::move(branchOriginIds)});
+        INVARIANT(originIdsInserted, "Failed to insert origin id trait, did another phase already assign them?");
+        const auto mappingInserted = tryInsert(traitSet, OriginMappingTrait{std::move(originMapping)});
+        INVARIANT(mappingInserted, "Failed to insert origin mapping trait, did another phase already assign it?");
+    }
+    else if (op.tryGetAs<OriginIdAssigner>().has_value())
     {
         lastOriginId = OriginId{lastOriginId.getRawValue() + 1};
         const auto success = tryInsert(traitSet, OutputOriginIdsTrait{{lastOriginId}});
