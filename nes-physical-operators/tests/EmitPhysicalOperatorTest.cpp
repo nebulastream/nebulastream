@@ -50,6 +50,7 @@
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
+#include <nautilus/val_details.hpp>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -253,6 +254,24 @@ public:
 
     std::random_device rd;
 };
+
+TEST_F(EmitPhysicalOperatorTest, HandlerLookupDoesNotInsertMissingHandler)
+{
+    const auto handler = std::make_shared<EmitOperatorHandler>();
+    handlers.emplace(OperatorHandlerId(4), handler);
+    run(
+        [&](ExecutionContext& ctx, RecordBuffer&)
+        {
+            EXPECT_EQ(
+                nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(ctx.getGlobalOperatorHandler(OperatorHandlerId(4))),
+                handler.get());
+            EXPECT_EQ(
+                nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(ctx.getGlobalOperatorHandler(OperatorHandlerId(99))),
+                nullptr);
+            EXPECT_EQ(handlers.size(), 1);
+        },
+        createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true));
+}
 
 TEST_F(EmitPhysicalOperatorTest, BasicTest)
 {
