@@ -22,7 +22,6 @@
 #include <Util/ExecutionConfiguration.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PhysicalOperator.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {

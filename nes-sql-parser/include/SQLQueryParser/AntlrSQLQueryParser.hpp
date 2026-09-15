@@ -17,6 +17,7 @@
 #include <ErrorHandling.hpp>
 
 
+#include <expected>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -26,13 +27,22 @@
 #include <AntlrSQLParser.h>
 #include <CommonTokenStream.h>
 #include <ParserRuleContext.h>
+#include <DataTypes/UnboundField.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
 LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
+
+/// Splits SQL text that may hold several statements into the text of each statement.
+std::expected<std::vector<std::string>, Exception> splitStatements(std::string_view sql);
+
+/// Binds the schema of a CREATE statement for a caller that already holds the parse tree.
+Schema<UnqualifiedUnboundField, Ordered> bindSchemaDefinition(AntlrSQLParser::SchemaDefinitionContext* schemaDefinition);
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.
 class ManagedAntlrParser : public std::enable_shared_from_this<ManagedAntlrParser>

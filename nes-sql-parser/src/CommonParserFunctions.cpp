@@ -15,6 +15,8 @@
 
 #include <CommonParserFunctions.hpp>
 
+#include <SQLQueryParser/StatementBinder.hpp>
+
 #include <cctype>
 #include <cstdint>
 #include <cstring>
@@ -213,7 +215,7 @@ std::unordered_map<Identifier, std::string> parseInputFormatterConfig(const Conf
 
 std::unordered_map<Identifier, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
 {
-    return collectConfigBlock(configOptions, {"OUTPUT_FORMATTER"}, configOptionToValue);
+    return collectConfigBlock(configOptions, {OUTPUT_FORMATTER_OPTION_GROUP}, configOptionToValue);
 }
 
 std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions)

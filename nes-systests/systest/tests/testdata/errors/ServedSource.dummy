@@ -1,0 +1,13 @@
+# name: ServedSource
+# description: the source reads from a server of the systest process, which a remote worker cannot reach
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE TCP;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+----
+1

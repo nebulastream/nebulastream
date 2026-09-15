@@ -24,7 +24,6 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 #include <QueryStatus.hpp>
 
 namespace NES

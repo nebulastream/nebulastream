@@ -162,7 +162,7 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
         /// A statement that the parser rejects is submitted unchanged,
         /// so the syntax error fails this one query rather than the rewrite failing every query of the file.
         /// Many test files assert exactly that error.
-        return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .inputFiles = {}};
+        return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .declaredSinkSchema = std::nullopt, .inputFiles = {}};
     }
 
     antlr4::TokenStreamRewriter rewriter{&parse->tokenStream()};
@@ -179,7 +179,7 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
         = resultDiscriminator.empty() ? fmt::format("{}", queryNumber) : fmt::format("{}_{}", resultDiscriminator, queryNumber);
 
     auto* sink = requireSingleSink(*parse, sql);
-    auto [inlinedSink, resultFile] = sinkRewriter.inlineSink(*parse, sink, context.resultFile(suffix));
+    auto [inlinedSink, resultFile, declaredSinkSchema] = sinkRewriter.inlineSink(*parse, sink, context.resultFile(suffix));
     rewriter.replace(sink->getStart(), sink->getStop(), inlinedSink);
 
     std::vector<std::filesystem::path> inputFiles;
@@ -198,18 +198,23 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
         }
     }
 
-    return RewrittenSql{.sql = rewriter.getText(), .resultFile = std::move(resultFile), .inputFiles = std::move(inputFiles)};
+    return RewrittenSql{
+        .sql = rewriter.getText(),
+        .resultFile = std::move(resultFile),
+        .declaredSinkSchema = std::move(declaredSinkSchema),
+        .inputFiles = std::move(inputFiles)};
 }
 
 void Emitter::emitQuery(SelectStatement query)
 {
-    auto [sql, resultFile, inputFiles] = emitSelect(query.sql, query.id, {});
+    auto [sql, resultFile, declaredSinkSchema, inputFiles] = emitSelect(query.sql, query.id, {});
     runnable.testCases.push_back(
         RewrittenTestCase{
             .action = RewrittenQuery{
                 .sql = std::move(sql),
                 .id = query.id,
                 .resultFile = std::move(resultFile),
+                .declaredSinkSchema = std::move(declaredSinkSchema),
                 .inputFiles = std::move(inputFiles),
                 .expected = std::move(query.expected)}});
 }
@@ -249,8 +254,9 @@ void Emitter::emitDifferential(const DifferentialStatement& block)
     /// The second half needs its own result file name, because the halves share a query number.
     static constexpr auto SecondHalf = "DIFFERENTIAL";
 
-    auto [firstSql, firstResultFile, unmeasuredFirstInput] = emitSelect(block.firstSql, block.firstId, {});
-    auto [secondSql, secondResultFile, unmeasuredSecondInput] = emitSelect(block.secondSql, block.secondId, SecondHalf);
+    auto [firstSql, firstResultFile, uncheckedFirstSchema, unmeasuredFirstInput] = emitSelect(block.firstSql, block.firstId, {});
+    auto [secondSql, secondResultFile, uncheckedSecondSchema, unmeasuredSecondInput]
+        = emitSelect(block.secondSql, block.secondId, SecondHalf);
     if (not firstResultFile.has_value() or not secondResultFile.has_value())
     {
         throw TestException("a differential query has to write a result to compare: {}", block.firstSql);

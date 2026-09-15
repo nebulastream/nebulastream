@@ -21,6 +21,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryStatus.hpp>
 
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <cpptrace/basic.hpp>
@@ -152,6 +153,13 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
         },
         context);
 }
+
+/// The reply holds the state as the proto enum, and the cast below relies on both enums having the same numbering.
+static_assert(static_cast<int>(QueryStatus::Registered) == static_cast<int>(::QueryState::Registered));
+static_assert(static_cast<int>(QueryStatus::Started) == static_cast<int>(::QueryState::Started));
+static_assert(static_cast<int>(QueryStatus::Running) == static_cast<int>(::QueryState::Running));
+static_assert(static_cast<int>(QueryStatus::Stopped) == static_cast<int>(::QueryState::Stopped));
+static_assert(static_cast<int>(QueryStatus::Failed) == static_cast<int>(::QueryState::Failed));
 
 grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const QueryStatusRequest* request, QueryStatusReply* reply)
 {

@@ -47,7 +47,12 @@ RewrittenTestCase createQueryCase(Expectation expected)
 {
     return RewrittenTestCase{
         .action = RewrittenQuery{
-            .sql = "", .id = SystestQueryId{1}, .resultFile = std::nullopt, .inputFiles = {}, .expected = std::move(expected)}};
+            .sql = "",
+            .id = SystestQueryId{1},
+            .resultFile = std::nullopt,
+            .declaredSinkSchema = std::nullopt,
+            .inputFiles = {},
+            .expected = std::move(expected)}};
 }
 
 ReportEntry createEntryWith(Verdict verdict)
