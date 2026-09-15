@@ -14,9 +14,8 @@
 
 //! The read request that reports which build each worker runs.
 //!
-//! A version is not written down anywhere, so answering means asking the workers
-//! themselves. This request only selects which ones to ask; the asking happens
-//! where the connections to them live.
+//! A version is not stored in the catalog, so answering means asking the workers themselves.
+//! This request only selects which ones to ask; the asking happens where the worker connections are.
 
 use crate::Execute;
 use crate::worker::endpoint::NetworkAddr;
@@ -26,7 +25,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 
-/// Selects the workers to ask. An absent address asks every worker the catalog holds.
+/// An absent address selects every worker in the catalog.
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct GetWorkerVersion {
     pub host_addr: Option<NetworkAddr>,
@@ -47,15 +46,15 @@ impl GetWorkerVersion {
 
 impl IntoCondition for GetWorkerVersion {
     fn to_condition(&self) -> Condition {
-        // Every worker is asked, whatever state the catalog last recorded for it. A worker that is
-        // registered but not yet up is exactly the one a caller wants told apart from a healthy one,
+        // Every worker is asked, whatever state the catalog last recorded for it.
+        // A worker that is registered but not yet up is exactly the one a caller wants to see,
         // and reporting that it could not be reached says that, while leaving it out says nothing.
         Condition::all().add_option(self.host_addr.clone().map(|v| Column::HostAddr.eq(v)))
     }
 }
 
 impl Execute for GetWorkerVersion {
-    /// The workers to ask, rather than their versions, because reading a version is not a catalog read.
+    /// The workers to ask, not their versions.
     type Response = Vec<Model>;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<Model>> {
         crate::get_all::<worker::Entity>(self, conn)
@@ -66,8 +65,9 @@ impl Execute for GetWorkerVersion {
 
 /// What one worker answered when asked for its version.
 ///
-/// A worker that could not be reached reports why instead of a version, so one unreachable worker
-/// does not hide what the others answered. Exactly one of the two is set.
+/// A worker that could not be reached reports why instead of a version,
+/// so one unreachable worker does not hide what the others answered.
+/// Exactly one of the two is set.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct WorkerVersion {
     pub worker: NetworkAddr,

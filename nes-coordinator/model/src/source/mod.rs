@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-//! Sources, split into a logical source (named, with a shared schema) and the
-//! physical sources placed on workers that feed it.
+//! Sources, split into a logical source (named, with a shared schema)
+//! and the physical sources on workers that feed it.
 
 pub mod logical;
 pub mod physical;

@@ -30,6 +30,7 @@ impl Arbitrary for QueryFragmentsWithRefs {
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         const MAX_WORKERS: u8 = 32;
         const MAX_NUM_FRAGMENTS: usize = 16;
+        const MAX_OPERATORS_PER_FRAGMENT: i32 = 12;
         (
             CreateWorker::topology_dag(1, MAX_WORKERS),
             1..=MAX_NUM_FRAGMENTS,
@@ -39,10 +40,9 @@ impl Arbitrary for QueryFragmentsWithRefs {
                 (Just(workers), vec((0..n, any::<bool>()), num))
             })
             .prop_map(|(workers, placements)| {
-                // Track each worker's remaining `max_operators` so
-                // generated fixtures stay within it; otherwise the insert
-                // is rejected. Cap per-fragment at 12 to keep test cases
-                // small.
+                // Track each worker's remaining `max_operators` so generated fixtures stay within it;
+                // otherwise the insert is rejected.
+                // The per-fragment cap keeps test cases small.
                 let mut remaining: Vec<i32> = workers
                     .iter()
                     .map(|worker| worker.max_operators.unwrap_or(i32::MAX))
@@ -51,13 +51,15 @@ impl Arbitrary for QueryFragmentsWithRefs {
                 let mut fragments: Vec<CreateQueryFragment> = placements
                     .into_iter()
                     .map(|(idx, has_source)| {
-                        let cap = remaining[idx].min(12);
-                        let ops = (cap / 2).clamp(0, cap);
-                        remaining[idx] -= ops;
+                        // Each fragment takes half of what is left
+                        // so several fragments can share one worker.
+                        let remaining_capacity = remaining[idx].min(MAX_OPERATORS_PER_FRAGMENT);
+                        let num_operators = remaining_capacity / 2;
+                        remaining[idx] -= num_operators;
                         CreateQueryFragment {
                             host_addr: workers[idx].host_addr.clone(),
                             plan: vec![],
-                            num_operators: ops,
+                            num_operators,
                             has_source,
                         }
                     })

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The ML-model entity: a registered inference model, holding the original file
-//! path and the MLIR body imported at registration time.
+//! The ML-model entity: a registered inference model.
 
 mod create;
 mod drop;
@@ -25,25 +24,24 @@ pub use get::GetMlModel;
 
 use sea_orm::entity::prelude::*;
 
-/// Registered ML inference model. `path` is the original source on the
-/// coordinator's filesystem (kept for `SHOW` output and re-registration
-/// after a path change). `imported` is the MLIR body produced at
-/// registration time and carried inline inside every `infer_model`
-/// operator; the coordinator does not re-read the file after import.
+/// A registered ML inference model.
 ///
-/// The MLIR is embedded in plans at registration, so dropping a model row
-/// does not affect running queries. Unlike sources and sinks, `ml_model` has
-/// no query relation and no drop-guard.
+/// The MLIR body is copied into each query plan that uses the model,
+/// so dropping a model row does not affect running queries.
+/// Unlike sources and sinks, `ml_model` has no query relation and no drop guard.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "ml_model")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub name: String,
+    /// The original file on the coordinator's filesystem,
+    /// kept for `SHOW` output and for re-registration after a path change.
     pub path: String,
     #[sea_orm(column_type = "JsonBinary")]
     pub input_schema: Json,
     #[sea_orm(column_type = "JsonBinary")]
     pub output_schema: Json,
+    /// The MLIR body produced at registration time; the file is not read again after import.
     #[serde(skip)]
     #[sea_orm(column_type = "JsonBinary")]
     pub imported: Json,
@@ -86,8 +84,8 @@ mod tests {
         let db = Database::for_test().await;
         req.execute(&db).await.unwrap();
         let error = req.execute(&db).await.expect_err("the name is taken");
-        // A name that is taken is the caller's error, so it reports itself rather than reporting
-        // that some write did not go through.
+        // A name that is taken is the caller's error,
+        // so it reports itself rather than reporting that some write did not go through.
         assert_eq!(
             error.downcast_ref::<CodedError>().map(|coded| coded.code),
             Some(ErrorCode::ModelAlreadyExists)

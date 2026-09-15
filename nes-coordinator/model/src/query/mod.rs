@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-//! The query entity and its create/drop/read requests. A query owns a set of
-//! fragments, sources, and sinks, and its lifecycle state is derived from its
-//! fragments.
+//! The query entity and the requests that manage it.
 
 mod create;
 mod drop;
@@ -37,6 +35,7 @@ use query_state::QueryState;
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
+/// A submitted query. It owns a set of fragments, sources, and sinks.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query")]
 pub struct Model {
@@ -44,8 +43,6 @@ pub struct Model {
     pub id: QueryId,
     pub name: Option<String>,
     pub sql: String,
-    // Derived automatically from the states of this query's fragments;
-    // never written by the application directly.
     pub state: QueryState,
     pub start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub stop_timestamp: Option<chrono::DateTime<chrono::Utc>>,
@@ -490,9 +487,9 @@ mod tests {
         proptest::prop_assume!(req.query.fragments.len() >= 2);
         let db = Database::for_test().await;
 
-        // Force the first two fragments onto one worker (unbounded so the
-        // combined placement is never rejected), so a single host carries
-        // two failing fragments.
+        // Force the first two fragments onto one worker
+        // (unbounded so the combined placement is never rejected),
+        // so a single host has two failing fragments.
         let host = req.workers[0].host_addr.clone();
         req.workers[0].max_operators = None;
         req.query.fragments[0].host_addr = host.clone();

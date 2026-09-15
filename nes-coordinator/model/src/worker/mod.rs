@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The worker entity and its create/drop/read requests, plus the worker state
-//! machine. A worker is identified by its network address.
+//! The worker entity, its state machine, and the requests that manage it.
 
 mod create;
 mod drop;
@@ -38,21 +37,20 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
 
-/// Observed worker state. The initial variant is assigned at insert
-/// time and never re-entered; the remaining variants are written when
-/// the observed state changes.
+/// Observed worker state, written by the controller.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Display, EnumIter, Serialize, Deserialize, DeriveActiveEnum,
 )]
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum WorkerState {
+    /// Assigned at insert time and never re-entered.
     Pending,
     Active,
     Unreachable,
     Removed,
 }
 
-/// Target state. The controller moves the observed state toward this.
+/// Target state. The controller moves the observed state toward it.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Display, EnumIter, Serialize, Deserialize, DeriveActiveEnum,
 )]
@@ -62,6 +60,7 @@ pub enum DesiredWorkerState {
     Removed,
 }
 
+/// A registered worker, identified by its network address.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "worker")]
 pub struct Model {
@@ -69,9 +68,8 @@ pub struct Model {
     pub host_addr: NetworkAddr,
     #[sea_orm(unique)]
     pub data_addr: NetworkAddr,
-    // How many more operators this worker can host, decremented by each
-    // fragment placement. `None` means unbounded, so the arithmetic is
-    // skipped.
+    /// How many more operators this worker can host, decremented by each fragment placement.
+    /// `None` means unbounded, so the arithmetic is skipped.
     pub max_operators: Option<i32>,
     #[sea_orm(column_type = "JsonBinary")]
     pub config: serde_json::Value,
@@ -109,10 +107,8 @@ impl Related<query::query_fragment::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-/// The target observed state to move a worker to. It names the destination
-/// only, and worker state is not validated against a transition graph. The
-/// initial worker state has no transition variant: workers start in it at
-/// insert time and never return to it.
+/// The observed state to move a worker to.
+/// There is no variant for the initial state, since a worker never returns to it.
 #[derive(Debug, Clone, Copy)]
 pub enum WorkerTransition {
     Active,
@@ -132,19 +128,18 @@ impl WorkerTransition {
 
 impl ActiveModel {
     /// Records the worker's observed state, as reported by the controller.
-    /// Worker state is trusted, not validated against a transition graph like
-    /// a query fragment. The controller is the sole writer, and every state is
-    /// reachable: a worker can recover from unreachable, and a removed address
-    /// can be registered again.
+    /// Worker state is trusted, not validated against a transition graph like a query fragment's:
+    /// the controller is the sole writer, and every state is reachable,
+    /// since a worker can recover from unreachable and a removed address can be registered again.
     pub fn apply_transition(&mut self, transition: WorkerTransition) {
         self.current_state = sea_orm::Set(transition.state());
     }
 }
 
 impl Entity {
-    /// Workers the controller still has to reconcile: everything
-    /// targeted as `Active`, plus anything whose observed state has
-    /// not yet converged on its target.
+    /// The workers that the controller still has to reconcile:
+    /// every worker targeted as `Active`,
+    /// and every worker whose observed state has not yet converged on its target.
     pub async fn actionable(conn: &impl ConnectionTrait) -> Result<Vec<Model>, DbErr> {
         Entity::find()
             .filter(
@@ -268,8 +263,8 @@ mod tests {
             w.execute(&db).await.unwrap();
         }
 
-        // Converge only half the rows onto their target, so the set below contains both
-        // workers that still need reconciling and workers that no longer do.
+        // Converge only half the rows onto their target, so the set below contains
+        // both workers that still need reconciling and workers that no longer do.
         let all = worker::Entity::find().all(&db).await.unwrap();
         for (i, w) in all.into_iter().enumerate() {
             if i % 2 == 0 {
@@ -379,9 +374,9 @@ mod tests {
         assert!(!after.is_empty());
         for f in &after {
             assert_eq!(f.current_state, QueryFragmentState::Failed);
-            // Cascade-failed fragments must carry the same telemetry as
-            // fragments failed via the application path. Otherwise the
-            // per-host error aggregation below skips them without any error.
+            // Cascade-failed fragments must have the same stop timestamp and error
+            // as fragments failed through the application path.
+            // Otherwise the per-host error aggregation below skips them without any error.
             assert!(
                 f.stop_timestamp.is_some(),
                 "cascade-failed fragment missing stop_timestamp"

@@ -28,8 +28,8 @@ impl Arbitrary for CreateWorker {
             prop_oneof![Just(None), (0..=1024i32).prop_map(Some)],
         )
             .prop_map(|(host_addr, data_port, max_operators)| {
-                // Generated ports are at most 65534 (range 1024..65535), so
-                // +1 is always a valid, distinct u16.
+                // Generated ports are at most 65534 (range 1024..65535),
+                // so +1 is always a valid, distinct u16.
                 let data_port = if data_port == host_addr.port {
                     data_port + 1
                 } else {
@@ -52,8 +52,8 @@ impl Arbitrary for CreateWorker {
     type Strategy = BoxedStrategy<Self>;
 }
 
-/// Convert a flat edge index into an (i, j) pair where i < j,
-/// enumerating edges in the same order as nested loops: (0,1), (0,2), ..., (1,2), (1,3), ...
+/// Converts a flat edge index into an (i, j) pair where i < j.
+/// Edges are enumerated in nested-loop order: (0,1), (0,2), ..., (1,2), (1,3), ...
 fn flat_index_to_edge(n: usize, idx: usize) -> (usize, usize) {
     let mut remaining = idx;
     for i in 0..n {

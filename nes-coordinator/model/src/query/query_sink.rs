@@ -15,6 +15,7 @@
 use crate::identifier::{QueryId, SinkId};
 use sea_orm::entity::prelude::*;
 
+/// Links a query to a sink that it writes into.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query_sink")]
 pub struct Model {

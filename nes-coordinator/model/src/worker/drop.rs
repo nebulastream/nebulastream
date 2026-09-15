@@ -20,9 +20,8 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
-/// Soft-remove: flips the target state to `Removed` rather than
-/// deleting the row. Any active fragments on the worker are then
-/// automatically failed.
+/// Soft removal: sets the target state to `Removed` rather than deleting the row.
+/// Any active fragments on the worker are then failed automatically.
 #[derive(Clone, Debug, Deserialize)]
 pub struct DropWorker {
     pub host_addr: NetworkAddr,

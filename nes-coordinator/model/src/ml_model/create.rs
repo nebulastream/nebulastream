@@ -29,8 +29,8 @@ pub struct CreateMlModel {
     pub output_schema: Json,
     #[serde(default)]
     pub imported: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one
-    /// already exists, as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists,
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }

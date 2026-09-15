@@ -30,8 +30,8 @@ pub struct CreateSink {
     pub schema: serde_json::value::Value,
     #[serde(default)]
     pub config: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one
-    /// already exists, as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists,
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }
@@ -66,7 +66,7 @@ impl Execute for CreateSink {
         ActiveModel::from(self.clone())
             .insert(conn)
             .await
-            // A sink names the worker it is placed on, which is the reference it can miss.
+            // A sink refers to the worker that it is placed on, which is the only reference it can miss.
             .map_err(catalog_write(
                 ErrorCode::SinkAlreadyExists,
                 ErrorCode::UnknownWorker,
@@ -112,6 +112,6 @@ impl Execute for CreateAnonymousSink {
                 ErrorCode::SinkAlreadyExists,
                 ErrorCode::UnknownWorker,
             ))
-            .context("failed to create inline sink")
+            .context("failed to create anonymous sink")
     }
 }

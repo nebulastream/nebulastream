@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The logical-source entity: a user-declared source identified by name,
-//! carrying the schema shared by every physical source bound to it.
+//! The logical-source entity and the requests that manage it.
 
 mod create;
 mod drop;
@@ -26,9 +25,8 @@ pub use get::GetLogicalSource;
 use crate::source::physical;
 use sea_orm::entity::prelude::*;
 
-/// User-declared logical source identified by name. Schema
-/// is stored via JSON and is shared by every physical source
-/// bound to it.
+/// A user-declared source identified by name.
+/// Its schema is shared by every physical source bound to it.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "logical_source")]
 pub struct Model {

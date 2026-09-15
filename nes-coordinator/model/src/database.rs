@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-//! Opens and configures the SQLite-backed catalog store, and exposes the
-//! connection and transaction types the rest of the crate runs statements
-//! against.
+//! Opens and configures the SQLite-backed catalog store,
+//! and exposes the connection and transaction types that the rest of the crate runs statements against.
 
 use anyhow::Result;
 use migration::Migrator;
@@ -29,22 +28,20 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, S
 use std::str::FromStr;
 use std::time::Duration;
 
-// SQLite serializes writers, so a big pool adds little. Keep one
-// connection open, cap the file pool at 8.
+// SQLite serializes writers, so a big pool adds little.
+// Keep one connection open, cap the file pool at 8.
 const SQLITE_MIN_CONNECTIONS: u32 = 1;
 const SQLITE_MAX_CONNECTIONS: u32 = 8;
 // Wait up to 5s for a write lock instead of failing on SQLITE_BUSY.
 const SQLITE_BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// Selects the SQLite backing store: an ephemeral in-memory database
-/// (for tests and short-lived coordinators) or a file at `path`.
+/// Where the SQLite catalog is stored.
 pub enum StateBackend {
-    /// In-process, non-persistent store. All state is lost when the
-    /// process exits. For tests and short-lived coordinators only.
+    /// In-process and non-persistent: all state is lost when the process exits.
+    /// For tests and short-lived coordinators only.
     Memory,
-    Sqlite {
-        path: String,
-    },
+    /// A database file, created if missing.
+    Sqlite { path: String },
 }
 
 impl StateBackend {
@@ -55,9 +52,9 @@ impl StateBackend {
     }
 }
 
-/// Pooled handle to the coordinator catalog. Implements the connection
-/// trait so requests can run against it directly, and exposes `begin`
-/// for explicit transactions.
+/// Pooled handle to the catalog.
+/// Implements the connection trait so requests can run against it directly,
+/// and exposes `begin` for explicit transactions.
 #[derive(Clone)]
 pub struct Database {
     conn: DatabaseConnection,
@@ -111,11 +108,12 @@ impl Database {
                     .synchronous(SqliteSynchronous::Normal)
                     .busy_timeout(SQLITE_BUSY_TIMEOUT);
 
-                // In-memory SQLite is per-connection: a second connection would
-                // see an empty, separate database. Hard-cap the pool at one.
-                // Disable idle/lifetime reaping too: if the pool ever recycled
-                // that one connection, the replacement would open a fresh, empty
-                // in-memory database and the catalog would be lost.
+                // In-memory SQLite is per-connection:
+                // a second connection would see an empty, separate database.
+                // Hard-cap the pool at one.
+                // Do not close idle or old connections either:
+                // if the pool ever replaced that one connection,
+                // the replacement would open a fresh, empty database and the catalog would be lost.
                 let pool = SqlitePoolOptions::new()
                     .min_connections(SQLITE_MIN_CONNECTIONS)
                     .max_connections(SQLITE_MIN_CONNECTIONS)
@@ -129,9 +127,8 @@ impl Database {
                 Ok(Self { conn })
             }
             StateBackend::Sqlite { path } => {
-                // Build options programmatically (not via `from_str`) so URI
-                // fragments in `path` cannot override the pragmas below
-                // (foreign_keys, recursive_triggers, WAL, ...) without any error.
+                // Build options programmatically (not via `from_str`)
+                // so URI fragments in `path` cannot override the pragmas below without any error.
                 let opts = SqliteConnectOptions::new()
                     .filename(&path)
                     .create_if_missing(true)
@@ -155,8 +152,8 @@ impl Database {
         }
     }
 
-    /// Build an in-memory database with all migrations applied. Panics on
-    /// failure; for tests only.
+    /// Build an in-memory database with all migrations applied.
+    /// Panics on failure; for tests only.
     pub async fn for_test() -> Self {
         let this = Self::with(StateBackend::Memory)
             .await
@@ -171,15 +168,15 @@ impl Database {
         Ok(Migrator::up(&self.conn, None).await?)
     }
 
-    /// Begin an immediate transaction. Sea-orm default `begin()` issues a
-    /// deferred `BEGIN` which only acquires the write lock on the first write.
-    /// This causes `SQLITE_BUSY_SNAPSHOT` (517) when a concurrent reader holds
-    /// a stale WAL snapshot. `BEGIN IMMEDIATE` acquires the write lock upfront,
-    /// letting `busy_timeout` handle contention instead of failing immediately.
+    /// Begin an immediate transaction.
+    /// A deferred `BEGIN` acquires the write lock only on the first write,
+    /// which fails with `SQLITE_BUSY_SNAPSHOT` (517)
+    /// when a concurrent reader holds a stale WAL snapshot.
+    /// `BEGIN IMMEDIATE` acquires the lock upfront, so `busy_timeout` handles contention instead.
     pub async fn begin(&self) -> Result<DatabaseTransaction, DbErr> {
-        // Sea-orm begin() issues `BEGIN` (deferred). We close that empty
-        // transaction with `END` (alias for COMMIT) and re-open it as
-        // `BEGIN IMMEDIATE` to acquire the write lock upfront.
+        // The ORM only issues a deferred `BEGIN`,
+        // so close that empty transaction with `END` (an alias for COMMIT)
+        // and re-open it as `BEGIN IMMEDIATE`.
         let txn = self.conn.begin().await?;
         txn.execute_unprepared("END; BEGIN IMMEDIATE").await?;
         Ok(txn)

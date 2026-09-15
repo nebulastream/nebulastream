@@ -12,21 +12,20 @@
     limitations under the License.
 */
 
-//! The network-link entity: a directed edge between two workers. Links can be
-//! declared independently of worker registration and are not backed by a
-//! foreign key.
+//! The network-link entity: a directed edge between two workers.
 
 use crate::worker::endpoint::NetworkAddr;
 use sea_orm::entity::prelude::*;
 
-/// A directed network edge between two workers. Both columns logically
-/// reference `worker.host_addr`, but no foreign key is enforced. This is
-/// deliberate: a foreign key would force clients to insert both workers
-/// before declaring a link between them, whereas we want links to be
-/// declarable ahead of (or independently of) worker registration. For
-/// the same reason, removing a worker does not delete its links; they
-/// stay as dangling edges. Both cases are expected, and query planning
-/// resolves links against the live worker set, ignoring dangling ones.
+/// A directed network edge between two workers.
+///
+/// Both columns logically reference `worker.host_addr`, but no foreign key is enforced.
+/// This is deliberate:
+/// a foreign key would force clients to insert both workers before declaring a link between them,
+/// whereas links should be declarable ahead of (or independently of) worker registration.
+/// For the same reason, removing a worker does not delete its links; they stay as dangling edges.
+/// Both cases are expected, and query planning resolves links against the live worker set
+/// and ignores dangling ones.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "network_link")]
 pub struct Model {

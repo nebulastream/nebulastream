@@ -33,9 +33,8 @@ pub struct CreatePhysicalSource {
     pub source_config: serde_json::Value,
     #[serde(default)]
     pub parser_config: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one
-    /// already exists (matched on the full definition), as with SQL
-    /// `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists
+    /// (matched on the full definition), as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }
@@ -58,9 +57,9 @@ impl Execute for CreatePhysicalSource {
     type Response = Model;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
         if self.if_not_exists {
-            // Match the full definition, not just (logical, host, type):
-            // two sources that agree on those three but differ in config
-            // (e.g. two FILE sources reading different paths) are distinct.
+            // Match the full definition, not only (logical, host, type):
+            // two sources that agree on those three but differ in config are distinct
+            // (for example two FILE sources that read different paths).
             let existing = Entity::find()
                 .filter(Column::LogicalSource.eq(&self.logical_source))
                 .filter(Column::HostAddr.eq(self.host_addr.to_string()))
@@ -73,8 +72,9 @@ impl Execute for CreatePhysicalSource {
                 return Ok(existing);
             }
         }
-        // A physical source names the logical source it binds to and the worker it runs on.
-        // The logical source is what a statement gets wrong, so a missing reference is reported as that.
+        // A physical source refers to a logical source and to a worker.
+        // The logical source is what a statement usually gets wrong,
+        // so a missing reference is reported as an unknown source name.
         Ok(ActiveModel::from(self.clone())
             .insert(conn)
             .await
@@ -115,8 +115,7 @@ impl From<CreateAnonymousSource> for ActiveModel {
 impl Execute for CreateAnonymousSource {
     type Response = Model;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
-        // A physical source names the logical source it binds to and the worker it runs on.
-        // The logical source is what a statement gets wrong, so a missing reference is reported as that.
+        // Same error mapping as the shared create above.
         Ok(ActiveModel::from(self.clone())
             .insert(conn)
             .await

@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-//! The physical-source entity: a concrete source placed on a worker and bound
-//! to a logical source. It is either user-managed and shared, or owned by a
-//! single query.
+//! The physical-source entity and the requests that manage it.
 
 pub(crate) mod create;
 mod drop;
@@ -39,16 +37,17 @@ use proptest::strategy::BoxedStrategy;
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
+/// A concrete source placed on a worker and bound to a logical source.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "physical_source")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: SourceId,
-    // Nullable for query-owned (inline/internal) sources, which have
-    // no shared logical binding.
+    /// Nullable for query-owned (anonymous/internal) sources, which have no shared logical binding.
     pub logical_source: Option<String>,
     pub host_addr: NetworkAddr,
-    // Free-form connector type owned by the C++ side (e.g. `FILE`, `NETWORK`); the coordinator only stores and echoes it.
+    /// Free-form connector type owned by the C++ side (for example `FILE` or `NETWORK`);
+    /// the coordinator only stores and returns it.
     pub source_type: String,
     #[sea_orm(column_type = "Json")]
     pub source_config: Json,
@@ -259,9 +258,9 @@ mod tests {
         req.worker.execute(&db).await.unwrap();
         let original = req.physical.execute(&db).await.unwrap();
 
-        // Same (logical, host, type) but a different config is a distinct
-        // source (e.g. two FILE sources reading different paths). Wrapping
-        // the original config guarantees the new one differs.
+        // Same (logical, host, type) but a different config is a distinct source
+        // (for example two FILE sources that read different paths).
+        // Wrapping the original config guarantees the new one differs.
         let retry = CreatePhysicalSource {
             source_config: serde_json::json!({ "variant": req.physical.source_config }),
             if_not_exists: true,
@@ -299,7 +298,7 @@ mod tests {
     }
 
     #[proptest(async = "tokio")]
-    async fn identical_inline_sources(
+    async fn identical_anonymous_sources(
         req1: AnonymousSourceWithRefs,
         req2: AnonymousSourceWithRefs,
     ) {

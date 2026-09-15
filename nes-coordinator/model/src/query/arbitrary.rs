@@ -21,9 +21,9 @@ use crate::worker::endpoint::NetworkAddr;
 use proptest::prelude::*;
 use proptest::strategy::BoxedStrategy;
 
-/// Test fixture bundling a `CreateQuery` with every catalog row it
-/// depends on (workers, logical source, physical sources, sink). The
-/// `setup` helpers insert them in dependency order.
+/// Test fixture that bundles a `CreateQuery` with every catalog row that it depends on
+/// (workers, logical source, physical sources, sink).
+/// The `setup` helpers insert them in dependency order.
 #[derive(Debug, Clone)]
 pub struct CreateQueryWithRefs {
     pub workers: Vec<CreateWorker>,
@@ -109,7 +109,7 @@ impl Arbitrary for CreateQueryWithRefs {
 }
 
 /// Builds a physical source factory for every source-bearing fragment,
-/// as either a shared or an inline/internal connector per `kind`.
+/// as either a shared or an anonymous/internal connector per `kind`.
 fn build_physical_sources(
     fragments: &[CreateQueryFragment],
     kind: ConnectorKind,
@@ -141,8 +141,7 @@ fn build_physical_sources(
         .collect()
 }
 
-/// Builds a sink factory as either a shared or an inline/internal
-/// connector per `kind`.
+/// Builds a sink factory as either a shared or an anonymous/internal connector per `kind`.
 fn build_sink(
     kind: ConnectorKind,
     name: String,

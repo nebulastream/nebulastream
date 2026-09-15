@@ -43,9 +43,9 @@ impl DropPhysicalSource {
 
 impl IntoCondition for DropPhysicalSource {
     fn to_condition(&self) -> Condition {
-        // Only Shared rows are user-droppable. Query-owned (inline /
-        // internal) sources are deleted automatically once their owning
-        // query goes away, so we never touch them here.
+        // Only Shared rows are user-droppable.
+        // Query-owned (anonymous/internal) sources are deleted automatically with their owning query,
+        // so they are never touched here.
         Condition::all()
             .add(Column::Kind.eq(ConnectorKind::Shared))
             .add_option(self.id.map(|v| Column::Id.eq(v)))

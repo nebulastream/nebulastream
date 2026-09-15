@@ -21,14 +21,13 @@ use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
-/// Register a logical source by name. `if_not_exists` makes the call
-/// idempotent and returns the existing row instead of erroring.
+/// Registers a logical source by name.
 #[derive(Clone, Debug, Deserialize)]
 pub struct CreateLogicalSource {
     pub name: String,
     pub schema: Json,
-    /// Return the existing row instead of erroring when a matching one
-    /// already exists, as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists,
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }

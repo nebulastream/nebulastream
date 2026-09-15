@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The sink entity and its create/drop/read requests. A sink is either
-//! user-managed and shared, or owned by a single query.
+//! The sink entity and the requests that manage it.
 
 mod create;
 mod drop;
@@ -35,17 +34,19 @@ use proptest::strategy::{BoxedStrategy, Strategy};
 use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
+/// An output that queries write to, placed on one worker.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "sink")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: SinkId,
-    // Nullable for query-owned (inline/internal) sinks; required and
-    // unique for shared, user-managed sinks.
+    /// Nullable for query-owned (anonymous/internal) sinks;
+    /// required and unique for shared, user-managed sinks.
     #[sea_orm(unique)]
     pub name: Option<String>,
     pub host_addr: NetworkAddr,
-    // Free-form connector type owned by the C++ side (e.g. `VOID`, `NETWORK`); the coordinator only stores and echoes it.
+    /// Free-form connector type owned by the C++ side (for example `VOID` or `NETWORK`);
+    /// the catalog only stores and returns it.
     pub sink_type: String,
     #[sea_orm(column_type = "JsonBinary")]
     pub schema: Json,

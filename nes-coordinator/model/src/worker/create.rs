@@ -30,8 +30,8 @@ pub struct CreateWorker {
     pub max_operators: Option<i32>,
     pub peers: Vec<NetworkAddr>,
     pub config: serde_json::Value,
-    /// Return the existing row instead of erroring when a matching one
-    /// already exists, as with SQL `CREATE ... IF NOT EXISTS`.
+    /// Return the existing row instead of erroring when a matching one already exists,
+    /// as with SQL `CREATE ... IF NOT EXISTS`.
     #[serde(default)]
     pub if_not_exists: bool,
 }
@@ -53,9 +53,8 @@ impl Execute for CreateWorker {
     type Response = Model;
     async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Model> {
         if self.if_not_exists {
-            // No-op when the worker already exists: return it as-is, without
-            // reconciling this request's peers or config (create-if-absent,
-            // not update).
+            // When the worker already exists, return it as is
+            // without applying this request's peers or config (create-if-absent, not update).
             if let Some(existing) = WorkerEntity::find_by_id(self.host_addr.clone())
                 .one(conn)
                 .await

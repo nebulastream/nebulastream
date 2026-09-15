@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! Renders catalog results as fixed-width ASCII tables for the CLI's
-//! human-readable output.
+//! Renders catalog results as fixed-width ASCII tables for the CLI's human-readable output.
 
 use crate::ml_model;
 use crate::query;
@@ -25,9 +24,8 @@ use crate::worker;
 use sea_orm::Iden;
 use std::fmt;
 
-/// Minimal fixed-width ASCII table renderer for the CLI's human-readable
-/// output. Kept small on purpose rather than pulling in a table-formatting
-/// dependency.
+/// A fixed-width ASCII table.
+/// Kept small on purpose rather than pulling in a table-formatting dependency.
 struct Table {
     headers: Vec<String>,
     rows: Vec<Vec<String>>,
@@ -38,7 +36,7 @@ impl Table {
         Self::with_headers(columns.into_iter().map(|c| c.to_string()))
     }
 
-    // For a result that is not a row of an entity and so has no columns to name itself with.
+    // For a result that is not an entity row and so has no column list to take its headers from.
     fn with_headers<I: IntoIterator<Item = impl Into<String>>>(headers: I) -> Self {
         Self {
             headers: headers.into_iter().map(Into::into).collect(),
@@ -47,9 +45,9 @@ impl Table {
     }
 
     fn row(&mut self, mut cells: Vec<String>) {
-        // A mismatch means a table function fell out of sync with its column
-        // list. Flag it in debug builds, but resize rather than let the
-        // renderer index out of bounds and crash the CLI at runtime.
+        // A mismatch means a table function fell out of sync with its column list.
+        // Flag it in debug builds,
+        // but resize rather than let the renderer index out of bounds and crash the CLI at runtime.
         debug_assert_eq!(cells.len(), self.headers.len());
         cells.resize(self.headers.len(), String::new());
         self.rows.push(cells);
@@ -58,8 +56,8 @@ impl Table {
 
 impl fmt::Display for Table {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Width is measured in characters, not bytes, so multibyte UTF-8
-        // content still lines up with the borders.
+        // Width is measured in characters, not bytes,
+        // so multibyte UTF-8 content still lines up with the borders.
         let mut widths: Vec<usize> = self.headers.iter().map(|h| h.chars().count()).collect();
         for row in &self.rows {
             for (i, cell) in row.iter().enumerate() {
@@ -110,8 +108,8 @@ fn opt<T: fmt::Display>(v: &Option<T>) -> String {
 
 fn opt_ts(v: &Option<chrono::DateTime<chrono::Utc>>) -> String {
     match v {
-        // Stored as UTC; render in the local time of whoever runs the
-        // coordinator so the CLI output reads as wall-clock time.
+        // Stored as UTC; rendered in the local time of the coordinator's host
+        // so the CLI output reads as wall-clock time.
         Some(ts) => ts
             .with_timezone(&chrono::Local)
             .format("%Y-%m-%d %H:%M:%S%.3f")

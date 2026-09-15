@@ -23,14 +23,15 @@ use serde::Deserialize;
 
 use super::get::GetQuery;
 
-/// Records the intent to stop the matched queries by setting every one of their
-/// fragments' desired state to Stopped, which stops the pipeline at its current
-/// position rather than letting downstream fragments finish the data already in
-/// flight. The actual stop happens asynchronously as the controller reconciles.
+/// Records the intent to stop the matched queries
+/// by setting every one of their fragments' desired state to Stopped.
+/// That stops the pipeline at its current position
+/// rather than letting downstream fragments finish the data already in flight.
+/// The actual stop happens asynchronously as the controller reconciles.
 ///
-/// The returned queries reflect their state at drop time, so they are usually
-/// still running. A caller that waits for the drop to finish is handed the
-/// queries in their final, reconciled state instead.
+/// The returned queries reflect their state at drop time, so they are usually still running.
+/// A caller that waits for the drop to finish
+/// receives the queries in their final, reconciled state instead.
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct DropQuery {
     #[serde(default)]

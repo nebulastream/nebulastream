@@ -12,24 +12,24 @@
     limitations under the License.
 */
 
-//! The error codes the system defines, and the failure type that names one.
+//! The system's error codes and failure type.
 
 use sea_orm::{DbErr, RuntimeErr};
 use std::fmt::Display;
 
 include!(concat!(env!("OUT_DIR"), "/error_code.rs"));
 
-/// A failure that names the code it reports, so a caller can act on the kind rather than read the
-/// message. Attached as a typed cause of an `anyhow::Error`, which the FFI boundary looks for.
+/// A failure with an error code, so a caller can act on the kind instead of reading the message.
+/// Attached as a typed cause of an `anyhow::Error`, which the FFI boundary looks for.
 ///
-/// A failure that does not name one is reported as `UnknownException`, so raising this is what
-/// distinguishes a classified failure from one nobody has got to yet.
+/// A failure without a code is reported as `UnknownException`,
+/// so raising this is what distinguishes a classified vs. unclassified failures.
 #[derive(Debug, thiserror::Error)]
 #[error("{msg}")]
 pub struct CodedError {
     pub code: ErrorCode,
     pub msg: String,
-    /// The stacktrace a C++ failure came with, empty for one raised here.
+    /// A C++ failure's stacktrace, empty for an error from the rust part.
     pub trace: String,
 }
 
@@ -43,22 +43,22 @@ impl CodedError {
         }
     }
 
-    /// A failure C++ raised, relayed with the code and stacktrace it reported.
+    /// A failure raised in C++, relayed with the code and stacktrace it reported.
     #[must_use]
     pub const fn relayed(code: ErrorCode, msg: String, trace: String) -> Self {
         Self { code, msg, trace }
     }
 }
 
-/// What the database refused a write for, when it says.
+/// Why the database refused a write, when it reports a reason.
 enum Violation {
     /// A row with that key is already there.
     Duplicate,
-    /// A row the write refers to is not there.
+    /// A row that the write refers to is not there.
     MissingReference,
 }
 
-/// Reads the constraint a rejected write broke, if the database reported one.
+/// Reads the constraint that a rejected write broke, if the database reported one.
 fn violation(err: &DbErr) -> Option<Violation> {
     let runtime = match err {
         DbErr::Exec(runtime) | DbErr::Query(runtime) | DbErr::Conn(runtime) => runtime,
@@ -77,12 +77,14 @@ fn violation(err: &DbErr) -> Option<Violation> {
     None
 }
 
-/// Names the code a rejected catalog write reports, given what the two constraints on this entity
-/// mean. A taken name and a reference to something absent are the caller's errors and are reported
-/// as themselves. Anything else the database refused is the write failing.
+/// Chooses the error code for a rejected catalog write,
+/// given what the two constraints on this entity mean.
+/// A taken name and a reference to something absent are the caller's errors
+/// and are reported as themselves.
+/// Anything else that the database refused is the write failing.
 ///
-/// An entity with no foreign key passes `CatalogWriteRejected` as the reference code, because a
-/// violation it cannot have should not be given a misleading name.
+/// An entity with no foreign key passes `CatalogWriteRejected` as the reference code,
+/// because a violation that it cannot have should not get a misleading code.
 pub fn catalog_write(
     duplicate: ErrorCode,
     missing_reference: ErrorCode,
@@ -112,8 +114,8 @@ macro_rules! coded_bail {
 mod tests {
     use super::{CodedError, ErrorCode};
 
-    /// The numbers are the contract with C++, so a few are pinned rather than trusted to the
-    /// generator. A change here means the shared list changed and the C++ side moved with it.
+    /// The numbers are the contract with C++, so a few are pinned.
+    /// A change here means the shared list changed and the C++ side changed with it.
     #[test]
     fn codes_match_the_shared_list() {
         assert_eq!(ErrorCode::PlacementFailure as u16, 2300);
@@ -130,7 +132,7 @@ mod tests {
         );
     }
 
-    /// A number the list does not define is what the boundary reports for an unclassified failure,
+    /// A number that the list does not define is what the boundary reports for an unclassified failure,
     /// so reading one back must not panic or invent a code.
     #[test]
     fn an_undefined_number_reads_as_unknown() {

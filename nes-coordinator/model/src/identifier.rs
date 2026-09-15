@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-//! Strong id types over `i64`, one per entity, so ids of different entities
-//! cannot be mixed up at compile time.
+//! Strong id types over `i64`, one per entity,
+//! so ids of different entities cannot be mixed up at compile time.
 
 use sea_orm::sea_query::{ArrayType, Nullable, ValueType, ValueTypeErr};
 use sea_orm::{ColIdx, ColumnType, DbErr, QueryResult, TryFromU64, TryGetError, TryGetable, Value};
@@ -21,9 +21,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-/// Defines a strong type over `i64` for entity ids. Serialized and
-/// stored as a plain integer; the wrapper exists only to prevent
-/// cross-entity id mixups at compile time.
+/// Defines one id type. It is serialized and stored as a plain integer.
 macro_rules! define_id {
     ($name:ident) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

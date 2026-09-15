@@ -33,9 +33,9 @@ impl DropSink {
 
 impl IntoCondition for DropSink {
     fn to_condition(&self) -> Condition {
-        // Only Shared rows are user-droppable. Query-owned (inline /
-        // internal) sinks are deleted automatically once their owning
-        // query goes away, so we never touch them here.
+        // Only Shared rows are user-droppable.
+        // Query-owned (anonymous/internal) sinks are deleted automatically with their owning query,
+        // so they are never touched here.
         Condition::all()
             .add(Column::Kind.eq(ConnectorKind::Shared))
             .add_option(self.name.clone().map(|v| Column::Name.eq(v)))

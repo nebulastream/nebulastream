@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The catalog operations a caller can issue. Each variant wraps one typed
-//! request; dispatch runs it and returns a typed result.
+//! Coordinator statements and their typed results.
 
 use crate::Execute;
 use crate::database::Database;
@@ -35,9 +34,8 @@ use crate::worker::{
 use anyhow::Result;
 use sea_orm::ConnectionTrait;
 
-/// Catalog operations issued against the coordinator. Each variant
-/// wraps a typed CRUD request; dispatch hands the request to its
-/// trait implementation and wraps the typed result in a `StatementResult`.
+/// An operation that a client can issue to the coordinator.
+/// Each variant wraps one typed request, and running it yields the matching `StatementResult` variant.
 #[derive(Clone, Debug, serde::Deserialize)]
 #[serde(tag = "tag")]
 pub enum Statement {
@@ -64,9 +62,8 @@ pub enum Statement {
     DropMlModel(DropMlModel),
 }
 
-/// Typed response paired one-to-one with each request variant. Models
-/// are returned by value so callers can render or forward them without
-/// re-querying.
+/// Typed result paired one-to-one with each `Statement` variant.
+/// Models are returned by value so callers can render or forward them without re-querying.
 #[derive(Clone, Debug, serde::Serialize)]
 pub enum StatementResult {
     CreatedLogicalSource(logical::Model),
@@ -103,8 +100,6 @@ impl Statement {
                 let (worker, fragments) = req.execute(conn).await?;
                 Ok(StatementResult::WorkerStatus(worker, fragments))
             }
-            // A version lives in the worker rather than in the catalog, so answering means asking the
-            // workers over the connections the request handler has and this one does not.
             Statement::GetWorkerVersion(_) => anyhow::bail!(
                 "a worker version request is answered where the connections to the workers are, not against the catalog"
             ),
@@ -155,8 +150,14 @@ impl Statement {
         }
     }
 
-    /// Run the statement inside an immediate transaction so all writes
-    /// commit atomically.
+    /// Run each statement of the client inside a transaction.
+    /// This avoids all kinds of anomalies, like data races and partial writes.
+    /// Also includes triggers within the same transaction, if any are defined.
+    /// Example: a `SELECT ...` SQL statement (wrapped in `CreateQuery`) does multiple related
+    /// DB operations like writing to the query, query_fragment, query_source, query_sink tables.
+    /// Moreover, it consumes slots from the workers where its fragments are placed on.
+    /// Transactions protect us against any kind of intermediate failure or concurrent update,
+    /// like another query releasing worker capacities at the same time we are consuming them.
     pub async fn execute_with(self, db: &Database) -> Result<StatementResult> {
         let txn = db.begin().await?;
         let response = self.execute_on(&txn).await?;

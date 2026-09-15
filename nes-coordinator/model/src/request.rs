@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-//! The request envelope submitted to the coordinator: a statement to run plus
-//! the wait semantics to apply before the caller's reply is sent.
+//! The request envelope submitted to the coordinator:
+//! a statement to run and the wait semantics to apply before the caller's reply is sent.
 
 use crate::query::query_state::QueryState;
 use crate::statement::{Statement, StatementResult};
@@ -22,34 +22,27 @@ use std::fmt::Debug;
 use std::time::Duration;
 use tokio::sync::oneshot;
 
-/// How long the coordinator parks a request's reply before answering, and
-/// the condition that releases it.
-///
-/// A request that does not need to wait answers as soon as its statement
-/// has been applied to the catalog. The parking variants hold the reply
-/// until their condition holds or their timeout elapses; a `None` timeout
-/// waits indefinitely. Which variant is valid depends on the statement:
-/// creates wait on a target state, drops and reads wait on termination,
-/// and reads can poll until the status stops changing.
+/// How long the coordinator holds back a request's reply, and the condition that releases it.
+/// A `None` timeout waits indefinitely.
 pub enum Wait {
     /// Answer as soon as the statement has been applied to the catalog.
     None,
-    /// Park a create until its query reaches the target state or
-    /// terminates. An elapsed timeout releases the reply with an error.
+    /// Hold a create until its query reaches the target state or terminates.
+    /// An elapsed timeout releases the reply with an error.
     UntilState {
         state: QueryState,
         timeout: Option<Duration>,
     },
-    /// Park a drop or a read until every affected query has terminated. An
-    /// elapsed timeout releases the reply with an error.
+    /// Hold a drop or a read until every affected query has terminated.
+    /// An elapsed timeout releases the reply with an error.
     UntilTerminated { timeout: Option<Duration> },
-    /// Park a read until its status can no longer change. An elapsed timeout
-    /// releases the reply with the current status, a successful return.
+    /// Hold a read until its status can no longer change.
+    /// An elapsed timeout releases the reply with the current status, which is a successful return.
     Poll { timeout: Option<Duration> },
 }
 
-/// One unit of work submitted to the coordinator: a statement to run plus
-/// the wait semantics applied before the caller's reply is sent.
+/// One unit of work submitted to the coordinator.
+/// The wait decides when the caller gets its reply, not what the statement does.
 pub struct Payload {
     pub input: StatementInput,
     pub wait: Wait,
@@ -76,7 +69,6 @@ impl Payload {
         self
     }
 
-    /// Block a create until its streaming query is running.
     pub fn until_running(self, timeout: Option<Duration>) -> Self {
         self.wait(Wait::UntilState {
             state: QueryState::Running,
@@ -84,7 +76,6 @@ impl Payload {
         })
     }
 
-    /// Block a create until its batch query has completed.
     pub fn until_completed(self, timeout: Option<Duration>) -> Self {
         self.wait(Wait::UntilState {
             state: QueryState::Completed,
@@ -92,19 +83,20 @@ impl Payload {
         })
     }
 
-    /// Block a drop or a read until every affected query has terminated.
     pub fn until_terminated(self, timeout: Option<Duration>) -> Self {
         self.wait(Wait::UntilTerminated { timeout })
     }
 
-    /// Poll a read until its status can no longer change, then answer.
     pub fn poll_for(self, timeout: Option<Duration>) -> Self {
         self.wait(Wait::Poll { timeout })
     }
 }
 
+/// A submitted statement.
 pub enum StatementInput {
+    // raw SQL text
     Sql(String),
+    // an already parsed statement
     Parsed(Statement),
 }
 
@@ -123,8 +115,8 @@ impl Debug for StatementInput {
     }
 }
 
-/// Envelope sent over the request channel: a payload plus a oneshot
-/// channel the coordinator uses to return the typed result.
+/// Envelope sent over the request channel.
+/// The reply channel is created together with the request so no caller can forget to supply one.
 pub struct Request {
     pub payload: Payload,
     pub reply_to: oneshot::Sender<Result<StatementResult>>,

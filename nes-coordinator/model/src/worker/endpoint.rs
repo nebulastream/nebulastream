@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The network address type used to identify and reach a worker, with parsing
-//! and validation.
+//! Network addresses of workers.
 
 use anyhow::Result;
 use sea_orm::sea_query::{ArrayType, Nullable, StringLen, ValueType, ValueTypeErr};
@@ -26,6 +25,8 @@ pub const DEFAULT_HOST_PORT: u16 = 8080;
 #[cfg(any(test, feature = "testing"))]
 pub const DEFAULT_DATA_PORT: u16 = 9090;
 
+/// A host and port used to identify and reach a worker.
+/// The host may be a hostname, which is why this is not a socket address.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NetworkAddr {
     pub host: String,
@@ -59,10 +60,10 @@ impl fmt::Display for NetworkAddr {
 impl FromStr for NetworkAddr {
     type Err = String;
 
-    /// Accepts `host:port` (hostname or IPv4) and the bracketed form
-    /// `[host]:port` required for IPv6 literals. A bare host that itself
-    /// contains a colon (an unbracketed IPv6 address) is rejected rather
-    /// than mis-split on its last colon.
+    /// Accepts `host:port` (hostname or IPv4)
+    /// and the bracketed form `[host]:port` required for IPv6 literals.
+    /// A bare host that itself contains a colon (an unbracketed IPv6 address) is rejected
+    /// rather than mis-split on its last colon.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (host, port_str) = if let Some(rest) = s.strip_prefix('[') {
             let close = rest.find(']').ok_or("Missing closing ']' in address")?;
@@ -81,8 +82,8 @@ impl FromStr for NetworkAddr {
         let port: u16 = port_str
             .parse()
             .map_err(|e: std::num::ParseIntError| e.to_string())?;
-        // Delegate the empty-host / zero-port checks to `new` so the rules
-        // live in one place.
+        // The empty-host and zero-port checks are done by the constructor,
+        // so the rules are in one place.
         NetworkAddr::new(host, port).map_err(|e| e.to_string())
     }
 }

@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-//! Data model of the coordinator catalog. It stores the state of a
-//! NebulaStream deployment: workers, sources, sinks, queries, and the query
-//! fragments placed on workers.
+//! Data model of the coordinator catalog.
+//! It stores the state of a NebulaStream deployment:
+//! workers, sources, sinks, queries, and the query fragments placed on workers.
 //!
 //! # Data model
 //!
-//! Each entity is one module under `src/`, with a SeaORM entity in its
-//! `mod.rs`. The main entities and their relationships:
+//! Each entity is one module under `src/`, with a SeaORM entity in its `mod.rs`.
+//! The main entities and their relationships:
 //!
 //! ```mermaid
 //! erDiagram
@@ -35,42 +35,38 @@
 //!     worker          ||..o{ network_link    : "endpoint (no FK)"
 //! ```
 //!
-//! The diagram is not exhaustive: `ml_model`, for example, is a standalone
-//! entity with no relationships, and more catalog objects will be added over
-//! time.
+//! The diagram is not exhaustive:
+//! `ml_model`, for example, is a standalone entity with no relationships,
+//! and more catalog objects will be added over time.
 //!
 //! # Statements and requests
 //!
-//! [`statement::Statement`] is the top-level enum of catalog operations. Each
-//! variant wraps a typed request. [`statement::Statement::execute_with`] runs
-//! one statement inside a transaction and returns a
-//! [`statement::StatementResult`]. A [`request::Request`] wraps a statement (or
-//! raw SQL) together with the wait options the coordinator applies before it
-//! replies.
+//! [`statement::Statement`] is the top-level enum of coordinator operations.
+//! Each variant wraps a statement input, which is raw SQL most of the time.
+//! [`statement::Statement::execute_with`] runs one statement inside a transaction
+//! and returns a [`statement::StatementResult`].
+//! A [`request::Request`] wraps a statement (or raw SQL)
+//! together with the wait options that the coordinator applies before it replies.
 //!
 //! # CRUD operations
 //!
-//! Each entity module has sibling `create.rs` / `get.rs` / `drop.rs` files with
-//! its request types. Every request implements [`Execute`], which runs it
-//! against a connection or transaction. Read and delete requests also implement
-//! [`IntoCondition`] to build their row filter, so an empty request matches all
-//! rows.
+//! Each entity module has sibling `create.rs` / `get.rs` / `drop.rs` files with its request types.
+//! Every request implements [`Execute`], which runs it within a connection or transaction.
+//! Read and delete requests also implement [`IntoCondition`] to build their row filter.
 //!
 //! # Triggers
 //!
-//! Invariants that span rows are enforced in the database, by SQL triggers
-//! defined in the `migration` crate. They:
+//! Invariants that span rows are enforced in the database,
+//! by SQL triggers defined in the `migration` crate. They:
 //!
 //! - validate query and query-fragment state transitions (illegal ones abort);
-//! - derive a query's state, start/stop timestamps, and per-host errors from
-//!   its fragments;
-//! - debit a worker's `max_operators` when a fragment is placed and credit it
-//!   back when the fragment ends;
+//! - derive a query's state, start/stop timestamps, and per-host errors from its fragments;
+//! - debit a worker's `max_operators` when a fragment is placed
+//!   and credit it back when the fragment ends;
 //! - stop a query's fragments when it fails, fail a removed worker's fragments,
-//!   and delete query-owned sources and sinks when their last query goes away.
+//!   and delete query-owned sources and sinks when their last query is deleted.
 //!
-//! Worker state is not validated: the controller writes the observed state and
-//! the model trusts it.
+//! Worker state is not validated: the controller writes the observed state and the model trusts it.
 
 pub mod database;
 pub mod error;
@@ -90,16 +86,16 @@ use sea_orm::{Condition, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-/// Builds the row-filter applied by read and delete requests. Each
-/// optional field becomes one predicate AND-ed into the condition, so
-/// an empty request matches all rows.
+/// Builds the row filter applied by read and delete requests.
+/// Each optional field becomes one predicate AND-ed into the condition,
+/// so an empty request matches all rows.
 pub trait IntoCondition {
     fn to_condition(&self) -> Condition;
 }
 
 /// Runs a filtered read for any entity whose request builds a condition.
-/// Collapses the otherwise-identical read bodies in the entity modules
-/// into one place, so cross-cutting changes live here.
+/// Collapses the otherwise identical read bodies in the entity modules into one place,
+/// so a cross-cutting change is made once.
 pub(crate) async fn get_all<E>(
     filter: &impl IntoCondition,
     conn: &impl ConnectionTrait,
@@ -110,10 +106,9 @@ where
     E::find().filter(filter.to_condition()).all(conn).await
 }
 
-/// Reads and then deletes every row matching a request's condition,
-/// returning the deleted rows. Delete-with-returning is not exposed by the
-/// ORM, so this is two statements; centralizing them keeps the drop paths
-/// identical and makes a single-statement version a local change.
+/// Reads and then deletes every row that matches a request's condition, returning the deleted rows.
+/// Delete-with-returning is not exposed by the ORM, so this is two statements;
+/// centralizing them keeps the drop paths identical and makes a single-statement version a local change.
 pub(crate) async fn drop_all<E>(
     filter: &impl IntoCondition,
     conn: &impl ConnectionTrait,
@@ -127,13 +122,13 @@ where
     Ok(rows)
 }
 
-/// Single entry point for every catalog request. Implementors take any
-/// connection-like handle and produce a typed response.
+/// Single entry point for every catalog request.
+/// Implementors take any connection-like handle and produce a typed response.
 ///
-/// Atomicity is the caller's responsibility: multistep implementations
-/// issue several inserts in sequence and will leave partial state on
-/// failure if handed a raw connection. Callers that need atomicity must
-/// pass a transaction handle. Several requests can share one:
+/// Atomicity is the caller's responsibility:
+/// multistep implementations issue several inserts in sequence
+/// and will leave partial state on failure if given a raw connection.
+/// Callers that need atomicity must pass a transaction handle. Several requests can share one:
 ///
 /// ```ignore
 /// let txn = db.begin().await?;
@@ -146,17 +141,17 @@ pub trait Execute {
     fn execute(&self, conn: &impl ConnectionTrait) -> impl Future<Output = Result<Self::Response>>;
 }
 
-/// Ownership model for a source or sink. Shared connectors are
-/// user-managed and outlive any single query. Anonymous connectors are
-/// owned by exactly one query and cleaned up with it. Internal behaves
-/// like anonymous but is reserved for system-generated rows that are
-/// hidden from user-facing listings.
+/// Ownership model for a source or sink.
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
 )]
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum ConnectorKind {
+    /// User-managed and outlives any single query.
     Shared,
+    /// Owned by exactly one query and cleaned up with it.
     Anonymous,
+    /// Like anonymous, but reserved for system-generated connectors like `NetworkSource`
+    /// that are hidden from user-facing listings.
     Internal,
 }

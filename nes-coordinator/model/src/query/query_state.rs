@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-//! The lifecycle state of a query, derived by database triggers from its
-//! fragment states rather than written by the application directly.
+//! The lifecycle state of a query.
 
 use sea_orm::{DeriveActiveEnum, EnumIter};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-/// Lifecycle state of a query. Never written by the application
-/// directly: a trigger derives it from the states of its fragments
-/// after every fragment update, and a second trigger rejects illegal
-/// transitions on the way out.
+/// Lifecycle state of a query.
+/// Never written by the application directly:
+/// a trigger derives it from the states of its fragments after every fragment update,
+/// and a second trigger rejects illegal transitions.
 #[derive(
     Clone,
     Copy,

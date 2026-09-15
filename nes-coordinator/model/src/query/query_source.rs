@@ -15,6 +15,7 @@
 use crate::identifier::{QueryId, SourceId};
 use sea_orm::entity::prelude::*;
 
+/// Links a query to a physical source that it reads.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query_source")]
 pub struct Model {
