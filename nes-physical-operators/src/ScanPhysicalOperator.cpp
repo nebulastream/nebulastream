@@ -21,12 +21,18 @@
 #include <utility>
 #include <vector>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatter.hpp>
+#include <OriginMappingOperatorHandler.hpp>
 #include <PhysicalOperator.hpp>
+#include <function.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 
@@ -38,6 +44,17 @@ ScanPhysicalOperator::ScanPhysicalOperator(
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)
+{
+}
+
+ScanPhysicalOperator::ScanPhysicalOperator(
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::vector<Record::RecordFieldIdentifier> projections,
+    const OperatorHandlerId originMappingHandlerId)
+    : bufferRef(std::move(bufferRef))
+    , projections(std::move(projections))
+    , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)
+    , originMappingHandlerId(originMappingHandlerId)
 {
 }
 
@@ -64,6 +81,20 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
+    if (originMappingHandlerId.has_value())
+    {
+        /// This scan heads a branch of a fan-out point, so the records travel on under the id that branch carries
+        /// rather than the one they were read with. Everything below reads the origin from the context, and the
+        /// branch's emit writes it back onto the buffers it produces.
+        executionCtx.originId = nautilus::invoke(
+            +[](OperatorHandler* handler, const OriginId originId)
+            {
+                PRECONDITION(handler != nullptr, "Expects a valid handler");
+                return dynamic_cast<OriginMappingOperatorHandler&>(*handler).mapOrigin(originId);
+            },
+            executionCtx.getGlobalOperatorHandler(originMappingHandlerId.value()),
+            executionCtx.originId);
+    }
     executionCtx.currentTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
