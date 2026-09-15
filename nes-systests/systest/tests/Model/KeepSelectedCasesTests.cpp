@@ -45,7 +45,7 @@ RewrittenCase queryCase(const uint64_t number)
 
 RunnableTestFile fileWith(std::vector<RewrittenCase> cases)
 {
-    return RunnableTestFile{.name = "test", .qualifyingPrefix = "T_", .setupStatements = {}, .cases = std::move(cases)};
+    return RunnableTestFile{.name = "test", .key = "T", .qualifyingPrefix = "T_", .setupStatements = {}, .cases = std::move(cases)};
 }
 
 }
