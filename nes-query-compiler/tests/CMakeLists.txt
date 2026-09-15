@@ -17,5 +17,6 @@ function(add_nes_compiler_test)
     target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
 endfunction()
 
+add_nes_compiler_test(OptimizedLogicalPlanSignatureUtilTest UnitTests/OptimizedLogicalPlanSignatureUtilTest.cpp)
 add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
 add_nes_compiler_test(PipeliningPhaseFanOutTest UnitTests/PipeliningPhaseFanOutTest.cpp)

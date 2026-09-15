@@ -462,9 +462,10 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
         with patch.object(acceptance.subprocess, "run") as run:
             run.return_value.returncode = 7
             with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(acceptance.AcceptanceFailure, "process exited with 7"):
-                acceptance.run_phase("cold", 1729, Path("systest"), self.root, self.root, self.root, self.root, "HASH_JOIN", "true")
+                acceptance.run_phase("cold", Path("systest"), self.root, self.root, self.root, self.root, "HASH_JOIN", "true")
             command = run.call_args.args[0]
-            self.assertIn("--shuffle-seed", command)
+            self.assertIn("--shuffle", command)
+            self.assertNotIn("--shuffle-seed", command)
             self.assertIn("--worker.enable_compilation_cache=true", command)
             self.assertEqual(command[command.index("--numberConcurrentQueries") + 1], "6")
 
@@ -476,9 +477,9 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
         topology.write_text("nodes: []\n", encoding="utf-8")
         argv = ["acceptance", "--systest", sys.executable, "--suite", str(suite), "--data", str(self.root),
                 "--topology", str(topology), "--run-root", str(self.root / "run"), "--inference", "disabled", "--full-suite",
-                "--seeds", "1", "2", "3", "--slice-cache", "true"]
+                "--warm-runs", "2", "--slice-cache", "true"]
 
-        def phase_reports(phase, seed, systest, corpus, data, topology, run_root, strategy, slice_cache):
+        def phase_reports(phase, systest, corpus, data, topology, run_root, strategy, slice_cache):
             log = run_root / f"{phase}.log"
             text = execution(cold=phase == "cold") + plan("Error:1", "error-local", (2, 3))
             log.write_text(text + result("Error:1", kind="expected_error"), encoding="utf-8")
@@ -539,15 +540,16 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
         self.assertIn("Inference explicitly disabled: inference/Model.test", output.getvalue())
         self.assertFalse((corpus / "inference/Model.test").exists())
 
-    def test_seed_validation_and_full_suite_option(self):
+    def test_warm_run_validation_and_full_suite_option(self):
         argv = ["--systest", "systest", "--suite", ".", "--data", ".", "--topology", "topology.yaml", "--run-root", "run",
                 "--inference", "disabled"]
         arguments = acceptance.parse_arguments(argv + ["--full-suite"])
         self.assertTrue(arguments.full_suite)
-        self.assertGreater(len(arguments.seeds), 2)
-        for seeds in (("1",), ("1", "1"), ("-1", "2"), (str(2**32), "2")):
-            with self.subTest(seeds=seeds), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-                acceptance.parse_arguments(argv + ["--seeds", *seeds])
+        self.assertEqual(arguments.warm_runs, 2)
+        self.assertEqual(acceptance.parse_arguments(argv + ["--warm-runs", "3"]).warm_runs, 3)
+        for runs in ("0", "-1", "invalid"):
+            with self.subTest(runs=runs), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                acceptance.parse_arguments(argv + ["--warm-runs", runs])
 
 
 if __name__ == "__main__":

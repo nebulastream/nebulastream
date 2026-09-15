@@ -14,7 +14,6 @@
 
 # Build files
 /build
-/build-bindings
 /build-docker*
 /cmake-build*
 CMakeUserPresets.json

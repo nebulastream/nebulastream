@@ -87,15 +87,13 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Explicit dependency gate; enabled requires ovc and all selected inference queries to pass.")
     parser.add_argument("--full-suite", action="store_true",
                         help="Run every .test file, including large/compilation-intensive tests; requires their test data.")
-    parser.add_argument("--seeds", type=int, nargs="+", default=(1729, 8675309, 42),
-                        help="First seed is cold; all subsequent seeds run in fresh warm processes.")
+    parser.add_argument("--warm-runs", type=int, default=2,
+                        help="Number of fresh shuffled warm processes after the cold run.")
     parser.add_argument("--join-strategies", nargs="+", choices=("HASH_JOIN", "NESTED_LOOP_JOIN"), default=("HASH_JOIN",))
     parser.add_argument("--slice-cache", nargs="+", choices=("true", "false"), default=("true", "false"))
     arguments = parser.parse_args(argv)
-    if len(arguments.seeds) < 2 or len(set(arguments.seeds)) != len(arguments.seeds):
-        parser.error("--seeds requires at least two distinct shuffle seeds")
-    if any(seed < 0 or seed > 2**32 - 1 for seed in arguments.seeds):
-        parser.error("--seeds must fit uint32")
+    if arguments.warm_runs < 1:
+        parser.error("--warm-runs must be positive")
     return arguments
 
 
@@ -361,7 +359,6 @@ def validate_process(phase: str, returncode: int, output_path: Path, file_count:
 
 def run_phase(
     phase: str,
-    seed: int,
     systest: Path,
     corpus: Path,
     data: Path,
@@ -373,7 +370,7 @@ def run_phase(
     log_path = run_root / f"{phase}.log"
     output_path = run_root / f"{phase}.stdout"
     command = [
-        str(systest), "--ignoreDisableConfigFile", "--shuffle", "--shuffle-seed", str(seed),
+        str(systest), "--ignoreDisableConfigFile", "--shuffle",
         "--numberConcurrentQueries", "6", "--testLocations", str(corpus),
         "--clusterConfig", str(topology), "--data", str(data),
         "--optimizer", f"join_strategy={join_strategy}",
@@ -407,10 +404,10 @@ def main() -> int:
             configuration_root = run_root / f"{strategy}-slice-{slice_cache}"
             (configuration_root / "cache").mkdir(parents=True)
             cold = None
-            for index, seed in enumerate(arguments.seeds):
+            for index in range(arguments.warm_runs + 1):
                 phase = "cold" if index == 0 else f"warm-{index}"
                 log_path, output_queries = run_phase(
-                    phase, seed, systest, corpus, data, topology, configuration_root, strategy, slice_cache
+                    phase, systest, corpus, data, topology, configuration_root, strategy, slice_cache
                 )
                 coverage = validate_reports(phase, log_path, output_queries, cold)
                 validate_artifacts(configuration_root / "cache", coverage)
@@ -422,7 +419,7 @@ def main() -> int:
                     warm_modules += count
                     warm_planned_aborts += coverage.planned_aborts.total()
                     outcome = f"{count}/{count} observed warm module hits"
-                print(f"{strategy}, slice-cache={slice_cache}, seed={seed}: {coverage.queries.total()} passed queries; {outcome}; "
+                print(f"{strategy}, slice-cache={slice_cache}, phase={phase}: {coverage.queries.total()} passed queries; {outcome}; "
                       f"{coverage.planned_aborts.total()} planned-but-uncompiled expected-error pipelines (not module hits)", flush=True)
     print(f"Compilation cache acceptance passed: {warm_modules}/{warm_modules} observed warm module hits, no tracing/fallback")
     print(f"Planned-but-uncompiled expected-error pipelines across warm processes: {warm_planned_aborts} "
