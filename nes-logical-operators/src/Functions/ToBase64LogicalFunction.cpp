@@ -110,7 +110,7 @@ ToBase64LogicalFunction Unreflector<ToBase64LogicalFunction>::operator()(const R
 
     if (!child.has_value())
     {
-        throw CannotDeserialize("ToBase64LogicalFunction is missing its child");
+        throw InvalidLogicalFunctionArgument("ToBase64LogicalFunction is missing its child");
     }
     return ToBase64LogicalFunction{child.value()};
 }
@@ -119,7 +119,7 @@ LogicalFunctionRegistryReturnType ToBase64LogicalFunction::createTO_BASE64(Logic
 {
     if (arguments.children.empty())
     {
-        throw CannotDeserialize("TO_BASE64 requires one argument");
+        throw InvalidLogicalFunctionArgument("TO_BASE64 requires one argument");
     }
     return ToBase64LogicalFunction(arguments.children.back());
 }

@@ -189,7 +189,7 @@ Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::op
     auto children = plan->getChildrenFor(id, context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator requires exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("EventTimeWatermarkAssignerLogicalOperator requires exactly one child, but got {}", children.size());
     }
     return EventTimeWatermarkAssignerLogicalOperator::create(children.at(0), onField, timeUnit);
 }

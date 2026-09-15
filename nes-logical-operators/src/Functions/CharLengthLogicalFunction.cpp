@@ -102,7 +102,7 @@ LogicalFunctionRegistryReturnType CharLengthLogicalFunction::createCHAR_LENGTH(L
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("CHAR_LENGTH requires exactly one argument, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("CHAR_LENGTH requires exactly one argument, but got {}", arguments.children.size());
     }
     return CharLengthLogicalFunction(arguments.children.back());
 }
