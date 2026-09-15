@@ -19,6 +19,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalUnion.cpp
         LowerToPhysicalSink.cpp
         LowerToPhysicalSource.cpp
+        LowerToPhysicalOriginSplit.cpp
         LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
@@ -32,6 +33,7 @@ add_registry_entry(LoweringRule WindowedAggregation)
 add_registry_entry(LoweringRule Union)
 add_registry_entry(LoweringRule Sink)
 add_registry_entry(LoweringRule Source KEY SourceDescriptor)
+add_registry_entry(LoweringRule OriginSplit)
 add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
 add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
 add_registry_entry(LoweringRule InferModel)

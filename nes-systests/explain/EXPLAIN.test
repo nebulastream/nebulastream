@@ -133,17 +133,18 @@ SINK(SINKFILTER2)
   PROJECTION(fields: [ID, VALUE]) [shared]
 ==END==
 
-# The asterisk projection above the shared selection is one per sink: a shared operator carries a single field order, so each sink
-# gets its own wrapper to hold the order it wants.
+# Each branch leaving the shared selection is headed by a split, which gives the branch origin ids of its own. The split also
+# holds the field order its sink asks for — a shared operator carries a single order and cannot hold both — so the branches
+# need no projection of their own on top.
 EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id, value FROM stream WHERE value > 2 INTO sinkFilter, sinkFilter2;
 ----
 == Optimized Global Plan ==
 SINK(SINKFILTER)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 2)
       PROJECTION(fields: [ID, VALUE])
         SOURCE(STREAM)
 SINK(SINKFILTER2)
-  PROJECTION(fields: [*])
+  ORIGINSPLIT()
     SELECTION(VALUE > 2) [shared]
 ==END==
