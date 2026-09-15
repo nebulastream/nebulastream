@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-//! Polymorphic task-set primitives that compile to `tokio`'s real types
-//! outside madsim and to in-crate equivalents under `cfg(madsim)` so the rest
-//! of the crate can share one source path across the simulated and real
-//! runtimes. The shim mirrors the upstream surface area used by the crate.
+//! Polymorphic task-set primitives that compile to `tokio`'s real types outside madsim
+//! and to in-crate equivalents under `cfg(madsim)`,
+//! so the rest of the crate can share one source path across the simulated and real runtimes.
+//! The shim mirrors the part of the upstream API that the crate uses.
 
 #[cfg(madsim)]
 use tokio::task::JoinHandle;
@@ -75,7 +75,7 @@ impl<T> JoinSet<T> {
 }
 
 // Dropping a madsim JoinHandle detaches the task instead of aborting it.
-// We must abort explicitly to match tokio::task::JoinSet's drop semantics.
+// Abort explicitly to match the drop semantics of tokio's JoinSet.
 #[cfg(madsim)]
 impl<T> Drop for JoinSet<T> {
     fn drop(&mut self) {

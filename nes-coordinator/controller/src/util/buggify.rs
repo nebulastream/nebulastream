@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-//! Fault-injection points for the madsim simulation. The macros expand to the
-//! simulator's buggify predicate under `cfg(madsim)` and to nothing (or a
-//! constant false) otherwise, so the guarded code never runs in normal builds.
+//! Fault-injection points for the madsim simulation.
+//! The macros expand to the simulator's buggify predicate under `cfg(madsim)`
+//! and to nothing (or a constant false) otherwise, so the guarded code never runs in normal builds.
 
 /// Evaluates to the madsim buggify predicate, or to `false` in normal builds.
-/// Use in an `if` when the fault needs a statement other than a plain return,
-/// for example `if buggify!() { continue; }`.
+/// Use in an `if` when the fault needs a statement other than a plain return, for example
+/// `if buggify!() { continue; }`.
 #[cfg(madsim)]
 macro_rules! buggify {
     () => {
@@ -36,8 +36,8 @@ macro_rules! buggify {
 pub(crate) use buggify;
 
 /// Returns from the enclosing function when the madsim buggify predicate fires,
-/// and expands to nothing in normal builds. With no argument it returns `()`;
-/// with an argument it returns that value.
+/// and expands to nothing in normal builds.
+/// With no argument it returns `()`; with an argument it returns that value.
 #[cfg(madsim)]
 macro_rules! buggify_return {
     () => {

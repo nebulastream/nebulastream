@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! Error types for a single worker RPC and the classification of which
-//! failures are worth retrying.
+//! Error types for a single worker RPC and the classification of which failures are worth retrying.
 
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
@@ -21,17 +20,15 @@ use thiserror::Error;
 
 use crate::remote::worker_rpc_service::Error as ProtoError;
 
-/// Classifies an error as transient (worth retrying) or terminal. Used by
-/// the RPC layer to gate retries and by the lifecycle driver to decide
-/// between a retry and a fatal failure.
+/// Classifies an error as transient (worth retrying) or terminal.
+/// Used by the RPC layer to decide whether to retry
+/// and by the reconciliation task to decide between a retry and a fatal failure.
 pub(crate) trait Retryable {
     fn retryable(&self) -> bool;
 }
 
-/// Failures of a single RPC against an out-of-process worker: either the
-/// transport never connected, or the request came back with a non-success
-/// status. Each variant carries enough context to surface in logs and to map
-/// cleanly into a persisted fragment-level error.
+/// Failures of a single RPC against an out-of-process worker.
+/// Each variant has enough context to appear in logs and to map into a persisted fragment-level error.
 #[derive(Error, Debug)]
 pub(crate) enum WorkerTaskError {
     #[error("failed to connect to {addr}: {err}")]
@@ -59,9 +56,9 @@ impl WorkerTaskError {
     }
 }
 
-/// gRPC status codes worth retrying: the transport or peer could not complete
-/// the call for now, rather than a terminal application error. Unknown is left
-/// out because it does not tell us whether the failure will clear up.
+/// gRPC status codes worth retrying:
+/// the transport or peer could not complete the call for now, rather than a terminal application error.
+/// Unknown is left out because it does not say whether the failure will clear up.
 const fn retryable(code: tonic::Code) -> bool {
     matches!(
         code,
@@ -75,9 +72,10 @@ const fn retryable(code: tonic::Code) -> bool {
 impl Retryable for WorkerTaskError {
     fn retryable(&self) -> bool {
         match self {
-            // A failed connection or an exhausted total timeout is a prolonged
-            // but still transient outage: retry at the fragment level rather
-            // than failing the fragment. The fragment retry budget bounds it.
+            // A failed connection or an exhausted total timeout
+            // is a prolonged but still transient outage:
+            // retry at the fragment level instead of giving the fragment up.
+            // The fragment retry budget bounds it.
             Self::Connection { .. } | Self::Timeout { .. } => true,
             Self::Grpc { status, .. } => retryable(status.code()),
         }

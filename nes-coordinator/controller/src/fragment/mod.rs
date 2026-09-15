@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! Defines how a worker is asked about one fragment: a client trait that each
-//! worker backend implements, and the result type a single call returns.
+//! How the lifecycle driver asks a worker about one fragment.
 
 mod task;
 
@@ -26,19 +25,24 @@ use model::query::query_fragment::{
 use std::future::Future;
 use std::time::Duration;
 
-/// Result of a single worker-facing call. The lifecycle driver inspects it
-/// to decide the next state transition, whether to retry, and whether to
-/// stop polling.
+/// Result of a single worker-facing call.
+/// The lifecycle driver inspects it to decide the next state transition,
+/// whether to retry, and whether to stop polling.
 pub(super) enum Outcome {
+    /// The answer implies this state change.
     Transition(QueryFragmentTransition),
+    /// The worker's full report, which the driver maps to a transition.
     Status(QueryFragmentStatus),
+    /// The request was taken, but the state has not changed yet.
     Accepted,
+    /// Terminal: the fragment is marked failed.
     Failed(QueryFragmentError),
+    /// Transient: counted against the retry budget.
     Retry(QueryFragmentError),
 }
 
-/// A fragment's state as the worker reports it, normalized into a shape the
-/// lifecycle driver can map onto a state transition.
+/// A fragment's state as the worker reports it,
+/// normalized into a shape that the lifecycle driver can map onto a state transition.
 #[derive(Debug)]
 pub struct QueryFragmentStatus {
     pub state: QueryFragmentState,
@@ -47,17 +51,17 @@ pub struct QueryFragmentStatus {
     pub error: Option<QueryFragmentError>,
 }
 
-/// Worker-facing operations for one fragment. In-process and out-of-process
-/// backends each provide their own implementation; the lifecycle driver is
-/// generic over this trait.
+/// Worker-facing operations for one fragment.
+/// In-process and out-of-process backends each provide their own implementation;
+/// the lifecycle driver is generic over this trait.
 ///
-/// These calls may be retried after a lost response, so the worker side has to
-/// be idempotent: re-issuing a call that already took effect must succeed
-/// rather than fail. The worker does not guarantee this yet; see issue #1817.
+/// These calls may be retried after a lost response, so the worker side has to be idempotent:
+/// re-issuing a call that already took effect must succeed rather than fail.
+/// The worker does not guarantee this yet; see issue #1817.
 pub(super) trait Client: Send + Sync {
     /// How long to wait between status reads of one fragment.
-    /// A backend that reaches its worker in process can afford a short interval, one that pays a
-    /// round trip per read cannot.
+    /// A backend that reaches its worker in process can afford a short interval;
+    /// one that pays a round trip per read cannot.
     fn poll_interval(&self) -> Duration;
 
     fn start(&self, id: QueryFragmentId, plan: &[u8]) -> impl Future<Output = Outcome> + Send;

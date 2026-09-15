@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! Runs the fragments of a worker that lives in the same process as the
-//! coordinator.
+//! Runs the fragments of a worker in the coordinator's own process.
 
 mod client;
 
@@ -33,9 +32,9 @@ use std::sync::Arc;
 use tokio::sync::watch;
 use tracing::{Instrument, error, info, info_span, warn};
 
-/// In-process worker interface. Implementors run fragment lifecycle commands
-/// synchronously inside the coordinator process; an internal adapter exposes
-/// them to the lifecycle driver as an async client.
+/// In-process worker interface.
+/// Implementors run fragment lifecycle commands synchronously inside the coordinator process;
+/// an internal adapter exposes them to the lifecycle driver as an async client.
 pub trait Worker: Send + Sync + 'static {
     fn start_query_fragment(&self, plan: Vec<u8>) -> Result<(), QueryFragmentError>;
     fn stop_query_fragment(&self, id: i64) -> Result<(), QueryFragmentError>;
@@ -44,19 +43,21 @@ pub trait Worker: Send + Sync + 'static {
 }
 
 /// Constructs an in-process worker from the worker row's config JSON.
-/// Letting the host supply the factory keeps this crate decoupled from any
-/// concrete worker implementation.
+/// Letting the host supply the factory
+/// keeps this crate decoupled from any concrete worker implementation.
 pub trait WorkerFactory: Send + Sync + 'static {
     fn create(&self, config_json: &str) -> anyhow::Result<Arc<dyn Worker>>;
 
-    /// The build a worker this factory creates would report. Answered without creating one,
-    /// because every in-process worker is the build this binary was linked with.
+    /// The build that a worker from this factory would report.
+    /// Answered without creating one,
+    /// because every in-process worker is the build that this binary was linked with.
     fn version(&self) -> String;
 }
 
-/// Per-worker reconciliation task for the in-process backend. Marks the
-/// worker active in the DB on start, then loops: load actionable fragments
-/// assigned to this worker and spawn a lifecycle driver for each one.
+/// Per-worker reconciliation task for the in-process backend.
+/// Marks the worker active in the DB on start, then loops:
+/// load the actionable fragments that are assigned to this worker
+/// and spawn a lifecycle driver for each one.
 pub(super) struct WorkerTask {
     worker: worker::Model,
     handle: Arc<dyn Worker>,

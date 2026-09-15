@@ -24,8 +24,8 @@ use std::time::Duration;
 
 use super::Worker;
 
-/// Turns a panic from a blocking worker call into an error outcome. The
-/// panic payload holds the message; there is no backtrace to recover.
+/// Turns a panic from a blocking worker call into an error outcome.
+/// The panic payload holds the message; there is no backtrace to recover.
 #[cfg(not(madsim))]
 fn panic_to_error(join_err: tokio::task::JoinError) -> QueryFragmentError {
     let msg = match join_err.try_into_panic() {
@@ -43,8 +43,9 @@ fn panic_to_error(join_err: tokio::task::JoinError) -> QueryFragmentError {
     }
 }
 
-/// Runs a blocking worker call off the async runtime. Under madsim the embedded
-/// client is unused and `spawn_blocking` is unavailable, so the call runs inline.
+/// Runs a blocking worker call off the async runtime.
+/// Under madsim the embedded client is unused and `spawn_blocking` is unavailable,
+/// so the call runs inline.
 #[cfg(not(madsim))]
 async fn run_blocking<T, F>(f: F) -> Result<T, QueryFragmentError>
 where
@@ -68,16 +69,17 @@ where
 /// Exception code the worker reports for a query id it has no record of.
 const QUERY_NOT_FOUND: u16 = 5000;
 
-/// The worker's status log is append-only and gets its first entry before any work is queued, so an
-/// unknown id was never started there. Nothing runs for it, so callers treat this as state, not failure.
+/// The worker's status log is append-only and gets its first entry before any work is queued,
+/// so an unknown id was never started there.
+/// Nothing runs for it, so callers treat this as state, not failure.
 fn is_not_found(error: &QueryFragmentError) -> bool {
     matches!(error, QueryFragmentError::Internal { code, .. } if *code == QUERY_NOT_FOUND)
 }
 
-/// Adapts the synchronous in-process worker interface to the async client
-/// interface used by the lifecycle driver. Every call reaches the engine
-/// through a lock that a query compilation can hold for a long time, so all of
-/// them run on a blocking thread rather than on the runtime.
+/// Adapts the synchronous in-process worker interface to the async client interface
+/// that the lifecycle driver uses.
+/// Every call reaches the engine through a lock that a query compilation can hold for a long time,
+/// so all of them run on a blocking thread rather than on the runtime.
 pub(super) struct QueryFragmentClient {
     worker: Arc<dyn Worker>,
 }
@@ -109,9 +111,9 @@ impl Client for QueryFragmentClient {
 
         let worker = self.worker.clone();
         match run_blocking(move || worker.start_query_fragment(prepared)).await {
-            // Not `Running`: the fragment has only been accepted at this point, and the state
-            // machine requires Pending to advance to Started. `observe` promotes it once the
-            // worker reports it producing.
+            // Not `Running`: the fragment has only been accepted at this point,
+            // and the state machine requires Pending to advance to Started.
+            // `observe` promotes it once the worker reports that it is producing.
             Ok(()) => Outcome::Transition(QueryFragmentTransition::Started),
             Err(err) if is_not_found(&err) => Outcome::Transition(QueryFragmentTransition::Pending),
             Err(err) => Outcome::Failed(err),

@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-//! Runs the fragments of a worker in another process over gRPC: connects with
-//! retries, records whether the worker is reachable, and reconciles its fragments
-//! while connected.
+//! Runs the fragments of a worker in another process over gRPC.
 
 mod client;
 
@@ -50,10 +48,10 @@ pub mod worker_rpc_service {
         tonic::include_proto!("nes");
 
         impl SerializableQueryId {
-            /// The wire format carries two string ids while the coordinator
-            /// identifies fragments by a single integer. Carry the integer in
-            /// the local id, rendered as a decimal string, until the wire
-            /// format itself moves to an integer id.
+            /// The wire format has two string ids
+            /// while the coordinator identifies fragments by one integer.
+            /// Put the integer in the local id, rendered as a decimal string,
+            /// until the wire format itself moves to an integer id.
             pub fn from_fragment_id(id: i64) -> Self {
                 Self {
                     local_query_id: id.to_string(),
@@ -115,12 +113,10 @@ async fn health_check(client: &HealthClient<Channel>) -> bool {
 }
 
 /// Per-worker reconciliation task for the out-of-process backend.
-/// Reconnects to the worker over gRPC with backoff, reflects connection
-/// state back into the DB, and while connected runs the same reconciliation
-/// loop as the in-process variant with an added heartbeat probe that tears
-/// down on failure. Reconnection is the task's own responsibility. The
-/// parent only decides whether the task should exist at all (via the
-/// worker row's desired state); transient unreachability is invisible to it.
+/// Reconnects to the worker over gRPC with backoff and reflects the connection state into the DB.
+/// Reconnection is the task's own responsibility:
+/// the parent only decides whether the task should exist at all (via the worker row's desired state),
+/// and transient unreachability is invisible to it.
 pub(super) struct WorkerTask {
     worker: worker::Model,
     db: DatabaseConnection,
@@ -173,10 +169,10 @@ impl WorkerTask {
                         .update(&self.db)
                         .await
                         .inspect_err(|e| warn!("failed to mark worker unreachable: {e}"))?;
-                    // Back off before reconnecting so a reachable but failing
-                    // worker does not get retried in a tight loop. This is
-                    // shorter than the connect-failure backoff because the
-                    // worker was reachable and should recover promptly.
+                    // Back off before reconnecting
+                    // so a reachable but failing worker does not get retried in a tight loop.
+                    // This is shorter than the connect-failure backoff
+                    // because the worker was reachable and should recover promptly.
                     tokio::time::sleep(HEALTH_CHECK_INTERVAL).await;
                 }
                 Err(connect_err) => {
@@ -196,10 +192,10 @@ impl WorkerTask {
         }
     }
 
-    /// Reconcile fragments and run health checks until the connection drops.
-    /// Same reconciliation loop as the in-process variant, with an extra
-    /// heartbeat branch that breaks the loop on a health-check failure so
-    /// the outer reconnect path can take over.
+    /// Reconciles fragments and runs health checks until the connection drops.
+    /// Same reconciliation loop as the in-process variant,
+    /// with an extra heartbeat branch that breaks the loop on a health-check failure
+    /// so the outer reconnect path can take over.
     async fn serve(&mut self, channel: Channel) {
         let health_client = HealthClient::new(channel.clone());
         self.worker_client = Some(WorkerRpcServiceClient::new(channel));

@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-//! Reads the build each worker runs.
+//! Reads the build that each worker runs.
 //!
-//! Nothing writes a version down, so answering means asking the workers. This sits in the
-//! controller crate because reaching a worker is what the crate knows how to do, and it is offered
-//! as a plain call rather than through the reconciliation loop, which is about fragments.
+//! The version is not known at worker registration time
+//! (which, as of now, is done by clients, not the workers themselves).
+//! Therefore, we need to fetch the version by asking the worker via gRPC.
 
 use crate::config::VERSION_TIMEOUT;
 use crate::embedded::WorkerFactory;
@@ -31,9 +31,9 @@ use tracing::debug;
 
 /// Asks every given worker which build it runs, all at once.
 ///
-/// A factory means the workers run in this process, and every one of them is therefore the build
-/// this binary was linked with. Without one they are processes of their own and each is asked over
-/// the network; one that does not answer reports why rather than failing the others.
+/// A factory means the workers run in this process,
+/// and every one of them is therefore the build that this binary was linked with.
+/// Without one, they are processes of their own and each is asked over the network.
 pub async fn worker_versions(
     workers: Vec<worker::Model>,
     embedded: Option<Arc<dyn WorkerFactory>>,
@@ -49,13 +49,12 @@ pub async fn worker_versions(
     join_all(
         workers
             .into_iter()
-            .map(|worker| async move { ask(worker.host_addr).await }),
+            .map(|worker| async move { worker_version(worker.host_addr).await }),
     )
     .await
 }
 
-/// Reaches one worker and reads its version, reporting what went wrong instead when it cannot.
-async fn ask(addr: NetworkAddr) -> WorkerVersion {
+async fn worker_version(addr: NetworkAddr) -> WorkerVersion {
     match request_version(&addr).await {
         Ok(version) => WorkerVersion::reported(addr, version),
         Err(err) => {
@@ -66,9 +65,7 @@ async fn ask(addr: NetworkAddr) -> WorkerVersion {
 }
 
 async fn request_version(addr: &NetworkAddr) -> anyhow::Result<String> {
-    // One deadline over dialling and asking together, so a worker that accepts the connection and
-    // then never answers is reported just as promptly as one that refuses it.
-    let ask = async {
+    let dial_and_request = async {
         let channel = Endpoint::from_shared(format!("http://{addr}"))?
             .connect_timeout(VERSION_TIMEOUT)
             .connect()
@@ -78,7 +75,7 @@ async fn request_version(addr: &NetworkAddr) -> anyhow::Result<String> {
             .await?;
         anyhow::Ok(response.into_inner().version)
     };
-    tokio::time::timeout(VERSION_TIMEOUT, ask)
+    tokio::time::timeout(VERSION_TIMEOUT, dial_and_request)
         .await
         .map_err(|_| anyhow::anyhow!("timed out after {VERSION_TIMEOUT:?}"))?
 }

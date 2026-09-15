@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! The shared control loop: on a timer or a wake-up it re-reads the database
-//! and starts or stops child tasks to match it.
+//! Shared control loop of every level of the reconciliation hierarchy.
 
 use crate::util::task_map::TaskMap;
 use std::fmt::Display;
@@ -23,10 +22,9 @@ use tokio::select;
 use tokio::sync::watch;
 use tracing::{debug, warn};
 
-/// Common pattern for reconciliation-driven control loops. An implementor
-/// owns a keyed set of child tasks and provides a step that queries
-/// authoritative state, then spawns or aborts children to move observed
-/// state toward desired state. Each level of the hierarchy uses this trait.
+/// One level of the reconciliation hierarchy.
+/// An implementor owns a keyed set of child tasks and provides a step that queries authoritative state,
+/// then spawns or aborts children to move observed state toward desired state.
 pub(crate) trait Reconciler {
     type Key: Eq + Hash + Clone + Send + Display + 'static;
 
@@ -34,14 +32,14 @@ pub(crate) trait Reconciler {
     fn reconcile(&mut self) -> impl Future<Output = ()> + Send;
 }
 
-/// Run a reconciliation loop. Three wake-up sources: a watch-channel
-/// intent signal (something in the DB likely changed), the completion of a
-/// child task, and a periodic tick. The watch channel coalesces, so a burst
-/// of notifications still results in one reconcile, and a slow consumer
-/// can never fall behind a fast producer. The periodic tick is the
-/// level-triggered backstop: state lives in the DB, so even if every
-/// notification were lost, the next poll would catch up. Returns when the
-/// intent sender is dropped.
+/// Runs a reconciliation loop.
+/// Three wake-up sources: a watch-channel intent signal (something in the DB likely changed),
+/// the completion of a child task, and a periodic tick.
+/// The watch channel coalesces, so a burst of notifications still results in one reconcile,
+/// and a slow consumer can never fall behind a fast producer.
+/// The periodic tick is the level-triggered backstop:
+/// state is in the DB, so even if every notification were lost, the next poll would catch up.
+/// Returns when the intent sender is dropped.
 pub(crate) async fn reconcile_loop(
     reconciler: &mut impl Reconciler,
     intent_rx: &mut watch::Receiver<()>,

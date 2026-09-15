@@ -46,10 +46,9 @@ fn query_id(id: i64) -> worker_rpc_service::nes::SerializableQueryId {
     worker_rpc_service::nes::SerializableQueryId::from_fragment_id(id)
 }
 
-/// Adapts a gRPC worker client to the async client interface used by the
-/// lifecycle driver. Each method runs through a shared RPC layer that adds
-/// a per-attempt timeout, an overall deadline, and bounded retries on
-/// transient errors.
+/// Adapts a gRPC worker client to the async client interface that the lifecycle driver uses.
+/// Each method runs through a shared RPC layer
+/// that adds a per-attempt timeout, an overall deadline, and bounded retries on transient errors.
 pub(super) struct QueryFragmentClient {
     client: WorkerRpcServiceClient<Channel>,
     host_addr: NetworkAddr,

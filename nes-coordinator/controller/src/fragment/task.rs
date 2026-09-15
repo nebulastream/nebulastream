@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-//! Moves one fragment from start to a finished state by asking its worker for
-//! the next step and saving the result after each step.
+//! The lifecycle driver of one fragment.
 
 use super::{Client, Outcome, QueryFragmentStatus};
 use crate::config::{MAX_CONSECUTIVE_FAILURES, RETRY_INTERVAL};
@@ -33,9 +32,9 @@ fn unix_ms_to_datetime(ms: u64) -> DateTime<Utc> {
     DateTime::from_timestamp_millis(i64::try_from(ms).unwrap_or(i64::MAX)).unwrap_or_default()
 }
 
-/// Counts down on consecutive retryable failures and converts the last
-/// error into a terminal transport error once the budget hits zero. Any
-/// successful outcome resets the counter.
+/// Counts down on consecutive retryable failures
+/// and converts the last error into a terminal transport error once the budget hits zero.
+/// Any successful outcome resets the counter.
 struct RetryBudget {
     remaining: u32,
 }
@@ -62,11 +61,11 @@ impl RetryBudget {
     }
 }
 
-/// Moves a single fragment through its lifecycle from pending through to a
-/// terminal state. Each iteration asks the worker for the next step, applies
-/// the result to a staged copy of the row, and persists. Between iterations,
-/// it refreshes from the DB so external desired-state changes (such as a
-/// stop request) take effect.
+/// Moves a single fragment through its lifecycle from pending through to a terminal state.
+/// Each iteration asks the worker for the next step,
+/// applies the result to a staged copy of the row, and persists.
+/// Between iterations it refreshes from the DB
+/// so external desired-state changes (such as a stop request) take effect.
 pub struct FragmentTask<C> {
     fragment: query_fragment::Model,
     update: query_fragment::ActiveModel,
@@ -107,9 +106,9 @@ impl<C: Client> FragmentTask<C> {
 
     async fn up(&mut self) -> anyhow::Result<()> {
         while !self.fragment.current_state.is_terminal() {
-            // A short query can already be finished by the time the start returns, so the first
-            // status read follows it without waiting. Only a read that found the fragment still
-            // running pays the interval before the next one.
+            // A short query can already be finished by the time the start returns,
+            // so the first status read follows it without waiting.
+            // Only a read that found the fragment still running pays the interval before the next one.
             let starting = self.fragment.current_state == QueryFragmentState::Pending;
             let outcome = match self.fragment.current_state {
                 QueryFragmentState::Pending => {
@@ -117,8 +116,9 @@ impl<C: Client> FragmentTask<C> {
                         .start(self.fragment.id, &self.fragment.plan)
                         .await
                 }
-                // Started is what a worker reports once it has taken the plan but before it is
-                // producing; both states advance only by asking the worker again.
+                // Started is what a worker reports once it has taken the plan
+                // but before it is producing;
+                // both states advance only by asking the worker again.
                 QueryFragmentState::Started | QueryFragmentState::Running => {
                     self.client
                         .observe(self.fragment.id, self.fragment.desired_state)
@@ -127,8 +127,8 @@ impl<C: Client> FragmentTask<C> {
                 _ => unreachable!("terminal state"),
             };
             self.apply(outcome).await?;
-            // A stop request arrived while the fragment was advancing. Leave the loop so the
-            // stop path takes over rather than continuing to poll toward running.
+            // A stop request arrived while the fragment was advancing.
+            // Leave the loop so the stop path takes over rather than continuing to poll toward running.
             if self.fragment.desired_state == DesiredQueryFragmentState::Stopped {
                 break;
             }
@@ -145,13 +145,14 @@ impl<C: Client> FragmentTask<C> {
     }
 
     async fn down(&mut self) -> anyhow::Result<()> {
-        // A fragment still recorded as pending is not skipped here: starting it is a single call,
-        // so a lost reply leaves it live on the worker while the catalog has not caught up, and
-        // skipping the stop would leave it there. A stop for a fragment the worker never
-        // received answers not-found, which is recorded as stopped just the same.
+        // A fragment still recorded as pending is not skipped here:
+        // starting it is a single call, so a lost reply leaves it live on the worker
+        // while the catalog has not caught up, and skipping the stop would leave it there.
+        // A stop for a fragment that the worker never received answers not-found,
+        // which is recorded as stopped all the same.
         //
-        // Send the stop request, retrying until the worker takes it or the
-        // fragment reaches a terminal state on its own.
+        // Send the stop request,
+        // retrying until the worker takes it or the fragment reaches a terminal state on its own.
         while !self.fragment.current_state.is_terminal() {
             let outcome = self.client.stop(self.fragment.id).await;
             // An accepted stop is a successful answer like any other:
@@ -162,8 +163,8 @@ impl<C: Client> FragmentTask<C> {
                 break;
             }
         }
-        // The stop was taken but the fragment is not done yet; poll until it
-        // reaches a terminal state.
+        // The stop was taken but the fragment is not done yet;
+        // poll until it reaches a terminal state.
         while !self.fragment.current_state.is_terminal() {
             let outcome = self
                 .client
@@ -179,9 +180,9 @@ impl<C: Client> FragmentTask<C> {
         Ok(())
     }
 
-    /// Stages the row changes a worker's answer implies, then persists them. A successful
-    /// answer of any kind refills the retry budget, so the budget counts consecutive
-    /// failures rather than failures over the whole lifetime.
+    /// Stages the row changes that a worker's answer implies, then persists them.
+    /// A successful answer of any kind refills the retry budget,
+    /// so the budget counts consecutive failures rather than failures over the whole lifetime.
     async fn apply(&mut self, outcome: Outcome) -> anyhow::Result<()> {
         let prev = self.fragment.current_state;
         let now = Utc::now();
@@ -200,7 +201,8 @@ impl<C: Client> FragmentTask<C> {
                 self.budget.reset();
                 self.update.mark_observed(now);
             }
-            // The fragment failed in an unrecoverable way, or the worker is permanently unreachable/failed
+            // The fragment failed in an unrecoverable way,
+            // or the worker is permanently unreachable or failed.
             Outcome::Failed(err) => {
                 error!("fatal: {err}");
                 self.update
@@ -226,10 +228,9 @@ impl<C: Client> FragmentTask<C> {
         Ok(())
     }
 
-    /// This is not really efficient
-    /// (we write and read from the DB row for every fragment after every poll/transition),
-    /// but it's easy to reason about.
-    /// Once it becomes a performance issue, we can revisit.
+    /// Not efficient (the row is written and read back after every poll and transition),
+    /// but easy to reason about.
+    /// Revisit once it becomes a performance issue.
     async fn refresh(&mut self) -> anyhow::Result<()> {
         if buggify!() {
             buggify_return!(Ok(()));
@@ -255,8 +256,8 @@ impl<C: Client> FragmentTask<C> {
         let start_ts = status.start_timestamp.map(unix_ms_to_datetime);
         let stop_ts = status.stop_timestamp.map(unix_ms_to_datetime);
         // A worker that omits a required field is likely a version mismatch.
-        // Fill it in with the current time so the fragment still advances,
-        // and warn. Retrying would just get the same report back.
+        // Fill it in with the current time so the fragment still advances, and warn.
+        // Retrying would only get the same report back.
         let fallback_ts = |field: &str| {
             warn!("worker reported {mapped_state} without {field}; using current time");
             now
