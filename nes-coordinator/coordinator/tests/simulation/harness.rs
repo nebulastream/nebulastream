@@ -33,7 +33,7 @@ use madsim::runtime::{Handle, NodeHandle};
 use madsim::task::{NodeId, ToNodeId};
 use model::database::{Database, StateBackend};
 use model::identifier::QueryFragmentId;
-use model::request::Request;
+use model::request::{Request, StatementInput, Wait};
 use model::statement::{Statement, StatementResult};
 use model::worker::endpoint::NetworkAddr;
 use model::worker::{CreateWorker, DropWorker};
@@ -111,7 +111,7 @@ impl TestHarness {
     }
 
     pub async fn send(&self, statement: Statement) -> Result<StatementResult> {
-        let (rx, req) = Request::new(statement);
+        let (rx, req) = Request::new(StatementInput::Parsed(statement), Wait::None);
         self.coordinator.sender.send(req).await?;
         tokio::time::timeout(SEND_TIMEOUT, rx)
             .await

@@ -29,7 +29,7 @@ use madsim::rand::seq::IteratorRandom;
 use madsim::rand::{Rng, thread_rng};
 use model::identifier::{QueryFragmentId, QueryId, SinkId, SourceId};
 use model::query::query_fragment::CreateQueryFragment;
-use model::query::{CreateQuery, DropQuery, GetQuery};
+use model::query::{CreateQuery, DropQuery, GetQuery, QueryWithFragments};
 use model::sink::CreateSink;
 use model::source::logical::CreateLogicalSource;
 use model::source::physical::CreatePhysicalSource;
@@ -138,7 +138,7 @@ impl ModelState {
             StatementResult::CreatedSink(sink) => {
                 self.sink = Some((sink.id, sink.host_addr));
             }
-            StatementResult::CreatedQuery(query, fragments) => {
+            StatementResult::CreatedQuery(QueryWithFragments { query, fragments }) => {
                 assert!(
                     self.active_queries.insert(query.id),
                     "query {} already created",

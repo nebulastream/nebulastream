@@ -62,7 +62,7 @@ async fn catalog_fragments_of(
     else {
         unreachable!();
     };
-    queries.into_iter().flat_map(|(_, f)| f).collect()
+    queries.into_iter().flat_map(|row| row.fragments).collect()
 }
 
 async fn catalog_workers_in(state: WorkerState, harness: &TestHarness) -> HashSet<NetworkAddr> {
