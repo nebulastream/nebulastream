@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Serialization/OptimizedLogicalPlanSignatureUtil.hpp>
+#include <OptimizedLogicalPlanSignatureUtil.hpp>
 
 #include <algorithm>
 #include <bit>

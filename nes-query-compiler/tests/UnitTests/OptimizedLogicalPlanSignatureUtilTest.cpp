@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -24,16 +26,21 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
-#include <Serialization/OptimizedLogicalPlanSignatureUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include <CompilationCache.hpp>
+#include <OptimizedLogicalPlanSignatureUtil.hpp>
+#include <Pipeline.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <QueryId.hpp>
+#include <SinkPhysicalOperator.hpp>
+#include <options.hpp>
 
 namespace NES
 {
@@ -134,4 +141,44 @@ TEST_F(OptimizedLogicalPlanSignatureUtilTest, QueryExecutionConfigurationAffects
 
     EXPECT_NE(createSignature(plan, defaultConfiguration), createSignature(plan, changedConfiguration));
 }
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, DisabledCacheSkipsSignatureGeneration)
+{
+    const LogicalPlan planWithoutInferredSchema{QueryId::invalid(), {UnionLogicalOperator::create()}};
+    const QueryExecutionConfiguration configuration;
+    const auto cacheDir = std::filesystem::temp_directory_path().string();
+
+    for (const auto& settings : std::vector<QueryCompilation::CompilationCache::Settings>{{false, cacheDir}, {true, {}}})
+    {
+        SCOPED_TRACE(settings.enabled ? "empty cache directory" : "disabled cache");
+        QueryCompilation::CompilationCache cache(settings);
+        ASSERT_FALSE(cache.isEnabled());
+        EXPECT_NO_THROW(cache.prepareForQuery(planWithoutInferredSchema, configuration));
+    }
+}
+
+#ifdef __linux__
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, EnabledCacheConfiguresSemanticQueryKey)
+{
+    const auto plan = createPlan(DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE});
+    const auto sink = plan.getRootOperators().front().getAs<SinkLogicalOperator>();
+    const auto pipeline = std::make_shared<Pipeline>(SinkPhysicalOperator(sink->getSinkDescriptor().value()));
+    QueryExecutionConfiguration configuration;
+    configuration.numberOfPartitions = DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES * 2;
+    const auto cacheDir = std::filesystem::temp_directory_path().string();
+    QueryCompilation::CompilationCache cache({true, cacheDir});
+    ASSERT_TRUE(cache.isEnabled());
+
+    cache.prepareForQuery(plan, configuration);
+    nautilus::engine::EngineOptions options;
+    cache.configureEngineOptionsForPipeline(options, pipeline);
+
+    EXPECT_EQ(options.getOptionOrDefault("engine.Blob.CacheDir", std::string{}), cacheDir);
+    const auto cacheKey = options.getOptionOrDefault("engine.Blob.CacheKey", std::string{});
+    EXPECT_TRUE(cacheKey.starts_with("nes:auto|binary="));
+    const auto queryKeyStart = cacheKey.find(":q=");
+    ASSERT_NE(queryKeyStart, std::string::npos);
+    EXPECT_EQ(cacheKey.substr(queryKeyStart), ":q=" + createSignature(plan, configuration) + ":o=0:h=0[]");
+}
+#endif
 }

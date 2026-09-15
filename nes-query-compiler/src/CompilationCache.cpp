@@ -28,7 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current_macros.hpp>
 #include <ErrorHandling.hpp>
-#include <PhysicalPlan.hpp>
+#include <OptimizedLogicalPlanSignatureUtil.hpp>
 #include <Pipeline.hpp>
 #include <options.hpp>
 
@@ -57,7 +57,9 @@ std::optional<std::string> createBinaryFingerprint()
 
 }
 
-CompilationCache::CompilationCache(Settings settings) : settings(std::move(settings)), binaryFingerprint(createBinaryFingerprint())
+CompilationCache::CompilationCache(Settings settings)
+    : settings(std::move(settings))
+    , binaryFingerprint(this->settings.enabled && !this->settings.cacheDir.empty() ? createBinaryFingerprint() : std::nullopt)
 {
     if (!this->settings.enabled && !this->settings.cacheDir.empty())
     {
@@ -75,15 +77,16 @@ bool CompilationCache::isEnabled() const
     return settings.enabled && !settings.cacheDir.empty() && binaryFingerprint.has_value();
 }
 
-void CompilationCache::prepareForQuery(const PhysicalPlan& physicalPlan)
+void CompilationCache::prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration)
 {
     resetPipelineOrdinals();
+    cacheKeySeed.clear();
     if (!isEnabled())
     {
-        cacheKeySeed.clear();
         return;
     }
-    cacheKeySeed = createCacheKeySeed(physicalPlan);
+    cacheKeySeed = OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, configuration);
+    PRECONDITION(!cacheKeySeed.empty(), "Compilation cache requires a non-empty optimized logical plan seed");
 }
 
 void CompilationCache::resetPipelineOrdinals()
@@ -132,14 +135,6 @@ void CompilationCache::configureEngineOptionsForPipeline(
 
     options.setOption("engine.Blob.CacheDir", settings.cacheDir);
     options.setOption("engine.Blob.CacheKey", createExplicitCacheKey(pipeline));
-}
-
-std::string CompilationCache::createCacheKeySeed(const PhysicalPlan& physicalPlan)
-{
-    const auto& signature = physicalPlan.getSignature();
-    PRECONDITION(
-        !signature.getRawValue().empty(), "Compilation cache requires a non-empty physical plan signature attached to the physical plan");
-    return signature.getRawValue();
 }
 
 std::string CompilationCache::createHandlerCacheSignature(const Pipeline& pipeline)

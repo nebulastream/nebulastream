@@ -22,7 +22,6 @@
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
-#include <Serialization/OptimizedLogicalPlanSignatureUtil.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -34,11 +33,10 @@ namespace NES::QueryCompilation
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
-    queryPlan.setSignature(PhysicalPlanSignature(OptimizedLogicalPlanSignatureUtil::create(request->queryPlan, defaultQueryExecution)));
 
     auto compilationCache
         = CompilationCache(CompilationCache::Settings{compilationCacheSettings.enabled, compilationCacheSettings.cacheDir});
-    compilationCache.prepareForQuery(queryPlan);
+    compilationCache.prepareForQuery(request->queryPlan, defaultQueryExecution);
 
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, &compilationCache);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);

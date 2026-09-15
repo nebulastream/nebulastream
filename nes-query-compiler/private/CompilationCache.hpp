@@ -27,7 +27,8 @@ class EngineOptions;
 
 namespace NES
 {
-class PhysicalPlan;
+class LogicalPlan;
+class QueryExecutionConfiguration;
 struct Pipeline;
 }
 
@@ -46,7 +47,7 @@ public:
     explicit CompilationCache(Settings settings);
 
     [[nodiscard]] bool isEnabled() const;
-    void prepareForQuery(const PhysicalPlan& physicalPlan);
+    void prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration);
     void resetPipelineOrdinals();
 
     void configureEngineOptionsForPipeline(nautilus::engine::EngineOptions& options, const std::shared_ptr<Pipeline>& pipeline);
@@ -55,7 +56,6 @@ private:
     [[nodiscard]] uint64_t getStablePipelineOrdinal(const std::shared_ptr<Pipeline>& pipeline);
     [[nodiscard]] std::string createExplicitCacheKey(const std::shared_ptr<Pipeline>& pipeline);
 
-    [[nodiscard]] static std::string createCacheKeySeed(const PhysicalPlan& physicalPlan);
     [[nodiscard]] static std::string createHandlerCacheSignature(const Pipeline& pipeline);
 
     Settings settings;
