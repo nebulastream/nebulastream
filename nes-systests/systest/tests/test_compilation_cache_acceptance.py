@@ -105,6 +105,15 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(acceptance.AcceptanceFailure, "coverage mismatch"):
             self.validate(execution(cold=False), cold)
 
+    def test_shared_pipeline_plan_references_do_not_duplicate_module_coverage(self):
+        text = plan(pipelines=(2, 3, 3)) + module() + module(pipeline=3, cold=False) + result()
+        cold = self.validate(text)
+        warm = self.validate(plan(local="fresh", pipelines=(7, 8, 8))
+                             + module(local="fresh", pipeline=7, cold=False)
+                             + module(local="fresh", pipeline=8, cold=False) + result(), cold)
+        self.assertEqual(warm.modules.total(), 2)
+        self.assertEqual(len(warm.events), 2)
+
     def test_same_count_different_module_keys_fails(self):
         cold = self.cold()
         with self.assertRaisesRegex(acceptance.AcceptanceFailure, "semantic modules.*coverage mismatch"):
@@ -412,6 +421,21 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
     def test_successful_process_parses_query_identities(self):
         self.output.write_text(stdout(("First:01", "Second:02 [option=1]")), encoding="utf-8")
         self.assertEqual(acceptance.validate_process("cold", 0, self.output, 1), Counter({"First:01": 1, "Second:02 [option=1]": 1}))
+
+    def test_current_case_id_format_matches_telemetry(self):
+        self.output.write_text(stdout(("First:1 [z=last, a=first]",)), encoding="utf-8")
+        queries = acceptance.validate_process("cold", 0, self.output, 1)
+        self.assertEqual(queries, Counter({"First:01 [a=first, z=last]": 1}))
+        cold = self.validate(execution(configuration={"a": "first", "z": "last"}), queries=queries)
+        self.output.write_text(stdout(("First:1 [a=first, z=last]",)), encoding="utf-8")
+        warm_queries = acceptance.validate_process("warm", 0, self.output, 1)
+        self.validate(execution(cold=False, configuration={"a": "first", "z": "last"}), cold, warm_queries)
+
+    def test_case_id_normalization_preserves_configuration_values(self):
+        self.assertEqual(acceptance.normalize_result_name("First:2 [z=x=y, a=]"), "First:02 [a=, z=x=y]")
+        for name in ("First", "First:0", "First:1 [option]", "First:1 [option=1, option=2]"):
+            with self.subTest(name=name), self.assertRaises(acceptance.AcceptanceFailure):
+                acceptance.normalize_result_name(name)
 
     def test_failed_or_signalled_process_fails_despite_passed_output(self):
         self.output.write_text(stdout(), encoding="utf-8")
