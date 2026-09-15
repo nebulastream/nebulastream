@@ -13,8 +13,8 @@
 */
 
 use crate::config::{
-    REMOTE_FRAGMENT_POLL_INTERVAL, RPC_ATTEMPT_TIMEOUT, RPC_MAX_RETRIES, RPC_RETRY_INIT,
-    RPC_TOTAL_TIMEOUT,
+    REMOTE_FRAGMENT_POLL_INTERVAL, RETRY_BACKOFF_BASE, RETRY_BACKOFF_FACTOR_MS,
+    RPC_ATTEMPT_TIMEOUT, RPC_MAX_RETRIES, RPC_TOTAL_TIMEOUT,
 };
 use crate::error::{Retryable, WorkerTaskError};
 use crate::fragment::{Client, Outcome, QueryFragmentStatus};
@@ -34,8 +34,10 @@ use tracing::{debug, warn};
 pub(super) use super::WorkerRpcServiceClient;
 
 fn rpc_retry_strategy() -> impl Iterator<Item = Duration> {
-    ExponentialBackoff::from_millis(RPC_RETRY_INIT)
-        .factor(2)
+    // The argument is the growth rate, not the first delay:
+    // the n-th delay is base to the power of n, times the factor.
+    ExponentialBackoff::from_millis(RETRY_BACKOFF_BASE)
+        .factor(RETRY_BACKOFF_FACTOR_MS)
         .map(jitter)
         .take(RPC_MAX_RETRIES)
 }

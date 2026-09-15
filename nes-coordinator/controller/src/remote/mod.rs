@@ -21,7 +21,7 @@ mod client;
 use crate::config::{
     CONNECT_MAX_DELAY, CONNECT_MAX_RETRIES, CONNECT_TIMEOUT, ENDPOINT_KEEP_ALIVE_INTERVAL,
     ENDPOINT_KEEP_ALIVE_TIMEOUT, HEALTH_CHECK_INTERVAL, POLL_INTERVAL, PROBE_TIMEOUT,
-    RECONNECT_INTERVAL,
+    RECONNECT_INTERVAL, RETRY_BACKOFF_BASE, RETRY_BACKOFF_FACTOR_MS,
 };
 use crate::error::WorkerTaskError;
 use crate::fragment::FragmentTask;
@@ -73,7 +73,9 @@ use health_proto::health_client::HealthClient;
 pub use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 
 fn connect_retry_strategy() -> impl Iterator<Item = Duration> {
-    ExponentialBackoff::from_millis(50)
+    // Same arithmetic as the RPC schedule: base to the power of n, times the factor.
+    ExponentialBackoff::from_millis(RETRY_BACKOFF_BASE)
+        .factor(RETRY_BACKOFF_FACTOR_MS)
         .max_delay(CONNECT_MAX_DELAY)
         .map(jitter)
         .take(CONNECT_MAX_RETRIES)

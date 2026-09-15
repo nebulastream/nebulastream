@@ -153,9 +153,13 @@ impl<C: Client> FragmentTask<C> {
         // Send the stop request, retrying until the worker takes it or the
         // fragment reaches a terminal state on its own.
         while !self.fragment.current_state.is_terminal() {
-            match self.client.stop(self.fragment.id).await {
-                Outcome::Accepted => break,
-                outcome => self.apply(outcome).await?,
+            let outcome = self.client.stop(self.fragment.id).await;
+            // An accepted stop is a successful answer like any other:
+            // it refills the retry budget and records the observation before the poll phase starts.
+            let accepted = matches!(outcome, Outcome::Accepted);
+            self.apply(outcome).await?;
+            if accepted {
+                break;
             }
         }
         // The stop was taken but the fragment is not done yet; poll until it
@@ -263,13 +267,18 @@ impl<C: Client> FragmentTask<C> {
             QueryFragmentState::Running => QueryFragmentTransition::Running {
                 start_timestamp: start_ts.unwrap_or_else(|| fallback_ts("start_timestamp")),
             },
+            // A short fragment can finish before it was ever observed running,
+            // so a terminal report is the only chance to record its start.
             QueryFragmentState::Completed => QueryFragmentTransition::Completed {
+                start_timestamp: start_ts,
                 stop_timestamp: stop_ts.unwrap_or_else(|| fallback_ts("stop_timestamp")),
             },
             QueryFragmentState::Stopped => QueryFragmentTransition::Stopped {
+                start_timestamp: start_ts,
                 stop_timestamp: stop_ts.unwrap_or_else(|| fallback_ts("stop_timestamp")),
             },
             QueryFragmentState::Failed => QueryFragmentTransition::Failed {
+                start_timestamp: start_ts,
                 stop_timestamp: stop_ts.unwrap_or_else(|| fallback_ts("stop_timestamp")),
                 error: status.error.unwrap_or_else(|| {
                     warn!("worker reported Failed without error; using a generic error");

@@ -73,8 +73,12 @@ pub(crate) const RPC_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
 /// Deadline covering all retries of one RPC.
 pub(crate) const RPC_TOTAL_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// Initial backoff for the RPC retry schedule, in milliseconds.
-pub(crate) const RPC_RETRY_INIT: u64 = 50;
+/// Growth rate of the retry backoff: each retry waits this many times longer than the last.
+pub(crate) const RETRY_BACKOFF_BASE: u64 = 2;
+
+/// Multiplier that scales the backoff into milliseconds.
+/// With the base above the delays are 50, 100, 200, 400, ... ms.
+pub(crate) const RETRY_BACKOFF_FACTOR_MS: u64 = 25;
 
 /// Retry attempts for a single RPC.
 pub(crate) const RPC_MAX_RETRIES: usize = 5;
