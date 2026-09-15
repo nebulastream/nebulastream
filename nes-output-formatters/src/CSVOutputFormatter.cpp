@@ -40,7 +40,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
 #include <function.hpp>
-#include <select.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -182,10 +181,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     }
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index
-    const auto delimiter = nautilus::select(
-        nautilus::val<uint64_t>{fieldIndex} == nautilus::val<uint64_t>{fieldNames.size()} - 1,
-        nautilus::val<const char*>{tupleDelimiter.c_str()},
-        nautilus::val<const char*>{fieldDelimiter.c_str()});
+    const nautilus::val<const char*> delimiter{(fieldIndex + 1 == fieldNames.size() ? tupleDelimiter : fieldDelimiter).c_str()};
 
     /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
     written += nautilus::invoke(
