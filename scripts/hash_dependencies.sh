@@ -22,12 +22,12 @@ set -euo pipefail
 # cd to root of git repo
 cd "$(git rev-parse --show-toplevel)"
 
-# Member manifests are deliberately excluded from the dependency image hash. Enforce the
-# invariants that make that safe: members can only inherit dependencies from the workspace,
-# and the workspace cannot keep dependencies that are not yet used (and therefore not vendored).
-python3 scripts/check_rust_dependency_policy.py
-
 # paths of dirs or files that affect the dependency images
+#
+# This list deliberately excludes member manifests.
+# Excluding them is only safe while every member inherits its dependencies from the workspace and the workspace keeps nothing unused.
+# CMake enforces both rules at configure time.
+# The list covers the script it runs, because relaxing either rule invalidates every image already vendored.
 #
 # Do not use trailing slashes on dirs since this leads to diverging hashes on macos.
 HASH_PATHS=(

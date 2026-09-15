@@ -62,13 +62,15 @@ nes_network = { workspace = true }
 
 Every workspace dependency must be used by at least one member. This ensures it is
 present in `Cargo.lock` and vendored into the development image as soon as it is added.
-`scripts/check_rust_dependency_policy.py` enforces both rules before the
-dependency-image hash is calculated. Consequently, member `Cargo.toml` files do not
-need to participate in that hash: changing which already-vendored workspace dependency
-a member uses cannot introduce an unvendored crate.
+`scripts/check_rust_dependency_policy.py` enforces both rules at CMake configure time.
+Consequently, member `Cargo.toml` files do not need to participate in the
+dependency-image hash: changing which already-vendored workspace dependency a member
+uses cannot introduce an unvendored crate.
 
-Running the dependency-image hash requires Python 3.11 or newer so the checker can use
-the standard-library `tomllib` parser.
+The checker requires Python 3.11 or newer for the standard-library `tomllib` parser.
+The development image ships a newer Python, so this only constrains a configure run
+outside the container. Computing the dependency-image hash itself needs no Python,
+which keeps the local image install script runnable on a host with an older default.
 
 Each member inherits the package defaults:
 

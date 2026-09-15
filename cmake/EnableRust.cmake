@@ -10,6 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The dependency image vendors the workspace from the root manifest alone and then builds offline.
+# That vendoring never sees a member that declares its own dependency, so the policy has to hold before a build starts.
+# The dependency hash script cannot check it, because the local image install computes the hash on a host that has no image yet.
+execute_process(
+        COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/check_rust_dependency_policy.py ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        ERROR_VARIABLE rust_dependency_policy_error
+        RESULT_VARIABLE rust_dependency_policy_result
+        ERROR_STRIP_TRAILING_WHITESPACE
+)
+if (NOT rust_dependency_policy_result EQUAL 0)
+    message(FATAL_ERROR "${rust_dependency_policy_error}")
+endif ()
+
 # Unfortunately, compiling rust with sanitizers requires the nightly compiler.
 SET(Rust_RESOLVE_RUSTUP_TOOLCHAINS OFF)
 SET(Rust_TOOLCHAIN "nightly")
