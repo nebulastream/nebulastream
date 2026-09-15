@@ -16,40 +16,31 @@
 
 #include <chrono>
 #include <cstddef>
-#include <deque>
 #include <functional>
-#include <optional>
 #include <span>
+#include <string_view>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
+#include <nes-coordinator-bridge/coordinator.h>
+
 #include <Config/Config.hpp>
-#include <Configurations/ConfigLiteral.hpp>
-#include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
-#include <ResultChecker/OutcomeChecker.hpp>
-#include <Runner/QuerySubmitter.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <DistributedQuery.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestBinder.hpp>
+#include <Runner/Cluster.hpp>
 
 namespace NES
 {
 
 /// Sets up the prepared partitions when constructed, then submits and checks their test cases.
-/// Each submission runs every bound test case once more.
+/// Each submission runs every test case once more.
 /// A caller repeats a run by submitting again, because a second setup would fail on the repeated CREATEs.
 class TestRunner
 {
 public:
-    /// Stages data, writes setup statements into the catalogs, and binds test cases.
-    /// A file whose setup fails is reported rather than thrown, so the other files still run.
-    TestRunner(const SystestConfiguration& config, std::vector<RunnablePartition> partitions);
+    /// A file whose setup fails is reported and not thrown, so the other files still run.
+    TestRunner(const SystestConfiguration& config, const Cluster& cluster, std::vector<RunnablePartition> partitions);
 
     /// One runner per invocation.
     /// Even when we want to submit multiple times, all setup statements need only one submission, which is done in the constructor.
@@ -75,70 +66,30 @@ public:
     [[nodiscard]] std::vector<ReportEntry> submitAll(size_t concurrency, const Observer& observe = {});
 
 private:
-    struct SetUpPartition
-    {
-        RunnablePartition partition;
-        std::vector<std::vector<BoundStatement>> testCases;
-    };
-
-    /// One test case of a set-up partition, and the position of its entry in the report.
     struct Job
     {
         const RunnablePartition& partition;
         const RewrittenTestCase& testCase;
-        std::span<const BoundStatement> statements;
         size_t reportSlot;
     };
 
-    /// A test case whose statements the runner submits one after another.
-    struct TestCaseRun
+    struct Submitted
     {
-        Job job;
-        /// The statements that have not finished. While a worker runs a query, the first one is that query.
-        std::span<const BoundStatement> remaining;
-        std::vector<StatementOutcome> outcomes;
-        std::vector<StatementTiming> timings;
-    };
-
-    /// The jobs of all partitions that require the same worker settings, so one submitter runs all of them.
-    struct WorkerSettingsGroup
-    {
-        ConfigurationOverride overrides;
-        std::deque<Job> jobs;
-    };
-
-    /// The test cases of one group that are pending, running, or finished and not yet checked.
-    struct GroupSubmission
-    {
-        QuerySubmitter submitter;
-        size_t concurrency;
-        std::deque<Job> pending;
-        std::unordered_map<DistributedQueryId, TestCaseRun> running;
-        std::deque<TestCaseRun> finished;
-
-        [[nodiscard]] bool isDone() const { return pending.empty() and running.empty() and finished.empty(); }
+        const Job* job = nullptr;
+        std::vector<Bridge::StatementOutcome> outcomes;
     };
 
     void setUp(std::vector<RunnablePartition> partitions);
 
-    /// One group at a time: one embedded receiver per process.
-    [[nodiscard]] QuerySubmitter createSubmitterFor(const ConfigurationOverride& overrides) const;
+    [[nodiscard]] Bridge::StatementOutcome submit(std::string_view sql, Bridge::WaitMode wait) const;
 
-    /// Processes an unbound statement or an EXPLAIN in place, without a worker.
-    /// @returns nullopt once the test case is ready to check.
-    [[nodiscard]] static std::optional<DistributedQueryId> submitNext(QuerySubmitter& submitter, TestCaseRun& run);
+    /// Waits until the query has terminated.
+    /// Stops a query that runs past the timeout, so it does not keep running on workers that later test cases use.
+    [[nodiscard]] Bridge::StatementOutcome runQuery(std::string_view sql) const;
 
-    static void admit(GroupSubmission& submission);
-    void submitGroup(
-        WorkerSettingsGroup group, size_t concurrency, const Observer& observe, std::vector<std::optional<ReportEntry>>& checked) const;
-
-    SystestBinder binder;
-    SystestClusterConfiguration clusterConfig;
-    bool remote;
-    Schema<LiteralConfigValue, Ordered> baseWorker;
+    std::reference_wrapper<const Cluster> cluster;
     std::chrono::milliseconds queryTimeout;
-    /// The partitions that setup accepted, which every submit runs.
-    std::vector<SetUpPartition> setUpPartitions;
+    std::vector<RunnablePartition> setUpPartitions;
     std::vector<ReportEntry> rejected;
     std::vector<std::jthread> servers;
 };

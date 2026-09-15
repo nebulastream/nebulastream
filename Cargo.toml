@@ -26,6 +26,21 @@ members = [
     "nes-coordinator/coordinator",
     "nes-coordinator/request-handler",
     "nes-coordinator/simulation",
+    "nes-coordinator/bridge",
+    "nes-frontend/nebucli",
+]
+# The bridge and nebucli link against C++ libraries, so they only build through CMake.
+# A plain cargo build or cargo test skips them.
+default-members = [
+    "nes-network/network",
+    "nes-network/network-bindings",
+    "nes-common/rust/spdlog-bindings",
+    "nes-coordinator/model",
+    "nes-coordinator/migration",
+    "nes-coordinator/controller",
+    "nes-coordinator/coordinator",
+    "nes-coordinator/request-handler",
+    "nes-coordinator/simulation",
 ]
 
 [workspace.package]
@@ -51,11 +66,13 @@ model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
 request_handler = { path = "nes-coordinator/request-handler" }
 coordinator = { path = "nes-coordinator/coordinator" }
+coordinator_bridge = { path = "nes-coordinator/bridge" }
 
 ahash = "0.8"
 anyhow = "1.0"
 async-channel = "2.3.1"
 async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
@@ -67,7 +84,6 @@ libtest-mimic = "0.8"
 madsim = { version = "0.2.34", features = ["macros"] }
 pin-project = "1.1.10"
 proptest = "1.5"
-proptest-derive = "0.5"
 prost = "0.13"
 # sea-orm 1.1.10 and later need sqlx 0.8.4 or later, and the sqlx fork below is based on 0.8.2.
 # sea-orm-macros must also stay at 1.1.9 in Cargo.lock,
@@ -87,6 +103,7 @@ sea-orm-migration = { version = "=1.1.9", features = [
 ] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0"
+serde_yaml = "0.9"
 sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
 strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"

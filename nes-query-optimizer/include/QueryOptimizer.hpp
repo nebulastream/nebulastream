@@ -15,36 +15,37 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Phases/OperatorPlacer.hpp>
 #include <Phases/RuleBasedOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
+#include <Catalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
-class ModelCatalog;
-}
 
-namespace NES
+/// The result of optimizing one query.
+struct OptimizedPlan
 {
+    /// The plan after the rewrite rules, before it is split across workers.
+    LogicalPlan globalPlan;
+    /// The parts of the global plan that each worker runs.
+    std::unordered_map<Host, std::vector<LogicalPlan>> localPlans;
+};
 
 class QueryOptimizer final
 {
 public:
-    explicit QueryOptimizer(
-        const QueryOptimizerConfiguration& defaultQueryOptimization,
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
-        const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
-        , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
+    explicit QueryOptimizer(const QueryOptimizerConfiguration& defaultQueryOptimization, const std::shared_ptr<Catalog>& catalog)
+        : ruleBasedOptimization(defaultQueryOptimization, catalog), operatorPlacement(defaultQueryOptimization, catalog)
+    {
+    }
 
-    [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;
+    [[nodiscard]] OptimizedPlan optimize(LogicalPlan plan) const;
 
 private:
     RuleBasedOptimizer ruleBasedOptimization;

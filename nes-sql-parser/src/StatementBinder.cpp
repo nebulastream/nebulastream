@@ -15,6 +15,8 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -37,10 +39,11 @@
 
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Overloaded.hpp>
+#include <boost/url/parse.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -52,8 +55,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 
 #include <DataTypes/UnboundField.hpp>
@@ -65,43 +66,38 @@
 namespace NES
 {
 
+namespace
+{
+/// A worker address is `host:port`.
+/// A URI parser would read the host as the scheme, and rejects an IPv4 address, because a scheme starts with a letter.
+std::string bindWorkerAddress(const std::string& address)
+{
+    if (const auto authority = boost::urls::parse_authority(address);
+        not authority or authority->has_userinfo() or authority->host().empty() or not authority->has_port())
+    {
+        throw InvalidQuerySyntax("'{}' is not a worker address of the form host:port", address);
+    }
+    return address;
+}
+}
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
 {
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
-    Impl(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
-        : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
-    {
-    }
+    explicit Impl(const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder) : queryBinder(queryBinder) { }
 
     ~Impl() = default;
-
-    StatementOutputFormat bindFormat(AntlrSQLParser::ShowFormatContext* formatAST) const
-    {
-        if (formatAST->TEXT() != nullptr)
-        {
-            return StatementOutputFormat::TEXT;
-        }
-        if (formatAST->JSON() != nullptr)
-        {
-            return StatementOutputFormat::JSON;
-        }
-        INVARIANT(false, "Invalid format type, is the binder out of sync or was a nullptr passed?");
-        std::unreachable();
-    }
 
     CreateLogicalSourceStatement
     bindCreateLogicalSourceStatement(AntlrSQLParser::CreateLogicalSourceDefinitionContext* logicalSourceDefAST) const
     {
         const auto sourceName = bindIdentifier(logicalSourceDefAST->sourceName->strictIdentifier());
         const auto schema = bindSchema(logicalSourceDefAST->schemaDefinition());
-        return CreateLogicalSourceStatement{.name = sourceName, .schema = schema};
+        return CreateLogicalSourceStatement{
+            .name = sourceName, .schema = schema, .ifNotExists = logicalSourceDefAST->ifNotExists() != nullptr};
     }
 
     CreatePhysicalSourceStatement
@@ -168,7 +164,7 @@ public:
                 const Literal* literalOpt = std::get_if<Literal>(&it->second);
                 if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                 {
-                    return URI(std::get<std::string>(*literalOpt)).toString();
+                    return bindWorkerAddress(std::get<std::string>(*literalOpt));
                 }
                 throw InvalidQuerySyntax("DATA must be a string literal");
             }
@@ -188,25 +184,55 @@ public:
                            const Literal* literalOpt = std::get_if<Literal>(&value);
                            if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
                            {
-                               return URI(std::get<std::string>(*literalOpt)).toString();
+                               return bindWorkerAddress(std::get<std::string>(*literalOpt));
                            }
                            throw InvalidQuerySyntax("DOWNSTREAM must be a string literal");
                        })
                 | std::ranges::to<std::vector<std::string>>();
         }();
 
+        /// Every other option becomes a worker configuration entry with a dotted key.
+        /// Example: `'4' AS "worker"."query_engine"."number_of_worker_threads"` gives `worker.query_engine.number_of_worker_threads -> 4`.
+        auto workerConfig = [&] -> std::unordered_map<std::string, std::string>
+        {
+            static const auto claimed
+                = std::array{Identifier::parse("MAX_OPERATORS"), Identifier::parse("DATA"), Identifier::parse("DOWNSTREAM")};
+
+            std::unordered_map<std::string, std::string> flattened;
+            for (const auto& [key, value] : configs)
+            {
+                if (key.size() == 1 && std::ranges::contains(claimed, *std::ranges::begin(key)))
+                {
+                    continue;
+                }
+                const auto* literal = std::get_if<Literal>(&value);
+                if (literal == nullptr)
+                {
+                    throw InvalidQuerySyntax("A worker configuration value must be a literal");
+                }
+                const auto path = key | std::views::transform([](const Identifier& part) { return part.asCanonicalString(); });
+                flattened.insert_or_assign(fmt::format("{}", fmt::join(path, ".")), literalToString(*literal));
+            }
+            return flattened;
+        }();
 
         return CreateWorkerStatement{
-            .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
+            .host = bindWorkerAddress(bindStringLiteral(workerDefAST->hostaddr)),
             .dataAddress = std::move(dataAddress),
             .maxOperators = maxOperators,
             .downstream = downStreams,
-            .config = {}};
+            .config = std::move(workerConfig),
+            .ifNotExists = workerDefAST->ifNotExists() != nullptr};
     }
 
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
+        /// A name of only digits is reserved, because an anonymous sink is identified by its numeric id.
+        if (std::ranges::all_of(sinkName.asCanonicalString(), [](const unsigned char character) { return std::isdigit(character) != 0; }))
+        {
+            throw InvalidQuerySyntax("Sink name '{}' is invalid: only-digit names are reserved", sinkName);
+        }
         const Identifier sinkType = bindIdentifier(sinkDefAST->type);
         const auto configOptions = [&]()
         {
@@ -227,7 +253,7 @@ public:
                 | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         std::unordered_map<Identifier, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find(Identifier::parse("OUTPUT_FORMATTER"));
+        if (const auto formatConfigIter = configOptions.find(Identifier::parse(std::string{OUTPUT_FORMATTER_OPTION_GROUP}));
             formatConfigIter != configOptions.end())
         {
             formatOptions = formatConfigIter->second
@@ -251,7 +277,8 @@ public:
             .schema = schema,
             .host = host,
             .sinkConfig = sinkOptions,
-            .formatConfig = formatOptions};
+            .formatConfig = formatOptions,
+            .ifNotExists = sinkDefAST->ifNotExists() != nullptr};
     }
 
     CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
@@ -289,7 +316,8 @@ public:
             .name = fmt::format("{}", modelName),
             .path = modelPath,
             .inputs = std::move(inputSchemaExp).value(),
-            .outputs = std::move(outputSchemaExp).value()};
+            .outputs = std::move(outputSchemaExp).value(),
+            .ifNotExists = modelDefAST->ifNotExists() != nullptr};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -319,11 +347,8 @@ public:
         throw InvalidStatement("Unrecognized CREATE statement");
     }
 
-    ShowLogicalSourcesStatement bindShowLogicalSourcesStatement(
-        const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
+    ShowLogicalSourcesStatement bindShowLogicalSourcesStatement(const AntlrSQLParser::ShowFilterContext* showFilter) const
     {
-        const std::optional<StatementOutputFormat> format
-            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
@@ -336,19 +361,16 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW LOGICAL SOURCES must be a string");
             }
-            return ShowLogicalSourcesStatement{.name = bindIdentifier(std::get<std::string>(value)), .format = format};
+            return ShowLogicalSourcesStatement{.name = bindIdentifier(std::get<std::string>(value))};
         }
-        return ShowLogicalSourcesStatement{.name = std::nullopt, .format = format};
+        return ShowLogicalSourcesStatement{.name = std::nullopt};
     }
 
     ShowPhysicalSourcesStatement bindShowPhysicalSourcesStatement(
         const AntlrSQLParser::ShowFilterContext* showFilter,
-        const AntlrSQLParser::ShowPhysicalSourcesSubjectContext* physicalSourcesSubject,
-        AntlrSQLParser::ShowFormatContext* showFormat) const
+        const AntlrSQLParser::ShowPhysicalSourcesSubjectContext* physicalSourcesSubject) const
     {
         std::optional<LogicalSourceName> logicalSourceName{};
-        const std::optional<StatementOutputFormat> format
-            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
         if (physicalSourcesSubject->logicalSourceName != nullptr)
         {
             logicalSourceName = LogicalSourceName(bindIdentifier(physicalSourcesSubject->logicalSourceName));
@@ -365,16 +387,13 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW PHYSICAL SOURCES must be an unsigned integer");
             }
-            return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::get<uint64_t>(value), .format = format};
+            return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::get<uint64_t>(value)};
         }
-        return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::nullopt, .format = format};
+        return ShowPhysicalSourcesStatement{.logicalSource = logicalSourceName, .id = std::nullopt};
     }
 
-    ShowSinksStatement
-    bindShowSinksStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
+    ShowSinksStatement bindShowSinksStatement(const AntlrSQLParser::ShowFilterContext* showFilter) const
     {
-        const std::optional<StatementOutputFormat> format
-            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
         if (showFilter != nullptr)
         {
             const auto [attr, value] = bindShowFilter(showFilter);
@@ -387,31 +406,52 @@ public:
             {
                 throw InvalidQuerySyntax("Filter value for SHOW SINKS must be a string");
             }
-            return ShowSinksStatement{.name = bindIdentifier(std::get<std::string>(value)), .format = format};
+            return ShowSinksStatement{.name = bindIdentifier(std::get<std::string>(value))};
         }
-        return ShowSinksStatement{.name = std::nullopt, .format = format};
+        return ShowSinksStatement{.name = std::nullopt};
     }
 
-    ShowQueriesStatement
-    bindShowQueriesStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
+    ShowModelsStatement bindShowModelsStatement(const AntlrSQLParser::ShowFilterContext* showFilter) const
     {
-        const std::optional<StatementOutputFormat> format
-            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
-        if (showFilter != nullptr)
+        if (showFilter == nullptr)
         {
-            const auto [attr, value] = bindShowFilter(showFilter);
-            static const auto IdIdentifier = Identifier::parse("ID");
-            if (attr != IdIdentifier)
-            {
-                throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
-            }
-            if (not std::holds_alternative<std::string>(value))
-            {
-                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
-            }
-            return ShowQueriesStatement{.id = DistributedQueryId{std::get<std::string>(value)}, .format = format};
+            return ShowModelsStatement{.name = std::nullopt};
         }
-        return ShowQueriesStatement{.id = std::nullopt, .format = format};
+        const auto filter = bindShowFilter(showFilter);
+        return ShowModelsStatement{.name = bindIdentifier(requireFilterValue<std::string>(filter, "NAME", "a string", "SHOW MODELS"))};
+    }
+
+    ShowQueriesStatement bindShowQueriesStatement(const AntlrSQLParser::ShowFilterContext* showFilter) const
+    {
+        if (showFilter == nullptr)
+        {
+            return ShowQueriesStatement{.id = std::nullopt, .name = std::nullopt};
+        }
+
+        const auto filter = bindShowFilter(showFilter);
+        static const auto IdIdentifier = Identifier::parse("ID");
+        static const auto NameIdentifier = Identifier::parse("NAME");
+        if (filter.first == IdIdentifier)
+        {
+            return ShowQueriesStatement{
+                .id = requireFilterValue<uint64_t>(filter, "ID", "an unsigned integer", "SHOW QUERIES"), .name = std::nullopt};
+        }
+        if (filter.first == NameIdentifier)
+        {
+            return ShowQueriesStatement{
+                .id = std::nullopt, .name = Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "SHOW QUERIES"))};
+        }
+        throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on ID or NAME attribute");
+    }
+
+    static ShowWorkersStatement bindShowWorkersStatement(const AntlrSQLParser::ShowFilterContext* showFilter)
+    {
+        if (showFilter == nullptr)
+        {
+            return ShowWorkersStatement{.host = std::nullopt};
+        }
+        const auto filter = bindShowFilter(showFilter);
+        return ShowWorkersStatement{.host = bindWorkerAddress(requireFilterValue<std::string>(filter, "HOST", "a string", "SHOW WORKERS"))};
     }
 
     Statement bindShowStatement(AntlrSQLParser::ShowStatementContext* showAST) const
@@ -421,29 +461,32 @@ public:
         if (const auto* logicalSourcesSubject = dynamic_cast<AntlrSQLParser::ShowLogicalSourcesSubjectContext*>(showAST->showSubject());
             logicalSourcesSubject != nullptr)
         {
-            return bindShowLogicalSourcesStatement(showFilter, showAST->showFormat());
+            return bindShowLogicalSourcesStatement(showFilter);
         }
         if (auto* physicalSourcesSubject = dynamic_cast<AntlrSQLParser::ShowPhysicalSourcesSubjectContext*>(showAST->showSubject());
             physicalSourcesSubject != nullptr)
         {
-            return bindShowPhysicalSourcesStatement(showFilter, physicalSourcesSubject, showAST->showFormat());
+            return bindShowPhysicalSourcesStatement(showFilter, physicalSourcesSubject);
         }
         if (const auto* queriesSubject = dynamic_cast<AntlrSQLParser::ShowQueriesSubjectContext*>(showAST->showSubject());
             queriesSubject != nullptr)
         {
-            return bindShowQueriesStatement(showFilter, showAST->showFormat());
+            return bindShowQueriesStatement(showFilter);
         }
         if (const auto* sinksSubject = dynamic_cast<AntlrSQLParser::ShowSinksSubjectContext*>(showAST->showSubject());
             sinksSubject != nullptr)
         {
-            return bindShowSinksStatement(showFilter, showAST->showFormat());
+            return bindShowSinksStatement(showFilter);
         }
         if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
             modelsSubject != nullptr)
         {
-            const std::optional<StatementOutputFormat> format
-                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
-            return ShowModelsStatement{.format = format};
+            return bindShowModelsStatement(showFilter);
+        }
+        if (const auto* workersSubject = dynamic_cast<AntlrSQLParser::ShowWorkersSubjectContext*>(showAST->showSubject());
+            workersSubject != nullptr)
+        {
+            return bindShowWorkersStatement(showFilter);
         }
         if (const auto* versionSubject = dynamic_cast<AntlrSQLParser::ShowVersionSubjectContext*>(showAST->showSubject());
             versionSubject != nullptr)
@@ -452,9 +495,7 @@ public:
             {
                 throw InvalidQuerySyntax("SHOW VERSION does not support a filter");
             }
-            const std::optional<StatementOutputFormat> format
-                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
-            return ShowVersionStatement{.format = format};
+            return ShowVersionStatement{};
         }
         throw InvalidStatement("Unrecognized SHOW statement");
     }
@@ -478,44 +519,94 @@ public:
         return std::get<T>(filter.second);
     }
 
-    static DropLogicalSourceStatement bindDropLogicalSource(const std::pair<Identifier, Literal>& filter)
+    static DropLogicalSourceStatement bindDropLogicalSource(const std::optional<std::pair<Identifier, Literal>>& filter)
     {
-        return DropLogicalSourceStatement{
-            LogicalSourceName(Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP LOGICAL SOURCE")))};
-    }
-
-    [[nodiscard]] DropPhysicalSourceStatement bindDropPhysicalSource(const std::pair<Identifier, Literal>& filter) const
-    {
-        const auto id = requireFilterValue<uint64_t>(filter, "ID", "an unsigned integer", "DROP PHYSICAL SOURCE");
-        if (const auto physicalSource = sourceCatalog->getPhysicalSource(PhysicalSourceId{id}))
+        if (not filter.has_value())
         {
-            return DropPhysicalSourceStatement{*physicalSource};
+            return DropLogicalSourceStatement{.source = std::nullopt};
         }
-        throw UnknownSourceName("There is no physical source with id {}", id);
+        return DropLogicalSourceStatement{
+            LogicalSourceName(Identifier::parse(requireFilterValue<std::string>(*filter, "NAME", "a string", "DROP LOGICAL SOURCE")))};
     }
 
-    static DropQueryStatement bindDropQuery(const std::pair<Identifier, Literal>& filter)
+    [[nodiscard]] static DropPhysicalSourceStatement bindDropPhysicalSource(const std::optional<std::pair<Identifier, Literal>>& filter)
     {
-        return DropQueryStatement{.id = DistributedQueryId(requireFilterValue<std::string>(filter, "ID", "a string", "DROP QUERY"))};
+        if (not filter.has_value())
+        {
+            return DropPhysicalSourceStatement{.id = std::nullopt};
+        }
+        return DropPhysicalSourceStatement{requireFilterValue<uint64_t>(*filter, "ID", "an unsigned integer", "DROP PHYSICAL SOURCE")};
     }
 
-    static DropSinkStatement bindDropSink(const std::pair<Identifier, Literal>& filter)
+    /// DROP QUERY and STOP QUERY select their queries with the same filter.
+    template <typename QueryStatement>
+    static QueryStatement bindQueryFilter(const std::optional<std::pair<Identifier, Literal>>& filter, const std::string_view statementName)
     {
-        return DropSinkStatement{Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SINK"))};
+        if (not filter.has_value())
+        {
+            return QueryStatement{.name = std::nullopt, .id = std::nullopt};
+        }
+        static const auto IdIdentifier = Identifier::parse("ID");
+        static const auto NameIdentifier = Identifier::parse("NAME");
+        if (filter->first == IdIdentifier)
+        {
+            return QueryStatement{
+                .name = std::nullopt, .id = requireFilterValue<uint64_t>(*filter, "ID", "an unsigned integer", statementName)};
+        }
+        if (filter->first == NameIdentifier)
+        {
+            return QueryStatement{
+                .name = Identifier::parse(requireFilterValue<std::string>(*filter, "NAME", "a string", statementName)), .id = std::nullopt};
+        }
+        throw InvalidQuerySyntax("Filter for {} must be on ID or NAME attribute", statementName);
     }
 
-    static DropModelStatement bindDropModel(const std::pair<Identifier, Literal>& filter)
+    static StopQueryStatement bindStopStatement(AntlrSQLParser::StopStatementContext* stopAst)
     {
-        return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
+        const auto* const filterAst = stopAst->dropFilter();
+        const std::optional<std::pair<Identifier, Literal>> filter
+            = filterAst != nullptr ? std::optional{bindDropFilter(filterAst)} : std::nullopt;
+        return bindQueryFilter<StopQueryStatement>(filter, "STOP QUERY");
+    }
+
+    static DropSinkStatement bindDropSink(const std::optional<std::pair<Identifier, Literal>>& filter)
+    {
+        if (not filter.has_value())
+        {
+            return DropSinkStatement{.name = std::nullopt};
+        }
+        return DropSinkStatement{Identifier::parse(requireFilterValue<std::string>(*filter, "NAME", "a string", "DROP SINK"))};
+    }
+
+    static DropModelStatement bindDropModel(const std::optional<std::pair<Identifier, Literal>>& filter)
+    {
+        if (not filter.has_value())
+        {
+            return DropModelStatement{.name = std::nullopt};
+        }
+        return DropModelStatement{.name = requireFilterValue<std::string>(*filter, "NAME", "a string", "DROP MODEL")};
+    }
+
+    static DropWorkerStatement bindDropWorker(const std::optional<std::pair<Identifier, Literal>>& filter)
+    {
+        if (not filter.has_value())
+        {
+            throw InvalidQuerySyntax("DROP WORKER requires a WHERE filter on the HOST attribute");
+        }
+        return DropWorkerStatement{.host = bindWorkerAddress(requireFilterValue<std::string>(*filter, "HOST", "a string", "DROP WORKER"))};
     }
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
-        const auto* const dropFilter = dropAst->dropFilter();
-        PRECONDITION(dropFilter != nullptr, "Drop statement must have a WHERE filter");
-        const auto filter = bindDropFilter(dropFilter);
+        const auto* const dropFilterAst = dropAst->dropFilter();
+        const std::optional<std::pair<Identifier, Literal>> filter
+            = dropFilterAst != nullptr ? std::optional{bindDropFilter(dropFilterAst)} : std::nullopt;
         auto* const subject = dropAst->dropSubject();
 
+        if (subject->dropQuery() != nullptr)
+        {
+            return bindQueryFilter<DropQueryStatement>(filter, "DROP QUERY");
+        }
         if (auto* const dropSourceAst = subject->dropSource())
         {
             if (dropSourceAst->dropLogicalSourceSubject() != nullptr)
@@ -527,10 +618,6 @@ public:
                 return bindDropPhysicalSource(filter);
             }
         }
-        if (subject->dropQuery() != nullptr)
-        {
-            return bindDropQuery(filter);
-        }
         if (subject->dropSink() != nullptr)
         {
             return bindDropSink(filter);
@@ -538,6 +625,10 @@ public:
         if (subject->dropModel() != nullptr)
         {
             return bindDropModel(filter);
+        }
+        if (subject->dropWorker() != nullptr)
+        {
+            return bindDropWorker(filter);
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }
@@ -647,32 +738,36 @@ public:
             {
                 return bindDropStatement(dropAst);
             }
+            if (auto* const stopAst = statementAST->stopStatement())
+            {
+                return bindStopStatement(stopAst);
+            }
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {
                 return bindExplainStatement(explainStatementAST);
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
-                std::optional<DistributedQueryId> queryId;
+                std::optional<Identifier> queryName;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
                     static const auto QueryIdentifier = Identifier::parse("QUERY");
-                    static const auto IdIdentifier = Identifier::parse("ID");
-                    if (auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
+                    static const auto NameIdentifier = Identifier::parse("NAME");
+                    if (const auto optionsIter = options.find(QueryIdentifier); optionsIter != options.end())
                     {
-                        if (auto idIter = optionsIter->second.find(IdIdentifier); idIter != optionsIter->second.end())
+                        if (const auto nameIter = optionsIter->second.find(NameIdentifier); nameIter != optionsIter->second.end())
                         {
-                            auto* literal = std::get_if<Literal>(&idIter->second);
-                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
+                            const auto* literal = std::get_if<Literal>(&nameIter->second);
+                            if (literal == nullptr || !std::holds_alternative<std::string>(*literal))
                             {
-                                throw InvalidQuerySyntax("Query id must be a string");
+                                throw InvalidQuerySyntax("Query name must be a string");
                             }
-                            queryId = DistributedQueryId(std::get<std::string>(*literal));
+                            queryName = Identifier::parse(std::get<std::string>(*literal));
                         }
                     }
                 }
-                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+                return QueryStatement{.plan = queryBinder(queryAst->query()), .name = queryName};
             }
 
             throw InvalidStatement(statementAST->toString());
@@ -688,10 +783,8 @@ public:
     }
 };
 
-StatementBinder::StatementBinder(
-    const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
-    : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
+StatementBinder::StatementBinder(const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
+    : impl(std::make_unique<Impl>(queryPlanBinder))
 {
 }
 
