@@ -1,0 +1,150 @@
+# name: inference/InferModelSFace.test
+# description: Prints SFace embeddings for a portrait, its five-degree rotation, and a different person
+# groups: [Inference, PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE portraits(encoded VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR portraits TYPE File;
+ATTACH FILE python_udf/portrait_comparison.jpg.base64.csv
+
+CREATE MODEL yunet ('model/face_detection_yunet_2026may_320_packed.onnx')
+INPUT (detectorTensor VARSIZED)
+OUTPUT (packedFaces VARSIZED);
+
+CREATE MODEL sface ('model/face_recognition_sface_2021dec.onnx')
+INPUT (embeddingTensor VARSIZED)
+OUTPUT (embedding VARSIZED);
+
+CREATE SINK sink(embeddingBase64 VARSIZED NOT NULL) TYPE File;
+
+SELECT TO_BASE64(embedding) AS embeddingBase64
+FROM MODEL_INFERENCE(sface, (
+    SELECT PYTHON((imageBytes, packedFaces): $python$
+        import cv2
+        import math
+        import numpy as np
+
+        input_size = 320
+        total_locations = 0
+        for stride in (8, 16, 32):
+            grid_size = input_size // stride
+            total_locations += grid_size * grid_size
+        values = np.frombuffer(packedFaces, dtype=np.float32)
+        if values.size != total_locations * 16:
+            raise ValueError("unexpected packed YuNet output size")
+
+        best_score = -1.0
+        best_stride = 0
+        best_grid_size = 0
+        best_index = 0
+        best_landmark_offset = 0
+        preceding_locations = 0
+        for stride in (8, 16, 32):
+            grid_size = input_size // stride
+            location_count = grid_size * grid_size
+            class_offset = preceding_locations
+            object_offset = total_locations + preceding_locations
+            landmark_offset = 6 * total_locations + 10 * preceding_locations
+            for index in range(location_count):
+                class_score = min(1.0, max(0.0, float(values[class_offset + index])))
+                object_score = min(1.0, max(0.0, float(values[object_offset + index])))
+                score = math.sqrt(class_score * object_score)
+                if score > best_score:
+                    best_score = score
+                    best_stride = stride
+                    best_grid_size = grid_size
+                    best_index = index
+                    best_landmark_offset = landmark_offset
+            preceding_locations += location_count
+        if best_score < 0.6:
+            raise ValueError("YuNet did not detect a face")
+
+        row = best_index // best_grid_size
+        column = best_index % best_grid_size
+        landmark_offset = best_landmark_offset + best_index * 10
+
+        encoded = np.frombuffer(imageBytes, dtype=np.uint8)
+        image = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+        source = np.empty((5, 2), dtype=np.float64)
+        image_width = float(image.shape[1])
+        image_height = float(image.shape[0])
+        for index in range(5):
+            normalized_x = (float(values[landmark_offset + index * 2]) + column) * best_stride / input_size
+            normalized_y = (float(values[landmark_offset + index * 2 + 1]) + row) * best_stride / input_size
+            source[index, 0] = normalized_x * image_width
+            source[index, 1] = normalized_y * image_height
+
+        target = np.empty((5, 2), dtype=np.float64)
+        target[0, 0], target[0, 1] = 38.2946, 51.6963
+        target[1, 0], target[1, 1] = 73.5318, 51.5014
+        target[2, 0], target[2, 1] = 56.0252, 71.7366
+        target[3, 0], target[3, 1] = 41.5493, 92.3655
+        target[4, 0], target[4, 1] = 70.7299, 92.2041
+
+        source_mean_x = 0.0
+        source_mean_y = 0.0
+        target_mean_x = 0.0
+        target_mean_y = 0.0
+        for index in range(5):
+            source_mean_x += source[index, 0]
+            source_mean_y += source[index, 1]
+            target_mean_x += target[index, 0]
+            target_mean_y += target[index, 1]
+        source_mean_x /= 5.0
+        source_mean_y /= 5.0
+        target_mean_x /= 5.0
+        target_mean_y /= 5.0
+
+        denominator = 0.0
+        numerator_a = 0.0
+        numerator_b = 0.0
+        for index in range(5):
+            source_x = source[index, 0] - source_mean_x
+            source_y = source[index, 1] - source_mean_y
+            target_x = target[index, 0] - target_mean_x
+            target_y = target[index, 1] - target_mean_y
+            denominator += source_x * source_x + source_y * source_y
+            numerator_a += source_x * target_x + source_y * target_y
+            numerator_b += source_x * target_y - source_y * target_x
+        if denominator == 0.0:
+            raise ValueError("degenerate YuNet landmarks")
+
+        a = numerator_a / denominator
+        b = numerator_b / denominator
+        transformation = np.empty((2, 3), dtype=np.float64)
+        transformation[0, 0] = a
+        transformation[0, 1] = -b
+        transformation[0, 2] = target_mean_x - a * source_mean_x + b * source_mean_y
+        transformation[1, 0] = b
+        transformation[1, 1] = a
+        transformation[1, 2] = target_mean_y - b * source_mean_x - a * source_mean_y
+
+        aligned = cv2.warpAffine(
+            image,
+            transformation,
+            (112, 112),
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0.0, 0.0, 0.0, 0.0))
+        rgb = cv2.cvtColor(aligned, cv2.COLOR_BGR2RGB)
+        tensor = rgb.astype(np.float32).transpose((2, 0, 1)).copy()
+        return str(tensor.data.as_byte(), int(tensor.nbytes))
+    $python$) AS VARSIZED AS embeddingTensor
+    FROM MODEL_INFERENCE(yunet, (
+        SELECT imageBytes, PYTHON((imageBytes): $python$
+            import cv2
+            import numpy as np
+
+            encoded = np.frombuffer(imageBytes, dtype=np.uint8)
+            image = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+            resized = cv2.resize(image, (320, 320), interpolation=cv2.INTER_LINEAR)
+            tensor = resized.astype(np.float32).transpose((2, 0, 1)).copy()
+            return str(tensor.data.as_byte(), int(tensor.nbytes))
+        $python$) AS VARSIZED AS detectorTensor
+        FROM (SELECT FROM_BASE64(encoded) AS imageBytes FROM portraits)
+    ))
+))
+INTO file();
+----
+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
