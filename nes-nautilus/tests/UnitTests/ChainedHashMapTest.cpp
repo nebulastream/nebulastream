@@ -472,19 +472,25 @@ TEST(ChainedHashMapIteratorTest, emptyMapIsAnEmptyRange)
     auto hashMapBuffer = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSize(numberOfBuckets, 0)).value();
     ChainedHashMap::init(hashMapBuffer, hashMapConfig);
 
-    auto engine = TestUtils::makeEngine(TestUtils::EngineMode::Interpreter);
-    auto iterate = engine.registerFunction(std::function(
-        /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
-        [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
-        {
-            const ChainedHashMapRef ref{BorrowedNautilusBuffer::from(buffer), hashMapConfig};
-            for (const auto entry : ref)
+    for (const auto mode : {TestUtils::EngineMode::Interpreter, TestUtils::EngineMode::Compiler})
+    {
+        auto engine = TestUtils::makeEngine(mode);
+        auto iterate = engine.registerFunction(std::function(
+            /// NOLINTNEXTLINE(performance-unnecessary-value-param): registerFunction requires val<FunctionArguments> by value.
+            [hashMapConfig](nautilus::val<TupleBuffer*> buffer)
             {
-                std::ignore = entry;
-            }
-        }));
+                const ChainedHashMapRef ref{BorrowedNautilusBuffer::from(buffer), hashMapConfig};
+                nautilus::val<uint64_t> count = 0;
+                for (const auto entry : ref)
+                {
+                    std::ignore = entry;
+                    ++count;
+                }
+                return count;
+            }));
 
-    EXPECT_NO_THROW(iterate(&hashMapBuffer));
+        EXPECT_EQ(iterate(&hashMapBuffer), 0);
+    }
 }
 
 /// Same properties, but with the in-map BloomFilter enabled at random sizing. findOrCreateEntry consults
