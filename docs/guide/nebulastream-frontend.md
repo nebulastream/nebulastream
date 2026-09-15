@@ -574,11 +574,13 @@ models:
 
 Each model entry requires:
 - `name` - Identifier used in `MODEL_INFERENCE(name, ...)` queries
-- `path` - Absolute path to an `.onnx` model file (must exist at registration time)
+- `path` - Absolute path to a model file (must exist at registration time). Supported formats: ONNX,
+  TensorFlow (frozen graph / graph text, SavedModel, MetaGraph), LiteRT (formerly TFLite), and
+  PaddlePaddle — see [Model Inference](operators.md#model-inference) for details
 - `input` - List of input fields with name and type (must match the model's input tensor)
 - `output` - List of output fields with name and type (must match the model's output tensor)
 
-For the equivalent SQL syntax and full usage examples, see `guide/query_api.md`.
+For the equivalent SQL syntax and full usage examples, see [Model Inference](operators.md#model-inference).
 
 **Example: Complete Topology with Model Inference**
 

@@ -1,6 +1,6 @@
 ---
 title: "Reference"
-weight: 10
+weight: 20
 ---
 
-These pages provide reference material for using NebulaStream: concepts, getting started, the Query API, and deployment.
+These pages provide reference material for using NebulaStream: concepts, the Query API, sources, sinks, operators, and functions.
