@@ -12,17 +12,12 @@
     limitations under the License.
 */
 
-//! Sends create/drop query traffic against the simulated cluster and
-//! asserts that the catalog and the workers stay in agreement.
+//! Sends create-query and drop-query traffic against the simulated cluster
+//! and asserts that the catalog and the workers agree afterwards.
 //!
-//! Each operation is one create-query or drop-query action. The workload
-//! picks `num_ops` of them, chooses create or drop by `create_weight` and
-//! `drop_weight`, spreads them across `[begin, end)` with random delays,
-//! and lets the runner replay each through the model state so every
-//! operation runs against a well-formed catalog. The final checks
-//! cover three angles: fragments of active queries are `Running` in the
-//! catalog, fragments of dropped queries are `Stopped` in the catalog,
-//! and worker-side active fragments match what the model expects.
+//! The workload runs `num_ops` operations, each create or drop by `create_weight` and `drop_weight`,
+//! spread across `[begin, end)` with random delays.
+//! Every operation is resolved through the model state so it runs against a well-formed catalog.
 
 #![cfg(madsim)]
 
@@ -127,10 +122,9 @@ impl Workload for QueryWorkload {
         info!("{}: completed {} ops", self.name(), self.num_ops);
     }
 
-    // The model state is read-only across this await chain: it is only
-    // ever mutated by `run` between ticks, and `check` is the final
-    // call of each tick. Madsim is single-threaded so no other task can
-    // borrow it concurrently.
+    // Holding the borrow across the await is safe: the model is only mutated while workloads start,
+    // and the checks run after every workload has finished.
+    // Madsim is single-threaded, so no other task borrows it concurrently.
     #[allow(clippy::await_holding_refcell_ref)]
     async fn check(&self, harness: &TestHarness) {
         let model = self.model.borrow();

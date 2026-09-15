@@ -12,15 +12,12 @@
     limitations under the License.
 */
 
-//! Failure-injection workload that clogs random directed links over the
-//! simulated network for a windowed period.
+//! Failure-injection workload that clogs random directed links of the simulated network for a window.
 //!
-//! This is looser than a textbook partition, which splits the nodes into
-//! groups with no links between them. Here each directed link is clogged on
-//! its own with probability `partition_rate`, so the broken links form a
-//! random, usually asymmetric set: A may be unable to reach B while B can
-//! still reach A. That covers clean partitions and also the messier
-//! reachability failures that reconnect logic has to handle in practice.
+//! This is looser than a textbook partition, which splits the nodes into groups with no links between them.
+//! Each directed link is clogged on its own with probability `partition_rate`,
+//! so the broken links form a random, usually asymmetric set: A may be unable to reach B while B can still reach A.
+//! That covers clean partitions and the messier reachability failures that reconnect logic has to handle in practice.
 
 #![cfg(madsim)]
 use crate::config;

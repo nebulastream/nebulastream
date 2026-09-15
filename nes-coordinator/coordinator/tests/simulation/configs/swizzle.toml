@@ -52,7 +52,7 @@ run_failure_workloads = false
   create_weight = 1
   drop_weight = 0
 
-  # Fewer queries — the coordinator itself may briefly be unreachable
+  # Fewer queries, since the coordinator itself may be unreachable for a while
   [[test.workload]]
   name = "Query"
   num_ops = 7

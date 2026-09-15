@@ -31,7 +31,7 @@ run_failure_workloads = false
   create_weight = 3
   drop_weight = 1
 
-  # Moderate latency inflation plus light packet loss
+  # Moderate latency and light packet loss
   [[test.workload]]
   name = "Degradation"
   begin = 10
@@ -61,7 +61,7 @@ run_failure_workloads = false
   create_weight = 5
   drop_weight = 2
 
-  # Heavy latency blowup plus 20% packet loss
+  # Heavy latency and 20% packet loss
   [[test.workload]]
   name = "Degradation"
   begin = 8

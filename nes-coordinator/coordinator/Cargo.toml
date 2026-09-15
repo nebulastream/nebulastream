@@ -34,7 +34,7 @@ tonic-build = { version = "0.5", package = "madsim-tonic-build" }
 
 [dev-dependencies]
 sea-orm.workspace = true
-# Pull in model's Arbitrary impls / generators for the simulation tests.
+# The testing feature provides the Arbitrary generators that the simulation tests use.
 model = { workspace = true, features = ["testing"] }
 proptest.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter"] }

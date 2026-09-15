@@ -14,12 +14,11 @@
 
 //! Fake gRPC worker used by the simulation.
 //!
-//! Implements the same RPC surface a real worker exposes (start, stop,
-//! per-fragment and aggregate status, plus health-check) against an
-//! in-memory map of fragments. State transitions are
-//! deterministic given a seed; each handler carries `buggify` points
-//! so the simulator can exercise the controller's retry, reconnect, and
-//! crash-recovery paths without standing up real worker processes.
+//! Implements the RPC surface of a real worker (start, stop, per-fragment and aggregate status, health check)
+//! against an in-memory map of fragments.
+//! State transitions are deterministic given a seed.
+//! The handlers have buggify points so the simulator exercises the controller's retry, reconnect,
+//! and crash-recovery paths without real worker processes.
 
 use madsim::buggify::buggify;
 use std::collections::HashMap;
@@ -148,10 +147,8 @@ impl SingleNodeWorker {
 
 #[tonic::async_trait]
 impl WorkerRpcService for SingleNodeWorker {
-    /// Registers and starts in one call, so the fragment is created here rather
-    /// than by a preceding RPC, and its id comes from the plan. Both fault
-    /// injections the two former handlers carried are kept: a rejected call and
-    /// a slow one.
+    /// Registers and starts in one call, so the fragment is created here and its id comes from the plan.
+    /// Two faults are injected: a rejected call and a slow one.
     #[instrument(skip(self, request))]
     async fn start_query(
         &self,
@@ -293,8 +290,8 @@ impl WorkerRpcService for SingleNodeWorker {
         }))
     }
 
-    /// A real worker reports the version of the binary it runs. The simulation has no binary and
-    /// nothing here asserts on the answer, so a fixed string is all this has to supply.
+    /// A real worker reports its binary's version.
+    /// The simulation has no binary and nothing asserts on the answer, so a fixed string is enough.
     #[instrument(skip(self, _request))]
     async fn request_version(
         &self,

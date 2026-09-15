@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-//! Runs one trial of the simulation: builds the harness, hooks up the
-//! workloads, runs them concurrently, and runs every workload's
-//! invariants once the simulation window has elapsed.
+//! Runs one trial: builds the harness, sets up the workloads, runs them concurrently,
+//! and runs every workload's checks once the simulation window has elapsed.
 //!
-//! `buggify` is a fault-injection switch. The coordinator and controller
-//! have buggify checks at chosen points; when buggify is on, a check returns
-//! true at random (but seed-reproducible) points and runs the fault there,
-//! for example an early error return or a skipped update. This hits failure
-//! paths that are otherwise rare. It is enabled at the start of a trial and
-//! optionally disabled partway through so the system can recover before the
-//! final invariant check.
+//! `buggify` is a fault-injection switch.
+//! The controller and the fake worker have buggify points; when buggify is on,
+//! a point fires at random (but seed-reproducible) moments and runs its fault there,
+//! for example an early error return or a slow reply.
+//! This hits failure paths that are otherwise rare.
+//! It is enabled at the start of a trial and optionally disabled partway through,
+//! so the system can recover before the final checks.
 
 #![cfg(madsim)]
 use crate::config::TestConfig;

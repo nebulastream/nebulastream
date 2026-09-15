@@ -12,21 +12,11 @@
     limitations under the License.
 */
 
-//! Property assertions a workload runs once the simulation has quiesced.
+//! Assertions that a workload runs once the simulation has quiesced.
 //!
-//! An invariant compares a piece of model state against what the
-//! coordinator and workers actually report, and panics on mismatch.
-//! Keeping the contract this small lets each workload assemble its own
-//! list of relevant invariants from short, reusable pieces.
-//!
-//! This module is the single home for the system invariants the simulation
-//! checks. Each is a condition that must hold after the run has quiesced:
-//!
-//!  - Catalog fragments of active queries match the model and are Running.
-//!  - Catalog fragments of dropped queries match the model and are Stopped.
-//!  - Workers report the same active fragments as the model.
-//!  - Catalog workers marked active match the model's active workers.
-//!  - Catalog workers marked removed match the model's dropped workers.
+//! An invariant compares one piece of model state against what the coordinator or the workers report,
+//! and panics on mismatch.
+//! The contract is kept this small so each workload assembles its own list from short, reusable pieces.
 
 #![cfg(madsim)]
 
@@ -106,9 +96,9 @@ impl Invariant<ModelState> for CatalogQueryFragmentsActive {
             "{}: ID mismatch",
             self.name()
         );
-        // Started counts as live: starting a fragment is a single call that only marks it accepted,
-        // and the next poll is what promotes it, so an active fragment sits in Started for up to one
-        // poll interval. Both are non-terminal, which is what this invariant is really asserting.
+        // Started counts as live: the start call only marks a fragment accepted and the next poll promotes it,
+        // so an active fragment stays in Started for up to one poll interval.
+        // Both states are non-terminal, which is what this invariant asserts.
         for f in &fragments {
             assert!(
                 matches!(

@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-//! Failure-injection workload that clogs whole nodes (not links) for
-//! overlapping time windows during a trial.
+//! Failure-injection workload that clogs whole nodes (not links) for overlapping windows.
 //!
-//! Each candidate node is picked with probability `swizzle_rate`, then
-//! a clog/unclog window is chosen with both endpoints randomized over
-//! the first and second half of the trial respectively. The result is
-//! a rolling pattern of overlapping outages that stresses concurrent
-//! reconnect attempts and ordering of intent/state notifications.
+//! Each candidate node is picked with probability `swizzle_rate`.
+//! Its clog starts at a random point in the first half of the workload's window
+//! and ends at a random point in the second half,
+//! so the outages overlap in a rolling pattern that stresses concurrent reconnects
+//! and the ordering of intent and state notifications.
 
 #![cfg(madsim)]
 

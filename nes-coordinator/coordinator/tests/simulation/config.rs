@@ -14,11 +14,9 @@
 
 //! TOML schema for simulation trial configs.
 //!
-//! A test file in `tests/simulation/configs` holds one or more trial
-//! entries. Each entry pins simulator behavior (timeout, buggify, network
-//! noise) and lists the workloads to run, by name plus a free-form
-//! options table. The runner uses these types to turn the TOML into a
-//! plan for a single madsim run.
+//! A test file in `tests/simulation/configs` holds one or more trial entries.
+//! Each entry pins simulator behavior (timeout, buggify, network noise)
+//! and lists the workloads to run, each by name with a free-form options table.
 
 #![cfg(madsim)]
 use serde::Deserialize;
@@ -29,16 +27,15 @@ use tracing::warn;
 const DEFAULT_TIMEOUT_SECS: u64 = 600;
 const DEFAULT_BUGGIFY_PROBABILITY: f64 = 0.25;
 
-/// Network conditions the harness applies to the simulated network.
+/// Network conditions that the harness applies to the simulated network.
 pub const SEND_LATENCY_LO: Duration = Duration::from_millis(1);
 pub const SEND_LATENCY_HI: Duration = Duration::from_millis(100);
 pub const SEND_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Window a failure workload runs over when it is auto-injected, and so has
-/// no config to read a window from.
+/// The window of an auto-injected failure workload, which has no config to read one from.
 pub const INJECTION_WINDOW_SECS: u64 = 30;
 
-/// Rates a failure workload falls back to when its config leaves them unset.
+/// Fallback rates for a failure workload whose config leaves them unset.
 pub const PARTITION_RATE: f64 = 0.15;
 pub const PAUSE_RATE: f64 = 0.20;
 pub const SWIZZLE_RATE: f64 = 0.5;
@@ -62,9 +59,8 @@ pub struct TestConfig {
     pub workload: Option<Vec<WorkloadOptions>>,
 }
 
-/// Validated network-noise settings applied to the simulated network for
-/// the entire trial. Validation happens during deserialization so a bad
-/// config fails at trial discovery rather than during the run.
+/// Network-noise settings applied to the simulated network for the entire trial.
+/// Validation happens during deserialization so a bad config fails at trial discovery rather than during the run.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(try_from = "RawNetworkConfig")]
 pub struct NetworkConfig {
@@ -124,8 +120,7 @@ impl TestConfig {
         DEFAULT_BUGGIFY_PROBABILITY
     }
 
-    /// Warn about workload windows that run past the test timeout, since the
-    /// test ends before they do and their tail is cut off.
+    /// Warns about workload windows past the test timeout, since the test ends before they do and their tail is cut off.
     pub fn warn_on_windows_past_timeout(&self) {
         let timeout = self.timeout().as_secs();
         for w in self.workload.iter().flatten() {

@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-//! Failure-injection workload that elevates network latency and packet
-//! loss for a window, then restores both to a baseline.
+//! Failure-injection workload that raises network latency and packet loss for a window, then restores a baseline.
 //!
-//! Targets the parts of the system that assume "the network mostly
-//! works": RPC retries, deadlines, and the coordinator's blocking-reply
-//! deadlines. Restoration uses a small but non-zero latency rather than
-//! zero so the test never relies on instant delivery.
+//! Targets the parts of the system that assume a mostly working network:
+//! RPC retries, deadlines, and the coordinator's blocking-reply deadlines.
+//! The restored latency is small but non-zero so the test never relies on instant delivery.
 
 #![cfg(madsim)]
 use crate::config;

@@ -10,11 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Attrition tests worker-failure resilience under load. Each test builds a
-# pool of workers, accumulates queries on them, then kills and restarts a
-# fraction of the workers during the run. The three tests vary the timing:
-# one window, escalating waves, and kills that overlap query deployment.
-# Each checks that the catalog and workers agree once the system recovers.
+# Worker-failure resilience under load.
+# Each test builds a pool of workers, accumulates queries on them, then kills and restarts a fraction of the workers.
+# The three tests vary the timing: one window, escalating waves, and kills that overlap query deployment.
 
 [[test]]
 title = "kill_query_window"
@@ -39,7 +37,7 @@ run_failure_workloads = false
   create_weight = 1
   drop_weight = 0
 
-  # Kill about a third of the workers in the same time window
+  # Kill about half the workers at the same instant
   [[test.workload]]
   name = "Attrition"
   begin = 5
@@ -98,7 +96,7 @@ timeout = 60
 buggify = false
 run_failure_workloads = false
 
-  # Few workers, many queries — every worker carries many fragments
+  # Few workers, many queries, so every worker holds many fragments
   [[test.workload]]
   name = "Worker"
   num_ops = 3

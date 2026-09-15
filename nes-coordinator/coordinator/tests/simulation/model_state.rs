@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
-//! In-memory mirror of what the workloads believe the coordinator's
-//! catalog contains. Invariants compare this against the real catalog and
-//! against worker-reported state to detect drift.
+//! In-memory mirror of what the workloads expect the coordinator's catalog to contain.
+//! Invariants compare it against the real catalog and against worker-reported state.
 //!
-//! Workloads do not send statements directly. They name an `Operation`,
-//! the model resolves it into either a ready statement or the next
-//! prerequisite, the runner sends the statement, and the response is
-//! handed back to the model with `observe`. Resolving each operation
-//! through the model keeps the simulated state and the assertions
-//! consistent without leaking catalog details into every workload.
+//! Workloads do not send statements directly.
+//! A workload picks an operation, the model resolves it into a ready statement or the next prerequisite,
+//! the statement is sent, and the response is folded back into the model.
+//! Resolving every operation through the model keeps the mirror and the assertions consistent
+//! without catalog details in every workload.
 
 #![cfg(madsim)]
 
@@ -55,11 +53,12 @@ pub enum Operation {
     DropQuery,
 }
 
+/// The next statement to send for an operation.
+/// After a prerequisite's response is observed, the operation is resolved again.
 pub enum Step {
-    /// A prerequisite must be fulfilled first. Execute this statement,
-    /// call `observe` with the response, then call `resolve` again.
+    /// A statement that must succeed before the operation's own statement can be built.
     Prerequisite(Statement),
-    /// All prerequisites are met. Execute this final statement.
+    /// The operation's own statement.
     Ready(Statement),
 }
 
@@ -87,9 +86,6 @@ pub struct ModelState {
 }
 
 impl ModelState {
-    /// Check prerequisites for `op` and return the next statement to execute.
-    /// If prerequisites are missing, returns `Step::Prerequisite`. Execute it,
-    /// call `observe`, then call `resolve` again for the same operation.
     pub fn resolve(&self, op: Operation) -> Result<Step> {
         match op {
             Operation::CreateWorker => self.create_worker(),
@@ -117,9 +113,9 @@ impl ModelState {
         }
     }
 
-    /// Fold a statement response into the model. Every statement a workload sends has to
-    /// come back through here, otherwise the model and the real catalog diverge and the
-    /// invariant checks report a mismatch the system did not cause.
+    /// Folds a statement response into the model.
+    /// Every response has to come back through here,
+    /// otherwise the model and the real catalog diverge and the invariants report a mismatch that the system did not cause.
     pub fn observe(&mut self, rsp: StatementResult) {
         match rsp {
             StatementResult::CreatedWorker(worker) => {
@@ -181,7 +177,7 @@ impl ModelState {
         let (source_id, source_addr) = self.physical.as_ref().unwrap();
         let (sink_id, sink_addr) = self.sink.as_ref().unwrap();
         let mut rng = thread_rng();
-        // pick a random subset among the currently active workers
+        // The source and sink hosts always get a fragment; the rest of the placement is a random subset of the workers.
         let k = rng.gen_range(0..=self.created_workers.len());
         let workers: HashSet<&NetworkAddr> = self
             .created_workers

@@ -14,18 +14,15 @@
 
 //! Workloads and the factories that build them.
 //!
-//! A workload is the unit of behavior a trial composes from. There are
-//! two flavors:
+//! A workload is the unit of behavior that a trial is composed from.
+//! There are two kinds:
 //!
-//!  - Driver workloads (`query`, `worker`) submit catalog operations and
-//!    later assert that the catalog and the workers agree with the
-//!    expected end state.
-//!  - Failure-injection workloads (`attrition`, `partition`, `stall`,
-//!    `swizzle`, `degradation`) perturb the network or node lifecycle
-//!    around them.
+//!  - Driver workloads (`query`, `worker`) submit catalog operations
+//!    and later assert that the catalog and the workers agree with the expected end state.
+//!  - Failure-injection workloads (`attrition`, `partition`, `stall`, `swizzle`, `degradation`)
+//!    perturb the network or the node lifecycle around them.
 //!
-//! Both kinds register themselves with `inventory`, so trials reference
-//! them by name in TOML without a central registry.
+//! Both kinds register themselves with `inventory`, so a trial references them by name in TOML without a central registry.
 
 #![cfg(madsim)]
 
@@ -80,12 +77,11 @@ pub fn pick_weighted<T: Copy>(choices: &[(T, u32)]) -> T {
         .0
 }
 
-/// Lifecycle a workload moves through during a trial. `setup` runs in
-/// sequence before any workload starts, so a workload can seed the
-/// model from the catalog or stage shared state without racing the
-/// others. `start` is where the traffic or fault injection happens and
-/// is run concurrently across all workloads. `check` runs
-/// at the end and is allowed to panic to fail the trial.
+/// A workload's lifecycle during a trial.
+/// `setup` runs for each workload in sequence before any starts,
+/// so a workload can seed the model from the catalog or stage shared state without racing the others.
+/// `start` runs concurrently across all workloads and is where the traffic or fault injection happens.
+/// `check` runs at the end and panics to fail the trial.
 #[async_trait(?Send)]
 pub trait Workload {
     fn name(&self) -> &str;
@@ -121,8 +117,7 @@ pub fn parse_options<T: DeserializeOwned + Default>(options: &HashMap<String, to
         .expect("failed to parse workload options")
 }
 
-/// Like `parse_options`, but for configs whose fields are required. There is
-/// no default to fall back to, so a missing field fails the parse.
+/// For configs whose fields are all required: there is no default to fall back to, so a missing field fails the parse.
 pub fn parse_required<T: DeserializeOwned>(options: &HashMap<String, toml::Value>) -> T {
     let table: toml::map::Map<String, toml::Value> = options
         .iter()
@@ -159,7 +154,7 @@ pub fn create_workload(
     panic!("unknown workload: {name}");
 }
 
-/// Run the resolve/observe loop for an operation, including all prerequisites.
+/// Sends the statements for an operation, prerequisites first, and folds each response into the model.
 pub async fn execute(op: Operation, model: &Rc<RefCell<ModelState>>, harness: &TestHarness) {
     loop {
         let step = model.borrow().resolve(op);

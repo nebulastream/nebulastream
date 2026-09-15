@@ -14,19 +14,16 @@
 
 //! Simulation test entry point.
 //!
-//! Each `.toml` file under `tests/simulation/configs` defines one or more
-//! deterministic trials. A trial picks a seed, builds a fresh madsim
-//! runtime, runs the configured workloads against an in-process
-//! coordinator and a swarm of fake workers, and asserts invariants at
-//! the end.
+//! Each `.toml` file under `tests/simulation/configs` defines one or more deterministic trials.
+//! A trial picks a seed, builds a fresh madsim runtime,
+//! runs the configured workloads against an in-process coordinator and a set of fake workers,
+//! and asserts invariants at the end.
 //!
-//! Trials run on a worker thread under a wall-clock timeout so a stuck
-//! simulation cannot hang the whole test binary. Seeds are surfaced on
-//! every failure so a flake can be replayed with `MADSIM_TEST_SEED=...`.
+//! Trials run on a worker thread under a wall-clock timeout so a stuck simulation cannot hang the whole test binary.
+//! The seed is printed on every failure so a flake can be replayed with `MADSIM_TEST_SEED=...`.
 //!
-//! The crate has to compile without madsim (clippy, normal builds,
-//! tooling) so most of the test code is gated on `cfg(madsim)`; the
-//! non-madsim build produces an empty trial list.
+//! The crate has to compile without madsim (clippy, normal builds, tooling),
+//! so most of the test code is behind `cfg(madsim)` and the non-madsim build produces an empty trial list.
 
 #[cfg(madsim)]
 mod config;
@@ -110,8 +107,7 @@ fn discover_trials() -> Vec<Trial> {
             };
 
             // No seed pinned: derive one per trial from the wall clock.
-            // Trials can start in the same nanosecond, so xor in the trial
-            // index times a large odd constant to keep seeds distinct.
+            // Trials can start in the same nanosecond, so xor in the trial index times a large odd constant to keep seeds distinct.
             let seed = env_seed.unwrap_or_else(|| {
                 let nanos = SystemTime::now()
                     .duration_since(UNIX_EPOCH)

@@ -12,15 +12,13 @@
     limitations under the License.
 */
 
-//! Simulation harness: starts the coordinator and worker nodes inside
-//! madsim and gives workloads a single API to operate them.
+//! Simulation harness: starts the coordinator and worker nodes inside madsim
+//! and gives workloads one API to operate them.
 //!
-//! Every node, the coordinator and each worker, is a separate madsim
-//! "node" with its own IP. Sending a statement to the coordinator is a
-//! function call on the harness; sending fault primitives (kill, pause,
-//! clog, restart) is also only a method call, but the work happens
-//! inside the simulator. The harness owns the test scratch directory so
-//! the on-disk database is cleaned up automatically when a trial ends.
+//! The coordinator and each worker is a separate madsim node with its own IP.
+//! Statements and fault primitives (kill, pause, clog, restart) are method calls on the harness;
+//! the faults themselves happen inside the simulator.
+//! The harness owns the test scratch directory so the on-disk database is removed when a trial ends.
 
 #![cfg(madsim)]
 
@@ -66,9 +64,7 @@ struct Coordinator {
     handle: NodeHandle,
 }
 
-/// Per-trial control point. Owns the coordinator handle, every worker
-/// node spawned during the trial, and a scratch directory for the
-/// coordinator's on-disk catalog.
+/// Per-trial control point over the simulated cluster.
 pub struct TestHarness {
     coordinator: Coordinator,
     workers: RefCell<HashMap<NetworkAddr, NodeId>>,

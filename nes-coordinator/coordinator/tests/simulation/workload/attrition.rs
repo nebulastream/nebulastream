@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-//! Failure-injection workload that kills and later restarts nodes.
+//! Failure-injection workload that kills nodes and later restarts them.
 //!
-//! Each candidate node is picked independently with probability
-//! `kill_rate`, then killed at the same instant. Restarts happen with
-//! random delays inside `restart_delay`, so the system experiences a
-//! correlated outage followed by a staggered recovery, which is a more
-//! demanding test than killing one node at a time.
+//! Each candidate node is picked independently with probability `kill_rate`, and all victims are killed at the same instant.
+//! Restarts happen after random delays inside the configured restart window,
+//! so the system sees a correlated outage followed by a staggered recovery, which is harder than losing one node at a time.
 
 #![cfg(madsim)]
 use crate::harness::TestHarness;
@@ -119,7 +117,7 @@ impl Workload for AttritionWorkload {
             .collect();
         restarts.sort_by_key(|&(_, delay)| delay);
 
-        // all nodes are killed at the same instant
+        // Kill every victim before the first restart sleep, so the outage is correlated.
         for &(id, _) in &restarts {
             info!("{}: kill {id}", self.name());
             harness.kill(id);

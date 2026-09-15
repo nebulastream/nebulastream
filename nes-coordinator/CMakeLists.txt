@@ -17,10 +17,8 @@ add_rust_cargo_test(migration)
 add_rust_cargo_test(controller)
 add_rust_cargo_test(coordinator)
 
-# The coordinator simulation tests compile the coordinator crates against
-# the deterministic madsim runtime, selected by the madsim cfg. They run
-# after the per-crate Rust tests because all cargo invocations share one
-# target directory.
+# The simulation tests compile the coordinator crates against the deterministic madsim runtime, selected by the madsim cfg.
+# They run after the per-crate Rust tests because all cargo invocations share one target directory.
 if (NES_ENABLES_TESTS)
     add_test(
             NAME rust-coordinator-simulation
@@ -28,10 +26,9 @@ if (NES_ENABLES_TESTS)
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
     get_property(_nes_rustc_for_sim CACHE Rust_COMPILER_CACHED PROPERTY VALUE)
-    # RUN_SERIAL: each trial has a real-time watchdog around a virtual-time
-    # simulation, so co-scheduled tests starving the CPU cause spurious
-    # timeouts. Running alone matches the isolated runner the suite was
-    # tuned on.
+    # RUN_SERIAL: each trial has a wall-clock watchdog around a virtual-time simulation,
+    # so co-scheduled tests that starve the CPU cause spurious timeouts.
+    # Running alone matches the isolated runner that the suite was tuned on.
     set_tests_properties(rust-coordinator-simulation PROPERTIES
             ENVIRONMENT "RUSTUP_TOOLCHAIN=${Rust_TOOLCHAIN};RUSTC=${_nes_rustc_for_sim};PROTOC=$<TARGET_FILE:protobuf::protoc>;RUSTFLAGS=--cfg madsim"
             LABELS "rust"

@@ -12,14 +12,11 @@
     limitations under the License.
 */
 
-//! Sends worker join/leave traffic during a trial (one seeded run of the
-//! simulation).
+//! Sends worker create and drop traffic during a trial.
 //!
-//! On `setup` the model is primed with whichever workers already exist
-//! in the catalog, so asserts later in the run do not report pre-existing
-//! rows as a mismatch. `start` then runs random create/drop operations
-//! over the configured window. The final checks compare the set of
-//! `Active` and `Removed` workers in the catalog against the model.
+//! On setup the model is seeded with the workers that already exist in the catalog,
+//! so the checks do not report pre-existing rows as a mismatch.
+//! The operations are spread across the configured window with random delays.
 
 #![cfg(madsim)]
 
@@ -139,7 +136,7 @@ impl Workload for WorkerWorkload {
         info!("{}: completed {} ops", self.name(), self.num_ops);
     }
 
-    // See the matching comment in workload/query.rs::check.
+    // See the matching comment in workload/query.rs.
     #[allow(clippy::await_holding_refcell_ref)]
     async fn check(&self, harness: &TestHarness) {
         let model = self.model.borrow();

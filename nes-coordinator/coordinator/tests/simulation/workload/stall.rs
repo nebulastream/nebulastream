@@ -12,12 +12,10 @@
     limitations under the License.
 */
 
-//! Failure-injection workload that pauses random nodes for a window
-//! and resumes them.
+//! Failure-injection workload that pauses random nodes for a window and resumes them.
 //!
-//! A paused node still exists from the network's point of view but
-//! makes no progress, which tests whether the coordinator's timeouts
-//! and the controller's reconciliation resume once the node comes back
+//! A paused node still exists from the network's point of view but makes no progress.
+//! This tests whether the coordinator's timeouts and the controller's reconciliation resume once the node comes back,
 //! rather than staying stuck in an intermediate state.
 
 #![cfg(madsim)]

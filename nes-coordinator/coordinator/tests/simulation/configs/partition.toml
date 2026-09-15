@@ -31,7 +31,7 @@ run_failure_workloads = false
   create_weight = 3
   drop_weight = 1
 
-  # About 30% of links broken — intermittent message loss between peers
+  # About 30% of links broken: intermittent message loss between peers
   [[test.workload]]
   name = "NetworkPartition"
   begin = 12
@@ -59,7 +59,7 @@ run_failure_workloads = false
   create_weight = 1
   drop_weight = 1
 
-  # 60% of links broken — most of the graph is split
+  # 60% of links broken: most of the graph is split
   [[test.workload]]
   name = "NetworkPartition"
   begin = 10
@@ -87,7 +87,7 @@ run_failure_workloads = false
   create_weight = 3
   drop_weight = 2
 
-  # Three partition windows — heal, break, heal
+  # Three partition windows with heals between them
   [[test.workload]]
   name = "NetworkPartition"
   begin = 10
