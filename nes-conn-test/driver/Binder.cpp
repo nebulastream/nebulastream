@@ -16,24 +16,24 @@
 
 #include <cstdint>
 #include <expected>
-#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include <CharStream.h>
 #include <Token.h>
+#include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Statements/StatementHandler.hpp>
 #include <Util/Strings.hpp>
 #include <misc/Interval.h>
 #include <ErrorHandling.hpp>
@@ -107,13 +107,10 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         return bindError("parsing the SQL", statements.error());
     }
 
-    auto sourceCatalog = std::make_shared<SourceCatalog>();
-    const StatementBinder binder(
-        sourceCatalog, [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
-    /// Connectors read their endpoint from config and conn-test does no placement, so a statement without a host gets any valid one,
-    /// as in the REPL with a single worker.
-    SourceStatementHandler handler{sourceCatalog, DefaultHost{"localhost"}};
+    const StatementBinder binder{[](auto&& ctx)
+                                 { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); }};
 
+    std::unordered_map<Identifier, LogicalSource> logicalSources;
     std::optional<SourceDescriptor> physicalDescriptor;
     for (const auto& statementContext : *statements)
     {
@@ -124,22 +121,35 @@ std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::strin
         }
         if (const auto* logical = std::get_if<CreateLogicalSourceStatement>(&*bound))
         {
-            if (const auto created = handler(*logical); !created.has_value())
+            if (!logicalSources.try_emplace(logical->name, logical->name, logical->schema).second)
             {
-                return bindError("creating the logical source", created.error());
+                return bindError("creating the logical source", SourceAlreadyExists("{}", logical->name));
             }
             continue;
         }
         if (const auto* phys = std::get_if<CreatePhysicalSourceStatement>(&*bound))
         {
+            const auto logicalSource = logicalSources.find(phys->attachedTo);
+            if (logicalSource == logicalSources.end())
+            {
+                return bindError("creating the physical source", UnknownSourceName("{}", phys->attachedTo));
+            }
             try
             {
-                auto created = handler(*phys);
+                /// Connectors read their endpoint from config and conn-test does no placement, so a missing host can stay invalid.
+                auto created = SourceDescriptor::create(
+                    PhysicalSourceId{PhysicalSourceId::INITIAL},
+                    logicalSource->second,
+                    phys->sourceType,
+                    phys->host.value_or(Host{Host::INVALID}),
+                    phys->sourceConfig,
+                    phys->parserConfig,
+                    false);
                 if (!created.has_value())
                 {
                     return bindError("creating the physical source", created.error());
                 }
-                physicalDescriptor.emplace(std::move(created->created));
+                physicalDescriptor.emplace(std::move(*created));
             }
             catch (const Exception& ex)
             {
@@ -175,10 +185,8 @@ std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& s
         return bindError("creating the sink", detail);
     }
 
-    /// The binder needs a source catalog, even though a sink config declares no source.
-    const StatementBinder binder(
-        std::make_shared<SourceCatalog>(),
-        [](auto&& ctx) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); });
+    const StatementBinder binder{[](auto&& ctx)
+                                 { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(ctx)>(ctx)); }};
     auto bound = binder.bind(statements->front().get());
     if (!bound.has_value())
     {
@@ -192,20 +200,21 @@ std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& s
     try
     {
         /// The harness runs the sink in its own process and ignores placement, so any host works.
-        SinkStatementHandler handler{std::make_shared<SinkCatalog>(), DefaultHost{"localhost"}};
-        auto created = handler(*sink);
-        if (!created.has_value())
-        {
-            return bindError("creating the sink", created.error());
-        }
-        if (toUpperCase(created->created.getFormatType()) != "JSON")
+        auto created = SinkDescriptor::createNamed(
+            SinkId{SinkId::INITIAL},
+            sink->name,
+            sink->sinkType,
+            sink->schema,
+            sink->host.value_or(Host{"localhost"}),
+            sink->sinkConfig,
+            sink->formatConfig);
+        if (toUpperCase(created.getFormatType()) != "JSON")
         {
             return bindError(
                 "checking the output format",
-                fmt::format(
-                    "failed: the sink receives JSONL, so its OUTPUT_FORMAT must be 'JSON', not '{}'", created->created.getFormatType()));
+                fmt::format("failed: the sink receives JSONL, so its OUTPUT_FORMAT must be 'JSON', not '{}'", created.getFormatType()));
         }
-        return std::move(created->created);
+        return created;
     }
     catch (const Exception& ex)
     {

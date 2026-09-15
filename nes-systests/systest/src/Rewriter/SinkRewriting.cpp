@@ -92,7 +92,7 @@ RewrittenSink SinkRewriter::inlined(
     {
         options.push_back(trailingOptions);
     }
-    return {.sql = Sql::sink(type, Sql::optionList(options)), .resultFile = resultFile};
+    return {.sql = Sql::sink(type, Sql::optionList(options)), .resultFile = resultFile, .declaredSchema = std::nullopt};
 }
 
 RewrittenSink
@@ -105,7 +105,14 @@ SinkRewriter::inlineSink(SqlParse& parse, AntlrSQLParser::SinkContext* sink, con
         {
             throw TestException("Query writes to sink '{}' that no sink declaration in this file names", sinkName->getText());
         }
-        return inlined(declaration->second.type, nullptr, Sql::schemaOption(Sql::Sink, declaration->second.schema), candidateResultFile);
+        auto rewritten
+            = inlined(declaration->second.type, nullptr, Sql::schemaOption(Sql::Sink, declaration->second.schema), candidateResultFile);
+        /// A checksum sink writes a count and a checksum, not the declared columns.
+        if (Sql::sameName(declaration->second.type, Sql::File))
+        {
+            rewritten.declaredSchema = declaration->second.boundSchema;
+        }
+        return rewritten;
     }
     if (const auto* anonymous = sink->anonymousSink(); anonymous != nullptr)
     {

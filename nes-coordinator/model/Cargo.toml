@@ -31,15 +31,13 @@ sqlx.workspace = true
 sea-orm-migration.workspace = true
 # Optional, so that the property-test generators and Arbitrary impls do not ship in a production build.
 proptest = { workspace = true, optional = true }
-proptest-derive = { workspace = true, optional = true }
 migration.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
 test-strategy.workspace = true
 proptest.workspace = true
-proptest-derive.workspace = true
 
 [features]
 # Exposes the Arbitrary impls and generators to sibling crates' tests.
-testing = ["dep:proptest", "dep:proptest-derive"]
+testing = ["dep:proptest"]

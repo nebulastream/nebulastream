@@ -24,8 +24,10 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
@@ -37,8 +39,6 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
@@ -46,21 +46,68 @@
 namespace NES
 {
 
-using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
-using LogicalSourceName = Identifier;
-
-enum class StatementOutputFormat : uint8_t
+/// The target of a DROP or STOP statement: the entity that matches a filter, or all of them.
+/// The grammar requires either WHERE or ALL, so a forgotten filter is a syntax error:
+///     DROP SINK WHERE NAME = 'mySink'  -> Selection::of(MYSINK)
+///     DROP SINK ALL                    -> Selection::all()
+///     DROP SINK                        -> syntax error
+template <typename Target>
+class Selection
 {
-    JSON,
-    TEXT
+public:
+    static Selection all() { return Selection{std::nullopt}; }
+
+    static Selection of(Target target) { return Selection{std::optional<Target>{std::move(target)}}; }
+
+    [[nodiscard]] bool selectsAll() const { return not target.has_value(); }
+
+    /// Unset when every entity is selected.
+    [[nodiscard]] const std::optional<Target>& getTarget() const { return target; }
+
+    /// Maps the target and keeps a selection of every entity as it is.
+    template <typename Function>
+    [[nodiscard]] Selection<std::invoke_result_t<Function, const Target&>> transform(Function&& function) const
+    {
+        using Mapped = Selection<std::invoke_result_t<Function, const Target&>>;
+        if (target.has_value())
+        {
+            return Mapped::of(std::invoke(std::forward<Function>(function), *target));
+        }
+        return Mapped::all();
+    }
+
+    bool operator==(const Selection&) const = default;
+
+private:
+    explicit Selection(std::optional<Target> target) : target{std::move(target)} { }
+
+    std::optional<Target> target;
 };
 
-/// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
-/// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
+using LogicalSourceName = Identifier;
+
+/// The name of the option group that holds the output formatter options of a sink.
+inline constexpr std::string_view OUTPUT_FORMATTER_OPTION_GROUP{"OUTPUT_FORMATTER"};
+
+/// The binder only parses the statements below.
+/// The coordinator executes them against its catalog.
 struct CreateLogicalSourceStatement
 {
     Identifier name;
     Schema<UnqualifiedUnboundField, Ordered> schema;
+    bool ifNotExists = false;
+};
+
+/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
+/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
+struct ShowLogicalSourcesStatement
+{
+    std::optional<Identifier> name;
+};
+
+struct DropLogicalSourceStatement
+{
+    Selection<LogicalSourceName> source;
 };
 
 struct CreatePhysicalSourceStatement
@@ -70,7 +117,21 @@ struct CreatePhysicalSourceStatement
     std::optional<Host> host;
     std::unordered_map<Identifier, std::string> sourceConfig;
     std::unordered_map<Identifier, std::string> parserConfig;
+    bool ifNotExists = false;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
+};
+
+struct DropPhysicalSourceStatement
+{
+    Selection<PhysicalSourceId> id;
+};
+
+/// The logical source is only a name here.
+/// The catalog decides whether it exists.
+struct ShowPhysicalSourcesStatement
+{
+    std::optional<LogicalSourceName> logicalSource;
+    std::optional<PhysicalSourceId> id;
 };
 
 struct CreateSinkStatement
@@ -81,50 +142,24 @@ struct CreateSinkStatement
     std::optional<Host> host;
     std::unordered_map<Identifier, std::string> sinkConfig;
     std::unordered_map<Identifier, std::string> formatConfig;
-};
-
-/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
-/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
-struct ShowLogicalSourcesStatement
-{
-    std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
-};
-
-/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
-/// referencing a dms object
-struct ShowPhysicalSourcesStatement
-{
-    std::optional<LogicalSourceName> logicalSource;
-    std::optional<uint32_t> id;
-    std::optional<StatementOutputFormat> format;
+    bool ifNotExists = false;
 };
 
 struct ShowSinksStatement
 {
     std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
-};
-
-struct DropLogicalSourceStatement
-{
-    LogicalSourceName source;
-};
-
-struct DropPhysicalSourceStatement
-{
-    SourceDescriptor descriptor;
 };
 
 struct DropSinkStatement
 {
-    Identifier name;
+    Selection<Identifier> name;
 };
 
 struct QueryStatement
 {
     LogicalPlan plan;
-    std::optional<DistributedQueryId> id;
+    std::optional<Identifier> name;
+    bool ifNotExists = false;
 };
 
 enum class ExplainFormat : uint8_t
@@ -150,13 +185,21 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<DistributedQueryId> id;
-    std::optional<StatementOutputFormat> format;
+    std::optional<QueryId> id;
+    std::optional<Identifier> name;
 };
+
+/// DROP QUERY and STOP QUERY select their queries by id, by name, or all at once.
+using QuerySelection = Selection<std::variant<QueryId, Identifier>>;
 
 struct DropQueryStatement
 {
-    DistributedQueryId id;
+    QuerySelection queries;
+};
+
+struct StopQueryStatement
+{
+    QuerySelection queries;
 };
 
 struct CreateModelStatement
@@ -165,26 +208,22 @@ struct CreateModelStatement
     std::string path;
     Schema<UnqualifiedUnboundField, Ordered> inputs;
     Schema<UnqualifiedUnboundField, Ordered> outputs;
+    bool ifNotExists = false;
 };
 
 struct ShowModelsStatement
 {
-    std::optional<StatementOutputFormat> format;
+    std::optional<Identifier> name;
 };
 
 struct ShowVersionStatement
 {
-    std::optional<StatementOutputFormat> format;
+    std::optional<std::string> host;
 };
 
 struct DropModelStatement
 {
-    std::string name;
-};
-
-struct WorkerStatusStatement
-{
-    std::vector<std::string> host;
+    Selection<std::string> name;
 };
 
 struct CreateWorkerStatement
@@ -194,6 +233,7 @@ struct CreateWorkerStatement
     std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
+    bool ifNotExists = false;
 };
 
 struct DropWorkerStatement
@@ -201,44 +241,33 @@ struct DropWorkerStatement
     std::string host;
 };
 
+struct ShowWorkersStatement
+{
+    std::optional<std::string> host;
+};
+
 using Statement = std::variant<
-    WorkerStatusStatement,
-    CreateWorkerStatement,
-    DropWorkerStatement,
     CreateLogicalSourceStatement,
-    CreatePhysicalSourceStatement,
-    CreateSinkStatement,
-    CreateModelStatement,
     ShowLogicalSourcesStatement,
-    ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
+    CreatePhysicalSourceStatement,
+    ShowPhysicalSourcesStatement,
     DropPhysicalSourceStatement,
+    CreateSinkStatement,
+    ShowSinksStatement,
     DropSinkStatement,
-    DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
-    ShowSinksStatement,
+    DropQueryStatement,
+    StopQueryStatement,
+    CreateWorkerStatement,
+    DropWorkerStatement,
+    ShowWorkersStatement,
+    CreateModelStatement,
     ShowModelsStatement,
-    ShowVersionStatement,
-    DropQueryStatement>;
-
-inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)
-{
-    /// NOLINTNEXTLINE(fuchsia-trailing-return)
-    auto visitor = [](const auto& visitedStatement) -> std::optional<StatementOutputFormat>
-    {
-        if constexpr (requires { visitedStatement.format; })
-        {
-            return visitedStatement.format;
-        }
-        else
-        {
-            return std::nullopt;
-        }
-    };
-    return std::visit(visitor, statement);
-}
+    DropModelStatement,
+    ShowVersionStatement>;
 
 class StatementBinder
 {
@@ -247,9 +276,7 @@ class StatementBinder
     std::unique_ptr<Impl> impl;
 
 public:
-    explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+    explicit StatementBinder(const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;
@@ -301,7 +328,6 @@ FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
-FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
 FMT_OSTREAM(NES::CreateWorkerStatement);
 FMT_OSTREAM(NES::DropWorkerStatement);

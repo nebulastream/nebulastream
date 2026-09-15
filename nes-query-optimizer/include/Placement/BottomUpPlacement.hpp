@@ -13,10 +13,11 @@
 */
 #pragma once
 
+#include <memory>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <WorkerCatalog.hpp>
+#include <Catalog.hpp>
+#include <NetworkTopology.hpp>
 
 namespace NES
 {
@@ -26,10 +27,14 @@ namespace NES
 /// logical operators.
 class BottomUpOperatorPlacer final
 {
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    std::shared_ptr<Catalog> catalog;
+    NetworkTopology topology;
 
 public:
-    explicit BottomUpOperatorPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
+    BottomUpOperatorPlacer(std::shared_ptr<Catalog> catalog, NetworkTopology topology)
+        : catalog{std::move(catalog)}, topology{std::move(topology)}
+    {
+    }
 
     void apply(LogicalPlan& logicalPlan);
 };

@@ -20,7 +20,6 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {

@@ -111,7 +111,7 @@ std::expected<std::vector<size_t>, ImportError> shapeFromPartial(const ov::Parti
 
     /// Only the leading (batch) dimension may be variable: inference feeds the model one tuple
     /// at a time, so a dynamic batch is resolved to 1. Warn rather than reject, so a stock model
-    /// does not have to be re-exported. For a FLOAT32 schema `ModelCatalog::registerModel` still
+    /// does not have to be re-exported. For a FLOAT32 schema the validation when a model is created still
     /// rejects the model if the resolved shape does not match the field count the user declared.
     /// Every other dimension must be static: its extent sizes the per-tuple buffer, so a dynamic
     /// one would leave the tensor size unknown.

@@ -21,19 +21,18 @@
 
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <rust/cxx.h>
+#include <BridgeError.hpp>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
 #include <ResultChecker/OutcomeChecker.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/UUID.hpp>
 #include <BaseUnitTest.hpp>
-#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryStatus.hpp>
 
 namespace NES
 {
@@ -41,36 +40,45 @@ namespace NES
 namespace
 {
 
-/// One local query on one worker.
-DistributedQueryStatusSnapshot createSnapshotIn(const QueryStatus state, const std::optional<Exception>& error)
+Bridge::StatementOutcome createOutcomeOf(const Bridge::QueryState state, const std::optional<Exception>& error)
 {
-    LocalQueryStatusSnapshot local;
-    local.queryId = QueryId::createLocal(LocalQueryId{generateUUID()});
-    local.state = state;
-    local.metrics.error = error;
-    DistributedQueryStatusSnapshot snapshot;
-    snapshot.localStatusSnapshots[Host{"localhost:8080"}].emplace(local.queryId, local);
-    return snapshot;
-}
-
-StatementOutcome createOutcomeOf(std::expected<DistributedQueryStatusSnapshot, Exception> reached)
-{
-    return StatementOutcome{.reached = std::move(reached), .sinkOutputSchema = std::nullopt, .explained = std::nullopt};
+    rust::Vec<Bridge::BridgeError> errors;
+    if (error.has_value())
+    {
+        errors.push_back(Bridge::toBridgeError(*error));
+    }
+    return Bridge::StatementOutcome{
+        .error = error.has_value() ? Bridge::toBridgeError(*error) : Bridge::BridgeError{},
+        .errors = std::move(errors),
+        .query_id = 0,
+        .state = state,
+        .start_ms = 0,
+        .stop_ms = 0,
+        .result = {}};
 }
 
 RewrittenTestCase createQueryExpecting(Expectation expectation)
 {
     return RewrittenTestCase{
         .action = RewrittenQuery{
-            .sql = "", .id = SystestQueryId{1}, .resultFile = std::nullopt, .inputFiles = {}, .expected = std::move(expectation)}};
+            .sql = "",
+            .id = SystestQueryId{1},
+            .resultFile = std::nullopt,
+            .declaredSinkSchema = std::nullopt,
+            .inputFiles = {},
+            .expected = std::move(expectation)}};
 }
 
-StatementOutcome createExplainedOutcome(std::string plan)
+Bridge::StatementOutcome createExplainedOutcome(const std::string& plan)
 {
-    return StatementOutcome{
-        .reached = std::unexpected{InvalidQuerySyntax("an EXPLAIN never reaches a worker")},
-        .sinkOutputSchema = std::nullopt,
-        .explained = std::move(plan)};
+    return Bridge::StatementOutcome{
+        .error = {},
+        .errors = {},
+        .query_id = 0,
+        .state = Bridge::QueryState::Completed,
+        .start_ms = 0,
+        .stop_ms = 0,
+        .result = rust::String{plan}};
 }
 
 RewrittenTestCase createExplainExpecting(std::vector<std::string> lines)
@@ -91,17 +99,17 @@ TEST_F(OutcomeCheckerTest, ExpectedErrorMatchesByCodeWhereverItWasRaised)
 {
     const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
 
-    const std::vector beforeWorker{createOutcomeOf(std::unexpected{InvalidQuerySyntax("rejected")})};
+    const std::vector beforeWorker{createOutcomeOf(Bridge::QueryState::Pending, InvalidQuerySyntax("rejected"))};
     EXPECT_TRUE(checkTestCase(beforeWorker, expected, {}).has_value());
 
-    const std::vector onWorker{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, InvalidQuerySyntax("rejected")))};
+    const std::vector onWorker{createOutcomeOf(Bridge::QueryState::Failed, InvalidQuerySyntax("rejected"))};
     EXPECT_TRUE(checkTestCase(onWorker, expected, {}).has_value());
 }
 
 TEST_F(OutcomeCheckerTest, ExpectedErrorWithAnotherCodeIsAMismatch)
 {
     const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, QueryStatusFailed("boom")))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Failed, QueryStatusFailed("boom"))};
 
     const auto verdict = checkTestCase(outcomes, expected, {});
     ASSERT_FALSE(verdict.has_value());
@@ -111,17 +119,49 @@ TEST_F(OutcomeCheckerTest, ExpectedErrorWithAnotherCodeIsAMismatch)
 TEST_F(OutcomeCheckerTest, ExpectedErrorMessageHasToOccur)
 {
     const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = "unknown source"});
-    const std::vector matching{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, InvalidQuerySyntax("unknown source stream")))};
+    const std::vector matching{createOutcomeOf(Bridge::QueryState::Failed, InvalidQuerySyntax("unknown source stream"))};
     EXPECT_TRUE(checkTestCase(matching, expected, {}).has_value());
 
-    const std::vector other{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, InvalidQuerySyntax("unknown sink")))};
+    const std::vector other{createOutcomeOf(Bridge::QueryState::Failed, InvalidQuerySyntax("unknown sink"))};
     EXPECT_FALSE(checkTestCase(other, expected, {}).has_value());
 }
 
-TEST_F(OutcomeCheckerTest, AQueryThatStopsAlthoughAnErrorWasExpectedIsAMismatch)
+TEST_F(OutcomeCheckerTest, ExpectedErrorMatchesAmongSeveralReportedErrors)
+{
+    auto outcome = createOutcomeOf(Bridge::QueryState::Failed, QueryStatusFailed("collateral"));
+    outcome.errors.push_back(Bridge::toBridgeError(InvalidQuerySyntax("rejected")));
+
+    const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
+    std::vector<Bridge::StatementOutcome> outcomes;
+    outcomes.push_back(std::move(outcome));
+    EXPECT_TRUE(checkTestCase(outcomes, expected, {}).has_value());
+}
+
+TEST_F(OutcomeCheckerTest, AQueryThatCompletesAlthoughAnErrorWasExpectedIsAMismatch)
 {
     const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Completed, std::nullopt)};
+
+    EXPECT_FALSE(checkTestCase(outcomes, expected, {}).has_value());
+}
+
+/// The query of a timed out wait is still running, so its outcome has an error and a state that is not terminal.
+TEST_F(OutcomeCheckerTest, ATimedOutQueryReportsTheTimeout)
+{
+    const auto expected = createQueryExpecting(ExpectedRows{});
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Running, QueryWaitTimeout("ran too long"))};
+
+    const auto verdict = checkTestCase(outcomes, expected, {});
+
+    ASSERT_FALSE(verdict.has_value());
+    EXPECT_TRUE(verdict.error().detail.contains("ran too long")) << verdict.error().detail;
+}
+
+/// Only a completed query leaves a complete result file.
+TEST_F(OutcomeCheckerTest, AQueryThatDidNotCompleteIsAMismatchEvenWithoutAnError)
+{
+    const auto expected = createQueryExpecting(ExpectedRows{});
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Stopped, std::nullopt)};
 
     EXPECT_FALSE(checkTestCase(outcomes, expected, {}).has_value());
 }
@@ -129,7 +169,7 @@ TEST_F(OutcomeCheckerTest, AQueryThatStopsAlthoughAnErrorWasExpectedIsAMismatch)
 TEST_F(OutcomeCheckerTest, AnUnexpectedFailureReportsTheError)
 {
     const auto expected = createQueryExpecting(ExpectedRows{});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, QueryStatusFailed("boom")))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Failed, QueryStatusFailed("boom"))};
 
     const auto verdict = checkTestCase(outcomes, expected, {});
     ASSERT_FALSE(verdict.has_value());
@@ -146,7 +186,7 @@ TEST_F(OutcomeCheckerTest, ADifferentialBlockWithAFailedHalfReportsTheFailure)
             .secondSql = "",
             .secondId = SystestQueryId{2},
             .secondResultFile = "second.csv"}};
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, QueryStatusFailed("boom")))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Failed, QueryStatusFailed("boom"))};
 
     const auto verdict = checkTestCase(outcomes, block, {});
     ASSERT_FALSE(verdict.has_value());
@@ -163,7 +203,7 @@ TEST_F(OutcomeCheckerTest, OnlyAPassingVerdictCountsAsPassed)
 TEST_F(OutcomeCheckerTest, ExpectedRowsWithoutAResultFileAreAMismatch)
 {
     const auto expected = createQueryExpecting(ExpectedRows{.rows = {"1"}});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Completed, std::nullopt)};
     const auto verdict = checkTestCase(outcomes, expected, {});
     ASSERT_FALSE(verdict.has_value());
     EXPECT_NE(verdict.error().detail.find("writes no result file"), std::string::npos);
@@ -172,27 +212,7 @@ TEST_F(OutcomeCheckerTest, ExpectedRowsWithoutAResultFileAreAMismatch)
 TEST_F(OutcomeCheckerTest, NoExpectedRowsAndNoResultFilePass)
 {
     const auto expected = createQueryExpecting(ExpectedRows{});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
-    EXPECT_TRUE(checkTestCase(outcomes, expected, {}).has_value());
-}
-
-TEST_F(OutcomeCheckerTest, AFailureWithoutAReportedErrorIsAMismatch)
-{
-    const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Failed, std::nullopt))};
-    const auto verdict = checkTestCase(outcomes, expected, {});
-    ASSERT_FALSE(verdict.has_value());
-    EXPECT_NE(verdict.error().detail.find("without reporting an error"), std::string::npos);
-}
-
-TEST_F(OutcomeCheckerTest, ExpectedErrorMatchesAmongSeveralReportedErrors)
-{
-    auto snapshot = createSnapshotIn(QueryStatus::Failed, QueryStatusFailed("collateral"));
-    auto other = createSnapshotIn(QueryStatus::Failed, InvalidQuerySyntax("rejected"));
-    snapshot.localStatusSnapshots.at(Host{"localhost:8080"}).merge(other.localStatusSnapshots.at(Host{"localhost:8080"}));
-
-    const auto expected = createQueryExpecting(ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt});
-    const std::vector outcomes{createOutcomeOf(std::move(snapshot))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Completed, std::nullopt)};
     EXPECT_TRUE(checkTestCase(outcomes, expected, {}).has_value());
 }
 
@@ -206,7 +226,7 @@ TEST_F(OutcomeCheckerTest, ADifferentialBlockWithOnlyOneOutcomeIsAMismatch)
             .secondSql = "",
             .secondId = SystestQueryId{2},
             .secondResultFile = "second.csv"}};
-    const std::vector outcomes{createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt))};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Completed, std::nullopt)};
     const auto verdict = checkTestCase(outcomes, block, {});
     ASSERT_FALSE(verdict.has_value());
     EXPECT_NE(verdict.error().detail.find("second half"), std::string::npos);
@@ -223,8 +243,8 @@ TEST_F(OutcomeCheckerTest, ADifferentialBlockWithAFailedSecondHalfReportsTheFail
             .secondId = SystestQueryId{2},
             .secondResultFile = "second.csv"}};
     const std::vector outcomes{
-        createOutcomeOf(createSnapshotIn(QueryStatus::Stopped, std::nullopt)),
-        createOutcomeOf(createSnapshotIn(QueryStatus::Failed, QueryStatusFailed("boom")))};
+        createOutcomeOf(Bridge::QueryState::Completed, std::nullopt),
+        createOutcomeOf(Bridge::QueryState::Failed, QueryStatusFailed("boom"))};
     const auto verdict = checkTestCase(outcomes, block, {});
     ASSERT_FALSE(verdict.has_value());
     EXPECT_TRUE(verdict.error().detail.contains("boom")) << verdict.error().detail;
@@ -249,7 +269,7 @@ TEST_F(OutcomeCheckerTest, ExplainWithAnotherPlanIsAMismatch)
 TEST_F(OutcomeCheckerTest, AnExplainThatDidNotBindReportsTheFailure)
 {
     const auto expected = createExplainExpecting({"SINK(OUT)"});
-    const std::vector outcomes{createOutcomeOf(std::unexpected{InvalidQuerySyntax("rejected")})};
+    const std::vector outcomes{createOutcomeOf(Bridge::QueryState::Pending, InvalidQuerySyntax("rejected"))};
     const auto verdict = checkTestCase(outcomes, expected, {});
     ASSERT_FALSE(verdict.has_value());
     EXPECT_NE(verdict.error().detail.find("rejected"), std::string::npos);

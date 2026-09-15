@@ -36,11 +36,11 @@ enum class ConnectorKind : uint8_t
 /// Parses `source` or `sink`, ignoring case.
 std::optional<ConnectorKind> parseConnectorKind(std::string_view text);
 
-/// Binds the test's SQL into one physical source descriptor on a local catalog.
+/// Binds the test's SQL into one physical source descriptor.
 /// Every failure is a harness error, because the committed configs are checked to bind and an invalid config is never a scenario.
 std::expected<SourceDescriptor, ErrorInfo> bindSourceStatements(const std::string& sql);
 
-/// Binds the test's SQL, one CREATE SINK statement, into a sink descriptor on a local catalog.
+/// Binds the test's SQL, one CREATE SINK statement, into a sink descriptor.
 /// Every failure is a harness error, because the config test checks that every committed config binds.
 /// The harness gives the sink JSONL records, so a config whose output format is not JSON does not bind.
 std::expected<SinkDescriptor, ErrorInfo> bindSinkStatements(const std::string& sql);

@@ -15,11 +15,16 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 
+#include <array>
 #include <ranges>
 #include <span>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
@@ -98,6 +103,30 @@ TEST_F(IdentifierTest, NotParseInvalidIdentifier)
     EXPECT_FALSE(identifier2.has_value());
     EXPECT_FALSE(identifier2.has_value());
     EXPECT_FALSE(identifier4.has_value());
+}
+
+/// The same cases as in `nes-coordinator/model/src/name.rs`, so both parsers are checked against one table.
+TEST_F(IdentifierTest, SharedCases)
+{
+    for (const auto& [sql, canonical] : std::array<std::pair<std::string_view, std::string_view>, 7>{
+             {{"foo", "FOO"},
+              {"Foo", "FOO"},
+              {"FOO", "FOO"},
+              {"\"FOO\"", "FOO"},
+              {"\"Foo\"", "Foo"},
+              {"a\"b", "A\"B"},
+              {R"(""x")", "\"x"}}})
+    {
+        const auto identifier = Identifier::parse(std::string{sql});
+        EXPECT_EQ(identifier.asCanonicalString(), canonical) << sql;
+        const auto written = ReflectionContext{}.reflect(identifier)->to_string();
+        ASSERT_TRUE(static_cast<bool>(written)) << sql;
+        EXPECT_EQ(Identifier::parse(*written), identifier) << sql;
+    }
+    for (const auto* const invalid : {"", "a.b", "\"", "\"\"", "\"a", "a\""})
+    {
+        EXPECT_FALSE(Identifier::tryParse(invalid).has_value()) << invalid;
+    }
 }
 
 TEST_F(IdentifierTest, ParseCorrectInsensitiveList)

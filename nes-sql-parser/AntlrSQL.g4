@@ -58,7 +58,7 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
+statement: query | createStatement | dropStatement | stopStatement | showStatement | explainStatement;
 
 explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
 explainStages: explainStage (',' explainStage)*;
@@ -66,19 +66,22 @@ explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
-createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createQueryDefinition;
+ifNotExists: IF NOT EXISTS;
+createLogicalSourceDefinition: LOGICAL SOURCE ifNotExists? sourceName=identifier schemaDefinition fromQuery?;
 
-createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
+createPhysicalSourceDefinition: PHYSICAL SOURCE ifNotExists? FOR logicalSource=identifier
                                 TYPE type=identifier
                                 optionsClause?;
 optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
-createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
+createSinkDefinition: SINK ifNotExists? sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
-createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
+createWorkerDefinition: WORKER ifNotExists? hostaddr=STRING optionsClause?;
 
-createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
+createQueryDefinition: QUERY ifNotExists? queryName=identifier AS query;
+
+createModelDefinition: MODEL ifNotExists? modelName=identifier '(' modelPath=STRING ')'
                        INPUT '(' modelInputField (',' modelInputField)* ')'
                        OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
 modelInputField: identifier typeDefinition;
@@ -92,7 +95,7 @@ nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
 
-dropStatement: DROP dropSubject WHERE dropFilter;
+dropStatement: DROP dropSubject dropSelection;
 dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
 dropModel: MODEL;
 dropQuery: QUERY;
@@ -102,20 +105,22 @@ dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
 
+dropSelection: WHERE dropFilter | ALL;
 dropFilter: attr=strictIdentifier EQ value=constant;
 
-showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
-showFormat: TEXT | JSON;
+stopStatement: STOP QUERY dropSelection;
+
+showStatement: SHOW showSubject (WHERE showFilter)?;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
     | MODELS #showModelsSubject
+    | WORKERS #showWorkersSubject
     | VERSION #showVersionSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
-queryWithOptions: query optionsClause?;
 query: queryTerm queryOrganization ;
 
 queryOrganization:
@@ -514,6 +519,7 @@ SELECT: 'SELECT' | 'select';
 SETS: 'SETS';
 SOME: 'SOME';
 START: 'START';
+STOP: 'STOP';
 TABLE: 'TABLE';
 TO: 'TO';
 TRUE: 'TRUE';
@@ -549,7 +555,6 @@ OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
-JSON: 'JSON';
 TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
@@ -625,6 +630,7 @@ WS
 SINKS: 'SINKS';
 SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
+WORKERS: 'WORKERS';
 
 
 DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
@@ -642,8 +648,6 @@ VARSIZED_TYPE: 'VARSIZED';
 BOOLEAN_TYPE: 'BOOLEAN';
 
 UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
-
-
 
 SHOW : 'SHOW';
 FORMAT : 'FORMAT' | 'format';
