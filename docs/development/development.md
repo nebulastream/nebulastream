@@ -104,27 +104,8 @@ e2e tests — and are excluded from the default build. See
 ### Code style & static analysis
 
 Code style and static analysis are available as CMake targets, so you do not need to invoke `clang-format` or
-`clang-tidy` by hand:
-
-- `format` / `check-format` — run clang-format (apply in place / check only).
-- `tidy-diff` / `tidy-diff-fix` — run clang-tidy over your diff (base `NES_TIDY_DIFF_BASE`, default `HEAD`).
-- `tidy-diff-to-main` / `tidy-diff-to-main-fix` — run clang-tidy over your whole branch relative to `origin/main`.
-- `tidy-full` — run clang-tidy over every translation unit (what nightly CI runs).
-
-For example, to fix clang-tidy findings on your branch inside the container:
-
-```shell
-docker run \
-    --workdir $(pwd) \
-    -v $(pwd):$(pwd) \
-    nebulastream/nes-development:local \
-    cmake --build build-docker --target tidy-diff-to-main-fix
-```
-
-In CLion these show up in the target dropdown and run like any other build target, so there is no need to edit the
-Docker toolchain environment. See
-[fixing clang-tidy warnings](https://github.com/nebulastream/nebulastream/blob/main/docs/development/fix_clang_tidy_warnings.md)
-for details.
+`clang-tidy` by hand. See [fixing clang-tidy warnings](coding_guidelines.md#fixing-clang-tidy-warnings) for
+the available targets and how to run them, both directly and inside the Docker toolchain environment.
 
 ### Modifying dependencies
 
@@ -313,13 +294,8 @@ that wrap build tools to run inside the Nix development shell.
    ./.nix/nix-cmake.sh --build cmake-build-debug
    ```
 
-3. **Run the clang-tidy diff workflow** against `origin/main`:
-   ```shell
-   nix run .#clang-tidy
-   ```
-   Pass another base ref after `--` to compare against a different branch or commit, for example
-   `nix run .#clang-tidy -- upstream/main`. The command uses the official `clang-tidy-diff.py` workflow, applies fixes
-   in place, and configures and builds `build/`.
+3. **Run the clang-tidy diff workflow**: see
+   [running the clang-tidy diff workflow with Nix](coding_guidelines.md#running-the-clang-tidy-diff-workflow-with-nix).
 
 ### CLion Integration with Nix
 

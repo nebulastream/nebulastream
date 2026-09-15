@@ -159,4 +159,4 @@ void MQTTSink::stop(Runtime::Execution::PipelineExecutionContext&)
 
 Testing sinks follows the same approach as sources: write unit tests for logic that does not revolve
 around I/O. Testing against an external system is not easily possible today; the connector tests will
-cover it once they land. See `standards/testing_guidelines.md` for which layer applies to what.
+cover it once they land. See [Testing](testing.md) for which layer applies to what.
