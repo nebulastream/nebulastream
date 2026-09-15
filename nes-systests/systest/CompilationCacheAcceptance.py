@@ -193,6 +193,20 @@ def display_query(result: dict) -> str:
     return f"{name}:{int(number):02d}" + (f" [{configuration}]" if configuration else "")
 
 
+def normalize_result_name(name: str) -> str:
+    match = re.fullmatch(r"(.+):(\d+)(?: \[(.*)\])?", name)
+    if match is None or int(match.group(2)) == 0:
+        raise AcceptanceFailure(f"invalid query identity in systest output: {name!r}")
+    configuration = {}
+    if match.group(3) is not None:
+        for parameter in match.group(3).split(", "):
+            key, separator, value = parameter.partition("=")
+            if not key or not separator or key in configuration:
+                raise AcceptanceFailure(f"invalid configuration in systest output: {name!r}")
+            configuration[key] = value
+    return display_query({"query": f"{match.group(1)}:{int(match.group(2))}", "configuration": configuration})
+
+
 def parse_reports(log_path: Path, output_queries: Counter) -> Coverage:
     text = require_path(log_path, "module telemetry log").read_text(encoding="utf-8")
     queries, modules, planned_aborts, reported_queries = Counter(), Counter(), Counter(), Counter()
@@ -341,7 +355,7 @@ def validate_process(phase: str, returncode: int, output_path: Path, file_count:
             or any(int(total) != query_count or status != "PASSED" for _, total, _, status in results)
             or output.count("PASSED") != query_count or "FAILED" in output or output.count("All queries passed.") != 1):
         raise AcceptanceFailure(f"{phase} did not pass all {query_count} queries; output: {output_path}\n{tail(output_path)}")
-    return Counter(name for _, _, name, _ in results)
+    return Counter(normalize_result_name(name) for _, _, name, _ in results)
 
 
 def run_phase(
