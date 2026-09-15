@@ -44,7 +44,6 @@
 
 namespace NES
 {
-class SinkCatalog;
 struct GeneralSinkConfig;
 }
 
@@ -69,7 +68,6 @@ private:
 
 class NamedSinkDescriptor final
 {
-    friend SinkCatalog;
     friend class SinkDescriptor;
 
 public:
@@ -122,7 +120,6 @@ using AnonymousSinkSchema = std::variant<
 
 class AnonymousSinkDescriptor final
 {
-    friend SinkCatalog;
     friend class SinkDescriptor;
     friend struct SinkLogicalOperator;
     friend class CalcTargetOrderRule;
@@ -172,7 +169,6 @@ private:
 
 class SinkDescriptor final
 {
-    friend SinkCatalog;
     friend Unreflector<SinkDescriptor>;
     friend class CalcTargetOrderRule;
 
@@ -194,7 +190,7 @@ public:
         OutputFormatterDescriptor formatter);
 
     /// Compatibility adapters for callers that still supply string config maps.
-    static std::optional<SinkDescriptor> createNamed(
+    static SinkDescriptor createNamed(
         SinkId id,
         Identifier name,
         const Identifier& sinkType,
@@ -203,7 +199,7 @@ public:
         const std::unordered_map<Identifier, std::string>& descriptorConfig,
         const std::unordered_map<Identifier, std::string>& formatConfig);
 
-    static std::optional<SinkDescriptor> createAnonymous(
+    static SinkDescriptor createAnonymous(
         SinkId id,
         const Identifier& sinkType,
         const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,

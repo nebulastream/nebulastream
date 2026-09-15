@@ -14,35 +14,18 @@
 
 #pragma once
 
-#include <expected>
-#include <optional>
 #include <span>
-#include <string>
 
-#include <DataTypes/UnboundField.hpp>
+#include <nes-coordinator-bridge/coordinator.h>
+
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <DistributedQuery.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-struct StatementOutcome
-{
-    /// Final worker status, or the error that stopped the statement first.
-    std::expected<DistributedQueryStatusSnapshot, Exception> reached;
-
-    /// Result file schema, absent for a negative or EXPLAIN case where we don't produce any actual result tuples.
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
-
-    std::optional<std::string> explained;
-};
-
 /// One outcome per query or EXPLAIN, one per executed differential half.
 [[nodiscard]] Verdict
-checkTestCase(std::span<const StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames);
+checkTestCase(std::span<const Bridge::StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames);
 
 }

@@ -14,16 +14,21 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
 
-DistributedLogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
+OptimizedPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
-    plan = ruleBasedOptimization.optimize(plan);
-    return operatorPlacement.place(plan);
+    auto globalPlan = ruleBasedOptimization.optimize(std::move(plan));
+    auto localPlans = operatorPlacement.place(globalPlan);
+    return OptimizedPlan{.globalPlan = std::move(globalPlan), .localPlans = std::move(localPlans)};
 }
 
 }
