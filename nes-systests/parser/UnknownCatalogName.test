@@ -1,0 +1,19 @@
+# name: parser/UnknownCatalogName.test
+# description: a statement naming a catalog entry that does not exist is rejected with the code for it
+# groups: [Parser]
+
+CREATE LOGICAL SOURCE declared(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR declared TYPE File;
+ATTACH INLINE
+1
+
+# Positive control: the declared source resolves.
+SELECT id FROM declared INTO File();
+----
+1
+
+# The catalog lookup happens in the coordinator, not in the parser, so this is a failure only it can detect.
+# It has to come back as the code for an unknown source name rather than as the unclassified fallback.
+SELECT id FROM undeclared INTO File();
+----
+ERROR 2030

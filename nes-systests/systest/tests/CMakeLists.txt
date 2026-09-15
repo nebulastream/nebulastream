@@ -45,5 +45,8 @@ add_nes_test_systest(systest-name-qualifier-test
 add_nes_test_systest(systest-sql-rewriter-test
         "Rewriter/SqlRewriterTests.cpp")
 
+add_nes_test_systest(systest-runner-test
+        "Runner/RunnerTests.cpp")
+
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
