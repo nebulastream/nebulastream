@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FischerTechnik HBW Monitor</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface:        #fcfcfb;
+    --page:           #f9f9f7;
+    --ink-primary:    #0b0b0b;
+    --ink-secondary:  #52514e;
+    --ink-muted:      #898781;
+    --hairline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --good:           #0ca30c;
+    --warning:        #fab219;
+    --critical:       #d03b3b;
+    --good-wash:      rgba(12,163,12,0.09);
+    --critical-wash:  rgba(208,59,59,0.09);
+    --unknown-wash:   rgba(137,135,129,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface:        #1e2127;
+      --page:           #0d0d0d;
+      --ink-primary:    #ffffff;
+      --ink-secondary:  #c3c2b7;
+      --ink-muted:      #8b8a85;
+      --hairline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --good:           #16c716;
+      --warning:        #fab219;
+      --critical:       #e66767;
+      --good-wash:      rgba(22,199,22,0.13);
+      --critical-wash:  rgba(230,103,103,0.13);
+      --unknown-wash:   rgba(139,138,133,0.10);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+    background: var(--page);
+    color: var(--ink-primary);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .brand img { width: 22px; height: 22px; flex: none; }
+  .brand-text {
+    font-size: 12px;
+    font-weight: 650;
+    color: var(--ink-muted);
+    letter-spacing: .02em;
+  }
+  .brand-text .powered-by {
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-right: 3px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 650;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--ink-secondary);
+    font-size: 12.5px;
+    margin: 0 0 4px;
+    max-width: 46em;
+  }
+  .subtitle .badge {
+    display: inline-block;
+    background: var(--unknown-wash);
+    color: var(--ink-secondary);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .source-note {
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    margin: 0 0 18px;
+  }
+
+  .statusbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    row-gap: 4px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--critical);
+    flex: none;
+    transition: background .2s;
+  }
+  .dot.ok { background: var(--good); }
+  .dot.warn { background: var(--warning); }
+  .status-text { font-weight: 600; color: var(--ink-primary); }
+  .last-msg {
+    color: var(--ink-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .spacer { flex: 1; }
+  .summary { color: var(--ink-secondary); }
+  .summary strong {
+    color: var(--ink-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stale-banner {
+    display: none;
+    align-items: flex-start;
+    gap: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warning);
+    color: var(--ink-secondary);
+    border-radius: 10px;
+    padding: 11px 14px;
+    margin-bottom: 14px;
+    font-size: 12.5px;
+  }
+  .stale-banner.show { display: flex; }
+  .stale-banner svg {
+    width: 16px; height: 16px; flex: none; margin-top: 1px;
+    color: var(--warning);
+  }
+
+  .board {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 22px repeat(3, 1fr);
+    gap: 10px;
+  }
+  .colhead, .rowhead {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    font-weight: 650;
+  }
+  .cell {
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid var(--hairline);
+    background: var(--unknown-wash);
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background-color .3s, border-color .3s, opacity .3s;
+  }
+  .cell.present { background: var(--good-wash); border-color: color-mix(in srgb, var(--good) 35%, var(--hairline)); }
+  .cell.missing { background: var(--critical-wash); border-color: color-mix(in srgb, var(--critical) 35%, var(--hairline)); }
+  .cell.stale { opacity: .5; }
+  .cell.flash { animation: flash-pulse .6s ease-out; }
+  @keyframes flash-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(11,11,11,0.14); }
+    100% { box-shadow: 0 0 0 8px rgba(11,11,11,0); }
+  }
+
+  .cell .slot-label {
+    position: absolute;
+    top: 7px;
+    left: 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: .01em;
+  }
+  .cell svg { width: 34%; height: 34%; }
+  .cell.unknown svg { color: var(--ink-muted); }
+  .cell.present svg { color: var(--good); }
+  .cell.missing svg { color: var(--critical); }
+
+  .cell .state-text {
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-secondary);
+  }
+
+  .cell .score-toggle {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font: 700 10px/14px system-ui, sans-serif;
+    padding: 0;
+    cursor: pointer;
+  }
+  .cell .score-toggle:hover { color: var(--ink-primary); }
+  .cell .score-line {
+    display: none;
+    font-size: 9.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+  }
+  .cell.show-score .score-line { display: block; }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 16px;
+    color: var(--ink-secondary);
+    font-size: 12px;
+    flex-wrap: wrap;
+    padding: 0 2px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-item svg { width: 14px; height: 14px; }
+  .legend-item.present svg { color: var(--good); }
+  .legend-item.missing svg { color: var(--critical); }
+  .legend-item.unknown svg { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img src="nebulastream-logo.png" alt="NebulaStream logo">
+    <span class="brand-text"><span class="powered-by">Powered by</span>NebulaStream</span>
+  </div>
+
+  <h1>FischerTechnik High-Bay Warehouse Monitor</h1>
+  <p class="subtitle">Live occupancy of the HBW's 9 storage slots, inferred by a NebulaStream vision-inference query.</p>
+  <p class="source-note">Source: <span class="badge">SSC</span> (Sensor/Surveillance Camera) feed, cropped per slot and classified frame by frame &mdash; not the PLC's own stock record.</p>
+
+  <div class="statusbar">
+    <span class="dot" id="connDot"></span>
+    <span class="status-text" id="connText">Connecting&hellip;</span>
+    <span class="last-msg" id="lastMsgText"></span>
+    <span class="spacer"></span>
+    <span class="summary" id="summaryText">&mdash;</span>
+  </div>
+
+  <div class="stale-banner" id="staleBanner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+    </svg>
+    <span>No frame received in a while &mdash; the SSC camera may not be pointed at the HBW right now. Showing the last known state, dimmed.</span>
+  </div>
+
+  <div class="board">
+    <div class="grid" id="grid">
+      <div></div>
+      <div class="colhead">1</div>
+      <div class="colhead">2</div>
+      <div class="colhead">3</div>
+      <!-- rows injected by JS -->
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item present">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 8z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>
+      Present
+    </div>
+    <div class="legend-item missing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 8z" stroke-dasharray="2.5 2.5"/><line x1="9" y1="12" x2="15" y2="16"/><line x1="15" y1="12" x2="9" y2="16"/></svg>
+      Missing
+    </div>
+    <div class="legend-item unknown">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+      No data yet
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
+<script>
+  const BROKER_URL = "ws://localhost:9001";
+  const TOPIC = "nes/hbw/slot_state";
+  // 2s tumbling alignment window + batched delivery means gaps of several
+  // seconds between snapshots are normal, not a real camera-pointing issue.
+  const STALE_AFTER_MS = 20000;
+
+  const ROWS = ["A", "B", "C"];
+  const COLS = ["1", "2", "3"];
+  const SLOTS = ROWS.flatMap(r => COLS.map(c => r + c));
+
+  const BUCKET_ICON = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 8z"/>
+      <path d="M8 8V6a4 4 0 0 1 8 0v2"/>
+    </svg>`;
+  const MISSING_ICON = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8H7.5a2 2 0 0 1-2-1.8L4 8z" stroke-dasharray="2.5 2.5"/>
+      <line x1="9" y1="12" x2="15" y2="16"/>
+      <line x1="15" y1="12" x2="9" y2="16"/>
+    </svg>`;
+
+  const grid = document.getElementById("grid");
+  const cells = {};
+  const lastEmpty = {};
+  const showScore = {};
+  ROWS.forEach(r => {
+    const rowhead = document.createElement("div");
+    rowhead.className = "rowhead";
+    rowhead.textContent = r;
+    grid.appendChild(rowhead);
+    COLS.forEach(c => {
+      const slot = r + c;
+      const cell = document.createElement("div");
+      cell.className = "cell unknown";
+      cell.title = "No data yet";
+      cell.innerHTML = `<span class="slot-label">${slot}</span>${BUCKET_ICON}<span class="state-text">&nbsp;</span>`;
+      grid.appendChild(cell);
+      cells[slot] = cell;
+    });
+  });
+
+  const connDot = document.getElementById("connDot");
+  const connText = document.getElementById("connText");
+  const lastMsgText = document.getElementById("lastMsgText");
+  const summaryText = document.getElementById("summaryText");
+  const staleBanner = document.getElementById("staleBanner");
+
+  function formatClock(unixMs) {
+    return new Date(unixMs).toLocaleTimeString([], { hour12: false });
+  }
+
+  let lastMessageAt = 0;
+
+  function setCellState(slot, empty, score) {
+    const cell = cells[slot];
+    const changed = lastEmpty[slot] !== undefined && lastEmpty[slot] !== empty;
+    lastEmpty[slot] = empty;
+    const icon = empty ? MISSING_ICON : BUCKET_ICON;
+    const label = empty ? "Missing" : "Present";
+    cell.className = "cell " + (empty ? "missing" : "present") + (showScore[slot] ? " show-score" : "");
+    cell.innerHTML = `<span class="slot-label">${slot}</span>${icon}<span class="state-text">${label}</span>` +
+      `<button class="score-toggle" data-slot="${slot}" title="Toggle exact score" aria-label="Toggle exact score for ${slot}">i</button>` +
+      `<span class="score-line">${label} · p_absent ${score.toFixed(3)}</span>`;
+    cell.title = `${slot}: ${label} (p_absent=${score.toFixed(3)})`;
+    if (changed) {
+      cell.classList.add("flash");
+      cell.addEventListener("animationend", () => cell.classList.remove("flash"), { once: true });
+    }
+  }
+
+  grid.addEventListener("click", (e) => {
+    const btn = e.target.closest(".score-toggle");
+    if (!btn) return;
+    const slot = btn.dataset.slot;
+    showScore[slot] = !showScore[slot];
+    cells[slot].classList.toggle("show-score", showScore[slot]);
+  });
+
+  function applySnapshot(msg) {
+    let numEmpty = 0;
+    for (const slot of SLOTS) {
+      const empty = Number(msg["empty_" + slot]) === 1;
+      const score = Number(msg["p_absent_" + slot]);
+      setCellState(slot, empty, score);
+      if (empty) numEmpty++;
+    }
+    summaryText.innerHTML = `<strong>${numEmpty} / 9</strong> slots empty`;
+    lastMessageAt = Date.now();
+    lastMsgText.textContent = "· last frame " + formatClock(Number(msg.ts));
+    staleBanner.classList.remove("show");
+    Object.values(cells).forEach(c => c.classList.remove("stale"));
+  }
+
+  setInterval(() => {
+    if (lastMessageAt === 0) return;
+    const stale = Date.now() - lastMessageAt > STALE_AFTER_MS;
+    staleBanner.classList.toggle("show", stale);
+    Object.values(cells).forEach(c => c.classList.toggle("stale", stale));
+  }, 1000);
+
+  function setConnStatus(kind, text) {
+    connDot.className = "dot " + kind;
+    connText.textContent = text;
+  }
+
+  setConnStatus("", "Connecting…");
+  const client = mqtt.connect(BROKER_URL, { reconnectPeriod: 2000 });
+
+  client.on("connect", () => {
+    setConnStatus("ok", "Connected");
+    client.subscribe(TOPIC);
+  });
+  client.on("reconnect", () => setConnStatus("warn", "Reconnecting…"));
+  client.on("close", () => setConnStatus("", "Disconnected"));
+  client.on("error", () => setConnStatus("", "Connection error"));
+
+  client.on("message", (_topic, payload) => {
+    // One MQTT message carries one TupleBuffer, which can hold multiple
+    // rows -- so the payload is newline-delimited JSON, not a single
+    // object. Each line is already a full 9-slot snapshot, so applying
+    // just the last line is enough to reflect current state.
+    const lines = payload.toString().split("\n").filter(Boolean);
+    if (lines.length === 0) return;
+    try {
+      applySnapshot(JSON.parse(lines[lines.length - 1]));
+    } catch (e) {
+      console.error("Bad message on", TOPIC, e, payload.toString());
+    }
+  });
+</script>
+</body>
+</html>

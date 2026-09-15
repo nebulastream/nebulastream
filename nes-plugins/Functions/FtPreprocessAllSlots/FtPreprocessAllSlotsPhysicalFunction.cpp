@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <Functions/FtPreprocessSlotPhysicalFunction.hpp>
+#include <Functions/FtPreprocessAllSlotsPhysicalFunction.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -34,11 +35,11 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
-/// Single-header JPEG (and friends) decoder, public domain. Only the JPEG path is exercised here
-/// (i/cam's frames are baseline JPEG), so every other format is compiled in but unused.
-/// STB_IMAGE_STATIC gives this translation unit's copy of the implementation internal linkage --
-/// FtPreprocessAllSlots vendors and implements the same header independently, and both plugin
-/// libraries end up in the same final binary, so external linkage here would collide at link time.
+/// Single-header JPEG (and friends) decoder, public domain. Vendored again rather than shared with
+/// FtPreprocessSlot -- plugins in this codebase are self-contained (see that plugin's CMakeLists
+/// comment on stb_image over a formal libjpeg-turbo dependency). STB_IMAGE_STATIC gives this
+/// translation unit's copy of the implementation internal linkage, since both plugin libraries end
+/// up in the same final binary and external linkage would collide with FtPreprocessSlot's own copy.
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
@@ -48,20 +49,40 @@
 namespace NES
 {
 
-FtPreprocessSlotPhysicalFunction::FtPreprocessSlotPhysicalFunction(
-    PhysicalFunction image, PhysicalFunction x, PhysicalFunction y, PhysicalFunction w, PhysicalFunction h)
-    : image(std::move(image)), x(std::move(x)), y(std::move(y)), w(std::move(w)), h(std::move(h))
+FtPreprocessAllSlotsPhysicalFunction::FtPreprocessAllSlotsPhysicalFunction(PhysicalFunction image) : image(std::move(image))
 {
 }
 
 namespace
 {
-/// Matches the training pipeline's IMG_SIZE=64, 3-channel RGB convention (see preprocess.py /
-/// train_model.py in the Dropbox "SSC model" folder) and the AutoVI demo's tensor layout, so the
-/// rest of the MODEL_INFERENCE plumbing (tensor shape matching, IREE compile) needs no changes.
 constexpr uint32_t modelExtent = 64;
 constexpr uint32_t modelChannels = 3;
-constexpr uint64_t outputTensorBytes = uint64_t{1} * modelChannels * modelExtent * modelExtent * sizeof(float);
+constexpr uint32_t slotCount = 9;
+constexpr uint64_t perSlotTensorBytes = uint64_t{1} * modelChannels * modelExtent * modelExtent * sizeof(float);
+constexpr uint64_t outputTensorBytes = uint64_t{slotCount} * perSlotTensorBytes;
+
+struct SlotRoi
+{
+    uint32_t x;
+    uint32_t y;
+    uint32_t w;
+    uint32_t h;
+};
+
+/// The 9 fixed HBW slot ROIs, same pixel rects and order (A1..C3) as the 9 FT_PREPROCESS_SLOT
+/// calls in ssc-slot-anomaly.sql. This order is also the row order BUCKET_SLOT_CNN_9's batched
+/// input expects and the column order its output is unpacked into (p_absent_A1..p_absent_C3 in
+/// the gated-batched YAML/SQL) -- change all three together or slot labels silently swap.
+constexpr std::array<SlotRoi, slotCount> slotRois{
+    {{86, 10, 55, 51}, /// A1
+     {155, 20, 57, 50}, /// A2
+     {240, 30, 76, 55}, /// A3
+     {88, 63, 56, 40}, /// B1
+     {149, 73, 69, 52}, /// B2
+     {237, 88, 78, 62}, /// B3
+     {92, 107, 51, 51}, /// C1
+     {150, 128, 72, 50}, /// C2
+     {226, 153, 88, 53}}}; /// C3
 
 /// HWC-interleaved, 8-bit-per-channel RGB image, decoded or cropped.
 struct RgbImage
@@ -77,29 +98,19 @@ struct ResampleContribution
     std::vector<float> weights;
 };
 
-/// i/cam's "data" field is a full data-URI (`data:image/jpeg;base64,<...>`), not a bare base64
-/// string -- the leading `data:image/jpeg;base64,` text is not itself valid base64 (':' and ';'
-/// aren't in the base64 alphabet), so decoding the whole field with FROM_BASE64 corrupts the
-/// image bytes. Confirmed empirically: stb_image reported "unknown image type" on real i/cam
-/// frames until this prefix was stripped first. Strip up to and including the first ',' (the
-/// data-URI separator, per RFC 2397) rather than hardcoding the prefix's length, since the media
-/// type could in principle vary.
+/// See FtPreprocessSlotPhysicalFunction.cpp's stripDataUriPrefix for the data-URI rationale.
 std::span<const std::byte> stripDataUriPrefix(std::span<const std::byte> field)
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char to search for the data-URI ',' separator
     const auto* commaPtr = static_cast<const std::byte*>(std::memchr(field.data(), ',', field.size()));
     if (commaPtr == nullptr)
     {
-        throw FormattingError("FT_PREPROCESS_SLOT expected a data-URI (\"data:<type>;base64,<...>\") but found no ',' separator");
+        throw FormattingError("FT_PREPROCESS_ALL_SLOTS expected a data-URI (\"data:<type>;base64,<...>\") but found no ',' separator");
     }
     const auto prefixLength = static_cast<size_t>(commaPtr - field.data()) + 1;
     return field.subspan(prefixLength);
 }
 
-/// Base64-decodes the data-URI payload (post prefix-strip) via OpenSSL, same approach as
-/// FromBase64PhysicalFunction -- duplicated rather than reused because that function operates on
-/// the whole field, ignorant of the data-URI prefix, and its runtime piece is tightly coupled to
-/// FromBase64LogicalFunction's own registry-plumbed FROM_BASE64 name.
 std::vector<uint8_t> decodeBase64(std::span<const std::byte> base64Bytes)
 {
     if (base64Bytes.empty())
@@ -112,12 +123,10 @@ std::vector<uint8_t> decodeBase64(std::span<const std::byte> base64Bytes)
         decoded.data(), reinterpret_cast<const unsigned char*>(base64Bytes.data()), static_cast<int>(base64Bytes.size()));
     if (decodedLen < 0)
     {
-        throw FormattingError("FT_PREPROCESS_SLOT could not base64-decode the data-URI payload");
+        throw FormattingError("FT_PREPROCESS_ALL_SLOTS could not base64-decode the data-URI payload");
     }
 
     auto actualLen = static_cast<size_t>(decodedLen);
-    /// EVP_DecodeBlock doesn't account for padding -- subtract padding bytes, same as
-    /// FromBase64PhysicalFunction's native decode helper.
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) index into the base64 buffer to check padding characters
     if (base64Bytes.size() >= 1 && base64Bytes[base64Bytes.size() - 1] == std::byte{'='})
     {
@@ -147,7 +156,7 @@ RgbImage decodeJpegToRgb(std::span<const std::byte> jpegBytes)
         modelChannels);
     if (decoded == nullptr)
     {
-        throw FormattingError("FT_PREPROCESS_SLOT could not decode JPEG payload: {}", stbi_failure_reason());
+        throw FormattingError("FT_PREPROCESS_ALL_SLOTS could not decode JPEG payload: {}", stbi_failure_reason());
     }
     SCOPE_EXIT
     {
@@ -158,15 +167,18 @@ RgbImage decodeJpegToRgb(std::span<const std::byte> jpegBytes)
     return {.width = static_cast<uint32_t>(width), .height = static_cast<uint32_t>(height), .pixels = {decoded, decoded + pixelCount}};
 }
 
-/// Extracts one HBW slot's fixed pixel rect out of the full i/cam frame, before resizing. Kept as
-/// its own step (rather than folded into the resize) so training-time crop == query-time crop by
-/// construction (see preprocess.py's "crop to slot ROI" step).
 RgbImage cropRgb(const RgbImage& image, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     if (w == 0 or h == 0 or x + w > image.width or y + h > image.height)
     {
         throw FormattingError(
-            "FT_PREPROCESS_SLOT crop rect ({}, {}, {}, {}) is out of bounds for a {}x{} frame", x, y, w, h, image.width, image.height);
+            "FT_PREPROCESS_ALL_SLOTS crop rect ({}, {}, {}, {}) is out of bounds for a {}x{} frame",
+            x,
+            y,
+            w,
+            h,
+            image.width,
+            image.height);
     }
 
     std::vector<uint8_t> cropped(static_cast<size_t>(w) * h * modelChannels);
@@ -179,11 +191,7 @@ RgbImage cropRgb(const RgbImage& image, uint32_t x, uint32_t y, uint32_t w, uint
     return {.width = w, .height = h, .pixels = std::move(cropped)};
 }
 
-/// Precomputes a separable bilinear resize's per-output-pixel source indices/weights, replicating
-/// PIL's `Image.BILINEAR` (a triangle filter, not a naive 2x2 sample) so training (Python/PIL) and
-/// query time (here) produce numerically matching tensors. Ported from
-/// nebulastream/nes-demo-process-intelligence's AUTOVI_PREPROCESS_IMAGE, which solved this same
-/// train/query parity problem for a different (PNG, whole-frame) source.
+/// See FtPreprocessSlotPhysicalFunction.cpp's computeTriangleContributions for the PIL-parity rationale.
 std::vector<ResampleContribution> computeTriangleContributions(const size_t inputExtent, const uint32_t outputExtent)
 {
     constexpr float coordinateShift = 0.01F;
@@ -276,24 +284,16 @@ void resizeRgbLikePillow(const RgbImage& image, std::vector<uint8_t>& resizedPix
     }
 }
 
-/// Native function invoked (via nautilus::invoke) from the traced physical function. Everything
-/// here -- data-URI strip, base64 decode, JPEG decode, crop, resize, normalize, HWC->CHW
-/// transpose -- runs as plain C++, not traced Nautilus IR; only the pointers/sizes crossing the
-/// boundary are `nautilus::val`s. `fieldPtr`/`fieldSize` is the RAW MQTT field value (e.g. i/cam's
-/// full "data:image/jpeg;base64,<...>" string) -- do not wrap the query's argument in
-/// FROM_BASE64, this function does its own data-URI-aware base64 decode.
-void preprocessSlotToTensor(int8_t* fieldPtr, uint64_t fieldSize, uint32_t x, uint32_t y, uint32_t w, uint32_t h, int8_t* outputPtr)
+/// Crops+resizes+normalizes one already-decoded frame into the CHW slice for slot `slotIndex`,
+/// starting at `outputPtr + slotIndex * perSlotTensorBytes`.
+void writeSlotTensor(const RgbImage& decoded, const SlotRoi& roi, int8_t* outputPtr, uint32_t slotIndex)
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    const auto field = std::span<const std::byte>(reinterpret_cast<const std::byte*>(fieldPtr), fieldSize);
-    const auto base64Payload = stripDataUriPrefix(field);
-    const auto jpegBytes = decodeBase64(base64Payload);
-    const auto decoded = decodeJpegToRgb(std::span<const std::byte>(reinterpret_cast<const std::byte*>(jpegBytes.data()), jpegBytes.size()));
-    const auto cropped = cropRgb(decoded, x, y, w, h);
+    const auto cropped = cropRgb(decoded, roi.x, roi.y, roi.w, roi.h);
 
     std::vector<uint8_t> resizedPixels;
     resizeRgbLikePillow(cropped, resizedPixels);
 
+    auto* slotOutputPtr = outputPtr + static_cast<size_t>(slotIndex) * perSlotTensorBytes; /// NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     for (uint32_t pixelY = 0; pixelY < modelExtent; ++pixelY)
     {
         for (uint32_t pixelX = 0; pixelX < modelExtent; ++pixelX)
@@ -304,32 +304,45 @@ void preprocessSlotToTensor(int8_t* fieldPtr, uint64_t fieldSize, uint32_t x, ui
                 const auto pixelOffset = baseIndex * modelChannels + channel;
                 const auto value = static_cast<float>(resizedPixels[pixelOffset]) / 255.0F;
                 const auto tensorIndex = channel * modelExtent * modelExtent + baseIndex;
-                std::memcpy(outputPtr + tensorIndex * sizeof(float), &value, sizeof(value)); /// NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                std::memcpy(
+                    slotOutputPtr + tensorIndex * sizeof(float), &value, sizeof(value)); /// NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             }
         }
     }
 }
+
+/// Native function invoked (via nautilus::invoke) from the traced physical function. Decodes the
+/// JPEG once, then crops/resizes/packs all 9 fixed slot ROIs into one [9,3,64,64] tensor -- the
+/// single biggest win over calling FT_PREPROCESS_SLOT 9 times, which each independently receive
+/// and decode their own copy of the same frame.
+void preprocessAllSlotsToTensor(int8_t* fieldPtr, uint64_t fieldSize, int8_t* outputPtr)
+{
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    const auto field = std::span<const std::byte>(reinterpret_cast<const std::byte*>(fieldPtr), fieldSize);
+    const auto base64Payload = stripDataUriPrefix(field);
+    const auto jpegBytes = decodeBase64(base64Payload);
+    const auto decoded = decodeJpegToRgb(std::span<const std::byte>(reinterpret_cast<const std::byte*>(jpegBytes.data()), jpegBytes.size()));
+
+    for (uint32_t slotIndex = 0; slotIndex < slotCount; ++slotIndex)
+    {
+        writeSlotTensor(decoded, slotRois.at(slotIndex), outputPtr, slotIndex);
+    }
+}
 }
 
-VarVal FtPreprocessSlotPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal FtPreprocessAllSlotsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto imageValue = image.execute(record, arena).getRawValueAs<VariableSizedData>();
-    const auto xValue = x.execute(record, arena).getRawValueAs<nautilus::val<uint32_t>>();
-    const auto yValue = y.execute(record, arena).getRawValueAs<nautilus::val<uint32_t>>();
-    const auto wValue = w.execute(record, arena).getRawValueAs<nautilus::val<uint32_t>>();
-    const auto hValue = h.execute(record, arena).getRawValueAs<nautilus::val<uint32_t>>();
 
     auto output = arena.allocateVariableSizedData(nautilus::val<uint64_t>(outputTensorBytes));
-    nautilus::invoke(
-        preprocessSlotToTensor, imageValue.getContent(), imageValue.getSize(), xValue, yValue, wValue, hValue, output.getContent());
+    nautilus::invoke(preprocessAllSlotsToTensor, imageValue.getContent(), imageValue.getSize(), output.getContent());
     return VariableSizedData(output.getContent(), nautilus::val<uint64_t>(outputTensorBytes));
 }
 
 /// NOLINTNEXTLINE(readability-identifier-naming)
-PhysicalFunctionRegistryReturnType FtPreprocessSlotPhysicalFunction::createFT_PREPROCESS_SLOT(PhysicalFunctionRegistryArguments arguments)
+PhysicalFunctionRegistryReturnType FtPreprocessAllSlotsPhysicalFunction::createFT_PREPROCESS_ALL_SLOTS(PhysicalFunctionRegistryArguments arguments)
 {
-    PRECONDITION(arguments.childFunctions.size() == 5, "FT_PREPROCESS_SLOT must have exactly 5 child functions (image, x, y, w, h)");
-    return FtPreprocessSlotPhysicalFunction(
-        arguments.childFunctions[0], arguments.childFunctions[1], arguments.childFunctions[2], arguments.childFunctions[3], arguments.childFunctions[4]);
+    PRECONDITION(arguments.childFunctions.size() == 1, "FT_PREPROCESS_ALL_SLOTS must have exactly 1 child function (image)");
+    return FtPreprocessAllSlotsPhysicalFunction(arguments.childFunctions[0]);
 }
 }

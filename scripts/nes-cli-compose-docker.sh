@@ -133,7 +133,12 @@ fi
 docker_tty_flag=()
 [[ -t 0 ]] && docker_tty_flag=(-t)
 
-docker run --rm -i "${docker_tty_flag[@]}" \
+# --network host: the worker needs to reach services bound to the host's own
+# localhost (e.g. a local MQTT broker for a webapp demo) -- inside the
+# container's default network namespace, "localhost" means the container
+# itself, not the host, so those connections fail otherwise. LAN targets
+# like the factory broker are unaffected either way.
+docker run --rm -i "${docker_tty_flag[@]}" --network host \
   -v "$repo_root:$repo_root" -w "$repo_root" \
   "$image" \
   bash -c "$inner_script" bash "$worker_bin" "$cli_bin" "$subcommand" "$port" "${topo_args[@]}" "${query_args[@]}" "${extra_args[@]}"

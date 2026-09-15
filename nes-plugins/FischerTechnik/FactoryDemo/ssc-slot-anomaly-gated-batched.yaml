@@ -1,0 +1,218 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Batched sibling of ssc-slot-anomaly-gated.yaml/.sql: one MODEL_INFERENCE call per frame instead
+# of 9 (one per slot).
+#
+# Why this is possible without retraining: BUCKET_SLOT_CNN's graph (Conv/Relu/MaxPool x3,
+# Flatten(axis=1), Gemm/Relu/Gemm, Softmax(axis=-1)) has no batch-hardcoded op -- Gemm's spec
+# treats its input's leading dimension as a generic row count, not literally "batch=1". So the
+# exact same trained weights, fed [9,3,64,64] instead of [1,3,64,64], produce 9 independent
+# per-slot results by construction. BUCKET_SLOT_CNN_9 (models/bucket_slot_cnn_9slot.onnx) is that
+# same graph wrapped with an outer [1,9,3,64,64] input (batch dim = 1, satisfying NES's
+# OpenVinoImporter invariant that inference evaluates one tuple at a time) -> Reshape to
+# [9,3,64,64] -> the original unmodified graph -> Gather/Squeeze down to the 9 p_absent scores.
+# Verified numerically identical (max abs diff 0.0) to running the original 9x in a loop, via
+# onnxruntime, before being wired in here -- see the conversation history for the check script.
+#
+# Why the gate collapsed from 9 joins to 1: the SSC is a single pan/tilt camera covering the whole
+# HBW -- it's either pointing at all 9 slots or none, by construction. ssc-slot-anomaly-gated's 9
+# PTU_POS_XX joins were the identical tolerance check copy-pasted 9x (confirmed: same topic
+# i/ptu/pos, same pan/tilt target literals in every branch), so one gate ahead of the single
+# FT_PREPROCESS_ALL_SLOTS call is equivalent, not a behavior change.
+#
+# Why thresholding moved from a WHERE to per-column Conditional() flags: today's WHERE
+# FT_LOG_SCORE(...) > 0.85 drops the whole row when a slot isn't anomalous, which worked when
+# each row was one slot. Here one row is one frame carrying all 9 slots' scores, so a WHERE can't
+# selectively drop one slot's value out of a row shared with the other 8 -- if it filtered on any
+# single slot's score, a frame where e.g. only A1 is anomalous would still have to carry A2..C3
+# through (or be dropped entirely, losing A1's alert). Instead every gated frame reaches the sink
+# unconditionally, carrying raw scores, per-slot empty_XX flags (Conditional() thresholded at the
+# same 0.85), and num_empty (their sum) -- so "A1 and A2 both empty this frame" is directly visible
+# in one row (empty_A1=1, empty_A2=1, num_empty=2) rather than requiring the reader to notice two
+# separate alert rows landed at the same timestamp. FT_LOG_SCORE's NES_INFO side-channel logging
+# is kept, called once per slot per row (all 9 fire unconditionally, same as the flags), so
+# multiple slots crossing threshold in the same frame still produce their own log lines together.
+#
+# Net vs. ssc-slot-anomaly-gated.yaml: 19 MQTT connections (9x SSC_CAM_XX + 9x PTU_POS_XX +
+# 1x PTU_POS) collapse to 3 (SSC_CAM + PTU_POS_GATE + PTU_POS_PRINT), and one JPEG frame is
+# decoded once per tick instead of 9 times (FT_PREPROCESS_ALL_SLOTS decodes once, crops 9x --
+# see its plugin comment). ssc-slot-anomaly-gated.yaml/.sql, ssc-slot-anomaly.yaml/.sql, and
+# ssc-slot-anomaly-debug-b2.yaml/.sql are left untouched; they still use the original
+# bucket_slot_cnn.onnx / BUCKET_SLOT_CNN and are unaffected by anything in this file.
+#
+# TODO before running (carried over from ssc-slot-anomaly-gated.yaml, unchanged):
+# - The pan/tilt +-0.01 tolerance is a placeholder threshold -- tune once real pan/tilt jitter at
+#   rest is known.
+# - The gate join's WINDOW TUMBLING(..., SIZE 2 SEC) is a starting point, not measured against
+#   this feed's actual i/cam vs i/ptu/pos update rates.
+
+sinks:
+  - name: SSC_SLOT_ANOMALY_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"empty_A1"'
+        type: UINT64
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"empty_A2"'
+        type: UINT64
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"empty_A3"'
+        type: UINT64
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"empty_B1"'
+        type: UINT64
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"empty_B2"'
+        type: UINT64
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"empty_B3"'
+        type: UINT64
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"empty_C1"'
+        type: UINT64
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"empty_C2"'
+        type: UINT64
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+      - name: '"empty_C3"'
+        type: UINT64
+      - name: '"num_empty"'
+        type: UINT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: ssc_slot_anomalies_gated_batched.csv
+
+  - name: PTU_ALIGNMENT_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+      - name: '"alignment"'
+        type: VARSIZED
+    type: Print
+    config:
+      output_format: CSV
+
+models:
+  - name: BUCKET_SLOT_CNN_9
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn_9slot.onnx
+    input:
+      - name: '"pixels9"'
+        type: VARSIZED
+    output:
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+
+logical:
+  - name: SSC_CAM
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: PTU_POS_GATE
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_PRINT
+    # Feeds the standalone alignment-print query only -- the hard gate uses PTU_POS_GATE above.
+    # Same schema as fischertechnik-run_all.yaml's PTU_POS.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+physical:
+  - logical: SSC_CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-batched-cam
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_GATE
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-batched-ptu-gate
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_PRINT
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-ssc-slot-anomaly-gated-batched-ptu-print
+      qos: 0
+      log_messages: false
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090

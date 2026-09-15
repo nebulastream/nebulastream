@@ -26,6 +26,7 @@ add_plugin("OutputFormatters/JSONOutputFormatter")
 add_plugin("Rules/RedundantUnionRemovalRule")
 add_plugin("Functions/Conditional")
 add_plugin("Functions/FtPreprocessSlot")
+add_plugin("Functions/FtPreprocessAllSlots")
 add_plugin("Functions/FtLogScore")
 
 if (NES_ENABLES_TESTS)

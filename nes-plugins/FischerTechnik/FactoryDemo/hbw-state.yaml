@@ -1,0 +1,152 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Webapp feed for the HBW slot-state monitor (see webapp/index.html). Same
+# query logic as ssc-slot-anomaly-gated-batched.yaml/.sql (one MODEL_INFERENCE
+# call over all 9 slots per frame, pan/tilt-gated, unconditional -- every
+# aligned frame reaches the sink whether or not any slot is empty) -- only the
+# sink changed: MQTT/JSON to a LOCAL broker instead of a CSV file, so a
+# browser can subscribe to it live. This is a deliberately separate broker
+# from the factory's own (192.168.0.10) -- the query publishes to
+# localhost:1883, and webapp/index.html subscribes to the same local broker
+# over its websocket listener (localhost:9001). See webapp/mosquitto.conf for
+# that broker's config and webapp/docker-compose.yml to run it.
+#
+# Left ssc-slot-anomaly-gated-batched.yaml/.sql untouched; this file has its
+# own client_ids (suffixed "-hbw-state") so both can run at the same time
+# without booting each other's MQTT connections.
+
+sinks:
+  - name: HBW_STATE_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"empty_A1"'
+        type: UINT64
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"empty_A2"'
+        type: UINT64
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"empty_A3"'
+        type: UINT64
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"empty_B1"'
+        type: UINT64
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"empty_B2"'
+        type: UINT64
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"empty_B3"'
+        type: UINT64
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"empty_C1"'
+        type: UINT64
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"empty_C2"'
+        type: UINT64
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+      - name: '"empty_C3"'
+        type: UINT64
+      - name: '"num_empty"'
+        type: UINT64
+    type: MQTT
+    config:
+      output_format: JSON
+      server_uri: localhost
+      topic: nes/hbw/slot_state
+      client_id: nebulastream-factorydemo-hbw-state-sink
+      qos: 0
+
+models:
+  - name: BUCKET_SLOT_CNN_9
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn_9slot.onnx
+    input:
+      - name: '"pixels9"'
+        type: VARSIZED
+    output:
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+
+logical:
+  - name: SSC_CAM
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: PTU_POS_GATE
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+physical:
+  - logical: SSC_CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-hbw-state-cam
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_GATE
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-hbw-state-ptu-gate
+      qos: 0
+      log_messages: false
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
