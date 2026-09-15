@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -50,6 +51,7 @@
 #include <Progress.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
+#include <TemporaryDirectory.hpp>
 #include <Version.hpp>
 
 #include <DataTypes/DataType.hpp>
@@ -92,20 +94,24 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 NES::SystestQuery makeQuery(
     const std::expected<NES::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
-    NES::SystestQueryId queryId)
+    NES::SystestQueryId queryId,
+    std::optional<std::filesystem::path> resultFile)
 {
     return NES::SystestQuery{
         .testName = NES::TestName{"test_query"},
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
-        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectation = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
-        .actualExplainOutput = std::nullopt};
+        .actualExplainOutput = std::nullopt,
+        .resultFile = std::move(resultFile),
+        .differentialResultFile = std::nullopt,
+        .qualifyingPrefix = {},
+        .inputFiles = {}};
 }
 }
 
@@ -173,7 +179,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId)},
+        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId, std::nullopt)},
         1,
         submitter,
         progressTracker,
@@ -207,7 +213,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId, std::nullopt)},
         1,
         submitter,
         progressTracker,
@@ -246,9 +252,10 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
-            dummyQueryId)},
+            dummyQueryId,
+            std::nullopt)},
         1,
         submitter,
         progressTracker,

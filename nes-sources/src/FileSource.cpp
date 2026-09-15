@@ -34,8 +34,6 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
-#include <FileDataRegistry.hpp>
-#include <InlineDataRegistry.hpp>
 
 namespace NES
 {
@@ -81,43 +79,6 @@ std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
-}
-
-InlineDataRegistryReturnType FileSource::provideInlineData(InlineDataRegistryArguments systestAdaptorArguments)
-{
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
-    {
-        throw InvalidConfigParameter("Mock FileSource cannot use given inline data if a 'file_path' is set");
-    }
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.try_emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
-
-
-    if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
-    {
-        /// Write inline tuples to test file.
-        for (const auto& tuple : systestAdaptorArguments.tuples)
-        {
-            testFile << tuple << "\n";
-        }
-        testFile.flush();
-        return systestAdaptorArguments.physicalSourceConfig;
-    }
-    throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
-}
-
-FileDataRegistryReturnType FileSource::provideFileData(FileDataRegistryArguments systestAdaptorArguments)
-{
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(SYSTEST_FILE_PATH_PARAMETER))
-    {
-        throw InvalidConfigParameter("The mock file data source cannot be used if the file_path parameter is already set.");
-    }
-
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(
-        SYSTEST_FILE_PATH_PARAMETER, systestAdaptorArguments.testFilePath.string());
-
-    return systestAdaptorArguments.physicalSourceConfig;
 }
 
 }
