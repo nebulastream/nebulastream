@@ -25,40 +25,34 @@
 
 //! Coordinator process glue.
 //!
-//! The coordinator is the long-lived control-plane component. It accepts
-//! client requests, writes the resulting desired state into the catalog,
-//! and leaves it to the controller to bring workers in line with the catalog.
+//! The coordinator is the long-lived control-plane component.
+//! It accepts client requests, writes the resulting desired state into the catalog,
+//! and leaves it to the controller to bring the workers in line with the catalog.
 //!
 //! Two long-running tasks share one process, joined by `tokio::select!`:
 //!
-//!  - The `RequestHandler` owns the request channel. It runs each
-//!    statement inside a database transaction, sends the reply back on
-//!    the per-request oneshot. For blocking requests it parks the reply
-//!    until the catalog reaches the state the caller asked for.
-//!  - The `Controller` (from the `controller` crate) walks the catalog
-//!    on a timer, spawns one task per active row, and tears those tasks
-//!    down when a row goes away or is marked removed.
+//!  - The `RequestHandler` owns the request channel.
+//!    It runs each statement inside a database transaction and sends the reply on the per-request oneshot.
+//!    For blocking requests it parks the reply until the catalog reaches the state that the caller asked for.
+//!  - The `Controller` (from the `controller` crate) reads the catalog on a timer,
+//!    spawns one task per active row, and stops those tasks when a row is deleted or marked removed.
 //!
-//! The two sides do not share memory: the catalog is the only shared
-//! state. They coordinate over two `watch` channels:
+//! The two sides do not share memory: the catalog is the only shared state.
+//! They coordinate over two `watch` channels:
 //!
-//!  - `intent`: the request handler sends after every successful
-//!    statement to nudge the controller to look at the catalog now
-//!    rather than at the next tick.
-//!  - `state`: the controller sends after every successful row update
-//!    so the request handler can re-check whether any parked reply is
-//!    ready.
+//!  - `intent`: the request handler sends after every successful statement,
+//!    so the controller reads the catalog now rather than at the next tick.
+//!  - `state`: the controller sends after every successful row update,
+//!    so the request handler re-checks whether any parked reply is ready.
 //!
-//! `watch` is chosen on purpose. The receiver only cares that something
-//! changed; older notifications are useless once a newer one arrives.
-//! Coalescing is built in, so a burst of updates collapses into one
-//! wake-up instead of flooding either side.
+//! `watch` is chosen because the receiver only needs to know that something changed;
+//! older notifications are useless once a newer one arrives.
+//! Coalescing is built in, so a burst of updates collapses into one wake-up.
 //!
-//! There are two entry points. `run` takes an already-built `Database`
-//! and runs both tasks on the current runtime. `start_with_runtime`
-//! builds a `Database` from a `StateBackend`, spawns `run` on the
-//! provided runtime, and returns the sender end of the request channel
-//! so callers can submit requests from outside the runtime.
+//! There are two entry points.
+//! `run` takes an already-built `Database` and runs both tasks on the current runtime.
+//! `start_with_runtime` builds the `Database` from a `StateBackend`, spawns `run` on the given runtime,
+//! and returns the sender end of the request channel so requests can be submitted from outside the runtime.
 
 mod request_handler;
 mod sql_planner;

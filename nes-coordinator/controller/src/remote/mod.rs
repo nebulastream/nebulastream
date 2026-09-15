@@ -59,8 +59,7 @@ pub mod worker_rpc_service {
                 }
             }
 
-            /// Reverse of the constructor above; ids that did not come from
-            /// a fragment id parse to nothing.
+            /// Reverse of the constructor above; an id that did not come from a fragment id parses to `None`.
             pub fn fragment_id(&self) -> Option<i64> {
                 self.local_query_id.parse().ok()
             }

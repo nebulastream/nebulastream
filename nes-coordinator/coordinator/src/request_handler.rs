@@ -35,25 +35,21 @@ use tokio::sync::{oneshot, watch};
 use tokio::time::Instant;
 use tracing::{debug, info};
 
-/// Returned when a blocking create finds the query in a terminal state
-/// that does not match the one the caller asked to wait for. There is
-/// nothing left to wait for, and reporting success would hide that the
-/// query never reached the requested state. Carries the query's fragments
-/// so a caller can read the structured per-fragment error, which the
-/// query's aggregated error summary drops the code of.
+/// Returned when a blocking create finds the query in a terminal state other than the one that it waited for.
+/// Nothing is left to wait for, and reporting success would hide that the query never reached the requested state.
+/// The fragments are included because the query's aggregated error summary drops the per-fragment error code.
 #[derive(Error, Debug)]
 #[error("Query '{}' terminated early with state {}", .0.id, .0.state)]
 pub struct EarlyTermination(pub query::Model, pub Vec<query::query_fragment::Model>);
 
-/// Returned when a blocking wait's timeout elapses before its condition is
-/// met. The reply cannot report success, since the query never reached the
-/// state the caller asked to wait for.
+/// Returned when a blocking wait's timeout elapses before its condition is met.
+/// The reply cannot report success, since the query never reached the state that the caller waited for.
 #[derive(Error, Debug)]
 #[error("timed out waiting for the blocking condition to be satisfied")]
 struct WaitTimeout;
 
 impl WaitTimeout {
-    /// Reported with a code, so a caller can tell a wait that gave up from a query that failed.
+    /// Reported with a code so a caller can tell a timed-out wait from a failed query.
     fn coded() -> anyhow::Error {
         anyhow::Error::new(CodedError::new(ErrorCode::QueryWaitTimeout, Self))
     }
@@ -84,31 +80,26 @@ struct PendingStatus {
     reply_to: oneshot::Sender<anyhow::Result<StatementResult>>,
 }
 
-/// A point-in-time read of query rows and their fragments, keyed by id, that
-/// the parked creates, drops, and reads are all resolved against.
+/// Query rows and their fragments from one catalog read, keyed by id.
 type QuerySnapshot = HashMap<QueryId, (query::Model, Vec<query::query_fragment::Model>)>;
 
 /// Owns the request channel and decides when each reply is sent.
 ///
-/// Every statement runs against the catalog right away. The reply,
-/// however, can be parked: a create that asks to block until the query
-/// reaches a target state, a drop that asks to block until the query
-/// terminates, a read that asks to block until every matched query
-/// terminates, and a status read that asks to poll for a window all
-/// return their reply later, once the controller has moved the catalog
-/// far enough for the wait to be satisfied.
+/// Every statement runs against the catalog right away.
+/// The reply can be parked: a create that waits for a target state, a drop or read that waits for termination,
+/// and a status read that polls for a window all reply later,
+/// once the controller has moved the catalog far enough to satisfy the wait.
 ///
-/// The loop wakes on three signals: a new request, a notification that
-/// the controller has written something to the catalog, or the closest
-/// poll deadline. On every wake-up it re-checks every parked reply and
-/// answers the ones that are now ready.
+/// The loop wakes on a new request, on a notification that the controller wrote to the catalog,
+/// or at the closest deadline.
+/// On every wake-up it re-checks every parked reply and answers the ones that are ready.
 pub(super) struct RequestHandler {
     receiver: async_channel::Receiver<Request>,
     db: Database,
     intent_tx: watch::Sender<()>,
     state_rx: watch::Receiver<()>,
     planner: Option<Arc<dyn SqlPlanner>>,
-    /// Present when the workers run in this process, which is what decides how one is asked for its version.
+    /// Set when the workers run in this process, which decides how a worker is asked for its version.
     factory: Option<Arc<dyn WorkerFactory>>,
     pending_query_creates: HashMap<QueryId, PendingCreate>,
     pending_query_drops: Vec<PendingDrop>,
@@ -177,10 +168,8 @@ impl RequestHandler {
             .unwrap_or_else(|| Instant::now() + Duration::from_secs(60 * 60))
     }
 
-    /// Run the statement and return its result together with the read filter
-    /// it resolved to, if any. A read planned from SQL resolves to the same
-    /// filter as one passed in structured, so a parked poll can re-run it
-    /// regardless of how the read arrived.
+    /// Runs the statement and returns its result with the read filter, if the statement is a read.
+    /// The filter is derived after planning, so a parked poll re-runs the same read whether it arrived as SQL or structured.
     async fn execute(
         &self,
         input: StatementInput,
@@ -222,9 +211,9 @@ impl RequestHandler {
         }
     }
 
-    /// Runs one statement against the catalog, except the one the catalog cannot answer.
-    /// A worker's version is not written down anywhere, so that request selects the workers here and
-    /// then asks them, which is why it does not go through the catalog-only path.
+    /// Runs one statement against the catalog.
+    /// The worker version request is the exception: a worker's version is not stored anywhere,
+    /// so the catalog only selects the workers and each of them is then asked for its version.
     async fn execute_statement(
         &self,
         statement: Statement,
@@ -365,9 +354,8 @@ impl RequestHandler {
         self.resolve_polls().await;
     }
 
-    /// Read the current catalog rows for every query a parked create, drop,
-    /// or read is waiting on, keyed by id. A read failure yields an empty
-    /// snapshot, which leaves the waits parked for the next wake-up.
+    /// Reads the current rows of every query that a parked create, drop, or read waits on.
+    /// A read failure yields an empty snapshot, which leaves the waits parked until the next wake-up.
     async fn query_snapshot(&self) -> QuerySnapshot {
         let mut all_ids: Vec<_> = self.pending_query_creates.keys().copied().collect();
         for pending in &self.pending_query_drops {
@@ -389,9 +377,8 @@ impl RequestHandler {
             .collect()
     }
 
-    /// Answer parked creates whose query reached the target state, and time
-    /// out those whose deadline passed without reaching it. Iterates the
-    /// parked creates directly so one whose row is missing can still time out.
+    /// Answers parked creates whose query reached the target state and times out those whose deadline passed.
+    /// Iterates the parked creates rather than the snapshot so a create whose row is missing can still time out.
     fn resolve_creates(&mut self, queries: &QuerySnapshot, now: Instant) {
         let create_ids: Vec<_> = self.pending_query_creates.keys().copied().collect();
         for id in create_ids {
@@ -413,8 +400,7 @@ impl RequestHandler {
             let (query, fragments) = queries[&id].clone();
 
             // Only abnormal terminations (Stopped, Failed) count as early.
-            // Reaching Completed past a less-advanced wait target is still a
-            // successful resolve from the caller's point of view.
+            // Reaching Completed past a less advanced wait target is still a success from the caller's point of view.
             let early_termination = matches!(query.state, QueryState::Stopped | QueryState::Failed)
                 && query.state != pending.block_until;
             if early_termination {
@@ -430,8 +416,7 @@ impl RequestHandler {
         }
     }
 
-    /// Answer parked drops once every dropped query has terminated, and time
-    /// out those whose deadline passed.
+    /// Answers parked drops once every dropped query has terminated and times out those whose deadline passed.
     fn resolve_drops(&mut self, queries: &QuerySnapshot, now: Instant) {
         let pending_drops = std::mem::take(&mut self.pending_query_drops);
         for pending in pending_drops {
@@ -453,8 +438,7 @@ impl RequestHandler {
         }
     }
 
-    /// Answer parked reads once every matched query has terminated, and time
-    /// out those whose deadline passed.
+    /// Answers parked reads once every matched query has terminated and times out those whose deadline passed.
     fn resolve_waits(&mut self, queries: &QuerySnapshot, now: Instant) {
         let pending_waits = std::mem::take(&mut self.pending_query_waits);
         for pending in pending_waits {
@@ -474,8 +458,7 @@ impl RequestHandler {
         }
     }
 
-    /// Re-run each parked status poll, answering it once its status can no
-    /// longer change or its deadline passed.
+    /// Re-runs each parked status poll and answers it once its status can no longer change or its deadline passed.
     async fn resolve_polls(&mut self) {
         let pending_polls = std::mem::take(&mut self.pending_polls);
         for pending in pending_polls {
@@ -535,15 +518,14 @@ impl RequestHandler {
     }
 }
 
-/// Names the code a failure to reach or to write the catalog reports.
-/// Only the transaction itself is classified here. What a statement does inside one fails for
-/// reasons of its own, which have their own codes.
+/// Attaches the error code for a failure to open or commit the catalog transaction.
+/// Only the transaction itself is classified here; a statement that fails inside one has its own codes.
 fn catalog_failure(code: ErrorCode) -> impl Fn(sea_orm::DbErr) -> anyhow::Error {
     move |err| anyhow::Error::new(CodedError::new(code, err))
 }
 
-/// The read filter a statement resolves to, if it is a query read. Used to
-/// re-run a parked poll on every wake-up.
+/// The statement's read filter, if it is a query read.
+/// A parked poll is re-run with it on every wake-up.
 fn read_filter(statement: &Statement) -> Option<GetQuery> {
     match statement {
         Statement::GetQuery(q) => Some(q.clone()),
@@ -560,10 +542,9 @@ fn all_terminal(query_ids: &[QueryId], queries: &QuerySnapshot) -> bool {
     })
 }
 
-/// True once the wait can stop parking: `current` has either reached the
-/// requested `target` state, or terminated some other way so it cannot make
-/// further progress toward it. A terminal state that is not the target still
-/// resolves the wait; the caller decides whether that counts as success.
+/// True once the wait can stop parking: `current` has reached `target`,
+/// or has terminated some other way and cannot make further progress toward it.
+/// A terminal state that is not the target still resolves the wait; the caller decides whether that is a success.
 fn wait_resolved(current: QueryState, target: QueryState) -> bool {
     matches!(
         (current, target),
@@ -579,13 +560,11 @@ fn wait_resolved(current: QueryState, target: QueryState) -> bool {
     ) || current.is_terminal()
 }
 
-/// True for a fragment whose status reply the caller can already trust:
-/// either it has terminated, its host is not active (so further updates
-/// cannot arrive), or it has reached a running state and been observed
-/// at least once after the poll was submitted. A fragment that has been
-/// observed but is still mid-transition (for example, re-deploying onto a
-/// host that just came back) keeps the poll open, so the caller waits for
-/// the query to converge instead of returning a snapshot taken mid-flight.
+/// True once no fragment's status can still change before the caller reads it:
+/// the fragment has terminated, its host is not active (so no further updates can arrive),
+/// or it is running and was observed at least once after the poll was submitted.
+/// A fragment that was observed but is still mid-transition (for example, redeploying onto a host that came back)
+/// keeps the poll open, so the caller gets a converged state instead of a snapshot taken mid-transition.
 fn status_satisfied(
     queries: &[(query::Model, Vec<query::query_fragment::Model>)],
     worker_states: &HashMap<NetworkAddr, WorkerState>,
@@ -689,8 +668,7 @@ mod tests {
         }
     }
 
-    /// Walk a query's fragments through the intermediate states the catalog
-    /// validation trigger requires before they can reach `target`.
+    /// Moves every fragment through the intermediate states that the catalog validation trigger requires before `target`.
     async fn transition_fragments(db: &Database, target: QueryFragmentState) {
         let steps = match target {
             QueryFragmentState::Started => vec![QueryFragmentState::Started],
@@ -718,10 +696,7 @@ mod tests {
         }
     }
 
-    /// A poll is honored based on the effective statement, so a read resolves
-    /// to a filter while a non-read does not. `execute` derives the filter the
-    /// same way after planning, so a read polls whether it arrived as SQL or
-    /// already structured.
+    /// A poll is honored based on the effective statement, so only a read resolves to a filter.
     #[test]
     fn read_filter_matches_reads_only() {
         assert!(read_filter(&Statement::GetQuery(GetQuery::all())).is_some());
@@ -827,9 +802,8 @@ mod tests {
             let state_tx = handle.state_tx.clone();
             let query_id = created.id;
             handle.rt.spawn(async move {
-                // Drop emits a second intent after the create; wait for it
-                // before flipping fragments to terminal so the handler sees
-                // the drop *and* the state change.
+                // The drop sends a second intent after the create's.
+                // Wait for it before moving the fragments to terminal, so the handler sees the drop and the state change.
                 intent_rx.changed().await.unwrap();
                 transition_fragments(&db, QueryFragmentState::Stopped).await;
                 state_tx.send(()).expect("state channel closed");

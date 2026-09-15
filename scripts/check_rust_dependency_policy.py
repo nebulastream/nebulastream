@@ -107,12 +107,10 @@ def validate(root: Path) -> list[str]:
             for dependency_name, specification in dependencies.items():
                 location = f"{relative_path} [{section_name}].{dependency_name}"
                 if not isinstance(specification, dict) or specification.get("workspace") is not True:
-                    # The simulation facades cannot be inherited from the
-                    # workspace table: inheritance cannot rename a package, and
-                    # the workspace entries must stay the real crates for the
-                    # non-simulated members. They are the only allowed inline
-                    # dependencies, and every crate must declare them
-                    # identically.
+                    # The madsim facades cannot be inherited from the workspace table:
+                    # inheritance cannot rename a package,
+                    # and the workspace entries must stay the real crates for the non-simulated members.
+                    # They are the only allowed inline dependencies, and every crate must declare them identically.
                     package = (
                         specification.get("package", "") if isinstance(specification, dict) else ""
                     )

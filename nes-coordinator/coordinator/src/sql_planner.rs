@@ -16,21 +16,16 @@ use anyhow::Result;
 use model::database::DatabaseTransaction;
 use model::statement::Statement;
 
-/// Translates raw SQL into the typed statement the coordinator executes.
+/// Translates raw SQL into the typed statement that the coordinator executes.
 ///
-/// The implementation lives outside this crate so the coordinator stays
-/// free of any SQL parser or optimizer dependency: it just hands off the
-/// open transaction together with the source text, and expects the same
-/// transaction back along with the translated statement.
+/// The implementation is outside this crate so the coordinator has no SQL parser or optimizer dependency.
 ///
-/// The transaction is passed through so the planner can read catalog
-/// state and stage inline rows (anonymous sources/sinks, plan blobs)
-/// inside the same atomic unit that will execute the result. Returning
-/// it lets the caller commit or roll the whole thing back as one unit.
+/// The open transaction is passed in and returned so the planner can read catalog state
+/// and stage inline rows (anonymous sources and sinks, plan blobs) in the same transaction that executes the result,
+/// and the caller commits or rolls back everything as one unit.
 ///
-/// `plan` is synchronous because the only current implementation calls
-/// into C++. Callers must invoke it from a context that tolerates a
-/// blocking call.
+/// `plan` is synchronous because the only current implementation calls into C++.
+/// Callers must invoke it from a context that tolerates a blocking call.
 pub trait SqlPlanner: Send + Sync {
     fn plan(&self, txn: DatabaseTransaction, sql: &str)
     -> Result<(Statement, DatabaseTransaction)>;
