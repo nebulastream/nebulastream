@@ -24,6 +24,7 @@ use tokio::sync::oneshot;
 
 /// How long the coordinator holds back a request's reply, and the condition that releases it.
 /// A `None` timeout waits indefinitely.
+#[derive(Debug, Clone, Copy)]
 pub enum Wait {
     /// Answer as soon as the statement has been applied to the catalog.
     None,
@@ -41,58 +42,8 @@ pub enum Wait {
     Poll { timeout: Option<Duration> },
 }
 
-/// One unit of work submitted to the coordinator.
-/// The wait decides when the caller gets its reply, not what the statement does.
-pub struct Payload {
-    pub input: StatementInput,
-    pub wait: Wait,
-}
-
-impl Payload {
-    pub fn sql(sql: String) -> Self {
-        Self::from_input(StatementInput::Sql(sql))
-    }
-
-    pub fn parsed(statement: Statement) -> Self {
-        Self::from_input(StatementInput::Parsed(statement))
-    }
-
-    fn from_input(input: StatementInput) -> Self {
-        Self {
-            input,
-            wait: Wait::None,
-        }
-    }
-
-    pub fn wait(mut self, wait: Wait) -> Self {
-        self.wait = wait;
-        self
-    }
-
-    pub fn until_running(self, timeout: Option<Duration>) -> Self {
-        self.wait(Wait::UntilState {
-            state: QueryState::Running,
-            timeout,
-        })
-    }
-
-    pub fn until_completed(self, timeout: Option<Duration>) -> Self {
-        self.wait(Wait::UntilState {
-            state: QueryState::Completed,
-            timeout,
-        })
-    }
-
-    pub fn until_terminated(self, timeout: Option<Duration>) -> Self {
-        self.wait(Wait::UntilTerminated { timeout })
-    }
-
-    pub fn poll_for(self, timeout: Option<Duration>) -> Self {
-        self.wait(Wait::Poll { timeout })
-    }
-}
-
 /// A submitted statement.
+#[derive(Debug)]
 pub enum StatementInput {
     // raw SQL text
     Sql(String),
@@ -100,45 +51,31 @@ pub enum StatementInput {
     Parsed(Statement),
 }
 
-impl Debug for Payload {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        write!(f, "{:?}", self.input)
-    }
-}
-
-impl Debug for StatementInput {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        match self {
-            Self::Sql(sql) => write!(f, "Sql({sql:?})"),
-            Self::Parsed(stmt) => write!(f, "{stmt:?}"),
-        }
-    }
-}
-
 /// Envelope sent over the request channel.
 /// The reply channel is created together with the request so no caller can forget to supply one.
 pub struct Request {
-    pub payload: Payload,
+    pub input: StatementInput,
+    pub wait: Wait,
     pub reply_to: oneshot::Sender<Result<StatementResult>>,
 }
 
 impl Debug for Request {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        write!(f, "Request{:?}", self.payload)
+        write!(f, "Request({:?}, {:?})", self.input, self.wait)
     }
 }
 
 impl Request {
-    pub fn new(statement: Statement) -> (oneshot::Receiver<Result<StatementResult>>, Self) {
-        Self::from(Payload::parsed(statement))
-    }
-
-    pub fn from(payload: Payload) -> (oneshot::Receiver<Result<StatementResult>>, Self) {
+    pub fn new(
+        input: StatementInput,
+        wait: Wait,
+    ) -> (oneshot::Receiver<Result<StatementResult>>, Self) {
         let (tx, rx) = oneshot::channel();
         (
             rx,
             Self {
-                payload,
+                input,
+                wait,
                 reply_to: tx,
             },
         )
