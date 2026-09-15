@@ -17,10 +17,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <expected>
 #include <functional>
 #include <iterator>
+#include <numeric>
 #include <optional>
 #include <random>
 #include <span>
@@ -29,6 +31,7 @@
 #include <variant>
 #include <vector>
 
+#include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -80,6 +83,50 @@ size_t caseCount(const std::vector<RunnableTestFile>& prepared)
         total += file.cases.size();
     }
     return total;
+}
+
+/// How many rounds the repetition asks for. Zero stands for no round limit, which only the time limit or a failure ends.
+uint64_t roundsOf(const RepetitionPolicy& repetition)
+{
+    if (const auto* fixed = std::get_if<SubmitRounds>(&repetition))
+    {
+        return fixed->count;
+    }
+    return std::holds_alternative<SubmitUntilStopped>(repetition) ? 0 : 1;
+}
+
+/// Records what one round measured, reading the checks and the cases side by side: the runner reports in file order,
+/// so the check at each position belongs to the case at that position.
+/// A case that failed measured nothing, and the failure ends the run after its round anyway.
+/// A differential block has no input files and is not measured. A measuring run skipped it before the rewriter existed too.
+/// An EXPLAIN is answered while compiling and never runs, so there is no execution to measure.
+void recordRound(
+    Benchmark& benchmark,
+    const std::vector<std::reference_wrapper<const RunnableTestFile>>& files,
+    const std::vector<CheckedQuery>& checked)
+{
+    size_t position = 0;
+    for (const RunnableTestFile& file : files)
+    {
+        for (const auto& testCase : file.cases)
+        {
+            const auto& result = checked.at(position++);
+            if (not std::holds_alternative<Success>(result.outcome) or result.timings.empty())
+            {
+                continue;
+            }
+            std::visit(
+                Overloaded{
+                    [&](const RewrittenQuery& query)
+                    {
+                        benchmark.record(
+                            fmt::format("{}:{}", file.name, query.id.getRawValue()), query.inputFiles, result.timings.front().execution);
+                    },
+                    [](const RewrittenDifferential&) {},
+                    [](const RewrittenExplain&) {}},
+                testCase.action);
+        }
+    }
 }
 
 }
@@ -209,48 +256,18 @@ ExecutorResult Executor::runOnce(TestRunner& runner, const RunPolicy& plan, Prep
     std::vector<CheckedQuery> report = std::move(prepared.unprepared);
     std::ranges::move(setUp.rejected, std::back_inserter(report));
 
-    std::optional<Benchmark> benchmark;
-    if (plan.measureReport.has_value())
-    {
-        benchmark.emplace();
-    }
-
     const TestRunner::QueryObserver observe
-        = [&](const TestCaseId& id, const RewrittenCase& testCase, const Verdict& verdict, const std::span<const QueryTiming> timings)
-    {
-        printProgress(progress, id, verdict);
-        if (not benchmark.has_value() or not verdict.has_value() or timings.empty())
-        {
-            return;
-        }
-        /// A differential block has no input files and is not measured. A measuring run skipped it before the rewriter existed too.
-        std::visit(
-            Overloaded{
-                [&](const RewrittenQuery& query)
-                {
-                    benchmark->record(
-                        fmt::format("{}:{}", id.originFile, query.id.getRawValue()), query.inputFiles, timings.front().execution);
-                },
-                [](const RewrittenDifferential&) {},
-                /// An EXPLAIN is answered while compiling and never runs, so there is no execution to measure.
-                [](const RewrittenExplain&) {}},
-            testCase.action);
-    };
+        = [&](const TestCaseId& id, const RewrittenCase&, const Verdict& verdict, const std::span<const QueryTiming>)
+    { printProgress(progress, id, verdict); };
 
     std::ranges::move(runner.submitQueries(setUp.ready, plan.concurrency, observe), std::back_inserter(report));
-    auto result = summarize(report);
-    if (benchmark.has_value())
-    {
-        const auto written = benchmark->writeTo(*plan.measureReport);
-        std::visit([&](auto& outcome) { outcome.report += written; }, result);
-    }
-    return result;
+    return summarize(report);
 }
 
 ExecutorResult Executor::runRounds(TestRunner& runner, const RunPolicy& plan, PreparedRun prepared)
 {
-    /// A repeating run puts a worker under load, and a file that could not be prepared or set up is a failure of the
-    /// invocation rather than something to repeat.
+    /// A repeating run measures what it runs or puts a worker under load, and a file that could not be prepared or set
+    /// up is a failure of the invocation rather than something to repeat.
     if (not prepared.unprepared.empty())
     {
         return summarize(prepared.unprepared);
@@ -261,27 +278,56 @@ ExecutorResult Executor::runRounds(TestRunner& runner, const RunPolicy& plan, Pr
         return summarize(setUp.rejected);
     }
 
-    fmt::print("Repeating the queries of {} test files\n", setUp.ready.size());
-    for (size_t round = 1;; ++round)
+    /// Filled only when the run measures, which is the only difference to a load run: each round then records how long
+    /// every passing query took, and the run ends in the written report rather than a tally.
+    const bool measuring = plan.measureReport.has_value();
+    Benchmark benchmark;
+
+    const auto rounds = roundsOf(plan.repetition);
+    if (not measuring)
+    {
+        fmt::print("Repeating the queries of {} test files\n", setUp.ready.size());
+    }
+
+    const auto startedAt = std::chrono::steady_clock::now();
+    for (uint64_t round = 1; rounds == 0 or round <= rounds; ++round)
     {
         const auto roundStartedAt = std::chrono::steady_clock::now();
         const auto checked = runner.submitQueries(setUp.ready, plan.concurrency);
         const auto failed
             = std::ranges::count_if(checked, [](const CheckedQuery& query) { return not std::holds_alternative<Success>(query.outcome); });
-        fmt::print(
-            "round {}: {} passed, {} failed in {} ms\n",
-            round,
-            checked.size() - static_cast<size_t>(failed),
-            failed,
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - roundStartedAt).count());
+        if (measuring)
+        {
+            recordRound(benchmark, setUp.ready, checked);
+            fmt::print("round {} of {} measured\n", round, rounds);
+        }
+        else
+        {
+            fmt::print(
+                "round {}: {} passed, {} failed in {} ms\n",
+                round,
+                checked.size() - static_cast<size_t>(failed),
+                failed,
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - roundStartedAt).count());
+        }
         static_cast<void>(std::fflush(stdout));
 
-        /// A wrong result ends the run, because the rounds after it would load the same wrong query.
+        /// A wrong result ends the run, because the rounds after it would measure or load the same wrong query.
         if (failed > 0)
         {
             return summarize(checked);
         }
+        if (plan.runLimit.has_value() and std::chrono::steady_clock::now() - startedAt >= *plan.runLimit)
+        {
+            break;
+        }
     }
+
+    if (plan.measureReport.has_value())
+    {
+        return RunSucceeded{.report = benchmark.writeTo(*plan.measureReport)};
+    }
+    return RunSucceeded{.report = "every round passed\n"};
 }
 
 ExecutorResult Executor::execute() const
@@ -298,12 +344,17 @@ ExecutorResult Executor::execute() const
     TestRunner runner{config};
     auto prepared = prepareAll(runner);
 
-    if (std::holds_alternative<RunInShuffledOrder>(plan.ordering))
+    if (const auto* shuffle = std::get_if<RunInShuffledOrder>(&plan.ordering))
     {
+        /// The seed is printed, so a failure this finds can be repeated with the same seed.
+        /// That repeats the order the files are submitted in, not the order their queries finish, which the pool decides.
+        const uint64_t seed = shuffle->seed.has_value() ? *shuffle->seed : std::random_device{}();
+        fmt::print("Running {} test files in random order, with seed {}\n", prepared.ready.size(), seed);
+
         /// The settings stay with their test file, so both move together.
         std::vector<size_t> order(prepared.ready.size());
         std::ranges::iota(order, size_t{0});
-        std::ranges::shuffle(order, std::mt19937{std::random_device{}()});
+        std::ranges::shuffle(order, std::mt19937_64{seed});
         std::vector<RunnableTestFile> shuffled;
         std::vector<ConfigurationOverride> shuffledSettings;
         shuffled.reserve(order.size());
