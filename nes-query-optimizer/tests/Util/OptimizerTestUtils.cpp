@@ -35,7 +35,6 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -118,14 +117,12 @@ OptimizerTestUtils::createSink(LogicalOperator child, std::string name, const st
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(LogicalOperator sink)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), {std::move(sink)}};
+    return LogicalPlan{INVALID_QUERY_ID, {std::move(sink)}};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
+    return LogicalPlan{INVALID_QUERY_ID, std::move(sinks)};
 }
 }

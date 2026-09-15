@@ -27,6 +27,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Barriers/SemanticAnalysisBarrier.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
 
@@ -45,24 +46,8 @@ LogicalPlan AnonymousSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            /// "host" is not part of the sink config — it determines placement, not sink behavior.
-            /// It is stored in the config map only because AnonymousSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find(Identifier::parse("host"));
-            if (hostIt == config.end())
-            {
-                throw InvalidConfigParameter("'host'");
-            }
-            auto host = Host(hostIt->second);
-            config.erase(hostIt);
-
-            const auto sinkDescriptor = sinkCatalog->getAnonymousSink(schema, type, host, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create anonymous sink descriptor");
-            }
-
-            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor.value());
+            const auto sinkDescriptor = catalog->createAnonymousSink(ConnectorKind::Anonymous, type, schema, config, formatConfig);
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator = SinkLogicalOperator::create(sinkDescriptor);
             sinkOperator = sinkOperator->withChildrenUnsafe(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }
@@ -84,6 +69,6 @@ std::set<std::type_index> AnonymousSinkBindingRule::neededBy() const
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)
 PlanRuleRegistryReturnType AnonymousSinkBindingRule::create(PlanRuleRegistryArguments arguments)
 {
-    return AnonymousSinkBindingRule{arguments.sinkCatalog};
+    return AnonymousSinkBindingRule{arguments.catalog};
 }
 }

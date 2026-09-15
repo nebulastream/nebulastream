@@ -14,48 +14,22 @@
 
 #pragma once
 
-#include <chrono>
-#include <expected>
-#include <optional>
 #include <span>
-#include <string>
-#include <string_view>
 
-#include <DataTypes/UnboundField.hpp>
+#include <nes-coordinator-bridge/coordinator.h>
+
 #include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
-#include <Schema/Schema.hpp>
-#include <Schema/SchemaFwd.hpp>
-#include <DistributedQuery.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-/// What running one statement produced, in the terms that the checks need.
-/// The reached state is the terminal state that the workers reported.
-/// The error in its place is what stopped the statement from reaching one, which a test that expects an error compares against.
-struct StatementOutcome
-{
-    std::expected<DistributedQueryStatusSnapshot, Exception> reached;
-
-    /// The schema that the sink writes, which the result file is read back with.
-    /// Absent when the statement produced no plan, and then there is no result file to read either.
-    std::optional<Schema<UnqualifiedUnboundField, Ordered>> sinkOutputSchema;
-
-    /// What an EXPLAIN printed. Such a statement is answered while it is bound and never reaches a worker.
-    std::optional<std::string> explained;
-
-    /// The span between the query running and stopping, as the workers recorded it.
-    std::chrono::milliseconds execution{};
-};
-
-/// Checks the answers to one test case against what the test expects.
+/// Checks the coordinator's answers to one test case against what the test expects.
 /// A query answers with one outcome, and each kind of expectation is a different check.
 /// A differential block answers with one outcome per half that ran, and its check is that the two results agree.
 /// The prefixed names in a printed plan are restored to their declared spelling before it is compared,
 /// so the plan reads as the test wrote it.
 [[nodiscard]] Verdict
-checkTestCase(std::span<const StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames);
+checkTestCase(std::span<const Bridge::StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames);
 
 }

@@ -47,16 +47,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
-#include <Util/UUID.hpp>
-#include <QueryId.hpp>
 
 
 using namespace NES;
-
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
 
 class LogicalPlanTest : public ::testing::Test
 {
@@ -109,7 +102,7 @@ TEST_F(LogicalPlanTest, SingleRootConstructor)
 TEST_F(LogicalPlanTest, MultipleRootsConstructor)
 {
     const std::vector<LogicalOperator> roots = {sourceOp, selectionOp};
-    const auto queryId = randomQueryId();
+    const auto queryId = QueryId{1};
     LogicalPlan plan(queryId, roots);
     EXPECT_EQ(plan.getRootOperators().size(), 2);
     EXPECT_EQ(plan.getQueryId(), queryId);

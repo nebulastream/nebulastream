@@ -15,7 +15,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 # One implementation library serving all registries this plugin participates in.
 add_library(json_output_formatter_plugin STATIC JSONOutputFormatter.cpp)
 target_link_libraries(json_output_formatter_plugin PRIVATE nes-output-formatters)
-target_include_directories(json_output_formatter_plugin PUBLIC include ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(json_output_formatter_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(simdjson CONFIG REQUIRED)
 target_link_libraries(json_output_formatter_plugin PRIVATE simdjson::simdjson)

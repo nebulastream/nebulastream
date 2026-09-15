@@ -22,7 +22,6 @@
 #include <Config/Config.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/Verdict.hpp>
-#include <Rewriter/TestFileRewriter.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -65,10 +64,12 @@ private:
 
     /// Prepares a single test file for execution (parsing and rewriting).
     /// A file that cannot be read, parsed, or rewritten yields a failed check (and does not end the run).
-    [[nodiscard]] std::expected<std::vector<RunnablePartition>, ReportEntry> prepare(const DiscoveredTestFile& discoveredTestFile);
+    [[nodiscard]] static std::expected<std::vector<RunnablePartition>, ReportEntry>
+    prepare(TestFileRewriter& rewriter, const DiscoveredTestFile& discoveredTestFile);
 
     /// Prepares every discovered test file before any query runs.
-    [[nodiscard]] PreparedRun prepareAll();
+    /// The rewriter comes from the caller, because it resolves each partition's placement against the running coordinator.
+    [[nodiscard]] PreparedRun prepareAll(TestFileRewriter& rewriter);
 
     /// Submits each test case exactly once.
     [[nodiscard]] static ExecutorResult runOnce(TestRunner& runner, const RunPolicy& plan, PreparedRun prepared);
@@ -82,7 +83,6 @@ private:
     [[nodiscard]] static ExecutorResult summarize(const std::vector<ReportEntry>& checkedCases);
 
     SystestConfiguration config;
-    TestFileRewriter rewriter;
 };
 
 }

@@ -16,25 +16,18 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
-#include <Identifiers/Identifiers.hpp>
+#include <Runner/Topology.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {
-
-struct SystestClusterConfiguration
-{
-    std::vector<WorkerConfig> workers;
-    std::vector<Host> allowSourcePlacement;
-    std::vector<Host> allowSinkPlacement;
-};
 
 class SystestConfiguration final : public BaseConfiguration
 {
@@ -82,9 +75,15 @@ public:
     bool excludedGroupsProvidedOnCommandLine = false;
     std::vector<std::string> globalExcludedGroups;
 
-    SystestClusterConfiguration clusterConfig;
+    ClusterConfiguration clusterConfig;
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
     std::optional<QueryOptimizerConfiguration> queryOptimizerConfig;
+
+    /// The optimizer and worker settings the command line gave, as keys and values.
+    /// The parsed configurations above validate the same input and reject a key that matches no option.
+    /// The runner submits these raw, because the coordinator and the worker apply them rather than this process.
+    std::unordered_map<std::string, std::string> optimizerOverrides;
+    std::unordered_map<std::string, std::string> workerOverrides;
 
 protected:
     std::vector<BaseOption*> getOptions() override;

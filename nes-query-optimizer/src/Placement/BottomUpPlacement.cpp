@@ -25,7 +25,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -41,9 +40,9 @@
 #include <fmt/ranges.h>
 #include <highs/interfaces/highs_c_api.h>
 #include <util/HighsInt.h>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
-#include <WorkerConfig.hpp>
 #include <scope_guard.hpp>
 
 namespace NES
@@ -433,14 +432,16 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
 
 void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
 {
-    const auto topology = workerCatalog->getTopology();
     validatePlan(topology, logicalPlan);
     validateConnectivity(topology, logicalPlan);
 
     const auto capacity = topology | std::views::keys
         | std::views::transform(
                               [&](const auto& nodeId) -> std::pair<NetworkTopology::NodeId, Capacity>
-                              { return {nodeId, workerCatalog->getWorker(nodeId).value().maxOperators}; })
+                              {
+                                  auto worker = catalog->getWorker(nodeId);
+                                  return {nodeId, worker.maxOperators};
+                              })
         | std::ranges::to<std::unordered_map<NetworkTopology::NodeId, Capacity>>();
 
     const auto placement = solvePlacement(logicalPlan, topology, capacity);

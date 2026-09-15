@@ -43,13 +43,10 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
-#include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -115,7 +112,7 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 {
     const auto sourceOp = SourceDescriptorLogicalOperator::create(leftSourceDescriptor);
     const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp}};
 
     const auto result = DecideMemoryLayoutRule{}.apply(plan);
 
@@ -146,7 +143,7 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()},
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()}}});
     const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp}};
 
     const auto result = DecideMemoryLayoutRule{}.apply(plan);
 
