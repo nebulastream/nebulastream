@@ -138,6 +138,8 @@ impl ActiveModelBehavior for ActiveModel {
 
 /// The state to move a fragment to, with the columns that state requires
 /// (a start or stop timestamp, an error).
+/// A terminal transition may also bring the start timestamp,
+/// because a short fragment can finish before it was ever observed running.
 /// Whether the step from the current state is legal is checked by a database trigger, not here.
 #[derive(Debug, Clone)]
 pub enum QueryFragmentTransition {
@@ -147,12 +149,15 @@ pub enum QueryFragmentTransition {
         start_timestamp: chrono::DateTime<chrono::Utc>,
     },
     Completed {
+        start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
         stop_timestamp: chrono::DateTime<chrono::Utc>,
     },
     Stopped {
+        start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
         stop_timestamp: chrono::DateTime<chrono::Utc>,
     },
     Failed {
+        start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
         stop_timestamp: chrono::DateTime<chrono::Utc>,
         error: QueryFragmentError,
     },
@@ -167,18 +172,21 @@ impl QueryFragmentTransition {
 
     pub fn completed_now() -> Self {
         Self::Completed {
+            start_timestamp: None,
             stop_timestamp: chrono::Utc::now(),
         }
     }
 
     pub fn stopped_now() -> Self {
         Self::Stopped {
+            start_timestamp: None,
             stop_timestamp: chrono::Utc::now(),
         }
     }
 
     pub fn failed_now(error: QueryFragmentError) -> Self {
         Self::Failed {
+            start_timestamp: None,
             stop_timestamp: chrono::Utc::now(),
             error,
         }
@@ -198,22 +206,40 @@ impl ActiveModel {
                 self.current_state = Set(QueryFragmentState::Running);
                 self.start_timestamp = Set(Some(start_timestamp));
             }
-            QueryFragmentTransition::Completed { stop_timestamp } => {
+            QueryFragmentTransition::Completed {
+                start_timestamp,
+                stop_timestamp,
+            } => {
                 self.current_state = Set(QueryFragmentState::Completed);
+                self.set_start_if_known(start_timestamp);
                 self.stop_timestamp = Set(Some(stop_timestamp));
             }
-            QueryFragmentTransition::Stopped { stop_timestamp } => {
+            QueryFragmentTransition::Stopped {
+                start_timestamp,
+                stop_timestamp,
+            } => {
                 self.current_state = Set(QueryFragmentState::Stopped);
+                self.set_start_if_known(start_timestamp);
                 self.stop_timestamp = Set(Some(stop_timestamp));
             }
             QueryFragmentTransition::Failed {
+                start_timestamp,
                 stop_timestamp,
                 error,
             } => {
                 self.current_state = Set(QueryFragmentState::Failed);
+                self.set_start_if_known(start_timestamp);
                 self.stop_timestamp = Set(Some(stop_timestamp));
                 self.error = Set(Some(error));
             }
+        }
+    }
+
+    // A terminal report without a start timestamp leaves whatever the row already has,
+    // so an earlier observed start is never overwritten with NULL.
+    fn set_start_if_known(&mut self, start_timestamp: Option<chrono::DateTime<chrono::Utc>>) {
+        if let Some(start_timestamp) = start_timestamp {
+            self.start_timestamp = Set(Some(start_timestamp));
         }
     }
 
