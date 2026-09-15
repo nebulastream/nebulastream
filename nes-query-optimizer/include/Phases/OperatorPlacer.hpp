@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
+#include <Catalog.hpp>
+#include <NetworkTopology.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
@@ -28,23 +29,17 @@ namespace NES
 class OperatorPlacer
 {
 public:
-    explicit OperatorPlacer(
-        QueryOptimizerConfiguration defaultQueryOptimization,
-        SharedPtr<const SourceCatalog> sourceCatalog,
-        SharedPtr<const SinkCatalog> sinkCatalog,
-        SharedPtr<const WorkerCatalog> workerCatalog)
-        : defaultQueryOptimization(std::move(defaultQueryOptimization))
-        , sourceCatalog(std::move(sourceCatalog))
-        , sinkCatalog(std::move(sinkCatalog))
-        , workerCatalog(std::move(workerCatalog)) { };
+    explicit OperatorPlacer(QueryOptimizerConfiguration defaultQueryOptimization, const std::shared_ptr<Catalog>& catalog)
+        : defaultQueryOptimization(std::move(defaultQueryOptimization)), catalog{catalog}
+    {
+    }
 
-    [[nodiscard]] DistributedLogicalPlan place(LogicalPlan plan) const;
+    /// Assigns each operator to a worker and splits the plan into one part per worker.
+    [[nodiscard]] std::unordered_map<Host, std::vector<LogicalPlan>> place(LogicalPlan plan) const;
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    std::shared_ptr<Catalog> catalog;
 };
 
 

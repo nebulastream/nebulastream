@@ -26,7 +26,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
-#include <QueryId.hpp>
+#include <QueryStatus.hpp>
 
 namespace NES
 {

@@ -53,5 +53,8 @@ add_nes_test_systest(systest-benchmark-test
 add_nes_test_systest(systest-executor-test
         "ExecutorTests.cpp")
 
+add_nes_test_systest(systest-runner-test
+        "Runner/RunnerTests.cpp")
+
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")

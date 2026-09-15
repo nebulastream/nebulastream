@@ -24,7 +24,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionConfiguration.hpp>
 #include <Pipeline.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {

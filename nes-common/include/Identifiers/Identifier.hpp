@@ -63,6 +63,10 @@ public:
 
     static std::expected<Identifier, Exception> tryParse(std::string value);
 
+    /// For names that come back from the catalog. They are stored already parsed, so they must not be parsed again.
+    /// Example: the user wrote `"Foo"`, the catalog stores `Foo`, and parsing `Foo` would give `FOO`.
+    static Identifier fromCanonical(std::string canonicalValue);
+
 private:
     explicit Identifier(std::string originalValue, std::string canonicalValue, bool caseSensitive);
 

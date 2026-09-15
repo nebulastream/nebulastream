@@ -19,12 +19,12 @@
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Model/ParsedTestFile.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
+#include <Runner/Cluster.hpp>
 
 namespace NES
 {
@@ -37,8 +37,9 @@ class TestFilePreparer
 public:
     explicit TestFilePreparer(const SystestConfiguration& config);
 
+    /// Registers workers at the cluster for a set of configuration overrides that no earlier file had.
     /// Throws when the file cannot be read or parsed.
-    [[nodiscard]] std::vector<RunnablePartition> prepare(const DiscoveredTestFile& testFile);
+    [[nodiscard]] std::vector<RunnablePartition> prepare(const DiscoveredTestFile& testFile, Cluster& cluster);
 
     /// Prefixes declared names with the key, e.g., `stream` becomes `JOIN_STREAM`, because all files share one catalog.
     [[nodiscard]] static RunnableTestFile rewritePartition(ParsedTestFile partition, const RewriteContext& context);
@@ -50,9 +51,6 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     TestFileKeyFactory keyFactory;
-    /// The worker for a statement that states no placement of its own.
-    Host defaultSourceHost;
-    Host defaultSinkHost;
     /// Shared across the run, so two files cannot claim the same prefixed name.
     PrefixedNameOwners nameOwners;
 };

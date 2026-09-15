@@ -17,23 +17,13 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <Config/Topology.hpp>
 #include <Configurations/ConfigLiteral.hpp>
-#include <Configurations/Util.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
-#include <QueryOptimizerConfiguration.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {
-
-struct SystestClusterConfiguration
-{
-    std::vector<WorkerConfig> workers;
-    std::vector<Host> allowSourcePlacement;
-    std::vector<Host> allowSinkPlacement;
-};
 
 /// Note: for now we ignore/override the here specified default values with ones provided by argparse when parsing the command line
 struct SystestConfiguration final
@@ -87,14 +77,10 @@ struct SystestConfiguration final
     bool excludedGroupsProvidedOnCommandLine = false;
     std::vector<std::string> globalExcludedGroups;
 
-    SystestClusterConfiguration clusterConfig;
+    ClusterConfiguration clusterConfig;
     /// Worker/optimizer config literals from the `-w` file and the command line after `--`
     /// (empty = nothing passed). They stay literals so per-test-file configuration overrides can
     /// be layered on top before resolving against SingleNodeWorkerConfiguration's declared schema.
     Schema<LiteralConfigValue, Ordered> workerOptimizerConfigLiterals;
-    /// Explicitly resolved defaults: tests construct SystestConfiguration without going through
-    /// the starter (which overwrites this from the `--` section), and the config structs are not
-    /// default-initialized to their defaults.
-    QueryOptimizerConfiguration queryOptimizerConfig = defaultConfiguration<QueryOptimizerConfiguration>();
 };
 }

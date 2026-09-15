@@ -122,6 +122,13 @@ Identifier Identifier::parse(std::string value)
     return Identifier{std::move(value), std::move(canonicalValue), caseSensitive};
 }
 
+Identifier Identifier::fromCanonical(std::string canonicalValue)
+{
+    PRECONDITION(!canonicalValue.empty(), "Invalid identifier, cannot be empty");
+    PRECONDITION(canonicalValue.find('.') == std::string::npos, "Invalid identifier, cannot contain dot: {}", canonicalValue);
+    return Identifier{fmt::format("\"{}\"", canonicalValue), canonicalValue, true};
+}
+
 std::expected<Identifier, Exception> Identifier::tryParse(std::string value)
 {
     if (value.empty())

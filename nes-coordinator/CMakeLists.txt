@@ -18,6 +18,9 @@ add_rust_cargo_test(controller)
 add_rust_cargo_test(coordinator)
 add_rust_cargo_test(request_handler)
 
+add_subdirectory(sql-planner)
+add_subdirectory(bridge)
+
 # The simulation tests compile the coordinator crates against the deterministic madsim runtime, selected by the madsim cfg.
 # They run after the per-crate Rust tests because all cargo invocations share one target directory.
 if (NES_ENABLES_TESTS)

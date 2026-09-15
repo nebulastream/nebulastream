@@ -17,59 +17,46 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <deque>
+#include <cstdint>
 #include <exception>
-#include <expected>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <ranges>
-#include <span>
 #include <string>
+#include <string_view>
 #include <thread>
-#include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
+#include <fmt/format.h>
+#include <folly/MPMCQueue.h>
+#include <folly/ScopeGuard.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <rust/cxx.h>
+#include <BridgeError.hpp>
+
 #include <Config/Config.hpp>
-#include <Configurations/ConfigParsing.hpp>
-#include <Configurations/Util.hpp>
-#include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
-#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
-#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
-#include <QueryManager/QueryManager.hpp>
 #include <ResultChecker/OutcomeChecker.hpp>
+#include <Runner/Cluster.hpp>
 #include <Runner/DataStaging.hpp>
-#include <Runner/QuerySubmitter.hpp>
-#include <DistributedQuery.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestBinder.hpp>
-#include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
-#include <WorkerOptimizerConfig.hpp>
-
-/// In-memory transport: sockets allow one receiver per process.
-extern void enable_memcom();
 
 namespace NES
 {
 namespace
 {
 
-/// From the running state (not starting) so source and pipeline startup do not count.
-std::chrono::nanoseconds extractExecutionTime(const DistributedQueryStatusSnapshot& snapshot)
+std::chrono::nanoseconds extractExecutionTime(const Bridge::StatementOutcome& outcome)
 {
-    const auto metrics = snapshot.coalesceQueryMetrics();
-    if (not metrics.running.has_value() or not metrics.stop.has_value())
-    {
-        return std::chrono::nanoseconds::zero();
-    }
-    return std::max(std::chrono::duration_cast<std::chrono::nanoseconds>(*metrics.stop - *metrics.running), std::chrono::nanoseconds{});
+    return outcome.stop_ms > outcome.start_ms ? std::chrono::milliseconds{outcome.stop_ms - outcome.start_ms}
+                                              : std::chrono::nanoseconds::zero();
 }
 
 TestCaseId createIdOf(const RunnablePartition& partition, const RewrittenTestCase& testCase)
@@ -88,18 +75,30 @@ void appendSkipped(std::vector<ReportEntry>& rejected, const RunnablePartition& 
 
 }
 
-TestRunner::TestRunner(const SystestConfiguration& config, std::vector<RunnablePartition> partitions)
-    : binder{config}
-    , clusterConfig{config.clusterConfig}
-    , remote{config.remoteWorker}
-    , baseWorker{config.workerOptimizerConfigLiterals}
-    , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds}}
+TestRunner::TestRunner(const SystestConfiguration& config, const Cluster& cluster, std::vector<RunnablePartition> partitions)
+    : cluster{cluster}, queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds}}
 {
-    if (not remote)
-    {
-        enable_memcom();
-    }
     setUp(std::move(partitions));
+}
+
+Bridge::StatementOutcome TestRunner::submit(const std::string_view sql, const Bridge::WaitMode wait) const
+{
+    return cluster.get().getCoordinator().submit(
+        rust::Str{sql.data(), sql.size()}, wait, static_cast<uint64_t>(queryTimeout.count()), false);
+}
+
+Bridge::StatementOutcome TestRunner::runQuery(const std::string_view sql) const
+{
+    auto outcome = submit(sql, Bridge::WaitMode::UntilCompleted);
+    if (outcome.error.code == static_cast<uint16_t>(ErrorCode::QueryWaitTimeout) and outcome.query_id != 0)
+    {
+        if (const auto dropped = submit(fmt::format("DROP QUERY WHERE ID = {}", outcome.query_id), Bridge::WaitMode::None);
+            not Bridge::isOk(dropped.error))
+        {
+            NES_WARNING("could not stop query {} after its timeout: {}", outcome.query_id, std::string{dropped.error.msg});
+        }
+    }
+    return outcome;
 }
 
 void TestRunner::setUp(std::vector<RunnablePartition> partitions)
@@ -108,157 +107,36 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
     for (auto& partition : partitions)
     {
         const auto& [overrides, runnable] = partition;
-        if (remote and not overrides.empty())
+        if (not overrides.empty() and not cluster.get().runsInThisProcess())
         {
-            appendSkipped(rejected, partition, "a run on workers started elsewhere cannot apply the settings that this file requires");
+            appendSkipped(rejected, partition, "a remote run cannot apply the settings of this file to workers that are already running");
+            continue;
+        }
+        if (not cluster.get().runsInThisProcess()
+            and std::ranges::any_of(
+                runnable.setupStatements,
+                [](const SetupStatement& setup) { return std::holds_alternative<StatementWithServedData>(setup); }))
+        {
+            appendSkipped(rejected, partition, "a remote worker cannot reach a source that this process serves over a socket");
             continue;
         }
         try
         {
             auto [setupSql, staged] = stage(runnable);
-            auto [testCases] = binder.bind(setupSql, runnable.testCases, runnable.key);
+            for (const auto& sql : setupSql)
+            {
+                if (const auto outcome = submit(sql, Bridge::WaitMode::None); not Bridge::isOk(outcome.error))
+                {
+                    throw TestException("setup statement failed: {}: {}", sql, std::string{outcome.error.msg});
+                }
+            }
             std::ranges::move(staged, std::back_inserter(servers));
-            setUpPartitions.push_back(SetUpPartition{.partition = std::move(partition), .testCases = std::move(testCases)});
+            setUpPartitions.push_back(std::move(partition));
         }
         catch (const std::exception& exception)
         {
             rejected.push_back(createFailedFileEntry(runnable.name, overrides, "could not run", exception));
             appendSkipped(rejected, partition, "the file's setup failed");
-        }
-    }
-}
-
-QuerySubmitter TestRunner::createSubmitterFor(const ConfigurationOverride& overrides) const
-{
-    auto resolveWorker = [base = baseWorker, overrides](const WorkerConfig& worker)
-    {
-        std::vector<std::string> arguments;
-        for (const auto& [key, value] : overrides)
-        {
-            std::string argument{"--"};
-            argument += key;
-            argument += '=';
-            argument += value;
-            arguments.push_back(std::move(argument));
-        }
-        auto merged = mergeConfigLayers(
-            {{.name = "topology", .literals = worker.config},
-             {.name = "run configuration", .literals = base},
-             {.name = "test file", .literals = parseCommandLineConfig(arguments)}});
-        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(merged.literals);
-        if (!resolved)
-        {
-            throw InvalidConfigParameter("{}", resolved.error());
-        }
-        return std::move(resolved)->worker;
-    };
-    auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(std::move(resolveWorker));
-    return QuerySubmitter{
-        std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend)), queryTimeout};
-}
-
-std::optional<DistributedQueryId> TestRunner::submitNext(QuerySubmitter& submitter, TestCaseRun& run)
-{
-    if (run.remaining.empty())
-    {
-        return std::nullopt;
-    }
-    const auto& [plan, explained] = run.remaining.front();
-    const auto started = plan.and_then([&](const BoundPlan& bound) { return submitter.startQuery(bound.plan); });
-    if (not started.has_value())
-    {
-        run.outcomes.push_back(
-            StatementOutcome{
-                .reached = std::unexpected{started.error()},
-                .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
-                .explained = explained});
-        run.timings.emplace_back();
-        run.remaining = run.remaining.subspan(1);
-        return std::nullopt;
-    }
-    return *started;
-}
-
-void TestRunner::admit(GroupSubmission& submission)
-{
-    while (submission.running.size() < std::max(submission.concurrency, size_t{1}) and not submission.pending.empty())
-    {
-        const auto& job = submission.pending.front();
-        TestCaseRun run{.job = job, .remaining = job.statements, .outcomes = {}, .timings = {}};
-        submission.pending.pop_front();
-        if (const auto started = submitNext(submission.submitter, run))
-        {
-            submission.running.emplace(*started, std::move(run));
-        }
-        else
-        {
-            submission.finished.push_back(std::move(run));
-        }
-    }
-}
-
-void TestRunner::submitGroup(
-    WorkerSettingsGroup group, const size_t concurrency, const Observer& observe, std::vector<std::optional<ReportEntry>>& checked) const
-{
-    GroupSubmission submission{
-        .submitter = createSubmitterFor(group.overrides),
-        .concurrency = concurrency,
-        .pending = std::move(group.jobs),
-        .running = {},
-        .finished = {}};
-
-    const auto check = [&](const TestCaseRun& run)
-    {
-        const auto& [partition, testCase, _, reportSlot] = run.job;
-        ReportEntry entry{
-            .id = createIdOf(partition, testCase), .outcome = checkTestCase(run.outcomes, testCase, partition.file.originalNames)};
-        if (observe)
-        {
-            observe(entry, testCase, run.timings);
-        }
-        checked.at(reportSlot) = std::move(entry);
-    };
-
-    while (not submission.isDone())
-    {
-        /// Check before admitting, so a new query does not run while earlier results are compared, which would distort its timing.
-        std::ranges::for_each(submission.finished, check);
-        submission.finished.clear();
-
-        admit(submission);
-        if (submission.running.empty())
-        {
-            continue;
-        }
-
-        for (auto& [queryId, outcome] : submission.submitter.finishedQueries())
-        {
-            auto node = submission.running.extract(queryId);
-            INVARIANT(not node.empty(), "a finished query was submitted by this run");
-            auto& run = node.mapped();
-
-            const auto& [plan, explained] = run.remaining.front();
-            /// A query that ran past the timeout has no status, so it shows no time and counts as not stopped.
-            const auto executionTime = outcome.has_value() ? extractExecutionTime(*outcome) : std::chrono::nanoseconds::zero();
-            const auto stopped = outcome.has_value() and outcome->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
-            run.outcomes.push_back(
-                StatementOutcome{
-                    .reached = std::move(outcome),
-                    .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
-                    .explained = std::nullopt});
-            run.timings.push_back(StatementTiming{.execution = executionTime});
-            run.remaining = run.remaining.subspan(1);
-
-            /// Differential halves run in sequence.
-            /// A failed first half skips the second, because the second has no result to compare with.
-            if (const auto started = stopped ? submitNext(submission.submitter, run) : std::nullopt)
-            {
-                submission.running.emplace(*started, std::move(run));
-            }
-            else
-            {
-                submission.finished.push_back(std::move(run));
-            }
         }
     }
 }
@@ -271,29 +149,100 @@ const std::vector<ReportEntry>& TestRunner::getRejected() const
 size_t TestRunner::countTestCases() const
 {
     return std::ranges::fold_left(
-        setUpPartitions, size_t{0}, [](const size_t sum, const SetUpPartition& partition) { return sum + partition.testCases.size(); });
+        setUpPartitions,
+        size_t{0},
+        [](const size_t sum, const RunnablePartition& partition) { return sum + partition.file.testCases.size(); });
 }
 
 std::vector<ReportEntry> TestRunner::submitAll(const size_t concurrency, const Observer& observe)
 {
-    /// Slots follow file order, although the groups reorder the files.
-    size_t reportSlot = 0;
-    std::vector<WorkerSettingsGroup> groups;
-    for (const auto& [partition, boundTestCases] : setUpPartitions)
+    std::vector<Job> jobs;
+    for (const auto& partition : setUpPartitions)
     {
-        const auto found = std::ranges::find(groups, partition.overrides, &WorkerSettingsGroup::overrides);
-        auto& [_, jobs]
-            = found == groups.end() ? groups.emplace_back(WorkerSettingsGroup{.overrides = partition.overrides, .jobs = {}}) : *found;
-        for (const auto& [testCase, statements] : std::views::zip(partition.file.testCases, boundTestCases))
+        for (const auto& testCase : partition.file.testCases)
         {
-            jobs.push_back(Job{.partition = partition, .testCase = testCase, .statements = statements, .reportSlot = reportSlot++});
+            jobs.push_back(Job{.partition = partition, .testCase = testCase, .reportSlot = jobs.size()});
         }
     }
 
-    std::vector<std::optional<ReportEntry>> checked(reportSlot);
-    for (auto& group : groups)
+    const auto threads = std::max(concurrency, size_t{1});
+    folly::MPMCQueue<const Job*> toSubmit{jobs.size() + threads};
+    folly::MPMCQueue<Submitted> answered{jobs.size() + threads};
+
+    const auto nextJob = [&toSubmit]
     {
-        submitGroup(std::move(group), concurrency, observe, checked);
+        const Job* job = nullptr;
+        toSubmit.blockingRead(job);
+        return job;
+    };
+    const auto submitJobs = [&]
+    {
+        while (const auto* job = nextJob())
+        {
+            Submitted answer{.job = job, .outcomes = {}};
+            std::visit(
+                Overloaded{
+                    [&](const RewrittenQuery& query) { answer.outcomes.push_back(runQuery(query.sql)); },
+                    [&](const RewrittenDifferential& block)
+                    {
+                        answer.outcomes.push_back(runQuery(block.firstSql));
+                        if (Bridge::isOk(answer.outcomes.back().error))
+                        {
+                            answer.outcomes.push_back(runQuery(block.secondSql));
+                        }
+                    },
+                    [&](const RewrittenExplain& explain) { answer.outcomes.push_back(submit(explain.sql, Bridge::WaitMode::None)); }},
+                job->testCase.action);
+            answered.blockingWrite(std::move(answer));
+        }
+    };
+    std::vector<std::jthread> submitters;
+    submitters.reserve(threads);
+    SCOPE_EXIT
+    {
+        const Job* skipped = nullptr;
+        while (toSubmit.read(skipped))
+        {
+        }
+        std::ranges::for_each(submitters, [&](const auto&) { toSubmit.blockingWrite(nullptr); });
+    };
+    while (submitters.size() < threads)
+    {
+        submitters.emplace_back(submitJobs);
+    }
+
+    /// A test case is handed out only after an earlier one is checked.
+    /// A measuring run has one submitter, so none of its queries runs while a result is compared, which would distort its time.
+    auto next = jobs.begin();
+    const auto handOutNext = [&]
+    {
+        if (next != jobs.end())
+        {
+            toSubmit.blockingWrite(&*next++);
+        }
+    };
+    for (size_t handedOut = 0; handedOut < threads; ++handedOut)
+    {
+        handOutNext();
+    }
+    std::vector<std::optional<ReportEntry>> checked(jobs.size());
+    for (size_t reported = 0; reported < jobs.size(); ++reported)
+    {
+        Submitted answer;
+        answered.blockingRead(answer);
+        const auto& [partition, testCase, reportSlot] = *answer.job;
+        ReportEntry entry{
+            .id = createIdOf(partition, testCase), .outcome = checkTestCase(answer.outcomes, testCase, partition.file.originalNames)};
+        if (observe)
+        {
+            const auto timings = answer.outcomes
+                | std::views::transform([](const Bridge::StatementOutcome& outcome)
+                                        { return StatementTiming{.execution = extractExecutionTime(outcome)}; })
+                | std::ranges::to<std::vector>();
+            observe(entry, testCase, timings);
+        }
+        checked.at(reportSlot) = std::move(entry);
+        handOutNext();
     }
     return checked
         | std::views::transform(

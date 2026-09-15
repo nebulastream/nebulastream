@@ -14,19 +14,38 @@
 
 #include <Rewriter/Declarations.hpp>
 
+#include <optional>
 #include <utility>
 #include <variant>
 
+#include <AntlrSQLParser.h>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Rewriter/ClassifiedStatement.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/SinkRewriting.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Overloaded.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 namespace
 {
+
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> bindOrNone(AntlrSQLParser::SchemaDefinitionContext* definition)
+{
+    try
+    {
+        return AntlrSQLQueryParser::bindSchemaDefinition(definition);
+    }
+    catch (const Exception&)
+    {
+        return std::nullopt;
+    }
+}
 
 void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkByName& sinkByName, const bool submitsDeclaredSinks)
 {
@@ -53,7 +72,8 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                     Identifier::parse(declaration.definition->sinkName->getText()),
                     SinkDefinition{
                         .type = declaration.definition->type->getText(),
-                        .schema = create.parse->getTextOf(declaration.definition->schemaDefinition())});
+                        .schema = create.parse->getTextOf(declaration.definition->schemaDefinition()),
+                        .boundSchema = bindOrNone(declaration.definition->schemaDefinition())});
             }},
         create.declaration);
 }

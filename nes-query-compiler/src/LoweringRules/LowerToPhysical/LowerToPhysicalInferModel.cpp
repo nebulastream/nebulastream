@@ -67,7 +67,7 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
                                     { return static_cast<QualifiedIdentifier>(field.getFullyQualifiedName()); })
             | std::ranges::to<std::vector>();
     };
-    /// VARSIZED is the bulk-byte escape hatch: the validator in `ModelCatalog::registerModel` enforces
+    /// VARSIZED is the bulk-byte escape hatch: the validation when a model is created enforces
     /// that a VARSIZED side has exactly one field, so checking the first field is sufficient.
     const auto& modelInputs = inferModelOp.get().getModel().getSchema().inputs;
     const auto& modelOutputs = inferModelOp.get().getModel().getSchema().outputs;

@@ -61,6 +61,11 @@ constexpr auto SocketHost = "SOCKET_HOST";
 constexpr auto SocketPort = "SOCKET_PORT";
 constexpr auto FlushIntervalMs = "FLUSH_INTERVAL_MS";
 
+/// Option keys of `CREATE WORKER`. Every other option of that statement is worker configuration.
+constexpr auto DataAddress = "DATA";
+constexpr auto MaxOperators = "MAX_OPERATORS";
+constexpr auto Downstream = "DOWNSTREAM";
+
 /// Returns whether two spellings resolve to the same name under the binder's case rules.
 /// A quoted and an unquoted spelling of one name match, and two unquoted spellings differing only in case also match.
 inline bool sameName(const std::string_view left, const std::string_view right)
@@ -114,6 +119,11 @@ inline std::string setClause(const std::string_view body)
 inline std::string sink(const std::string_view type, const std::string_view body)
 {
     return fmt::format("{}({})", type, body);
+}
+
+inline std::string createWorker(const std::string_view host, const std::vector<std::string>& options)
+{
+    return fmt::format("CREATE WORKER {} {}", stringLiteral(host), setClause(optionList(options)));
 }
 
 }

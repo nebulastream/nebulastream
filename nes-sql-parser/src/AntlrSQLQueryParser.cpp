@@ -14,6 +14,7 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 
+#include <expected>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -32,9 +33,14 @@
 #include <Recognizer.h>
 #include <Token.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <misc/Interval.h>
+#include <CommonParserFunctions.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::AntlrSQLQueryParser
@@ -113,6 +119,37 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
     catch (antlr4::RuntimeException& antlrException)
     {
         throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
+    }
+}
+
+Schema<UnqualifiedUnboundField, Ordered> bindSchemaDefinition(AntlrSQLParser::SchemaDefinitionContext* schemaDefinition)
+{
+    return bindSchema(schemaDefinition);
+}
+
+std::expected<std::vector<std::string>, Exception> splitStatements(const std::string_view sql)
+{
+    try
+    {
+        const auto parser = ManagedAntlrParser::create(sql);
+        return parser->parseMultiple().transform(
+            [](const auto& statements)
+            {
+                return statements
+                    | std::views::transform(
+                           [](const auto& statement)
+                           {
+                               const auto* const start = statement.get()->getStart();
+                               const auto* const stop = statement.get()->getStop();
+                               return start->getInputStream()->getText(
+                                   antlr4::misc::Interval{start->getStartIndex(), stop->getStopIndex()});
+                           })
+                    | std::ranges::to<std::vector>();
+            });
+    }
+    catch (const Exception& exception)
+    {
+        return std::unexpected{exception};
     }
 }
 

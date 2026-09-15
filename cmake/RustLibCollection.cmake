@@ -276,6 +276,10 @@ rustflags = []
     file(MAKE_DIRECTORY "${umbrella_dir}/src")
     file(WRITE "${umbrella_dir}/src/lib.rs" "${extern_lines}")
 
+    # The umbrella is its own workspace, so it does not use the lock file of the repository.
+    # Copy that lock file so that every umbrella builds the same dependency versions as the workspace.
+    file(COPY_FILE "${PROJECT_SOURCE_DIR}/Cargo.lock" "${umbrella_dir}/Cargo.lock" ONLY_IF_DIFFERENT)
+
     set(import_args
             MANIFEST_PATH "${umbrella_dir}/Cargo.toml"
             CRATES ${umbrella_name}

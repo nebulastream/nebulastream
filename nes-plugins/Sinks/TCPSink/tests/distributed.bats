@@ -28,9 +28,9 @@ teardown()      { nes_distributed_teardown; }
 @test "streams formatted output to nc" {
   setup_distributed tests/good/example.yaml
 
-  run docker_nes_cli -t tests/good/example.yaml start
+  run docker_nes_cli -s tests/good/example.yaml start
   assert_success
-  wait_until_status tests/good/example.yaml "Stopped" "$output" --require-healthy "worker-1"
+  wait_until_status tests/good/example.yaml "Completed" "$(newest_query_id)" --require-healthy "worker-1"
 
   wait_until test -s results.csv
   assert_file_line_count results.csv 10 --ignore-empty-lines
@@ -42,7 +42,7 @@ teardown()      { nes_distributed_teardown; }
   setup_distributed tests/good/example.yaml
   docker compose pause tcp-client
 
-  run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/example.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -61,11 +61,10 @@ teardown()      { nes_distributed_teardown; }
 EOF
 )"
   assert_success
-  query_id=$output
-
+  query_id=$(newest_query_id)
   wait_until grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
   docker compose unpause tcp-client
-  wait_until_status tests/good/example.yaml "Stopped" "$query_id" --require-healthy "worker-1"
+  wait_until_status tests/good/example.yaml "Completed" "$query_id" --require-healthy "worker-1"
 
   wait_until awk 'NF { count++ } END { exit(count != 2000) }' results.csv
   assert_file_line_count results.csv 2000 --ignore-empty-lines
@@ -74,7 +73,7 @@ EOF
 @test "reconnects after the TCP peer restarts" {
   setup_distributed tests/good/example.yaml
 
-  run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/example.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -93,8 +92,7 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
-
+  query_id=$(newest_query_id)
   wait_until awk 'NF { count++ } END { exit(count < 10) }' results.csv
   # stop_grace_period 0s makes Docker force-kill nc while it is already exiting on SIGTERM. That race can leave a stale
   # cleanup which removes the network of the restarted container, so the sink's packets are silently dropped.
@@ -102,13 +100,13 @@ EOF
 
   wait_until grep -q "TCPChannel disconnected" worker-1/singleNodeWorker.log
   wait_until grep -q "Reconnected TCPChannel" worker-1/singleNodeWorker.log
-  wait_until_status tests/good/example.yaml "Stopped" "$query_id" --require-healthy "worker-1"
+  wait_until_status tests/good/example.yaml "Completed" "$query_id" --require-healthy "worker-1"
 }
 
 @test "fails after the reconnect timeout" {
   setup_distributed tests/good/example.yaml
 
-  run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/example.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -129,8 +127,7 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
-
+  query_id=$(newest_query_id)
   wait_until test -s results.csv
   docker compose kill tcp-client
 
@@ -142,7 +139,7 @@ EOF
   setup_distributed tests/good/example.yaml
   docker compose pause tcp-client
 
-  run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/example.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
@@ -160,17 +157,16 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
-
+  query_id=$(newest_query_id)
   wait_until grep -q "accepted buffers may be lost" worker-1/singleNodeWorker.log
-  wait_until_status tests/good/example.yaml "Stopped" "$query_id" --require-healthy "worker-1"
+  wait_until_status tests/good/example.yaml "Completed" "$query_id" --require-healthy "worker-1"
 }
 
 @test "shuts down the worker while the TCP peer is not reading" {
   setup_distributed tests/good/example.yaml
   docker compose pause tcp-client
 
-  run docker_nes_cli -t tests/good/example.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/example.yaml start "$(cat <<'EOF'
     SELECT * FROM GENERATOR (
         'CSV' AS "INPUT_FORMATTER"."TYPE",
         'worker-1:8080' AS "SOURCE"."HOST",
