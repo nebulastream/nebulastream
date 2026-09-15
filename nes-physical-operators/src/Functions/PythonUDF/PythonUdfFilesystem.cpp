@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -96,6 +97,18 @@ CodonCompilationResult
 compileWithCodon(const std::string& sourcePath, const std::string& source, const std::vector<std::string>& importPaths)
 {
     codon::ir::setNativeOptimizationEnabled(false);
+    std::ofstream sourceFile{sourcePath, std::ios::binary | std::ios::trunc};
+    if (!sourceFile)
+    {
+        throw std::runtime_error("Could not create Python UDF debug source file: " + sourcePath);
+    }
+    sourceFile.write(source.data(), static_cast<std::streamsize>(source.size()));
+    if (!sourceFile)
+    {
+        throw std::runtime_error("Could not write Python UDF debug source file: " + sourcePath);
+    }
+    sourceFile.close();
+
     auto filesystem = std::make_shared<PythonUdfFilesystem>("nes-worker", sourcePath, !importPaths.empty());
     for (const auto& importPath : importPaths)
     {
@@ -103,6 +116,7 @@ compileWithCodon(const std::string& sourcePath, const std::string& source, const
     }
 
     codon::Compiler compiler("nes-worker", codon::Compiler::Mode::RELEASE, std::vector<std::string>{}, false, false, false, filesystem);
+    compiler.getLLVMVisitor()->setDebug(true);
     const auto parseStart = std::chrono::steady_clock::now();
     if (auto error = compiler.parseCode(sourcePath, source))
     {
@@ -114,7 +128,9 @@ compileWithCodon(const std::string& sourcePath, const std::string& source, const
         throw std::runtime_error("Could not compile Python UDF: " + llvm::toString(std::move(error)));
     }
     const auto optimizeStart = std::chrono::steady_clock::now();
-    compiler.getLLVMVisitor()->optimizeLLVM();
+    auto optimizationOptions = codon::ir::LLVMOptimizationOptions::release();
+    optimizationOptions.preserveDebugInfo = true;
+    compiler.getLLVMVisitor()->optimizeLLVM(optimizationOptions);
     const auto optimizeEnd = std::chrono::steady_clock::now();
 
     const auto* module = compiler.getLLVMVisitor()->getModule();

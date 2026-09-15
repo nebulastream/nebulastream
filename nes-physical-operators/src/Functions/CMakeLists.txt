@@ -39,6 +39,15 @@ add_source_files(nes-physical-operators
         PythonUDF/PythonUdfRuntime.cpp
 )
 
+# Codon is built with the same RTTI mode as LLVM. Keep its filesystem adapter consistent because polymorphic
+# shared_ptr objects cross this boundary.
+if(NOT LLVM_ENABLE_RTTI)
+    set_source_files_properties(
+            "${CMAKE_CURRENT_SOURCE_DIR}/PythonUDF/PythonUdfFilesystem.cpp"
+            TARGET_DIRECTORY nes-physical-operators
+            PROPERTIES COMPILE_OPTIONS "-fno-rtti")
+endif()
+
 add_registry_entry(PhysicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(PhysicalFunction CastTo KEY CastToType)
 add_registry_entry(PhysicalFunction CastToUnixTimestamp KEY CastToUnixTs)

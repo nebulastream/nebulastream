@@ -18,6 +18,9 @@ vcpkg_from_github(
         HEAD_REF develop
         PATCHES
         0001-build-compiler-only-with-llvm-21.patch
+        0002-configurable-llvm-optimization.patch
+        0003-fix-int64-min-unary-negation.patch
+        0004-avoid-null-zero-length-memory-operations.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

@@ -23,6 +23,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <unistd.h>
 #include <DataTypes/VarVal.hpp>
 #include <DataTypes/VariableSizedData.hpp>
 #include <Functions/PythonPhysicalFunction.hpp>
@@ -563,7 +564,8 @@ CompiledPythonUdf compilePythonUdf(
         loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
         loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
-        const auto sourcePath = (std::filesystem::temp_directory_path() / fmt::format("{}.py", symbol)).string();
+        const auto sourcePath
+            = (std::filesystem::temp_directory_path() / fmt::format("{}_{}.py", symbol, static_cast<uint64_t>(::getpid()))).string();
         const auto codonResult = compileWithCodon(sourcePath, source, importPaths);
         llvm::LLVMContext llvmContext;
         auto parsedModule = llvm::parseBitcodeFile(
@@ -592,7 +594,7 @@ CompiledPythonUdf compilePythonUdf(
         fmt::print(
             stderr,
             "[PythonUDF] Compiled '{}' with Codon in {:.3f} ms (mutex wait: {:.3f} ms, parse: {:.3f} ms, compile: {:.3f} "
-            "ms, LLVM optimize: {:.3f} ms, cleanup: {:.3f} ms, bitcode: {:.3f} ms)\n",
+            "ms, LLVM optimize: {:.3f} ms, cleanup: {:.3f} ms, bitcode: {:.3f} ms; debug source: '{}')\n",
             symbol,
             elapsedMilliseconds(compilationStart, compilationEnd),
             elapsedMilliseconds(mutexWaitStart, compilationStart),
@@ -600,7 +602,8 @@ CompiledPythonUdf compilePythonUdf(
             codonResult.compileMilliseconds,
             codonResult.optimizeMilliseconds,
             elapsedMilliseconds(cleanupStart, bitcodeStart),
-            elapsedMilliseconds(bitcodeStart, compilationEnd));
+            elapsedMilliseconds(bitcodeStart, compilationEnd),
+            sourcePath);
         return {std::move(pipelineBitcode), std::move(interpreterBitcode)};
     }
     catch (const Exception&)
@@ -804,6 +807,7 @@ compilePythonUdfInterpreter(const std::string& symbol, const std::string& interp
     options.setOption("engine.compilationStrategy", std::string{"legacy"});
     options.setOption("mlir.enableMultithreading", false);
     options.setOption("mlir.inline_invoke_calls", true);
+    options.setOption("mlir.debug.enable", true);
     nautilus::engine::NautilusEngine engine{options};
     const auto udfSymbol = interpreterSymbolName(symbol);
     engine.registerUDF(udfSymbol, interpreterBitcode);

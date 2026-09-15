@@ -497,7 +497,7 @@ index e711a79e..c45b5086 100644
 -		hooks.preOptModuleTransform = [](llvm::Module& module) {
 -			nautilus::compiler::mlir::inlineFunctions(module);
 +		hooks.preOptModuleTransform = [](llvm::Module& module, const nautilus::engine::EngineOptions& options) {
-+			nautilus::compiler::mlir::inlineFunctions(module, options.getUDFRegistrySnapshot());
++			nautilus::compiler::mlir::inlineFunctions(module, options.getUDFRegistrySnapshot(), options.getOptionOrDefault("mlir.debug.enable", false));
  		};
  
  		// Hook 2: contribute the inline registry's (name -> address) pairs
@@ -719,7 +719,7 @@ index 5474a792..b21f55b4 100644
 -	// `dlopen`-loaded shared object ctors; snapshotting avoids holding the
 -	// registry mutex across llvm::Linker and keeps repeated lookups cheap.
 -	const auto symbolTable = InlineFunctionRegistry::instance().getSymbolTable();
-+void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry) {
++void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry, bool preserveDebugInfo) {
 +	// A symbolic invoke already emitted a declaration with the UDF's public
 +	// entry-point name. Merging resolves it; local helper names stay isolated.
 +	mergeUDFModules(moduleToOptimize, udfRegistry);
@@ -841,7 +841,7 @@ index 5474a792..b21f55b4 100644
  	} while (doAnotherIteration);
  
 -	StripDebugInfo(moduleToOptimize); // suppress more warnings from function cloning
-+	StripDebugInfo(moduleToOptimize);
++	if (!preserveDebugInfo) StripDebugInfo(moduleToOptimize);
  }
  } // namespace nautilus::compiler::mlir
 diff --git a/plugins/inlining/src/LLVMInliningUtils.hpp b/plugins/inlining/src/LLVMInliningUtils.hpp
@@ -860,9 +860,8 @@ index 53fa5b02..39a2ca84 100644
  
  // find inlinable functions in the module and replace them with defined function from the bitcode registry
 -void inlineFunctions(llvm::Module& moduleToOptimize);
-+void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry);
++void inlineFunctions(llvm::Module& moduleToOptimize, const engine::UDFRegistry::Snapshot& udfRegistry, bool preserveDebugInfo = false);
  
  } // namespace nautilus::compiler::mlir
 -- 
 2.50.0
-

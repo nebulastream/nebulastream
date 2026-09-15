@@ -37,7 +37,7 @@ index c07add6..07579f7 100644
  
  # Codon compiler library
  include_directories(${LLVM_INCLUDE_DIRS})
-@@ -382,11 +387,33 @@ set(CODON_CPPFILES
+@@ -382,11 +387,38 @@ set(CODON_CPPFILES
    codon/cir/transform/numpy/indexing.cpp
    codon/cir/transform/numpy/numpy.cpp
    codon/util/common.cpp)
@@ -71,7 +71,12 @@ index c07add6..07579f7 100644
 +                                            ${fast_float_SOURCE_DIR}/include)
 +else()
 +  target_compile_definitions(codonc PUBLIC CODON_COMPILER_ONLY)
-+  target_compile_options(codonc PRIVATE -fno-rtti)
++  # Codon and LLVM exchange polymorphic C++ objects. Match LLVM's RTTI mode:
++  # sanitizer builds use an RTTI-enabled LLVM so UBSan can validate vptrs,
++  # while regular NES dependency builds keep the smaller no-RTTI setup.
++  if(NOT LLVM_ENABLE_RTTI)
++    target_compile_options(codonc PRIVATE -fno-rtti)
++  endif()
 +endif()
  target_sources(codonc PRIVATE ${CODON_CPPFILES} codon_rules.cpp omp_rules.cpp)
  if(ASAN)

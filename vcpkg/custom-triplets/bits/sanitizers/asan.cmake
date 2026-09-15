@@ -23,3 +23,11 @@ if (PORT STREQUAL llvm)
     set(VCPKG_C_FLAGS "")
     set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Address")
 endif()
+
+# OpenBLAS's hand-written x86 kernels use inline assembly with tight register constraints. ASan instrumentation adds
+# enough register pressure for Clang to reject those kernels with "inline assembly requires more registers than
+# available". Keep the library unsanitized; callers and the surrounding NES integration remain instrumented.
+if (PORT STREQUAL openblas)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+endif()

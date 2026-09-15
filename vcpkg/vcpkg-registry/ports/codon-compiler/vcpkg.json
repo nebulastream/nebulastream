@@ -1,7 +1,7 @@
 {
   "name": "codon-compiler",
   "version": "0.19.6",
-  "port-version": 7,
+  "port-version": 12,
   "description": "Compiler-only Codon frontend and LLVM backend for NebulaStream UDFs",
   "homepage": "https://github.com/exaloop/codon",
   "license": "Apache-2.0",
