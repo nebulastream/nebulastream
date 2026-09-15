@@ -22,7 +22,6 @@
 #include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {

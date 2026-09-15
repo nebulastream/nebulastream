@@ -15,6 +15,7 @@
 //! The system's error codes and failure type.
 
 use sea_orm::{DbErr, RuntimeErr};
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 include!(concat!(env!("OUT_DIR"), "/error_code.rs"));
@@ -24,9 +25,10 @@ include!(concat!(env!("OUT_DIR"), "/error_code.rs"));
 ///
 /// A failure without a code is reported as `UnknownException`,
 /// so raising this is what distinguishes a classified vs. unclassified failures.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, thiserror::Error)]
 #[error("{msg}")]
 pub struct CodedError {
+    #[serde(with = "code_number")]
     pub code: ErrorCode,
     pub msg: String,
     /// A C++ failure's stacktrace, empty for an error from the rust part.
@@ -47,6 +49,20 @@ impl CodedError {
     #[must_use]
     pub const fn relayed(code: ErrorCode, msg: String, trace: String) -> Self {
         Self { code, msg, trace }
+    }
+}
+
+/// The code is stored as its number, the form both sides of the bridge agree on.
+mod code_number {
+    use super::ErrorCode;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(code: &ErrorCode, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u16(*code as u16)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ErrorCode, D::Error> {
+        u16::deserialize(deserializer).map(ErrorCode::from_code)
     }
 }
 

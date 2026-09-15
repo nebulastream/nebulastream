@@ -37,23 +37,13 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-
-using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
 using LogicalSourceName = Identifier;
-
-enum class StatementOutputFormat : uint8_t
-{
-    JSON,
-    TEXT
-};
 
 /// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
@@ -61,6 +51,19 @@ struct CreateLogicalSourceStatement
 {
     Identifier name;
     Schema<UnqualifiedUnboundField, Ordered> schema;
+};
+
+/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
+/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
+struct ShowLogicalSourcesStatement
+{
+    std::optional<Identifier> name;
+};
+
+/// An empty `source` means the statement carried no WHERE filter and drops every logical source.
+struct DropLogicalSourceStatement
+{
+    std::optional<LogicalSourceName> source;
 };
 
 struct CreatePhysicalSourceStatement
@@ -73,6 +76,20 @@ struct CreatePhysicalSourceStatement
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
+/// An empty `id` means the statement carried no WHERE filter and drops every physical source.
+struct DropPhysicalSourceStatement
+{
+    std::optional<uint64_t> id;
+};
+
+/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
+/// referencing a dms object
+struct ShowPhysicalSourcesStatement
+{
+    std::optional<LogicalSourceName> logicalSource;
+    std::optional<uint32_t> id;
+};
+
 struct CreateSinkStatement
 {
     Identifier name;
@@ -83,48 +100,21 @@ struct CreateSinkStatement
     std::unordered_map<Identifier, std::string> formatConfig;
 };
 
-/// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
-/// because searching for a name for which no logical source exists is not a syntax error but just returns an empty result
-struct ShowLogicalSourcesStatement
-{
-    std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
-};
-
-/// ShowPhysicalSourcesStatement, on the other hand, cannot reference a logical source by name that doesn't exist because it is directly
-/// referencing a dms object
-struct ShowPhysicalSourcesStatement
-{
-    std::optional<LogicalSourceName> logicalSource;
-    std::optional<uint32_t> id;
-    std::optional<StatementOutputFormat> format;
-};
-
 struct ShowSinksStatement
 {
     std::optional<Identifier> name;
-    std::optional<StatementOutputFormat> format;
 };
 
-struct DropLogicalSourceStatement
-{
-    LogicalSourceName source;
-};
-
-struct DropPhysicalSourceStatement
-{
-    SourceDescriptor descriptor;
-};
-
+/// An empty `name` means the statement carried no WHERE filter and drops every sink.
 struct DropSinkStatement
 {
-    Identifier name;
+    std::optional<Identifier> name;
 };
 
 struct QueryStatement
 {
     LogicalPlan plan;
-    std::optional<DistributedQueryId> id;
+    std::optional<Identifier> name;
 };
 
 enum class ExplainFormat : uint8_t
@@ -150,13 +140,14 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<DistributedQueryId> id;
-    std::optional<StatementOutputFormat> format;
+    std::optional<uint64_t> id;
+    std::optional<Identifier> name;
 };
 
 struct DropQueryStatement
 {
-    DistributedQueryId id;
+    std::optional<Identifier> name;
+    std::optional<uint64_t> id;
 };
 
 struct CreateModelStatement
@@ -169,17 +160,18 @@ struct CreateModelStatement
 
 struct ShowModelsStatement
 {
-    std::optional<StatementOutputFormat> format;
+    std::optional<Identifier> name;
 };
 
+/// Carries nothing: the statement names no subject and takes no filter.
 struct ShowVersionStatement
 {
-    std::optional<StatementOutputFormat> format;
 };
 
+/// An empty `name` means the statement carried no WHERE filter and drops every model.
 struct DropModelStatement
 {
-    std::string name;
+    std::optional<std::string> name;
 };
 
 struct WorkerStatusStatement
@@ -191,54 +183,45 @@ struct CreateWorkerStatement
 {
     std::string host;
     std::string dataAddress;
-    std::optional<size_t> capacity;
+    std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
 };
 
+/// The only drop statement without a filter-less form: removing a worker requires a concrete address,
+/// so the WHERE filter is mandatory.
 struct DropWorkerStatement
 {
     std::string host;
 };
 
+struct ShowWorkersStatement
+{
+    std::optional<std::string> host;
+};
+
 using Statement = std::variant<
-    WorkerStatusStatement,
-    CreateWorkerStatement,
-    DropWorkerStatement,
     CreateLogicalSourceStatement,
-    CreatePhysicalSourceStatement,
-    CreateSinkStatement,
-    CreateModelStatement,
     ShowLogicalSourcesStatement,
-    ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
+    CreatePhysicalSourceStatement,
+    ShowPhysicalSourcesStatement,
     DropPhysicalSourceStatement,
+    CreateSinkStatement,
+    ShowSinksStatement,
     DropSinkStatement,
-    DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
-    ShowSinksStatement,
+    DropQueryStatement,
+    WorkerStatusStatement,
+    CreateWorkerStatement,
+    DropWorkerStatement,
+    ShowWorkersStatement,
+    CreateModelStatement,
     ShowModelsStatement,
-    ShowVersionStatement,
-    DropQueryStatement>;
-
-inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)
-{
-    /// NOLINTNEXTLINE(fuchsia-trailing-return)
-    auto visitor = [](const auto& visitedStatement) -> std::optional<StatementOutputFormat>
-    {
-        if constexpr (requires { visitedStatement.format; })
-        {
-            return visitedStatement.format;
-        }
-        else
-        {
-            return std::nullopt;
-        }
-    };
-    return std::visit(visitor, statement);
-}
+    DropModelStatement,
+    ShowVersionStatement>;
 
 class StatementBinder
 {
@@ -247,9 +230,7 @@ class StatementBinder
     std::unique_ptr<Impl> impl;
 
 public:
-    explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+    explicit StatementBinder(const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

@@ -23,6 +23,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -31,9 +32,9 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -63,32 +64,37 @@ OptimizerTestUtils::createSource(std::string name, const std::vector<std::string
     return createSource(std::move(name), createSchema(fieldNames));
 }
 
+/// NOLINTBEGIN(readability-convert-member-functions-to-static)
 SourceDescriptor
 OptimizerTestUtils::createSourceDescriptor(const Identifier& identifier, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    auto source = sourceCatalog.addLogicalSource(identifier, schema);
-
-    if (!source.has_value())
-    {
-        throw TestException();
-    }
+    const LogicalSource logicalSource{identifier, schema};
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
-    auto result = sourceCatalog.addPhysicalSource(source.value(), Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig);
-
-    if (!result.has_value())
+    auto sourceDescriptor = SourceDescriptor::create(
+        INITIAL_PHYSICAL_SOURCE_ID,
+        logicalSource,
+        Identifier::parse("File"),
+        Host{"localhost"},
+        sourceConfig,
+        {{Identifier::parse("type"), "CSV"}},
+        false);
+    if (!sourceDescriptor.has_value())
     {
         throw TestException();
     }
-    return result.value();
+    return sourceDescriptor.value();
 }
 
+/// NOLINTEND(readability-convert-member-functions-to-static)
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 SinkDescriptor OptimizerTestUtils::createSinkDescriptor(const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
 
-    auto sinkDescriptor = sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {});
+    auto sinkDescriptor
+        = SinkDescriptor::createNamed(INVALID_SINK_ID, sinkName, Identifier::parse("File"), schema, Host{"localhost"}, sinkConfig, {});
     if (!sinkDescriptor.has_value())
     {
         throw TestException();
@@ -111,14 +117,12 @@ OptimizerTestUtils::createSink(LogicalOperator child, std::string name, const st
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(LogicalOperator sink)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), {std::move(sink)}};
+    return LogicalPlan{INVALID_QUERY_ID, {std::move(sink)}};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan OptimizerTestUtils::createPlan(std::vector<LogicalOperator> sinks)
 {
-    return LogicalPlan{
-        QueryId::create(LocalQueryId{LocalQueryId::INVALID}, DistributedQueryId{DistributedQueryId::INVALID}), std::move(sinks)};
+    return LogicalPlan{INVALID_QUERY_ID, std::move(sinks)};
 }
 }

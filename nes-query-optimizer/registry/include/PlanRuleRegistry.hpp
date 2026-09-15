@@ -19,10 +19,8 @@
 #include <string>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Util/RuntimeRegistry.hpp>
-#include <ModelCatalog.hpp>
+#include <Catalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
@@ -33,9 +31,9 @@ using PlanRuleRegistryReturnType = Rule<LogicalPlan>;
 struct PlanRuleRegistryArguments
 {
     QueryOptimizerConfiguration defaultQueryOptimization;
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
-    std::shared_ptr<const ModelCatalog> modelCatalog;
+    /// Sources, sinks, models and the topology all come from the coordinator, so one handle answers
+    /// every lookup a rule makes.
+    std::shared_ptr<Catalog> catalog;
 };
 
 using PlanRuleFn = std::function<PlanRuleRegistryReturnType(PlanRuleRegistryArguments)>;

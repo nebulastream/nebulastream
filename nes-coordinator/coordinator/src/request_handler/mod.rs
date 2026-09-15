@@ -26,7 +26,7 @@ pub use parking::EarlyTermination;
 
 use crate::SqlPlanner;
 use chrono::Utc;
-use controller::embedded::WorkerFactory;
+use controller::in_process::WorkerFactory;
 use model::Execute;
 use model::database::Database;
 use model::identifier::QueryId;

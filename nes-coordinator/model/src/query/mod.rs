@@ -47,7 +47,7 @@ pub struct Model {
     pub start_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     pub stop_timestamp: Option<chrono::DateTime<chrono::Utc>>,
     #[sea_orm(column_type = "JsonBinary")]
-    pub error: Option<serde_json::Value>,
+    pub error: Option<query_fragment::QueryError>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -292,7 +292,7 @@ mod tests {
     use crate::Execute;
     use crate::database::Database;
     use crate::query::query_fragment::{
-        self, DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState,
+        self, DesiredQueryFragmentState, QueryError, QueryFragmentError, QueryFragmentState,
         QueryFragmentTransition,
     };
     use crate::query::query_state::QueryState;
@@ -470,7 +470,7 @@ mod tests {
     }
 
     #[proptest(async = "tokio")]
-    async fn query_error_aggregates_per_host(mut req: CreateQueryWithRefs) {
+    async fn query_error_is_the_failed_fragments_error(mut req: CreateQueryWithRefs) {
         let db = Database::for_test().await;
         let (_, fragments) = setup(&db, &mut req).await;
 
@@ -487,12 +487,18 @@ mod tests {
             .unwrap();
         assert_eq!(query.state, QueryState::Failed);
 
-        let host = fragments[0].host_addr.to_string();
-        assert_eq!(query.error, Some(serde_json::json!({ host: ["boom"] })));
+        assert_eq!(
+            query.error,
+            Some(QueryError {
+                host_addr: fragments[0].host_addr.clone(),
+                error: QueryFragmentError::Transport { msg: "boom".into() },
+            })
+        );
     }
 
+    /// A second failure on the same query is a consequence of the first and must not replace it.
     #[proptest(async = "tokio")]
-    async fn query_error_aggregates_multiple_fragments_on_same_host(mut req: CreateQueryWithRefs) {
+    async fn query_error_keeps_the_first_failure(mut req: CreateQueryWithRefs) {
         proptest::prop_assume!(req.query.fragments.len() >= 2);
         let db = Database::for_test().await;
 
@@ -506,15 +512,14 @@ mod tests {
 
         let (_, fragments) = setup(&db, &mut req).await;
 
-        // Fail every fragment on that host with a distinct message.
+        // Fail every fragment on that host in turn, each with its own message.
         let on_host: Vec<_> = fragments.iter().filter(|f| f.host_addr == host).collect();
-        let mut expected: Vec<String> = Vec::new();
         for (idx, frag) in on_host.iter().enumerate() {
-            let msg = format!("boom{idx}");
-            expected.push(msg.clone());
             let mut update: query_fragment::ActiveModel = (*frag).clone().into();
             update.apply_transition(QueryFragmentTransition::failed_now(
-                QueryFragmentError::Transport { msg },
+                QueryFragmentError::Transport {
+                    msg: format!("boom{idx}"),
+                },
             ));
             update.update(&db).await.unwrap();
         }
@@ -526,16 +531,15 @@ mod tests {
             .unwrap();
         assert_eq!(query.state, QueryState::Failed);
 
-        // The host maps to the full list of messages, none dropped.
-        let errors = query.error.expect("query.error must be set when failed");
-        let messages = errors
-            .get(host.to_string())
-            .and_then(|m| m.as_array())
-            .expect("per-host errors must be a JSON list");
-        let got: std::collections::HashSet<&str> =
-            messages.iter().filter_map(|m| m.as_str()).collect();
-        let want: std::collections::HashSet<&str> = expected.iter().map(String::as_str).collect();
-        assert_eq!(got, want);
+        assert_eq!(
+            query.error,
+            Some(QueryError {
+                host_addr: host,
+                error: QueryFragmentError::Transport {
+                    msg: "boom0".into()
+                },
+            })
+        );
     }
 
     #[proptest(async = "tokio")]

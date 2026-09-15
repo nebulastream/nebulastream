@@ -15,7 +15,7 @@
 //! Opens and configures the SQLite-backed catalog store,
 //! and exposes the connection and transaction types that the rest of the crate runs statements against.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use migration::Migrator;
 pub use sea_orm::DatabaseTransaction;
 use sea_orm::{
@@ -152,16 +152,23 @@ impl Database {
         }
     }
 
-    /// Build an in-memory database with all migrations applied.
+    /// Connects to the catalog and brings its schema up to date.
+    pub async fn open(backend: StateBackend) -> Result<Self> {
+        let this = Self::with(backend)
+            .await
+            .context("failed to create database state")?;
+        this.migrate()
+            .await
+            .context("failed to run database migrations")?;
+        Ok(this)
+    }
+
+    /// An in-memory catalog with the schema applied.
     /// Panics on failure; for tests only.
     pub async fn for_test() -> Self {
-        let this = Self::with(StateBackend::Memory)
+        Self::open(StateBackend::Memory)
             .await
-            .expect("failed to connect to the database");
-        Migrator::up(&this.conn, None)
-            .await
-            .expect("failed to apply migrations");
-        this
+            .expect("failed to open the test database")
     }
 
     pub async fn migrate(&self) -> Result<()> {

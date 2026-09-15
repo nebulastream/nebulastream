@@ -19,7 +19,7 @@
 //! Therefore, we need to fetch the version by asking the worker via gRPC.
 
 use crate::config::VERSION_TIMEOUT;
-use crate::embedded::WorkerFactory;
+use crate::in_process::WorkerFactory;
 use crate::remote::WorkerRpcServiceClient;
 use futures::future::join_all;
 use model::worker;

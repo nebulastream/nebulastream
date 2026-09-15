@@ -21,12 +21,10 @@
 #include <gtest/gtest.h>
 
 #include <Config/Config.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <Executor.hpp>
-#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -73,7 +71,6 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestE2ETest test class."); }
 
     static constexpr std::string_view EXTENSION = ".dummy";
-    static constexpr size_t DEFAULT_WORKER_CAPACITY = 1000;
 };
 
 /// Given a file with some correct and some incorrect queries, make sure that only the incorrect queries fail
@@ -84,15 +81,6 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     constexpr std::string_view testFile = "MultipleCorrectAndIncorrect";
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}{}", SYSTEST_DATA_DIR, testFile, EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {WorkerConfig{
-            .host = Host("localhost:8080"),
-            .dataAddress = "localhost:9090",
-            .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),
-            .downstream = {},
-            .config = {}}},
-        .allowSourcePlacement = {Host("localhost:8080")},
-        .allowSinkPlacement = {Host("localhost:8080")}};
 
     const Executor executor{config};
     const auto result = executor.execute();
@@ -120,15 +108,6 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.directlySpecifiedTestFiles.setValue(fmt::format("{}/errors/{}/{}", SYSTEST_DATA_DIR, directory, testFileName));
     config.testFileExtension.setValue(std::string(EXTENSION));
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
-    config.clusterConfig = SystestClusterConfiguration{
-        .workers = {WorkerConfig{
-            .host = Host("localhost:8080"),
-            .dataAddress = "localhost:9090",
-            .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),
-            .downstream = {},
-            .config = {}}},
-        .allowSourcePlacement = {Host("localhost:8080")},
-        .allowSinkPlacement = {Host("localhost:8080")}};
 
     const Executor executor{config};
     const auto result = executor.execute();

@@ -62,7 +62,7 @@ pub use sql_planner::SqlPlanner;
 
 use crate::request_handler::RequestHandler;
 use controller::Controller;
-use controller::embedded::WorkerFactory;
+use controller::in_process::WorkerFactory;
 use model::database::Database;
 use model::request::Request;
 use std::sync::Arc;
@@ -70,7 +70,6 @@ use tokio::sync::watch;
 use tracing::{Instrument, info_span};
 
 #[cfg(not(madsim))]
-use anyhow::Context;
 #[cfg(not(madsim))]
 use model::database::StateBackend;
 #[cfg(not(madsim))]
@@ -104,24 +103,16 @@ pub async fn run(
 #[cfg(not(madsim))]
 pub fn start_with_runtime(
     runtime: &tokio::runtime::Runtime,
-    state_backend: Option<StateBackend>,
-    planner: Option<Arc<dyn SqlPlanner>>,
+    state_backend: StateBackend,
+    planner: Arc<dyn SqlPlanner>,
     worker_factory: Option<Arc<dyn WorkerFactory>>,
-    request_buffer_size: Option<usize>,
 ) -> anyhow::Result<async_channel::Sender<Request>> {
     info!("starting");
-    let (sender, receiver) =
-        async_channel::bounded(request_buffer_size.unwrap_or(DEFAULT_REQUEST_QUEUE_CAPACITY));
+    let (sender, receiver) = async_channel::bounded(DEFAULT_REQUEST_QUEUE_CAPACITY);
 
     runtime.block_on(async {
-        let db = Database::with(state_backend.unwrap_or(StateBackend::Memory))
-            .await
-            .context("failed to create database state")?;
-        db.migrate()
-            .await
-            .context("failed to run database migrations")?;
-
-        tokio::spawn(run(db, planner, worker_factory, receiver));
+        let db = Database::open(state_backend).await?;
+        tokio::spawn(run(db, Some(planner), worker_factory, receiver));
         anyhow::Ok(())
     })?;
 

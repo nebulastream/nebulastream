@@ -34,7 +34,6 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -58,13 +57,15 @@ public:
             {Identifier::parse("i8"), DataTypeProvider::provideDataType(DataType::Type::INT8)}};
     }
 
-    static TypedLogicalOperator<SourceDescriptorLogicalOperator> makeSource(SourceCatalog& catalog)
+    static TypedLogicalOperator<SourceDescriptorLogicalOperator> makeSource()
     {
-        const auto logical = catalog.addLogicalSource(Identifier::parse("agg_src"), createSchema()).value();
+        const auto logical = LogicalSource{Identifier::parse("agg_src"), createSchema()};
         const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
         const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
         const auto descriptor
-            = catalog.addPhysicalSource(logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig).value();
+            = SourceDescriptor::create(
+                  PhysicalSourceId{1}, logical, Identifier::parse("file"), Host{"localhost"}, sourceConfig, parserConfig, false)
+                  .value();
         return SourceDescriptorLogicalOperator::create(descriptor);
     }
 
@@ -78,8 +79,7 @@ public:
 
 TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 {
-    SourceCatalog catalog;
-    const auto schema = makeSource(catalog)->getOutputSchema();
+    const auto schema = makeSource()->getOutputSchema();
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())
     {
@@ -103,8 +103,7 @@ TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
 
 TEST_F(AggregationInputTypeTest, AcceptsNumericInput)
 {
-    SourceCatalog catalog;
-    const auto schema = makeSource(catalog)->getOutputSchema();
+    const auto schema = makeSource()->getOutputSchema();
 
     for (const auto& name : AggregationLogicalFunctionRegistry::instance().getRegisteredNames())
     {
