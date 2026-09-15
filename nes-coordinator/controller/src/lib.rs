@@ -37,7 +37,7 @@
 //! A missed wake-up only delays the next reaction to the next poll interval.
 
 use crate::config::POLL_INTERVAL;
-use crate::embedded::WorkerFactory;
+use crate::in_process::WorkerFactory;
 use crate::util::buggify::buggify;
 use crate::util::reconcile::{Reconciler, reconcile_loop};
 use crate::util::task_map::TaskMap;
@@ -51,9 +51,9 @@ use tokio::sync::watch;
 use tracing::{Instrument, info, info_span, warn};
 
 mod config;
-pub mod embedded;
 mod error;
 pub mod fragment;
+pub mod in_process;
 pub mod remote;
 mod version;
 
@@ -143,7 +143,7 @@ impl Controller {
                 // so that a bad config fails only this one, instead of unwinding the caller.
                 async move {
                     let embedded_worker = factory.create(&embedded_worker_config(&worker_model))?;
-                    embedded::WorkerTask::new(
+                    in_process::InProcessWorkerTask::new(
                         worker_model,
                         embedded_worker,
                         db,

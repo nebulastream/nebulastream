@@ -14,6 +14,7 @@
 
 //! The query-fragment entity and its lifecycle types.
 
+use crate::error::CodedError;
 use crate::identifier::QueryFragmentId;
 use crate::identifier::QueryId;
 use crate::worker::endpoint::NetworkAddr;
@@ -27,14 +28,23 @@ use thiserror::Error;
 /// Why a fragment failed: an error inside the worker, or a failure to reach it.
 #[derive(Debug, Clone, Error, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub enum QueryFragmentError {
-    #[error("Internal worker error; code: {code}, msg: {msg}, stacktrace: {trace}")]
-    Internal {
-        code: u16,
-        msg: String,
-        trace: String,
-    },
+    #[error("Internal worker error; code: {}, msg: {}, stacktrace: {}", .0.code as u16, .0.msg, .0.trace)]
+    Internal(CodedError),
     #[error("Worker communication error: {msg}")]
     Transport { msg: String },
+}
+
+/// The failure that ended a query: the first fragment that failed, and where it ran.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+pub struct QueryError {
+    pub host_addr: NetworkAddr,
+    pub error: QueryFragmentError,
+}
+
+impl std::fmt::Display for QueryError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.host_addr, self.error)
+    }
 }
 
 /// One execution unit of a query, placed on a single worker.

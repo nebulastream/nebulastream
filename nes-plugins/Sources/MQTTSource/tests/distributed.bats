@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+bats_require_minimum_version 1.5.0
+
 source "$NES_BATS_LIB"
 
 setup_file()    { nes_distributed_setup_file "$NES_CLI" mqtt-source; }
@@ -33,16 +35,16 @@ docker_mqtt_subscribe() {
 
 @test "launch query from topology" {
   setup_distributed tests/good/example.yaml
-  run docker_nes_cli -t tests/good/example.yaml start
+  run docker_nes_cli -s tests/good/example.yaml start
   [ "$status" -eq 0 ]
-  query_id=$output
+  query_id=$(newest_query_id)
 
   sleep 1
   docker_mqtt_produce mqtt-source-test 32.0
   docker_mqtt_produce mqtt-source-test 32.0
   sleep 1
 
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml stop $query_id
   wait_until docker compose exec -T worker-1 grep -q "2,410" results.csv
 
   grep "2,410" worker-1/results.csv
@@ -50,7 +52,7 @@ docker_mqtt_subscribe() {
 
 @test "launch query from commandline" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -64,14 +66,14 @@ EOF
 )"
 
   [ "$status" -eq 0 ]
-  query_id=$output
+  query_id=$(newest_query_id)
 
   sleep 1
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
   sleep 1
 
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml stop $query_id
   [ "$status" -eq 0 ]
   wait_until docker compose exec -T worker-1 grep -q "2,222" results.csv
 
@@ -80,7 +82,7 @@ EOF
 
 @test "empty message delimiter allows tuples to span messages" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -94,14 +96,14 @@ EOF
 )"
 
   assert_success
-  query_id=$output
+  query_id=$(newest_query_id)
 
   sleep 1
   docker_mqtt_produce mqtt-source-test 3
   docker_mqtt_produce mqtt-source-test $'2\n'
   wait_until docker compose exec -T worker-1 grep -qx 32 results.csv
 
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml stop $query_id
   assert_success
 
   assert_file_line_count worker-1/results.csv 2
@@ -110,7 +112,7 @@ EOF
 
 @test "long flushing interval" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -136,7 +138,7 @@ EOF
 
 @test "long flushing interval does not flush early" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -166,7 +168,7 @@ EOF
   # the source receives raw ascii csv. the data is always ['3', '2', '\n'] (3 bytes)
 
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -180,7 +182,7 @@ EOF
 )"
 
   [ "$status" -eq 0 ]
-  query_id=$output
+  query_id=$(newest_query_id)
 
   sleep 1
   #
@@ -200,7 +202,7 @@ EOF
 
 @test "more data" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -214,7 +216,7 @@ EOF
 )"
 
   [ "$status" -eq 0 ]
-  query_id=$output
+  query_id=$(newest_query_id)
 
   wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
 
@@ -244,14 +246,14 @@ EOF
   wait
 
   wait_until docker compose exec -T worker-1 sh -c '[ "$(wc -l < results.csv)" -eq 30501 ]'
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml stop $query_id
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml stop $query_id
 
   assert_file_line_count worker-1/results.csv 30501
 }
 
 @test "fails query when broker stops during processing" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -264,7 +266,7 @@ EOF
 EOF
 )"
   assert_success
-  query_id=$output
+  query_id=$(newest_query_id)
 
   wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy 'worker-1'
   run docker_mqtt_produce mqtt-source-test 32
@@ -277,7 +279,7 @@ EOF
 @test "fails query when broker is unavailable at startup" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker compose kill mqtt-broker
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -289,13 +291,12 @@ EOF
     ) INTO CHECKSUM('worker-1:8080' AS "SINK"."HOST", 'results.csv' AS "SINK"."FILE_PATH")
 EOF
 )"
-  assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$output" --require-healthy '^worker-.*$'
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$(newest_query_id)" --require-healthy '^worker-.*$'
 }
 
 @test "mqtt source with json messages" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -309,7 +310,7 @@ EOF
 EOF
   )"
   assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$output" --require-healthy '^worker-.*$'
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$(newest_query_id)" --require-healthy '^worker-.*$'
   docker_mqtt_produce mqtt-source-test $'{"ID": 32}'
   wait_until docker compose exec -T worker-1 grep -qx 32 results.csv
   wait_until docker compose exec -T worker-1 grep -Fq \
@@ -321,7 +322,7 @@ EOF
 
 @test "mqtt source with cooperative shutdown" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+  run docker_nes_cli -s tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
     SELECT * FROM MQTT(
         'worker-1:8080' AS "SOURCE"."HOST",
         'mqtt-source-test' AS "SOURCE"."TOPIC",
@@ -334,7 +335,7 @@ EOF
 EOF
   )"
   assert_success
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$output" --require-healthy '^worker-.*$'
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$(newest_query_id)" --require-healthy '^worker-.*$'
 
   assert_success_within_deadline 20 docker compose stop -t 20 worker-1
 }

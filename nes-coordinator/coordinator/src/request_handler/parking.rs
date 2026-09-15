@@ -33,7 +33,7 @@ use tokio::time::Instant;
 
 /// Returned when a blocking create finds the query in a terminal state other than the one that it waited for.
 /// Nothing is left to wait for, and reporting success would hide that the query never reached the requested state.
-/// The fragments are included because the query's aggregated error summary drops the per-fragment error code.
+/// The query row carries the failure that ended it; the fragments come along as they do with every query read.
 #[derive(Error, Debug)]
 #[error("Query '{}' terminated early with state {}", .0.query.id, .0.query.state)]
 pub struct EarlyTermination(pub QueryWithFragments);

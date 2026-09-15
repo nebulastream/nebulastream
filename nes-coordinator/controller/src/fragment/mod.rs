@@ -14,8 +14,10 @@
 
 //! How the lifecycle driver asks a worker about one fragment.
 
+pub(crate) mod client;
 mod task;
 
+pub use client::RawStatus;
 pub(super) use task::FragmentTask;
 
 use model::identifier::QueryFragmentId;
@@ -25,9 +27,7 @@ use model::query::query_fragment::{
 use std::future::Future;
 use std::time::Duration;
 
-/// Result of a single worker-facing call.
-/// The lifecycle driver inspects it to decide the next state transition,
-/// whether to retry, and whether to stop polling.
+/// One worker-facing call's answer, as the lifecycle driver acts on it.
 pub(super) enum Outcome {
     /// The answer implies this state change.
     Transition(QueryFragmentTransition),
@@ -52,8 +52,8 @@ pub struct QueryFragmentStatus {
 }
 
 /// Worker-facing operations for one fragment.
-/// In-process and out-of-process backends each provide their own implementation;
-/// the lifecycle driver is generic over this trait.
+/// The lifecycle driver is generic over this trait,
+/// so it does not depend on how the worker is reached.
 ///
 /// These calls may be retried after a lost response, so the worker side has to be idempotent:
 /// re-issuing a call that already took effect must succeed rather than fail.

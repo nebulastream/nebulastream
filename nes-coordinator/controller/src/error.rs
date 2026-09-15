@@ -14,6 +14,7 @@
 
 //! Error types for a single worker RPC and the classification of which failures are worth retrying.
 
+use model::error::{CodedError, ErrorCode};
 use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
 use thiserror::Error;
@@ -48,11 +49,16 @@ pub(crate) enum WorkerTaskError {
 }
 
 impl WorkerTaskError {
+    /// A status read answers NOT_FOUND for an unknown id, while a stop reports the worker's own
+    /// code for it in the trailing metadata, so both spellings count.
     pub(crate) fn is_not_found(&self) -> bool {
-        matches!(
-            self,
-            Self::Grpc { status, .. } if status.code() == tonic::Code::NotFound
-        )
+        match self {
+            Self::Grpc { status, .. } => {
+                status.code() == tonic::Code::NotFound
+                    || reported_code(status) == Some(ErrorCode::QueryNotFound)
+            }
+            _ => false,
+        }
     }
 }
 
@@ -91,13 +97,23 @@ fn meta_str(status: &tonic::Status, key: &str) -> String {
         .to_string()
 }
 
+/// The code the worker attached to a failed call, if it attached one.
+fn reported_code(status: &tonic::Status) -> Option<ErrorCode> {
+    meta_str(status, "code")
+        .parse::<u16>()
+        .ok()
+        .map(ErrorCode::from_code)
+}
+
 impl From<&ProtoError> for QueryFragmentError {
     fn from(err: &ProtoError) -> Self {
-        Self::Internal {
-            code: u16::try_from(err.code).unwrap_or(u16::MAX),
-            msg: err.message.clone(),
-            trace: err.stack_trace.clone(),
-        }
+        let code =
+            u16::try_from(err.code).map_or(ErrorCode::UnknownException, ErrorCode::from_code);
+        Self::Internal(CodedError::relayed(
+            code,
+            err.message.clone(),
+            err.stack_trace.clone(),
+        ))
     }
 }
 
@@ -110,11 +126,11 @@ impl From<&WorkerTaskError> for QueryFragmentError {
             WorkerTaskError::Grpc { addr, status } if retryable(status.code()) => Self::Transport {
                 msg: format!("gRPC error at '{addr}': {status}"),
             },
-            WorkerTaskError::Grpc { status, .. } => Self::Internal {
-                code: meta_str(status, "code").parse().unwrap_or(0),
-                msg: status.message().to_string(),
-                trace: meta_str(status, "trace"),
-            },
+            WorkerTaskError::Grpc { status, .. } => Self::Internal(CodedError::relayed(
+                reported_code(status).unwrap_or(ErrorCode::UnknownException),
+                status.message().to_string(),
+                meta_str(status, "trace"),
+            )),
             WorkerTaskError::Timeout { addr } => Self::Transport {
                 msg: format!("RPC to '{addr}' exceeded the total timeout"),
             },

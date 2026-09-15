@@ -133,12 +133,9 @@ impl TestHarness {
                     let receiver = receiver.clone();
                     let db_path = db_path.clone();
                     async move {
-                        let db = Database::with(StateBackend::sqlite(&db_path))
+                        let db = Database::open(StateBackend::sqlite(&db_path))
                             .await
-                            .expect("failed to create database");
-                        db.migrate()
-                            .await
-                            .expect("failed to run database migrations");
+                            .expect("failed to open the database");
                         coordinator::run(db, None, None, receiver).await;
                     }
                 }

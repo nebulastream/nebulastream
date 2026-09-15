@@ -51,10 +51,6 @@
 #include <Progress.hpp>
 #include <WorkingDirectoryGuard.hpp>
 
-/// Switches the workers to in-memory communication, which the systest run needs because it starts its workers in this
-/// process: the transport otherwise binds one receiver socket per process and a second worker cannot come up.
-extern void enable_memcom();
-
 namespace NES
 {
 namespace
@@ -336,11 +332,7 @@ ExecutorResult Executor::execute() const
     const auto plan = RunPolicy::create(config);
     const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
-    if (not config.remoteWorker.getValue())
-    {
-        enable_memcom();
-    }
-
+    /// One coordinator with the workers this invocation configured serves every one of its test files.
     TestRunner runner{config};
     auto prepared = prepareAll(runner);
 

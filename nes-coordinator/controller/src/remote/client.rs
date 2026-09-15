@@ -17,12 +17,11 @@ use crate::config::{
     RPC_ATTEMPT_TIMEOUT, RPC_MAX_RETRIES, RPC_TOTAL_TIMEOUT,
 };
 use crate::error::{Retryable, WorkerTaskError};
-use crate::fragment::{Client, Outcome, QueryFragmentStatus};
+use crate::fragment::client::{CallError, RawStatus, Transport};
 use crate::remote::worker_rpc_service;
+use crate::remote::worker_rpc_service::nes::SerializableQueryPlan;
 use model::identifier::QueryFragmentId;
-use model::query::query_fragment::{
-    DesiredQueryFragmentState, QueryFragmentError, QueryFragmentState, QueryFragmentTransition,
-};
+use model::query::query_fragment::QueryFragmentError;
 use model::worker::endpoint::NetworkAddr;
 use std::future::Future;
 use std::time::Duration;
@@ -46,15 +45,15 @@ fn query_id(id: i64) -> worker_rpc_service::nes::SerializableQueryId {
     worker_rpc_service::nes::SerializableQueryId::from_fragment_id(id)
 }
 
-/// Adapts a gRPC worker client to the async client interface that the lifecycle driver uses.
-/// Each method runs through a shared RPC layer
+/// The transport to a worker behind a socket.
+/// Each call runs through a shared RPC layer
 /// that adds a per-attempt timeout, an overall deadline, and bounded retries on transient errors.
-pub(super) struct QueryFragmentClient {
+pub(super) struct RemoteTransport {
     client: WorkerRpcServiceClient<Channel>,
     host_addr: NetworkAddr,
 }
 
-impl QueryFragmentClient {
+impl RemoteTransport {
     pub(super) const fn new(
         client: WorkerRpcServiceClient<Channel>,
         host_addr: NetworkAddr,
@@ -112,110 +111,72 @@ impl QueryFragmentClient {
     }
 }
 
-impl Client for QueryFragmentClient {
+/// A worker behind a socket can fail to answer for a while; those failures are retried.
+/// An unknown id is state rather than failure; anything else failed for good.
+fn classify(err: WorkerTaskError) -> CallError {
+    if err.is_not_found() {
+        CallError::NotFound
+    } else if err.retryable() {
+        CallError::Transient(QueryFragmentError::from(&err))
+    } else {
+        CallError::Failed(QueryFragmentError::from(&err))
+    }
+}
+
+impl Transport for RemoteTransport {
     fn poll_interval(&self) -> Duration {
         REMOTE_FRAGMENT_POLL_INTERVAL
     }
 
-    #[tracing::instrument(level = "debug", skip(self))]
-    async fn start(&self, id: QueryFragmentId, plan: &[u8]) -> Outcome {
-        let mut query_plan: worker_rpc_service::nes::SerializableQueryPlan =
-            match prost::Message::decode(plan) {
-                Ok(plan) => plan,
-                Err(e) => {
-                    return Outcome::Failed(QueryFragmentError::Internal {
-                        code: 0,
-                        msg: format!("failed to decode stored query plan: {e}"),
-                        trace: String::new(),
-                    });
-                }
-            };
-        query_plan.query_id = Some(query_id(*id));
+    #[tracing::instrument(level = "debug", skip(self, plan))]
+    async fn start(&self, plan: SerializableQueryPlan) -> Result<(), CallError> {
         let req = worker_rpc_service::StartQueryRequest {
-            query_plan: Some(query_plan),
+            query_plan: Some(plan),
         };
-        match self
-            .rpc(move |mut client| {
-                let req = req.clone();
-                Box::pin(async move { client.start_query(req).await })
-            })
-            .await
-        {
-            Ok(_) => Outcome::Transition(QueryFragmentTransition::Started),
-            Err(err) if err.retryable() => Outcome::Retry(QueryFragmentError::from(&err)),
-            Err(err) if err.is_not_found() => Outcome::Transition(QueryFragmentTransition::Pending),
-            Err(err) => Outcome::Failed(QueryFragmentError::from(&err)),
-        }
+        self.rpc(move |mut client| {
+            let req = req.clone();
+            Box::pin(async move { client.start_query(req).await })
+        })
+        .await
+        .map(|_| ())
+        .map_err(classify)
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn stop(&self, id: QueryFragmentId) -> Outcome {
+    async fn stop(&self, id: QueryFragmentId) -> Result<(), CallError> {
         let req = worker_rpc_service::StopQueryRequest {
             query_id: Some(query_id(*id)),
         };
-        match self
-            .rpc(move |mut client| {
-                let req = req.clone();
-                Box::pin(async move { client.stop_query(req).await })
-            })
-            .await
-        {
-            Ok(()) => Outcome::Accepted,
-            Err(err) if err.is_not_found() => {
-                Outcome::Transition(QueryFragmentTransition::stopped_now())
-            }
-            Err(err) if err.retryable() => Outcome::Retry(QueryFragmentError::from(&err)),
-            Err(err) => Outcome::Failed(QueryFragmentError::from(&err)),
-        }
+        self.rpc(move |mut client| {
+            let req = req.clone();
+            Box::pin(async move { client.stop_query(req).await })
+        })
+        .await
+        .map_err(classify)
     }
 
     #[tracing::instrument(level = "debug", skip(self))]
-    async fn observe(
-        &self,
-        id: QueryFragmentId,
-        desired_state: DesiredQueryFragmentState,
-    ) -> Outcome {
+    async fn status(&self, id: QueryFragmentId) -> Result<RawStatus, CallError> {
         let req = worker_rpc_service::QueryStatusRequest {
             query_id: Some(query_id(*id)),
         };
-        match self
+        let reply = self
             .rpc(move |mut client| {
                 let req = req.clone();
                 Box::pin(async move { client.request_query_status(req).await })
             })
             .await
-        {
-            Ok(reply) => {
-                let state = match QueryFragmentState::try_from(reply.state) {
-                    Ok(state) => state,
-                    Err(unknown) => {
-                        return Outcome::Retry(QueryFragmentError::Transport {
-                            msg: format!("worker reported unknown fragment state: {unknown}"),
-                        });
-                    }
-                };
-                let metrics = reply.metrics.as_ref();
-                let status = QueryFragmentStatus {
-                    state,
-                    start_timestamp: metrics.and_then(|m| m.start_unix_time_in_ms),
-                    stop_timestamp: metrics.and_then(|m| m.stop_unix_time_in_ms),
-                    error: metrics
-                        .and_then(|m| m.error.as_ref())
-                        .map(QueryFragmentError::from),
-                };
-                debug!("{status:?}");
-                Outcome::Status(status)
-            }
-            Err(err) if err.is_not_found() => match desired_state {
-                DesiredQueryFragmentState::Completed => {
-                    Outcome::Transition(QueryFragmentTransition::Pending)
-                }
-                DesiredQueryFragmentState::Stopped => {
-                    Outcome::Transition(QueryFragmentTransition::stopped_now())
-                }
-            },
-            Err(err) if err.retryable() => Outcome::Retry(QueryFragmentError::from(&err)),
-            Err(err) => Outcome::Failed(QueryFragmentError::from(&err)),
-        }
+            .map_err(classify)?;
+        let metrics = reply.metrics.as_ref();
+        let status = RawStatus {
+            state: reply.state,
+            start_ms: metrics.and_then(|m| m.start_unix_time_in_ms),
+            stop_ms: metrics.and_then(|m| m.stop_unix_time_in_ms),
+            error: metrics
+                .and_then(|m| m.error.as_ref())
+                .map(QueryFragmentError::from),
+        };
+        debug!(state = status.state, "status");
+        Ok(status)
     }
 }

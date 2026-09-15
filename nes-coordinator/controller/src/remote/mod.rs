@@ -23,10 +23,11 @@ use crate::config::{
 };
 use crate::error::WorkerTaskError;
 use crate::fragment::FragmentTask;
+use crate::fragment::client::FragmentClient;
 use crate::util::buggify::buggify_return;
 use crate::util::reconcile::Reconciler;
 use crate::util::task_map::TaskMap;
-use client::QueryFragmentClient;
+use client::RemoteTransport;
 use model::identifier::QueryFragmentId;
 use model::query::query_fragment;
 use model::worker;
@@ -48,20 +49,14 @@ pub mod worker_rpc_service {
         tonic::include_proto!("nes");
 
         impl SerializableQueryId {
-            /// The wire format has two string ids
-            /// while the coordinator identifies fragments by one integer.
-            /// Put the integer in the local id, rendered as a decimal string,
-            /// until the wire format itself moves to an integer id.
             pub fn from_fragment_id(id: i64) -> Self {
-                Self {
-                    local_query_id: id.to_string(),
-                    distributed_query_id: String::new(),
-                }
+                Self { id }
             }
 
-            /// Reverse of the constructor above; an id that did not come from a fragment id parses to `None`.
+            /// Fragment ids are positive; zero is the proto3 default for an
+            /// unset id.
             pub fn fragment_id(&self) -> Option<i64> {
-                self.local_query_id.parse().ok()
+                (self.id != 0).then_some(self.id)
             }
         }
     }
@@ -269,7 +264,7 @@ impl Reconciler for WorkerTask {
                 FragmentTask::new(
                     fragment,
                     db,
-                    QueryFragmentClient::new(rpc_client, host_addr),
+                    FragmentClient::new(RemoteTransport::new(rpc_client, host_addr)),
                     state_tx,
                 )
                 .run()

@@ -156,6 +156,7 @@ impl Entity {
 mod tests {
     use crate::Execute;
     use crate::database::Database;
+    use crate::query::query_fragment::QueryFragmentError;
     use crate::query::{
         self, CreateQueryWithRefs, query_fragment, query_fragment::QueryFragmentState, setup,
         walk_all,
@@ -390,9 +391,13 @@ mod tests {
             .unwrap()
             .unwrap();
         let err = query.error.expect("query.error must be set when failed");
+        assert_eq!(
+            err.host_addr, host,
+            "query.error must name the removed host"
+        );
         assert!(
-            err.get(host.to_string()).is_some(),
-            "query.error must contain the failed host, got: {err}"
+            matches!(err.error, QueryFragmentError::Transport { .. }),
+            "a removed worker is a transport failure, got: {err}"
         );
     }
 

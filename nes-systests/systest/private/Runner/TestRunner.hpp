@@ -16,32 +16,48 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <span>
 #include <thread>
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Discovery/TestDiscovery.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
+#include <Runner/Cluster.hpp>
 #include <Util/Pointers.hpp>
-#include <SystestBinder.hpp>
 
 namespace NES
 {
 
-/// Owns the workers that a run submits to, and runs rewritten test files against them.
-/// A worker takes its settings at startup, so the run holds one worker per set of settings that its test files ask for.
+/// One test file part, rewritten and ready to submit, together with the worker settings it asks for.
+/// The settings are kept with the part because a worker takes them at startup, so the part runs on the worker that has them.
+struct RewrittenPart
+{
+    ConfigurationOverride settings;
+    RunnableTestFile test;
+};
+
+/// Owns an embedded coordinator and the workers a run registers with it, and runs rewritten test files against them.
+/// The coordinator plans every statement and places it on the workers, so this process holds no catalog of its own.
 class TestRunner
 {
 public:
+    /// Starts the coordinator with the optimizer settings the command line gave, then registers the workers the run
+    /// places its test files on.
     explicit TestRunner(const SystestConfiguration& config);
     ~TestRunner();
 
-    /// Parses one test file and rewrites each of its parts into the SQL to submit.
+    /// Parses one test file, splits it by the worker settings that its queries ask for, and rewrites each part.
+    /// A part asking for settings the run cannot give it is left out, with a printed line saying so.
     /// Throws when the file cannot be read or parsed, which the caller reports as one failed check for the file.
     [[nodiscard]] std::vector<RewrittenPart> rewrite(const DiscoveredTestFile& testfile);
+
+    /// Returns where a test file asking for these settings goes, and nothing when the run cannot give it those settings.
+    [[nodiscard]] std::optional<Placement> placementFor(const ConfigurationOverride& settings);
 
     /// Receives each case as it is checked, so a caller can report it while the rest of the run continues.
     /// The timings hold one entry per submitted statement, in submission order.
@@ -57,12 +73,11 @@ public:
         std::vector<std::jthread> servers;
     };
 
-    /// Stages the data, puts the setup statements of every test file into the catalogs, and compiles its cases.
+    /// Stages the data and submits the setup statements of every test file to the coordinator.
     /// Separate from submitting the queries, because a caller that submits them more than once must set up only once:
-    /// a second CREATE of the same name is a catalog conflict rather than more load, and compiling again would measure
-    /// the optimizer rather than the query.
-    /// The settings say which worker each test file runs on, one entry per test file. They go away once a worker is
-    /// registered for its settings and the statement states the host that it goes to.
+    /// a second CREATE of the same name is a catalog conflict rather than more load.
+    /// The settings say which worker each test file runs on, one entry per test file. They only label the checks here,
+    /// because the worker for them was registered when the file was rewritten.
     [[nodiscard]] SetUpRun setUpAll(const std::vector<RunnableTestFile>& runnables, std::span<const ConfigurationOverride> settings);
 
     /// Submits the cases of the test files that were set up, up to `concurrency` at a time, and checks each one.
@@ -73,7 +88,7 @@ public:
         const QueryObserver& observe = {});
 
     /// Sets every test file up, then submits their cases up to `concurrency` at a time and checks each one.
-    /// A file whose setup is rejected yields one failed check and none of its cases run.
+    /// A file whose setup the coordinator rejects yields one failed check and none of its cases run.
     [[nodiscard]] std::vector<CheckedQuery> runAll(
         const std::vector<RunnableTestFile>& runnables,
         std::span<const ConfigurationOverride> settings,

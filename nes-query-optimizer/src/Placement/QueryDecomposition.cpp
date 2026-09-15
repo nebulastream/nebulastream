@@ -16,8 +16,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
-#include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -31,8 +29,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
@@ -40,14 +36,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
-#include <DistributedLogicalPlan.hpp>
+#include <Catalog.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <NetworkTopology.hpp>
-#include <QueryId.hpp>
 #include <QueryOptimizerNetworkConfiguration.hpp>
-#include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {
@@ -57,11 +50,9 @@ namespace
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
-    /// NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) deliberate const-ref in local helper struct
     const QueryOptimizerNetworkConfiguration& config;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    const std::shared_ptr<Catalog> catalog;
+    const NetworkTopology& topology;
 
     void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
     {
@@ -84,22 +75,23 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     /// Look up connection (data-plane) addresses for the upstream and downstream nodes.
     /// Network sources/sinks use the data-plane address for actual data transfer,
     /// while the Host (gRPC address) is only used for management.
-    const auto downstreamWorker = context.workerCatalog->getWorker(channel.downstreamNode);
-    INVARIANT(downstreamWorker.has_value(), "Downstream worker {} not found in catalog", channel.downstreamNode);
-    const auto upstreamWorker = context.workerCatalog->getWorker(channel.upstreamNode);
-    INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
+    const auto downstreamWorker = context.catalog->getWorker(channel.downstreamNode);
+    const auto upstreamWorker = context.catalog->getWorker(channel.upstreamNode);
 
-    const auto& downstreamData = downstreamWorker->dataAddress;
-    const auto& upstreamData = upstreamWorker->dataAddress;
+    const auto& downstreamData = downstreamWorker.data;
+    const auto& upstreamData = upstreamWorker.data;
 
     auto sourceConfig = std::unordered_map<Identifier, std::string>{
-        {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
+        {Identifier::parse("host"), channel.downstreamNode.getRawValue()},
+        {Identifier::parse("channel"), channel.id.getRawValue()},
+        {Identifier::parse("bind"), downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
+        {Identifier::parse("host"), channel.upstreamNode.getRawValue()},
         {Identifier::parse("channel"), channel.id.getRawValue()},
         {Identifier::parse("bind"), upstreamData},
         {Identifier::parse("data_endpoint"), downstreamData},
@@ -125,18 +117,15 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getAnonymousSource(
+    const auto networkSourceDescriptor = context.catalog->createAnonymousSource(
+        ConnectorKind::Internal,
         Identifier::parse("Network"),
         orderedUpstreamSchema,
-        Host(channel.downstreamNode.getRawValue()),
-        {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}},
-        sourceConfig);
-    INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
-    const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
+        sourceConfig,
+        {{Identifier::parse(InputFormatterDescriptor::getTypeString()), "NATIVE"}});
 
-    auto networkSinkDescriptor = context.sinkCatalog->getAnonymousSink(
-        orderedUpstreamSchema, Identifier::parse("Network"), Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
-    INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
+    auto networkSinkDescriptor = context.catalog->createAnonymousSink(
+        ConnectorKind::Internal, Identifier::parse("Network"), orderedUpstreamSchema, sinkConfig, {});
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
@@ -150,7 +139,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator::create(networkSourceDescriptor)->withTraitSet(downstreamTs),
-        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor.value())->withTraitSet(upstreamTs).withInferredSchema()};
+        SinkLogicalOperator::create(channel.upstreamOp, networkSinkDescriptor)->withTraitSet(upstreamTs).withInferredSchema()};
 }
 
 LogicalOperator createNetworkChannel(
@@ -160,7 +149,7 @@ LogicalOperator createNetworkChannel(
     const NetworkTopology::NodeId& endNode)
 {
     /// Ask the topology for a path of nodes that connects upstream and downstream, currently we use any of them
-    const auto paths = context.workerCatalog->getTopology().findPaths(startNode, endNode, NetworkTopology::Direction::Downstream);
+    const auto paths = context.topology.findPaths(startNode, endNode, NetworkTopology::Direction::Downstream);
     if (paths.empty())
     {
         throw PlacementFailure("No path from {} to {} found", startNode, endNode);
@@ -222,13 +211,13 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
 }
 }
 
-QueryDecomposer::QueryDecomposer(
-    SharedPtr<const WorkerCatalog> workerCatalog, SharedPtr<const SourceCatalog> sourceCatalog, SharedPtr<const SinkCatalog> sinkCatalog)
-    : workerCatalog(std::move(workerCatalog)), sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+QueryDecomposer::QueryDecomposer(const std::shared_ptr<Catalog>& catalog, const NetworkTopology& topology)
+    : catalog{catalog}, topology{topology}
 {
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
+std::unordered_map<Host, std::vector<LogicalPlan>>
+QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
@@ -236,12 +225,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
             BFSRange(placedPlan.getRootOperators().front()), [](const auto& op) { return hasTrait<PlacementTrait>(op.getTraitSet()); }),
         "BUG: query decomposition requires placement of all operators");
 
-    DecompositionContext context{
-        .plansByNode = {},
-        .config = configuration,
-        .sourceCatalog = copyPtr(sourceCatalog),
-        .sinkCatalog = copyPtr(sinkCatalog),
-        .workerCatalog = copyPtr(workerCatalog)};
+    DecompositionContext context{.plansByNode = {}, .config = configuration, .catalog = catalog, .topology = topology};
 
     auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front()).withInferredSchema();
     context.addPlanToNode(root, getPlacementFor(root));
@@ -254,7 +238,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         }
     }
 
-    return {std::move(context.plansByNode), placedPlan};
+    return context.plansByNode;
 }
 
 }
