@@ -376,10 +376,8 @@ std::unordered_map<OperatorId, ReflectedOperator> reflectOperators(const Logical
         PRECONDITION(generic.has_value(), "Failed to parse a reflected operator while computing a plan signature");
         auto reflectedOperator = context.unreflect<ReflectedOperator>(Reflected{*generic});
         const auto operatorId = reflectedOperator.operatorId;
-        PRECONDITION(
-            reflectedOperators.emplace(operatorId, std::move(reflectedOperator)).second,
-            "Duplicate operator id {} while computing a plan signature",
-            operatorId.getRawValue());
+        const auto inserted = reflectedOperators.emplace(operatorId, std::move(reflectedOperator)).second;
+        PRECONDITION(inserted, "Duplicate operator id {} while computing a plan signature", operatorId.getRawValue());
     }
     return reflectedOperators;
 }
