@@ -181,6 +181,10 @@ def generate_matrix(config, profile):
 
         matrix.extend(expand_job(resolved_job, runners, merged_default_flags))
 
+    # Temporary PR 2012 validation: retain the original nightly UBSan jobs only.
+    if profile == "nightly":
+        matrix = [entry for entry in matrix if entry["sanitizer"] == "undefined"]
+
     return matrix
 
 
