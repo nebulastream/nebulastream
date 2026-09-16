@@ -64,7 +64,6 @@
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/ReservoirSampleAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -196,9 +195,6 @@ LogicalFunction createRawLiteralFunction(std::string literal)
     return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
 }
 
-/// The seed RESERVOIR uses when the query does not name one; eviction and merge decisions are driven by it.
-constexpr uint64_t DEFAULT_RESERVOIR_SEED = 42;
-
 uint64_t
 parseUnsignedConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
 {
@@ -214,27 +210,6 @@ parseUnsignedConstantArgument(const LogicalFunction& argument, const std::string
             "Expected an unsigned integer constant for {}, but got {} at {}", description, constant.value()->getConstantValue(), queryText);
     }
     return parsed.value();
-}
-
-/// RESERVOIR(statisticId, sampleSize): builds a reservoir sample over the whole input records of a window
-AntlrSQLHelper::StatisticBuildInfo bindReservoirBuild(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
-{
-    if (arguments.size() < 2 or arguments.size() > 3)
-    {
-        throw InvalidQuerySyntax("RESERVOIR expects two or three arguments (statisticId, sampleSize[, seed]) at {}", queryText);
-    }
-    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR statisticId", queryText);
-    const auto sampleSize = parseUnsignedConstantArgument(arguments[1], "the RESERVOIR sampleSize", queryText);
-    if (statisticId == StatisticId::INVALID or sampleSize == 0)
-    {
-        throw InvalidQuerySyntax("RESERVOIR requires a valid statisticId and a sampleSize greater than zero at {}", queryText);
-    }
-    const auto seed
-        = arguments.size() == 3 ? parseUnsignedConstantArgument(arguments[2], "the RESERVOIR seed", queryText) : DEFAULT_RESERVOIR_SEED;
-    return {
-        .statisticId = StatisticId(statisticId),
-        .statisticFunction = WindowAggregationLogicalFunction{ReservoirSampleAggregationLogicalFunction{sampleSize, seed}},
-        .functionName = "RESERVOIR"};
 }
 
 std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadFields(
@@ -261,24 +236,6 @@ std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadField
         payloadFields.emplace_back(fieldAccess.value()->getFieldName(), dataType.value());
     }
     return payloadFields;
-}
-
-AntlrSQLHelper::StatisticProbeInfo bindReservoirProbe(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
-{
-    if (arguments.size() < 3 or arguments.size() % 2 == 0)
-    {
-        throw InvalidQuerySyntax("RESERVOIR_PROBE expects a statisticId followed by (fieldName, typeName) pairs at {}", queryText);
-    }
-    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the RESERVOIR_PROBE statisticId", queryText);
-    if (statisticId == StatisticId::INVALID)
-    {
-        throw InvalidQuerySyntax("RESERVOIR_PROBE requires a valid statisticId at {}", queryText);
-    }
-    return {
-        .statisticId = StatisticId(statisticId),
-        .blobType = StatisticBlobType{ReservoirSampleAggregationLogicalFunction::NAME},
-        .payloadFields = parsePayloadFields(arguments, 1, "RESERVOIR_PROBE", queryText),
-        .windowMatch = StatisticWindowMatch::ExactWindow};
 }
 
 std::string
@@ -1496,8 +1453,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default: {
             helpers.top().hasUnnamedAggregation = false;
-            if (funcName == "RESERVOIR" or funcName == "RESERVOIR_PROBE" or funcName == "STATISTIC_BUILD" or funcName == "STATISTIC_PROBE"
-                or funcName == "STATISTIC_PROBE_RANGE")
+            if (funcName == "STATISTIC_BUILD" or funcName == "STATISTIC_PROBE" or funcName == "STATISTIC_PROBE_RANGE")
             {
                 const auto numArgs = context->argument.size();
                 if (numArgs > helpers.top().functionBuilder.size())
@@ -1512,24 +1468,19 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
                 const std::vector<LogicalFunction> statisticArgs(argsBegin, helpers.top().functionBuilder.end());
                 helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                if (funcName == "RESERVOIR" or funcName == "STATISTIC_BUILD")
+                if (funcName == "STATISTIC_BUILD")
                 {
                     if (helpers.top().statisticBuild.has_value())
                     {
                         throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
                     }
-                    helpers.top().statisticBuild = funcName == "RESERVOIR" ? bindReservoirBuild(statisticArgs, context->getText())
-                                                                           : bindStatisticBuild(statisticArgs, context->getText());
+                    helpers.top().statisticBuild = bindStatisticBuild(statisticArgs, context->getText());
                 }
                 else
                 {
                     if (helpers.top().statisticProbe.has_value())
                     {
                         throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
-                    }
-                    if (funcName == "RESERVOIR_PROBE")
-                    {
-                        helpers.top().statisticProbe = bindReservoirProbe(statisticArgs, context->getText());
                     }
                     else
                     {

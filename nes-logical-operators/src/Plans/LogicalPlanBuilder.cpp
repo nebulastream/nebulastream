@@ -50,7 +50,6 @@
 #include <Operators/Statistic/StatisticWindowMatch.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/ReservoirSampleAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
