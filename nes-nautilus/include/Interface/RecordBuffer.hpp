@@ -53,6 +53,9 @@ public:
     nautilus::val<SequenceNumber> getSequenceNumber();
     void setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber);
 
+    nautilus::val<SequenceNumber> getPredecessor();
+    void setPredecessor(const nautilus::val<SequenceNumber>& predecessor);
+
     /// Sets the chunk number of the underlying tuple buffer. The chunk number is a monotonically increasing identifier for chunks of a sequence number.
     void setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber);
     nautilus::val<ChunkNumber> getChunkNumber();
@@ -61,6 +64,9 @@ public:
 
     nautilus::val<Epoch> getOriginEpoch();
     void setOriginEpoch(const nautilus::val<Epoch>& originEpoch);
+
+    [[nodiscard]] nautilus::val<int8_t*> getBarriers() const;
+    void setBarriers(const nautilus::val<int8_t*>& barriers);
 
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.

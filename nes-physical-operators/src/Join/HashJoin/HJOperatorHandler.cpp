@@ -157,6 +157,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     auto tupleBuffer = tupleBufferVal.value();
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
+    tupleBuffer.setPredecessor(SequenceNumber(sequenceData.predecessor));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);

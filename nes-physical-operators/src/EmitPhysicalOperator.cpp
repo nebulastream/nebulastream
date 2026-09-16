@@ -131,8 +131,13 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
+    recordBuffer.setPredecessor(ctx.predecessor);
     recordBuffer.setCreationTs(ctx.currentTs);
     recordBuffer.setOriginEpoch(ctx.currentEpoch);
+    if (potentialLastChunk)
+    {
+        recordBuffer.setBarriers(ctx.barriers);
+    }
 
     setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
 

@@ -148,6 +148,16 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
     return controlBlock->getSequenceNumber();
 }
 
+void TupleBuffer::setPredecessor(const SequenceNumber predecessor) noexcept
+{
+    controlBlock->setPredecessor(predecessor);
+}
+
+SequenceNumber TupleBuffer::getPredecessor() const noexcept
+{
+    return controlBlock->getPredecessor();
+}
+
 void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
@@ -171,6 +181,16 @@ void TupleBuffer::setOriginEpoch(Epoch epoch) noexcept
 [[nodiscard]] Epoch TupleBuffer::getOriginEpoch() const noexcept
 {
     return controlBlock->getOriginEpoch();
+}
+
+[[nodiscard]] const std::vector<std::string>& TupleBuffer::getBarriers() const noexcept
+{
+    return controlBlock->getBarriers();
+}
+
+void TupleBuffer::setBarriers(std::vector<std::string> barriers) noexcept
+{
+    controlBlock->setBarriers(std::vector(barriers));
 }
 
 void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept

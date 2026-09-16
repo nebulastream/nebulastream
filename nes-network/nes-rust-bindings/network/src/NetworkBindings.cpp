@@ -47,12 +47,19 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
 {
     buffer.setSequenceNumber(NES::SequenceNumber(metaData.sequence_number));
+    buffer.setPredecessor(NES::SequenceNumber(metaData.predecessor));
     buffer.setChunkNumber(NES::ChunkNumber(metaData.chunk_number));
     buffer.setOriginId(NES::OriginId(metaData.origin_id));
     buffer.setLastChunk(metaData.last_chunk);
     buffer.setOriginEpoch(NES::Epoch(metaData.origin_epoch));
     buffer.setWatermark(NES::Timestamp(metaData.watermark));
     buffer.setNumberOfTuples(metaData.number_of_tuples);
+
+    std::vector<std::string> barriers;
+    for (const auto& barrier : metaData.barriers) {
+        barriers.emplace_back(barrier);
+    }
+    buffer.setBarriers(barriers);
 }
 
 void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)

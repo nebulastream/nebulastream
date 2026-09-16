@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -164,6 +165,9 @@ public:
 
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
+    void setPredecessor(SequenceNumber predecessor) noexcept;
+    [[nodiscard]] SequenceNumber getPredecessor() const noexcept;
+
     void setChunkNumber(ChunkNumber chunkNumber) noexcept;
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
@@ -175,6 +179,9 @@ public:
 
     void setOriginEpoch(Epoch epoch) noexcept;
     [[nodiscard]] Epoch getOriginEpoch() const noexcept;
+
+    void setBarriers(std::vector<std::string> barriers) noexcept;
+    [[nodiscard]] const std::vector<std::string>& getBarriers() const noexcept;
 
     void setCreationTimestampInMS(Timestamp value) noexcept;
 

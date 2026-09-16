@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -90,12 +91,16 @@ public:
     void setWatermark(Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
     void setSequenceNumber(SequenceNumber sequenceNumber);
+    [[nodiscard]] SequenceNumber getPredecessor() const noexcept;
+    void setPredecessor(SequenceNumber predecessor);
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
     void setChunkNumber(ChunkNumber chunkNumber);
     [[nodiscard]] bool isLastChunk() const noexcept;
     void setLastChunk(bool lastChunk);
     [[nodiscard]] Epoch getOriginEpoch() const noexcept;
     void setOriginEpoch(Epoch epoch);
+    [[nodiscard]] const std::vector<std::string>& getBarriers() const noexcept;
+    void setBarriers(std::vector<std::string> barriers);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
@@ -113,9 +118,11 @@ private:
     uint32_t numberOfTuples = 0;
     Timestamp watermark = Timestamp(Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
+    SequenceNumber predecessor = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
     Epoch originEpoch = INVALID_EPOCH;
+    std::vector<std::string> barriers;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;

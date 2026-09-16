@@ -53,6 +53,7 @@ struct WindowInfoAndSequenceNumber
 {
     WindowInfo windowInfo;
     SequenceNumber sequenceNumber;
+    SequenceNumber predecessor;
 
     bool operator<(const WindowInfoAndSequenceNumber& other) const { return windowInfo < other.windowInfo; }
 };

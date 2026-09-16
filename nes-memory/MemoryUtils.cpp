@@ -54,11 +54,13 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
     copiedBuffer.setWatermark(buffer.getWatermark());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
+    copiedBuffer.setPredecessor(buffer.getPredecessor());
     copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setOriginId(buffer.getOriginId());
     copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
     copiedBuffer.setOriginEpoch(buffer.getOriginEpoch());
+    copiedBuffer.setBarriers(std::vector(buffer.getBarriers()));
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {

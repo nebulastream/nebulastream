@@ -120,6 +120,7 @@ pub enum DataChannelResponse {
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TupleBuffer {
     pub sequence_number: u64,
+    pub predecessor: u64,
     pub origin_id: u64,
     pub watermark: u64,
     pub chunk_number: u64,
@@ -129,6 +130,7 @@ pub struct TupleBuffer {
     pub data: Vec<u8>,
     pub child_buffers: Vec<Vec<u8>>,
     pub closing: bool,
+    pub barriers: Vec<String>,
 }
 
 impl TupleBuffer {

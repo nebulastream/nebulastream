@@ -18,13 +18,13 @@
 
 namespace NES
 {
-SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk)
-    : sequenceNumber(sequenceNumber.getRawValue()), chunkNumber(chunkNumber.getRawValue()), lastChunk(lastChunk)
+SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk, SequenceNumber predecessor)
+    : sequenceNumber(sequenceNumber.getRawValue()), chunkNumber(chunkNumber.getRawValue()), lastChunk(lastChunk), predecessor(predecessor.getRawValue())
 {
 }
 
 SequenceData::SequenceData()
-    : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue()), chunkNumber(INVALID_CHUNK_NUMBER.getRawValue()), lastChunk(false) { };
+    : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue()), chunkNumber(INVALID_CHUNK_NUMBER.getRawValue()), lastChunk(false), predecessor(INVALID_SEQ_NUMBER.getRawValue()) { };
 
 std::ostream& operator<<(std::ostream& os, const SequenceData& obj)
 {
