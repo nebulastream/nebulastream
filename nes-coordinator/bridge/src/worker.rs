@@ -50,6 +50,11 @@ pub(crate) mod ffi {
 /// Starts in-process C++ workers for the embedded deployment.
 pub(crate) struct BridgeWorkerFactory;
 
+#[must_use]
+pub fn embedded_worker_factory() -> Arc<dyn WorkerFactory> {
+    Arc::new(BridgeWorkerFactory)
+}
+
 impl WorkerFactory for BridgeWorkerFactory {
     fn create(&self, cfg: &str) -> anyhow::Result<Arc<dyn InProcessWorker>> {
         Ok(Arc::new(BridgeWorker::new(cfg)?))

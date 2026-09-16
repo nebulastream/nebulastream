@@ -120,6 +120,7 @@ endmacro()
 #   NES_CLI            = $<TARGET_FILE:nes-cli>
 #   NES_REPL           = $<TARGET_FILE:nes-repl>
 #   NES_REPL_EMBEDDED  = $<TARGET_FILE:nes-repl-embedded>
+#   NES_SERVER         = $<TARGET_FILE:nes-server>
 #   NES_SYSTEST        = $<TARGET_FILE:systest>
 #   NES_RUNTIME_BASE_IMAGE (only when DOCKER_COMPOSE is set)
 #
@@ -170,6 +171,7 @@ function(add_e2e_test)
         NES_CLI=$<TARGET_FILE:nes-cli>
         NES_REPL=$<TARGET_FILE:nes-repl>
         NES_REPL_EMBEDDED=$<TARGET_FILE:nes-repl-embedded>
+        NES_SERVER=$<TARGET_FILE:nes-server>
         NES_SYSTEST=$<TARGET_FILE:systest>
     )
     if (ARG_DOCKER_COMPOSE)

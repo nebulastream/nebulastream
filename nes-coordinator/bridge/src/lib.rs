@@ -22,5 +22,7 @@ mod planner;
 mod test_context;
 mod worker;
 
-pub use coordinator::Coordinator;
 pub use coordinator::ffi::WorkerMode;
+pub use coordinator::{Coordinator, default_host};
+pub use planner::sql_planner;
+pub use worker::embedded_worker_factory;

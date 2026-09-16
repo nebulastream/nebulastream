@@ -32,10 +32,13 @@ pub use error::ApiError;
 pub use routes::router;
 pub use state::AppState;
 
+use anyhow::{Context, anyhow};
 use axum::Router;
 use controller::in_process::WorkerFactory;
 use coordinator::SqlPlanner;
 use model::database::Database;
+use model::request::{StatementInput, Wait};
+use model::statement::Statement;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
@@ -56,16 +59,28 @@ impl Default for Config {
     }
 }
 
-#[must_use]
-pub fn start(
+pub async fn start(
     db: Database,
     planner: Option<Arc<dyn SqlPlanner>>,
     factory: Option<Arc<dyn WorkerFactory>>,
     config: Config,
-) -> (Router, JoinHandle<()>) {
+    bootstrap: Vec<Statement>,
+) -> anyhow::Result<(Router, JoinHandle<()>)> {
     let (sender, receiver) = async_channel::bounded(config.queue_capacity);
     let coordinator = tokio::spawn(coordinator::run(db, planner, factory, receiver));
-    (router(AppState::new(sender, &config)), coordinator)
+    let state = AppState::new(sender, &config);
+    for statement in bootstrap {
+        let described = format!("{statement:?}");
+        if let Err(error) = state
+            .submit(StatementInput::Parsed(statement), Wait::None)
+            .await
+        {
+            coordinator.abort();
+            return Err(anyhow!("{}: {}", error.body.error, error.body.message))
+                .with_context(|| format!("bootstrap statement failed: {described}"));
+        }
+    }
+    Ok((router(state), coordinator))
 }
 
 pub async fn serve(

@@ -18,6 +18,7 @@ use axum::http::{Method, Request, StatusCode, header};
 use http_body_util::BodyExt;
 use model::database::Database;
 use model::query::query_fragment::{self, QueryFragmentState};
+use model::statement::Statement;
 use sea_orm::sea_query::Expr;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use serde_json::{Value, json};
@@ -48,13 +49,22 @@ impl TestServer {
     }
 
     pub async fn with_config(config: Config) -> Self {
+        Self::open(config, vec![]).await.unwrap()
+    }
+
+    pub async fn with_bootstrap(bootstrap: Vec<Statement>) -> anyhow::Result<Self> {
+        Self::open(Config::default(), bootstrap).await
+    }
+
+    async fn open(config: Config, bootstrap: Vec<Statement>) -> anyhow::Result<Self> {
         let db = Database::for_test().await;
-        let (router, coordinator) = server::start(db.clone(), None, None, config);
-        Self {
+        let (router, coordinator) =
+            server::start(db.clone(), None, None, config, bootstrap).await?;
+        Ok(Self {
             router,
             db,
             coordinator,
-        }
+        })
     }
 
     pub async fn send(&self, request: Request<Body>) -> (StatusCode, Value) {

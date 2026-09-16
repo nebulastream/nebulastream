@@ -1,6 +1,6 @@
 name: Create Container for Head_SHA
 description: |
-  Builds the executable images (nes-cli, nes-repl, nes-repl-embedded, nes-worker) for the given
+  Builds the executable images (nes-cli, nes-repl, nes-repl-embedded, nes-server, nes-worker) for the given
   head_sha (branch, tag, or commit sha) via the `package-docker-images-all` CMake target and
   publishes them to Docker Hub, tagged as specified via the parameter.
 on:
@@ -80,7 +80,7 @@ jobs:
               cmake --build build --target package-docker-images-all
       - name: Push executable images
         run: |
-          for image in nes-cli nes-repl nes-repl-embedded nes-worker; do
+          for image in nes-cli nes-repl nes-repl-embedded nes-server nes-worker; do
             docker push "nebulastream/${image}:${{ needs.sanitize-tag.outputs.tag }}-${{ matrix.arch }}"
           done
 
@@ -110,6 +110,10 @@ jobs:
           docker buildx imagetools create -t nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }} \
             nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-x64 \
             nebulastream/nes-repl:${{ needs.sanitize-tag.outputs.tag }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-server:${{ needs.sanitize-tag.outputs.tag }} \
+            nebulastream/nes-server:${{ needs.sanitize-tag.outputs.tag }}-x64 \
+            nebulastream/nes-server:${{ needs.sanitize-tag.outputs.tag }}-arm64
 
           docker buildx imagetools create -t nebulastream/nes-worker:${{ needs.sanitize-tag.outputs.tag }} \
             nebulastream/nes-worker:${{ needs.sanitize-tag.outputs.tag }}-x64 \

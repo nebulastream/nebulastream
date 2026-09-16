@@ -102,13 +102,13 @@ docker run \
 
 #### Package the binaries as Docker images
 Build the runtime base and package each executable into a slim image (`nebulastream/nes-cli`, `nes-repl`,
-`nes-repl-embedded`, `nes-worker`):
+`nes-repl-embedded`, `nes-server`, `nes-worker`):
 
 ```shell
 cmake --build cmake-build-debug --target package-docker-images-all -j
 ```
 
-Use `package-docker-<nes-cli|nes-repl|nes-repl-embedded|nes-worker>` for a single image. These targets are excluded from the
+Use `package-docker-<nes-cli|nes-repl|nes-repl-embedded|nes-server|nes-worker>` for a single image. These targets are excluded from the
 default build. See [Packaging Docker images](docs/development/packaging_docker_images.md) for image names and
 tags.
 

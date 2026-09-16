@@ -13,9 +13,11 @@
 */
 
 use anyhow::Result;
+use coordinator::SqlPlanner;
 use model::query::query_fragment::CreateQueryFragment;
 use model::statement::Statement;
 use sea_orm::DatabaseTransaction;
+use std::sync::Arc;
 use tracing::debug;
 
 use crate::catalog::PlanningTransaction;
@@ -74,7 +76,20 @@ pub(crate) struct FfiSqlPlanner {
     pub(crate) default_host: String,
 }
 
-impl coordinator::SqlPlanner for FfiSqlPlanner {
+#[must_use]
+pub fn sql_planner(
+    rt_handle: tokio::runtime::Handle,
+    optimizer_config: &str,
+    default_host: &str,
+) -> Arc<dyn SqlPlanner> {
+    Arc::new(FfiSqlPlanner {
+        rt_handle,
+        optimizer_config: optimizer_config.to_string(),
+        default_host: default_host.to_string(),
+    })
+}
+
+impl SqlPlanner for FfiSqlPlanner {
     fn plan(
         &self,
         txn: DatabaseTransaction,

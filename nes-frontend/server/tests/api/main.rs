@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+mod bootstrap;
 mod catalog;
 mod common;
 mod health_statements;

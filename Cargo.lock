@@ -2807,6 +2807,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "server_app"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "coordinator_bridge",
+ "model",
+ "serde_json",
+ "server",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"

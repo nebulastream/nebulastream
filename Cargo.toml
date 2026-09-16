@@ -27,8 +27,9 @@ members = [
     "nes-coordinator/bridge",
     "nes-frontend/nebucli",
     "nes-frontend/server",
+    "nes-frontend/server/app",
 ]
-# The bridge and nebucli crates link against the C++ tree, so a bare
+# The bridge, nebucli and server app crates link against the C++ tree, so a bare
 # `cargo build` at the workspace root would need the CMake build to exist.
 # Keep them out of the default set; CMake drives them explicitly.
 default-members = [
@@ -54,6 +55,7 @@ model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
 coordinator = { path = "nes-coordinator/coordinator" }
 coordinator_bridge = { path = "nes-coordinator/bridge" }
+server = { path = "nes-frontend/server" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
@@ -91,7 +93,7 @@ sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
 strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"
 thiserror = "2.0"
-tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time", "signal"] }
 # Pinned to the API surface of the madsim fork (madsim-rs/rust-tokio-retry)
 # that the simulation build patches in; newer releases renamed spawn to start.
 tokio-retry = "=0.3.0"

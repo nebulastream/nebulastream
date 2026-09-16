@@ -29,6 +29,9 @@
 #     docker_nes_cli, wait_until_status [--require-healthy <regex>]
 #                                            (used by cli/MQTT* suites)
 #
+#   nes-server (the REST coordinator) as a local process:
+#     nes_server_start, nes_server_stop, nes_http
+#
 #   Layer-2 callers pass the client binary path to nes_distributed_setup_file
 #   (e.g. "$NES_CLI") plus a suite name when more than one suite drives that
 #   binary; see nes_derive_image_names. Testdata is the directory containing the
@@ -428,4 +431,60 @@ nes_offline_setup() {
   cp -r "$(dirname "$BATS_TEST_FILENAME")" "$TMP_DIR"
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3
+}
+
+# ---------------------------------------------------------------------------
+# nes-server as a local process: started on an ephemeral port in the current
+# directory, driven with curl, stopped with SIGTERM.
+#
+# Call nes_server_start and nes_server_stop directly, never under `run`: `run`
+# executes in a subshell, and `wait` only knows this shell's own children.
+# ---------------------------------------------------------------------------
+
+nes_server_start() {
+  nes_require_env NES_SERVER
+  "$NES_SERVER" --listen 127.0.0.1:0 "$@" >nes-server.out 2>nes-server.err 3>&- &
+  export NES_SERVER_PID=$!
+  local deadline=$((SECONDS + 30)) url=
+  while true; do
+    url=$(sed -n 's/.*listening on \(http:\/\/[^[:space:]]*\).*/\1/p' nes-server.err 2>/dev/null | head -n 1)
+    [ -n "$url" ] && break
+    if ! kill -0 "$NES_SERVER_PID" 2>/dev/null; then
+      sed 's/^/#   /' nes-server.err >&3
+      fail "nes-server exited before listening"
+      return 1
+    fi
+    if ((SECONDS >= deadline)); then
+      fail "timed out waiting for nes-server to listen"
+      return 1
+    fi
+    sleep 0.1
+  done
+  export NES_SERVER_URL="$url"
+  echo "# nes-server listening on $NES_SERVER_URL (pid $NES_SERVER_PID)" >&3
+}
+
+nes_server_stop() {
+  [ -n "${NES_SERVER_PID:-}" ] || return 0
+  local deadline=$((SECONDS + ${1:-30}))
+  kill -TERM "$NES_SERVER_PID" 2>/dev/null || true
+  while kill -0 "$NES_SERVER_PID" 2>/dev/null; do
+    if ((SECONDS >= deadline)); then
+      kill -KILL "$NES_SERVER_PID" 2>/dev/null || true
+      break
+    fi
+    sleep 0.1
+  done
+  local code=0
+  wait "$NES_SERVER_PID" || code=$?
+  unset NES_SERVER_PID
+  return "$code"
+}
+
+nes_http() {
+  local -a args=(-sS -X "$1" -H 'content-type: application/json' -w '\n%{http_code}')
+  if [ "$#" -ge 3 ]; then
+    args+=(-d "$3")
+  fi
+  curl "${args[@]}" "${NES_SERVER_URL}$2"
 }

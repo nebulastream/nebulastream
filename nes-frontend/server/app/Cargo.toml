@@ -10,13 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_rust_cargo_test(server)
+[package]
+name = "server_app"
+version = "0.1.0"
+edition = "2024"
 
-add_executable(nes-server main.cpp)
-target_link_libraries(nes-server PRIVATE nes-coordinator-bridge)
-target_link_rust_lib(nes-server server_app)
+[lib]
+crate-type = ["staticlib", "lib"]
 
-add_e2e_test(
-    NAME server-smoke-test
-    BATS_FILE tests/smoke.bats
-)
+[dependencies]
+server.workspace = true
+coordinator_bridge.workspace = true
+model.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+tracing.workspace = true

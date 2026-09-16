@@ -38,6 +38,9 @@ pub struct Args {
 
     #[arg(long, default_value_t = coordinator::DEFAULT_REQUEST_QUEUE_CAPACITY)]
     pub request_queue: usize,
+
+    #[arg(short, long)]
+    pub debug: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -105,5 +108,16 @@ mod tests {
         assert_eq!(args.worker_mode, WorkerMode::Embedded);
         assert_eq!(args.config().wait_cap, Duration::from_secs(5));
         assert_eq!(args.config().queue_capacity, 8);
+    }
+
+    #[test]
+    fn debug_logging_is_off_unless_asked_for() {
+        assert!(!Args::try_parse_from(["nes-server"]).unwrap().debug);
+        assert!(Args::try_parse_from(["nes-server", "-d"]).unwrap().debug);
+        assert!(
+            Args::try_parse_from(["nes-server", "--debug"])
+                .unwrap()
+                .debug
+        );
     }
 }

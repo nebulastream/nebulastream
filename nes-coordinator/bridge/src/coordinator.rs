@@ -16,12 +16,10 @@
 //! A Rust caller keeps it and sends parsed or SQL statements over it.
 //! A C++ frontend owns one through the bridge, submits SQL, and reads a typed outcome back.
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
-use controller::in_process::WorkerFactory;
-use coordinator::{EarlyTermination, SqlPlanner, start_with_runtime};
+use coordinator::{EarlyTermination, start_with_runtime};
 use model::database::StateBackend;
 use model::query::Model as Query;
 use model::query::query_state::QueryState;
@@ -31,8 +29,8 @@ use tokio::runtime::{Builder, Runtime};
 use tokio::sync::watch;
 
 use crate::error::{FfiError, query_failure};
-use crate::planner::FfiSqlPlanner;
-use crate::worker::BridgeWorkerFactory;
+use crate::planner::sql_planner;
+use crate::worker::embedded_worker_factory;
 
 #[cxx::bridge(namespace = "NES::Bridge")]
 pub(crate) mod ffi {
@@ -126,9 +124,11 @@ pub struct Coordinator {
     default_host: String,
 }
 
+/// The host a statement without a HOST clause is placed on, or empty when there is none to default to.
 /// Embedded deployments run a single in-process worker, so defaulting to it is unambiguous.
 /// Remote deployments have several, so there is nothing to default to.
-fn default_host_for(mode: ffi::WorkerMode) -> &'static str {
+#[must_use]
+pub fn default_host(mode: ffi::WorkerMode) -> &'static str {
     match mode {
         ffi::WorkerMode::Embedded => "localhost:8080",
         _ => "",
@@ -147,14 +147,10 @@ impl Coordinator {
             .build()
             .context("failed to create coordinator runtime")?;
 
-        let default_host = default_host_for(mode).to_string();
-        let planner: Arc<dyn SqlPlanner> = Arc::new(FfiSqlPlanner {
-            rt_handle: runtime.handle().clone(),
-            optimizer_config: optimizer_config.to_string(),
-            default_host: default_host.clone(),
-        });
-        let factory: Option<Arc<dyn WorkerFactory>> = match mode {
-            ffi::WorkerMode::Embedded => Some(Arc::new(BridgeWorkerFactory)),
+        let default_host = default_host(mode).to_string();
+        let planner = sql_planner(runtime.handle().clone(), optimizer_config, &default_host);
+        let factory = match mode {
+            ffi::WorkerMode::Embedded => Some(embedded_worker_factory()),
             _ => None,
         };
 
