@@ -61,7 +61,7 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     --mount=type=secret,id=VCPKG_CACHE_BUCKET \
     --mount=type=secret,id=VCPKG_CACHE_REGION \
     bash -c ' \
-    set -e; \
+    set -eo pipefail; \
     if [ -f /run/secrets/VCPKG_CACHE_ACCESS_KEY ] && [ -s /run/secrets/VCPKG_CACHE_ACCESS_KEY ] && [ -f /run/secrets/VCPKG_CACHE_BUCKET ] && [ -s /run/secrets/VCPKG_CACHE_BUCKET ]; then \
         echo "S3 credentials found. Using authenticated readwrite cache..."; \
         export AWS_ACCESS_KEY_ID=$(cat /run/secrets/VCPKG_CACHE_ACCESS_KEY); \
@@ -87,10 +87,16 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     git -C vcpkg_repository checkout "$(grep -o "\"builtin-baseline\": \"[0-9a-f]*\"" vcpkg.json | cut -d\" -f4)"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
     ./vcpkg_repository/vcpkg install \
+        --keep-going \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
         --triplet="${ARCH}-linux-${SANITIZER}-${VCPKG_STDLIB}" \
-        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}"'
+        --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" \
+        2>&1 | tee /tmp/vcpkg-install.log || { \
+            build_status=$?; \
+            bash ./print-build-failure-logs.sh /tmp/vcpkg-install.log ./vcpkg_repository/buildtrees || true; \
+            exit "$build_status"; \
+        }'
 
 RUN bash -c ' \
     set -e; \
