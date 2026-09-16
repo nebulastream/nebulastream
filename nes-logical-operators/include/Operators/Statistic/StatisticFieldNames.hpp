@@ -26,7 +26,6 @@ namespace NES
 /// The field names a statistic build chain agrees on, as plain strings.
 namespace StatisticFieldNames
 {
-inline constexpr std::string_view NUMBER_OF_SEEN_TUPLES = "STATISTICNUMBEROFSEENTUPLES";
 inline constexpr std::string_view NUMBER_OF_SEEN_MEASUREMENTS = "STATISTICNUMBEROFSEENMEASUREMENTS";
 inline constexpr std::string_view STATISTIC_ID = "STATISTICID";
 inline constexpr std::string_view START_TS = "STATISTICSTART";

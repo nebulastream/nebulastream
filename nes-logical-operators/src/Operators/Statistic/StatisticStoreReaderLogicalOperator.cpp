@@ -140,14 +140,12 @@ void StatisticStoreReaderLogicalOperator::inferLocalSchema()
         }
     }
 
-    /// A fresh stream rather than a pass-through: one row per stored statistic in the probed range, carrying the
-    /// lookup key back alongside the reconstructed value.
     const auto uint64Type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
     std::vector<UnqualifiedUnboundField> outputFields{
         UnqualifiedUnboundField{Identifier::parse(std::string{StatisticFieldNames::STATISTIC_ID}), uint64Type},
         UnqualifiedUnboundField{Identifier::parse(std::string{StatisticFieldNames::START_TS}), uint64Type},
         UnqualifiedUnboundField{Identifier::parse(std::string{StatisticFieldNames::END_TS}), uint64Type},
-        UnqualifiedUnboundField{Identifier::parse(std::string{StatisticFieldNames::NUMBER_OF_SEEN_TUPLES}), uint64Type}};
+        UnqualifiedUnboundField{Identifier::parse(std::string{StatisticFieldNames::NUMBER_OF_SEEN_MEASUREMENTS}), uint64Type}};
     for (const auto& [name, dataType] : payloadFields)
     {
         outputFields.emplace_back(name, dataType);
@@ -186,7 +184,7 @@ StatisticStoreReaderLogicalOperator StatisticStoreReaderLogicalOperator::withTra
 
 StatisticStoreReaderLogicalOperator StatisticStoreReaderLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> children) const
 {
-    PRECONDITION(children.size() == 1, "Can only set exactly one child for a scalar statistic probe, got {}", children.size());
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for statistic store reader, got {}", children.size());
     auto copy = *this;
     copy.child = std::move(children.at(0));
     return copy;
@@ -194,7 +192,7 @@ StatisticStoreReaderLogicalOperator StatisticStoreReaderLogicalOperator::withChi
 
 StatisticStoreReaderLogicalOperator StatisticStoreReaderLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    PRECONDITION(children.size() == 1, "Can only set exactly one child for a scalar statistic probe, got {}", children.size());
+    PRECONDITION(children.size() == 1, "Can only set exactly one child for statistic store reader, got {}", children.size());
     auto copy = *this;
     copy.child = std::move(children.at(0));
     copy.inferLocalSchema();

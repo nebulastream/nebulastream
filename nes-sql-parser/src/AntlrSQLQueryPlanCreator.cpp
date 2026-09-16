@@ -1502,11 +1502,12 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 const auto numArgs = context->argument.size();
                 if (numArgs > helpers.top().functionBuilder.size())
                 {
-                    throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
+                    throw UnsupportedQuery(
+                        "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
+                        "expression stack: {}",
                         funcName,
                         numArgs,
-                        helpers.top().functionBuilder.size());
+                        context->getText());
                 }
                 const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
                 const std::vector<LogicalFunction> statisticArgs(argsBegin, helpers.top().functionBuilder.end());
@@ -1562,11 +1563,12 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 const auto numArgs = context->argument.size();
                 if (numArgs > helpers.top().functionBuilder.size())
                 {
-                    throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
+                    throw UnsupportedQuery(
+                        "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
+                        "expression stack: {}",
                         funcName,
                         numArgs,
-                        helpers.top().functionBuilder.size());
+                        context->getText());
                 }
                 auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
                 std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());

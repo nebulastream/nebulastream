@@ -95,14 +95,12 @@ private:
     std::optional<LogicalOperator> child;
 
     void inferLocalSchema();
-    /// Set during schema inference
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
     std::optional<FieldNames> fieldNames;
 
     TraitSet traitSet;
 
     friend struct std::hash<StatisticStoreWriterLogicalOperator>;
-    friend Reflector<TypedLogicalOperator<StatisticStoreWriterLogicalOperator>>;
 };
 
 namespace detail

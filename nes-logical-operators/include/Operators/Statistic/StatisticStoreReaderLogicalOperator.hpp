@@ -44,7 +44,7 @@
 namespace NES
 {
 
-/// Reads a statistic back out of the statistic store, whatever its payload layout.
+/// Reads statistic(s) back out of the statistic store, whatever their payload layout.
 ///
 /// The payload is opaque, so the probe is told how to decode it: `blobName` selects the decoder and `payloadFields`
 /// names the columns it produces -- one field for a scalar aggregation, one per sampled column for a reservoir
@@ -58,7 +58,7 @@ namespace NES
 class StatisticStoreReaderLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
-    /// One decoded column of the payload: a scalar contributes exactly one, a reservoir sample one per sampled field.
+    /// One decoded column of the payload: a scalar contributes exactly one, synopses can contribute several.
     using PayloadField = std::pair<Identifier, DataType>;
 
     StatisticStoreReaderLogicalOperator(
@@ -119,7 +119,6 @@ private:
     std::vector<PayloadField> payloadFields;
     StatisticWindowMatch windowMatch;
 
-    /// Set during schema inference.
     std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 
     TraitSet traitSet;
@@ -128,8 +127,6 @@ private:
 
 namespace detail
 {
-/// Strong types are flattened to their underlying representation so no Reflector specialisation is needed for
-/// StatisticId.
 struct ReflectedStatisticStoreReaderLogicalOperator
 {
     OperatorId operatorId{OperatorId::INVALID};

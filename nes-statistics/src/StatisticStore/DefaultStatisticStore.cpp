@@ -49,7 +49,12 @@ bool DefaultStatisticStore::insertStatistic(const StatisticId& statisticId, Stat
 bool DefaultStatisticStore::deleteStatistics(const StatisticId& statisticId, const Timestamp& startTs, const Timestamp& endTs)
 {
     const auto statisticsLocked = statistics.wlock();
-    auto& windowed = (*statisticsLocked)[statisticId];
+    const auto itId = statisticsLocked->find(statisticId);
+    if (itId == statisticsLocked->end())
+    {
+        return false;
+    }
+    auto& windowed = itId->second;
     const auto [lowerKey, upperKey] = containedWindowBounds(startTs, endTs);
 
     bool foundAny = false;

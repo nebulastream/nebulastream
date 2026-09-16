@@ -13,4 +13,3 @@
 
 add_nes_test(statistic-store-test StatisticStoreTest.cpp)
 target_link_libraries(statistic-store-test nes-statistics)
-target_include_directories(statistic-store-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
