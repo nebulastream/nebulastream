@@ -345,6 +345,7 @@ public:
             {
                 auto delay = std::chrono::milliseconds(1 + std::rand() % 100);
                 delayedAdmissionTaskSubmitter.submitTaskIn(std::move(task), delay);
+                return true;
             }
 
             if (task.buf.getBarriers().empty() && FAILPOINT("task_queue.delay_nonbarrier"))

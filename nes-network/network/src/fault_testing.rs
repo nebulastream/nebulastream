@@ -18,7 +18,9 @@ pub mod fault_ffi {
         #[allow(non_snake_case)]
         fn initActiveFaultContext(host: String);
         #[allow(non_snake_case)]
-        fn checkIo() -> bool;
+        fn checkNetworkFault() -> bool;
+        #[allow(non_snake_case)]
+        fn checkDiskFault() -> bool;
         #[allow(non_snake_case)]
         fn failpoint(name: &str) -> bool;
         fn deferredFailpoint(name: &str) -> u8;
@@ -52,15 +54,31 @@ macro_rules! init_fault_context {
 
 #[cfg(feature = "fault-testing")]
 #[macro_export]
-macro_rules! check_io {
+macro_rules! check_network_fault {
     () => {
-        $crate::fault_testing::fault_ffi::checkIo()
+        $crate::fault_testing::fault_ffi::checkNetworkFault()
     };
 }
 
 #[cfg(not(feature = "fault-testing"))]
 #[macro_export]
-macro_rules! check_io {
+macro_rules! check_network_fault {
+    () => {
+        false
+    };
+}
+
+#[cfg(feature = "fault-testing")]
+#[macro_export]
+macro_rules! check_disk_fault {
+    () => {
+        $crate::fault_testing::fault_ffi::checkDiskFault()
+    };
+}
+
+#[cfg(not(feature = "fault-testing"))]
+#[macro_export]
+macro_rules! check_disk_fault {
     () => {
         false
     };

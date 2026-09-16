@@ -97,7 +97,8 @@ struct FaultRule
 class FaultSimulator
 {
 public:
-    bool check();
+    bool checkNetworkFault();
+    bool checkDiskFault();
 
     void simulateCrash();
     void simulateDisconnect();
@@ -106,7 +107,8 @@ public:
     void setCrashCallback(std::function<void()> callback);
 
 private:
-    std::atomic<bool> triggered{false};
+    std::atomic<bool> networkFaultActive{false};
+    std::atomic<bool> diskFaultActive{false};
     std::function<void()> crashCallback;
 };
 
@@ -156,10 +158,16 @@ private:
     std::unordered_map<Host, std::unique_ptr<FaultInjectionContext>> faultContexts;
 };
 
-inline bool checkIO()
+inline bool checkNetworkFault()
 {
     auto* context = getActiveFaultContext();
-    return context->simulator.check();
+    return context->simulator.checkNetworkFault();
+}
+
+inline bool checkDiskFault()
+{
+    auto* context = getActiveFaultContext();
+    return context->simulator.checkDiskFault();
 }
 
 inline bool failpoint(std::string_view name)
@@ -180,14 +188,16 @@ inline void applyFaultAction(FaultAction action)
 
 #ifdef FAULT_TESTING
 
-    #define CHECK_IO() checkIO()
+    #define CHECK_NETWORK_FAULT() checkNetworkFault()
+    #define CHECK_DISK_FAULT() checkDiskFault()
     #define FAILPOINT(name) failpoint(name)
     #define DEFERRED_FAILPOINT(name) NES::deferredFailpoint(name)
     #define APPLY_FAULT_ACTION(action) NES::applyFaultAction(action)
 
 #else
 
-    #define CHECK_IO() false
+    #define CHECK_NETWORK_FAULT() false
+    #define CHECK_DISK_FAULT() false
     #define FAILPOINT(name) false
     #define DEFERRED_FAILPOINT(name) (std::optional<NES::FaultAction>{})
     #define APPLY_FAULT_ACTION(action) ((void)0)

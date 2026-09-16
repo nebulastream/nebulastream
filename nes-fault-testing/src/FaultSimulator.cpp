@@ -64,14 +64,20 @@ bool CountBasedFaultTrigger::eval()
     return count == targetCount;
 }
 
-bool FaultSimulator::check()
+bool FaultSimulator::checkNetworkFault()
 {
-    return triggered.load(std::memory_order_acquire);
+    return networkFaultActive.load(std::memory_order_acquire);
+}
+
+bool FaultSimulator::checkDiskFault()
+{
+    return diskFaultActive.load(std::memory_order_acquire);
 }
 
 void FaultSimulator::simulateCrash()
 {
-    triggered.store(true, std::memory_order_release);
+    networkFaultActive.store(true, std::memory_order_release);
+    diskFaultActive.store(true, std::memory_order_release);
 
     std::thread(
         [this]
@@ -85,7 +91,7 @@ void FaultSimulator::simulateCrash()
 
 void FaultSimulator::simulateDisconnect()
 {
-    triggered.store(true, std::memory_order_release);
+    networkFaultActive.store(true, std::memory_order_release);
 
     std::thread(
         [this]
@@ -98,7 +104,8 @@ void FaultSimulator::simulateDisconnect()
 
 void FaultSimulator::release()
 {
-    triggered.store(false, std::memory_order_release);
+    networkFaultActive.store(false, std::memory_order_release);
+    diskFaultActive.store(false, std::memory_order_release);
 }
 
 void FaultSimulator::setCrashCallback(std::function<void()> callback)

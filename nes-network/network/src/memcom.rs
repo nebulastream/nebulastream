@@ -13,7 +13,7 @@
 */
 
 use crate::protocol::ConnectionIdentifier;
-use crate::{check_io, fault_testing};
+use crate::{check_network_fault, fault_testing};
 use futures::task::noop_waker_ref;
 use pin_project::{pin_project, pinned_drop};
 use std::collections::HashMap;
@@ -71,7 +71,7 @@ where
         cx: &mut Context<'_>,
         buf: &mut ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
-        if check_io!() {
+        if check_network_fault!() {
             return Poll::Ready(Err(io::Error::new(
                 io::ErrorKind::BrokenPipe,
                 "connection killed",
@@ -90,7 +90,7 @@ where
         cx: &mut Context<'_>,
         buf: &[u8],
     ) -> Poll<io::Result<usize>> {
-        if check_io!() {
+        if check_network_fault!() {
             return Poll::Ready(Err(io::Error::new(
                 io::ErrorKind::BrokenPipe,
                 "connection killed",
@@ -100,7 +100,7 @@ where
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        if check_io!() {
+        if check_network_fault!() {
             return Poll::Ready(Err(io::Error::new(
                 io::ErrorKind::BrokenPipe,
                 "connection killed",
@@ -110,7 +110,7 @@ where
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
-        if check_io!() {
+        if check_network_fault!() {
             return Poll::Ready(Err(io::Error::new(
                 io::ErrorKind::BrokenPipe,
                 "connection killed",
@@ -224,7 +224,7 @@ impl MemCom {
             this: &MemCom,
             connection: &ConnectionIdentifier,
         ) -> core::result::Result<tokio::sync::mpsc::Sender<Channel>, RetryError<Error>> {
-            let channel = if check_io!() {
+            let channel = if check_network_fault!() {
                 None
             } else {
                 this.listening.read().await.get(connection).cloned()
