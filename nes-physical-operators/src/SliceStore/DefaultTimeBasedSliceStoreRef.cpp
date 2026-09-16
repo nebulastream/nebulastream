@@ -120,27 +120,24 @@ NautilusBuffer DefaultTimeBasedSliceStoreRef::getDataStructureRef(
         bufferProvider);
 }
 
-void setupSliceStoreProxy(
-    DefaultTimeBasedSliceStore* sliceStore, const PipelineExecutionContext* pipelineCtx, DefaultTimeBasedSliceStoreRef* self)
+void DefaultTimeBasedSliceStoreRef::setupSliceStore(CompilationContext& compilationContext)
 {
     PRECONDITION(sliceStore != nullptr, "The slice store not be null");
-    PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
+    const auto& pipelineCtx = compilationContext.pipelineExecutionContext;
+    PRECONDITION(pipelineCtx.getBufferManager() != nullptr, "bufferProvider should not be null!");
 
     /// Creating new space for the slice cache of this pipeline
     /// The order is important. First, we need to set the number of worker threads, as the slice cache depends on it.
-    self->sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    sliceCache->setNumberOfWorkerThreads(pipelineCtx.getNumberOfWorkerThreads());
     const auto startOfEntries = sliceStore->allocateSpaceForSliceCache(
-        self->sliceCache->getCacheMemorySize(), pipelineCtx->getPipelineId(), *pipelineCtx->getBufferManager());
-    self->sliceCache->setStartOfEntries(startOfEntries);
-}
-
-void DefaultTimeBasedSliceStoreRef::setupSliceStore(CompilationContext& compilationContext)
-{
-    setupSliceStoreProxy(sliceStore, std::addressof(compilationContext.pipelineExecutionContext), this);
+        sliceCache->getCacheMemorySize(), pipelineCtx.getPipelineId(), *pipelineCtx.getBufferManager());
     const auto ordinal = compilationContext.runtimeBindingCounter++;
     sliceStoreBinding
         = compilationContext.runtimeBindings.bind<const DefaultTimeBasedSliceStoreRef>(fmt::format("slice-store/{}/ref", ordinal), this);
-    cacheBinding = compilationContext.runtimeBindings.bind(fmt::format("slice-store/{}/cache", ordinal), sliceCache->getStartOfEntries());
+    cacheBinding = compilationContext.runtimeBindings.bind(
+        fmt::format("slice-store/{}/cache", ordinal),
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        reinterpret_cast<SliceCacheEntry*>(startOfEntries.data()));
 }
 
 }

@@ -14,10 +14,8 @@
 
 #pragma once
 
-#include <cstddef>
 #include <functional>
 #include <memory>
-#include <span>
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
@@ -72,9 +70,6 @@ public:
     std::unique_ptr<SliceStoreRef> clone() override;
 
 private:
-    /// They need access to private members (sliceCaches, sliceCacheConfiguration) to create and look up per-pipeline caches.
-    friend void setupSliceStoreProxy(
-        DefaultTimeBasedSliceStore* sliceStore, const PipelineExecutionContext* pipelineCtx, DefaultTimeBasedSliceStoreRef* self);
     friend void defaultTimeBasedSliceStoreRefCacheMissProxy(
         SliceCacheEntry* entryToReplace,
         OperatorHandler* operatorHandlerPtr,

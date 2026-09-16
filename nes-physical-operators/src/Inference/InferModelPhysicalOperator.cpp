@@ -81,11 +81,6 @@ namespace
 
 using detail::ThreadLocalRuntimeWrapper;
 
-void setupSessions(ThreadLocalRuntimeWrapper* twl, PipelineExecutionContext* pec)
-{
-    twl->setup(pec->getNumberOfWorkerThreads());
-}
-
 int8_t* getInputBuffer(ThreadLocalRuntimeWrapper* twl, WorkerThreadId thread)
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) std::byte* to int8_t* for nautilus pointer arithmetic
@@ -125,7 +120,7 @@ void InferModelPhysicalOperator::setup(ExecutionContext& executionCtx, Compilati
     setupChild(executionCtx, compilationContext);
     runtimeBinding = compilationContext.runtimeBindings.bind(
         fmt::format("inference/{}/runtime", compilationContext.runtimeBindingCounter++), threadLocal.get());
-    nautilus::invoke(setupSessions, runtimeBinding.get(), executionCtx.pipelineContext);
+    threadLocal->setup(compilationContext.pipelineExecutionContext.getNumberOfWorkerThreads());
 }
 
 void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const

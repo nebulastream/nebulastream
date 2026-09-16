@@ -13,11 +13,9 @@
 */
 
 #pragma once
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <span>
 #include <type_traits>
 
 #include <Identifiers/Identifiers.hpp>
@@ -79,11 +77,7 @@ public:
     /// Sets the number of worker threads so that per-thread cache memory can be allocated.
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
-    void setStartOfEntries(const std::span<std::byte>& startOfSliceCache);
-    [[nodiscard]] SliceCacheEntry* getStartOfEntries() const;
-
 protected:
-    SliceCacheEntry* startOfSliceCache;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
     uint64_t numberOfWorkerThreads = 1;

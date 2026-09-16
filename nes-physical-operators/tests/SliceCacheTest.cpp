@@ -19,7 +19,6 @@
 #include <functional>
 #include <memory>
 #include <random>
-#include <span>
 #include <sstream>
 #include <tuple>
 #include <utility>
@@ -293,14 +292,13 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
 
     /// Allocate memory for the single dummy entry used by SliceCacheNone
     std::vector<std::byte> noneCacheMemory{sliceCache->getCacheMemorySize(), std::byte{0}};
-    const std::span<std::byte> entries{noneCacheMemory};
-    sliceCache->setStartOfEntries(entries);
 
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
     nautilus::RuntimeBindings bindings;
-    const auto cacheBinding = bindings.bind("slice-cache", sliceCache->getStartOfEntries());
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    const auto cacheBinding = bindings.bind("slice-cache", reinterpret_cast<SliceCacheEntry*>(noneCacheMemory.data()));
     const auto bufferProviderBinding = bindings.bind("buffer-provider", pec->bufferManager.get());
     auto module = nautilusEngine->createModule();
     module.setRuntimeBindings(bindings);
@@ -360,12 +358,11 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
     /// Zero-initialized entries have sliceStart == sliceEnd == 0, so no timestamp will match them.
     /// getCacheMemorySize() includes extra space for the replacement index stored after the entries.
     std::vector<std::byte> noneCacheMemory{sliceCache->getCacheMemorySize(), std::byte{0}};
-    const std::span<std::byte> entries{noneCacheMemory};
-    sliceCache->setStartOfEntries(entries);
 
     bool callbackCalled = false;
     nautilus::RuntimeBindings bindings;
-    const auto cacheBinding = bindings.bind("slice-cache", sliceCache->getStartOfEntries());
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    const auto cacheBinding = bindings.bind("slice-cache", reinterpret_cast<SliceCacheEntry*>(noneCacheMemory.data()));
     const auto bufferProviderBinding = bindings.bind("buffer-provider", pec->bufferManager.get());
     auto module = nautilusEngine->createModule();
     module.setRuntimeBindings(bindings);
