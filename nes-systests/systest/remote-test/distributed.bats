@@ -19,15 +19,19 @@ setup_file() {
 
   nes_require_env NES_SYSTEST
   nes_require_env NES_WORKER
+  nes_require_env NES_SERVER
   nes_require_env NES_DIR
   nes_require_env NES_TEST_TMP_DIR
   nes_require_env DATADIR
   nes_require_env NES_RUNTIME_BASE_IMAGE
   nes_require_executable "$NES_SYSTEST"
   nes_require_executable "$NES_WORKER"
+  nes_require_executable "$NES_SERVER"
 
   nes_build_runtime_image WORKER_IMAGE nes-worker-systest \
     "$NES_WORKER" nes-single-node-worker
+  nes_build_runtime_image SERVER_IMAGE nes-server-systest \
+    "$NES_SERVER" nes-server
   nes_build_app_image SYSTEST_IMAGE nes-systest-image \
     "$NES_SYSTEST" systest
 
@@ -37,6 +41,7 @@ setup_file() {
 
   echo "# Using NES_DIR: $NES_DIR" >&3
   echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
+  echo "# Using SERVER_IMAGE: $SERVER_IMAGE" >&3
   echo "# Using SYSTEST_IMAGE: $SYSTEST_IMAGE" >&3
   echo "# Using TESTDATA_DIR: $TESTDATA_DIR" >&3
   echo "# Using TESTCONFIG_DIR: $TESTCONFIG_DIR" >&3
@@ -46,6 +51,7 @@ setup_file() {
 teardown_file() {
   echo "# Test suite completed" >&3
   docker rmi $WORKER_IMAGE || true
+  docker rmi $SERVER_IMAGE || true
   docker rmi $SYSTEST_IMAGE || true
 }
 
@@ -115,7 +121,7 @@ function setup_distributed() {
 }
 
 docker_systest() {
-  docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
+  docker compose exec systest systest --coordinator http://nes-server:8081 --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
 
 # Inference systests convert ONNX models with the OpenVINO converter. When `ovc` is not

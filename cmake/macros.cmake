@@ -110,6 +110,8 @@ endmacro()
 #                    NES_RUNTIME_BASE_IMAGE env var). Without it the test
 #                    runs the binaries directly (offline).
 #   JOBS      — bats parallelism (omit for sequential)
+#   LABELS    — additional ctest labels, e.g. Systest for a lane that runs
+#               the systest corpus and belongs in that CI step
 #   EXTRA_ENV — additional KEY=VALUE env entries (escape hatch)
 #
 # Always-on bats flags: --verbose-run --timing.
@@ -131,7 +133,7 @@ function(add_e2e_test)
     cmake_parse_arguments(ARG
         "DOCKER_COMPOSE"
         "NAME;BATS_FILE;JOBS"
-        "EXTRA_ENV"
+        "EXTRA_ENV;LABELS"
         ${ARGN}
     )
     if (NOT ARG_NAME)
@@ -197,6 +199,7 @@ function(add_e2e_test)
         list(APPEND _fixtures RuntimeBaseImage)
         set(_labels DockerCompose)
     endif ()
+    list(APPEND _labels ${ARG_LABELS})
     set_tests_properties(${ARG_NAME} PROPERTIES
         FIXTURES_REQUIRED "${_fixtures}"
         LABELS "${_labels}"

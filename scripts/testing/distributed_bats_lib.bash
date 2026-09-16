@@ -538,6 +538,7 @@ nes_compose_server_service() {
       - type: bind
         source: "$TEST_DIR"
         target: /workdir
+${NES_COMPOSE_SERVER_VOLUMES:-}
 EOF
 }
 

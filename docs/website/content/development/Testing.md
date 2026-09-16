@@ -498,6 +498,23 @@ cmake-build-debug/nes-systests/systest/systest \
 > - Network connectivity exists between systest and all workers
 > - If using Docker, workers must be in the same network or properly exposed
 
+#### Running Against a `nes-server`
+
+The runner can also use the coordinator of a running `nes-server`. In the server's embedded worker mode it hosts the topology's workers in its own process, so nothing else has to be started:
+
+```bash
+# Terminal 1: Start the server
+cmake-build-debug/nes-frontend/server/nes-server --worker-mode embedded
+
+# Terminal 2: Run systest against it
+cmake-build-debug/nes-systests/systest/systest \
+    --coordinator http://127.0.0.1:8081 \
+    --clusterConfig nes-systests/configs/topologies/two-node.yaml \
+    -e tcp
+```
+
+The `tcp` group is excluded because a source the runner serves over a socket cannot reach a worker in another process. The `systest-server-test` lane runs the corpus this way, and `systest-remote-test` does the same with the server and the workers in containers.
+
 #### Docker-Based Remote Testing
 
 For complex multi-worker topologies, use Docker Compose to orchestrate the cluster. The [distributed remote test](https://github.com/nebulastream/nebulastream/blob/main/nes-systests/systest/remote-test/distributed.bats) demonstrates this approach:
