@@ -336,6 +336,14 @@ public:
                 auto delay = std::chrono::milliseconds(1 + std::rand() % 100);
                 delayedAdmissionTaskSubmitter.submitTaskIn(std::move(task), delay);
             }
+
+            if (task.buf.getBarriers().empty() && FAILPOINT("task_queue.delay_nonbarrier"))
+            {
+                auto delay = std::chrono::milliseconds(100);
+                delayedAdmissionTaskSubmitter.submitTaskIn(std::move(task), delay);
+                return true;
+            }
+
             taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;

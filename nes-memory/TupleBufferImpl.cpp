@@ -264,6 +264,16 @@ void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
     this->sequenceNumber = sequenceNumber;
 }
 
+SequenceNumber BufferControlBlock::getPredecessor() const noexcept
+{
+    return predecessor;
+}
+
+void BufferControlBlock::setPredecessor(const SequenceNumber predecessor)
+{
+    this->predecessor = predecessor;
+}
+
 ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
 {
     return chunkNumber;
@@ -292,6 +302,16 @@ void BufferControlBlock::setLastChunk(const bool lastChunk)
 void BufferControlBlock::setOriginEpoch(Epoch epoch)
 {
     this->originEpoch = epoch;
+}
+
+[[nodiscard]] const std::vector<std::string>& BufferControlBlock::getBarriers() const noexcept
+{
+    return barriers;
+}
+
+void BufferControlBlock::setBarriers(std::vector<std::string> barriers)
+{
+    this->barriers = std::move(barriers);
 }
 
 void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)

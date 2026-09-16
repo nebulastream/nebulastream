@@ -39,7 +39,7 @@ void InnerJoinTriggerStrategy::triggerWindow(
         for (const auto& sliceRight : allSlices)
         {
             const bool isLastChunk = chunkNumber == totalChunks;
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
             emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, pipelineCtx);
             ++chunkNumber;
         }
@@ -72,7 +72,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         for (const auto& sliceRight : allSlices)
         {
             const bool isLastChunk = chunkNumber == totalChunks;
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
             emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, pipelineCtx);
             ++chunkNumber;
         }
@@ -84,7 +84,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         for (const auto& slice : allSlices)
         {
             const bool isLastChunk = chunkNumber == totalChunks;
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
             emitFn({slice}, allSlices, ProbeTaskType::LEFT_NULL_FILL, windowInfo.windowInfo, sequenceData, pipelineCtx);
             ++chunkNumber;
         }
@@ -96,7 +96,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         for (const auto& slice : allSlices)
         {
             const bool isLastChunk = chunkNumber == totalChunks;
-            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+            const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
             emitFn(allSlices, {slice}, ProbeTaskType::RIGHT_NULL_FILL, windowInfo.windowInfo, sequenceData, pipelineCtx);
             ++chunkNumber;
         }

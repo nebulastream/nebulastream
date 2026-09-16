@@ -183,6 +183,7 @@ impl SenderChannel {
     pub fn propagate_stop(&self) -> TrySendDataResult {
         let buffer = TupleBuffer {
             sequence_number: u64::MAX,
+            predecessor: u64::MAX - 1,
             origin_id: u64::MAX,
             chunk_number: u64::MAX,
             origin_epoch: u64::MAX,
@@ -192,6 +193,7 @@ impl SenderChannel {
             closing: true,
             data: Vec::new(),
             child_buffers: Vec::new(),
+            barriers: Vec::new(),
         };
 
         self.try_send_data(buffer)

@@ -23,7 +23,7 @@ namespace NES
 
 struct SequenceData
 {
-    SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk);
+    SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk, SequenceNumber predecessor);
     explicit SequenceData();
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj);
@@ -34,6 +34,7 @@ struct SequenceData
     SequenceNumber::Underlying sequenceNumber;
     ChunkNumber::Underlying chunkNumber;
     bool lastChunk;
+    SequenceNumber::Underlying predecessor;
 };
 
 }

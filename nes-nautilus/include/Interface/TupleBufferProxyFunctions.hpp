@@ -15,6 +15,8 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
@@ -76,6 +78,16 @@ inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer
     return tupleBuffer->getSequenceNumber();
 }
 
+inline void NES_Memory_TupleBuffer_setPredecessor(TupleBuffer* tupleBuffer, const SequenceNumber predecessor)
+{
+    tupleBuffer->setPredecessor(predecessor);
+};
+
+inline SequenceNumber NES_Memory_TupleBuffer_getPredecessor(const TupleBuffer* tupleBuffer)
+{
+    return tupleBuffer->getPredecessor();
+}
+
 inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(TupleBuffer* tupleBuffer, const Timestamp value)
 {
     tupleBuffer->setCreationTimestampInMS(Timestamp(value));
@@ -109,6 +121,16 @@ inline Epoch NES_Memory_TupleBuffer_getOriginEpoch(const TupleBuffer* tupleBuffe
 inline void NES_Memory_TupleBuffer_setOriginEpoch(TupleBuffer* tupleBuffer, const Epoch epoch)
 {
     tupleBuffer->setOriginEpoch(epoch);
+};
+
+inline int8_t* NES_Memory_TupleBuffer_getBarriers(const TupleBuffer* tupleBuffer)
+{
+    return reinterpret_cast<int8_t*>(const_cast<std::vector<std::string>*>(&tupleBuffer->getBarriers()));
+};
+
+inline void NES_Memory_TupleBuffer_setBarriers(TupleBuffer* tupleBuffer, int8_t* barriers)
+{
+    tupleBuffer->setBarriers(*reinterpret_cast<std::vector<std::string>*>(barriers));
 };
 
 }

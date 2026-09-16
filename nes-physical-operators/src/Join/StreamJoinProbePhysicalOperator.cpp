@@ -97,10 +97,12 @@ void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, Recor
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.predecessor = recordBuffer.getPredecessor();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
     executionCtx.originEpoch = executionCtx.currentEpoch;
+    executionCtx.barriers = recordBuffer.getBarriers();
     openChild(executionCtx, recordBuffer);
 }
 

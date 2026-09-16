@@ -98,6 +98,16 @@ void RecordBuffer::setOriginEpoch(const nautilus::val<Epoch>& originEpoch)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setOriginEpoch, buffer.asArg(), originEpoch);
 }
 
+nautilus::val<int8_t*> RecordBuffer::getBarriers() const
+{
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getBarriers, buffer.asArg());
+}
+
+void RecordBuffer::setBarriers(const nautilus::val<int8_t*>& barriers)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setBarriers, buffer.asArg(), barriers);
+}
+
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, buffer.asArg())};
@@ -111,6 +121,16 @@ void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
 nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg())};
+}
+
+void RecordBuffer::setPredecessor(const nautilus::val<SequenceNumber>& predecessor)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setPredecessor, buffer.asArg(), predecessor);
+}
+
+nautilus::val<SequenceNumber> RecordBuffer::getPredecessor()
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getPredecessor, buffer.asArg())};
 }
 
 nautilus::val<Timestamp> RecordBuffer::getCreatingTs()

@@ -71,10 +71,12 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , watermarkTs(uint64_t{0})
     , currentTs(uint64_t{0})
     , sequenceNumber(INVALID<SequenceNumber>)
+    , predecessor(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
     , currentEpoch(nautilus::invoke(getCurrentEpochProxy, pipelineContext))
     , originEpoch(currentEpoch)
+    , barriers(static_cast<int8_t*>(nullptr))
 {
 }
 

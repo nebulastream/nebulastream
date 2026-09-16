@@ -129,11 +129,14 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
         }
 
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
-        /// As the windows are sorted, we can simply increment the sequence number here.
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        /// We derive the window's sequence number from the window boundaries
+        /// This is strictly monotonically increasing, as we emit windows in sorted order
+        const SequenceNumber predecessor = SequenceNumber(sequenceNumber);
+        const SequenceNumber own_sequence_number = SequenceNumber(windowInfo.windowEnd.getRawValue());
+        sequenceNumber.store(own_sequence_number.getRawValue(), std::memory_order::relaxed);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{windowInfo, own_sequence_number, predecessor}].emplace_back(slice);
         }
     }
     return windowsToSlices;
@@ -162,10 +165,12 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
     auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
     {
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        const SequenceNumber predecessor = SequenceNumber(sequenceNumber);
+        const SequenceNumber own_sequence_number = SequenceNumber(windowInfo.windowEnd.getRawValue());
+        sequenceNumber.store(own_sequence_number.getRawValue(), std::memory_order::relaxed);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{windowInfo, own_sequence_number, predecessor}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
     };

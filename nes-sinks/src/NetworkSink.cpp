@@ -153,15 +153,22 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
     auto currentBuffer = std::optional(inputBuffer);
     while (currentBuffer)
     {
+        rust::Vec<rust::String> rust_barriers;
+
+        for (const auto& barrier : currentBuffer->getBarriers()) {
+            rust_barriers.push_back(rust::String(barrier));
+        }
         /// Set buffer header
         const SerializedTupleBufferHeader metadata{
             .sequence_number = currentBuffer->getSequenceNumber().getRawValue(),
+            .predecessor = currentBuffer->getSequenceNumber().getRawValue() - 1,
             .origin_id = currentBuffer->getOriginId().getRawValue(),
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
             .origin_epoch = currentBuffer->getOriginEpoch().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
-            .last_chunk = currentBuffer->isLastChunk()};
+            .last_chunk = currentBuffer->isLastChunk(),
+            .barriers = rust_barriers,};
 
         /// Set child buffers
         std::vector<rust::Slice<const uint8_t>> children;

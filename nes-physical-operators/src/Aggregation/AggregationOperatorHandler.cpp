@@ -116,6 +116,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
         tupleBuffer.setOriginId(outputOriginId);
         tupleBuffer.setSequenceNumber(windowInfo.sequenceNumber);
+        tupleBuffer.setPredecessor(windowInfo.predecessor);
         tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setOriginEpoch(pipelineCtx->getCurrentEpoch());
