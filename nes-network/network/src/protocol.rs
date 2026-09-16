@@ -80,6 +80,7 @@ impl FromStr for ThisConnectionIdentifier {
 impl FromStr for ConnectionIdentifier {
     type Err = Box<dyn std::error::Error + Send + Sync>;
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let s = s.strip_prefix("nes://").unwrap_or(s);
         let url = Url::parse(&format!("nes://{s}"))
             .map_err(|e| format!("Invalid ConnectionIdentifier: Invalid Url: {e}"))?;
         url.host().ok_or("Invalid ConnectionIdentifier: No host")?;
@@ -92,6 +93,11 @@ impl FromStr for ConnectionIdentifier {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ControlChannelRequest {
     ChannelRequest(ChannelIdentifier),
+    BarrierComplete {
+        channel_id: ChannelIdentifier,
+        origin_id: u64,
+        epoch: u64,
+    },
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ControlChannelResponse {
@@ -112,7 +118,7 @@ pub type OriginSequenceNumber = (u64, u64, u64);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DataChannelResponse {
-    AckData(OriginSequenceNumber),
+    AckData(OriginSequenceNumber, u64), // Buffer sequence number, Low-watermark sequence number 
     NAckData(OriginSequenceNumber),
     Close,
 }
