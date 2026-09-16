@@ -21,7 +21,6 @@ use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::oneshot;
 use tracing::{Instrument, error, info_span, warn};
-use crate::receiver::backup::recover_log;
 use super::control::*;
 
 /// Timeout for graceful tokio runtime shutdown

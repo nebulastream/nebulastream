@@ -15,7 +15,7 @@
 use super::channel::*;
 use crate::channel::{Channel, Communication, CommunicationListener};
 use crate::protocol::*;
-use crate::receiver::backup::recover_log;
+use crate::receiver::gateway::{GatewayControlMessage, ReceiverGateway, ReceiverGatewayHandle};
 use crate::receiver::receiver::ReceiverChannelFTOptions;
 use crate::util::*;
 use futures::SinkExt;
@@ -36,12 +36,12 @@ pub(super) type Error = Box<dyn std::error::Error + Send + Sync>;
 pub(super) type CloseFlag = bool;
 
 pub(super) enum NetworkServiceControlCommand {
-    RetryChannel(ChannelIdentifier, DataQueue, ReceiverChannelFTOptions, CloseFlag, CancellationToken),
+    RetryChannel(ChannelIdentifier, DataQueue, ReceiverGatewayHandle, CloseFlag, CancellationToken),
     RegisterChannel(ChannelIdentifier, DataQueue, Sender<()>, ReceiverChannelFTOptions),
 }
 pub(super) type NetworkingServiceController = async_channel::Sender<NetworkServiceControlCommand>;
 type RegisteredChannels =
-    Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, ReceiverChannelFTOptions, CancellationToken)>>>;
+    Arc<RwLock<HashMap<ChannelIdentifier, (DataQueue, ReceiverGatewayHandle, CancellationToken)>>>;
 type PendingChannels<R, W> = Arc<
     RwLock<
         HashMap<
@@ -51,6 +51,7 @@ type PendingChannels<R, W> = Arc<
     >,
 >;
 type TombstonedChannels = Arc<RwLock<HashSet<ChannelIdentifier>>>;
+type GatewayRegistry = Arc<RwLock<HashMap<ChannelIdentifier, ReceiverGatewayHandle>>>;
 
 type NetworkingServiceControlListener = async_channel::Receiver<NetworkServiceControlCommand>;
 enum ConnectionIdentification<R: AsyncRead, W: AsyncWrite> {
@@ -112,6 +113,7 @@ struct ControllerState<R: AsyncRead, W: AsyncWrite> {
     // Channels which have been opened by the network side but not have been picked up by the
     // software side.
     pending_channels: PendingChannels<R, W>,
+    gateways: GatewayRegistry,
 }
 
 impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
@@ -137,15 +139,23 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
         &self,
         channel_identifier: ChannelIdentifier,
         data_queue: DataQueue,
-        ft_options: ReceiverChannelFTOptions,
+        gateway: ReceiverGatewayHandle,
         cancellation_token: CancellationToken,
     ) {
         let mut lock = self.registered_channels.write().await;
-        let replaced = lock.insert(channel_identifier, (data_queue, ft_options, cancellation_token));
+        let replaced = lock.insert(channel_identifier, (data_queue, gateway, cancellation_token));
         lock.retain(|_, v| !v.2.is_cancelled());
         if let Some(r) = replaced {
             assert!(r.0.is_closed());
         }
+    }
+
+    async fn add_gateway(&self, channel_identifier: ChannelIdentifier, gateway: ReceiverGatewayHandle) {
+        self.gateways.write().await.insert(channel_identifier, gateway);
+    }
+
+    async fn find_gateway(&self, channel_identifier: &ChannelIdentifier) -> Option<ReceiverGatewayHandle> {
+        self.gateways.read().await.get(channel_identifier).cloned()
     }
 
     async fn add_channel_tombstone(&self, channel_identifier: ChannelIdentifier) {
@@ -156,7 +166,7 @@ impl<R: AsyncRead, W: AsyncWrite> ControllerState<R, W> {
     async fn take_registered_channel(
         &self,
         channel_identifier: &ChannelIdentifier,
-    ) -> Option<(DataQueue, ReceiverChannelFTOptions, CancellationToken)> {
+    ) -> Option<(DataQueue, ReceiverGatewayHandle, CancellationToken)> {
         self.registered_channels
             .write()
             .await
@@ -195,6 +205,7 @@ impl<R: AsyncRead, W: AsyncWrite> Default for ControllerState<R, W> {
             tombstoned_channels: Default::default(),
             registered_channels: Default::default(),
             pending_channels: Default::default(),
+            gateways: Default::default(),
         }
     }
 }
@@ -205,6 +216,7 @@ impl<R: AsyncRead, W: AsyncWrite> Clone for ControllerState<R, W> {
             tombstoned_channels: self.tombstoned_channels.clone(),
             registered_channels: self.registered_channels.clone(),
             pending_channels: self.pending_channels.clone(),
+            gateways: self.gateways.clone(),
         }
     }
 }
@@ -237,7 +249,7 @@ async fn control_socket_handler<
 
                 // The data channel needs to be registered beforehand, which is done by the software
                 // side via the NetworkingServiceController, which is exposed to the NetworkService.
-                let Some((emit, ft_options, token)) = state.take_registered_channel(&channel).await
+                let Some((emit, gateway, token)) = state.take_registered_channel(&channel).await
                 else {
                     // If the channel has not been registered yet, which is plausible because network sources and sinks
                     // are started without synchronization, the ChannelRequest is denied. Usually the other side will
@@ -258,7 +270,7 @@ async fn control_socket_handler<
                 // side attempts to connect. This is handled after Connection Identification within
                 // @socket_listener.
                 let attach_to_channel =
-                    create_channel_handler(channel.clone(), emit, ft_options, token, control.clone());
+                    create_channel_handler(channel.clone(), emit, gateway, token, control.clone());
 
                 state
                     .add_pending_channel(
@@ -277,6 +289,11 @@ async fn control_socket_handler<
                         this_connection_identifier.clone().into(),
                     ))
                     .await?;
+            }
+
+            ControlChannelRequest::BarrierComplete { channel_id, origin_id, epoch } => {
+                let gateway = state.find_gateway(&channel_id).await.unwrap();
+                gateway.control_tx.send(GatewayControlMessage::BarrierComplete(origin_id, epoch));
             }
         }
     }
@@ -401,7 +418,7 @@ pub(super) async fn create_control_socket_handler(
             communication,
             receiver_span.clone(),
         )
-            .instrument(info_span!(parent: receiver_span, "control-socket-listener", bind = %connection_identifier)),
+            .instrument(info_span!(parent: receiver_span, "control-socket-listener", bind = %connection_identifier.clone())),
     ));
 
     // Listen to all software-facing requests.
@@ -426,31 +443,20 @@ pub(super) async fn create_control_socket_handler(
                 };
 
                 tokio::spawn({
+                    let host = connection_identifier.clone();
                     async move {
-                        if ft_options.enable_backup {
-                            let mut file = ft_options.backup_path.clone().expect("Backup receivers need a file path");
-                            file = file.join("log.bin");
-
-                            let mut queue = emit_fn.clone();
-                            let r = recover_log(file, &mut queue).await;
-
-                            match r {
-                                Ok(log_closed) => {
-                                    if log_closed {
-                                        state.add_channel_tombstone(ident).await;
-                                        emit_fn.close();
-                                        return;
-                                    }
-                                }
-                                Err(e) => {
-                                    panic!("figure out what to do here if it ever happens \n {e}")
-                                }
-                            }
-                        }
-
                         let token = CancellationToken::new();
+                        let (gateway, gateway_handle) = ReceiverGateway::new(ft_options.backup_path.clone().unwrap(), host, ident.clone(), emit_fn.clone(), token.clone());
+                        state.add_gateway(ident.clone(), gateway_handle.clone()).await;
+
+                        let log_closed = gateway.start().await;
+                        if log_closed {
+                            state.add_channel_tombstone(ident).await;
+                            emit_fn.close();
+                            return
+                        }
                         state
-                            .add_registered_channel(ident, emit_fn, ft_options, token.clone())
+                            .add_registered_channel(ident, emit_fn, gateway_handle, token.clone())
                             .await;
                     }
                 });
@@ -462,15 +468,16 @@ pub(super) async fn create_control_socket_handler(
             Ok(NetworkServiceControlCommand::RetryChannel(
                 ident,
                 emit_fn,
-                ft_options,
+                gateway,
                 is_closed,
                 token,
             )) => {
                 if !is_closed {
                     state
-                        .add_registered_channel(ident, emit_fn, ft_options, token)
+                        .add_registered_channel(ident, emit_fn, gateway, token)
                         .await;
                 } else {
+                    token.cancel();
                     state.add_channel_tombstone(ident).await;
                 }
             }

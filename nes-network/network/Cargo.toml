@@ -37,3 +37,4 @@ url = { workspace = true }
 pin-project = { workspace = true }
 log = { workspace = true }
 rand = { workspace = true }
+fixedbitset = { workspace = true }

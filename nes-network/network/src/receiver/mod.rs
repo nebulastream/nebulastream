@@ -14,5 +14,5 @@
 mod channel;
 mod control;
 mod receiver;
-mod backup;
+mod gateway;
 pub use receiver::*;
