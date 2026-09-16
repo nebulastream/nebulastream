@@ -61,7 +61,10 @@
     "nlohmann-json",
     {
       "name": "openblas",
-      "default-features": false
+      "default-features": false,
+      "features": [
+        "dynamic-arch"
+      ]
     },
     {
       "name": "opencv4",
