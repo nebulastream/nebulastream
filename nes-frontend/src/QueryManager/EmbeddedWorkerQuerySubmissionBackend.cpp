@@ -126,14 +126,14 @@ auto withKillSwitch(F&& f)
     using Result = std::invoke_result_t<F>;
     auto killed = [] { return Result{std::unexpected(Exception{"connection was killed", grpc::StatusCode::UNAVAILABLE})}; };
 
-    if (getActiveFaultContext()->simulator.check())
+    if (getActiveFaultContext()->simulator.checkNetworkFault())
     {
         return killed();
     }
 
     Result result = std::invoke(std::forward<F>(f));
 
-    if (getActiveFaultContext()->simulator.check())
+    if (getActiveFaultContext()->simulator.checkNetworkFault())
     {
         return killed();
     }

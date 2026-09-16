@@ -43,6 +43,10 @@ FaultAction parseAction(const YAML::Node& node)
     {
         return FaultAction::UDF;
     }
+    if (action == "NONE")
+    {
+        return FaultAction::NONE;
+    }
     throw std::runtime_error("unknown action: " + action);
 }
 

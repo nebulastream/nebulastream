@@ -104,9 +104,14 @@ void initActiveFaultContext(rust::String host)
     NES::initActiveFaultContext(NES::Host(host.c_str()));
 }
 
-bool checkIo()
+bool checkNetworkFault()
 {
-    return NES::checkIO();
+    return NES::checkNetworkFault();
+}
+
+bool checkDiskFault()
+{
+    return NES::checkDiskFault();
 }
 
 bool failpoint(rust::str name)

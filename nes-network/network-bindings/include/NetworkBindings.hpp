@@ -48,7 +48,8 @@ private:
 /// I.e., threads created by the tokio runtime need to be associated with a worker and a thread name
 void identifyThread(rust::str threadName, rust::str host);
 void initActiveFaultContext(rust::String host);
-bool checkIo();
+bool checkNetworkFault();
+bool checkDiskFault();
 bool failpoint(rust::str name);
 std::uint8_t deferredFailpoint(rust::str name);
 void applyFaultAction(std::uint8_t action);

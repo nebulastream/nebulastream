@@ -79,7 +79,9 @@ pub mod ffi {
         #[allow(non_snake_case)]
         fn initActiveFaultContext(host: String);
         #[allow(non_snake_case)]
-        fn checkIo() -> bool;
+        fn checkNetworkFault() -> bool;
+        #[allow(non_snake_case)]
+        fn checkDiskFault() -> bool;
         #[allow(non_snake_case)]
         fn failpoint(name: &str) -> bool;
         #[allow(non_snake_case)]
