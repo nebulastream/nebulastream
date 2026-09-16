@@ -153,7 +153,7 @@ docker_nes_repl() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit WAIT_FOR_QUERY_TERMINATION" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query_distributed.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
@@ -166,13 +166,13 @@ docker_nes_repl() {
 @test "WAIT_FOR_QUERY_TERMINATION exits cleanly on SIGTERM" {
   setup_distributed tests/topologies/1-node.yaml
 
-  # non_infinite_query.sql configures the source to produce data for 10000ms,
+  # non_infinite_query_distributed.sql configures the source to produce data for 10000ms,
   # so WAIT_FOR_QUERY_TERMINATION would normally make nes-repl block ~10s.
   # Send SIGTERM to nes-repl mid-wait and verify the on-exit loop exits well
   # before the 10s mark and reports the warning.
   (
     tail -f /dev/null | docker compose exec -T nes-repl bash -c \
-      "nes-repl -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION </workdir/tests/sql-file-tests/good/non_infinite_query.sql"
+      "nes-repl -f JSON --on-exit WAIT_FOR_QUERY_TERMINATION </workdir/tests/sql-file-tests/good/non_infinite_query_distributed.sql"
   ) &
   REPL_BG=$!
 
@@ -194,7 +194,7 @@ docker_nes_repl() {
   setup_distributed tests/topologies/1-node.yaml
 
   start_time=$(date +%s)
-  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query.sql
+  ADDITIONAL_NEBULI_FLAGS="--on-exit STOP_QUERIES" run docker_nes_repl tests/sql-file-tests/good/non_infinite_query_distributed.sql
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]

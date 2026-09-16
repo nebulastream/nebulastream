@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
-//! Starting a coordinator and operating it.
+//! Starting a coordinator, or connecting to one that another process runs, and operating it.
 //! A Rust caller keeps it and sends parsed or SQL statements over it.
-//! A C++ frontend owns one through the bridge, submits SQL, and reads a typed outcome back.
+//! A C++ frontend owns one through the bridge, submits SQL, and reads a typed outcome back,
+//! the same way for both backends.
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, anyhow};
+use client::{Client, ClientError, WaitKind};
 use coordinator::{EarlyTermination, start_with_runtime};
 use model::database::StateBackend;
 use model::query::Model as Query;
@@ -92,6 +94,8 @@ pub(crate) mod ffi {
             optimizer_config: &str,
         ) -> Result<Box<Coordinator>>;
 
+        fn connect_coordinator(url: &str) -> Result<Box<Coordinator>>;
+
         /// The host for a statement that omits its HOST clause, or empty when one is required.
         fn default_host(self: &Coordinator) -> String;
 
@@ -114,15 +118,21 @@ pub(crate) mod ffi {
     }
 }
 
-/// Owns the coordinator's runtime and request channel, so dropping it shuts the coordinator down.
 pub struct Coordinator {
-    sender: async_channel::Sender<Request>,
-    runtime: Option<Runtime>,
-    /// Set to true to release a parked wait early.
-    /// Held here so another thread can reach it while the waiting thread is parked inside the FFI.
-    cancel: watch::Sender<bool>,
+    backend: Backend,
     default_host: String,
 }
+
+enum Backend {
+    Embedded {
+        sender: async_channel::Sender<Request>,
+        runtime: Option<Runtime>,
+        cancel: watch::Sender<bool>,
+    },
+    Remote(Client),
+}
+
+const POLL_SLICE: Duration = Duration::from_secs(1);
 
 /// The host a statement without a HOST clause is placed on, or empty when there is none to default to.
 /// Embedded deployments run a single in-process worker, so defaulting to it is unambiguous.
@@ -156,51 +166,76 @@ impl Coordinator {
 
         let sender = start_with_runtime(&runtime, state_backend, planner, factory)?;
         Ok(Self {
-            sender,
-            runtime: Some(runtime),
-            cancel: watch::channel(false).0,
+            backend: Backend::Embedded {
+                sender,
+                runtime: Some(runtime),
+                cancel: watch::channel(false).0,
+            },
             default_host,
         })
     }
 
-    fn block_on<F: Future>(&self, fut: F) -> F::Output {
-        self.runtime
-            .as_ref()
-            .expect("runtime present until drop")
-            .handle()
-            .block_on(fut)
+    pub fn connect(url: &str) -> Result<Self> {
+        let url = url
+            .parse()
+            .with_context(|| format!("invalid coordinator URL '{url}'"))?;
+        let client = Client::new(url)?.with_poll_slice(POLL_SLICE);
+        Ok(Self {
+            backend: Backend::Remote(client),
+            default_host: String::new(),
+        })
     }
 
     pub fn send(&self, input: StatementInput, wait: Wait) -> Result<StatementResult> {
-        let (rx, req) = Request::new(input, wait);
-        self.sender
-            .send_blocking(req)
-            .map_err(|_| anyhow!("coordinator shut down"))?;
-        self.block_on(rx)?
+        match &self.backend {
+            Backend::Embedded {
+                sender, runtime, ..
+            } => {
+                let (rx, req) = Request::new(input, wait);
+                sender
+                    .send_blocking(req)
+                    .map_err(|_| anyhow!("coordinator shut down"))?;
+                block_on(runtime, rx)?
+            }
+            Backend::Remote(client) => remote_send(client, input, wait),
+        }
     }
 
     /// Answers `None` as soon as the waits are cancelled.
     /// The request is abandoned rather than withdrawn.
-    /// The coordinator still holds it and later answers into a receiver that nobody reads.
+    /// The coordinator still holds it and later answers into a receiver that nobody reads,
+    /// or, over the network, finishes the request in flight for a client that no longer asks again.
     fn send_until_cancelled(
         &self,
         input: StatementInput,
         wait: Wait,
     ) -> Result<Option<StatementResult>> {
-        let mut cancel = self.cancel.subscribe();
-        if *cancel.borrow_and_update() {
-            return Ok(None);
-        }
-        let (rx, req) = Request::new(input, wait);
-        self.sender
-            .send_blocking(req)
-            .map_err(|_| anyhow!("coordinator shut down"))?;
-        self.block_on(async {
-            tokio::select! {
-                reply = rx => reply.map_err(anyhow::Error::from).and_then(|r| r).map(Some),
-                _ = cancel.changed() => Ok(None),
+        match &self.backend {
+            Backend::Embedded {
+                sender,
+                runtime,
+                cancel,
+            } => {
+                let mut cancel = cancel.subscribe();
+                if *cancel.borrow_and_update() {
+                    return Ok(None);
+                }
+                let (rx, req) = Request::new(input, wait);
+                sender
+                    .send_blocking(req)
+                    .map_err(|_| anyhow!("coordinator shut down"))?;
+                block_on(runtime, async {
+                    tokio::select! {
+                        reply = rx => reply.map_err(anyhow::Error::from).and_then(|r| r).map(Some),
+                        _ = cancel.changed() => Ok(None),
+                    }
+                })
             }
-        })
+            Backend::Remote(client) => match remote_send(client, input, wait) {
+                Err(error) if is_cancelled(&error) => Ok(None),
+                result => result.map(Some),
+            },
+        }
     }
 
     /// A frontend reads it to register its worker there.
@@ -210,7 +245,12 @@ impl Coordinator {
     }
 
     pub(crate) fn cancel_waits(&self) {
-        let _ = self.cancel.send(true);
+        match &self.backend {
+            Backend::Embedded { cancel, .. } => {
+                let _ = cancel.send(true);
+            }
+            Backend::Remote(client) => client.cancel(),
+        }
     }
 
     pub(crate) fn submit(
@@ -261,10 +301,68 @@ impl Coordinator {
 
 impl Drop for Coordinator {
     fn drop(&mut self) {
-        if let Some(rt) = self.runtime.take() {
+        if let Backend::Embedded { runtime, .. } = &mut self.backend
+            && let Some(rt) = runtime.take()
+        {
             rt.shutdown_timeout(Duration::from_millis(500));
         }
     }
+}
+
+fn block_on<F: Future>(runtime: &Option<Runtime>, fut: F) -> F::Output {
+    runtime
+        .as_ref()
+        .expect("runtime present until drop")
+        .handle()
+        .block_on(fut)
+}
+
+fn remote_send(client: &Client, input: StatementInput, wait: Wait) -> Result<StatementResult> {
+    let (kind, deadline, target) = match wait {
+        Wait::UntilState { state, timeout } => (wait_kind(state), deadline(timeout), Some(state)),
+        Wait::UntilTerminated { timeout } => (Some(WaitKind::Terminated), deadline(timeout), None),
+        Wait::None => (None, None, None),
+    };
+    let result = match (input, kind) {
+        (StatementInput::Sql(sql), None) => client.sql(&sql)?,
+        (StatementInput::Sql(sql), Some(kind)) => client.sql_wait(&sql, kind, deadline)?,
+        (StatementInput::Parsed(statement), None) => client.statement(&statement)?,
+        (StatementInput::Parsed(statement), Some(kind)) => {
+            client.statement_wait(&statement, kind, deadline)?
+        }
+    };
+    match (result, target) {
+        (StatementResult::CreatedQuery(created), Some(target))
+            if matches!(
+                created.query.state,
+                QueryState::Stopped | QueryState::Failed
+            ) && created.query.state != target =>
+        {
+            Err(anyhow::Error::new(EarlyTermination(created)))
+        }
+        (result, _) => Ok(result),
+    }
+}
+
+const fn wait_kind(state: QueryState) -> Option<WaitKind> {
+    match state {
+        QueryState::Pending => None,
+        QueryState::Started => Some(WaitKind::Started),
+        QueryState::Running => Some(WaitKind::Running),
+        QueryState::Completed => Some(WaitKind::Completed),
+        QueryState::Stopped | QueryState::Failed => Some(WaitKind::Terminated),
+    }
+}
+
+fn deadline(timeout: Option<Duration>) -> Option<Instant> {
+    timeout.map(|timeout| Instant::now() + timeout)
+}
+
+fn is_cancelled(error: &anyhow::Error) -> bool {
+    matches!(
+        error.downcast_ref::<ClientError>(),
+        Some(ClientError::Cancelled)
+    )
 }
 
 pub(crate) fn start_coordinator(
@@ -282,6 +380,10 @@ pub(crate) fn start_coordinator(
         mode,
         optimizer_config,
     )?))
+}
+
+pub(crate) fn connect_coordinator(url: &str) -> Result<Box<Coordinator>, FfiError> {
+    Ok(Box::new(Coordinator::connect(url)?))
 }
 
 /// A statement that created no query is terminal at once; its answer, if any, is the given text.

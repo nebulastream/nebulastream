@@ -108,7 +108,8 @@ int main(const int argc, char** argv)
         using argparse::ArgumentParser;
         ArgumentParser program("nes-repl");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
-        program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string{"localhost:8080"});
+        program.add_argument("--coordinator")
+            .help("base URL of a running nes-server, used instead of a coordinator in this process, e.g. http://127.0.0.1:8081");
 
         program.add_argument("--on-exit")
             .choices(
@@ -194,6 +195,13 @@ int main(const int argc, char** argv)
         }
 
 
+        const bool remoteCoordinator = program.is_used("--coordinator");
+        if (remoteCoordinator and (program.is_used("--db") or program.is_used("--optimizer")))
+        {
+            std::cerr << "--db and --optimizer configure a coordinator in this process; they cannot be combined with --coordinator\n";
+            return 1;
+        }
+
 #ifdef EMBED_ENGINE
         constexpr auto workerMode = NES::Bridge::WorkerMode::Embedded;
 #else
@@ -201,16 +209,28 @@ int main(const int argc, char** argv)
 #endif
         /// An empty --db uses an ephemeral in-memory catalog; a path uses a persistent sqlite one.
         const auto dbPath = program.get<std::string>("--db");
-        auto coordinator = NES::Bridge::start_coordinator(
-            rust::Str{dbPath.data(), dbPath.size()}, workerMode, rust::Str{optimizerConfigJson.data(), optimizerConfigJson.size()});
+        auto coordinator = [&]
+        {
+            if (remoteCoordinator)
+            {
+                const auto url = program.get<std::string>("--coordinator");
+                return NES::Bridge::connect_coordinator(rust::Str{url.data(), url.size()});
+            }
+            return NES::Bridge::start_coordinator(
+                rust::Str{dbPath.data(), dbPath.size()}, workerMode, rust::Str{optimizerConfigJson.data(), optimizerConfigJson.size()});
+        }();
 
 #ifdef EMBED_ENGINE
         /// The coordinator can only place fragments on a worker that the catalog lists.
         /// The embedded worker is registered at the default host, so a statement without a HOST clause is placed on it.
-        const auto embeddedWorkerStatement
-            = fmt::format("CREATE WORKER '{}' SET ('localhost:9090' AS DATA)", std::string{coordinator->default_host()});
-        NES::Bridge::raiseReported(
-            coordinator->submit(rust::Str{embeddedWorkerStatement}, NES::Bridge::WaitMode::None, 0, jsonOutput).error);
+        /// A coordinator elsewhere brings its own workers, so nothing is registered for it here.
+        if (not remoteCoordinator)
+        {
+            const auto embeddedWorkerStatement
+                = fmt::format("CREATE WORKER '{}' SET ('localhost:9090' AS DATA)", std::string{coordinator->default_host()});
+            NES::Bridge::raiseReported(
+                coordinator->submit(rust::Str{embeddedWorkerStatement}, NES::Bridge::WaitMode::None, 0, jsonOutput).error);
+        }
 #endif
 
         const NES::Repl replClient(*coordinator, errorBehaviour, jsonOutput, interactiveMode, SignalHandler::terminationToken());

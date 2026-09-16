@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-mod client;
 mod output;
 mod start;
 
@@ -21,11 +20,11 @@ pub use output::{Format, Output};
 
 use anyhow::bail;
 use clap::{Parser, Subcommand};
+use client::Url;
 use model::query::{QueryWithFragments, query_fragment};
 use model::statement::StatementResult;
 use model::worker;
 use model::worker::endpoint::NetworkAddr;
-use reqwest::Url;
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
 use std::io::{IsTerminal, Write};

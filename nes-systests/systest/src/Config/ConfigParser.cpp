@@ -95,6 +95,9 @@ void configureArgumentParser(ArgumentParser& program)
         .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
               "/nes-systests/");
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
+    program.add_argument("--coordinator")
+        .help("base URL of a running nes-server, used instead of a coordinator in this process; its workers are the run's, so "
+              "a topology is required");
     program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
     program.add_argument("--shuffle").flag().help("run queries in random order");
     program.add_argument("--shuffle-seed")
@@ -449,6 +452,10 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     }
 
     config.remoteWorker = program.get<bool>("--remote");
+    if (program.is_used("--coordinator"))
+    {
+        config.coordinatorUrl = program.get<std::string>("--coordinator");
+    }
 
     /// Read only when the invocation gives a topology.
     /// The option carries a default path, and loading it regardless would place every run on a topology nobody asked for.
@@ -536,6 +543,12 @@ void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConf
     if (not program.is_used("--optimizer"))
     {
         return;
+    }
+
+    if (program.is_used("--coordinator"))
+    {
+        std::cerr << "--optimizer configures a coordinator in this process; it cannot be combined with --coordinator\n";
+        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
     std::unordered_map<std::string, std::string> optimizerRawConfig;

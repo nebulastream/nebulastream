@@ -89,13 +89,16 @@ nes-repl-embedded -d -f JSON
 
 # Distributed mode (multi-node)
 nes-repl -d -f JSON
+
+# As a client of a running nes-server, which then holds the catalog and the workers
+nes-repl --coordinator http://127.0.0.1:8081 -f JSON
 ```
 
 **Flags:**
 
 - `-d` - Debug mode with detailed logging
 - `-f <format>` - Output format: `JSON` for programmatic access, `TEXT` for tabular format (default: `TEXT`)
-- `-s <address>` - Server address to connect to (default: `localhost:8080`). Not required for `nes-repl-embedded`.
+- `--coordinator <url>` - Use the coordinator of the `nes-server` at this URL instead of starting one in this process. `--db` and `--optimizer` then belong to the server and are rejected.
 - `--on-exit <behavior>` - Behavior when REPL exits (default: `DO_NOTHING`)
   - `DO_NOTHING` - Exit immediately, leaving queries running on workers
   - `WAIT_FOR_QUERY_TERMINATION` - Wait for all queries to finish before exiting

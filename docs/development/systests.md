@@ -250,6 +250,7 @@ Tests can be run with specific configuration settings (`-- --worker.total_memory
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries to remote workers, use remote mode (`-r` or `--remote`).
+To use the coordinator of a running `nes-server` instead of one in the systest process, pass `--coordinator <url>`; the run then uses that server's workers, so it needs a topology, and `--optimizer` belongs to the server.
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).
 
 

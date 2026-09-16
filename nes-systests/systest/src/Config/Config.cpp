@@ -40,6 +40,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &endlessSeconds,
         &excludeGroups,
         &remoteWorker,
+        &coordinatorUrl,
         &clusterConfigPath};
 }
 }
