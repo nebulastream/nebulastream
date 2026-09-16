@@ -18,6 +18,9 @@
 /cmake-build*
 CMakeUserPresets.json
 debug*
+
+# nes-cli's persisted query state (see scripts/nes-cli-compose-docker.sh --attach)
+/.nes-cli-state
 vcpkg-repository
 
 # Deb file

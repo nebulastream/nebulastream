@@ -39,33 +39,9 @@ FROM
     FROM
       MODEL_INFERENCE(BUCKET_SLOT_CNN_9,
         (SELECT
-           "camTs" AS "ts",
+           CASTTOUNIXTS("ts") AS "ts",
            FT_PREPROCESS_ALL_SLOTS("data") AS "pixels9"
-         FROM
-           (SELECT
-              CASTTOUNIXTS("ts") AS "camTs",
-              "data",
-              1 AS "camKey"
-            FROM SSC_CAM)
-           INNER JOIN
-           (SELECT
-              "alignStart",
-              "allAligned",
-              1 AS "alignKey"
-            FROM
-              (SELECT
-                 start AS "alignStart",
-                 MIN(Conditional(
-                   ABS("pan" - FLOAT64(0.988990783691406)) > FLOAT64(0.01)
-                   OR ABS("tilt" - FLOAT64(-0.252666652202606)) > FLOAT64(0.01),
-                   UINT64(0),
-                   UINT64(1))) AS "allAligned"
-               FROM
-                 (SELECT CASTTOUNIXTS("ts") AS "ptuTs", "pan", "tilt" FROM PTU_POS_GATE)
-               WINDOW TUMBLING("ptuTs", SIZE 500 MS)))
-           ON "camKey" = "alignKey"
-           WINDOW TUMBLING("camTs", "alignStart", SIZE 500 MS)
-           WHERE "allAligned" = UINT64(1)))
+         FROM SSC_CAM))
   )
 )
 INTO

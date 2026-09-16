@@ -20,6 +20,12 @@
     --good-wash:      rgba(12,163,12,0.09);
     --critical-wash:  rgba(208,59,59,0.09);
     --unknown-wash:   rgba(137,135,129,0.08);
+    /* Per-pipeline identity colors -- kept well clear of --good/--critical/--warning
+       so panel branding is never mistaken for a slot-occupancy or staleness signal. */
+    --nes-accent:      #2f6fed;
+    --nes-accent-wash: rgba(47,111,237,0.09);
+    --py-accent:       #7c3aed;
+    --py-accent-wash:  rgba(124,58,237,0.09);
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -37,6 +43,10 @@
       --good-wash:      rgba(22,199,22,0.13);
       --critical-wash:  rgba(230,103,103,0.13);
       --unknown-wash:   rgba(139,138,133,0.10);
+      --nes-accent:      #74a0ff;
+      --nes-accent-wash: rgba(116,160,255,0.14);
+      --py-accent:       #b98cf0;
+      --py-accent-wash:  rgba(185,140,240,0.14);
     }
   }
   * { box-sizing: border-box; }
@@ -48,29 +58,9 @@
     font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   .wrap {
-    max-width: 600px;
+    max-width: 1180px;
     margin: 0 auto;
     padding: 24px 16px 48px;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .brand img { width: 22px; height: 22px; flex: none; }
-  .brand-text {
-    font-size: 12px;
-    font-weight: 650;
-    color: var(--ink-muted);
-    letter-spacing: .02em;
-  }
-  .brand-text .powered-by {
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    margin-right: 3px;
   }
 
   h1 {
@@ -83,7 +73,7 @@
     color: var(--ink-secondary);
     font-size: 12.5px;
     margin: 0 0 4px;
-    max-width: 46em;
+    max-width: 62em;
   }
   .subtitle .badge {
     display: inline-block;
@@ -111,7 +101,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 16px;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
     box-shadow: 0 1px 2px rgba(11,11,11,0.03);
   }
   .dot {
@@ -125,24 +115,168 @@
   .dot.ok { background: var(--good); }
   .dot.warn { background: var(--warning); }
   .status-text { font-weight: 600; color: var(--ink-primary); }
-  .last-msg {
+  .conn-note {
     color: var(--ink-muted);
     font-size: 12px;
-    font-variant-numeric: tabular-nums;
   }
   .spacer { flex: 1; }
+  .clock-item { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+  .clock-label {
+    font-size: 10.5px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ink-muted);
+  }
+  .clock-value {
+    font-size: 14px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-primary);
+  }
+
+  .panels {
+    display: flex;
+    gap: 20px;
+    row-gap: 20px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .panel {
+    flex: 1 1 460px;
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 14px;
+    padding: 18px 18px 20px;
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03);
+  }
+  .panel[data-kind="nes"] { --accent: var(--nes-accent); --accent-wash: var(--nes-accent-wash); }
+  .panel[data-kind="py"]  { --accent: var(--py-accent);  --accent-wash: var(--py-accent-wash); }
+
+  .panel-divider {
+    position: relative;
+    flex: 0 0 auto;
+    width: 1px;
+    align-self: stretch;
+    background: var(--hairline);
+    margin: 4px 0;
+  }
+  .panel-divider .vs-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--page);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    color: var(--ink-muted);
+  }
+  @media (max-width: 980px) {
+    .panel-divider { display: none; }
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .panel-logo {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-wash);
+  }
+  .panel-logo img { width: 20px; height: 20px; }
+  .panel-logo svg { width: 18px; height: 18px; color: var(--accent); }
+  .panel-heading { min-width: 0; }
+  .panel-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .panel-title-row h2 {
+    font-size: 15.5px;
+    font-weight: 750;
+    margin: 0;
+    color: var(--accent);
+  }
+  .panel-title-row .tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid var(--accent-wash);
+    color: var(--accent);
+    background: var(--accent-wash);
+  }
+  .panel-kicker {
+    color: var(--ink-muted);
+    font-size: 11.5px;
+    margin: 3px 0 0;
+  }
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
   .summary { color: var(--ink-secondary); }
   .summary strong {
     color: var(--ink-primary);
     font-variant-numeric: tabular-nums;
   }
 
+  .timing {
+    display: flex;
+    gap: 18px;
+    row-gap: 6px;
+    flex-wrap: wrap;
+    background: var(--page);
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+  }
+  .timing-item { display: flex; flex-direction: column; gap: 2px; }
+  .timing-label {
+    font-size: 10.5px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ink-muted);
+  }
+  .timing-value {
+    font-size: 14px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-primary);
+  }
+
   .stale-banner {
     display: none;
     align-items: flex-start;
     gap: 9px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--page);
+    border: 1px solid var(--hairline);
     border-left: 3px solid var(--warning);
     color: var(--ink-secondary);
     border-radius: 10px;
@@ -157,11 +291,10 @@
   }
 
   .board {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--page);
+    border: 1px solid var(--hairline);
     border-radius: 14px;
     padding: 16px;
-    box-shadow: 0 1px 2px rgba(11,11,11,0.03);
   }
   .grid {
     display: grid;
@@ -246,7 +379,7 @@
   .legend {
     display: flex;
     gap: 18px;
-    margin-top: 16px;
+    margin-top: 20px;
     color: var(--ink-secondary);
     font-size: 12px;
     flex-wrap: wrap;
@@ -261,38 +394,23 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <img src="nebulastream-logo.png" alt="NebulaStream logo">
-    <span class="brand-text"><span class="powered-by">Powered by</span>NebulaStream</span>
-  </div>
-
   <h1>FischerTechnik High-Bay Warehouse Monitor</h1>
-  <p class="subtitle">Live occupancy of the HBW's 9 storage slots, inferred by a NebulaStream vision-inference query.</p>
-  <p class="source-note">Source: <span class="badge">SSC</span> (Sensor/Surveillance Camera) feed, cropped per slot and classified frame by frame &mdash; not the PLC's own stock record.</p>
+  <p class="subtitle">Live occupancy of the HBW's 9 storage slots, inferred from the same SSC camera feed by two independent pipelines running side by side: a NebulaStream query, and a plain-Python baseline.</p>
+  <p class="source-note">Source: <span class="badge">SSC</span> (Sensor/Surveillance Camera) feed, cropped per slot and classified frame by frame &mdash; not the PLC's own stock record. Both pipelines run the exact same ONNX model and threshold; only the inference engine and MQTT plumbing differ.</p>
 
   <div class="statusbar">
     <span class="dot" id="connDot"></span>
     <span class="status-text" id="connText">Connecting&hellip;</span>
-    <span class="last-msg" id="lastMsgText"></span>
+    <span class="conn-note">to the local demo broker (ws://localhost:9001)</span>
     <span class="spacer"></span>
-    <span class="summary" id="summaryText">&mdash;</span>
-  </div>
-
-  <div class="stale-banner" id="staleBanner">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
-    </svg>
-    <span>No frame received in a while &mdash; the SSC camera may not be pointed at the HBW right now. Showing the last known state, dimmed.</span>
-  </div>
-
-  <div class="board">
-    <div class="grid" id="grid">
-      <div></div>
-      <div class="colhead">1</div>
-      <div class="colhead">2</div>
-      <div class="colhead">3</div>
-      <!-- rows injected by JS -->
+    <div class="clock-item">
+      <span class="clock-label">Clock</span>
+      <span class="clock-value" id="clockText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
     </div>
+  </div>
+
+  <div class="panels" id="panels">
+    <!-- panel markup injected by JS, one per entry in PANELS -->
   </div>
 
   <div class="legend">
@@ -314,10 +432,25 @@
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
 <script>
   const BROKER_URL = "ws://localhost:9001";
-  const TOPIC = "nes/hbw/slot_state";
-  // 2s tumbling alignment window + batched delivery means gaps of several
-  // seconds between snapshots are normal, not a real camera-pointing issue.
-  const STALE_AFTER_MS = 20000;
+  // Both panels' snapshots should track the camera's own frame rate -- a gap
+  // this long means that panel's query/process/broker actually stalled.
+  const STALE_AFTER_MS = 5000;
+
+  const TERMINAL_ICON = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <path d="m7 9 3 3-3 3"/>
+      <path d="M13 15h4"/>
+    </svg>`;
+
+  const PANELS = [
+    { id: "nes", kind: "nes", label: "NebulaStream", tag: "NES query", topic: "nes/hbw/slot_state",
+      logo: `<img src="nebulastream-logo.png" alt="NebulaStream logo">`,
+      kicker: "hbw-state.sql, running inside the NES engine." },
+    { id: "py", kind: "py", label: "Python baseline", tag: "Raw Python", topic: "py/hbw/slot_state",
+      logo: TERMINAL_ICON,
+      kicker: "python-baseline/infer.py, an independent MQTT + ONNX Runtime script." },
+  ];
 
   const ROWS = ["A", "B", "C"];
   const COLS = ["1", "2", "3"];
@@ -335,45 +468,137 @@
       <line x1="15" y1="12" x2="9" y2="16"/>
     </svg>`;
 
-  const grid = document.getElementById("grid");
-  const cells = {};
-  const lastEmpty = {};
-  const showScore = {};
-  ROWS.forEach(r => {
-    const rowhead = document.createElement("div");
-    rowhead.className = "rowhead";
-    rowhead.textContent = r;
-    grid.appendChild(rowhead);
-    COLS.forEach(c => {
-      const slot = r + c;
-      const cell = document.createElement("div");
-      cell.className = "cell unknown";
-      cell.title = "No data yet";
-      cell.innerHTML = `<span class="slot-label">${slot}</span>${BUCKET_ICON}<span class="state-text">&nbsp;</span>`;
-      grid.appendChild(cell);
-      cells[slot] = cell;
+  function pad(n, width = 2) {
+    return String(n).padStart(width, "0");
+  }
+  function formatClock(unixMs) {
+    return new Date(unixMs).toLocaleTimeString([], { hour12: false });
+  }
+  function formatClockMs(unixMs) {
+    const d = new Date(unixMs);
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+  }
+
+  // One state object per panel: DOM refs + the small bits of state each
+  // panel's rendering needs (last-known empty flags, per-cell score toggle,
+  // last-message timestamp for the staleness check).
+  const panels = {};
+
+  function buildPanel(cfg) {
+    const root = document.createElement("div");
+    root.className = "panel";
+    root.dataset.kind = cfg.kind;
+    root.innerHTML = `
+      <div class="panel-header">
+        <div class="panel-logo">${cfg.logo}</div>
+        <div class="panel-heading">
+          <div class="panel-title-row">
+            <h2>${cfg.label}</h2>
+            <span class="tag">${cfg.tag}</span>
+          </div>
+          <p class="panel-kicker">${cfg.kicker}</p>
+        </div>
+      </div>
+      <div class="summary-row">
+        <span class="summary" id="${cfg.id}-summaryText">&mdash;</span>
+      </div>
+      <div class="timing">
+        <div class="timing-item">
+          <span class="timing-label">Last frame</span>
+          <span class="timing-value" id="${cfg.id}-lastMsgText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Last received</span>
+          <span class="timing-value" id="${cfg.id}-lastRecvText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Offset (received &minus; frame ts)</span>
+          <span class="timing-value" id="${cfg.id}-latencyText">&mdash;</span>
+        </div>
+      </div>
+      <div class="stale-banner" id="${cfg.id}-staleBanner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+        </svg>
+        <span>No frame received in a while &mdash; this pipeline may not be running, or the SSC camera isn't pointed at the HBW. Showing the last known state, dimmed.</span>
+      </div>
+      <div class="board">
+        <div class="grid" id="${cfg.id}-grid">
+          <div></div>
+          <div class="colhead">1</div>
+          <div class="colhead">2</div>
+          <div class="colhead">3</div>
+        </div>
+      </div>
+    `;
+    document.getElementById("panels").appendChild(root);
+
+    const grid = document.getElementById(`${cfg.id}-grid`);
+    const cells = {};
+    ROWS.forEach(r => {
+      const rowhead = document.createElement("div");
+      rowhead.className = "rowhead";
+      rowhead.textContent = r;
+      grid.appendChild(rowhead);
+      COLS.forEach(c => {
+        const slot = r + c;
+        const cell = document.createElement("div");
+        cell.className = "cell unknown";
+        cell.title = "No data yet";
+        cell.innerHTML = `<span class="slot-label">${slot}</span>${BUCKET_ICON}<span class="state-text">&nbsp;</span>`;
+        grid.appendChild(cell);
+        cells[slot] = cell;
+      });
     });
+
+    grid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".score-toggle");
+      if (!btn) return;
+      const slot = btn.dataset.slot;
+      const state = panels[cfg.id];
+      state.showScore[slot] = !state.showScore[slot];
+      cells[slot].classList.toggle("show-score", state.showScore[slot]);
+    });
+
+    panels[cfg.id] = {
+      topic: cfg.topic,
+      cells,
+      lastEmpty: {},
+      showScore: {},
+      lastMessageAt: 0,
+      summaryText: document.getElementById(`${cfg.id}-summaryText`),
+      lastMsgText: document.getElementById(`${cfg.id}-lastMsgText`),
+      lastRecvText: document.getElementById(`${cfg.id}-lastRecvText`),
+      latencyText: document.getElementById(`${cfg.id}-latencyText`),
+      staleBanner: document.getElementById(`${cfg.id}-staleBanner`),
+    };
+  }
+
+  PANELS.forEach((cfg, i) => {
+    if (i > 0) {
+      const divider = document.createElement("div");
+      divider.className = "panel-divider";
+      divider.innerHTML = `<span class="vs-badge">VS</span>`;
+      document.getElementById("panels").appendChild(divider);
+    }
+    buildPanel(cfg);
   });
 
   const connDot = document.getElementById("connDot");
   const connText = document.getElementById("connText");
-  const lastMsgText = document.getElementById("lastMsgText");
-  const summaryText = document.getElementById("summaryText");
-  const staleBanner = document.getElementById("staleBanner");
+  const clockText = document.getElementById("clockText");
 
-  function formatClock(unixMs) {
-    return new Date(unixMs).toLocaleTimeString([], { hour12: false });
-  }
+  setInterval(() => {
+    clockText.textContent = formatClockMs(Date.now());
+  }, 50);
 
-  let lastMessageAt = 0;
-
-  function setCellState(slot, empty, score) {
-    const cell = cells[slot];
-    const changed = lastEmpty[slot] !== undefined && lastEmpty[slot] !== empty;
-    lastEmpty[slot] = empty;
+  function setCellState(state, slot, empty, score) {
+    const cell = state.cells[slot];
+    const changed = state.lastEmpty[slot] !== undefined && state.lastEmpty[slot] !== empty;
+    state.lastEmpty[slot] = empty;
     const icon = empty ? MISSING_ICON : BUCKET_ICON;
     const label = empty ? "Missing" : "Present";
-    cell.className = "cell " + (empty ? "missing" : "present") + (showScore[slot] ? " show-score" : "");
+    cell.className = "cell " + (empty ? "missing" : "present") + (state.showScore[slot] ? " show-score" : "");
     cell.innerHTML = `<span class="slot-label">${slot}</span>${icon}<span class="state-text">${label}</span>` +
       `<button class="score-toggle" data-slot="${slot}" title="Toggle exact score" aria-label="Toggle exact score for ${slot}">i</button>` +
       `<span class="score-line">${label} · p_absent ${score.toFixed(3)}</span>`;
@@ -384,34 +609,31 @@
     }
   }
 
-  grid.addEventListener("click", (e) => {
-    const btn = e.target.closest(".score-toggle");
-    if (!btn) return;
-    const slot = btn.dataset.slot;
-    showScore[slot] = !showScore[slot];
-    cells[slot].classList.toggle("show-score", showScore[slot]);
-  });
-
-  function applySnapshot(msg) {
+  function applySnapshot(state, msg) {
     let numEmpty = 0;
     for (const slot of SLOTS) {
       const empty = Number(msg["empty_" + slot]) === 1;
       const score = Number(msg["p_absent_" + slot]);
-      setCellState(slot, empty, score);
+      setCellState(state, slot, empty, score);
       if (empty) numEmpty++;
     }
-    summaryText.innerHTML = `<strong>${numEmpty} / 9</strong> slots empty`;
-    lastMessageAt = Date.now();
-    lastMsgText.textContent = "· last frame " + formatClock(Number(msg.ts));
-    staleBanner.classList.remove("show");
-    Object.values(cells).forEach(c => c.classList.remove("stale"));
+    state.summaryText.innerHTML = `<strong>${numEmpty} / 9</strong> slots empty`;
+    state.lastMessageAt = Date.now();
+    state.lastMsgText.textContent = formatClock(Number(msg.ts));
+    state.lastRecvText.textContent = formatClockMs(state.lastMessageAt);
+    const offsetMs = state.lastMessageAt - Number(msg.ts);
+    state.latencyText.textContent = (offsetMs >= 0 ? "+" : "") + offsetMs + " ms";
+    state.staleBanner.classList.remove("show");
+    Object.values(state.cells).forEach(c => c.classList.remove("stale"));
   }
 
   setInterval(() => {
-    if (lastMessageAt === 0) return;
-    const stale = Date.now() - lastMessageAt > STALE_AFTER_MS;
-    staleBanner.classList.toggle("show", stale);
-    Object.values(cells).forEach(c => c.classList.toggle("stale", stale));
+    Object.values(panels).forEach(state => {
+      if (state.lastMessageAt === 0) return;
+      const stale = Date.now() - state.lastMessageAt > STALE_AFTER_MS;
+      state.staleBanner.classList.toggle("show", stale);
+      Object.values(state.cells).forEach(c => c.classList.toggle("stale", stale));
+    });
   }, 1000);
 
   function setConnStatus(kind, text) {
@@ -424,23 +646,26 @@
 
   client.on("connect", () => {
     setConnStatus("ok", "Connected");
-    client.subscribe(TOPIC);
+    PANELS.forEach(cfg => client.subscribe(cfg.topic));
   });
   client.on("reconnect", () => setConnStatus("warn", "Reconnecting…"));
   client.on("close", () => setConnStatus("", "Disconnected"));
   client.on("error", () => setConnStatus("", "Connection error"));
 
-  client.on("message", (_topic, payload) => {
-    // One MQTT message carries one TupleBuffer, which can hold multiple
-    // rows -- so the payload is newline-delimited JSON, not a single
-    // object. Each line is already a full 9-slot snapshot, so applying
-    // just the last line is enough to reflect current state.
+  client.on("message", (topic, payload) => {
+    const cfg = PANELS.find(p => p.topic === topic);
+    if (!cfg) return;
+    const state = panels[cfg.id];
+    // One MQTT message can carry a whole TupleBuffer -- newline-delimited
+    // JSON, not a single object. Each line is already a full 9-slot
+    // snapshot, so applying just the last line is enough. The Python
+    // baseline sends one object per message, which this still handles fine.
     const lines = payload.toString().split("\n").filter(Boolean);
     if (lines.length === 0) return;
     try {
-      applySnapshot(JSON.parse(lines[lines.length - 1]));
+      applySnapshot(state, JSON.parse(lines[lines.length - 1]));
     } catch (e) {
-      console.error("Bad message on", TOPIC, e, payload.toString());
+      console.error("Bad message on", topic, e, payload.toString());
     }
   });
 </script>

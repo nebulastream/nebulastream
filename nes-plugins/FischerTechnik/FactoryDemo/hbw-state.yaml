@@ -10,20 +10,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Webapp feed for the HBW slot-state monitor (see webapp/index.html). Same
-# query logic as ssc-slot-anomaly-gated-batched.yaml/.sql (one MODEL_INFERENCE
-# call over all 9 slots per frame, pan/tilt-gated, unconditional -- every
-# aligned frame reaches the sink whether or not any slot is empty) -- only the
-# sink changed: MQTT/JSON to a LOCAL broker instead of a CSV file, so a
-# browser can subscribe to it live. This is a deliberately separate broker
-# from the factory's own (192.168.0.10) -- the query publishes to
-# localhost:1883, and webapp/index.html subscribes to the same local broker
-# over its websocket listener (localhost:9001). See webapp/mosquitto.conf for
-# that broker's config and webapp/docker-compose.yml to run it.
+# Webapp feed for the HBW slot-state monitor (see webapp/index.html). One
+# MODEL_INFERENCE call over all 9 slots per frame -- every frame reaches the
+# sink whether or not any slot is empty -- publishing MQTT/JSON to a LOCAL
+# broker instead of a CSV file, so a browser can subscribe to it live. This
+# is a deliberately separate broker from the factory's own (192.168.0.10) --
+# the query publishes to localhost:1883, and webapp/index.html subscribes to
+# the same local broker over its websocket listener (localhost:9001). See
+# webapp/mosquitto.conf for that broker's config and webapp/docker-compose.yml
+# to run it.
 #
-# Left ssc-slot-anomaly-gated-batched.yaml/.sql untouched; this file has its
-# own client_ids (suffixed "-hbw-state") so both can run at the same time
-# without booting each other's MQTT connections.
+# Unlike ssc-slot-anomaly-gated-batched.yaml/.sql, this query does NOT gate
+# on PTU pan/tilt alignment: that join (camera frames vs. a PTU stream that
+# only emits every ~2s) was an exact-bucket windowed equi-join, so most
+# frames landed in a bucket with no matching PTU row and were silently
+# dropped -- and even fixed, PTU's own ~2s cadence would still cap output
+# freshness. Removed for now (see webapp latency analysis); pan/tilt gating
+# will be reconsidered separately, e.g. as a lookup against last-known state
+# instead of a windowed join. This file has its own client_ids (suffixed
+# "-hbw-state") so it can run alongside ssc-slot-anomaly-gated-batched
+# without the two stepping on each other's MQTT connections.
 
 sinks:
   - name: HBW_STATE_SINK
@@ -110,14 +116,6 @@ logical:
         type: VARSIZED
       - name: '"data"'
         type: VARSIZED
-  - name: PTU_POS_GATE
-    schema:
-      - name: '"ts"'
-        type: VARSIZED
-      - name: '"pan"'
-        type: FLOAT64
-      - name: '"tilt"'
-        type: FLOAT64
 
 physical:
   - logical: SSC_CAM
@@ -129,21 +127,8 @@ physical:
     source_config:
       server_uri: 192.168.0.10
       topic: i/cam
-      flush_interval_ms: 1000
+      flush_interval_ms: 100
       client_id: nebulastream-factorydemo-hbw-state-cam
-      qos: 0
-      log_messages: false
-  - logical: PTU_POS_GATE
-    host: localhost:8080
-    parser_config:
-      type: JSON
-      tuple_delimiter: "\n"
-    type: MQTT
-    source_config:
-      server_uri: 192.168.0.10
-      topic: i/ptu/pos
-      flush_interval_ms: 1000
-      client_id: nebulastream-factorydemo-hbw-state-ptu-gate
       qos: 0
       log_messages: false
 
