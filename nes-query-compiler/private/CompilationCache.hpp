@@ -15,10 +15,10 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <CompilationCacheConfiguration.hpp>
 
 namespace nautilus::engine
 {
@@ -38,27 +38,19 @@ namespace NES::QueryCompilation
 class CompilationCache final
 {
 public:
-    struct Settings final
-    {
-        bool enabled = false;
-        std::string cacheDir;
-    };
-
-    explicit CompilationCache(Settings settings);
+    explicit CompilationCache(CompilationCacheConfiguration configuration);
 
     [[nodiscard]] bool isEnabled() const;
-    void prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration);
-    void resetPipelineOrdinals();
-
-    void configureEngineOptionsForPipeline(nautilus::engine::EngineOptions& options, const std::shared_ptr<Pipeline>& pipeline);
+    void prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& executionConfiguration);
+    void configureEngineOptionsForPipeline(nautilus::engine::EngineOptions& options, const Pipeline& pipeline);
 
 private:
-    [[nodiscard]] uint64_t getStablePipelineOrdinal(const std::shared_ptr<Pipeline>& pipeline);
-    [[nodiscard]] std::string createExplicitCacheKey(const std::shared_ptr<Pipeline>& pipeline);
+    [[nodiscard]] uint64_t getStablePipelineOrdinal(const Pipeline& pipeline);
+    [[nodiscard]] std::string createExplicitCacheKey(const Pipeline& pipeline);
 
     [[nodiscard]] static std::string createHandlerCacheSignature(const Pipeline& pipeline);
 
-    Settings settings;
+    CompilationCacheConfiguration configuration;
     std::optional<std::string> binaryFingerprint;
     std::string cacheKeySeed;
     std::unordered_map<const Pipeline*, uint64_t> pipelineToStableOrdinalMap;

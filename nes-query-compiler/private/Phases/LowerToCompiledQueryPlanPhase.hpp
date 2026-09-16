@@ -37,7 +37,7 @@ class LowerToCompiledQueryPlanPhase
 {
 public:
     explicit LowerToCompiledQueryPlanPhase(
-        DumpMode dumpQueryCompilationIntermediateRepresentations, QueryCompilation::CompilationCache* compilationCache)
+        DumpMode dumpQueryCompilationIntermediateRepresentations, QueryCompilation::CompilationCache& compilationCache)
         : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), compilationCache(compilationCache)
     {
     }
@@ -64,6 +64,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
-    QueryCompilation::CompilationCache* compilationCache;
+    QueryCompilation::CompilationCache& compilationCache;
 };
 }

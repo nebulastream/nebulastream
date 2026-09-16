@@ -34,11 +34,10 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
 {
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
 
-    auto compilationCache
-        = CompilationCache(CompilationCache::Settings{compilationCacheSettings.enabled, compilationCacheSettings.cacheDir});
+    auto compilationCache = CompilationCache(compilationCacheConfiguration);
     compilationCache.prepareForQuery(request->queryPlan, defaultQueryExecution);
 
-    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, &compilationCache);
+    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, compilationCache);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }

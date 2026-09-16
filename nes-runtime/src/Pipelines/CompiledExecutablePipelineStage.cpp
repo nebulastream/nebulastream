@@ -114,11 +114,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     CPPTRACE_TRY
     {
         auto module = engine.createModule();
-        if (const auto cacheKey = module.getOptions().getOptionOrDefault("engine.Blob.CacheKey", std::string{}); !cacheKey.empty())
-        {
-            module.setOption(
-                "engine.Blob.CacheKey", fmt::format("{}:workers={}", cacheKey, pipelineExecutionContext.getNumberOfWorkerThreads()));
-        }
+        module.setOption("nes.numberOfWorkerThreads", std::to_string(pipelineExecutionContext.getNumberOfWorkerThreads()));
         CompilationContext compilationCtx{pipelineExecutionContext, operatorHandlers, runtimeBindings, operatorHandlerBindings};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);

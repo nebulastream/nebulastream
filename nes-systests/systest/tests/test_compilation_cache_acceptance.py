@@ -467,7 +467,8 @@ class CompilationCacheAcceptanceTests(unittest.TestCase):
             self.assertIn("--shuffle", command)
             self.assertNotIn("--clusterConfig", command)
             self.assertNotIn("--shuffle-seed", command)
-            self.assertIn("--worker.enable_compilation_cache=true", command)
+            self.assertIn("--worker.compilation_cache.enabled=true", command)
+            self.assertIn(f"--worker.compilation_cache.cache_dir={self.root / 'cache'}", command)
             self.assertEqual(command[command.index("--numberConcurrentQueries") + 1], "6")
 
     def test_cli_prints_planned_aborts_separately_from_real_module_hits(self):

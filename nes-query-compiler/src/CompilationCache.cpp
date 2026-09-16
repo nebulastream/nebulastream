@@ -57,47 +57,43 @@ std::optional<std::string> createBinaryFingerprint()
 
 }
 
-CompilationCache::CompilationCache(Settings settings)
-    : settings(std::move(settings))
-    , binaryFingerprint(this->settings.enabled && !this->settings.cacheDir.empty() ? createBinaryFingerprint() : std::nullopt)
+CompilationCache::CompilationCache(CompilationCacheConfiguration configuration)
+    : configuration(std::move(configuration))
+    , binaryFingerprint(
+          this->configuration.enabled.getValue() && !this->configuration.cacheDir.getValue().empty() ? createBinaryFingerprint()
+                                                                                                     : std::nullopt)
 {
-    if (!this->settings.enabled && !this->settings.cacheDir.empty())
+    if (!this->configuration.enabled.getValue() && this->configuration.cacheDir.isExplicitlySet())
     {
         NES_INFO("Compilation cache directory is set, but compilation cache is disabled.");
     }
-    if (this->settings.enabled && !this->settings.cacheDir.empty() && !binaryFingerprint.has_value())
+    if (this->configuration.enabled.getValue() && !this->configuration.cacheDir.getValue().empty() && !binaryFingerprint.has_value())
     {
         NES_WARNING("Could not determine binary fingerprint. Disabling compilation cache.");
-        this->settings.enabled = false;
     }
 }
 
 bool CompilationCache::isEnabled() const
 {
-    return settings.enabled && !settings.cacheDir.empty() && binaryFingerprint.has_value();
+    return configuration.enabled.getValue() && !configuration.cacheDir.getValue().empty() && binaryFingerprint.has_value();
 }
 
-void CompilationCache::prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration)
+void CompilationCache::prepareForQuery(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& executionConfiguration)
 {
-    resetPipelineOrdinals();
+    pipelineToStableOrdinalMap.clear();
+    nextStablePipelineOrdinal = 0;
     cacheKeySeed.clear();
     if (!isEnabled())
     {
         return;
     }
-    cacheKeySeed = OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, configuration);
+    cacheKeySeed = OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, executionConfiguration);
     PRECONDITION(!cacheKeySeed.empty(), "Compilation cache requires a non-empty optimized logical plan seed");
 }
 
-void CompilationCache::resetPipelineOrdinals()
+uint64_t CompilationCache::getStablePipelineOrdinal(const Pipeline& pipeline)
 {
-    pipelineToStableOrdinalMap.clear();
-    nextStablePipelineOrdinal = 0;
-}
-
-uint64_t CompilationCache::getStablePipelineOrdinal(const std::shared_ptr<Pipeline>& pipeline)
-{
-    const Pipeline* pipelinePtr = pipeline.get();
+    const Pipeline* pipelinePtr = &pipeline;
     if (const auto it = pipelineToStableOrdinalMap.find(pipelinePtr); it != pipelineToStableOrdinalMap.end())
     {
         return it->second;
@@ -107,7 +103,7 @@ uint64_t CompilationCache::getStablePipelineOrdinal(const std::shared_ptr<Pipeli
     return ordinal;
 }
 
-std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipeline>& pipeline)
+std::string CompilationCache::createExplicitCacheKey(const Pipeline& pipeline)
 {
     PRECONDITION(!cacheKeySeed.empty(), "Compilation cache requires a non-empty optimized logical plan seed");
 
@@ -121,19 +117,18 @@ std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipel
     }
     keyBuilder << ":q=" << cacheKeySeed;
     keyBuilder << ":o=" << pipelineOrdinal;
-    keyBuilder << ":h=" << createHandlerCacheSignature(*pipeline);
+    keyBuilder << ":h=" << createHandlerCacheSignature(pipeline);
     return keyBuilder.str();
 }
 
-void CompilationCache::configureEngineOptionsForPipeline(
-    nautilus::engine::EngineOptions& options, const std::shared_ptr<Pipeline>& pipeline)
+void CompilationCache::configureEngineOptionsForPipeline(nautilus::engine::EngineOptions& options, const Pipeline& pipeline)
 {
     if (!isEnabled())
     {
         return;
     }
 
-    options.setOption("engine.Blob.CacheDir", settings.cacheDir);
+    options.setOption("engine.Blob.CacheDir", configuration.cacheDir.getValue());
     options.setOption("engine.Blob.CacheKey", createExplicitCacheKey(pipeline));
 }
 

@@ -376,7 +376,7 @@ def run_phase(
         "--worker.default_query_execution.execution_mode=COMPILER",
         f"--worker.default_query_execution.slice_cache.enable_slice_cache={slice_cache}",
         "--worker.total_memory_in_bytes=805306368", "--worker.unpooled_memory_fraction=0.8333333",
-        "--worker.enable_compilation_cache=true", f"--worker.compilation_cache_dir={run_root / 'cache'}",
+        "--worker.compilation_cache.enabled=true", f"--worker.compilation_cache.cache_dir={run_root / 'cache'}",
     ]
     print(f"Running {phase} process: {shlex.join(command)}", flush=True)
     with output_path.open("w", encoding="utf-8") as output:

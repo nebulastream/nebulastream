@@ -28,12 +28,12 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <Schema/Schema.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Serialization/ReflectedOperator.hpp>
 #include <Serialization/TraitReflection.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -42,7 +42,6 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Reflection.hpp>
 #include <rfl/Generic.hpp>
-#include <rfl/json/read.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -364,28 +363,9 @@ void assignOperatorOrdinals(
     }
 }
 
-std::unordered_map<OperatorId, ReflectedOperator> reflectOperators(const LogicalPlan& optimizedPlan)
-{
-    const auto serializedPlan = QueryPlanSerializationUtil::serializeQueryPlan(optimizedPlan);
-    std::unordered_map<OperatorId, ReflectedOperator> reflectedOperators;
-    reflectedOperators.reserve(serializedPlan.reflectedoperators_size());
-    const ReflectionContext context;
-    for (const auto& serializedOperator : serializedPlan.reflectedoperators())
-    {
-        const auto generic = rfl::json::read<rfl::Generic>(serializedOperator);
-        PRECONDITION(generic.has_value(), "Failed to parse a reflected operator while computing a plan signature");
-        auto reflectedOperator = context.unreflect<ReflectedOperator>(Reflected{*generic});
-        const auto operatorId = reflectedOperator.operatorId;
-        const auto inserted = reflectedOperators.emplace(operatorId, std::move(reflectedOperator)).second;
-        PRECONDITION(inserted, "Duplicate operator id {} while computing a plan signature", operatorId.getRawValue());
-    }
-    return reflectedOperators;
-}
-
 void appendOperator(
     CanonicalWriter& writer,
     const LogicalOperator& logicalOperator,
-    const std::unordered_map<OperatorId, ReflectedOperator>& reflectedOperators,
     const std::unordered_map<OperatorId, uint64_t>& operatorOrdinals,
     std::unordered_set<OperatorId>& emittedOperators)
 {
@@ -396,9 +376,6 @@ void appendOperator(
         writer.unsignedInteger(ordinal);
         return;
     }
-
-    const auto reflectedOperator = reflectedOperators.find(logicalOperator.getId());
-    PRECONDITION(reflectedOperator != reflectedOperators.end(), "Logical operator is missing reflected configuration");
 
     writer.marker('N');
     writer.unsignedInteger(ordinal);
@@ -429,9 +406,14 @@ void appendOperator(
             writer.marker('n');
         }
     }
+    else if (logicalOperator.tryGetAs<UnionLogicalOperator>() || logicalOperator.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>())
+    {
+        writer.marker('r');
+        writer.unsignedInteger(ordinal);
+    }
     else
     {
-        appendGeneric(writer, *reflectedOperator->second.config, operatorOrdinals);
+        appendGeneric(writer, *logicalOperator->reflect(ReflectionContext{}), operatorOrdinals);
     }
 
     const auto children = logicalOperator.getChildren();
@@ -439,7 +421,7 @@ void appendOperator(
     writer.unsignedInteger(children.size());
     for (const auto& child : children)
     {
-        appendOperator(writer, child, reflectedOperators, operatorOrdinals, emittedOperators);
+        appendOperator(writer, child, operatorOrdinals, emittedOperators);
     }
 }
 
@@ -462,7 +444,6 @@ void appendConfiguration(CanonicalWriter& writer, const QueryExecutionConfigurat
 std::string OptimizedLogicalPlanSignatureUtil::create(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration)
 {
     CanonicalWriter writer;
-    writer.string("nes.optimized-logical-plan.v3");
     appendConfiguration(writer, configuration);
 
     std::unordered_map<OperatorId, uint64_t> operatorOrdinals;
@@ -472,13 +453,12 @@ std::string OptimizedLogicalPlanSignatureUtil::create(const LogicalPlan& optimiz
         assignOperatorOrdinals(root, operatorOrdinals, nextOrdinal);
     }
 
-    const auto reflectedOperators = reflectOperators(optimizedPlan);
     std::unordered_set<OperatorId> emittedOperators;
     writer.marker('G');
     writer.unsignedInteger(optimizedPlan.getRootOperators().size());
     for (const auto& root : optimizedPlan.getRootOperators())
     {
-        appendOperator(writer, root, reflectedOperators, operatorOrdinals, emittedOperators);
+        appendOperator(writer, root, operatorOrdinals, emittedOperators);
     }
     return writer.take();
 }

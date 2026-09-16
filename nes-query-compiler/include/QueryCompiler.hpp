@@ -14,22 +14,16 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
+#include <CompilationCacheConfiguration.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {
-struct CompilationCacheSettings final
-{
-    bool enabled = true;
-    std::string cacheDir;
-};
-
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
@@ -46,9 +40,8 @@ class QueryCompiler
 {
 public:
     explicit QueryCompiler(
-        QueryExecutionConfiguration defaultQueryExecution,
-        CompilationCacheSettings compilationCacheSettings = {})
-        : defaultQueryExecution(std::move(defaultQueryExecution)), compilationCacheSettings(std::move(compilationCacheSettings))
+        QueryExecutionConfiguration defaultQueryExecution, CompilationCacheConfiguration compilationCacheConfiguration = {})
+        : defaultQueryExecution(std::move(defaultQueryExecution)), compilationCacheConfiguration(std::move(compilationCacheConfiguration))
     {
     }
 
@@ -56,7 +49,7 @@ public:
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;
-    CompilationCacheSettings compilationCacheSettings;
+    CompilationCacheConfiguration compilationCacheConfiguration;
 };
 
 }

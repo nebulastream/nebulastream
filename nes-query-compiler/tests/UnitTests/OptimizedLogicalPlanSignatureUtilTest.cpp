@@ -12,18 +12,33 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <gtest/gtest.h>
+#include <nautilus/CompilationStatistics.hpp>
+#include <nautilus/Engine.hpp>
+#include <nautilus/val.hpp>
+#include <yaml-cpp/yaml.h>
+#include <scope_guard.hpp>
 
+#include <Configuration/WorkerConfiguration.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
@@ -35,6 +50,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <CompilationCache.hpp>
+#include <CompilationCacheConfiguration.hpp>
 #include <OptimizedLogicalPlanSignatureUtil.hpp>
 #include <Pipeline.hpp>
 #include <QueryExecutionConfiguration.hpp>
@@ -86,6 +102,40 @@ LogicalPlan createPlan(
 std::string createSignature(const LogicalPlan& plan, const QueryExecutionConfiguration& configuration = {})
 {
     return OptimizedLogicalPlanSignatureUtil::create(plan, configuration);
+}
+
+LogicalOperator selectValue(const LogicalOperator& child, std::string value)
+{
+    const auto field = child.getOutputSchema()[Identifier::parse("VALUE")].value();
+    return SelectionLogicalOperator::create(
+        child,
+        EqualsLogicalFunction{FieldAccessLogicalFunction{field}, ConstantValueLogicalFunction{field.getDataType(), std::move(value)}});
+}
+
+LogicalPlan createFilteredPlan(const DataType type, const std::vector<std::string>& values)
+{
+    const auto plan = createPlan(type);
+    const auto sink = plan.getRootOperators().front().getAs<SinkLogicalOperator>();
+    auto child = sink.getChildren().front();
+    for (const auto& value : values)
+    {
+        child = selectValue(child, value);
+    }
+    return LogicalPlan{QueryId::invalid(), {SinkLogicalOperator::create(child, sink->getSinkDescriptor().value())}};
+}
+
+LogicalPlan createUnionPlan(const bool shareSource, const bool reverseChildren = false)
+{
+    const auto type = DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto plan = createPlan(type);
+    const auto sink = plan.getRootOperators().front().getAs<SinkLogicalOperator>();
+    const auto source = sink.getChildren().front();
+    const auto rightSource = shareSource ? source : createPlan(type).getRootOperators().front().getChildren().front();
+    auto left = selectValue(source, "1");
+    auto right = selectValue(rightSource, "2");
+    auto children = reverseChildren ? std::vector{right, left} : std::vector{left, right};
+    const auto merged = UnionLogicalOperator::create(std::move(children));
+    return LogicalPlan{QueryId::invalid(), {SinkLogicalOperator::create(merged, sink->getSinkDescriptor().value())}};
 }
 }
 
@@ -142,19 +192,93 @@ TEST_F(OptimizedLogicalPlanSignatureUtilTest, QueryExecutionConfigurationAffects
     EXPECT_NE(createSignature(plan, defaultConfiguration), createSignature(plan, changedConfiguration));
 }
 
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, CacheConfigurationUsesNestedOptions)
+{
+    WorkerConfiguration worker;
+    EXPECT_FALSE(worker.compilationCache.enabled.getValue());
+    EXPECT_EQ(worker.compilationCache.cacheDir.getValue(), "/tmp/nes-compilation-cache");
+    EXPECT_FALSE(worker.compilationCache.isExplicitlySet());
+
+    worker.overwriteConfigWithYAMLNode(YAML::Load("compilation_cache:\n  enabled: true\n  cache_dir: /tmp/nes-cache-config-test\n"));
+    EXPECT_TRUE(worker.compilationCache.enabled.getValue());
+    EXPECT_EQ(worker.compilationCache.cacheDir.getValue(), "/tmp/nes-cache-config-test");
+
+    WorkerConfiguration overrides;
+    overrides.overwriteConfigWithCommandLineInput({{"compilation_cache.enabled", "false"}});
+    worker.applyExplicitlySetFrom(overrides);
+    EXPECT_FALSE(worker.compilationCache.enabled.getValue());
+    EXPECT_EQ(worker.compilationCache.cacheDir.getValue(), "/tmp/nes-cache-config-test");
+
+    worker.clear();
+    EXPECT_FALSE(worker.compilationCache.enabled.getValue());
+    EXPECT_EQ(worker.compilationCache.cacheDir.getValue(), "/tmp/nes-compilation-cache");
+    EXPECT_FALSE(worker.compilationCache.isExplicitlySet());
+}
+
 TEST_F(OptimizedLogicalPlanSignatureUtilTest, DisabledCacheSkipsSignatureGeneration)
 {
     const LogicalPlan planWithoutInferredSchema{QueryId::invalid(), {UnionLogicalOperator::create()}};
     const QueryExecutionConfiguration configuration;
     const auto cacheDir = std::filesystem::temp_directory_path().string();
 
-    for (const auto& settings : std::vector<QueryCompilation::CompilationCache::Settings>{{false, cacheDir}, {true, {}}})
+    CompilationCacheConfiguration disabled;
+    disabled.cacheDir = cacheDir;
+    CompilationCacheConfiguration emptyDirectory;
+    emptyDirectory.enabled = true;
+    emptyDirectory.cacheDir = std::string{};
+    for (const auto& cacheConfiguration : {disabled, emptyDirectory})
     {
-        SCOPED_TRACE(settings.enabled ? "empty cache directory" : "disabled cache");
-        QueryCompilation::CompilationCache cache(settings);
+        SCOPED_TRACE(cacheConfiguration.enabled.getValue() ? "empty cache directory" : "disabled cache");
+        QueryCompilation::CompilationCache cache(cacheConfiguration);
         ASSERT_FALSE(cache.isEnabled());
         EXPECT_NO_THROW(cache.prepareForQuery(planWithoutInferredSchema, configuration));
     }
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, NestedBoundFieldsIgnoreGeneratedIds)
+{
+    const auto type = DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    EXPECT_EQ(createSignature(createFilteredPlan(type, {"1", "2"})), createSignature(createFilteredPlan(type, {"1", "2"})));
+    EXPECT_NE(createSignature(createFilteredPlan(type, {"1", "2"})), createSignature(createFilteredPlan(type, {"1", "3"})));
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, LiteralBytesRemainPartOfIdentity)
+{
+    const auto type = DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE};
+    const std::vector<std::string> values{"aaaa", "bbbb", std::string("a\0b", 3), std::string("a\0c", 3), "Grüße🌍"};
+    std::vector<std::string> signatures;
+    for (const auto& value : values)
+    {
+        const auto signature = createSignature(createFilteredPlan(type, {value}));
+        EXPECT_EQ(signature, createSignature(createFilteredPlan(type, {value})));
+        for (const auto& previous : signatures)
+        {
+            EXPECT_NE(signature, previous);
+        }
+        signatures.push_back(signature);
+    }
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, SharedSubgraphsAndChildOrderArePreserved)
+{
+    const auto shared = createSignature(createUnionPlan(true));
+    EXPECT_EQ(shared, createSignature(createUnionPlan(true)));
+    EXPECT_NE(shared, createSignature(createUnionPlan(false)));
+    EXPECT_NE(shared, createSignature(createUnionPlan(true, true)));
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, IngestionWatermarkIdentityIgnoresGeneratedId)
+{
+    const auto type = DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto makePlan = [&]
+    {
+        const auto plan = createPlan(type);
+        const auto sink = plan.getRootOperators().front().getAs<SinkLogicalOperator>();
+        const auto watermark = IngestionTimeWatermarkAssignerLogicalOperator::create(sink.getChildren().front());
+        return LogicalPlan{QueryId::invalid(), {SinkLogicalOperator::create(watermark, sink->getSinkDescriptor().value())}};
+    };
+    EXPECT_EQ(createSignature(makePlan()), createSignature(makePlan()));
+    EXPECT_NE(createSignature(makePlan()), createSignature(createPlan(type)));
 }
 
 #ifdef __linux__
@@ -166,12 +290,15 @@ TEST_F(OptimizedLogicalPlanSignatureUtilTest, EnabledCacheConfiguresSemanticQuer
     QueryExecutionConfiguration configuration;
     configuration.numberOfPartitions = DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES * 2;
     const auto cacheDir = std::filesystem::temp_directory_path().string();
-    QueryCompilation::CompilationCache cache({true, cacheDir});
+    CompilationCacheConfiguration cacheConfiguration;
+    cacheConfiguration.enabled = true;
+    cacheConfiguration.cacheDir = cacheDir;
+    QueryCompilation::CompilationCache cache(cacheConfiguration);
     ASSERT_TRUE(cache.isEnabled());
 
     cache.prepareForQuery(plan, configuration);
     nautilus::engine::EngineOptions options;
-    cache.configureEngineOptionsForPipeline(options, pipeline);
+    cache.configureEngineOptionsForPipeline(options, *pipeline);
 
     EXPECT_EQ(options.getOptionOrDefault("engine.Blob.CacheDir", std::string{}), cacheDir);
     const auto cacheKey = options.getOptionOrDefault("engine.Blob.CacheKey", std::string{});
@@ -179,6 +306,105 @@ TEST_F(OptimizedLogicalPlanSignatureUtilTest, EnabledCacheConfiguresSemanticQuer
     const auto queryKeyStart = cacheKey.find(":q=");
     ASSERT_NE(queryKeyStart, std::string::npos);
     EXPECT_EQ(cacheKey.substr(queryKeyStart), ":q=" + createSignature(plan, configuration) + ":o=0:h=0[]");
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, PipelineOrdinalsResetOnlyWhenPreparingAQuery)
+{
+    const auto type = DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
+    const auto plan = createPlan(type);
+    const auto sink = plan.getRootOperators().front().getAs<SinkLogicalOperator>();
+    const auto first = std::make_shared<Pipeline>(SinkPhysicalOperator(sink->getSinkDescriptor().value()));
+    const auto second = std::make_shared<Pipeline>(SinkPhysicalOperator(sink->getSinkDescriptor().value()));
+    const auto cacheDir = std::filesystem::temp_directory_path().string();
+    CompilationCacheConfiguration cacheConfiguration;
+    cacheConfiguration.enabled = true;
+    cacheConfiguration.cacheDir = cacheDir;
+    QueryCompilation::CompilationCache cache(cacheConfiguration);
+    ASSERT_TRUE(cache.isEnabled());
+    const auto keyFor = [&](const Pipeline& pipeline)
+    {
+        nautilus::engine::EngineOptions options;
+        cache.configureEngineOptionsForPipeline(options, pipeline);
+        return options.getOptionOrDefault("engine.Blob.CacheKey", std::string{});
+    };
+
+    cache.prepareForQuery(plan, {});
+    const auto firstKey = keyFor(*first);
+    const auto secondKey = keyFor(*second);
+    EXPECT_NE(firstKey, secondKey);
+    EXPECT_EQ(keyFor(*first), firstKey);
+    EXPECT_EQ(keyFor(*second), secondKey);
+
+    cache.prepareForQuery(createPlan(type), {});
+    EXPECT_EQ(keyFor(*second), firstKey);
+    EXPECT_EQ(keyFor(*first), secondKey);
+
+    QueryExecutionConfiguration changed;
+    changed.numberOfPartitions = DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES * 2;
+    cache.prepareForQuery(plan, changed);
+    EXPECT_NE(keyFor(*first), firstKey);
+    EXPECT_TRUE(keyFor(*first).ends_with(":o=0:h=0[]"));
+}
+
+TEST_F(OptimizedLogicalPlanSignatureUtilTest, WorkerCountOptionSeparatesNativeArtifacts)
+{
+    const auto cache = std::filesystem::temp_directory_path()
+        / ("nes-worker-count-cache-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    ASSERT_TRUE(std::filesystem::create_directory(cache));
+    SCOPE_EXIT
+    {
+        std::error_code error;
+        std::filesystem::remove_all(cache, error);
+    };
+
+    nautilus::engine::Options options;
+    options.setOption("engine.backend", "mlir");
+    options.setOption("engine.compiler", "legacy");
+    options.setOption("engine.Blob.CacheDir", cache.string());
+    options.setOption("engine.Blob.CacheKey", "nes-worker-count-option-test");
+    nautilus::engine::NautilusEngine engine(options);
+    std::unordered_map<uint64_t, std::string> keys;
+    for (const uint64_t workers : {uint64_t{1}, uint64_t{4}, (uint64_t{1} << 32) + 1, uint64_t{1}, uint64_t{4}, (uint64_t{1} << 32) + 1})
+    {
+        SCOPED_TRACE(workers);
+        const bool warm = keys.contains(workers);
+        auto module = engine.createModule();
+        module.setOption("nes.numberOfWorkerThreads", std::to_string(workers));
+        EXPECT_EQ(module.getOptions().getOptionOrDefault("engine.Blob.CacheKey", std::string{}), "nes-worker-count-option-test");
+        uint64_t traces = 0;
+        module.registerFunction<nautilus::val<uint64_t>()>(
+            "count",
+            [&traces, workers]() -> nautilus::val<uint64_t>
+            {
+                ++traces;
+                return workers;
+            });
+        auto compiled = module.compile();
+        EXPECT_EQ(compiled.getFunction<uint64_t()>("count")(), workers);
+        const auto statistics = compiled.getStatistics();
+        ASSERT_NE(statistics, nullptr);
+        const auto* outcome = statistics->find("cache.object");
+        const auto* traced = statistics->find("cache.tracingRan");
+        const auto* key = statistics->find("cache.key");
+        ASSERT_NE(outcome, nullptr);
+        ASSERT_NE(traced, nullptr);
+        ASSERT_NE(key, nullptr);
+        EXPECT_EQ(std::get<std::string>(*outcome), warm ? "hit" : "written");
+        EXPECT_EQ(std::get<int64_t>(*traced), warm ? 0 : 1);
+        EXPECT_EQ(traces == 0, warm);
+        if (warm)
+        {
+            EXPECT_EQ(std::get<std::string>(*key), keys.at(workers));
+        }
+        else
+        {
+            for (const auto& [otherWorkers, otherKey] : keys)
+            {
+                EXPECT_NE(std::get<std::string>(*key), otherKey);
+            }
+            keys.emplace(workers, std::get<std::string>(*key));
+        }
+    }
 }
 #endif
 }
