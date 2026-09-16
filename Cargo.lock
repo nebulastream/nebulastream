@@ -520,7 +520,6 @@ dependencies = [
  "anyhow",
  "async-channel",
  "async-trait",
- "chrono",
  "controller",
  "futures",
  "inventory",

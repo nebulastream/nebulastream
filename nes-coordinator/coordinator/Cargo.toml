@@ -24,8 +24,6 @@ tokio = { version = "0.2", package = "madsim-tokio", features = ["rt", "rt-multi
 tracing.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-chrono.workspace = true
-sea-orm.workspace = true
 futures.workspace = true
 
 [build-dependencies]
