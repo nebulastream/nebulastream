@@ -27,6 +27,7 @@ use tokio_retry2::{Retry, RetryError};
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, Span, error, info, info_span, warn};
+use crate::failpoint;
 
 pub type Result<T> = std::result::Result<T, Error>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -63,6 +64,7 @@ pub(super) enum NetworkServiceControlCommand {
         oneshot::Sender<ChannelCommandQueue>,
         SenderConfig,
     ),
+    SendBarrierComplete(ConnectionIdentifier, ChannelIdentifier, u64, u64),
 }
 
 /// Control commands sent to a connection handler.
@@ -86,6 +88,8 @@ pub(super) enum NetworkingConnectionControlCommand {
     /// Retry establishing a channel after a failure. This reuses the existing
     /// cancellation token and command queue from the failed attempt.
     RetryChannel(PendingChannel, Option<DeadChannel>),
+    /// Send a barrier complete notification over this control channel
+    SendBarrierComplete(ChannelIdentifier, u64, u64),
 }
 pub(super) type NetworkServiceController = async_channel::Sender<NetworkServiceControlCommand>;
 type NetworkServiceControlListener = async_channel::Receiver<NetworkServiceControlCommand>;
@@ -227,8 +231,11 @@ async fn create_connection<C: Communication>(
     }
 }
 
-type EstablishChannelRequest =
-    tokio::sync::mpsc::Sender<(ChannelIdentifier, oneshot::Sender<EstablishChannelResult>)>;
+enum NetworkingConnectionHandlerRequest {
+    EstablishChannel(ChannelIdentifier, oneshot::Sender<EstablishChannelResult>),
+    SendBarrierComplete(ChannelIdentifier, u64, u64, oneshot::Sender<bool>),
+}
+type ControlRequestSender = tokio::sync::mpsc::Sender<NetworkingConnectionHandlerRequest>;
 
 /// Attempts to register a channel with exponential backoff retry on failure.
 ///
@@ -266,10 +273,11 @@ type EstablishChannelRequest =
 async fn attempt_channel_registration<C: Communication + 'static>(
     this_connection: ThisConnectionIdentifier,
     pending_channel: PendingChannel,
-    channel_tx: EstablishChannelRequest,
+    channel_tx: ControlRequestSender,
     controller: NetworkingConnectionController,
     communication: C,
-    previous_channel : Option<DeadChannel>
+    previous_channel : Option<DeadChannel>,
+    own_controller: NetworkServiceController,
 ) {
     let retry = ExponentialBackoff::from_millis(2)
         .max_delay_millis(500)
@@ -280,7 +288,7 @@ async fn attempt_channel_registration<C: Communication + 'static>(
         async || -> core::result::Result<(Option<ConnectionIdentifier>), RetryError<Error>> {
             let (tx, rx) = oneshot::channel();
             if channel_tx
-                .send((pending_channel.id.clone(), tx))
+                .send(NetworkingConnectionHandlerRequest::EstablishChannel(pending_channel.id.clone(), tx))
                 .await
                 .is_err()
             {
@@ -323,7 +331,8 @@ async fn attempt_channel_registration<C: Communication + 'static>(
                 pending_channel,
                 communication,
                 controller,
-                previous_channel
+                previous_channel,
+                own_controller,
             );
         }
         None => {
@@ -331,6 +340,40 @@ async fn attempt_channel_registration<C: Communication + 'static>(
         }
     }
 
+}
+
+async fn send_barrier_complete_with_retry(
+    channel_tx: ControlRequestSender,
+    channel_id: ChannelIdentifier,
+    origin_id: u64,
+    epoch: u64,
+) {
+    let retry = ExponentialBackoff::from_millis(2)
+        .max_delay_millis(500)
+        .map(jitter);
+
+    let _ = Retry::spawn(
+        retry,
+        async || -> core::result::Result<(), RetryError<Error>> {
+            let (tx, rx) = oneshot::channel();
+            if channel_tx
+                .send(NetworkingConnectionHandlerRequest::SendBarrierComplete(channel_id.clone(), origin_id, epoch, tx))
+                .await
+                .is_err()
+            {
+                return Err(RetryError::Permanent("NetworkService Shutdown".into()));
+            }
+
+            match rx.await {
+                Ok(_) => Ok(()),
+                Err(err) => Err(RetryError::Transient {
+                    err: err.into(),
+                    retry_after: None,
+                }),
+            }
+        },
+    )
+    .await;
 }
 
 /// Handles all channel registrations and retries for a specific connection.
@@ -355,6 +398,7 @@ async fn connection_handler<C: Communication + 'static>(
     controller: NetworkingConnectionController,
     listener: NetworkingConnectionControlListener,
     communication: C,
+    own_controller: NetworkServiceController,
 ) -> Result<()> {
     let (request_connection, mut await_connection_request) = tokio::sync::mpsc::channel::<
         oneshot::Sender<(
@@ -364,9 +408,7 @@ async fn connection_handler<C: Communication + 'static>(
     >(1);
 
     let (channel_registration_request_handler, mut await_channel_registration_request) =
-        tokio::sync::mpsc::channel::<(ChannelIdentifier, oneshot::Sender<EstablishChannelResult>)>(
-            10,
-        );
+        tokio::sync::mpsc::channel::<NetworkingConnectionHandlerRequest>(10);
 
     // Connection Keepalive Task:
     // This task is responsible for establishing and maintaining connections to the target_connection.
@@ -430,20 +472,34 @@ async fn connection_handler<C: Communication + 'static>(
                     rx.await.expect("Connection Task should not have aborted");
 
                 loop {
-                    let Some((channel, response)) = await_channel_registration_request.recv().await
-                    else {
+                    let Some(request) = await_channel_registration_request.recv().await else {
                         return;
                     };
-                    match establish_channel(&mut writer, &mut reader, channel.clone()).await {
-                        // Channel could not be established, notify caller and reconnect
-                        EstablishChannelResult::BadConnection(c, ct) => {
-                            let _ = response.send(EstablishChannelResult::BadConnection(c, ct));
-                            // If establishing a channel fails because of a networking issue, we
-                            // have to reconnect first
-                            continue 'connection;
+                    match request {
+                        NetworkingConnectionHandlerRequest::EstablishChannel(channel, response) => {
+                            match establish_channel(&mut writer, &mut reader, channel.clone()).await {
+                                // Channel could not be established, notify caller and reconnect
+                                EstablishChannelResult::BadConnection(c, ct) => {
+                                    let _ = response.send(EstablishChannelResult::BadConnection(c, ct));
+                                    // If establishing a channel fails because of a networking issue, we
+                                    // have to reconnect first
+                                    continue 'connection;
+                                }
+                                other_result => {
+                                    let _ = response.send(other_result);
+                                }
+                            }
                         }
-                        other_result => {
-                            let _ = response.send(other_result);
+                        NetworkingConnectionHandlerRequest::SendBarrierComplete(channel_id, origin_id, epoch, response) => {
+                            failpoint!("sink.before_barrier_callback");
+                            if writer
+                                .send(ControlChannelRequest::BarrierComplete {channel_id, origin_id, epoch})
+                                .await
+                                .is_err()
+                            {
+                                continue 'connection;
+                            }
+                            response.send(true);
                         }
                     }
                 }
@@ -473,7 +529,8 @@ async fn connection_handler<C: Communication + 'static>(
                         channel_registration_request_handler.clone(),
                         controller.clone(),
                         communication.clone(),
-                        None
+                        None,
+                        own_controller.clone(),
                     )
                     .in_current_span(),
                 );
@@ -489,7 +546,19 @@ async fn connection_handler<C: Communication + 'static>(
                         channel_registration_request_handler.clone(),
                         controller.clone(),
                         communication.clone(),
-                        previous_channel
+                        previous_channel,
+                        own_controller.clone(),
+                    )
+                    .in_current_span(),
+                );
+            }
+            NetworkingConnectionControlCommand::SendBarrierComplete(channel_id, origin_id, epoch) => {
+                tokio::spawn(
+                    send_barrier_complete_with_retry(
+                        channel_registration_request_handler.clone(),
+                        channel_id,
+                        origin_id,
+                        epoch,
                     )
                     .in_current_span(),
                 );
@@ -509,6 +578,7 @@ fn create_connection_handler(
     this_connection: ThisConnectionIdentifier,
     target_connection: ConnectionIdentifier,
     communication: impl Communication + 'static,
+    own_controller: NetworkServiceController,
 ) -> (ScopedTask<()>, NetworkingConnectionController) {
     let (tx, rx) = async_channel::bounded::<NetworkingConnectionControlCommand>(1024);
     let control = tx.clone();
@@ -523,7 +593,8 @@ fn create_connection_handler(
                         target_connection,
                         control, // Pass controller clone so channel handlers can send RetryChannel commands
                         rx,
-                        communication
+                        communication,
+                        own_controller,
                     )
                     .await
                 );
@@ -546,6 +617,7 @@ fn create_connection_handler(
 /// until the service is shut down (when the control channel is closed).
 pub(super) async fn network_sender_dispatcher(
     this_connection: ThisConnectionIdentifier,
+    own_controller: NetworkServiceController,
     control: NetworkServiceControlListener,
     communication: impl Communication + 'static,
 ) -> Result<()> {
@@ -559,38 +631,54 @@ pub(super) async fn network_sender_dispatcher(
         (ScopedTask<()>, NetworkingConnectionController),
     > = HashMap::default();
 
-    // Consume `RegisterChannel` requests from the worker and dispatch them to a dedicated handler
-    while let Ok(NetworkServiceControlCommand::RegisterChannel(
-        target_connection,
-        channel,
-        tx,
-        channel_config,
-    )) = control.recv().await
-    {
-        // if the new channel is on a connection, which has not yet been created, a new connection
-        // handler is created before submitting the channel registration to the connection handler
-        let (_, controller) = connections.entry(target_connection.clone()).or_insert({
-            info!("Creating connection to {}", target_connection);
-            let (task, controller) = create_connection_handler(
-                this_connection.clone(),
-                target_connection.clone(),
-                communication.clone(),
-            );
-            (task, controller)
-        });
+    while let Ok(command) = control.recv().await {
+        match command {
+            // Consume `RegisterChannel` requests from the worker and dispatch them to a dedicated handler
+            NetworkServiceControlCommand::RegisterChannel(target_connection, channel, tx, channel_config) => {
+                // if the new channel is on a connection, which has not yet been created, a new connection
+                // handler is created before submitting the channel registration to the connection handler
+                let (_, controller) = connections.entry(target_connection.clone()).or_insert({
+                    info!("Creating connection to {}", target_connection);
+                    let (task, controller) = create_connection_handler(
+                        this_connection.clone(),
+                        target_connection.clone(),
+                        communication.clone(),
+                        own_controller.clone(),
+                    );
+                    (task, controller)
+                });
 
-        // Dispatch the request to the correct connection handler
-        controller
-            .send(NetworkingConnectionControlCommand::RegisterChannel(
-                channel,
-                tx,
-                channel_config,
-            ))
-            .await
-            // The Connection Controller should never terminate but instead attempt
-            // to reconnect. The only reason a connection controller would terminate is
-            // if it has been removed from the `connections` map.
-            .expect("BUG: Connection should not have been terminated");
+                // Dispatch the request to the correct connection handler
+                controller
+                    .send(NetworkingConnectionControlCommand::RegisterChannel(
+                        channel,
+                        tx,
+                        channel_config,
+                    ))
+                    .await
+                    // The Connection Controller should never terminate but instead attempt
+                    // to reconnect. The only reason a connection controller would terminate is
+                    // if it has been removed from the `connections` map.
+                    .expect("BUG: Connection should not have been terminated");
+            }
+            NetworkServiceControlCommand::SendBarrierComplete(target_connection, channel_id, origin_id, epoch) => {
+                let (_, controller) = connections.entry(target_connection.clone()).or_insert({
+                    info!("Creating connection to {}", target_connection);
+                    let (task, controller) = create_connection_handler(
+                        this_connection.clone(),
+                        target_connection.clone(),
+                        communication.clone(),
+                        own_controller.clone(),
+                    );
+                    (task, controller)
+                });
+
+                controller
+                    .send(NetworkingConnectionControlCommand::SendBarrierComplete(channel_id, origin_id, epoch))
+                    .await
+                    .expect("BUG: Connection should not have been terminated");;
+            }
+        }
     }
 
     // The software side was closed, which means that the NetworkingService was dropped.

@@ -17,6 +17,7 @@ use crate::protocol::*;
 use futures::SinkExt;
 use rand::Rng;
 use std::collections::{HashMap, VecDeque};
+use std::str::FromStr;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
@@ -138,10 +139,12 @@ pub(super) struct ChannelHandler<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> {
     cancellation_token: CancellationToken,
     pending_writes: VecDeque<TupleBuffer>,
     wait_for_ack: HashMap<OriginSequenceNumber, TupleBuffer>,
+    pending_barriers: HashMap<u64, Vec<(u64, String)>>, // OriginID, List of (sequence number, barrier token)
     writer: DataChannelSenderWriter<W>,
     reader: DataChannelSenderReader<R>,
     queue: ChannelCommandQueueListener,
     max_pending_acks: usize,
+    own_controller: NetworkServiceController,
 }
 
 
@@ -164,15 +167,18 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
         reader: DataChannelSenderReader<R>,
         writer: DataChannelSenderWriter<W>,
         max_pending_acks: usize,
+        own_controller: NetworkServiceController,
     ) -> Self {
         Self {
             cancellation_token,
             pending_writes: Default::default(),
             wait_for_ack: Default::default(),
+            pending_barriers: HashMap::new(),
             reader,
             writer,
             queue,
             max_pending_acks,
+            own_controller,
         }
     }
     /// Handles commands from the `SenderChannel` (software side).
@@ -231,7 +237,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
     ///
     /// Returns an error if an Ack/Nack is received for an unknown sequence number,
     /// indicating a protocol violation.
-    fn handle_response(&mut self, response: DataChannelResponse) -> InternalResult<()> {
+    async fn handle_response(&mut self, response: DataChannelResponse) -> InternalResult<()> {
         match response {
             DataChannelResponse::Close => {
                 info!("Channel Closed by other receiver");
@@ -249,12 +255,49 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     ));
                 }
             }
-            DataChannelResponse::AckData(seq) => {
-                if self.wait_for_ack.remove(&seq).is_none() {
-                    return Err(ErrorOrStatus::Error(
+            DataChannelResponse::AckData(seq, low_watermark_sn) => {
+                let ack = self.wait_for_ack.get(&seq).ok_or_else(|| {
+                    ErrorOrStatus::Error(
                         format!("Protocol Error. Unknown Seq {seq:?}").into(),
-                    ));
-                };
+                    )
+                })?;
+                
+                // set barrier as pending
+                for barrier in &ack.barriers {
+                    self.pending_barriers
+                        .entry(seq.0)
+                        .or_default()
+                        .push((seq.1, barrier.clone()));
+                }
+
+                // find barriers <= low watermark for current origin
+                let mut ready_barriers = Vec::new();
+                if let Some(barriers) = self.pending_barriers.get_mut(&seq.0) {
+                    let mut i = 0;
+
+                    while i < barriers.len() {
+                        if barriers[i].0 <= low_watermark_sn {
+                            ready_barriers.push(barriers.swap_remove(i).1);
+                        } else {
+                            i += 1;
+                        }
+                    }
+                }
+
+                // send barrier confirmations
+                for barrier in ready_barriers {
+                    let mut token_parts = barrier.splitn(4, '|');
+                    let host = ConnectionIdentifier::from_str(token_parts.next().expect("")).ok().expect("");
+                    let channel_id = token_parts.next().expect("").to_string();
+                    let origin_id = token_parts.next().expect("").parse().ok().expect("");
+                    let epoch = token_parts.next().expect("").parse().ok().expect("");
+
+                    self.own_controller
+                        .send(NetworkServiceControlCommand::SendBarrierComplete(host, channel_id, origin_id, epoch, ))
+                        .await;
+                }
+
+                self.wait_for_ack.remove(&seq);
                 trace!("Ack for {seq:?}");
             }
         }
@@ -397,7 +440,7 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
 
             select! {
                 response = Self::read_from_other_side(&self.cancellation_token, &mut self.reader), if should_read_from_other_side => {
-                    self.handle_response(response?)?;
+                    self.handle_response(response?).await?;
                 },
                 request = Self::read_from_software(&self.cancellation_token, &mut self.queue), if should_read_from_software => {
                     self.handle_request(request?).await?;
@@ -465,6 +508,7 @@ async fn channel_handler(
     target_connection: ConnectionIdentifier,
     communication: impl Communication,
     previous_channel : Option<DeadChannel>,
+    own_controller: NetworkServiceController,
 ) -> (Result<ChannelHandlerStatus>, Option<DeadChannel>) {
     debug!(
         "Channel negotiated. Connecting to {target_connection} on channel {}",
@@ -490,6 +534,7 @@ async fn channel_handler(
         reader,
         writer,
         pending_channel.max_pending_acks,
+        own_controller,
     );
 
     if let Some(channel) = previous_channel {
@@ -537,6 +582,7 @@ pub(super) fn create_channel_handler(
     communication: impl Communication + 'static,
     controller: NetworkingConnectionController,
     previous_channel : Option<DeadChannel>,
+    own_controller: NetworkServiceController,
 ) {
     tokio::spawn(
         {
@@ -550,6 +596,7 @@ pub(super) fn create_channel_handler(
                     target_connection,
                     communication,
                     previous_channel,
+                    own_controller,
                 )
                 .await;
 

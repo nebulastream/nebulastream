@@ -356,11 +356,12 @@ impl<C: Communication + 'static> NetworkService<C> {
             {
                 let this_connection = this_connection.clone();
                 let communication = communication.clone();
+                let own_controller = controller.clone();
                 async move {
                     debug!("Starting sender network service");
                     debug!(
                         "sender network service stopped: {:?}",
-                        network_sender_dispatcher(this_connection, listener, communication).await
+                        network_sender_dispatcher(this_connection, own_controller, listener, communication).await
                     );
                 }
             }
