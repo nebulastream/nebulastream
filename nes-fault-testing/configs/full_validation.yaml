@@ -202,3 +202,100 @@ testcases:
         trigger:
           type: TIME
           after_ms: 9000
+
+# ----------------------- Checkpoint Tests -----------------------------
+
+  # Let a node crash at a point where some older logs were pruned already
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/many_operators.test
+    failpoints:
+      - host: global
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: backup.before_checkpoint_complete
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 3
+
+  # Crash during checkpoint completion write (corrupted barrier file)
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/many_operators.test
+    failpoints:
+      - host: global
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: backup.during_checkpoint_complete
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 2
+
+  # Crash a worker before deleting an old epoch from disk
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/many_operators.test
+    failpoints:
+      - host: global
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: backup.before_epoch_delete
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 2
+
+  # Disconnect a worker just before sending a barrier confirmation. Tests retry logic
+  # TODO hosts
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/many_operators.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: sink.before_barrier_callback
+        action: DISCONNECT
+        trigger:
+          type: COUNT
+          count: 2
+      # no-op failpoint to verify that the previous checkpoint epoch completed
+      - host: merge-node-1:8080
+        name: sink.before_barrier_callback
+        action: NONE
+        trigger:
+          type: COUNT
+          count: 3
+
+  # Delay non-barrier buffers and crash node right after checkpoint. Test whether the barrier ACK mechanism works correctly
+  - mode: SYSTESTS
+    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    queries:
+      - ../systests/many_operators.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: task_queue.delay_nonbarrier
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: backup.after_checkpoint_complete
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 3
+
+
