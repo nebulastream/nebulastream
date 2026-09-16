@@ -25,14 +25,7 @@ namespace NES
 
 #include <uuid/uuid.h>
 
-static std::string generate_uuid()
-{
-    uuid_t bin;
-    uuid_generate_random(bin);
-    char str[37];
-    uuid_unparse_lower(bin, str);
-    return std::string(str);
-}
+
 
 static LogicalOperator dfs(LogicalOperator& root, const QueryOptimizerNetworkConfiguration& configuration)
 {
@@ -45,9 +38,7 @@ static LogicalOperator dfs(LogicalOperator& root, const QueryOptimizerNetworkCon
             auto newRoot = source.value()->
             withUpdatedConfig(ConfigParametersNetworkSource::BACKUP.name, true).
             withUpdatedConfig(ConfigParametersNetworkSource::BACKUP_PATH.name, path);
-            return SNDeduplicationLogicalOperator(WeakLogicalOperator{}, generate_uuid())
-                .withChildren({newRoot})
-                .withTraitSet(root.getTraitSet());
+            return newRoot;
         }
         return root;
     }
