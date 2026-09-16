@@ -12,18 +12,20 @@
     limitations under the License.
 */
 use crate::DEFAULT_REQUEST_TIMEOUT;
+use crate::client::{Client, WaitKind};
 use anyhow::{Context, Result, bail};
-use coordinator_bridge::Coordinator;
-use model::ml_model::CreateMlModel;
-use model::request::{StatementInput, Wait};
-use model::sink::CreateSink;
-use model::source::logical::CreateLogicalSource;
-use model::source::physical::CreatePhysicalSource;
+use model::ml_model::{self, CreateMlModel};
+use model::query::QueryWithFragments;
+use model::query::query_state::QueryState;
+use model::sink::{self, CreateSink};
+use model::source::logical::{self, CreateLogicalSource};
+use model::source::physical::{self, CreatePhysicalSource};
 use model::statement::Statement;
-use model::worker::CreateWorker;
 use model::worker::endpoint::NetworkAddr;
+use model::worker::{self, CreateWorker};
 use serde::Deserialize;
 use std::io::Read;
+use std::time::Instant;
 use tracing::error;
 
 #[derive(Deserialize)]
@@ -246,17 +248,15 @@ fn flatten_recursive(
 }
 
 impl Setup {
-    /// Returns the optimizer config as a flattened dot-separated JSON string
-    /// suitable for C++ `BaseConfiguration::overwriteConfigWithCommandLineInput()`.
-    pub fn optimizer_config_json(&self) -> String {
-        if self.optimizer.is_null() {
-            return String::new();
+    pub fn warn_if_optimizer_set(&self) {
+        if !self.optimizer.is_null() {
+            eprintln!(
+                "warning: the setup file's optimizer section is ignored; configure the optimizer on the coordinator (nes-server --optimizer-config)"
+            );
         }
-        let flat = flatten_cfg(&self.optimizer);
-        serde_json::to_string(&flat).unwrap_or_default()
     }
 
-    fn into_statements(self) -> Result<(Vec<Statement>, Vec<String>)> {
+    pub(crate) fn into_statements(self) -> Result<(Vec<Statement>, Vec<String>)> {
         let mut stmts = Vec::new();
 
         for worker in self.workers {
@@ -342,78 +342,142 @@ pub fn load_setup_file(path: Option<&str>) -> Result<Setup> {
     serde_yaml::from_str(&yaml).context("failed to parse setup file")
 }
 
-pub fn send_setup(handle: &Coordinator, setup: Setup) -> Result<()> {
-    let (statements, _) = setup.into_statements()?;
-    for stmt in statements {
-        handle.send(StatementInput::Parsed(stmt), Wait::None)?;
+pub(crate) fn register(client: &Client, statements: Vec<Statement>) -> Result<()> {
+    for statement in statements {
+        match statement {
+            Statement::CreateWorker(worker) => {
+                client.create::<worker::Model>("v1/workers", &worker)?;
+            }
+            Statement::CreateLogicalSource(source) => {
+                client.create::<logical::Model>("v1/sources/logical", &source)?;
+            }
+            Statement::CreatePhysicalSource(source) => {
+                client.create::<physical::Model>("v1/sources/physical", &source)?;
+            }
+            Statement::CreateSink(sink) => {
+                client.create::<sink::Model>("v1/sinks", &sink)?;
+            }
+            Statement::CreateMlModel(model) => {
+                client.create::<ml_model::Model>("v1/models", &model)?;
+            }
+            other => unreachable!("a setup only produces create statements, got {other:?}"),
+        }
     }
     Ok(())
 }
 
 pub fn run(
-    handle: &Coordinator,
+    client: &Client,
     setup: Setup,
     cli_queries: &[String],
     until_completed: bool,
-) -> Result<()> {
-    use model::query::query_state::QueryState;
-
+) -> Result<Vec<QueryWithFragments>> {
     let (statements, file_queries) = setup.into_statements()?;
-
-    for stmt in statements {
-        handle.send(StatementInput::Parsed(stmt), Wait::None)?;
-    }
+    register(client, statements)?;
 
     let queries: &[String] = if cli_queries.is_empty() {
         &file_queries
     } else {
         cli_queries
     };
-
     if queries.is_empty() {
         bail!("no queries provided (pass as arguments or include in setup file)");
     }
 
-    let target = if until_completed {
-        QueryState::Completed
+    let wait = if until_completed {
+        WaitKind::Completed
     } else {
-        QueryState::Running
+        WaitKind::Running
     };
     // A query should reach Running within the request timeout. Running to
     // Completed can take arbitrarily long, so that waits without a deadline.
-    let timeout = if until_completed {
-        None
-    } else {
-        Some(DEFAULT_REQUEST_TIMEOUT)
-    };
+    let deadline = (!until_completed).then(|| Instant::now() + DEFAULT_REQUEST_TIMEOUT);
 
-    let errors: Vec<_> = std::thread::scope(|scope| {
+    let results: Vec<Result<QueryWithFragments>> = std::thread::scope(|scope| {
         queries
             .iter()
             .map(|query| {
-                scope.spawn(|| {
-                    handle.send(
-                        StatementInput::Sql(query.clone()),
-                        Wait::UntilState {
-                            state: target,
-                            timeout,
-                        },
-                    )
+                scope.spawn(move || {
+                    client
+                        .submit_query(query, wait, deadline)
+                        .and_then(ensure_reached)
                 })
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .map(|h| h.join().expect("query thread panicked"))
-            .filter_map(|rsp| rsp.err())
+            .map(|handle| handle.join().expect("query thread panicked"))
             .collect()
     });
 
+    let (rows, errors): (Vec<_>, Vec<_>) = results.into_iter().partition(Result::is_ok);
     if errors.is_empty() {
-        Ok(())
+        Ok(rows.into_iter().map(Result::unwrap).collect())
     } else {
-        for err in &errors {
-            error!("{err:#}");
+        let messages: Vec<String> = errors
+            .into_iter()
+            .map(|error| format!("{:#}", error.unwrap_err()))
+            .collect();
+        for message in &messages {
+            error!("{message}");
         }
-        bail!("{} query/queries failed", errors.len())
+        bail!(
+            "{} query/queries failed: {}",
+            messages.len(),
+            messages.join("; ")
+        )
+    }
+}
+
+fn ensure_reached(row: QueryWithFragments) -> Result<QueryWithFragments> {
+    match row.query.state {
+        QueryState::Stopped | QueryState::Failed => {
+            let cause = row
+                .query
+                .error
+                .as_ref()
+                .map_or_else(|| "no error recorded".to_owned(), ToString::to_string);
+            bail!(
+                "query {} {}: {cause}",
+                row.query.id,
+                row.query.state.to_string().to_lowercase()
+            )
+        }
+        _ => Ok(row),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_setup_with_an_optimizer_section_still_parses() {
+        let setup: Setup = serde_yaml::from_str(
+            "workers:\n  - host: localhost:8080\noptimizer:\n  join_strategy: HASH_JOIN\n",
+        )
+        .unwrap();
+        assert!(!setup.optimizer.is_null());
+        let (statements, queries) = setup.into_statements().unwrap();
+        assert_eq!(statements.len(), 1);
+        assert!(queries.is_empty());
+    }
+
+    #[test]
+    fn a_stopped_or_failed_query_is_a_failure_for_the_caller() {
+        let row = |state| QueryWithFragments {
+            query: model::query::Model {
+                id: model::identifier::QueryId::new(3),
+                name: None,
+                sql: String::new(),
+                state,
+                start_timestamp: None,
+                stop_timestamp: None,
+                error: None,
+            },
+            fragments: Vec::new(),
+        };
+        assert!(ensure_reached(row(QueryState::Running)).is_ok());
+        let error = ensure_reached(row(QueryState::Failed)).unwrap_err();
+        assert_eq!(error.to_string(), "query 3 failed: no error recorded");
     }
 }

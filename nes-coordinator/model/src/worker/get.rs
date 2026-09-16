@@ -19,7 +19,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 pub struct GetWorker {
     pub host_addr: Option<NetworkAddr>,
     pub current_state: Option<WorkerState>,

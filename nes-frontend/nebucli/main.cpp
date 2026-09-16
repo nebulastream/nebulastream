@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Plugins/BuiltinPlugins.hpp>
 #include <Version.hpp>
 
 extern "C" int nebucli_main();
@@ -25,8 +24,5 @@ int main(int argc, char** argv)
         NES::printVersion("nes-cli");
         return 0;
     }
-    /// Registries are populated at runtime rather than at configure time, so nothing this binary links is reachable
-    /// until they are loaded. Done here rather than in Rust, because the registries are C++.
-    NES::loadBuiltinPlugins();
     return nebucli_main();
 }

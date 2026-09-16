@@ -10,39 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# nebucli is a Rust staticlib with a thin C++ main() wrapper.
-# This lets CMake resolve the full C++ dependency graph (sql-planner,
-# nes-single-node-worker-lib, etc.) that the coordinator bridge needs.
+add_rust_cargo_test(nebucli)
+
 add_executable(nes-cli main.cpp)
-target_link_libraries(nes-cli PRIVATE nes-coordinator-bridge)
+target_link_libraries(nes-cli PRIVATE nes-common)
 target_link_rust_lib(nes-cli nebucli)
 
-# nebucli E2E tests driven by bats
+add_e2e_test(
+    NAME offline-cli-test
+    BATS_FILE tests/offline.bats
+)
 
-if (ENABLE_BATS_TESTS)
-    add_test(
-            NAME offline-cli-test
-            COMMAND
-            env NES_CLI=$<TARGET_FILE:nes-cli>
-            env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/tests
-            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-            env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/tests/offline.bats
-    )
-endif ()
-
-if (ENABLE_DOCKER_TESTS)
-    if (ENABLE_BATS_TESTS)
-        add_test(
-                NAME distributed-cli-test
-                COMMAND
-                env NES_CLI=$<TARGET_FILE:nes-cli>
-                env NES_CLI_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/tests
-                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
-                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
-                env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
-                ${BATS} --jobs 19 --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/tests/distributed.bats
-        )
-        set_tests_properties(distributed-cli-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
-    endif ()
-endif ()
+add_e2e_test(
+    NAME distributed-cli-test
+    BATS_FILE tests/distributed.bats
+    DOCKER_COMPOSE
+    JOBS 19
+)

@@ -20,7 +20,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct GetPhysicalSource {
     pub id: Option<SourceId>,
     pub host_addr: Option<NetworkAddr>,

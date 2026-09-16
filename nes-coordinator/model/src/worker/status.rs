@@ -24,7 +24,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct GetWorkerStatus {
     pub host_addr: NetworkAddr,
 }

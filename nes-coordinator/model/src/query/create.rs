@@ -23,7 +23,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, Query
 use serde::Deserialize;
 use std::collections::BTreeSet;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct CreateQuery {
     #[serde(default)]
     pub name: Option<String>,

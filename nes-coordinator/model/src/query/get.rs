@@ -21,7 +21,7 @@ use anyhow::Result;
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct GetQuery {
     pub ids: Option<Vec<QueryId>>,
     pub name: Option<String>,

@@ -29,7 +29,7 @@ members = [
     "nes-frontend/server",
     "nes-frontend/server/app",
 ]
-# The bridge, nebucli and server app crates link against the C++ tree, so a bare
+# The bridge and server app crates link against the C++ tree, so a bare
 # `cargo build` at the workspace root would need the CMake build to exist.
 # Keep them out of the default set; CMake drives them explicitly.
 default-members = [
@@ -40,6 +40,7 @@ default-members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-frontend/nebucli",
     "nes-frontend/server",
 ]
 
@@ -61,7 +62,7 @@ anyhow = "1.0"
 async-channel = "2.3.1"
 async-trait = "0.1"
 axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive", "env"] }
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
@@ -73,6 +74,7 @@ pin-project = "1.1.10"
 proptest = "1.5"
 proptest-derive = "0.5"
 prost = "=0.13.4"
+reqwest = { version = "0.12", default-features = false, features = ["json", "blocking"] }
 sea-orm = { version = "=1.1.1", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",

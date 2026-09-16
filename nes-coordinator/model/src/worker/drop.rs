@@ -22,7 +22,7 @@ use serde::Deserialize;
 
 /// Soft removal: sets the target state to `Removed` rather than deleting the row.
 /// Any active fragments on the worker are then failed automatically.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct DropWorker {
     pub host_addr: NetworkAddr,
 }

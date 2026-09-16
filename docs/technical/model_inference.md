@@ -57,9 +57,10 @@ pip install openvino==2025.3.0
 ovc --version  # sanity check
 ```
 
-`ovc` must be reachable on the `$PATH` of every process that handles
-`CREATE MODEL` — the coordinator for a deployed cluster, or the offline
-`nebucli`. Workers do not need it: they receive the already-converted IR.
+`ovc` must be reachable on the `$PATH` of every process that plans
+`CREATE MODEL` — `nes-server` for a deployed cluster, or the embedded REPL.
+`nes-cli` only forwards the model path from its setup file. Workers do not
+need it: they receive the already-converted IR.
 A version mismatch is treated as "tool unavailable": the version string is
 parsed at startup, and on mismatch model import is disabled and queries that
 try to register a model are rejected.
@@ -87,9 +88,9 @@ into the same `ModelStatementHandler`:
 `ModelCatalog::registerModel` validates the request and stores it:
 
 1. The path on disk must exist. The check happens wherever `CREATE MODEL`
-   is processed — that is the coordinator for a deployed cluster, or the
-   `nebucli` process for the offline CLI. The model file does **not** need
-   to exist on the workers; only the importer's host needs it.
+   is planned — that is `nes-server` for a deployed cluster, or the embedded
+   REPL. The model file does **not** need to exist on the workers or on the
+   host running `nes-cli`; only the planner's host needs it.
 2. The model is converted to OpenVINO IR via `ovc`, producing an XML
    topology and a `.bin` weights blob.
 3. The IR is read back through the OpenVINO runtime to scrape the

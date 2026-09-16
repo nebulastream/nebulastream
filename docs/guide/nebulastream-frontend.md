@@ -20,11 +20,12 @@ tests.
 
 ## Overview
 
-NebulaStream provides three primary frontend interfaces:
+NebulaStream provides four primary frontend interfaces:
 
 1. **`nes-repl-embedded`** - Single-node embedded worker with local query execution via interactive REPL
 2. **`nes-repl`** - Distributed query controller for multi-node deployments via interactive REPL
-3. **`nes-cli`** - Stateless one-shot CLI for deploying and controlling queries from topology files
+3. **`nes-server`** - The coordinator as a long-running service with a REST API under `/v1`
+4. **`nes-cli`** - Stateless one-shot CLI that deploys and controls queries through `nes-server` from setup files
 
 All interfaces support JSON output for programmatic access.
 
@@ -287,10 +288,14 @@ DROP QUERY WHERE ID='<query-id>';
 
 ## NES-CLI (One-Shot Topology Controller)
 
-NES-CLI is a "stateless" CLI tool for deploying and managing queries based on YAML topology files. Unlike the REPL, `nes-cli` performs single operations and exits. The CLI is stateless in the sense that source/sink catalogs and topology configuration are always loaded from YAML files—nothing is persisted between invocations.
+NES-CLI is a stateless one-shot client of a running coordinator, `nes-server`. Unlike the REPL, `nes-cli` performs single operations and exits: it registers the workers, sources, sinks and models of a YAML setup file on the coordinator, submits queries, and reads or stops them. Nothing is persisted in the CLI itself; the coordinator keeps the catalog and drives the workers between invocations.
 
-> [!NOTE]
-> **Implementation Detail:** To enable query management across CLI invocations, the CLI maintains an internal mapping of global query IDs to local query instances in `$XDG_STATE_HOME/nebucli/` (or `$HOME/.local/state/nebucli/`). This is an implementation detail and should not be relied upon.
+The coordinator has to be running, with the workers started separately:
+
+```bash
+nes-server --listen 0.0.0.0:8081                 # remote workers, registered through the CLI
+nes-server --listen 0.0.0.0:8081 --optimizer-config '{"join_strategy":"HASH_JOIN"}'
+```
 
 ### Basic Usage
 
@@ -298,56 +303,61 @@ NES-CLI is a "stateless" CLI tool for deploying and managing queries based on YA
 # Display help
 nes-cli --help
 
-# Dump topology (validate and print parsed topology)
-nes-cli -t topology.yaml dump
-nes-cli -d -t topology.yaml dump  # With debug output
+# Where the coordinator is (default http://127.0.0.1:8081), as a flag or from the environment
+nes-cli --coordinator http://coordinator:8081 status
+export NES_COORDINATOR=http://coordinator:8081
 
-# Start query from topology file
-nes-cli -t topology.yaml start
+# Dump the query plans (registers the setup, plans the queries without executing them)
+nes-cli -s setup.yaml dump
+nes-cli -d -s setup.yaml dump  # With debug logging in nes-cli.log
 
-# Start ad-hoc query (override topology query)
-nes-cli -t topology.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+# Start the queries of a setup file, waiting until they run
+nes-cli -s setup.yaml start
+nes-cli -s setup.yaml start --until-completed   # wait until they complete instead
 
-# Check query status
-nes-cli -t topology.yaml status <query-id>
+# Start ad-hoc queries (override the setup file's queries)
+nes-cli -s setup.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 
-# Stop query
-nes-cli -t topology.yaml stop <query-id>
+# Show all queries, or the given ones, with their fragments
+nes-cli status
+nes-cli status <query-id>
 
-# Stop multiple queries
-nes-cli -t topology.yaml stop <query-id-1> <query-id-2> <query-id-3>
+# Stop queries, waiting up to 15 seconds (or -w <seconds>) for them to terminate
+nes-cli stop <query-id>
+nes-cli stop <query-id-1> <query-id-2> <query-id-3>
 
-# Use environment variable for topology file
-export NES_TOPOLOGY_FILE=topology.yaml
+# Run any SQL statement on the coordinator
+nes-cli sql 'SHOW QUERIES'
+
+# Use the environment variable for the setup file
+export NES_SETUP_FILE=setup.yaml
 nes-cli dump
 nes-cli start
 
-# Read topology from stdin
-cat topology.yaml | nes-cli -t - dump
-cat topology.yaml | nes-cli -t - start
-cat topology.yaml | nes-cli -t - start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
-cat topology.yaml | nes-cli -t - status <query-id>
-cat topology.yaml | nes-cli -t - stop <query-id>
+# Read the setup from stdin
+cat setup.yaml | nes-cli -s - dump
+cat setup.yaml | nes-cli -s - start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 
 # Works with Docker too
-cat topology.yaml | docker run -i nes-cli -t - start
-cat topology.yaml | docker run -i nes-cli -t - dump
-cat topology.yaml | docker run -i nes-cli -t - stop <query-id>
-cat topology.yaml | docker run -i nes-cli -t - status <query-id>
+cat setup.yaml | docker run -i -e NES_COORDINATOR=http://coordinator:8081 nebulastream/nes-cli -s - start
 ```
 
 **Flags:**
 
-- `-t <file>` - Topology file path, or `-` to read from stdin
-- `-d` - Debug mode with detailed logging
+- `--coordinator <url>` - The coordinator's base URL, also read from `NES_COORDINATOR`; default `http://127.0.0.1:8081`
+- `-s <file>` - Setup file path, or `-` to read from stdin
+- `-o auto|json|table` - Output format: `auto` prints a table on a terminal and JSON otherwise
+- `-d` - Debug mode with detailed logging in `nes-cli.log`
 
-**Topology File Resolution Order:**
+**Setup File Resolution Order:**
 
-The CLI looks for the topology file in the following priority order:
-1. `-t <file>` flag - Explicitly specified file path, or `-t -` to read from stdin
-2. `NES_TOPOLOGY_FILE` environment variable
-3. `topology.yaml` in current directory
-4. `topology.yml` in current directory
+The CLI looks for the setup file in the following priority order:
+1. `-s <file>` flag - Explicitly specified file path, or `-s -` to read from stdin
+2. `NES_SETUP_FILE` environment variable
+3. `setup.yaml` in current directory
+4. `setup.yml` in current directory
+
+An `optimizer:` section in a setup file is ignored with a warning: the optimizer is configured on the coordinator, which plans every query, with `nes-server --optimizer-config`.
 
 ### Topology File Format
 
@@ -359,7 +369,7 @@ and sinks. The `query` field can contain 0, 1, or multiple query statements:
 - **Multiple queries**: `query: [...]` (array of strings)
 
 > [!NOTE]
-> Providing a query via the command line (e.g., `nes-cli -t topology.yaml start 'SELECT ...'`) will override any queries
+> Providing a query via the command line (e.g., `nes-cli -s setup.yaml start 'SELECT ...'`) will override any queries
 > defined in the topology file's `query` field.
 
 **Example: Single Query Topology**
@@ -494,8 +504,8 @@ workers:
 
 ```bash
 # Provide query as command line argument
-nes-cli -t topology.yaml dump 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
-nes-cli -t topology.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+nes-cli -s setup.yaml dump 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+nes-cli -s setup.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 ```
 
 **Example: Multi-Worker Topology with Data Routing**
@@ -662,40 +672,55 @@ workers:
 **Checking Status:**
 
 ```bash
-nes-cli -t topology.yaml status <query-id>
+nes-cli status <query-id>
 ```
 
-Returns JSON array with query status information:
+When the output is not a terminal (or with `-o json`), the CLI prints one JSON object per query with its fragments,
+each fragment carrying the state of the worker it is placed on:
 
 ```json
 [
   {
-    "query_id": "amazing_stallion",
-    "query_status": "Running"
-  },
-  {
-    "grpc_addr": "worker-1:8080",
-    "query_status": "Running"
-  },
-  {
-    "grpc_addr": "worker-2:8080",
-    "query_status": "Running"
+    "id": 1,
+    "name": null,
+    "sql": "SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK",
+    "state": "Running",
+    "start_timestamp": "2026-09-16T10:00:00Z",
+    "stop_timestamp": null,
+    "error": null,
+    "fragments": [
+      {
+        "id": 1,
+        "query_id": 1,
+        "host_addr": "worker-1:8080",
+        "num_operators": 3,
+        "has_source": true,
+        "current_state": "Running",
+        "desired_state": "Completed",
+        "start_timestamp": "2026-09-16T10:00:00Z",
+        "stop_timestamp": null,
+        "error": null,
+        "last_observed_at": "2026-09-16T10:00:05Z",
+        "worker_state": "Active"
+      }
+    ]
   }
 ]
 ```
 
-**Query Status Values:**
+On a terminal (or with `-o table`) the same information is printed as tables: the queries, then the fragments of
+each worker.
 
-- `"Running"` - Query is actively processing
-- `"PartiallyStopped"` - Some query instances have stopped (e.g., source reached end of stream)
-- `"Unreachable"` - Cannot reach one or more workers. Affected LocalQueries will have the `ConnectionError` state.
+**Query States:** `Pending`, `Started`, `Running`, `Completed`, `Stopped`, `Failed`. A worker's state is `Active`
+or `Unreachable`; a query keeps running while one of its workers is unreachable, and the fragments resume when the
+worker comes back.
 
 **Stopping Queries:**
 
 ```bash
 # Stop single query
-nes-cli -t topology.yaml stop <query-id>
+nes-cli stop <query-id>
 
-# Stop multiple queries
-nes-cli -t topology.yaml stop <id1> <id2> <id3>
+# Stop multiple queries, waiting up to 60 seconds for them to terminate
+nes-cli stop -w 60 <id1> <id2> <id3>
 ```

@@ -36,7 +36,7 @@ use sea_orm::ConnectionTrait;
 
 /// An operation that a client can issue to the coordinator.
 /// Each variant wraps one typed request, and running it yields the matching `StatementResult` variant.
-#[derive(Clone, Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "tag")]
 pub enum Statement {
     CreateWorker(CreateWorker),
@@ -64,7 +64,7 @@ pub enum Statement {
 
 /// Typed result paired one-to-one with each `Statement` variant.
 /// Models are returned by value so callers can render or forward them without re-querying.
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum StatementResult {
     CreatedLogicalSource(logical::Model),
     CreatedPhysicalSource(physical::Model),
@@ -162,5 +162,43 @@ impl Statement {
         let response = self.execute_on(&txn).await?;
         txn.commit().await?;
         Ok(response)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::identifier::QueryId;
+    use crate::query::query_state::QueryState;
+
+    #[test]
+    fn a_statement_round_trips_through_json() {
+        let statement = Statement::GetQuery(GetQuery::all().with_id(QueryId::new(7)));
+        let json = serde_json::to_value(&statement).unwrap();
+        assert_eq!(json["tag"], "GetQuery");
+        let back: Statement = serde_json::from_value(json).unwrap();
+        assert!(matches!(back, Statement::GetQuery(get) if get.ids == Some(vec![QueryId::new(7)])));
+    }
+
+    #[test]
+    fn a_result_round_trips_through_json() {
+        let result = StatementResult::Queries(vec![QueryWithFragments {
+            query: query::Model {
+                id: QueryId::new(1),
+                name: None,
+                sql: "SELECT * FROM src INTO snk".to_owned(),
+                state: QueryState::Running,
+                start_timestamp: None,
+                stop_timestamp: None,
+                error: None,
+            },
+            fragments: Vec::new(),
+        }]);
+        let json = serde_json::to_value(&result).unwrap();
+        let back: StatementResult = serde_json::from_value(json).unwrap();
+        assert!(matches!(
+            back,
+            StatementResult::Queries(rows) if rows.len() == 1 && rows[0].query.state == QueryState::Running
+        ));
     }
 }

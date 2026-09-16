@@ -18,7 +18,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct DropMlModel {
     pub name: Option<String>,
 }

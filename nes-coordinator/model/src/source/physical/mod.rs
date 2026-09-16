@@ -38,7 +38,7 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 /// A concrete source placed on a worker and bound to a logical source.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "physical_source")]
 pub struct Model {
     #[sea_orm(primary_key)]

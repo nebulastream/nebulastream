@@ -32,7 +32,7 @@ use super::get::GetQuery;
 /// The returned queries reflect their state at drop time, so they are usually still running.
 /// A caller that waits for the drop to finish
 /// receives the queries in their final, reconciled state instead.
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct DropQuery {
     #[serde(default)]
     pub filters: GetQuery,
