@@ -29,6 +29,7 @@
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -107,11 +108,11 @@ Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& refle
 
 AggregationLogicalFunctionRegistryReturnType MedianAggregationLogicalFunction::create(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.on.size() != 1)
+    if (arguments.parameters.size() != 1)
     {
-        throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidQuerySyntax("MEDIAN expects exactly one field argument, but got {}", arguments.parameters.size());
     }
-    return MedianAggregationLogicalFunction{arguments.on.at(0)};
+    return MedianAggregationLogicalFunction{parseFieldParameter(arguments.parameters.front(), "the field of MEDIAN")};
 }
 }
 

@@ -45,7 +45,7 @@ target_link_libraries(nes-logical-operators PUBLIC nes-schema nes-sources nes-si
 # Factory registries
 # Runtime registries: entries are static create members on the plugin classes.
 create_runtime_registry(AggregationLogicalFunction nes-logical-operators
-        ENTRY_TEMPLATE "&\${PLUGIN_NAME}AggregationLogicalFunction::create"
+        ENTRY_TEMPLATE "makeAggregationLogicalFunctionEntry<\${PLUGIN_NAME}AggregationLogicalFunction>()"
         HEADER_TEMPLATE "\${PLUGIN_NAME}AggregationLogicalFunction.hpp")
 
 # Name-based construction surface for logical operators; no entries yet (operators gain one by

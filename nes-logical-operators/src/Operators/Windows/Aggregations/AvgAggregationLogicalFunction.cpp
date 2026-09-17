@@ -25,6 +25,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -106,11 +107,11 @@ Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflecte
 
 AggregationLogicalFunctionRegistryReturnType AvgAggregationLogicalFunction::create(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.on.size() != 1)
+    if (arguments.parameters.size() != 1)
     {
-        throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidQuerySyntax("AVG expects exactly one field argument, but got {}", arguments.parameters.size());
     }
-    return AvgAggregationLogicalFunction{arguments.on.at(0)};
+    return AvgAggregationLogicalFunction{parseFieldParameter(arguments.parameters.front(), "the field of AVG")};
 }
 }
 

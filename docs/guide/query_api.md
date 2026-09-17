@@ -625,6 +625,26 @@ WINDOW TUMBLING(ts, SIZE 1 MIN)
 HAVING MAX(price) > 100.0 AND COUNT(*) >= 10 INTO sink
 ```
 
+#### Statistics
+
+A windowed aggregation can be stored as a statistic instead of emitted, and read back later. Both sides are
+resolved through the aggregation registry, so a new synopsis needs no parser change.
+
+- A synopsis (an aggregation registered with `IS_STATISTIC`, such as a reservoir sample or a sketch) is written
+  flat with the statistic id as its first argument: `RESERVOIRSAMPLE(42, 100)`.
+- A scalar aggregation becomes a statistic through `STATISTIC_BUILD(<aggregation>, statisticId)`.
+- `<NAME>_PROBE(statisticId, field, type, ...)` reads the statistic stored for exactly the incoming window
+  bounds, `<NAME>_PROBE_RANGE(...)` every statistic within them. The `(field, type)` pairs name the columns
+  the stored payload decodes into.
+
+```sql
+SELECT STATISTIC_BUILD(SUM(value), 43) FROM sensor WINDOW TUMBLING(ts, SIZE 5 SEC) INTO sink
+```
+
+```sql
+SELECT SUM_PROBE_RANGE(43, total, float64) FROM probe_requests INTO sink
+```
+
 #### Join
 
 Joins combine tuples from two input streams based on a condition within a window.

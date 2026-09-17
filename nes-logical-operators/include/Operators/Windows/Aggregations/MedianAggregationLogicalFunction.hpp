@@ -49,10 +49,11 @@ public:
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
+    static constexpr std::string_view NAME = "Median";
+
 private:
     AggregationFieldAccess inputFunction;
     bool nullable{};
-    static constexpr std::string_view NAME = "Median";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 

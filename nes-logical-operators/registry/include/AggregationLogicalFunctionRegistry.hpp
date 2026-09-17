@@ -14,13 +14,13 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>
-#include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -28,24 +28,59 @@ namespace NES
 
 using AggregationLogicalFunctionRegistryReturnType = WindowAggregationLogicalFunction;
 
+/// The SQL call's arguments in call order. The parser has already desugared expressions into pre-aggregation
+/// projections, so each is either an UnboundFieldAccessLogicalFunction or a ConstantValueLogicalFunction.
 struct AggregationLogicalFunctionRegistryArguments
 {
-    std::vector<AggregationFieldAccess> on;
-    bool includeNullValues;
+    std::vector<LogicalFunction> parameters;
 };
 
 using AggregationLogicalFunctionFn
     = std::function<AggregationLogicalFunctionRegistryReturnType(AggregationLogicalFunctionRegistryArguments)>;
 
+struct AggregationLogicalFunctionRegistryEntry
+{
+    AggregationLogicalFunctionFn create;
+    std::string_view name;
+    bool isStatistic{false};
+};
+
+/// Contract for an aggregation class registered via add_registry_entry(AggregationLogicalFunction <Name>).
+///
+/// Required:
+/// - `static constexpr std::string_view NAME`: the registry key (looked up case-insensitively) and the blob type.
+/// - `static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments)`:
+///   validates the arguments a SQL call supplied and constructs the function. Throw InvalidQuerySyntax on a bad
+///   call so the parser can report it as such.
+///
+/// Optional:
+/// - `static constexpr bool IS_STATISTIC = true`: marks a synopsis (reservoir sample, histogram, sketch, ...).
+///   The parser then expects its SQL call to start with the statistic id, `NAME(statisticId, parameters...)`,
+///   and always routes the result into a statistic store writer. Unmarked aggregations are ordinary window
+///   aggregations that become statistics only when wrapped, `STATISTIC_BUILD(NAME(...), statisticId)`.
+template <typename T>
+concept MarkedStatisticAggregation = requires {
+    { T::IS_STATISTIC } -> std::convertible_to<bool>;
+};
+
+/// Builds the registry entry for an aggregation class; referenced by the ENTRY_TEMPLATE in the component's CMake.
+template <typename T>
+AggregationLogicalFunctionRegistryEntry makeAggregationLogicalFunctionEntry()
+{
+    bool isStatistic = false;
+    if constexpr (MarkedStatisticAggregation<T>)
+    {
+        isStatistic = T::IS_STATISTIC;
+    }
+    return {.create = &T::create, .name = T::NAME, .isStatistic = isStatistic};
+}
+
 /// Filled by loadBuiltinPlugins() / plugin registration (see cmake/RuntimeRegistrationUtil.cmake).
-/// Entries are static create members on the aggregation function classes (constructor
-/// signatures differ between aggregations). Enables name-based construction of aggregation
-/// functions, e.g. for parser-side extensibility.
 /// Case-insensitive to mirror the retired BaseRegistry.
 class AggregationLogicalFunctionRegistry : public RuntimeRegistry<
                                                AggregationLogicalFunctionRegistry,
                                                std::string,
-                                               AggregationLogicalFunctionFn,
+                                               AggregationLogicalFunctionRegistryEntry,
                                                /*CaseSensitive*/ false>
 {
 public:

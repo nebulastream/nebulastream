@@ -11,7 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+        AggregationLogicalFunctionProvider.cpp
         AggregationLogicalFunctionRegistry.cpp
+        AggregationParameters.cpp
         WindowAggregationLogicalFunction.cpp
         AvgAggregationLogicalFunction.cpp
         CountAggregationLogicalFunction.cpp

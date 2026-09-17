@@ -24,6 +24,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -107,11 +108,11 @@ Unreflector<MinAggregationLogicalFunction>::operator()(const Reflected& reflecte
 
 AggregationLogicalFunctionRegistryReturnType MinAggregationLogicalFunction::create(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.on.size() != 1)
+    if (arguments.parameters.size() != 1)
     {
-        throw CannotDeserialize("MinAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidQuerySyntax("MIN expects exactly one field argument, but got {}", arguments.parameters.size());
     }
-    return MinAggregationLogicalFunction{arguments.on.at(0)};
+    return MinAggregationLogicalFunction{parseFieldParameter(arguments.parameters.front(), "the field of MIN")};
 }
 }
 

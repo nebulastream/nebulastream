@@ -46,10 +46,11 @@ public:
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
+    static constexpr std::string_view NAME = "Avg";
+
 private:
     AggregationFieldAccess inputFunction;
     bool nullable{};
-    static constexpr std::string_view NAME = "Avg";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };
 

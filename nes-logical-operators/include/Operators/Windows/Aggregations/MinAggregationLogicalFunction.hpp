@@ -49,10 +49,11 @@ public:
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
+    static constexpr std::string_view NAME = "Min";
+
 private:
     AggregationFieldAccess inputFunction;
     DataType aggregateType;
-    static constexpr std::string_view NAME = "Min";
 };
 
 template <>
