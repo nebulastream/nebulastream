@@ -46,7 +46,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <ModelCatalog.hpp>
+#include <Model.hpp>
 #include <OptimizerTestUtils.hpp>
 
 namespace NES
@@ -510,13 +510,13 @@ TEST_F(ProjectionPushdownRuleTest, UnhandledOperatorIsNarrowedToRequiredFields)
     /// InferModel is not in projectionPushdown's dispatch list, so it takes the default branch.
     /// pushBeyondDefault computes the narrowing projection for it, so rebuildPlan has to materialize it.
 
-    ModelCatalog catalog;
-    catalog.registerModel(
+    const auto model = RegisteredModel::create(
         "tiny",
         std::filesystem::path{INFERENCE_TEST_DATA} / "tiny_1_to_1.onnx",
         ModelSchema{
-            .inputs = ModelFieldList{UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::FLOAT32}},
-            .outputs = ModelFieldList{UnqualifiedUnboundField{Identifier::parse("prediction"), DataType::Type::FLOAT32}}});
+            .inputs = Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::FLOAT32}},
+            .outputs
+            = Schema<UnqualifiedUnboundField, Ordered>{UnqualifiedUnboundField{Identifier::parse("prediction"), DataType::Type::FLOAT32}}});
 
     auto source = utils.createSource(
         "inferModel",
@@ -525,7 +525,7 @@ TEST_F(ProjectionPushdownRuleTest, UnhandledOperatorIsNarrowedToRequiredFields)
             UnqualifiedUnboundField{Identifier::parse("in_0"), DataType::Type::FLOAT32},
             UnqualifiedUnboundField{Identifier::parse("sibling"), DataType::Type::UINT64}});
 
-    auto inferModel = TypedLogicalOperator<InferModelLogicalOperator>{catalog.load("tiny"), LogicalOperator{source}};
+    auto inferModel = TypedLogicalOperator<InferModelLogicalOperator>{model, LogicalOperator{source}};
 
     auto projection = ProjectionLogicalOperator::create(
         inferModel,
