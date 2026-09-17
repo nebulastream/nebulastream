@@ -67,6 +67,16 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
             declaration.definition->getText());
     }
 
+    /// A source that reads from a socket connects to the server that sends its attached data, so the endpoint is not the test's to choose.
+    if (declaration.attached.has_value() and readsFromSocket(declaration.definition->type->getText())
+        and (declaresOption(declaredOptions(declaration.definition), Sql::Source, Sql::SocketHost)
+             or declaresOption(declaredOptions(declaration.definition), Sql::Source, Sql::SocketPort)))
+    {
+        throw TestException(
+            "A source with attached data must not choose its socket endpoint, because a server sends it that data: {}",
+            declaration.definition->getText());
+    }
+
     const auto sourceNumber = ordinal++;
 
     /// The file that the source itself opens, which goes into its options.
@@ -198,7 +208,7 @@ void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter
     }
 }
 
-std::string addSourceOptions(const std::string& sql, const std::vector<std::string>& options)
+std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options)
 {
     SqlParse parse{sql};
     auto* definition = findFirst<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree());
@@ -207,8 +217,16 @@ std::string addSourceOptions(const std::string& sql, const std::vector<std::stri
         throw TestException("Only a physical source takes source options, but this statement declares something else: {}", sql);
     }
 
-    auto merged = options;
-    if (const auto declaredText = parse.textOf(declaredOptions(definition)); not declaredText.empty())
+    auto* declared = declaredOptions(definition);
+    std::vector<std::string> merged;
+    for (const auto& [group, key, value] : options)
+    {
+        if (not declaresOption(declared, group, key))
+        {
+            merged.push_back(Sql::option(group, key, value));
+        }
+    }
+    if (const auto declaredText = parse.textOf(declared); not declaredText.empty())
     {
         merged.push_back(declaredText);
     }

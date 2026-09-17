@@ -69,7 +69,7 @@ Emitter::Emitter(const RewriteContext& context, Declarations declarations)
     , sinkRewriter{context, this->declarations.names, this->declarations.sinkByName}
 {
     runnable.name = context.name;
-    runnable.namePrefix = this->declarations.names.prefix();
+    runnable.originalNames = this->declarations.names.originalNames();
 }
 
 RunnableTestFile Emitter::emit(ClassifiedTestFile classified) &&

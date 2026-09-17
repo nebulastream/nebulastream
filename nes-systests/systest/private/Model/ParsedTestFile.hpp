@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -76,6 +77,16 @@ struct ExplainStatement
 };
 
 using TestStatement = std::variant<CreateStatement, SelectStatement, DifferentialStatement, ExplainStatement>;
+
+/// The query numbers that a statement answers to on the command line.
+/// A CREATE has none, and a differential block has two.
+[[nodiscard]] std::vector<SystestQueryId> queryNumbersOf(const TestStatement& statement);
+
+/// Drops every statement with a query number outside the selection.
+/// An empty selection selects everything.
+/// The CREATEs stay, because every remaining statement may depend on them.
+/// Selecting happens before rewriting, so a malformed statement that the run does not select cannot fail the file.
+void keepSelectedStatements(std::vector<TestStatement>& statements, const std::unordered_set<SystestQueryId>& selected);
 
 /// The statements of one test file, in file order.
 struct ParsedTestFile

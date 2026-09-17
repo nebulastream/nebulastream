@@ -380,6 +380,15 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
         NES::SystestClusterConfiguration clusterConfig;
         clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
         clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
+        /// The first entry of each list is the default host of a source or sink that names none, so an empty list has no default.
+        if (clusterConfig.allowSourcePlacement.empty())
+        {
+            throw std::runtime_error("allow_source_placement must list at least one worker");
+        }
+        if (clusterConfig.allowSinkPlacement.empty())
+        {
+            throw std::runtime_error("allow_sink_placement must list at least one worker");
+        }
         for (const auto& worker : clusterConfigYAML["workers"])
         {
             NES::SingleNodeWorkerConfiguration config;

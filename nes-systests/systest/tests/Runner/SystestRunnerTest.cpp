@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -92,20 +93,24 @@ makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std:
 NES::SystestQuery makeQuery(
     const std::expected<NES::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
-    NES::SystestQueryId queryId)
+    NES::SystestQueryId queryId,
+    std::optional<std::filesystem::path> resultFile)
 {
     return NES::SystestQuery{
         .testName = NES::TestName{"test_query"},
         .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
-        .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
         .queryDefinition = "SELECT * FROM test",
         .planInfoOrException = planInfoOrException,
         .expectation = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
-        .actualExplainOutput = std::nullopt};
+        .actualExplainOutput = std::nullopt,
+        .resultFile = std::move(resultFile),
+        .differentialResultFile = std::nullopt,
+        .originalNames = {},
+        .inputFiles = {}};
 }
 }
 
@@ -173,7 +178,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId)},
+        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId, std::nullopt)},
         1,
         submitter,
         progressTracker,
@@ -207,7 +212,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId, std::nullopt)},
         1,
         submitter,
         progressTracker,
@@ -246,9 +251,10 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, {}, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
-            dummyQueryId)},
+            dummyQueryId,
+            std::nullopt)},
         1,
         submitter,
         progressTracker,
@@ -257,6 +263,48 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     ASSERT_EQ(result.size(), 1);
     ASSERT_TRUE(result.front().verdict.has_value());
     EXPECT_FALSE(result.front().verdict->has_value());
+}
+
+/// A differential pair compares two successful results, so a half without a partner is useless.
+/// The runner stops it and still waits for its terminal state, so no query is left running after the run exits.
+TEST_F(SystestRunnerTest, StopsTheFirstHalfWhenTheSecondHalfOfADifferentialPairDoesNotStart)
+{
+    const auto firstId = randomQueryId();
+
+    auto [submitter, mockBackend] = createQuerySubmitter();
+    /// Starting polls the status until the query leaves Registered, so the status is answered outside the start-stop sequence.
+    EXPECT_CALL(*mockBackend, status(firstId))
+        .WillOnce(testing::Return(makeSummary(firstId, QueryStatus::Started, nullptr)))
+        .WillRepeatedly(testing::Return(makeSummary(firstId, QueryStatus::Stopped, nullptr)));
+    const testing::InSequence seq;
+    EXPECT_CALL(*mockBackend, start(::testing::_))
+        .WillOnce(testing::Return(std::expected<QueryId, Exception>{firstId}))
+        .WillOnce(testing::Return(std::unexpected{Exception{"second half rejected", 10000}}));
+    EXPECT_CALL(*mockBackend, stop(firstId)).WillOnce(testing::Return(std::expected<void, Exception>{}));
+    SystestProgressTracker progressTracker;
+
+    SourceCatalog sourceCatalog;
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(),
+        Identifier::parse("File"),
+        Host("localhost"),
+        {{Identifier::parse("file_path"), "/dev/null"}},
+        parserConfig);
+    auto sourceOperator = SourceDescriptorLogicalOperator::create(testPhysicalSource.value());
+    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator::create(sourceOperator, dummySinkDescriptor)}};
+    const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
+
+    auto query
+        = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId, std::nullopt);
+    query.differentialQueryPlan = distributedPlan;
+
+    const auto result = runQueries({query}, 1, submitter, progressTracker, discardPerformanceMessage);
+
+    ASSERT_EQ(result.size(), 1);
+    ASSERT_TRUE(result.front().exception.has_value());
+    EXPECT_THAT(result.front().exception->what(), ::testing::HasSubstr("second half rejected"));
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

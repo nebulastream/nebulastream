@@ -71,9 +71,17 @@ void makeAnonymousSourcePathsAbsolute(
 /// Adds to a source written into a query the defaults that a declared physical source gets, unless the test set them.
 void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const Host& host);
 
-/// Adds config options to a physical source statement the rewriter already emitted.
-/// The new options merge into the statement's single `SET` clause, keeping the options already there.
+/// One config option of a physical source, before it is rendered into SQL.
+struct SourceOption
+{
+    std::string group;
+    std::string key;
+    std::string value;
+};
+
+/// Adds config options to a physical source statement that the rewriter already emitted.
 /// The runner needs this for a value that is known only once the run started, such as the port that a data server bound.
-std::string addSourceOptions(const std::string& sql, const std::vector<std::string>& options);
+/// An option whose key the statement already sets is dropped, so a value that the test wrote wins over a default.
+std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options);
 
 }

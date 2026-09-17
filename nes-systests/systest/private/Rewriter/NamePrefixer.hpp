@@ -24,6 +24,7 @@
 #include <TokenStreamRewriter.h>
 
 #include <Identifiers/Identifier.hpp>
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/SqlParse.hpp>
 
 namespace NES
@@ -80,15 +81,14 @@ public:
     /// The rewriter substitutes catalog-visible names and leaves column names, aliases and keywords untouched.
     [[nodiscard]] std::optional<Identifier> prefixed(std::string_view name) const;
 
-    /// The prefix put in front of every name, so a consumer can strip it from a text again.
-    [[nodiscard]] const std::string& prefix() const { return namePrefix; }
+    /// The original spelling of every prefixed name, so a consumer can read a printed plan as the test wrote it.
+    [[nodiscard]] OriginalNames originalNames() const;
 
 private:
     friend class NameRegistry;
-    PrefixedNames(PrefixedByName prefixedByName, std::string prefix);
+    explicit PrefixedNames(PrefixedByName prefixedByName);
 
     PrefixedByName prefixedByName;
-    std::string namePrefix;
 };
 
 /// Collects the catalog-visible names of one test file, prefixing each with that file's key.
@@ -112,13 +112,16 @@ private:
     PrefixedByName prefixedByName;
 };
 
-/// Removes the name prefix wherever it occurs in text, so a plan reads as the test wrote it.
-std::string stripPrefix(std::string_view text, std::string_view namePrefix);
+/// Replaces every prefixed name in a text with the spelling that the test declared, so a plan reads as the test wrote it.
+/// Only whole identifiers that are registered names change, so a name that merely starts like the prefix stays as printed.
+/// One pass over the text, so a restored name is never matched again: with key `ORDERS`, `ORDERS_ORDERS_INPUT` becomes
+/// `ORDERS_INPUT` even when a source `input` is registered as well.
+std::string restoreNames(std::string_view text, const OriginalNames& names);
 
 /// Replaces every identifier that refers to a name that the test file declared with its prefixed spelling.
 /// Only registered names change, so column names, aliases, keywords and string literals stay as the test wrote them.
-/// An identifier that spells a plugin type keeps its spelling, because a type is not a name that any test file declares,
-/// and the grammar admits the same word in both positions: `CREATE PHYSICAL SOURCE FOR File TYPE File`.
+/// An identifier that spells a plugin type or a function name keeps its spelling, because neither is a name that a test file
+/// declares, and the grammar admits the same word in both positions: `CREATE PHYSICAL SOURCE FOR File TYPE File`.
 /// The replacements join the given rewriter, so a caller combines them with its own edits in one pass, and an edit that
 /// already covers a name wins over the replacement of that name.
 void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names);
