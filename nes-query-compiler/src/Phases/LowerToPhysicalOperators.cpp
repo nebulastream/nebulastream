@@ -91,46 +91,47 @@ LoweringRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
 
     /// We apply the rule and receive a subgraph
     const auto [root, leaves] = rule->apply(logicalOperator);
+    const auto children = logicalOperator.getChildren();
     INVARIANT(
-        leaves.size() == logicalOperator.getChildren().size(),
+        leaves.size() == children.size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
-        logicalOperator.getChildren().size(),
-        leaves.size());
-    /// if the lowering result is empty we bypass the operator
-    if (not root)
-    {
-        if (not logicalOperator.getChildren().empty())
-        {
-            INVARIANT(
-                logicalOperator.getChildren().size() == 1,
-                "Empty lowering result of operators with multiple children are not supported {}",
-                logicalOperator);
-            auto loweredChild = lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument, memo);
-            memo.emplace(logicalOperator, loweredChild);
-            return loweredChild;
-        }
-        return {};
-    }
-    memo.emplace(logicalOperator, root);
-    /// We embed the subgraph into the resulting plan of physical operator wrappers
-    auto children = logicalOperator.getChildren();
-    INVARIANT(
-        children.size() == leaves.size(),
-        "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
-        leaves.size(),
-        logicalOperator);
+        leaves.size());
 
-    std::ranges::for_each(
-        std::views::zip(children, leaves),
-        [&registryArgument, &memo](const auto& zippedPair)
+    /// What the operator lowered to: its own subgraph with the lowered children embedded into the leaves, or, when it
+    /// lowers to nothing, whatever stands in for it — the child it bypasses to, or nothing at all when it has none.
+    const auto loweredOperator = [&]() -> LoweringRuleResultSubgraph::SubGraphRoot
+    {
+        /// if the lowering result is empty we bypass the operator
+        if (not root)
         {
-            const auto& [child, leaf] = zippedPair;
-            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument, memo);
-            leaf->addChild(rootNodeOfLoweredChild);
-        });
-    return root;
+            if (children.empty())
+            {
+                return {};
+            }
+            INVARIANT(
+                children.size() == 1, "Empty lowering result of operators with multiple children are not supported {}", logicalOperator);
+            return lowerOperatorRecursively(children.front(), registryArgument, memo);
+        }
+
+        /// We embed the subgraph into the resulting plan of physical operator wrappers
+        std::ranges::for_each(
+            std::views::zip(children, leaves),
+            [&registryArgument, &memo](const auto& zippedPair)
+            {
+                const auto& [child, leaf] = zippedPair;
+                auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument, memo);
+                leaf->addChild(rootNodeOfLoweredChild);
+            });
+        return root;
+    }();
+
+    /// Every path records what it lowered to here rather than on its own way out, so that none can return without
+    /// memoizing: an operator shared by several parents lowers once, the empty result included. The plan is a DAG, so
+    /// nothing reaches this operator again while its own subtree is being lowered.
+    memo.emplace(logicalOperator, loweredOperator);
+    return loweredOperator;
 }
 }
 
