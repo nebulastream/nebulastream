@@ -63,8 +63,8 @@ MQTTSink::MQTTSink(BackpressureController backpressureController, const SinkDesc
     , retained(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::RETAINED))
     , maxOutstandingMessages(sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::MAX_OUTSTANDING_MESSAGES))
     , backpressureHandler(
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_UPPER_THRESHOLD),
-          sinkDescriptor.getFromConfig(SinkDescriptor::BACKPRESSURE_LOWER_THRESHOLD))
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::BACKPRESSURE_UPPER_THRESHOLD),
+          sinkDescriptor.getFromConfig(ConfigParametersMQTTSink::BACKPRESSURE_LOWER_THRESHOLD))
 {
 }
 
