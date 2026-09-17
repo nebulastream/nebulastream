@@ -21,3 +21,5 @@ target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_
 link_plugin_library(nes-sources generator_source_plugin_library)
 add_registry_entry(Source Generator)
 add_registry_entry(SourceValidation Generator)
+
+add_tests_if_enabled(tests)
