@@ -34,12 +34,9 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
-#include <InputFormatterValidationProvider.hpp>
 
 namespace NES
 {
@@ -75,45 +72,16 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist.", logicalSource.getLogicalSourceName());
         return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
     }
-    auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(descriptorConfig));
-    if (not descriptorConfigOpt.has_value())
+    const auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
+    auto descriptor
+        = SourceDescriptor::create(id, logicalSource, sourceType, std::move(host), std::move(descriptorConfig), parserConfig, false);
+    if (not descriptor.has_value())
     {
-        return std::unexpected{
-            UnknownSourceType("The source type '{}' is not registered. If it is a plugin, make sure you activated it.", sourceType)};
+        return descriptor;
     }
-
-    std::unordered_map<std::string, std::string> parserConfigStringMap;
-    parserConfigStringMap.reserve(parserConfig.size());
-    for (const auto& [key, value] : parserConfig)
-    {
-        parserConfigStringMap.emplace(key.asCanonicalString(), value);
-    }
-    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
-    {
-        return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
-    }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
-    {
-        return std::unexpected{UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat)};
-    }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
-
-    SourceDescriptor descriptor{
-        id,
-        logicalSource,
-        sourceType.asCanonicalString(),
-        std::move(host),
-        std::move(descriptorConfigOpt.value()),
-        formatDescriptor,
-        false};
-    idsToPhysicalSources.emplace(id, descriptor);
-    logicalPhysicalIter->second.insert(descriptor);
-    NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
+    idsToPhysicalSources.emplace(id, *descriptor);
+    logicalPhysicalIter->second.insert(*descriptor);
+    NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor->getSourceType(), id);
     return descriptor;
 }
 
@@ -165,40 +133,19 @@ std::optional<SourceDescriptor> SourceCatalog::getAnonymousSource(
     const std::unordered_map<Identifier, std::string>& parserConfigMap,
     std::unordered_map<Identifier, std::string> sourceConfigMap) const
 {
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(sourceConfigMap));
-    if (!descriptorConfig.has_value())
+    const auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
+    const auto logicalSource = LogicalSource{Identifier::parse(physicalId.toString()), schema};
+    auto descriptor = SourceDescriptor::create(
+        physicalId, logicalSource, sourceType, std::move(host), std::move(sourceConfigMap), parserConfigMap, true);
+    if (not descriptor.has_value())
     {
-        return std::nullopt;
+        if (descriptor.error().code() == ErrorCode::UnknownSourceType)
+        {
+            return std::nullopt;
+        }
+        throw descriptor.error();
     }
-
-    std::unordered_map<std::string, std::string> parserConfigStringMap;
-    parserConfigStringMap.reserve(parserConfigMap.size());
-    for (const auto& [key, value] : parserConfigMap)
-    {
-        parserConfigStringMap.emplace(key.asCanonicalString(), value);
-    }
-    if (not parserConfigStringMap.contains(InputFormatterDescriptor::getTypeString()))
-    {
-        throw InvalidConfigParameter("Source config does not contain input formatter type");
-    }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
-    {
-        throw UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat);
-    }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
-
-
-    auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto name = Identifier::parse(physicalId.toString());
-
-    const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{
-        physicalId, logicalSource, sourceType.asCanonicalString(), std::move(host), descriptorConfig.value(), formatDescriptor, true};
-    return sourceDescriptor;
+    return *descriptor;
 }
 
 std::optional<std::unordered_set<SourceDescriptor>> SourceCatalog::getPhysicalSources(const LogicalSource& logicalSource) const
@@ -228,7 +175,7 @@ bool SourceCatalog::removeLogicalSource(const LogicalSource& logicalSource)
         logicalSource.getLogicalSourceName());
     for (const auto& physicalSource : physicalSourcesIter->second)
     {
-        const auto erasedPhysicalSource = idsToPhysicalSources.erase(physicalSource.physicalSourceId);
+        const auto erasedPhysicalSource = idsToPhysicalSources.erase(physicalSource.getPhysicalSourceId());
         INVARIANT(
             erasedPhysicalSource == 1,
             "Physical source {} was mapped to logical source \"{}\", but physical source did not have an entry in "
