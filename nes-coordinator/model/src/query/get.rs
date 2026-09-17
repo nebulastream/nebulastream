@@ -15,7 +15,7 @@
 use crate::identifier::QueryId;
 use crate::query::query_fragment;
 use crate::query::query_state::QueryState;
-use crate::query::{self, Column, Entity};
+use crate::query::{Column, Entity, QueryWithFragments};
 use crate::{Execute, IntoCondition};
 use anyhow::Result;
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
@@ -61,20 +61,21 @@ impl IntoCondition for GetQuery {
 }
 
 impl Execute for GetQuery {
-    type Response = Vec<(query::Model, Vec<query_fragment::Model>)>;
-    async fn execute(
-        &self,
-        conn: &impl ConnectionTrait,
-    ) -> Result<Vec<(query::Model, Vec<query_fragment::Model>)>> {
-        if self.with_fragments {
-            Ok(Entity::find()
+    type Response = Vec<QueryWithFragments>;
+    async fn execute(&self, conn: &impl ConnectionTrait) -> Result<Vec<QueryWithFragments>> {
+        let queries = if self.with_fragments {
+            Entity::find()
                 .filter(self.to_condition())
                 .find_with_related(query_fragment::Entity)
                 .all(conn)
-                .await?)
+                .await?
         } else {
             let queries = Entity::find().filter(self.to_condition()).all(conn).await?;
-            Ok(queries.into_iter().map(|query| (query, vec![])).collect())
-        }
+            queries.into_iter().map(|query| (query, vec![])).collect()
+        };
+        Ok(queries
+            .into_iter()
+            .map(|(query, fragments)| QueryWithFragments { query, fragments })
+            .collect())
     }
 }
