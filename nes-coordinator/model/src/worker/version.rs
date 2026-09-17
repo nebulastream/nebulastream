@@ -26,7 +26,7 @@ use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 
 /// An absent address selects every worker in the catalog.
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize, serde::Serialize)]
 pub struct GetWorkerVersion {
     pub host_addr: Option<NetworkAddr>,
 }
@@ -68,7 +68,7 @@ impl Execute for GetWorkerVersion {
 /// A worker that could not be reached reports why instead of a version,
 /// so one unreachable worker does not hide what the others answered.
 /// Exactly one of the two is set.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkerVersion {
     pub worker: NetworkAddr,
     pub version: Option<String>,

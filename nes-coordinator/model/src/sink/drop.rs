@@ -19,7 +19,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct DropSink {
     pub name: Option<String>,
     pub id: Option<SinkId>,

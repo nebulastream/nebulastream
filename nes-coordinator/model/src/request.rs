@@ -37,9 +37,6 @@ pub enum Wait {
     /// Hold a drop or a read until every affected query has terminated.
     /// An elapsed timeout releases the reply with an error.
     UntilTerminated { timeout: Option<Duration> },
-    /// Hold a read until its status can no longer change.
-    /// An elapsed timeout releases the reply with the current status, which is a successful return.
-    Poll { timeout: Option<Duration> },
 }
 
 /// A submitted statement.

@@ -25,7 +25,6 @@ mod parking;
 pub use parking::{EarlyTermination, WaitTimeout};
 
 use crate::SqlPlanner;
-use chrono::Utc;
 use controller::in_process::WorkerFactory;
 use model::Execute;
 use model::database::Database;
@@ -33,9 +32,7 @@ use model::identifier::QueryId;
 use model::query::GetQuery;
 use model::request::Request;
 use model::statement::StatementResult;
-use model::worker;
 use parking::{Observation, ParkedReplies, ReplyPlan, plan_reply};
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{oneshot, watch};
@@ -45,9 +42,8 @@ use tracing::{debug, info};
 /// Owns the request channel and decides when each reply is sent.
 ///
 /// Every statement runs against the catalog right away.
-/// The reply can be parked: a create that waits for a target state, a drop or read that waits for termination,
-/// and a status read that polls for a window all reply later,
-/// once the controller has moved the catalog far enough to satisfy the wait.
+/// The reply can be parked: a create or a read waits for a target state, a drop or a read waits for termination,
+/// and each is answered once the controller has moved the catalog far enough to satisfy the wait.
 ///
 /// The loop wakes on a new request, on a notification that the controller wrote to the catalog,
 /// or at the closest deadline.
@@ -86,7 +82,7 @@ impl RequestHandler {
         info!("starting");
         loop {
             // With nothing due, the timer still fires once an hour,
-            // so a catalog change that sends no notification (a worker leaving the active state, say) is picked up eventually.
+            // so a catalog change that sends no notification is picked up eventually.
             let next_deadline = self
                 .parked
                 .next_deadline()
@@ -122,7 +118,7 @@ impl RequestHandler {
             self.intent_tx.send(()).expect("intent channel closed");
         }
 
-        match result.map(|result| plan_reply(result, wait, Utc::now())) {
+        match result.map(|result| plan_reply(result, wait)) {
             Err(e) => {
                 let _ = reply_to.send(Err(e));
             }
@@ -162,21 +158,9 @@ impl RequestHandler {
             .with_fragments()
             .execute(&self.db)
             .await?;
-        let hosts: Vec<_> = rows
-            .iter()
-            .flat_map(|row| row.fragments.iter().map(|f| f.host_addr.clone()))
-            .collect();
-        let workers = worker::Entity::find()
-            .filter(worker::Column::HostAddr.is_in(hosts))
-            .all(&self.db)
-            .await?;
         Ok(Observation {
             at: Instant::now(),
             queries: rows.into_iter().map(|row| (row.query.id, row)).collect(),
-            worker_states: workers
-                .into_iter()
-                .map(|w| (w.host_addr, w.current_state))
-                .collect(),
         })
     }
 }
@@ -192,7 +176,6 @@ mod tests {
     use model::query::{CreateQueryWithRefs, DropQuery, GetQuery};
     use model::request::{Request, StatementInput, Wait};
     use model::statement::{Statement, StatementResult};
-    use model::worker::WorkerState;
     use proptest::prelude::*;
     use sea_orm::sea_query::Expr;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
@@ -301,28 +284,6 @@ mod tests {
                 .await
                 .unwrap();
         }
-    }
-
-    async fn activate_workers(db: &Database) {
-        worker::Entity::update_many()
-            .col_expr(
-                worker::Column::CurrentState,
-                Expr::value(WorkerState::Active),
-            )
-            .exec(db)
-            .await
-            .unwrap();
-    }
-
-    async fn observe_fragments(db: &Database) {
-        query_fragment::Entity::update_many()
-            .col_expr(
-                query_fragment::Column::LastObservedAt,
-                Expr::value(Utc::now()),
-            )
-            .exec(db)
-            .await
-            .unwrap();
     }
 
     proptest! {
@@ -459,37 +420,6 @@ mod tests {
                 err.downcast_ref::<WaitTimeout>(),
                 Some(WaitTimeout(StatementResult::CreatedQuery(created))) if created.query.state == QueryState::Pending
             ));
-        }
-
-        #[test]
-        fn status_poll_resolves_once_the_fragments_are_observed(mut req in any::<CreateQueryWithRefs>()) {
-            let handle = TestHandle::new(&mut req);
-
-            let result = handle.ask(Statement::CreateQuery(req.query)).unwrap();
-            let StatementResult::CreatedQuery(created) = result else {
-                panic!("expected CreatedQuery");
-            };
-            handle.rt.block_on(activate_workers(&handle.db));
-
-            let db = handle.db.clone();
-            let state_tx = handle.state_tx.clone();
-            handle.rt.spawn(async move {
-                transition_fragments(&db, QueryFragmentState::Running).await;
-                loop {
-                    observe_fragments(&db).await;
-                    let _ = state_tx.send(());
-                    tokio::time::sleep(Duration::from_millis(20)).await;
-                }
-            });
-
-            let result = handle.ask_with(
-                Statement::GetQuery(GetQuery::all().with_id(created.query.id).with_fragments()),
-                Wait::Poll { timeout: None },
-            ).unwrap();
-            let StatementResult::Queries(rows) = result else {
-                panic!("expected Queries");
-            };
-            assert!(rows.iter().flat_map(|row| &row.fragments).all(|f| f.current_state == QueryFragmentState::Running));
         }
     }
 }

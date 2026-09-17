@@ -22,7 +22,7 @@ compose_file="$work_dir/compose.yaml"
 commands_dir="$work_dir/commands"
 
 cleanup() {
-  docker rm -f worker >/dev/null 2>&1 || true
+  docker rm -f server worker >/dev/null 2>&1 || true
   if [[ -f "$compose_file" ]]; then
     (cd "$work_dir" && docker compose down --volumes --remove-orphans) >/dev/null 2>&1 || true
   fi
@@ -88,6 +88,7 @@ extract_code_block topology yaml "$work_dir/topology.yaml"
 extract_code_block compose yaml "$compose_file"
 for command in \
   run-worker \
+  run-server \
   submit-query \
   inspect-output \
   stop-worker \
@@ -125,6 +126,7 @@ if docker container inspect worker >/dev/null 2>&1; then
   exit 1
 fi
 run_documented_command run-worker
+run_documented_command run-server
 if ! retry_documented_command submit-query; then
   echo "Could not register the Docker run query." >&2
   exit 1
@@ -144,8 +146,8 @@ if ! compose_query_output="$(retry_documented_command submit-compose-query)"; th
   echo "Could not register the Docker Compose query." >&2
   exit 1
 fi
-compose_query_id="$(printf '%s\n' "$compose_query_output" | tail -n 1 | tr -d '\r')"
-if [[ ! "$compose_query_id" =~ ^[a-z0-9_]+$ ]]; then
+compose_query_id="$(printf '%s\n' "$compose_query_output" | jq -r '.[-1].query.id')"
+if [[ ! "$compose_query_id" =~ ^[0-9]+$ ]]; then
   echo "The Docker Compose query returned an unexpected ID: $compose_query_id" >&2
   exit 1
 fi

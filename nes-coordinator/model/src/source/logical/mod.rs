@@ -27,7 +27,7 @@ use sea_orm::entity::prelude::*;
 
 /// A user-declared source identified by name.
 /// Its schema is shared by every physical source bound to it.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "logical_source")]
 pub struct Model {
     #[sea_orm(primary_key)]

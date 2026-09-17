@@ -32,6 +32,10 @@
 #   nes-server (the REST coordinator) as a local process:
 #     nes_server_start, nes_server_stop, nes_http
 #
+#   nes-server in a compose stack (used by the suites' create_compose.sh):
+#     nes_optimizer_config_json, nes_compose_server_service, nes_compose_cli_service
+#     nes_cli_wait
+#
 #   Layer-2 callers pass the client binary path to nes_distributed_setup_file
 #   (e.g. "$NES_CLI") plus a suite name when more than one suite drives that
 #   binary; see nes_derive_image_names. Testdata is the directory containing the
@@ -266,6 +270,7 @@ nes_derive_image_names() {
 
   export NES_BATS_TEST_LABEL="distributed-${suite}"
   export NES_BATS_WORKER_PREFIX="nes-worker-${suite}-test"
+  export NES_BATS_SERVER_PREFIX="nes-server-${suite}-test"
   export NES_BATS_APP_PREFIX="nes-${suite}-image"
   export NES_BATS_APP_IMAGE_VAR="${bin_suffix^^}_IMAGE"
 }
@@ -279,30 +284,36 @@ nes_distributed_setup_file() {
   nes_derive_image_names "$bin_path" "${2:-}"
 
   nes_cleanup_leaked_resources "$NES_BATS_TEST_LABEL" \
-    "${NES_BATS_WORKER_PREFIX}-*" "${NES_BATS_APP_PREFIX}-*"
+    "${NES_BATS_WORKER_PREFIX}-*" "${NES_BATS_SERVER_PREFIX}-*" "${NES_BATS_APP_PREFIX}-*"
 
   nes_require_env NES_WORKER
+  nes_require_env NES_SERVER
   nes_require_env NES_TEST_TMP_DIR
   nes_require_env NES_RUNTIME_BASE_IMAGE
   nes_require_executable "$NES_WORKER"
+  nes_require_executable "$NES_SERVER"
   nes_require_executable "$bin_path"
 
   # Per-test images use random suffixes so parallel checkouts don't collide.
   # Docker's COPY layer is content-addressed, so unchanged binaries hit cache.
   nes_build_runtime_image WORKER_IMAGE "$NES_BATS_WORKER_PREFIX" \
     "$NES_WORKER" nes-single-node-worker
+  nes_build_runtime_image SERVER_IMAGE "$NES_BATS_SERVER_PREFIX" \
+    "$NES_SERVER" nes-server
   nes_build_app_image "$NES_BATS_APP_IMAGE_VAR" "$NES_BATS_APP_PREFIX" \
     "$bin_path" "$bin_name"
 
   echo "# Using client binary: $bin_path" >&3
   echo "# Using NES_WORKER: $NES_WORKER" >&3
   echo "# Using WORKER_IMAGE: $WORKER_IMAGE" >&3
+  echo "# Using SERVER_IMAGE: $SERVER_IMAGE" >&3
   echo "# Using ${NES_BATS_APP_IMAGE_VAR}: ${!NES_BATS_APP_IMAGE_VAR}" >&3
 }
 
 nes_distributed_teardown_file() {
   echo "# Test suite completed" >&3
   docker rmi "$WORKER_IMAGE" || true
+  docker rmi "$SERVER_IMAGE" || true
   docker rmi "${!NES_BATS_APP_IMAGE_VAR}" || true
 }
 
@@ -371,7 +382,7 @@ wait_until_status() {
 
   for i in $(seq 1 80); do
     sleep 1
-    run --separate-stderr docker_nes_cli -s "$topology_file" status -w 5 "$query_id"
+    run --separate-stderr docker_nes_cli -s "$topology_file" status "$query_id"
     [ "$status" -eq 0 ]
     query_status=$(echo "$output" | jq -r --argjson query_id "$query_id" '.[] | select(.id == $query_id) | .state')
     if [ -n "$healthy_service_regex" ]; then
@@ -487,4 +498,89 @@ nes_http() {
     args+=(-d "$3")
   fi
   curl "${args[@]}" "${NES_SERVER_URL}$2"
+}
+
+# ---------------------------------------------------------------------------
+# nes-server in a compose stack. The suites' create_compose.sh scripts source
+# this library and print the two services every stack needs: the coordinator
+# and the CLI pointed at it.
+# ---------------------------------------------------------------------------
+
+nes_optimizer_config_json() {
+  yq '.optimizer' "$1" | jq -r -c '
+    if . == null then "" else
+      [ paths(scalars) as $p
+        | select(all($p[]; type == "string"))
+        | { key: ($p | join(".")), value: (getpath($p) | tostring) } ]
+      | from_entries
+    end'
+}
+
+nes_compose_server_service() {
+  nes_require_env SERVER_IMAGE
+  nes_require_env TEST_DIR
+  local optimizer
+  optimizer=$(nes_optimizer_config_json "$1")
+  cat <<EOF
+  nes-server:
+    image: $SERVER_IMAGE
+    pull_policy: never
+    working_dir: /workdir/nes-server
+    command: ["--listen", "0.0.0.0:8081", "--worker-mode", "remote", "--optimizer-config", '${optimizer//\'/\'\'}']
+    stop_grace_period: 2s
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/v1/health"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+    volumes:
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
+EOF
+}
+
+nes_compose_cli_service() {
+  nes_require_env TEST_DIR
+  cat <<EOF
+  nes-cli:
+    image: $1
+    pull_policy: never
+    environment:
+      NES_SETUP_FILE: $2
+      NES_COORDINATOR: http://nes-server:8081
+    stop_grace_period: 0s
+    working_dir: /workdir
+    command: ["sleep", "infinity"]
+    depends_on:
+      nes-server:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: "$TEST_DIR"
+        target: /workdir
+EOF
+}
+
+nes_cli_wait() {
+  local deadline=$((SECONDS + $1))
+  local filter=$2
+  shift 2
+  while true; do
+    run --separate-stderr docker_nes_cli status "$@"
+    if [ "$status" -ne 0 ]; then
+      echo "# status failed: $stderr" >&3
+      return 1
+    fi
+    if [ "$(echo "$output" | jq "$filter")" = "true" ]; then
+      return 0
+    fi
+    if ((SECONDS >= deadline)); then
+      echo "# last status: $output" >&3
+      fail "timed out waiting for: $filter"
+      return 1
+    fi
+    sleep 1
+  done
 }

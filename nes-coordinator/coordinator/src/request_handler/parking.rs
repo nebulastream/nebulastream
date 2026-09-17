@@ -13,19 +13,15 @@
 */
 
 //! The parking rules: which replies wait, what they wait for, and when they are released.
-//! Everything here is a function over values (catalog rows, worker states, a clock reading),
+//! Everything here is a function over values (catalog rows and a clock reading),
 //! so the rules are tested without a database or a runtime.
 
-use chrono::{DateTime, Utc};
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryId;
 use model::query::QueryWithFragments;
-use model::query::query_fragment::QueryFragmentState;
 use model::query::query_state::QueryState;
 use model::request::Wait;
 use model::statement::StatementResult;
-use model::worker::WorkerState;
-use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::fmt;
 use std::time::Duration;
@@ -85,18 +81,12 @@ pub(super) enum Until {
     Dropped,
     /// A read: every query has terminated. The reply lists the queries with their fragments.
     Terminated,
-    /// A status read: its fragments' status has stopped changing, judged from observations made after this time.
-    /// A passed deadline releases the rows as they are instead of an error.
-    Converged(DateTime<Utc>),
 }
 
-/// One wake-up's view of the catalog: the rows of every query that a parked reply waits on,
-/// and the state of every worker that hosts one of their fragments.
 pub(super) struct Observation {
     /// When the rows were read. Deadlines are compared against it.
     pub at: Instant,
     pub queries: HashMap<QueryId, QueryWithFragments>,
-    pub worker_states: HashMap<NetworkAddr, WorkerState>,
 }
 
 /// The wait that holds back one reply, resolved against the statement's own result at submission.
@@ -113,12 +103,7 @@ pub(super) enum ReplyPlan {
 }
 
 /// A wait that does not apply to the result (a state wait on a drop, say) is ignored and the reply is sent now.
-/// A status read whose rows have no fragments has nothing that can still change, so it is answered now as well.
-pub(super) fn plan_reply(
-    result: StatementResult,
-    wait: Wait,
-    submitted_at: DateTime<Utc>,
-) -> ReplyPlan {
+pub(super) fn plan_reply(result: StatementResult, wait: Wait) -> ReplyPlan {
     let (ids, until, timeout) = match (result, wait) {
         (StatementResult::CreatedQuery(created), Wait::UntilState { state, timeout }) => {
             (vec![created.query.id], Until::Reaches(state), timeout)
@@ -138,15 +123,6 @@ pub(super) fn plan_reply(
             Until::AllReach(state),
             timeout,
         ),
-        (StatementResult::Queries(rows), Wait::Poll { timeout })
-            if rows.iter().any(|row| !row.fragments.is_empty()) =>
-        {
-            (
-                rows.iter().map(|row| row.query.id).collect(),
-                Until::Converged(submitted_at),
-                timeout,
-            )
-        }
         (result, _) => return ReplyPlan::Now(result),
     };
     ReplyPlan::Later(Hold {
@@ -233,21 +209,6 @@ impl<R> ParkedReply<R> {
                     .get(id)
                     .is_some_and(|row| row.query.state.is_terminal())
             }),
-            // No fragment's status can still change before the caller reads it:
-            // the fragment has terminated, its host is not active (so no further updates can arrive),
-            // or it is running and was observed at least once after the poll was submitted.
-            // A fragment that was observed but is still mid-transition (for example, redeploying onto a host that came back)
-            // keeps the poll open, so the caller gets a converged state instead of a snapshot taken mid-transition.
-            Until::Converged(submitted_at) => {
-                expired
-                    || rows().flat_map(|row| &row.fragments).all(|f| {
-                        f.current_state.is_terminal()
-                            || observation.worker_states.get(&f.host_addr)
-                                != Some(&WorkerState::Active)
-                            || (f.current_state == QueryFragmentState::Running
-                                && f.last_observed_at.is_some_and(|t| t >= submitted_at))
-                    })
-            }
         };
         if !satisfied {
             return expired.then(|| Err(self.timeout(observation)));
@@ -277,7 +238,7 @@ impl<R> ParkedReply<R> {
             Until::Dropped => {
                 StatementResult::DroppedQueries(rows().map(|row| row.query.clone()).collect())
             }
-            Until::AllReach(_) | Until::Terminated | Until::Converged(_) => {
+            Until::AllReach(_) | Until::Terminated => {
                 StatementResult::Queries(rows().cloned().collect())
             }
         })
@@ -315,7 +276,8 @@ mod tests {
     use super::*;
     use model::identifier::QueryFragmentId;
     use model::query;
-    use model::query::query_fragment::{self, DesiredQueryFragmentState};
+    use model::query::query_fragment::{self, DesiredQueryFragmentState, QueryFragmentState};
+    use model::worker::endpoint::NetworkAddr;
 
     const UNTIL_RUNNING: Wait = Wait::UntilState {
         state: QueryState::Running,
@@ -338,10 +300,7 @@ mod tests {
         }
     }
 
-    fn running_on(
-        host: &NetworkAddr,
-        last_observed_at: Option<DateTime<Utc>>,
-    ) -> QueryWithFragments {
+    fn running_on(host: &NetworkAddr) -> QueryWithFragments {
         let mut row = row(1, QueryState::Running);
         row.fragments.push(query_fragment::Model {
             id: QueryFragmentId::new(1),
@@ -355,20 +314,15 @@ mod tests {
             start_timestamp: None,
             stop_timestamp: None,
             error: None,
-            last_observed_at,
+            last_observed_at: None,
         });
         row
     }
 
-    fn observation(
-        at: Instant,
-        rows: Vec<QueryWithFragments>,
-        workers: Vec<(NetworkAddr, WorkerState)>,
-    ) -> Observation {
+    fn observation(at: Instant, rows: Vec<QueryWithFragments>) -> Observation {
         Observation {
             at,
             queries: rows.into_iter().map(|row| (row.query.id, row)).collect(),
-            worker_states: workers.into_iter().collect(),
         }
     }
 
@@ -404,23 +358,11 @@ mod tests {
     fn a_wait_that_does_not_fit_the_result_replies_now() {
         let dropped = StatementResult::DroppedQueries(vec![row(1, QueryState::Running).query]);
         assert!(matches!(
-            plan_reply(dropped, UNTIL_RUNNING, Utc::now()),
+            plan_reply(dropped, UNTIL_RUNNING),
             ReplyPlan::Now(_)
         ));
         let created = StatementResult::CreatedQuery(row(1, QueryState::Pending));
-        assert!(matches!(
-            plan_reply(created, Wait::None, Utc::now()),
-            ReplyPlan::Now(_)
-        ));
-    }
-
-    #[test]
-    fn a_status_poll_without_fragments_replies_now() {
-        let queries = StatementResult::Queries(vec![row(1, QueryState::Running)]);
-        assert!(matches!(
-            plan_reply(queries, Wait::Poll { timeout: None }, Utc::now()),
-            ReplyPlan::Now(_)
-        ));
+        assert!(matches!(plan_reply(created, Wait::None), ReplyPlan::Now(_)));
     }
 
     #[test]
@@ -430,7 +372,7 @@ mod tests {
             ids,
             until,
             timeout,
-        }) = plan_reply(created, UNTIL_RUNNING, Utc::now())
+        }) = plan_reply(created, UNTIL_RUNNING)
         else {
             panic!("expected the reply to be parked");
         };
@@ -449,7 +391,7 @@ mod tests {
                 None,
                 now,
             );
-            let released = parked.release(&observation(now, vec![row(1, state)], vec![]));
+            let released = parked.release(&observation(now, vec![row(1, state)]));
             assert!(matches!(
                 released.as_slice(),
                 [("reply", Ok(StatementResult::CreatedQuery(_)))]
@@ -468,7 +410,7 @@ mod tests {
                 None,
                 now,
             );
-            let released = parked.release(&observation(now, vec![row(1, state)], vec![]));
+            let released = parked.release(&observation(now, vec![row(1, state)]));
             assert!(matches!(
                 released.as_slice(),
                 [("reply", Err(e))] if e.is::<EarlyTermination>()
@@ -485,7 +427,7 @@ mod tests {
             None,
             now,
         );
-        let released = parked.release(&observation(now, vec![row(1, QueryState::Stopped)], vec![]));
+        let released = parked.release(&observation(now, vec![row(1, QueryState::Stopped)]));
         assert!(matches!(
             released.as_slice(),
             [("reply", Ok(StatementResult::CreatedQuery(_)))]
@@ -501,9 +443,9 @@ mod tests {
             Some(ONE_SECOND),
             now,
         );
-        assert!(parked.release(&observation(now, vec![], vec![])).is_empty());
+        assert!(parked.release(&observation(now, vec![])).is_empty());
         assert!(!parked.is_empty());
-        let released = parked.release(&observation(now + ONE_SECOND, vec![], vec![]));
+        let released = parked.release(&observation(now + ONE_SECOND, vec![]));
         assert!(matches!(
             released.as_slice(),
             [("reply", Err(e))] if is_timeout(e) && e.downcast_ref::<WaitTimeout>().is_none()
@@ -520,7 +462,7 @@ mod tests {
             Some(ONE_SECOND),
             now,
         );
-        let expired = observation(now + ONE_SECOND, vec![row(1, QueryState::Running)], vec![]);
+        let expired = observation(now + ONE_SECOND, vec![row(1, QueryState::Running)]);
         let released = parked.release(&expired);
         let [("reply", Err(e))] = released.as_slice() else {
             panic!("expected one timed-out reply");
@@ -549,7 +491,6 @@ mod tests {
         let expired = observation(
             now + ONE_SECOND,
             vec![row(1, QueryState::Stopped), row(2, QueryState::Running)],
-            vec![],
         );
         let released = parked.release(&expired);
         let [("reply", Err(e))] = released.as_slice() else {
@@ -570,7 +511,7 @@ mod tests {
             Some(ONE_SECOND),
             now,
         );
-        let expired = observation(now + ONE_SECOND, vec![running_on(&host(), None)], vec![]);
+        let expired = observation(now + ONE_SECOND, vec![running_on(&host())]);
         let released = parked.release(&expired);
         let [("reply", Err(e))] = released.as_slice() else {
             panic!("expected one timed-out reply");
@@ -589,9 +530,7 @@ mod tests {
             row(1, QueryState::Pending),
             row(2, QueryState::Pending),
         ]);
-        let ReplyPlan::Later(Hold { ids, until, .. }) =
-            plan_reply(queries, UNTIL_RUNNING, Utc::now())
-        else {
+        let ReplyPlan::Later(Hold { ids, until, .. }) = plan_reply(queries, UNTIL_RUNNING) else {
             panic!("expected the reply to be parked");
         };
         assert_eq!(ids, vec![QueryId::new(1), QueryId::new(2)]);
@@ -610,13 +549,11 @@ mod tests {
         let half_there = observation(
             now,
             vec![row(1, QueryState::Running), row(2, QueryState::Pending)],
-            vec![],
         );
         assert!(parked.release(&half_there).is_empty());
         let there = observation(
             now,
             vec![row(1, QueryState::Running), row(2, QueryState::Completed)],
-            vec![],
         );
         assert!(matches!(
             parked.release(&there).as_slice(),
@@ -633,7 +570,7 @@ mod tests {
             None,
             now,
         );
-        let failed = observation(now, vec![row(1, QueryState::Failed)], vec![]);
+        let failed = observation(now, vec![row(1, QueryState::Failed)]);
         assert!(matches!(
             parked.release(&failed).as_slice(),
             [("reply", Ok(StatementResult::Queries(rows)))]
@@ -646,7 +583,7 @@ mod tests {
         let now = Instant::now();
         let mut parked = parked(vec![], Until::AllReach(QueryState::Running), None, now);
         assert!(matches!(
-            parked.release(&observation(now, vec![], vec![])).as_slice(),
+            parked.release(&observation(now, vec![])).as_slice(),
             [("reply", Ok(StatementResult::Queries(rows)))] if rows.is_empty()
         ));
     }
@@ -655,7 +592,7 @@ mod tests {
     fn a_drop_that_matched_nothing_is_released_at_once() {
         let now = Instant::now();
         let mut parked = parked(vec![], Until::Dropped, None, now);
-        let released = parked.release(&observation(now, vec![], vec![]));
+        let released = parked.release(&observation(now, vec![]));
         assert!(matches!(
             released.as_slice(),
             [("reply", Ok(StatementResult::DroppedQueries(dropped)))] if dropped.is_empty()
@@ -674,73 +611,15 @@ mod tests {
         let half_done = observation(
             now,
             vec![row(1, QueryState::Completed), row(2, QueryState::Running)],
-            vec![],
         );
         assert!(parked.release(&half_done).is_empty());
         let done = observation(
             now,
             vec![row(1, QueryState::Completed), row(2, QueryState::Failed)],
-            vec![],
         );
         assert!(matches!(
             parked.release(&done).as_slice(),
             [("reply", Ok(StatementResult::Queries(rows)))] if rows.len() == 2
-        ));
-    }
-
-    #[test]
-    fn a_status_poll_waits_for_an_observation_after_its_submission() {
-        let submitted_at = Utc::now();
-        let stale = Some(submitted_at - chrono::Duration::seconds(1));
-        let fresh = Some(submitted_at + chrono::Duration::seconds(1));
-        let active = vec![(host(), WorkerState::Active)];
-        let now = Instant::now();
-        let mut parked = parked(
-            vec![QueryId::new(1)],
-            Until::Converged(submitted_at),
-            None,
-            now,
-        );
-        let before = observation(now, vec![running_on(&host(), stale)], active.clone());
-        assert!(parked.release(&before).is_empty());
-        let after = observation(now, vec![running_on(&host(), fresh)], active);
-        assert!(matches!(
-            parked.release(&after).as_slice(),
-            [("reply", Ok(StatementResult::Queries(_)))]
-        ));
-    }
-
-    #[test]
-    fn a_status_poll_is_released_once_its_host_is_not_active() {
-        let now = Instant::now();
-        let mut parked = parked(
-            vec![QueryId::new(1)],
-            Until::Converged(Utc::now()),
-            None,
-            now,
-        );
-        let unreachable = vec![(host(), WorkerState::Unreachable)];
-        let never_observed = observation(now, vec![running_on(&host(), None)], unreachable);
-        assert!(matches!(
-            parked.release(&never_observed).as_slice(),
-            [("reply", Ok(StatementResult::Queries(_)))]
-        ));
-    }
-
-    #[test]
-    fn a_status_poll_past_its_deadline_replies_with_the_current_rows() {
-        let now = Instant::now();
-        let mut parked = parked(
-            vec![QueryId::new(1)],
-            Until::Converged(Utc::now()),
-            Some(ONE_SECOND),
-            now,
-        );
-        let active = vec![(host(), WorkerState::Active)];
-        let expired = observation(now + ONE_SECOND, vec![running_on(&host(), None)], active);
-        assert!(matches!(
-            parked.release(&expired).as_slice(),
-            [("reply", Ok(StatementResult::Queries(rows)))] if rows.len() == 1
         ));
     }
 
@@ -781,7 +660,6 @@ mod tests {
         let nothing_moved = observation(
             now,
             vec![row(1, QueryState::Pending), row(2, QueryState::Running)],
-            vec![],
         );
         assert!(matches!(
             parked.release(&nothing_moved).as_slice(),

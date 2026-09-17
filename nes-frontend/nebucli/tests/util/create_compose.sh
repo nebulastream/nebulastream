@@ -30,10 +30,17 @@ if [ -z "$CLI_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$SERVER_IMAGE" ]; then
+  echo "ERROR: SERVER_IMAGE is not set"
+  exit 1
+fi
+
 if [ -z "$TEST_DIR" ]; then
   echo "ERROR: TEST_DIR is not set"
   exit 1
 fi
+
+source "$NES_BATS_LIB"
 
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
@@ -65,22 +72,9 @@ is_valid_config() {
 
 
 # Start building the compose file
-cat <<EOF
-services:
-  nes-cli:
-    image: $CLI_IMAGE
-    pull_policy: never
-    environment:
-      NES_SETUP_FILE: $WORKERS_FILE
-      XDG_STATE_HOME: /workdir/.xdg-state
-    stop_grace_period: 0s
-    working_dir: /workdir
-    command: ["sleep", "infinity"]
-    volumes:
-      - type: bind
-        source: "$TEST_DIR"
-        target: /workdir
-EOF
+echo "services:"
+nes_compose_server_service "$WORKERS_FILE"
+nes_compose_cli_service "$CLI_IMAGE" "$WORKERS_FILE"
 
 # Read workers and generate services
 WORKER_COUNT=$(yq '.workers | length' "$WORKERS_FILE")

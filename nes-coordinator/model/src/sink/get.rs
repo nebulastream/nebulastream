@@ -19,7 +19,7 @@ use anyhow::{Context, Result};
 use sea_orm::{ColumnTrait, Condition, ConnectionTrait};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, serde::Serialize)]
 pub struct GetSink {
     pub id: Option<SinkId>,
     pub name: Option<String>,

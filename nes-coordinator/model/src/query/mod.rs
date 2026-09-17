@@ -36,7 +36,7 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 /// A submitted query. It owns a set of fragments, sources, and sinks.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -66,7 +66,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 /// A query row and its fragment rows.
 /// Every query read and create returns this shape; the fragments are empty when a read did not ask for them.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
 pub struct QueryWithFragments {
     pub query: Model,
     pub fragments: Vec<query_fragment::Model>,

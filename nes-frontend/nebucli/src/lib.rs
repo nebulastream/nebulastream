@@ -11,38 +11,51 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+mod client;
+mod output;
 mod start;
+
+pub use client::{Client, ClientError, WaitKind};
+pub use output::{Format, Output};
 
 use anyhow::bail;
 use clap::{Parser, Subcommand};
-use coordinator_bridge::{Coordinator, WorkerMode};
-use model::database::StateBackend;
-use model::identifier::QueryId;
-use model::query::{DropQuery, GetQuery, QueryWithFragments};
-use model::request::{StatementInput, Wait};
-use model::statement::{Statement, StatementResult};
-use model::worker::GetWorker;
+use model::query::{QueryWithFragments, query_fragment};
+use model::statement::StatementResult;
+use model::worker;
 use model::worker::endpoint::NetworkAddr;
-use std::collections::HashMap;
-use std::time::Duration;
+use reqwest::Url;
+use serde_json::Value;
+use std::collections::{BTreeMap, HashMap};
+use std::io::{IsTerminal, Write};
+use std::time::{Duration, Instant};
 use tracing::{Level, error};
 
 pub(crate) const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 
+const DEFAULT_COORDINATOR: &str = "http://127.0.0.1:8081";
+
 #[derive(Parser)]
 #[command(name = "nebucli")]
 struct Cli {
-    /// Enable debug logging
-    #[arg(short = 'd', long)]
+    #[arg(
+        long,
+        env = "NES_COORDINATOR",
+        default_value = DEFAULT_COORDINATOR,
+        global = true
+    )]
+    coordinator: Url,
+
+    #[arg(short = 'd', long, global = true)]
     debug: bool,
 
-    /// Run queries on an in-process embedded worker instead of deploying to remote workers
-    #[arg(long)]
-    embedded: bool,
-
     /// Path to setup file, or '-' for stdin
-    #[arg(short = 's', long = "setup")]
+    #[arg(short = 's', long = "setup", global = true)]
     setup: Option<String>,
+
+    #[arg(short = 'o', long, value_enum, default_value_t = Format::Auto, global = true)]
+    output: Format,
 
     #[command(subcommand)]
     command: Command,
@@ -50,7 +63,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Submit queries from setup file or CLI args
     Start {
         /// Block until all queries reach the Completed state, not just Running
         #[arg(long = "until-completed")]
@@ -62,193 +74,196 @@ enum Command {
     Stop {
         #[arg(required = true)]
         query_ids: Vec<i64>,
-        /// Wait up to N seconds for queries to reach a terminal state
         #[arg(long, short)]
         wait: Option<u64>,
     },
-    /// Show query or worker status
     Status {
-        /// Wait up to N seconds for fragments to be polled freshly
-        #[arg(long, short)]
-        wait: Option<u64>,
         query_ids: Vec<i64>,
     },
-    /// Print query plans without executing
     Dump {
         #[arg(trailing_var_arg = true)]
         queries: Vec<String>,
     },
-}
-
-fn default_db_path() -> String {
-    let base = std::env::var("XDG_STATE_HOME").unwrap_or_else(|_| {
-        let home = std::env::var("HOME").expect("HOME not set");
-        format!("{home}/.local/state")
-    });
-    format!("{base}/nebucli/coordinator.db")
+    Sql {
+        statement: String,
+    },
 }
 
 pub fn run() -> anyhow::Result<()> {
-    let result = run_inner();
+    let cli = Cli::parse();
+    let terminal = std::io::stdout().is_terminal();
+    let mut stdout = std::io::stdout().lock();
+    execute(cli, &mut stdout, terminal)
+}
+
+pub fn run_with(
+    args: impl IntoIterator<Item = String>,
+    out: &mut impl Write,
+    stdout_is_terminal: bool,
+) -> anyhow::Result<()> {
+    let cli = Cli::try_parse_from(args)?;
+    execute(cli, out, stdout_is_terminal)
+}
+
+fn execute(cli: Cli, out: &mut impl Write, stdout_is_terminal: bool) -> anyhow::Result<()> {
+    init_tracing(cli.debug);
+    let result = run_inner(cli, out, stdout_is_terminal);
     if let Err(e) = &result {
         error!("{e:#}");
     }
     result
 }
 
-fn run_inner() -> anyhow::Result<()> {
-    let cli = Cli::parse();
-
-    if cli.debug {
+fn init_tracing(debug: bool) {
+    let result = if debug {
         let file_appender = tracing_appender::rolling::never(".", "nes-cli.log");
         tracing_subscriber::fmt()
             .with_max_level(Level::DEBUG)
             .with_ansi(false)
             .with_writer(file_appender)
-            .init();
+            .try_init()
     } else {
         tracing_subscriber::fmt()
             .with_max_level(Level::WARN)
             .with_writer(std::io::stderr)
             .without_time()
             .with_target(false)
-            .init();
-    }
+            .try_init()
+    };
+    drop(result);
+}
 
-    let db = default_db_path();
-
-    if let Some(parent) = std::path::Path::new(&db).parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-
+fn run_inner(cli: Cli, out: &mut impl Write, stdout_is_terminal: bool) -> anyhow::Result<()> {
     let setup = match cli.command {
         Command::Start { .. } | Command::Dump { .. } => {
             Some(start::load_setup_file(cli.setup.as_deref())?)
         }
         _ => None,
     };
+    if let Some(setup) = &setup {
+        setup.warn_if_optimizer_set();
+    }
 
-    let optimizer_config = setup
-        .as_ref()
-        .map(|s| s.optimizer_config_json())
-        .unwrap_or_default();
-    let mode = if cli.embedded {
-        WorkerMode::Embedded
-    } else {
-        WorkerMode::Remote
-    };
-    let handle = Coordinator::start(StateBackend::sqlite(&db), mode, &optimizer_config)?;
+    let client = Client::new(cli.coordinator)?;
+    let mut output = Output::new(out, cli.output, stdout_is_terminal);
 
     match cli.command {
         Command::Start {
             until_completed,
             queries,
         } => {
-            start::run(&handle, setup.unwrap(), &queries, until_completed)?;
+            let rows = start::run(&client, setup.unwrap(), &queries, until_completed)?;
+            output.result(&StatementResult::Queries(rows))?;
         }
         Command::Stop { query_ids, wait } => {
-            let timeout = wait
-                .map(Duration::from_secs)
-                .unwrap_or(DEFAULT_REQUEST_TIMEOUT);
-            let errors: Vec<_> = std::thread::scope(|scope| {
+            let deadline =
+                Instant::now() + wait.map_or(DEFAULT_REQUEST_TIMEOUT, Duration::from_secs);
+            let client = &client;
+            let results: Vec<anyhow::Result<_>> = std::thread::scope(|scope| {
                 query_ids
                     .iter()
-                    .map(|id| {
-                        let stmt = Statement::DropQuery(
-                            DropQuery::all()
-                                .with_filters(GetQuery::all().with_id(QueryId::new(*id))),
-                        );
-                        scope.spawn(|| {
-                            handle.send(
-                                StatementInput::Parsed(stmt),
-                                Wait::UntilTerminated {
-                                    timeout: Some(timeout),
-                                },
-                            )
-                        })
-                    })
+                    .map(|id| scope.spawn(move || client.drop_query(*id, Some(deadline))))
                     .collect::<Vec<_>>()
                     .into_iter()
-                    .map(|h| h.join().expect("stop thread panicked"))
-                    .filter_map(|rsp| rsp.err())
+                    .map(|handle| handle.join().expect("stop thread panicked"))
                     .collect()
             });
+            let (dropped, errors): (Vec<_>, Vec<_>) = results.into_iter().partition(Result::is_ok);
             if !errors.is_empty() {
-                for err in &errors {
-                    error!("{err:#}");
-                }
-                bail!("{} stop request(s) failed", errors.len());
-            }
-        }
-        Command::Status { wait, query_ids } => {
-            let req = if query_ids.is_empty() {
-                GetQuery::all().with_fragments()
-            } else {
-                GetQuery::all()
-                    .with_ids(query_ids.into_iter().map(QueryId::new).collect())
-                    .with_fragments()
-            };
-            let poll = wait.map_or(Wait::None, |secs| Wait::Poll {
-                timeout: Some(Duration::from_secs(secs)),
-            });
-            let result = handle.send(StatementInput::Parsed(Statement::GetQuery(req)), poll)?;
-            let StatementResult::Queries(queries) = result else {
-                return Ok(());
-            };
-
-            let workers_resp = handle.send(
-                StatementInput::Parsed(Statement::GetWorker(GetWorker::all())),
-                Wait::None,
-            )?;
-            let worker_states: HashMap<NetworkAddr, _> = match workers_resp {
-                StatementResult::Workers(workers) => workers
+                let messages: Vec<String> = errors
                     .into_iter()
-                    .map(|w| (w.host_addr, w.current_state))
-                    .collect(),
-                _ => HashMap::new(),
-            };
-
-            let output: Vec<_> = queries
-                .into_iter()
-                .map(
-                    |QueryWithFragments {
-                         query: q,
-                         fragments,
-                     }| {
-                        let mut val = serde_json::to_value(&q).unwrap();
-                        let augmented: Vec<_> = fragments
-                            .into_iter()
-                            .map(|f| {
-                                let host = f.host_addr.clone();
-                                let mut f_val = serde_json::to_value(&f).unwrap();
-                                f_val.as_object_mut().unwrap().insert(
-                                    "worker_state".to_string(),
-                                    serde_json::to_value(worker_states.get(&host)).unwrap(),
-                                );
-                                f_val
-                            })
-                            .collect();
-                        val.as_object_mut().unwrap().insert(
-                            "fragments".to_string(),
-                            serde_json::to_value(&augmented).unwrap(),
-                        );
-                        val
-                    },
-                )
-                .collect();
-            println!("{}", serde_json::to_string_pretty(&output)?);
+                    .map(|error| format!("{:#}", error.unwrap_err()))
+                    .collect();
+                bail!(
+                    "{} stop request(s) failed: {}",
+                    messages.len(),
+                    messages.join("; ")
+                );
+            }
+            let dropped = dropped.into_iter().map(Result::unwrap).collect();
+            output.result(&StatementResult::DroppedQueries(dropped))?;
+        }
+        Command::Status { query_ids } => {
+            let queries = client.queries(&query_ids, true)?;
+            let workers = client.workers()?;
+            if output.is_json() {
+                output.json(&status_json(&queries, &workers))?;
+            } else {
+                output.result(&StatementResult::Queries(queries.clone()))?;
+                for (worker, fragments) in fragments_by_worker(queries, workers) {
+                    output.result(&StatementResult::WorkerStatus(worker, fragments))?;
+                }
+            }
         }
         Command::Dump { queries } => {
-            start::send_setup(&handle, setup.unwrap())?;
+            let (statements, file_queries) = setup.unwrap().into_statements()?;
+            start::register(&client, statements)?;
+            let queries = if queries.is_empty() {
+                file_queries
+            } else {
+                queries
+            };
             for query in &queries {
-                let result =
-                    handle.send(StatementInput::Sql(format!("EXPLAIN {query}")), Wait::None)?;
-                println!("{result}");
+                let explanation = client.explain(query)?;
+                if output.is_json() {
+                    output.json(&serde_json::json!({ "explanation": explanation }))?;
+                } else {
+                    output.text(&explanation)?;
+                }
             }
         }
+        Command::Sql { statement } => output.result(&client.sql(&statement)?)?,
     }
 
     Ok(())
+}
+
+fn status_json(queries: &[QueryWithFragments], workers: &[worker::Model]) -> Value {
+    let worker_states: HashMap<&NetworkAddr, worker::WorkerState> = workers
+        .iter()
+        .map(|worker| (&worker.host_addr, worker.current_state))
+        .collect();
+    let rows = queries
+        .iter()
+        .map(|QueryWithFragments { query, fragments }| {
+            let mut row = serde_json::to_value(query).expect("a query serializes");
+            let fragments: Vec<Value> = fragments
+                .iter()
+                .map(|fragment| {
+                    let mut value = serde_json::to_value(fragment).expect("a fragment serializes");
+                    value["worker_state"] =
+                        serde_json::to_value(worker_states.get(&fragment.host_addr))
+                            .expect("a worker state serializes");
+                    value
+                })
+                .collect();
+            row["fragments"] = Value::Array(fragments);
+            row
+        })
+        .collect();
+    Value::Array(rows)
+}
+
+fn fragments_by_worker(
+    queries: Vec<QueryWithFragments>,
+    workers: Vec<worker::Model>,
+) -> Vec<(worker::Model, Vec<query_fragment::Model>)> {
+    let mut by_host: BTreeMap<String, Vec<query_fragment::Model>> = BTreeMap::new();
+    for fragment in queries.into_iter().flat_map(|row| row.fragments) {
+        by_host
+            .entry(fragment.host_addr.to_string())
+            .or_default()
+            .push(fragment);
+    }
+    let mut workers: Vec<_> = workers
+        .into_iter()
+        .filter_map(|worker| {
+            let fragments = by_host.remove(&worker.host_addr.to_string())?;
+            Some((worker, fragments))
+        })
+        .collect();
+    workers.sort_by(|a, b| a.0.host_addr.to_string().cmp(&b.0.host_addr.to_string()));
+    workers
 }
 
 #[unsafe(no_mangle)]

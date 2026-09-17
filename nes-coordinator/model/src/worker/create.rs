@@ -23,7 +23,7 @@ use serde::Deserialize;
 
 use super::Model;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct CreateWorker {
     pub host_addr: NetworkAddr,
     pub data_addr: NetworkAddr,

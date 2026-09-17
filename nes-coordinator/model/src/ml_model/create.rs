@@ -21,7 +21,7 @@ use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct CreateMlModel {
     pub name: String,
     pub path: String,

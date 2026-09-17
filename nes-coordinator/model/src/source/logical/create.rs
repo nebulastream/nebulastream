@@ -22,7 +22,7 @@ use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
 use serde::Deserialize;
 
 /// Registers a logical source by name.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct CreateLogicalSource {
     pub name: String,
     pub schema: Json,

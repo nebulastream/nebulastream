@@ -29,16 +29,9 @@ add_custom_target(package-docker-runtime-base
 add_dependencies(package-docker-images-all package-docker-runtime-base)
 
 function(nes_add_docker_image IMAGE TARGET)
-    if (IMAGE STREQUAL "nes-cli")
-        set(STATE "VOLUME /state\nENV XDG_STATE_HOME=/state\n")
-    else ()
-        set(STATE "")
-    endif ()
-
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")
     string(CONCAT DOCKERFILE_CONTENT
         "FROM ${NES_RUNTIME_BASE_IMAGE}\n"
-        "${STATE}"
         "COPY $<TARGET_FILE_NAME:${TARGET}> /usr/bin/$<TARGET_FILE_NAME:${TARGET}>\n"
         "ENTRYPOINT [\"/usr/bin/$<TARGET_FILE_NAME:${TARGET}>\"]\n"
     )

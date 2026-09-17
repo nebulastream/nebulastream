@@ -115,6 +115,22 @@ statement() {
   assert_json_equal '"UnknownSourceName"' "$(echo "$body" | jq '.error')"
 }
 
+@test "an unknown optimizer configuration key fails the first planned statement" {
+  nes_server_start --worker-mode embedded --optimizer-config '{"test_invalid_optimizer_config_name":"INVALID"}'
+  http POST /v1/queries/explain "$(sql_body 'SELECT * FROM stream INTO sink')"
+  [ "$http_status" -eq 500 ]
+  assert_json_equal '"InvalidConfigParameter"' "$(echo "$body" | jq '.error')"
+  [[ "$(echo "$body" | jq -r '.message')" == *"Unrecognized configuration key: 'test_invalid_optimizer_config_name'"* ]]
+}
+
+@test "an invalid optimizer configuration value fails the first planned statement" {
+  nes_server_start --worker-mode embedded --optimizer-config '{"join_strategy":"INVALID"}'
+  http POST /v1/queries/explain "$(sql_body 'SELECT * FROM stream INTO sink')"
+  [ "$http_status" -eq 500 ]
+  assert_json_equal '"InvalidConfigParameter"' "$(echo "$body" | jq '.error')"
+  [[ "$(echo "$body" | jq -r '.message')" == *"Enum for INVALID was not found"* ]]
+}
+
 @test "a termination signal stops the server cleanly" {
   nes_server_start --worker-mode embedded
   http GET /v1/health

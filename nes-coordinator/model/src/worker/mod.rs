@@ -61,7 +61,7 @@ pub enum DesiredWorkerState {
 }
 
 /// A registered worker, identified by its network address.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "worker")]
 pub struct Model {
     #[sea_orm(primary_key)]

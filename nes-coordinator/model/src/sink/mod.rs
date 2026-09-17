@@ -35,7 +35,7 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 /// An output that queries write to, placed on one worker.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "sink")]
 pub struct Model {
     #[sea_orm(primary_key)]

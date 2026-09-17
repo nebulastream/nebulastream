@@ -50,7 +50,7 @@ impl std::fmt::Display for QueryError {
 /// One execution unit of a query, placed on a single worker.
 /// The worker's `max_operators` is decremented on insert
 /// and restored automatically once the query_fragment reaches a terminal state.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query_fragment")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
@@ -300,7 +300,7 @@ impl Entity {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, serde::Serialize)]
 pub struct CreateQueryFragment {
     pub host_addr: NetworkAddr,
     pub plan: Vec<u8>,

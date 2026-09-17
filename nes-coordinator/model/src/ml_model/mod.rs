@@ -29,7 +29,7 @@ use sea_orm::entity::prelude::*;
 /// The MLIR body is copied into each query plan that uses the model,
 /// so dropping a model row does not affect running queries.
 /// Unlike sources and sinks, `ml_model` has no query relation and no drop guard.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, DeriveEntityModel)]
 #[sea_orm(table_name = "ml_model")]
 pub struct Model {
     #[sea_orm(primary_key)]

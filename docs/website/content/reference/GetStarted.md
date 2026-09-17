@@ -26,6 +26,18 @@ docker run -d --rm \
 This command starts a NebulaStream worker in a Docker container and exposes its gRPC port on all network interfaces at `0.0.0.0:8080`.
 Check with `docker ps` if the worker is running.
 
+Queries are managed by the coordinator, `nes-server`. Start one next to the worker; sharing the worker's network
+namespace lets it reach the worker at `localhost:8080`, the address the topology file uses:
+
+<!-- quick-start-run-server:start -->
+```bash
+docker run -d --rm --name server \
+  --network container:worker \
+  nebulastream/nes-server \
+  --listen 127.0.0.1:8081
+```
+<!-- quick-start-run-server:end -->
+
 <details>
 <summary>Expected Output</summary>
 
@@ -108,17 +120,31 @@ Run the query using the following command:
     --network container:worker \
     -v "$PWD/topology.yaml:/catalog/topology.yaml:ro" \
     nebulastream/nes-cli \
-    -t /catalog/topology.yaml start
+    -s /catalog/topology.yaml start
 ```
 <!-- quick-start-submit-query:end -->
 
-If query registration is successful, CLI returns the [query ID]() and stops.
+The CLI registers the topology on the coordinator, submits the query, waits until it runs, and prints the query as
+JSON. Its `query.id` identifies the query for the status and stop commands.
 
 <details>
 <summary>Example Output of a Query Submission</summary>
 
-```bash
-soaring_thoroughbred_0926
+```json
+[
+  {
+    "query": {
+      "id": 1,
+      "name": null,
+      "sql": "SELECT VALUE * UINT64(2) AS SCALED_VALUE\nFROM GENERATOR_SOURCE\nINTO RESULTS\n",
+      "state": "Running",
+      "start_timestamp": "2026-09-16T10:00:00.120Z",
+      "stop_timestamp": null,
+      "error": null
+    },
+    "fragments": []
+  }
+]
 ```
 </details>
 
@@ -149,7 +175,7 @@ SCALED_VALUE:UINT64:NOT_NULLABLE
 
 ### What Happened?
 
-We registered a query via `nes-cli`.
+We registered a query via `nes-cli` on the coordinator, which deployed it to the worker.
 Generator source inside the NebulaStream worker started generating data and sent it to the execution engine for processing.
 Results were outputted to a CSV file after processing.
 
@@ -157,11 +183,11 @@ Results were outputted to a CSV file after processing.
 
 ### Stop the Worker
 
-Then you can stop the worker with the following command:
+Then you can stop the coordinator and the worker with the following command:
 
 <!-- quick-start-stop-worker:start -->
 ```bash
-docker stop worker
+docker stop server worker
 ```
 <!-- quick-start-stop-worker:end -->
 
@@ -182,10 +208,23 @@ services:
     tty: true
     stdin_open: true
 
+  nes-server:
+    image: nebulastream/nes-server
+    depends_on:
+      - worker
+    command: ["--listen", "0.0.0.0:8081"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/v1/health"]
+      interval: 1s
+      retries: 30
+
   nes-cli:
     image: nebulastream/nes-cli
     depends_on:
-      - worker
+      nes-server:
+        condition: service_healthy
+    environment:
+      NES_COORDINATOR: http://nes-server:8081
     volumes:
       - .:/catalog
     entrypoint: ["/bin/sh", "-c"]
@@ -193,7 +232,8 @@ services:
 ```
 <!-- quick-start-compose:end -->
 
-The compose file above keeps the `nes-cli` alive, so that we can check the query status, and also stop the query later.
+The compose file above runs the coordinator next to the worker and keeps the `nes-cli` alive, so that we can check
+the query status, and also stop the query later.
 
 ### Create New Topology File
 
@@ -216,7 +256,7 @@ docker compose up -d
 ```
 <!-- quick-start-start-compose:end -->
 
-This runs the worker and the nes-cli instances.
+This runs the worker, the coordinator and the nes-cli instances.
 
 <details>
 <summary>Expected Output</summary>
@@ -232,7 +272,7 @@ This runs the worker and the nes-cli instances.
 
 <br>
 
-Check that both containers are running:
+Check that the containers are running:
 
 <!-- quick-start-list-compose:start -->
 ```bash
@@ -259,19 +299,31 @@ Run the following command to submit the query via `nes-cli`:
 
 <!-- quick-start-submit-compose-query:start -->
 ```bash
-docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml start
+docker compose exec -T nes-cli nes-cli -s /catalog/compose-topology.yaml start
 ```
 <!-- quick-start-submit-compose-query:end -->
 
-The command prints a query ID.
-Seeing the query ID in the output means the query registration is successful, and the query is running.
+The command prints the query as JSON once it runs; its `query.id` is the query ID.
 Keep the query ID for status check or stopping the query later.
 
 <details>
 <summary>Example Output of a Query Submission</summary>
 
-```bash
-regal_hanoverian_9516
+```json
+[
+  {
+    "query": {
+      "id": 1,
+      "name": null,
+      "sql": "SELECT VALUE * UINT64(2) AS SCALED_VALUE\nFROM GENERATOR_SOURCE\nINTO RESULTS\n",
+      "state": "Running",
+      "start_timestamp": "2026-09-16T10:00:00.120Z",
+      "stop_timestamp": null,
+      "error": null
+    },
+    "fragments": []
+  }
+]
 ```
 </details>
 
@@ -281,7 +333,7 @@ If you kept the query ID, check its status by replacing it with the `<query-id>`
 
 <!-- quick-start-status-compose-query:start -->
 ```bash
-docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
+docker compose exec -T nes-cli nes-cli status <query-id>
 ```
 <!-- quick-start-status-compose-query:end -->
 
@@ -290,59 +342,38 @@ This should return the status of the registered query.
 <details>
 <summary>Example Output of Query Status Check</summary>
 
-The status check first returns the query’s global status, followed by its status on each worker where it is running.
-In this single-node example, the output therefore includes the global status and the status reported by the single worker.
+The status is one JSON object per query: the query's own fields, and its fragments, each with the state of the
+worker it runs on.
 
-The status output contains the following fields:
-- `query_id`: Identifies the query as a whole and is shared by its global and worker-local status entries.
-- `local_query_id`: A UUID assigned by a worker to its local query instance. It appears only in worker-local entries.
-- `worker`: The address of the worker running the local query instance.
-- `query_status`: The current state of the query, such as `Running` or `Stopped`.
-- `started`: The time at which the query was started.
-- `running`: The time at which the query entered the `Running` state.
-- `stopped`: The time at which the query entered the `Stopped` state.
-
-Each timestamp contains:
-- `formatted`: A human-readable representation of the timestamp.
-- `since_epoch`: The time elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
-- `unit`: The unit used by `since_epoch`, currently `microseconds`.
-
-```bash
+```json
 [
-    {
-        "query_id": "regal_hanoverian_9516",
-        "query_status": "Running",
-        "running": {
-            "formatted": "2026-07-31 13:32:34.339000",
-            "since_epoch": 1785504754339000,
-            "unit": "microseconds"
-        },
-        "started": {
-            "formatted": "2026-07-31 13:32:34.293000",
-            "since_epoch": 1785504754293000,
-            "unit": "microseconds"
-        }
-    },
-    {
-        "local_query_id": "656d2d78-496d-4409-89c3-caa8789c9297",
-        "query_id": "regal_hanoverian_9516",
-        "query_status": "Running",
-        "running": {
-            "formatted": "2026-07-31 13:32:34.339000",
-            "since_epoch": 1785504754339000,
-            "unit": "microseconds"
-        },
-        "started": {
-            "formatted": "2026-07-31 13:32:34.293000",
-            "since_epoch": 1785504754293000,
-            "unit": "microseconds"
-        },
-        "worker": "worker:8080"
-    }
+  {
+    "id": 1,
+    "name": null,
+    "sql": "SELECT VALUE * UINT64(2) AS SCALED_VALUE\nFROM GENERATOR_SOURCE\nINTO RESULTS\n",
+    "state": "Running",
+    "start_timestamp": "2026-09-16T10:00:00.120Z",
+    "stop_timestamp": null,
+    "error": null,
+    "fragments": [
+      {
+        "id": 1,
+        "query_id": 1,
+        "host_addr": "worker:8080",
+        "num_operators": 3,
+        "has_source": true,
+        "current_state": "Running",
+        "desired_state": "Completed",
+        "start_timestamp": "2026-09-16T10:00:00.120Z",
+        "stop_timestamp": null,
+        "error": null,
+        "last_observed_at": "2026-09-16T10:00:05.001Z",
+        "worker_state": "Active"
+      }
+    ]
+  }
 ]
-
 ```
-
 </details>
 
 ### Stop the Query
@@ -351,19 +382,29 @@ Stop the query using `nes-cli`:
 
 <!-- quick-start-stop-compose-query:start -->
 ```bash
-docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml stop <query-id>
+docker compose exec -T nes-cli nes-cli stop <query-id>
 ```
 <!-- quick-start-stop-compose-query:end -->
 
 <details>
 <summary>Example Output of a Query Stop Command</summary>
 
-```bash
-[
+The stopped query, as the coordinator recorded it once it terminated:
+
+```json
+{
+  "DroppedQueries": [
     {
-        "query_id": "regal_hanoverian_9516"
+      "id": 1,
+      "name": null,
+      "sql": "SELECT VALUE * UINT64(2) AS SCALED_VALUE\nFROM GENERATOR_SOURCE\nINTO RESULTS\n",
+      "state": "Stopped",
+      "start_timestamp": "2026-09-16T10:00:00.120Z",
+      "stop_timestamp": "2026-09-16T10:00:12.480Z",
+      "error": null
     }
-]
+  ]
+}
 ```
 </details>
 
@@ -373,7 +414,7 @@ And check the status again:
 
 <!-- quick-start-status-stopped-compose-query:start -->
 ```bash
-docker compose exec -T nes-cli nes-cli -t /catalog/compose-topology.yaml status <query-id>
+docker compose exec -T nes-cli nes-cli status <query-id>
 ```
 <!-- quick-start-status-stopped-compose-query:end -->
 
@@ -382,51 +423,35 @@ This should return the status of the registered query as `Stopped`.
 <details>
 <summary>Expected Output</summary>
 
-```bash
+```json
 [
-    {
-        "query_id": "regal_hanoverian_9516",
-        "query_status": "Stopped",
-        "running": {
-            "formatted": "2026-07-31 13:32:34.339000",
-            "since_epoch": 1785504754339000,
-            "unit": "microseconds"
-        },
-        "started": {
-            "formatted": "2026-07-31 13:32:34.293000",
-            "since_epoch": 1785504754293000,
-            "unit": "microseconds"
-        },
-        "stopped": {
-            "formatted": "2026-07-31 13:32:44.557000",
-            "since_epoch": 1785504764557000,
-            "unit": "microseconds"
-        }
-    },
-    {
-        "local_query_id": "656d2d78-496d-4409-89c3-caa8789c9297",
-        "query_id": "regal_hanoverian_9516",
-        "query_status": "Stopped",
-        "running": {
-            "formatted": "2026-07-31 13:32:34.339000",
-            "since_epoch": 1785504754339000,
-            "unit": "microseconds"
-        },
-        "started": {
-            "formatted": "2026-07-31 13:32:34.293000",
-            "since_epoch": 1785504754293000,
-            "unit": "microseconds"
-        },
-        "stopped": {
-            "formatted": "2026-07-31 13:32:44.557000",
-            "since_epoch": 1785504764557000,
-            "unit": "microseconds"
-        },
-        "worker": "worker:8080"
-    }
+  {
+    "id": 1,
+    "name": null,
+    "sql": "SELECT VALUE * UINT64(2) AS SCALED_VALUE\nFROM GENERATOR_SOURCE\nINTO RESULTS\n",
+    "state": "Stopped",
+    "start_timestamp": "2026-09-16T10:00:00.120Z",
+    "stop_timestamp": "2026-09-16T10:00:12.480Z",
+    "error": null,
+    "fragments": [
+      {
+        "id": 1,
+        "query_id": 1,
+        "host_addr": "worker:8080",
+        "num_operators": 3,
+        "has_source": true,
+        "current_state": "Stopped",
+        "desired_state": "Stopped",
+        "start_timestamp": "2026-09-16T10:00:00.120Z",
+        "stop_timestamp": "2026-09-16T10:00:12.480Z",
+        "error": null,
+        "last_observed_at": "2026-09-16T10:00:12.480Z",
+        "worker_state": "Active"
+      }
+    ]
+  }
 ]
 ```
-
 </details>
 
 ### Stop Worker and CLI
