@@ -50,10 +50,11 @@ public:
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
+    static constexpr std::string_view NAME = "Count";
+
 private:
     AggregationFieldAccess inputFunction;
     bool includeNullValues = false;
-    static constexpr std::string_view NAME = "Count";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::UINT64;
 };
 

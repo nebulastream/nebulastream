@@ -82,11 +82,24 @@ public:
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
 
+    /// The tokens a function call spans. STATISTIC_BUILD uses it to tell whether its argument is the very call that
+    /// produced an aggregation (or a synopsis), rather than something that merely carries the same name.
+    struct CallTokenRange
+    {
+        size_t start;
+        size_t stop;
+        bool operator==(const CallTokenRange&) const = default;
+    };
+
+    /// The call that produced windowAggs.back().
+    std::optional<CallTokenRange> lastAggregationCall;
+
     struct StatisticBuildInfo
     {
         StatisticId statisticId;
         WindowAggregationLogicalFunction statisticFunction;
         std::string functionName;
+        CallTokenRange call;
     };
 
     std::optional<StatisticBuildInfo> statisticBuild;

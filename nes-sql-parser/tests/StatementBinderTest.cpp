@@ -14,6 +14,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -21,21 +22,41 @@
 #include <variant>
 #include <vector>
 
+#include <cstdint>
+#include <string_view>
+#include <tuple>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/StatisticIdentifiers.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Operators/Statistic/StatisticFieldNames.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticWindowMatch.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -43,11 +64,104 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
+#include <folly/hash/Hash.h>
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterValidationProvider.hpp>
+
+namespace NES
+{
+template <bool IsStatistic>
+class TestAggregationLogicalFunction
+{
+public:
+    static constexpr std::string_view NAME = IsStatistic ? "TestSynopsis" : "TestAggregation";
+    static constexpr bool IS_STATISTIC = IsStatistic;
+
+    TestAggregationLogicalFunction(AggregationFieldAccess inputFunction, const uint64_t parameter)
+        : inputFunction(std::move(inputFunction)), parameter(parameter)
+    {
+    }
+
+    [[nodiscard]] TestAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const
+    {
+        const TypedLogicalFunction<FieldAccessLogicalFunction> inferred{FieldAccessLogicalFunction{*schema.begin()}};
+        return TestAggregationLogicalFunction{inferred, parameter};
+    }
+
+    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
+
+    [[nodiscard]] static DataType getAggregateType() { return DataTypeProvider::provideDataType(DataType::Type::UINT64); }
+
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const { return inputFunction; }
+
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept { return true; }
+
+    [[nodiscard]] uint64_t getParameter() const { return parameter; }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity) const { return fmt::format("{}({})", NAME, parameter); }
+
+    [[nodiscard]] bool operator==(const TestAggregationLogicalFunction& other) const
+    {
+        return inputFunction == other.inputFunction and parameter == other.parameter;
+    }
+
+    /// Plain: NAME(field, parameter). Synopsis: NAME(statisticId, parameter), the parser strips the id first.
+    static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments)
+    {
+        const auto& parameters = arguments.parameters;
+        if (parameters.size() != (IsStatistic ? 1 : 2))
+        {
+            throw InvalidQuerySyntax("{} got {} arguments", NAME, parameters.size());
+        }
+        const auto parameter = parseUnsignedParameter(parameters.back(), fmt::format("the parameter of {}", NAME));
+        if constexpr (IsStatistic)
+        {
+            const TypedLogicalFunction<UnboundFieldAccessLogicalFunction> placeholder{
+                UnboundFieldAccessLogicalFunction{Identifier::parse("TESTSYNOPSISINPUT")}};
+            return TestAggregationLogicalFunction{placeholder, parameter};
+        }
+        else
+        {
+            return TestAggregationLogicalFunction{parseFieldParameter(parameters.front(), fmt::format("the field of {}", NAME)), parameter};
+        }
+    }
+
+private:
+    AggregationFieldAccess inputFunction;
+    uint64_t parameter;
+};
+
+using TestPlainAggregationLogicalFunction = TestAggregationLogicalFunction<false>;
+using TestSynopsisAggregationLogicalFunction = TestAggregationLogicalFunction<true>;
+
+template <bool IsStatistic>
+struct Reflector<TestAggregationLogicalFunction<IsStatistic>>
+{
+    Reflected operator()(const TestAggregationLogicalFunction<IsStatistic>& function, const ReflectionContext& context) const
+    {
+        return context.reflect(function.getInputFunction());
+    }
+};
+}
+
+template <bool IsStatistic>
+struct std::hash<NES::TestAggregationLogicalFunction<IsStatistic>>
+{
+    size_t operator()(const NES::TestAggregationLogicalFunction<IsStatistic>& function) const noexcept
+    {
+        return folly::hash::hash_combine(function.getInputFunction(), function.getParameter());
+    }
+};
+
+static_assert(NES::WindowAggregationFunctionConcept<NES::TestPlainAggregationLogicalFunction>);
+static_assert(NES::WindowAggregationFunctionConcept<NES::TestSynopsisAggregationLogicalFunction>);
 
 namespace NES
 {
@@ -64,6 +178,39 @@ public:
     {
         Logger::setupLogging("StatementBinderTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatementBinderTest test case.");
+        /// The registry is process-wide; a second suite in the same binary finds the entries already there.
+        std::ignore = AggregationLogicalFunctionRegistry::instance().addEntry(
+            std::string{TestPlainAggregationLogicalFunction::NAME},
+            makeAggregationLogicalFunctionEntry<TestPlainAggregationLogicalFunction>());
+        std::ignore = AggregationLogicalFunctionRegistry::instance().addEntry(
+            std::string{TestSynopsisAggregationLogicalFunction::NAME},
+            makeAggregationLogicalFunctionEntry<TestSynopsisAggregationLogicalFunction>());
+    }
+
+    [[nodiscard]] LogicalPlan bindPlan(const std::string& query) const
+    {
+        const auto statement = binder->parseAndBindSingle(query);
+        if (not statement.has_value())
+        {
+            throw std::runtime_error(fmt::format("{} did not bind: {}", query, statement.error().what()));
+        }
+        return std::get<QueryStatement>(*statement).plan;
+    }
+
+    [[nodiscard]] std::optional<ErrorCode> bindError(const std::string& query) const
+    {
+        const auto statement = binder->parseAndBindSingle(query);
+        if (statement.has_value())
+        {
+            return std::nullopt;
+        }
+        return statement.error().code();
+    }
+
+    [[nodiscard]] std::string bindErrorMessage(const std::string& query) const
+    {
+        const auto statement = binder->parseAndBindSingle(query);
+        return statement.has_value() ? std::string{} : std::string{statement.error().what()};
     }
 
     void SetUp() override
@@ -641,6 +788,175 @@ TEST_F(StatementBinderTest, LowercaseFullJoinParsesToOuterFullJoinType)
     const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
     ASSERT_EQ(1, joins.size());
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
+}
+
+constexpr std::string_view WINDOWED = " FROM s WINDOW TUMBLING(ts, SIZE 1 SEC) INTO sink";
+
+TEST_F(StatementBinderTest, StatisticBuildWrapsScalarAggregation)
+{
+    const auto plan = bindPlan(fmt::format("SELECT STATISTIC_BUILD(43, SUM(x)){}", WINDOWED));
+    const auto writers = getOperatorByType<StatisticStoreWriterLogicalOperator>(plan);
+    ASSERT_EQ(writers.size(), 1);
+    EXPECT_EQ(writers.front()->getStatisticId(), StatisticId(43));
+    EXPECT_EQ(writers.front()->getTypeName(), StatisticBlobType{"Sum"});
+    const auto aggregations = getOperatorByType<WindowedAggregationLogicalOperator>(plan);
+    ASSERT_EQ(aggregations.size(), 1);
+    const auto projected = aggregations.front()->getWindowAggregation();
+    ASSERT_EQ(projected.size(), 2);
+    EXPECT_TRUE(projected.at(0).function.tryGetAs<SumAggregationLogicalFunction>().has_value());
+    EXPECT_TRUE(projected.at(1).function.tryGetAs<CountAggregationLogicalFunction>().has_value());
+    EXPECT_EQ(projected.at(1).name, Identifier::parse(std::string{StatisticFieldNames::NUMBER_OF_SEEN_MEASUREMENTS}));
+}
+
+TEST_F(StatementBinderTest, StatisticBuildWrapsCountStar)
+{
+    const auto plan = bindPlan(fmt::format("SELECT STATISTIC_BUILD(46, COUNT(*)){}", WINDOWED));
+    const auto writers = getOperatorByType<StatisticStoreWriterLogicalOperator>(plan);
+    ASSERT_EQ(writers.size(), 1);
+    EXPECT_EQ(writers.front()->getTypeName(), StatisticBlobType{"Count"});
+}
+
+TEST_F(StatementBinderTest, StatisticBuildDesugarsExpressionArgument)
+{
+    const auto plan = bindPlan(fmt::format("SELECT STATISTIC_BUILD(43, SUM(x + UINT64(1))){}", WINDOWED));
+    ASSERT_EQ(getOperatorByType<StatisticStoreWriterLogicalOperator>(plan).size(), 1);
+    EXPECT_FALSE(getOperatorByType<ProjectionLogicalOperator>(plan).empty());
+}
+
+TEST_F(StatementBinderTest, RegisteredSynopsisIsBuiltFlat)
+{
+    for (const auto* call : {"TESTSYNOPSIS(42, 100)", "testsynopsis(42, 100)", "TestSynopsis(42, UINT64(100))"})
+    {
+        const auto plan = bindPlan(fmt::format("SELECT {}{}", call, WINDOWED));
+        const auto writers = getOperatorByType<StatisticStoreWriterLogicalOperator>(plan);
+        ASSERT_EQ(writers.size(), 1) << call;
+        EXPECT_EQ(writers.front()->getStatisticId(), StatisticId(42)) << call;
+        EXPECT_EQ(writers.front()->getTypeName(), StatisticBlobType{"TestSynopsis"}) << call;
+        const auto aggregations = getOperatorByType<WindowedAggregationLogicalOperator>(plan);
+        ASSERT_EQ(aggregations.size(), 1) << call;
+        const auto projected = aggregations.front()->getWindowAggregation();
+        ASSERT_EQ(projected.size(), 2) << call;
+        const auto synopsis = projected.at(0).function.tryGetAs<TestSynopsisAggregationLogicalFunction>();
+        ASSERT_TRUE(synopsis.has_value()) << call;
+        EXPECT_EQ(synopsis.value()->getParameter(), 100) << call;
+        EXPECT_EQ(projected.at(1).name, Identifier::parse(std::string{StatisticFieldNames::NUMBER_OF_SEEN_MEASUREMENTS})) << call;
+    }
+}
+
+TEST_F(StatementBinderTest, RegisteredAggregationByNameIsAnOrdinaryAggregation)
+{
+    const auto plan = bindPlan(fmt::format("SELECT TESTAGGREGATION(x, 5){}", WINDOWED));
+    EXPECT_TRUE(getOperatorByType<StatisticStoreWriterLogicalOperator>(plan).empty());
+    const auto aggregations = getOperatorByType<WindowedAggregationLogicalOperator>(plan);
+    ASSERT_EQ(aggregations.size(), 1);
+    const auto projected = aggregations.front()->getWindowAggregation();
+    ASSERT_EQ(projected.size(), 1);
+    const auto function = projected.front().function.tryGetAs<TestPlainAggregationLogicalFunction>();
+    ASSERT_TRUE(function.has_value());
+    EXPECT_EQ(function.value()->getParameter(), 5);
+    EXPECT_EQ(projected.front().name, Identifier::parse("X_TESTAGGREGATION"));
+
+    const auto renamed = bindPlan(fmt::format("SELECT TESTAGGREGATION(x, 5) AS agg{}", WINDOWED));
+    const auto renamedProjected = getOperatorByType<WindowedAggregationLogicalOperator>(renamed).front()->getWindowAggregation();
+    ASSERT_EQ(renamedProjected.size(), 1);
+    EXPECT_EQ(renamedProjected.front().name, Identifier::parse("AGG"));
+}
+
+TEST_F(StatementBinderTest, TokenAggregationsKeepTheirAutoName)
+{
+    const auto plan = bindPlan(fmt::format("SELECT SUM(x){}", WINDOWED));
+    const auto projected = getOperatorByType<WindowedAggregationLogicalOperator>(plan).front()->getWindowAggregation();
+    ASSERT_EQ(projected.size(), 1);
+    EXPECT_EQ(projected.front().name, Identifier::parse("X_SUM"));
+    EXPECT_NO_THROW(std::ignore = bindPlan(fmt::format("SELECT SUM(x) + UINT64(1){}", WINDOWED)));
+}
+
+TEST_F(StatementBinderTest, ProbeReadsAnyRegisteredAggregation)
+{
+    const auto synopsisPlan = bindPlan("SELECT TESTSYNOPSIS_PROBE(42, v, uint64, w, float64) FROM s INTO sink");
+    const auto synopsisReaders = getOperatorByType<StatisticStoreReaderLogicalOperator>(synopsisPlan);
+    ASSERT_EQ(synopsisReaders.size(), 1);
+    EXPECT_EQ(synopsisReaders.front()->getStatisticId(), StatisticId(42));
+    EXPECT_EQ(synopsisReaders.front()->getTypeName(), StatisticBlobType{"TestSynopsis"});
+    EXPECT_EQ(synopsisReaders.front()->getWindowMatch(), StatisticWindowMatch::ExactWindow);
+    ASSERT_EQ(synopsisReaders.front()->getPayloadFields().size(), 2);
+    EXPECT_EQ(synopsisReaders.front()->getPayloadFields().at(1).second, DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+
+    const auto scalarPlan = bindPlan("SELECT sum_probe_range(43, total, float64) FROM s INTO sink");
+    const auto scalarReaders = getOperatorByType<StatisticStoreReaderLogicalOperator>(scalarPlan);
+    ASSERT_EQ(scalarReaders.size(), 1);
+    EXPECT_EQ(scalarReaders.front()->getTypeName(), StatisticBlobType{"Sum"});
+    EXPECT_EQ(scalarReaders.front()->getWindowMatch(), StatisticWindowMatch::WithinRange);
+    ASSERT_EQ(scalarReaders.front()->getPayloadFields().size(), 1);
+}
+
+TEST_F(StatementBinderTest, StatisticCallsWithBadArgumentsAreInvalidQuerySyntax)
+{
+    const std::vector<std::string> selects{
+        "TESTSYNOPSIS()",
+        "TESTSYNOPSIS(0, 100)",
+        "TESTSYNOPSIS('a', 100)",
+        "TESTSYNOPSIS(42)",
+        "TESTSYNOPSIS(42, x)",
+        "TESTSYNOPSIS(42, 1, 2)",
+        "STATISTIC_BUILD(43, TESTSYNOPSIS(42, 100))",
+        "STATISTIC_BUILD(43, x)",
+        "STATISTIC_BUILD(43, SUM(x) + UINT64(1))",
+        "STATISTIC_BUILD(0, SUM(x))",
+        "STATISTIC_BUILD(SUM(x), 43)",
+        "STATISTIC_BUILD(42, 'AVG', x)",
+        "STATISTIC_BUILD(43, SUM(x)), AVG(y)",
+        "STATISTIC_BUILD(1, SUM(x)), STATISTIC_BUILD(2, SUM(y))",
+        "TESTSYNOPSIS(1, 10), TESTSYNOPSIS(2, 10)",
+        "RESERVOIR(42, 100)",
+    };
+    for (const auto& select : selects)
+    {
+        const auto query = fmt::format("SELECT {}{}", select, WINDOWED);
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+    }
+    EXPECT_EQ(bindError("SELECT STATISTIC_BUILD(43, SUM(x)) FROM s INTO sink"), ErrorCode::InvalidQuerySyntax) << "build without window";
+
+    const std::vector<std::string> probes{
+        "FOO_PROBE(42, v, uint64)",
+        "SUM_PROBE(42, v)",
+        "SUM_PROBE(42, v, notatype)",
+        "SUM_PROBE(0, v, uint64)",
+        "STATISTIC_PROBE(42, 'Sum', v, float64)",
+        "TESTSYNOPSIS_PROBE(1, v, uint64), SUM_PROBE(2, w, uint64)",
+    };
+    for (const auto& probe : probes)
+    {
+        const auto query = fmt::format("SELECT {} FROM s INTO sink", probe);
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+    }
+}
+
+/// STATISTIC_BUILD takes the aggregation call it wraps, not a field that happens to carry an aggregation's output name.
+TEST_F(StatementBinderTest, StatisticBuildDoesNotTakeAnUnrelatedAggregation)
+{
+    for (const auto* select : {"MAX(a), STATISTIC_BUILD(7, a_MAX)", "MAX(a) AS m, STATISTIC_BUILD(7, m)"})
+    {
+        const auto query = fmt::format("SELECT {}{}", select, WINDOWED);
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+        EXPECT_THAT(bindErrorMessage(query), ::testing::HasSubstr("expects an aggregation call as its second argument")) << query;
+    }
+}
+
+TEST_F(StatementBinderTest, WrappedSynopsisMessageOnlyNamesAWrappedSynopsis)
+{
+    constexpr std::string_view wrappedSynopsis = "is a statistic synopsis and is written without STATISTIC_BUILD";
+    for (const auto* select : {"STATISTIC_BUILD(2, TESTSYNOPSIS(1, 100))", "MAX(a), STATISTIC_BUILD(2, TESTSYNOPSIS(1, 100))"})
+    {
+        const auto query = fmt::format("SELECT {}{}", select, WINDOWED);
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+        EXPECT_THAT(bindErrorMessage(query), ::testing::HasSubstr(std::string{wrappedSynopsis})) << query;
+    }
+    const auto afterBuild = fmt::format("SELECT STATISTIC_BUILD(1, SUM(x)), STATISTIC_BUILD(2, y){}", WINDOWED);
+    EXPECT_EQ(bindError(afterBuild), ErrorCode::InvalidQuerySyntax);
+    EXPECT_THAT(bindErrorMessage(afterBuild), ::testing::Not(::testing::HasSubstr(std::string{wrappedSynopsis})));
+    const auto twoBuilds = fmt::format("SELECT STATISTIC_BUILD(1, SUM(x)), STATISTIC_BUILD(2, SUM(y)){}", WINDOWED);
+    EXPECT_THAT(bindErrorMessage(twoBuilds), ::testing::HasSubstr("Only one statistic build"));
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

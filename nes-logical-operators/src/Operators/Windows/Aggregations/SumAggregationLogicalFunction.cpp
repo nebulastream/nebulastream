@@ -26,6 +26,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Schema/Schema.hpp>
@@ -136,11 +137,11 @@ Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflecte
 
 AggregationLogicalFunctionRegistryReturnType SumAggregationLogicalFunction::create(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (arguments.on.size() != 1)
+    if (arguments.parameters.size() != 1)
     {
-        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidQuerySyntax("SUM expects exactly one field argument, but got {}", arguments.parameters.size());
     }
-    return SumAggregationLogicalFunction{arguments.on.at(0)};
+    return SumAggregationLogicalFunction{parseFieldParameter(arguments.parameters.front(), "the field of SUM")};
 }
 }
 

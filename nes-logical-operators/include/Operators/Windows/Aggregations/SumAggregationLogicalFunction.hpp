@@ -50,12 +50,13 @@ public:
 
     static AggregationLogicalFunctionRegistryReturnType create(AggregationLogicalFunctionRegistryArguments arguments);
 
+    static constexpr std::string_view NAME = "Sum";
+
 private:
     [[nodiscard]] static DataType inferFromInput(DataType inputType);
 
     AggregationFieldAccess inputFunction;
     DataType aggregateType;
-    static constexpr std::string_view NAME = "Sum";
 };
 
 template <>

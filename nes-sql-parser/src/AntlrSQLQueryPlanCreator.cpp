@@ -14,6 +14,7 @@
 
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstddef>
@@ -59,6 +60,8 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Statistic/StatisticBlobType.hpp>
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/AggregationLogicalFunctionProvider.hpp>
+#include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -195,21 +198,19 @@ LogicalFunction createRawLiteralFunction(std::string literal)
     return ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(literal));
 }
 
-uint64_t
-parseUnsignedConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
+AntlrSQLHelper::CallTokenRange tokenRangeOf(const antlr4::ParserRuleContext& context)
 {
-    const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
-    if (not constant)
+    return {.start = context.getStart()->getTokenIndex(), .stop = context.getStop()->getTokenIndex()};
+}
+
+StatisticId parseStatisticId(const LogicalFunction& argument, const std::string_view functionName, const std::string_view queryText)
+{
+    const auto statisticId = parseUnsignedParameter(argument, fmt::format("the statisticId of {} at {}", functionName, queryText));
+    if (statisticId == StatisticId::INVALID)
     {
-        throw InvalidQuerySyntax("Expected an unsigned integer constant for {} at {}", description, queryText);
+        throw InvalidQuerySyntax("{} requires a valid statisticId at {}", functionName, queryText);
     }
-    const auto parsed = NES::from_chars<uint64_t>(constant.value()->getConstantValue());
-    if (not parsed.has_value())
-    {
-        throw InvalidQuerySyntax(
-            "Expected an unsigned integer constant for {}, but got {} at {}", description, constant.value()->getConstantValue(), queryText);
-    }
-    return parsed.value();
+    return StatisticId(statisticId);
 }
 
 std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadFields(
@@ -238,94 +239,19 @@ std::vector<StatisticStoreReaderLogicalOperator::PayloadField> parsePayloadField
     return payloadFields;
 }
 
-std::string
-parseStringConstantArgument(const LogicalFunction& argument, const std::string_view description, const std::string_view queryText)
+std::optional<std::pair<std::string, StatisticWindowMatch>> parseProbeFunctionName(const std::string& functionName)
 {
-    const auto constant = argument.tryGetAs<ConstantValueLogicalFunction>();
-    if (not constant)
+    constexpr std::string_view rangeSuffix = "_PROBE_RANGE";
+    constexpr std::string_view exactSuffix = "_PROBE";
+    if (functionName.size() > rangeSuffix.size() and functionName.ends_with(rangeSuffix))
     {
-        throw InvalidQuerySyntax("Expected a quoted string constant for {} at {}", description, queryText);
+        return std::pair{functionName.substr(0, functionName.size() - rangeSuffix.size()), StatisticWindowMatch::WithinRange};
     }
-    const auto raw = constant.value()->getConstantValue();
-    if (raw.size() < 2 or raw.front() != '\'' or raw.back() != '\'')
+    if (functionName.size() > exactSuffix.size() and functionName.ends_with(exactSuffix))
     {
-        throw InvalidQuerySyntax("Expected a quoted string constant for {}, but got {} at {}", description, raw, queryText);
+        return std::pair{functionName.substr(0, functionName.size() - exactSuffix.size()), StatisticWindowMatch::ExactWindow};
     }
-    return raw.substr(1, raw.size() - 2);
-}
-
-WindowAggregationLogicalFunction
-bindStatisticAggregation(const std::string& metricName, const AggregationFieldAccess& field, const std::string_view queryText)
-{
-    const auto metric = toUpperCase(metricName);
-    if (metric == "AVG")
-    {
-        return WindowAggregationLogicalFunction{AvgAggregationLogicalFunction{field}};
-    }
-    if (metric == "MIN")
-    {
-        return WindowAggregationLogicalFunction{MinAggregationLogicalFunction{field}};
-    }
-    if (metric == "MAX")
-    {
-        return WindowAggregationLogicalFunction{MaxAggregationLogicalFunction{field}};
-    }
-    if (metric == "SUM")
-    {
-        return WindowAggregationLogicalFunction{SumAggregationLogicalFunction{field}};
-    }
-    if (metric == "COUNT")
-    {
-        return WindowAggregationLogicalFunction{CountAggregationLogicalFunction{field, true}};
-    }
-    throw InvalidQuerySyntax("STATISTIC_BUILD got an unknown metric {} at {}", metricName, queryText);
-}
-
-AntlrSQLHelper::StatisticBuildInfo bindStatisticBuild(const std::vector<LogicalFunction>& arguments, const std::string_view queryText)
-{
-    if (arguments.size() != 3)
-    {
-        throw InvalidQuerySyntax("STATISTIC_BUILD expects exactly three arguments (statisticId, metricName, field) at {}", queryText);
-    }
-    const auto statisticId = parseUnsignedConstantArgument(arguments[0], "the STATISTIC_BUILD statisticId", queryText);
-    if (statisticId == StatisticId::INVALID)
-    {
-        throw InvalidQuerySyntax("STATISTIC_BUILD requires a valid statisticId at {}", queryText);
-    }
-    const auto metricName = parseStringConstantArgument(arguments[1], "the STATISTIC_BUILD metric name", queryText);
-    const auto fieldAccess = arguments[2].tryGetAs<UnboundFieldAccessLogicalFunction>();
-    if (not fieldAccess)
-    {
-        throw InvalidQuerySyntax("STATISTIC_BUILD expects a field name as its third argument at {}", queryText);
-    }
-    return {
-        .statisticId = StatisticId(statisticId),
-        .statisticFunction = bindStatisticAggregation(metricName, arguments[2].getAs<UnboundFieldAccessLogicalFunction>(), queryText),
-        .functionName = "STATISTIC_BUILD"};
-}
-
-AntlrSQLHelper::StatisticProbeInfo bindStatisticProbe(
-    const std::vector<LogicalFunction>& arguments,
-    const std::string_view functionName,
-    const StatisticWindowMatch windowMatch,
-    const std::string_view queryText)
-{
-    if (arguments.size() < 4 or arguments.size() % 2 != 0)
-    {
-        throw InvalidQuerySyntax(
-            "{} expects a statisticId and a blob type followed by (fieldName, typeName) pairs at {}", functionName, queryText);
-    }
-    const auto statisticId = parseUnsignedConstantArgument(arguments[0], fmt::format("the {} statisticId", functionName), queryText);
-    if (statisticId == StatisticId::INVALID)
-    {
-        throw InvalidQuerySyntax("{} requires a valid statisticId at {}", functionName, queryText);
-    }
-    const auto blobType = parseStringConstantArgument(arguments[1], fmt::format("the {} blob type", functionName), queryText);
-    return {
-        .statisticId = StatisticId(statisticId),
-        .blobType = StatisticBlobType{blobType},
-        .payloadFields = parsePayloadFields(arguments, 2, functionName, queryText),
-        .windowMatch = windowMatch};
+    return std::nullopt;
 }
 
 LogicalFunction createNegatedNumericLiteralFunction(const ConstantValueLogicalFunction& constantFunction)
@@ -1374,28 +1300,55 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = toUpperCase(context->children[0]->getText());
     const auto tokenType = context->getStart()->getType();
 
-    /// Ensures the current aggregation argument is a direct field access.
-    /// If the argument is an expression (e.g. i + UINT64(1)), desugars it into a pre-aggregation
-    /// projection so that the aggregation operates on a simple field reference.
+    /// Turns an aggregation argument into a field reference. An expression (e.g. i + UINT64(1)) is desugared into a
+    /// pre-aggregation projection so that the aggregation operates on a simple field reference.
+    const auto toFieldAccess = [&](LogicalFunction argument) -> UnboundFieldAccessLogicalFunction
+    {
+        if (const auto fieldAccess = argument.tryGetAs<UnboundFieldAccessLogicalFunction>())
+        {
+            return fieldAccess.value().get();
+        }
+        const auto tempName = bindIdentifier(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
+        helpers.top().preAggregationProjections.emplace_back(tempName, std::move(argument));
+        return UnboundFieldAccessLogicalFunction(tempName);
+    };
+
     const auto ensureFieldAccessArgument = [&]()
     {
         if (helpers.top().functionBuilder.empty())
         {
             throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
         }
-        if (!helpers.top().functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>())
+        auto argument = std::move(helpers.top().functionBuilder.back());
+        helpers.top().functionBuilder.pop_back();
+        helpers.top().functionBuilder.emplace_back(toFieldAccess(std::move(argument)));
+    };
+
+    const auto toRegistryArguments = [&](std::vector<LogicalFunction> arguments)
+    {
+        AggregationLogicalFunctionRegistryArguments registryArguments{};
+        std::optional<Identifier> firstInputField;
+        for (auto& argument : arguments)
         {
-            /// Desugar: pop the expression, create a temp field, store a pre-aggregation projection,
-            /// and push a FieldAccess to the temp field back onto functionBuilder.
-            auto expression = std::move(helpers.top().functionBuilder.back());
-            helpers.top().functionBuilder.pop_back();
-            const auto tempName = bindIdentifier(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
-            helpers.top().preAggregationProjections.emplace_back(tempName, std::move(expression));
-            helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(tempName));
+            if (argument.tryGetAs<ConstantValueLogicalFunction>())
+            {
+                registryArguments.parameters.push_back(std::move(argument));
+                continue;
+            }
+            auto fieldAccess = toFieldAccess(std::move(argument));
+            if (not firstInputField.has_value())
+            {
+                firstInputField = fieldAccess.getFieldName();
+            }
+            registryArguments.parameters.emplace_back(std::move(fieldAccess));
         }
+        return std::pair{std::move(registryArguments), firstInputField};
     };
 
     auto isAggregation = false;
+    /// The registry path takes its arguments off the expression stack itself; the token cases leave the input field there.
+    auto argumentsConsumed = false;
+    std::optional<Identifier> aggregationInputField;
     switch (tokenType)
     {
         case AntlrSQLLexer::COUNT: {
@@ -1453,45 +1406,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default: {
             helpers.top().hasUnnamedAggregation = false;
-            if (funcName == "STATISTIC_BUILD" or funcName == "STATISTIC_PROBE" or funcName == "STATISTIC_PROBE_RANGE")
-            {
-                const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
-                {
-                    throw UnsupportedQuery(
-                        "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
-                        "expression stack: {}",
-                        funcName,
-                        numArgs,
-                        context->getText());
-                }
-                const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                const std::vector<LogicalFunction> statisticArgs(argsBegin, helpers.top().functionBuilder.end());
-                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                if (funcName == "STATISTIC_BUILD")
-                {
-                    if (helpers.top().statisticBuild.has_value())
-                    {
-                        throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
-                    }
-                    helpers.top().statisticBuild = bindStatisticBuild(statisticArgs, context->getText());
-                }
-                else
-                {
-                    if (helpers.top().statisticProbe.has_value())
-                    {
-                        throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
-                    }
-                    else
-                    {
-                        const auto windowMatch
-                            = funcName == "STATISTIC_PROBE_RANGE" ? StatisticWindowMatch::WithinRange : StatisticWindowMatch::ExactWindow;
-                        helpers.top().statisticProbe = bindStatisticProbe(statisticArgs, funcName, windowMatch, context->getText());
-                    }
-                }
-                break;
-            }
-            /// Check if the function is a constructor for a datatype
+            /// A type constructor such as UINT64(1) keeps its argument on the constant stack, so it is resolved
+            /// before anything is taken off the expression stack.
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
                 if (const auto numArgs = context->argument.size(); numArgs != 1)
@@ -1503,36 +1419,132 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 {
                     throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
                 }
-                helpers.top().hasUnnamedAggregation = false;
                 auto value = std::move(helpers.top().constantBuilder.back());
                 helpers.top().constantBuilder.pop_back();
-                auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
-                helpers.top().functionBuilder.emplace_back(constFunctionItem);
+                helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
+                break;
             }
-            else
+            /// A synopsis call pushes nothing back, so wrapping one in STATISTIC_BUILD leaves the outer call without
+            /// that argument. Say so before the generic "arguments did not reach the stack" error would.
+            if (funcName == "STATISTIC_BUILD" and helpers.top().statisticBuild.has_value()
+                and std::ranges::any_of(
+                    context->argument, [&](auto* argument) { return tokenRangeOf(*argument) == helpers.top().statisticBuild->call; }))
             {
-                const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
+                throw InvalidQuerySyntax(
+                    "{} is a statistic synopsis and is written without STATISTIC_BUILD, as {}(statisticId, ...) at {}",
+                    helpers.top().statisticBuild->functionName,
+                    helpers.top().statisticBuild->functionName,
+                    context->getText());
+            }
+            const auto numArgs = context->argument.size();
+            if (numArgs > helpers.top().functionBuilder.size())
+            {
+                throw UnsupportedQuery(
+                    "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
+                    "expression stack: {}",
+                    funcName,
+                    numArgs,
+                    context->getText());
+            }
+            const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+            std::vector<LogicalFunction> arguments(argsBegin, helpers.top().functionBuilder.end());
+            helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+
+            if (const auto description = AggregationLogicalFunctionProvider::tryDescribe(funcName))
+            {
+                if (description->isStatistic)
                 {
-                    throw UnsupportedQuery(
-                        "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
-                        "expression stack: {}",
+                    if (arguments.empty())
+                    {
+                        throw InvalidQuerySyntax("{} expects the statisticId as its first argument at {}", funcName, context->getText());
+                    }
+                    if (helpers.top().statisticBuild.has_value())
+                    {
+                        throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
+                    }
+                    const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
+                    arguments.erase(arguments.begin());
+                    helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
+                        .statisticId = statisticId,
+                        .statisticFunction
+                        = AggregationLogicalFunctionProvider::provide(funcName, toRegistryArguments(std::move(arguments)).first),
+                        .functionName = funcName,
+                        .call = tokenRangeOf(*context)};
+                    break;
+                }
+                auto [registryArguments, firstInputField] = toRegistryArguments(std::move(arguments));
+                helpers.top().windowAggs.emplace_back(
+                    AggregationLogicalFunctionProvider::provide(funcName, std::move(registryArguments)), std::nullopt);
+                aggregationInputField = firstInputField;
+                argumentsConsumed = true;
+                isAggregation = true;
+                break;
+            }
+            if (const auto probe = parseProbeFunctionName(funcName))
+            {
+                const auto& [aggregationName, windowMatch] = *probe;
+                const auto probed = AggregationLogicalFunctionProvider::tryDescribe(aggregationName);
+                if (not probed.has_value())
+                {
+                    throw InvalidQuerySyntax(
+                        "{} probes an unknown aggregation {} (registered: {}) at {}",
                         funcName,
-                        numArgs,
+                        aggregationName,
+                        fmt::join(AggregationLogicalFunctionProvider::registeredNames(), ", "),
                         context->getText());
                 }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
-                if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
+                if (arguments.empty() or arguments.size() % 2 == 0)
                 {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                    throw InvalidQuerySyntax(
+                        "{} expects a statisticId followed by (fieldName, typeName) pairs at {}", funcName, context->getText());
                 }
-                else
+                if (helpers.top().statisticProbe.has_value())
                 {
-                    throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
+                    throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
                 }
+                helpers.top().statisticProbe = AntlrSQLHelper::StatisticProbeInfo{
+                    .statisticId = parseStatisticId(arguments.front(), funcName, context->getText()),
+                    .blobType = StatisticBlobType{std::string{probed->name}},
+                    .payloadFields = parsePayloadFields(arguments, 1, funcName, context->getText()),
+                    .windowMatch = windowMatch};
+                break;
             }
+            if (funcName == "STATISTIC_BUILD")
+            {
+                if (arguments.size() != 2)
+                {
+                    throw InvalidQuerySyntax(
+                        "STATISTIC_BUILD expects a statisticId and an aggregation call, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
+                        context->getText());
+                }
+                /// The second argument has to be the call that produced the last aggregation. Its output field alone does
+                /// not prove that: STATISTIC_BUILD(42, x_SUM) next to a SUM(x) names the same field without wrapping it.
+                const auto wrapsLastAggregation
+                    = not helpers.top().windowAggs.empty() and helpers.top().lastAggregationCall == tokenRangeOf(*context->argument[1]);
+                if (not wrapsLastAggregation)
+                {
+                    throw InvalidQuerySyntax(
+                        "STATISTIC_BUILD expects an aggregation call as its second argument, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
+                        context->getText());
+                }
+                if (helpers.top().statisticBuild.has_value())
+                {
+                    throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
+                }
+                const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
+                const auto aggregation = helpers.top().windowAggs.back().first;
+                helpers.top().windowAggs.pop_back();
+                helpers.top().lastAggregationCall.reset();
+                helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
+                    .statisticId = statisticId, .statisticFunction = aggregation, .functionName = funcName, .call = tokenRangeOf(*context)};
+                break;
+            }
+            if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(arguments)))
+            {
+                helpers.top().functionBuilder.push_back(*logicalFunction);
+                break;
+            }
+            throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
         }
     }
 
@@ -1542,13 +1554,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     if (isAggregation)
     {
         helpers.top().hasUnnamedAggregation = true;
-        const auto onField = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get();
-        helpers.top().functionBuilder.pop_back();
-        const auto autoName = fmt::format("{}_{}", onField.getFieldName(), funcName);
+        if (not argumentsConsumed)
+        {
+            aggregationInputField = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get().getFieldName();
+            helpers.top().functionBuilder.pop_back();
+        }
+        const auto autoName = aggregationInputField.has_value() ? fmt::format("{}_{}", *aggregationInputField, funcName) : funcName;
         const auto asField = bindIdentifier(autoName);
         const auto [aggFunc, asName] = helpers.top().windowAggs.back();
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
+        helpers.top().lastAggregationCall = tokenRangeOf(*context);
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
     }
 }
