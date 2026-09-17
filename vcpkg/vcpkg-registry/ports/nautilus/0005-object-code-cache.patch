@@ -1689,6 +1689,33 @@ index 5b214f57..b4fb6012 100644
  };
  
  } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp
+index 02299115..9a38d2cf 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRExecutable.cpp
+@@ -3,6 +3,8 @@
+ #include "nautilus/compiler/backends/mlir/MLIRExecutable.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRPassManager.hpp"
++#include "nautilus/exceptions/RuntimeException.hpp"
++#include <llvm/Support/Error.h>
+ #include <mlir/IR/MLIRContext.h>
+ 
+ namespace nautilus::compiler::mlir {
+@@ -26,7 +28,12 @@ MLIRExecutable& MLIRExecutable::operator=(MLIRExecutable&& other) noexcept {
+ }
+ void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) {
+ 	std::scoped_lock lock(llvm_jit_mutex);
+-	return jit->lookup(member).get();
++	auto symbol = jit->lookup(member);
++	if (!symbol) {
++		throw RuntimeException("Could not resolve MLIR function '" + member +
++		                       "': " + llvm::toString(symbol.takeError()));
++	}
++	return *symbol;
+ }
+ bool MLIRExecutable::hasInvocableFunctionPtr() {
+ 	return true;
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
 index 9b0662d8..6cc137b7 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
@@ -1837,13 +1864,14 @@ index d86405ac..9a609a96 100644
  	void visitAdd(ir::AddOperation* addIntOp, ValueFrame& frame);
  	void visitSub(ir::SubOperation* subIntOp, ValueFrame& frame);
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
-index c5cda3fe..120e97d4 100644
+index c5cda3fe..7a8994dd 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
-@@ -3,10 +3,12 @@
+@@ -3,10 +3,13 @@
  #include "nautilus/compiler/backends/mlir/jit/PackFunctionArguments.hpp"
  #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
  #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
++#include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 +#include <llvm/ExecutionEngine/Orc/ObjectTransformLayer.h>
  #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
  #include <llvm/ExecutionEngine/SectionMemoryManager.h>
@@ -1853,7 +1881,7 @@ index c5cda3fe..120e97d4 100644
  #include <llvm/TargetParser/Triple.h>
  #include <mlir/Target/LLVMIR/Export.h>
  
-@@ -21,50 +23,25 @@ llvm::Error makeStringError(const llvm::Twine& message) {
+@@ -21,50 +24,25 @@ llvm::Error makeStringError(const llvm::Twine& message) {
  	return llvm::createStringError(llvm::inconvertibleErrorCode(), message);
  }
  
@@ -1913,7 +1941,7 @@ index c5cda3fe..120e97d4 100644
  		auto layer = std::make_unique<llvm::orc::RTDyldObjectLinkingLayer>(
  		    session, [](const llvm::MemoryBuffer&) { return std::make_unique<llvm::SectionMemoryManager>(); });
  
-@@ -85,48 +62,35 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+@@ -85,48 +63,40 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
  		return layer;
  	};
  
@@ -1927,10 +1955,16 @@ index c5cda3fe..120e97d4 100644
 -	// RuntimeDyld drops the weak DW.ref personality symbol emitted for AArch64
 -	// exception frames. Let LLJIT select JITLink on AArch64, which retains the
 -	// indirection and registers the generated EH frames correctly.
+-	if (!targetTriple.isAArch64()) {
+-		jitBuilder.setObjectLinkingLayerCreator(objectLinkingLayerCreator);
 +	llvm::orc::LLJITBuilder builder;
 +	builder.setJITTargetMachineBuilder(std::move(*tmBuilderOrError));
- 	if (!targetTriple.isAArch64()) {
--		jitBuilder.setObjectLinkingLayerCreator(objectLinkingLayerCreator);
++	if (targetTriple.isAArch64()) {
++		builder.setObjectLinkingLayerCreator(
++		    [](llvm::orc::ExecutionSession& session) -> std::unique_ptr<llvm::orc::ObjectLayer> {
++			    return std::make_unique<llvm::orc::ObjectLinkingLayer>(session);
++		    });
++	} else {
 +		builder.setObjectLinkingLayerCreator(objectLinkingLayerCreator);
  	}
 -	auto jitOrErr = jitBuilder.create();
@@ -1978,7 +2012,7 @@ index c5cda3fe..120e97d4 100644
  #if defined(__GNUC__) && !defined(__clang__)
  #pragma GCC diagnostic pop
  #endif
-@@ -135,21 +99,92 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
+@@ -135,21 +105,92 @@ llvm::Expected<std::unique_ptr<MLIRJit>> MLIRJit::create(::mlir::ModuleOp module
  	}
  	mainJD.addGenerator(std::move(*generatorOrErr));
  
