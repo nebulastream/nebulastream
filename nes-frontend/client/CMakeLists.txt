@@ -10,10 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(argparse CONFIG REQUIRED)
-find_package(replxx CONFIG REQUIRED)
-
-add_subdirectory(repl)
-add_subdirectory(client)
-add_subdirectory(nebucli)
-add_subdirectory(server)
+add_rust_cargo_test(client)

@@ -69,26 +69,32 @@ namespace NES
 namespace
 {
 
-/// Starts the coordinator with the optimizer settings the command line gave.
+Bridge::WorkerMode workerModeOf(const SystestConfiguration& config)
+{
+    const bool remote = config.remoteWorker.getValue() or not config.coordinatorUrl.getValue().empty();
+    return remote ? Bridge::WorkerMode::Remote : Bridge::WorkerMode::Embedded;
+}
+
+/// Starts the coordinator with the optimizer settings the command line gave, or connects to the one it named.
 /// A separate function, so the JSON string outlives the call, which it would not if the member init list built it.
 /// Empty settings pass nothing rather than an empty object, so the optimizer keeps its own defaults.
 /// In the embedded mode the coordinator starts a worker in this process for each one registered with it.
 /// In the remote mode it starts none and answers no default host, because it sends its commands over gRPC to the
 /// worker already running at each registered address.
-rust::Box<Bridge::Coordinator>
-startCoordinator(const std::unordered_map<std::string, std::string>& optimizer, const Bridge::WorkerMode workers)
+rust::Box<Bridge::Coordinator> startCoordinator(const SystestConfiguration& config)
 {
+    if (const auto& url = config.coordinatorUrl.getValue(); not url.empty())
+    {
+        return Bridge::connect_coordinator(rust::Str{url.data(), url.size()});
+    }
+    const auto workers = workerModeOf(config);
+    const auto& optimizer = config.optimizerOverrides;
     if (optimizer.empty())
     {
         return Bridge::start_coordinator(rust::Str{}, workers, rust::Str{});
     }
     const auto json = rfl::json::write(optimizer);
     return Bridge::start_coordinator(rust::Str{}, workers, rust::Str{json.data(), json.size()});
-}
-
-Bridge::WorkerMode workerModeOf(const SystestConfiguration& config)
-{
-    return config.remoteWorker.getValue() ? Bridge::WorkerMode::Remote : Bridge::WorkerMode::Embedded;
 }
 
 /// One case of one test file in the submitted group, and the slot its check takes in the report.
@@ -126,7 +132,7 @@ struct TestRunner::Impl
         , configDir(config.configDir.getValue())
         , discoverRoot(config.testDiscoverRoot.getValue())
         /// An empty database path selects an in-memory catalog.
-        , coordinator{startCoordinator(config.optimizerOverrides, workerModeOf(config))}
+        , coordinator{startCoordinator(config)}
         , cluster{*coordinator, Cluster::Settings{.mode = workerModeOf(config), .topology = config.clusterConfig, .workerSettings = config.workerOverrides}}
         , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds.getValue()}}
     {

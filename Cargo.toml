@@ -25,6 +25,7 @@ members = [
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
     "nes-coordinator/bridge",
+    "nes-frontend/client",
     "nes-frontend/nebucli",
     "nes-frontend/server",
     "nes-frontend/server/app",
@@ -40,6 +41,7 @@ default-members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-frontend/client",
     "nes-frontend/nebucli",
     "nes-frontend/server",
 ]
@@ -57,6 +59,7 @@ controller = { path = "nes-coordinator/controller" }
 coordinator = { path = "nes-coordinator/coordinator" }
 coordinator_bridge = { path = "nes-coordinator/bridge" }
 server = { path = "nes-frontend/server" }
+client = { path = "nes-frontend/client" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"

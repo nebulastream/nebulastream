@@ -357,6 +357,7 @@ Tests can be run with specific configuration settings (`-- --worker.total_memory
 Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries to remote workers, use remote mode (`-r` or `--remote`).
+To use the coordinator of a running `nes-server` instead of one in the systest process, pass `--coordinator <url>`; the run then uses that server's workers, so it needs a topology, and `--optimizer` belongs to the server.
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).
 
 
@@ -496,6 +497,23 @@ cmake-build-debug/nes-systests/systest/systest \
 > - Workers are started with the correct `--grpc` addresses
 > - Network connectivity exists between systest and all workers
 > - If using Docker, workers must be in the same network or properly exposed
+
+#### Running Against a `nes-server`
+
+The runner can also use the coordinator of a running `nes-server`. In the server's embedded worker mode it hosts the topology's workers in its own process, so nothing else has to be started:
+
+```bash
+# Terminal 1: Start the server
+cmake-build-debug/nes-frontend/server/nes-server --worker-mode embedded
+
+# Terminal 2: Run systest against it
+cmake-build-debug/nes-systests/systest/systest \
+    --coordinator http://127.0.0.1:8081 \
+    --clusterConfig nes-systests/configs/topologies/two-node.yaml \
+    -e tcp
+```
+
+The `tcp` group is excluded because a source the runner serves over a socket cannot reach a worker in another process. The `systest-server-test` lane runs the corpus this way, and `systest-remote-test` does the same with the server and the workers in containers.
 
 #### Docker-Based Remote Testing
 

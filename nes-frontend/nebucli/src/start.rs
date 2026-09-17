@@ -12,8 +12,8 @@
     limitations under the License.
 */
 use crate::DEFAULT_REQUEST_TIMEOUT;
-use crate::client::{Client, WaitKind};
 use anyhow::{Context, Result, bail};
+use client::{Client, WaitKind};
 use model::ml_model::{self, CreateMlModel};
 use model::query::QueryWithFragments;
 use model::query::query_state::QueryState;

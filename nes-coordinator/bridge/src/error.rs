@@ -19,6 +19,7 @@
 
 use std::fmt;
 
+use client::ClientError;
 use model::error::{CodedError, ErrorCode};
 use model::query::Model as Query;
 use model::query::query_fragment::{QueryError, QueryFragmentError};
@@ -75,8 +76,31 @@ impl From<&CodedError> for ffi::BridgeError {
     }
 }
 
+impl From<&ClientError> for ffi::BridgeError {
+    fn from(error: &ClientError) -> Self {
+        let code = match error {
+            ClientError::Api { body, .. } => ErrorCode::from_code(body.code),
+            ClientError::Transport { .. } => ErrorCode::CoordinatorUnreachable,
+            ClientError::Deadline { .. } => ErrorCode::QueryWaitTimeout,
+            ClientError::Http { .. } | ClientError::Cancelled => ErrorCode::UnknownException,
+        };
+        let msg = match error {
+            ClientError::Api { body, .. } => body.message.clone(),
+            other => other.to_string(),
+        };
+        Self {
+            code: code as u16,
+            msg,
+            trace: String::new(),
+        }
+    }
+}
+
 impl From<&anyhow::Error> for ffi::BridgeError {
     fn from(error: &anyhow::Error) -> Self {
+        if let Some(client_error) = error.downcast_ref::<ClientError>() {
+            return client_error.into();
+        }
         match error.downcast_ref::<CodedError>() {
             // The code comes from the classified cause and the message from the whole chain,
             // because the context that a caller added above it says where the failure happened.

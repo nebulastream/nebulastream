@@ -30,6 +30,17 @@ if [ -z "$SYSTEST_IMAGE" ]; then
   exit 1
 fi
 
+if [ -z "$SERVER_IMAGE" ]; then
+  echo "ERROR: SERVER_IMAGE is not set"
+  exit 1
+fi
+
+if [ -z "$NES_BATS_LIB" ]; then
+  echo "ERROR: NES_BATS_LIB is not set"
+  exit 1
+fi
+source "$NES_BATS_LIB"
+
 if [ -z "$NES_DIR" ]; then
   echo "ERROR: NES_DIR is not set"
   exit 1
@@ -95,14 +106,31 @@ fi
 #   TESTDATA_DIR:   test input data -> /data
 #   TESTCONFIG_DIR: repository checkout -> $NES_DIR
 #   TEST_DIR:       test working directory -> $CONTAINER_WORKDIR
+# The coordinator runs in the nes-server service and plans every statement there, so it sees the same
+# paths as the runner: the models it loads and the files the statements name.
+NES_COMPOSE_SERVER_VOLUMES="      - type: bind
+        source: \"$TESTDATA_DIR\"
+        target: /data
+$TESTDATA_CACHE_MOUNT
+      - type: bind
+        source: \"$TESTCONFIG_DIR\"
+        target: \"$NES_DIR\"
+      - type: bind
+        source: \"$TEST_DIR\"
+        target: \"$CONTAINER_WORKDIR\""
+export NES_COMPOSE_SERVER_VOLUMES
+echo "services:"
+nes_compose_server_service "$WORKERS_FILE"
 cat <<EOF
-services:
   systest:
     image: $SYSTEST_IMAGE
     pull_policy: never
     stop_grace_period: 0s
     command: ["sleep", "infinity"]
     working_dir: $CONTAINER_WORKDIR
+    depends_on:
+      nes-server:
+        condition: service_healthy
     volumes:
       - type: bind
         source: "$TESTDATA_DIR"

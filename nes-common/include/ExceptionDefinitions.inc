@@ -77,6 +77,7 @@ EXCEPTION(UnknownWorker, 2302, "unknown worker")
 EXCEPTION(DistributedFailure, 2303, "distributed failure")
 EXCEPTION(WorkerUnreachable, 2304, "worker could not be reached")
 EXCEPTION(WorkerAlreadyExists, 2305, "worker already exists")
+EXCEPTION(CoordinatorUnreachable, 2306, "coordinator could not be reached")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
