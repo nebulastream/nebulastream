@@ -396,6 +396,7 @@ void printQueryResultToStdOut(
     const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, const std::string_view queryPerformanceMessage)
 {
     INVARIANT(runningQuery.verdict.has_value(), "a query is reported only after it was checked");
+
     struct QueryCoverage
     {
         std::string query;
@@ -406,9 +407,15 @@ void printQueryResultToStdOut(
     };
 
     const auto& query = runningQuery.systestQuery;
-    const auto kind = query.actualExplainOutput.has_value() ? "explain"
-        : std::holds_alternative<ExpectedError>(query.expectation) ? "expected_error"
-                                                                 : "execute";
+    const char* kind = "execute";
+    if (query.actualExplainOutput.has_value())
+    {
+        kind = "explain";
+    }
+    else if (std::holds_alternative<ExpectedError>(query.expectation))
+    {
+        kind = "expected_error";
+    }
     NES_DEBUG(
         "Systest query result: {}",
         rfl::json::write(QueryCoverage{

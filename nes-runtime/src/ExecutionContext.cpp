@@ -151,7 +151,7 @@ nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const
         throw std::logic_error("Operator handlers must be registered during setup before tracing");
     }
 #endif
-    return nautilus::val<OperatorHandler*>(nullptr);
+    return {nullptr};
 }
 
 }

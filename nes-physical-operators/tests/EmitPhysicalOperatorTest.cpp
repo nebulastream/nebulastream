@@ -123,7 +123,6 @@ public:
         std::shared_ptr<BufferManager> bufferManager;
     };
 
-public:
     static void SetUpTestSuite()
     {
         Logger::setupLogging("EmitPhysicalOperatorTest.log", LogLevel::LOG_DEBUG);

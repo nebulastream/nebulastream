@@ -79,7 +79,7 @@ public:
     {
         marker('d');
         const auto bits = std::bit_cast<uint64_t>(value);
-        static constexpr char digits[] = "0123456789abcdef";
+        static constexpr std::string_view digits{"0123456789abcdef"};
         for (int shift = 60; shift >= 0; shift -= 4)
         {
             marker(digits[(bits >> shift) & 0x0fU]);
