@@ -65,19 +65,19 @@ be a different query. So the blob carries its own bin geometry, in O(1) instead 
 
 ```
 offset  size  field
-0       1     version            = 1; other values are rejected
-1       7     reserved, zero
-8       8     numberOfBins       u64
-16      8     minValue           u64
-24      8     maxValue           u64
-32      ...   numberOfBins * u64 counters
+0       8     numberOfBins       u64
+8       8     minValue           u64
+16      8     maxValue           u64
+24      ...   numberOfBins * u64 counters
 ```
 
-- The histogram is defined over **unsigned integer** inputs only (see step 4), so `minValue` / `maxValue` are plain
+- The histogram is defined over **unsigned integer** inputs only (see step 5), so `minValue` / `maxValue` are plain
   `u64`, exactly what `parseUnsignedParameter` produced. The blob does not record the input field's width; the
   bounds the iterator emits are `UINT64`.
-- There is no layout byte and no counter-size byte. A different payload (sparse, narrower counters) is a new
-  `version`; nothing in this format prepares for one.
+- There is no version, layout or counter-size byte. The blobs live in the statistic store of one running system
+  and are never read by another build of the code, and the store already tags every blob with its type name. A
+  different payload (sparse, narrower counters) would be a different type name; nothing in this format prepares
+  for one.
 - `numberOfSeenTuples` leaves the blob. The histogram has no part in it any more: `addStatisticBuild` pairs every
   statistic function with a `COUNT`, and that count is what the writer stores as
   `StatisticTuple::numberOfSeenMeasurements`.
@@ -94,12 +94,12 @@ offset  size  field
   and the value `max` itself, so it spans `w + (max - min) % numberOfBins + 1` integers and is **wider** than the
   others by up to `numberOfBins`. With `w = 1` that is a last bin up to `numberOfBins + 1` times as wide as a
   regular one. This is a known property of the integer width, stated in the class documentation and pinned by the
-  "range with a remainder" systest. A caller that needs even bins picks `max - min + 1` as a multiple of the bin
-  count.
+  "range with a remainder" systest. A caller that wants the most even bins picks `max - min` as a multiple of the
+  bin count; the last bin is then wider by exactly the one value `max`.
 - Reported bounds: `binStart = min + i*w`; `binEnd = min + (i+1)*w` for all but the last bin, `binEnd = max` for the
   last. `binEnd` is exclusive except for the last bin, where it is inclusive.
 
-Effect: 682 bins take `32 + 682*8 = 5,488` bytes instead of 16,392 (3.0x). The aggregation *state* shrinks from
+Effect: 682 bins take `24 + 682*8 = 5,480` bytes instead of 16,392 (3.0x). The aggregation *state* shrinks from
 `24*n + 8` to `8*n` bytes, so `reset`, `combine` and `lower` touch a third of the memory and `lower` is one header
 write plus one `memcpy`.
 
@@ -126,8 +126,10 @@ sharper:
   sees the bin count, the error message must do the conversion for them: it names the bin count the budget led to,
   the range, and the budget for the largest accepted bin count (`HEADER_SIZE + 8 * (max - min)`).
 
-With the new layout the formula is `(budget - 32) / 8` instead of `(budget - 8) / 24`, so
-`EQUIWIDTHHISTOGRAM(44, value, 128, 0, 25)` yields 12 bins, not 5. The POC goldens cannot be copied.
+With the new layout the formula is `(budget - 24) / 8` instead of `(budget - 8) / 24`, so
+`EQUIWIDTHHISTOGRAM(44, value, 128, 0, 25)` yields 13 bins, not 5. The POC goldens cannot be copied. The systests
+use a budget of 120 (12 bins, `w = 2`) for their main scenario, because 13 bins over `[0,25]` give `w = 1` and a
+last bin of `[12, 25]`, which is a fine remainder test but a poor first example.
 
 ### Validating a blob
 
@@ -145,9 +147,9 @@ virtual void validate(std::span<const int8_t> payload) const;
 ```
 
 `loadStatisticsProxy` calls it for every statistic next to the existing type-name and size checks. The histogram's
-override delegates to `validateEquiWidthHistogramBlob`, which rejects: fewer than 32 bytes, `version != 1`,
+override delegates to `validateEquiWidthHistogramBlob`, which rejects: fewer than 24 bytes,
 `numberOfBins == 0`, `minValue >= maxValue`, `maxValue - minValue < numberOfBins`, and
-`payload.size() != 32 + numberOfBins * 8`. After that the traced `forEachRecord` can trust the header.
+`payload.size() != 24 + numberOfBins * 8`. After that the traced `forEachRecord` can trust the header.
 
 ## Dependencies outside the histogram
 
@@ -204,11 +206,25 @@ and `ChainedHashMap` requires at least one entry per page. An entry is `sizeof(C
 aggregation states`, so with the default configuration a histogram above roughly 120 bins fails the precondition
 (debug) or computes `entriesPerPage = 0` (release). The POC grew the page instead.
 
-Step 3 ports that, without the POC's extra option: `pageSize = std::max(conf.pageSize, entrySize)`. A state that
-large gets one entry per page; `ChainedHashMap` already allocates pages above the pooled buffer size through
-`getUnpooledBuffer`. This is a change to the generic aggregation lowering and the only engine change in this port.
-It gets its own commit and a test that does not involve statistics (a lowering unit test, or a systest with a
-small `page_size` and an ordinary aggregation whose entry exceeds it).
+The memory budget is what resolves this, and no new option is needed. The user has already said how much memory
+the histogram may take, and the state follows from it directly: `getSizeOfStateInBytes() = 8 * numberOfBins =
+budget - 24`, rounded down to 8. That state is part of `entrySize`. So a query with a budget above `page_size`
+is not a misconfiguration to reject (as the hash join does for a tuple that does not fit its page); it is an
+explicit request for a larger entry, and the lowering honours it by sizing the page from the entry.
+
+Step 3 therefore ports the POC's rule without its extra `min_entries_per_page` option:
+`pageSize = std::max(conf.pageSize, entrySize)`. It is written against `entrySize`, not against the histogram, so
+it stays a generic rule with no statistics-specific code in the aggregation lowering, and the budget reaches it
+through the state size alone.
+
+- A state that large gets one entry per page, which for a statistic build (never keyed) is the only entry the map
+  will hold. `ChainedHashMap` already allocates pages above the pooled buffer size through `getUnpooledBuffer`.
+- This gives the budget a meaning beyond the blob: besides bounding the stored blob, it bounds the histogram's
+  share of each hash-map page, so the memory held while a window is open is about `budget` per slice and worker
+  thread.
+- It is a change to the generic aggregation lowering and the only engine change in this port. It gets its own
+  commit and a test that does not involve statistics (a lowering unit test, or a systest with a small `page_size`
+  and an ordinary aggregation whose entry exceeds it).
 
 ### Statistic ids in systests
 
@@ -233,7 +249,7 @@ Each step is one commit that builds and passes its tests (`./.nix/nix-cmake.sh`,
 3. **Hash-map page size** grows to fit one entry (above).
 4. **`EquiWidthHistogramBlob`** in `nes-statistics` + unit test in `nes-statistics/tests`:
    - header and counters written into a buffer and read back as bins, including the inclusive, wider last bin;
-   - `equiWidthHistogramBinsForBudget` for a budget below the header, exactly one bin, and the 128 → 12 case;
+   - `equiWidthHistogramBinsForBudget` for a budget below the header, exactly one bin, and the 128 → 13 case;
    - `validateEquiWidthHistogramBlob` rejecting each case listed under "Validating a blob". This is plain C++, no
      tracing needed.
 5. **Logical function** `EquiWidthHistogramAggregationLogicalFunction`, rewritten to the value-type concept
@@ -272,7 +288,7 @@ Each step is one commit that builds and passes its tests (`./.nix/nix-cmake.sh`,
    - `forEachRecord` emits one record per bin with the bounds computed from the header as under "Bin geometry".
    - Test: unit test for the factory's rejections (two fields, four fields, a `float64` counter).
 8. **Systests** `nes-systests/operator/aggregation/statistics/WindowAggregationHistograms.test`, ids `200-299`:
-   - build only (the POC's first query, 12 bins over `[0,25]`);
+   - build only (the POC's first query with a budget of 120: 12 bins over `[0,25]`);
    - build → probe in the nested form, all bins;
    - out-of-range values on both sides landing in the last bin;
    - a range with a remainder, showing the wider inclusive last bin and its `binEnd = max`;
@@ -298,11 +314,11 @@ stay so that whoever picks it up later does not have to redo the analysis.
 First a caveat the new format creates. The POC measured 4.24x for delta over the full blob: 4,395 vs 18,619 bytes
 per window, ~200 of 682 bins changing. Both figures are **wire** measurements (the root container's received
 bytes divided by the window count), which is why the full-blob figure is above the 16,392-byte stored blob. Two
-thirds of that full blob were bounds. Against the new 5,488-byte blob, the same delta is roughly **1.25x**, and
+thirds of that full blob were bounds. Against the new 5,480-byte blob, the same delta is roughly **1.25x**, and
 generic zstd on the plain blob likely beats it. So the delta is only worth porting together with a tighter delta
 encoding, and the numbers must be re-measured before it is argued for.
 
-D1. **Sparse payload** as blob `version = 2`: `[u64 numEntries] { u32 binIndex, u64 counter } *`.
+D1. **Sparse payload** under a type name of its own (the blob has no version field): `[u64 numEntries] { u32 binIndex, u64 counter } *`.
     12 instead of the POC's 16 bytes per entry. The delta blob becomes the normal header + sparse payload + a
     16-byte delta trailer `{u64 isKeyframe, u64 intervalId}`, so one codec serves plain, GEN and RESOLVER. The
     plain histogram may use the sparse payload too when it is smaller (mostly-empty histograms); the iterator then
@@ -356,7 +372,7 @@ after the review and **confirmed**; 6-8 are new from the review.
 4. The delta compression is not ported. If it ever is: separate commits **and** a default-off optimizer option,
    always compiled (no CMake switch).
 5. No explicit-bounds layout; bounds are never stored. Future histogram kinds are not a concern of this format,
-   which is why the header has a version byte and nothing else that anticipates them.
+   which is why the header has no version, layout or counter-size field (version byte dropped on 2026-09-17).
 6. The bin width stays the POC's integer `(max - min) / bins`; the last bin is inclusive of `max` and wider by the
    remainder. Documented and tested instead of changed (follows from confirming Decision 2).
 7. Nullable input is rejected during type inference; so is every input type that is not an unsigned integer.
@@ -375,7 +391,7 @@ after the review and **confirmed**; 6-8 are new from the review.
 | D4 probe contract unspecified | step 7 factory: three `UINT64` fields by position, `InvalidQuerySyntax` otherwise; registry entry signature in step 2 |
 | D5 last bin wider, `max` inclusivity undefined | "Bin geometry": `max` inclusive, wider last bin stated and tested (Decision 6); binning itself unchanged by decision |
 | D6 more budget can invalidate a query; underflow in the budget formula | Decision 2 confirmed, error message names the largest accepted budget; comparison before subtraction |
-| D7 header prepares for layouts the plan forbids | `layout` and `counterSizeBytes` removed; version byte only |
+| D7 header prepares for layouts the plan forbids | `layout`, `counterSizeBytes` and the version byte removed; the header is bins, min, max |
 | Step 1 under-specified, mixed authorship, missing hunks, bundled registry | "The physical statistic operators": file list, hunk list, separate copy commit with credit, rebase path; registry is its own step 2 |
 | Scalar iterator needs the type name | registry entry takes `(typeName, payloadFields)` |
 | Process-global store, id collisions | "Statistic ids in systests" |
