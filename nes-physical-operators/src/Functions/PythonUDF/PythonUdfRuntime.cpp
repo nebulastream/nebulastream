@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <unwind.h>
 #include <fmt/format.h>
+#include <Util/Strings.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 
@@ -458,10 +459,9 @@ extern "C" __attribute__((visibility("default"), used)) CodonString seq_str_floa
 
 extern "C" __attribute__((visibility("default"), used)) double seq_float_from_str(const CodonString string, const char** end)
 {
-    double result = 0;
-    const auto conversion = std::from_chars(string.data, string.data + string.length, result);
-    *end = conversion.ec == std::errc{} || conversion.ec == std::errc::result_out_of_range ? conversion.ptr : string.data;
-    return result;
+    const auto [result, suffix] = NES::from_chars_prefix<double>(std::string_view(string.data, string.length));
+    *end = suffix.data();
+    return result.value_or(0.0);
 }
 
 extern "C" __attribute__((visibility("default"), used)) void* seq_stdout()
