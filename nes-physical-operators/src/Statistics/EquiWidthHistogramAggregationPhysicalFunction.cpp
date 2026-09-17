@@ -81,9 +81,12 @@ void EquiWidthHistogramAggregationPhysicalFunction::lift(
 
     /// Below minValue the subtraction wraps to a huge number and above maxValue the quotient runs past the last bin;
     /// both land in the last bin, which therefore also means "outside the range". See the class documentation.
+    /// The clamp is a select rather than a ternary: a ternary would need the traced condition as a plain bool and
+    /// would bake one branch into the trace, which lets an out-of-range value write past the counters.
     const auto binIndex = (value - nautilus::val<uint64_t>{minValue}) / nautilus::val<uint64_t>{binWidth};
     const auto lastBin = nautilus::val<uint64_t>{numberOfBins - 1};
-    const auto boundedBinIndex = binIndex < nautilus::val<uint64_t>{numberOfBins} ? binIndex : lastBin;
+    const auto boundedBinIndex = VarVal::select(binIndex < nautilus::val<uint64_t>{numberOfBins}, VarVal{binIndex}, VarVal{lastBin})
+                                     .getRawValueAs<nautilus::val<uint64_t>>();
 
     const auto counter = counterAt(countersOf(aggregationState), boundedBinIndex);
     VarVal{readValueFromMemRef<uint64_t>(counter) + nautilus::val<uint64_t>{1}}.writeToMemory(counter);

@@ -140,8 +140,10 @@ nautilus::val<uint64_t> EquiWidthHistogramBlobBinReader::getBinStart(const nauti
 nautilus::val<uint64_t> EquiWidthHistogramBlobBinReader::getBinEnd(const nautilus::val<uint64_t>& binIndex) const
 {
     /// The last bin ends at maxValue, inclusive: it holds both the remainder of the integer division and maxValue itself.
-    const auto regularEnd = minValue + ((binIndex + nautilus::val<uint64_t>{1}) * binWidth);
-    return (binIndex + nautilus::val<uint64_t>{1}) < numberOfBins ? regularEnd : maxValue;
+    /// A select rather than a ternary, which would need the traced condition as a plain bool and bake one branch in.
+    const auto nextBin = binIndex + nautilus::val<uint64_t>{1};
+    const auto regularEnd = minValue + (nextBin * binWidth);
+    return VarVal::select(nextBin < numberOfBins, VarVal{regularEnd}, VarVal{maxValue}).getRawValueAs<nautilus::val<uint64_t>>();
 }
 
 nautilus::val<uint64_t> EquiWidthHistogramBlobBinReader::getBinCounter(const nautilus::val<uint64_t>& binIndex) const
