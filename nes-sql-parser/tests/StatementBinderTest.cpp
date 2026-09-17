@@ -455,6 +455,69 @@ TEST_F(StatementBinderTest, MultiSinkQueryWithRepeatedSink)
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
+/// Every sink of a query reads the finished union, so an INTO written on an earlier operand promises something the query
+/// does not do: it reads as that operand's own sink while it would consume the whole union.
+TEST_F(StatementBinderTest, SinkInsideUnionOperandIsRejected)
+{
+    const std::string query = "SELECT a FROM inputStreamA INTO sinkA UNION SELECT a FROM inputStreamB INTO sinkB";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+/// An operand in the middle of a union chain is the right-hand side of the union it sits in, and only the union built
+/// from it is an earlier operand of the one above. Reaching it therefore takes more than looking at the nearest union:
+/// the clause is rejected for a left-hand side found further up, which is what tells a walk apart from a single check.
+TEST_F(StatementBinderTest, SinkInsideAMiddleUnionOperandIsRejected)
+{
+    const std::string query
+        = "SELECT a FROM inputStreamA UNION SELECT a FROM inputStreamB INTO outputStream UNION SELECT a FROM inputStreamC";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+/// Naming one sink in both operands would otherwise pass the duplicate check, which only sees a single INTO clause at a
+/// time, and write the union into that sink twice.
+TEST_F(StatementBinderTest, RepeatedSinkAcrossUnionTerms)
+{
+    const std::string query = "SELECT a FROM inputStreamA INTO outputStream UNION SELECT a FROM inputStreamB INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+/// A subquery produces rows for the query around it, so sinks named inside one would promise a write that no part of
+/// the statement performs. The message is asserted as well, because a query this shape must be rejected for naming
+/// sinks and not for some unrelated reason.
+TEST_F(StatementBinderTest, SinkInsideSubqueryIsRejected)
+{
+    const std::string query = "SELECT a FROM (SELECT b FROM inputStream INTO innerSink) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+    EXPECT_NE(std::string{statement.error().what()}.find("Only the outermost query"), std::string::npos)
+        << "rejected for an unrelated reason: " << statement.error().what();
+}
+
+/// The sinks of a union are written after its last operand, which stays the way to give a union a sink.
+TEST_F(StatementBinderTest, UnionWithTrailingSinkIsAccepted)
+{
+    const std::string query = "SELECT a FROM inputStreamA UNION SELECT a FROM inputStreamB INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+}
+
+/// An EXPLAIN carries the query it explains, sinks and all, so that query is the statement's own and names its sinks
+/// like any other. It reaches the statement by a route of its own, which this pins.
+TEST_F(StatementBinderTest, ExplainedQueryWithSinkIsAccepted)
+{
+    const std::string query = "EXPLAIN (LOGICAL) FORMAT TEXT SELECT a FROM inputStream INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+}
+
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement
