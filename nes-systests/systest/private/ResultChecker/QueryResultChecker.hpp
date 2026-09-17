@@ -15,6 +15,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,7 +30,9 @@ namespace NES
 struct QueryResultCheck
 {
     std::filesystem::path resultFile;
-    Schema<UnqualifiedUnboundField, Ordered> expectedSchema;
+    /// The schema the rows are expected in. Absent when the caller does not know what the sink was planned with, and
+    /// the header the sink wrote then stands in, so the check aligns the rows by it and compares only them.
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> expectedSchema;
     std::vector<std::string> expectedTuples;
 
     /// Fails when the output file is missing, and otherwise when its schema or its tuples differ from the expected ones.

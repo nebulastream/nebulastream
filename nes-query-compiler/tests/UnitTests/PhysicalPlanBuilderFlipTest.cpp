@@ -49,11 +49,6 @@ namespace NES
 namespace
 {
 
-QueryId randomQueryId()
-{
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
-}
-
 using PipelineLocation = PhysicalOperatorWrapper::PipelineLocation;
 
 class PhysicalPlanBuilderFlipTest : public Testing::BaseUnitTest
@@ -178,7 +173,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     /// Build sink->source graph: sink is root, source is child.
     sink->addChild(source);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -208,7 +203,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     unionOp->addChild(source2);
     sink->addChild(unionOp);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -246,7 +241,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     union1->addChild(union2);
     sink->addChild(union1);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -285,7 +280,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, EdgeCountPreserved)
 
     const size_t expectedEdges = 3;
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(QueryId{1});
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 

@@ -139,7 +139,7 @@ namespace NES::detail
 {
 struct ReflectedSourceDescriptor
 {
-    uint64_t physicalSourceId;
+    int64_t physicalSourceId;
     LogicalSource logicalSource;
     std::string type;
     Host host;

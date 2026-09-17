@@ -46,9 +46,6 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Util/UUID.hpp>
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -111,7 +108,7 @@ TEST_F(CalcTargetOrderTest, JustSource)
     const auto sourceOp = SourceDescriptorLogicalOperator::create(sourceDescriptor);
     const auto sinkOp = SinkLogicalOperator::create(sourceOp, sinkDescriptor);
 
-    LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    LogicalPlan plan{QueryId{1}, {sinkOp}};
     plan = CalcTargetOrderRule{}.apply(plan);
 
     auto targetSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
@@ -144,7 +141,7 @@ TEST_F(CalcTargetOrderTest, JoinOverProjection)
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()}}});
     const auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
 
-    LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
+    LogicalPlan plan{QueryId{1}, {sinkOp}};
     plan = CalcTargetOrderRule{}.apply(plan);
 
     const Schema<UnqualifiedUnboundField, Ordered> expectedSchema{

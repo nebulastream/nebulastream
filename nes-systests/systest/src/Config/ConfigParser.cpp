@@ -16,10 +16,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -32,6 +34,7 @@
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+#include <Runner/Topology.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
@@ -40,7 +43,6 @@
 #include <yaml-cpp/node/parse.h>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <WorkerConfig.hpp>
 
 namespace
 {
@@ -379,6 +381,60 @@ void applyGroupSelection(const ArgumentParser& program, NES::SystestConfiguratio
     addSequenceOptionValues(program, "--exclude-groups", config.excludeGroups);
 }
 
+/// Flattens a nested YAML mapping into the dotted keys a worker matches its configuration options by.
+void flattenInto(const YAML::Node& node, const std::string& prefix, std::unordered_map<std::string, std::string>& flattened)
+{
+    for (const auto& entry : node)
+    {
+        const auto key = prefix.empty() ? entry.first.as<std::string>() : prefix + "." + entry.first.as<std::string>();
+        if (entry.second.IsMap())
+        {
+            flattenInto(entry.second, key, flattened);
+            continue;
+        }
+        flattened.insert_or_assign(key, entry.second.as<std::string>());
+    }
+}
+
+/// Reads the `workers:` block of a topology file, which the runner registers one `CREATE WORKER` for.
+std::vector<NES::TopologyWorker> readTopologyWorkers(const YAML::Node& workers)
+{
+    if (not workers.IsSequence())
+    {
+        return {};
+    }
+
+    std::vector<NES::TopologyWorker> topology;
+    topology.reserve(workers.size());
+    for (const auto& worker : workers)
+    {
+        NES::TopologyWorker declared{
+            .host = NES::Host{worker["host"].as<std::string>()},
+            .dataAddress = {},
+            .maxOperators = std::nullopt,
+            .downstream = {},
+            .config = {}};
+        if (worker["data_address"])
+        {
+            declared.dataAddress = worker["data_address"].as<std::string>();
+        }
+        if (worker["max_operators"])
+        {
+            declared.maxOperators = worker["max_operators"].as<uint64_t>();
+        }
+        if (worker["downstream"])
+        {
+            declared.downstream = worker["downstream"].as<std::vector<NES::Host>>();
+        }
+        if (worker["config"])
+        {
+            flattenInto(worker["config"], {}, declared.config);
+        }
+        topology.push_back(std::move(declared));
+    }
+    return topology;
+}
+
 void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
     if (program.is_used("--shuffle-seed"))
@@ -394,42 +450,25 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
 
     config.remoteWorker = program.get<bool>("--remote");
 
-    try
+    /// Read only when the invocation gives a topology.
+    /// The option carries a default path, and loading it regardless would place every run on a topology nobody asked for.
+    if (program.is_used("--clusterConfig"))
     {
-        if (program.is_used("--clusterConfig"))
+        try
         {
             config.clusterConfigPath = program.get<std::string>("--clusterConfig");
+            auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
+            NES::ClusterConfiguration clusterConfig;
+            clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
+            clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
+            clusterConfig.workers = readTopologyWorkers(clusterConfigYAML["workers"]);
+            config.clusterConfig = clusterConfig;
         }
-        auto clusterConfigYAML = YAML::LoadFile(config.clusterConfigPath.getValue());
-        NES::SystestClusterConfiguration clusterConfig;
-        clusterConfig.allowSinkPlacement = clusterConfigYAML["allow_sink_placement"].as<std::vector<NES::Host>>();
-        clusterConfig.allowSourcePlacement = clusterConfigYAML["allow_source_placement"].as<std::vector<NES::Host>>();
-        for (const auto& worker : clusterConfigYAML["workers"])
+        catch (std::exception& e)
         {
-            NES::SingleNodeWorkerConfiguration config;
-            /// Check if worker has config key
-            if (worker["config"].IsDefined() && !worker["config"].IsNull())
-            {
-                config.overwriteConfigWithYAMLNode(worker["config"]);
-            }
-
-            clusterConfig.workers.push_back(NES::WorkerConfig{
-                .host = worker["host"].as<NES::Host>(),
-                .dataAddress = worker["data_address"].as<std::string>(),
-                .maxOperators = worker["max_operators"].IsDefined()
-                    ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
-                    : NES::Capacity(NES::CapacityKind::Unlimited{}),
-                .downstream
-                = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
-                .config = config,
-            });
+            std::cerr << "Error loading cluster config: " << e.what() << '\n';
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
         }
-        config.clusterConfig = clusterConfig;
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Error loading cluster config: " << e.what() << '\n';
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
     if (program.is_used("-n"))
@@ -515,6 +554,8 @@ void applyOptimizerConfiguration(const ArgumentParser& program, NES::SystestConf
     NES::QueryOptimizerConfiguration queryOptimizerConfig;
     queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
     config.queryOptimizerConfig = queryOptimizerConfig;
+    /// This keeps the raw form too, because the coordinator reads these back as keys and values.
+    config.optimizerOverrides = std::move(optimizerRawConfig);
 }
 
 void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -535,6 +576,24 @@ void applySingleNodeWorkerConfiguration(const ArgumentParser& program, NES::Syst
     }
 
     config.singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(workerArgc, workerArgv.data());
+
+    /// The load above rejects a key that matches no option.
+    /// This keeps the raw form too, because the runner declares it on the worker that the coordinator then starts.
+    for (const auto& argument : confVec)
+    {
+        const auto separator = argument.find('=');
+        if (separator == std::string::npos)
+        {
+            std::cerr << "Invalid worker argument. Requires argument like '--worker.x=VALUE' but got '" << argument << "'\n";
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+        auto key = argument.substr(0, separator);
+        if (key.starts_with("--"))
+        {
+            key = key.substr(2);
+        }
+        config.workerOverrides.insert_or_assign(std::move(key), argument.substr(separator + 1));
+    }
 }
 
 void handleMetaCommands(const ArgumentParser& program, const NES::SystestConfiguration& config)
