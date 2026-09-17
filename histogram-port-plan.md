@@ -240,7 +240,7 @@ whole systest tree. Ids are allocated in blocks per file and the block is stated
 Each step is one commit that builds and passes its tests (`./.nix/nix-cmake.sh`, never more than `-j 4`).
 
 1. **Copy the physical statistic operators** from `ccfe22d067` (above). Test: scalar round trip
-   `STATISTIC_BUILD(SUM(x), 100)` → `SUM_PROBE(100, total, float64)` as a systest in the nested form
+   `STATISTIC_BUILD(100, SUM(x))` → `SUM_PROBE(100, total, float64)` as a systest in the nested form
    `SELECT ... FROM (SELECT SUM_PROBE(...) FROM (SELECT STATISTIC_BUILD(...) ...))`, which this branch can parse but
    not yet run. This is the first end-to-end run of the copied code; expect to find problems here.
 2. **Iterator registry + `StatisticIterator::validate`.** Test: unit tests in `nes-statistics/tests` for the
@@ -401,3 +401,62 @@ after the review and **confirmed**; 6-8 are new from the review.
 | No unit test for the physical function | step 6 |
 | Decision 3 questioned | confirmed by the author, recorded as such |
 | Decision dates | "Decisions" header states what was decided when |
+
+## Implemented 2026-09-17: where the port differed from this plan
+
+All eight steps are on the branch, one commit each plus one bug-fix commit. What follows records where the
+implementation had to depart from the plan above, so that the plan stays a truthful account of what was built.
+
+**The blob layout lives in two headers, not one.** The plan put the whole layout in
+`nes-statistics/include/Statistics/EquiWidthHistogramBlob.hpp`. It cannot: `create` turns the SQL call's memory
+budget into a bin count, so the logical function needs `equiWidthHistogramBinsForBudget`, and
+`nes-logical-operators` cannot depend on `nes-statistics` -- that edge runs the other way. The offsets and the
+budget arithmetic therefore sit in `nes-logical-operators/include/Operators/Statistic/EquiWidthHistogramBlobLayout.hpp`,
+next to `StatisticBlobType` and `StatisticFieldNames`, which is the statistic vocabulary the two modules already
+share; the Nautilus accessors, the bin reader and `validateEquiWidthHistogramBlob` build on them in nes-statistics.
+One header still owns every number.
+
+**A ternary is not a conditional in traced code.** `cond ? a : b` needs its condition as a plain `bool`, which a
+traced `nautilus::val<bool>` cannot be: the conversion bakes one branch into the trace. Both places the histogram
+wanted a conditional -- the clamp of the bin index in `lift` and the inclusive end of the last bin in the reader --
+were written as ternaries and were silently wrong once compiled, the first badly so: without the clamp an
+out-of-range value wrote past the counters, into the `COUNT` state next to them in the hash-map entry. They are
+`VarVal::select` now. The unit tests could not see it, because untraced values evaluate a ternary fine; the
+systests did. Anything added later under D3 has the same trap waiting.
+
+**Type inference and serialization are tested in `nes-logical-operators`, not `StatementBinderTest`.** The binder
+test has no source catalog, so its plans carry unbound fields: `withInferredType` is never called and a plan cannot
+be serialized (`Reflector<UnboundFieldAccessLogicalFunction>` refuses). Both moved to
+`nes-logical-operators/tests/EquiWidthHistogramAggregationLogicalFunctionTest.cpp`, which builds a file source to
+bind against. `StatementBinderTest` keeps what it can actually check: that the SQL call becomes a store writer with
+the right bin count, and that each bad call is `InvalidQuerySyntax`.
+
+**`_PROBE_RANGE` is covered for one window only.** Chained onto its own build, the probe is handed that build's
+window, so the range form reads exactly one statistic. A range genuinely spanning several windows needs a second
+query to drive the probe, and the systest runner runs the queries of a file concurrently, so nothing orders the
+writer before the reader. The scenario is in the file with that limit stated, rather than as a test that would pass
+for the wrong reason.
+
+**Step 1 notes that turned out not to apply.** The review's concern that `insertStatistic` uses `emplace` and would
+drop a second blob for the same `(id, start, end)` does not hold on this branch: `DefaultStatisticStore` keeps a
+`std::multimap`, and `AbstractStatisticStore` documents that duplicates coexist. The `thread_local tProbeStatistics`
+map keyed by handler id is fine as it stands -- load, iterate and release all happen inside one `execute` on one
+thread -- but it is only ever cleared, never erased, so it keeps one vector per reader per worker thread alive for
+the life of the process.
+
+**Step 3 also fixed the state-size accumulator.** `getSizeOfStateInBytes()` was summed into an `int`. That is
+harmless while every aggregation state is a few bytes, but the page size is now derived from it and a memory budget
+is user input, so it accumulates into a `uint64_t`.
+
+**Rebased onto `feature/statistic-build-port` on 2026-09-18.** The port was written on `4043b26f6f`; the branch it
+now sits on is `dddd00dd4c`, which folds `af5190950b` into that commit: `STATISTIC_BUILD` takes the statisticId
+first, it no longer mistakes a field named after an aggregation's output for the aggregation itself, and
+`parseUnsignedParameter` no longer reads `4.5` as `4`. Only one thing in this port had to move with it, the scalar
+round trip of step 1, which was written as `STATISTIC_BUILD(SUM(value), 100)`; it is fixed inside that commit so
+each step still passes its own test. The flat synopsis form already started with the statisticId, so the
+histogram's own SQL surface is unchanged.
+
+Still missing: `a4c2f4b21c`, which lets a scalar function carry a name ending in `_PROBE`. It lives on
+`feature/td/statistic-registry-parsing` and is not on `feature/statistic-build-port`, so on this branch an unknown
+function whose name ends in `_PROBE` is still reported as a probe of an unknown aggregation rather than being
+looked up as a scalar function first.
