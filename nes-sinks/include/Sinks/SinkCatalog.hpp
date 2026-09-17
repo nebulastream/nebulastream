@@ -60,7 +60,7 @@ public:
     std::vector<SinkDescriptor> getAllSinkDescriptors() const;
 
 private:
-    mutable std::atomic<AnonymousSinkId::Underlying> nextAnonymousSinkId{INITIAL_ANONYMOUS_SINK_ID.getRawValue()};
+    mutable std::atomic<SinkId::Underlying> nextSinkId{INITIAL_SINK_ID.getRawValue()};
     folly::Synchronized<std::unordered_map<Identifier, SinkDescriptor>> sinks;
 };
 }
