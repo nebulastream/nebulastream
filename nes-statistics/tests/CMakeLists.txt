@@ -19,3 +19,6 @@ target_link_libraries(statistic-iterator-registry-test nes-statistics)
 
 add_nes_test(equi-width-histogram-blob-test EquiWidthHistogramBlobTest.cpp)
 target_link_libraries(equi-width-histogram-blob-test nes-statistics)
+
+add_nes_test(equi-width-histogram-statistic-iterator-test EquiWidthHistogramStatisticIteratorTest.cpp)
+target_link_libraries(equi-width-histogram-statistic-iterator-test nes-statistics)

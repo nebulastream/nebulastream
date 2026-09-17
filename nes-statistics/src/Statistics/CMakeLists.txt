@@ -12,8 +12,11 @@
 
 add_source_files(nes-statistics
         EquiWidthHistogramBlob.cpp
+        EquiWidthHistogramStatisticIterator.cpp
         StatisticIterator.cpp
         StatisticIteratorProvider.cpp
         StatisticIteratorRegistry.cpp
         ScalarStatisticIterator.cpp
 )
+
+add_registry_entry(StatisticIterator EquiWidthHistogram)
