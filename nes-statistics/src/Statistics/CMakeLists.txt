@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-statistics
+        EquiWidthHistogramBlob.cpp
         StatisticIterator.cpp
         StatisticIteratorProvider.cpp
         StatisticIteratorRegistry.cpp
