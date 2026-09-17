@@ -11,6 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
+        EquiWidthHistogramAggregationPhysicalFunction.cpp
         StatisticStoreReaderPhysicalOperator.cpp
         StatisticStoreWriterPhysicalOperator.cpp
 )
+
+add_registry_entry(AggregationPhysicalFunction EquiWidthHistogram)
