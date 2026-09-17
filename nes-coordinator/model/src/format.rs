@@ -275,9 +275,8 @@ impl fmt::Display for StatementResult {
                 write!(f, "{}", physical_table(std::slice::from_ref(model)))
             }
             Self::CreatedSink(model) => write!(f, "{}", sink_table(std::slice::from_ref(model))),
-            Self::CreatedQuery(model, _fragments) => {
-                write!(f, "{}", query_table(std::slice::from_ref(model)))?;
-                Ok(())
+            Self::CreatedQuery(created) => {
+                write!(f, "{}", query_table(std::slice::from_ref(&created.query)))
             }
             Self::CreatedWorker(model) => {
                 write!(f, "{}", worker_table(std::slice::from_ref(model)))
@@ -295,7 +294,7 @@ impl fmt::Display for StatementResult {
             Self::Sinks(v) => write!(f, "{}", sink_table(v)),
             Self::ExplainedQuery(s) => write!(f, "{s}"),
             Self::Queries(v) => {
-                let mut queries: Vec<_> = v.iter().map(|(query, _)| query.clone()).collect();
+                let mut queries: Vec<_> = v.iter().map(|q| q.query.clone()).collect();
                 queries.sort_by_key(|query| query.id);
                 write!(f, "{}", query_table(&queries))?;
                 Ok(())

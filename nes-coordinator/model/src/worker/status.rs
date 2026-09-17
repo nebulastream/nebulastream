@@ -16,6 +16,7 @@
 //! currently placed on it.
 
 use crate::Execute;
+use crate::error::{CodedError, ErrorCode};
 use crate::query::query_fragment;
 use crate::worker::endpoint::NetworkAddr;
 use crate::worker::{self, Column};
@@ -52,6 +53,11 @@ impl Execute for GetWorkerStatus {
             ))?
             .into_iter()
             .next()
-            .context("worker not found")
+            .ok_or_else(|| {
+                anyhow::Error::new(CodedError::new(
+                    ErrorCode::UnknownWorker,
+                    format!("worker {} not found", self.host_addr),
+                ))
+            })
     }
 }

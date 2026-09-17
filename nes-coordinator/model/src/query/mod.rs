@@ -64,6 +64,14 @@ impl Related<query_fragment::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// A query row and its fragment rows.
+/// Every query read and create returns this shape; the fragments are empty when a read did not ask for them.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct QueryWithFragments {
+    pub query: Model,
+    pub fragments: Vec<query_fragment::Model>,
+}
+
 #[derive(Debug, Clone)]
 pub enum SourceFactory {
     Shared(CreatePhysicalSource),
@@ -123,7 +131,8 @@ pub(crate) async fn setup(
     req: &mut CreateQueryWithRefs,
 ) -> (Model, Vec<query_fragment::Model>) {
     setup_refs(db, req).await;
-    req.query.execute(db).await.unwrap()
+    let created = req.query.execute(db).await.unwrap();
+    (created.query, created.fragments)
 }
 
 #[cfg(test)]
@@ -310,7 +319,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].0, created);
+        assert_eq!(results[0].query, created);
     }
 
     #[proptest(async = "tokio")]
