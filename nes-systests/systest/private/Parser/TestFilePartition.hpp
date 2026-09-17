@@ -22,17 +22,17 @@
 namespace NES
 {
 
-/// One configuration override and the corresponding statements of a test file.
-/// Each part runs on its own worker, because a worker takes its configuration at startup and cannot change it later.
-struct TestFilePart
+/// One configuration override and the statements of a test file that run under it.
+/// Each partition runs on its own worker, because a worker takes its configuration at startup and cannot change it later.
+struct TestFilePartition
 {
     ConfigurationOverride overrides;
     ParsedTestFile file;
 };
 
-/// Splits a test file into one part per distinct configuration override, in the order the file first asks for each.
-/// Every part repeats the CREATE statements of the file, followed by the statements that ask for its override.
-/// A file whose queries all ask for the same configuration yields a single part.
-[[nodiscard]] std::vector<TestFilePart> partitionByOverrides(const ParsedTestFile& testFile);
+/// Splits a test file into one partition per distinct configuration override, in the order the file first asks for each.
+/// Every partition repeats the CREATE statements of the file, followed by the statements that ask for its override.
+/// A file whose queries all ask for the same configuration yields a single partition.
+[[nodiscard]] std::vector<TestFilePartition> partitionByOverrides(const ParsedTestFile& testFile);
 
 }

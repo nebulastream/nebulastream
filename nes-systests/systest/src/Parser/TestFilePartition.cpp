@@ -15,6 +15,7 @@
 #include <Parser/TestFilePartition.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <optional>
 #include <ranges>
 #include <variant>
@@ -27,18 +28,18 @@
 namespace NES
 {
 
-std::vector<TestFilePart> partitionByOverrides(const ParsedTestFile& testFile)
+std::vector<TestFilePartition> partitionByOverrides(const ParsedTestFile& testFile)
 {
-    /// Each part runs under its own key, and that key prefixes every qualified name.
-    /// CREATE statements are repeated into every part, each declaring its sources using the prefix its queries reference.
+    /// Each partition runs under its own key, and that key prefixes every qualified name.
+    /// CREATE statements are repeated into every partition, each declaring its sources using the prefix its queries reference.
     const auto creates = testFile.statements
         | std::views::filter([](const auto& statement) { return std::holds_alternative<CreateStatement>(statement); })
         | std::ranges::to<std::vector<TestStatement>>();
 
-    std::vector<TestFilePart> partitions;
+    std::vector<TestFilePartition> partitions;
     for (const auto& statement : testFile.statements)
     {
-        /// Every part repeats the CREATE statements, so a CREATE belongs to no part in particular.
+        /// Every partition repeats the CREATE statements, so a CREATE belongs to no partition in particular.
         if (const auto overrides = std::visit<std::optional<ConfigurationOverride>>(
                 Overloaded{
                     [](const CreateStatement&) { return std::nullopt; },
@@ -48,17 +49,18 @@ std::vector<TestFilePart> partitionByOverrides(const ParsedTestFile& testFile)
                     [](const ExplainStatement&) { return ConfigurationOverride{}; }},
                 statement))
         {
-            auto partition = std::ranges::find(partitions, *overrides, &TestFilePart::overrides);
+            auto partition = std::ranges::find(partitions, *overrides, &TestFilePartition::overrides);
             if (partition == partitions.end())
             {
-                partition = partitions.emplace(partitions.end(), *overrides, ParsedTestFile{.path = testFile.path, .statements = creates});
+                partitions.emplace_back(*overrides, ParsedTestFile{.path = testFile.path, .statements = creates});
+                partition = std::prev(partitions.end());
             }
             partition->file.statements.push_back(statement);
         }
     }
     if (partitions.empty())
     {
-        return {TestFilePart{.overrides = {}, .file = testFile}};
+        return {TestFilePartition{.overrides = {}, .file = testFile}};
     }
     return partitions;
 }

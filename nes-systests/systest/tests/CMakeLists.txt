@@ -24,7 +24,8 @@ add_nes_test_systest(systest-test-discovery-test
         "Discovery/TestDiscoveryTests.cpp")
 
 add_nes_test_systest(systest-run-policy-test
-        "Config/RunPolicyTests.cpp")
+        "Config/RunPolicyTests.cpp"
+        "Config/ClusterConfigTests.cpp")
 
 add_nes_test_systest(slt-parser-test
         "Parser/SystestParserTests.cpp"
@@ -32,7 +33,7 @@ add_nes_test_systest(slt-parser-test
         "Parser/SystestParserValidTestFilesTests.cpp"
         "ResultChecker/ResultCheckerTests.cpp"
         "Runner/SystestRunnerTest.cpp"
-        "Model/KeepSelectedCasesTests.cpp"
+        "Model/KeepSelectedStatementsTests.cpp"
         "Model/TestCaseIdTests.cpp"
         "WorkingDirectoryGuardTests.cpp")
 

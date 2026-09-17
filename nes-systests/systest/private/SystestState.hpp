@@ -32,6 +32,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
+#include <Model/RunnableTestFile.hpp>
 #include <Model/Verdict.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
@@ -84,8 +85,8 @@ struct SystestQuery
     /// then there is nothing to check.
     std::optional<std::filesystem::path> resultFile;
     std::optional<std::filesystem::path> differentialResultFile;
-    /// The EXPLAIN check strips this from the printed plan, so the plan reads as the test wrote it.
-    std::string qualifyingPrefix;
+    /// The EXPLAIN check restores these in the printed plan, so the plan reads as the test wrote it.
+    OriginalNames originalNames;
     /// One entry per source reference. Only a measurement reads these, to derive throughput.
     std::vector<std::filesystem::path> inputFiles;
 };

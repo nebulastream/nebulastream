@@ -36,6 +36,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -52,7 +53,7 @@
 #include <ResultChecker/DifferentialChecker.hpp>
 #include <ResultChecker/ExplainChecker.hpp>
 #include <ResultChecker/QueryResultChecker.hpp>
-#include <Rewriter/NameQualifier.hpp>
+#include <Rewriter/NamePrefixer.hpp>
 #include <Runner/QuerySubmitter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Variant.hpp>
@@ -137,7 +138,7 @@ Verdict checkSucceededQuery(const SystestQuery& query)
         .expectedTuples = expectedRows});
 }
 
-/// The printed plan uses the qualified names, so the qualifying prefix is removed before the comparison.
+/// The printed plan uses the prefixed names, so they are restored to the declared spelling before the comparison.
 Verdict checkExplainedQuery(const SystestQuery& query)
 {
     if (std::holds_alternative<ExpectedError>(query.expectation))
@@ -148,7 +149,7 @@ Verdict checkExplainedQuery(const SystestQuery& query)
 
     INVARIANT(query.actualExplainOutput.has_value(), "checking an EXPLAIN requires a computed explain output");
     const auto expectedLines = NES::get<ExpectedPlan>(query.expectation).lines;
-    const auto actual = unqualified(query.actualExplainOutput.value(), query.qualifyingPrefix);
+    const auto actual = restoreNames(query.actualExplainOutput.value(), query.originalNames);
     if (hasExplainRegexTags(expectedLines))
     {
         return runCheck(ExplainRegexCheck{.expected = expectedLines, .actual = actual});
@@ -240,6 +241,29 @@ std::vector<RunningQuery> runQueries(
     std::unordered_set<DistributedQueryId> discardedQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
 
+    /// The pair has its verdict, so the other half only has to reach a terminal state.
+    /// A half that already finished is removed now.
+    /// One that is still running is stopped, because it cannot contribute to a comparison any more, and is discarded when
+    /// its status arrives.
+    const auto discardPartner = [&](const DistributedQueryId& partner)
+    {
+        if (finishedDifferentialQueries.erase(partner) > 0)
+        {
+            active.erase(partner);
+            return;
+        }
+        try
+        {
+            querySubmitter.stopQuery(partner);
+        }
+        catch (const Exception& e)
+        {
+            /// The partner may have reached a terminal state on its own in the meantime.
+            NES_DEBUG("Could not stop the other half of a differential pair {}: {}", partner, e.what());
+        }
+        discardedQueries.insert(partner);
+    };
+
     const auto startMoreQueries = [&] -> bool
     {
         bool hasOneMoreQueryToStart = false;
@@ -270,10 +294,12 @@ std::vector<RunningQuery> runQueries(
                 }
                 else
                 {
-                    /// The first half started but its partner did not, so its terminal state only removes it.
+                    /// The first half started but its partner did not.
+                    /// It joins the active queries so the run waits for it to stop before exiting.
                     if (first)
                     {
-                        discardedQueries.insert(*first);
+                        active.emplace(*first, std::make_shared<RunningQuery>(nextQuery, *first));
+                        discardPartner(*first);
                     }
                     auto failure = first ? std::move(second).error() : std::move(first).error();
                     processQueryWithError(
@@ -337,18 +363,9 @@ std::vector<RunningQuery> runQueries(
             if (queryStatus.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
                 processQueryWithError(it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage);
-                /// The pair has its verdict, so the other half only has to reach a terminal state.
-                /// A half that already finished is removed now, and one that is still running is discarded when its status arrives.
                 if (const auto partner = runningQuery->differentialQueryPair)
                 {
-                    if (finishedDifferentialQueries.erase(*partner) > 0)
-                    {
-                        active.erase(*partner);
-                    }
-                    else
-                    {
-                        discardedQueries.insert(*partner);
-                    }
+                    discardPartner(*partner);
                 }
                 active.erase(queryStatus.queryId);
                 continue;

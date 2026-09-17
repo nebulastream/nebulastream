@@ -12,36 +12,6 @@
     limitations under the License.
 */
 
+/// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
+
 #include <Model/RunnableTestFile.hpp>
-
-#include <unordered_set>
-#include <variant>
-#include <vector>
-
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Overloaded.hpp>
-
-namespace NES
-{
-
-void keepSelectedCases(RunnableTestFile& runnable, const std::unordered_set<SystestQueryId>& selected)
-{
-    if (selected.empty())
-    {
-        return;
-    }
-    std::erase_if(
-        runnable.cases,
-        [&](const RewrittenCase& testCase)
-        {
-            return not std::visit(
-                Overloaded{
-                    [&](const RewrittenQuery& query) { return selected.contains(query.id); },
-                    [&](const RewrittenDifferential& block)
-                    { return selected.contains(block.firstId) or selected.contains(block.secondId); },
-                    [&](const RewrittenExplain& explain) { return selected.contains(explain.id); }},
-                testCase.action);
-        });
-}
-
-}

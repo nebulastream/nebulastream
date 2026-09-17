@@ -49,7 +49,7 @@ TestStatement explain(std::string sql)
 }
 
 /// The SQL of every statement of a part, so a part can be stated as what it holds rather than as a variant.
-std::vector<std::string> sqlOf(const TestFilePart& part)
+std::vector<std::string> sqlOf(const TestFilePartition& part)
 {
     std::vector<std::string> sql;
     sql.reserve(part.file.statements.size());
