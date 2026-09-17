@@ -1,0 +1,41 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[[test]]
+title = "busy_workers"
+timeout = 90
+min_queries_failed_by_worker_drop = 1
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 8
+  end = 10
+  create_weight = 1
+  drop_weight = 0
+
+  # The queries start once all workers exist, so their fragments are spread over the workers.
+  [[test.workload]]
+  name = "Query"
+  num_ops = 6
+  begin = 10
+  end = 14
+  create_weight = 1
+  drop_weight = 0
+
+  # Every worker without the source or the sink is dropped while the queries run.
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 8
+  begin = 16
+  end = 30
+  create_weight = 0
+  drop_weight = 1
