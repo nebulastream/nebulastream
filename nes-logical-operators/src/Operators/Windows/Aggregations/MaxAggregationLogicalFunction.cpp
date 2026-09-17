@@ -115,7 +115,7 @@ AggregationLogicalFunctionRegistryReturnType MaxAggregationLogicalFunction::crea
 {
     if (arguments.on.size() != 1)
     {
-        throw CannotDeserialize("MaxAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
+        throw InvalidLogicalFunctionArgument("MaxAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
     return MaxAggregationLogicalFunction{arguments.on.at(0)};
 }

@@ -112,7 +112,7 @@ Unreflector<FromBase64LogicalFunction>::operator()(const Reflected& reflected, c
 
     if (!child.has_value())
     {
-        throw CannotDeserialize("FromBase64LogicalFunction is missing its child");
+        throw InvalidLogicalFunctionArgument("FromBase64LogicalFunction is missing its child");
     }
     return FromBase64LogicalFunction{child.value()};
 }
@@ -122,7 +122,7 @@ LogicalFunctionRegistryReturnType FromBase64LogicalFunction::createFROM_BASE64(L
 {
     if (arguments.children.empty())
     {
-        throw CannotDeserialize("FROM_BASE64 requires one argument");
+        throw InvalidLogicalFunctionArgument("FROM_BASE64 requires one argument");
     }
     return FromBase64LogicalFunction(arguments.children.back());
 }

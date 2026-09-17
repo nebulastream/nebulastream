@@ -163,7 +163,7 @@ Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(con
     auto children = plan->getChildrenFor(operatorId, context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("InferModelNameLogicalOperator requires exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("InferModelNameLogicalOperator requires exactly one child, but got {}", children.size());
     }
 
     return TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.value(), std::move(children.at(0))};

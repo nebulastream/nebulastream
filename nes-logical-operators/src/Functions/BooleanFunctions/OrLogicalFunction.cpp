@@ -105,7 +105,7 @@ LogicalFunctionRegistryReturnType OrLogicalFunction::createOr(LogicalFunctionReg
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return OrLogicalFunction(arguments.children[0], arguments.children[1]);
 }
