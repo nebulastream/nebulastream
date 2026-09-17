@@ -30,7 +30,7 @@
 
 namespace
 {
-/// The report lists one line per failed case, each starting with this marker.
+/// The report lists one line per failed test case, each starting with this marker.
 constexpr std::string_view FailMarker = "  FAIL  ";
 
 size_t countFailedCases(const std::string_view report)
@@ -43,8 +43,8 @@ size_t countFailedCases(const std::string_view report)
     return count;
 }
 
-/// The start of a failed case's report line. The label is the test file relative to the discovery root, without its
-/// extension, followed by the query number.
+/// The start of a failed test case's report line.
+/// The label is the test file relative to the discovery root, without its extension, followed by the query number.
 std::string failLine(const std::string_view directory, const std::string_view testFile, const int queryNumber)
 {
     return fmt::format("{}{}/{}:{}: ", FailMarker, directory, testFile, queryNumber);

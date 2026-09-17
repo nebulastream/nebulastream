@@ -39,13 +39,13 @@ public:
     explicit TestRunner(const SystestConfiguration& config);
     ~TestRunner();
 
-    /// Parses one test file and rewrites each of its parts into the SQL to submit.
+    /// Parses one test file and rewrites each of its partitions into the SQL to submit.
     /// Throws when the file cannot be read or parsed, which the caller reports as one failed check for the file.
     [[nodiscard]] std::vector<RewrittenPart> rewrite(const DiscoveredTestFile& testfile);
 
-    /// Receives each case as it is checked, so a caller can report it while the rest of the run continues.
+    /// Receives each test case as it is checked, so a caller can report it while the rest of the run continues.
     /// The timings hold one entry per submitted statement, in submission order.
-    /// Called from the thread that runs the checks, one case at a time, so an observer needs no locking of its own.
+    /// Called from the thread that runs the checks, one test case at a time, so an observer needs no locking of its own.
     using QueryObserver = std::function<void(const TestCaseId&, const RewrittenTestCase&, const Verdict&, std::span<const QueryTiming>)>;
 
     /// What setting the test files up produced: the ones that a run may submit, a failed check for each one that it may not,
@@ -57,23 +57,23 @@ public:
         std::vector<std::jthread> servers;
     };
 
-    /// Stages the data, puts the setup statements of every test file into the catalogs, and binds its cases.
+    /// Stages the data, puts the setup statements of every test file into the catalogs, and binds its test cases.
     /// Separate from submitting the queries, because a caller that submits them more than once must set up only once:
-    /// a second CREATE of the same name is a catalog conflict rather than more load, and compiling again would measure
+    /// a second CREATE of the same name is a catalog conflict rather than more load, and binding again would measure
     /// the optimizer rather than the query.
-    /// The settings say which worker each test file runs on, one entry per test file. They go away once a worker is
-    /// registered for its settings and the statement states the host that it goes to.
+    /// The settings say which worker each test file runs on, one entry per test file.
+    /// They go away once a worker is registered for its settings and the statement states the host that it goes to.
     [[nodiscard]] SetUpRun setUpAll(const std::vector<RunnableTestFile>& runnables, std::span<const ConfigurationOverride> settings);
 
-    /// Submits the cases of the test files that were set up, up to `concurrency` at a time, and checks each one.
-    /// The checks come back in test file order however the cases interleave, so the report does not depend on timing.
+    /// Submits the test cases of the test files that were set up, up to `concurrency` at a time, and checks each one.
+    /// The checks come back in test file order however the test cases interleave, so the report does not depend on timing.
     [[nodiscard]] std::vector<CheckedQuery> submitQueries(
         const std::vector<std::reference_wrapper<const RunnableTestFile>>& runnables,
         size_t concurrency,
         const QueryObserver& observe = {});
 
-    /// Sets every test file up, then submits their cases up to `concurrency` at a time and checks each one.
-    /// A file whose setup is rejected yields one failed check and none of its cases run.
+    /// Sets every test file up, then submits their test cases up to `concurrency` at a time and checks each one.
+    /// A file whose setup is rejected yields one failed check and none of its test cases run.
     [[nodiscard]] std::vector<CheckedQuery> runAll(
         const std::vector<RunnableTestFile>& runnables,
         std::span<const ConfigurationOverride> settings,

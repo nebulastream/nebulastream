@@ -37,6 +37,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Model/ConfigurationOverride.hpp>
+#include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
@@ -57,7 +58,7 @@ namespace NES
 namespace
 {
 
-/// Prints one checked case as it finishes, so a long run shows what it is doing rather than only its tally.
+/// Prints one checked test case as it finishes, so a long run shows what it is doing rather than only its tally.
 void printProgress(SystestProgressTracker& progress, const TestCaseId& id, const Verdict& verdict)
 {
     progress.incrementQueryCounter();
@@ -71,7 +72,7 @@ void printProgress(SystestProgressTracker& progress, const TestCaseId& id, const
     static_cast<void>(std::fflush(stdout));
 }
 
-/// How many cases the prepared test files hold, which is how many checks the run produces.
+/// How many test cases the prepared test files hold, which is how many checks the run produces.
 size_t caseCount(const std::vector<RunnableTestFile>& prepared)
 {
     size_t total = 0;
@@ -139,7 +140,7 @@ Executor::PreparedRun Executor::prepareAll(TestRunner& runner) const
 
 ExecutorResult Executor::summarize(const std::vector<CheckedQuery>& checked)
 {
-    /// An invocation that ran no query has not passed. It has not run.
+    /// An invocation that ran no query has not passed, it has not run.
     /// Reporting success would let a group name that nobody kept up to date, or a filter that matches nothing, go unnoticed.
     if (checked.empty())
     {
@@ -148,7 +149,7 @@ ExecutorResult Executor::summarize(const std::vector<CheckedQuery>& checked)
             .errorCode = ErrorCode::TestException};
     }
 
-    /// One line per skipped file rather than one per skipped case, because every case of a file skips for the same reason.
+    /// One line per skipped file rather than one per skipped test case, because every test case of a file skips for the same reason.
     struct SkipLine
     {
         std::string label;
@@ -166,7 +167,7 @@ ExecutorResult Executor::summarize(const std::vector<CheckedQuery>& checked)
                 [&](const Mismatch& mismatch) { failures.push_back(fmt::format("  FAIL  {}: {}\n", query.id, mismatch.detail)); },
                 [&](const Skipped& skip)
                 {
-                    /// The label drops the query number, so every case of one file part folds into one line.
+                    /// The label drops the query number, so every test case of one file partition folds into one line.
                     auto label = fmt::format(
                         "{}",
                         TestCaseId{
@@ -186,7 +187,7 @@ ExecutorResult Executor::summarize(const std::vector<CheckedQuery>& checked)
     for (const auto& [label, reason, count] : skips)
     {
         skipped += count;
-        details += fmt::format("  SKIP  {}: {} cases: {}\n", label, count, reason);
+        details += fmt::format("  SKIP  {}: {} test cases: {}\n", label, count, reason);
     }
 
     const auto passed = checked.size() - failures.size() - skipped;
@@ -204,7 +205,7 @@ ExecutorResult Executor::runOnce(TestRunner& runner, const RunPolicy& plan, Prep
 {
     SystestProgressTracker progress{caseCount(prepared.ready)};
 
-    /// What failed before any query ran joins the report next to the cases that run below.
+    /// What failed before any query ran joins the report next to the test cases that run below.
     auto setUp = runner.setUpAll(prepared.ready, prepared.settings);
     std::vector<CheckedQuery> report = std::move(prepared.unprepared);
     std::ranges::move(setUp.rejected, std::back_inserter(report));
@@ -223,16 +224,22 @@ ExecutorResult Executor::runOnce(TestRunner& runner, const RunPolicy& plan, Prep
         {
             return;
         }
-        /// A differential block has no input files and is not measured. A measuring run skipped it before the rewriter existed too.
+        /// A differential block has no input files and is not measured.
+        /// A measuring run skipped it before the rewriter existed too.
         std::visit(
             Overloaded{
                 [&](const RewrittenQuery& query)
                 {
-                    benchmark->record(
-                        fmt::format("{}:{}", id.originFile, query.id.getRawValue()), query.inputFiles, timings.front().execution);
+                    /// A query that is expected to fail measures the time to its failure, which says nothing about the query.
+                    if (std::holds_alternative<ExpectedError>(query.expectation))
+                    {
+                        return;
+                    }
+                    /// The id includes the settings, so the partitions of one file measure as separate queries.
+                    benchmark->record(fmt::format("{}", id), query.inputFiles, timings.front().execution);
                 },
                 [](const RewrittenDifferential&) {},
-                /// An EXPLAIN is answered while compiling and never runs, so there is no execution to measure.
+                /// An EXPLAIN is answered while binding and never runs, so there is no execution to measure.
                 [](const RewrittenExplain&) {}},
             testCase.action);
     };
@@ -259,6 +266,11 @@ ExecutorResult Executor::runRounds(TestRunner& runner, const RunPolicy& plan, Pr
     if (not setUp.rejected.empty())
     {
         return summarize(setUp.rejected);
+    }
+    /// A selection that matches nothing would otherwise repeat an empty round forever.
+    if (std::ranges::all_of(setUp.ready, [](const auto& runnable) { return runnable.get().testCases.empty(); }))
+    {
+        return summarize({});
     }
 
     fmt::print("Repeating the queries of {} test files\n", setUp.ready.size());
@@ -315,6 +327,11 @@ ExecutorResult Executor::execute() const
         }
         prepared.ready = std::move(shuffled);
         prepared.settings = std::move(shuffledSettings);
+        /// The test cases of a file are shuffled too, so a test case that depends on the one written above it is found.
+        for (auto& runnable : prepared.ready)
+        {
+            std::ranges::shuffle(runnable.testCases, std::mt19937{std::random_device{}()});
+        }
     }
 
     if (std::holds_alternative<SubmitOnce>(plan.repetition))

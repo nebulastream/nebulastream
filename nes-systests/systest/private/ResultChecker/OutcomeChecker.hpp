@@ -32,9 +32,9 @@
 namespace NES
 {
 
-/// What running one statement produced, in the terms the checks need.
-/// The reached state is the terminal state that the workers reported. The error in its place is what stopped the
-/// statement from reaching one, which a test that expects an error compares against.
+/// What running one statement produced, in the terms that the checks need.
+/// The reached state is the terminal state that the workers reported.
+/// The error in its place is what stopped the statement from reaching one, which a test that expects an error compares against.
 struct StatementOutcome
 {
     std::expected<DistributedQueryStatusSnapshot, Exception> reached;
@@ -46,14 +46,15 @@ struct StatementOutcome
     /// What an EXPLAIN printed. Such a statement is answered while it is bound and never reaches a worker.
     std::optional<std::string> explained;
 
-    /// The span between the query starting and stopping, as the workers recorded it.
+    /// The span between the query running and stopping, as the workers recorded it.
     std::chrono::milliseconds execution{};
 };
 
-/// Checks the answers to one case against what the test expects.
+/// Checks the answers to one test case against what the test expects.
 /// A query answers with one outcome, and each kind of expectation is a different check.
 /// A differential block answers with one outcome per half that ran, and its check is that the two results agree.
-/// The prefixed names in a printed plan are restored to their declared spelling before it is compared, so the plan reads as the test wrote it.
+/// The prefixed names in a printed plan are restored to their declared spelling before it is compared,
+/// so the plan reads as the test wrote it.
 [[nodiscard]] Verdict
 checkTestCase(std::span<const StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames);
 

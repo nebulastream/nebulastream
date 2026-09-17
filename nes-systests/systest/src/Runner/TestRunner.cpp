@@ -63,16 +63,17 @@ SingleNodeWorkerConfiguration configuredWith(const SingleNodeWorkerConfiguration
     return configured;
 }
 
-/// The span the workers recorded between the query starting and stopping.
+/// The span that the workers recorded between the query running and stopping.
+/// Running rather than starting, so the time excludes bringing up sources and pipelines, as the measurements before this runner did.
 /// A query that reported neither timestamp took no measurable time of its own.
 std::chrono::milliseconds executionTime(const DistributedQueryStatusSnapshot& snapshot)
 {
     const auto metrics = snapshot.coalesceQueryMetrics();
-    if (not metrics.start.has_value() or not metrics.stop.has_value())
+    if (not metrics.running.has_value() or not metrics.stop.has_value())
     {
         return std::chrono::milliseconds::zero();
     }
-    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(*metrics.stop - *metrics.start);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(*metrics.stop - *metrics.running);
     return elapsed.count() > 0 ? elapsed : std::chrono::milliseconds::zero();
 }
 
@@ -111,14 +112,14 @@ struct TestRunner::Impl
         return QuerySubmitter{std::move(manager)};
     }
 
-    /// One case of one test file in the submitted group.
+    /// One test case of one test file in the submitted group.
     struct Job
     {
         size_t runnable = 0;
         size_t index = 0;
     };
 
-    /// One case in flight: which of its statements is running, and what the statements answered so far.
+    /// One test case in flight: which of its statements is running, and what the statements answered so far.
     struct InFlight
     {
         Job job;
@@ -129,8 +130,8 @@ struct TestRunner::Impl
     };
 
     /// Runs the test files that asked for one set of settings, against the worker that has them.
-    /// Submitting is asynchronous, so this starts up to `concurrency` cases and then waits for whichever finishes
-    /// first, rather than holding a thread per case.
+    /// Submitting is asynchronous, so this starts up to `concurrency` test cases and then waits for whichever finishes
+    /// first, rather than holding a thread per test case.
     void submitGroup(
         const std::vector<std::reference_wrapper<const RunnableTestFile>>& inGroup,
         const std::vector<size_t>& indices,
@@ -158,7 +159,7 @@ struct TestRunner::Impl
         std::deque<InFlight> answered;
 
         /// Submits the flight's next statement, or answers it here when it has no plan to run.
-        /// Returns false once the case has nothing further to submit, which is when it can be checked.
+        /// Returns false once the test case has nothing further to submit, which is when it can be checked.
         const auto advance = [&](InFlight& flight)
         {
             const auto& statements = statementsOf(flight.job);
@@ -253,9 +254,8 @@ struct TestRunner::Impl
                     QueryTiming{.submission = std::chrono::steady_clock::now() - flight.startedAt, .execution = execution});
                 ++flight.statement;
 
-                /// The halves of a differential block run one after the other, so the second reads a result file that
-                /// is complete. A failed first half leaves the second unsubmitted, because its result would compare
-                /// against nothing.
+                /// The halves of a differential block run one after the other, so the second reads a complete result file.
+                /// A failed first half leaves the second unsubmitted, because its result would compare against nothing.
                 if (not succeeded or not advance(flight))
                 {
                     answered.push_back(std::move(flight));
@@ -297,13 +297,23 @@ TestRunner::setUpAll(const std::vector<RunnableTestFile>& runnables, const std::
     {
         const auto& runnable = runnables.at(index);
         const auto& asked = settings[index];
+        /// Workers started elsewhere take no settings from this run, so a file that asks for some is skipped rather than failed,
+        /// as the runner before this one did.
+        if (impl->remote and not asked.empty())
+        {
+            for (const auto& testCase : runnable.testCases)
+            {
+                run.rejected.push_back(CheckedQuery{
+                    .id = TestCaseId{.originFile = runnable.name, .queryIdInFile = testCaseNumber(testCase), .overrides = asked},
+                    .outcome
+                    = Skipped{.reason = "a run against workers started elsewhere cannot apply the settings that this file asks for"},
+                    .timings = {}});
+            }
+            continue;
+        }
         /// Each file is set up on its own, so a failure reaches no further than that file.
         try
         {
-            if (impl->remote and not asked.empty())
-            {
-                throw TestException("a run against workers started elsewhere cannot apply the settings this file asks for");
-            }
             auto bound = impl->binder.bind(runnable);
             std::ranges::move(bound.servers, std::back_inserter(run.servers));
             impl->prepared.push_back(Impl::Prepared{.settings = asked, .testCases = std::move(bound.testCases)});
@@ -315,7 +325,7 @@ TestRunner::setUpAll(const std::vector<RunnableTestFile>& runnables, const std::
                 .id = TestCaseId{.originFile = runnable.name, .queryIdInFile = INVALID<SystestQueryId>, .overrides = asked},
                 .outcome = Mismatch{fmt::format("could not run: {}", exception.what())},
                 .timings = {}});
-            /// The file's cases are never submitted, and leaving them out would shrink the total with no trace,
+            /// The file's test cases are never submitted, and leaving them out would shrink the total with no trace,
             /// so each one reports that it was skipped.
             for (const auto& testCase : runnable.testCases)
             {
@@ -334,7 +344,7 @@ std::vector<CheckedQuery> TestRunner::submitQueries(
 {
     INVARIANT(impl->prepared.size() == runnables.size(), "every test file that is ready to submit was set up");
 
-    /// Where each test file's checks start in the report, so a case keeps its place however the run groups the files.
+    /// Where each test file's checks start in the report, so a test case keeps its place however the run groups the files.
     std::vector<size_t> offsets;
     offsets.reserve(runnables.size());
     size_t total = 0;
@@ -346,7 +356,8 @@ std::vector<CheckedQuery> TestRunner::submitQueries(
     std::vector<CheckedQuery> checked(total);
 
     /// A worker takes its settings at startup, so the files are run one group of settings at a time, and each group
-    /// waits for the group before it. This is what registering a worker per set of settings replaces.
+    /// waits for the group before it.
+    /// Registering a worker per set of settings replaces this.
     std::vector<ConfigurationOverride> groups;
     for (const auto& prepared : impl->prepared)
     {

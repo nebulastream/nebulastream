@@ -56,8 +56,8 @@ public:
     [[nodiscard]] ExecutorResult execute() const;
 
 private:
-    /// What preparing the discovered test files produced: the ones ready to run with the settings each asks for, and a
-    /// failed check for each one that is not.
+    /// What preparing the discovered test files produced: the ones ready to run with the settings that each asks for,
+    /// and a failed check for each one that is not.
     struct PreparedRun
     {
         std::vector<RunnableTestFile> ready;
@@ -68,7 +68,7 @@ private:
 
     /// Reads one test file and rewrites it into the SQL to submit.
     /// A file that cannot be read or rewritten yields one failed check, so one unusable file does not end the run.
-    /// A file yields several parts when its queries ask for different worker settings, because a worker takes its
+    /// A file yields several partitions when its queries ask for different worker settings, because a worker takes its
     /// settings at startup.
     [[nodiscard]] static std::expected<std::vector<RunnableTestFile>, CheckedQuery>
     prepare(const DiscoveredTestFile& discovered, TestRunner& runner, std::vector<ConfigurationOverride>& settings);
@@ -76,11 +76,11 @@ private:
     /// Prepares every discovered test file before any query runs, so progress can count towards a known total.
     [[nodiscard]] PreparedRun prepareAll(TestRunner& runner) const;
 
-    /// Runs every case one time, reporting each as it finishes.
-    /// Files that could not be prepared or set up join the report as failures next to the cases that ran.
+    /// Runs every test case one time, reporting each as it finishes.
+    /// Files that could not be prepared or set up join the report as failures next to the test cases that ran.
     [[nodiscard]] static ExecutorResult runOnce(TestRunner& runner, const RunPolicy& plan, PreparedRun prepared);
 
-    /// Submits the cases round after round, to keep a worker under load.
+    /// Submits the test cases round after round, to keep a worker under load.
     /// Setting up happens once, because a second CREATE of the same name is a catalog conflict rather than more load.
     /// Refuses files that could not be prepared or set up, because they are failures of the invocation rather than
     /// something to repeat, and stops on the first round that fails.

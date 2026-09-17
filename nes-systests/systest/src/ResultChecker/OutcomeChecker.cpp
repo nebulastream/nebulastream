@@ -75,7 +75,7 @@ Failure failureOf(const StatementOutcome& outcome)
     return failure;
 }
 
-/// Checks a statement that failed against the error the test expects.
+/// Checks a statement that failed against the error that the test expects.
 /// Errors beyond the expected one are tolerated, because a failure on one pipeline can raise further errors on the
 /// pipelines connected to it.
 Verdict checkFailed(const Failure& actual, const Expectation& expectation)
