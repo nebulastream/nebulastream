@@ -21,6 +21,6 @@ name = "migration"
 path = "src/lib.rs"
 
 [dependencies]
-tokio.workspace = true
+tokio = { version = "0.2", package = "madsim-tokio", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
 sea-orm.workspace = true
 sea-orm-migration.workspace = true
