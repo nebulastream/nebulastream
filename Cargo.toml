@@ -23,6 +23,8 @@ members = [
     "nes-coordinator/model",
     "nes-coordinator/migration",
     "nes-coordinator/controller",
+    "nes-coordinator/coordinator",
+    "nes-coordinator/request-handler",
 ]
 
 [workspace.package]
@@ -45,6 +47,8 @@ duration_suboptimal_units = "allow"
 nes_network = { path = "nes-network/network" }
 migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }
+controller = { path = "nes-coordinator/controller" }
+request_handler = { path = "nes-coordinator/request-handler" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
@@ -80,8 +84,12 @@ tokio-retry2 = { version = "0.5", features = ["jitter", "tracing"] }
 tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor"] }
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
-tonic = "0.13"
-tonic-build = "0.13"
 tracing = "0.1.44"
 tracing-subscriber = "0.3"
 url = { version = "2.5.4", features = ["serde"] }
+
+# The coordinator crates declare tokio and tonic inline as madsim facade packages
+# (same API, simulator backend under `--cfg madsim`, plain re-export otherwise).
+# They cannot inherit those from this table: workspace inheritance cannot rename a package,
+# and the entries here must stay the real crates for the network and binding members.
+# The dependency policy script allows the madsim-* facades as the only inline exception.
