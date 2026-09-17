@@ -1,0 +1,60 @@
+# name: aggregation/statistics/StatisticStoreScalarRoundTrip.test
+# description: Round trip of a scalar statistic through the statistic store. A windowed SUM is written under a
+#              statistic id by STATISTIC_BUILD, and SUM_PROBE on the same id reads it back in the same query.
+# groups: [Aggregation, WindowOperators, Statistics]
+
+# The statistic store is process-global and keeps every blob written for a key, so a statistic id must be used by
+# exactly one query in the whole systest tree. This file owns the ids 100-119.
+
+CREATE LOGICAL SOURCE stream(value FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1.5,100
+2.5,200
+4.25,1100
+8.25,1200
+16,2100
+
+CREATE SINK sinkBuild(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkRoundTrip(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, total FLOAT64 NOT NULL)  TYPE File;
+CREATE SINK sinkMismatch(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, smallest FLOAT64 NOT NULL)  TYPE File;
+
+# Write only: the build re-emits the statistic metadata, the blob itself stays in the store.
+# Windows of 1 s over the input above: [0,1000) holds 1.5 and 2.5, [1000,2000) holds 4.25 and 8.25, [2000,3000) holds 16.
+SELECT STATISTIC_BUILD(100, SUM(value))
+FROM stream WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkBuild;
+----
+100,0,1000,2
+100,1000,2000,2
+100,2000,3000,1
+
+# Write and read back in one query: the probe reads the statistic of exactly the window the build just wrote.
+# The sums are 1.5 + 2.5 = 4, 4.25 + 8.25 = 12.5 and 16.
+SELECT *
+FROM (
+    SELECT SUM_PROBE(101, total, float64)
+    FROM (
+        SELECT STATISTIC_BUILD(101, SUM(value))
+        FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkRoundTrip;
+----
+101,0,1000,2,4
+101,1000,2000,2,12.5
+101,2000,3000,1,16
+
+# A probe of a statistic some other aggregation wrote reads foreign bytes, so it fails instead: the stored blob is
+# tagged Sum and the probe asks for Min.
+SELECT *
+FROM (
+    SELECT MIN_PROBE(102, smallest, float64)
+    FROM (
+        SELECT STATISTIC_BUILD(102, SUM(value))
+        FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkMismatch;
+----
+ERROR 4005

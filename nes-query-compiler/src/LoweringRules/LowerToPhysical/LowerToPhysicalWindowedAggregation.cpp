@@ -111,7 +111,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             std::move(aggregationInputFunction),
             resultFieldIdentifier,
             tupleLayout,
-            descriptor.function.shallIncludeNullValues());
+            descriptor.function);
         if (const auto aggregationFactory = AggregationPhysicalFunctionRegistry::instance().find(std::string{name}))
         {
             aggregationPhysicalFunctions.push_back((*aggregationFactory)(std::move(aggregationArguments)));

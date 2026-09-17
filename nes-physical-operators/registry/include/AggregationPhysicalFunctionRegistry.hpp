@@ -23,6 +23,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
@@ -37,7 +38,7 @@ struct AggregationPhysicalFunctionRegistryArguments
     PhysicalFunction inputFunction;
     Record::RecordFieldIdentifier resultFieldIdentifier;
     std::optional<std::shared_ptr<PagedVectorTupleLayout>> tupleLayout;
-    bool includeNullValues;
+    WindowAggregationLogicalFunction logicalFunction;
 };
 
 using AggregationPhysicalFunctionFn
