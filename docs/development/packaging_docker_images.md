@@ -9,6 +9,7 @@ one CMake target per executable plus `package-docker-images-all`, which builds a
 | `package-docker-nes-cli`          | `nebulastream/nes-cli`                            | `nes-cli`                |
 | `package-docker-nes-repl`         | `nebulastream/nes-repl`                           | `nes-repl`               |
 | `package-docker-nes-repl-embedded`| `nebulastream/nes-repl-embedded`                  | `nes-repl-embedded`      |
+| `package-docker-nes-server`       | `nebulastream/nes-server`                         | `nes-server`             |
 | `package-docker-nes-worker`       | `nebulastream/nes-worker`                         | `nes-single-node-worker` |
 
 Every image target is named after the image it builds.

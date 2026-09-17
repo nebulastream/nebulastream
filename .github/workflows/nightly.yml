@@ -3,7 +3,7 @@ description: |
   This workflow is triggered every night at 2:30 AM UTC.
   This is a good way to ensure that the main branch is always in a good state.
   For now, this workflow file runs the same tests as `pr.yml`, plus long-running and benchmark jobs.
-  On `main` it also publishes the executable images (nes-cli, nes-repl, nes-repl-embedded, nes-worker) to Docker Hub as `:latest`.
+  On `main` it also publishes the executable images (nes-cli, nes-repl, nes-repl-embedded, nes-server, nes-worker) to Docker Hub as `:latest`.
 
 on:
   workflow_dispatch:

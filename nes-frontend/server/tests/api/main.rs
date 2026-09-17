@@ -12,17 +12,11 @@
     limitations under the License.
 */
 
-//! The FFI surface between the C++ side and the Rust coordinator, one bridge module per file.
-//! Every bridge reports failures through the same error struct.
-
+mod bootstrap;
 mod catalog;
-mod coordinator;
-mod error;
-mod planner;
-mod test_context;
-mod worker;
-
-pub use coordinator::ffi::WorkerMode;
-pub use coordinator::{Coordinator, default_host};
-pub use planner::sql_planner;
-pub use worker::embedded_worker_factory;
+mod common;
+mod health_statements;
+mod queries;
+mod serve;
+mod wait;
+mod workers;

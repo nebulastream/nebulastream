@@ -26,8 +26,10 @@ members = [
     "nes-coordinator/coordinator",
     "nes-coordinator/bridge",
     "nes-frontend/nebucli",
+    "nes-frontend/server",
+    "nes-frontend/server/app",
 ]
-# The bridge and nebucli crates link against the C++ tree, so a bare
+# The bridge, nebucli and server app crates link against the C++ tree, so a bare
 # `cargo build` at the workspace root would need the CMake build to exist.
 # Keep them out of the default set; CMake drives them explicitly.
 default-members = [
@@ -38,6 +40,7 @@ default-members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-frontend/server",
 ]
 
 [workspace.package]
@@ -52,14 +55,17 @@ model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
 coordinator = { path = "nes-coordinator/coordinator" }
 coordinator_bridge = { path = "nes-coordinator/bridge" }
+server = { path = "nes-frontend/server" }
 
 anyhow = "1.0"
 async-channel = "2.3.1"
 async-trait = "0.1"
+axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 clap = { version = "4", features = ["derive"] }
 chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
 cxx = "1.0.194"
 futures = "0.3.31"
+http-body-util = "0.1.5"
 inventory = "0.3"
 libtest-mimic = "0.8"
 madsim = { version = "0.2.34", features = ["macros"] }
@@ -87,7 +93,7 @@ sqlx = { version = "=0.8.2", default-features = false, features = ["sqlite"] }
 strum = { version = "0.26", features = ["derive"] }
 test-strategy = "0.4.5"
 thiserror = "2.0"
-tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time"] }
+tokio = { version = "1.52.0", features = ["macros", "rt", "rt-multi-thread", "sync", "net", "io-util", "time", "signal"] }
 # Pinned to the API surface of the madsim fork (madsim-rs/rust-tokio-retry)
 # that the simulation build patches in; newer releases renamed spawn to start.
 tokio-retry = "=0.3.0"
@@ -96,6 +102,7 @@ tokio-serde = { version = "0.9", features = ["cbor", "serde_cbor", "json", "serd
 tokio-stream = "0.1.17"
 tokio-util = { version = "0.7.13", features = ["codec"] }
 toml = "1.1.2"
+tower = { version = "0.5.3", features = ["util"] }
 tracing = "0.1.44"
 tracing-appender = "0.2"
 tracing-subscriber = "0.3"

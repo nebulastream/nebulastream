@@ -10,9 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(argparse CONFIG REQUIRED)
-find_package(replxx CONFIG REQUIRED)
+add_rust_cargo_test(server)
 
-add_subdirectory(repl)
-add_subdirectory(nebucli)
-add_subdirectory(server)
+add_executable(nes-server main.cpp)
+target_link_libraries(nes-server PRIVATE nes-coordinator-bridge)
+target_link_rust_lib(nes-server server_app)
+
+add_e2e_test(
+    NAME server-smoke-test
+    BATS_FILE tests/smoke.bats
+)
