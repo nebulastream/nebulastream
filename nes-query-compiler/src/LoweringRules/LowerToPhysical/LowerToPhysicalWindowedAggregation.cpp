@@ -14,6 +14,7 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -154,7 +155,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto valueSize = std::accumulate(
         aggregationPhysicalFunctions.begin(),
         aggregationPhysicalFunctions.end(),
-        0,
+        uint64_t{0},
         [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
     uint64_t keySize = 0;
@@ -169,7 +170,11 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
-    const auto pageSize = conf.pageSize.getValue();
+    /// The page size says how many entries share one allocation, not how large an entry may be, and ChainedHashMap
+    /// requires at least one entry per page. An aggregation that needs a large state -- a synopsis sized by a memory
+    /// budget, say -- has already stated how much memory it may take, so the page grows to hold that one entry
+    /// instead of the query being rejected.
+    const auto pageSize = std::max<uint64_t>(conf.pageSize.getValue(), entrySize);
 
     const auto fieldKeyNames
         = boundGroupingKeys | std::views::transform([](const auto& field) { return QualifiedIdentifier{field->getField().getLastName()}; });
