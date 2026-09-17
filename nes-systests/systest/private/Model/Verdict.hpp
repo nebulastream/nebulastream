@@ -14,8 +14,14 @@
 
 #pragma once
 
+#include <chrono>
 #include <expected>
 #include <string>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include <Model/TestCaseId.hpp>
 
 namespace NES
 {
@@ -33,5 +39,45 @@ struct Success
 
 /// The outcome of one check.
 using Verdict = std::expected<Success, Mismatch>;
+
+/// A test case that never ran because something that it needed failed, and the reason why.
+/// Reported rather than dropped, so the tally still counts it.
+struct Skipped
+{
+    std::string reason;
+};
+
+/// The reported state of one test case: it passed, it failed with a mismatch, or it never ran.
+/// The first two are a check's verdict.
+/// A skip has no verdict, because no check ran.
+using CaseOutcome = std::variant<Success, Mismatch, Skipped>;
+
+inline CaseOutcome asOutcome(Verdict verdict)
+{
+    if (verdict.has_value())
+    {
+        return Success{};
+    }
+    return std::move(verdict).error();
+}
+
+/// How long one statement took, measured two ways.
+/// The submission is the wall time that this process waited, which includes planning and the queueing behind other queries.
+/// The execution is the span between the query running and stopping.
+struct QueryTiming
+{
+    std::chrono::steady_clock::duration submission{};
+    std::chrono::milliseconds execution{};
+};
+
+/// One checked test case, identified so a report line points back at its test file and query.
+struct CheckedQuery
+{
+    TestCaseId id;
+    CaseOutcome outcome;
+    /// One entry per submitted statement, in submission order.
+    /// Empty when the test case never ran.
+    std::vector<QueryTiming> timings;
+};
 
 }
