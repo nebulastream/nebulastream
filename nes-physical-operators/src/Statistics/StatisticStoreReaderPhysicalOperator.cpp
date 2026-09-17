@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -53,12 +54,15 @@ thread_local std::unordered_map<uint64_t, std::vector<AbstractStatisticStore::St
 /// A probe declares what it expects to read, but the store is keyed by statisticId alone, so a probe can reach a
 /// statistic some other build wrote. Reading it anyway would reinterpret the stored bytes -- a FLOAT64 average read
 /// as a UINT64 count -- or read past a shorter payload. Fail loudly instead.
+///
+/// This is the last place that can: forEachRecord below is traced Nautilus code that only receives a pointer.
 void validateAgainstProbe(
     const std::vector<AbstractStatisticStore::StatisticRef>& statistics,
     const StatisticId statisticId,
-    const StatisticBlobType& expectedTypeName,
-    const uint64_t expectedPayloadSizeInBytes)
+    const StatisticIterator& statisticIterator)
 {
+    const auto& expectedTypeName = statisticIterator.getStatisticBlobType();
+    const auto expectedPayloadSizeInBytes = statisticIterator.getExpectedPayloadSizeInBytes();
     for (const auto& statistic : statistics)
     {
         if (statistic->getTypeName() != expectedTypeName)
@@ -77,6 +81,8 @@ void validateAgainstProbe(
                 statistic->getStatisticDataSize(),
                 expectedPayloadSizeInBytes);
         }
+        /// A payload whose size follows from its own header reports 0 above, so this is the only check it gets.
+        statisticIterator.validate(std::span{statistic->getStatisticData(), statistic->getStatisticDataSize()});
     }
 }
 
@@ -106,8 +112,7 @@ uint64_t loadStatisticsProxy(
         statistics = store.getStatistics(statisticId, Timestamp{startTs.getRawValue()}, Timestamp{endTs.getRawValue()});
     }
 
-    validateAgainstProbe(
-        statistics, statisticId, statisticIterator->getStatisticBlobType(), statisticIterator->getExpectedPayloadSizeInBytes());
+    validateAgainstProbe(statistics, statisticId, *statisticIterator);
     auto& frame = tProbeStatistics[readerId];
     frame = std::move(statistics);
     return frame.size();

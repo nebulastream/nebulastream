@@ -12,28 +12,23 @@
     limitations under the License.
 */
 
-#include <Statistics/StatisticIterator.hpp>
+#include <Statistics/StatisticIteratorProvider.hpp>
 
-#include <cstdint>
-#include <span>
+#include <string>
 #include <utility>
-#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Statistics/ScalarStatisticIterator.hpp>
+#include <StatisticIteratorRegistry.hpp>
 
-namespace NES
+namespace NES::StatisticIteratorProvider
 {
 
-StatisticIterator::StatisticIterator(StatisticBlobType typeName) : typeName(std::move(typeName))
+StatisticIteratorRegistryReturnType provide(StatisticIteratorRegistryArguments arguments)
 {
-}
-
-const StatisticBlobType& StatisticIterator::getStatisticBlobType() const
-{
-    return typeName;
-}
-
-void StatisticIterator::validate(std::span<const int8_t>) const
-{
-    /// A fixed-size payload is fully covered by the size check the probe already ran.
+    if (const auto factory = StatisticIteratorRegistry::instance().find(arguments.typeName.getRawValue()))
+    {
+        return (*factory)(std::move(arguments));
+    }
+    return ScalarStatisticIterator::create(std::move(arguments));
 }
 
 }

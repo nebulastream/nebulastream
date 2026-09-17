@@ -13,3 +13,6 @@
 
 add_nes_test(statistic-store-test StatisticStoreTest.cpp)
 target_link_libraries(statistic-store-test nes-statistics)
+
+add_nes_test(statistic-iterator-registry-test StatisticIteratorRegistryTest.cpp)
+target_link_libraries(statistic-iterator-registry-test nes-statistics)

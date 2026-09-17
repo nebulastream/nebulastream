@@ -12,5 +12,7 @@
 
 add_source_files(nes-statistics
         StatisticIterator.cpp
+        StatisticIteratorProvider.cpp
+        StatisticIteratorRegistry.cpp
         ScalarStatisticIterator.cpp
 )

@@ -25,7 +25,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <StatisticStore/AbstractStatisticStore.hpp>
-#include <Statistics/ScalarStatisticIterator.hpp>
+#include <Statistics/StatisticIterator.hpp>
+#include <Statistics/StatisticIteratorProvider.hpp>
 #include <Statistics/StatisticStoreOperatorHandler.hpp>
 #include <Statistics/StatisticStoreReaderPhysicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -61,14 +62,18 @@ LoweringRuleResultSubgraph LowerToPhysicalStatisticStoreReader::apply(LogicalOpe
         .outputStatisticEnd = resolvePhysicalFieldName(outputSchema, StatisticFieldNames::END_TS),
         .outputNumberOfSeenMeasurements = resolvePhysicalFieldName(outputSchema, StatisticFieldNames::NUMBER_OF_SEEN_MEASUREMENTS)};
 
-    /// Every statistic this branch can write is a scalar: the single value the aggregation reduced its window to.
-    /// Synopses bring their own decoder, which is what the statistic iterator registry will select.
-    const auto& payloadFields = probe->getPayloadFields();
-    INVARIANT(payloadFields.size() == 1, "A scalar statistic decodes to exactly one column, but {} were declared", payloadFields.size());
-    auto statisticIterator = std::make_shared<ScalarStatisticIterator>(
-        probe->getTypeName(),
-        payloadFields.front().second,
-        resolvePhysicalFieldName(outputSchema, payloadFields.front().first.getOriginalString()));
+    /// The payload columns, resolved to their physical names. Their declared order is what gives them their meaning
+    /// to the decoder, so it must survive lowering untouched.
+    std::vector<StatisticPayloadField> payloadFields;
+    for (const auto& [name, dataType] : probe->getPayloadFields())
+    {
+        payloadFields.emplace_back(resolvePhysicalFieldName(outputSchema, name.getOriginalString()), dataType);
+    }
+
+    /// Which decoder reads the blob is decided by the aggregation that wrote it: a synopsis registers its own,
+    /// anything else is the single scalar the aggregation reduced its window to.
+    auto statisticIterator
+        = StatisticIteratorProvider::provide({.typeName = probe->getTypeName(), .payloadFields = std::move(payloadFields)});
 
     const StatisticStoreReaderPhysicalOperator reader{
         handlerId, probe->getStatisticId(), fieldIdentifiers, std::move(statisticIterator), probe->getWindowMatch()};

@@ -16,12 +16,16 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Operators/Statistic/StatisticBlobType.hpp>
+#include <Statistics/StatisticIterator.hpp>
+#include <ErrorHandling.hpp>
+#include <StatisticIteratorRegistry.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -31,6 +35,21 @@ ScalarStatisticIterator::ScalarStatisticIterator(
     StatisticBlobType typeName, DataType valueType, Record::RecordFieldIdentifier outputValueFieldName)
     : StatisticIterator(std::move(typeName)), valueType(std::move(valueType)), outputValueFieldName(std::move(outputValueFieldName))
 {
+}
+
+std::shared_ptr<StatisticIterator> ScalarStatisticIterator::create(StatisticIteratorRegistryArguments arguments)
+{
+    if (arguments.payloadFields.size() != 1)
+    {
+        throw InvalidQuerySyntax(
+            "{} reduces a window to a single value, so its probe declares exactly one column, e.g. {}_PROBE(id, "
+            "<value> <type>); got {}",
+            arguments.typeName.getRawValue(),
+            arguments.typeName.getRawValue(),
+            arguments.payloadFields.size());
+    }
+    auto& field = arguments.payloadFields.front();
+    return std::make_shared<ScalarStatisticIterator>(std::move(arguments.typeName), std::move(field.type), std::move(field.name));
 }
 
 uint64_t ScalarStatisticIterator::getExpectedPayloadSizeInBytes() const

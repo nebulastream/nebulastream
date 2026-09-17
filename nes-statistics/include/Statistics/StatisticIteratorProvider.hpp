@@ -12,28 +12,15 @@
     limitations under the License.
 */
 
-#include <Statistics/StatisticIterator.hpp>
+#pragma once
 
-#include <cstdint>
-#include <span>
-#include <utility>
-#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <StatisticIteratorRegistry.hpp>
 
-namespace NES
+namespace NES::StatisticIteratorProvider
 {
 
-StatisticIterator::StatisticIterator(StatisticBlobType typeName) : typeName(std::move(typeName))
-{
-}
-
-const StatisticBlobType& StatisticIterator::getStatisticBlobType() const
-{
-    return typeName;
-}
-
-void StatisticIterator::validate(std::span<const int8_t>) const
-{
-    /// A fixed-size payload is fully covered by the size check the probe already ran.
-}
+/// The decoder for a stored statistic: the registered one if the blob type has an entry, the scalar decoder
+/// otherwise. Throws InvalidQuerySyntax if the probe's payload columns do not fit the decoder.
+StatisticIteratorRegistryReturnType provide(StatisticIteratorRegistryArguments arguments);
 
 }

@@ -12,28 +12,15 @@
     limitations under the License.
 */
 
-#include <Statistics/StatisticIterator.hpp>
-
-#include <cstdint>
-#include <span>
-#include <utility>
-#include <Operators/Statistic/StatisticBlobType.hpp>
+#include <StatisticIteratorRegistry.hpp>
 
 namespace NES
 {
 
-StatisticIterator::StatisticIterator(StatisticBlobType typeName) : typeName(std::move(typeName))
+StatisticIteratorRegistry& StatisticIteratorRegistry::instance()
 {
-}
-
-const StatisticBlobType& StatisticIterator::getStatisticBlobType() const
-{
-    return typeName;
-}
-
-void StatisticIterator::validate(std::span<const int8_t>) const
-{
-    /// A fixed-size payload is fully covered by the size check the probe already ran.
+    static StatisticIteratorRegistry inst;
+    return inst;
 }
 
 }

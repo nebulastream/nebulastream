@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 #include <DataTypes/DataType.hpp>
 #include <Interface/Record.hpp>
@@ -26,10 +27,17 @@
 namespace NES
 {
 
+struct StatisticIteratorRegistryArguments;
+
+/// Decodes the single value an ordinary aggregation reduced its window to. This is what every blob type without a
+/// decoder of its own falls back to, so it is not a registry entry.
 class ScalarStatisticIterator final : public StatisticIterator
 {
 public:
     ScalarStatisticIterator(StatisticBlobType typeName, DataType valueType, Record::RecordFieldIdentifier outputValueFieldName);
+
+    /// Throws InvalidQuerySyntax unless the probe declared exactly one payload column.
+    static std::shared_ptr<StatisticIterator> create(StatisticIteratorRegistryArguments arguments);
 
     [[nodiscard]] uint64_t getExpectedPayloadSizeInBytes() const override;
     void forEachRecord(const nautilus::val<int8_t*>& payload, const std::function<void(Record&)>& emit) const override;
