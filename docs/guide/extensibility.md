@@ -109,12 +109,10 @@ public:
 
 }
 ```
-This specifies the entry type (usually a factory `std::function`; a registry may bundle more into a
-struct, e.g. the aggregation registry stores the factory together with the class's `NAME` and an optional
-`IS_STATISTIC` marker read off the class, see `AggregationLogicalFunctionRegistry.hpp`), the arguments an
-entry receives, and how an entry is expressed for a plugin type — either a factory template like
-`makeSourceFactory` (when construction is uniform over the plugin type) or a static member on the plugin
-class (when per-plugin logic is needed, e.g. `&AddLogicalFunction::createAdd`).
+This specifies the entry type (usually a factory `std::function`, or a struct containing one), the
+arguments an entry receives, and how an entry is expressed for a plugin type — either a factory template
+like `makeSourceFactory` (when construction is uniform over the plugin type) or a static member on the
+plugin class (when per-plugin logic is needed, e.g. `&AddLogicalFunction::createAdd`).
 
 The component declares the registry once in its `CMakeLists.txt`:
 ```cmake

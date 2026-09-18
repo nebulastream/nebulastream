@@ -23,6 +23,9 @@
 namespace NES
 {
 
+/// The * of COUNT(*) arrives as an unbound field access named *. Only COUNT accepts it; parseFieldParameter rejects it.
+bool isStarParameter(const LogicalFunction& parameter);
+
 /// All throw InvalidQuerySyntax naming `description`, e.g. "the sampleSize of RESERVOIRSAMPLE".
 AggregationFieldAccess parseFieldParameter(const LogicalFunction& parameter, std::string_view description);
 

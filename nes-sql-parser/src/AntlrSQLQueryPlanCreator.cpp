@@ -1472,6 +1472,12 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                         .call = tokenRangeOf(*context)};
                     break;
                 }
+                if (context->starArg != nullptr)
+                {
+                    /// As in the COUNT token case, * reaches the aggregation as a field named *, from which COUNT derives
+                    /// that it counts every record. It never reaches the expression stack, so it is not among the arguments.
+                    arguments.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
+                }
                 auto [registryArguments, firstInputField] = toRegistryArguments(std::move(arguments));
                 helpers.top().windowAggs.emplace_back(
                     AggregationLogicalFunctionProvider::provide(funcName, std::move(registryArguments)), std::nullopt);
@@ -1493,10 +1499,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                         fmt::join(AggregationLogicalFunctionProvider::registeredNames(), ", "),
                         context->getText());
                 }
-                if (arguments.empty() or arguments.size() % 2 == 0)
+                /// The payload is only readable through the columns named here, so a probe names at least one.
+                if (arguments.size() < 3 or arguments.size() % 2 == 0)
                 {
                     throw InvalidQuerySyntax(
-                        "{} expects a statisticId followed by (fieldName, typeName) pairs at {}", funcName, context->getText());
+                        "{} expects a statisticId followed by at least one (fieldName, typeName) pair at {}", funcName, context->getText());
                 }
                 if (helpers.top().statisticProbe.has_value())
                 {

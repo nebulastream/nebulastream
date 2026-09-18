@@ -44,6 +44,7 @@
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Operators/Statistic/StatisticWindowMatch.hpp>
+#include <Operators/Windows/Aggregations/AggregationLogicalFunctionProvider.hpp>
 #include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
@@ -871,6 +872,30 @@ TEST_F(StatementBinderTest, TokenAggregationsKeepTheirAutoName)
     EXPECT_NO_THROW(std::ignore = bindPlan(fmt::format("SELECT SUM(x) + UINT64(1){}", WINDOWED)));
 }
 
+/// COUNT and count are the COUNT token; any other spelling reaches COUNT through the aggregation registry.
+TEST_F(StatementBinderTest, CountStarCountsEveryRecordOnBothPaths)
+{
+    for (const auto* call : {"COUNT(*)", "count(*)", "Count(*)", "COUNT(x)", "Count(x)"})
+    {
+        const auto plan = bindPlan(fmt::format("SELECT {}{}", call, WINDOWED));
+        const auto projected = getOperatorByType<WindowedAggregationLogicalOperator>(plan).front()->getWindowAggregation();
+        ASSERT_EQ(projected.size(), 1) << call;
+        const auto count = projected.front().function.tryGetAs<CountAggregationLogicalFunction>();
+        ASSERT_TRUE(count.has_value()) << call;
+        EXPECT_EQ(count.value()->shallIncludeNullValues(), std::string_view{call}.contains('*')) << call;
+    }
+}
+
+TEST_F(StatementBinderTest, OnlyCountAcceptsStar)
+{
+    const LogicalFunction star{UnboundFieldAccessLogicalFunction{Identifier::parse("*")}};
+    const auto count = AggregationLogicalFunctionProvider::provide("COUNT", {.parameters = {star}});
+    ASSERT_TRUE(count.tryGetAs<CountAggregationLogicalFunction>().has_value());
+    EXPECT_TRUE(count.tryGetAs<CountAggregationLogicalFunction>().value()->shallIncludeNullValues());
+    ASSERT_EXCEPTION_ERRORCODE(
+        std::ignore = AggregationLogicalFunctionProvider::provide("SUM", {.parameters = {star}}), ErrorCode::InvalidQuerySyntax);
+}
+
 TEST_F(StatementBinderTest, ProbeReadsAnyRegisteredAggregation)
 {
     const auto synopsisPlan = bindPlan("SELECT TESTSYNOPSIS_PROBE(42, v, uint64, w, float64) FROM s INTO sink");
@@ -919,6 +944,7 @@ TEST_F(StatementBinderTest, StatisticCallsWithBadArgumentsAreInvalidQuerySyntax)
 
     const std::vector<std::string> probes{
         "FOO_PROBE(42, v, uint64)",
+        "SUM_PROBE(42)",
         "SUM_PROBE(42, v)",
         "SUM_PROBE(42, v, notatype)",
         "SUM_PROBE(0, v, uint64)",

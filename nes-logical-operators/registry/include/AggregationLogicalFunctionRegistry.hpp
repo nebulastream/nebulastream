@@ -28,8 +28,6 @@ namespace NES
 
 using AggregationLogicalFunctionRegistryReturnType = WindowAggregationLogicalFunction;
 
-/// The SQL call's arguments in call order. The parser has already desugared expressions into pre-aggregation
-/// projections, so each is either an UnboundFieldAccessLogicalFunction or a ConstantValueLogicalFunction.
 struct AggregationLogicalFunctionRegistryArguments
 {
     std::vector<LogicalFunction> parameters;

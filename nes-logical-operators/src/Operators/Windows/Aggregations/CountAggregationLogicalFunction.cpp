@@ -14,20 +14,17 @@
 
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 
-#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Field.hpp>
@@ -129,21 +126,12 @@ AggregationLogicalFunctionRegistryReturnType CountAggregationLogicalFunction::cr
         throw InvalidQuerySyntax("COUNT expects exactly one argument, a field or *, but got {}", arguments.parameters.size());
     }
     /// COUNT(*) counts every record, so null values are included; COUNT(field) skips nulls of that field.
-    const auto field = parseFieldParameter(arguments.parameters.front(), "the field of COUNT");
-    const auto countsEveryRecord = std::visit(
-        [](const auto& access)
-        {
-            if constexpr (std::same_as<std::decay_t<decltype(access)>, TypedLogicalFunction<UnboundFieldAccessLogicalFunction>>)
-            {
-                return access->getFieldName() == Identifier::parse("*");
-            }
-            else
-            {
-                return false;
-            }
-        },
-        field);
-    return CountAggregationLogicalFunction{field, countsEveryRecord};
+    const auto& parameter = arguments.parameters.front();
+    if (isStarParameter(parameter))
+    {
+        return CountAggregationLogicalFunction{parameter.getAs<UnboundFieldAccessLogicalFunction>(), true};
+    }
+    return CountAggregationLogicalFunction{parseFieldParameter(parameter, "the field of COUNT"), false};
 }
 }
 

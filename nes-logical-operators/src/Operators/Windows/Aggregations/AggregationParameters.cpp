@@ -21,6 +21,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -28,8 +29,18 @@
 namespace NES
 {
 
+bool isStarParameter(const LogicalFunction& parameter)
+{
+    const auto unbound = parameter.tryGetAs<UnboundFieldAccessLogicalFunction>();
+    return unbound.has_value() and unbound.value()->getFieldName() == Identifier::parse("*");
+}
+
 AggregationFieldAccess parseFieldParameter(const LogicalFunction& parameter, const std::string_view description)
 {
+    if (isStarParameter(parameter))
+    {
+        throw InvalidQuerySyntax("Expected a field name for {}, but got *", description);
+    }
     if (const auto unbound = parameter.tryGetAs<UnboundFieldAccessLogicalFunction>())
     {
         return unbound.value();
