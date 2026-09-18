@@ -103,10 +103,15 @@ InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildrenUnsafe(
 }
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static, performance-unnecessary-value-param)
-InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator>) const
+/// Generic plan-rewriting rules may rebuild this operator while traversing (mirror of
+/// SemMapNameLogicalOperator), so withChildren must actually set the child instead of guarding.
+/// Schema inference stays guarded (requires model resolution).
+InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
 {
-    PRECONDITION(false, "InferModelName requires model resolution before schema inference");
-    std::unreachable();
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for InferModelName, got {}", newChildren.size());
+    auto copy = *this;
+    copy.child = std::move(newChildren.front());
+    return copy;
 }
 
 /// NOLINTEND(readability-convert-member-functions-to-static, performance-unnecessary-value-param)

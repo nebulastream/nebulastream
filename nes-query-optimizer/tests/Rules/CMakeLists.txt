@@ -14,3 +14,5 @@ add_subdirectory(Static)
 
 add_nes_optimizer_test(RuleManagerTest RuleManagerTest.cpp)
 add_nes_optimizer_test(PlanVisitorTest PlanVisitorTest.cpp)
+add_nes_optimizer_test(SemMapResolutionRuleTest SemMapResolutionRuleTest.cpp)
+target_link_libraries(SemMapResolutionRuleTest nes-semantic)

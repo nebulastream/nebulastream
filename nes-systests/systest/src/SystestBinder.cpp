@@ -76,6 +76,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -514,10 +515,12 @@ struct SystestBinder::Impl
 
         SLTSinkFactory sinkProvider{sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
+        auto semanticModelCatalog = std::make_shared<SemanticModelCatalog>();
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name().view(), sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration, sourceCatalog, sinkCatalog, copyPtr(workerCatalog), modelCatalog};
+        const QueryOptimizer queryOptimizer{
+            queryOptimizerConfiguration, sourceCatalog, sinkCatalog, copyPtr(workerCatalog), modelCatalog, semanticModelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)

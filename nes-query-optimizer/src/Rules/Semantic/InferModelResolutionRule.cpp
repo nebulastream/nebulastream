@@ -33,6 +33,7 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Rules/Semantic/SemMapResolutionRule.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
@@ -69,7 +70,13 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> InferModelResolutionRule::needs() const
 {
-    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
+    /// Also needs SemMapResolutionRule: its generic op.withChildren traversal re-infers schemas,
+    /// which requires SemMapName operators to be resolved to SemMap first.
+    return {
+        typeid(LogicalSourceExpansionRule),
+        typeid(SinkBindingRule),
+        typeid(AnonymousSinkBindingRule),
+        typeid(SemMapResolutionRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
