@@ -21,5 +21,6 @@ endfunction()
 
 add_nes_test_semantic(SemanticModelCatalogTest SemanticModelCatalogTest.cpp)
 add_nes_test_semantic(ResponseParsingTest ResponseParsingTest.cpp)
+add_nes_test_semantic(LlmClientFactoryTest LlmClientFactoryTest.cpp)
 add_nes_test_semantic(CurlLlmClientTest CurlLlmClientTest.cpp)
 target_link_libraries(CurlLlmClientTest Boost::asio)

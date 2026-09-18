@@ -16,6 +16,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 add_library(nes-semantic
         src/SemanticModelCatalog.cpp
         src/CurlLlmClient.cpp
+        src/MockLlmClient.cpp
+        src/LlmClientFactory.cpp
         src/ResponseParsing.cpp)
 target_include_directories(nes-semantic PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
