@@ -12,14 +12,17 @@
     limitations under the License.
 */
 
-/// Multi-sink lowering into a shared physical DAG. Optimize a single-sink tree, graft a second sink onto
-/// the optimized plan (the deployment model: extra sinks attached after optimization), compile, and assert
-/// the sink/source counts. Without the fix apply() dropped all but the first sink, and the un-memoized
-/// lowerOperatorRecursively duplicated the shared subplan (source included) once per parent. Pipeline-internal
-/// structure of the shared part is a separate issue, not asserted here.
-/// The post-optimizer graft copies the second sink's TraitSet from the first (the per-rule optimizer does
-/// not yet preserve multi-root sharing, #1753), so these tests pin a trait config no real plan has. Drop
-/// the copy once #1753 lands.
+/// Multi-sink lowering into a shared physical DAG: a plan whose sinks share a sub-plan lowers into one physical
+/// sub-plan that every sink root reads, rather than into a copy of it per sink.
+///
+/// The tests optimize a single-sink tree, graft a second sink onto the optimized plan — the deployment model, where
+/// further sinks are attached after optimization — compile it, and assert that contract on the result: every sink root
+/// survives lowering, and the operators the sinks share, the source included, are lowered once. How the pipelines are
+/// cut inside the shared part is a separate question and is not asserted here.
+///
+/// The post-optimizer graft copies the second sink's TraitSet from the first (the per-rule optimizer does not yet
+/// preserve multi-root sharing, #1753), so these tests pin a trait config no real plan has. Drop the copy once #1753
+/// lands.
 
 #include <memory>
 #include <string>
