@@ -295,6 +295,7 @@ int main(int argc, char** argv)
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
+        NES::SemanticModelStatementHandler semanticModelStatementHandler{semanticModelCatalog};
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
             queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
@@ -303,6 +304,7 @@ int main(int argc, char** argv)
             std::move(sinkStatementHandler),
             std::move(topologyStatementHandler),
             std::move(modelStatementHandler),
+            std::move(semanticModelStatementHandler),
             queryStatementHandler,
             std::move(binder),
             errorBehaviour,

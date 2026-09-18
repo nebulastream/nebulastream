@@ -516,7 +516,8 @@ struct SystestBinder::Impl
         SLTSinkFactory sinkProvider{sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto modelCatalog = std::make_shared<ModelCatalog>();
         auto semanticModelCatalog = std::make_shared<SemanticModelCatalog>();
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name().view(), sourceCatalog, modelCatalog, sinkProvider);
+        auto loadedSystests
+            = loadFromSLTFile(testfile.file, testfile.name().view(), sourceCatalog, modelCatalog, semanticModelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const QueryOptimizer queryOptimizer{
@@ -671,10 +672,22 @@ struct SystestBinder::Impl
         }
     }
 
+    static void
+    createSemanticModel(const std::shared_ptr<SemanticModelCatalog>& semanticModelCatalog, const CreateSemanticModelStatement& statement)
+    {
+        auto handler = SemanticModelStatementHandler(semanticModelCatalog);
+        auto result = handler(statement);
+        if (!result)
+        {
+            throw std::move(result).error();
+        }
+    }
+
     void bindCreateStatement(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<ModelCatalog>& modelCatalog,
+        const std::shared_ptr<SemanticModelCatalog>& semanticModelCatalog,
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
@@ -708,6 +721,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateModelStatement>(statement))
         {
             createModel(modelCatalog, std::get<CreateModelStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateSemanticModelStatement>(statement))
+        {
+            createSemanticModel(semanticModelCatalog, std::get<CreateSemanticModelStatement>(statement));
         }
         else
         {
@@ -997,6 +1014,7 @@ struct SystestBinder::Impl
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         const std::shared_ptr<ModelCatalog>& modelCatalog,
+        const std::shared_ptr<SemanticModelCatalog>& semanticModelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
@@ -1055,7 +1073,14 @@ struct SystestBinder::Impl
                                 *create.attach);
                         }
                         bindCreateStatement(
-                            binder, sourceCatalog, modelCatalog, sltSinkProvider, sourceThreads, create.sql, std::move(testData));
+                            binder,
+                            sourceCatalog,
+                            modelCatalog,
+                            semanticModelCatalog,
+                            sltSinkProvider,
+                            sourceThreads,
+                            create.sql,
+                            std::move(testData));
                     },
                     [&](const SelectStatement& query) { builders.push_back(bindSelectStatement(testFileName, sltSinkProvider, query)); },
                     [&](const ExplainStatement& statement)

@@ -110,6 +110,16 @@ public:
     /// inside HAVING can be distinguished from the ones the SELECT list already projects.
     size_t aggCountBeforeHaving = 0;
 
+    /// Pending SEM_MAP(model, cols…) calls found in the SELECT list, desugared into
+    /// SemMapNameLogicalOperator nodes in exitPrimaryQuery. Mirrors preAggregationProjections.
+    struct PendingSemMap
+    {
+        Identifier modelName;
+        std::vector<Identifier> inputFields;
+        std::optional<Identifier> outputAlias;
+    };
+    std::vector<PendingSemMap> pendingSemMaps;
+
     /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
     bool isModelInference = false;
 

@@ -42,6 +42,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <SemanticModelConfig.hpp>
 
 namespace NES
 {
@@ -182,6 +183,24 @@ struct DropModelStatement
     std::string name;
 };
 
+struct CreateSemanticModelStatement
+{
+    std::string name;
+    SemanticModelConfig config;
+    Schema<UnqualifiedUnboundField, Ordered> inputs;
+    Schema<UnqualifiedUnboundField, Ordered> outputs;
+};
+
+struct ShowSemanticModelsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropSemanticModelStatement
+{
+    std::string name;
+};
+
 struct WorkerStatusStatement
 {
     std::vector<std::string> host;
@@ -209,17 +228,20 @@ using Statement = std::variant<
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
     CreateModelStatement,
+    CreateSemanticModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
     DropModelStatement,
+    DropSemanticModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
+    ShowSemanticModelsStatement,
     ShowVersionStatement,
     DropQueryStatement>;
 

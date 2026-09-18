@@ -827,6 +827,13 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
     }
 
+    /// Insert desugared SEM_MAP(...) calls from the select list as operators, before the
+    /// pre-aggregation projections so a SEM_MAP output can feed an aggregation.
+    for (const auto& pending : helpers.top().pendingSemMaps)
+    {
+        queryPlan = LogicalPlanBuilder::addSemMap(pending.modelName, pending.inputFields, pending.outputAlias, queryPlan);
+    }
+
     /// Insert pre-aggregation projections for desugared expression arguments (e.g., AVG(i + UINT64(1))).
     if (!helpers.top().preAggregationProjections.empty())
     {
@@ -1283,6 +1290,72 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     }
 }
 
+void AntlrSQLQueryPlanCreator::handleSemMapCall(AntlrSQLParser::FunctionCallContext* context)
+{
+    const auto numArgs = context->argument.size();
+    if (numArgs < 2)
+    {
+        throw InvalidQuerySyntax(
+            "SEM_MAP requires a model name and at least one input column, got {} argument(s) at {}", numArgs, context->getText());
+    }
+    if (numArgs > helpers.top().functionBuilder.size())
+    {
+        throw InvalidQuerySyntax(
+            "SEM_MAP expects {} arguments but only {} are available at {}", numArgs, helpers.top().functionBuilder.size(), context->getText());
+    }
+
+    auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+    std::vector<LogicalFunction> args(argsBegin, helpers.top().functionBuilder.end());
+    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+
+    const auto toFieldName = [&](const LogicalFunction& function) -> Identifier
+    {
+        if (const auto access = function.tryGetAs<UnboundFieldAccessLogicalFunction>())
+        {
+            return access.value()->getFieldName();
+        }
+        throw InvalidQuerySyntax("SEM_MAP arguments must be column references at {}", context->getText());
+    };
+
+    const auto modelName = toFieldName(args.front());
+    std::vector<Identifier> inputFields;
+    inputFields.reserve(args.size() - 1);
+    for (const auto& arg : args | std::views::drop(1))
+    {
+        inputFields.push_back(toFieldName(arg));
+    }
+
+    /// Read the alias off the parse tree, not the helper: 'AS <alias>' is visited after this
+    /// function returns, so helper state is not yet populated.
+    std::optional<Identifier> outputAlias;
+    for (auto* parent = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parent != nullptr;
+         parent = dynamic_cast<antlr4::ParserRuleContext*>(parent->parent))
+    {
+        if (auto* const namedExpr = dynamic_cast<AntlrSQLParser::NamedExpressionContext*>(parent))
+        {
+            if (namedExpr->name != nullptr)
+            {
+                outputAlias = bindIdentifier(namedExpr->name);
+            }
+            break;
+        }
+    }
+    if (!outputAlias.has_value())
+    {
+        throw InvalidQuerySyntax("SEM_MAP requires an alias (AS <name>) when used in the select list at {}", context->getText());
+    }
+
+    helpers.top().pendingSemMaps.push_back(AntlrSQLHelper::PendingSemMap{modelName, std::move(inputFields), outputAlias});
+    /// The SemMap operator merges its model outputs into the child schema, so when the select list
+    /// already carries an asterisk the star picks the output up — pushing the identity
+    /// FieldAccess(item) would collide with it at schema inference (output name twice). Without an
+    /// asterisk the select item is the only carrier, so it must be pushed.
+    if (!helpers.top().asterisk)
+    {
+        helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(outputAlias.value()));
+    }
+}
+
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     const auto funcName = toUpperCase(context->children[0]->getText());
@@ -1367,8 +1440,12 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             helpers.top().hasUnnamedAggregation = false;
+            if (funcName == "SEM_MAP")
+            {
+                handleSemMapCall(context);
+            }
             /// Check if the function is a constructor for a datatype
-            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            else if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
                 if (const auto numArgs = context->argument.size(); numArgs != 1)
                 {

@@ -15,6 +15,7 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -292,6 +293,129 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
+    /// Reads a single, flat (non-dotted) option out of a ConfigMultiMap by key, e.g. `'...' AS BASE_URL`.
+    /// Unlike bindConfigOptions (which requires a two-part qualified key such as SINK.FORMAT), SEM_MAP's
+    /// options are flat, so we scan the multimap produced by bindConfigOptionsWithDuplicates directly.
+    static std::optional<Literal> findFlatConfigOption(const ConfigMultiMap& configs, std::string_view key)
+    {
+        const auto keyIdentifier = Identifier::parse(std::string{key});
+        const auto it = std::ranges::find_if(
+            configs, [&](const auto& option) { return option.first.size() == 1 && *std::ranges::begin(option.first) == keyIdentifier; });
+        if (it == configs.end())
+        {
+            return std::nullopt;
+        }
+        const auto* literal = std::get_if<Literal>(&it->second);
+        if (literal == nullptr)
+        {
+            throw InvalidConfigParameter("Semantic model option '{}' must be a literal value", key);
+        }
+        return *literal;
+    }
+
+    static std::string requireFlatStringOption(const ConfigMultiMap& configs, std::string_view key)
+    {
+        const auto literal = findFlatConfigOption(configs, key);
+        if (!literal.has_value() || !std::holds_alternative<std::string>(*literal))
+        {
+            throw InvalidConfigParameter("Semantic model option '{}' must be set to a string literal", key);
+        }
+        return std::get<std::string>(*literal);
+    }
+
+    CreateSemanticModelStatement
+    bindCreateSemanticModelStatement(AntlrSQLParser::CreateSemanticModelDefinitionContext* semanticModelDefAST) const
+    {
+        const auto modelName = bindIdentifier(semanticModelDefAST->modelName->strictIdentifier());
+        const auto configs = bindConfigOptionsWithDuplicates(semanticModelDefAST->optionsClause()->options->namedConfigExpression());
+
+        static const std::array<Identifier, 5> knownOptions{
+            Identifier::parse("BASE_URL"),
+            Identifier::parse("MODEL"),
+            Identifier::parse("PROMPT"),
+            Identifier::parse("API_KEY_ENV"),
+            Identifier::parse("OUTPUT_VALUES")};
+        for (const auto& option : configs)
+        {
+            if (option.first.size() != 1 || std::ranges::find(knownOptions, *std::ranges::begin(option.first)) == knownOptions.end())
+            {
+                throw InvalidConfigParameter("Unknown semantic model option: {}", option.first);
+            }
+        }
+
+        SemanticModelConfig config{
+            .baseUrl = requireFlatStringOption(configs, "BASE_URL"),
+            .model = requireFlatStringOption(configs, "MODEL"),
+            .prompt = requireFlatStringOption(configs, "PROMPT"),
+            .apiKeyEnv = std::nullopt,
+            .outputValues = std::nullopt};
+
+        if (const auto apiKeyEnvLiteral = findFlatConfigOption(configs, "API_KEY_ENV"); apiKeyEnvLiteral.has_value())
+        {
+            if (!std::holds_alternative<std::string>(*apiKeyEnvLiteral))
+            {
+                throw InvalidConfigParameter("Semantic model option 'API_KEY_ENV' must be a string literal");
+            }
+            config.apiKeyEnv = std::get<std::string>(*apiKeyEnvLiteral);
+        }
+
+        if (const auto outputValuesLiteral = findFlatConfigOption(configs, "OUTPUT_VALUES"); outputValuesLiteral.has_value())
+        {
+            if (!std::holds_alternative<std::string>(*outputValuesLiteral))
+            {
+                throw InvalidConfigParameter("Semantic model option 'OUTPUT_VALUES' must be a string literal");
+            }
+            const auto raw = std::get<std::string>(*outputValuesLiteral);
+            std::vector<std::string> values;
+            for (const auto part : std::views::split(raw, std::string_view{","}))
+            {
+                std::string_view trimmed{part.begin(), part.end()};
+                constexpr std::string_view whitespace = " \t\n\r\f\v";
+                const auto first = trimmed.find_first_not_of(whitespace);
+                if (first == std::string_view::npos)
+                {
+                    continue;
+                }
+                trimmed.remove_prefix(first);
+                trimmed.remove_suffix(trimmed.size() - trimmed.find_last_not_of(whitespace) - 1);
+                values.emplace_back(trimmed);
+            }
+            config.outputValues = std::move(values);
+        }
+
+        std::vector<UnqualifiedUnboundField> inputs;
+        for (auto* const inputField : semanticModelDefAST->modelInputField())
+        {
+            inputs.emplace_back(
+                bindIdentifier(inputField->identifier()), bindDataType(inputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+        std::vector<UnqualifiedUnboundField> outputs;
+        for (auto* const outputField : semanticModelDefAST->modelOutputField())
+        {
+            outputs.emplace_back(
+                bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+        auto inputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(inputs))
+                                  .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+        auto outputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(outputs))
+                                   .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+
+        if (!inputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in semantic model input schema {}", inputSchemaExp.error());
+        }
+        if (!outputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in semantic model output schema {}", outputSchemaExp.error());
+        }
+
+        return CreateSemanticModelStatement{
+            .name = fmt::format("{}", modelName),
+            .config = std::move(config),
+            .inputs = std::move(inputSchemaExp).value(),
+            .outputs = std::move(outputSchemaExp).value()};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -315,6 +439,11 @@ public:
         if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
         {
             return bindCreateModelStatement(modelDefAST);
+        }
+        if (auto* const semanticModelDefAST = createAST->createDefinition()->createSemanticModelDefinition();
+            semanticModelDefAST != nullptr)
+        {
+            return bindCreateSemanticModelStatement(semanticModelDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -438,6 +567,13 @@ public:
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
         }
+        if (const auto* semanticModelsSubject = dynamic_cast<AntlrSQLParser::ShowSemanticModelsSubjectContext*>(showAST->showSubject());
+            semanticModelsSubject != nullptr)
+        {
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowSemanticModelsStatement{.format = format};
+        }
         if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
             modelsSubject != nullptr)
         {
@@ -509,6 +645,14 @@ public:
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
 
+    static DropSemanticModelStatement bindDropSemanticModel(const std::pair<Identifier, Literal>& filter)
+    {
+        /// Normalize through Identifier::parse so the name matches the CREATE-side catalog key
+        /// (model names are bound as identifiers and uppercased there).
+        const auto modelName = Identifier::parse(requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEMANTIC MODEL"));
+        return DropSemanticModelStatement{.name = fmt::format("{}", modelName)};
+    }
+
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();
@@ -534,6 +678,10 @@ public:
         if (subject->dropSink() != nullptr)
         {
             return bindDropSink(filter);
+        }
+        if (subject->dropSemanticModel() != nullptr)
+        {
+            return bindDropSemanticModel(filter);
         }
         if (subject->dropModel() != nullptr)
         {

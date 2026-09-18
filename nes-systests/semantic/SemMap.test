@@ -1,0 +1,83 @@
+# name: semantic/SemMap.test
+# description: SEM_MAP over CREATE SEMANTIC MODEL end to end under a real worker. Models point at
+#              mock:// URLs (hermetic LLM seam, plan M4) so grammar, binding, resolution, lowering
+#              and JIT execution all run for real while no socket is touched: echo answers through
+#              the real normalisation cascade, unparseable default-fills (D7b), unreachable throws
+#              InferenceRuntimeFailure (D7a). The last query renames the model output with a
+#              call-site alias, which requires alias and catalog OUTPUT name to stay distinct.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,POSITIVE
+2,negative
+3,POSITIVE(unsure)
+4,clearly-negative
+5,pozitive
+6,zzzz
+
+# freeText has no OUTPUT_VALUES: the answer passes through normalisation unchanged (free text).
+CREATE SEMANTIC MODEL freeText SET ('mock://echo' AS BASE_URL, 'mock-model' AS MODEL, 'Echo the description uppercased' AS PROMPT) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED);
+
+# restricted declares OUTPUT_VALUES: the uppercased echo runs through the normalisation cascade.
+CREATE SEMANTIC MODEL restricted SET ('mock://echo' AS BASE_URL, 'mock-model' AS MODEL, 'Classify the sentiment as POSITIVE or NEGATIVE' AS PROMPT, 'POSITIVE,NEGATIVE' AS OUTPUT_VALUES) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED);
+
+# garbage behaves like an LLM that rambled instead of answering in JSON: D7(b) default-fills.
+CREATE SEMANTIC MODEL garbage SET ('mock://unparseable' AS BASE_URL, 'mock-model' AS MODEL, 'Classify the sentiment' AS PROMPT) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED);
+
+# downEndpoint behaves like a dead endpoint: D7(a) throws, failing the query.
+CREATE SEMANTIC MODEL downEndpoint SET ('mock://unreachable' AS BASE_URL, 'mock-model' AS MODEL, 'Classify the sentiment' AS PROMPT) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED);
+
+CREATE SINK out1(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+
+# Free-text happy path, multi-row: every description comes back uppercased.
+SELECT *, SEM_MAP(freeText, description) AS sentiment FROM reviews INTO out1;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# The normalisation cascade, one rung per row (plan 2.3): exact match, case-insensitive match,
+# parenthetical strip, containment, fuzzy match (ratio 0.9375 over the 0.6 cutoff), and a miss
+# (ratio 0.333) that default-fills to the empty string, which the comparison renders as NULL.
+SELECT *, SEM_MAP(restricted, description) AS sentiment FROM reviews INTO out1;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE
+4,clearly-negative,NEGATIVE
+5,pozitive,POSITIVE
+6,zzzz,NULL
+
+# D7(b): an unparseable LLM response is not a transport failure. The query succeeds and every
+# sentiment arrives default-filled (empty -> NULL).
+SELECT *, SEM_MAP(garbage, description) AS sentiment FROM reviews INTO out1;
+----
+1,POSITIVE,NULL
+2,negative,NULL
+3,POSITIVE(unsure),NULL
+4,clearly-negative,NULL
+5,pozitive,NULL
+6,zzzz,NULL
+
+# D7(a): an unreachable endpoint is a transport failure. The query fails loudly with
+# InferenceRuntimeFailure instead of emitting default-filled rows.
+SELECT *, SEM_MAP(downEndpoint, description) AS sentiment FROM reviews INTO out1;
+----
+ERROR 3006 "unreachable"
+
+# The alias renames the model output: the record field is MOOD while the client is still keyed by
+# the catalog OUTPUT name SENTIMENT (plan M4 Step 1).
+CREATE SINK out2(id UINT64 NOT NULL, description VARSIZED NOT NULL, mood VARSIZED NOT NULL) TYPE File;
+SELECT *, SEM_MAP(freeText, description) AS mood FROM reviews INTO out2;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ

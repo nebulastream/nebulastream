@@ -90,6 +90,11 @@ public:
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
     void enterAnonymousSource(AntlrSQLParser::AnonymousSourceContext* context) override;
+
+private:
+    /// Desugars a `SEM_MAP(model, col, ...)` call found in exitFunctionCall's default case into a
+    /// pending entry consumed by exitPrimaryQuery; see AntlrSQLHelper::PendingSemMap.
+    void handleSemMapCall(AntlrSQLParser::FunctionCallContext* context);
 };
 
 }

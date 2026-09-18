@@ -41,6 +41,7 @@ public:
         SinkStatementHandler sinkStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
         ModelStatementHandler modelStatementHandler,
+        SemanticModelStatementHandler semanticModelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         ErrorBehaviour errorBehaviour,

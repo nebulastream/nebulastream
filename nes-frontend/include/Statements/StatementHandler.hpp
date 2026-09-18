@@ -39,6 +39,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -151,6 +152,26 @@ struct DropModelStatementResult
     std::string name;
 };
 
+struct SemanticModelInfo
+{
+    std::string name;
+    SemanticModelConfig config;
+    Schema<UnqualifiedUnboundField, Ordered> inputSchema;
+    Schema<UnqualifiedUnboundField, Ordered> outputSchema;
+};
+
+using CreateSemanticModelStatementResult = SemanticModelInfo;
+
+struct ShowSemanticModelsStatementResult
+{
+    std::vector<SemanticModelInfo> models;
+};
+
+struct DropSemanticModelStatementResult
+{
+    std::string name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -168,6 +189,9 @@ using StatementResult = std::variant<
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
     DropModelStatementResult,
+    CreateSemanticModelStatementResult,
+    ShowSemanticModelsStatementResult,
+    DropSemanticModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -262,6 +286,17 @@ public:
     std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
     std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
+};
+
+class SemanticModelStatementHandler final : public StatementHandler<SemanticModelStatementHandler>
+{
+    std::shared_ptr<SemanticModelCatalog> semanticModelCatalog;
+
+public:
+    explicit SemanticModelStatementHandler(std::shared_ptr<SemanticModelCatalog> semanticModelCatalog);
+    std::expected<CreateSemanticModelStatementResult, Exception> operator()(const CreateSemanticModelStatement& statement);
+    std::expected<ShowSemanticModelsStatementResult, Exception> operator()(const ShowSemanticModelsStatement& statement) const;
+    std::expected<DropSemanticModelStatementResult, Exception> operator()(const DropSemanticModelStatement& statement);
 };
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>

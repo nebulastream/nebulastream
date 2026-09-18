@@ -48,6 +48,7 @@
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -297,6 +298,74 @@ std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operat
     }
     modelCatalog->removeModel(statement.name);
     return DropModelStatementResult{.name = statement.name};
+}
+
+SemanticModelStatementHandler::SemanticModelStatementHandler(std::shared_ptr<SemanticModelCatalog> semanticModelCatalog)
+    : semanticModelCatalog(std::move(semanticModelCatalog))
+{
+}
+
+namespace
+{
+SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
+{
+    return SemanticModelInfo{
+        .name = model.getName(),
+        .config = model.getConfig(),
+        .inputSchema = model.getSchema().inputs,
+        .outputSchema = model.getSchema().outputs,
+    };
+}
+}
+
+/// Translates a `CREATE SEMANTIC MODEL` SQL statement into a registration in the semantic model catalog.
+///
+/// The order matters:
+///   1. Reject models with already registered names
+///   2. Validate and register the given model in the catalog (no endpoint contact — see plan §M3)
+std::expected<CreateSemanticModelStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const CreateSemanticModelStatement& statement)
+{
+    if (semanticModelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{ModelAlreadyExists(statement.name)};
+    }
+
+    try
+    {
+        semanticModelCatalog->registerModel(
+            statement.name, statement.config, SemanticModelSchema{.inputs = statement.inputs, .outputs = statement.outputs});
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toSemanticModelInfo(semanticModelCatalog->load(statement.name));
+}
+
+std::expected<ShowSemanticModelsStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const ShowSemanticModelsStatement&) const
+{
+    auto registeredModels = semanticModelCatalog->getRegisteredModels();
+    std::vector<SemanticModelInfo> models;
+    models.reserve(registeredModels.size());
+    for (const auto& model : registeredModels)
+    {
+        models.push_back(toSemanticModelInfo(model));
+    }
+    return ShowSemanticModelsStatementResult{.models = std::move(models)};
+}
+
+std::expected<DropSemanticModelStatementResult, Exception>
+SemanticModelStatementHandler::operator()(const DropSemanticModelStatement& statement)
+{
+    if (!semanticModelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{UnknownModelName(statement.name)};
+    }
+    semanticModelCatalog->removeModel(statement.name);
+    return DropSemanticModelStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)

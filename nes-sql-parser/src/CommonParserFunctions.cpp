@@ -98,12 +98,13 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
     ConfigMap boundConfigOptions{};
     for (auto* const configOption : configOptions)
     {
-        if (configOption->name->strictIdentifier().size() != 2)
+        const auto optionKeyChain = configOption->name->identifierChain();
+        if (optionKeyChain == nullptr || optionKeyChain->strictIdentifier().size() != 2)
         {
             throw InvalidConfigParameter("Config key needs to be qualified exactly once, but was {}", configOption->name->getText());
         }
-        const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier().at(0));
-        auto optionName = bindIdentifier(configOption->name->strictIdentifier().at(1));
+        const auto rootIdentifier = bindIdentifier(optionKeyChain->strictIdentifier().at(0));
+        auto optionName = bindIdentifier(optionKeyChain->strictIdentifier().at(1));
         boundConfigOptions.try_emplace(
             rootIdentifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>{});
 

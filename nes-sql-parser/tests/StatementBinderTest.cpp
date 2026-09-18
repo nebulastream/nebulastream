@@ -28,6 +28,8 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SemMapNameLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -68,6 +70,7 @@ public:
     std::shared_ptr<SourceStatementHandler> sourceStatementHandler;
     std::shared_ptr<SinkStatementHandler> sinkStatementHandler;
     std::shared_ptr<ModelStatementHandler> modelStatementHandler;
+    std::shared_ptr<SemanticModelStatementHandler> semanticModelStatementHandler;
 
     /* Will be called before a test is executed. */
     static void SetUpTestSuite()
@@ -88,6 +91,8 @@ public:
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
         sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
         modelStatementHandler = std::make_shared<ModelStatementHandler>(std::make_shared<ModelCatalog>());
+        semanticModelStatementHandler
+            = std::make_shared<SemanticModelStatementHandler>(std::make_shared<SemanticModelCatalog>());
     }
 };
 
@@ -855,6 +860,153 @@ TEST_F(StatementBinderTest, BindCreateModelRejectsBackendClause)
     const auto withBackendClause = binder->parseAndBindSingle(
         "CREATE MODEL backendClause ('" + modelPath + "' BACKEND openvino) INPUT (f1 VARSIZED) OUTPUT (o1 VARSIZED)");
     ASSERT_FALSE(withBackendClause.has_value());
+}
+
+TEST_F(StatementBinderTest, BindCreateSemanticModel)
+{
+    const std::string createSemanticModelStatement
+        = "CREATE SEMANTIC MODEL sentiment SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+          "'Classify the sentiment as POSITIVE or NEGATIVE' AS PROMPT, 'POSITIVE,NEGATIVE' AS OUTPUT_VALUES) "
+          "INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)";
+    const auto statement = binder->parseAndBindSingle(createSemanticModelStatement);
+    ASSERT_TRUE(statement.has_value()) << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateSemanticModelStatement>(*statement));
+
+    const auto& createSemanticModel = std::get<CreateSemanticModelStatement>(*statement);
+    ASSERT_EQ(createSemanticModel.name, "SENTIMENT");
+    ASSERT_EQ(createSemanticModel.config.baseUrl, "http://localhost:11434/v1");
+    ASSERT_EQ(createSemanticModel.config.model, "gemma3:27b");
+    ASSERT_EQ(createSemanticModel.config.prompt, "Classify the sentiment as POSITIVE or NEGATIVE");
+    ASSERT_FALSE(createSemanticModel.config.apiKeyEnv.has_value());
+    ASSERT_TRUE(createSemanticModel.config.outputValues.has_value());
+    ASSERT_EQ(*createSemanticModel.config.outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE"}));
+    ASSERT_EQ(createSemanticModel.inputs.size(), 1);
+    ASSERT_EQ(createSemanticModel.inputs[Identifier::parse("description")]->getDataType().type, DataType::Type::VARSIZED);
+    ASSERT_EQ(createSemanticModel.outputs.size(), 1);
+    ASSERT_EQ(createSemanticModel.outputs[Identifier::parse("sentiment")]->getDataType().type, DataType::Type::VARSIZED);
+
+    /// CREATE SEMANTIC MODEL registers in the catalog without contacting the endpoint.
+    const auto createdResult = semanticModelStatementHandler->apply(createSemanticModel);
+    ASSERT_TRUE(createdResult.has_value());
+    ASSERT_EQ(createdResult.value().name, "SENTIMENT");
+
+    /// Verify SHOW SEMANTIC MODELS returns the registered model with metadata
+    const auto showStatement = binder->parseAndBindSingle("SHOW SEMANTIC MODELS");
+    ASSERT_TRUE(showStatement.has_value()) << showStatement.error();
+    ASSERT_TRUE(std::holds_alternative<ShowSemanticModelsStatement>(*showStatement));
+    const auto showResult = semanticModelStatementHandler->apply(std::get<ShowSemanticModelsStatement>(*showStatement));
+    ASSERT_TRUE(showResult.has_value());
+    ASSERT_EQ(showResult.value().models.size(), 1);
+    ASSERT_EQ(showResult.value().models.at(0).name, "SENTIMENT");
+    ASSERT_EQ(showResult.value().models.at(0).config.model, "gemma3:27b");
+
+    /// Verify duplicate registration fails
+    const auto duplicateResult = semanticModelStatementHandler->apply(createSemanticModel);
+    ASSERT_FALSE(duplicateResult.has_value());
+
+    /// Verify DROP SEMANTIC MODEL removes the model
+    const auto dropStatement = binder->parseAndBindSingle("DROP SEMANTIC MODEL WHERE NAME = 'sentiment'");
+    ASSERT_TRUE(dropStatement.has_value()) << dropStatement.error();
+    ASSERT_TRUE(std::holds_alternative<DropSemanticModelStatement>(*dropStatement));
+    const auto dropResult = semanticModelStatementHandler->apply(std::get<DropSemanticModelStatement>(*dropStatement));
+    ASSERT_TRUE(dropResult.has_value());
+    ASSERT_EQ(dropResult.value().name, "SENTIMENT");
+
+    /// Verify SHOW SEMANTIC MODELS is now empty
+    const auto showAfterDrop = semanticModelStatementHandler->apply(std::get<ShowSemanticModelsStatement>(*showStatement));
+    ASSERT_TRUE(showAfterDrop.has_value());
+    ASSERT_EQ(showAfterDrop.value().models.size(), 0);
+
+    /// Verify registration with an API_KEY_ENV naming an unset environment variable fails
+    const auto apiKeyStatement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL keyed SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+        "'classify' AS PROMPT, 'NES_STATEMENT_BINDER_TEST_UNSET_ENV' AS API_KEY_ENV) "
+        "INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_TRUE(apiKeyStatement.has_value()) << apiKeyStatement.error();
+    const auto apiKeyResult = semanticModelStatementHandler->apply(std::get<CreateSemanticModelStatement>(*apiKeyStatement));
+    ASSERT_FALSE(apiKeyResult.has_value());
+}
+
+/// A space after the comma (e.g. copy-pasted from prose) must not leak into the values:
+/// untrimmed ' NEGATIVE' would never match normalizeAnswer's uppercase-exact rung.
+TEST_F(StatementBinderTest, BindCreateSemanticModelTrimsOutputValues)
+{
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL spacedValues SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+        "'Classify the sentiment' AS PROMPT, ' POSITIVE, NEGATIVE ,, NEUTRAL ' AS OUTPUT_VALUES) "
+        "INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_TRUE(statement.has_value()) << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateSemanticModelStatement>(*statement));
+
+    const auto& createSemanticModel = std::get<CreateSemanticModelStatement>(*statement);
+    ASSERT_TRUE(createSemanticModel.config.outputValues.has_value());
+    ASSERT_EQ(*createSemanticModel.config.outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE", "NEUTRAL"}));
+}
+
+TEST_F(StatementBinderTest, BindCreateSemanticModelRejectsUnknownOption)
+{
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL sentiment SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+        "'classify' AS PROMPT, 'oops' AS BOGUS_OPTION) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_FALSE(statement.has_value());
+}
+
+TEST_F(StatementBinderTest, BindCreateSemanticModelRequiresPromptOption)
+{
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL sentiment SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL) "
+        "INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_FALSE(statement.has_value());
+}
+
+/// The desugared SEM_MAP call becomes a SemMapNameLogicalOperator with the model name, the
+/// call-site input columns (VARSIZED placeholders) and the select-list alias as output alias.
+TEST_F(StatementBinderTest, SemMapInSelectListParsesToSemMapNameOperator)
+{
+    const std::string query = "SELECT *, SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO out";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto semMaps = getOperatorByType<SemMapNameLogicalOperator>(plan);
+    ASSERT_EQ(semMaps.size(), 1);
+    EXPECT_EQ(semMaps.at(0)->getModelName(), "SENTIMENT");
+    EXPECT_EQ(
+        semMaps.at(0)->getCallSiteInputs(),
+        (std::vector<UnqualifiedUnboundField>{
+            UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}}));
+    ASSERT_TRUE(semMaps.at(0)->getOutputAlias().has_value());
+    EXPECT_EQ(*semMaps.at(0)->getOutputAlias(), Identifier::parse("sentiment"));
+}
+
+/// With an asterisk the star already carries the SemMap output (the operator merges model outputs
+/// into the child schema), so the select item must not emit a second projection entry; without an
+/// asterisk the select item is the only carrier.
+TEST_F(StatementBinderTest, SemMapSelectItemOnlyWhenNoAsterisk)
+{
+    const auto projectionsOf = [](const LogicalPlan& plan) { return getOperatorByType<ProjectionLogicalOperator>(plan); };
+
+    const auto starPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(
+        "SELECT *, SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO out");
+    const auto starProjections = projectionsOf(starPlan);
+    ASSERT_EQ(starProjections.size(), 1);
+    const auto starExplain = starProjections.at(0)->explain(ExplainVerbosity::Short, OperatorId{1});
+    EXPECT_NE(starExplain.find("PROJECTION(fields: [*])"), std::string::npos);
+    EXPECT_EQ(starExplain.find("SENTIMENT"), std::string::npos);
+
+    const auto itemPlan
+        = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO out");
+    const auto itemProjections = projectionsOf(itemPlan);
+    ASSERT_EQ(itemProjections.size(), 1);
+    EXPECT_NE(itemProjections.at(0)->explain(ExplainVerbosity::Short, OperatorId{1}).find("PROJECTION(fields: [SENTIMENT])"), std::string::npos);
+}
+
+/// SEM_MAP needs a model name and at least one input column, and an alias in the select list.
+TEST_F(StatementBinderTest, SemMapRejectsMissingInputColumnsAndMissingAlias)
+{
+    EXPECT_THROW(
+        AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT *, SEM_MAP(sentiment) AS sentiment FROM reviews INTO out"),
+        Exception);
+    EXPECT_THROW(
+        AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString("SELECT *, SEM_MAP(sentiment, description) FROM reviews INTO out"),
+        Exception);
 }
 
 TEST_F(StatementBinderTest, ExplainStatement)

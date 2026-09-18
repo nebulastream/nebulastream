@@ -66,7 +66,7 @@ explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createSemanticModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -81,6 +81,12 @@ createWorkerDefinition: WORKER hostaddr=STRING optionsClause?;
 createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
                        INPUT '(' modelInputField (',' modelInputField)* ')'
                        OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
+
+createSemanticModelDefinition
+    : SEMANTIC MODEL modelName=identifier optionsClause
+      INPUT  '(' modelInputField  (',' modelInputField)*  ')'
+      OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
+
 modelInputField: identifier typeDefinition;
 modelOutputField: identifier typeDefinition;
 
@@ -93,8 +99,9 @@ nullableDefinition: NOT NULLTOKEN;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropSemanticModel | dropModel;
 dropModel: MODEL;
+dropSemanticModel: SEMANTIC MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -110,6 +117,7 @@ showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
     | SINKS #showSinksSubject
+    | SEMANTIC MODELS #showSemanticModelsSubject
     | MODELS #showModelsSubject
     | VERSION #showVersionSubject;
 
@@ -205,7 +213,10 @@ multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
-namedConfigExpression: (constant | schema) AS name=identifierChain;
+/// An option key may collide with a reserved token — e.g. `AS MODEL` in CREATE SEMANTIC MODEL —
+/// so the key position additionally accepts those tokens (compare explainStage/explainFormat).
+namedConfigExpression: (constant | schema) AS name=optionKey;
+optionKey: identifierChain | MODEL;
 
 namedExpression
     : expression AS name=identifier
@@ -557,6 +568,7 @@ MODELS: 'MODELS';
 MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
+SEMANTIC: 'SEMANTIC';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

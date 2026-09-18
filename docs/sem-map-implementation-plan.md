@@ -246,6 +246,12 @@ the declared OUTPUT column. **This is the prototype's core risk, retired.**
   two operator types; keep `needs()`/`neededBy()` identical.
   `add_registry_entry(PlanRule SemMapResolutionRule KEY SemMapResolution)`.
 - Thread `SemanticModelCatalog` through the four sites listed in §3.
+- `SemMapResolutionRule` throws the existing `UnknownModelName` (2040) on an unresolved name,
+  reusing the code `InferModelResolutionRule` already throws — the message text carries the model
+  name, so "semantic model" vs. "ML model" is only distinguishable by reading the message.
+  **Revisitable:** if review wants a code that's distinguishable without reading the message, split
+  it into a new `UnknownSemanticModelName` in `nes-common/include/ExceptionDefinitions.inc` plus one
+  throw-site change in `SemMapResolutionRule.cpp` — no other call site depends on the current code.
 
 **Exit:** `SemMapLogicalOperatorTest` covers schema-append, missing INPUT field → `CannotInferSchema`,
 and name collision → `CannotInferSchema`.
@@ -297,6 +303,36 @@ contact the endpoint at CREATE time — it makes DDL fail on a cold Ollama.
 `EXPLAIN SELECT *, SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO out;` renders a
 `SEM_MAP` node with the OUTPUT column in the schema. From here on this is the fast inner loop.
 
+#### 3.3 As-built notes (deviations found while verifying the exit criterion)
+
+- **Option keys can collide with reserved tokens.** `'gemma3:27b' AS MODEL` does not parse: `MODEL`
+  is a lexer token and `namedConfigExpression` binds `name=identifierChain`. Fixed with a new
+  `optionKey: identifierChain | MODEL` rule in `namedConfigExpression` (pattern per
+  `explainStage: identifier | LOGICAL`); `bindConfigOptions` reads the chain through
+  `OptionKeyContext::identifierChain()` and rejects keyword keys on the qualified-key path.
+- **The star already carries the SemMap output.** `SELECT *, SEM_MAP(…) AS x` collided at schema
+  inference (output name twice: star expansion over the child schema, which includes the model
+  output, plus the identity projection item the desugar pushed). Fix in the desugar: when
+  `helpers.top().asterisk` is set, skip pushing the `FieldAccess(alias)` item. Without an asterisk
+  the item is the only carrier, so it is still pushed (alias remains required — the plan's §2
+  "tightened" option). Known edge: `SELECT SEM_MAP(…) AS x, *` still emits both.
+- **`SemMapNameLogicalOperator::withChildren` is functional** (sets the single child, no schema
+  inference): generic rules (e.g. `InferModelResolutionRule`) call `withChildren` on every operator
+  while traversing, and a guarded `PRECONDITION(false)` there aborts the whole process
+  (`PRECONDITION` terminates, it does not throw). Schema-inference accessors stay guarded.
+- **Rule ordering:** `InferModelResolutionRule` now `needs` `SemMapResolutionRule` (identical
+  needs/neededBy otherwise left the tie-break to alphabetical order, which ran the wrong one first).
+- **`DROP SEMANTIC MODEL`'s NAME filter** is normalized through `Identifier::parse` so it matches
+  the CREATE-side catalog key (identifiers uppercased); `DROP MODEL` (the old statement) still binds
+  the raw string — pre-existing, untouched.
+- **E2E binary is `nes-repl-embedded`** (plain `nes-repl` has no worker, so EXPLAIN's placement
+  fails with "non-existing worker"). The embedded flavor registers a default worker at
+  `localhost:<grpc-port>` and defaults DDL hosts to it, so the e2e script omits `SOURCE`/`SINK`.HOST.
+  Verified: exit-criterion query renders `SEM_MAP(model: SENTIMENT, inputFields: [DESCRIPTION])` in
+  the optimized plan; negatives fire as `UnknownModelName` (2040), `CannotInferSchema` (2003) for
+  missing column and nullable/non-VARSIZED input, `InvalidQuerySyntax` (2000) for arity and missing
+  alias.
+
 ### M4 — Hermetic systest
 
 `nes-systests/semantic/SemMap.test` — auto-discovered, no CMake entry needed.
@@ -307,13 +343,85 @@ deterministic canned answers derived from the input text (e.g. echo uppercased, 
 That keeps the seam inside `nes-semantic`, adds no test infrastructure, and exercises the entire
 grammar → lowering → execute path for real.
 
-> **Open — malformed / unreachable LLM at runtime.** Options: (a) throw, failing the query loudly;
-> (b) write `default_value` + confidence 0, matching the Python baseline; (c) one retry then (b).
-> Recommendation for the prototype: **(a) throw on transport failure, (b) default-fill on
-> unparseable content.** That distinguishes "your endpoint is down" from "your model is chatty",
-> which is the distinction you will actually be debugging.
+> **Resolved as D7 — malformed / unreachable LLM at runtime.** Transport failure throws
+> `InferenceRuntimeFailure` (3006) and fails the query loudly; unparseable content default-fills
+> every field (`""` + confidence 0), matching the Python baseline. Both were already implemented in
+> `CurlLlmClient` (`CurlLlmClient.cpp`: curl failure / non-2xx throw, empty-envelope default-fill)
+> and are mirrored behaviour-for-behaviour by `MockLlmClient`, the hermetic client behind the
+> `mock://` scheme. The mock URL vocabulary: `mock://echo` (happy path — input uppercased, then run
+> through the real `normalizeAnswer`, confidence 1.0), `mock://unparseable` (D7b default-fill,
+> confidence 0.0), `mock://unreachable` (D7a throw). Unknown behaviour → `CannotLoadModel`.
+> Dispatch lives in `nes-semantic`'s `createLlmClient`; `mock://` also works in production builds
+> (a warning logs, nothing leaves the process).
 
-**Exit:** `SemMap.test` green with `mock://`, in CI, with no network.
+**Exit:** `SemMap.test` green with `mock://`, in CI, with no network. **Verified 2026-09-18**: the
+whole-suite systest run (`ctest --test-dir build-docker -j4`, 1087/1087) includes `SemMap.test`'s 5
+queries — the file is auto-discovered at runtime by the `systest` binary itself (there is no
+per-`.test`-file ctest entry; it runs inside the fixed `systest_compiler_*` /
+`systest_interpreter_*` / `systest_benchmark_small` ctest entries, which is also why the file being
+present had never actually been exercised until this run). First run surfaced a real crash, not
+anticipated by this plan: the spine-only resolution-rule rewrite (as-built note below) left the
+child `UnionLogicalOperator` without an inferred schema, and `SemMapLogicalOperator`'s constructor
+reads it eagerly — `SemMapResolutionRule.cpp` now calls `.withInferredSchema()` on the child before
+constructing the resolved operator. After the fix, isolated `-t nes-systests/semantic/SemMap.test`
+runs show all 5 queries passing, including the `mock://unreachable` transport-failure case and the
+alias-split case.
+
+#### As-built note — alias/OUTPUT-name split (found while writing the test file)
+
+`SEM_MAP(model, col) AS mood` over a model declaring `OUTPUT (sentiment VARSIZED)` produced a
+schema column `MOOD` but an operator that wrote — and keyed the LLM result map by — `SENTIMENT`:
+`LowerToPhysicalSemMap` built both from the catalog names, ignoring the alias the logical schema
+carries. The two names are genuinely distinct and both are needed — the catalog OUTPUT name is
+what the prompt asks the LLM for and what keys `SemanticMapResult`; the alias is the record field
+to write. `SemMapPhysicalOperator` now takes both (`outputFieldNames` = write targets,
+`modelOutputNames` = result-map keys), and lowering passes `resolvedModelOutputFields()` (made
+public) for the former and the catalog names for the latter. Covered by
+`SemMapPhysicalOperatorTest.AliasDiffersFromModelOutputName` and the last query of `SemMap.test`,
+which fails without the fix.
+
+#### As-built note — resolution-rule traversal is spine-only (found by the whole-suite regression)
+
+Both resolution rules traverse every plan, but `SemMapResolutionRule` runs first (rule ordering
+above). Its old rebuild-everything fallback (`op.withChildren(children)`) eagerly re-inferred
+projection schemas over *every* subtree — including parents of an unresolved
+`InferModelNameLogicalOperator`, whose schema accessors are guarded until its own rule runs.
+`PRECONDITION` terminates rather than throwing, so EXPLAIN tests with `MODEL_INFERENCE` queries
+killed the whole systest subprocess. The mirror ordering has the same hole (InferModel first would
+abort on unresolved `SemMapName`), so with rebuild-everything traversals the two "run first"
+requirements cannot both hold. `SemMapResolutionRule` now threads an `UpContext` bool through
+`PlanVisitor` and rebuilds only the spine above a resolved `SemMapName`; untouched subtrees are
+returned verbatim, so plans without SEM_MAP are a strict no-op and `INFER_MODEL_NAME` subtrees are
+never touched. This matches the existing convention (`LogicalSourceExpansionRule` rebuilds via
+`withChildrenUnsafe`); schema inference stays with `TypeInferenceRule`, which runs after all
+resolution rules. The ordering SemMap < InferModel remains required — `InferModelResolutionRule`
+keeps main's rebuild-everything fallback, and a SEM_MAP plan with unresolved `SemMapName` would
+still abort in its traversal.
+
+A test-file corollary verified while writing `SemMap.test`: the expected blocks preserve the input
+case of the `description` column — inline data is written to CSV verbatim and compared by exact
+string equality, so no stage uppercases it.
+
+**Addendum, 2026-09-18 — leaving the child untouched cuts both ways.** The spine-only rewrite fixed
+the `InferModelName` abort, but "untouched subtrees are returned verbatim" also means the immediate
+child of a *resolved* `SemMapName` no longer gets its schema inferred as a side effect of the
+traversal — the old rebuild-everything fallback used to supply that for free by re-inferring every
+subtree's schema on the way up, including the `UnionLogicalOperator` that
+`LogicalSourceExpansionRule` builds via `withChildrenUnsafe` (which deliberately leaves its own
+schema unset; the fallback's generic `op.withChildren(children)` step, not `TypeInferenceRule`, is
+what used to fill it in before `TypeInferenceRule` ever ran). `SemMapLogicalOperator`'s constructor
+reads the child's output schema eagerly (same pattern as `InferModelLogicalOperator`), so with
+nothing left to infer it that eager read hit `INVARIANT(outputSchema.has_value())` on the
+still-unset `Union` and `std::terminate()`d — the exact same "process death" failure mode this note
+already describes, just from the opposite direction. First surfaced by running `SemMap.test`
+in the whole-suite systest binary (never exercised until 2026-09-18; see the M4 exit-criterion
+note above). Fixed in `SemMapResolutionRule.cpp` by calling `children.at(0).withInferredSchema()`
+before constructing the resolved `SemMapLogicalOperator`, so the immediate child is always
+schema-complete regardless of whether the rest of its subtree was touched. Known residual edge,
+untested: if that child subtree itself contained an *unresolved* `InferModelNameLogicalOperator`
+(a SEM_MAP chained directly above an unresolved MODEL_INFERENCE call), `withInferredSchema()` would
+recurse into it and hit the same guarded-accessor abort this note opened with — not exercised by
+`SemMap.test` or the current systest corpus.
 
 ### M5 — Real endpoint + the Phase 2 motivation number
 
@@ -323,6 +431,60 @@ grammar → lowering → execute path for real.
 - Parity check against the Python operator on the same data + prompt + model: compare the
   `sentiment` column row-for-row, and report disagreement rate. Non-zero is expected (sampling);
   a systematic skew means the prompt port in §2.1 drifted.
+
+#### As-built — real endpoint run, 2026-09-18, on `tims-home-server`
+
+Run on `tims-home-server`'s existing Ollama (16 cores). `gemma3:27b` (the §1 example model) isn't
+pulled there; `llama3.2:1b` was tried first and could not reliably produce the multi-key JSON shape
+the prompt asks for (it echoed the literal example back). **Model actually used: `llama3.1:latest`
+(8B)**, which follows the schema correctly — confirmed with a raw `curl` against
+`/v1/chat/completions` before running anything through NES.
+
+**Data**: 200-row slice of `rotten_tomatoes_movie_reviews.csv`
+(`/Users/tim/Documents/work/data-llm-operator/rotten_tomatoes_movie_reviews.csv`), `reviewText` as
+the input column, commas/quotes/newlines sanitized to fit the systest `File` source's unquoted CSV
+reader (`FIELD_DELIMITER=,`). `scoreSentiment` kept aside as ground truth. Query: the §1 shape
+(`SELECT *, SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO out`), `OUTPUT_VALUES
+'POSITIVE,NEGATIVE'`. Smoke-tested first via `nes-repl-embedded` (plain `nes-repl` has no worker —
+same "non-existing worker" issue as M3) with `--network host` so the container reaches the host's
+Ollama on `localhost:11434` directly.
+
+**Throughput sweep** (`--worker.query_engine.number_of_worker_threads=N`, wall-clock for all 200
+rows, single query, nothing else running on the worker):
+
+| threads | wall-clock | rows/sec |
+|---|---|---|
+| 1  | 99.6s | 2.01 |
+| 4  | 72.9s | 2.74 |
+| 16 | 69.0s | 2.90 |
+
+The ceiling does **not** track `N / latency` past 4 threads — 4→16 threads buys almost nothing
+(2.74 → 2.90 rows/sec). Ollama itself appears to serialize inference on this box (one model, one
+GPU/CPU budget), so the bottleneck moves from "NES worker threads parked on I/O" to "the LLM
+backend can't actually serve N requests concurrently." This sharpens the Phase 2 argument: batching
+requests into fewer, larger calls matters more than just freeing up worker threads, since raw
+request concurrency against a single local Ollama instance is capped well below 16.
+
+**Parity**: a standalone Python script (`m5_scratch/python_baseline.py`, not committed — see
+Step 5) reimplements `_parse_llm_json` and `_normalize_answer` verbatim from
+`llm_operator/operators/llm_operator.py` and posts the identical prompt shape directly to the same
+Ollama endpoint (the full coordinator in `llm_operator/` pulls in host-swap/config-file machinery
+orthogonal to what's being measured here). Compared against the NES `threads=1` run (serial vs.
+serial, to avoid confounding parity with the threads=16 concurrency effect above):
+
+- Disagreement rate: 35/200 = **17.5%**
+- Accuracy vs. `scoreSentiment` ground truth: NES 150/200 (75.0%), Python 158/200 (79.0%)
+- Answer distribution: NES 101 POSITIVE / 91 NEGATIVE / 8 empty (default-filled); Python 112
+  POSITIVE / 87 NEGATIVE / 1 empty — close enough on POSITIVE/NEGATIVE that there's **no systematic
+  skew**; the gap is almost entirely in the empty/default-fill rate.
+- Checked `CurlLlmClient.cpp` (`buildPrompt`, `map()`) line-by-line against the Python prompt
+  assembly and `_parse_llm_json`/`_normalize_answer`: no structural drift — same system/operator/data
+  blocks, same request body shape, same parsing cascade. The elevated NES default-fill rate (4% vs.
+  0.5%) is attributed to ordinary LLM sampling variance between two separate live runs against a
+  temperature>0 model, not a prompt-port bug; re-running either side would likely shift both rates.
+
+Numbers are for `llama3.1:latest`/8B on this specific box on this date — re-run before citing them
+as a general Phase 1 ceiling.
 
 ---
 
