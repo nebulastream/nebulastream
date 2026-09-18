@@ -34,3 +34,11 @@ if (ENABLE_INFERENCE_TESTS)
 endif ()
 
 add_nes_physical_operator_test(StreamJoinProbePhysicalOperatorTest StreamJoinProbePhysicalOperatorTest.cpp)
+
+function(add_nes_semmap_physical_operator_test)
+    add_nes_physical_operator_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-nautilus-test-util)
+endfunction()
+
+add_nes_semmap_physical_operator_test(SemMapPhysicalOperatorTest SemMapPhysicalOperatorTest.cpp)

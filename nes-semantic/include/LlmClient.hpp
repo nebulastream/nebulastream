@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -48,5 +50,10 @@ public:
     /// trip — Phase 1 has no async path (plan §1, §D6).
     virtual SemanticMapResult map(std::string_view inputText) = 0;
 };
+
+/// Creates one `LlmClient` for a resolved semantic model. One call per worker thread — the
+/// concrete clients hold per-thread state (a `CURL*`, an LLM session) and cannot be shared.
+/// Dispatch lives in `LlmClientFactory.hpp`; the lowering rules capture this alias only.
+using LlmClientFactory = std::function<std::unique_ptr<LlmClient>()>;
 
 }
