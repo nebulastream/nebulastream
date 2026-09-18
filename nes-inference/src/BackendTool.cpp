@@ -148,7 +148,11 @@ std::expected<ToolDiscovery, std::string> discoverTool(std::string_view name, bo
     return ToolDiscovery{.name = std::string(name), .path = std::move(*path), .version = std::move(version)};
 }
 
-RunResult runTool(const std::filesystem::path& exe, std::span<const std::string> args, std::span<const std::byte> stdinData)
+RunResult runTool(
+    const std::filesystem::path& exe,
+    std::span<const std::string> args,
+    std::span<const std::byte> stdinData,
+    const std::filesystem::path& workingDirectory)
 {
     RunResult result;
 
@@ -163,7 +167,11 @@ RunResult runTool(const std::filesystem::path& exe, std::span<const std::string>
     try
     {
         subprocess::Popen proc(
-            argv, subprocess::input{subprocess::PIPE}, subprocess::output{subprocess::PIPE}, subprocess::error{subprocess::PIPE});
+            argv,
+            subprocess::input{subprocess::PIPE},
+            subprocess::output{subprocess::PIPE},
+            subprocess::error{subprocess::PIPE},
+            subprocess::cwd{workingDirectory.string()});
 
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char for subprocess input
         const auto* inputPtr = reinterpret_cast<const char*>(stdinData.data());
