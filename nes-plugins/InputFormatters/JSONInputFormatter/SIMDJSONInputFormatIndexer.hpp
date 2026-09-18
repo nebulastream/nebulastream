@@ -37,7 +37,7 @@
 #include <InputFormatIndexer.hpp>
 #include <InputFormatterDescriptor.hpp>
 #include <RawBufferIndex.hpp>
-#include <RawValueParser.hpp>
+#include <ValueDeserializerUtil.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -89,13 +89,32 @@ public:
         const char tupleDelimiter,
         std::vector<std::string> jsonPointersToFields,
         std::vector<Record::RecordFieldIdentifier> fieldNamesOutput,
-        std::vector<DataType> fieldDataTypes)
+        std::vector<DataType> fieldDataTypes,
+        const std::string& deserializerOverrides)
         : tupleDelimiter(tupleDelimiter)
         , jsonPointersToFields(std::move(jsonPointersToFields))
         , fieldNamesOutput(std::move(fieldNamesOutput))
         , fieldDataTypes(std::move(fieldDataTypes))
         , nullValues({})
     {
+        deserializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
+        deserializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
+        deserializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
+        deserializerTypes[DataType::Type::UINT64] = "DefaultUINT64";
+        deserializerTypes[DataType::Type::INT8] = "DefaultINT8";
+        deserializerTypes[DataType::Type::INT16] = "DefaultINT16";
+        deserializerTypes[DataType::Type::INT32] = "DefaultINT32";
+        deserializerTypes[DataType::Type::INT64] = "DefaultINT64";
+        deserializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
+        deserializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+        deserializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+        /// The raw JSON text of a string is not its value, it still carries the JSON escape sequences. Only the JSON deserializers
+        /// decode them, the default ones would hand the escape sequences through to the record verbatim.
+        deserializerTypes[DataType::Type::CHAR] = "JSONCHAR";
+        deserializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+
+        /// Override the datatype defaults for the fields that the user configured a deserializer for
+        fieldDeserializerTypes = parseValueDeserializerOverrides(deserializerOverrides, this->fieldNamesOutput);
     }
 
     /// Delegate constructor that applies preconditions before safely calling the constructor
@@ -120,7 +139,8 @@ public:
             config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
             std::move(jsonPointersToFields),
             std::move(fieldNamesOutput),
-            std::move(fieldDataTypes));
+            std::move(fieldDataTypes),
+            config.getFromConfig(InputFormatterDescriptor::VALUE_DESERIALIZERS));
     }
 
     ~SIMDJSONInputFormatIndexer() override = default;
@@ -130,8 +150,6 @@ public:
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const override { return {&tupleDelimiter, 1}; }
 
     [[nodiscard]] std::string_view getFieldDelimitingBytes() const override { return ""; }
-
-    [[nodiscard]] QuotationType getQuotationType() const override { return QuotationType::DOUBLE_QUOTE; }
 
     [[nodiscard]] const std::vector<std::string>& getNullValues() const override { return nullValues; }
 

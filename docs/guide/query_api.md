@@ -19,20 +19,22 @@ Let's start with key terminology.
 
 ### Core Concepts Glossary
 
-| Term                 | Description                                                                                 | Usage                                                                            |
-|:---------------------|:--------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------|
-| **Stream**           | Unbounded sequence of data records (tuples).                                                | `FROM`, `INTO`                                                                   |
-| **Tuple**            | A single record or event in a stream, composed of one or more fields.                       | Internal                                                                         |
-| **Schema**           | Logical structure of a tuple, defining its fields and their data types.                     | [See Sources](#data-sources-logical-and-physical)                                |
-| **Field**            | Atomic unit of data within a tuple, defined by a name and a data type.                      | Internal                                                                         |
-| **Data Type**        | Specifies how to interpret a field's data and which operations are valid.                   | `INT8`, `UINT8`, `INT16`, `UINT16`, `INT32`, `UINT32`, `INT64`, `UINT64`, `FLOAT32`, `FLOAT64`, `CHAR`, `BOOLEAN`, `VARSIZED` |
-| **Source**           | Connector that **ingests** external data, creating a stream.                                | `FROM`, [See Sources](#data-sources-logical-and-physical)                        |
-| **Input Formatter**  | Decodes raw data from a source into internal tuple format.                                  | [See Input Formatters](#input-formatters)                                        |
-| **Operator**         | Transforms a stream of tuples (e.g., filtering, aggregating).                               | `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, [See Operators](#operators)               |
-| **Function**         | Operation applied to one or more fields (or input functions) within an operator.            | `SUM`, `AVG`, `+`, `-`, `CONCAT`, [See Functions](#functions)                    |
-| **Window**           | Partition an unbounded stream into finite chunks for stateful operations like aggregations. | `WINDOW (TUMBLING\|SLIDING) (timestamp, [duration][unit])`                       |
-| **Output Formatter** | Encodes tuples into a specific format to prepare for a sink.                                | [See Output Formatters](#output-formatters)                                      |
-| **Sink**             | Connector that **exports** query results out of NebulaStream.                               | `INTO`, [See Sinks](#data-sinks-defining-the-output)                             |
+| Term                   | Description                                                                                 | Usage                                                                                                                         |
+|:-----------------------|:--------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------|
+| **Stream**             | Unbounded sequence of data records (tuples).                                                | `FROM`, `INTO`                                                                                                                |
+| **Tuple**              | A single record or event in a stream, composed of one or more fields.                       | Internal                                                                                                                      |
+| **Schema**             | Logical structure of a tuple, defining its fields and their data types.                     | [See Sources](#data-sources-logical-and-physical)                                                                             |
+| **Field**              | Atomic unit of data within a tuple, defined by a name and a data type.                      | Internal                                                                                                                      |
+| **Data Type**          | Specifies how to interpret a field's data and which operations are valid.                   | `INT8`, `UINT8`, `INT16`, `UINT16`, `INT32`, `UINT32`, `INT64`, `UINT64`, `FLOAT32`, `FLOAT64`, `CHAR`, `BOOLEAN`, `VARSIZED` |
+| **Source**             | Connector that **ingests** external data, creating a stream.                                | `FROM`, [See Sources](#data-sources-logical-and-physical)                                                                     |
+| **Input Formatter**    | Decodes raw data from a source into internal tuple format.                                  | [See Input Formatters](#input-formatters)                                                                                     |
+| **Value Deserializer** | Deserializes textual values into their binary representation.                               | [See Value Deserializers](#value-deserializers)                                                                               |
+| **Operator**           | Transforms a stream of tuples (e.g., filtering, aggregating).                               | `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, [See Operators](#operators)                                                            |
+| **Function**           | Operation applied to one or more fields (or input functions) within an operator.            | `SUM`, `AVG`, `+`, `-`, `CONCAT`, [See Functions](#functions)                                                                 |
+| **Window**             | Partition an unbounded stream into finite chunks for stateful operations like aggregations. | `WINDOW (TUMBLING\|SLIDING) (timestamp, [duration][unit])`                                                                    |
+| **Output Formatter**   | Encodes tuples into a specific format to prepare for a sink.                                | [See Output Formatters](#output-formatters)                                                                                   |
+| **Value Serializer**   | Serializes binary values into their textual representation.                                 | [See Value Serializers](#value-serializers)                                                                                   |
+| **Sink**               | Connector that **exports** query results out of NebulaStream.                               | `INTO`, [See Sinks](#data-sinks-defining-the-output)                                                                          |
 
 ---
 
@@ -316,6 +318,30 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 Currently, NebulaStream supports CSV and JSON input formats.
 
 ---
+## Value Deserializers
+Value Deserializers convert textual values that arrive with the incoming records into binary values.
+Thus, they are part of the input-formatting routine and handle the deserialization of the actual values, which were located by the
+input formatter.
+The data type of a field determines its default deserializer type, which the user may override per field. For each deserializer type,
+a separate deserializer for nullable fields is implemented.
+
+The system comes with the `(Nullable)Default<Typename>ValueDeserializer` implementations for every data type, which use `std::from_chars`.
+Value Deserializers can be configured with the flags `quoted` and `hasTrailingSpaces`, which need to be set by the `RawBufferIndex` during the construction of the Value Deserializer.
+
+Further Value Deserializer implementations, for example using third party parser libraries, may be added as plugin.
+Note, that each new deserializer implementations requires a separate "Nullable" variant.
+
+The used Value Deserializer implementation of a specific field can be adjusted with the `VALUE_DESERIALIZERS` parameter of the input formatter by providing a comma-separated list of <Field-Name>:<Deserializer-Key> entries.
+Fields that the user did not configure keep the default deserializer of their data type.
+Configuring the deserializer per field (instead of per data type) allows two fields of the same data type to arrive in different external representations, for example one timestamp in Unix seconds and another one in Unix milliseconds:
+```sql
+CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
+'CSV' as INPUT_FORMATTER."TYPE",
+'event_time:RFC3339ToEpochMilliseconds,ingest_time:UnixMilliseconds' as "INPUT_FORMATTER".VALUE_DESERIALIZERS,
+...
+);
+```
+---
 ## Output Formatters
 The output formatter component converts records with values in our native in-memory format into the desired output format of a sink.
 They are employed by sinks that utilize the `OUTPUT_FORMAT` parameter to configure the format of the result tuples.
@@ -352,6 +378,28 @@ SELECT "status" AS field_value, 'status' AS literal_value FROM stream INTO sink;
 
 Here, `"status"` refers to a field named `status`, whereas `'status'` is the literal string `status`.
 
+---
+## Value Serializers
+Value Serializers convert binary values into their textual representations within textual formats like CSV or JSON.
+Thus, they are part of the output-formatting routine and handle the serialization of the actual values while the output formatter handles the remaining symbols like delimiting characters.
+Unlike the Value Deserializers, Value Serializers do not need to differentiate between nullable and non-nullable fields, as null-values will be detected and written by the output formatter.
+
+The system comes with the `Default<Typename>ValueSerializer` implementations, as well as JSONCHARValueSerializer and JSONVARSIZEDValueSerializer for json-escaped strings and chars.
+The default implementations use `std::to_string` for int - string conversions and `fmt::format`, which utilizes the Dragonbox algorithm, for float - string conversions.
+Value Serializers can currently be configured with the `quoted` flag, which needs to be set by the output formatter that calls the Value Serializer.
+
+Further Value Serializer implementations, for example using third party parser libraries, may be added as plugin.
+
+The used Value Serializer implementation of a specific field can be adjusted with the `VALUE_SERIALIZERS` parameter of the output formatter by providing a comma-separated list of <Field-Name>:<Serializer-Key> entries.
+Fields that the user did not configure keep the default serializer of their data type.
+Configuring the serializer per field (instead of per data type) allows two fields of the same data type to leave the system in different external representations:
+```sql
+CREATE SINK sink_name TYPE FILE SET(
+       'CSV' as "SINK".OUTPUT_FORMAT,
+       'event_time:EpochMillisecondsToRFC3339,ingest_time:UnixMilliseconds' as "OUTPUT_FORMATTER".VALUE_SERIALIZERS,
+       ...
+);
+```
 ---
 ## Data Types
 In NebulaStream, each field is associated with exactly one data type.

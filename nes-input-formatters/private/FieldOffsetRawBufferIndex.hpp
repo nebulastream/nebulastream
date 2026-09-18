@@ -22,6 +22,7 @@
 
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
+#include <Arena.hpp>
 #include <InputFormatter.hpp>
 #include <RawBufferIndex.hpp>
 #include <val_arith.hpp>
@@ -55,7 +56,8 @@ public:
         const nautilus::val<uint64_t>& recordIndex,
         const InputFormatIndexer& indexer,
         nautilus::val<RawBufferIndex*> rawBufferIndex,
-        const TupleBufferRef& bufferRef) const override;
+        const TupleBufferRef& bufferRef,
+        const ArenaRef& arena) const override;
 
     [[nodiscard]] TupleDelimiterOffsets getTupleDelimiterOffsets() const override
     {
