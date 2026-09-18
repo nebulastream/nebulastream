@@ -65,6 +65,8 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
     const nautilus::val<int8_t*>& recordBufferPtr,
     const nautilus::val<uint64_t>& recordIndex,
     const InputFormatIndexer& indexer,
+    const nautilus::val<const InputFormatIndexer*>&,
+    const nautilus::val<const std::vector<std::string>*>& runtimeNullValues,
     nautilus::val<RawBufferIndex*> rawBufferIndex,
     const TupleBufferRef& bufferRef) const
 {
@@ -89,8 +91,7 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
         const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-        parseRawValueIntoRecord(
-            fieldDataType, record, fieldAddress, fieldSize, fieldName, indexer.getNullValues(), indexer.getQuotationType());
+        parseRawValueIntoRecord(fieldDataType, record, fieldAddress, fieldSize, fieldName, runtimeNullValues, indexer.getQuotationType());
     }
     return record;
 }

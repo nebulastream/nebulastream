@@ -92,4 +92,9 @@ std::vector<DataType> OutputFormatterBufferRef::getAllDataTypes() const
     return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
 }
 
+void OutputFormatterBufferRef::registerRuntimeBindings(nautilus::RuntimeBindings& bindings) const
+{
+    formatter->registerRuntimeBindings(bindings);
+}
+
 }

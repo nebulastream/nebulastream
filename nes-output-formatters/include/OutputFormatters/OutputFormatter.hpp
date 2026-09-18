@@ -26,6 +26,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
+#include <nautilus/RuntimeBinding.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -62,6 +63,8 @@ public:
         = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
+
+    virtual void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 

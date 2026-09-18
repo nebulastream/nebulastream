@@ -27,6 +27,7 @@
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
 #include <Util/DumpMode.hpp>
 #include <fmt/format.h>
+#include <CompilationCacheConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -44,6 +45,7 @@ public:
     QueryExecutionConfiguration defaultQueryExecution = {"default_query_execution", "Default configuration for query executions"};
     QueryOptimizerConfiguration defaultQueryOptimization = {"default_query_optimization", "Default configuration for query optimizations"};
     WorkerNetworkConfiguration network = {"network", "Default configuration for network sources and sinks"};
+    CompilationCacheConfiguration compilationCache = {"compilation_cache", "Configuration for persistent compilation caching"};
 
     /// Total memory budget in bytes shared by the global buffer pool. The buffer manager splits it into an unpooled
     /// share (see unpooled_memory_fraction) and a pooled share; the pooled share is divided into operator buffers.
@@ -98,7 +100,8 @@ private:
             &bufferAlignmentInBytes,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,
-            &dumpGraph};
+            &dumpGraph,
+            &compilationCache};
     }
 };
 }

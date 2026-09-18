@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <span>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -27,6 +28,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
 #include <SequenceShredder.hpp>
@@ -95,6 +97,7 @@ public:
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild);
 
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings);
 
     std::ostream& toString(std::ostream& os) const;
 
@@ -103,6 +106,9 @@ private:
     std::vector<Record::RecordFieldIdentifier> projections;
     std::shared_ptr<TupleBufferRef> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder;
+    nautilus::RuntimeBinding<const InputFormatIndexer> indexerBinding;
+    nautilus::RuntimeBinding<SequenceShredder> sequenceShredderBinding;
+    nautilus::RuntimeBinding<const std::vector<std::string>> nullValuesBinding;
 };
 
 }

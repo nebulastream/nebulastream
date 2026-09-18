@@ -56,6 +56,8 @@ public:
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) override;
+
     /// validates and formats a string to string configuration
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -68,6 +70,8 @@ private:
     bool quoteStrings;
     std::string fieldDelimiter;
     std::string tupleDelimiter;
+    nautilus::RuntimeBinding<const char> fieldDelimiterBinding;
+    nautilus::RuntimeBinding<const char> tupleDelimiterBinding;
 };
 }
 

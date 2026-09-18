@@ -19,6 +19,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/BufferRef/OutputFormatterBufferRef.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/Record.hpp>
@@ -139,6 +140,15 @@ void EmitPhysicalOperator::emitRecordBuffer(
 EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
     : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
+}
+
+void EmitPhysicalOperator::setup(ExecutionContext&, CompilationContext& compilationContext) const
+{
+    compilationContext.registerOperatorHandler(operatorHandlerId);
+    if (const auto outputFormatter = std::dynamic_pointer_cast<OutputFormatterBufferRef>(bufferRef))
+    {
+        outputFormatter->registerRuntimeBindings(compilationContext.runtimeBindings);
+    }
 }
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const

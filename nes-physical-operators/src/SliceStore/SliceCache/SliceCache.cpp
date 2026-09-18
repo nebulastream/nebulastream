@@ -13,10 +13,8 @@
 */
 #include <SliceStore/SliceCache/SliceCache.hpp>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <span>
 #include <SliceStore/SliceCache/SliceCacheNone.hpp>
 #include <SliceStore/SliceCache/SliceCacheSecondChance.hpp>
 #include <SliceCacheConfiguration.hpp>
@@ -24,12 +22,11 @@
 namespace NES
 {
 SliceCache::SliceCache(const uint64_t numberOfEntries, const uint64_t sizeOfEntry)
-    : startOfSliceCache(nullptr), numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
+    : numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
 {
 }
 
-SliceCache::SliceCache(const SliceCache& cache)
-    : startOfSliceCache(cache.startOfSliceCache), numberOfEntries(cache.numberOfEntries), sizeOfEntry(cache.sizeOfEntry)
+SliceCache::SliceCache(const SliceCache& cache) : numberOfEntries(cache.numberOfEntries), sizeOfEntry(cache.sizeOfEntry)
 {
 }
 
@@ -51,12 +48,6 @@ uint64_t SliceCache::getCacheMemorySize() const
 void SliceCache::setNumberOfWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     this->numberOfWorkerThreads = numberOfWorkerThreads;
-}
-
-void SliceCache::setStartOfEntries(const std::span<std::byte>& startOfSliceCache)
-{
-    ///NOLINTNEXTLINE (cppcoreguidelines-pro-type-reinterpret-cast)
-    this->startOfSliceCache = reinterpret_cast<SliceCacheEntry*>(startOfSliceCache.data());
 }
 
 }

@@ -36,7 +36,7 @@ class EmitPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
 
     void terminate(ExecutionContext&) const override { /*noop*/ }
 

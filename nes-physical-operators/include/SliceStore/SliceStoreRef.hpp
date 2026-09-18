@@ -26,6 +26,7 @@
 
 namespace NES
 {
+class CompilationContext;
 class WindowBasedOperatorHandler;
 
 /// Abstract interface for accessing operator-specific data structures from a SliceStore.
@@ -50,7 +51,7 @@ public:
     virtual std::unique_ptr<SliceStoreRef> clone() = 0;
 
     /// Initializes the slice store ref (e.g., allocates cache memory). Called during setup().
-    virtual void setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx) = 0;
+    virtual void setupSliceStore(CompilationContext& compilationContext) = 0;
 };
 
 }

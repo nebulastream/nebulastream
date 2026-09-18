@@ -74,7 +74,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(
+        configuration.workerConfiguration.defaultQueryExecution, configuration.workerConfiguration.compilationCache);
 
     if (!configuration.dataAddress.getValue().empty())
     {

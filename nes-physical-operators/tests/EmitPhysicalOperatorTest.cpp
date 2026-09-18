@@ -26,6 +26,8 @@
 #include <ranges>
 #include <set>
 #include <source_location>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <tuple>
 #include <unordered_map>
@@ -38,6 +40,7 @@
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -50,16 +53,22 @@
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
+#include <nautilus/Engine.hpp>
+#include <nautilus/RuntimeBinding.hpp>
+#include <nautilus/val_details.hpp>
 
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <BaseUnitTest.hpp>
+#include <CompilationContext.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Pipeline.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -71,10 +80,19 @@ constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 100000;
 constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+
+nautilus::engine::Options compilerOptions()
+{
+    nautilus::engine::Options options;
+    options.setOption("engine.backend", std::string("mlir"));
+    options.setOption("engine.compilationStrategy", std::string("legacy"));
+    return options;
+}
 }
 
 class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 {
+public:
     struct MockedPipelineContext final : PipelineExecutionContext
     {
         bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy) override
@@ -93,16 +111,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
-        {
-            return *operatorHandlers;
-        }
-
-        void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& opHandlers) override
-        {
-            operatorHandlers = &opHandlers;
-        }
-
         MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
@@ -113,10 +121,8 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     };
 
-public:
     static void SetUpTestSuite()
     {
         Logger::setupLogging("EmitPhysicalOperatorTest.log", LogLevel::LOG_DEBUG);
@@ -141,10 +147,16 @@ public:
     void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
     {
         MockedPipelineContext pec{buffers, bm};
-        pec.setOperatorHandlers(handlers);
+        nautilus::RuntimeBindings bindings;
+        OperatorHandlerBindings handlerBindings;
+        CompilationContext compilationContext{pec, handlers, bindings, handlerBindings};
+        for (const auto& [id, handler] : handlers)
+        {
+            compilationContext.registerOperatorHandler(id);
+        }
         Arena arena(bm);
 
-        ExecutionContext executionContext{&pec, &arena};
+        ExecutionContext executionContext{&pec, &arena, &handlerBindings};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
@@ -254,6 +266,24 @@ public:
     std::random_device rd;
 };
 
+TEST_F(EmitPhysicalOperatorTest, HandlerLookupDoesNotInsertMissingHandler)
+{
+    const auto handler = std::make_shared<EmitOperatorHandler>();
+    handlers.emplace(OperatorHandlerId(4), handler);
+    run(
+        [&](ExecutionContext& ctx, RecordBuffer&)
+        {
+            EXPECT_EQ(
+                nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(ctx.getGlobalOperatorHandler(OperatorHandlerId(4))),
+                handler.get());
+            EXPECT_EQ(
+                nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(ctx.getGlobalOperatorHandler(OperatorHandlerId(99))),
+                nullptr);
+            EXPECT_EQ(handlers.size(), 1);
+        },
+        createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true));
+}
+
 TEST_F(EmitPhysicalOperatorTest, BasicTest)
 {
     auto buffer = createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true);
@@ -270,6 +300,141 @@ TEST_F(EmitPhysicalOperatorTest, BasicTest)
     checkBufferAt(0, SequenceNumber::INITIAL, ChunkNumber::INITIAL, true);
     checkForDups();
     checkLastChunks();
+}
+
+TEST_F(EmitPhysicalOperatorTest, HandlerBindingsFollowSetupOrderInsteadOfGlobalIds)
+{
+    nautilus::engine::NautilusEngine engine(compilerOptions());
+    std::string previousSchema;
+    for (const auto& [firstId, secondId] : {std::pair{91ULL, 4ULL}, std::pair{2ULL, 101ULL}})
+    {
+        handlers.clear();
+        handlers.emplace(OperatorHandlerId(firstId), std::make_shared<EmitOperatorHandler>());
+        handlers.emplace(OperatorHandlerId(secondId), std::make_shared<EmitOperatorHandler>());
+        MockedPipelineContext pec{buffers, bm};
+        Arena arena(bm);
+        OperatorHandlerBindings handlerBindings;
+        ExecutionContext context{&pec, &arena, &handlerBindings};
+        nautilus::RuntimeBindings bindings;
+        auto module = engine.createModule();
+        CompilationContext compilationContext{pec, handlers, bindings, handlerBindings};
+        compilationContext.registerOperatorHandler(OperatorHandlerId(firstId));
+        compilationContext.registerOperatorHandler(OperatorHandlerId(secondId));
+        compilationContext.registerOperatorHandler(OperatorHandlerId(firstId));
+        EXPECT_EQ(handlerBindings.size(), 2);
+        EXPECT_EQ(bindings.entries().size(), 2);
+        EXPECT_EQ(bindings.entries().at("handler/0")->address, handlers.at(OperatorHandlerId(firstId)).get());
+        EXPECT_EQ(bindings.entries().at("handler/1")->address, handlers.at(OperatorHandlerId(secondId)).get());
+        if (!previousSchema.empty())
+        {
+            EXPECT_EQ(bindings.schema(), previousSchema);
+        }
+        previousSchema = bindings.schema();
+        module.registerFunction(
+            "first",
+            std::function<nautilus::val<OperatorHandler*>()>([&] { return context.getGlobalOperatorHandler(OperatorHandlerId(firstId)); }));
+        module.registerFunction(
+            "second",
+            std::function<nautilus::val<OperatorHandler*>()>([&]
+                                                             { return context.getGlobalOperatorHandler(OperatorHandlerId(secondId)); }));
+        module.setRuntimeBindings(bindings);
+        auto compiled = module.compile();
+        EXPECT_EQ(compiled.getFunction<OperatorHandler*()>("first")(), handlers.at(OperatorHandlerId(firstId)).get());
+        EXPECT_EQ(compiled.getFunction<OperatorHandler*()>("second")(), handlers.at(OperatorHandlerId(secondId)).get());
+    }
+}
+
+TEST_F(EmitPhysicalOperatorTest, ExecutionContextBorrowsHandlerBindingsRegisteredAfterConstruction)
+{
+    const auto handler = std::make_shared<EmitOperatorHandler>();
+    handlers.emplace(OperatorHandlerId(4), handler);
+    MockedPipelineContext pec{buffers, bm};
+    Arena arena(bm);
+    OperatorHandlerBindings handlerBindings;
+    ExecutionContext context{&pec, &arena, &handlerBindings};
+    {
+        nautilus::RuntimeBindings bindings;
+        CompilationContext compilationContext{pec, handlers, bindings, handlerBindings};
+        compilationContext.registerOperatorHandler(OperatorHandlerId(4));
+    }
+    EXPECT_EQ(
+        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(context.getGlobalOperatorHandler(OperatorHandlerId(4))),
+        handler.get());
+    EXPECT_EQ(
+        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(context.getGlobalOperatorHandler(OperatorHandlerId(99))),
+        nullptr);
+    EXPECT_EQ(handlerBindings.size(), 1);
+    EXPECT_EQ(handlers.size(), 1);
+}
+
+TEST_F(EmitPhysicalOperatorTest, HandlerRegistrationRejectsMissingOrNullOwners)
+{
+    MockedPipelineContext pec{buffers, bm};
+    nautilus::RuntimeBindings bindings;
+    OperatorHandlerBindings handlerBindings;
+    CompilationContext compilationContext{pec, handlers, bindings, handlerBindings};
+    EXPECT_THROW(compilationContext.registerOperatorHandler(OperatorHandlerId(4)), std::out_of_range);
+    handlers.emplace(OperatorHandlerId(4), nullptr);
+    EXPECT_THROW(compilationContext.registerOperatorHandler(OperatorHandlerId(4)), std::invalid_argument);
+    EXPECT_TRUE(handlerBindings.empty());
+    EXPECT_TRUE(bindings.entries().empty());
+}
+
+TEST_F(EmitPhysicalOperatorTest, UnregisteredHandlerCannotBeLookedUpWhileTracing)
+{
+    MockedPipelineContext pec{buffers, bm};
+    Arena arena(bm);
+    ExecutionContext unboundContext{&pec, &arena};
+    EXPECT_THROW(std::ignore = unboundContext.getGlobalOperatorHandler(OperatorHandlerId(0)), std::logic_error);
+    OperatorHandlerBindings handlerBindings;
+    for (const auto* bindings : std::initializer_list<const OperatorHandlerBindings*>{nullptr, &handlerBindings})
+    {
+        SCOPED_TRACE(bindings != nullptr);
+        nautilus::engine::NautilusEngine engine(compilerOptions());
+        ExecutionContext context{&pec, &arena, bindings};
+        auto module = engine.createModule();
+        module.registerFunction(
+            "unregistered",
+            std::function<nautilus::val<OperatorHandler*>()>([&] { return context.getGlobalOperatorHandler(OperatorHandlerId(0)); }));
+        EXPECT_THROW(module.compile(), std::logic_error);
+    }
+    EXPECT_TRUE(handlerBindings.empty());
+    EXPECT_TRUE(handlers.empty());
+}
+
+TEST_F(EmitPhysicalOperatorTest, PipelineUsesFreshBoundEmitHandlerOnRestart)
+{
+    for (const bool compilation : {true, false})
+    {
+        SCOPED_TRACE(compilation);
+        reset();
+        const auto schema
+            = Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{Identifier::parse("A_FIELD"), DataType::Type::UINT32}};
+        auto bufferRef = LowerSchemaProvider::lowerSchema(POOLED_BUFFER_SIZE, schema, MemoryLayoutType::ROW_LAYOUT);
+        auto emit = createUUT();
+        auto root = PhysicalOperator(ScanPhysicalOperator(bufferRef, bufferRef->getAllFieldNames())).withChild(emit);
+        auto pipeline = std::make_shared<Pipeline>(root);
+        auto options = compilerOptions();
+        options.setOption("engine.Compilation", compilation);
+        const std::weak_ptr<OperatorHandler> handler = handlers.at(OperatorHandlerId(0));
+        {
+            CompiledExecutablePipelineStage stage(pipeline, handlers, options);
+            handlers.clear();
+            MockedPipelineContext pec{buffers, bm};
+            for (size_t restart = 0; restart < 2; ++restart)
+            {
+                SCOPED_TRACE(restart);
+                stage.start(pec);
+                EXPECT_FALSE(handler.expired());
+                auto buffer = createBuffer(SequenceNumber::INITIAL + restart, ChunkNumber::INITIAL, true);
+                stage.execute(buffer, pec);
+                stage.stop(pec);
+                checkNumberOfBuffers(restart + 1);
+                checkBufferAt(restart, SequenceNumber::INITIAL + restart, ChunkNumber::INITIAL, true);
+            }
+        }
+        EXPECT_TRUE(handler.expired());
+    }
 }
 
 TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)

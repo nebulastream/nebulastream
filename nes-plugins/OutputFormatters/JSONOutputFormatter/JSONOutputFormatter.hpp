@@ -51,6 +51,8 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) override;
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     /// Registry entry (see OutputFormatterRegistry.hpp).
@@ -62,6 +64,7 @@ public:
 
 private:
     std::vector<std::string> canonicalFieldNames;
+    std::vector<nautilus::RuntimeBinding<const char>> fieldNameBindings;
 };
 
 }

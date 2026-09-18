@@ -24,6 +24,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
 
@@ -69,5 +70,7 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+
+    void registerRuntimeBindings(nautilus::RuntimeBindings& bindings) const;
 };
 }

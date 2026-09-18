@@ -13,11 +13,9 @@
 */
 
 #pragma once
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <span>
 #include <type_traits>
 
 #include <Identifiers/Identifiers.hpp>
@@ -67,6 +65,7 @@ public:
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual NautilusBuffer getDataStructureRef(
+        const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry,
@@ -78,10 +77,7 @@ public:
     /// Sets the number of worker threads so that per-thread cache memory can be allocated.
     void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
-    void setStartOfEntries(const std::span<std::byte>& startOfSliceCache);
-
 protected:
-    SliceCacheEntry* startOfSliceCache;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
     uint64_t numberOfWorkerThreads = 1;

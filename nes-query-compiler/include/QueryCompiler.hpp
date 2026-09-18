@@ -18,12 +18,12 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
+#include <CompilationCacheConfiguration.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {
-
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
@@ -39,12 +39,17 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
+    explicit QueryCompiler(
+        QueryExecutionConfiguration defaultQueryExecution, CompilationCacheConfiguration compilationCacheConfiguration = {})
+        : defaultQueryExecution(std::move(defaultQueryExecution)), compilationCacheConfiguration(std::move(compilationCacheConfiguration))
+    {
+    }
 
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 
 private:
     QueryExecutionConfiguration defaultQueryExecution;
+    CompilationCacheConfiguration compilationCacheConfiguration;
 };
 
 }

@@ -27,6 +27,7 @@
 #include <DataTypes/VariableSizedData.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/Record.hpp>
+#include <fmt/format.h>
 #include <nautilus/function.hpp>
 #include <nautilus/std/cstring.h>
 #include <InferenceRuntime.hpp>
@@ -35,6 +36,7 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <Model.hpp>
 #include <PhysicalOperator.hpp>
@@ -79,11 +81,6 @@ namespace
 
 using detail::ThreadLocalRuntimeWrapper;
 
-void setupSessions(ThreadLocalRuntimeWrapper* twl, PipelineExecutionContext* pec)
-{
-    twl->setup(pec->getNumberOfWorkerThreads());
-}
-
 int8_t* getInputBuffer(ThreadLocalRuntimeWrapper* twl, WorkerThreadId thread)
 {
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) std::byte* to int8_t* for nautilus pointer arithmetic
@@ -121,12 +118,14 @@ InferModelPhysicalOperator::InferModelPhysicalOperator(
 void InferModelPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     setupChild(executionCtx, compilationContext);
-    nautilus::invoke(setupSessions, nautilus::val<ThreadLocalRuntimeWrapper*>(threadLocal.get()), executionCtx.pipelineContext);
+    runtimeBinding = compilationContext.runtimeBindings.bind(
+        fmt::format("inference/{}/runtime", compilationContext.runtimeBindingCounter++), threadLocal.get());
+    threadLocal->setup(compilationContext.pipelineExecutionContext.getNumberOfWorkerThreads());
 }
 
 void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto runtime = nautilus::val<ThreadLocalRuntimeWrapper*>(threadLocal.get());
+    const auto runtime = runtimeBinding.get();
     const auto inputBuffer = nautilus::invoke(getInputBuffer, runtime, ctx.workerThreadId);
 
     if (varsizedInput)

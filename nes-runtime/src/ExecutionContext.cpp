@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <DataTypes/DataTypesUtil.hpp>
@@ -30,7 +31,9 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <nautilus/function.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -57,7 +60,10 @@ PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
 }
 }
 
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
+ExecutionContext::ExecutionContext(
+    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+    const nautilus::val<Arena*>& arena,
+    const OperatorHandlerBindings* operatorHandlerBindings)
     : pipelineContext(pipelineContext)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineId(nautilus::invoke(getPipelineIdProxy, pipelineContext))
@@ -68,6 +74,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , operatorHandlerBindings(operatorHandlerBindings)
 {
 }
 
@@ -128,16 +135,23 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
     localStateMap.emplace(operatorId, std::move(state));
 }
 
-static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
-{
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    return handlers[index].get();
-}
-
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
 {
-    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex.getRawValue());
-    return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
+    if (operatorHandlerBindings == nullptr)
+    {
+        throw std::logic_error("Operator handler bindings are unavailable");
+    }
+    if (const auto binding = operatorHandlerBindings->find(handlerIndex); binding != operatorHandlerBindings->end())
+    {
+        return binding->second.get();
+    }
+#ifdef ENABLE_TRACING
+    if (nautilus::tracing::inTracer())
+    {
+        throw std::logic_error("Operator handlers must be registered during setup before tracing");
+    }
+#endif
+    return {nullptr};
 }
 
 }

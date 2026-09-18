@@ -51,17 +51,14 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
         return;
     }
 
-    /// call open on all child operators
     openChild(executionCtx, recordBuffer);
 
-    /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
@@ -74,15 +71,22 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         rawScan(executionCtx, recordBuffer);
         return;
     }
-    /// call open on all child operators
     openChild(executionCtx, recordBuffer);
-    /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = uint64_t{0}; i < numberOfRecords; i = i + uint64_t{1})
     {
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+}
+
+void ScanPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    if (const auto inputFormatter = std::dynamic_pointer_cast<InputFormatter>(bufferRef))
+    {
+        inputFormatter->registerRuntimeBindings(compilationContext.runtimeBindings);
+    }
+    setupChild(executionCtx, compilationContext);
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

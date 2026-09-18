@@ -19,10 +19,8 @@
 #include <functional>
 #include <memory>
 #include <random>
-#include <span>
 #include <sstream>
 #include <tuple>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -40,6 +38,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <BaseUnitTest.hpp>
 #include <Engine.hpp>
 #include <function.hpp>
@@ -51,7 +50,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -164,18 +162,6 @@ public:
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
-
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
-        {
-            INVARIANT(false, "This function should not be called");
-            std::unreachable();
-        }
-
-        void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) override
-        {
-            INVARIANT(false, "This function should not be called");
-            std::unreachable();
-        }
 
         explicit MockedPipelineContext(std::shared_ptr<AbstractBufferProvider> bufferManager) : bufferManager(std::move(bufferManager)) { }
 
@@ -306,40 +292,50 @@ TEST_P(SliceCacheNoneTest, testSliceCacheNone)
 
     /// Allocate memory for the single dummy entry used by SliceCacheNone
     std::vector<std::byte> noneCacheMemory{sliceCache->getCacheMemorySize(), std::byte{0}};
-    const std::span<std::byte> entries{noneCacheMemory};
-    sliceCache->setStartOfEntries(entries);
 
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
+    nautilus::RuntimeBindings bindings;
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    const auto cacheBinding = bindings.bind("slice-cache", reinterpret_cast<SliceCacheEntry*>(noneCacheMemory.data()));
+    const auto bufferProviderBinding = bindings.bind("buffer-provider", pec->bufferManager.get());
+    auto module = nautilusEngine->createModule();
+    module.setRuntimeBindings(bindings);
     using CompiledCacheFunction = std::function<nautilus::val<SliceCacheEntry::DataStructure>(
         nautilus::val<uint64_t>, nautilus::val<SliceCacheEntry::DataStructure>, nautilus::val<bool*>)>;
-    auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<uint64_t>& timestampRaw,
-            const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
-            const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
-        {
-            const nautilus::val<Timestamp> timestamp{timestampRaw};
-            auto resultBuf = sliceCache->getDataStructureRef(
-                timestamp,
-                nautilus::val<WorkerThreadId>{0},
-                [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
-                {
-                    /// Use nautilus::invoke with a proxy function to avoid copying the val
-                    /// (which would trigger traceCopy on a null-state val, creating a free variable).
-                    nautilus::invoke(
-                        +[](bool* callbackFlag, SliceCacheEntry* entry, SliceCacheEntry::DataStructure dataStructure)
-                        {
-                            *callbackFlag = true;
-                            entry->dataStructure = dataStructure;
-                        },
-                        callbackCalledPtr,
-                        entryToReplace,
-                        newDataStructurePtr);
-                },
-                pec->bufferManager.get());
-            return resultBuf.asArg();
-        }));
+    module.registerFunction(
+        "lookup",
+        CompiledCacheFunction(
+            [&](const nautilus::val<uint64_t>& timestampRaw,
+                const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
+                const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
+            {
+                const nautilus::val<Timestamp> timestamp{timestampRaw};
+                auto resultBuf = sliceCache->getDataStructureRef(
+                    cacheBinding.get(),
+                    timestamp,
+                    nautilus::val<WorkerThreadId>{0},
+                    [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
+                    {
+                        /// Use nautilus::invoke with a proxy function to avoid copying the val
+                        /// (which would trigger traceCopy on a null-state val, creating a free variable).
+                        nautilus::invoke(
+                            +[](bool* callbackFlag, SliceCacheEntry* entry, SliceCacheEntry::DataStructure dataStructure)
+                            {
+                                *callbackFlag = true;
+                                entry->dataStructure = dataStructure;
+                            },
+                            callbackCalledPtr,
+                            entryToReplace,
+                            newDataStructurePtr);
+                    },
+                    bufferProviderBinding.get());
+                return resultBuf.asArg();
+            }));
+    auto compiled = module.compile();
+    auto sliceCacheCallableFunction
+        = compiled.getFunction<SliceCacheEntry::DataStructure(uint64_t, SliceCacheEntry::DataStructure, bool*)>("lookup");
 
     for (const auto& op : operations)
     {
@@ -362,52 +358,62 @@ TEST_P(SliceCacheSecondChanceTest, testSliceCacheSecondChance)
     /// Zero-initialized entries have sliceStart == sliceEnd == 0, so no timestamp will match them.
     /// getCacheMemorySize() includes extra space for the replacement index stored after the entries.
     std::vector<std::byte> noneCacheMemory{sliceCache->getCacheMemorySize(), std::byte{0}};
-    const std::span<std::byte> entries{noneCacheMemory};
-    sliceCache->setStartOfEntries(entries);
 
     bool callbackCalled = false;
+    nautilus::RuntimeBindings bindings;
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    const auto cacheBinding = bindings.bind("slice-cache", reinterpret_cast<SliceCacheEntry*>(noneCacheMemory.data()));
+    const auto bufferProviderBinding = bindings.bind("buffer-provider", pec->bufferManager.get());
+    auto module = nautilusEngine->createModule();
+    module.setRuntimeBindings(bindings);
     using CompiledCacheFunction = std::function<nautilus::val<SliceCacheEntry::DataStructure>(
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<SliceCacheEntry::DataStructure>,
         nautilus::val<bool*>)>;
-    auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<Timestamp::Underlying>& timestampRaw,
-            const nautilus::val<Timestamp::Underlying>& sliceStartRaw,
-            const nautilus::val<Timestamp::Underlying>& sliceEndRaw,
-            const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
-            const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
-        {
-            const nautilus::val<Timestamp> timestamp{timestampRaw};
-            auto resultBuf = sliceCache->getDataStructureRef(
-                timestamp,
-                nautilus::val<WorkerThreadId>{0},
-                [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
-                {
-                    /// Use nautilus::invoke with a proxy function to avoid copying the val
-                    /// (which would trigger traceCopy on a null-state val, creating a free variable).
-                    nautilus::invoke(
-                        +[](bool* callbackFlag,
-                            SliceCacheEntry* entry,
-                            Timestamp::Underlying sliceStart,
-                            Timestamp::Underlying sliceEnd,
-                            SliceCacheEntry::DataStructure dataStructure)
-                        {
-                            *callbackFlag = true;
-                            entry->sliceStart = sliceStart;
-                            entry->sliceEnd = sliceEnd;
-                            entry->dataStructure = dataStructure;
-                        },
-                        callbackCalledPtr,
-                        entryToReplace,
-                        sliceStartRaw,
-                        sliceEndRaw,
-                        newDataStructurePtr);
-                },
-                pec->bufferManager.get());
-            return resultBuf.asArg();
-        }));
+    module.registerFunction(
+        "lookup",
+        CompiledCacheFunction(
+            [&](const nautilus::val<Timestamp::Underlying>& timestampRaw,
+                const nautilus::val<Timestamp::Underlying>& sliceStartRaw,
+                const nautilus::val<Timestamp::Underlying>& sliceEndRaw,
+                const nautilus::val<SliceCacheEntry::DataStructure>& newDataStructurePtr,
+                const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<SliceCacheEntry::DataStructure>
+            {
+                const nautilus::val<Timestamp> timestamp{timestampRaw};
+                auto resultBuf = sliceCache->getDataStructureRef(
+                    cacheBinding.get(),
+                    timestamp,
+                    nautilus::val<WorkerThreadId>{0},
+                    [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
+                    {
+                        /// Use nautilus::invoke with a proxy function to avoid copying the val
+                        /// (which would trigger traceCopy on a null-state val, creating a free variable).
+                        nautilus::invoke(
+                            +[](bool* callbackFlag,
+                                SliceCacheEntry* entry,
+                                Timestamp::Underlying sliceStart,
+                                Timestamp::Underlying sliceEnd,
+                                SliceCacheEntry::DataStructure dataStructure)
+                            {
+                                *callbackFlag = true;
+                                entry->sliceStart = sliceStart;
+                                entry->sliceEnd = sliceEnd;
+                                entry->dataStructure = dataStructure;
+                            },
+                            callbackCalledPtr,
+                            entryToReplace,
+                            sliceStartRaw,
+                            sliceEndRaw,
+                            newDataStructurePtr);
+                    },
+                    bufferProviderBinding.get());
+                return resultBuf.asArg();
+            }));
+    auto compiled = module.compile();
+    auto sliceCacheCallableFunction = compiled.getFunction<SliceCacheEntry::DataStructure(
+        Timestamp::Underlying, Timestamp::Underlying, Timestamp::Underlying, SliceCacheEntry::DataStructure, bool*)>("lookup");
     /// Create a reference cache to independently verify the Nautilus implementation
     SecondChanceCache referenceCache(numberOfEntries);
 

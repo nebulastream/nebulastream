@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -25,14 +26,13 @@
 namespace NES
 {
 
-/// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
-/// Furthermore, it supports projection push down to eliminate unneeded reads
 class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

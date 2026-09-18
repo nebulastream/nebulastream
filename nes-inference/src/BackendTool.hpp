@@ -73,7 +73,11 @@ struct RunResult
 /// Execute `exe` with `args`. If `stdinData` is non-empty it is written to the
 /// child's stdin and stdin is then closed. stdout is captured as bytes, stderr
 /// as text.
-RunResult runTool(const std::filesystem::path& exe, std::span<const std::string> args, std::span<const std::byte> stdinData);
+RunResult runTool(
+    const std::filesystem::path& exe,
+    std::span<const std::string> args,
+    std::span<const std::byte> stdinData,
+    const std::filesystem::path& workingDirectory = {});
 
 }
 

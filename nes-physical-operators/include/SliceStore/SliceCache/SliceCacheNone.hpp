@@ -36,6 +36,7 @@ public:
     ~SliceCacheNone() override = default;
     [[nodiscard]] std::unique_ptr<SliceCache> clone() const override;
     NautilusBuffer getDataStructureRef(
+        const nautilus::val<SliceCacheEntry*>& runtimeCacheStart,
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry,

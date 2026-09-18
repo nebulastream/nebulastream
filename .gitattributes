@@ -13,3 +13,5 @@
 *.pdiparams binary
 # TensorFlow SavedModel checkpoint shards have no usable suffix
 nes-inference/tests/testdata/tiny_savedmodel/variables/* binary
+# Unified-diff blank context lines intentionally contain one space.
+vcpkg/vcpkg-registry/ports/nautilus/0005-object-code-cache.patch -whitespace

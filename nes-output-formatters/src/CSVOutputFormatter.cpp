@@ -132,6 +132,13 @@ void writeValue(
         }
     }
 }
+
+uint64_t writeNullValueToBuffer(
+    const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, int8_t* bufferStartingAddress)
+{
+    return writeValueToBuffer("NULL", remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
 }
 
 CSVOutputFormatter::CSVOutputFormatter(
@@ -152,41 +159,42 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
+    const bool isLastField = fieldIndex + 1 == fieldNames.size();
+    const auto& binding = isLastField ? tupleDelimiterBinding : fieldDelimiterBinding;
+    const auto delimiter
+        = binding.isBound() ? binding.get() : nautilus::val<const char*>((isLastField ? tupleDelimiter : fieldDelimiter).c_str());
+    const nautilus::val<bool> quoteStringsRef{quoteStrings};
     nautilus::val<uint64_t> written{0};
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
-    /// Handle NULL values and write value
     if (value.isNullable())
     {
         if (value.isNull())
         {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeValueToBuffer,
-                nautilus::val<const char*>{"NULL"},
-                currentRemainingSize,
-                recordBuffer.getReference(),
-                bufferProvider,
-                fieldPointer + written);
+                writeNullValueToBuffer, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
         }
         else
         {
-            writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+            writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStringsRef, written, currentRemainingSize);
         }
     }
     else
     {
-        writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+        writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStringsRef, written, currentRemainingSize);
     }
 
-    /// Write either the field delimiter or the tuple delimiter, depending on the field index
-    const nautilus::val<const char*> delimiter{(fieldIndex + 1 == fieldNames.size() ? tupleDelimiter : fieldDelimiter).c_str()};
-
-    /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
     written += nautilus::invoke(
         writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
     return written;
+}
+
+void CSVOutputFormatter::registerRuntimeBindings(nautilus::RuntimeBindings& bindings)
+{
+    fieldDelimiterBinding = bindings.bind("output/field-delimiter", fieldDelimiter.c_str());
+    tupleDelimiterBinding = bindings.bind("output/tuple-delimiter", tupleDelimiter.c_str());
 }
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)

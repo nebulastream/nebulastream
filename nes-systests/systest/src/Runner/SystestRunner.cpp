@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -61,6 +62,7 @@
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
+#include <rfl/json/write.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -393,6 +395,36 @@ std::vector<RunningQuery> runQueries(
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, const std::string_view queryPerformanceMessage)
 {
+    INVARIANT(runningQuery.verdict.has_value(), "a query is reported only after it was checked");
+
+    struct QueryCoverage
+    {
+        std::string query;
+        std::map<std::string, std::string> configuration;
+        bool passed;
+        std::string kind;
+        bool differential;
+    };
+
+    const auto& query = runningQuery.systestQuery;
+    const char* kind = "execute";
+    if (query.actualExplainOutput.has_value())
+    {
+        kind = "explain";
+    }
+    else if (std::holds_alternative<ExpectedError>(query.expectation))
+    {
+        kind = "expected_error";
+    }
+    NES_DEBUG(
+        "Systest query result: {}",
+        rfl::json::write(QueryCoverage{
+            .query = fmt::format("{}:{}", query.testName, query.queryIdInFile.toString()),
+            .configuration = {query.configurationOverride.begin(), query.configurationOverride.end()},
+            .passed = runningQuery.verdict->has_value(),
+            .kind = kind,
+            .differential = query.differentialQueryPlan.has_value()}));
+
     const auto queryCounterAsString = std::to_string(progressTracker.getQueryCounter());
     const auto progressPercent = std::clamp(progressTracker.getProgressInPercent(), 0.0, 100.0);
     const auto caseId = fmt::format(
@@ -412,7 +444,6 @@ void printQueryResultToStdOut(
     const auto maxPadding = 1000;
     const auto finalPadding = std::min<size_t>(paddingDots, maxPadding);
     std::cout << std::string(finalPadding, '.');
-    INVARIANT(runningQuery.verdict.has_value(), "a query is reported only after it was checked");
     if (runningQuery.verdict->has_value())
     {
         fmt::print(fmt::emphasis::bold | fg(fmt::color::green), "PASSED {}\n", queryPerformanceMessage);

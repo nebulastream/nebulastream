@@ -15,12 +15,14 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include <Interface/Record.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <CompilationContext.hpp>
@@ -62,6 +64,7 @@ private:
     size_t outputSize;
     bool varsizedInput;
     bool varsizedOutput;
+    mutable nautilus::RuntimeBinding<detail::ThreadLocalRuntimeWrapper> runtimeBinding;
     std::optional<PhysicalOperator> child;
 };
 

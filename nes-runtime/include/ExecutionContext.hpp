@@ -36,6 +36,7 @@
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -44,7 +45,6 @@
 
 namespace NES
 {
-
 /// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
 /// allowing the operator to allocate two different types of memory, in regard to their lifetime.
 /// 1. Memory for a pipeline invocation: Arena
@@ -84,7 +84,10 @@ enum class OpenReturnState : uint8_t
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
+    explicit ExecutionContext(
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const nautilus::val<Arena*>& arena,
+        const OperatorHandlerBindings* operatorHandlerBindings = nullptr);
 
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
@@ -117,6 +120,7 @@ struct ExecutionContext final
     nautilus::val<bool> lastChunk;
 
 private:
+    const OperatorHandlerBindings* const operatorHandlerBindings;
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     OpenReturnState openReturnState{OpenReturnState::CONTINUE};
 };

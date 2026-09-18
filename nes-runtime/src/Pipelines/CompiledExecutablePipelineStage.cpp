@@ -14,6 +14,7 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <ostream>
@@ -40,7 +41,6 @@
 
 namespace NES
 {
-
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
@@ -53,7 +53,6 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
 {
     INVARIANT(compiledPipelineFunction.has_value(), "execute() was called before start() compiled the pipeline");
     /// we call the compiled pipeline function with an input buffer and the execution context
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     (*compiledPipelineFunction)(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
@@ -62,9 +61,6 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
 {
     /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
     /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
-    /// Capturing the pipeline shared_ptr by value instead makes the compiled module co-own the pipeline, and because
-    /// cached slices keep that module alive through their cleanup handle, it retains the pipeline (and its slice
-    /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
@@ -73,7 +69,7 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
                                nautilus::val<const TupleBuffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
     {
-        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef, &operatorHandlerBindings);
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
@@ -99,9 +95,8 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena), &operatorHandlerBindings);
     pipeline->getRootOperator().terminate(ctx);
 }
 
@@ -112,25 +107,24 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    operatorHandlerBindings.clear();
+    nautilus::RuntimeBindings runtimeBindings;
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    /// Each pipeline compiles into exactly one module: operators register named helper functions during setup(),
-    /// the main pipeline function is added to the same module, and a single compile() call traces and compiles
-    /// all of them together. Only afterwards do the handles handed out during setup() become invocable.
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena), &operatorHandlerBindings);
     CPPTRACE_TRY
     {
         auto module = engine.createModule();
-        CompilationContext compilationCtx{module};
+        module.setOption("nes.numberOfWorkerThreads", std::to_string(pipelineExecutionContext.getNumberOfWorkerThreads()));
+        CompilationContext compilationCtx{pipelineExecutionContext, operatorHandlers, runtimeBindings, operatorHandlerBindings};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
-        compiledModule = module.compile();
-        compilationCtx.resolveAfterCompilation(*compiledModule);
-        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        module.setRuntimeBindings(runtimeBindings);
+        auto compiledModule = module.compile();
+        compiledPipelineFunction = compiledModule.getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
-        if (const auto statistics = compiledModule->getStatistics())
+        if (const auto statistics = compiledModule.getStatistics())
         {
             NES_DEBUG(
                 "Nautilus compilation statistics for pipeline {}:\n{}",
@@ -143,5 +137,4 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
     }
 }
-
 }

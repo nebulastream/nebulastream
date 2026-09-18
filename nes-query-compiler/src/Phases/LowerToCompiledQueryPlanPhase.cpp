@@ -14,15 +14,13 @@
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
-#include <algorithm>
+#include <CompilationCache.hpp>
+
 #include <memory>
-#include <optional>
 #include <ranges>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -135,6 +133,8 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             break;
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+
+    compilationCache.configureEngineOptionsForPipeline(options, *pipeline);
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 

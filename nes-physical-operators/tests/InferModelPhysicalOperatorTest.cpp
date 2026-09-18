@@ -94,22 +94,11 @@ protected:
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
-        {
-            return *operatorHandlers;
-        }
-
-        void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& opHandlers) override
-        {
-            operatorHandlers = &opHandlers;
-        }
-
         void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the fixture
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
         WorkerThreadId threadId = INITIAL<WorkerThreadId>;
         uint64_t numWorkerThreads = 1;
 

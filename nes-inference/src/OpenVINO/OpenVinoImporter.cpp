@@ -244,9 +244,11 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
         }
     };
 
-    const auto outputXmlPath = tempDir / fmt::format("{}.xml", outputStemFor(modelPath));
-    const std::vector<std::string> args{modelPath.string(), "--compress_to_fp16=False", "--output_model", outputXmlPath.string()};
-    auto result = detail::runTool(discovery.path, args, {});
+    const auto outputFileName = fmt::format("{}.xml", outputStemFor(modelPath));
+    const auto outputXmlPath = tempDir / outputFileName;
+    const std::vector<std::string> args{
+        std::filesystem::absolute(modelPath).string(), "--compress_to_fp16=False", "--output_model", outputFileName};
+    auto result = detail::runTool(std::filesystem::absolute(discovery.path), args, {}, tempDir);
     if (!result.errorMessage.empty())
     {
         NES_ERROR("ovc launch error: {}", result.errorMessage);

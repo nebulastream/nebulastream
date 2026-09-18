@@ -14,10 +14,8 @@
 
 #pragma once
 
-#include <cstddef>
 #include <functional>
 #include <memory>
-#include <span>
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
@@ -30,6 +28,7 @@
 #include <SliceStore/SliceCache/SliceCache.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/RuntimeBinding.hpp>
 #include <SliceCacheConfiguration.hpp>
 #include <val_concepts.hpp>
 
@@ -66,21 +65,17 @@ public:
         const nautilus::val<OperatorHandler*>& operatorHandler,
         nautilus::val<AbstractBufferProvider*> bufferProvider) override;
 
-    void setupSliceStore(const nautilus::val<PipelineExecutionContext*>& pipelineCtx) override;
+    void setupSliceStore(CompilationContext& compilationContext) override;
     ~DefaultTimeBasedSliceStoreRef() override = default;
     std::unique_ptr<SliceStoreRef> clone() override;
 
 private:
-    /// They need access to private members (sliceCaches, sliceCacheConfiguration) to create and look up per-pipeline caches.
-    friend void setupSliceStoreProxy(
-        DefaultTimeBasedSliceStore* sliceStore, const PipelineExecutionContext* pipelineCtx, DefaultTimeBasedSliceStoreRef* self);
     friend void defaultTimeBasedSliceStoreRefCacheMissProxy(
         SliceCacheEntry* entryToReplace,
         OperatorHandler* operatorHandlerPtr,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
         const DefaultTimeBasedSliceStoreRef* sliceStoreRef,
-        DefaultTimeBasedSliceStore* sliceStore,
         AbstractBufferProvider* bufferProvider);
 
     DataStructureExtractor dataStructureExtractor;
@@ -89,6 +84,8 @@ private:
     /// Having these as C++ values is fine, as they do not change between tracing and runtime of the query.
     std::unique_ptr<SliceCache> sliceCache;
     DefaultTimeBasedSliceStore* sliceStore;
+    nautilus::RuntimeBinding<const DefaultTimeBasedSliceStoreRef> sliceStoreBinding;
+    nautilus::RuntimeBinding<SliceCacheEntry> cacheBinding;
 };
 
 }
