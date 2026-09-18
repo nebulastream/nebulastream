@@ -28,6 +28,8 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Functions/PythonLogicalFunction.hpp>
+#include <Functions/PythonPhysicalFunction.hpp>
 #include <Functions/UDFCallLogicalFunction.hpp>
 #include <Functions/UDFPhysicalFunction.hpp>
 #include <Schema/Binder.hpp>
@@ -40,14 +42,15 @@
 
 namespace NES::QueryCompilation
 {
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait)
+PhysicalFunction FunctionProvider::lowerFunction(
+    LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunctions;
     std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait));
+        childFunctions.emplace_back(lowerFunction(child, fieldMappingTrait, pythonUdfImportPaths));
         inputTypes.emplace_back(child.getDataType());
     }
 
@@ -72,6 +75,19 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
         INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
         return UDFPhysicalFunction(
             childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor));
+    }
+    /// Inline Python UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query
+    /// text rather than a catalog descriptor, so they bypass the registry the same way.
+    if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
+    {
+        return PhysicalFunction{PythonPhysicalFunction(
+                                    pythonFunction.value()->getParameterNames(),
+                                    pythonFunction.value()->getBody(),
+                                    childFunctions,
+                                    inputTypes,
+                                    logicalFunction.getDataType(),
+                                    pythonUdfImportPaths)}
+            .withSetupChildren(std::move(childFunctions));
     }
 
     /// 3. Calling the registry to create an executable function.

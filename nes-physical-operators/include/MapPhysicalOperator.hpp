@@ -28,6 +28,7 @@ class MapPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;

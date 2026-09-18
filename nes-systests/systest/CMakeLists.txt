@@ -110,7 +110,7 @@ endif ()
 # packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
 # PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
 # All three are permanently opt-in, like `large`, and never run as part of the default invocations below.
-set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree)
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree CompilerOnly)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)

@@ -397,7 +397,8 @@ booleanComparison
 
 
 valueExpression
-    : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    : PYTHON '(' '(' parameters=identifierSeq ')' ':' body=PYTHON_BODY ')' AS returnType=typeDefinition returnNullable=NULLTOKEN? #pythonFunction
+    | CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
@@ -604,6 +605,10 @@ STRING
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
     ;
 
+PYTHON_BODY
+    : '$python$' .*? '$python$'
+    ;
+
 INTEGER_VALUE
     : DIGIT+
     ;
@@ -668,6 +673,7 @@ PHYSICAL: 'PHYSICAL';
 WORKER: 'WORKER';
 SINK : 'SINK';
 VERSION : 'VERSION' | 'version';
+PYTHON: 'PYTHON' | 'python';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work

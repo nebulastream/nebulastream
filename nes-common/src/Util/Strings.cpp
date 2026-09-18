@@ -132,20 +132,24 @@ std::string formatFloat(std::floating_point auto value)
 template <>
 std::optional<double> from_chars<double>(const std::string_view input)
 {
-    const std::string str(trimWhiteSpaces(input));
+    const auto trimmed = trimWhiteSpaces(input);
+    const auto [value, suffix] = from_chars_prefix<double>(trimmed);
+    return suffix.empty() ? value : std::nullopt;
+}
+
+template <>
+std::pair<std::optional<double>, std::string_view> from_chars_prefix<double>(const std::string_view input)
+{
+    const std::string str(input);
     try
     {
-        std::size_t pos = 0;
-        const auto value = std::stod(str, &pos);
-        if (pos != str.size())
-        {
-            return {};
-        }
-        return value;
+        std::size_t parsedCharacters = 0;
+        const auto value = std::stod(str, &parsedCharacters);
+        return {value, input.substr(parsedCharacters)};
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
-        return {};
+        return {std::nullopt, input};
     }
 }
 
