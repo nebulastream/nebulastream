@@ -22,6 +22,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Util/Reflection.hpp>
 #include <SemanticModelConfig.hpp>
 
 namespace NES
@@ -63,6 +64,8 @@ class RegisteredSemanticModel
     }
 
     friend class NES::SemanticModelCatalog;
+    friend struct Reflector<RegisteredSemanticModel>;
+    friend struct Unreflector<RegisteredSemanticModel>;
 
 public:
     [[nodiscard]] const std::string& getName() const { return name; }
@@ -72,6 +75,18 @@ public:
     [[nodiscard]] const SemanticModelSchema& getSchema() const { return schema; }
 
     bool operator==(const RegisteredSemanticModel&) const = default;
+};
+
+template <>
+struct Reflector<RegisteredSemanticModel>
+{
+    Reflected operator()(const RegisteredSemanticModel& model, const ReflectionContext& context) const;
+};
+
+template <>
+struct Unreflector<RegisteredSemanticModel>
+{
+    RegisteredSemanticModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 /// Manages `CREATE SEMANTIC MODEL` registration. Validates the config at registration time

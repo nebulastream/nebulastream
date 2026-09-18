@@ -15,15 +15,67 @@
 #include <SemanticModelCatalog.hpp>
 
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <Util/URI.hpp>
 
 namespace NES
 {
+
+namespace detail
+{
+struct
+    ReflectedRegisteredSemanticModel /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding optionals of vector-backed types trip the check; no real escape
+{
+    std::optional<std::string> name;
+    std::optional<std::string> baseUrl;
+    std::optional<std::string> model;
+    std::optional<std::string> prompt;
+    std::optional<std::string> apiKeyEnv;
+    std::optional<std::vector<std::string>> outputValues;
+    std::optional<SemanticModelFieldList> inputs;
+    std::optional<SemanticModelFieldList> outputs;
+};
+}
+
+Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanticModel& model, const ReflectionContext& context) const
+{
+    return context.reflect(detail::ReflectedRegisteredSemanticModel{
+        .name = std::make_optional(model.getName()),
+        .baseUrl = std::make_optional(model.getConfig().baseUrl),
+        .model = std::make_optional(model.getConfig().model),
+        .prompt = std::make_optional(model.getConfig().prompt),
+        .apiKeyEnv = model.getConfig().apiKeyEnv,
+        .outputValues = model.getConfig().outputValues,
+        .inputs = std::make_optional(model.getSchema().inputs),
+        .outputs = std::make_optional(model.getSchema().outputs)});
+}
+
+RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto reflected = context.unreflect<detail::ReflectedRegisteredSemanticModel>(rfl);
+    if (!reflected.name.has_value() || !reflected.baseUrl.has_value() || !reflected.model.has_value() || !reflected.prompt.has_value()
+        || !reflected.inputs.has_value() || !reflected.outputs.has_value())
+    {
+        throw NES::CannotDeserialize("Failed to deserialize RegisteredSemanticModel");
+    }
+    SemanticModelConfig config{
+        .baseUrl = std::move(reflected.baseUrl).value(),
+        .model = std::move(reflected.model).value(),
+        .prompt = std::move(reflected.prompt).value(),
+        .apiKeyEnv = std::move(reflected.apiKeyEnv),
+        .outputValues = std::move(reflected.outputValues)};
+    /// Bypasses catalog validation: the coordinator already validated; the worker trusts the reflected form.
+    /// Schema's user-declared destructor suppresses its implicit move ctor; std::move on the field initializers
+    /// would just rebind to copy-from-const-ref. Pass by value.
+    SemanticModelSchema schema{.inputs = reflected.inputs.value(), .outputs = reflected.outputs.value()};
+    return RegisteredSemanticModel{std::move(reflected.name).value(), std::move(config), std::move(schema)};
+}
 
 void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig config, SemanticModelSchema schema)
 {

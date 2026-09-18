@@ -97,6 +97,12 @@ public:
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 
+    static LogicalPlan addSemMap(
+        Identifier modelName,
+        std::vector<Identifier> inputFields,
+        std::optional<Identifier> outputAlias,
+        const LogicalPlan& childPlan);
+
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addAnonymousSink(
         Identifier type,

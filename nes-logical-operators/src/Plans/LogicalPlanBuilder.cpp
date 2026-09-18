@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
@@ -37,6 +38,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/SemMapNameLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
@@ -164,6 +166,19 @@ LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const Logica
 {
     NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
     return promoteOperatorToRoot(childPlan, TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.asCanonicalString()});
+}
+
+LogicalPlan LogicalPlanBuilder::addSemMap(
+    Identifier modelName, std::vector<Identifier> inputFields, std::optional<Identifier> outputAlias, const LogicalPlan& childPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add SEM_MAP operator to query plan for model {}", modelName);
+    auto callSiteInputs = inputFields
+        | std::views::transform([](const Identifier& field)
+                                 { return UnqualifiedUnboundField{field, DataType::Type::VARSIZED}; })
+        | std::ranges::to<std::vector>();
+    return promoteOperatorToRoot(
+        childPlan,
+        TypedLogicalOperator<SemMapNameLogicalOperator>{modelName.asCanonicalString(), std::move(callSiteInputs), std::move(outputAlias)});
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)
