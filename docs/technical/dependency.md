@@ -1,8 +1,7 @@
 # Dependency Management
 
 This document outlines NebulaStream's current state of dependency management. All dependencies are
-managed via [vcpkg](https://github.com/microsoft/vcpkg). The original design decisions are outlined in the
-[dependency management design document](docs/design/20240710_dependency-management.md).
+managed via [vcpkg](https://github.com/microsoft/vcpkg).
 
 ## VCPKG
 

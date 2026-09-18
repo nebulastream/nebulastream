@@ -97,7 +97,8 @@ A query refers to the function by that name, and lowering looks the physical fun
 See `nes-plugins/Functions/Conditional/CMakeLists.txt` for the complete build setup of the example plugin.
 To activate the plugin, add the line `add_plugin("Functions/Conditional")` to `nes-plugins/CMakeLists.txt`.
 
-For a detailed explanation of the plugin system, CMake macros, and how registries work, see [guide/extensibility.md](extensibility.md).
+For a detailed explanation of the plugin system, CMake macros, and how registries work, see
+[Extensibility, Plugins, and Registries](extensibility.md).
 
 ## 5. Interface
 
@@ -250,4 +251,4 @@ The generic child list interface flattens them into `[condition1, result1, ..., 
 
 Last, it is good practice to define tests for the function.
 See `ConditionalLogicalFunctionTest.cpp` for unit tests, and `nes-systests/function/Conditional.test` for end to end tests that run queries against the function.
-Which layer a given test belongs in, and what each layer is expected to cover, is described in [standards/testing_guidelines.md](../standards/testing_guidelines.md).
+Which layer a given test belongs in, and what each layer is expected to cover, is described in [Testing](testing.md).
