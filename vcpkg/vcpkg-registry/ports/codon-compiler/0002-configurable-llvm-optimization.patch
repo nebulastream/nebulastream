@@ -1,0 +1,201 @@
+diff --git a/codon/cir/llvm/llvisitor.cpp b/codon/cir/llvm/llvisitor.cpp
+index 37279ca8..2a17c60b 100644
+--- a/codon/cir/llvm/llvisitor.cpp
++++ b/codon/cir/llvm/llvisitor.cpp
+@@ -371,11 +371,19 @@ void LLVMVisitor::process(const Node *x) {
+ 
+ void LLVMVisitor::dump(const std::string &filename) { writeToLLFile(filename, false); }
+ 
+-void LLVMVisitor::optimizeLLVM() { runLLVMPipeline(); }
++void LLVMVisitor::optimizeLLVM() { runLLVMPipeline(); }
++
++void LLVMVisitor::optimizeLLVM(const LLVMOptimizationOptions &options) {
++  db.builder->finalize();
++  optimize(M.get(), options, plugins);
++}
+ 
+ void LLVMVisitor::runLLVMPipeline() {
+   db.builder->finalize();
+-  optimize(M.get(), db.debug, db.jit, plugins);
++  auto options = db.debug ? LLVMOptimizationOptions::debug()
++                          : LLVMOptimizationOptions::release();
++  options.jit = db.jit;
++  optimize(M.get(), options, plugins);
+ }
+ 
+ void LLVMVisitor::writeToObjectFile(const std::string &filename, bool pic,
+diff --git a/codon/cir/llvm/llvisitor.h b/codon/cir/llvm/llvisitor.h
+index 4503ee60..c39e75db 100644
+--- a/codon/cir/llvm/llvisitor.h
++++ b/codon/cir/llvm/llvisitor.h
+@@ -15,5 +15,7 @@ namespace codon {
+ namespace ir {
+ 
++struct LLVMOptimizationOptions;
++
+ class LLVMVisitor : public util::ConstVisitor {
+ private:
+   struct CoroData {
+@@ -347,6 +349,9 @@ public:
+ 
+   /// Runs Codon's LLVM optimization pipeline without writing the module.
+   void optimizeLLVM();
++  /// Runs Codon's LLVM optimization pipeline using explicit optimization and
++  /// debug-information settings.
++  void optimizeLLVM(const LLVMOptimizationOptions &options);
+ 
+   /// Writes module as native object file.
+   /// @param filename the .o file to write to
+diff --git a/codon/cir/llvm/optimize.cpp b/codon/cir/llvm/optimize.cpp
+index 775d9d8d..85dcf5b7 100644
+--- a/codon/cir/llvm/optimize.cpp
++++ b/codon/cir/llvm/optimize.cpp
+@@ -69,8 +69,9 @@ getTargetMachine(llvm::Module *module, bool setFunctionAttributes, bool pic) {
+ }
+ 
+ namespace {
+-void applyDebugTransformations(llvm::Module *module, bool debug, bool jit) {
+-  if (debug) {
++void applyDebugTransformations(llvm::Module *module,
++                               const LLVMOptimizationOptions &options) {
++  if (options.preserveDebugStackFrames) {
+     auto ctor = LLVMVisitor::getGlobalCtorName();
+     // remove tail calls and fix linkage for stack traces
+     for (auto &f : *module) {
+@@ -78,5 +79,5 @@ void applyDebugTransformations(llvm::Module *module, bool debug, bool jit) {
+       // needed for debug symbols
+-      if (!jit && f.getName() != ctor)
++      if (!options.jit && f.getName() != ctor)
+         f.setLinkage(llvm::GlobalValue::ExternalLinkage);
+       if (!f.hasFnAttribute(llvm::Attribute::AttrKind::AlwaysInline))
+         f.addFnAttr(llvm::Attribute::AttrKind::NoInline);
+@@ -86,7 +87,8 @@ void applyDebugTransformations(llvm::Module *module, bool debug, bool jit) {
+         }
+       }
+     }
+-  } else {
++  }
++  if (!options.preserveDebugInfo) {
+     llvm::StripDebugInfo(*module);
+   }
+ }
+@@ -995,9 +997,10 @@ llvm::cl::opt<bool>
+                   llvm::cl::desc("Disable architecture-specific optimizations"),
+                   llvm::cl::init(false));
+ 
+-void runLLVMOptimizationPasses(llvm::Module *module, bool debug, bool jit,
+-                               PluginManager *plugins) {
+-  applyDebugTransformations(module, debug, jit);
++void runLLVMOptimizationPasses(llvm::Module *module,
++                               const LLVMOptimizationOptions &options,
++                               PluginManager *plugins) {
++  applyDebugTransformations(module, options);
+   applyFastMathTransformations(module);
+ 
+   llvm::LoopAnalysisManager lam;
+@@ -1032,19 +1035,14 @@ void runLLVMOptimizationPasses(llvm::Module *module, bool debug, bool jit,
+ 
+   if (plugins) {
+     for (auto *plugin : *plugins) {
+-      plugin->dsl->addLLVMPasses(&pb, debug);
++      plugin->dsl->addLLVMPasses(&pb, options.preserveDebugStackFrames);
+     }
+   }
+ 
+-  if (debug) {
+-    llvm::ModulePassManager mpm =
+-        pb.buildO0DefaultPipeline(llvm::OptimizationLevel::O0);
+-    mpm.run(*module, mam);
+-  } else {
+-    llvm::ModulePassManager mpm =
+-        pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+-    mpm.run(*module, mam);
+-  }
++  llvm::ModulePassManager mpm = options.level == llvm::OptimizationLevel::O0
++                                    ? pb.buildO0DefaultPipeline(options.level)
++                                    : pb.buildPerModuleDefaultPipeline(options.level);
++  mpm.run(*module, mam);
+ 
+-  applyDebugTransformations(module, debug, jit);
++  applyDebugTransformations(module, options);
+ }
+@@ -1076,15 +1074,12 @@ void setNativeOptimizationEnabled(bool enabled) {
+   DisableNative = !enabled;
+ }
+ 
+-void optimize(llvm::Module *module, bool debug, bool jit, PluginManager *plugins) {
++void optimize(llvm::Module *module, const LLVMOptimizationOptions &options,
++              PluginManager *plugins) {
+   verify(module);
+-  {
++  for (unsigned run = 0; run < options.runs; ++run) {
+     TIME("llvm/opt1");
+-    runLLVMOptimizationPasses(module, debug, jit, plugins);
+-  }
+-  if (!debug) {
+-    TIME("llvm/opt2");
+-    runLLVMOptimizationPasses(module, debug, jit, plugins);
++    runLLVMOptimizationPasses(module, options, plugins);
+   }
+   {
+     TIME("llvm/gpu");
+@@ -1096,6 +1091,14 @@ void optimize(llvm::Module *module, bool debug, bool jit, PluginManager *plugins) {
+   verify(module);
+ }
+ 
++void optimize(llvm::Module *module, bool debug, bool jit,
++              PluginManager *plugins) {
++  auto options = debug ? LLVMOptimizationOptions::debug()
++                       : LLVMOptimizationOptions::release();
++  options.jit = jit;
++  optimize(module, options, plugins);
++}
++
+ bool isFastMathOn() { return FastMath; }
+ 
+ } // namespace ir
+diff --git a/codon/cir/llvm/optimize.h b/codon/cir/llvm/optimize.h
+index acac29dc..aaae2834 100644
+--- a/codon/cir/llvm/optimize.h
++++ b/codon/cir/llvm/optimize.h
+@@ -18,9 +18,40 @@ getTargetMachine(llvm::Module *module, bool setFunctionAttributes = false,
+ /// Enables or disables architecture-specific LLVM optimizations.
+ void setNativeOptimizationEnabled(bool enabled);
+ 
++struct LLVMOptimizationOptions {
++  llvm::OptimizationLevel level = llvm::OptimizationLevel::O3;
++  unsigned runs = 2;
++  bool preserveDebugInfo = false;
++  bool preserveDebugStackFrames = false;
++  bool jit = false;
++
++  static LLVMOptimizationOptions debug() {
++    return {
++        .level = llvm::OptimizationLevel::O0,
++        .runs = 1,
++        .preserveDebugInfo = true,
++        .preserveDebugStackFrames = true,
++        .jit = false,
++    };
++  }
++
++  static LLVMOptimizationOptions release() {
++    return {
++        .level = llvm::OptimizationLevel::O3,
++        .runs = 2,
++        .preserveDebugInfo = false,
++        .preserveDebugStackFrames = false,
++        .jit = false,
++    };
++  }
++};
++
++void optimize(llvm::Module *module, const LLVMOptimizationOptions &options,
++              PluginManager *plugins = nullptr);
++
+ void optimize(llvm::Module *module, bool debug, bool jit = false,
+               PluginManager *plugins = nullptr);
+ 
+ bool isFastMathOn();
+ } // namespace ir
+ } // namespace codon
