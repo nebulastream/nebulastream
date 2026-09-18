@@ -62,12 +62,6 @@
 #include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AggregationLogicalFunctionProvider.hpp>
 #include <Operators/Windows/Aggregations/AggregationParameters.hpp>
-#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -1298,7 +1292,6 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     const auto funcName = toUpperCase(context->children[0]->getText());
-    const auto tokenType = context->getStart()->getType();
 
     /// Turns an aggregation argument into a field reference. An expression (e.g. i + UINT64(1)) is desugared into a
     /// pre-aggregation projection so that the aggregation operates on a simple field reference.
@@ -1311,17 +1304,6 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         const auto tempName = bindIdentifier(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
         helpers.top().preAggregationProjections.emplace_back(tempName, std::move(argument));
         return UnboundFieldAccessLogicalFunction(tempName);
-    };
-
-    const auto ensureFieldAccessArgument = [&]()
-    {
-        if (helpers.top().functionBuilder.empty())
-        {
-            throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-        }
-        auto argument = std::move(helpers.top().functionBuilder.back());
-        helpers.top().functionBuilder.pop_back();
-        helpers.top().functionBuilder.emplace_back(toFieldAccess(std::move(argument)));
     };
 
     const auto toRegistryArguments = [&](std::vector<LogicalFunction> arguments)
@@ -1345,250 +1327,169 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         return std::pair{std::move(registryArguments), firstInputField};
     };
 
-    auto isAggregation = false;
-    /// The registry path takes its arguments off the expression stack itself; the token cases leave the input field there.
-    auto argumentsConsumed = false;
-    std::optional<Identifier> aggregationInputField;
-    switch (tokenType)
+    helpers.top().hasUnnamedAggregation = false;
+    /// A type constructor such as UINT64(1) keeps its argument on the constant stack, so it is resolved
+    /// before anything is taken off the expression stack.
+    if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
     {
-        case AntlrSQLLexer::COUNT: {
-            const auto includeNullValues = (context->starArg != nullptr);
-            if (includeNullValues)
-            {
-                /// COUNT(*) — no field argument needed; use a dummy * field
-                helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
-            }
-            else
-            {
-                ensureFieldAccessArgument();
-            }
-            helpers.top().windowAggs.emplace_back(
-                CountAggregationLogicalFunction{
-                    helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>(), includeNullValues},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        }
-        case AntlrSQLLexer::AVG:
-            ensureFieldAccessArgument();
-            helpers.top().windowAggs.emplace_back(
-                AvgAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        case AntlrSQLLexer::MAX:
-            ensureFieldAccessArgument();
-            helpers.top().windowAggs.emplace_back(
-                MaxAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        case AntlrSQLLexer::MIN:
-            ensureFieldAccessArgument();
-            helpers.top().windowAggs.emplace_back(
-                MinAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        case AntlrSQLLexer::SUM:
-            ensureFieldAccessArgument();
-            helpers.top().windowAggs.emplace_back(
-                SumAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        case AntlrSQLLexer::MEDIAN:
-            ensureFieldAccessArgument();
-            helpers.top().windowAggs.emplace_back(
-                MedianAggregationLogicalFunction{helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>()},
-                std::nullopt);
-            isAggregation = true;
-            break;
-        default: {
-            helpers.top().hasUnnamedAggregation = false;
-            /// A type constructor such as UINT64(1) keeps its argument on the constant stack, so it is resolved
-            /// before anything is taken off the expression stack.
-            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
-            {
-                if (const auto numArgs = context->argument.size(); numArgs != 1)
-                {
-                    throw InvalidQuerySyntax(
-                        "Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
-                }
-                if (helpers.top().constantBuilder.empty())
-                {
-                    throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
-                }
-                auto value = std::move(helpers.top().constantBuilder.back());
-                helpers.top().constantBuilder.pop_back();
-                helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
-                break;
-            }
-            /// A synopsis call pushes nothing back, so wrapping one in STATISTIC_BUILD leaves the outer call without
-            /// that argument. Say so before the generic "arguments did not reach the stack" error would.
-            if (funcName == "STATISTIC_BUILD" and helpers.top().statisticBuild.has_value()
-                and std::ranges::any_of(
-                    context->argument, [&](auto* argument) { return tokenRangeOf(*argument) == helpers.top().statisticBuild->call; }))
-            {
-                throw InvalidQuerySyntax(
-                    "{} is a statistic synopsis and is written without STATISTIC_BUILD, as {}(statisticId, ...) at {}",
-                    helpers.top().statisticBuild->functionName,
-                    helpers.top().statisticBuild->functionName,
-                    context->getText());
-            }
-            const auto numArgs = context->argument.size();
-            if (numArgs > helpers.top().functionBuilder.size())
-            {
-                throw UnsupportedQuery(
-                    "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
-                    "expression stack: {}",
-                    funcName,
-                    numArgs,
-                    context->getText());
-            }
-            const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-            std::vector<LogicalFunction> arguments(argsBegin, helpers.top().functionBuilder.end());
-            helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-
-            /// Like the aggregation keywords (COUNT or count, never Count), aggregation and statistic names are only
-            /// recognised in upper or in lower case, although the registry itself looks them up case-insensitively.
-            const auto requireKeywordCase = [&]
-            {
-                const auto spelledName = context->children[0]->getText();
-                if (spelledName != funcName and spelledName != toLowerCase(spelledName))
-                {
-                    throw InvalidQuerySyntax(
-                        "{} has to be written {} or {} at {}", spelledName, funcName, toLowerCase(funcName), context->getText());
-                }
-            };
-
-            if (const auto description = AggregationLogicalFunctionProvider::tryDescribe(funcName))
-            {
-                requireKeywordCase();
-                if (description->isStatistic)
-                {
-                    if (arguments.empty())
-                    {
-                        throw InvalidQuerySyntax("{} expects the statisticId as its first argument at {}", funcName, context->getText());
-                    }
-                    if (helpers.top().statisticBuild.has_value())
-                    {
-                        throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
-                    }
-                    const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
-                    arguments.erase(arguments.begin());
-                    helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
-                        .statisticId = statisticId,
-                        .statisticFunction
-                        = AggregationLogicalFunctionProvider::provide(funcName, toRegistryArguments(std::move(arguments)).first),
-                        .functionName = funcName,
-                        .call = tokenRangeOf(*context)};
-                    break;
-                }
-                if (context->starArg != nullptr)
-                {
-                    /// As in the COUNT token case, * reaches the aggregation as a field named *, from which COUNT derives
-                    /// that it counts every record. It never reaches the expression stack, so it is not among the arguments.
-                    arguments.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
-                }
-                auto [registryArguments, firstInputField] = toRegistryArguments(std::move(arguments));
-                helpers.top().windowAggs.emplace_back(
-                    AggregationLogicalFunctionProvider::provide(funcName, std::move(registryArguments)), std::nullopt);
-                aggregationInputField = firstInputField;
-                argumentsConsumed = true;
-                isAggregation = true;
-                break;
-            }
-            if (const auto probe = parseProbeFunctionName(funcName))
-            {
-                const auto& [aggregationName, windowMatch] = *probe;
-                const auto probed = AggregationLogicalFunctionProvider::tryDescribe(aggregationName);
-                if (not probed.has_value())
-                {
-                    throw InvalidQuerySyntax(
-                        "{} probes an unknown aggregation {} (registered: {}) at {}",
-                        funcName,
-                        aggregationName,
-                        fmt::join(AggregationLogicalFunctionProvider::registeredNames(), ", "),
-                        context->getText());
-                }
-                requireKeywordCase();
-                /// The payload is only readable through the columns named here, so a probe names at least one.
-                if (arguments.size() < 3 or arguments.size() % 2 == 0)
-                {
-                    throw InvalidQuerySyntax(
-                        "{} expects a statisticId followed by at least one (fieldName, typeName) pair at {}", funcName, context->getText());
-                }
-                if (helpers.top().statisticProbe.has_value())
-                {
-                    throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
-                }
-                helpers.top().statisticProbe = AntlrSQLHelper::StatisticProbeInfo{
-                    .statisticId = parseStatisticId(arguments.front(), funcName, context->getText()),
-                    .blobType = StatisticBlobType{std::string{probed->name}},
-                    .payloadFields = parsePayloadFields(arguments, 1, funcName, context->getText()),
-                    .windowMatch = windowMatch};
-                break;
-            }
-            if (funcName == "STATISTIC_BUILD")
-            {
-                requireKeywordCase();
-                if (arguments.size() != 2)
-                {
-                    throw InvalidQuerySyntax(
-                        "STATISTIC_BUILD expects a statisticId and an aggregation call, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
-                        context->getText());
-                }
-                /// The second argument has to be the call that produced the last aggregation. Its output field alone does
-                /// not prove that: STATISTIC_BUILD(42, x_SUM) next to a SUM(x) names the same field without wrapping it.
-                const auto wrapsLastAggregation
-                    = not helpers.top().windowAggs.empty() and helpers.top().lastAggregationCall == tokenRangeOf(*context->argument[1]);
-                if (not wrapsLastAggregation)
-                {
-                    throw InvalidQuerySyntax(
-                        "STATISTIC_BUILD expects an aggregation call as its second argument, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
-                        context->getText());
-                }
-                if (helpers.top().statisticBuild.has_value())
-                {
-                    throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
-                }
-                const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
-                const auto aggregation = helpers.top().windowAggs.back().first;
-                helpers.top().windowAggs.pop_back();
-                helpers.top().lastAggregationCall.reset();
-                helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
-                    .statisticId = statisticId, .statisticFunction = aggregation, .functionName = funcName, .call = tokenRangeOf(*context)};
-                break;
-            }
-            if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(arguments)))
-            {
-                helpers.top().functionBuilder.push_back(*logicalFunction);
-                break;
-            }
-            throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
-        }
-    }
-
-    /// For aggregation functions, generate an auto-name for the result field and replace the raw
-    /// field access in functionBuilder with a reference to the aggregation output. This enables
-    /// post-aggregation arithmetic like MEDIAN(i8) + UINT64(1).
-    if (isAggregation)
-    {
-        helpers.top().hasUnnamedAggregation = true;
-        if (not argumentsConsumed)
+        if (const auto numArgs = context->argument.size(); numArgs != 1)
         {
-            aggregationInputField = helpers.top().functionBuilder.back().getAs<UnboundFieldAccessLogicalFunction>().get().getFieldName();
-            helpers.top().functionBuilder.pop_back();
+            throw InvalidQuerySyntax("Type constructor {} expects exactly 1 argument, got {} at {}", funcName, numArgs, context->getText());
         }
-        const auto autoName = aggregationInputField.has_value() ? fmt::format("{}_{}", *aggregationInputField, funcName) : funcName;
-        const auto asField = bindIdentifier(autoName);
-        const auto [aggFunc, asName] = helpers.top().windowAggs.back();
-        helpers.top().windowAggs.pop_back();
-        helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
+        if (helpers.top().constantBuilder.empty())
+        {
+            throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
+        }
+        auto value = std::move(helpers.top().constantBuilder.back());
+        helpers.top().constantBuilder.pop_back();
+        helpers.top().functionBuilder.emplace_back(ConstantValueLogicalFunction(*dataType, std::move(value)));
+        return;
+    }
+    /// A synopsis call pushes nothing back, so wrapping one in STATISTIC_BUILD leaves the outer call without
+    /// that argument. Say so before the generic "arguments did not reach the stack" error would.
+    if (funcName == "STATISTIC_BUILD" and helpers.top().statisticBuild.has_value()
+        and std::ranges::any_of(
+            context->argument, [&](auto* argument) { return tokenRangeOf(*argument) == helpers.top().statisticBuild->call; }))
+    {
+        throw InvalidQuerySyntax(
+            "{} is a statistic synopsis and is written without STATISTIC_BUILD, as {}(statisticId, ...) at {}",
+            helpers.top().statisticBuild->functionName,
+            helpers.top().statisticBuild->functionName,
+            context->getText());
+    }
+    const auto numArgs = context->argument.size();
+    if (numArgs > helpers.top().functionBuilder.size())
+    {
+        throw UnsupportedQuery(
+            "Function '{}' is currently not supported in this context, as its {} argument(s) did not reach the "
+            "expression stack: {}",
+            funcName,
+            numArgs,
+            context->getText());
+    }
+    const auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+    std::vector<LogicalFunction> arguments(argsBegin, helpers.top().functionBuilder.end());
+    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+
+    /// Like the aggregation keywords (COUNT or count, never Count), aggregation and statistic names are only
+    /// recognised in upper or in lower case, although the registry itself looks them up case-insensitively.
+    const auto requireKeywordCase = [&]
+    {
+        const auto spelledName = context->children[0]->getText();
+        if (spelledName != funcName and spelledName != toLowerCase(spelledName))
+        {
+            throw InvalidQuerySyntax(
+                "{} has to be written {} or {} at {}", spelledName, funcName, toLowerCase(funcName), context->getText());
+        }
+    };
+
+    if (const auto description = AggregationLogicalFunctionProvider::tryDescribe(funcName))
+    {
+        requireKeywordCase();
+        if (description->isStatistic)
+        {
+            if (arguments.empty())
+            {
+                throw InvalidQuerySyntax("{} expects the statisticId as its first argument at {}", funcName, context->getText());
+            }
+            if (helpers.top().statisticBuild.has_value())
+            {
+                throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
+            }
+            const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
+            arguments.erase(arguments.begin());
+            helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
+                .statisticId = statisticId,
+                .statisticFunction = AggregationLogicalFunctionProvider::provide(funcName, toRegistryArguments(std::move(arguments)).first),
+                .functionName = funcName,
+                .call = tokenRangeOf(*context)};
+            return;
+        }
+        if (context->starArg != nullptr)
+        {
+            /// * reaches the aggregation as a field named *, from which COUNT derives that it counts every record.
+            /// It never reaches the expression stack, so it is not among the arguments.
+            arguments.emplace_back(UnboundFieldAccessLogicalFunction(Identifier::parse("*")));
+        }
+        auto [registryArguments, firstInputField] = toRegistryArguments(std::move(arguments));
+        auto aggregation = AggregationLogicalFunctionProvider::provide(funcName, std::move(registryArguments));
+        /// Name the result after its input field, e.g. X_SUM, and leave a reference to it on the expression stack.
+        /// This enables post-aggregation arithmetic like MEDIAN(i8) + UINT64(1).
+        const auto asField = bindIdentifier(firstInputField.has_value() ? fmt::format("{}_{}", *firstInputField, funcName) : funcName);
+        helpers.top().windowAggs.emplace_back(std::move(aggregation), std::optional{asField});
+        helpers.top().hasUnnamedAggregation = true;
         helpers.top().lastAggregationCall = tokenRangeOf(*context);
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
+        return;
     }
+    if (const auto probe = parseProbeFunctionName(funcName))
+    {
+        const auto& [aggregationName, windowMatch] = *probe;
+        const auto probed = AggregationLogicalFunctionProvider::tryDescribe(aggregationName);
+        if (not probed.has_value())
+        {
+            throw InvalidQuerySyntax(
+                "{} probes an unknown aggregation {} (registered: {}) at {}",
+                funcName,
+                aggregationName,
+                fmt::join(AggregationLogicalFunctionProvider::registeredNames(), ", "),
+                context->getText());
+        }
+        requireKeywordCase();
+        /// The payload is only readable through the columns named here, so a probe names at least one.
+        if (arguments.size() < 3 or arguments.size() % 2 == 0)
+        {
+            throw InvalidQuerySyntax(
+                "{} expects a statisticId followed by at least one (fieldName, typeName) pair at {}", funcName, context->getText());
+        }
+        if (helpers.top().statisticProbe.has_value())
+        {
+            throw InvalidQuerySyntax("Only one statistic probe is supported per query at {}", context->getText());
+        }
+        helpers.top().statisticProbe = AntlrSQLHelper::StatisticProbeInfo{
+            .statisticId = parseStatisticId(arguments.front(), funcName, context->getText()),
+            .blobType = StatisticBlobType{std::string{probed->name}},
+            .payloadFields = parsePayloadFields(arguments, 1, funcName, context->getText()),
+            .windowMatch = windowMatch};
+        return;
+    }
+    if (funcName == "STATISTIC_BUILD")
+    {
+        requireKeywordCase();
+        if (arguments.size() != 2)
+        {
+            throw InvalidQuerySyntax(
+                "STATISTIC_BUILD expects a statisticId and an aggregation call, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
+                context->getText());
+        }
+        /// The second argument has to be the call that produced the last aggregation. Its output field alone does
+        /// not prove that: STATISTIC_BUILD(42, x_SUM) next to a SUM(x) names the same field without wrapping it.
+        const auto wrapsLastAggregation
+            = not helpers.top().windowAggs.empty() and helpers.top().lastAggregationCall == tokenRangeOf(*context->argument[1]);
+        if (not wrapsLastAggregation)
+        {
+            throw InvalidQuerySyntax(
+                "STATISTIC_BUILD expects an aggregation call as its second argument, e.g. STATISTIC_BUILD(42, SUM(x)), at {}",
+                context->getText());
+        }
+        if (helpers.top().statisticBuild.has_value())
+        {
+            throw InvalidQuerySyntax("Only one statistic build is supported per query at {}", context->getText());
+        }
+        const auto statisticId = parseStatisticId(arguments.front(), funcName, context->getText());
+        const auto aggregation = helpers.top().windowAggs.back().first;
+        helpers.top().windowAggs.pop_back();
+        helpers.top().lastAggregationCall.reset();
+        helpers.top().statisticBuild = AntlrSQLHelper::StatisticBuildInfo{
+            .statisticId = statisticId, .statisticFunction = aggregation, .functionName = funcName, .call = tokenRangeOf(*context)};
+        return;
+    }
+    if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(arguments)))
+    {
+        helpers.top().functionBuilder.push_back(*logicalFunction);
+        return;
+    }
+    throw InvalidQuerySyntax("Unknown (aggregation) function: {} at {}", funcName, context->getText());
 }
 
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
