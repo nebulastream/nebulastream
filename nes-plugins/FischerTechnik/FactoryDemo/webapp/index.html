@@ -508,11 +508,19 @@
           <span class="timing-value" id="${cfg.id}-lastMsgText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
         </div>
         <div class="timing-item">
+          <span class="timing-label">Real-time</span>
+          <span class="timing-value" id="${cfg.id}-realtimeText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
+        </div>
+        <div class="timing-item">
+          <span class="timing-label">Frame age (real-time &minus; frame)</span>
+          <span class="timing-value" id="${cfg.id}-frameAgeText">&mdash;</span>
+        </div>
+        <div class="timing-item">
           <span class="timing-label">Last received</span>
           <span class="timing-value" id="${cfg.id}-lastRecvText">&ndash;&ndash;:&ndash;&ndash;:&ndash;&ndash;.&ndash;&ndash;&ndash;</span>
         </div>
         <div class="timing-item">
-          <span class="timing-label">Offset (received &minus; frame ts)</span>
+          <span class="timing-label">Offset (received &minus; frame)</span>
           <span class="timing-value" id="${cfg.id}-latencyText">&mdash;</span>
         </div>
       </div>
@@ -566,8 +574,11 @@
       lastEmpty: {},
       showScore: {},
       lastMessageAt: 0,
+      lastFrameTs: 0,
       summaryText: document.getElementById(`${cfg.id}-summaryText`),
       lastMsgText: document.getElementById(`${cfg.id}-lastMsgText`),
+      realtimeText: document.getElementById(`${cfg.id}-realtimeText`),
+      frameAgeText: document.getElementById(`${cfg.id}-frameAgeText`),
       lastRecvText: document.getElementById(`${cfg.id}-lastRecvText`),
       latencyText: document.getElementById(`${cfg.id}-latencyText`),
       staleBanner: document.getElementById(`${cfg.id}-staleBanner`),
@@ -589,7 +600,15 @@
   const clockText = document.getElementById("clockText");
 
   setInterval(() => {
-    clockText.textContent = formatClockMs(Date.now());
+    const now = Date.now();
+    clockText.textContent = formatClockMs(now);
+    Object.values(panels).forEach(state => {
+      state.realtimeText.textContent = formatClockMs(now);
+      if (state.lastFrameTs > 0) {
+        const ageMs = now - state.lastFrameTs;
+        state.frameAgeText.textContent = (ageMs >= 0 ? "+" : "") + ageMs + " ms";
+      }
+    });
   }, 50);
 
   function setCellState(state, slot, empty, score) {
@@ -619,9 +638,10 @@
     }
     state.summaryText.innerHTML = `<strong>${numEmpty} / 9</strong> slots empty`;
     state.lastMessageAt = Date.now();
-    state.lastMsgText.textContent = formatClock(Number(msg.ts));
+    state.lastFrameTs = Number(msg.ts);
+    state.lastMsgText.textContent = formatClock(state.lastFrameTs);
     state.lastRecvText.textContent = formatClockMs(state.lastMessageAt);
-    const offsetMs = state.lastMessageAt - Number(msg.ts);
+    const offsetMs = state.lastMessageAt - state.lastFrameTs;
     state.latencyText.textContent = (offsetMs >= 0 ? "+" : "") + offsetMs + " ms";
     state.staleBanner.classList.remove("show");
     Object.values(state.cells).forEach(c => c.classList.remove("stale"));

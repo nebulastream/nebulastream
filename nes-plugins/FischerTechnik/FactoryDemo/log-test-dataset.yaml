@@ -1,0 +1,104 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Raw capture for building test datasets: two plain projection queries (no
+# joins, no filters, no model inference), each logging one FischerTechnik
+# feed straight to its own CSV -- ssc_cam.csv for the SSC pan/tilt camera
+# (i/cam) and ptu_pos.csv for the PTU's pan/tilt readout (i/ptu/pos). Same
+# shape as ssc-log-frames.sql/yaml, just running both feeds side by side
+# under one topology so a single worker + single nes-cli invocation
+# captures both streams for the same time window.
+#
+# Meant to run for a short, fixed window (a minute or two) and then be
+# stopped -- see the run command for how to bound it with `timeout`. Reuses
+# ssc-log-frames.yaml's max_operators: 10000 bump, needed because each
+# SSC_CAM tuple's "data" field is a full base64 JPEG data-URI (320x240 @
+# quality 30, ~1fps), several KB per tuple.
+#
+# Separate client_ids ("-log-test-dataset") so this can run alongside any
+# other FactoryDemo query without colliding on MQTT connections to the
+# factory broker.
+
+sinks:
+  - name: SSC_CAM_LOG_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"data"'
+        type: VARSIZED
+    type: File
+    config:
+      output_format: CSV
+      file_path: ssc_cam.csv
+  - name: PTU_POS_LOG_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+    type: File
+    config:
+      output_format: CSV
+      file_path: ptu_pos.csv
+
+logical:
+  - name: SSC_CAM
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: PTU_POS
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+physical:
+  - logical: SSC_CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-log-test-dataset-cam
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-log-test-dataset-ptu
+      qos: 0
+      log_messages: false
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000

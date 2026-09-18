@@ -1,0 +1,206 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Same webapp feed as hbw-state.yaml, but gated on PTU pan/tilt so inference only runs on frames
+# taken while the SSC camera is actually pointed at the HBW rack.
+#
+# hbw-state.yaml dropped the gate because a tumbling-window equi-join between SSC_CAM (~1fps) and
+# PTU_POS (~1 sample / 2s) used a bucket size (500ms / 2s picked without checking, per
+# ssc-slot-anomaly-gated*.yaml's own TODOs) smaller than or misaligned with PTU's real cadence, so
+# most buckets had no PTU row at all and the frame was dropped.
+#
+# Fix here is just sizing the bucket correctly: WINDOW TUMBLING(camTs, ptuTs, SIZE 2500 MS) gives
+# each bucket 25% margin over PTU's nominal 2000ms period, so a slightly late sample still lands in
+# the same bucket as the frames around it, without the window being wide enough to catch two PTU
+# samples. One INNER JOIN, one window, one WHERE on the pan/tilt tolerance, then straight into
+# MODEL_INFERENCE -- no pre-aggregation, no second window layer.
+#
+# Trade-off, measured: this adds real end-to-end latency vs. the unguarded hbw-state.yaml, since a
+# tumbling bucket can't emit until an event crosses its far edge -- with a 2500ms bucket that can be
+# close to 2.5s, sometimes more (whatever crosses that edge is the next PTU sample, on its own ~2s
+# clock). A denser SLIDING pre-aggregation over PTU_POS_GATE can cut that down to ~100ms at the cost
+# of a second window layer; kept this version simple instead per request -- revisit if the latency
+# becomes a real problem again.
+#
+# Pan/tilt target and tolerance: {"pan":0.9842201471328735,"tilt":-0.2473333477973938} is the
+# current confirmed at-rest HBW pointing position (differs slightly from the older 0.988990... /
+# -0.252666... constants in ssc-slot-anomaly-gated*.sql -- recalibrated, not a typo). Tolerance is
+# +-0.003, tighter than the older +-0.01; loosen if PTU_ALIGNMENT_SINK shows it's too twitchy.
+#
+# TODO before running:
+# - 0.003 tolerance and the 2500ms bucket are untested against this feed's actual pan/tilt noise
+#   and PTU update jitter -- watch PTU_ALIGNMENT_SINK and widen either if frames get dropped.
+#
+# Separate client_ids ("-hbw-state-gated") so this can run alongside hbw-state.yaml and the
+# ssc-slot-anomaly-gated* queries without colliding on MQTT connections.
+
+sinks:
+  - name: HBW_STATE_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"empty_A1"'
+        type: UINT64
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"empty_A2"'
+        type: UINT64
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"empty_A3"'
+        type: UINT64
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"empty_B1"'
+        type: UINT64
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"empty_B2"'
+        type: UINT64
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"empty_B3"'
+        type: UINT64
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"empty_C1"'
+        type: UINT64
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"empty_C2"'
+        type: UINT64
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+      - name: '"empty_C3"'
+        type: UINT64
+      - name: '"num_empty"'
+        type: UINT64
+    type: MQTT
+    config:
+      output_format: JSON
+      server_uri: localhost
+      topic: nes/hbw/slot_state
+      client_id: nebulastream-factorydemo-hbw-state-gated-sink
+      qos: 0
+  - name: PTU_ALIGNMENT_SINK
+    host: localhost:8080
+    schema:
+      - name: '"ts"'
+        type: UINT64
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+      - name: '"alignment"'
+        type: VARSIZED
+    type: Print
+    config:
+      output_format: CSV
+
+models:
+  - name: BUCKET_SLOT_CNN_9
+    path: /home/thanasis/Desktop/nebulastream/nes-plugins/FischerTechnik/FactoryDemo/models/bucket_slot_cnn_9slot.onnx
+    input:
+      - name: '"pixels9"'
+        type: VARSIZED
+    output:
+      - name: '"p_absent_A1"'
+        type: FLOAT32
+      - name: '"p_absent_A2"'
+        type: FLOAT32
+      - name: '"p_absent_A3"'
+        type: FLOAT32
+      - name: '"p_absent_B1"'
+        type: FLOAT32
+      - name: '"p_absent_B2"'
+        type: FLOAT32
+      - name: '"p_absent_B3"'
+        type: FLOAT32
+      - name: '"p_absent_C1"'
+        type: FLOAT32
+      - name: '"p_absent_C2"'
+        type: FLOAT32
+      - name: '"p_absent_C3"'
+        type: FLOAT32
+
+logical:
+  - name: SSC_CAM
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"data"'
+        type: VARSIZED
+  - name: PTU_POS_GATE
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+  - name: PTU_POS_PRINT
+    # Feeds the standalone alignment-print query only -- the hard gate uses PTU_POS_GATE above.
+    schema:
+      - name: '"ts"'
+        type: VARSIZED
+      - name: '"pan"'
+        type: FLOAT64
+      - name: '"tilt"'
+        type: FLOAT64
+
+physical:
+  - logical: SSC_CAM
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/cam
+      flush_interval_ms: 100
+      client_id: nebulastream-factorydemo-hbw-state-gated-cam
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_GATE
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-hbw-state-gated-ptu-gate
+      qos: 0
+      log_messages: false
+  - logical: PTU_POS_PRINT
+    host: localhost:8080
+    parser_config:
+      type: JSON
+      tuple_delimiter: "\n"
+    type: MQTT
+    source_config:
+      server_uri: 192.168.0.10
+      topic: i/ptu/pos
+      flush_interval_ms: 1000
+      client_id: nebulastream-factorydemo-hbw-state-gated-ptu-print
+      qos: 0
+      log_messages: false
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090

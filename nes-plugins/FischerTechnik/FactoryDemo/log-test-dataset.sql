@@ -1,0 +1,18 @@
+SELECT
+  CASTTOUNIXTS("ts") AS "ts",
+  "data"
+FROM
+  SSC_CAM
+INTO
+  SSC_CAM_LOG_SINK
+;
+
+SELECT
+  CASTTOUNIXTS("ts") AS "ts",
+  "pan",
+  "tilt"
+FROM
+  PTU_POS
+INTO
+  PTU_POS_LOG_SINK
+;
