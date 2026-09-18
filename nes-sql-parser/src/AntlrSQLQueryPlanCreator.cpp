@@ -1450,8 +1450,21 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             std::vector<LogicalFunction> arguments(argsBegin, helpers.top().functionBuilder.end());
             helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
 
+            /// Like the aggregation keywords (COUNT or count, never Count), aggregation and statistic names are only
+            /// recognised in upper or in lower case, although the registry itself looks them up case-insensitively.
+            const auto requireKeywordCase = [&]
+            {
+                const auto spelledName = context->children[0]->getText();
+                if (spelledName != funcName and spelledName != toLowerCase(spelledName))
+                {
+                    throw InvalidQuerySyntax(
+                        "{} has to be written {} or {} at {}", spelledName, funcName, toLowerCase(funcName), context->getText());
+                }
+            };
+
             if (const auto description = AggregationLogicalFunctionProvider::tryDescribe(funcName))
             {
+                requireKeywordCase();
                 if (description->isStatistic)
                 {
                     if (arguments.empty())
@@ -1499,6 +1512,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                         fmt::join(AggregationLogicalFunctionProvider::registeredNames(), ", "),
                         context->getText());
                 }
+                requireKeywordCase();
                 /// The payload is only readable through the columns named here, so a probe names at least one.
                 if (arguments.size() < 3 or arguments.size() % 2 == 0)
                 {
@@ -1518,6 +1532,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             if (funcName == "STATISTIC_BUILD")
             {
+                requireKeywordCase();
                 if (arguments.size() != 2)
                 {
                     throw InvalidQuerySyntax(

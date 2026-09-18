@@ -826,7 +826,7 @@ TEST_F(StatementBinderTest, StatisticBuildDesugarsExpressionArgument)
 
 TEST_F(StatementBinderTest, RegisteredSynopsisIsBuiltFlat)
 {
-    for (const auto* call : {"TESTSYNOPSIS(42, 100)", "testsynopsis(42, 100)", "TestSynopsis(42, UINT64(100))"})
+    for (const auto* call : {"TESTSYNOPSIS(42, 100)", "testsynopsis(42, 100)", "TESTSYNOPSIS(42, UINT64(100))"})
     {
         const auto plan = bindPlan(fmt::format("SELECT {}{}", call, WINDOWED));
         const auto writers = getOperatorByType<StatisticStoreWriterLogicalOperator>(plan);
@@ -872,10 +872,9 @@ TEST_F(StatementBinderTest, TokenAggregationsKeepTheirAutoName)
     EXPECT_NO_THROW(std::ignore = bindPlan(fmt::format("SELECT SUM(x) + UINT64(1){}", WINDOWED)));
 }
 
-/// COUNT and count are the COUNT token; any other spelling reaches COUNT through the aggregation registry.
-TEST_F(StatementBinderTest, CountStarCountsEveryRecordOnBothPaths)
+TEST_F(StatementBinderTest, CountStarCountsEveryRecord)
 {
-    for (const auto* call : {"COUNT(*)", "count(*)", "Count(*)", "COUNT(x)", "Count(x)"})
+    for (const auto* call : {"COUNT(*)", "count(*)", "COUNT(x)", "count(x)"})
     {
         const auto plan = bindPlan(fmt::format("SELECT {}{}", call, WINDOWED));
         const auto projected = getOperatorByType<WindowedAggregationLogicalOperator>(plan).front()->getWindowAggregation();
@@ -894,6 +893,27 @@ TEST_F(StatementBinderTest, OnlyCountAcceptsStar)
     EXPECT_TRUE(count.tryGetAs<CountAggregationLogicalFunction>().value()->shallIncludeNullValues());
     ASSERT_EXCEPTION_ERRORCODE(
         std::ignore = AggregationLogicalFunctionProvider::provide("SUM", {.parameters = {star}}), ErrorCode::InvalidQuerySyntax);
+}
+
+/// Like COUNT and count, but never Count, a name is recognised in upper or in lower case only.
+TEST_F(StatementBinderTest, AggregationAndStatisticNamesAreKeywordCased)
+{
+    for (const auto* select : {"testaggregation(x, 5)", "statistic_build(43, sum(x))"})
+    {
+        EXPECT_NO_THROW(std::ignore = bindPlan(fmt::format("SELECT {}{}", select, WINDOWED))) << select;
+    }
+    for (const auto* select :
+         {"Count(*)", "Count(x)", "Sum(x)", "TestAggregation(x, 5)", "TestSynopsis(42, 100)", "Statistic_Build(43, SUM(x))"})
+    {
+        const auto query = fmt::format("SELECT {}{}", select, WINDOWED);
+        EXPECT_EQ(bindError(query), ErrorCode::InvalidQuerySyntax) << query;
+        EXPECT_THAT(bindErrorMessage(query), ::testing::HasSubstr("has to be written")) << query;
+    }
+    EXPECT_THAT(
+        bindErrorMessage(fmt::format("SELECT Count(x){}", WINDOWED)), ::testing::HasSubstr("Count has to be written COUNT or count"));
+    const std::string probe = "SELECT Sum_Probe(42, v, uint64) FROM s INTO sink";
+    EXPECT_EQ(bindError(probe), ErrorCode::InvalidQuerySyntax);
+    EXPECT_THAT(bindErrorMessage(probe), ::testing::HasSubstr("has to be written SUM_PROBE or sum_probe"));
 }
 
 TEST_F(StatementBinderTest, ProbeReadsAnyRegisteredAggregation)
