@@ -129,7 +129,7 @@ SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
     }
     if (err != RdKafka::ERR_NO_ERROR)
     {
-        throw CannotOpenSink("KafkaSink produce to topic {} failed: {}", topic, RdKafka::err2str(err));
+        throw CannotWriteToSink("KafkaSink produce to topic {} failed: {}", topic, RdKafka::err2str(err));
     }
     return SendResult::Ok;
 }
@@ -141,7 +141,7 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
 
     if (const auto error = deliveryReportCallback.error.load(); error != RdKafka::ERR_NO_ERROR)
     {
-        throw CannotOpenSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
+        throw CannotWriteToSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
     }
 
     auto currentBuffer = std::optional{inputTupleBuffer};
@@ -184,7 +184,7 @@ void KafkaSink::stop(PipelineExecutionContext& pec)
     }
     if (const auto error = deliveryReportCallback.error.load(); error != RdKafka::ERR_NO_ERROR)
     {
-        throw CannotOpenSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
+        NES_WARNING("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
     }
     NES_INFO("Kafka Sink completed.");
     producer.reset();
