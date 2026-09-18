@@ -1,8 +1,3 @@
----
-title: "Quick Start"
-weight: 30
----
-
 ## Install NebulaStream
 
 The recommended way to run NebulaStream is with [Docker](https://www.docker.com/get-started/).

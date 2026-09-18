@@ -1,8 +1,3 @@
----
-title: "NebuLi: Distributed Deployment"
-weight: 60
----
-
 NebulaStream provides two primary frontend interfaces for distributed deployments:
 
 1. **`nes-repl`** - Distributed query controller for multi-node deployments via interactive REPL

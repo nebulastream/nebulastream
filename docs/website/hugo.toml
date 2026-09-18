@@ -33,28 +33,24 @@ enableRobotsTXT = true
   description = "NebulaStream is a general purpose, end-to-end data management system for the IoT."
   repo = "https://github.com/nebulastream/nebulastream"
 
-# Pages shared with docs/ are mounted from there, never copied, so the site cannot
-# drift from the docs the contributors read on GitHub. Declaring any content mount
-# replaces the default one, hence the explicit content -> content entry.
+# Pages are generated from docs/getting-started, docs/guide, and docs/development by the
+# content adapters in content/*/_content.gotmpl, which read the plain markdown files
+# through the assets mounts below. This keeps a single flat, frontmatter-free source of
+# truth readable both on GitHub and on the site, with no separate copies to drift out of
+# sync.
 [module]
   [[module.mounts]]
     source = "content"
     target = "content"
   [[module.mounts]]
-    source = "../development/development.md"
-    target = "content/development/developer.md"
+    source = "assets"
+    target = "assets"
   [[module.mounts]]
-    source = "../guide/how_to_add_a_source.md"
-    target = "content/development/howToAddSource.md"
+    source = "../getting-started"
+    target = "assets/getting-started"
   [[module.mounts]]
-    source = "../guide/how_to_add_a_sink.md"
-    target = "content/development/howToAddSink.md"
+    source = "../guide"
+    target = "assets/guide"
   [[module.mounts]]
-    source = "../guide/query_api.md"
-    target = "content/reference/APIConcepts.md"
-  [[module.mounts]]
-    source = "../guide/extensibility.md"
-    target = "content/development/Extensibility.md"
-  [[module.mounts]]
-    source = "../guide/how_to_add_a_placement_strategy.md"
-    target = "content/development/HowToAddAPlacementStrategy.md"
+    source = "../development"
+    target = "assets/development"
