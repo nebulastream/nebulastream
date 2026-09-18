@@ -16,13 +16,13 @@
 
 #include <atomic>
 #include <chrono>
-#include <cstddef>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
@@ -94,7 +94,6 @@ struct ConfigParametersNetworkSink
         "CHANNEL",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
-
     /// Per-channel sender queue size override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
         "SENDER_QUEUE_SIZE",

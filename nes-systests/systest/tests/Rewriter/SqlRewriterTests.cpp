@@ -226,7 +226,7 @@ TEST_F(SqlRewriterTest, RewritesInlineSourceNamedSinkAndQuery)
     EXPECT_EQ(std::get<RewrittenQuery>(queries.at(0).action).resultFile, "/work/TESTKEY_1.csv");
     const auto* expectedRows = std::get_if<ExpectedRows>(&std::get<RewrittenQuery>(queries.at(0).action).expectation);
     ASSERT_NE(expectedRows, nullptr);
-    EXPECT_EQ(expectedRows->rows, (std::vector<std::string>{"1"}));
+    EXPECT_EQ(expectedRows->rowsPerSink, (std::vector<std::vector<std::string>>{{"1"}}));
 
     EXPECT_EQ(namePrefix, "TESTKEY_");
 }
