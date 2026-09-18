@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,19 +47,33 @@ public:
     const DiscoveryRoot root{rootPath};
 };
 
-TEST(StripPrefixTest, RemovesEveryOccurrenceOfThePrefix)
+TEST(RestoreNamesTest, RestoresEveryRegisteredName)
 {
-    EXPECT_EQ(stripPrefix("SINK(TESTKEY_SINKONETUPLE) <- SOURCE(TESTKEY_ONETUPLE)", "TESTKEY_"), "SINK(SINKONETUPLE) <- SOURCE(ONETUPLE)");
+    const OriginalNames names{{"TESTKEY_SINKONETUPLE", "SINKONETUPLE"}, {"TESTKEY_ONETUPLE", "ONETUPLE"}};
+    EXPECT_EQ(restoreNames("SINK(TESTKEY_SINKONETUPLE) <- SOURCE(TESTKEY_ONETUPLE)", names), "SINK(SINKONETUPLE) <- SOURCE(ONETUPLE)");
 }
 
-TEST(StripPrefixTest, KeepsTextWithoutPrefix)
+TEST(RestoreNamesTest, KeepsTextWithoutRegisteredNames)
 {
-    EXPECT_EQ(stripPrefix("SINK(SINKONETUPLE)", "TESTKEY_"), "SINK(SINKONETUPLE)");
+    const OriginalNames names{{"TESTKEY_ONETUPLE", "ONETUPLE"}};
+    EXPECT_EQ(restoreNames("SINK(SINKONETUPLE)", names), "SINK(SINKONETUPLE)");
 }
 
-TEST(StripPrefixTest, RemovesAdjacentOccurrences)
+/// A declared name may start with the key itself, so stripping the prefix textually would eat into the name.
+/// Restoring the registered name as a whole keeps the declared spelling, and the restored text is not matched again.
+TEST(RestoreNamesTest, RestoresANameThatStartsLikeThePrefix)
 {
-    EXPECT_EQ(stripPrefix("A_A_NAME", "A_"), "NAME");
+    const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}, {"ORDERS_INPUT", "INPUT"}};
+    EXPECT_EQ(restoreNames("SOURCE(ORDERS_ORDERS_INPUT) SOURCE(ORDERS_INPUT)", names), "SOURCE(ORDERS_INPUT) SOURCE(INPUT)");
+}
+
+/// A field is never prefixed, so a field whose name starts like the prefix has to stay as printed.
+TEST(RestoreNamesTest, LeavesAnUnregisteredNameAlone)
+{
+    const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}};
+    EXPECT_EQ(
+        restoreNames("PROJECTION(fields: [ORDERS_TOTAL, ORDERS_ORDERS_INPUT2])", names),
+        "PROJECTION(fields: [ORDERS_TOTAL, ORDERS_ORDERS_INPUT2])");
 }
 
 /// Asserts that the directory prefix separates duplicate file stems (i.e. without the .test extension).
@@ -180,12 +195,15 @@ TEST_F(NamePrefixerTest, QuotesAPrefixedNameThatWasQuoted)
     EXPECT_EQ(registry.declare("bid").getOriginalString(), "BENCHMARK_D_NEXMARK_BID");
 }
 
-/// The sealed names hold the prefix that was put in front of every name, so a consumer can strip it from a printed plan again.
-TEST_F(NamePrefixerTest, SealContainsThePrefix)
+/// The sealed names remember the declared spelling of every prefixed name, so a consumer can restore a printed plan.
+TEST_F(NamePrefixerTest, SealMapsPrefixedNamesBackToTheDeclaredSpelling)
 {
     NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     registry.declare("bid");
-    EXPECT_EQ(std::move(registry).seal().prefix(), "BENCHMARK_D_NEXMARK_");
+    registry.declare(R"("Input Stream")");
+    EXPECT_EQ(
+        std::move(registry).seal().originalNames(),
+        (OriginalNames{{"BENCHMARK_D_NEXMARK_BID", "BID"}, {"BENCHMARK_D_NEXMARK_Input Stream", "Input Stream"}}));
 }
 
 /// The grammar admits any text between quotes, so a test file can declare a name that no identifier can hold.

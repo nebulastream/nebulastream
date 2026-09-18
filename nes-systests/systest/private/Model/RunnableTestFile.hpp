@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -122,14 +123,16 @@ inline SystestQueryId testCaseNumber(const RewrittenTestCase& testCase)
         testCase.action);
 }
 
+/// Maps the canonical spelling of a prefixed name back to the canonical spelling that the test declared.
+/// Canonical, because a printed plan spells names that way.
+using OriginalNames = std::unordered_map<std::string, std::string>;
+
 /// The rewriter produces this and the runner consumes it.
 struct RunnableTestFile
 {
     /// Name for reporting failure/progress.
     std::string name;
-    /// The prefix put in front of every catalog-visible name, so a consumer comparing printed
-    /// plans can strip it and read the names that the test wrote.
-    std::string namePrefix;
+    OriginalNames originalNames;
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;
 };

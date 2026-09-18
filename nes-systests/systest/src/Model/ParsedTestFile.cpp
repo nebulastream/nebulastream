@@ -12,6 +12,43 @@
     limitations under the License.
 */
 
-/// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
-
 #include <Model/ParsedTestFile.hpp>
+
+#include <algorithm>
+#include <unordered_set>
+#include <variant>
+#include <vector>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Overloaded.hpp>
+
+namespace NES
+{
+
+std::vector<SystestQueryId> queryNumbersOf(const TestStatement& statement)
+{
+    return std::visit(
+        Overloaded{
+            [](const CreateStatement&) { return std::vector<SystestQueryId>{}; },
+            [](const SelectStatement& query) { return std::vector{query.id}; },
+            [](const DifferentialStatement& block) { return std::vector{block.firstId, block.secondId}; },
+            [](const ExplainStatement& explain) { return std::vector{explain.id}; }},
+        statement);
+}
+
+void keepSelectedStatements(std::vector<TestStatement>& statements, const std::unordered_set<SystestQueryId>& selected)
+{
+    if (selected.empty())
+    {
+        return;
+    }
+    std::erase_if(
+        statements,
+        [&](const TestStatement& statement)
+        {
+            const auto numbers = queryNumbersOf(statement);
+            return not numbers.empty() and std::ranges::none_of(numbers, [&](const auto& number) { return selected.contains(number); });
+        });
+}
+
+}
