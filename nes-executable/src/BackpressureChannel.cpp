@@ -50,7 +50,7 @@ BackpressureController::BackpressureController(std::shared_ptr<Channel> channel)
     ++this->channel->stateMtx.lock()->controllers;
 }
 
-BackpressureController::~BackpressureController()
+void BackpressureController::leaveChannel() noexcept
 {
     if (!channel)
     {
@@ -66,6 +66,24 @@ BackpressureController::~BackpressureController()
         --state->controllers;
     }
     channel->change.notify_all();
+    channel.reset();
+    applyingPressure = false;
+}
+
+BackpressureController::~BackpressureController()
+{
+    leaveChannel();
+}
+
+BackpressureController& BackpressureController::operator=(BackpressureController&& other) noexcept
+{
+    if (this != &other)
+    {
+        leaveChannel();
+        channel = std::move(other.channel);
+        applyingPressure = std::exchange(other.applyingPressure, false);
+    }
+    return *this;
 }
 
 bool BackpressureController::applyPressure()
@@ -112,6 +130,11 @@ bool BackpressureController::releasePressure()
 void BackpressureListener::wait(const std::stop_token& stopToken) const
 {
     auto state = channel->stateMtx.lock();
+    /// A destroyed channel reads as open, because the last controller leaving takes its pressure with it. The contract
+    /// that a controller outlives every listener therefore has to be checked before proceeding, and not only after a
+    /// wait, or a listener first used after the last controller is gone would pass straight through.
+    INVARIANT(!state->isDestroyed(), "Backpressure Controller was destroyed before the BackpressureListener");
+
     /// If no controller applies backpressure, the backpressureListener can proceed
     if (state->isOpen())
     {
