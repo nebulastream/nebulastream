@@ -234,7 +234,7 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {
             /// if read method returned -1 an error occurred during read.
-            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
+            NES_ERROR("An error occurred while reading from socket: {}", strerror(errno));
             readWasValid = false;
             numReceivedBytes = 0;
             break;
@@ -275,7 +275,11 @@ void TCPSource::close()
     NES_DEBUG("Trying to close connection.");
     if (connection >= 0)
     {
-        ::close(sockfd);
+        if (::close(sockfd) != 0)
+        {
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            NES_WARNING("Could not close socket {}:{}. {}", socketHost, socketPort, strerrorResult);
+        }
         NES_TRACE("Connection closed.");
     }
 }
