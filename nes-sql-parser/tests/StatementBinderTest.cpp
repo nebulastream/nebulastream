@@ -455,6 +455,42 @@ TEST_F(StatementBinderTest, MultiSinkQueryWithRepeatedSink)
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
+/// Demonstrates the defect. The parser collects every sink clause it sees into one list and attaches all of them to the
+/// finished plan, so a sink named inside a subquery becomes a sink of the statement's own query.
+///
+/// The statement below reads as "write B of inputStream into innerSink, and A of that result into outputStream". What
+/// it binds to is:
+///
+///     SINK(INNERSINK)
+///       PROJECTION(fields: [A])
+///         PROJECTION(fields: [B])
+///           SOURCE(INPUTSTREAM)
+///     SINK(OUTPUTSTREAM)
+///       PROJECTION(fields: [A]) [shared]
+///
+/// Both sinks are roots of the statement's plan, and innerSink hangs above the outer projection that outputStream
+/// reads, shared with it. So innerSink receives the rows of the outer query — A, after its projection — rather than the
+/// subquery's B, and the write the text asks for never happens. Nothing reports this.
+TEST_F(StatementBinderTest, SinkInsideSubqueryLeaksIntoTheOuterQuery)
+{
+    const std::string query = "SELECT a FROM (SELECT b FROM inputStream INTO innerSink) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+
+    ASSERT_TRUE(statement.has_value()) << "a subquery naming a sink is accepted";
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto roots = plan.getRootOperators();
+
+    ASSERT_EQ(2, roots.size()) << "plan: " << explain(plan, ExplainVerbosity::Short);
+    EXPECT_EQ(Identifier::parse("innerSink"), roots.at(0).getAs<SinkLogicalOperator>()->getSinkName());
+    EXPECT_EQ(Identifier::parse("outputStream"), roots.at(1).getAs<SinkLogicalOperator>()->getSinkName());
+
+    /// Both sinks read the same operator, so the subquery's sink is fed the outer query's rows.
+    ASSERT_EQ(1, roots.at(0).getChildren().size());
+    ASSERT_EQ(1, roots.at(1).getChildren().size());
+    EXPECT_EQ(roots.at(0).getChildren().at(0).getId(), roots.at(1).getChildren().at(0).getId())
+        << "plan: " << explain(plan, ExplainVerbosity::Short);
+}
+
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement
