@@ -1863,6 +1863,23 @@ index d86405ac..9a609a96 100644
  
  	void visitAdd(ir::AddOperation* addIntOp, ValueFrame& frame);
  	void visitSub(ir::SubOperation* subIntOp, ValueFrame& frame);
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
+index cc9c5664..7a5a0671 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/jit/CMakeLists.txt
+@@ -2,3 +2,12 @@ add_source_files(nautilus
+         MLIRJit.cpp
+         PackFunctionArguments.cpp
+ )
++
++get_filename_component(_nautilus_target_dir
++        "${CMAKE_CURRENT_LIST_DIR}/../../../../../.."
++        ABSOLUTE)
++set_source_files_properties(
++        ${CMAKE_CURRENT_SOURCE_DIR}/MLIRJit.cpp
++        DIRECTORY ${_nautilus_target_dir}
++        PROPERTIES COMPILE_OPTIONS -fno-rtti
++)
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp b/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
 index c5cda3fe..7a8994dd 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/jit/MLIRJit.cpp
