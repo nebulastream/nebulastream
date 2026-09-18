@@ -38,6 +38,10 @@ class BackpressureController
 {
     explicit BackpressureController(std::shared_ptr<Channel> channel);
 
+    /// Gives up this controller's place on the channel: the pressure it applies, if any, and its own count. Leaves the
+    /// controller without a channel, so that giving it up twice is a no-op.
+    void leaveChannel() noexcept;
+
     std::shared_ptr<Channel> channel;
     /// Applying twice from the same controller is a no-op
     bool applyingPressure = false;
@@ -52,7 +56,10 @@ public:
 
     /// Default moves leaves channel in an empty state which prevents unintended destruction of the underlying channel
     BackpressureController(BackpressureController&& other) noexcept = default;
-    BackpressureController& operator=(BackpressureController&& other) noexcept = default;
+    /// Assigning over a controller ends it, so it gives up its place on the channel first: a defaulted assignment would
+    /// drop the controller without releasing the pressure it applies, which no one is left to release, and without
+    /// decrementing the count that tells the channel when its last controller is gone.
+    BackpressureController& operator=(BackpressureController&& other) noexcept;
 
     bool applyPressure();
     bool releasePressure();
