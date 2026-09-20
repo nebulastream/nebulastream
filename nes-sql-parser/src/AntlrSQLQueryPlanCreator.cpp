@@ -701,6 +701,15 @@ void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
 
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
+    /// The sink clause belongs to the statement rather than to a query specification, so it is visited once the query
+    /// it follows has been built and there is no helper left for its identifiers to belong to. enterSinkClause reads
+    /// them straight off its own context, so nothing is lost by leaving them alone here.
+    if (helpers.empty())
+    {
+        AntlrSQLBaseListener::enterIdentifier(context);
+        return;
+    }
+
     /// Get Index of Parent Rule to check type of parent rule in conditions
     std::optional<size_t> parentRuleIndex;
     if (const auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)

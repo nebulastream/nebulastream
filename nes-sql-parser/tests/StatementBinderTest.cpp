@@ -427,6 +427,54 @@ TEST_F(StatementBinderTest, AnonymousSourceQuery)
     ASSERT_EQ(schema, anonymousSourceOperator->getSourceSchema());
 }
 
+TEST_F(StatementBinderTest, SinkInsideUnionOperandIsRejected)
+{
+    const std::string query = "SELECT a FROM inputStreamA INTO sinkA UNION SELECT a FROM inputStreamB INTO sinkB";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, SinkInsideAMiddleUnionOperandIsRejected)
+{
+    const std::string query
+        = "SELECT a FROM inputStreamA UNION SELECT a FROM inputStreamB INTO outputStream UNION SELECT a FROM inputStreamC";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, RepeatedSinkAcrossUnionTerms)
+{
+    const std::string query = "SELECT a FROM inputStreamA INTO outputStream UNION SELECT a FROM inputStreamB INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, SinkInsideSubqueryIsRejected)
+{
+    const std::string query = "SELECT a FROM (SELECT b FROM inputStream INTO innerSink) INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, UnionWithTrailingSinkIsAccepted)
+{
+    const std::string query = "SELECT a FROM inputStreamA UNION SELECT a FROM inputStreamB INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+}
+
+TEST_F(StatementBinderTest, ExplainedQueryWithSinkIsAccepted)
+{
+    const std::string query = "EXPLAIN (LOGICAL) FORMAT TEXT SELECT a FROM inputStream INTO outputStream";
+    const auto statement = binder->parseAndBindSingle(query);
+    ASSERT_TRUE(statement.has_value());
+}
+
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement

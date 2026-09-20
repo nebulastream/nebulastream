@@ -60,7 +60,7 @@ terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
+explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? topLevelQuery;
 explainStages: explainStage (',' explainStage)*;
 explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
@@ -115,7 +115,12 @@ showSubject: QUERIES #showQueriesSubject
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
-queryWithOptions: query optionsClause?;
+queryWithOptions: topLevelQuery optionsClause?;
+
+/// A query the statement itself runs, as opposed to one nested inside another query. Only such a query writes into
+/// sinks, so this is the one rule that carries the sink clause, and it is reachable from the statement alone: every
+/// way of nesting a query goes through `query` instead, where an INTO is not a thing the grammar can express.
+topLevelQuery: query sinkClause?;
 query: queryTerm queryOrganization ;
 
 queryOrganization:
@@ -136,7 +141,7 @@ queryPrimary
     | '(' query ')'                                                         #subquery
     ;
 /// new layout to be closer to traditional SQL
-querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
+querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause?;
 
 
 fromClause: FROM relation (',' relation)*;
