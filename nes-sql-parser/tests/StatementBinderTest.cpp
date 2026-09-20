@@ -455,8 +455,9 @@ TEST_F(StatementBinderTest, MultiSinkQueryWithRepeatedSink)
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
-/// Every sink of a query reads the finished union, so an INTO written on an earlier operand promises something the query
-/// does not do: it reads as that operand's own sink while it would consume the whole union.
+/// Every sink of a query reads the finished union, so an INTO written on an operand promises something the query does
+/// not do: it reads as that operand's own sink while it would consume the whole union. An operand is a `query`, which
+/// carries no sink clause, so the spelling does not parse.
 TEST_F(StatementBinderTest, SinkInsideUnionOperandIsRejected)
 {
     const std::string query = "SELECT a FROM inputStreamA INTO sinkA UNION SELECT a FROM inputStreamB INTO sinkB";
@@ -465,9 +466,9 @@ TEST_F(StatementBinderTest, SinkInsideUnionOperandIsRejected)
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
-/// An operand in the middle of a union chain is the right-hand side of the union it sits in, and only the union built
-/// from it is an earlier operand of the one above. Reaching it therefore takes more than looking at the nearest union:
-/// the clause is rejected for a left-hand side found further up, which is what tells a walk apart from a single check.
+/// The middle of a union chain was the position that needed the most care while the sink clause hung off a query
+/// specification, because it is the right-hand side of one union and only an earlier operand of the one above. With the
+/// clause at statement level no operand can carry one, so the case stops being special.
 TEST_F(StatementBinderTest, SinkInsideAMiddleUnionOperandIsRejected)
 {
     const std::string query
@@ -488,19 +489,18 @@ TEST_F(StatementBinderTest, RepeatedSinkAcrossUnionTerms)
 }
 
 /// A subquery produces rows for the query around it, so sinks named inside one would promise a write that no part of
-/// the statement performs. The message is asserted as well, because a query this shape must be rejected for naming
-/// sinks and not for some unrelated reason.
+/// the statement performs. Only a query the statement runs carries a sink clause, and every way of nesting one goes
+/// through `query`, which has none — so this is a parse error rather than something a later pass has to catch.
 TEST_F(StatementBinderTest, SinkInsideSubqueryIsRejected)
 {
     const std::string query = "SELECT a FROM (SELECT b FROM inputStream INTO innerSink) INTO outputStream";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_FALSE(statement.has_value());
     ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
-    EXPECT_NE(std::string{statement.error().what()}.find("Only the outermost query"), std::string::npos)
-        << "rejected for an unrelated reason: " << statement.error().what();
 }
 
-/// The sinks of a union are written after its last operand, which stays the way to give a union a sink.
+/// A union is a query like any other, so the statement's sink clause follows it. This is the same text as before the
+/// clause moved: it used to parse as the last operand's own sink clause and now parses as the statement's.
 TEST_F(StatementBinderTest, UnionWithTrailingSinkIsAccepted)
 {
     const std::string query = "SELECT a FROM inputStreamA UNION SELECT a FROM inputStreamB INTO outputStream";

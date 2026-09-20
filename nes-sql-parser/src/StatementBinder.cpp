@@ -71,12 +71,12 @@ namespace NES
 class StatementBinder::Impl
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
+    std::function<LogicalPlan(AntlrSQLParser::TopLevelQueryContext*)> queryBinder;
 
 public:
     Impl(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
+        const std::function<LogicalPlan(AntlrSQLParser::TopLevelQueryContext*)>& queryBinder)
         : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
     {
     }
@@ -616,7 +616,7 @@ public:
 
     Statement bindExplainStatement(AntlrSQLParser::ExplainStatementContext* explainAst) const
     {
-        INVARIANT(explainAst->query() != nullptr, "Should be enforced by antlr");
+        INVARIANT(explainAst->topLevelQuery() != nullptr, "Should be enforced by antlr");
         ExplainFormat format = ExplainFormat::Visual;
         std::unordered_set<ExplainStage> stages = {ExplainStage::Logical, ExplainStage::Optimized, ExplainStage::Distributed};
         if (auto* const stagesAST = explainAst->explainStages())
@@ -628,7 +628,7 @@ public:
             format = bindExplainFormat(formatAST);
         }
 
-        return ExplainQueryStatement{.plan = queryBinder(explainAst->query()), .explainFormat = format, .explainStages = stages};
+        return ExplainQueryStatement{.plan = queryBinder(explainAst->topLevelQuery()), .explainFormat = format, .explainStages = stages};
     }
 
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
@@ -672,7 +672,7 @@ public:
                         }
                     }
                 }
-                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+                return QueryStatement{.plan = queryBinder(queryAst->topLevelQuery()), .id = queryId};
             }
 
             throw InvalidStatement(statementAST->toString());
@@ -690,7 +690,7 @@ public:
 
 StatementBinder::StatementBinder(
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
+    const std::function<LogicalPlan(AntlrSQLParser::TopLevelQueryContext*)>& queryPlanBinder)
     : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
 }

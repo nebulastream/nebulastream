@@ -31,7 +31,7 @@
 namespace NES::AntlrSQLQueryParser
 {
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
+LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::TopLevelQueryContext* queryAst);
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.

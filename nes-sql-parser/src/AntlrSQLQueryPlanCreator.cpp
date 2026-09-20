@@ -384,49 +384,6 @@ void negateTopFunction(std::stack<AntlrSQLHelper>& helpers, const std::string& e
     }
 }
 
-/// True unless the clause belongs to the query the statement runs, rather than to one nested inside another query.
-///
-/// Every sink of a query consumes what that query produces, so only its outermost query can name them. The grammar
-/// hangs a sink clause off a query specification, and a union operand and a parenthesised subquery are made of the same
-/// rule, which is why the position is checked here: the sinks of `A UNION B INTO sink` are written on B, the last
-/// operand, and belong to the union as a whole, while the same clause on A would read as A's own sink.
-///
-/// The walk climbs to the statement and accepts only when it gets there through the rules a query is built from, taking
-/// a union through its last operand. Every other way up ends it: an earlier operand, a query in parentheses, and
-/// likewise any way to nest a query added later, because a construct this rule was never taught about is not one of the
-/// statement-level rules it accepts on. A new nesting construct is therefore refused until someone decides what its
-/// sinks should mean, instead of silently writing them into the enclosing query.
-bool isInsideNestedQuery(const antlr4::tree::ParseTree* clause)
-{
-    const auto* child = clause;
-    for (const auto* ancestor = clause->parent; ancestor != nullptr; child = ancestor, ancestor = ancestor->parent)
-    {
-        /// Arrived at the statement through query rules alone, so the clause names the sinks of the query it runs.
-        if (dynamic_cast<const AntlrSQLParser::QueryWithOptionsContext*>(ancestor) != nullptr
-            or dynamic_cast<const AntlrSQLParser::ExplainStatementContext*>(ancestor) != nullptr)
-        {
-            return false;
-        }
-        /// A union operand other than the last one, whose rows reach the sinks only as part of the union.
-        if (const auto* setOperation = dynamic_cast<const AntlrSQLParser::SetOperationContext*>(ancestor);
-            setOperation != nullptr and static_cast<const antlr4::tree::ParseTree*>(setOperation->left) == child)
-        {
-            return true;
-        }
-        const auto isQueryRule = dynamic_cast<const AntlrSQLParser::QuerySpecificationContext*>(ancestor) != nullptr
-            or dynamic_cast<const AntlrSQLParser::QueryPrimaryContext*>(ancestor) != nullptr
-            or dynamic_cast<const AntlrSQLParser::QueryTermContext*>(ancestor) != nullptr
-            or dynamic_cast<const AntlrSQLParser::QueryContext*>(ancestor) != nullptr;
-        if (not isQueryRule)
-        {
-            /// Left the query rules for something else on the way up — a subquery in a FROM clause, for instance — so
-            /// the clause belongs to a query that another one reads rather than to the statement's own.
-            return true;
-        }
-    }
-    return true;
-}
-
 }
 
 void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
@@ -443,13 +400,6 @@ void AntlrSQLQueryPlanCreator::enterFromClause(AntlrSQLParser::FromClauseContext
 
 void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext* context)
 {
-    if (isInsideNestedQuery(context))
-    {
-        throw InvalidQuerySyntax(
-            "Only the outermost query of a statement writes into sinks, so INTO belongs behind the last UNION operand and cannot be "
-            "written on an earlier one or inside a subquery: {}",
-            context->getText());
-    }
     if (context->sink().empty())
     {
         throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
@@ -767,6 +717,15 @@ void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
 
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
+    /// The sink clause belongs to the statement rather than to a query specification, so it is visited once the query
+    /// it follows has been built and there is no helper left for its identifiers to belong to. enterSinkClause reads
+    /// them straight off its own context, so nothing is lost by leaving them alone here.
+    if (helpers.empty())
+    {
+        AntlrSQLBaseListener::enterIdentifier(context);
+        return;
+    }
+
     /// Get Index of Parent Rule to check type of parent rule in conditions
     std::optional<size_t> parentRuleIndex;
     if (const auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)

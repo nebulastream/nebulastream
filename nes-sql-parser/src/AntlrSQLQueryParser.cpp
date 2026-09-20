@@ -72,7 +72,7 @@ installErrorListenerAndHandler(std::string_view query, antlr4::Lexer& lexer, ant
 }
 }
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::TopLevelQueryContext* queryAst)
 {
     try
     {
@@ -104,7 +104,7 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
             throw InvalidQuerySyntax("Expected a query statement in {}", queryString);
         }
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
-        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->queryWithOptions()->query());
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, statement->queryWithOptions()->topLevelQuery());
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.setOriginalSql(std::string(queryString));
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
