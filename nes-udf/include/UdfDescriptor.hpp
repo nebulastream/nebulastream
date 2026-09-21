@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -31,9 +34,21 @@ class UdfCatalog;
 /// widths, BOOLEAN, and VARSIZED; CHAR and UNDEFINED are rejected at registration (see docs/design/20260708_Scalar_UDF_Support.md, NG4).
 [[nodiscard]] bool isSupportedUdfType(DataType::Type type);
 
-/// A registered scalar UDF: name, path to the `.so` exposing the UDF C ABI, entry point inside it
-/// (e.g. "module.function"), and the declared signature. No public constructor -- only reachable
-/// through `UdfCatalog::registerUdf` (which validates) or reflection (which trusts prior validation).
+/// How a registered UDF executes. InProcess loads a bridge `.so` (CPython, PyPy, ...) that implements the UDF C ABI.
+/// Codon compiles the entry point's module ahead of time into the query pipeline (no `.so`, no ABI call per row).
+enum class UdfExecution : std::uint8_t
+{
+    InProcess,
+    Codon
+};
+
+/// Splits an entry point "module.function" (the module may be a dotted package path) at its last dot.
+/// Returns nullopt unless both parts are non-empty.
+[[nodiscard]] std::optional<std::pair<std::string, std::string>> splitEntrypoint(std::string_view entrypoint);
+
+/// A registered scalar UDF: name, how it executes, path to the `.so` exposing the UDF C ABI (InProcess only; empty
+/// for Codon), entry point inside it (e.g. "module.function"), and the declared signature. No public constructor --
+/// only reachable through `UdfCatalog::registerUdf` (which validates) or reflection (which trusts prior validation).
 class UdfDescriptor
 {
     std::string name;
@@ -41,13 +56,21 @@ class UdfDescriptor
     std::string entrypoint;
     std::vector<DataType> argTypes;
     DataType returnType;
+    UdfExecution execution;
 
-    UdfDescriptor(std::string name, std::filesystem::path path, std::string entrypoint, std::vector<DataType> argTypes, DataType returnType)
+    UdfDescriptor(
+        std::string name,
+        std::filesystem::path path,
+        std::string entrypoint,
+        std::vector<DataType> argTypes,
+        DataType returnType,
+        UdfExecution execution)
         : name(std::move(name))
         , path(std::move(path))
         , entrypoint(std::move(entrypoint))
         , argTypes(std::move(argTypes))
         , returnType(returnType)
+        , execution(execution)
     {
     }
 
@@ -65,6 +88,8 @@ public:
     [[nodiscard]] const std::vector<DataType>& getArgTypes() const { return argTypes; }
 
     [[nodiscard]] const DataType& getReturnType() const { return returnType; }
+
+    [[nodiscard]] UdfExecution getExecution() const { return execution; }
 
     bool operator==(const UdfDescriptor&) const = default;
 };

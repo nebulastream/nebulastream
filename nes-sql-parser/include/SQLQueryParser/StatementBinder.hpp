@@ -43,6 +43,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
+#include <UdfDescriptor.hpp>
 
 namespace NES
 {
@@ -190,6 +191,7 @@ struct CreateFunctionStatement
     std::string entrypoint;
     std::vector<DataType> argTypes;
     DataType returnType;
+    UdfExecution execution = UdfExecution::InProcess;
 };
 
 struct ShowFunctionsStatement

@@ -1,0 +1,43 @@
+# name: udf/CodonUdf.test
+# description: catalog UDFs executed by Codon (CREATE FUNCTION ... BRIDGE 'codon'): the ENTRYPOINT module is compiled
+# ahead of time into the query pipeline. Same portable module as the CPython/PyPy bridges; NULL arguments give NULL.
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE numbers(a INT64, b INT64, name VARSIZED);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,2,abc
+10,,xyz
+,5,
+
+CREATE FUNCTION add_codon (a INT64, b INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.add';
+CREATE FUNCTION shout_codon (text VARSIZED) RETURNS VARSIZED BRIDGE 'codon' ENTRYPOINT 'portable_udfs.shout';
+
+# A NULL in either argument yields NULL without calling the function
+SELECT add_codon(a, b) AS result FROM numbers
+INTO file();
+----
+3
+NULL
+NULL
+
+SELECT shout_codon(name) AS result FROM numbers
+INTO file();
+----
+ABC
+XYZ
+NULL
+
+CREATE LOGICAL SOURCE prices(price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR prices TYPE File;
+ATTACH INLINE
+100.0
+40.0
+
+CREATE FUNCTION discount_codon (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.apply_discount';
+
+SELECT discount_codon(price) AS discounted FROM prices
+INTO file();
+----
+90.0
+36.0
