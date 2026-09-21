@@ -135,7 +135,7 @@ private:
 std::string restoreNames(std::string_view text, const OriginalNames& names);
 
 /// Prefixes every reference to a name that the test file declared.
-/// Only source, sink and model positions change: `SELECT s FROM s` renames only the second `s`.
+/// Only source, sink, model and function positions change: `SELECT s FROM s` renames only the second `s`.
 void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names);
 
 }

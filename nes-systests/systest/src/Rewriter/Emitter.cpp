@@ -126,6 +126,8 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 }
             },
             [&](const ModelDeclaration& declaration) { runnable.setupStatements.emplace_back(modelStatement(*create.parse, declaration)); },
+            [&](const FunctionDeclaration& declaration)
+            { runnable.setupStatements.emplace_back(functionStatement(*create.parse, declaration)); },
             [&](const SinkDeclaration& declaration)
             {
                 /// An inlined sink needs no statement of its own.
@@ -146,6 +148,21 @@ PlainStatement Emitter::modelStatement(SqlParse& parse, const ModelDeclaration& 
     if (const std::filesystem::path declared{unquote(declaration.definition->modelPath->getText())}; declared.is_relative())
     {
         rewriter.replace(declaration.definition->modelPath, Sql::stringLiteral((context.testDataDir / declared).string()));
+    }
+    return PlainStatement{.sql = rewriter.getText()};
+}
+
+PlainStatement Emitter::functionStatement(SqlParse& parse, const FunctionDeclaration& declaration) const
+{
+    antlr4::TokenStreamRewriter rewriter{&parse.tokenStream()};
+    prefixNames(parse, rewriter, declarations.names);
+    /// A relative FROM library resolves against the test data directory, as a relative model path does.
+    if (auto* path = declaration.definition->functionPath; path != nullptr)
+    {
+        if (const std::filesystem::path declared{unquote(path->getText())}; declared.is_relative())
+        {
+            rewriter.replace(path, Sql::stringLiteral((context.testDataDir / declared).string()));
+        }
     }
     return PlainStatement{.sql = rewriter.getText()};
 }

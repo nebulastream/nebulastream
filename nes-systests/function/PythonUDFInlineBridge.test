@@ -1,0 +1,22 @@
+# name: function/PythonUDFInlineBridge.test
+# description: Inline PYTHON(...) UDF selecting the cpython interpreter backend via BRIDGE, instead of the default Codon AOT compile
+# groups: [Function, PythonUDF, PythonUdf]
+
+CREATE LOGICAL SOURCE values(id UINT64 NOT NULL, number INT64, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR values TYPE File;
+ATTACH INLINE
+1,5,10
+2,,20
+3,-7,30
+
+SELECT PYTHON((id, number, text): $python$
+    if number is None:
+        return None
+    return int(id) + number + int(text)
+$python$) AS INT64 NULL BRIDGE 'cpython' AS result
+FROM values
+INTO file();
+----
+16
+NULL
+26

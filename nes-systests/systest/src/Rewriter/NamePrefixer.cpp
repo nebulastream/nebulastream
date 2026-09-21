@@ -256,6 +256,14 @@ void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, c
     {
         prefix(model->modelName);
     }
+    for (const auto* function : findAll<AntlrSQLParser::CreateFunctionDefinitionContext>(parse.tree()))
+    {
+        prefix(function->udfName);
+    }
+    for (auto* call : findAll<AntlrSQLParser::FunctionCallContext>(parse.tree()))
+    {
+        prefix(call->functionName());
+    }
     for (auto* source : findAll<AntlrSQLParser::NamedSourceContext>(parse.tree()))
     {
         prefixParts(source->multipartIdentifier());

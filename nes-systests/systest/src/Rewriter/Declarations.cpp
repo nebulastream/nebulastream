@@ -41,6 +41,8 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                 /// A query that infers with a model refers to it, so a model is prefixed like a source.
                 registry.declare(declaration.definition->modelName->getText());
             },
+            /// Test files share one UDF catalog, so a function is prefixed like a model.
+            [&](const FunctionDeclaration& declaration) { registry.declare(declaration.definition->udfName->getText()); },
             [&](const SinkDeclaration& declaration)
             {
                 /// A sink name is catalog-visible only when its declaration is submitted.

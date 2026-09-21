@@ -63,6 +63,7 @@ private:
     void emitDifferential(const DifferentialStatement& block);
 
     [[nodiscard]] PlainStatement modelStatement(SqlParse& parse, const ModelDeclaration& declaration) const;
+    [[nodiscard]] PlainStatement functionStatement(SqlParse& parse, const FunctionDeclaration& declaration) const;
 
     const RewriteContext& context; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     Declarations declarations;

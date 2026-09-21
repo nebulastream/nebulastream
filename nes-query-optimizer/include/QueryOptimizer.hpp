@@ -27,6 +27,7 @@
 namespace NES
 {
 class ModelCatalog;
+class UdfCatalog;
 }
 
 namespace NES
@@ -40,8 +41,9 @@ public:
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::shared_ptr<const SinkCatalog>& sinkCatalog,
         const std::shared_ptr<const WorkerCatalog>& workerCatalog,
-        const std::shared_ptr<const ModelCatalog>& modelCatalog)
-        : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog)
+        const std::shared_ptr<const ModelCatalog>& modelCatalog,
+        const std::shared_ptr<const UdfCatalog>& udfCatalog)
+        : ruleBasedOptimization(defaultQueryOptimization, sourceCatalog, sinkCatalog, modelCatalog, udfCatalog)
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
     [[nodiscard]] DistributedLogicalPlan optimize(LogicalPlan plan) const;

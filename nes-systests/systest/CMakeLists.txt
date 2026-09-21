@@ -104,12 +104,47 @@ target_compile_definitions(nes-systest-lib PUBLIC
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
+# The CPython UDF bridge (built by nes-udf/bridge-cpython only where Python's embed dev files exist) is
+# dlopen'd by the `PythonUdf` systest group. `.test` files reference it via the PY_BRIDGE_DIR
+# substitution keyword; the binder puts nes-systests/udf/pyudfs on NES_UDF_PATH so `import`s resolve.
+# PY_UDF_VENV_DIR resolves to nes-systests/udf/small_venv -- an in-tree venv (see PythonUdfVenv.test)
+# demonstrating worker.python_udf.venv (A7 in docs/design/20260708_Scalar_UDF_Support.md) with no
+# machine-specific path needed in the .test file itself.
+find_package(Python3 COMPONENTS Development.Embed QUIET)
+if (Python3_FOUND)
+    target_compile_definitions(nes-systest-lib PUBLIC
+            SYSTEST_PY_BRIDGE_DIR="$<TARGET_FILE_DIR:nes-cpython-udf-bridge>"
+            SYSTEST_PY_UDF_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../udf/pyudfs"
+            SYSTEST_PY_UDF_VENV_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../udf/small_venv")
+else ()
+    target_compile_definitions(nes-systest-lib PUBLIC SYSTEST_PY_BRIDGE_DIR="" SYSTEST_PY_UDF_PATH="" SYSTEST_PY_UDF_VENV_DIR="")
+endif ()
+
 # Add the systest executable
 add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-query-optimizer)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 target_include_directories(systest PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+
+# `BRIDGE`-based CREATE FUNCTION statements resolve the path relative to the running executable (see
+# UdfBridgeRegistry), not through the PY_BRIDGE_DIR substitution above. Stage the built bridge next to
+# `systest` at that same location so these tests exercise the real resolution path.
+if (Python3_FOUND)
+    add_custom_command(TARGET systest POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
+endif ()
+
+# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
+# the same reason as the Python3 check above.
+include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
+nes_find_pypy()
+if (NES_PYPY_FOUND)
+    add_custom_command(TARGET systest POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:systest>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:systest>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
+endif ()
 
 # By default, only run with slice cache enabled. When ALL_SLICE_CACHE_TESTS is ON, also run without.
 if (ALL_SLICE_CACHE_TESTS)
@@ -121,12 +156,29 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the OpenVINO converter;
 # when ENABLE_INFERENCE_TESTS is OFF (e.g. `ovc` not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large CompilerOnly)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
+# The PythonUdfVenv group needs worker.python_udf.venv pointed at a populated venv (see
+# nes-systests/udf/small_venv, set inline by PythonUdfVenv.test itself via GLOBALCONFIGURATION).
+# PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
+# packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
+# PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
+# All three are permanently opt-in, like `large`, and never run as part of the default invocations below.
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree CompilerOnly)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree)
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
 endif ()
+# The PythonUdf group needs the Python bridge; skip it where Python's embed dev files are absent.
+if (NOT Python3_FOUND)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PythonUdf)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PythonUdf)
+endif ()
+# The PyPyUdf group needs the PyPy bridge; skip it where pypy3 is absent.
+if (NOT NES_PYPY_FOUND)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS PyPyUdf)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER PyPyUdf)
+endif ()
+
 # The NestedLoopIntensive group holds tests whose input is large enough that the O(n^2) nested loop join takes over an
 # hour per query, in the compiler just as much as in the interpreter. So exclude them from both NLJ invocations.
 # They still run for every other join strategy.

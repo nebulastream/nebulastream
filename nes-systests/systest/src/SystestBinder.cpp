@@ -14,11 +14,13 @@
 
 #include <SystestBinder.hpp>
 
+#include <cstdlib>
 #include <expected>
 #include <memory>
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -50,6 +52,7 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <UdfCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -97,21 +100,29 @@ struct SystestBinder::Impl
         : sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
+        , udfCatalog{std::make_shared<UdfCatalog>()}
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
+        , udfHandler{udfCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
               config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),
-              modelCatalog}
+              modelCatalog,
+              udfCatalog}
     {
         for (const auto& [host, data, capacity, downstream, workerConfig] : config.clusterConfig.workers)
         {
             workerCatalog->addWorker(host, data, capacity, downstream, workerConfig);
+        }
+        /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge.
+        if (std::string_view{SYSTEST_PY_UDF_PATH}.size() > 0)
+        {
+            setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
         }
     }
 
@@ -155,7 +166,9 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
-                [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
+                [&](const CreateFunctionStatement& statement) { throwOnError(udfHandler(statement)); },
+                [&](const auto&)
+                { throw UnsupportedQuery("a setup statement has to declare a source, a sink, a model, or a function: {}", sql); }},
             binding);
     }
 
@@ -223,11 +236,13 @@ private:
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
+    std::shared_ptr<UdfCatalog> udfCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    UdfStatementHandler udfHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };
