@@ -74,6 +74,11 @@ public:
     create(LogicalOperator child, std::vector<UnboundProjection> projections, Asterisk asterisk);
 
     [[nodiscard]] std::vector<Projection> getProjections() const;
+
+    /// The projections as declared (name + function), available before schema inference — unlike
+    /// getProjections(), which binds each field against the (not-yet-inferred) output schema.
+    [[nodiscard]] const std::vector<UnboundProjection>& getUnboundProjections() const { return projections; }
+
     [[nodiscard]] std::unordered_map<Field, std::unordered_set<Field>> getAccessedFieldsForOutput() const override;
     [[nodiscard]] bool hasAsterisk() const;
 

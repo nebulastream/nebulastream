@@ -1,0 +1,35 @@
+# name: udf/PythonUdfIrisClassificationIree.test
+# description: same as PythonUdfIrisClassification.test, but via IREE instead of onnxruntime -- the
+# same execution engine MODEL_INFERENCE itself uses (import -> compile -> run at UDF-import time).
+# Needs iree-base-compiler + iree-base-runtime + onnx in a venv passed via --worker.python_udf.venv.
+# No PyPy wheels exist for either onnxruntime or IREE's Python packages -- CPython only.
+# Do not combine with PythonUdfVenv/PythonUdfOnnx in one invocation -- one interpreter per process.
+# groups: [PythonUdfIree]
+
+CREATE LOGICAL SOURCE stream(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+6.1,3.5,1.4,0.2
+4.9,3.0,1.4,0.2
+4.7,3.2,1.3,0.2
+
+CREATE FUNCTION setosa_iree (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf_iree.setosa';
+CREATE FUNCTION versicolor_iree (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf_iree.versicolor';
+CREATE FUNCTION virginica_iree (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf_iree.virginica';
+
+SELECT p1, p2, p3, p4, setosa_iree(p1, p2, p3, p4) AS setosa, versicolor_iree(p1, p2, p3, p4) AS versicolor, virginica_iree(p1, p2, p3, p4) AS virginica
+FROM stream
+INTO FILE();
+----
+6.1,3.5,1.4,0.2,0.946717,0.051443,0.00184
+4.9,3.0,1.4,0.2,0.888224,0.103913,0.007863
+4.7,3.2,1.3,0.2,0.898816,0.094172,0.007012
+
+# Same filter as InferModel.test: keep only rows classified as setosa with probability > 0.9.
+SELECT * FROM (
+    SELECT p1, p2, p3, p4, setosa_iree(p1, p2, p3, p4) AS setosa, versicolor_iree(p1, p2, p3, p4) AS versicolor, virginica_iree(p1, p2, p3, p4) AS virginica
+    FROM stream
+) WHERE setosa > 0.9
+INTO FILE();
+----
+6.1,3.5,1.4,0.2,0.946717,0.051443,0.00184

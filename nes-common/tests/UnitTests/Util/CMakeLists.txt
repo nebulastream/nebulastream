@@ -24,6 +24,7 @@ add_nes_common_test(nes-common-tests
         "FilesTest.cpp"
         "ReflectionTest.cpp"
         "VersionTest.cpp"
+        "NamedCatalogTest.cpp"
 )
 
 add_nes_test(nes-thread-test

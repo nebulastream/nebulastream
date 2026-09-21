@@ -28,6 +28,7 @@
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <UdfCatalog.hpp>
 
 namespace NES
 {
@@ -36,11 +37,13 @@ RuleBasedOptimizer::RuleBasedOptimizer(
     QueryOptimizerConfiguration defaultQueryOptimization,
     std::shared_ptr<const SourceCatalog> sourceCatalog,
     std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const ModelCatalog> modelCatalog)
+    std::shared_ptr<const ModelCatalog> modelCatalog,
+    std::shared_ptr<const UdfCatalog> udfCatalog)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
     , modelCatalog(std::move(modelCatalog))
+    , udfCatalog(std::move(udfCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
 
@@ -50,6 +53,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(
         .sourceCatalog = this->sourceCatalog,
         .sinkCatalog = this->sinkCatalog,
         .modelCatalog = this->modelCatalog,
+        .udfCatalog = this->udfCatalog,
     };
 
     for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())

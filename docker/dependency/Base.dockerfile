@@ -30,6 +30,7 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     pkg-config \
+    python3-dev \
     -y \
     && apt clean && rm -rf /var/lib/apt/lists/*
 

@@ -1,0 +1,73 @@
+# name: udf/PythonUDFNexmark.test
+# description: scalar currency.apply_discount UDF on Nexmark bid prices via both bridges; large-scale
+# filters on the UDF's input, and two independent UDFs filtered on their outputs, exercising PyPy's JIT warm-up.
+# The filter-on-output comparison incl. Codon lives in PythonUdfBridgeComparison.test
+# groups: [PythonUdf, PyPyUdf, large]
+
+CREATE LOGICAL SOURCE bidModified100K(timestamp UINT64 NOT NULL, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);
+CREATE PHYSICAL SOURCE FOR bidModified100K TYPE File;
+ATTACH FILE small/nexmark/bid_modified_100K.csv
+
+# CPython bridge small scale
+CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'currency.apply_discount';
+
+SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidModified100K
+WHERE (auctionId = 0 AND bidder = 0 AND price = 117.0) OR (auctionId = 1 AND bidder = 0 AND price = 208.0)
+INTO FILE();
+----
+0,0,105.3
+1,0,187.2
+
+# PyPy bridge, same query, same expected result
+CREATE FUNCTION discount_price_pypy (price FLOAT64) RETURNS FLOAT64 BRIDGE 'pypy' ENTRYPOINT 'currency.apply_discount';
+
+SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidModified100K
+WHERE (auctionId = 0 AND bidder = 0 AND price = 117.0) OR (auctionId = 1 AND bidder = 0 AND price = 208.0)
+INTO FILE();
+----
+0,0,105.3
+1,0,187.2
+
+# Large scale nexmark with udf tests
+CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+# CPython bridge, filter on simple scalar UDF INPUT
+SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidLarge
+WHERE (auctionId = 999994 AND bidder = 126934 AND price = 146.0) OR (auctionId = 999994 AND bidder = 23774 AND price = 40.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# PyPy bridge, filter on simple scalar UDF INPUT
+SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidLarge
+WHERE (auctionId = 999994 AND bidder = 126934 AND price = 146.0) OR (auctionId = 999994 AND bidder = 23774 AND price = 40.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# Two independent UDFs (no chaining) on separate columns; WHERE filters on both UDFs' outputs, so both run on every row
+CREATE FUNCTION name_from_id_cpython (id INT32) RETURNS VARSIZED BRIDGE 'cpython' ENTRYPOINT 'currency.id_to_name';
+CREATE FUNCTION name_from_id_pypy (id INT32) RETURNS VARSIZED BRIDGE 'pypy' ENTRYPOINT 'currency.id_to_name';
+
+# CPython bridge, two independent UDFs, filter on both UDFs' OUTPUTs
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice, name_from_id_cpython(bidder) AS bidderName FROM bidLarge
+) WHERE (auctionId = 999994 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidderName = 'CDHHE')
+INTO FILE();
+----
+999994,126934,131.4,BCGJDE
+999994,23774,36.0,CDHHE
+
+# PyPy bridge, same independent UDFs, same filter on OUTPUTs
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice, name_from_id_pypy(bidder) AS bidderName FROM bidLarge
+) WHERE (auctionId = 999994 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidderName = 'CDHHE')
+INTO FILE();
+----
+999994,126934,131.4,BCGJDE
+999994,23774,36.0,CDHHE
+

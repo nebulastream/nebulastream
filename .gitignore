@@ -45,7 +45,7 @@ nes-asp/data/*.csv
 *.log
 *.undo
 
-scripts/__pycache__
+__pycache__/
 .ccache
 
 # Ignore nix symlinks
