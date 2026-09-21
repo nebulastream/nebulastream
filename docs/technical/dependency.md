@@ -126,9 +126,11 @@ patch throws all transient dependencies which would otherwise be introduced via 
 
 ### LLVM
 
-Based on the current vcpkg version. The LLVM patch simply disables all default features. This is not possible via
+Based on the current vcpkg version (22.1.8). The LLVM patch simply disables all default features. This is not possible via
 `vcpkg.json` because llvm is included via
-nautilus.
+nautilus. The remaining patches only fix install directories and disable the libomp aliases so that the port installs
+into the vcpkg layout. This port is only used when MLIR is built via vcpkg; the docker images and the nix flake use the
+prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-v1`).
 
 ### Paho MQTT
 
@@ -139,7 +141,13 @@ non-standard specialization; the standard only mandates it for `char`, `wchar_t`
 
 ### Nautilus
 
-Nautilus is not currently on vcpkg.
+Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
+[nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port disables all optional backends and plugins
+we do not use (bytecode/tbc, C++, asmjit, simd, profiling, ...) and only builds the MLIR backend. It carries a single
+patch, `0001-disable-ubsan-function-call-check`: UBSan's `-fsanitize=function` traps when the JIT-compiled entry point is
+called through a typed function pointer, because JIT code has no type-hash prologue. Exception handling for `invoke`
+calls (destructors of live values, rethrow at the host boundary) is provided by nautilus itself. The nix flake builds
+the same nautilus commit with the same patch (`.nix/nautilus`), keep both in sync when bumping.
 
 ### libuuid
 
