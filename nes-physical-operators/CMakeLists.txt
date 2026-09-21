@@ -32,7 +32,12 @@ add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 target_sources(nes-physical-operators PRIVATE ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
 find_package(OpenSSL REQUIRED)
-target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-input-formatters nes-inference-runtime OpenSSL::Crypto)
+find_package(codon-compiler CONFIG REQUIRED)
+target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-sinks nes-nautilus nes-logical-operators nes-input-formatter-provider PRIVATE nes-codon-plugin nes-input-formatters nes-inference-runtime nes-codon-plugin OpenSSL::Crypto codon::compiler)
+add_dependencies(nes-physical-operators nes-codon-blas-plugin nes-codon-opencv-plugin)
+target_compile_definitions(nes-physical-operators PRIVATE
+        NES_CODON_BLAS_PLUGIN_PATH="$<TARGET_FILE:nes-codon-blas-plugin>"
+        NES_CODON_OPENCV_PLUGIN_PATH="$<TARGET_FILE:nes-codon-opencv-plugin>")
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

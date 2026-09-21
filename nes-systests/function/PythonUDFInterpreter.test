@@ -1,0 +1,22 @@
+# name: function/PythonUDFInterpreter.test
+# description: Compiles only the Python UDF while the surrounding Nautilus pipeline runs in interpreter mode
+# groups: [Function, PythonUDF]
+
+CREATE LOGICAL SOURCE values(id UINT64 NOT NULL, number INT64, text VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR values TYPE File;
+ATTACH INLINE
+1,5,10
+2,,20
+3,-7,30
+
+SELECT PYTHON((id, number, text): $python$
+    if number is None:
+        return None
+    return int(id) + number + int(text)
+$python$) AS INT64 NULL AS result
+FROM values
+INTO file();
+----
+16
+NULL
+26

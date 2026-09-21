@@ -19,6 +19,8 @@ vcpkg_from_github(
         0001-fmt-fix.patch
         0002-move-function-wrapper.patch
         0002-preserve-jit-frame-pointers.patch
+        0003-Add-engine-scoped-LLVM-bitcode-UDFs.patch
+        0004-engine-scoped-external-symbols.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
