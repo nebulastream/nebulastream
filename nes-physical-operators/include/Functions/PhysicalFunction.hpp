@@ -28,6 +28,8 @@
 namespace NES
 {
 
+class CompilationContext;
+
 namespace detail
 {
 struct ErasedPhysicalFunction;
@@ -59,6 +61,7 @@ struct ErasedPhysicalFunction
     virtual ~ErasedPhysicalFunction() = default;
 
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual void setupSelf(CompilationContext& compilationContext) const = 0;
 
 private:
     template <typename T>
@@ -208,11 +211,28 @@ struct TypedPhysicalFunction
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const { return self->execute(record, arena); }
 
+    void setup(CompilationContext& compilationContext) const
+    {
+        for (const auto& child : setupChildren)
+        {
+            child.setup(compilationContext);
+        }
+        self->setupSelf(compilationContext);
+    }
+
+    PhysicalFunction withSetupChildren(std::vector<PhysicalFunction> children) const
+    {
+        auto copy = *this;
+        copy.setupChildren = std::move(children);
+        return copy;
+    }
+
 private:
     template <typename FriendChecked>
     friend struct TypedPhysicalFunction;
 
     std::shared_ptr<const NES::detail::ErasedPhysicalFunction> self;
+    std::vector<PhysicalFunction> setupChildren;
 };
 
 namespace detail
@@ -227,6 +247,14 @@ struct PhysicalFunctionModel : ErasedPhysicalFunction
     explicit PhysicalFunctionModel(PhysicalFunctionType impl) : impl(std::move(impl)) { }
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override { return impl.execute(record, arena); }
+
+    void setupSelf(CompilationContext& compilationContext) const override
+    {
+        if constexpr (requires { impl.setupSelf(compilationContext); })
+        {
+            impl.setupSelf(compilationContext);
+        }
+    }
 
     [[nodiscard]] PhysicalFunctionType get() const { return impl; }
 

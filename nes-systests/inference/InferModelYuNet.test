@@ -1,0 +1,104 @@
+# name: inference/InferModelYuNet.test
+# description: Preprocesses a portrait, runs packed YuNet, and decodes one compact face-landmark record
+# groups: [Inference, PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE portraits(encoded VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR portraits TYPE File;
+ATTACH FILE python_udf/portrait.jpg.base64.csv
+
+CREATE MODEL yunet ('model/face_detection_yunet_2026may_320_packed.onnx')
+INPUT (tensor VARSIZED)
+OUTPUT (packedFaces VARSIZED);
+
+CREATE SINK sink(faceRecordBytes UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((face): $python$
+    return len(face)
+$python$) AS UINT64 AS faceRecordBytes
+FROM (
+    SELECT PYTHON((packedFaces): $python$
+        import math
+        import numpy as np
+
+        input_size = 320
+        total_locations = 0
+        for stride in (8, 16, 32):
+            grid_size = input_size // stride
+            total_locations += grid_size * grid_size
+
+        values = np.frombuffer(packedFaces, dtype=np.float32)
+        if values.size != total_locations * 16:
+            raise ValueError("unexpected packed YuNet output size")
+
+        best_score = -1.0
+        best_stride = 0
+        best_grid_size = 0
+        best_index = 0
+        best_bbox_offset = 0
+        best_landmark_offset = 0
+        preceding_locations = 0
+
+        for stride in (8, 16, 32):
+            grid_size = input_size // stride
+            location_count = grid_size * grid_size
+            class_offset = preceding_locations
+            object_offset = total_locations + preceding_locations
+            bbox_offset = 2 * total_locations + 4 * preceding_locations
+            landmark_offset = 6 * total_locations + 10 * preceding_locations
+
+            for index in range(location_count):
+                class_score = float(values[class_offset + index])
+                object_score = float(values[object_offset + index])
+                class_score = min(1.0, max(0.0, class_score))
+                object_score = min(1.0, max(0.0, object_score))
+                score = math.sqrt(class_score * object_score)
+                if score > best_score:
+                    best_score = score
+                    best_stride = stride
+                    best_grid_size = grid_size
+                    best_index = index
+                    best_bbox_offset = bbox_offset
+                    best_landmark_offset = landmark_offset
+            preceding_locations += location_count
+
+        face_bytes = ""
+        if best_score >= 0.6:
+            row = best_index // best_grid_size
+            column = best_index % best_grid_size
+            bbox = best_bbox_offset + best_index * 4
+            center_x = (column + float(values[bbox])) * best_stride
+            center_y = (row + float(values[bbox + 1])) * best_stride
+            width = math.exp(float(values[bbox + 2])) * best_stride
+            height = math.exp(float(values[bbox + 3])) * best_stride
+
+            face = np.empty((15,), dtype=np.float32)
+            scale = float(input_size)
+            face[0] = (center_x - width / 2.0) / scale
+            face[1] = (center_y - height / 2.0) / scale
+            face[2] = width / scale
+            face[3] = height / scale
+            landmarks = best_landmark_offset + best_index * 10
+            for index in range(5):
+                face[4 + index * 2] = (float(values[landmarks + index * 2]) + column) * best_stride / scale
+                face[5 + index * 2] = (float(values[landmarks + index * 2 + 1]) + row) * best_stride / scale
+            face[14] = best_score
+            face_bytes = str(face.data.as_byte(), int(face.nbytes))
+        return face_bytes
+    $python$) AS VARSIZED AS face
+    FROM MODEL_INFERENCE(yunet, (
+        SELECT PYTHON((imageBytes): $python$
+            import cv2
+            import numpy as np
+
+            encoded = np.frombuffer(imageBytes, dtype=np.uint8)
+            image = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+            resized = cv2.resize(image, (320, 320), interpolation=cv2.INTER_LINEAR)
+            tensor = resized.astype(np.float32).transpose((2, 0, 1)).copy()
+            return str(tensor.data.as_byte(), int(tensor.nbytes))
+        $python$) AS VARSIZED AS tensor
+        FROM (SELECT FROM_BASE64(encoded) AS imageBytes FROM portraits)
+    ))
+)
+INTO file();
+----
+60

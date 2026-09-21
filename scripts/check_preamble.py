@@ -110,6 +110,9 @@ VENDORED_FILES = {
     "vcpkg/vcpkg-registry/ports/libuuid/config.linux.h",
     "vcpkg/vcpkg-registry/ports/libuuid/portfile.cmake",
     "vcpkg/vcpkg-registry/ports/libuuid/unofficial-libuuid-config.cmake.in",
+    "vcpkg/vcpkg-registry/ports/opencv4/0020-fix-narrow-filesystem.diff",
+    "vcpkg/vcpkg-registry/ports/opencv4/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/opencv4/usage.in",
 }
 
 if __name__ == "__main__":

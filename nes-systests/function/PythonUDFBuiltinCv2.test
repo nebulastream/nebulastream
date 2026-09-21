@@ -1,0 +1,22 @@
+# name: function/PythonUDFBuiltinCv2.test
+# description: Imports the NES-embedded cv2 facade without configuring an external module path
+# groups: [Function, PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE images(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR images TYPE File;
+ATTACH INLINE
+AZ
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((data): $python$
+    import cv2
+    import numpy as np
+    pixels = np.frombuffer(data, dtype=np.uint8).reshape((1, 2))
+    normalized = cv2.normalize(pixels, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+    return int(normalized.sum())
+$python$) AS UINT64 AS result
+FROM images
+INTO file();
+----
+255

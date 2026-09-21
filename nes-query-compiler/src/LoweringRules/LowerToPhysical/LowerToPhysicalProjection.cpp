@@ -116,8 +116,8 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     {
         auto targetName = fieldMappingTrait->getMapping(unbind(fieldName));
         PRECONDITION(targetName.has_value(), "Projection name was not in field mapping");
-        auto physicalFunction
-            = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
+        auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(
+            function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>(), conf.getPythonUdfImportPaths());
         auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);
         child = std::make_shared<PhysicalOperatorWrapper>(
             physicalOperator,

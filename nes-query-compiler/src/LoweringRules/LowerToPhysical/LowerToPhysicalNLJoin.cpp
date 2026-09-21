@@ -126,7 +126,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
-    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
+    auto joinFunction
+        = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping, conf.getPythonUdfImportPaths());
     auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
     const uint64_t tupleSizeLeft = getSizeInBytes(leftTupleLayout->getSchema());

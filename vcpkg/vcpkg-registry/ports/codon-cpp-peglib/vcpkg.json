@@ -1,0 +1,8 @@
+{
+  "name": "codon-cpp-peglib",
+  "version-string": "2026-08-16-c036fdd",
+  "description": "Codon's fork of the header-only cpp-peglib PEG parser",
+  "homepage": "https://github.com/exaloop/cpp-peglib",
+  "license": "MIT",
+  "supports": "!windows"
+}

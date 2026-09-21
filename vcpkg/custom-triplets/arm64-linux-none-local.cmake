@@ -13,3 +13,6 @@
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/local.cmake)
+
+# Apply per-port overrides after the architecture and sanitizer defaults.
+include("${CMAKE_CURRENT_LIST_DIR}/bits/ports.cmake")

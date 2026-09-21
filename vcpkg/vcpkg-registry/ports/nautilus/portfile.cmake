@@ -15,6 +15,9 @@ vcpkg_from_github(
         REPO nebulastream/nautilus
 		REF bee5f2723c63a815e40c85f3fa81a7a96399ed28
         SHA512 2ac9db4b71b8644c26c68a5f0e06b5b11dfe31ada51547fb87cc1ff76f5dd2cea963d558f5836f3961e08689c9e1b1d1acf06bddeab815814811134d0b0d387d
+		PATCHES
+		0003-Add-engine-scoped-LLVM-bitcode-UDFs.patch
+		0004-engine-scoped-external-symbols.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -41,6 +44,7 @@ vcpkg_cmake_configure(
 		-DENABLE_STD_PLUGIN=ON
 		-DENABLE_SPECIALIZATION_PLUGIN=ON
 		-DENABLE_INLINING_PLUGIN=ON
+		-DENABLE_INLINING_PASS=OFF
 		-DENABLE_GPU_PLUGIN=OFF
 		-DENABLE_STACKTRACE=OFF
 		-DUSE_EXTERNAL_MLIR=ON

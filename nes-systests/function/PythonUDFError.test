@@ -1,0 +1,20 @@
+# name: function/PythonUDFError.test
+# description: Reports exceptions raised by an inline Python UDF as query errors without terminating the worker
+# groups: [Function, PythonUDF, CompilerOnly]
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+CREATE LOGICAL SOURCE numbers(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+24.4
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((value): $python$
+    return int(value)
+$python$) AS UINT64 AS result
+FROM numbers
+INTO file();
+----
+ERROR UnknownException "Python UDF failed: invalid literal for int() with base 10: '24.4'"

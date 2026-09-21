@@ -1030,6 +1030,18 @@ TEST_F(StatementBinderTest, InnerJoinParsesToInnerJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
 }
 
+TEST_F(StatementBinderTest, PythonFunctionParsesInJoinPredicate)
+{
+    const std::string query = R"(SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2)
+ON PYTHON((leftValue, rightValue): $python$
+    return leftValue < rightValue
+$python$) AS BOOLEAN WINDOW TUMBLING(SIZE 1000 MS) INTO sink)";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
+}
+
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)
 {
     const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT outer JOIN (SELECT * FROM s2) "
