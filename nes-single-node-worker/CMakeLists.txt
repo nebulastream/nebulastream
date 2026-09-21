@@ -36,6 +36,27 @@ add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 set_property(TARGET nes-single-node-worker PROPERTY ENABLE_EXPORTS ON)
 find_package(argparse CONFIG REQUIRED)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib argparse::argparse)
+
+# UdfBridgeRegistry resolves BRIDGE clauses relative to the worker's executable dir, so stage the built
+# bridge there via symlink. nes-udf/bridge-cpython is configured after this dir, so re-check for
+# Python's embed dev files instead of `if (TARGET nes-cpython-udf-bridge)`.
+find_package(Python3 COMPONENTS Development.Embed QUIET)
+if (Python3_FOUND)
+    add_custom_command(TARGET nes-single-node-worker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-cpython-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-cpython-udf-bridge>")
+endif ()
+
+# Same staging, for the PyPy bridge (see nes-udf/bridge-pypy) -- independently re-detected here for
+# the same reason as the Python3 check above.
+include(${PROJECT_SOURCE_DIR}/cmake/FindNesPyPy.cmake)
+nes_find_pypy()
+if (NES_PYPY_FOUND)
+    add_custom_command(TARGET nes-single-node-worker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE:nes-pypy-udf-bridge>" "$<TARGET_FILE_DIR:nes-single-node-worker>/nes-udf-bridges/$<TARGET_FILE_NAME:nes-pypy-udf-bridge>")
+endif ()
+
 if (ENABLE_BATS_TESTS)
     add_test(
             NAME worker-offline-test

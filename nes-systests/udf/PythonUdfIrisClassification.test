@@ -1,0 +1,34 @@
+# name: udf/PythonUdfIrisClassification.test
+# description: reproduces InferModel.test through three scalar Python UDFs (BRIDGE 'cpython'), one
+# per output class, running the same iris.onnx model via onnxruntime.
+# Needs onnxruntime in a venv passed via --worker.python_udf.venv (after --); not run by default.
+# Do not combine with PythonUdfVenv in one invocation -- one interpreter per process, first venv wins.
+# groups: [PythonUdfOnnx]
+
+CREATE LOGICAL SOURCE stream(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+6.1,3.5,1.4,0.2
+4.9,3.0,1.4,0.2
+4.7,3.2,1.3,0.2
+
+CREATE FUNCTION setosa_py (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf.setosa';
+CREATE FUNCTION versicolor_py (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf.versicolor';
+CREATE FUNCTION virginica_py (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) RETURNS FLOAT32 BRIDGE 'cpython' ENTRYPOINT 'iris_udf.virginica';
+
+SELECT p1, p2, p3, p4, setosa_py(p1, p2, p3, p4) AS setosa, versicolor_py(p1, p2, p3, p4) AS versicolor, virginica_py(p1, p2, p3, p4) AS virginica
+FROM stream
+INTO FILE();
+----
+6.1,3.5,1.4,0.2,0.946717,0.051443,0.00184
+4.9,3.0,1.4,0.2,0.888224,0.103913,0.007863
+4.7,3.2,1.3,0.2,0.898816,0.094172,0.007012
+
+# Same filter as InferModel.test: keep only rows classified as setosa with probability > 0.9.
+SELECT * FROM (
+    SELECT p1, p2, p3, p4, setosa_py(p1, p2, p3, p4) AS setosa, versicolor_py(p1, p2, p3, p4) AS versicolor, virginica_py(p1, p2, p3, p4) AS virginica
+    FROM stream
+) WHERE setosa > 0.9
+INTO FILE();
+----
+6.1,3.5,1.4,0.2,0.946717,0.051443,0.00184

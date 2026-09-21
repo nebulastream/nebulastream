@@ -30,16 +30,42 @@ bool isSupportedType(const DataType::Type type)
 }
 }
 
+PythonUdfBackend parsePythonUdfBackend(const std::string_view bridge)
+{
+    if (bridge == "codon" || bridge == "CODON")
+    {
+        return PythonUdfBackend::Codon;
+    }
+    if (bridge == "cpython" || bridge == "CPYTHON")
+    {
+        return PythonUdfBackend::CPython;
+    }
+    if (bridge == "pypy" || bridge == "PYPY")
+    {
+        return PythonUdfBackend::PyPy;
+    }
+    throw UnsupportedUdfLanguage("'{}' is not a valid Python UDF BRIDGE (expected codon, cpython, or pypy)", bridge);
+}
+
 PythonLogicalFunction::PythonLogicalFunction(
-    std::vector<std::string> parameterNames, std::string body, DataType returnType, std::vector<LogicalFunction> arguments)
-    : parameterNames(std::move(parameterNames)), body(std::move(body)), returnType(returnType), arguments(std::move(arguments))
+    std::vector<std::string> parameterNames,
+    std::string body,
+    DataType returnType,
+    std::vector<LogicalFunction> arguments,
+    PythonUdfBackend backend)
+    : parameterNames(std::move(parameterNames))
+    , body(std::move(body))
+    , returnType(returnType)
+    , arguments(std::move(arguments))
+    , backend(backend)
 {
     PRECONDITION(this->parameterNames.size() == this->arguments.size(), "Python UDF parameter and argument counts differ");
 }
 
 bool PythonLogicalFunction::operator==(const PythonLogicalFunction& rhs) const
 {
-    return parameterNames == rhs.parameterNames && body == rhs.body && returnType == rhs.returnType && arguments == rhs.arguments;
+    return parameterNames == rhs.parameterNames && body == rhs.body && returnType == rhs.returnType && arguments == rhs.arguments
+        && backend == rhs.backend;
 }
 
 DataType PythonLogicalFunction::getDataType() const
@@ -84,13 +110,31 @@ std::string_view PythonLogicalFunction::getType() const
     return NAME;
 }
 
+namespace
+{
+std::string_view bridgeName(const PythonUdfBackend backend)
+{
+    switch (backend)
+    {
+        case PythonUdfBackend::Codon:
+            return "codon";
+        case PythonUdfBackend::CPython:
+            return "cpython";
+        case PythonUdfBackend::PyPy:
+            return "pypy";
+    }
+    std::unreachable();
+}
+}
+
 std::string PythonLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("PythonLogicalFunction({} -> {})", fmt::join(parameterNames, ", "), returnType);
+        return fmt::format("PythonLogicalFunction({} -> {}, BRIDGE {})", fmt::join(parameterNames, ", "), returnType, bridgeName(backend));
     }
-    return fmt::format("PYTHON(({}): $python${}$python$) AS {}", fmt::join(parameterNames, ", "), body, returnType);
+    return fmt::format(
+        "PYTHON(({}): $python${}$python$) AS {} BRIDGE '{}'", fmt::join(parameterNames, ", "), body, returnType, bridgeName(backend));
 }
 
 const std::vector<std::string>& PythonLogicalFunction::getParameterNames() const
@@ -103,18 +147,24 @@ const std::string& PythonLogicalFunction::getBody() const
     return body;
 }
 
+PythonUdfBackend PythonLogicalFunction::getBackend() const
+{
+    return backend;
+}
+
 Reflected Reflector<PythonLogicalFunction>::operator()(const PythonLogicalFunction& function, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedPythonLogicalFunction{
         .parameterNames = function.parameterNames,
         .body = function.body,
         .returnType = function.returnType,
-        .arguments = function.arguments});
+        .arguments = function.arguments,
+        .backend = function.backend});
 }
 
 PythonLogicalFunction Unreflector<PythonLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [parameterNames, body, returnType, arguments] = context.unreflect<detail::ReflectedPythonLogicalFunction>(reflected);
-    return PythonLogicalFunction(std::move(parameterNames), std::move(body), returnType, std::move(arguments));
+    auto [parameterNames, body, returnType, arguments, backend] = context.unreflect<detail::ReflectedPythonLogicalFunction>(reflected);
+    return PythonLogicalFunction(std::move(parameterNames), std::move(body), returnType, std::move(arguments), backend);
 }
 }

@@ -1,0 +1,50 @@
+# name: udf/PythonUdfBridgeComparison.test
+# description: same 10% discount UDF on Nexmark bid prices through every Python execution backend (CPython bridge,
+# PyPy bridge, inline Codon) plus a native-SQL baseline; each filters on the output of the discount, so it is
+# evaluated for every row. Run with -b to compare the per-backend cost.
+# groups: [PythonUdf, PyPyUdf, PythonUDF, CompilerOnly, large]
+
+CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'currency.apply_discount';
+CREATE FUNCTION discount_price_pypy (price FLOAT64) RETURNS FLOAT64 BRIDGE 'pypy' ENTRYPOINT 'currency.apply_discount';
+
+# CPython bridge, filter on simple scalar UDF OUTPUT
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# PyPy bridge, filter on simple scalar UDF OUTPUT
+SELECT * FROM (
+    SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# Codon (inline PYTHON, AOT-compiled into the query pipeline), same discount, filter on OUTPUT
+SELECT * FROM (
+    SELECT auctionId, bidder, PYTHON((price): $python$
+        return price * 0.9
+    $python$) AS FLOAT64 BRIDGE 'codon' AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0
+
+# Native-SQL baseline, no UDF: same 10% discount and filter-on-OUTPUT shape, for comparing UDF call overhead
+SELECT * FROM (
+    SELECT auctionId, bidder, price * 0.9 AS discountedPrice FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
+INTO FILE();
+----
+999994,126934,131.4
+999994,23774,36.0

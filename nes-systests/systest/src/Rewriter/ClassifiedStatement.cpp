@@ -55,6 +55,10 @@ CreateDeclaration classify(const SqlParse& parse, CreateStatement create)
     {
         return ModelDeclaration{.definition = model};
     }
+    if (auto* function = findFirst<AntlrSQLParser::CreateFunctionDefinitionContext>(parse.tree()))
+    {
+        return FunctionDeclaration{.definition = function};
+    }
     throw TestException("Unsupported CREATE statement: {}", create.sql);
 }
 
