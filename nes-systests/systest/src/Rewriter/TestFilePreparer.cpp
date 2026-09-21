@@ -88,6 +88,14 @@ ParsedTestFile TestFilePreparer::parse(const DiscoveredTestFile& testFile) const
     parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
     parser.registerSubstitutionRule(
         {.keyword = "CONFIG/", .ruleFunction = [&](std::string& substitute) { substitute = (configDir / "").string(); }});
+    parser.registerSubstitutionRule(
+        {.keyword = "PY_BRIDGE_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_BRIDGE_DIR; }});
+    /// PY_UDF_VENV_DIR is local to PythonUdfVenv.test: it only resolves nes-systests/udf/small_venv, a fixture that test alone uses.
+    if (testFile.file.filename() == "PythonUdfVenv.test")
+    {
+        parser.registerSubstitutionRule(
+            {.keyword = "PY_UDF_VENV_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_UDF_VENV_DIR; }});
+    }
     parser.loadString(readTestFile(testFile.file));
     try
     {

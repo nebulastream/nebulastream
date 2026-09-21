@@ -125,6 +125,13 @@ const ConfigField<DumpMode::Options> DUMP_COMPILATION_RESULT{
     "NONE"};
 
 const ConfigField<bool> DUMP_GRAPH{Identifier::parse("dump_graph"), "If to dump graph of the compilation results", false};
+
+const ConfigField<std::string> PYTHON_UDF_VENV{
+    Identifier::parse("venv"),
+    "Path to a `python -m venv` directory (created from the same CPython/PyPy build the Python UDF bridge "
+    "links against) whose site-packages is added to the embedded interpreter. Default: system-local Python only",
+    [](const ConfigLiteral& literal) { return tryGetOr<std::string>(literal, expectedType<std::string>()); },
+    std::string{}};
 /// NOLINTEND(bugprone-throwing-static-initialization,cert-err58-cpp)
 
 }
@@ -141,7 +148,8 @@ Schema<QualifiedErasedConfigField, Ordered> WorkerConfiguration::getConfigSchema
         BUFFER_ALIGNMENT_IN_BYTES,
         DEFAULT_MAX_INFLIGHT_BUFFERS,
         DUMP_COMPILATION_RESULT,
-        DUMP_GRAPH);
+        DUMP_GRAPH,
+        createConfigSchema(Identifier::parse("python_udf"), PYTHON_UDF_VENV));
 }
 
 WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& config)
@@ -155,6 +163,7 @@ WorkerConfiguration WorkerConfiguration::fromConfig(const InstantiatedConfig& co
         config.get(BUFFER_ALIGNMENT_IN_BYTES),
         config.get(DEFAULT_MAX_INFLIGHT_BUFFERS),
         config.get(DUMP_COMPILATION_RESULT),
-        config.get(DUMP_GRAPH)};
+        config.get(DUMP_GRAPH),
+        config.get(PYTHON_UDF_VENV)};
 }
 }

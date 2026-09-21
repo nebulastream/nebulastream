@@ -36,6 +36,11 @@ RUN apt-get update && apt-get install -y python3 python3-venv && \
     ovc --version && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
+# Runtime library for the PyPy-backed UDF bridge (nes-udf/bridge-pypy); see Development.dockerfile
+# for the build-time pypy3-dev install.
+RUN apt-get update && apt-get install -y pypy3 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Downstream images run as this unprivileged user. uid/gid are pinned so volume ownership is
 # stable across architectures; the numeric USER satisfies Kubernetes runAsNonRoot.
 RUN groupadd --gid 10000 nes && useradd --uid 10000 --gid 10000 --create-home nes

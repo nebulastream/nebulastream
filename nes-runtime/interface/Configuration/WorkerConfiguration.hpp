@@ -15,6 +15,8 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <utility>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
@@ -41,7 +43,8 @@ struct WorkerConfiguration
         uint64_t bufferAlignmentInBytes,
         uint64_t defaultMaxInflightBuffers,
         DumpMode::Options dumpQueryCompilationIR,
-        bool dumpGraph)
+        bool dumpGraph,
+        std::string pythonUdfVenv)
         : queryEngine(queryEngine)
         , defaultQueryExecution(defaultQueryExecution)
         , network(network)
@@ -51,6 +54,7 @@ struct WorkerConfiguration
         , defaultMaxInflightBuffers(defaultMaxInflightBuffers)
         , dumpQueryCompilationIR(dumpQueryCompilationIR)
         , dumpGraph(dumpGraph)
+        , pythonUdfVenv(std::move(pythonUdfVenv))
     {
     }
 
@@ -77,6 +81,11 @@ struct WorkerConfiguration
     DumpMode::Options dumpQueryCompilationIR;
 
     bool dumpGraph;
+
+    /// Path to a `python -m venv` directory (created from the same CPython/PyPy build the Python UDF bridge links against)
+    /// whose site-packages is added to the embedded interpreter. Empty (the default) leaves the Python UDF bridges'
+    /// embedded interpreters on system-local Python only. See docs/design/20260708_Scalar_UDF_Support.md, A7.
+    std::string pythonUdfVenv;
 
     static WorkerConfiguration fromConfig(const InstantiatedConfig& config);
 };
