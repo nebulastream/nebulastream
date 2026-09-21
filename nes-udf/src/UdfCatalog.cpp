@@ -28,15 +28,34 @@ namespace NES
 {
 
 void UdfCatalog::registerUdf(
-    std::string name, std::filesystem::path path, std::string entrypoint, std::vector<DataType> argTypes, DataType returnType)
+    std::string name,
+    std::filesystem::path path,
+    std::string entrypoint,
+    std::vector<DataType> argTypes,
+    DataType returnType,
+    const UdfExecution execution)
 {
-    if (!std::filesystem::exists(path))
+    if (execution == UdfExecution::Codon)
     {
-        throw NES::InvalidStatement("UDF library path does not exist: {}", path);
+        if (!splitEntrypoint(entrypoint).has_value())
+        {
+            throw NES::InvalidStatement("Codon UDF '{}' needs ENTRYPOINT 'module.function', got '{}'", name, entrypoint);
+        }
+        if (argTypes.empty())
+        {
+            throw NES::InvalidStatement("Codon UDF '{}' needs at least one argument", name);
+        }
     }
-    if (!std::filesystem::is_regular_file(path))
+    else
     {
-        throw NES::InvalidStatement("UDF library path is not a regular file: {}", path);
+        if (!std::filesystem::exists(path))
+        {
+            throw NES::InvalidStatement("UDF library path does not exist: {}", path);
+        }
+        if (!std::filesystem::is_regular_file(path))
+        {
+            throw NES::InvalidStatement("UDF library path is not a regular file: {}", path);
+        }
     }
 
     /// Reject ABI-incompatible types up front so descriptor/signature compatibility is an invariant downstream code can trust.
@@ -53,7 +72,7 @@ void UdfCatalog::registerUdf(
     }
     validateType(returnType, "return");
 
-    auto descriptor = UdfDescriptor{name, std::move(path), std::move(entrypoint), std::move(argTypes), returnType};
+    auto descriptor = UdfDescriptor{name, std::move(path), std::move(entrypoint), std::move(argTypes), returnType, execution};
     catalog.registerEntry(std::move(name), std::move(descriptor));
 }
 

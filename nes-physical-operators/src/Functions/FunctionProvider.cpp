@@ -13,7 +13,10 @@
 */
 #include <Functions/FunctionProvider.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -53,6 +56,72 @@ namespace
 std::string buildInlinePythonSource(const std::vector<std::string>& parameterNames, const std::string& body, std::string_view functionName)
 {
     return fmt::format("def {}({}):\n{}\n", functionName, fmt::join(parameterNames, ", "), body);
+}
+
+/// A catalog UDF that executes through Codon (CREATE FUNCTION ... BRIDGE 'codon'), expressed as the inline function
+/// the Codon path already compiles: the ENTRYPOINT module is imported and called from a generated body.
+struct CodonUdfCall
+{
+    std::vector<std::string> parameterNames;
+    std::string body;
+};
+
+/// Reproduces the strict-UDF semantics of the interpreter bridges (a NULL argument yields NULL without calling the UDF)
+/// in the generated body, so the imported function only ever sees plain values, never Optional[T].
+CodonUdfCall buildCodonUdfCall(const UdfDescriptor& descriptor, const std::vector<DataType>& inputTypes)
+{
+    const auto entrypoint = splitEntrypoint(descriptor.getEntrypoint());
+    INVARIANT(entrypoint.has_value(), "Codon UDF '{}' has no 'module.function' entry point", descriptor.getName());
+    INVARIANT(
+        inputTypes.size() == descriptor.getArgTypes().size(), "UDF '{}' called with a wrong number of arguments", descriptor.getName());
+
+    CodonUdfCall call;
+    std::vector<std::string> arguments;
+    call.body = fmt::format("from {} import {} as _nes_udf_entry\n", entrypoint->first, entrypoint->second);
+    for (size_t index = 0; index < inputTypes.size(); ++index)
+    {
+        call.parameterNames.emplace_back(fmt::format("_p{}", index));
+        if (inputTypes[index].nullable)
+        {
+            call.body += fmt::format("if _p{} is None:\n    return None\n", index);
+            arguments.emplace_back(fmt::format("_p{}.__val__()", index));
+        }
+        else
+        {
+            arguments.emplace_back(fmt::format("_p{}", index));
+        }
+    }
+    call.body += fmt::format("return _nes_udf_entry({})", fmt::join(arguments, ", "));
+    return call;
+}
+
+/// Where Codon looks for the ENTRYPOINT module: the configured python_udf_import_paths plus NES_UDF_PATH, the module
+/// search path the CPython and PyPy bridges use, so a single directory of UDF modules serves every backend.
+std::vector<std::string> codonImportPaths(const std::vector<std::string>& configured)
+{
+    auto paths = configured;
+    const auto* const udfPath = std::getenv("NES_UDF_PATH"); /// NOLINT(concurrency-mt-unsafe)
+    if (udfPath == nullptr)
+    {
+        return paths;
+    }
+    const std::string_view remaining{udfPath};
+    size_t begin = 0;
+    while (begin <= remaining.size())
+    {
+        const auto end = remaining.find(':', begin);
+        const auto directory = std::string{remaining.substr(begin, end == std::string_view::npos ? std::string_view::npos : end - begin)};
+        if (!directory.empty() && std::ranges::find(paths, directory) == paths.end())
+        {
+            paths.push_back(directory);
+        }
+        if (end == std::string_view::npos)
+        {
+            break;
+        }
+        begin = end + 1;
+    }
+    return paths;
 }
 
 /// Bridge name resolveBuiltinUdfBridgePath expects; Codon never reaches here (handled separately).
@@ -102,8 +171,22 @@ PhysicalFunction FunctionProvider::lowerFunction(
     {
         const auto& descriptor = udfCallFunction.value()->getDescriptor();
         INVARIANT(descriptor.has_value(), "UDF '{}' must be resolved before lowering", udfCallFunction.value()->getUdfName());
-        return UDFPhysicalFunction(
-            childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor));
+        if (descriptor->getExecution() == UdfExecution::Codon)
+        {
+            INVARIANT(logicalFunction.getDataType().nullable, "UDF call results are nullable");
+            auto codonCall = buildCodonUdfCall(*descriptor, inputTypes);
+            return PhysicalFunction{PythonPhysicalFunction(
+                                        std::move(codonCall.parameterNames),
+                                        std::move(codonCall.body),
+                                        childFunctions,
+                                        inputTypes,
+                                        logicalFunction.getDataType(),
+                                        codonImportPaths(pythonUdfImportPaths))}
+                .withSetupChildren(std::move(childFunctions));
+        }
+        return PhysicalFunction{UDFPhysicalFunction(
+                                    childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor))}
+            .withSetupChildren(std::move(childFunctions));
     }
     /// Inline Python UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query
     /// text rather than a catalog descriptor, so they bypass the registry the same way. BRIDGE selects
@@ -125,11 +208,13 @@ PhysicalFunction FunctionProvider::lowerFunction(
         static constexpr std::string_view InlineFunctionName = "nes_inline_udf";
         const auto bridgePath = resolveBuiltinUdfBridgePath(interpreterBridgeName(pythonFunction.value()->getBackend()));
         const auto source = buildInlinePythonSource(pythonFunction.value()->getParameterNames(), pythonFunction.value()->getBody(), InlineFunctionName);
-        return UDFPhysicalFunction(
-            childFunctions,
-            inputTypes,
-            logicalFunction.getDataType(),
-            UdfBackend::createFromSource(bridgePath, source, std::string(InlineFunctionName), inputTypes, logicalFunction.getDataType()));
+        return PhysicalFunction{UDFPhysicalFunction(
+                                    childFunctions,
+                                    inputTypes,
+                                    logicalFunction.getDataType(),
+                                    UdfBackend::createFromSource(
+                                        bridgePath, source, std::string(InlineFunctionName), inputTypes, logicalFunction.getDataType()))}
+            .withSetupChildren(std::move(childFunctions));
     }
 
     /// 3. Calling the registry to create an executable function.
