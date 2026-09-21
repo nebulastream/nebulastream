@@ -6,7 +6,7 @@ As a result there are at least three major simplifications that the PoC makes us
 2. does not dive into a memorylayout-/bufferref-based implementation for custom/new datatypes, which is probably the clean way, but requires a significant refactor of bufferrefs
 3. ignores nullability of struct fields and array / vector elements
 
-Furthermore, the PoC builds on top of the value SerDe implementations introduced on the parser-registry branch, which enables the addition of SerDes for new datatypes without modifying other formatter files.
+Furthermore, the PoC builds on top of the value Serde implementations introduced on the parser-registry branch, which enables the addition of Serde for new datatypes without modifying other formatter files.
 
 # The Problem
 Adding a new logical type means editing core code at every switch site: parsers, schema printer, sinks, JSON/CSV formatters, Nautilus runtime, generator source, etc.
@@ -25,7 +25,7 @@ Many formats like JSON, XML, and Avro support composite and array values, so we 
 - G1: A new `DataType` can be added from `nes-plugins/` using the same registration pattern that sources, sinks, and formatters already use, addressing P1.
 - G2: Support a composite `STRUCT` variant with a name and a field list that participates in schemas, parsers, formatters, and Nautilus values, addressing P2.
 - G3: Provide a generic SQL constructor syntax `T(arg1, arg2, ...)` for any registered type, dispatched in the parser without per-type code, addressing P3.
-- G4: Support the definition of default SerDes for each individual DataType plugin (in contrast to only offering default SerDes for the "Struct" type), addressing P1.
+- G4: Support the definition of default Serde for each individual DataType plugin (in contrast to only offering default Serde for the "Struct" type), addressing P1.
 - G5: Demonstrate G1–G4 end-to-end with example plugins that fit on top of the core without modifying it (`Image/ThermalFrame`, `Reading`, `(Moving)Point`, `MovingPolygon`, `Timestamp`).
 - G6: Create a fixed-sized (is an array, but name contrasts 'varsized') datatype that is type-specific, i.e., represents an array of type T.
 - G7: Create a vector datatype, which functions similar to the fixed-sized / array type but does not declare the number of elements per value in the schema definition.
@@ -53,7 +53,7 @@ Many formats like JSON, XML, and Avro support composite and array values, so we 
 - `FIXEDSIZED` was added on this same branch as a precedent for an "extensible-but-flat" variant that participates in formatters, parsers, and Nautilus (G5).
   `STRUCT` follows the same shape (extra fields on `DataType`, new Nautilus value type, switch-site handling) and reuses the same shared `JsonValueParser`.
 - `DataTypeRegistry` and `DataTypeProvider` already existed for the registry pattern; this PoC adds the first composite plugins that actually use them.
-- We build on top of the `parser-registry` branch, which provides registries for `value SerDes` and allows to define default (de)serialization functions for each datatype.
+- We build on top of the `parser-registry` branch, which provides registries for `value Serde` and allows to define default (de)serialization functions for each datatype.
   In this PoC, we will additionally allow the definition of default (de)serialization methods per datatype plugin.
 
 # Proposed Solution
@@ -62,7 +62,7 @@ Many formats like JSON, XML, and Avro support composite and array values, so we 
    - `VECTOR` carries `elementType`
    - `STRUCT` carries `structName` + `vector<pair<string, DataType>> fields`.
 2. Add matching Nautilus values (`FixedSizedData`, `StructData`, `VectorData`) with `VarVal` integration so physical functions can read and write composite fields.
-3. Wire the new variants through the necessary switch sites: schema printer, sinks, JSON/CSV input / output formatters (via SerDe registry entries), generator source.
+3. Wire the new variants through the necessary switch sites: schema printer, sinks, JSON/CSV input / output formatters (via Serde registry entries), generator source.
 4. Add three generic, type-driven logical/physical functions that replace the per-type pattern:
    - `ConstructStructLogicalFunction` / `ConstructStructPhysicalFunction`: for any registered `STRUCT`, build a value from N child expressions matching the field list.
    - `CastToTypeLogicalFunction`: for any registered non-`STRUCT` type, cast an expression to it.
@@ -78,9 +78,9 @@ A new plugin therefore consists of:
 - one `*DataType.cpp` that registers the type via `RegisterXxxDataType(DataTypeRegistryArguments)` in namespace `NES::DataTypeGeneratedRegistrar`;
 - one `CMakeLists.txt` line `add_plugin_as_library(<Name> DataType nes-data-types-registry ...)`;
 - zero or more domain-specific logical/physical functions, registered the same way as any other function.
-- Optional default SerDe for the plugin type. Formatters will resort to their default struct-SerDes if no default for the plugin was given.
+- Optional default Serde for the plugin type. Formatters will resort to their default struct-Serde if no default for the plugin was given.
   For example, to be able to receive values of the Decimal{integer: INT64, fraction: INT64} type in the form of "42.125", a default deserializer for Decimal must be implemented, as these values do not follow the standard struct syntax of {"integer": 42, "fraction": 125}.
-- Zero or more non-default SerDes (see `parser-registry` branch).
+- Zero or more non-default Serde (see `parser-registry` branch).
 
 No edits to core code paths are required beyond the registration entry point.
 
@@ -88,7 +88,7 @@ No edits to core code paths are required beyond the registration entry point.
 - G1: New plugins live entirely under `nes-plugins/DataTypes/<Name>/` and register through the existing `DataTypeRegistry`.
 - G2: `STRUCT` participates in `DataType`, schemas, formatters, parsers, and Nautilus values; composite values round-trip through the system end-to-end.
 - G3: Any registered type works with the generic `T(...)` syntax — the parser does not need per-type code.
-- G4: Allows registration of default and alternative SerDe plugins for a datatype plugin.
+- G4: Allows registration of default and alternative Serde plugins for a datatype plugin.
 - G5: Multiple end-to-end plugins (`Image`/`ThermalFrame`, `Reading`, `Timestamp` etc.) and a Python demo demonstrate the full path. A new `NestedJSON` input formatter plugin demonstrates ingesting nested input that maps onto composite fields.
 - G6: Implemented working FIXEDSIZED datatype.
 - G7: Implemented working VECTOR datatype. Each individual field value may have a different number of elements, but a value cannot add or remove any elements after being received by the system.
@@ -259,12 +259,12 @@ SELECT timestamp, to_celsius(frame) AS celsius, is_fever(frame) AS fever FROM th
 The `nes-plugins/DataTypes/Image/demo/run_demo.py` script wires this end to end: it feeds a real thermal frame
 in, runs `to_rgb`, and writes out the colorized image — all of the type-specific behaviour living in the plugin.
 
-### 8. DataType-plugin-specific SerDes (P1, G4)
-Since every datatype-plugin is treated as a struct-variant, the current approach of registering SerDes for datatype-variants, as introduced by `parser-registry`, does not allow us to register SerDes for individual datatype plugins.
-This PoC allows to register SerDes for datatype plugins, by combining the name of the SerDe type with the name of the plugin (for example, `"DefaultTimestampValueDeserializer"`).
+### 8. DataType-plugin-specific Serde (P1, G4)
+Since every datatype-plugin is treated as a struct-variant, the current approach of registering Serde for datatype-variants, as introduced by `parser-registry`, does not allow us to register Serde for individual datatype plugins.
+This PoC allows to register Serde for datatype plugins, by combining the name of the Serde type with the name of the plugin (for example, `"DefaultTimestampValueDeserializer"`).
 As an effect, this allows formats like CSV, which usually do not support composite values, to receive values of datatype plugins.
-If not specifically configured, the system will resort to the `Default<Plugin Name>` SerDe, if it exists. Otherwise, the system will use the default SerDe for the struct variant, configured by the format.
-In the following example, the `Date`, `Time`, and `Timestamp` plugins all have default SerDe implement, which accept ISO 8601 formatted data.
+If not specifically configured, the system will resort to the `Default<Plugin Name>` Serde, if it exists. Otherwise, the system will use the default Serde for the struct variant, configured by the format.
+In the following example, the `Date`, `Time`, and `Timestamp` plugins all have default Serde implement, which accept ISO 8601 formatted data.
 ```sql
 CREATE LOGICAL SOURCE timeSource(date Date NOT NULL, time Time NOT NULL, timestamp Timestamp NOT NULL);
 CREATE PHYSICAL SOURCE FOR timeSource TYPE FILE;
@@ -307,7 +307,7 @@ INTO sinkCountStar;
 - `nes-plugins/DataTypes/Image/`: registers `Image` and `ThermalFrame`, plus `to_celsius`, `is_fever`, `to_rgb`. Demo at `nes-plugins/DataTypes/Image/demo/run_demo.py` consumes a thermal image and emits a colorized RGB image.
 - `nes-plugins/DataTypes/Reading/`: registers `Reading{celsius, humidity_pct}` and an addition function over `Reading`s, demonstrating a second independent struct with arithmetic semantics.
 - `nes-plugins/InputFormatters/NestedJSONInputFormatter/`: separate plugin, demonstrates that ingesting nested JSON into composite columns is itself an opt-in plugin.
-- `nes-plugins/DataTypes/Time`: registers `Time`, `Date`, `(Unsigned)Timestamp` plugins and their SerDes.
+- `nes-plugins/DataTypes/Time`: registers `Time`, `Date`, `(Unsigned)Timestamp` plugins and their Serde.
 - Systests under `nes-systests/formatter/JSON_OUTPUT/` (`StructConstruction`, `StructAdd`, `StructWHERE`, `ThermalFrameStructJSON`, `ThermalFrameFunctions`, `ThermalFrameToRGB`, `FixedSizedArrayJSON` ...) exercise the end-to-end paths.
 - Systests under `nes-systests/formatter/datatype_plugins` for all `Timestamp` related tests.
 - (Branch extensible-datatypes-geotemporal) `nes-plugins/MEOS`: registers all geospatial / geotemporal datatypes and the functions they can be used with. Includes MobilityNebula's MEOS wrapper that acts as interface between NebulaStream and the MEOS library.
@@ -325,7 +325,7 @@ INTO sinkCountStar;
     - either like PoC or via MemoryLayout/BufferRef
 - introduce vector with type
     - either like PoC or via MemoryLayout/BufferRef
-- (potentially) timestamp refactor that introduces the `Timestamp` datatype plugin alongside multiple SerDes as the only valid timestamp type for watermarks.
+- (potentially) timestamp refactor that introduces the `Timestamp` datatype plugin alongside multiple Serde as the only valid timestamp type for watermarks.
 - (potentially) introduce Image type with Mono16 and functions for SIGMOD demo use case
 
 # Extensible Data Types in other Systems
@@ -342,14 +342,14 @@ However, `FIXEDSIZED`, `VECTOR`, and `STRUCT` all have fixed physical representa
 `STRUCT` and `FIXEDSIZED` byte-align the physical representation of their fields / elements inside the buffer.
 `VECTOR` stores an 8 byte child buffer address and an 8 byte size of the location of the byte-aligned vector elements.
 For the in-record representation, we implemented a nautilus data type for each of the variants.
-Therefore, users may define functions and SerDes plugins using their datatype plugins, but need to use the functions provided by the `StructData` class to access the fields of their composite type.
+Therefore, users may define functions and Serde plugins using their datatype plugins, but need to use the functions provided by the `StructData` class to access the fields of their composite type.
 
 ### User-defined physical representation
 This type of extension allows users, additionally to the logical structure of the type, to define the physical representation of the type in-memory.
 Therefore, users are not bound to a predefined physical representation offered by the system, as it is currently the case in NebulaStream (`RowTupleBuffer`, `ColumnTupleBuffer`, `VarVal`).
 
 This type of user-extension is currently not supported in our PoC. Writing and reading a value from memory is hard-coded into the corresponding `VarVal` functions, so the physical layout of each type cannot be altered without rewriting `VarVal`, the nautilus type implementations, and the `BufferRef` files.
-The only flexibility in this regard that we offer is the option to create plugins for datatype-plugin specific SerDes, which are naturally only employed for incoming / outgoing buffers, ergo the external representation.
+The only flexibility in this regard that we offer is the option to create plugins for datatype-plugin specific Serde, which are naturally only employed for incoming / outgoing buffers, ergo the external representation.
 Customizable physical layout of values and tuples within the buffer could be the next logical step of this extension, since they offer room for optimizations, but are of higher complexity, as they impact `BufferRefs` and `VarVals`.
 
 ### Other Systems
@@ -380,6 +380,12 @@ In contrast to our data type plugins, the user-defined type does not need to map
 Unlike Beam, we currently do not support the definition of type parameters for our data types, but it has some applictions like for precision or timezone definition (the Timestamp plugin currently does not consider offsets / timezones).
 `LogicalType` allows customizability of the logical type layer. The in-memory representation of the underlying Beam-Schema-Type is controlled by Beam runtime and not alterable for the user.
 
+#### Apache Spark
+Similar to Beam, Spark allows to create a `UserDefinedType` for a class X of the , which maps X to an underlying SQL type.
+The `UserDefinedType` must define serialize() and deserialize() functions to convert values from X to the SQL type and vice versa.
+Therefore, this user-defined type approach does not allow to customize physical in-memory representation of the new type.
+Unlike Beam, Spark does not include support for type parameters.
+Spark also supports the `STRUCT` type, which consists of named and typed fields. However, the `STRUCT` itself is not named, so the system cannot distinguish two `STRUCT` types with the same fields.
 
 # Summary
 The PoC adds three extensible variants (`FIXEDSIZED`, `VECTOR`, `STRUCT`) to `DataType`, a generic SQL `T(...)` constructor pipeline, and multiple plugins for several real-life use cases that demonstrate the full path from registration to physical execution.
