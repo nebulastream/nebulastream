@@ -1,0 +1,32 @@
+# name: semantic/SemMapRealEndpoint.test
+# description: SEM_MAP against a real, locally-running Ollama endpoint (plan §M5, §C.6). Not
+#              hermetic on purpose — excluded from every default ctest suite via the
+#              Semantic-Nightly group (see SYSTEST_EXCLUDE_GROUPS in
+#              nes-systests/systest/CMakeLists.txt). Requires Ollama reachable at
+#              host.docker.internal:11434 with `llama3.1:8b` pulled (the model the M5 as-built
+#              run used — docs/sem-map-implementation-plan.md §M5).
+#
+#              A real LLM's exact wording is not deterministic across runs, so this cannot use the
+#              usual exact-match tuple comparison. SEM_MAP is select-list-only (the grammar
+#              desugars it into a dedicated operator inserted before the query's projections —
+#              AntlrSQLQueryPlanCreator.cpp's handleSemMapCall/pendingSemMaps — so it cannot appear
+#              inside a WHERE predicate to turn "non-empty" into an in-engine, deterministic
+#              filter). This file therefore has no expected-result block at all: the query just has
+#              to run end to end against the real endpoint without throwing (D7a would fire
+#              InferenceRuntimeFailure if the endpoint were unreachable or misbehaving). Checking
+#              the actual sentiment values for non-emptiness against this specific model/prompt is
+#              left to the manual M5-style sweep documented in docs/sem-map-implementation-plan.md.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,This movie was a delight from start to finish
+2,Two hours I will never get back
+3,A solid effort but forgettable
+
+CREATE SEMANTIC MODEL sentiment SET ('http://host.docker.internal:11434/v1' AS BASE_URL, 'llama3.1:8b' AS MODEL, 'Classify the sentiment as POSITIVE or NEGATIVE' AS PROMPT, 'POSITIVE,NEGATIVE' AS OUTPUT_VALUES) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED);
+
+CREATE SINK result(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+
+SELECT *, SEM_MAP(sentiment, description) AS sentiment FROM reviews INTO result;

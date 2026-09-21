@@ -16,7 +16,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -83,13 +85,19 @@ SemanticMapResult MockLlmClient::map(const std::string_view inputText)
     if (behaviour == Behaviour::Unreachable)
     {
         /// D7(a): transport failure — the endpoint is down. Throw; this is the query's problem,
-        /// not this row's. Mirrors CurlLlmClient's curl_easy_perform failure path.
+        /// not this row's. Mirrors CurlLlmClient's curl_easy_perform failure path. Unlike
+        /// CurlLlmClient, this throws on the first attempt — config.maxRetries does not apply to
+        /// the mock, so the systest stays fast regardless of the configured retry count.
         throw InferenceRuntimeFailure("Semantic model request to {} failed: mock endpoint is unreachable", config.baseUrl);
     }
 
     SemanticMapResult result;
-    for (const auto& fieldName : outputFieldNames)
+    for (size_t i = 0; i < outputFieldNames.size(); ++i)
     {
+        const auto& fieldName = outputFieldNames[i];
+        const auto& step = config.steps[i];
+        const std::optional<std::vector<std::string>> outputValues
+            = step.outputValues.empty() ? std::nullopt : std::make_optional(step.outputValues);
         if (behaviour == Behaviour::Echo)
         {
             /// Happy path: echo the input uppercased, confidence 1.0 — but through the real
@@ -98,13 +106,13 @@ SemanticMapResult MockLlmClient::map(const std::string_view inputText)
             upper.reserve(inputText.size());
             std::ranges::transform(
                 inputText, std::back_inserter(upper), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
-            result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer(upper, config.outputValues, ""), .confidence = 1.0};
+            result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer(upper, outputValues, step.defaultValue), .confidence = 1.0};
         }
         else
         {
             /// D7(b): unparseable response — default-fill every field instead of throwing.
             /// Mirrors CurlLlmClient's empty-envelope default-fill.
-            result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer("", config.outputValues, ""), .confidence = 0.0};
+            result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer("", outputValues, step.defaultValue), .confidence = 0.0};
         }
     }
     return result;

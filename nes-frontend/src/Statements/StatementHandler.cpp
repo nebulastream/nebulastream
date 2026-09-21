@@ -318,19 +318,13 @@ SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
 }
 }
 
-/// Translates a `CREATE SEMANTIC MODEL` SQL statement into a registration in the semantic model catalog.
-///
-/// The order matters:
-///   1. Reject models with already registered names
-///   2. Validate and register the given model in the catalog (no endpoint contact — see plan §M3)
+/// Translates a `CREATE SEMANTIC MODEL` SQL statement into a registration in the semantic model
+/// catalog. Validates and registers the given model (no endpoint contact — see plan §M3);
+/// `SemanticModelCatalog::registerModel` rejects an already-registered name itself.
 std::expected<CreateSemanticModelStatementResult, Exception>
 SemanticModelStatementHandler::operator()(const CreateSemanticModelStatement& statement)
 {
-    if (semanticModelCatalog->hasModel(statement.name))
-    {
-        return std::unexpected{ModelAlreadyExists(statement.name)};
-    }
-
+    /// registerModel itself rejects a duplicate name (ModelAlreadyExists) — no pre-check needed.
     try
     {
         semanticModelCatalog->registerModel(

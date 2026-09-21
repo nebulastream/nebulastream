@@ -16,11 +16,15 @@
 
 #include <cstdlib>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SemanticModelConfig.hpp>
@@ -38,9 +42,23 @@ SemanticModelConfig validConfig()
     return SemanticModelConfig{
         .baseUrl = "http://host.docker.internal:11434/v1",
         .model = "gemma3:27b",
-        .prompt = "Classify the sentiment as POSITIVE or NEGATIVE",
         .apiKeyEnv = std::nullopt,
-        .outputValues = std::nullopt};
+        .steps = {SemanticStep{
+            .kind = SemanticStep::Kind::MAP,
+            .prompt = "Classify the sentiment as POSITIVE or NEGATIVE",
+            .outputValues = {},
+            .defaultValue = ""}}};
+}
+
+SemanticModelSchema validSchema()
+{
+    return SemanticModelSchema{
+        .inputs = std::vector{UnqualifiedUnboundField{
+                      Identifier::parse("description"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}}
+            | std::ranges::to<SemanticModelFieldList>(),
+        .outputs = std::vector{UnqualifiedUnboundField{
+                       Identifier::parse("sentiment"), DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}}}
+            | std::ranges::to<SemanticModelFieldList>()};
 }
 
 }
@@ -54,7 +72,7 @@ public:
 TEST_F(SemanticModelCatalogTest, RegistersModelWithValidConfig)
 {
     SemanticModelCatalog catalog;
-    ASSERT_NO_THROW(catalog.registerModel("sentiment", validConfig()));
+    ASSERT_NO_THROW(catalog.registerModel("sentiment", validConfig(), validSchema()));
     EXPECT_TRUE(catalog.hasModel("sentiment"));
 }
 
@@ -63,7 +81,7 @@ TEST_F(SemanticModelCatalogTest, RejectsInvalidBaseUrl)
     SemanticModelCatalog catalog;
     auto config = validConfig();
     config.baseUrl = "not a url";
-    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config), NES::ErrorCode::CannotLoadModel);
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::CannotLoadModel);
 }
 
 TEST_F(SemanticModelCatalogTest, RejectsEmptyModel)
@@ -71,15 +89,24 @@ TEST_F(SemanticModelCatalogTest, RejectsEmptyModel)
     SemanticModelCatalog catalog;
     auto config = validConfig();
     config.model = "";
-    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config), NES::ErrorCode::CannotLoadModel);
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::CannotLoadModel);
 }
 
 TEST_F(SemanticModelCatalogTest, RejectsEmptyPrompt)
 {
     SemanticModelCatalog catalog;
     auto config = validConfig();
-    config.prompt = "";
-    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config), NES::ErrorCode::CannotLoadModel);
+    config.steps.front().prompt = "";
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::CannotLoadModel);
+}
+
+TEST_F(SemanticModelCatalogTest, RejectsStepOutputArityMismatch)
+{
+    SemanticModelCatalog catalog;
+    auto config = validConfig();
+    config.steps.push_back(
+        SemanticStep{.kind = SemanticStep::Kind::MAP, .prompt = "second step", .outputValues = {}, .defaultValue = ""});
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::CannotLoadModel);
 }
 
 TEST_F(SemanticModelCatalogTest, RejectsApiKeyEnvThatIsNotSet)
@@ -88,7 +115,7 @@ TEST_F(SemanticModelCatalogTest, RejectsApiKeyEnvThatIsNotSet)
     auto config = validConfig();
     config.apiKeyEnv = "NES_SEMANTIC_TEST_DEFINITELY_UNSET_VAR";
     ASSERT_EQ(std::getenv(config.apiKeyEnv->c_str()), nullptr);
-    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config), NES::ErrorCode::CannotLoadModel);
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::CannotLoadModel);
 }
 
 TEST_F(SemanticModelCatalogTest, AcceptsApiKeyEnvThatIsSet)
@@ -97,8 +124,24 @@ TEST_F(SemanticModelCatalogTest, AcceptsApiKeyEnvThatIsSet)
     SemanticModelCatalog catalog;
     auto config = validConfig();
     config.apiKeyEnv = "NES_SEMANTIC_TEST_SET_VAR";
-    ASSERT_NO_THROW(catalog.registerModel("m", config));
+    ASSERT_NO_THROW(catalog.registerModel("m", config, validSchema()));
     unsetenv("NES_SEMANTIC_TEST_SET_VAR");
+}
+
+TEST_F(SemanticModelCatalogTest, RejectsBatchSizeGreaterThanOne)
+{
+    SemanticModelCatalog catalog;
+    auto config = validConfig();
+    config.batchSize = 2;
+    ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, validSchema()), NES::ErrorCode::InvalidConfigParameter);
+}
+
+TEST_F(SemanticModelCatalogTest, RejectsDuplicateModelName)
+{
+    SemanticModelCatalog catalog;
+    catalog.registerModel("sentiment", validConfig(), validSchema());
+    ASSERT_EXCEPTION_ERRORCODE(
+        catalog.registerModel("sentiment", validConfig(), validSchema()), NES::ErrorCode::ModelAlreadyExists);
 }
 
 TEST_F(SemanticModelCatalogTest, DoesNotContainUnregisteredModel)
@@ -110,7 +153,7 @@ TEST_F(SemanticModelCatalogTest, DoesNotContainUnregisteredModel)
 TEST_F(SemanticModelCatalogTest, RemoveModelMakesItUnknown)
 {
     SemanticModelCatalog catalog;
-    catalog.registerModel("sentiment", validConfig());
+    catalog.registerModel("sentiment", validConfig(), validSchema());
     catalog.removeModel("sentiment");
     EXPECT_FALSE(catalog.hasModel("sentiment"));
 }
@@ -124,7 +167,7 @@ TEST_F(SemanticModelCatalogTest, LoadThrowsForUnknownModel)
 TEST_F(SemanticModelCatalogTest, LoadReturnsRegisteredConfig)
 {
     SemanticModelCatalog catalog;
-    catalog.registerModel("sentiment", validConfig());
+    catalog.registerModel("sentiment", validConfig(), validSchema());
     const auto loaded = catalog.load("sentiment");
     EXPECT_EQ(loaded.getName(), "sentiment");
     EXPECT_EQ(loaded.getConfig(), validConfig());
@@ -133,8 +176,8 @@ TEST_F(SemanticModelCatalogTest, LoadReturnsRegisteredConfig)
 TEST_F(SemanticModelCatalogTest, GetModelNamesListsAllRegisteredModels)
 {
     SemanticModelCatalog catalog;
-    catalog.registerModel("a", validConfig());
-    catalog.registerModel("b", validConfig());
+    catalog.registerModel("a", validConfig(), validSchema());
+    catalog.registerModel("b", validConfig(), validSchema());
     const auto names = catalog.getModelNames();
     EXPECT_EQ(names.size(), 2);
 }

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -323,18 +324,48 @@ public:
         return std::get<std::string>(*literal);
     }
 
+    /// Reads a flat, non-negative integer option, e.g. `10 AS BATCH_SIZE`. The grammar's `constant`
+    /// already admits integer literals, so no grammar change is needed for these knobs.
+    static std::optional<size_t> findFlatIntOption(const ConfigMultiMap& configs, std::string_view key)
+    {
+        const auto literal = findFlatConfigOption(configs, key);
+        if (!literal.has_value())
+        {
+            return std::nullopt;
+        }
+        if (const auto* asInt = std::get_if<int64_t>(&*literal); asInt != nullptr)
+        {
+            if (*asInt < 0)
+            {
+                throw InvalidConfigParameter("Semantic model option '{}' must not be negative", key);
+            }
+            return static_cast<size_t>(*asInt);
+        }
+        if (const auto* asUint = std::get_if<uint64_t>(&*literal); asUint != nullptr)
+        {
+            return static_cast<size_t>(*asUint);
+        }
+        throw InvalidConfigParameter("Semantic model option '{}' must be set to an integer literal", key);
+    }
+
     CreateSemanticModelStatement
     bindCreateSemanticModelStatement(AntlrSQLParser::CreateSemanticModelDefinitionContext* semanticModelDefAST) const
     {
         const auto modelName = bindIdentifier(semanticModelDefAST->modelName->strictIdentifier());
         const auto configs = bindConfigOptionsWithDuplicates(semanticModelDefAST->optionsClause()->options->namedConfigExpression());
 
-        static const std::array<Identifier, 5> knownOptions{
+        static const std::array<Identifier, 11> knownOptions{
             Identifier::parse("BASE_URL"),
             Identifier::parse("MODEL"),
             Identifier::parse("PROMPT"),
             Identifier::parse("API_KEY_ENV"),
-            Identifier::parse("OUTPUT_VALUES")};
+            Identifier::parse("OUTPUT_VALUES"),
+            Identifier::parse("DEFAULT_VALUE"),
+            Identifier::parse("BATCH_SIZE"),
+            Identifier::parse("MAX_CONCURRENCY"),
+            Identifier::parse("MAX_RETRIES"),
+            Identifier::parse("REQUEST_TIMEOUT"),
+            Identifier::parse("CONNECT_TIMEOUT")};
         for (const auto& option : configs)
         {
             if (option.first.size() != 1 || std::ranges::find(knownOptions, *std::ranges::begin(option.first)) == knownOptions.end())
@@ -343,21 +374,11 @@ public:
             }
         }
 
-        SemanticModelConfig config{
-            .baseUrl = requireFlatStringOption(configs, "BASE_URL"),
-            .model = requireFlatStringOption(configs, "MODEL"),
+        SemanticStep step{
+            .kind = SemanticStep::Kind::MAP,
             .prompt = requireFlatStringOption(configs, "PROMPT"),
-            .apiKeyEnv = std::nullopt,
-            .outputValues = std::nullopt};
-
-        if (const auto apiKeyEnvLiteral = findFlatConfigOption(configs, "API_KEY_ENV"); apiKeyEnvLiteral.has_value())
-        {
-            if (!std::holds_alternative<std::string>(*apiKeyEnvLiteral))
-            {
-                throw InvalidConfigParameter("Semantic model option 'API_KEY_ENV' must be a string literal");
-            }
-            config.apiKeyEnv = std::get<std::string>(*apiKeyEnvLiteral);
-        }
+            .outputValues = {},
+            .defaultValue = ""};
 
         if (const auto outputValuesLiteral = findFlatConfigOption(configs, "OUTPUT_VALUES"); outputValuesLiteral.has_value())
         {
@@ -380,7 +401,50 @@ public:
                 trimmed.remove_suffix(trimmed.size() - trimmed.find_last_not_of(whitespace) - 1);
                 values.emplace_back(trimmed);
             }
-            config.outputValues = std::move(values);
+            step.outputValues = std::move(values);
+        }
+        if (const auto defaultValueLiteral = findFlatConfigOption(configs, "DEFAULT_VALUE"); defaultValueLiteral.has_value())
+        {
+            if (!std::holds_alternative<std::string>(*defaultValueLiteral))
+            {
+                throw InvalidConfigParameter("Semantic model option 'DEFAULT_VALUE' must be a string literal");
+            }
+            step.defaultValue = std::get<std::string>(*defaultValueLiteral);
+        }
+
+        SemanticModelConfig config{
+            .baseUrl = requireFlatStringOption(configs, "BASE_URL"),
+            .model = requireFlatStringOption(configs, "MODEL"),
+            .apiKeyEnv = std::nullopt,
+            .steps = {std::move(step)}};
+
+        if (const auto apiKeyEnvLiteral = findFlatConfigOption(configs, "API_KEY_ENV"); apiKeyEnvLiteral.has_value())
+        {
+            if (!std::holds_alternative<std::string>(*apiKeyEnvLiteral))
+            {
+                throw InvalidConfigParameter("Semantic model option 'API_KEY_ENV' must be a string literal");
+            }
+            config.apiKeyEnv = std::get<std::string>(*apiKeyEnvLiteral);
+        }
+        if (const auto batchSize = findFlatIntOption(configs, "BATCH_SIZE"); batchSize.has_value())
+        {
+            config.batchSize = *batchSize;
+        }
+        if (const auto maxConcurrency = findFlatIntOption(configs, "MAX_CONCURRENCY"); maxConcurrency.has_value())
+        {
+            config.maxConcurrency = *maxConcurrency;
+        }
+        if (const auto maxRetries = findFlatIntOption(configs, "MAX_RETRIES"); maxRetries.has_value())
+        {
+            config.maxRetries = *maxRetries;
+        }
+        if (const auto requestTimeout = findFlatIntOption(configs, "REQUEST_TIMEOUT"); requestTimeout.has_value())
+        {
+            config.requestTimeout = std::chrono::seconds(*requestTimeout);
+        }
+        if (const auto connectTimeout = findFlatIntOption(configs, "CONNECT_TIMEOUT"); connectTimeout.has_value())
+        {
+            config.connectTimeout = std::chrono::milliseconds(*connectTimeout);
         }
 
         std::vector<UnqualifiedUnboundField> inputs;

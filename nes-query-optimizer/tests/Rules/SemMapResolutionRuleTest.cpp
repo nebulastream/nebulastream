@@ -58,9 +58,9 @@ TEST_F(SemMapResolutionRuleTest, ResolvesNameOperatorAgainstCatalog)
         SemanticModelConfig{
             .baseUrl = "mock://localhost",
             .model = "mock-model",
-            .prompt = "classify sentiment",
             .apiKeyEnv = std::nullopt,
-            .outputValues = std::nullopt},
+            .steps = {SemanticStep{
+                .kind = SemanticStep::Kind::MAP, .prompt = "classify sentiment", .outputValues = {}, .defaultValue = ""}}},
         SemanticModelSchema{
             .inputs = SemanticModelFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}},
             .outputs = SemanticModelFieldList{UnqualifiedUnboundField{Identifier::parse("sentiment"), DataType::Type::VARSIZED}}});
@@ -96,9 +96,9 @@ TEST_F(SemMapResolutionRuleTest, CarriesOutputAliasThroughResolution)
         SemanticModelConfig{
             .baseUrl = "mock://localhost",
             .model = "mock-model",
-            .prompt = "classify sentiment",
             .apiKeyEnv = std::nullopt,
-            .outputValues = std::nullopt},
+            .steps = {SemanticStep{
+                .kind = SemanticStep::Kind::MAP, .prompt = "classify sentiment", .outputValues = {}, .defaultValue = ""}}},
         SemanticModelSchema{
             .inputs = SemanticModelFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}},
             .outputs = SemanticModelFieldList{UnqualifiedUnboundField{Identifier::parse("sentiment"), DataType::Type::VARSIZED}}});

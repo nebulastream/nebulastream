@@ -14,10 +14,13 @@
 
 #include <CurlLlmClient.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -89,9 +92,18 @@ std::string CurlLlmClient::buildPrompt(const std::string_view inputText) const
         ROW_ID,
         exampleRow);
 
-    /// Operator block (llm_operator.py::_build_fused_operator_prompt, n=1: label is "operation").
-    const std::string operatorBlock
-        = fmt::format("Apply the following 1 operation to each row:\n  1. MAP: {} → output field: \"{}\"", config.prompt, outputFieldNames.front());
+    /// Operator block (llm_operator.py::_build_fused_operator_prompt): one numbered line per step,
+    /// step i paired with outputFieldNames[i] (registerModel enforces the arities match).
+    std::string operatorLines;
+    for (size_t i = 0; i < config.steps.size(); ++i)
+    {
+        if (i > 0)
+        {
+            operatorLines += "\n";
+        }
+        operatorLines += fmt::format("  {}. MAP: {} → output field: \"{}\"", i + 1, config.steps[i].prompt, outputFieldNames[i]);
+    }
+    const std::string operatorBlock = fmt::format("Apply the following {} operations to each row:\n{}", config.steps.size(), operatorLines);
 
     /// Data block: `{"row1": "<content>"}`, JSON-escaped via nlohmann so embedded quotes/newlines
     /// in the row content cannot corrupt the payload.
@@ -119,20 +131,41 @@ std::string CurlLlmClient::postChatCompletion(const std::string& requestBody) co
         }
     }
 
-    std::string responseBody;
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_URL, target.c_str());
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestBody.size()));
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, appendToString);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+    /// Mandatory, not optional: without it libcurl uses SIGALRM for DNS timeouts, which is unsafe
+    /// off the main thread — we run one CURL* handle per worker thread.
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, static_cast<long>(config.requestTimeout.count()));
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(config.connectTimeout.count()));
 
-    const CURLcode result = curl_easy_perform(curl);
+    CURLcode result = CURLE_OK;
     long status = 0;
-    if (result == CURLE_OK)
+    std::string responseBody;
+    for (size_t attempt = 0;; ++attempt)
     {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+        responseBody.clear();
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+        result = curl_easy_perform(curl);
+        status = 0;
+        if (result == CURLE_OK)
+        {
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+        }
+
+        /// Retry only on transport failure and 429/5xx — a 4xx is the caller's problem, not a
+        /// transient one, and retrying it would just repeat the same error slower.
+        const bool transportFailed = result != CURLE_OK;
+        const bool retryableStatus = status == 429 || (status >= 500 && status < 600);
+        if ((!transportFailed && !retryableStatus) || attempt >= config.maxRetries)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100) * (1U << attempt));
     }
     curl_slist_free_all(headers);
 
@@ -157,20 +190,29 @@ SemanticMapResult CurlLlmClient::map(const std::string_view inputText)
     const std::string responseBody = postChatCompletion(requestBody.dump());
 
     /// An unparseable completion envelope (not the model's JSON row, but the HTTP response
-    /// itself) is treated the same as an unparseable row below: default-fill, don't throw.
+    /// itself) is treated the same as an unparseable row below: default-fill, don't throw. Every
+    /// level is guarded — a 200 response that is valid JSON of the wrong shape (missing
+    /// "message"/"content") must fall into the default-fill path, not throw an uncaught
+    /// nlohmann::json type error.
     const nlohmann::json completion = nlohmann::json::parse(responseBody, nullptr, false);
     std::string content;
     if (!completion.is_discarded() && completion.contains("choices") && !completion["choices"].empty())
     {
-        content = completion["choices"][0]["message"]["content"].get<std::string>();
+        const auto& choice = completion["choices"][0];
+        if (choice.contains("message") && choice["message"].contains("content") && choice["message"]["content"].is_string())
+        {
+            content = choice["message"]["content"].get<std::string>();
+        }
     }
 
     const nlohmann::json parsed = parseLlmJson(content);
     const nlohmann::json row = parsed.contains(ROW_ID) ? parsed[std::string(ROW_ID)] : nlohmann::json::object();
 
     SemanticMapResult result;
-    for (const auto& fieldName : outputFieldNames)
+    for (size_t i = 0; i < outputFieldNames.size(); ++i)
     {
+        const auto& fieldName = outputFieldNames[i];
+        const auto& step = config.steps[i];
         std::string rawAnswer;
         double confidence = 0.0;
         if (row.contains(fieldName))
@@ -185,7 +227,9 @@ SemanticMapResult CurlLlmClient::map(const std::string_view inputText)
                 confidence = fieldValue["confidence"].get<double>();
             }
         }
-        result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer(rawAnswer, config.outputValues, ""), .confidence = confidence};
+        const std::optional<std::vector<std::string>> outputValues
+            = step.outputValues.empty() ? std::nullopt : std::make_optional(step.outputValues);
+        result[fieldName] = SemanticFieldResult{.answer = normalizeAnswer(rawAnswer, outputValues, step.defaultValue), .confidence = confidence};
     }
     return result;
 }

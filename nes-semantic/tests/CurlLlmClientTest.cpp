@@ -14,9 +14,11 @@
 
 #include <CurlLlmClient.hpp>
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -35,6 +37,32 @@ namespace NES
 
 namespace
 {
+
+/// Reads one HTTP/1.1 request (headers + body, using Content-Length) off `socket` and discards it
+/// — every test server here only cares about replying, not about request content.
+void readHttpRequest(boost::asio::ip::tcp::socket& socket)
+{
+    boost::asio::streambuf requestBuffer;
+    boost::asio::read_until(socket, requestBuffer, "\r\n\r\n");
+
+    std::istream requestStream(&requestBuffer);
+    std::string headerLine;
+    size_t contentLength = 0;
+    while (std::getline(requestStream, headerLine) && headerLine != "\r")
+    {
+        constexpr std::string_view contentLengthPrefix = "Content-Length:";
+        if (headerLine.starts_with(contentLengthPrefix))
+        {
+            contentLength = std::stoul(headerLine.substr(contentLengthPrefix.size()));
+        }
+    }
+    /// Some of the body may already be sitting in requestBuffer from the read_until above.
+    const size_t alreadyRead = requestBuffer.size();
+    if (alreadyRead < contentLength)
+    {
+        boost::asio::read(socket, requestBuffer, boost::asio::transfer_exactly(contentLength - alreadyRead));
+    }
+}
 
 /// Accepts exactly one HTTP/1.1 connection, reads the request (headers + body, using
 /// Content-Length), and replies with `responseBody` as a 200 with `Content-Type: application/json`.
@@ -55,27 +83,7 @@ public:
             {
                 boost::asio::ip::tcp::socket socket(ioContext);
                 acceptor.accept(socket);
-
-                boost::asio::streambuf requestBuffer;
-                boost::asio::read_until(socket, requestBuffer, "\r\n\r\n");
-
-                std::istream requestStream(&requestBuffer);
-                std::string headerLine;
-                size_t contentLength = 0;
-                while (std::getline(requestStream, headerLine) && headerLine != "\r")
-                {
-                    constexpr std::string_view contentLengthPrefix = "Content-Length:";
-                    if (headerLine.starts_with(contentLengthPrefix))
-                    {
-                        contentLength = std::stoul(headerLine.substr(contentLengthPrefix.size()));
-                    }
-                }
-                /// Some of the body may already be sitting in requestBuffer from the read_until above.
-                const size_t alreadyRead = requestBuffer.size();
-                if (alreadyRead < contentLength)
-                {
-                    boost::asio::read(socket, requestBuffer, boost::asio::transfer_exactly(contentLength - alreadyRead));
-                }
+                readHttpRequest(socket);
 
                 const std::string response = fmt::format(
                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -96,14 +104,96 @@ public:
     }
 };
 
+/// Accepts one connection per entry in `statusThenBody` in sequence, replying to each with the
+/// given HTTP status and body. Used to test the retry loop's backoff-and-retry-on-5xx path: e.g.
+/// `{{503, ""}, {200, envelope}}` fails the first attempt and succeeds on the retry.
+class MultiShotHttpServer
+{
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::acceptor acceptor;
+    std::thread serverThread;
+
+public:
+    explicit MultiShotHttpServer(std::vector<std::pair<int, std::string>> statusThenBody)
+        : acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 0))
+    {
+        serverThread = std::thread(
+            [this, statusThenBody = std::move(statusThenBody)]
+            {
+                for (const auto& [status, body] : statusThenBody)
+                {
+                    boost::asio::ip::tcp::socket socket(ioContext);
+                    acceptor.accept(socket);
+                    readHttpRequest(socket);
+
+                    const std::string response = fmt::format(
+                        "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        status,
+                        status == 200 ? "OK" : "Error",
+                        body.size(),
+                        body);
+                    boost::asio::write(socket, boost::asio::buffer(response));
+                }
+            });
+    }
+
+    [[nodiscard]] unsigned short port() const { return acceptor.local_endpoint().port(); }
+
+    ~MultiShotHttpServer()
+    {
+        if (serverThread.joinable())
+        {
+            serverThread.join();
+        }
+    }
+};
+
+/// Accepts a connection, reads the request, and never replies — exercises CURLOPT_TIMEOUT (a
+/// stuck endpoint must not park the calling thread forever).
+class StallingHttpServer
+{
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::acceptor acceptor;
+    std::thread serverThread;
+
+public:
+    StallingHttpServer() : acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 0))
+    {
+        serverThread = std::thread(
+            [this]
+            {
+                boost::asio::ip::tcp::socket socket(ioContext);
+                acceptor.accept(socket);
+                readHttpRequest(socket);
+                /// Deliberately never writes a response; the socket is closed on destruction,
+                /// which is enough to unblock curl once its timeout fires.
+            });
+    }
+
+    [[nodiscard]] unsigned short port() const { return acceptor.local_endpoint().port(); }
+
+    ~StallingHttpServer()
+    {
+        if (serverThread.joinable())
+        {
+            serverThread.join();
+        }
+    }
+};
+
 SemanticModelConfig configFor(const std::string& baseUrl)
 {
     return SemanticModelConfig{
         .baseUrl = baseUrl,
         .model = "test-model",
-        .prompt = "Classify the sentiment as POSITIVE or NEGATIVE",
         .apiKeyEnv = std::nullopt,
-        .outputValues = std::vector<std::string>{"POSITIVE", "NEGATIVE"}};
+        .steps = {SemanticStep{
+            .kind = SemanticStep::Kind::MAP,
+            .prompt = "Classify the sentiment as POSITIVE or NEGATIVE",
+            .outputValues = {"POSITIVE", "NEGATIVE"},
+            .defaultValue = ""}},
+        .requestTimeout = std::chrono::seconds(2),
+        .connectTimeout = std::chrono::milliseconds(500)};
 }
 
 /// A canned OpenAI-compatible chat-completions envelope whose message content is the
@@ -164,6 +254,44 @@ TEST_F(CurlLlmClientTest, ThrowsInferenceRuntimeFailureWhenEndpointIsUnreachable
     /// Port 1 is reserved and nothing binds a client-facing service there: connection is refused
     /// immediately, giving a deterministic transport failure without any real network dependency.
     CurlLlmClient client(configFor("http://127.0.0.1:1"), {"sentiment"});
+    ASSERT_EXCEPTION_ERRORCODE(client.map("anything"), NES::ErrorCode::InferenceRuntimeFailure);
+}
+
+TEST_F(CurlLlmClientTest, RetriesOn503ThenSucceeds)
+{
+    const std::string rowContent = R"({"row1": {"sentiment": {"answer": "POSITIVE", "confidence": 0.9}}})";
+    MultiShotHttpServer server({{503, ""}, {200, chatCompletionEnvelope(rowContent)}});
+
+    auto config = configFor(fmt::format("http://127.0.0.1:{}", server.port()));
+    config.maxRetries = 2;
+    CurlLlmClient client(config, {"sentiment"});
+    const auto result = client.map("this product is great");
+
+    EXPECT_EQ(result.at("sentiment").answer, "POSITIVE");
+}
+
+TEST_F(CurlLlmClientTest, DoesNotRetryOn4xx)
+{
+    /// A 400 is exhausted on the first attempt — MultiShotHttpServer only has one response queued,
+    /// so a second connection attempt (which would happen if 4xx were retried) hangs until the
+    /// test's own timeout, which is what would turn this into a slow/flaky test if the "no retry
+    /// on 4xx" behaviour ever regressed.
+    MultiShotHttpServer server({{400, "bad request"}});
+
+    auto config = configFor(fmt::format("http://127.0.0.1:{}", server.port()));
+    config.maxRetries = 2;
+    CurlLlmClient client(config, {"sentiment"});
+    ASSERT_EXCEPTION_ERRORCODE(client.map("anything"), NES::ErrorCode::InferenceRuntimeFailure);
+}
+
+TEST_F(CurlLlmClientTest, TimesOutAgainstAStalledEndpoint)
+{
+    StallingHttpServer server;
+
+    auto config = configFor(fmt::format("http://127.0.0.1:{}", server.port()));
+    config.requestTimeout = std::chrono::seconds(1);
+    config.maxRetries = 0;
+    CurlLlmClient client(config, {"sentiment"});
     ASSERT_EXCEPTION_ERRORCODE(client.map("anything"), NES::ErrorCode::InferenceRuntimeFailure);
 }
 

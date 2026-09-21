@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -876,10 +877,10 @@ TEST_F(StatementBinderTest, BindCreateSemanticModel)
     ASSERT_EQ(createSemanticModel.name, "SENTIMENT");
     ASSERT_EQ(createSemanticModel.config.baseUrl, "http://localhost:11434/v1");
     ASSERT_EQ(createSemanticModel.config.model, "gemma3:27b");
-    ASSERT_EQ(createSemanticModel.config.prompt, "Classify the sentiment as POSITIVE or NEGATIVE");
+    ASSERT_EQ(createSemanticModel.config.steps.size(), 1);
+    ASSERT_EQ(createSemanticModel.config.steps.front().prompt, "Classify the sentiment as POSITIVE or NEGATIVE");
     ASSERT_FALSE(createSemanticModel.config.apiKeyEnv.has_value());
-    ASSERT_TRUE(createSemanticModel.config.outputValues.has_value());
-    ASSERT_EQ(*createSemanticModel.config.outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE"}));
+    ASSERT_EQ(createSemanticModel.config.steps.front().outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE"}));
     ASSERT_EQ(createSemanticModel.inputs.size(), 1);
     ASSERT_EQ(createSemanticModel.inputs[Identifier::parse("description")]->getDataType().type, DataType::Type::VARSIZED);
     ASSERT_EQ(createSemanticModel.outputs.size(), 1);
@@ -939,8 +940,7 @@ TEST_F(StatementBinderTest, BindCreateSemanticModelTrimsOutputValues)
     ASSERT_TRUE(std::holds_alternative<CreateSemanticModelStatement>(*statement));
 
     const auto& createSemanticModel = std::get<CreateSemanticModelStatement>(*statement);
-    ASSERT_TRUE(createSemanticModel.config.outputValues.has_value());
-    ASSERT_EQ(*createSemanticModel.config.outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE", "NEUTRAL"}));
+    ASSERT_EQ(createSemanticModel.config.steps.front().outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE", "NEUTRAL"}));
 }
 
 TEST_F(StatementBinderTest, BindCreateSemanticModelRejectsUnknownOption)
@@ -949,6 +949,35 @@ TEST_F(StatementBinderTest, BindCreateSemanticModelRejectsUnknownOption)
         "CREATE SEMANTIC MODEL sentiment SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
         "'classify' AS PROMPT, 'oops' AS BOGUS_OPTION) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
     ASSERT_FALSE(statement.has_value());
+}
+
+/// The grammar's `constant` already admits integer literals, so `10 AS BATCH_SIZE` parses without
+/// a grammar change — this is what plan §C.3 relies on.
+TEST_F(StatementBinderTest, BindCreateSemanticModelParsesIntegerOptions)
+{
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL tuned SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+        "'classify' AS PROMPT, 3 AS MAX_RETRIES, 30 AS REQUEST_TIMEOUT, 5000 AS CONNECT_TIMEOUT) "
+        "INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_TRUE(statement.has_value()) << statement.error();
+    const auto& createSemanticModel = std::get<CreateSemanticModelStatement>(*statement);
+    ASSERT_EQ(createSemanticModel.config.maxRetries, 3);
+    ASSERT_EQ(createSemanticModel.config.requestTimeout, std::chrono::seconds(30));
+    ASSERT_EQ(createSemanticModel.config.connectTimeout, std::chrono::milliseconds(5000));
+}
+
+/// BATCH_SIZE/MAX_CONCURRENCY > 1 are consumed by the asynchronous execution path only (plan
+/// §C.3); until that lands, registerModel rejects them at CREATE time rather than silently
+/// accepting a knob that does nothing.
+TEST_F(StatementBinderTest, BindCreateSemanticModelRejectsBatchSizeGreaterThanOne)
+{
+    const auto statement = binder->parseAndBindSingle(
+        "CREATE SEMANTIC MODEL batched SET ('http://localhost:11434/v1' AS BASE_URL, 'gemma3:27b' AS MODEL, "
+        "'classify' AS PROMPT, 10 AS BATCH_SIZE) INPUT (description VARSIZED) OUTPUT (sentiment VARSIZED)");
+    ASSERT_TRUE(statement.has_value()) << statement.error();
+    const auto result = semanticModelStatementHandler->apply(std::get<CreateSemanticModelStatement>(*statement));
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code(), NES::ErrorCode::InvalidConfigParameter);
 }
 
 TEST_F(StatementBinderTest, BindCreateSemanticModelRequiresPromptOption)

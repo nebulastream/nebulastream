@@ -40,9 +40,9 @@ SemanticModelConfig freeTextConfig(const std::string& baseUrl)
     return SemanticModelConfig{
         .baseUrl = baseUrl,
         .model = "test-model",
-        .prompt = "Classify the sentiment",
         .apiKeyEnv = std::nullopt,
-        .outputValues = std::nullopt};
+        .steps = {SemanticStep{
+            .kind = SemanticStep::Kind::MAP, .prompt = "Classify the sentiment", .outputValues = {}, .defaultValue = ""}}};
 }
 
 SemanticModelConfig restrictedConfig(const std::string& baseUrl)
@@ -50,9 +50,12 @@ SemanticModelConfig restrictedConfig(const std::string& baseUrl)
     return SemanticModelConfig{
         .baseUrl = baseUrl,
         .model = "test-model",
-        .prompt = "Classify the sentiment",
         .apiKeyEnv = std::nullopt,
-        .outputValues = std::vector<std::string>{"POSITIVE", "NEGATIVE"}};
+        .steps = {SemanticStep{
+            .kind = SemanticStep::Kind::MAP,
+            .prompt = "Classify the sentiment",
+            .outputValues = {"POSITIVE", "NEGATIVE"},
+            .defaultValue = ""}}};
 }
 
 }

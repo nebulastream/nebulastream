@@ -181,11 +181,17 @@ normalizeAnswer(const std::string_view answer, const std::optional<std::vector<s
         }
     }
 
+    constexpr double cutoff = 0.6;
     std::optional<std::string> bestMatch;
-    double bestRatio = 0.6;
+    double bestRatio = cutoff;
     for (const auto& [key, value] : lookup)
     {
-        if (const double ratio = levenshteinRatio(upper, key); ratio >= bestRatio)
+        const double ratio = levenshteinRatio(upper, key);
+        /// The cutoff test stays inclusive (>= cutoff), but the tiebreak against the running best
+        /// is strict (> not >=): Python's difflib.get_close_matches is insertion-ordered and keeps
+        /// the first candidate on a tie, matching the containment rung above. A plain `ratio >=
+        /// bestRatio` here would silently pick the last tied candidate instead of the first.
+        if (ratio >= cutoff && (!bestMatch.has_value() || ratio > bestRatio))
         {
             bestRatio = ratio;
             bestMatch = value;

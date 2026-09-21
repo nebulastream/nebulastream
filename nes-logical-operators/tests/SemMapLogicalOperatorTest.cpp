@@ -33,15 +33,23 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SemMapLogicalOperator.hpp>
 #include <Operators/SemMapNameLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/UUID.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <SemanticModelConfig.hpp>
 
@@ -61,14 +69,16 @@ RegisteredSemanticModel loadModel(SemanticModelFieldList inputs, SemanticModelFi
     static std::atomic<size_t> counter{0};
     const auto name = fmt::format("sm_{}", counter.fetch_add(1));
 
+    const auto numOutputs = outputs.size();
     catalog.registerModel(
         name,
         SemanticModelConfig{
             .baseUrl = "mock://localhost",
             .model = "mock-model",
-            .prompt = "classify this",
             .apiKeyEnv = std::nullopt,
-            .outputValues = std::nullopt},
+            .steps = std::vector<SemanticStep>(
+                numOutputs,
+                SemanticStep{.kind = SemanticStep::Kind::MAP, .prompt = "classify this", .outputValues = {}, .defaultValue = ""})},
         SemanticModelSchema{.inputs = std::move(inputs), .outputs = std::move(outputs)});
     return catalog.load(name);
 }
@@ -370,6 +380,53 @@ TEST_F(SemMapLogicalOperatorTest, NameVariantCarriesOutputAlias)
     EXPECT_FALSE(*withAlias == *withoutAlias);
     const std::hash<NES::SemMapNameLogicalOperator> hasher;
     EXPECT_EQ(hasher(*withAlias), hasher(*withAliasAgain));
+}
+
+/// The coordinator->worker wire path: Reflector/Unreflector<RegisteredSemanticModel> and
+/// Reflector<TypedLogicalOperator<SemMapLogicalOperator>> (plan §D4). The Unreflector bypasses
+/// catalog validation — the coordinator already validated at CREATE time — so this is the only
+/// coverage that the reflected shape actually round-trips.
+TEST_F(SemMapLogicalOperatorTest, ReflectionRoundTripPreservesModelAndCallSite)
+{
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
+    const Schema<UnqualifiedUnboundField, Ordered> sourceSchema{
+        UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}};
+    const auto source = makeSourceWithSchema(sourceCatalog, "reviews", sourceSchema);
+
+    /// Captured once: `defaultModel()` registers a fresh, uniquely-named catalog entry on every
+    /// call, so re-calling it below for comparison would compare against a different model.
+    const auto model = defaultModel();
+    const auto semMap = TypedLogicalOperator<SemMapLogicalOperator>{
+                             model,
+                             std::vector<UnqualifiedUnboundField>{
+                                 UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}}}
+                             .withChildrenUnsafe({LogicalOperator{source}});
+
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED},
+        UnqualifiedUnboundField{Identifier::parse("sentiment"), DataType::Type::VARSIZED}};
+    const std::unordered_map<Identifier, std::string> sinkConfig{
+        {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("OUTPUT_FORMAT"), "CSV"}};
+    const auto sinkDescriptor
+        = sinkCatalog.addSinkDescriptor(Identifier::parse("test_sink"), sinkSchema, Identifier::parse("file"), Host{"localhost"}, sinkConfig, {})
+              .value();
+    const auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({LogicalOperator{semMap}});
+
+    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+
+    const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
+    const auto restored = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);
+
+    const auto semMaps = getOperatorByType<SemMapLogicalOperator>(restored);
+    ASSERT_EQ(semMaps.size(), 1U);
+    const auto& restoredModel = semMaps[0]->getModel();
+    EXPECT_EQ(restoredModel.getName(), model.getName());
+    EXPECT_EQ(restoredModel.getConfig(), model.getConfig());
+    EXPECT_EQ(restoredModel.getSchema().inputs, model.getSchema().inputs);
+    EXPECT_EQ(restoredModel.getSchema().outputs, model.getSchema().outputs);
+    EXPECT_EQ(semMaps[0]->resolvedModelOutputFields().size(), 1U);
 }
 
 /// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access)

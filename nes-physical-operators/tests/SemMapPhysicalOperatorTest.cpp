@@ -81,6 +81,15 @@ struct StubLlmClient final : LlmClient
     SemanticMapResult map(std::string_view) override { return {{"SENTIMENT", SemanticFieldResult{.answer = "POSITIVE", .confidence = 0.9}}}; }
 };
 
+/// Returns an empty result map for every call — exercises the default-fill branch
+/// (`slot.answers[i].clear()` / `allocateVariableSizedData(0)`) that only the systest covered
+/// before (plan §D5). Mirrors what CurlLlmClient/MockLlmClient produce for a field name the
+/// completion's JSON never mentioned.
+struct EmptyMapLlmClient final : LlmClient
+{
+    SemanticMapResult map(std::string_view) override { return {}; }
+};
+
 /// Echoes the uppercased input back as the answer — used to prove per-record correctness (no caching).
 struct EchoLlmClient final : LlmClient
 {
@@ -294,6 +303,44 @@ TEST_F(SemMapPhysicalOperatorTest, SingleRecord)
             for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
                 EXPECT_EQ(view[row]["sentiment"].as<std::string>(), "POSITIVE") << "(compiled=" << compiled << ")";
+                ++totalRecords;
+            }
+        }
+        EXPECT_EQ(totalRecords, 1U) << "(compiled=" << compiled << ")";
+    }
+}
+
+/// The LLM answering with no entry for the declared field at all (not just an unparseable one)
+/// must default-fill to an empty string rather than crash or leave the field uninitialized.
+TEST_F(SemMapPhysicalOperatorTest, EmptyMapDefaultFills)
+{
+    const auto [inputSchema, outputSchema] = makeSchemas({"SENTIMENT"});
+    auto inputBuffer = createInputBuffer(inputSchema, {"a great product"});
+
+    for (bool compiled : {false, true})
+    {
+        auto [pipeline, handlers] = createSemMapPipeline(
+            [] { return std::make_unique<EmptyMapLlmClient>(); }, inputSchema, outputSchema, {"description"}, {"sentiment"}, {"SENTIMENT"});
+        CompiledExecutablePipelineStage stage(pipeline, handlers, makeEngineOptions(compiled));
+
+        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        auto bufMgr = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, bufferSize, std::make_shared<NesDefaultMemoryAllocator>());
+        MockedPipelineContext pec{emittedBuffers, bufMgr};
+
+        stage.start(pec);
+        stage.execute(inputBuffer, pec);
+        stage.stop(pec);
+
+        size_t totalRecords = 0;
+        auto lockedBuffers = *emittedBuffers.rlock();
+        for (auto& outBuf : lockedBuffers)
+        {
+            Testing::TestTupleBuffer ttb(outputSchema);
+            auto view = ttb.open(outBuf);
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
+            {
+                EXPECT_EQ(view[row]["sentiment"].as<std::string>(), "") << "(compiled=" << compiled << ")";
                 ++totalRecords;
             }
         }

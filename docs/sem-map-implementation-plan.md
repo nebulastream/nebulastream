@@ -488,6 +488,80 @@ as a general Phase 1 ceiling.
 
 ---
 
+## Stage 2 — asynchrony
+
+Design only — nothing here is built. Supersedes the one-line "Phase 2: OperatorHandler +
+Build/Probe split + `repeatTask`" sketch above with the actual engine-internals constraints, found
+by reading `nes-query-engine`/`nes-sinks` rather than assumed.
+
+**Why a background I/O thread cannot just call `emitBuffer`.** `PipelineExecutionContext::emitBuffer`
+is a lambda captured by reference inside the `WorkTask` handling function's stack frame
+(`nes-query-engine/QueryEngine.cpp`, the `DefaultPEC pec(...)` construction around lines 480–513,
+passed a `[&](const TupleBuffer&, ContinuationPolicy) {...}` lambda that closes over `task`,
+`pipeline`, `taskId` and `pool` by reference). The PEC — and everything it closed over — is gone the
+moment `pipeline->stage->execute(task.buf, pec)` returns. A background HTTP-response thread that
+tried to call back into that `emitBuffer` after `execute()` has returned would be calling through a
+dangling reference. This kills the obvious design ("kick off the HTTP request, have the response
+callback emit directly").
+
+**The viable path is defer-and-poll via `repeatTask`.**
+`PipelineExecutionContext::repeatTask(buffer, duration)` lets a pipeline stage tell the engine "re-run
+me with this buffer after `duration`" instead of finishing now — `NetworkSink::execute`
+(`nes-sinks/src/NetworkSink.cpp:104-162`) is the existing template: on backpressure it calls
+`pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL)` instead of blocking. For SEM_MAP stage 2:
+- `execute()` starts (or joins) an async batch of HTTP requests against the handler-owned client
+  pool and returns immediately without emitting.
+- `close()` (called on the repeat) checks whether the batch's results are ready: if yes, writes the
+  output buffer and emits normally; if no, calls `pec->repeatTask(inputBuffer, ~10ms)` again.
+- `terminate()` drains any in-flight requests through `handler->stop(...)` before the pipeline is
+  torn down — see "in-flight requests are invisible to `pendingTasks`" below for why this is
+  mandatory, not a nicety.
+
+**`repeatTask` is strictly once per execution.** Every `DefaultPEC` method (`emitBuffer`, `repeatTask`
+itself, and the others alongside them) asserts `PRECONDITION(!wasRepeated, "A task should terminate
+after repeating")` (`QueryEngine.cpp`, the `wasRepeated` flag set at the `repeatTask` call site around
+lines 214–288). A pipeline stage cannot call `repeatTask` twice in one `execute()`/`close()` pass, and
+cannot call `emitBuffer` after calling `repeatTask` — the repeat-then-emit-on-completion split above
+is not optional, it is the only shape the API allows.
+
+**Backpressure is free.** `repeatTask` moves the task's `TaskCallback` into the repeated task
+(`QueryEngine.cpp`'s `requiresTaskRepetition` plumbing), so the source's in-flight semaphore
+(`nes-executable/include/BackpressureChannel.hpp`) stays held across the repeat. Stage 2 does not
+need to touch `BackpressureChannel` at all — a batch that is still waiting on HTTP responses
+continues to count as "in flight" from the source's point of view, which is exactly the throttling
+behaviour wanted.
+
+**Arena memory does not survive the repeat.** Per-`execute()` arena allocations
+(`Arena::allocateVariableSizedData`, used today for the VARSIZED output — plan §M1) are freed when
+`execute()` returns. Anything that needs to survive until a later `repeatTask` resumption — the
+batch's pending row indices, partially-filled answers — must be copied into memory owned by the
+`OperatorHandler`, not the arena.
+
+**In-flight requests are invisible to the engine's task-completion tracking, so draining in `stop()`
+is mandatory**, not a nicety: the engine's `pendingTasks` counter tracks *tasks*, and a batch that
+has called `repeatTask` and is now waiting on an HTTP response is, from the engine's perspective, a
+completed task that will be resubmitted later — it does not hold `pendingTasks` up the way an
+in-progress synchronous task would. `terminate()` must explicitly wait for outstanding HTTP requests
+before allowing shutdown to proceed, or a query stop can race a batch's in-flight requests.
+
+**Cache the handler pointer once, in `open()`.** `ExecutionContext::getGlobalOperatorHandler`
+(`nes-runtime/include/ExecutionContext.hpp:92`) deep-copies the whole handler map on every call — a
+per-record call site (as SEM_MAP's Phase 1 `execute()` uses today) would silently make this O(n) in
+the handler map size, per record. Stage 2's Build phase must fetch the handler once in `open()` and
+hold the raw pointer for the lifetime of the pipeline stage.
+
+**Our own counter-finding, from the M5 sweep above: batching is the higher-value half of stage 2,
+not per-request concurrency.** 4→16 worker threads bought almost nothing against a real local Ollama
+(2.74 → 2.90 rows/sec) because Ollama serialises inference on a single GPU/CPU budget — raw request
+concurrency is capped well below what 16 worker threads could offer. `maxConcurrency` (plan §C.3)
+should not be sized above what the target endpoint actually serves in parallel; `batchSize` — fewer,
+larger HTTP calls carrying multiple rows in one `_llm_call_id`-keyed payload (the prompt format
+already supports this, see `CurlLlmClient::buildPrompt`'s `ROW_ID`/data-block comments) — is the
+lever with the larger expected payoff, and should be implemented and measured before spending further
+effort tuning concurrency.
+
+---
+
 ## 5. Parallel tracks — non-blocking
 
 Neither of these holds up M0–M2. Both are decisions better made with the people who own the

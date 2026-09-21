@@ -77,7 +77,15 @@ struct ThreadLocalLlmClients
         }
     }
 
-    [[nodiscard]] PerThreadSlot& getSlot(WorkerThreadId thread) { return slots[thread.getRawValue() % slots.size()]; }
+    [[nodiscard]] PerThreadSlot& getSlot(WorkerThreadId thread)
+    {
+        /// Indexing directly (not `% slots.size()`) is deliberate: a modulo would silently let two
+        /// threads share one non-thread-safe CURL* and one scratch buffer if a WorkerThreadId ever
+        /// exceeded the configured worker count — data corruption, not a clean failure.
+        const auto index = thread.getRawValue();
+        INVARIANT(index < slots.size(), "WorkerThreadId {} is out of range for {} thread-local slots", index, slots.size());
+        return slots[index];
+    }
 
     LlmClientFactory factory;
     std::vector<std::string> outputFieldNames;
