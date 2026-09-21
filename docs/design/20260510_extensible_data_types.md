@@ -333,7 +333,6 @@ Allowing users to extend the datatypes, a system offers, with optional plugins c
 As simplification, we can differentiate between two types of data type extensions.
 
 ### User-defined logical data types
-This type of extension is usually based on composite / struct types.
 The system offers a set amount of fully implemented basic / leaf types (`INT`, `CHAR`, `BOOL` ...) and container types (`Array`, `Vector`, `Map`...) and allows users to create compositions out of basic types, container types, and further composed types.
 The user might also be able to define `functions` on their custom type composition, which perform operations using the fields of the composite type.
 
@@ -345,23 +344,47 @@ However, `FIXEDSIZED`, `VECTOR`, and `STRUCT` all have fixed physical representa
 For the in-record representation, we implemented a nautilus data type for each of the variants.
 Therefore, users may define functions and SerDes plugins using their datatype plugins, but need to use the functions provided by the `StructData` class to access the fields of their composite type.
 
-### User-defined physical data types
+### User-defined physical representation
 This type of extension allows users, additionally to the logical structure of the type, to define the physical representation of the type in-memory.
-Therefore, entirely new non-composite types are possible this way.
+Therefore, users are not bound to a predefined physical representation offered by the system, as it is currently the case in NebulaStream (`RowTupleBuffer`, `ColumnTupleBuffer`, `VarVal`).
 
-This type of user-extension is currently not supported in our PoC. Writing and reading a value from memory is hard-coded into the corresponding `VarVal` functions.
-The only flexibility in this regard that we offer is the option to create plugins for datatype-plugin specific SerDes, which are naturally only employed for incoming / outgoing buffers.
+This type of user-extension is currently not supported in our PoC. Writing and reading a value from memory is hard-coded into the corresponding `VarVal` functions, so the physical layout of each type cannot be altered without rewriting `VarVal`, the nautilus type implementations, and the `BufferRef` files.
+The only flexibility in this regard that we offer is the option to create plugins for datatype-plugin specific SerDes, which are naturally only employed for incoming / outgoing buffers, ergo the external representation.
 Customizable physical layout of values and tuples within the buffer could be the next logical step of this extension, since they offer room for optimizations, but are of higher complexity, as they impact `BufferRefs` and `VarVals`.
 
 ### Other Systems
 In the following overview, we briefly describe user-extensibility of data types in other stream processing engines and database systems.
 #### Apache Flink
+Flink offers two "composite" type options: 
+`ROW` is a composite type consisting of fields with a name, data type, and an optional field description.
+`STRUCTURE` is the type for user-extensions. It consists of fields as well as a structure name. Therefore, two structures with the same fields but different names will not be considered equal types by the system.
+The `STRUCTURE` type is similar to what we offer in our PoC. Flink does not allow casting of a specific `STRUCTURE` value to a `STRUCTURE` of a different name, even if the fields are equal -> they are considered different types.
+
+Flink does not allow users to change the physical representation of types. Very similar to NebulaStream, basic logical data types map to their respective internal basic type (SMALLINT → short, FLOAT → float etc.), while complex types like `Array`, `Row`, `String` etc. have their dedicated internal interfaces like `ArrayData` and `RowData` etc., which define functions to access elements, size etc.
+These interfaces are realized by classes like `BinaryArrayData`, describing the physical representation of the types. Writer helper classes like `BinaryArrayWriter` are responsible for writing into the memory that the binary data classes point to.
+None of these components are easily changeable for users. Therefore, user extensions for data types in Flink only touch the logical layer. The physical representation of `STRUCTURE` types is determined by the system, based on the field types used.
+
+#### Apache Beam
+Beam offers users to map a user-facing type of the language of the SDK to an underlying Beam Schema Type in form of a `LogicalType`.
+Notably, Beam has a `Row` schema type, which is comparable to Flink's `ROW` type. Composite type definitions with unique identifier are therefore possible.
+A `LogicalType` needs to define:
+- Unique identifier of the data type
+- Input Type: User-facing representation type of the logical type. Values are converted from this type into the base type.
+- Base Type: Beam schema type, which serves as the underlying type of the logical type.
+- BaseType to InputType conversion function toBaseType()
+- InputType to BaseType conversion function toInputType()
+- (Optional) Type parameters. These can be used to give additional properties to a single logical type, like scale and precision of a decimal type.
+
+`LogicalType` can therefore be described as a user-defined mapping between a type of the API and a supported Beam-Schema-Type. 
+In contrast to our data type plugins, the user-defined type does not need to map to the struct / row type of the engine. 
+Unlike Beam, we currently do not support the definition of type parameters for our data types, but it has some applictions like for precision or timezone definition (the Timestamp plugin currently does not consider offsets / timezones).
+`LogicalType` allows customizability of the logical type layer. The in-memory representation of the underlying Beam-Schema-Type is controlled by Beam runtime and not alterable for the user.
 
 
 # Summary
 The PoC adds three extensible variants (`FIXEDSIZED`, `VECTOR`, `STRUCT`) to `DataType`, a generic SQL `T(...)` constructor pipeline, and multiple plugins for several real-life use cases that demonstrate the full path from registration to physical execution.
 P1 is addressed by routing all type-specific logic through the existing registry pattern and through generic `Construct`/`Cast` functions instead of per-type switch cases.
-P2 is addressed by `STRUCT` with nominal typing.
+P2 is addressed by `STRUCT` with nominal typing.                 
 P3 is addressed by the generic `exitFunctionCall` parser dispatch.
 P4 is addressed by the addition of the `FIXEDSIZED` and `VECTOR` types. 
 Current constraint: `VECTOR` and `FIXEDSIZED` currently cannot be constructed within a SQL query like values of registered datatype plugins can.
