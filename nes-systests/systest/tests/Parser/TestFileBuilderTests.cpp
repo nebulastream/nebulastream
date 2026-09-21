@@ -50,15 +50,16 @@ public:
 /// Reading the file as a whole would give both queries the same setting.
 TEST_F(TestFileParserTest, ReadsAConfigurationAsApplyingToTheQueriesBelowIt)
 {
-    const auto [path, statements] = readSlt("GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1567]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n"
-                                            "\n"
-                                            "GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1568]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1567]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n"
+        "\n"
+        "GlobalConfiguration worker.default_query_execution.operator_buffer_size: [1568]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 2U);
     const auto* first = std::get_if<SelectStatement>(&statements.at(0));
@@ -72,14 +73,15 @@ TEST_F(TestFileParserTest, ReadsAConfigurationAsApplyingToTheQueriesBelowIt)
 /// A global line holds for what follows it, so a query below one inherits it without restating it.
 TEST_F(TestFileParserTest, CarriesAGlobalConfigurationToEveryQueryBelowIt)
 {
-    const auto [path, statements] = readSlt("GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n"
-                                            "\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n"
+        "\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 2U);
     for (const auto& statement : statements)
@@ -94,11 +96,11 @@ TEST_F(TestFileParserTest, CarriesAGlobalConfigurationToEveryQueryBelowIt)
 /// JoinNull relies on this: it asserts the join answers the same with the bloom filter on and off.
 TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
 {
-    const auto [path, statements]
-        = readSlt("GlobalConfiguration worker.default_query_execution.bloom_filter.enable_bloom_filter: [true, false]\n"
-                  "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                  "----\n"
-                  "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.default_query_execution.bloom_filter.enable_bloom_filter: [true, false]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 2U);
     const auto* first = std::get_if<SelectStatement>(&statements.at(0));
@@ -118,11 +120,12 @@ TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
 /// Two lines that each list values combine into every pairing of them, so the query runs once per pairing.
 TEST_F(TestFileParserTest, CombinesTwoListedConfigurationsIntoEveryPairing)
 {
-    const auto [path, statements] = readSlt("GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 2]\n"
-                                            "Configuration worker.default_query_execution.operator_buffer_size: [1567, 1568]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 2]\n"
+        "Configuration worker.default_query_execution.operator_buffer_size: [1567, 1568]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 4U);
     std::set<std::pair<std::string, std::string>> pairings;
@@ -142,11 +145,12 @@ TEST_F(TestFileParserTest, CombinesTwoListedConfigurationsIntoEveryPairing)
 /// Equal pairings would run the same query twice with the same configuration, so only one of them is kept.
 TEST_F(TestFileParserTest, RunsEqualPairingsOnce)
 {
-    const auto [path, statements] = readSlt("GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 2]\n"
-                                            "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 2]\n"
+        "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 1U);
     const auto* query = std::get_if<SelectStatement>(&statements.at(0));
@@ -158,11 +162,12 @@ TEST_F(TestFileParserTest, RunsEqualPairingsOnce)
 TEST_F(TestFileParserTest, RejectsAKeySetBothGloballyAndForOneQuery)
 {
     EXPECT_THROW(
-        readSlt("GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
-                "Configuration worker.query_engine.number_of_worker_threads: [2]\n"
-                "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                "----\n"
-                "1\n"),
+        readSlt(
+            "GlobalConfiguration worker.query_engine.number_of_worker_threads: [1]\n"
+            "Configuration worker.query_engine.number_of_worker_threads: [2]\n"
+            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+            "----\n"
+            "1\n"),
         Exception);
 }
 
@@ -170,20 +175,22 @@ TEST_F(TestFileParserTest, RejectsAKeySetBothGloballyAndForOneQuery)
 TEST_F(TestFileParserTest, RejectsAKeySetTwiceForOneQuery)
 {
     EXPECT_THROW(
-        readSlt("Configuration worker.query_engine.number_of_worker_threads: [1]\n"
-                "Configuration worker.query_engine.number_of_worker_threads: [2]\n"
-                "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                "----\n"
-                "1\n"),
+        readSlt(
+            "Configuration worker.query_engine.number_of_worker_threads: [1]\n"
+            "Configuration worker.query_engine.number_of_worker_threads: [2]\n"
+            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+            "----\n"
+            "1\n"),
         Exception);
 }
 
 /// A query with no configuration runs exactly once, so listing no configuration is not an empty set of alternatives.
 TEST_F(TestFileParserTest, RunsAQueryWithoutOverridesExactlyOnce)
 {
-    const auto [path, statements] = readSlt("SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 1U);
     const auto* query = std::get_if<SelectStatement>(&statements.at(0));
@@ -196,9 +203,10 @@ TEST_F(TestFileParserTest, RunsAQueryWithoutOverridesExactlyOnce)
 TEST_F(TestFileParserTest, RejectsAResultThatFollowsNoQuery)
 {
     EXPECT_THROW(
-        readSlt("CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-                "----\n"
-                "1\n"),
+        readSlt(
+            "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
+            "----\n"
+            "1\n"),
         Exception);
 }
 
@@ -207,8 +215,9 @@ TEST_F(TestFileParserTest, RejectsAResultThatFollowsNoQuery)
 TEST_F(TestFileParserTest, RejectsAQueryWithoutAResult)
 {
     EXPECT_THROW(
-        readSlt("CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-                "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"),
+        readSlt(
+            "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
+            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"),
         Exception);
 }
 
@@ -216,11 +225,12 @@ TEST_F(TestFileParserTest, RejectsAQueryWithoutAResult)
 /// below it is the plan it expects.
 TEST_F(TestFileParserTest, ReadsAnExplainWithThePlanItExpects)
 {
-    const auto [path, statements] = readSlt("EXPLAIN (LOGICAL) FORMAT TEXT SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "== Logical Plan ==\n"
-                                            "SINK(SINKONETUPLE)\n"
-                                            "==END==\n");
+    const auto [path, statements] = readSlt(
+        "EXPLAIN (LOGICAL) FORMAT TEXT SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "== Logical Plan ==\n"
+        "SINK(SINKONETUPLE)\n"
+        "==END==\n");
 
     ASSERT_EQ(statements.size(), 1U);
     const auto* explain = std::get_if<ExplainStatement>(&statements.at(0));
@@ -234,17 +244,18 @@ TEST_F(TestFileParserTest, ReadsAnExplainWithThePlanItExpects)
 /// kept for the query below, while a global line stays in scope, as in the runner before the typed model.
 TEST_F(TestFileParserTest, DropsALocalConfigurationAboveAnExplainAndKeepsAGlobalOne)
 {
-    const auto [path, statements] = readSlt("GlobalConfiguration worker.query_engine.number_of_worker_threads: [2]\n"
-                                            "Configuration worker.default_query_execution.operator_buffer_size: [1567]\n"
-                                            "EXPLAIN (LOGICAL) FORMAT TEXT SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "== Logical Plan ==\n"
-                                            "SINK(SINKONETUPLE)\n"
-                                            "==END==\n"
-                                            "\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "GlobalConfiguration worker.query_engine.number_of_worker_threads: [2]\n"
+        "Configuration worker.default_query_execution.operator_buffer_size: [1567]\n"
+        "EXPLAIN (LOGICAL) FORMAT TEXT SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "== Logical Plan ==\n"
+        "SINK(SINKONETUPLE)\n"
+        "==END==\n"
+        "\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 2U);
     ASSERT_NE(std::get_if<ExplainStatement>(&statements.at(0)), nullptr);
@@ -257,16 +268,17 @@ TEST_F(TestFileParserTest, DropsALocalConfigurationAboveAnExplainAndKeepsAGlobal
 /// The reader captures each statement in file order, typed: creates with their attach data, the query with its expected rows.
 TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
 {
-    const auto [path, statements] = readSlt("CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
-                                            "CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;\n"
-                                            "ATTACH INLINE\n"
-                                            "1\n"
-                                            "\n"
-                                            "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;\n"
-                                            "\n"
-                                            "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "CREATE LOGICAL SOURCE oneTuple(field_1 UINT64 NOT NULL);\n"
+        "CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;\n"
+        "ATTACH INLINE\n"
+        "1\n"
+        "\n"
+        "CREATE SINK sinkOneTuple(field_1 UINT64 NOT NULL) TYPE File;\n"
+        "\n"
+        "SELECT field_1 FROM oneTuple INTO sinkOneTuple;\n"
+        "----\n"
+        "1\n");
 
     EXPECT_EQ(path, "/tests/OneTuple.test");
     ASSERT_EQ(statements.size(), 4U);
@@ -300,15 +312,16 @@ TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
 /// An ATTACH FILE source keeps the referenced path rather than materializing anything.
 TEST_F(TestFileParserTest, ReadsFileAttach)
 {
-    const auto [path, statements] = readSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
-                                            "CREATE PHYSICAL SOURCE FOR stream TYPE File;\n"
-                                            "ATTACH FILE small/stream8.csv\n"
-                                            "\n"
-                                            "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
-                                            "\n"
-                                            "SELECT id FROM stream INTO out;\n"
-                                            "----\n"
-                                            "1\n");
+    const auto [path, statements] = readSlt(
+        "CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+        "CREATE PHYSICAL SOURCE FOR stream TYPE File;\n"
+        "ATTACH FILE small/stream8.csv\n"
+        "\n"
+        "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
+        "\n"
+        "SELECT id FROM stream INTO out;\n"
+        "----\n"
+        "1\n");
 
     ASSERT_EQ(statements.size(), 4U);
     const auto* physicalSource = std::get_if<CreateStatement>(&statements.at(1));

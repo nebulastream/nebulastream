@@ -89,8 +89,7 @@ protected:
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
     virtual void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
-        PipelineExecutionContext* pipelineCtx)
-        = 0;
+        PipelineExecutionContext* pipelineCtx) = 0;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;

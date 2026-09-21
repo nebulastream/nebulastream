@@ -162,14 +162,15 @@ Verdict checkExplainRegexAssertions(const std::vector<ExplainRegexAssertion>& as
         {
             if (std::regex_search(actualOutput, std::regex(pattern)) != shouldMatch)
             {
-                return std::unexpected(Mismatch{fmt::format(
-                    "Explain Output Regex Assertion Failed (line {}, expected pattern \"{}\" {} match)\n"
-                    "----------------------\n"
-                    "Actual:\n{}",
-                    line + 1,
-                    pattern,
-                    shouldMatch ? "to" : "not to",
-                    actualOutput)});
+                return std::unexpected(
+                    Mismatch{fmt::format(
+                        "Explain Output Regex Assertion Failed (line {}, expected pattern \"{}\" {} match)\n"
+                        "----------------------\n"
+                        "Actual:\n{}",
+                        line + 1,
+                        pattern,
+                        shouldMatch ? "to" : "not to",
+                        actualOutput)});
             }
         }
         catch (const std::regex_error& exception)
@@ -215,16 +216,17 @@ Verdict reportFirstDifference(const std::vector<std::string>& expected, const st
     static constexpr std::string_view EndOfOutput = "<end of output>";
     const auto firstDifferingLine
         = static_cast<size_t>(std::ranges::distance(expected.begin(), std::ranges::mismatch(expected, actual).in1));
-    return std::unexpected(Mismatch{fmt::format(
-        "Explain Output Mismatch (first difference at line {}, expected \"{}\" but got \"{}\")\n"
-        "----------------------\n"
-        "Expected:\n{}\n\n"
-        "Actual:\n{}",
-        firstDifferingLine + 1,
-        firstDifferingLine < expected.size() ? std::string_view{expected.at(firstDifferingLine)} : EndOfOutput,
-        firstDifferingLine < actual.size() ? std::string_view{actual.at(firstDifferingLine)} : EndOfOutput,
-        fmt::join(expected, "\n"),
-        fmt::join(actual, "\n"))});
+    return std::unexpected(
+        Mismatch{fmt::format(
+            "Explain Output Mismatch (first difference at line {}, expected \"{}\" but got \"{}\")\n"
+            "----------------------\n"
+            "Expected:\n{}\n\n"
+            "Actual:\n{}",
+            firstDifferingLine + 1,
+            firstDifferingLine < expected.size() ? std::string_view{expected.at(firstDifferingLine)} : EndOfOutput,
+            firstDifferingLine < actual.size() ? std::string_view{actual.at(firstDifferingLine)} : EndOfOutput,
+            fmt::join(expected, "\n"),
+            fmt::join(actual, "\n"))});
 }
 
 }

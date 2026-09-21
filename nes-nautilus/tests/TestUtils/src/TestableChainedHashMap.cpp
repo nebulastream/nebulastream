@@ -136,97 +136,104 @@ TestableChainedHashMap::TestableChainedHashMap(
     chainedHashMapBuffer = chainedHashMapBufferOpt.value();
     ChainedHashMap::init(chainedHashMapBuffer, hashMapConfig);
 
-    insertFn.emplace(engine->registerFunction(std::function(
-        [dataTypes = dataTypes, projections = projections, fieldKeys = fieldKeys, fieldValues = fieldValues, hashMapConfig = hashMapConfig](
-            nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
-        {
-            const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
-            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
-            ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
-            std::ignore = chmRef.findOrCreateEntry(
-                record,
-                [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
-                {
-                    const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
-                    const ChainedHashMapRef::ChainedEntryRef newEntryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
-                    newEntryRef.copyValuesToEntry(record, bm);
-                },
-                bm);
-        })));
+    insertFn.emplace(engine->registerFunction(
+        std::function(
+            [dataTypes = dataTypes,
+             projections = projections,
+             fieldKeys = fieldKeys,
+             fieldValues = fieldValues,
+             hashMapConfig = hashMapConfig](
+                nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<AbstractBufferProvider*> bm, nautilus::val<AnyVec*> rec)
+            {
+                const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                std::ignore = chmRef.findOrCreateEntry(
+                    record,
+                    [&](const nautilus::val<AbstractHashMapEntry*>& newEntry)
+                    {
+                        const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
+                        const ChainedHashMapRef::ChainedEntryRef newEntryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
+                        newEntryRef.copyValuesToEntry(record, bm);
+                    },
+                    bm);
+            })));
 
     /// Looks a key up without mutating the map under test: materialises the probe key into a disposable
     /// one-entry probe map (findOrCreateEntry on an always-empty map is just "format this entry" - it
     /// never touches the map under test), then does a genuine no-mutation ChainedHashMapRef::findEntry()
     /// against the real map. This mirrors the entry-to-entry probing idiom used by the hash-join and
     /// aggregation probe operators in production (they probe one map with an entry materialised in another).
-    lookupFn.emplace(engine->registerFunction(std::function(
-        [keyDataTypes = keyDataTypes,
-         keyProjections = fieldKeyNames,
-         fieldKeys = fieldKeys,
-         fieldValues = fieldValues,
-         fieldValueNames = fieldValueNames,
-         fieldValueTypes = fieldValueTypes,
-         hashMapConfig = hashMapConfig,
-         probeConfig = probeConfig](
-            nautilus::val<TupleBuffer*> chainedHashMapBuffer,
-            nautilus::val<TupleBuffer*> probeBuffer,
-            nautilus::val<AbstractBufferProvider*> bm,
-            nautilus::val<AnyVec*> keyIn,
-            nautilus::val<AnyVec*> out) -> nautilus::val<bool>
-        {
-            const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
-            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
-            const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
-
-            ChainedHashMapRef probeMapRef{borrowedProbeBuffer, probeConfig};
-            const auto probeEntry = probeMapRef.findOrCreateEntry(keyRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
-
-            ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
-            const auto foundEntry = chmRef.findEntry(probeEntry);
-            const nautilus::val<bool> found = (foundEntry != nullptr);
-            if (found)
+    lookupFn.emplace(engine->registerFunction(
+        std::function(
+            [keyDataTypes = keyDataTypes,
+             keyProjections = fieldKeyNames,
+             fieldKeys = fieldKeys,
+             fieldValues = fieldValues,
+             fieldValueNames = fieldValueNames,
+             fieldValueTypes = fieldValueTypes,
+             hashMapConfig = hashMapConfig,
+             probeConfig = probeConfig](
+                nautilus::val<TupleBuffer*> chainedHashMapBuffer,
+                nautilus::val<TupleBuffer*> probeBuffer,
+                nautilus::val<AbstractBufferProvider*> bm,
+                nautilus::val<AnyVec*> keyIn,
+                nautilus::val<AnyVec*> out) -> nautilus::val<bool>
             {
-                const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
-                const ChainedHashMapRef::ChainedEntryRef entryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
-                const auto valueRecord = entryRef.getValue();
-                storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes);
-            }
-            return found;
-        })));
+                const Record keyRecord = buildRecordFromAnyVec(keyIn, keyProjections, keyDataTypes);
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const BorrowedNautilusBuffer borrowedProbeBuffer = BorrowedNautilusBuffer::from(probeBuffer);
 
-    readAllFn.emplace(engine->registerFunction(std::function(
-        [fieldKeys = fieldKeys,
-         fieldValues = fieldValues,
-         fieldKeyNames = fieldKeyNames,
-         fieldKeyTypes = fieldKeyTypes,
-         fieldValueNames = fieldValueNames,
-         fieldValueTypes = fieldValueTypes,
-         hashMapConfig = hashMapConfig](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
-        {
-            /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
-            const auto numTuples = nautilus::invoke(
-                +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
-            if (numTuples == nautilus::val<uint64_t>{0})
+                ChainedHashMapRef probeMapRef{borrowedProbeBuffer, probeConfig};
+                const auto probeEntry = probeMapRef.findOrCreateEntry(keyRecord, [](const nautilus::val<AbstractHashMapEntry*>&) { }, bm);
+
+                ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                const auto foundEntry = chmRef.findEntry(probeEntry);
+                const nautilus::val<bool> found = (foundEntry != nullptr);
+                if (found)
+                {
+                    const auto chainedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{chainedEntry, borrowedBuffer, fieldKeys, fieldValues};
+                    const auto valueRecord = entryRef.getValue();
+                    storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes);
+                }
+                return found;
+            })));
+
+    readAllFn.emplace(engine->registerFunction(
+        std::function(
+            [fieldKeys = fieldKeys,
+             fieldValues = fieldValues,
+             fieldKeyNames = fieldKeyNames,
+             fieldKeyTypes = fieldKeyTypes,
+             fieldValueNames = fieldValueNames,
+             fieldValueTypes = fieldValueTypes,
+             hashMapConfig = hashMapConfig](nautilus::val<TupleBuffer*> chainedHashMapBuffer, nautilus::val<std::vector<AnyVec>*> outVector)
             {
-                return;
-            }
+                /// begin() calls getPage(0) via invoke which fails on an empty CHM, so guard first.
+                const auto numTuples = nautilus::invoke(
+                    +[](TupleBuffer* buf) { return ChainedHashMap::load(*buf).getTotalNumberOfRecords(); }, chainedHashMapBuffer);
+                if (numTuples == nautilus::val<uint64_t>{0})
+                {
+                    return;
+                }
 
-            const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
-            const ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
+                const BorrowedNautilusBuffer borrowedBuffer = BorrowedNautilusBuffer::from(chainedHashMapBuffer);
+                const ChainedHashMapRef chmRef{borrowedBuffer, hashMapConfig};
 
-            for (const auto entry : chmRef)
-            {
-                const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, fieldValues};
+                for (const auto entry : chmRef)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRef{entry, borrowedBuffer, fieldKeys, fieldValues};
 
-                auto out = anyVecPushBack(outVector, nautilus::val<size_t>{fieldKeys.size() + fieldValues.size()});
+                    auto out = anyVecPushBack(outVector, nautilus::val<size_t>{fieldKeys.size() + fieldValues.size()});
 
-                const auto keyRecord = entryRef.getKey();
-                const auto valueRecord = entryRef.getValue();
+                    const auto keyRecord = entryRef.getKey();
+                    const auto valueRecord = entryRef.getValue();
 
-                storeRecordToAnyVec(out, keyRecord, fieldKeyNames, fieldKeyTypes);
-                storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes, fieldKeys.size());
-            }
-        })));
+                    storeRecordToAnyVec(out, keyRecord, fieldKeyNames, fieldKeyTypes);
+                    storeRecordToAnyVec(out, valueRecord, fieldValueNames, fieldValueTypes, fieldKeys.size());
+                }
+            })));
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access, performance-unnecessary-value-param)
