@@ -41,6 +41,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <UdfDescriptor.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 
@@ -190,6 +191,7 @@ struct CreateFunctionStatement
     std::string entrypoint;
     std::vector<DataType> argTypes;
     DataType returnType;
+    UdfExecution execution = UdfExecution::InProcess;
 };
 
 struct ShowFunctionsStatement
