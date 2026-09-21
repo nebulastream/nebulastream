@@ -28,6 +28,17 @@ setup_file() {
 
   nes_build_runtime_image WORKER_IMAGE nes-worker-systest \
     "$NES_WORKER" nes-single-node-worker
+  # The worker resolves BRIDGE 'cpython' / 'pypy' to the UDF bridges staged next to its binary.
+  local bridges_dir
+  bridges_dir="$(dirname "$(realpath "$NES_WORKER")")/nes-udf-bridges"
+  if [ -d "$bridges_dir" ]; then
+    local bridges_ctx
+    bridges_ctx=$(mktemp -d)
+    cp -rL "$bridges_dir" "$bridges_ctx/nes-udf-bridges"
+    printf 'FROM %s\nCOPY nes-udf-bridges /usr/bin/nes-udf-bridges\n' "$WORKER_IMAGE" \
+      | docker build --pull=false --network=none --load -t "$WORKER_IMAGE" -f - "$bridges_ctx"
+    rm -rf "$bridges_ctx"
+  fi
   nes_build_app_image SYSTEST_IMAGE nes-systest-image \
     "$NES_SYSTEST" systest
 

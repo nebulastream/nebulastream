@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -27,13 +28,33 @@
 
 namespace NES
 {
+
+/// Selects how an inline PYTHON(...) UDF is executed. Codon (the default) AOT-compiles the body to
+/// native code linked into the query's own compiled pipeline -- fastest, but only a statically-typeable
+/// subset of Python. CPython/PyPy instead run it through the same interpreter bridges file-based
+/// CREATE FUNCTION UDFs use, trading per-row call overhead for full Python semantics.
+enum class PythonUdfBackend : std::uint8_t
+{
+    Codon,
+    CPython,
+    PyPy
+};
+
+/// Parses a SQL BRIDGE clause value ("codon"/"cpython"/"pypy", case-insensitive). Throws
+/// NES::UnsupportedUdfLanguage if `bridge` names none of them.
+[[nodiscard]] PythonUdfBackend parsePythonUdfBackend(std::string_view bridge);
+
 class PythonLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Python";
 
     PythonLogicalFunction(
-        std::vector<std::string> parameterNames, std::string body, DataType returnType, std::vector<LogicalFunction> arguments);
+        std::vector<std::string> parameterNames,
+        std::string body,
+        DataType returnType,
+        std::vector<LogicalFunction> arguments,
+        PythonUdfBackend backend = PythonUdfBackend::Codon);
 
     [[nodiscard]] bool operator==(const PythonLogicalFunction& rhs) const;
     [[nodiscard]] DataType getDataType() const;
@@ -44,12 +65,14 @@ public:
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] const std::vector<std::string>& getParameterNames() const;
     [[nodiscard]] const std::string& getBody() const;
+    [[nodiscard]] PythonUdfBackend getBackend() const;
 
 private:
     std::vector<std::string> parameterNames;
     std::string body;
     DataType returnType;
     std::vector<LogicalFunction> arguments;
+    PythonUdfBackend backend;
 
     friend Reflector<PythonLogicalFunction>;
 };
@@ -62,6 +85,7 @@ struct ReflectedPythonLogicalFunction
     std::string body;
     DataType returnType;
     std::vector<LogicalFunction> arguments;
+    PythonUdfBackend backend;
 };
 }
 
