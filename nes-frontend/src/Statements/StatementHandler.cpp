@@ -53,6 +53,7 @@
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <UdfCatalog.hpp>
 #include <UdfDescriptor.hpp>
 #include <WorkerCatalog.hpp>
@@ -315,7 +316,7 @@ UdfInfo toUdfInfo(const UdfDescriptor& descriptor)
 {
     return UdfInfo{
         .name = descriptor.getName(),
-        .path = descriptor.getPath().string(),
+        .path = descriptor.getExecution() == UdfExecution::Codon ? std::string{CodonUdfBridge} : descriptor.getPath().string(),
         .entrypoint = descriptor.getEntrypoint(),
         .argTypes = descriptor.getArgTypes(),
         .returnType = descriptor.getReturnType(),
@@ -334,7 +335,8 @@ std::expected<CreateFunctionStatementResult, Exception> UdfStatementHandler::ope
 
     try
     {
-        udfCatalog->registerUdf(statement.name, statement.path, statement.entrypoint, statement.argTypes, statement.returnType);
+        udfCatalog->registerUdf(
+            statement.name, statement.path, statement.entrypoint, statement.argTypes, statement.returnType, statement.execution);
     }
     catch (const Exception& e)
     {

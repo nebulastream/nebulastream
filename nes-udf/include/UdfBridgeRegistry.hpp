@@ -20,6 +20,10 @@
 namespace NES
 {
 
+/// BRIDGE value selecting Codon (ahead-of-time compiled into the query pipeline). Unlike the interpreter bridges it has
+/// no shipped `.so`, so it is deliberately absent from resolveBuiltinUdfBridgePath.
+inline constexpr std::string_view CodonUdfBridge = "codon";
+
 /// Directory containing the running executable (resolved via /proc/self/exe on Linux). Anchor for
 /// locating shipped UDF bridge `.so` files at a fixed, deployment-relative path.
 [[nodiscard]] std::filesystem::path currentExecutableDirectory();
