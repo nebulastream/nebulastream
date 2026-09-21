@@ -64,6 +64,7 @@
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <UdfCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -162,17 +163,20 @@ struct SystestBinder::Impl
         , sourceCatalog(std::make_shared<SourceCatalog>())
         , sinkCatalog(std::make_shared<SinkCatalog>())
         , modelCatalog(std::make_shared<ModelCatalog>())
+        , udfCatalog(std::make_shared<UdfCatalog>())
         , workerCatalog(std::make_shared<WorkerCatalog>())
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
+        , udfHandler{udfCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
               config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),
-              modelCatalog}
+              modelCatalog,
+              udfCatalog}
     {
         for (const auto& [host, data, capacity, downstream, workerConfig] : clusterConfiguration.workers)
         {
@@ -213,6 +217,17 @@ struct SystestBinder::Impl
 
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const DiscoveredTestFile& testfile)
     {
+        /// UDF names are not prefixed per test file, so each file starts from an empty UDF catalog.
+        /// Queries are optimized while their file loads, which keeps the files from seeing each other's functions.
+        for (const auto& udfName : udfCatalog->getUdfNames())
+        {
+            udfCatalog->removeUdf(udfName);
+        }
+        /// Make the Python UDF modules (nes-systests/udf/pyudfs) importable by the Python bridge.
+        if (std::string_view{SYSTEST_PY_UDF_PATH}.size() > 0)
+        {
+            setenv("NES_UDF_PATH", SYSTEST_PY_UDF_PATH, /*overwrite=*/1);
+        }
         SystestParser parser;
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
@@ -226,6 +241,14 @@ struct SystestBinder::Impl
                      substitute.push_back('/');
                  }
              }});
+        parser.registerSubstitutionRule(
+            {.keyword = "PY_BRIDGE_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_BRIDGE_DIR; }});
+        /// PY_UDF_VENV_DIR is local to PythonUdfVenv.test: it only resolves nes-systests/udf/small_venv, a fixture that test alone uses.
+        if (testfile.file.filename() == "PythonUdfVenv.test")
+        {
+            parser.registerSubstitutionRule(
+                {.keyword = "PY_UDF_VENV_DIR", .ruleFunction = [](std::string& substitute) { substitute = SYSTEST_PY_UDF_VENV_DIR; }});
+        }
         parser.loadString(readTestFile(testfile.file));
 
         const ParsedTestFile parsedFile = [&]
@@ -361,8 +384,19 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
+                [&](const CreateFunctionStatement& statement) { createFunction(statement); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
+    }
+
+    /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
+    void createFunction(CreateFunctionStatement statement)
+    {
+        if (const std::filesystem::path path{statement.path}; path.is_relative())
+        {
+            statement.path = (testDataDir / path).string();
+        }
+        throwOnError(udfHandler(statement));
     }
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
@@ -470,11 +504,13 @@ private:
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
+    std::shared_ptr<UdfCatalog> udfCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    UdfStatementHandler udfHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };

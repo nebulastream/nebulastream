@@ -125,6 +125,12 @@ void Emitter::emitCreate(ClassifiedCreate create, const bool submitsDeclaredSink
                 }
             },
             [&](const ModelDeclaration& declaration) { runnable.setupStatements.emplace_back(modelStatement(*create.parse, declaration)); },
+            [&](const FunctionDeclaration&)
+            {
+                /// Submitted as written; the binder resolves a relative library path against the test data directory.
+                antlr4::TokenStreamRewriter rewriter{&create.parse->tokenStream()};
+                runnable.setupStatements.emplace_back(PlainStatement{.sql = rewriter.getText()});
+            },
             [&](const SinkDeclaration& declaration)
             {
                 /// An inlined sink needs no statement of its own.
