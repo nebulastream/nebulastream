@@ -18,10 +18,14 @@
 #include <memory>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Interface/NESStrongTypeRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
@@ -35,6 +39,14 @@ namespace NES
 /// For a median aggregation, the aggregation value would be a data structure that stores all seen values so far.
 struct AggregationState
 {
+};
+
+/// Identifies the input buffer so page-based aggregates can preserve its tuple order.
+struct AggregationInputBuffer
+{
+    nautilus::val<OriginId> originId;
+    nautilus::val<SequenceNumber> sequenceNumber;
+    nautilus::val<ChunkNumber> chunkNumber;
 };
 
 /// This class represents an aggregation function. An aggregation function is used to aggregate records in a window.
@@ -52,7 +64,9 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& bufferProvider,
-        const Record& record)
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp,
+        const AggregationInputBuffer& inputBuffer)
         = 0;
 
     /// Combines two aggregation states into one. After calling this method, aggregationState1 contains the combined state

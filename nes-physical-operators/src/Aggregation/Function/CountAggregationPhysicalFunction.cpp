@@ -13,6 +13,8 @@
 */
 
 #include <Aggregation/Function/CountAggregationPhysicalFunction.hpp>
+#include <Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -51,7 +53,9 @@ void CountAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     /// Reading the old count from the aggregation state.
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);

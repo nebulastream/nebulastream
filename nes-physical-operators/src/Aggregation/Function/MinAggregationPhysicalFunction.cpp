@@ -13,6 +13,8 @@
 */
 
 #include <Aggregation/Function/MinAggregationPhysicalFunction.hpp>
+#include <Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -45,7 +47,9 @@ void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 
