@@ -35,13 +35,42 @@
 #include <Schema/Binder.hpp>
 #include <Traits/FieldMappingTrait.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <UdfBackend.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <UdfDescriptor.hpp>
 
 namespace NES::QueryCompilation
 {
+namespace
+{
+/// Wraps an inline PYTHON(...) body as a plain, top-level Python function so it can be handed to
+/// initialize_udf_from_source: the CPython/PyPy ABI marshals arguments as ordinary Python values
+/// already, so no per-argument unwrapping is needed here (unlike the Codon path, which must also
+/// generate its own C-ABI trampoline).
+std::string buildInlinePythonSource(const std::vector<std::string>& parameterNames, const std::string& body, std::string_view functionName)
+{
+    return fmt::format("def {}({}):\n{}\n", functionName, fmt::join(parameterNames, ", "), body);
+}
+
+/// Bridge name resolveBuiltinUdfBridgePath expects; Codon never reaches here (handled separately).
+std::string_view interpreterBridgeName(const PythonUdfBackend backend)
+{
+    switch (backend)
+    {
+        case PythonUdfBackend::CPython:
+            return "cpython";
+        case PythonUdfBackend::PyPy:
+            return "pypy";
+        case PythonUdfBackend::Codon:
+            break;
+    }
+    std::unreachable();
+}
+}
+
 PhysicalFunction FunctionProvider::lowerFunction(
     LogicalFunction logicalFunction, const FieldMappingTrait& fieldMappingTrait, const std::vector<std::string>& pythonUdfImportPaths)
 {
@@ -77,17 +106,30 @@ PhysicalFunction FunctionProvider::lowerFunction(
             childFunctions, descriptor->getArgTypes(), logicalFunction.getDataType(), UdfBackend::create(*descriptor));
     }
     /// Inline Python UDFs (PYTHON((...): $python$ ... $python$)) carry their source directly in the query
-    /// text rather than a catalog descriptor, so they bypass the registry the same way.
+    /// text rather than a catalog descriptor, so they bypass the registry the same way. BRIDGE selects
+    /// how: Codon (default) AOT-compiles the body into the pipeline itself; cpython/pypy instead run it
+    /// through the same interpreter bridges file-based UDFs use, with no catalog entry.
     if (const auto pythonFunction = logicalFunction.tryGetAs<PythonLogicalFunction>())
     {
-        return PhysicalFunction{PythonPhysicalFunction(
-                                    pythonFunction.value()->getParameterNames(),
-                                    pythonFunction.value()->getBody(),
-                                    childFunctions,
-                                    inputTypes,
-                                    logicalFunction.getDataType(),
-                                    pythonUdfImportPaths)}
-            .withSetupChildren(std::move(childFunctions));
+        if (pythonFunction.value()->getBackend() == PythonUdfBackend::Codon)
+        {
+            return PhysicalFunction{PythonPhysicalFunction(
+                                        pythonFunction.value()->getParameterNames(),
+                                        pythonFunction.value()->getBody(),
+                                        childFunctions,
+                                        inputTypes,
+                                        logicalFunction.getDataType(),
+                                        pythonUdfImportPaths)}
+                .withSetupChildren(std::move(childFunctions));
+        }
+        static constexpr std::string_view InlineFunctionName = "nes_inline_udf";
+        const auto bridgePath = resolveBuiltinUdfBridgePath(interpreterBridgeName(pythonFunction.value()->getBackend()));
+        const auto source = buildInlinePythonSource(pythonFunction.value()->getParameterNames(), pythonFunction.value()->getBody(), InlineFunctionName);
+        return UDFPhysicalFunction(
+            childFunctions,
+            inputTypes,
+            logicalFunction.getDataType(),
+            UdfBackend::createFromSource(bridgePath, source, std::string(InlineFunctionName), inputTypes, logicalFunction.getDataType()));
     }
 
     /// 3. Calling the registry to create an executable function.

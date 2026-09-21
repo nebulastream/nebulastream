@@ -28,6 +28,8 @@ ffibuilder.embedding_api("""
 
     int initialize_udf(const char *entrypoint, int argc, const int *arg_type_codes,
                         int return_type_code, char **errormessage);
+    int initialize_udf_from_source(const char *source, const char *function_name, int argc,
+                                    const int *arg_type_codes, int return_type_code, char **errormessage);
     int execute_udf_row(int handle, const void *const *arg_values, const long long *arg_lens,
                          const int *arg_nulls, void *result_scalar, char **result_string,
                          long long *result_string_len, int *result_null, char **errormessage);
@@ -112,6 +114,13 @@ ffibuilder.embedding_init_code("""
             return
         ffi.cast(_CTYPE[return_type] + " *", result_scalar)[0] = value
 
+    def _register_callable(func, argc, arg_type_codes, return_type_code):
+        with _lock:
+            handle = _next_handle[0]
+            _next_handle[0] += 1
+            _registry[handle] = (func, [arg_type_codes[i] for i in range(argc)], return_type_code)
+        return handle
+
     @ffi.def_extern()
     def initialize_udf(entrypoint, argc, arg_type_codes, return_type_code, errormessage):
         full = ffi.string(entrypoint).decode()
@@ -127,12 +136,24 @@ ffibuilder.embedding_init_code("""
         except Exception as exc:  # noqa: BLE001 -- reported to the caller, not re-raised
             _set_error(errormessage, f"{type(exc).__name__}: {exc}")
             return -1
+        return _register_callable(func, argc, arg_type_codes, return_type_code)
 
-        with _lock:
-            handle = _next_handle[0]
-            _next_handle[0] += 1
-            _registry[handle] = (func, [arg_type_codes[i] for i in range(argc)], return_type_code)
-        return handle
+    @ffi.def_extern()
+    def initialize_udf_from_source(source, function_name, argc, arg_type_codes, return_type_code, errormessage):
+        # Executed into a fresh dict rather than imported as a module: each inline UDF gets its own
+        # private namespace, so same-named helpers in two different inline UDF bodies never collide.
+        source_text = ffi.string(source).decode()
+        func_name = ffi.string(function_name).decode()
+        try:
+            module_globals = {}
+            exec(compile(source_text, "<inline udf>", "exec"), module_globals)
+            func = module_globals[func_name]
+            if not callable(func):
+                raise TypeError(f"'{func_name}' is not callable")
+        except Exception as exc:  # noqa: BLE001 -- reported to the caller, not re-raised
+            _set_error(errormessage, f"{type(exc).__name__}: {exc}")
+            return -1
+        return _register_callable(func, argc, arg_type_codes, return_type_code)
 
     @ffi.def_extern()
     def execute_udf_row(handle, arg_values, arg_lens, arg_nulls, result_scalar,

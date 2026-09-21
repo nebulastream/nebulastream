@@ -141,6 +141,32 @@ char* fetchPythonError()
     return dupString(out);
 }
 
+/* Takes ownership of `function` (may be nullptr / non-callable). On success, registers it under a fresh
+ * handle and returns that handle; on failure returns -1 with *errormessage set (or leaves any existing
+ * Python error to be formatted by the caller). GIL held. */
+int registerCallable(PyObject* function, int argc, const int* arg_type_codes, int return_type_code, char** errormessage)
+{
+    if (function == nullptr || PyCallable_Check(function) == 0)
+    {
+        Py_XDECREF(function);
+        if (errormessage != nullptr)
+        {
+            *errormessage = (PyErr_Occurred() != nullptr) ? fetchPythonError() : dupString("entrypoint attribute is not callable");
+        }
+        return -1;
+    }
+
+    auto* ctx = new UdfCtx();
+    ctx->callable = function; /* transfer ownership */
+    ctx->argTypes.assign(arg_type_codes, arg_type_codes + argc);
+    ctx->returnType = return_type_code;
+
+    const std::lock_guard<std::mutex> lock(g_mutex);
+    const int handle = g_nextHandle++;
+    g_registry[handle] = ctx;
+    return handle;
+}
+
 PyObject* toPyArg(const void* value, long long length, int isNull, int typeCode)
 {
     if (isNull != 0)
@@ -332,28 +358,57 @@ extern "C" int initialize_udf(const char* entrypoint, int argc, const int* arg_t
     }
     PyObject* function = PyObject_GetAttrString(module, full.substr(dot + 1).c_str());
     Py_DECREF(module);
-    if (function == nullptr || PyCallable_Check(function) == 0)
+
+    const int handle = registerCallable(function, argc, arg_type_codes, return_type_code, errormessage);
+    PyGILState_Release(gil);
+    return handle;
+}
+
+extern "C" int initialize_udf_from_source(
+    const char* source, const char* function_name, int argc, const int* arg_type_codes, int return_type_code, char** errormessage)
+{
+    if (errormessage != nullptr)
     {
-        Py_XDECREF(function);
+        *errormessage = nullptr;
+    }
+    std::call_once(g_pyInit, initPythonOnce);
+    const PyGILState_STATE gil = PyGILState_Ensure();
+
+    const std::string sourceText = (source != nullptr) ? source : "";
+    const std::string funcName = (function_name != nullptr) ? function_name : "";
+
+    /* Executed in a fresh dict rather than imported as a module: each inline UDF gets its own private
+     * namespace, so same-named helpers defined by two different inline UDF bodies never collide. */
+    PyObject* moduleDict = PyDict_New();
+    if (moduleDict == nullptr || PyDict_SetItemString(moduleDict, "__builtins__", PyEval_GetBuiltins()) != 0)
+    {
+        Py_XDECREF(moduleDict);
         if (errormessage != nullptr)
         {
-            *errormessage = (PyErr_Occurred() != nullptr) ? fetchPythonError() : dupString("entrypoint attribute is not callable");
+            *errormessage = fetchPythonError();
         }
         PyGILState_Release(gil);
         return -1;
     }
 
-    auto* ctx = new UdfCtx();
-    ctx->callable = function; /* transfer ownership */
-    ctx->argTypes.assign(arg_type_codes, arg_type_codes + argc);
-    ctx->returnType = return_type_code;
-
-    int handle = 0;
+    PyObject* execResult = PyRun_String(sourceText.c_str(), Py_file_input, moduleDict, moduleDict);
+    if (execResult == nullptr)
     {
-        const std::lock_guard<std::mutex> lock(g_mutex);
-        handle = g_nextHandle++;
-        g_registry[handle] = ctx;
+        Py_DECREF(moduleDict);
+        if (errormessage != nullptr)
+        {
+            *errormessage = fetchPythonError();
+        }
+        PyGILState_Release(gil);
+        return -1;
     }
+    Py_DECREF(execResult);
+
+    PyObject* function = PyDict_GetItemString(moduleDict, funcName.c_str()); /* borrowed */
+    Py_XINCREF(function);
+    Py_DECREF(moduleDict);
+
+    const int handle = registerCallable(function, argc, arg_type_codes, return_type_code, errormessage);
     PyGILState_Release(gil);
     return handle;
 }

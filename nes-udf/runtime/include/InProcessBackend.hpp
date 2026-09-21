@@ -16,7 +16,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include <UdfBackend.hpp>
@@ -31,6 +33,16 @@ class InProcessBackend final : public UdfBackend
 {
 public:
     explicit InProcessBackend(const UdfDescriptor& descriptor);
+
+    /// Loads `bridgePath` directly (bypassing the catalog) and initializes it from literal source via
+    /// initialize_udf_from_source, rather than resolving an importable module via initialize_udf.
+    InProcessBackend(
+        std::filesystem::path bridgePath,
+        const std::string& source,
+        const std::string& functionName,
+        const std::vector<DataType>& argTypes,
+        const DataType& returnType);
+
     ~InProcessBackend() override;
     InProcessBackend(const InProcessBackend&) = delete;
     InProcessBackend& operator=(const InProcessBackend&) = delete;
@@ -53,6 +65,11 @@ public:
         int* resultNull) override;
 
 private:
+    /// dlopen's `bridgePath` and resolves execute_udf_row/cleanup_udf into executeFn/cleanupFn. Throws
+    /// CannotLoadUdf on failure. Shared by both constructors; each then resolves and calls its own
+    /// initialize_udf variant.
+    void* loadBridge(const std::filesystem::path& bridgePath);
+
     /// Builds the ABI per-argument arrays from the staged buffers and calls execute_udf_row, throwing
     /// UdfExecutionError on a recoverable failure. Caller holds `mutex`.
     void invokeUdf(

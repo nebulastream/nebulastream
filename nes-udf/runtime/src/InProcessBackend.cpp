@@ -18,9 +18,11 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <dlfcn.h>
@@ -40,6 +42,7 @@ namespace
 constexpr std::size_t SLOT_BYTES = 8;
 
 using InitializeUdfFn = int (*)(const char*, int, const int*, int, char**);
+using InitializeUdfFromSourceFn = int (*)(const char*, const char*, int, const int*, int, char**);
 using ExecuteUdfRowFn = int (*)(int, const void* const*, const long long*, const int*, void*, char**, long long*, int*, char**);
 using CleanupUdfFn = void (*)(int);
 
@@ -81,23 +84,31 @@ int toUdfTypeCode(const DataType::Type type)
 }
 }
 
+void* InProcessBackend::loadBridge(const std::filesystem::path& bridgePath)
+{
+    void* handle = dlopen(bridgePath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (handle == nullptr)
+    {
+        throw CannotLoadUdf("Failed to load UDF library '{}': {}", bridgePath.string(), dlerror());
+    }
+    executeFn = dlsym(handle, "execute_udf_row");
+    cleanupFn = dlsym(handle, "cleanup_udf");
+    if (executeFn == nullptr || cleanupFn == nullptr)
+    {
+        dlclose(handle);
+        throw CannotLoadUdf(
+            "UDF library '{}' does not export the required symbols execute_udf_row/cleanup_udf", bridgePath.string());
+    }
+    return handle;
+}
+
 InProcessBackend::InProcessBackend(const UdfDescriptor& descriptor) : argCount(descriptor.getArgTypes().size())
 {
-    libHandle = dlopen(descriptor.getPath().c_str(), RTLD_NOW | RTLD_GLOBAL);
-    if (libHandle == nullptr)
-    {
-        throw CannotLoadUdf("Failed to load UDF library '{}': {}", descriptor.getPath().string(), dlerror());
-    }
-
+    libHandle = loadBridge(descriptor.getPath());
     auto* const initializeFn = reinterpret_cast<InitializeUdfFn>(dlsym(libHandle, "initialize_udf"));
-    executeFn = dlsym(libHandle, "execute_udf_row");
-    cleanupFn = dlsym(libHandle, "cleanup_udf");
-    if (initializeFn == nullptr || executeFn == nullptr || cleanupFn == nullptr)
+    if (initializeFn == nullptr)
     {
-        dlclose(libHandle);
-        throw CannotLoadUdf(
-            "UDF library '{}' does not export the required symbols initialize_udf/execute_udf_row/cleanup_udf",
-            descriptor.getPath().string());
+        throw CannotLoadUdf("UDF library '{}' does not export the required symbol initialize_udf", descriptor.getPath().string());
     }
 
     argTypeCodes.reserve(argCount);
@@ -120,6 +131,45 @@ InProcessBackend::InProcessBackend(const UdfDescriptor& descriptor) : argCount(d
         /// without the runtime itself knowing, so the next dlopen of this same path re-runs init on an
         /// already-live-but-orphaned runtime and crashes.
         throw CannotLoadUdf("Failed to initialize UDF '{}': {}", descriptor.getEntrypoint(), message);
+    }
+
+    argPointers.resize(argCount);
+    argLengths.resize(argCount);
+    argNullFlags.resize(argCount);
+}
+
+InProcessBackend::InProcessBackend(
+    std::filesystem::path bridgePath,
+    const std::string& source,
+    const std::string& functionName,
+    const std::vector<DataType>& argTypes,
+    const DataType& returnType)
+    : argCount(argTypes.size())
+{
+    libHandle = loadBridge(bridgePath);
+    auto* const initializeFn = reinterpret_cast<InitializeUdfFromSourceFn>(dlsym(libHandle, "initialize_udf_from_source"));
+    if (initializeFn == nullptr)
+    {
+        throw CannotLoadUdf(
+            "UDF bridge '{}' does not export the required symbol initialize_udf_from_source", bridgePath.string());
+    }
+
+    argTypeCodes.reserve(argCount);
+    for (const auto& argType : argTypes)
+    {
+        argTypeCodes.push_back(toUdfTypeCode(argType.type));
+    }
+    const int returnTypeCode = toUdfTypeCode(returnType.type);
+
+    char* errorMessage = nullptr;
+    udfHandle = initializeFn(
+        source.c_str(), functionName.c_str(), static_cast<int>(argCount), argTypeCodes.data(), returnTypeCode, &errorMessage);
+    if (udfHandle < 0)
+    {
+        const std::string message = errorMessage != nullptr ? errorMessage : "unknown error";
+        std::free(errorMessage);
+        /// See the "Never dlclose" comment above/below.
+        throw CannotLoadUdf("Failed to initialize inline UDF '{}': {}", functionName, message);
     }
 
     argPointers.resize(argCount);
@@ -229,6 +279,12 @@ std::uint64_t InProcessBackend::executeVarsizedRow(
 std::shared_ptr<UdfBackend> UdfBackend::create(const UdfDescriptor& descriptor)
 {
     return std::make_shared<InProcessBackend>(descriptor);
+}
+
+std::shared_ptr<UdfBackend> UdfBackend::createFromSource(
+    std::filesystem::path bridgePath, std::string source, std::string functionName, std::vector<DataType> argTypes, DataType returnType)
+{
+    return std::make_shared<InProcessBackend>(std::move(bridgePath), source, functionName, argTypes, returnType);
 }
 
 }

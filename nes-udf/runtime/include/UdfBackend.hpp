@@ -15,7 +15,12 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
+
+#include <DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -59,6 +64,17 @@ public:
 
     /// Load and prepare the UDF described by `descriptor`. v1 always returns an in-process backend.
     [[nodiscard]] static std::shared_ptr<UdfBackend> create(const UdfDescriptor& descriptor);
+
+    /// Load and prepare a UDF from literal source rather than a catalog descriptor: `bridgePath` is a
+    /// built-in bridge `.so` (resolved via resolveBuiltinUdfBridgePath), `source` is the UDF body's
+    /// Python source, and `functionName` names the callable it defines. Used for inline UDFs (e.g. SQL's
+    /// PYTHON(...) expression with BRIDGE 'cpython'/'pypy'), which carry no catalog entry.
+    [[nodiscard]] static std::shared_ptr<UdfBackend> createFromSource(
+        std::filesystem::path bridgePath,
+        std::string source,
+        std::string functionName,
+        std::vector<DataType> argTypes,
+        DataType returnType);
 };
 
 }

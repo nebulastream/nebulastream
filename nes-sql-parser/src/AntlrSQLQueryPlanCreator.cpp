@@ -998,13 +998,17 @@ void AntlrSQLQueryPlanCreator::exitPythonFunction(AntlrSQLParser::PythonFunction
     PRECONDITION(body.size() >= Delimiter.size() * 2, "Malformed Python UDF body");
     body = body.substr(Delimiter.size(), body.size() - Delimiter.size() * 2);
 
+    const auto backend
+        = context->bridge != nullptr ? parsePythonUdfBackend(bindStringLiteral(context->bridge)) : PythonUdfBackend::Codon;
+
     auto& functions = helpers.top().isJoinRelation ? helpers.top().joinKeyRelationHelper : helpers.top().functionBuilder;
     functions.emplace_back(PythonLogicalFunction(
         std::move(parameterNames),
         std::move(body),
         bindDataType(
             context->returnType, context->returnNullable == nullptr ? DataType::NULLABLE::NOT_NULLABLE : DataType::NULLABLE::IS_NULLABLE),
-        std::move(arguments)));
+        std::move(arguments),
+        backend));
 }
 
 void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)

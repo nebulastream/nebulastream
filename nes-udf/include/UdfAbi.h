@@ -61,6 +61,15 @@ enum UdfStatus
 int initialize_udf(
     const char* entrypoint, int argc, const int* arg_type_codes, int return_type_code, char** errormessage);
 
+/// Prepare a UDF for execution from literal source rather than an importable module. `source` is
+/// executed in a fresh, anonymous namespace (private to this one handle); `function_name` names the
+/// callable it defines. Used for inline UDFs (e.g. SQL's PYTHON(...) expression), which carry their
+/// body as query text instead of a file reachable via the bridge's module search path. Same argument,
+/// return, and handle contract as initialize_udf. Optional: a bridge that never serves inline UDFs may
+/// omit it.
+int initialize_udf_from_source(
+    const char* source, const char* function_name, int argc, const int* arg_type_codes, int return_type_code, char** errormessage);
+
 /// Execute the UDF for a single row.
 ///   arg_values[i]      -> the i-th argument value; for UDF_VARSIZED it points at
 ///                         the raw bytes (see arg_lens[i]).

@@ -397,7 +397,7 @@ booleanComparison
 
 
 valueExpression
-    : PYTHON '(' '(' parameters=identifierSeq ')' ':' body=PYTHON_BODY ')' AS returnType=typeDefinition returnNullable=NULLTOKEN? #pythonFunction
+    : PYTHON '(' '(' parameters=identifierSeq ')' ':' body=PYTHON_BODY ')' AS returnType=typeDefinition returnNullable=NULLTOKEN? (BRIDGE bridge=STRING)? #pythonFunction
     | CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
