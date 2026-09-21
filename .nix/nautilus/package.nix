@@ -1,11 +1,12 @@
 {
   pkgs,
+  llvmPackages,
   mlirBinary,
 }:
 
 let
   lib = pkgs.lib;
-  llvm = pkgs.llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 
@@ -15,8 +16,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "d63bd8f30298e6761e749769742f34d01d332210";
-    hash = "sha256-UD2msYmFyueMMvCMVrZRDNoKc9qwnEsgmE8pqtPG/60=";
+    rev = "9f6576a126ced9d21e1d1c2f54b0972370870da8";
+    hash = "sha256-IO0vfvVM9J2MVWrFf4LFMq8gxkHtSetYEN56MKSAKYs=";
   };
 
   baseBuildInputs = [
@@ -52,7 +53,6 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
-        ./patches/0002-auto-guard-throwing-invokes.patch
       ];
 
       nativeBuildInputs = [
@@ -80,6 +80,9 @@ let
         "-DENABLE_C_BACKEND=ON"
         "-DENABLE_BC_BACKEND=OFF"
         "-DENABLE_ASMJIT_BACKEND=OFF"
+        "-DENABLE_TBC_BACKEND=OFF"
+        "-DENABLE_BUILTIN_PLUGIN=OFF"
+        "-DENABLE_PROFILING_PLUGIN=OFF"
         "-DENABLE_SIMD_PLUGIN=OFF"
         "-DENABLE_STD_PLUGIN=ON"
         "-DENABLE_SPECIALIZATION_PLUGIN=OFF"

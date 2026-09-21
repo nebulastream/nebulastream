@@ -1,6 +1,6 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   fetchurl,
   cmake,
   ninja,
@@ -13,7 +13,7 @@
 }:
 
 let
-  llvm = llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 

@@ -21,9 +21,17 @@
         };
         lib = pkgs.lib;
         rustToolchain = pkgs.rust-bin.stable.latest.default;
-        llvm = pkgs.llvmPackages_19;
+        toolchain = rec {
+          llvmToolchainVersion = "22";
+          llvmPackages = pkgs.${"llvmPackages_${llvmToolchainVersion}"};
+          # Release of the prebuilt MLIR toolchain (nebulastream/clang-binaries) matching the LLVM version above.
+          mlirBuild = "v1";
+          mlirRelease = "vmlir-${llvmToolchainVersion}-${mlirBuild}";
+          mlirAssetPrefix = "nes-llvm-${llvmToolchainVersion}-${mlirBuild}";
+        };
+        llvm = toolchain.llvmPackages;
         clangToolsVersion = lib.getVersion llvm.clang-tools;
-        llvmToolchainVersion = lib.versions.major clangToolsVersion;
+        inherit (toolchain) llvmToolchainVersion;
         clangTidyDiffCommand = "clang-tidy-diff-${llvmToolchainVersion}.py";
         clangStdenv = llvm.stdenv;
         libcxxStdenv = llvm.libcxxStdenv;
@@ -271,12 +279,16 @@
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
           };
 
-        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
-        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };
-        re2Packages = pkgs.callPackage ./.nix/re2/package.nix { };
-        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix { };
-        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix { };
-        openvinoPackages = pkgs.callPackage ./.nix/openvino/package.nix { };
+        packageToolchainArgs = { inherit (toolchain) llvmPackages; };
+        # grpc/protobuf are pinned to the abseil release they were validated with, newer nixpkgs default to a newer one.
+        abseilPackageArgs = packageToolchainArgs // { abseil-cpp = pkgs.abseil-cpp_202505 or pkgs.abseil-cpp; };
+
+        nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix packageToolchainArgs;
+        abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix abseilPackageArgs;
+        re2Packages = pkgs.callPackage ./.nix/re2/package.nix packageToolchainArgs;
+        protobufPackages = pkgs.callPackage ./.nix/protobuf/package.nix packageToolchainArgs;
+        grpcPackages = pkgs.callPackage ./.nix/grpc/package.nix packageToolchainArgs;
+        openvinoPackages = pkgs.callPackage ./.nix/openvino/package.nix packageToolchainArgs;
 
         ccacheFlags = [
           "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
@@ -291,23 +303,29 @@
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache
         '';
 
-        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix { };
-        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
-        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
-        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
-        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix { };
-        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
-        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix { };
-        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
-        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix { };
-        follyPackages = pkgs.callPackage ./.nix/folly/package.nix { };
-        pahoMqttPackages = pkgs.callPackage ./.nix/paho_mqtt/package.nix { };
+        antlr4Packages = pkgs.callPackage ./.nix/antlr4/package.nix packageToolchainArgs;
+        cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix packageToolchainArgs;
+        argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix packageToolchainArgs;
+        libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix packageToolchainArgs;
+        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix packageToolchainArgs;
+        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix packageToolchainArgs;
+        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix packageToolchainArgs;
+        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix packageToolchainArgs;
+        spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix packageToolchainArgs;
+        follyPackages = pkgs.callPackage ./.nix/folly/package.nix packageToolchainArgs;
+        pahoMqttPackages = pkgs.callPackage ./.nix/paho_mqtt/package.nix packageToolchainArgs;
 
-        mlirPackages = import ./.nix/mlir/package.nix { inherit pkgs; };
+        mlirPackages = import ./.nix/mlir/package.nix {
+          inherit pkgs;
+          inherit (toolchain) llvmToolchainVersion mlirRelease mlirAssetPrefix;
+        };
         mlirBinaryFor = cfg: mlirPackages.forOptions cfg;
 
         nautilusPackagesFor = mlirBinary:
-          import ./.nix/nautilus/package.nix { inherit pkgs mlirBinary; };
+          import ./.nix/nautilus/package.nix {
+            inherit pkgs mlirBinary;
+            inherit (toolchain) llvmPackages;
+          };
 
         sanitizerPackageSet = {
           antlr4 = antlr4Packages;
