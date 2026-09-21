@@ -300,11 +300,18 @@ public:
         /// FROM (a literal .so path) and BRIDGE (a name resolved to a shipped bridge) are both optional;
         /// at least one is required, FROM wins if both given. Resolving BRIDGE here keeps
         /// CreateFunctionStatement.path a plain string -- downstream code never needs to know BRIDGE exists.
+        /// BRIDGE 'codon' is the exception: it has no `.so`, so it selects UdfExecution::Codon and takes no FROM.
         if (functionDefAST->functionPath == nullptr && functionDefAST->bridge == nullptr)
         {
             throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
         }
-        const auto path = functionDefAST->functionPath != nullptr
+        const auto isCodon = functionDefAST->bridge != nullptr && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge;
+        if (isCodon && functionDefAST->functionPath != nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
+        }
+        const auto path = isCodon ? std::string{}
+            : functionDefAST->functionPath != nullptr
             ? bindStringLiteral(functionDefAST->functionPath)
             : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
         const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
@@ -323,7 +330,8 @@ public:
             .path = path,
             .entrypoint = entrypoint,
             .argTypes = std::move(argTypes),
-            .returnType = returnType};
+            .returnType = returnType,
+            .execution = isCodon ? UdfExecution::Codon : UdfExecution::InProcess};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const

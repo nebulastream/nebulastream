@@ -278,6 +278,10 @@ std::uint64_t InProcessBackend::executeVarsizedRow(
 
 std::shared_ptr<UdfBackend> UdfBackend::create(const UdfDescriptor& descriptor)
 {
+    if (descriptor.getExecution() != UdfExecution::InProcess)
+    {
+        throw CannotLoadUdf("UDF '{}' does not run through an in-process bridge", descriptor.getName());
+    }
     return std::make_shared<InProcessBackend>(descriptor);
 }
 

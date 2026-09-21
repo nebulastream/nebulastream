@@ -34,8 +34,15 @@ class UdfCatalog
     NamedCatalog<UdfDescriptor> catalog;
 
 public:
-    void
-    registerUdf(std::string name, std::filesystem::path path, std::string entrypoint, std::vector<DataType> argTypes, DataType returnType);
+    /// `path` is the bridge `.so` for InProcess UDFs and unused (empty) for Codon UDFs, whose `entrypoint` names an
+    /// importable "module.function" that the Codon compiler resolves at lowering time.
+    void registerUdf(
+        std::string name,
+        std::filesystem::path path,
+        std::string entrypoint,
+        std::vector<DataType> argTypes,
+        DataType returnType,
+        UdfExecution execution = UdfExecution::InProcess);
     void removeUdf(const std::string& udfName);
     [[nodiscard]] bool hasUdf(const std::string& udfName) const;
     [[nodiscard]] std::vector<std::string> getUdfNames() const;
