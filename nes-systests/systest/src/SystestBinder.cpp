@@ -392,7 +392,7 @@ private:
     /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
     void createFunction(CreateFunctionStatement statement)
     {
-        if (const std::filesystem::path path{statement.path}; path.is_relative())
+        if (const std::filesystem::path path{statement.path}; !path.empty() && path.is_relative())
         {
             statement.path = (testDataDir / path).string();
         }
