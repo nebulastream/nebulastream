@@ -20,6 +20,8 @@ vcpkg_from_github(
         0002-move-function-wrapper.patch
         0003-inlining-clang-22-arm64.patch
         0002-preserve-jit-frame-pointers.patch
+        0003-Add-engine-scoped-LLVM-bitcode-UDFs.patch
+        0004-engine-scoped-external-symbols.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

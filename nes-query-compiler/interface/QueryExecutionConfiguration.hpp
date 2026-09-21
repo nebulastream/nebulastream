@@ -15,6 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/InstantiatedConfigValue.hpp>
 #include <Schema/Schema.hpp>
@@ -42,6 +45,7 @@ struct QueryExecutionConfiguration
         bool tupleBufferInlining,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
+        std::vector<std::string> pythonUdfImportPaths,
         bool nautilusPerf = false)
         : executionMode(executionMode)
         , nautilusInlining(nautilusInlining)
@@ -52,6 +56,7 @@ struct QueryExecutionConfiguration
         , tupleBufferInlining(tupleBufferInlining)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
+        , pythonUdfImportPaths(std::move(pythonUdfImportPaths))
         , nautilusPerf(nautilusPerf)
     {
     }
@@ -65,9 +70,13 @@ struct QueryExecutionConfiguration
     bool tupleBufferInlining;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
+    /// Directories from which inline Python UDFs may import user-provided modules.
+    std::vector<std::string> pythonUdfImportPaths;
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
     /// walk through and name their frames.
     bool nautilusPerf;
+
+    [[nodiscard]] const std::vector<std::string>& getPythonUdfImportPaths() const { return pythonUdfImportPaths; }
 
     static QueryExecutionConfiguration fromConfig(const InstantiatedConfig& config);
 };

@@ -1,0 +1,70 @@
+# Start a worker on localhost:8080 and create /dev/video10 with v4l2loopback.
+query: |
+  SELECT TIMESTAMP, WIDTH, HEIGHT, PIXEL_FORMAT, IMAGE
+  FROM WEBCAM
+  INTO VIRTUAL_CAMERA
+
+sinks:
+  - name: VIRTUAL_CAMERA
+    host: localhost:8080
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: PIXEL_FORMAT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
+    type: V4L2
+    config:
+      output_format: NATIVE
+      device: /dev/video10
+      frame_rate: 30
+      poll_timeout_ms: 1000
+
+logical:
+  - name: WEBCAM
+    schema:
+      - name: TIMESTAMP
+        type: UINT64
+        nullable: false
+      - name: WIDTH
+        type: UINT64
+        nullable: false
+      - name: HEIGHT
+        type: UINT64
+        nullable: false
+      - name: PIXEL_FORMAT
+        type: UINT64
+        nullable: false
+      - name: IMAGE
+        type: VARSIZED
+        nullable: false
+
+physical:
+  - logical: WEBCAM
+    host: localhost:8080
+    parser_config:
+      type: NATIVE
+    type: V4L2
+    source_config:
+      device: /dev/video0
+      width: 320
+      height: 240
+      frame_rate: 30
+      pixel_format: YUYV
+      buffer_count: 4
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+    max_operators: 10000
+

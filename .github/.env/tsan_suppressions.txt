@@ -19,3 +19,15 @@ race:__shared_weak_count
 race:__assoc_state
 race:__assoc_sub_state
 
+# Codon constructs a fresh LLVM compiler for every Python UDF it compiles, and its LLVMVisitor
+# constructor calls LLVMInitializeX86Target/TargetMC/AsmPrinter, which write LLVM's global target
+# registry (llvm::getTheX86_64Target()'s Target object) with the values it already holds. Nautilus
+# reads that same registry when it creates a target machine for a query pipeline, and both run on
+# worker threads, so TSan reports a write/read race on the registry. Re-registration writes identical
+# values, which is why it is harmless in practice. Removing the suppression needs Codon to register the
+# targets once, before any worker thread exists, which its public API does not expose today.
+race:codon::ir::LLVMVisitor::LLVMVisitor
+# The registering frames themselves, in case the Codon constructor cannot be symbolized
+# (the patterns match as substrings, so TargetMC is covered too).
+race:LLVMInitializeX86Target
+race:LLVMInitializeX86AsmPrinter

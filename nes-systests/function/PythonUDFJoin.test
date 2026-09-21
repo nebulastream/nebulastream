@@ -1,0 +1,33 @@
+# name: function/PythonUDFJoin.test
+# description: Uses an arbitrary Boolean Python UDF as a window-join predicate
+# groups: [Function, PythonUDF, Join, CompilerOnly, CompilationIntensive]
+
+CREATE LOGICAL SOURCE left_numbers(left_value UINT64 NOT NULL, left_timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR left_numbers TYPE File;
+ATTACH INLINE
+1,1000
+2,1001
+5,2000
+
+CREATE LOGICAL SOURCE right_numbers(right_value UINT64 NOT NULL, right_timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR right_numbers TYPE File;
+ATTACH INLINE
+2,1010
+4,1020
+1,2010
+7,2011
+
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, left_value UINT64 NOT NULL, left_timestamp UINT64 NOT NULL, right_value UINT64 NOT NULL, right_timestamp UINT64 NOT NULL) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM left_numbers)
+INNER JOIN (SELECT * FROM right_numbers)
+ON PYTHON((left_value, right_value): $python$
+    return left_value < right_value and (left_value + right_value) % 3 == 0
+$python$) AS BOOLEAN
+WINDOW TUMBLING(left_timestamp, right_timestamp, SIZE 1 SEC)
+INTO sink;
+----
+1000 2000 1 1000 2 1010
+1000 2000 2 1001 4 1020
+2000 3000 5 2000 7 2011

@@ -92,6 +92,12 @@ StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
 {
 }
 
+void StreamJoinProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    joinFunction.setup(compilationContext);
+    WindowProbePhysicalOperator::setup(executionCtx, compilationContext);
+}
+
 Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const Record& outerRecord,
     const Record& innerRecord,

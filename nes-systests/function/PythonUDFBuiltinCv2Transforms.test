@@ -1,0 +1,41 @@
+# name: function/PythonUDFBuiltinCv2Transforms.test
+# description: Exercises the native cv2 transforms required by the NES image demo
+# groups: [Function, PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE images(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR images TYPE File;
+ATTACH INLINE
+ABCDEFGHIJKLMNOP
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((data): $python$
+    import cv2
+    import numpy as np
+
+    mono8 = np.frombuffer(data, dtype=np.uint8).reshape((4, 4))
+    color = cv2.applyColorMap(mono8, cv2.COLORMAP_VIRIDIS)
+    smaller = cv2.resize(color, (2, 2), interpolation=cv2.INTER_CUBIC)
+    cv2.rectangle(smaller, (0, 0), (1, 1), (1, 2, 3), 1, cv2.LINE_8, 0)
+    success, jpeg = cv2.imencode(".jpg", smaller, (cv2.IMWRITE_JPEG_QUALITY, 90))
+    decoded_jpeg = cv2.imdecode(jpeg, cv2.IMREAD_COLOR)
+    decoded_gray = cv2.imdecode(jpeg, cv2.IMREAD_GRAYSCALE)
+
+    yuyv_input = np.frombuffer(data[:8], dtype=np.uint8).reshape((2, 2, 2))
+    bgr = cv2.cvtColor(yuyv_input, cv2.COLOR_YUV2BGR_YUYV)
+    direct_gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    yuyv = cv2.cvtColor(bgr, cv2.COLOR_BGR2YUV_YUYV)
+    gray = cv2.cvtColor(yuyv, cv2.COLOR_YUV2GRAY_YUYV)
+
+    mono16 = np.frombuffer(data, dtype=np.uint16).reshape((2, 4))
+    png_success, png = cv2.imencode(".png", mono16)
+    decoded_png = cv2.imdecode(png, cv2.IMREAD_UNCHANGED)
+
+    if not success or not png_success:
+        return 0
+    return color.size + smaller.size + decoded_jpeg.size + decoded_gray.size + bgr.size + direct_gray.size + yuyv.size + gray.size + decoded_png.size
+$python$) AS UINT64 AS result
+FROM images
+INTO file();
+----
+112

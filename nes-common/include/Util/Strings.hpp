@@ -20,6 +20,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
@@ -74,6 +75,15 @@ template <>
 std::optional<bool> from_chars(std::string_view input);
 template <>
 std::optional<char> from_chars(std::string_view input);
+
+/// Parses a numeric prefix and returns its value and the unconsumed suffix of the original input.
+/// On invalid or out-of-range input, returns no value and the original input.
+/// The double implementation accepts leading whitespace, as does from_chars<double>.
+template <typename T>
+std::pair<std::optional<T>, std::string_view> from_chars_prefix(std::string_view input) = delete;
+
+template <>
+std::pair<std::optional<double>, std::string_view> from_chars_prefix<double>(std::string_view input);
 
 /// Same as from_chars, but throws CannotFormatMalformedStringValue instead of returning an empty optional.
 template <typename T>

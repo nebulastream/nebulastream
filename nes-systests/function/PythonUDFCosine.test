@@ -1,0 +1,29 @@
+# name: function/PythonUDFCosine.test
+# description: Resolves Codon's cblas_sdot call through the BLAS compatibility plugin
+# groups: [Function, PythonUDF, CompilerOnly, CompilationIntensive]
+
+CREATE LOGICAL SOURCE embeddings(left_encoded VARSIZED NOT NULL, right_encoded VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR embeddings TYPE File;
+ATTACH INLINE
+AACAPwAAAAA=,AAAAAAAAgD8=
+
+CREATE SINK sink(similarity FLOAT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((left_embedding, right_embedding): $python$
+    import numpy as np
+
+    left = np.frombuffer(left_embedding, dtype=np.float32)
+    right = np.frombuffer(right_embedding, dtype=np.float32)
+    dot = np.dot(left, right)
+    norm = np.sqrt(np.sum(left * left) * np.sum(right * right))
+    return float(dot / norm)
+$python$) AS FLOAT64 AS similarity
+FROM (
+    SELECT
+        FROM_BASE64(left_encoded) AS left_embedding,
+        FROM_BASE64(right_encoded) AS right_embedding
+    FROM embeddings
+)
+INTO sink;
+----
+0

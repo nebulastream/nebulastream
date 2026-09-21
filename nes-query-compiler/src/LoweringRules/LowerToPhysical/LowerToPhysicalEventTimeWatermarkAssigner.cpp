@@ -44,7 +44,7 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
     const auto inputSchema = createPhysicalOutputSchema(assignerOp->getChild().getTraitSet());
 
     const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(
-        assignerOp->getOnField(), *assignerOp->getChild()->getTraitSet().get<FieldMappingTrait>());
+        assignerOp->getOnField(), *assignerOp->getChild()->getTraitSet().get<FieldMappingTrait>(), conf.getPythonUdfImportPaths());
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assignerOp->getUnit()));
 
     const auto wrapper

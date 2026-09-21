@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <expected>
 #include <string>
+#include <vector>
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -26,6 +27,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/format.h>
 #include <BloomFilterConfiguration.hpp>
@@ -150,6 +152,17 @@ const ConfigField<bool> NAUTILUS_PERF{
     "jitdump records with their symbols, line tables and unwinding information, so that `perf inject --jit` attributes samples to "
     "them. Keeps the optimization level, so the profile shows production code.",
     false};
+
+const ConfigField<std::vector<std::string>> PYTHON_UDF_IMPORT_PATHS{
+    Identifier::parse("python_udf_import_paths"),
+    "Comma-separated directories from which inline Python UDFs may import user-provided modules",
+    [](const ConfigLiteral& literal)
+    {
+        return tryGetOr<std::string>(literal, expectedType<std::string>())
+            .transform([](const std::string& value) { return splitWithStringDelimiter<std::string>(value, ","); });
+    },
+    std::vector<std::string>{},
+    ""};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -165,6 +178,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        PYTHON_UDF_IMPORT_PATHS,
         NAUTILUS_PERF,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
@@ -189,6 +203,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(TUPLE_BUFFER_INLINING),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config),
+        config.get(PYTHON_UDF_IMPORT_PATHS),
         config.get(NAUTILUS_PERF)};
 }
 
