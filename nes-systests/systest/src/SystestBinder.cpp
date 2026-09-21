@@ -677,7 +677,7 @@ struct SystestBinder::Impl
         /// Resolve a relative `.so` path against testDataDir before routing through the handler.
         auto resolvedStatement = statement;
         auto path = std::filesystem::path(statement.path);
-        if (!path.is_absolute())
+        if (!path.empty() && !path.is_absolute())
         {
             path = testDataDir / path;
         }

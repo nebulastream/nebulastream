@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -51,6 +52,16 @@ bool isSupportedUdfType(const DataType::Type type)
     return false;
 }
 
+std::optional<std::pair<std::string, std::string>> splitEntrypoint(const std::string_view entrypoint)
+{
+    const auto lastDot = entrypoint.rfind('.');
+    if (lastDot == std::string_view::npos || lastDot == 0 || lastDot + 1 == entrypoint.size())
+    {
+        return std::nullopt;
+    }
+    return std::make_pair(std::string{entrypoint.substr(0, lastDot)}, std::string{entrypoint.substr(lastDot + 1)});
+}
+
 namespace detail
 {
 struct ReflectedUdfDescriptor
@@ -60,6 +71,7 @@ struct ReflectedUdfDescriptor
     std::optional<std::string> entrypoint;
     std::optional<std::vector<DataType>> argTypes;
     std::optional<DataType> returnType;
+    std::optional<UdfExecution> execution;
 };
 }
 
@@ -70,7 +82,8 @@ Reflected Reflector<UdfDescriptor>::operator()(const UdfDescriptor& descriptor, 
         .path = std::make_optional(descriptor.getPath().string()),
         .entrypoint = std::make_optional(descriptor.getEntrypoint()),
         .argTypes = std::make_optional(descriptor.getArgTypes()),
-        .returnType = std::make_optional(descriptor.getReturnType())});
+        .returnType = std::make_optional(descriptor.getReturnType()),
+        .execution = std::make_optional(descriptor.getExecution())});
 }
 
 UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
@@ -87,7 +100,8 @@ UdfDescriptor Unreflector<UdfDescriptor>::operator()(const Reflected& rfl, const
         std::filesystem::path(std::move(reflected.path).value()),
         std::move(reflected.entrypoint).value(),
         std::move(reflected.argTypes).value(),
-        std::move(reflected.returnType).value()};
+        std::move(reflected.returnType).value(),
+        reflected.execution.value_or(UdfExecution::InProcess)};
 }
 
 }

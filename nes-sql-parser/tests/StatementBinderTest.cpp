@@ -53,6 +53,7 @@
 #include <InputFormatterValidationProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <UdfBridgeRegistry.hpp>
+#include <UdfDescriptor.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -448,6 +449,38 @@ TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndBridgePrefersFrom)
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
     EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).path, "/opt/udfs/libcurrency.so");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridge)
+{
+    const std::string statementString = "CREATE FUNCTION discount (price FLOAT64) RETURNS FLOAT64 "
+                                        "BRIDGE 'codon' ENTRYPOINT 'discount.apply_discount'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.execution, UdfExecution::Codon);
+    EXPECT_TRUE(create.path.empty());
+    EXPECT_EQ(create.entrypoint, "discount.apply_discount");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithInterpreterBridgeIsInProcess)
+{
+    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
+                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).execution, UdfExecution::InProcess);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridgeAndFromThrows)
+{
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 "
+                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'codon' ENTRYPOINT 'm.f'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
 }
 
 TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownBridgeThrows)
