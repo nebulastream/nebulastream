@@ -32,6 +32,12 @@
           "features": [
             "mlir"
           ]
+        },
+        {
+          "name": "codon-compiler",
+          "features": [
+            "llvm"
+          ]
         }
       ]
     }
@@ -45,6 +51,7 @@
     "boost-process",
     "boost-system",
     "boost-url",
+    "codon-compiler",
     "cpptrace",
     "date",
     "fmt",
@@ -58,6 +65,22 @@
     "nameof",
     "nautilus",
     "nlohmann-json",
+    {
+      "name": "openblas",
+      "default-features": false,
+      "features": [
+        "dynamic-arch"
+      ]
+    },
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "calib3d",
+        "jpeg",
+        "png"
+      ]
+    },
     {
       "name": "openvino",
       "default-features": false,

@@ -96,6 +96,11 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// strategy and the backend explicitly rather than relying on the "non-empty backend implies legacy" shortcut.
     options.setOption("engine.compilationStrategy", std::string("legacy"));
     options.setOption("engine.backend", std::string("mlir"));
+    /// Python UDFs are linked through the inlining plugin's pre-optimization LLVM hook.
+    options.setOption("mlir.inline_invoke_calls", true);
+    /// Keep source locations in dumped compilation results and register generated code with GDB. This is also what
+    /// prevents the inlining plugin from stripping the debug metadata carried by an embedded Python UDF module.
+    options.setOption("mlir.debug.enable", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
