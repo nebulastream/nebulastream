@@ -32,6 +32,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
+#include <Operators/SemanticMapNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
@@ -164,6 +165,12 @@ LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const Logica
 {
     NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
     return promoteOperatorToRoot(childPlan, TypedLogicalOperator<InferModelNameLogicalOperator>{modelName.asCanonicalString()});
+}
+
+LogicalPlan LogicalPlanBuilder::addSemanticMap(Identifier modelName, const LogicalPlan& childPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add semantic map operator to query plan for model {}", modelName);
+    return promoteOperatorToRoot(childPlan, TypedLogicalOperator<SemanticMapNameLogicalOperator>{modelName.asCanonicalString()});
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)

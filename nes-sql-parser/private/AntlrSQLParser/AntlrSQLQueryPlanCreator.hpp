@@ -68,6 +68,8 @@ public:
 
     void enterModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context) override;
     void exitModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context) override;
+    void enterSemanticMapRelation(AntlrSQLParser::SemanticMapRelationContext* context) override;
+    void exitSemanticMapRelation(AntlrSQLParser::SemanticMapRelationContext* context) override;
 
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;

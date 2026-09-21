@@ -172,6 +172,27 @@ struct ShowModelsStatement
     std::optional<StatementOutputFormat> format;
 };
 
+/// `CREATE SEMANTIC MODEL`. The binder stays purely syntactic: the SET options arrive as a
+/// flat string map under the LLM namespace and are typed, defaulted and validated by the
+/// statement handler and the catalog.
+struct CreateSemanticModelStatement
+{
+    std::string name;
+    Schema<UnqualifiedUnboundField, Ordered> inputs;
+    Schema<UnqualifiedUnboundField, Ordered> outputs;
+    std::unordered_map<Identifier, std::string> config;
+};
+
+struct ShowSemanticModelsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropSemanticModelStatement
+{
+    std::string name;
+};
+
 struct ShowVersionStatement
 {
     std::optional<StatementOutputFormat> format;
@@ -209,17 +230,20 @@ using Statement = std::variant<
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
     CreateModelStatement,
+    CreateSemanticModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
     DropModelStatement,
+    DropSemanticModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
+    ShowSemanticModelsStatement,
     ShowVersionStatement,
     DropQueryStatement>;
 

@@ -38,6 +38,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
@@ -151,6 +152,28 @@ struct DropModelStatementResult
     std::string name;
 };
 
+struct SemanticModelInfo
+{
+    std::string name;
+    std::string endpoint;
+    std::string modelName;
+    std::string prompt;
+    Schema<UnqualifiedUnboundField, Ordered> inputSchema;
+    Schema<UnqualifiedUnboundField, Ordered> outputSchema;
+};
+
+using CreateSemanticModelStatementResult = SemanticModelInfo;
+
+struct ShowSemanticModelsStatementResult
+{
+    std::vector<SemanticModelInfo> models;
+};
+
+struct DropSemanticModelStatementResult
+{
+    std::string name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -160,14 +183,17 @@ using StatementResult = std::variant<
     WorkerStatusStatementResult,
     ShowVersionStatementResult,
     CreateModelStatementResult,
+    CreateSemanticModelStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
     ShowModelsStatementResult,
+    ShowSemanticModelsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
     DropModelStatementResult,
+    DropSemanticModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -262,6 +288,19 @@ public:
     std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
     std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
+};
+
+/// Handles `CREATE/SHOW/DROP SEMANTIC MODEL`. Owns the semantic model catalog and turns the
+/// flat `LLM.*` option map produced by the binder into a typed `SemanticModelConfig`.
+class SemanticModelStatementHandler final : public StatementHandler<SemanticModelStatementHandler>
+{
+    std::shared_ptr<SemanticModelCatalog> semanticModelCatalog;
+
+public:
+    explicit SemanticModelStatementHandler(std::shared_ptr<SemanticModelCatalog> semanticModelCatalog);
+    std::expected<CreateSemanticModelStatementResult, Exception> operator()(const CreateSemanticModelStatement& statement);
+    std::expected<ShowSemanticModelsStatementResult, Exception> operator()(const ShowSemanticModelsStatement& statement) const;
+    std::expected<DropSemanticModelStatementResult, Exception> operator()(const DropSemanticModelStatement& statement);
 };
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>

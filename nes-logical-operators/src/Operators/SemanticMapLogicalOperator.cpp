@@ -1,0 +1,233 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Operators/SemanticMapLogicalOperator.hpp>
+
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <iterator>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+#include <ErrorHandling.hpp>
+#include <SemanticModelCatalog.hpp>
+
+namespace NES
+{
+
+SemanticMapLogicalOperator::SemanticMapLogicalOperator(WeakLogicalOperator self, RegisteredSemanticModel model)
+    : ManagedByOperator(std::move(self)), model(std::move(model))
+{
+}
+
+SemanticMapLogicalOperator::SemanticMapLogicalOperator(WeakLogicalOperator self, RegisteredSemanticModel model, LogicalOperator child)
+    : ManagedByOperator(std::move(self)), model(std::move(model)), child(std::move(child))
+{
+    inferLocalSchema();
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
+std::string_view SemanticMapLogicalOperator::getName() const noexcept
+{
+    return NAME;
+}
+
+const RegisteredSemanticModel& SemanticMapLogicalOperator::getModel() const
+{
+    return model;
+}
+
+bool SemanticMapLogicalOperator::operator==(const SemanticMapLogicalOperator& rhs) const
+{
+    return model == rhs.model && getOutputSchema() == rhs.getOutputSchema() && getTraitSet() == rhs.getTraitSet();
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
+std::string SemanticMapLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
+{
+    const auto inputNames = model.getSchema().inputs
+        | std::views::transform([](const UnqualifiedUnboundField& field) { return fmt::format("{}", field.getFullyQualifiedName()); });
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format(
+            "SEM_MAP(opId: {}, inputFields: [{}], traitSet: {})", opId, fmt::join(inputNames, ", "), traitSet.explain(verbosity));
+    }
+    return fmt::format("SEM_MAP(inputFields: [{}])", fmt::join(inputNames, ", "));
+}
+
+void SemanticMapLogicalOperator::inferLocalSchema()
+{
+    PRECONDITION(child.has_value(), "SemanticMap requires a child for local schema inference");
+    const auto childOutput = child->getOutputSchema();
+
+    const auto& modelInputs = model.getSchema().inputs;
+    const auto& modelOutputs = model.getSchema().outputs;
+
+    /// Verify the child's schema contains a matching, non-nullable, same-typed field for every declared input.
+    for (const auto& modelInput : modelInputs)
+    {
+        const auto field = childOutput[modelInput.getFullyQualifiedName()];
+        if (!field.has_value())
+        {
+            throw CannotInferSchema("Field '{}' not found in input schema", modelInput.getFullyQualifiedName());
+        }
+        if (field->getDataType().nullable)
+        {
+            throw CannotInferSchema("Field '{}' is nullable, but model inputs must not be nullable", modelInput.getFullyQualifiedName());
+        }
+        if (field->getDataType().type != modelInput.getDataType().type)
+        {
+            throw CannotInferSchema(
+                "Type mismatch for field '{}': schema has a different type than the semantic model declares",
+                modelInput.getFullyQualifiedName());
+        }
+    }
+
+    auto outputFields = childOutput | RangeUnbinder{} | std::ranges::to<std::vector>();
+    std::ranges::copy(modelOutputs, std::back_inserter(outputFields));
+    auto outputSchemaOrCollisions = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
+    if (!outputSchemaOrCollisions.has_value())
+    {
+        throw CannotInferSchema(
+            "SemanticMap output schema has name collisions between child fields and model outputs: "
+            + Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(outputSchemaOrCollisions.error()));
+    }
+    outputSchema = std::move(outputSchemaOrCollisions).value();
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
+SemanticMapLogicalOperator SemanticMapLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(child.has_value(), "SemanticMap requires a child");
+    auto copy = *this;
+    copy.child = copy.child->withInferredSchema();
+    copy.inferLocalSchema();
+    return copy;
+}
+
+TraitSet SemanticMapLogicalOperator::getTraitSet() const
+{
+    return traitSet;
+}
+
+SemanticMapLogicalOperator SemanticMapLogicalOperator::withTraitSet(TraitSet newTraitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = std::move(newTraitSet);
+    return copy;
+}
+
+SemanticMapLogicalOperator SemanticMapLogicalOperator::withChildrenUnsafe(std::vector<LogicalOperator> newChildren) const
+{
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for SemanticMap, got {}", newChildren.size());
+    auto copy = *this;
+    copy.child = std::move(newChildren.front());
+    return copy;
+}
+
+SemanticMapLogicalOperator SemanticMapLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
+{
+    PRECONDITION(newChildren.size() == 1, "Can only set exactly one child for SemanticMap, got {}", newChildren.size());
+    auto copy = *this;
+    copy.child = std::move(newChildren.front());
+    copy.inferLocalSchema();
+    return copy;
+}
+
+Schema<Field, Unordered> SemanticMapLogicalOperator::getOutputSchema() const
+{
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bindToOperator(self.lock(), outputSchema.value());
+}
+
+Schema<Field, Ordered> SemanticMapLogicalOperator::getOrderedOutputSchema(const ChildOutputOrderProvider orderProvider) const
+{
+    PRECONDITION(child.has_value(), "SemanticMap requires a child to derive its ordered output schema");
+
+    /// Concatenate child's ordered output and the model's ordered outputs; collisions are an error,
+    std::vector<UnqualifiedUnboundField> fields = orderProvider(child.value()) | RangeUnbinder{} | std::ranges::to<std::vector>();
+    std::ranges::copy(model.getSchema().outputs, std::back_inserter(fields));
+    auto orderedOrCollisions = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(fields));
+    if (!orderedOrCollisions.has_value())
+    {
+        throw CannotInferSchema(
+            "SemanticMap output schema has name collisions between child fields and model outputs: "
+            + Schema<UnqualifiedUnboundField, Ordered>::createCollisionString(orderedOrCollisions.error()));
+    }
+    return NES::bindToOperator(self.lock(), std::move(orderedOrCollisions).value());
+}
+
+std::vector<LogicalOperator> SemanticMapLogicalOperator::getChildren() const
+{
+    if (child.has_value())
+    {
+        return {*child};
+    }
+    return {};
+}
+
+LogicalOperator SemanticMapLogicalOperator::getChild() const
+{
+    PRECONDITION(child.has_value(), "Child not set when trying to retrieve child");
+    return child.value();
+}
+
+Reflected Reflector<TypedLogicalOperator<SemanticMapLogicalOperator>>::operator()(
+    const TypedLogicalOperator<SemanticMapLogicalOperator>& op, const ReflectionContext& context) const
+{
+    return context.reflect(detail::ReflectedSemanticMapLogicalOperator{.operatorId = op.getId(), .model = context.reflect(op->getModel())});
+}
+
+Unreflector<TypedLogicalOperator<SemanticMapLogicalOperator>>::Unreflector(ContextType plan) : plan(std::move(plan))
+{
+}
+
+TypedLogicalOperator<SemanticMapLogicalOperator>
+Unreflector<TypedLogicalOperator<SemanticMapLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto [operatorId, model] = context.unreflect<detail::ReflectedSemanticMapLogicalOperator>(rfl);
+    auto children = plan->getChildrenFor(operatorId, context);
+    if (children.size() != 1)
+    {
+        throw CannotDeserialize("SemanticMapLogicalOperator requires exactly one child, but got {}", children.size());
+    }
+    return TypedLogicalOperator<SemanticMapLogicalOperator>{context.unreflect<RegisteredSemanticModel>(model), std::move(children.at(0))};
+}
+
+}
+
+std::size_t std::hash<NES::SemanticMapLogicalOperator>::operator()(const NES::SemanticMapLogicalOperator& op) const noexcept
+{
+    return std::hash<std::string>{}(op.getModel().getName());
+}

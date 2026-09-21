@@ -20,6 +20,8 @@ add_source_files(nes-logical-operators
         EventTimeWatermarkAssignerLogicalOperator.cpp
         InferModelLogicalOperator.cpp
         InferModelNameLogicalOperator.cpp
+        SemanticMapLogicalOperator.cpp
+        SemanticMapNameLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)
@@ -34,3 +36,5 @@ add_unreflection_entry(LogicalOperator IngestionTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator EventTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator InferModel)
 add_unreflection_entry(LogicalOperator InferModelName)
+add_unreflection_entry(LogicalOperator SemanticMap)
+add_unreflection_entry(LogicalOperator SemanticMapName)

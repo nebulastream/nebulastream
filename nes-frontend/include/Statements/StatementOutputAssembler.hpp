@@ -514,6 +514,53 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
+using SemanticModelInfoOutputRowType = std::
+    tuple<std::string, std::string, std::string, std::string, Schema<UnqualifiedUnboundField, Ordered>, Schema<UnqualifiedUnboundField, Ordered>>;
+constexpr std::array<std::string_view, 6> semanticModelInfoOutputColumns{
+    "model_name", "endpoint", "model", "prompt", "input_schema", "output_schema"};
+
+template <>
+struct StatementOutputAssembler<CreateSemanticModelStatementResult>
+{
+    using OutputRowType = SemanticModelInfoOutputRowType;
+
+    auto convert(const CreateSemanticModelStatementResult& result)
+    {
+        return std::make_pair(
+            semanticModelInfoOutputColumns,
+            std::vector{
+                std::make_tuple(result.name, result.endpoint, result.modelName, result.prompt, result.inputSchema, result.outputSchema)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowSemanticModelsStatementResult>
+{
+    using OutputRowType = SemanticModelInfoOutputRowType;
+
+    auto convert(const ShowSemanticModelsStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.models.size());
+        for (const auto& model : result.models)
+        {
+            output.emplace_back(model.name, model.endpoint, model.modelName, model.prompt, model.inputSchema, model.outputSchema);
+        }
+        return std::make_pair(semanticModelInfoOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropSemanticModelStatementResult>
+{
+    using OutputRowType = ModelNameOutputRowType;
+
+    auto convert(const DropSemanticModelStatementResult& result)
+    {
+        return std::make_pair(modelNameOutputColumns, std::vector{std::make_tuple(result.name)});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -534,5 +581,8 @@ static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
 static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
 static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
 static_assert(AssemblembleStatementResult<DropModelStatementResult>);
+static_assert(AssemblembleStatementResult<CreateSemanticModelStatementResult>);
+static_assert(AssemblembleStatementResult<ShowSemanticModelsStatementResult>);
+static_assert(AssemblembleStatementResult<DropSemanticModelStatementResult>);
 
 }

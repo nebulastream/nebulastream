@@ -69,6 +69,9 @@ EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
+EXCEPTION(UnknownSemanticModelName, 2044, "unknown semantic model name")
+EXCEPTION(SemanticModelAlreadyExists, 2045, "semantic model already exists")
+EXCEPTION(InvalidSemanticModel, 2046, "invalid semantic model definition")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

@@ -292,6 +292,72 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
+    CreateSemanticModelStatement
+    bindCreateSemanticModelStatement(AntlrSQLParser::CreateSemanticModelDefinitionContext* modelDefAST) const
+    {
+        const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
+
+        std::vector<UnqualifiedUnboundField> inputs;
+        for (auto* const inputField : modelDefAST->modelInputField())
+        {
+            inputs.emplace_back(
+                bindIdentifier(inputField->identifier()), bindDataType(inputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+
+        std::vector<UnqualifiedUnboundField> outputs;
+        for (auto* const outputField : modelDefAST->modelOutputField())
+        {
+            outputs.emplace_back(
+                bindIdentifier(outputField->identifier()), bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+
+        auto inputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(inputs))
+                                  .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+        auto outputSchemaExp = Schema<UnqualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(outputs))
+                                   .transform_error(Schema<UnqualifiedUnboundField, Ordered>::createCollisionString);
+
+        if (!inputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in semantic model input schema {}", inputSchemaExp.error());
+        }
+        if (!outputSchemaExp.has_value())
+        {
+            throw FieldAlreadyExists("Field name collision in semantic model output schema {}", outputSchemaExp.error());
+        }
+
+        /// Every option is qualified exactly once (`LLM.PROMPT`), because `bindConfigOptions`
+        /// rejects unqualified keys. Flattened to strings here; typing happens in the handler.
+        static const auto LlmNamespace = Identifier::parse("LLM");
+        std::unordered_map<Identifier, std::string> config;
+        if (modelDefAST->optionsClause() != nullptr)
+        {
+            const auto options = bindConfigOptions(modelDefAST->optionsClause()->options->namedConfigExpression());
+            for (const auto& [rootIdentifier, entries] : options)
+            {
+                if (not(rootIdentifier == LlmNamespace))
+                {
+                    throw InvalidConfigParameter(
+                        "CREATE SEMANTIC MODEL only accepts options in the LLM namespace, but got '{}'", rootIdentifier);
+                }
+                for (const auto& [optionName, value] : entries)
+                {
+                    const auto* const literal = std::get_if<Literal>(&value);
+                    if (literal == nullptr)
+                    {
+                        throw InvalidConfigParameter("Option 'LLM.{}' must be a literal, not a schema", optionName);
+                    }
+                    config.emplace(optionName, literalToString(*literal));
+                }
+            }
+        }
+
+        return CreateSemanticModelStatement{
+            .name = fmt::format("{}", modelName),
+            .inputs = std::move(inputSchemaExp).value(),
+            .outputs = std::move(outputSchemaExp).value(),
+            .config = std::move(config)};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -311,6 +377,11 @@ public:
         if (auto* const workerDefAST = createAST->createDefinition()->createWorkerDefinition(); workerDefAST != nullptr)
         {
             return bindCreateWorkerStatement(workerDefAST);
+        }
+        if (auto* const semanticModelDefAST = createAST->createDefinition()->createSemanticModelDefinition();
+            semanticModelDefAST != nullptr)
+        {
+            return bindCreateSemanticModelStatement(semanticModelDefAST);
         }
         if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
         {
@@ -438,6 +509,14 @@ public:
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
         }
+        if (const auto* semanticModelsSubject
+            = dynamic_cast<AntlrSQLParser::ShowSemanticModelsSubjectContext*>(showAST->showSubject());
+            semanticModelsSubject != nullptr)
+        {
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowSemanticModelsStatement{.format = format};
+        }
         if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
             modelsSubject != nullptr)
         {
@@ -509,6 +588,12 @@ public:
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
 
+    static DropSemanticModelStatement bindDropSemanticModel(const std::pair<Identifier, Literal>& filter)
+    {
+        return DropSemanticModelStatement{
+            .name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEMANTIC MODEL")};
+    }
+
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();
@@ -534,6 +619,10 @@ public:
         if (subject->dropSink() != nullptr)
         {
             return bindDropSink(filter);
+        }
+        if (subject->dropSemanticModel() != nullptr)
+        {
+            return bindDropSemanticModel(filter);
         }
         if (subject->dropModel() != nullptr)
         {
