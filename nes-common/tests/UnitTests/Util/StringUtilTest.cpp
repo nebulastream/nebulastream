@@ -15,6 +15,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <Util/Strings.hpp>
 #include <gmock/gmock.h>
@@ -141,6 +142,59 @@ TEST(SafeStodThrowTests, ThrowsOnInvalidInput)
     EXPECT_FALSE(from_chars<double>("   ").has_value());
     EXPECT_FALSE(from_chars<double>("--1.0").has_value());
     EXPECT_FALSE(from_chars<double>("3.14.15").has_value());
+}
+
+TEST(FromCharsPrefixTest, ReturnsSuffixInOriginalInput)
+{
+    const std::string input = "1+2j";
+    const auto [value, suffix] = from_chars_prefix<double>(input);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_DOUBLE_EQ(*value, 1.0);
+    EXPECT_EQ(suffix, "+2j");
+    EXPECT_EQ(suffix.data(), input.data() + 1);
+}
+
+TEST(FromCharsPrefixTest, ParsesSignedExponentWithLeadingWhitespace)
+{
+    const std::string_view input = "  +1.25e-2 rest";
+    const auto [value, suffix] = from_chars_prefix<double>(input);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_DOUBLE_EQ(*value, 0.0125);
+    EXPECT_EQ(suffix, " rest");
+    EXPECT_EQ(suffix.data(), input.data() + 10);
+}
+
+TEST(FromCharsPrefixTest, RespectsStringViewBoundary)
+{
+    const std::string storage = "12.5extra";
+    const std::string_view input(storage.data(), 4);
+    const auto [value, suffix] = from_chars_prefix<double>(input);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_DOUBLE_EQ(*value, 12.5);
+    EXPECT_TRUE(suffix.empty());
+    EXPECT_EQ(suffix.data(), input.data() + input.size());
+}
+
+TEST(FromCharsPrefixTest, PreservesEmbeddedNullInSuffix)
+{
+    const std::string input("12\0tail", 7);
+    const auto [value, suffix] = from_chars_prefix<double>(input);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_DOUBLE_EQ(*value, 12.0);
+    EXPECT_EQ(suffix, std::string_view(input).substr(2));
+    EXPECT_EQ(suffix.data(), input.data() + 2);
+}
+
+TEST(FromCharsPrefixTest, ReturnsOriginalInputOnFailure)
+{
+    for (const std::string_view input : {"", "   ", "invalid", "--1.0", "1e500tail", "-1e500", "1e-500"})
+    {
+        SCOPED_TRACE(input);
+        const auto [value, suffix] = from_chars_prefix<double>(input);
+        EXPECT_FALSE(value.has_value());
+        EXPECT_EQ(suffix, input);
+        EXPECT_EQ(suffix.data(), input.data());
+    }
 }
 
 TEST(TrimWhiteSpacesTest, TrimLeadingSpacesOnly)

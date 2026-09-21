@@ -35,3 +35,5 @@ if (PORT STREQUAL openvino)
     set(VCPKG_CXX_FLAGS "")
     set(VCPKG_C_FLAGS "")
 endif()
+
+set(NES_VCPKG_SANITIZER ubsan)

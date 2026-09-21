@@ -30,6 +30,7 @@ add_source_files(nes-logical-operators
         CastFromUnixTimestampLogicalFunction.cpp
         VarSizedToNumericLogicalFunction.cpp
         ExtractFromTimestampLogicalFunction.cpp
+        PythonLogicalFunction.cpp
 )
 
 
@@ -47,6 +48,7 @@ add_unreflection_entry(LogicalFunction VarSizedToNumeric)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_unreflection_entry(LogicalFunction Python)
 
 add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(LogicalFunction CastToType)

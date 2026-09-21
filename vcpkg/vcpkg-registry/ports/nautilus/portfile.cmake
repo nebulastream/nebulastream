@@ -17,6 +17,8 @@ vcpkg_from_github(
         SHA512 2ac9db4b71b8644c26c68a5f0e06b5b11dfe31ada51547fb87cc1ff76f5dd2cea963d558f5836f3961e08689c9e1b1d1acf06bddeab815814811134d0b0d387d
         PATCHES
         0002-preserve-jit-frame-pointers.patch
+        0003-Add-engine-scoped-LLVM-bitcode-UDFs.patch
+        0004-engine-scoped-external-symbols.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
