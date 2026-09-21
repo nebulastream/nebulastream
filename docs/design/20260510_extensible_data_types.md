@@ -97,7 +97,7 @@ No edits to core code paths are required beyond the registration entry point.
 ## Branch
 https://github.com/nebulastream/nebulastream/tree/extensible-data-types-timestamp (Implemented PoC solution and plugins. Additionally, allows EventTimeWatermarks to use the "UnsignedTimestamp" datatype plugin as ts).
 
-https://github.com/nebulastream/nebulastream/tree/extensible-data-types-geotemporal (Geospatial and geotemporal type plugins + functions backed by MEOS library. Builds upon MobilityStream.).
+https://github.com/nebulastream/nebulastream/tree/extensible-data-types-geotemporal (Geospatial and geotemporal type plugins + functions backed by MEOS library. Builds upon MobilityNebula.).
 
 ## Code Examples
 All snippets below are condensed from the systests under `nes-systests/` (`function/casting/Casting.test`,
@@ -310,7 +310,7 @@ INTO sinkCountStar;
 - `nes-plugins/DataTypes/Time`: registers `Time`, `Date`, `(Unsigned)Timestamp` plugins and their SerDes.
 - Systests under `nes-systests/formatter/JSON_OUTPUT/` (`StructConstruction`, `StructAdd`, `StructWHERE`, `ThermalFrameStructJSON`, `ThermalFrameFunctions`, `ThermalFrameToRGB`, `FixedSizedArrayJSON` ...) exercise the end-to-end paths.
 - Systests under `nes-systests/formatter/datatype_plugins` for all `Timestamp` related tests.
-- (Branch extensible-datatypes-geotemporal) `nes-plugins/MEOS`: registers all geospatial / geotemporal datatypes and the functions they can be used with. Includes MobilityStream's MEOS wrapper that acts as interface between NebulaStream and the MEOS library.
+- (Branch extensible-datatypes-geotemporal) `nes-plugins/MEOS`: registers all geospatial / geotemporal datatypes and the functions they can be used with. Includes MobilityNebula's MEOS wrapper that acts as interface between NebulaStream and the MEOS library.
 
 # Implementation Plan
 - Rebase with main to employ the refactored plugin registration approach
