@@ -26,7 +26,7 @@ docker compose up -d
 if [[ "$WITH_PYTHON_BASELINE" -eq 1 ]]; then
   echo "Starting Python baseline (python-baseline/infer.py)..."
   cd python-baseline
-  if [[ ! -d .venv ]]; then
+  if [[ ! -x .venv/bin/python ]]; then
     echo "  no venv found, creating one and installing requirements..."
     python3 -m venv .venv
     .venv/bin/pip install -q -r requirements.txt
