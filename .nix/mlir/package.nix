@@ -30,38 +30,38 @@ let
   hashes = {
     x64 = {
       none = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-Nn86t+YS7YrmLsWPyE1A2vpJi1OmwmLvD/m7UBloO/o=";
+        libstdcxx = "sha256-nHalYYu4LEc7vJXojAsCSIm80Uxg1vW886pWFT5cjW8=";
       };
       address = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-r+jlVVgo7a5Ite/I6x5JHP5bRPz1jMTa4WInsag+BVY=";
+        libstdcxx = "sha256-iVYSpIGFc8/ui2IXlzfU14FKWSkuw+ffkSpyNzBAe5k=";
       };
       thread = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-EXQQdi6iqLRifTEPvXBzHrnMuimjJ7zmk2+TN88TgyU=";
+        libstdcxx = "sha256-3Yzvmj0SGjVPE5HDU8BRXJ1GvCxCj6xoQ69I3eCmSrk=";
       };
       undefined = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-Mt5izF8CpULhYmpmGFNZvYAtpXSrlXSL7fD6HOiYGRM=";
+        libstdcxx = "sha256-XwY3CKQB8EPGvxpfaKHgpKAy/r3+EPNm1ZBDJg2ZgVU=";
       };
     };
     arm64 = {
       none = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-KiRjfYAO6hgdMaBKou/nEEKStuDMtKxRxbC8J1an7R4=";
+        libstdcxx = "sha256-veUbLMx89uRNlDDuRd+5vzmKX52D4r+hLxyUrNX7lvw=";
       };
       address = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-zDIkA15NdXkBnq1QzXNRkaJrL3KhG9LFbiFScR770iY=";
+        libstdcxx = "sha256-L4/h2X765xDFKISNhbUqgQF+mMdLP3ugHsevscfB/S0=";
       };
       thread = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-sGwr4Ek/resX1+RqPl/x5oi6BqQ88ymIDa2nj+Ax13s=";
+        libstdcxx = "sha256-Lye3pm1CdmF2WTCmA1gC2jHstk3RcBH+wg+V9CYIyUs=";
       };
       undefined = {
-        libcxx = lib.fakeHash;
-        libstdcxx = lib.fakeHash;
+        libcxx = "sha256-Rn9XOuO6Iz4YFx0qMHZwVk67gA/fzXwPAm6n2fBWTDw=";
+        libstdcxx = "sha256-3mu38xsng32fN0PXd4aS5Jz2ZgHVX9FC+4176SkY69w=";
       };
     };
   };
