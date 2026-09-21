@@ -74,7 +74,7 @@ function(project_enable_tidy)
     endif ()
 
     # Locate clang-tidy-diff.py. It ships with LLVM; the file name carries the
-    # version (e.g. clang-tidy-diff-19.py) and it is usually only on PATH, not in
+    # version (e.g. clang-tidy-diff-22.py) and it is usually only on PATH, not in
     # a predictable prefix, so we probe the versioned and unversioned names the
     # same way the format target probes clang-format.
     find_program(CLANG_TIDY_DIFF_EXECUTABLE

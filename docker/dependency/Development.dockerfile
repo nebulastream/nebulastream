@@ -44,7 +44,7 @@ RUN mkdir -p /tmp/ClangBuildAnalyzer \
     && ClangBuildAnalyzer --version
 
 # Install GDB Libc++ Pretty Printer
-RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-19.1.7/libcxx/utils/gdb/libcxx/printers.py && \
+RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-22.1.8/libcxx/utils/gdb/libcxx/printers.py && \
     cat << 'EOF' > /etc/gdb/gdbinit
 python
 import sys

@@ -8,7 +8,7 @@ As every setup is different, it might be necessary to adjust the commands to you
 
 # Running clang-tidy via CMake targets (recommended)
 Just like `clang-format` is available as the `format` / `check-format` CMake targets, clang-tidy on your diff is
-available as CMake targets. These wrap `clang-tidy-diff.py` so you no longer need the hand-written `git diff | clang-tidy-diff-19.py ...`
+available as CMake targets. These wrap `clang-tidy-diff.py` so you no longer need the hand-written `git diff | clang-tidy-diff-22.py ...`
 command below. There are five targets:
 
 | Target | Scope | Mode |
@@ -74,23 +74,23 @@ If you want run clang-tidy on the diff to another branch, please change `origin/
 The below command assumes that NebulaStream is mounted under `/tmp/nebulastream` in the docker image.
 We exclude '*.inc' files, since '*.inc' files are dependent header files that other header files include and that therefore don't need to compile on their own.
 ```bash
-export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
+export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-22 && \
     git config --global --add safe.directory /tmp/nebulastream && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
-    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
+    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-22.py -clang-tidy-binary clang-tidy-22 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
 ```
 Since we generate some header files in the build process, clang-tidy might complain about missing header files.
 In this case, you have to build `NebulaStream` before running the clang-tidy check to create the missing header files.
 ```bash
-export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
+export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-22 && \
     git config --global --add safe.directory /tmp/nebulastream && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
     cmake --build build -j -- -k 0 && \
-    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
+    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-22.py -clang-tidy-binary clang-tidy-22 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
 ```
 
 # Fixing clang-tidy warnings compared to a commit hash

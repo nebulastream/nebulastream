@@ -38,14 +38,14 @@ log_fatal() {
 }
 
 
-if [ -x "$(command -v clang-format-19)" ]
+if [ -x "$(command -v clang-format-22)" ]
 then
-    CLANG_FORMAT="clang-format-19"
-elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 19" > /dev/null
+    CLANG_FORMAT="clang-format-22"
+elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 22" > /dev/null
 then
     CLANG_FORMAT="clang-format"
 else
-    log_fatal could not find clang-format 19 in PATH, please install.
+    log_fatal could not find clang-format 22 in PATH, please install.
 fi
 
 if [ -x "$(command -v rustfmt)" ]

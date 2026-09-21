@@ -4,9 +4,9 @@
 # This image is pre-built and pushed to the registry so that downstream images
 # (worker, CLI, REPL, test containers) can skip network-heavy apt/wget steps at build time.
 # Changes to this image are included in the development-image dependency hash.
-FROM ubuntu:25.04
+FROM ubuntu:26.04
 
-ARG LLVM_TOOLCHAIN_VERSION=19
+ARG LLVM_TOOLCHAIN_VERSION=22
 ARG GRPC_HEALTH_PROBE_VERSION=v0.4.40
 
 RUN apt update -y && apt install curl wget gpg -y \
