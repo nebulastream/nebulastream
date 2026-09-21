@@ -20,6 +20,7 @@ add_source_files(nes-logical-operators
         ConstantValueLogicalFunction.cpp
         FieldAccessLogicalFunction.cpp
         ConcatLogicalFunction.cpp
+        UDFCallLogicalFunction.cpp
         OctetLengthLogicalFunction.cpp
         CharLengthLogicalFunction.cpp
         FromBase64LogicalFunction.cpp
@@ -30,12 +31,13 @@ add_source_files(nes-logical-operators
         CastFromUnixTimestampLogicalFunction.cpp
         VarSizedToNumericLogicalFunction.cpp
         ExtractFromTimestampLogicalFunction.cpp
+        PythonLogicalFunction.cpp
 )
-
 
 add_unreflection_entry(LogicalFunction ConstantValue)
 add_unreflection_entry(LogicalFunction FieldAccess)
 add_unreflection_entry(LogicalFunction Concat)
+add_unreflection_entry(LogicalFunction UDFCall)
 add_unreflection_entry(LogicalFunction CharLength KEY CHAR_LENGTH)
 add_unreflection_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
 add_unreflection_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
@@ -47,6 +49,7 @@ add_unreflection_entry(LogicalFunction VarSizedToNumeric)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Day_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Month_Of)
 add_unreflection_entry(LogicalFunction ExtractFromTimestamp KEY Year_Of)
+add_unreflection_entry(LogicalFunction Python)
 
 add_registry_entry(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
 add_registry_entry(LogicalFunction CastToType)
@@ -61,5 +64,6 @@ add_registry_entry(LogicalFunction FieldAccess)
 add_registry_entry(LogicalFunction FromBase64 KEY FROM_BASE64)
 add_registry_entry(LogicalFunction OctetLength KEY OCTET_LENGTH)
 add_registry_entry(LogicalFunction ToBase64 KEY TO_BASE64)
+add_registry_entry(LogicalFunction UDFCall)
 add_registry_entry(LogicalFunction UnboundFieldAccess)
 add_registry_entry(LogicalFunction VarSizedToNumeric)

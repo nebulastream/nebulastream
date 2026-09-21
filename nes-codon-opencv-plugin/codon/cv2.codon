@@ -1,0 +1,578 @@
+"""OpenCV-compatible image operations for inline Codon UDFs."""
+
+import numpy as np
+import internal.static as static
+
+NORM_INF: Literal[int] = 1
+NORM_L1: Literal[int] = 2
+NORM_L2: Literal[int] = 4
+NORM_L2SQR: Literal[int] = 5
+NORM_HAMMING: Literal[int] = 6
+NORM_HAMMING2: Literal[int] = 7
+NORM_TYPE_MASK: Literal[int] = 7
+NORM_RELATIVE: Literal[int] = 8
+NORM_MINMAX: Literal[int] = 32
+CV_8U: Literal[int] = 0
+CV_8S: Literal[int] = 1
+CV_16U: Literal[int] = 2
+CV_16S: Literal[int] = 3
+CV_32S: Literal[int] = 4
+CV_32F: Literal[int] = 5
+CV_64F: Literal[int] = 6
+CV_16F: Literal[int] = 7
+
+# Keep these values aligned with OpenCV's public enums.  The native adapter
+# deliberately passes them through to OpenCV instead of maintaining a second
+# whitelist.
+COLOR_BGR2BGRA: Literal[int] = 0
+COLOR_RGB2RGBA: Literal[int] = 0
+COLOR_BGRA2BGR: Literal[int] = 1
+COLOR_RGBA2RGB: Literal[int] = 1
+COLOR_BGR2RGBA: Literal[int] = 2
+COLOR_RGB2BGRA: Literal[int] = 2
+COLOR_RGBA2BGR: Literal[int] = 3
+COLOR_BGRA2RGB: Literal[int] = 3
+COLOR_BGR2RGB: Literal[int] = 4
+COLOR_RGB2BGR: Literal[int] = 4
+COLOR_BGRA2RGBA: Literal[int] = 5
+COLOR_RGBA2BGRA: Literal[int] = 5
+COLOR_BGR2GRAY: Literal[int] = 6
+COLOR_RGB2GRAY: Literal[int] = 7
+COLOR_GRAY2BGR: Literal[int] = 8
+COLOR_GRAY2RGB: Literal[int] = 8
+COLOR_GRAY2BGRA: Literal[int] = 9
+COLOR_GRAY2RGBA: Literal[int] = 9
+COLOR_BGRA2GRAY: Literal[int] = 10
+COLOR_RGBA2GRAY: Literal[int] = 11
+COLOR_BGR2BGR565: Literal[int] = 12
+COLOR_RGB2BGR565: Literal[int] = 13
+COLOR_BGR5652BGR: Literal[int] = 14
+COLOR_BGR5652RGB: Literal[int] = 15
+COLOR_BGRA2BGR565: Literal[int] = 16
+COLOR_RGBA2BGR565: Literal[int] = 17
+COLOR_BGR5652BGRA: Literal[int] = 18
+COLOR_BGR5652RGBA: Literal[int] = 19
+COLOR_GRAY2BGR565: Literal[int] = 20
+COLOR_BGR5652GRAY: Literal[int] = 21
+COLOR_BGR2BGR555: Literal[int] = 22
+COLOR_RGB2BGR555: Literal[int] = 23
+COLOR_BGR5552BGR: Literal[int] = 24
+COLOR_BGR5552RGB: Literal[int] = 25
+COLOR_BGRA2BGR555: Literal[int] = 26
+COLOR_RGBA2BGR555: Literal[int] = 27
+COLOR_BGR5552BGRA: Literal[int] = 28
+COLOR_BGR5552RGBA: Literal[int] = 29
+COLOR_GRAY2BGR555: Literal[int] = 30
+COLOR_BGR5552GRAY: Literal[int] = 31
+COLOR_BGR2XYZ: Literal[int] = 32
+COLOR_RGB2XYZ: Literal[int] = 33
+COLOR_XYZ2BGR: Literal[int] = 34
+COLOR_XYZ2RGB: Literal[int] = 35
+COLOR_BGR2YCrCb: Literal[int] = 36
+COLOR_RGB2YCrCb: Literal[int] = 37
+COLOR_YCrCb2BGR: Literal[int] = 38
+COLOR_YCrCb2RGB: Literal[int] = 39
+COLOR_BGR2HSV: Literal[int] = 40
+COLOR_RGB2HSV: Literal[int] = 41
+COLOR_BGR2Lab: Literal[int] = 44
+COLOR_RGB2Lab: Literal[int] = 45
+COLOR_BGR2Luv: Literal[int] = 50
+COLOR_RGB2Luv: Literal[int] = 51
+COLOR_BGR2HLS: Literal[int] = 52
+COLOR_RGB2HLS: Literal[int] = 53
+COLOR_HSV2BGR: Literal[int] = 54
+COLOR_HSV2RGB: Literal[int] = 55
+COLOR_Lab2BGR: Literal[int] = 56
+COLOR_Lab2RGB: Literal[int] = 57
+COLOR_Luv2BGR: Literal[int] = 58
+COLOR_Luv2RGB: Literal[int] = 59
+COLOR_HLS2BGR: Literal[int] = 60
+COLOR_HLS2RGB: Literal[int] = 61
+COLOR_BGR2HSV_FULL: Literal[int] = 66
+COLOR_RGB2HSV_FULL: Literal[int] = 67
+COLOR_BGR2HLS_FULL: Literal[int] = 68
+COLOR_RGB2HLS_FULL: Literal[int] = 69
+COLOR_HSV2BGR_FULL: Literal[int] = 70
+COLOR_HSV2RGB_FULL: Literal[int] = 71
+COLOR_HLS2BGR_FULL: Literal[int] = 72
+COLOR_HLS2RGB_FULL: Literal[int] = 73
+COLOR_BGR2YUV: Literal[int] = 82
+COLOR_RGB2YUV: Literal[int] = 83
+COLOR_YUV2BGR: Literal[int] = 84
+COLOR_YUV2RGB: Literal[int] = 85
+COLOR_YUV2RGB_NV12: Literal[int] = 90
+COLOR_YUV2BGR_NV12: Literal[int] = 91
+COLOR_YUV2RGB_NV21: Literal[int] = 92
+COLOR_YUV2BGR_NV21: Literal[int] = 93
+COLOR_YUV2RGBA_NV12: Literal[int] = 94
+COLOR_YUV2BGRA_NV12: Literal[int] = 95
+COLOR_YUV2RGBA_NV21: Literal[int] = 96
+COLOR_YUV2BGRA_NV21: Literal[int] = 97
+COLOR_YUV2RGB_YV12: Literal[int] = 98
+COLOR_YUV2BGR_YV12: Literal[int] = 99
+COLOR_YUV2RGB_IYUV: Literal[int] = 100
+COLOR_YUV2BGR_IYUV: Literal[int] = 101
+COLOR_YUV2RGBA_YV12: Literal[int] = 102
+COLOR_YUV2BGRA_YV12: Literal[int] = 103
+COLOR_YUV2RGBA_IYUV: Literal[int] = 104
+COLOR_YUV2BGRA_IYUV: Literal[int] = 105
+COLOR_YUV2GRAY_420: Literal[int] = 106
+COLOR_YUV2RGB_UYVY: Literal[int] = 107
+COLOR_YUV2BGR_UYVY: Literal[int] = 108
+COLOR_YUV2RGBA_UYVY: Literal[int] = 111
+COLOR_YUV2BGRA_UYVY: Literal[int] = 112
+COLOR_YUV2RGB_YUY2: Literal[int] = 115
+COLOR_YUV2BGR_YUY2: Literal[int] = 116
+COLOR_YUV2BGR_YUYV: Literal[int] = 116
+COLOR_YUV2RGB_YVYU: Literal[int] = 117
+COLOR_YUV2BGR_YVYU: Literal[int] = 118
+COLOR_YUV2RGBA_YUY2: Literal[int] = 119
+COLOR_YUV2BGRA_YUY2: Literal[int] = 120
+COLOR_YUV2RGBA_YVYU: Literal[int] = 121
+COLOR_YUV2BGRA_YVYU: Literal[int] = 122
+COLOR_YUV2GRAY_UYVY: Literal[int] = 123
+COLOR_YUV2GRAY_YUY2: Literal[int] = 124
+COLOR_YUV2GRAY_YUYV: Literal[int] = 124
+COLOR_RGBA2mRGBA: Literal[int] = 125
+COLOR_mRGBA2RGBA: Literal[int] = 126
+COLOR_RGB2YUV_I420: Literal[int] = 127
+COLOR_BGR2YUV_I420: Literal[int] = 128
+COLOR_RGBA2YUV_I420: Literal[int] = 129
+COLOR_BGRA2YUV_I420: Literal[int] = 130
+COLOR_RGB2YUV_YV12: Literal[int] = 131
+COLOR_BGR2YUV_YV12: Literal[int] = 132
+COLOR_RGBA2YUV_YV12: Literal[int] = 133
+COLOR_BGRA2YUV_YV12: Literal[int] = 134
+COLOR_BGR2YUV_YUYV: Literal[int] = 148
+
+COLORMAP_AUTUMN: Literal[int] = 0
+COLORMAP_BONE: Literal[int] = 1
+COLORMAP_JET: Literal[int] = 2
+COLORMAP_WINTER: Literal[int] = 3
+COLORMAP_RAINBOW: Literal[int] = 4
+COLORMAP_OCEAN: Literal[int] = 5
+COLORMAP_SUMMER: Literal[int] = 6
+COLORMAP_SPRING: Literal[int] = 7
+COLORMAP_COOL: Literal[int] = 8
+COLORMAP_HSV: Literal[int] = 9
+COLORMAP_PINK: Literal[int] = 10
+COLORMAP_HOT: Literal[int] = 11
+COLORMAP_PARULA: Literal[int] = 12
+COLORMAP_MAGMA: Literal[int] = 13
+COLORMAP_INFERNO: Literal[int] = 14
+COLORMAP_PLASMA: Literal[int] = 15
+COLORMAP_VIRIDIS: Literal[int] = 16
+COLORMAP_CIVIDIS: Literal[int] = 17
+COLORMAP_TWILIGHT: Literal[int] = 18
+COLORMAP_TWILIGHT_SHIFTED: Literal[int] = 19
+COLORMAP_TURBO: Literal[int] = 20
+COLORMAP_DEEPGREEN: Literal[int] = 21
+
+INTER_NEAREST: Literal[int] = 0
+INTER_LINEAR: Literal[int] = 1
+INTER_CUBIC: Literal[int] = 2
+INTER_AREA: Literal[int] = 3
+INTER_LANCZOS4: Literal[int] = 4
+INTER_LINEAR_EXACT: Literal[int] = 5
+INTER_NEAREST_EXACT: Literal[int] = 6
+
+WARP_FILL_OUTLIERS: Literal[int] = 8
+WARP_INVERSE_MAP: Literal[int] = 16
+
+BORDER_CONSTANT: Literal[int] = 0
+BORDER_REPLICATE: Literal[int] = 1
+BORDER_REFLECT: Literal[int] = 2
+BORDER_WRAP: Literal[int] = 3
+BORDER_REFLECT_101: Literal[int] = 4
+BORDER_TRANSPARENT: Literal[int] = 5
+BORDER_REFLECT101: Literal[int] = 4
+BORDER_DEFAULT: Literal[int] = 4
+BORDER_ISOLATED: Literal[int] = 16
+
+FILLED: Literal[int] = -1
+LINE_4: Literal[int] = 4
+LINE_8: Literal[int] = 8
+LINE_AA: Literal[int] = 16
+
+IMREAD_UNCHANGED: Literal[int] = -1
+IMREAD_GRAYSCALE: Literal[int] = 0
+IMREAD_COLOR: Literal[int] = 1
+IMREAD_COLOR_BGR: Literal[int] = 1
+IMREAD_ANYDEPTH: Literal[int] = 2
+IMREAD_ANYCOLOR: Literal[int] = 4
+IMREAD_LOAD_GDAL: Literal[int] = 8
+IMREAD_REDUCED_GRAYSCALE_2: Literal[int] = 16
+IMREAD_REDUCED_COLOR_2: Literal[int] = 17
+IMREAD_REDUCED_GRAYSCALE_4: Literal[int] = 32
+IMREAD_REDUCED_COLOR_4: Literal[int] = 33
+IMREAD_REDUCED_GRAYSCALE_8: Literal[int] = 64
+IMREAD_REDUCED_COLOR_8: Literal[int] = 65
+IMREAD_IGNORE_ORIENTATION: Literal[int] = 128
+IMREAD_COLOR_RGB: Literal[int] = 256
+
+IMWRITE_JPEG_QUALITY: Literal[int] = 1
+IMWRITE_JPEG_PROGRESSIVE: Literal[int] = 2
+IMWRITE_JPEG_OPTIMIZE: Literal[int] = 3
+IMWRITE_PNG_COMPRESSION: Literal[int] = 16
+IMWRITE_PNG_STRATEGY: Literal[int] = 17
+IMWRITE_PNG_BILEVEL: Literal[int] = 18
+IMWRITE_WEBP_QUALITY: Literal[int] = 64
+
+def _check_image(image):
+    if not image.flags.c_contiguous:
+        raise ValueError("NES cv2 requires a C-contiguous image")
+
+def _opencv_depth(T: type):
+    if T is np.uint8:
+        return i64(0)
+    elif T is np.int8:
+        return i64(1)
+    elif T is np.uint16:
+        return i64(2)
+    elif T is np.int16:
+        return i64(3)
+    elif T is np.int32:
+        return i64(4)
+    elif T is np.float32:
+        return i64(5)
+    elif T is np.float64:
+        return i64(6)
+    elif T is np.float16:
+        return i64(7)
+    else:
+        compile_error("NES cv2 does not support this ndarray element type")
+
+def _check_uint8(T: type):
+    if T is not np.uint8:
+        compile_error("This OpenCV operation requires a uint8 ndarray")
+
+def _image_shape(image):
+    channels = 0
+    if static.len(image.shape) == 2:
+        height, width = image.shape
+        channels = 1
+    elif static.len(image.shape) == 3:
+        height, width, channels = image.shape
+    else:
+        compile_error("NES cv2 supports only 2D or 3D ndarrays")
+    return (height, width, channels)
+
+def _raise_native_error(status, error_pointer, error_size):
+    if status != i8(0):
+        raise RuntimeError(str(error_pointer, int(error_size)))
+
+def imencode(extension, image: np.ndarray[T, N], params=(), T: type, N: Literal[int]):
+    """Encode an image using any codec and pixel type supported by OpenCV."""
+    _check_image(image)
+    height, width, channels = _image_shape(image)
+
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    native_params = List[i64]()
+    for parameter in params:
+        native_params.append(i64(parameter))
+    from C import nes_cv_imencode(
+        Ptr[byte], i64, Ptr[byte], i64, i64, i64, i64, i64,
+        Ptr[i64], i64,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_imencode(
+        extension.ptr,
+        i64(len(extension)),
+        image.data.as_byte(),
+        i64(image.nbytes),
+        i64(width),
+        i64(height),
+        i64(channels),
+        _opencv_depth(T),
+        native_params.arr.ptr,
+        i64(len(native_params)),
+        __ptr__(result_pointer),
+        __ptr__(result_size),
+        __ptr__(error_pointer),
+        __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+
+    encoded = np.ndarray[np.uint8, 1]((int(result_size),), Ptr[np.uint8](result_pointer.as_byte()))
+    return (True, encoded)
+
+def cvtColor(image: np.ndarray[T, N], code: Literal[int], dstCn=0, T: type, N: Literal[int]):
+    """Convert an image using an OpenCV color conversion code."""
+    _check_image(image)
+    height, width, channels = _image_shape(image)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_cvt_color(
+        Ptr[byte], i64, i64, i64, i64, i64, i64, i64,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64],
+        Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_cvt_color(
+        image.data.as_byte(), i64(image.nbytes), i64(width), i64(height), i64(channels), _opencv_depth(T), i64(code), i64(dstCn),
+        __ptr__(result_pointer), __ptr__(result_size), __ptr__(result_width), __ptr__(result_height),
+        __ptr__(result_channels), __ptr__(result_element_size), __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    if (code == COLOR_BGR2GRAY or code == COLOR_RGB2GRAY or code == COLOR_BGRA2GRAY or code == COLOR_RGBA2GRAY
+            or code == COLOR_BGR5652GRAY or code == COLOR_BGR5552GRAY or code == COLOR_YUV2GRAY_420
+            or code == COLOR_YUV2GRAY_UYVY or code == COLOR_YUV2GRAY_YUY2):
+        return np.ndarray[T, 2]((int(result_height), int(result_width)), Ptr[T](result_pointer.as_byte()))
+    return np.ndarray[T, 3](
+        (int(result_height), int(result_width), int(result_channels)), Ptr[T](result_pointer.as_byte()))
+
+def applyColorMap(image: np.ndarray[T, N], color_map: Literal[int], T: type, N: Literal[int]):
+    """Apply any built-in OpenCV color map."""
+    _check_image(image)
+    _check_uint8(T)
+    height, width, channels = _image_shape(image)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_apply_color_map(
+        Ptr[byte], i64, i64, i64, i64, i64,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64],
+        Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_apply_color_map(
+        image.data.as_byte(), i64(image.nbytes), i64(width), i64(height), i64(channels), i64(color_map),
+        __ptr__(result_pointer), __ptr__(result_size), __ptr__(result_width), __ptr__(result_height),
+        __ptr__(result_channels), __ptr__(result_element_size), __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    return np.ndarray[np.uint8, 3](
+        (int(result_height), int(result_width), int(result_channels)), Ptr[np.uint8](result_pointer.as_byte()))
+
+def resize(
+    image: np.ndarray[T, N],
+    dsize,
+    fx=0.0,
+    fy=0.0,
+    interpolation: Literal[int] = INTER_LINEAR,
+    T: type,
+    N: Literal[int]):
+    """Resize an image using any OpenCV interpolation mode."""
+    _check_image(image)
+    height, width, channels = _image_shape(image)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_resize(
+        Ptr[byte], i64, i64, i64, i64, i64, i64, i64, float, float, i64,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64],
+        Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_resize(
+        image.data.as_byte(), i64(image.nbytes), i64(width), i64(height), i64(channels), _opencv_depth(T),
+        i64(dsize[0]), i64(dsize[1]), float(fx), float(fy), i64(interpolation),
+        __ptr__(result_pointer), __ptr__(result_size), __ptr__(result_width), __ptr__(result_height),
+        __ptr__(result_channels), __ptr__(result_element_size), __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    if static.len(image.shape) == 2:
+        return np.ndarray[T, 2]((int(result_height), int(result_width)), Ptr[T](result_pointer.as_byte()))
+    return np.ndarray[T, 3]((int(result_height), int(result_width), int(result_channels)), Ptr[T](result_pointer.as_byte()))
+
+def imdecode(encoded: np.ndarray[T, N], flags: Literal[int], T: type, N: Literal[int]):
+    """Decode an image using an OpenCV image-read mode."""
+    _check_image(encoded)
+    _check_uint8(T)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_imdecode(
+        Ptr[byte], i64, i64, Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64],
+        Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_imdecode(
+        encoded.data.as_byte(), i64(encoded.nbytes), i64(flags), __ptr__(result_pointer), __ptr__(result_size),
+        __ptr__(result_width), __ptr__(result_height), __ptr__(result_channels), __ptr__(result_element_size),
+        __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    if flags == IMREAD_UNCHANGED:
+        if result_channels != i64(1) or result_element_size != i64(2):
+            raise ValueError("NES cv2.IMREAD_UNCHANGED expects a 16-bit single-channel image")
+        return np.ndarray[np.uint16, 2](
+            (int(result_height), int(result_width)), Ptr[np.uint16](result_pointer.as_byte()))
+    if (flags == IMREAD_GRAYSCALE or flags == IMREAD_REDUCED_GRAYSCALE_2
+            or flags == IMREAD_REDUCED_GRAYSCALE_4 or flags == IMREAD_REDUCED_GRAYSCALE_8):
+        return np.ndarray[np.uint8, 2](
+            (int(result_height), int(result_width)), Ptr[np.uint8](result_pointer.as_byte()))
+    if result_element_size != i64(1):
+        raise ValueError("NES cv2.imdecode needs an explicit statically typed wrapper for this decoded pixel depth")
+    return np.ndarray[np.uint8, 3](
+        (int(result_height), int(result_width), int(result_channels)), Ptr[np.uint8](result_pointer.as_byte()))
+
+def rectangle(
+    image: np.ndarray[T, N],
+    point1,
+    point2,
+    color,
+    thickness=1,
+    lineType: Literal[int] = LINE_8,
+    shift=0,
+    T: type,
+    N: Literal[int]):
+    """Draw an in-place rectangle and return the input ndarray."""
+    _check_image(image)
+    height, width, channels = _image_shape(image)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_rectangle(
+        Ptr[byte], i64, i64, i64, i64, i64, i64, i64, i64, i64, float, float, float, i64, i64, i64,
+        Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_rectangle(
+        image.data.as_byte(), i64(image.nbytes), i64(width), i64(height), i64(channels), _opencv_depth(T),
+        i64(point1[0]), i64(point1[1]), i64(point2[0]), i64(point2[1]),
+        float(color[0]), float(color[1]), float(color[2]), i64(thickness), i64(lineType), i64(shift),
+        __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    return image
+
+def warpAffine(
+    src: np.ndarray[T, N],
+    M,
+    dsize,
+    dst=None,
+    flags: Literal[int] = INTER_LINEAR,
+    borderMode: Literal[int] = BORDER_CONSTANT,
+    borderValue=(0.0, 0.0, 0.0, 0.0),
+    T: type,
+    N: Literal[int]):
+    """Apply a 2x3 affine transform using OpenCV's interpolation and border modes."""
+    _check_image(src)
+    if dst is not None:
+        raise ValueError("NES cv2.warpAffine does not yet reuse a caller-provided dst allocation")
+    if static.len(M.shape) != 2 or M.shape[0] != 2 or M.shape[1] != 3:
+        raise ValueError("cv2.warpAffine transformation matrix must have shape (2, 3)")
+    height, width, channels = _image_shape(src)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_warp_affine(
+        Ptr[byte], i64, i64, i64, i64, i64,
+        float, float, float, float, float, float,
+        i64, i64, i64, i64, float, float, float, float,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_warp_affine(
+        src.data.as_byte(), i64(src.nbytes), i64(width), i64(height), i64(channels), _opencv_depth(T),
+        float(M[0, 0]), float(M[0, 1]), float(M[0, 2]),
+        float(M[1, 0]), float(M[1, 1]), float(M[1, 2]),
+        i64(dsize[0]), i64(dsize[1]), i64(flags), i64(borderMode),
+        float(borderValue[0]), float(borderValue[1]), float(borderValue[2]), float(borderValue[3]),
+        __ptr__(result_pointer), __ptr__(result_size), __ptr__(result_width), __ptr__(result_height),
+        __ptr__(result_channels), __ptr__(result_element_size), __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+    if N == 2:
+        return np.ndarray[T, 2]((int(result_height), int(result_width)), Ptr[T](result_pointer.as_byte()))
+    return np.ndarray[T, 3](
+        (int(result_height), int(result_width), int(result_channels)), Ptr[T](result_pointer.as_byte()))
+
+def normalize(
+    src: np.ndarray[T, N],
+    dst=None,
+    alpha=1.0,
+    beta=0.0,
+    norm_type: Literal[int] = NORM_L2,
+    dtype: Literal[int] = -1,
+    mask=None,
+    T: type,
+    N: Literal[int]):
+    """Normalize an array using OpenCV's norm and output-depth parameters."""
+    _check_image(src)
+    if dst is not None:
+        raise ValueError("NES cv2.normalize does not yet reuse a caller-provided dst allocation")
+    if mask is not None:
+        raise ValueError("NES cv2.normalize does not yet support a mask")
+    height, width, channels = _image_shape(src)
+    result_pointer = Ptr[byte]()
+    result_size = i64(0)
+    result_width = i64(0)
+    result_height = i64(0)
+    result_channels = i64(0)
+    result_element_size = i64(0)
+    error_pointer = Ptr[byte]()
+    error_size = i64(0)
+    from C import nes_cv_normalize(
+        Ptr[byte], i64, i64, i64, i64, i64, float, float, i64, i64,
+        Ptr[Ptr[byte]], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[i64], Ptr[Ptr[byte]], Ptr[i64]) -> i8
+    status = nes_cv_normalize(
+        src.data.as_byte(), i64(src.nbytes), i64(width), i64(height), i64(channels), _opencv_depth(T),
+        float(alpha), float(beta), i64(norm_type), i64(dtype), __ptr__(result_pointer), __ptr__(result_size),
+        __ptr__(result_width), __ptr__(result_height), __ptr__(result_channels), __ptr__(result_element_size),
+        __ptr__(error_pointer), __ptr__(error_size))
+    _raise_native_error(status, error_pointer, error_size)
+
+    if dtype == -1:
+        if N == 2:
+            return np.ndarray[T, 2]((int(result_height), int(result_width)), Ptr[T](result_pointer.as_byte()))
+        return np.ndarray[T, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[T](result_pointer.as_byte()))
+    elif dtype == CV_8U:
+        if N == 2:
+            return np.ndarray[np.uint8, 2](
+                (int(result_height), int(result_width)), Ptr[np.uint8](result_pointer.as_byte()))
+        return np.ndarray[np.uint8, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.uint8](result_pointer.as_byte()))
+    elif dtype == CV_8S:
+        if N == 2:
+            return np.ndarray[np.int8, 2]((int(result_height), int(result_width)), Ptr[np.int8](result_pointer.as_byte()))
+        return np.ndarray[np.int8, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.int8](result_pointer.as_byte()))
+    elif dtype == CV_16U:
+        if N == 2:
+            return np.ndarray[np.uint16, 2](
+                (int(result_height), int(result_width)), Ptr[np.uint16](result_pointer.as_byte()))
+        return np.ndarray[np.uint16, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.uint16](result_pointer.as_byte()))
+    elif dtype == CV_16S:
+        if N == 2:
+            return np.ndarray[np.int16, 2](
+                (int(result_height), int(result_width)), Ptr[np.int16](result_pointer.as_byte()))
+        return np.ndarray[np.int16, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.int16](result_pointer.as_byte()))
+    elif dtype == CV_32S:
+        if N == 2:
+            return np.ndarray[np.int32, 2](
+                (int(result_height), int(result_width)), Ptr[np.int32](result_pointer.as_byte()))
+        return np.ndarray[np.int32, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.int32](result_pointer.as_byte()))
+    elif dtype == CV_32F:
+        if N == 2:
+            return np.ndarray[np.float32, 2](
+                (int(result_height), int(result_width)), Ptr[np.float32](result_pointer.as_byte()))
+        return np.ndarray[np.float32, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.float32](result_pointer.as_byte()))
+    elif dtype == CV_64F:
+        if N == 2:
+            return np.ndarray[np.float64, 2](
+                (int(result_height), int(result_width)), Ptr[np.float64](result_pointer.as_byte()))
+        return np.ndarray[np.float64, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.float64](result_pointer.as_byte()))
+    elif dtype == CV_16F:
+        if N == 2:
+            return np.ndarray[np.float16, 2](
+                (int(result_height), int(result_width)), Ptr[np.float16](result_pointer.as_byte()))
+        return np.ndarray[np.float16, 3](
+            (int(result_height), int(result_width), int(result_channels)), Ptr[np.float16](result_pointer.as_byte()))
+    else:
+        compile_error("NES cv2.normalize does not yet expose this OpenCV output depth")

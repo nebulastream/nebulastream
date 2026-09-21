@@ -120,6 +120,12 @@ RUN python3 -m venv /opt/iree && \
     iree-compile --version && \
     iree-import-onnx --help > /dev/null
 
+# Install PyPy for the PyPy-backed UDF bridge (nes-udf/bridge-pypy). Optional and auto-detected via
+# find_program(pypy3), same as IREE above -- absence just disables the feature, nothing fails.
+RUN apt-get update && apt-get install -y pypy3-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    pypy3 --version
+
 # Vendor the dependencies of both the NES workspace and nightly's standard library. The latter
 # keeps sanitizer builds using `-Zbuild-std` offline as well. The build context is limited to
 # Cargo files and Rust sources by Development.dockerfile.dockerignore.

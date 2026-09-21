@@ -62,6 +62,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <CommonParserFunctions.hpp>
+#include <UdfBridgeRegistry.hpp>
 
 namespace NES
 {
@@ -292,6 +293,47 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
+    CreateFunctionStatement bindCreateFunctionStatement(AntlrSQLParser::CreateFunctionDefinitionContext* functionDefAST) const
+    {
+        const auto functionName = bindIdentifier(functionDefAST->udfName->strictIdentifier());
+
+        /// FROM (a literal .so path) and BRIDGE (a name resolved to a shipped bridge) are both optional;
+        /// at least one is required, FROM wins if both given. Resolving BRIDGE here keeps
+        /// CreateFunctionStatement.path a plain string -- downstream code never needs to know BRIDGE exists.
+        /// BRIDGE 'codon' is the exception: it has no `.so`, so it selects UdfExecution::Codon and takes no FROM.
+        if (functionDefAST->functionPath == nullptr && functionDefAST->bridge == nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION requires FROM, BRIDGE, or both");
+        }
+        const auto isCodon = functionDefAST->bridge != nullptr && bindStringLiteral(functionDefAST->bridge) == CodonUdfBridge;
+        if (isCodon && functionDefAST->functionPath != nullptr)
+        {
+            throw InvalidStatement("CREATE FUNCTION ... BRIDGE '{}' compiles the ENTRYPOINT module and does not take FROM", CodonUdfBridge);
+        }
+        const auto path = isCodon ? std::string{}
+            : functionDefAST->functionPath != nullptr
+            ? bindStringLiteral(functionDefAST->functionPath)
+            : resolveBuiltinUdfBridgePath(bindStringLiteral(functionDefAST->bridge)).string();
+        const auto entrypoint = bindStringLiteral(functionDefAST->entrypoint);
+
+        /// Argument names in the DDL are documentation only — a scalar UDF matches
+        /// its arguments positionally, so we keep just the ordered types.
+        std::vector<DataType> argTypes;
+        for (auto* const argField : functionDefAST->functionArgField())
+        {
+            argTypes.push_back(bindDataType(argField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE));
+        }
+        const auto returnType = bindDataType(functionDefAST->returnType, DataType::NULLABLE::NOT_NULLABLE);
+
+        return CreateFunctionStatement{
+            .name = fmt::format("{}", functionName),
+            .path = path,
+            .entrypoint = entrypoint,
+            .argTypes = std::move(argTypes),
+            .returnType = returnType,
+            .execution = isCodon ? UdfExecution::Codon : UdfExecution::InProcess};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -315,6 +357,10 @@ public:
         if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
         {
             return bindCreateModelStatement(modelDefAST);
+        }
+        if (auto* const functionDefAST = createAST->createDefinition()->createFunctionDefinition(); functionDefAST != nullptr)
+        {
+            return bindCreateFunctionStatement(functionDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -456,6 +502,13 @@ public:
                 = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
             return ShowVersionStatement{.format = format};
         }
+        if (const auto* functionsSubject = dynamic_cast<AntlrSQLParser::ShowFunctionsSubjectContext*>(showAST->showSubject());
+            functionsSubject != nullptr)
+        {
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowFunctionsStatement{.format = format};
+        }
         throw InvalidStatement("Unrecognized SHOW statement");
     }
 
@@ -509,6 +562,11 @@ public:
         return DropModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP MODEL")};
     }
 
+    static DropFunctionStatement bindDropFunction(const std::pair<Identifier, Literal>& filter)
+    {
+        return DropFunctionStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP FUNCTION")};
+    }
+
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();
@@ -538,6 +596,10 @@ public:
         if (subject->dropModel() != nullptr)
         {
             return bindDropModel(filter);
+        }
+        if (subject->dropFunction() != nullptr)
+        {
+            return bindDropFunction(filter);
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }

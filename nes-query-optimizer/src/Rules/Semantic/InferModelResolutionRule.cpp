@@ -57,10 +57,16 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
                     std::ranges::size(children) == 1,
                     "Expected InferModelName Logical Operator to have one child, but has {}",
                     std::ranges::size(children));
-                return LogicalOperator{
-                    TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog->load(modelName), std::move(children.at(0))}};
+                /// withChildrenUnsafe, not the schema-inferring constructor: the child's schema may still be
+                /// unresolved here (e.g. UDFResolutionRule hasn't run yet). Real inference happens once in
+                /// TypeInferenceRule, after both catalog-resolution rules have run.
+                return LogicalOperator{TypedLogicalOperator<InferModelLogicalOperator>{modelCatalog->load(modelName)}.withChildrenUnsafe(
+                    {std::move(children.at(0))})};
             }
-            return op.withChildren(std::move(children));
+            /// Generic fallback: rebuild unresolved operators structurally, without forcing schema/type inference
+            /// (see the comment above on why -- the same reasoning applies to every operator in the tree, not just
+            /// InferModelName's own child).
+            return op.withChildrenUnsafe(std::move(children));
         }};
 
     return visitor.apply(queryPlan);

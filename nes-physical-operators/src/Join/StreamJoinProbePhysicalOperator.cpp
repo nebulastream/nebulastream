@@ -92,6 +92,12 @@ StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
 {
 }
 
+void StreamJoinProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    joinFunction.setup(compilationContext);
+    WindowProbePhysicalOperator::setup(executionCtx, compilationContext);
+}
+
 void StreamJoinProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();

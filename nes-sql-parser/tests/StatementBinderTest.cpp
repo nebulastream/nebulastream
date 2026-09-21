@@ -58,6 +58,8 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterValidationProvider.hpp>
 #include <ModelCatalog.hpp>
+#include <UdfBridgeRegistry.hpp>
+#include <UdfDescriptor.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -414,7 +416,112 @@ TEST_F(StatementBinderTest, AnonymousSinkQuery)
     ASSERT_EQ(schema, anonymousSinkOperator->getTargetSchema());
 }
 
-TEST_F(StatementBinderTest, AnonymousSourceQuery)
+TEST_F(StatementBinderTest, BindCreateFunction)
+{
+    const std::string statementString = "CREATE FUNCTION to_euro (amount FLOAT64, ccy VARSIZED) RETURNS FLOAT64 "
+                                        "FROM '/opt/udfs/libcurrency.so' ENTRYPOINT 'currency.to_euro'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    /// Unquoted identifiers are upper-folded by the parser (as is the call site), so the name is normalized.
+    EXPECT_EQ(create.name, "TO_EURO");
+    EXPECT_EQ(create.path, "/opt/udfs/libcurrency.so");
+    EXPECT_EQ(create.entrypoint, "currency.to_euro");
+    ASSERT_EQ(create.argTypes.size(), 2U);
+    EXPECT_EQ(create.argTypes.at(0).type, DataType::Type::FLOAT64);
+    EXPECT_EQ(create.argTypes.at(1).type, DataType::Type::VARSIZED);
+    EXPECT_EQ(create.returnType.type, DataType::Type::FLOAT64);
+}
+
+TEST_F(StatementBinderTest, BindDropFunction)
+{
+    const auto statement = binder->parseAndBindSingle("DROP FUNCTION WHERE name = 'to_euro'");
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<DropFunctionStatement>(*statement));
+    EXPECT_EQ(std::get<DropFunctionStatement>(*statement).name, "to_euro");
+}
+
+TEST_F(StatementBinderTest, BindShowFunctions)
+{
+    const auto statement = binder->parseAndBindSingle("SHOW FUNCTIONS");
+    ASSERT_TRUE(statement.has_value());
+    EXPECT_TRUE(std::holds_alternative<ShowFunctionsStatement>(*statement));
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithBridge)
+{
+    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
+                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.path, resolveBuiltinUdfBridgePath("cpython").string());
+    EXPECT_EQ(create.entrypoint, "currency.add");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithFromAndBridgePrefersFrom)
+{
+    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
+                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).path, "/opt/udfs/libcurrency.so");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridge)
+{
+    const std::string statementString = "CREATE FUNCTION discount (price FLOAT64) RETURNS FLOAT64 "
+                                        "BRIDGE 'codon' ENTRYPOINT 'discount.apply_discount'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<CreateFunctionStatement>(*statement));
+
+    const auto& create = std::get<CreateFunctionStatement>(*statement);
+    EXPECT_EQ(create.execution, UdfExecution::Codon);
+    EXPECT_TRUE(create.path.empty());
+    EXPECT_EQ(create.entrypoint, "discount.apply_discount");
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithInterpreterBridgeIsInProcess)
+{
+    const std::string statementString = "CREATE FUNCTION add_py (a INT64, b INT64) RETURNS INT64 "
+                                        "BRIDGE 'cpython' ENTRYPOINT 'currency.add'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value());
+    EXPECT_EQ(std::get<CreateFunctionStatement>(*statement).execution, UdfExecution::InProcess);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithCodonBridgeAndFromThrows)
+{
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 "
+                                        "FROM '/opt/udfs/libcurrency.so' BRIDGE 'codon' ENTRYPOINT 'm.f'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithUnknownBridgeThrows)
+{
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 BRIDGE 'cobol' ENTRYPOINT 'm.f'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::UnsupportedUdfLanguage);
+}
+
+TEST_F(StatementBinderTest, BindCreateFunctionWithNeitherFromNorLanguageThrows)
+{
+    const std::string statementString = "CREATE FUNCTION f (a INT64) RETURNS INT64 ENTRYPOINT 'm.f'";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidStatement);
+}
+
+TEST_F(StatementBinderTest, InlineSourceQuery)
 {
     const std::string query = "SELECT id, text \n"
                               "FROM File(\n"
@@ -1110,6 +1217,18 @@ TEST_F(StatementBinderTest, AsOfJoinRejectsNonEqualityPredicates)
             }
         },
         Exception);
+}
+
+TEST_F(StatementBinderTest, PythonFunctionParsesInJoinPredicate)
+{
+    const std::string query = R"(SELECT * FROM (SELECT * FROM s1) INNER JOIN (SELECT * FROM s2)
+ON PYTHON((leftValue, rightValue): $python$
+    return leftValue < rightValue
+$python$) AS BOOLEAN WINDOW TUMBLING(SIZE 1000 MS) INTO sink)";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::INNER_JOIN, joins.at(0)->getJoinType());
 }
 
 TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)

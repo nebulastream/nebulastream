@@ -29,6 +29,7 @@
 #include <variant>
 #include <vector>
 #include <AntlrSQLParser.h>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -40,6 +41,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <UdfDescriptor.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 
@@ -182,6 +184,26 @@ struct DropModelStatement
     std::string name;
 };
 
+struct CreateFunctionStatement
+{
+    std::string name;
+    std::string path;
+    std::string entrypoint;
+    std::vector<DataType> argTypes;
+    DataType returnType;
+    UdfExecution execution = UdfExecution::InProcess;
+};
+
+struct ShowFunctionsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropFunctionStatement
+{
+    std::string name;
+};
+
 struct WorkerStatusStatement
 {
     std::vector<std::string> host;
@@ -209,18 +231,21 @@ using Statement = std::variant<
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
     CreateModelStatement,
+    CreateFunctionStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
     DropModelStatement,
+    DropFunctionStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     ShowModelsStatement,
     ShowVersionStatement,
+    ShowFunctionsStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

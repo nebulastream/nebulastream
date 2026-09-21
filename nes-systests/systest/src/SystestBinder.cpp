@@ -47,6 +47,7 @@
 #include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
+#include <UdfCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -97,17 +98,20 @@ struct SystestBinder::Impl
         : sourceCatalog{std::make_shared<SourceCatalog>()}
         , sinkCatalog{std::make_shared<SinkCatalog>()}
         , modelCatalog{std::make_shared<ModelCatalog>()}
+        , udfCatalog(std::make_shared<UdfCatalog>())
         , workerCatalog{std::make_shared<WorkerCatalog>()}
         , sourceHandler{sourceCatalog, RequireHostConfig{}}
         , sinkHandler{sinkCatalog, RequireHostConfig{}}
         , modelHandler{modelCatalog}
+        , udfHandler{udfCatalog}
         , statementBinder{sourceCatalog, [](auto&& plan) { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(plan)>(plan)); }}
         , queryOptimizer{
               config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
               sourceCatalog,
               sinkCatalog,
               copyPtr(workerCatalog),
-              modelCatalog}
+              modelCatalog,
+              udfCatalog}
     {
         for (const auto& [host, data, capacity, downstream, workerConfig] : config.clusterConfig.workers)
         {
@@ -156,8 +160,19 @@ private:
                 [&](const CreatePhysicalSourceStatement& statement) { throwOnError(sourceHandler(statement)); },
                 [&](const CreateSinkStatement& statement) { throwOnError(sinkHandler(statement)); },
                 [&](const CreateModelStatement& statement) { throwOnError(modelHandler(statement)); },
+                [&](const CreateFunctionStatement& statement) { createFunction(statement); },
                 [&](const auto&) { throw UnsupportedQuery("a setup statement has to declare a source, a sink, or a model: {}", sql); }},
             binding);
+    }
+
+    /// Resolves a relative `.so` path against the test data directory before the handler registers the function.
+    void createFunction(CreateFunctionStatement statement)
+    {
+        if (const std::filesystem::path path{statement.path}; !path.empty() && path.is_relative())
+        {
+            statement.path = (testDataDir / path).string();
+        }
+        throwOnError(udfHandler(statement));
     }
 
     [[nodiscard]] Statement bindStatement(const std::string& sql) const
@@ -224,11 +239,13 @@ private:
     std::shared_ptr<SourceCatalog> sourceCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
     std::shared_ptr<ModelCatalog> modelCatalog;
+    std::shared_ptr<UdfCatalog> udfCatalog;
     SharedPtr<WorkerCatalog> workerCatalog;
 
     SourceStatementHandler sourceHandler;
     SinkStatementHandler sinkHandler;
     ModelStatementHandler modelHandler;
+    UdfStatementHandler udfHandler;
     StatementBinder statementBinder;
     QueryOptimizer queryOptimizer;
 };

@@ -49,7 +49,14 @@ struct ModelDeclaration
     AntlrSQLParser::CreateModelDefinitionContext* definition;
 };
 
-using CreateDeclaration = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration>;
+/// A scalar UDF is global to the UDF catalog, which the binder resets per test file, so it needs no name prefixing.
+struct FunctionDeclaration
+{
+    AntlrSQLParser::CreateFunctionDefinitionContext* definition;
+};
+
+using CreateDeclaration
+    = std::variant<LogicalSourceDeclaration, PhysicalSourceDeclaration, SinkDeclaration, ModelDeclaration, FunctionDeclaration>;
 
 /// A pointer holds the parse, because a parse points at its own members and cannot move.
 /// The declaration points into that parse, so the two share one lifetime.

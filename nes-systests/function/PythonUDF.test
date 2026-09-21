@@ -1,0 +1,29 @@
+# name: function/PythonUDF.test
+# description: Compiles a scalar Python UDF with Codon and inlines its LLVM bitcode into a Nautilus pipeline
+# groups: [Function, PythonUDF, CompilerOnly]
+
+GlobalConfiguration worker.dump_compilation_result: [FILE]
+
+CREATE LOGICAL SOURCE numbers(a UINT64 NOT NULL, b UINT64 NOT NULL, c VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,2,24
+10,20,24
+100,7,24
+
+CREATE SINK sink(result UINT64 NOT NULL) TYPE File;
+
+SELECT PYTHON((a, b, c): $python$
+    import numpy as np
+    rng = np.random.default_rng(seed=0)
+    x = rng.random(500_000)
+    y = rng.random(500_000)
+    c = ((x-1)**2 + (y-1)**2 < 1).sum() * (4 / len(x))
+    return f'Haha{a} {b} {c}'
+$python$) AS VARSIZED AS result
+FROM numbers
+INTO file();
+----
+Haha1 2 3.14443
+Haha10 20 3.14443
+Haha100 7 3.14443
