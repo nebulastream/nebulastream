@@ -328,6 +328,36 @@ INTO sinkCountStar;
 - (potentially) timestamp refactor that introduces the `Timestamp` datatype plugin alongside multiple SerDes as the only valid timestamp type for watermarks.
 - (potentially) introduce Image type with Mono16 and functions for SIGMOD demo use case
 
+# Extensible Data Types in other Systems
+Allowing users to extend the datatypes, a system offers, with optional plugins can have several meanings. 
+As simplification, we can differentiate between two types of data type extensions.
+
+### User-defined logical data types
+This type of extension is usually based on composite / struct types.
+The system offers a set amount of fully implemented basic / leaf types (`INT`, `CHAR`, `BOOL` ...) and container types (`Array`, `Vector`, `Map`...) and allows users to create compositions out of basic types, container types, and further composed types.
+The user might also be able to define `functions` on their custom type composition, which perform operations using the fields of the composite type.
+
+Our PoC follows this approach: As a first step, we introduced `FIXEDSIZED` as array type (and later on `VECTOR`). As a second step, we introduced the `STRUCT` type, which consists of typed and named fields.
+We allow users to register a struct with a specific combination of fields under a name, which can be used like a type for fields of a schema and during ad-hoc construction inside a SQL query.
+However, `FIXEDSIZED`, `VECTOR`, and `STRUCT` all have fixed physical representations within the records and the buffer, that the user cannot alter within their plugin definition: 
+`STRUCT` and `FIXEDSIZED` byte-align the physical representation of their fields / elements inside the buffer.
+`VECTOR` stores an 8 byte child buffer address and an 8 byte size of the location of the byte-aligned vector elements.
+For the in-record representation, we implemented a nautilus data type for each of the variants.
+Therefore, users may define functions and SerDes plugins using their datatype plugins, but need to use the functions provided by the `StructData` class to access the fields of their composite type.
+
+### User-defined physical data types
+This type of extension allows users, additionally to the logical structure of the type, to define the physical representation of the type in-memory.
+Therefore, entirely new non-composite types are possible this way.
+
+This type of user-extension is currently not supported in our PoC. Writing and reading a value from memory is hard-coded into the corresponding `VarVal` functions.
+The only flexibility in this regard that we offer is the option to create plugins for datatype-plugin specific SerDes, which are naturally only employed for incoming / outgoing buffers.
+Customizable physical layout of values and tuples within the buffer could be the next logical step of this extension, since they offer room for optimizations, but are of higher complexity, as they impact `BufferRefs` and `VarVals`.
+
+### Other Systems
+In the following overview, we briefly describe user-extensibility of data types in other stream processing engines and database systems.
+#### Apache Flink
+
+
 # Summary
 The PoC adds three extensible variants (`FIXEDSIZED`, `VECTOR`, `STRUCT`) to `DataType`, a generic SQL `T(...)` constructor pipeline, and multiple plugins for several real-life use cases that demonstrate the full path from registration to physical execution.
 P1 is addressed by routing all type-specific logic through the existing registry pattern and through generic `Construct`/`Cast` functions instead of per-type switch cases.
