@@ -11,61 +11,51 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <cstddef>
-#include <memory>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/TimestampRef.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
+#include <ExecutionContext.hpp>
+#include <val_base.hpp>
 
 namespace NES
 {
-
-class CountAggregationPhysicalFunction : public AggregationPhysicalFunction
+class ArrayAggAggregationPhysicalFunction final : public AggregationPhysicalFunction
 {
 public:
-    CountAggregationPhysicalFunction(
-        DataType inputType,
-        DataType resultType,
-        PhysicalFunction inputFunction,
-        Record::RecordFieldIdentifier resultFieldIdentifier,
-        bool includeNullValues);
+    ArrayAggAggregationPhysicalFunction(
+        DataType inputType, DataType resultType, PhysicalFunction inputFunction, Record::RecordFieldIdentifier resultFieldIdentifier);
+
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        BorrowedNautilusBuffer,
+        BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Record& record,
-        const nautilus::val<Timestamp>&,
-        const AggregationInputBuffer&) override;
+        const nautilus::val<Timestamp>& timestamp,
+        const AggregationInputBuffer& inputBuffer) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
-        BorrowedNautilusBuffer,
+        BorrowedNautilusBuffer parentBuffer1,
         nautilus::val<AggregationState*> aggregationState2,
-        BorrowedNautilusBuffer,
+        BorrowedNautilusBuffer parentBuffer2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
     Record lower(
-        nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider& pipelineMemoryProvider) override;
+        nautilus::val<AggregationState*> aggregationState,
+        BorrowedNautilusBuffer parentBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(
-        nautilus::val<AggregationState*> aggregationState, BorrowedNautilusBuffer, PipelineMemoryProvider& pipelineMemoryProvider) override;
+        nautilus::val<AggregationState*> aggregationState,
+        BorrowedNautilusBuffer parentBuffer,
+        PipelineMemoryProvider& pipelineMemoryProvider) override;
     void cleanup(nautilus::val<AggregationState*> aggregationState) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~CountAggregationPhysicalFunction() override = default;
-
     static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
-
-private:
-    bool includeNullValues;
 };
-
 }

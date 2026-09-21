@@ -1,0 +1,44 @@
+# name: operator/aggregation/ArrayAggOrdering.test
+# description: Page-sorted aggregation orders input-buffer pages while preserving tuple order inside each page
+# groups: [Aggregation, WindowOperators]
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+# Separate physical sources guarantee separate input buffers. Their arrival order must not affect the result.
+CREATE LOGICAL SOURCE pages(value UINT8 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR pages TYPE File;
+ATTACH INLINE
+65,300
+66,400
+
+CREATE PHYSICAL SOURCE FOR pages TYPE File;
+ATTACH INLINE
+67,100
+68,200
+
+CREATE SINK orderedSink(payload VARSIZED NOT NULL) TYPE File;
+
+# The earlier page contains CD; the later page contains AB, so the payload is CDAB.
+SELECT TO_BASE64(ARRAY_AGG(value)) AS payload
+FROM pages
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO orderedSink;
+----
+Q0RBQg==
+
+CREATE LOGICAL SOURCE withinPage(value UINT8 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR withinPage TYPE File;
+ATTACH INLINE
+67,300
+65,100
+66,200
+
+CREATE SINK withinPageSink(payload VARSIZED NOT NULL) TYPE File;
+
+# No tuple sorting: CAB remains CAB even though sorting individual timestamps would produce ABC.
+SELECT TO_BASE64(ARRAY_AGG(value)) AS payload
+FROM withinPage
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO withinPageSink;
+----
+Q0FC

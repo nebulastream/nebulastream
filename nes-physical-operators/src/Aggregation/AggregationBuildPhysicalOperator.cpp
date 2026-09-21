@@ -93,7 +93,13 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(
+            state,
+            borrowedHashMapBuffer,
+            ctx.pipelineMemoryProvider,
+            record,
+            timestamp,
+            AggregationInputBuffer{.originId = ctx.originId, .sequenceNumber = ctx.sequenceNumber, .chunkNumber = ctx.chunkNumber});
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

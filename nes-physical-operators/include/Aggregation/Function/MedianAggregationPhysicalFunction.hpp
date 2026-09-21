@@ -16,6 +16,8 @@
 
 #include <cstddef>
 #include <memory>
+#include <Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
@@ -44,7 +46,9 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record) override;
+        const Record& record,
+        const nautilus::val<Timestamp>&,
+        const AggregationInputBuffer&) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         BorrowedNautilusBuffer parentBuffer1,
