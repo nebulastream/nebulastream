@@ -22,9 +22,17 @@ GTEST_TEST(EndpointValidationTest, ValidEndpoint)
     auto assertInvalid
         = [](const std::string& addr) { EXPECT_ANY_THROW([[maybe_unused]] auto unused = NES::EndpointValidation{}.isValid(addr)); };
 
+    /// Port zero requests an available port from the OS when binding.
+    assertValid("127.0.0.1:0");
+    assertValid("0.0.0.0:0");
+    assertValid("localhost:0");
+    assertValid("[::]:0");
+    assertValid("[::1]:0");
+
     /// Valid addresses
     assertValid("127.0.0.1:8080");
     assertValid("0.0.0.0:9092");
+    assertValid(":0");
     assertValid(":8080");
     assertValid("localhost:8080");
     assertValid("[::]:8080");
@@ -48,6 +56,13 @@ GTEST_TEST(EndpointValidationTest, ValidEndpointForGrpc)
     auto assertValid = [](const std::string& addr) { EXPECT_TRUE(NES::EndpointValidation{NES::EndpointValidation::GRPC}.isValid(addr)); };
     auto assertInvalid = [](const std::string& addr)
     { EXPECT_ANY_THROW([[maybe_unused]] auto unused = NES::EndpointValidation{NES::EndpointValidation::GRPC}.isValid(addr)); };
+
+    /// Port zero requests an available port from the OS when binding.
+    assertValid("127.0.0.1:0");
+    assertValid("0.0.0.0:0");
+    assertValid("localhost:0");
+    assertValid("[::]:0");
+    assertValid("[::1]:0");
 
     /// Valid addresses
     assertValid("127.0.0.1:8080");
