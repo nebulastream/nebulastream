@@ -112,9 +112,15 @@ docker_systest() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
 
+# The SingleNodeOnly group tags tests that validate behavior only checkable in single-node mode. Their
+# assertions cannot hold distributed: e.g. an invalid source config is rejected at source construction,
+# which in single-node surfaces the systest error code the test asserts, but on a remote worker reaches
+# the client only as a generic gRPC "Status: INTERNAL" error. The config is rejected before any
+# distributed execution, so excluding these from the remote suite loses no coverage.
+EXTRA_EXCLUDE_GROUPS=(SingleNodeOnly)
+
 # Inference systests convert ONNX models with the OpenVINO converter. When `ovc` is not
 # available in the worker image (ENABLE_INFERENCE_TESTS=OFF), exclude the Inference group too.
-EXTRA_EXCLUDE_GROUPS=()
 if [ "$ENABLE_INFERENCE_TESTS" != "ON" ]; then
   EXTRA_EXCLUDE_GROUPS+=(Inference)
 fi
