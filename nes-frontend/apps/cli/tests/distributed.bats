@@ -84,7 +84,7 @@ teardown()      { nes_distributed_teardown; }
   [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
-  sleep 1
+  wait_until_status tests/good/select-gen-into-void.yaml Running "$QUERY_ID"
 
   run docker_nes_cli -t tests/good/select-gen-into-void.yaml stop "$QUERY_ID"
   [ "$status" -eq 0 ]
@@ -99,9 +99,7 @@ teardown()      { nes_distributed_teardown; }
   [[ "$output" =~ ^[a-z_]+_[0-9]{4}$ ]]
   QUERY_ID=$output
 
-  sleep 1
-
-  run docker_nes_cli -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  wait_until_status tests/good/select-gen-into-void.yaml Running "$QUERY_ID"
   [ "$status" -eq 0 ]
 
   QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
@@ -204,7 +202,7 @@ teardown()      { nes_distributed_teardown; }
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
-  sleep 1
+  wait_until_status tests/good/chained-joins.yaml Running "$QUERY_ID"
 
   # This has to be kill not stop. Stop will gracefully shutdown the worker and all queries on that worker.
   # This would cause the query to fail as it was unexpectedly stopped. If we kill the worker: upstream and downstream
@@ -269,7 +267,7 @@ EOF
   [ "$status" -eq 0 ]
   QUERY_ID=$output
 
-  sleep 1
+  wait_until_status tests/good/chained-joins.yaml Running "$QUERY_ID"
 
   # Simulate a crash by killing worker-1.
   docker compose kill worker-1
@@ -312,9 +310,7 @@ EOF
   [ $status -eq 0 ]
   query_id=$output
 
-  sleep 1
-
-  run docker_nes_cli status $query_id
+  wait_until_status tests/good/select-gen-into-void.yaml Running "$query_id"
   [ $status -eq 0 ]
   assert_json_contains "[{\"query_id\":\"$query_id\", \"query_status\":\"Running\", \"running\": {}, \"started\": {}}]" "$output"
 
@@ -495,7 +491,7 @@ EOF
   # Output should be a query ID (numeric)
   QUERY_ID=$output
 
-  sleep 1
+  wait_until_status tests/good/select-gen-into-void.yaml Running "$QUERY_ID"
 
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - stop $QUERY_ID'"
   [ "$status" -eq 0 ]
@@ -509,7 +505,7 @@ EOF
   # Output should be a query ID (numeric)
   QUERY_ID=$output
 
-  sleep 1
+  wait_until_status tests/good/select-gen-into-void.yaml Running "$QUERY_ID"
 
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - status $QUERY_ID'"
   [ "$status" -eq 0 ]
