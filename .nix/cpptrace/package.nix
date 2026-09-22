@@ -15,6 +15,15 @@ let
   clangStdenv = llvmPackages.stdenv;
   libcxxStdenv = llvmPackages.libcxxStdenv;
 
+  # Find module for the nixpkgs libdwarf this derivation builds cpptrace against.
+  #
+  # This mirrors the canonical shim at `cmake/Findlibdwarf.cmake`: that file cannot be reused
+  # directly here since this derivation resolves libdwarf via a nix store path rather than
+  # pkg-config/find_library discovery, but the target name it exports must stay in sync with the
+  # variables it sets (libdwarf_LIBRARIES / LIBDWARF_LIBRARIES): the canonical target name is
+  # `libdwarf::dwarf` (what cpptrace's own vcpkg build path links against, and what the real
+  # upstream libdwarf CMake config exports); `libdwarf::libdwarf` is kept as an alias for anything
+  # still written against the older name.
   libdwarfModule = writeTextFile {
     name = "libdwarf-cmake";
     destination = "/share/cmake/Modules/Findlibdwarf.cmake";
@@ -29,14 +38,15 @@ let
       include(FindPackageHandleStandardArgs)
       find_package_handle_standard_args(libdwarf DEFAULT_MSG libdwarf_INCLUDE_DIR libdwarf_LIBRARY)
       if(libdwarf_FOUND)
-        add_library(libdwarf::libdwarf UNKNOWN IMPORTED)
-        set_target_properties(libdwarf::libdwarf PROPERTIES
+        add_library(libdwarf::dwarf UNKNOWN IMPORTED)
+        set_target_properties(libdwarf::dwarf PROPERTIES
           IMPORTED_LOCATION ''${libdwarf_LIBRARY}
           INTERFACE_INCLUDE_DIRECTORIES ''${libdwarf_INCLUDE_DIR})
+        add_library(libdwarf::libdwarf ALIAS libdwarf::dwarf)
         set(libdwarf_INCLUDE_DIRS ''${libdwarf_INCLUDE_DIR})
         set(LIBDWARF_INCLUDE_DIRS ''${libdwarf_INCLUDE_DIR})
-        set(libdwarf_LIBRARIES libdwarf::libdwarf)
-        set(LIBDWARF_LIBRARIES libdwarf::libdwarf)
+        set(libdwarf_LIBRARIES libdwarf::dwarf)
+        set(LIBDWARF_LIBRARIES libdwarf::dwarf)
       endif()
     '';
   };

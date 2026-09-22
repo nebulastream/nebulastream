@@ -354,7 +354,7 @@
             stdlib = combo.stdlib;
             mlirBinary = combo.mlirBinary;
             thirdPartyDeps = mkThirdPartyDeps combo;
-            cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;
+            cmakeInputs = [ mlirBinary ] ++ thirdPartyDeps;
             cmakePrefixPath = lib.makeSearchPath "" cmakeInputs;
             pkgConfigPath = lib.concatStringsSep ":" (
               map (dir: lib.makeSearchPath dir thirdPartyDeps) [
@@ -382,7 +382,9 @@
               PKG_CONFIG_PATH = pkgConfigPath;
               MLIR_DIR = "${mlirBinary}/lib/cmake/mlir";
               LLVM_DIR = "${mlirBinary}/lib/cmake/llvm";
-              CMAKE_MODULE_PATH = lib.makeSearchPath "share/cmake/Modules" [ libdwarfModule ];
+              # No libdwarf CMAKE_MODULE_PATH entry here: CMakeLists.txt prepends the in-repo
+              # `cmake/` dir (the canonical Findlibdwarf.cmake) ahead of whatever this env var
+              # supplies, so a nix-side copy would only ever be shadowed dead weight.
               CPATH = includePath;
               CPLUS_INCLUDE_PATH = CPATH;
               C_INCLUDE_PATH = CPATH;
@@ -408,7 +410,9 @@
           "-DMLIR_DIR=${combo.mlirBinary}/lib/cmake/mlir"
           "-DLLVM_DIR=${combo.mlirBinary}/lib/cmake/llvm"
           "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
-          "-DCMAKE_MODULE_PATH=${libdwarfModule}/share/cmake/Modules"
+          # No libdwarf CMAKE_MODULE_PATH flag here: CMakeLists.txt prepends the in-repo `cmake/`
+          # dir (the canonical Findlibdwarf.cmake) ahead of this, so it would be shadowed dead
+          # weight. See cmake/Findlibdwarf.cmake for the single source of truth.
           "-DUSE_SANITIZER=${combo.sanitizer.cmakeValue}"
         ];
 
@@ -485,31 +489,10 @@
 
         nebulastreamPatches = patchFilesFor "nebulastream";
 
-        libdwarfModule = pkgs.writeTextFile {
-          name = "libdwarf-cmake";
-          destination = "/share/cmake/Modules/Findlibdwarf.cmake";
-          text = ''
-            set(libdwarf_INCLUDE_DIR "${pkgs.libdwarf.dev}/include/libdwarf-2")
-            find_library(libdwarf_LIBRARY
-              NAMES dwarf libdwarf
-              PATHS
-                "${(pkgs.libdwarf.lib or pkgs.libdwarf)}/lib"
-                "${pkgs.libdwarf}/lib"
-            )
-            include(FindPackageHandleStandardArgs)
-            find_package_handle_standard_args(libdwarf DEFAULT_MSG libdwarf_INCLUDE_DIR libdwarf_LIBRARY)
-            if(libdwarf_FOUND)
-              add_library(libdwarf::libdwarf UNKNOWN IMPORTED)
-              set_target_properties(libdwarf::libdwarf PROPERTIES
-                IMPORTED_LOCATION ''${libdwarf_LIBRARY}
-                INTERFACE_INCLUDE_DIRECTORIES ''${libdwarf_INCLUDE_DIR})
-              set(libdwarf_INCLUDE_DIRS ''${libdwarf_INCLUDE_DIR})
-              set(LIBDWARF_INCLUDE_DIRS ''${libdwarf_INCLUDE_DIR})
-              set(libdwarf_LIBRARIES libdwarf::libdwarf)
-              set(LIBDWARF_LIBRARIES libdwarf::libdwarf)
-            endif()
-          '';
-        };
+        # No libdwarf CMake shim is defined here: the main project's own cmake/Findlibdwarf.cmake
+        # is the single source of truth for the main configure (see the comments above at its
+        # former call sites), and .nix/cpptrace/package.nix carries its own nix-store-path-aware
+        # mirror for the separate, out-of-tree cpptrace derivation.
 
         formatRunner = pkgs.writeShellApplication {
           name = "nes-format";
