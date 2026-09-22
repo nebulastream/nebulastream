@@ -55,15 +55,19 @@ nautilus::val<size_t> OwnedNautilusBuffer::getNumberOfRecords() const
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> OwnedNautilusBuffer::storeChild(OwnedNautilusBuffer&& child)
 {
-    return nautilus::invoke(
-        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child); }, &buffer, &child.buffer);
+    return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child).getRawValue(); },
+        &buffer,
+        &child.buffer)};
 }
 
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> OwnedNautilusBuffer::storeChild(BorrowedNautilusBuffer&& child)
 {
-    return nautilus::invoke(
-        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child); }, &buffer, child.asArg());
+    return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        +[](NES::TupleBuffer* buffer, NES::TupleBuffer* child) { return buffer->storeChildBuffer(*child).getRawValue(); },
+        &buffer,
+        child.asArg())};
 }
 
 OwnedNautilusBuffer OwnedNautilusBuffer::getChild(const nautilus::val<ChildBufferIndex>& index) const
@@ -153,15 +157,15 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nauti
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(OwnedNautilusBuffer&& child)
 {
-    return nautilus::val<ChildBufferIndex>{
-        nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
+    return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(BorrowedNautilusBuffer&& child)
 {
-    return nautilus::val<ChildBufferIndex>{
-        nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
+    return nautilus::val<ChildBufferIndex>{nautilus::invoke(
+        +[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
 nautilus::val<NES::TupleBuffer*> BorrowedNautilusBuffer::asArg()
