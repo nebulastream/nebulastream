@@ -153,13 +153,15 @@ OwnedNautilusBuffer BorrowedNautilusBuffer::getChildFromIndexAddress(const nauti
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(OwnedNautilusBuffer&& child)
 {
-    return nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child); }, buffer, child.asArg());
+    return nautilus::val<ChildBufferIndex>{
+        nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
 /// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved): && signals ownership transfer; the nautilus tracer only needs the buffer's address.
 nautilus::val<ChildBufferIndex> BorrowedNautilusBuffer::storeChild(BorrowedNautilusBuffer&& child)
 {
-    return nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child); }, buffer, child.asArg());
+    return nautilus::val<ChildBufferIndex>{
+        nautilus::invoke(+[](TupleBuffer* self, TupleBuffer* child) { return self->storeChildBuffer(*child).getRawValue(); }, buffer, child.asArg())};
 }
 
 nautilus::val<NES::TupleBuffer*> BorrowedNautilusBuffer::asArg()

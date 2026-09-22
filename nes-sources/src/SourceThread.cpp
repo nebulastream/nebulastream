@@ -22,6 +22,7 @@
 #include <memory>
 #include <stop_token>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -228,7 +229,9 @@ void SourceThread::stop()
 
     try
     {
-        this->terminationFuture.get();
+        /// The result only signals how the source implementation terminated; SourceThread reacts to that via
+        /// the thrown exception path below, not the returned value, so it is intentionally discarded.
+        std::ignore = this->terminationFuture.get();
     }
     catch (const Exception& exception)
     {

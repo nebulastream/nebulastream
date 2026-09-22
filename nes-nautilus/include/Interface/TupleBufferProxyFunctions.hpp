@@ -41,9 +41,13 @@ void inline NES_Memory_TupleBuffer_setNumberOfTuples(TupleBuffer* tupleBuffer, c
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 
-inline OriginId NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffer)
+/// Returns the raw underlying value rather than OriginId: nautilus's exception-handling wiring for invoke()
+/// instantiates a fallback `return R{};` for the return type R regardless of whether the call can actually
+/// throw, and NESStrongType is deliberately not default-constructible. Callers wrap the result back into
+/// OriginId via nautilus::val<OriginId>'s converting constructor from nautilus::val<Underlying>.
+inline OriginId::Underlying NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getOriginId();
+    return tupleBuffer->getOriginId().getRawValue();
 };
 
 inline void NES_Memory_TupleBuffer_setOriginId(TupleBuffer* tupleBuffer, const OriginId value)
@@ -51,9 +55,10 @@ inline void NES_Memory_TupleBuffer_setOriginId(TupleBuffer* tupleBuffer, const O
     tupleBuffer->setOriginId(OriginId(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getWatermark(const TupleBuffer* tupleBuffer)
+/// See NES_Memory_TupleBuffer_getOriginId for why this returns the raw underlying value instead of Timestamp.
+inline Timestamp::Underlying NES_Memory_TupleBuffer_getWatermark(const TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getWatermark();
+    return tupleBuffer->getWatermark().getRawValue();
 };
 
 inline void NES_Memory_TupleBuffer_setWatermark(TupleBuffer* tupleBuffer, const Timestamp value)
@@ -61,9 +66,10 @@ inline void NES_Memory_TupleBuffer_setWatermark(TupleBuffer* tupleBuffer, const 
     tupleBuffer->setWatermark(Timestamp(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const TupleBuffer* tupleBuffer)
+/// See NES_Memory_TupleBuffer_getOriginId for why this returns the raw underlying value instead of Timestamp.
+inline Timestamp::Underlying NES_Memory_TupleBuffer_getCreationTimestampInMS(const TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getCreationTimestampInMS();
+    return tupleBuffer->getCreationTimestampInMS().getRawValue();
 };
 
 inline void NES_Memory_TupleBuffer_setSequenceNumber(TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
@@ -71,9 +77,10 @@ inline void NES_Memory_TupleBuffer_setSequenceNumber(TupleBuffer* tupleBuffer, c
     tupleBuffer->setSequenceNumber(sequenceNumber);
 };
 
-inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer* tupleBuffer)
+/// See NES_Memory_TupleBuffer_getOriginId for why this returns the raw underlying value instead of SequenceNumber.
+inline SequenceNumber::Underlying NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getSequenceNumber();
+    return tupleBuffer->getSequenceNumber().getRawValue();
 }
 
 inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(TupleBuffer* tupleBuffer, const Timestamp value)
@@ -91,9 +98,10 @@ inline void NES_Memory_TupleBuffer_setLastChunk(TupleBuffer* tupleBuffer, const 
     tupleBuffer->setLastChunk(isLastChunk);
 };
 
-inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const TupleBuffer* tupleBuffer)
+/// See NES_Memory_TupleBuffer_getOriginId for why this returns the raw underlying value instead of ChunkNumber.
+inline ChunkNumber::Underlying NES_Memory_TupleBuffer_getChunkNumber(const TupleBuffer* tupleBuffer)
 {
-    return tupleBuffer->getChunkNumber();
+    return tupleBuffer->getChunkNumber().getRawValue();
 };
 
 inline bool NES_Memory_TupleBuffer_isLastChunk(const TupleBuffer* tupleBuffer)
