@@ -58,7 +58,7 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
 }
 }
 
-std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
+std::expected<DistributedQuery, Exception> QueryManager::getQuery(const DistributedQueryId& query) const
 {
     const auto it = state.queries.find(query);
     if (it == state.queries.end())
@@ -314,9 +314,9 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
-std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::stop(const DistributedQueryId& queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
@@ -351,7 +351,7 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
         return std::unexpected{exceptions};
     }
     NES_DEBUG("Stopping query {} was successful.", queryId);
-    state.queries.erase(queryId);
+    /// Stopped queries stay registered so that their terminal status can still be queried.
     return {};
 }
 
