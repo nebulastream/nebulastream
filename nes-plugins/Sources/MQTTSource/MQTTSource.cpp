@@ -212,7 +212,9 @@ void MQTTSource::writePayloadToBuffer(const std::string_view payload, TupleBuffe
 
 void MQTTSource::close()
 {
-    if (client->is_connected())
+    /// `open()` constructs the client outside its try block, so a source that never opened (or whose
+    /// client constructor threw) still gets closed on the teardown path with a null client.
+    if (client && client->is_connected())
     {
         client->unsubscribe(topic);
         client->disconnect();
