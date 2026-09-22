@@ -30,7 +30,8 @@ add_dependencies(package-docker-images-all package-docker-runtime-base)
 
 function(nes_add_docker_image IMAGE TARGET)
     if (IMAGE STREQUAL "nes-cli")
-        set(STATE "VOLUME /state\nENV XDG_STATE_HOME=/state\n")
+        # The runtime base runs as the unprivileged nes user; the volume must be created as root and owned by nes.
+        set(STATE "USER root\nRUN install -d -o nes -g nes /state\nUSER 10000:10000\nVOLUME /state\nENV XDG_STATE_HOME=/state\n")
     else ()
         set(STATE "")
     endif ()

@@ -313,6 +313,8 @@ nes_distributed_setup() {
   # `tests/`); copying it as a subdir of TMP_DIR matches the path prefix used
   # in the @test bodies (e.g. tests/good/example.yaml).
   cp -r "$(dirname "$BATS_TEST_FILENAME")" "$TMP_DIR"
+  # Give the unprivileged nes user (uid 10000) and any host user access.
+  chmod -R a+rwX "$TMP_DIR"
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 

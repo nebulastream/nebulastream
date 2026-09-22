@@ -15,6 +15,8 @@ Open a terminal and run the following Docker command to start a NebulaStream wor
 
 <!-- quick-start-run-worker:start -->
 ```bash
+mkdir -p output && chmod a+rwX output
+
 docker run -d --rm \
   --name worker \
   -v "$PWD/output:/output" \
@@ -22,6 +24,8 @@ docker run -d --rm \
   -- --grpc=0.0.0.0:8080
 ```
 <!-- quick-start-run-worker:end -->
+
+The worker runs as an unprivileged user inside the container (uid 10000), so the mounted `output` directory must be writable for it — that is what the `chmod` above ensures.
 
 This command starts a NebulaStream worker in a Docker container and exposes its gRPC port on all network interfaces at `0.0.0.0:8080`.
 Check with `docker ps` if the worker is running.
@@ -212,6 +216,8 @@ Run the docker compose file using the following command:
 
 <!-- quick-start-start-compose:start -->
 ```bash
+mkdir -p output && chmod a+rwX output
+
 docker compose up -d
 ```
 <!-- quick-start-start-compose:end -->

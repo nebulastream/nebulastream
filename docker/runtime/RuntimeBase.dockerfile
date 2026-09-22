@@ -34,3 +34,9 @@ RUN apt-get update && apt-get install -y python3 python3-venv && \
     ln -s /opt/openvino/bin/ovc /usr/local/bin/ovc && \
     ovc --version && \
     apt clean && rm -rf /var/lib/apt/lists/*
+
+# Downstream images run as this unprivileged user. uid/gid are pinned so volume ownership is
+# stable across architectures; the numeric USER satisfies Kubernetes runAsNonRoot.
+RUN groupadd --gid 10000 nes && useradd --uid 10000 --gid 10000 --create-home nes
+USER 10000:10000
+WORKDIR /home/nes
