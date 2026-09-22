@@ -66,6 +66,23 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     NES_TRACE("Init TCPSource.");
 }
 
+TCPSource::TCPSource(InjectedSocketTag, const int connectedSocketFd, std::string host, std::string port, const float flushIntervalMs)
+    : connection(connectedSocketFd)
+    , sockfd(connectedSocketFd)
+    , errBuffer{}
+    , socketHost(std::move(host))
+    , socketPort(std::move(port))
+    , socketType(SOCK_STREAM)
+    , socketDomain(AF_INET)
+    , tupleDelimiter('\n')
+    , socketBufferSize(1024)
+    , bytesUsedForSocketBufferSizeTransfer(0)
+    , flushIntervalInMs(flushIntervalMs)
+    , connectionTimeout(0)
+{
+    NES_TRACE("Init TCPSource around injected socket fd (test-only).");
+}
+
 std::ostream& TCPSource::toString(std::ostream& str) const
 {
     str << "\nTCPSource(";
@@ -85,7 +102,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
+bool TCPSource::tryToConnect(const addrinfo* result)
 {
     const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
 
@@ -108,8 +125,17 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         return false;
     }
 
+    /// Capture the socket's original flags now that sockfd actually exists (a pre-connect() fcntl(F_GETFL)
+    /// on a not-yet-created fd reads garbage, corrupting the blocking-mode restore below). A -1 result means
+    /// F_GETFL itself failed; fall back to 0 so the restore below doesn't propagate that failure as bits.
+    originalFlags = fcntl(sockfd, F_GETFL, 0);
+    if (originalFlags == -1)
+    {
+        originalFlags = 0;
+    }
+
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-signed-bitwise) - POSIX API requires varargs
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+    fcntl(sockfd, F_SETFL, originalFlags | O_NONBLOCK);
 
     /// set timeout for both blocking receive and send calls
     /// if timeout is set to zero, then the operation will never timeout
@@ -184,11 +210,9 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// make sure that result is cleaned up automatically (RAII)
     const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
 
-    const int flags = fcntl(sockfd, F_GETFL, 0);
-
     CPPTRACE_TRY
     {
-        tryToConnect(result, flags);
+        tryToConnect(result);
     }
     CPPTRACE_CATCH(...)
     {
@@ -196,18 +220,42 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
         throw wrapExternalException("Could not establich connection!");
     }
 
-    /// Set connection to non-blocking again to enable a timeout in the 'read()' call
-    fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
+    /// Restore blocking mode (cleared during connect() above) so SO_RCVTIMEO governs read() timeouts again.
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
+    fcntl(sockfd, F_SETFL, originalFlags & ~O_NONBLOCK);
 
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+TCPSource::ReadOutcome TCPSource::classifyReadResult(const ssize_t bytesReceived, const int errnoValue)
+{
+    if (bytesReceived > 0)
+    {
+        return ReadOutcome::Data;
+    }
+    if (bytesReceived == EOF_RECEIVED_BUFFER_SIZE)
+    {
+        return ReadOutcome::EndOfStream;
+    }
+    /// bytesReceived < 0: a genuine read() failure. Distinguish transient conditions from a real error so a
+    /// mid-stream failure (e.g. ECONNRESET) is never silently reported as a clean end-of-stream.
+    if (errnoValue == EINTR)
+    {
+        return ReadOutcome::Retry;
+    }
+    if (errnoValue == EAGAIN || errnoValue == EWOULDBLOCK)
+    {
+        return ReadOutcome::WouldBlock;
+    }
+    return ReadOutcome::Error;
+}
+
+Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     try
     {
         size_t numReceivedBytes = 0;
-        while (fillBuffer(tupleBuffer, numReceivedBytes))
+        while (fillBuffer(tupleBuffer, numReceivedBytes, stopToken))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -224,34 +272,51 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffe
     }
 }
 
-bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes, const std::stop_token& stopToken)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
     bool readWasValid = true;
 
     const size_t rawTBSize = tupleBuffer.getBufferSize();
-    while (not flushIntervalPassed and numReceivedBytes < rawTBSize)
+    while (not flushIntervalPassed and numReceivedBytes < rawTBSize and not stopToken.stop_requested())
     {
         const ssize_t bufferSizeReceived
             = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
-        numReceivedBytes += bufferSizeReceived;
-        if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
+        switch (classifyReadResult(bufferSizeReceived, errno))
         {
-            /// if read method returned -1 an error occurred during read.
-            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
-            readWasValid = false;
-            numReceivedBytes = 0;
-            break;
-        }
-        if (bufferSizeReceived == EOF_RECEIVED_BUFFER_SIZE)
-        {
-            NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
-            if (numReceivedBytes == 0)
-            {
-                NES_INFO("TCP Source detected EoS");
-                readWasValid = false;
+            case ReadOutcome::Data: {
+                numReceivedBytes += bufferSizeReceived;
                 break;
+            }
+            case ReadOutcome::EndOfStream: {
+                NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
+                if (numReceivedBytes == 0)
+                {
+                    NES_INFO("TCP Source detected EoS");
+                    readWasValid = false;
+                }
+                flushIntervalPassed = true;
+                continue;
+            }
+            case ReadOutcome::Retry: {
+                continue;
+            }
+            case ReadOutcome::WouldBlock: {
+                if (numReceivedBytes > 0)
+                {
+                    /// Hand back what we already have rather than blocking further; the caller will call in again.
+                    return true;
+                }
+                /// Nothing to read yet: back off briefly instead of busy-polling an idle/slow peer at 100% CPU.
+                std::this_thread::sleep_for(IDLE_POLL_BACKOFF);
+                continue;
+            }
+            case ReadOutcome::Error: {
+                /// A genuine socket error (e.g. ECONNRESET) must not be reported as a clean end-of-stream:
+                /// that would silently complete the query with truncated data instead of failing it.
+                const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+                throw RunningRoutineFailure("Error while reading from socket {}:{}. {}", socketHost, socketPort, strerrorResult);
             }
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
@@ -267,7 +332,7 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
     }
     ++generatedBuffers;
     /// Loop while we haven't received any bytes yet and we can still read from the socket.
-    return numReceivedBytes == 0 and readWasValid;
+    return numReceivedBytes == 0 and readWasValid and not stopToken.stop_requested();
 }
 
 DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
