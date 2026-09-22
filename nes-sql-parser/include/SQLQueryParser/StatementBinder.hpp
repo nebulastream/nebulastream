@@ -191,7 +191,7 @@ struct CreateWorkerStatement
 {
     std::string host;
     std::string dataAddress;
-    std::optional<size_t> capacity;
+    std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
 };

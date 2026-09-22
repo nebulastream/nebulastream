@@ -953,12 +953,13 @@ TEST_F(StatementBinderTest, ExplainStatementCaseInsensitive)
 TEST_F(StatementBinderTest, CreateWorkerStatementTest)
 {
     const std::string statementString
-        = R"(CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS "DATA", 32 AS "CAPACITY", 'localhost2:9090' AS "DOWNSTREAM", 'localhost1:9090' AS "DOWNSTREAM"))";
+        = R"(CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS "DATA", 32 AS "MAX_OPERATORS", 'localhost2:9090' AS "DOWNSTREAM", 'localhost1:9090' AS "DOWNSTREAM"))";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
     ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).host, "localhost:8080");
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "localhost:9090");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).maxOperators, 32U);
 }
 
 TEST_F(StatementBinderTest, CreateLogicalQueryPlanRejectsNonQueryStatements)

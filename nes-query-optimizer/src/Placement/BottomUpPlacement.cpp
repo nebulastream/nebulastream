@@ -271,7 +271,7 @@ void addCapacityConstraints(
     PlacementModel& model,
     const LogicalPlan& logicalPlan,
     const NetworkTopology& topology,
-    const std::unordered_map<NetworkTopology::NodeId, Capacity>& capacity)
+    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators)
 {
     for (const auto& nodeId : topology | std::views::keys)
     {
@@ -297,7 +297,7 @@ void addCapacityConstraints(
                             value.data()),
                         model.highs);
                 }},
-            capacity.at(nodeId));
+            maxOperators.at(nodeId));
     }
 }
 
@@ -412,7 +412,9 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> extractPl
 }
 
 std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlacement(
-    const LogicalPlan& logicalPlan, const NetworkTopology& topology, const std::unordered_map<NetworkTopology::NodeId, Capacity>& capacity)
+    const LogicalPlan& logicalPlan,
+    const NetworkTopology& topology,
+    const std::unordered_map<NetworkTopology::NodeId, Capacity>& maxOperators)
 {
     auto model = createPlacementModel();
     SCOPE_EXIT
@@ -422,7 +424,7 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
 
     addPlacementVariables(model, logicalPlan, topology);
     addExactlyOneNodeConstraint(model, logicalPlan, topology);
-    addCapacityConstraints(model, logicalPlan, topology, capacity);
+    addCapacityConstraints(model, logicalPlan, topology, maxOperators);
     addSourcePlacementConstraints(model, logicalPlan);
     addSinkPlacementConstraint(model, logicalPlan);
     addConnectivityConstraints(model, logicalPlan, topology);
@@ -437,13 +439,12 @@ void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
     validatePlan(topology, logicalPlan);
     validateConnectivity(topology, logicalPlan);
 
-    const auto capacity = topology | std::views::keys
-        | std::views::transform(
-                              [&](const auto& nodeId) -> std::pair<NetworkTopology::NodeId, Capacity>
-                              { return {nodeId, workerCatalog->getWorker(nodeId).value().maxOperators}; })
+    const auto maxOperators = topology | std::views::keys
+        | std::views::transform([&](const auto& nodeId) -> std::pair<NetworkTopology::NodeId, Capacity>
+                                { return {nodeId, workerCatalog->getWorker(nodeId).value().maxOperators}; })
         | std::ranges::to<std::unordered_map<NetworkTopology::NodeId, Capacity>>();
 
-    const auto placement = solvePlacement(logicalPlan, topology, capacity);
+    const auto placement = solvePlacement(logicalPlan, topology, maxOperators);
 
     if (!placement)
     {

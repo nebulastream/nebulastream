@@ -584,7 +584,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
     {
         statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
+            .host = host, .dataAddress = dataAddress, .maxOperators = maxOperators, .downstream = downstream, .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {
