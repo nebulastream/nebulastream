@@ -141,11 +141,12 @@ public:
             ? bindConfigOptionsWithDuplicates(workerDefAST->optionsClause()->options->namedConfigExpression())
             : ConfigMultiMap{};
 
-        auto capacity = [&] -> std::optional<size_t>
+        const auto maxOperators = [&] -> std::optional<size_t>
         {
             auto it = std::ranges::find_if(
                 configs,
-                [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("CAPACITY"); });
+                [](const auto& key)
+                { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("MAX_OPERATORS"); });
             if (it != configs.end())
             {
                 auto* literalOpt = std::get_if<Literal>(&it->second);
@@ -153,7 +154,7 @@ public:
                 {
                     return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
                 }
-                throw InvalidQuerySyntax("Capacity must be an unsigned integer literal");
+                throw InvalidQuerySyntax("MAX_OPERATORS must be an unsigned integer literal");
             }
             return std::nullopt;
         }();
@@ -199,7 +200,7 @@ public:
         return CreateWorkerStatement{
             .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
             .dataAddress = std::move(dataAddress),
-            .capacity = capacity,
+            .maxOperators = maxOperators,
             .downstream = downStreams,
             .config = {}};
     }
