@@ -140,7 +140,7 @@ SELECT * FROM csvStreamInteger INTO FILE();
 9,NULL,true,"malformed_multiple_dots"
 10,NULL,true,"integer_overflow"
 11,NULL,true,"negative_value"
-12,31,true,"hexadecimal"
+12,NULL,true,"hexadecimal"
 13,123,false,"leading_zero"
 14,NULL,true,"double_negative_sign"
 15,NULL,true,"suffix"
