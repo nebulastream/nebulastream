@@ -148,8 +148,7 @@ docker_nes_repl() {
   ) &
   REPL_BG=$!
 
-  # Give the REPL time to deploy the query and enter the on-exit wait loop.
-  sleep 3
+  wait_until grep -q "Starting source with originId" worker-node/singleNodeWorker.log
 
   start_time=$(date +%s)
   docker compose exec -T nes-repl pkill -TERM -f "^nes-repl"
