@@ -24,7 +24,6 @@ namespace NES::Windowing
 {
 
 TimeUnit::TimeUnit(const uint64_t offset) : multiplier(offset) { };
-TimeUnit::TimeUnit(const TimeUnit& timeUnit) = default;
 
 uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
 {
@@ -35,11 +34,6 @@ std::ostream& operator<<(std::ostream& os, const TimeUnit& timeUnit)
 {
     os << fmt::format("TimeUnit: multiplier= {}", std::to_string(timeUnit.multiplier));
     return os;
-}
-
-bool TimeUnit::operator==(const TimeUnit& other) const
-{
-    return this->multiplier == other.multiplier;
 }
 
 TimeUnit TimeUnit::Milliseconds()
