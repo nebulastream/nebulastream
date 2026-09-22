@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -97,11 +96,20 @@ void KafkaSink::start(PipelineExecutionContext&)
     }
 }
 
-SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
+void KafkaSink::throwIfDeliveryFailed() const
+{
+    if (const auto error = deliveryReportCallback.error.load(); error != RdKafka::ERR_NO_ERROR)
+    {
+        throw CannotWriteToSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
+    }
+}
+
+bool KafkaSink::tryProduce(const TupleBuffer& buffer)
 {
     /// librdkafka only releases a produce()'d message's queue slot once its delivery report has
     /// been popped via poll() se we need to poll on every try (repeat or new one)
     producer->poll(0);
+    throwIfDeliveryFailed();
 
     std::string payload;
     BufferIterator iterator{buffer};
@@ -125,13 +133,13 @@ SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
 
     if (err == RdKafka::ERR__QUEUE_FULL)
     {
-        return SendResult::Full;
+        return false;
     }
     if (err != RdKafka::ERR_NO_ERROR)
     {
         throw CannotWriteToSink("KafkaSink produce to topic {} failed: {}", topic, RdKafka::err2str(err));
     }
-    return SendResult::Ok;
+    return true;
 }
 
 void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
@@ -139,32 +147,10 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
     PRECONDITION(producer, "KafkaSink producer is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in KafkaSink.");
 
-    if (const auto error = deliveryReportCallback.error.load(); error != RdKafka::ERR_NO_ERROR)
+    if (const auto retry = backpressureHandler.send(
+            inputTupleBuffer, backpressureController, [this](const TupleBuffer& buffer) { return tryProduce(buffer); }))
     {
-        throw CannotWriteToSink("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
-    }
-
-    auto currentBuffer = std::optional{inputTupleBuffer};
-    while (currentBuffer)
-    {
-        switch (tryProduce(*currentBuffer))
-        {
-            case SendResult::Ok: {
-                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
-                continue;
-            }
-            case SendResult::Full: {
-                if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
-                {
-                    pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
-                }
-                return;
-            }
-            case SendResult::Closed: {
-                /// tryProduce() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
-                INVARIANT(false, "tryProduce unexpectedly returned SendResult::Closed");
-            }
-        }
+        pec.repeatTask(*retry, BackpressureHandler::RETRY_INTERVAL);
     }
 }
 
@@ -174,17 +160,19 @@ void KafkaSink::stop(PipelineExecutionContext& pec)
     {
         return;
     }
-    INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
-
-    producer->poll(0);
-    if (producer->outq_len() > 0)
+    if (!backpressureHandler.stop(
+            backpressureController,
+            [this](const TupleBuffer& buffer) { return tryProduce(buffer); },
+            [this]
+            {
+                producer->poll(0);
+                throwIfDeliveryFailed();
+                return producer->outq_len() == 0;
+            }))
     {
-        pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
+        /// The repetitions are bounded by librdkafka: every message is either delivered or fails after DELIVERY_TIMEOUT_MS.
+        pec.repeatTask({}, BackpressureHandler::RETRY_INTERVAL);
         return;
-    }
-    if (const auto error = deliveryReportCallback.error.load(); error != RdKafka::ERR_NO_ERROR)
-    {
-        NES_WARNING("KafkaSink delivery to brokers {} failed: {}", bootstrapServers, RdKafka::err2str(error));
     }
     NES_INFO("Kafka Sink completed.");
     producer.reset();
