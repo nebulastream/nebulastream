@@ -54,7 +54,12 @@ setup() {
   cp -r "$NES_WORKER_TESTDATA" "$TMP_DIR"
   cd "$TMP_DIR" || exit
 
-  echo "# Using TEST_DIR: $TMP_DIR" >&3
+  # Fresh random port per test: tests that don't care about the bind address still
+  # launch a real worker, and the default [::]:8080 collides across suites running
+  # in parallel (ctest -j). See issue #61.
+  PORT=$(( 20000 + (RANDOM % 20000) ))
+
+  echo "# Using TEST_DIR: $TMP_DIR (port $PORT)" >&3
 }
 
 teardown() {
@@ -93,7 +98,7 @@ worker_timeout() {
 }
 
 @test "worker launches and stays alive" {
-  worker_timeout 5s
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT
   [ "$status" -eq 124 ] # killed by timeout
   grep "Starting SingleNodeWorker" singleNodeWorker.log
 }
@@ -124,13 +129,14 @@ worker_timeout() {
 }
 
 @test "worker accepts valid configs" {
-  worker_timeout 5s --workerConfig=tests/good/config.yaml
+  # tests/good/config.yaml sets grpc: 0.0.0.0:8080; override it so the test does not bind the default port.
+  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:$PORT
   [ "$status" -eq 124 ] # killed by timeout
 }
 
 @test "worker warns when CLI overrides YAML config value" {
   # The YAML config sets admission_queue_size=1024. Override it via CLI to trigger the warning.
-  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --worker.query_engine.admission_queue_size=2048
+  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:$PORT --worker.query_engine.admission_queue_size=2048
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should contain the override warning
@@ -140,7 +146,7 @@ worker_timeout() {
 
 @test "worker does not warn when CLI sets a value not in YAML" {
   # The YAML config does not set enable_event_trace. Setting it via CLI should not trigger a warning.
-  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --enable_event_trace=true
+  worker_timeout 5s --workerConfig=tests/good/config.yaml -- --grpc=127.0.0.1:$PORT --enable_event_trace=true
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should NOT contain the override warning for this key
@@ -154,18 +160,18 @@ worker_timeout() {
 @test "worker rejects total_memory_in_bytes of 0" {
   # A zero budget yields zero pooled buffers, which cannot back the internal MPMC queues. NonZeroValidation rejects
   # it at config-parse time.
-  worker_timeout 5s -- --worker.total_memory_in_bytes=0
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT --worker.total_memory_in_bytes=0
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "total_memory_in_bytes" singleNodeWorker.log
 }
 
 @test "worker rejects unpooled_memory_fraction out of range" {
   # The fraction is validated to [0.0, 1.0] at config-parse time, so both bounds are rejected there.
-  worker_timeout 5s -- --worker.unpooled_memory_fraction=1.5
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT --worker.unpooled_memory_fraction=1.5
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "unpooled_memory_fraction" singleNodeWorker.log
 
-  worker_timeout 5s -- --worker.unpooled_memory_fraction=-0.1
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT --worker.unpooled_memory_fraction=-0.1
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "unpooled_memory_fraction" singleNodeWorker.log
 }
@@ -173,12 +179,12 @@ worker_timeout() {
 @test "worker rejects non-power-of-two buffer_alignment_in_bytes" {
   # 48 is not a power of two. Rejected at config-parse time by PowerOfTwoValidation, so this holds on
   # every build type (a BufferManager PRECONDITION would be compiled out in the no-assert Benchmark build).
-  worker_timeout 5s -- --worker.buffer_alignment_in_bytes=48
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT --worker.buffer_alignment_in_bytes=48
   grep -E "invalid config parameter|Validator" singleNodeWorker.log
   grep "buffer_alignment_in_bytes" singleNodeWorker.log
 }
 
 @test "worker accepts unpooled_memory_fraction of 0.0 (all pooled)" {
-  worker_timeout 5s -- --worker.unpooled_memory_fraction=0.0
+  worker_timeout 5s -- --grpc=127.0.0.1:$PORT --worker.unpooled_memory_fraction=0.0
   [ "$status" -eq 124 ] # stays alive
 }
