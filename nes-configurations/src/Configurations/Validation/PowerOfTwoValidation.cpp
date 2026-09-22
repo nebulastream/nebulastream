@@ -14,6 +14,7 @@
 
 #include <Configurations/Validation/PowerOfTwoValidation.hpp>
 
+#include <bit>
 #include <cstdint>
 #include <regex>
 #include <string>
@@ -30,8 +31,8 @@ bool PowerOfTwoValidation::isValid(const std::string& parameter) const
         return false;
     }
 
-    /// A positive power of two has exactly one set bit, so n & (n - 1) clears it to zero.
+    /// has_single_bit(0) is false, so zero is rejected without a separate check.
     const uint64_t value = std::stoul(parameter);
-    return value > 0 && (value & (value - 1)) == 0;
+    return std::has_single_bit(value);
 }
 }
