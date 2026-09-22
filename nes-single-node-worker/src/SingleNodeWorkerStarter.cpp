@@ -224,7 +224,8 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
+            int selectedPort = 0;
+            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials(), &selectedPort);
             builder.RegisterService(&workerService);
             grpc::EnableDefaultHealthCheckService(true);
 
@@ -239,7 +240,7 @@ int main(const int argc, const char* argv[])
             {
                 return *terminationSignal;
             }
-            NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
+            NES_INFO("Server listening on port {} (configured address: {})", selectedPort, configuration->grpcAddressUri.getValue());
             server->Wait();
             if (auto terminationSignal = cleanup.clearServerAndGetTerminationSignal())
             {
