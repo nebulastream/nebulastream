@@ -53,6 +53,8 @@ INSTANCE_PID=0
 setup() {
   mkdir -p "$NES_TEST_TMP_DIR"
   export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  # Give the unprivileged nes user (uid 10000) and any host user access.
+  chmod -R a+rwX "$TMP_DIR"
 
   cd "$TMP_DIR" || exit
 
