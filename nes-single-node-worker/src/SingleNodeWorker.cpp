@@ -57,8 +57,11 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : listener(std::make_shared<CompositeStatisticListener>())
+    , metrics(std::make_shared<MetricsListener>())
+    , configuration(configuration)
 {
+    listener->addListener(copyPtr(metrics));
     {
         std::stringstream configStr;
         ConfigValuePrinter printer(configStr);
@@ -156,6 +159,7 @@ std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQuerySta
         {
             return std::unexpected{QueryNotFound("{}", queryId)};
         }
+        status->metrics.counters = metrics->getCounters(queryId);
         return status.value();
     }
     CPPTRACE_CATCH(...)

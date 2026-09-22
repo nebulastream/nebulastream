@@ -39,12 +39,24 @@ inline std::ostream& operator<<(std::ostream& ostream, const QueryStatus& status
     return ostream << magic_enum::enum_name(status);
 }
 
+/// Per-query task counters aggregated from the engine's statistic event stream.
+/// Populated by the SingleNodeWorker from its MetricsListener; QueryLog itself leaves them zero.
+struct QueryCounters
+{
+    /// Tuples that entered pipelines, summed across all pipelines. A repeated task re-delivers its buffer and counts again.
+    uint64_t processedTuples = 0;
+    /// Tasks whose pipeline execution completed successfully.
+    uint64_t processedTasks = 0;
+    uint64_t expiredTasks = 0;
+};
+
 struct QueryMetrics
 {
     std::optional<std::chrono::system_clock::time_point> start;
     std::optional<std::chrono::system_clock::time_point> running;
     std::optional<std::chrono::system_clock::time_point> stop;
     std::optional<Exception> error;
+    QueryCounters counters;
 };
 
 /// Summary structure of the query log for a query

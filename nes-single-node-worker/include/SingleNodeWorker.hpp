@@ -27,6 +27,7 @@
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <MetricsListener.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
@@ -46,6 +47,7 @@ inline constexpr std::string_view SingleNodeWorkerBinaryName{"nes-single-node-wo
 class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
+    SharedPtr<MetricsListener> metrics;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
