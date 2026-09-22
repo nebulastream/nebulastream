@@ -114,6 +114,11 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         const auto compilation = backend == ExecutionMode::COMPILER;
         options.setOption("engine.Compilation", compilation);
         options.setOption("engine.backend", std::string("mlir"));
+        /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+        /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+        /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+        /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+        options.setOption("ir.disableBlockArgumentPruning", true);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
@@ -255,6 +260,11 @@ void NautilusTestUtils::compileFillBufferFunction(
     const bool compilation = (backend == ExecutionMode::COMPILER);
     options.setOption("engine.Compilation", compilation);
     options.setOption("engine.backend", std::string("mlir"));
+    /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+    /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+    /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+    /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+    options.setOption("ir.disableBlockArgumentPruning", true);
     auto engine = nautilus::engine::NautilusEngine(options);
     options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
     auto compiledFunction = engine.registerFunction(tmp);

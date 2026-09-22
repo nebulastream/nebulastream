@@ -327,6 +327,11 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 
@@ -384,6 +389,11 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 
@@ -441,6 +451,11 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 
@@ -506,6 +521,11 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 
@@ -564,6 +584,11 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 
@@ -609,6 +634,11 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", true);
     options.setOption("engine.backend", std::string("mlir"));
+    /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+    /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+    /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+    /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+    options.setOption("ir.disableBlockArgumentPruning", true);
     CompiledExecutablePipelineStage stage(pipeline, handlers, options);
 
     folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
@@ -731,6 +761,11 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
+                /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+                /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+                /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+                /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+                opt.setOption("ir.disableBlockArgumentPruning", true);
                 return opt;
             }());
 

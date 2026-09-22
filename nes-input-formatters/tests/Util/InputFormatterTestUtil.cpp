@@ -182,6 +182,11 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     auto nautilusOptions = nautilus::engine::Options{};
     nautilusOptions.setOption("engine.Compilation", isCompiled);
     nautilusOptions.setOption("engine.backend", std::string("mlir"));
+    /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
+    /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
+    /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
+    /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
+    nautilusOptions.setOption("ir.disableBlockArgumentPruning", true);
     nautilusOptions.setOption("mlir.enableMultithreading", false);
     return std::make_shared<CompiledExecutablePipelineStage>(
         physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);
