@@ -276,6 +276,26 @@ TOPEOF
   grep "Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 
+# Regression for #59: a per-worker 'config:' block must be applied, not silently dropped.
+# The nested config below carries an unknown key, so worker registration must reject it.
+# Before the fix the block was dropped and this dump succeeded.
+@test "topology validation: per-worker config is applied (rejects unknown worker config key)" {
+  run $NES_CLI -d -t tests/bad/invalid_worker_config_key.yaml dump
+  [ "$status" -eq 1 ]
+  grep -i "Unrecognized configuration key" nes-cli.log
+  grep "idontexist" nes-cli.log
+}
+
+# Regression for #59 (harden): a null-valued nested worker config leaf is neither a map nor a
+# scalar. It used to fall through flattenYAMLNode and vanish silently, bypassing validation.
+# With the fix it must be rejected up front, naming the offending dotted path.
+@test "topology validation: null-valued worker config leaf is rejected, not dropped" {
+  run $NES_CLI -d -t tests/bad/null_worker_config_value.yaml dump
+  [ "$status" -eq 1 ]
+  grep "must be a scalar or nested map" nes-cli.log
+  grep "worker.network.receiver_queue_size" nes-cli.log
+}
+
 # --- Error message quality tests ---
 # Each test starts from a valid base topology and introduces exactly one error.
 # The base topology is tests/good/select-gen-into-void.yaml.
