@@ -20,3 +20,10 @@ target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOUR
 link_plugin_library(nes-sources tcp_source_plugin_library)
 add_registry_entry(Source TCP)
 add_registry_entry(SourceValidation TCP)
+# These tests use docker CLI to run docker-compose from within the development container.
+add_e2e_test(
+    NAME tcp-source-test
+    BATS_FILE tests/distributed.bats
+    DOCKER_COMPOSE
+    JOBS 4
+)
