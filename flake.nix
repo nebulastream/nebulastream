@@ -729,6 +729,8 @@
           gdb
           llvm.lldb
           python3
+          jq
+          (bats.withLibraries (p: [ p.bats-support p.bats-assert p.bats-file ]))
         ];
 
         packageInstallPhase = ''
