@@ -30,7 +30,7 @@ add_dependencies(package-docker-images-all package-docker-runtime-base)
 
 function(nes_add_docker_image IMAGE TARGET)
     if (IMAGE STREQUAL "nes-cli")
-        set(STATE "VOLUME /state\nENV XDG_STATE_HOME=/state\n")
+        set(STATE "RUN install -d -o nes -g nes /state\nVOLUME /state\nENV XDG_STATE_HOME=/state\n")
     else ()
         set(STATE "")
     endif ()
@@ -38,8 +38,15 @@ function(nes_add_docker_image IMAGE TARGET)
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")
     string(CONCAT DOCKERFILE_CONTENT
         "FROM ${NES_RUNTIME_BASE_IMAGE}\n"
+        # Create the unprivileged runtime user in this per-image layer, not the runtime base:
+        # the base is part of the dependency-image hash, so editing it forces a from-scratch
+        # rebuild and diverges from the pre-built upstream image. uid/gid pinned so volume
+        # ownership is stable across arches; numeric USER satisfies Kubernetes runAsNonRoot.
+        "RUN groupadd --gid 10000 nes && useradd --uid 10000 --gid 10000 --create-home nes\n"
         "${STATE}"
         "COPY $<TARGET_FILE_NAME:${TARGET}> /usr/bin/$<TARGET_FILE_NAME:${TARGET}>\n"
+        "USER 10000:10000\n"
+        "WORKDIR /home/nes\n"
         "ENTRYPOINT [\"/usr/bin/$<TARGET_FILE_NAME:${TARGET}>\"]\n"
     )
     file(GENERATE OUTPUT "${DOCKERFILE}" CONTENT "${DOCKERFILE_CONTENT}")

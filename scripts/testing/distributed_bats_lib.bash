@@ -156,7 +156,10 @@ nes_build_runtime_image() {
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
+    RUN groupadd --gid 10000 nes && useradd --uid 10000 --gid 10000 --create-home nes
     COPY $container_bin /usr/bin
+    USER 10000:10000
+    WORKDIR /home/nes
     ENTRYPOINT ["$container_bin"]
 EOF
   rm -rf "$ctx"
@@ -177,7 +180,10 @@ nes_build_app_image() {
   cp "$(realpath "$bin_path")" "$ctx/$container_bin"
   docker build --pull=false --network=none --load -t "$image_tag" -f - "$ctx" <<EOF
     FROM $NES_RUNTIME_BASE_IMAGE
+    RUN groupadd --gid 10000 nes && useradd --uid 10000 --gid 10000 --create-home nes
     COPY $container_bin /usr/bin
+    USER 10000:10000
+    WORKDIR /home/nes
 EOF
   rm -rf "$ctx"
   export "$image_var=$image_tag"
@@ -313,6 +319,9 @@ nes_distributed_setup() {
   # `tests/`); copying it as a subdir of TMP_DIR matches the path prefix used
   # in the @test bodies (e.g. tests/good/example.yaml).
   cp -r "$(dirname "$BATS_TEST_FILENAME")" "$TMP_DIR"
+  # Containers run as the unprivileged image user (uid 10000), which must be
+  # able to write into the bind-mounted test directory regardless of host uid.
+  chmod -R a+rwX "$TMP_DIR"
   cd "$TMP_DIR" || exit
   echo "# Using TEST_DIR: $TMP_DIR" >&3
 
