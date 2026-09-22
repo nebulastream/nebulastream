@@ -25,15 +25,13 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
-#include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::GeneratorFields
@@ -290,7 +288,9 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
     const auto stddev = parameters[3];
 
 
-    outputType.type = magic_enum::enum_cast<NES::DataType::Type>(type).value();
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{type});
+    INVARIANT(dataType.has_value(), "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
+    outputType.type = dataType->type;
     switch (outputType.type)
     {
         case DataType::Type::UINT8:
@@ -369,22 +369,82 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
-    if (const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam); not type.has_value())
+    const auto dataType = DataTypeProvider::tryProvideDataType(std::string{typeParam});
+    if (not dataType.has_value())
     {
-        constexpr auto allDataTypes = magic_enum::enum_names<DataType::Type>();
-        NES_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only {} {}", fmt::join(allDataTypes, ","), rawSchemaLine);
-        throw InvalidConfigParameter(
-            "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
+        throw InvalidConfigParameter("Invalid Type \"{}\" in NORMAL_DISTRIBUTION: {}", typeParam, rawSchemaLine);
     }
-    const auto parsedMean = from_chars<double>(mean);
-    const auto parsedStdDev = from_chars<double>(stddev);
-    if (!parsedMean || !parsedStdDev)
+
+    /// Floating-point output types are drawn from a std::normal_distribution<T>(mean, stddev).
+    auto validateNormal = [&]<typename T>()
     {
-        throw InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
-    }
-    if (parsedStdDev < 0.0)
+        const auto parsedStdDev = from_chars<T>(stddev);
+        if (not from_chars<T>(mean).has_value() or not parsedStdDev.has_value())
+        {
+            throw InvalidConfigParameter("Can not parse mean or stddev as {} in {}", typeParam, rawSchemaLine);
+        }
+        if (not(*parsedStdDev >= 0))
+        {
+            throw InvalidConfigParameter("Stddev must be non-negative in {}", rawSchemaLine);
+        }
+    };
+    /// Integer output types are drawn from a std::binomial_distribution<T>(mean, stddev).
+    /// Its number of trials must be non-negative, and its success probability must lie in [0, 1].
+    auto validateBinomial = [&]<typename T>()
     {
-        throw InvalidConfigParameter("Stddev must be non-negative");
+        const auto trials = from_chars<T>(mean);
+        const auto probability = from_chars<double>(stddev);
+        if (not trials.has_value() or not probability.has_value())
+        {
+            throw InvalidConfigParameter("Can not parse mean as {} or stddev in {}", typeParam, rawSchemaLine);
+        }
+        if (std::cmp_less(*trials, 0))
+        {
+            throw InvalidConfigParameter("Mean must be non-negative for integer output types in {}", rawSchemaLine);
+        }
+        if (not(*probability >= 0.0 and *probability <= 1.0))
+        {
+            throw InvalidConfigParameter("Stddev must be in [0, 1] for integer output types in {}", rawSchemaLine);
+        }
+    };
+
+    switch (dataType->type)
+    {
+        case DataType::Type::UINT8:
+            validateBinomial.operator()<uint8_t>();
+            break;
+        case DataType::Type::UINT16:
+            validateBinomial.operator()<uint16_t>();
+            break;
+        case DataType::Type::UINT32:
+            validateBinomial.operator()<uint32_t>();
+            break;
+        case DataType::Type::UINT64:
+            validateBinomial.operator()<uint64_t>();
+            break;
+        case DataType::Type::INT8:
+            validateBinomial.operator()<int8_t>();
+            break;
+        case DataType::Type::INT16:
+            validateBinomial.operator()<int16_t>();
+            break;
+        case DataType::Type::INT32:
+            validateBinomial.operator()<int32_t>();
+            break;
+        case DataType::Type::INT64:
+            validateBinomial.operator()<int64_t>();
+            break;
+        case DataType::Type::FLOAT32:
+            validateNormal.operator()<float>();
+            break;
+        case DataType::Type::FLOAT64:
+            validateNormal.operator()<double>();
+            break;
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+            throw InvalidConfigParameter("Output Type \"{}\" is not supported for normal or binomial distribution.", typeParam);
     }
 }
 
