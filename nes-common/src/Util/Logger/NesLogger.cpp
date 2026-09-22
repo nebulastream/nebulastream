@@ -26,6 +26,7 @@
 #include <spdlog/logger.h>
 #include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <Thread.hpp>
 
@@ -126,7 +127,11 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
         sinks.push_back(consoleSink);
     }
 
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
+    /// Rotate instead of truncate-on-start so long-running deployments cannot fill the disk.
+    /// The size is generous so tests that grep the live file for one-shot markers do not lose them to rotation mid-run.
+    static constexpr size_t MAX_LOG_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+    static constexpr size_t MAX_ROTATED_LOG_FILES = 3;
+    auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logFileName, MAX_LOG_FILE_SIZE_BYTES, MAX_ROTATED_LOG_FILES);
     fileSink->set_level(spdlogLevel);
     auto formatter = std::make_unique<spdlog::pattern_formatter>();
     formatter->add_flag<HostFlag>('*');
