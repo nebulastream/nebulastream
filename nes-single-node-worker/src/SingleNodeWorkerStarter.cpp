@@ -37,6 +37,7 @@
 #include <folly/Synchronized.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
@@ -156,7 +157,9 @@ int main(const int argc, const char* argv[])
     {
         return 1;
     }
-    NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+    /// Configuration is not parsed yet; start at the most verbose level so config warnings and errors reach the log file.
+    static constexpr auto CompiledLogLevel = static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL);
+    NES::Logger::setupLogging("singleNodeWorker.log", CompiledLogLevel);
     SCOPE_EXIT
     {
         if (const auto logger = NES::Logger::getInstance())
@@ -218,6 +221,16 @@ int main(const int argc, const char* argv[])
         {
             return 0;
         }
+        auto logLevel = configuration->logLevel.getValue();
+        if (logLevel > CompiledLogLevel)
+        {
+            /// Written to stderr because the warning level itself may be compiled out.
+            std::cerr << "Log level " << magic_enum::enum_name(logLevel) << " is not enabled in this build, using "
+                      << magic_enum::enum_name(CompiledLogLevel) << " instead.\n";
+            logLevel = CompiledLogLevel;
+        }
+        /// Changing the level in place keeps the logger object the Rust network layer is bound to.
+        NES::Logger::getInstance()->changeLogLevel(logLevel);
         {
             NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
