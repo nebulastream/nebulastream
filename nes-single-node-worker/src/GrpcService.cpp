@@ -110,17 +110,26 @@ T getValueOrThrow(std::expected<T, Exception> expected)
     throw std::move(expected.error());
 }
 
-grpc::Status tryWithDefaultHandling(const std::function<grpc::Status()>& f, grpc::ServerContext* context)
+}
+
+grpc::Status GRPCServer::tryWithDefaultHandling(const std::function<grpc::Status()>& body, grpc::ServerContext* context) const
 {
+    /// gRPC owns the handler threads, so they never pass through Thread's constructor and their log
+    /// lines would carry the "Not A Worker"/"unnamed" defaults. Label each one once, on first use.
+    static thread_local bool threadLabelled = false;
+    if (not threadLabelled)
+    {
+        Thread::initializeThread(workerHost, "grpc");
+        threadLabelled = true;
+    }
+
     grpc::Status status{};
     cpptrace::try_catch(
-        [&] { status = f(); },
+        [&] { status = body(); },
         [&](const Exception& e) { status = handleError(e, context); },
         [&](const std::exception& e) { status = handleError(e, context); },
         [&]() { status = handleError(context); });
     return status;
-}
-
 }
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, StartQueryReply* response)

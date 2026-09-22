@@ -13,12 +13,14 @@
 */
 
 #pragma once
+#include <functional>
 #include <utility>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Thread.hpp>
 
 namespace NES
 {
@@ -39,9 +41,15 @@ public:
 
     grpc::Status RequestVersion(grpc::ServerContext* context, const google::protobuf::Empty* request, VersionResponse* response) override;
 
-    explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
+    /// Constructed on the worker's main thread, whose logging identity is captured so that the
+    /// gRPC-owned handler threads can inherit it (see tryWithDefaultHandling).
+    explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)), workerHost(Thread::getThisWorkerNodeId()) { }
 
 private:
+    /// Runs one RPC body with the shared error handling, after labelling the calling thread.
+    grpc::Status tryWithDefaultHandling(const std::function<grpc::Status()>& body, grpc::ServerContext* context) const;
+
     SingleNodeWorker delegate;
+    Host workerHost;
 };
 }
