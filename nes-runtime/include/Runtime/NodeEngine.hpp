@@ -53,6 +53,10 @@ public:
 
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 
+    [[nodiscard]] std::shared_ptr<const BufferManager> getBufferManager() const { return bufferManager; }
+
+    [[nodiscard]] QueryEngine::QueueMetrics getQueueMetrics() const { return queryEngine->getQueueMetrics(); }
+
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 
     [[nodiscard]] std::shared_ptr<const QueryLog> getQueryLog() const { return queryLog; }

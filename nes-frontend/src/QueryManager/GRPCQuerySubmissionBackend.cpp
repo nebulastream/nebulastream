@@ -127,6 +127,9 @@ std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::s
         const Exception exception(runError.message(), runError.code());
         metrics.error = exception;
     }
+    metrics.counters.processedTuples = response.metrics().processedtuples();
+    metrics.counters.processedTasks = response.metrics().processedtasks();
+    metrics.counters.expiredTasks = response.metrics().expiredtasks();
 
     auto state = magic_enum::enum_cast<QueryStatus>(static_cast<uint8_t>(response.state()));
     if (!state)

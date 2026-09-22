@@ -10,10 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-single-node-worker
-        SingleNodeWorker.cpp
-        GrpcService.cpp
-        GoogleEventTracePrinter.cpp
-        CompositeStatisticListener.cpp
-        MetricsListener.cpp
-)
+add_nes_test(metrics-listener-test MetricsListenerTest.cpp)
+target_link_libraries(metrics-listener-test nes-single-node-worker-lib)

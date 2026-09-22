@@ -45,12 +45,22 @@ struct WorkerStatus
         std::optional<Exception> error;
     };
 
+    /// Buffer-pool and task-queue fill levels; approximate, for observability.
+    struct EngineMetrics
+    {
+        uint64_t availablePooledBuffers = 0;
+        uint64_t totalPooledBuffers = 0;
+        uint64_t admissionQueueUsed = 0;
+        uint64_t internalQueueUsed = 0;
+    };
+
     /// Currently we will not store all historical data on the WorkerNode.
     /// This timestamp indicates which events are captured by the WorkerStatus
     std::chrono::system_clock::time_point after;
     std::chrono::system_clock::time_point until;
     std::vector<ActiveQuery> activeQueries;
     std::vector<TerminatedQuery> terminatedQueries;
+    EngineMetrics engineMetrics;
 };
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response);

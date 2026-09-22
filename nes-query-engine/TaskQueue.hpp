@@ -65,6 +65,16 @@ class TaskQueue
 public:
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
 
+    /// Approximate number of pending tasks in the admission queue. Racy by nature; for observability only.
+    [[nodiscard]] size_t admissionQueueUsed() const
+    {
+        const auto guess = admission.sizeGuess();
+        return guess > 0 ? static_cast<size_t>(guess) : 0;
+    }
+
+    /// Approximate number of pending tasks in the internal queue. Racy by nature; for observability only.
+    [[nodiscard]] size_t internalQueueUsed() const { return internal.size(); }
+
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.
     template <typename T = TaskType>

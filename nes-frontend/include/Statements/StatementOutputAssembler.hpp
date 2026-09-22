@@ -105,18 +105,44 @@ using QueryStatusOutputRowType = std::tuple<
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>,
-    std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 8> queryStatusOutputColumns{
-    "query_id", "local_query_id", "worker", "query_status", "error", "started", "running", "stopped"};
+    std::optional<std::chrono::system_clock::time_point>,
+    std::optional<uint64_t>,
+    std::optional<uint64_t>,
+    std::optional<uint64_t>>;
+constexpr std::array<std::string_view, 11> queryStatusOutputColumns{
+    "query_id",
+    "local_query_id",
+    "worker",
+    "query_status",
+    "error",
+    "started",
+    "running",
+    "stopped",
+    "processed_tuples",
+    "processed_tasks",
+    "expired_tasks"};
 using WorkerStatusOutputRowType = std::tuple<
     Host,
     std::string,
-    QueryStatus,
+    std::string,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
-    std::optional<std::chrono::system_clock::time_point>>;
-constexpr std::array<std::string_view, 6> workerStatusOutputColumns{
-    "worker", "local_query_id", "query_status", "error", "started", "stopped"};
+    std::optional<std::chrono::system_clock::time_point>,
+    std::optional<uint64_t>,
+    std::optional<uint64_t>,
+    std::optional<uint64_t>,
+    std::optional<uint64_t>>;
+constexpr std::array<std::string_view, 10> workerStatusOutputColumns{
+    "worker",
+    "local_query_id",
+    "query_status",
+    "error",
+    "started",
+    "stopped",
+    "available_buffers",
+    "total_buffers",
+    "admission_queue",
+    "internal_queue"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -306,6 +332,20 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
         for (const auto& [id, query] : result.queries)
         {
             auto globalMetrics = query.coalesceQueryMetrics();
+            /// The global row sums the per-worker counters of the snapshots that are reachable.
+            QueryCounters globalCounters;
+            for (const auto& statusResults : query.localStatusSnapshots | std::views::values)
+            {
+                for (const auto& statusResult : statusResults | std::views::values)
+                {
+                    if (statusResult)
+                    {
+                        globalCounters.processedTuples += statusResult->metrics.counters.processedTuples;
+                        globalCounters.processedTasks += statusResult->metrics.counters.processedTasks;
+                        globalCounters.expiredTasks += statusResult->metrics.counters.expiredTasks;
+                    }
+                }
+            }
             output.emplace_back(
                 id,
                 std::nullopt,
@@ -314,7 +354,10 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
                 globalMetrics.error.transform([](const auto& exception) { return exception.what(); }),
                 globalMetrics.start,
                 globalMetrics.running,
-                globalMetrics.stop);
+                globalMetrics.stop,
+                globalCounters.processedTuples,
+                globalCounters.processedTasks,
+                globalCounters.expiredTasks);
             for (const auto& [grpc, statusResults] : query.localStatusSnapshots)
             {
                 for (const auto& [queryId, statusResult] : statusResults)
@@ -330,7 +373,10 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
                             metrics.error.transform([](const auto& exception) { return exception.what(); }),
                             metrics.start,
                             metrics.running,
-                            metrics.stop);
+                            metrics.stop,
+                            metrics.counters.processedTuples,
+                            metrics.counters.processedTasks,
+                            metrics.counters.expiredTasks);
                     }
                     else
                     {
@@ -340,6 +386,9 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
                             grpc,
                             "ConnectionError",
                             statusResult.error().what(),
+                            std::nullopt,
+                            std::nullopt,
+                            std::nullopt,
                             std::nullopt,
                             std::nullopt,
                             std::nullopt);
@@ -408,20 +457,46 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
         {
             if (!workerStatusResult)
             {
-                output.emplace_back(grpc, "", QueryStatus::Failed, workerStatusResult.error().what(), std::nullopt, std::nullopt);
+                output.emplace_back(
+                    grpc,
+                    "",
+                    magic_enum::enum_name(QueryStatus::Failed),
+                    workerStatusResult.error().what(),
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt);
             }
             else
             {
                 auto status = workerStatusResult.value();
-                output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
+                output.reserve(status.activeQueries.size() + status.terminatedQueries.size() + 1);
+                /// One summary row per worker carries the engine gauges, so an idle worker is still visible.
+                output.emplace_back(
+                    grpc,
+                    "",
+                    "",
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    status.engineMetrics.availablePooledBuffers,
+                    status.engineMetrics.totalPooledBuffers,
+                    status.engineMetrics.admissionQueueUsed,
+                    status.engineMetrics.internalQueueUsed);
                 for (const auto& activeQuery : status.activeQueries)
                 {
                     output.emplace_back(
                         grpc,
                         activeQuery.queryId.getLocalQueryId().getRawValue(),
-                        QueryStatus::Running,
+                        magic_enum::enum_name(QueryStatus::Running),
                         std::nullopt,
                         activeQuery.started,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt,
                         std::nullopt);
                 }
                 for (const auto& terminatedQuery : status.terminatedQueries)
@@ -429,10 +504,14 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
                     output.emplace_back(
                         grpc,
                         terminatedQuery.queryId.getLocalQueryId().getRawValue(),
-                        terminatedQuery.error.has_value() ? QueryStatus::Failed : QueryStatus::Stopped,
+                        magic_enum::enum_name(terminatedQuery.error.has_value() ? QueryStatus::Failed : QueryStatus::Stopped),
                         terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
                         terminatedQuery.started,
-                        terminatedQuery.terminated);
+                        terminatedQuery.terminated,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt,
+                        std::nullopt);
                 }
             }
         }

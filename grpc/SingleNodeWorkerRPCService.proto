@@ -66,6 +66,12 @@ message QueryMetrics {
    optional uint64 runningUnixTimeInMs = 2;
    optional uint64 stopUnixTimeInMs = 3;
    optional Error error = 4;
+   // Tuples that entered pipelines of this query, summed across all pipelines.
+   // A repeated task re-delivers its buffer and counts again.
+   uint64 processedTuples = 5;
+   // Tasks whose pipeline execution completed successfully.
+   uint64 processedTasks = 6;
+   uint64 expiredTasks = 7;
 }
 
 message QueryStatusReply {
@@ -91,8 +97,17 @@ message WorkerStatusResponse {
     optional Error error = 4;
   }
 
+  message EngineMetrics {
+    // Buffer-pool and task-queue fill levels; approximate, for observability.
+    uint64 available_pooled_buffers = 1;
+    uint64 total_pooled_buffers = 2;
+    uint64 admission_queue_used = 3;
+    uint64 internal_queue_used = 4;
+  }
+
   uint64 after_unix_timestamp_in_milli_seconds = 3;
   uint64 until_unix_timestamp_in_milli_seconds = 4;
   repeated ActiveQuery active_queries = 1;
   repeated TerminatedQuery terminated_queries = 2;
+  EngineMetrics engine_metrics = 5;
 }

@@ -71,6 +71,11 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
         std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
     response->set_until_unix_timestamp_in_milli_seconds(
         std::chrono::duration_cast<std::chrono::milliseconds>(status.until.time_since_epoch()).count());
+    auto* engineMetrics = response->mutable_engine_metrics();
+    engineMetrics->set_available_pooled_buffers(status.engineMetrics.availablePooledBuffers);
+    engineMetrics->set_total_pooled_buffers(status.engineMetrics.totalPooledBuffers);
+    engineMetrics->set_admission_queue_used(status.engineMetrics.admissionQueueUsed);
+    engineMetrics->set_internal_queue_used(status.engineMetrics.internalQueueUsed);
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -106,6 +111,11 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                             ? std::make_optional(Exception(terminatedQuery.error().message(), terminatedQuery.error().code()))
                             : std::nullopt};
                 })
-            | std::ranges::to<std::vector>()};
+            | std::ranges::to<std::vector>(),
+        .engineMetrics = WorkerStatus::EngineMetrics{
+            .availablePooledBuffers = response->engine_metrics().available_pooled_buffers(),
+            .totalPooledBuffers = response->engine_metrics().total_pooled_buffers(),
+            .admissionQueueUsed = response->engine_metrics().admission_queue_used(),
+            .internalQueueUsed = response->engine_metrics().internal_queue_used()}};
 }
 }

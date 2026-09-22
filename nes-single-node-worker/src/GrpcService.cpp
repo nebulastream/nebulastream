@@ -161,8 +161,11 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
             *reply->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
             if (const auto queryStatus = delegate.getQueryStatus(queryId); queryStatus.has_value())
             {
-                const auto& [start, running, stop, error] = queryStatus->metrics;
+                const auto& [start, running, stop, error, queryCounters] = queryStatus->metrics;
                 reply->set_state(static_cast<::QueryState>(queryStatus->state));
+                reply->mutable_metrics()->set_processedtuples(queryCounters.processedTuples);
+                reply->mutable_metrics()->set_processedtasks(queryCounters.processedTasks);
+                reply->mutable_metrics()->set_expiredtasks(queryCounters.expiredTasks);
 
                 if (start.has_value())
                 {

@@ -395,6 +395,11 @@ public:
         addInternalTask(PendingPipelineStopTask{queryId, std::move(node), 0, std::move(callback)});
     }
 
+    [[nodiscard]] QueryEngine::QueueMetrics getQueueMetrics() const
+    {
+        return {.admissionQueueUsed = taskQueue.admissionQueueUsed(), .internalQueueUsed = taskQueue.internalQueueUsed()};
+    }
+
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
@@ -805,6 +810,11 @@ QueryEngine::QueryEngine(
     {
         threadPool->addThread(host);
     }
+}
+
+QueryEngine::QueueMetrics QueryEngine::getQueueMetrics() const
+{
+    return threadPool->getQueueMetrics();
 }
 
 /// NOLINTNEXTLINE Intentionally non-const

@@ -41,6 +41,15 @@ public:
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();
 
+    /// Approximate task-queue fill levels; racy by nature, for observability only.
+    struct QueueMetrics
+    {
+        size_t admissionQueueUsed;
+        size_t internalQueueUsed;
+    };
+
+    [[nodiscard]] QueueMetrics getQueueMetrics() const;
+
     /// Order of Member construction is top to bottom and order of destruction is reversed
     /// Starting the ThreadPool is the very **last** thing the query engine does and **stopping**
     /// the ThreadPool is the first thing that happens during destruction.
