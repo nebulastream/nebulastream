@@ -30,9 +30,9 @@ namespace NES
 
 WorkerCatalog::WorkerCatalog(const std::vector<WorkerConfig>& workers)
 {
-    for (const auto& [host, data, capacity, downstream, config] : workers)
+    for (const auto& [host, data, maxOperators, downstream, config] : workers)
     {
-        this->addWorker(host, data, capacity, downstream, config);
+        this->addWorker(host, data, maxOperators, downstream, config);
     }
 }
 

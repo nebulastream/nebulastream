@@ -1,6 +1,6 @@
 # Tests placement failure due to insufficient capacity.
-# The query requires 2 operators (2 filter operators) but source-node has capacity=0
-# and sink-node has capacity=1. The placement algorithm should fail with "could not
+# The query requires 2 operators (2 filter operators) but source-node has max_operators=0
+# and sink-node has max_operators=1. The placement algorithm should fail with "could not
 # place all operators - insufficient capacity".
 
 query: |
