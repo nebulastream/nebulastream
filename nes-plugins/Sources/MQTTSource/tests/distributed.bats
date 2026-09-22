@@ -60,7 +60,11 @@ docker_mqtt_subscribe() {
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  # Wait until the source has actually subscribed before publishing: a fixed sleep can be
+  # shorter than subscription takes under shared-runner load, and these messages are published
+  # at the default QoS (at-most-once), so anything sent before the subscription is up front is
+  # silently lost. Same marker used by the "more data" test below.
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32.0
   docker_mqtt_produce mqtt-source-test 32.0
   sleep 1
@@ -89,7 +93,9 @@ EOF
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  # See "launch query from topology" above: wait for the actual MQTT subscription instead of a
+  # fixed sleep before publishing at QoS 2 (subscription still needs to be up first).
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
   sleep 1
@@ -119,7 +125,9 @@ EOF
   assert_success
   query_id=$output
 
-  sleep 1
+  # See "launch query from topology" above: wait for the actual MQTT subscription instead of a
+  # fixed sleep before publishing.
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 3
   docker_mqtt_produce mqtt-source-test $'2\n'
   wait_until docker compose exec -T worker-1 grep -qx 32 results.csv
@@ -148,7 +156,9 @@ EOF
 
   [ "$status" -eq 0 ]
 
-  sleep 1
+  # See "launch query from topology" above: wait for the actual MQTT subscription instead of a
+  # fixed sleep before publishing at QoS 2.
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
 
@@ -174,7 +184,10 @@ EOF
 
   [ "$status" -eq 0 ]
 
-  sleep 1
+  # See "launch query from topology" above: wait for the actual MQTT subscription instead of a
+  # fixed sleep before publishing at QoS 2. The sleep 5 below is the actual behavior under test
+  # (confirming no early flush), not a service-readiness wait, so it stays.
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
   sleep 5
@@ -205,7 +218,9 @@ EOF
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  # See "launch query from topology" above: wait for the actual MQTT subscription instead of a
+  # fixed sleep before publishing at QoS 2.
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   local payloads=()
   for i in {1..68}; do
     payloads+=($'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32')

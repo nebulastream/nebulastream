@@ -395,7 +395,12 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
                 return SourceReturnType::EmitResult::SUCCESS;
             });
         wait_for_emits(recorder, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        /// Wait for the deterministic `open()` signal instead of a fixed sleep: `open()` runs
+        /// unconditionally right before the backpressure gate (see dataSourceThreadRoutine), so
+        /// once it fires the thread is at (or about to enter) the pressure wait. A fixed sleep can
+        /// be shorter than thread scheduling takes under a loaded CI host, racing the assertion
+        /// below against a source that never got CPU time yet.
+        EXPECT_TRUE(control->waitUntilOpened());
         EXPECT_FALSE(control->wasClosed());
         wait_for_emits(recorder, 0);
         backpressureController.releasePressure();
@@ -436,7 +441,9 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
                 return SourceReturnType::EmitResult::SUCCESS;
             });
         wait_for_emits(recorder, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        /// See the identical comment in `ApplyBackbressure` above: wait for the deterministic
+        /// `open()` signal instead of a fixed sleep.
+        EXPECT_TRUE(control->waitUntilOpened());
         EXPECT_FALSE(control->wasClosed());
         wait_for_emits(recorder, 0);
         verify_non_blocking_stop(sourceThread);

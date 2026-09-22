@@ -148,8 +148,11 @@ docker_nes_repl() {
   ) &
   REPL_BG=$!
 
-  # Give the REPL time to deploy the query and enter the on-exit wait loop.
-  sleep 3
+  # Wait until the source has actually started before sending SIGTERM: a fixed sleep can be
+  # shorter than query deployment takes under shared-runner load, which would send the signal
+  # before the REPL even entered its on-exit wait loop. Same log marker used below in
+  # "default on-exit behavior should keep queries alive".
+  wait_until grep -q "Starting source with originId" worker-node/singleNodeWorker.log
 
   start_time=$(date +%s)
   docker compose exec -T nes-repl pkill -TERM -f "^nes-repl"
