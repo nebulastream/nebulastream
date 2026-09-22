@@ -3,7 +3,7 @@ testcases:
 
   # Disconnect a worker mid execution
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -16,7 +16,7 @@ testcases:
 
   # Crash an intermediate worker mid execution
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -29,7 +29,7 @@ testcases:
 
   # Crash a source worker mid execution
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -40,9 +40,9 @@ testcases:
           type: TIME
           after_ms: 8000
 
- # Crash a sink worker mid execution
+  # Crash a sink worker mid execution
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -56,7 +56,7 @@ testcases:
   # Disconnect a worker after processing a query restart but before replying to coordinator
   # i.e. query is running again but coordinator sees a failed start message
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/16-node-single-operator.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -77,7 +77,7 @@ testcases:
   # ----------------------- Protocol Tests -----------------------------
   # Crash during disk write in upstream backup
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -90,7 +90,7 @@ testcases:
 
   # Crash before sending ACK for persisted buffers
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -103,7 +103,7 @@ testcases:
 
   # Disconnect before sending ACK for persisted buffers
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -116,7 +116,7 @@ testcases:
 
   # Crash before writing stop to disk
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -129,7 +129,7 @@ testcases:
 
   # Crash before sending ACK for stop after persisting to disk
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -142,7 +142,7 @@ testcases:
 
   # Disconnect before sending ACK for stop after persisting to disk
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
     failpoints:
@@ -156,12 +156,12 @@ testcases:
   # Introduce exaggerated task queue chaos (i.e. out-of-order processing of sequence numbers made visible)
   # Crash join node mid execution to see if emitted sequence numbers remain consistent
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
       - ../systests/aggregation.test
     failpoints:
-      - host: global
+      - host: merge-node-1:8080
         name: task_queue.reorder_random
         action: UDF
         trigger:
@@ -179,12 +179,12 @@ testcases:
   # Does not model a realistic failure scenario, but validates the correct handling of dropped buffers during deduplication,
   # especially if the exact chunking differs between the two epochs due to induced out of order processing
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
       - ../systests/join.test
       - ../systests/aggregation.test
     failpoints:
-      - host: global
+      - host: merge-node-1:8080
         name: task_queue.reorder_random
         action: UDF
         trigger:
@@ -203,13 +203,13 @@ testcases:
           type: TIME
           after_ms: 9000
 
-# ----------------------- Checkpoint Tests -----------------------------
+  # ----------------------- Checkpoint Tests -----------------------------
 
   # Let a node crash at a point where some older logs were pruned already
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
-      - ../systests/many_operators.test
+      - ../systests/join.test
     failpoints:
       - host: global
         name: task_queue.reorder_random
@@ -225,9 +225,9 @@ testcases:
 
   # Crash during checkpoint completion write (corrupted barrier file)
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
-      - ../systests/many_operators.test
+      - ../systests/join.test
     failpoints:
       - host: global
         name: task_queue.reorder_random
@@ -243,9 +243,9 @@ testcases:
 
   # Crash a worker before deleting an old epoch from disk
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
-      - ../systests/many_operators.test
+      - ../systests/join.test
     failpoints:
       - host: global
         name: task_queue.reorder_random
@@ -260,11 +260,10 @@ testcases:
           count: 2
 
   # Disconnect a worker just before sending a barrier confirmation. Tests retry logic
-  # TODO hosts
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
-      - ../systests/many_operators.test
+      - ../systests/join.test
     failpoints:
       - host: merge-node-1:8080
         name: sink.before_barrier_callback
@@ -282,9 +281,9 @@ testcases:
 
   # Delay non-barrier buffers and crash node right after checkpoint. Test whether the barrier ACK mechanism works correctly
   - mode: SYSTESTS
-    topology: ../../nes-systests/configs/topologies/merge-tree.yaml
+    topology: ../../nes-fault-testing/topologies/merge-tree.yaml
     queries:
-      - ../systests/many_operators.test
+      - ../systests/join.test
     failpoints:
       - host: merge-node-1:8080
         name: task_queue.delay_nonbarrier
@@ -297,5 +296,25 @@ testcases:
         trigger:
           type: COUNT
           count: 3
+
+  # Aggregation of a join, and join of an aggregation. Validate sequence number + predecessor logic
+  - mode: SYSTESTS
+    topology: ../../nes-fault-testing/topologies/merge-tree2.yaml
+    queries:
+      - ../systests/join_aggregation.test
+      - ../systests/aggregation_join.test
+    failpoints:
+      - host: merge-node-1:8080
+        name: task_queue.reorder_random
+        action: UDF
+        trigger:
+          type: ALWAYS
+      - host: merge-node-1:8080
+        name: backup.before_checkpoint_complete
+        action: CRASH
+        trigger:
+          type: COUNT
+          count: 3
+
 
 
