@@ -94,16 +94,6 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
-    /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
-    /// BlockArgumentPruningPass replaces a block argument with the value every predecessor agrees on and
-    /// removes the argument, but does not fix up CallOperation/IndirectCallOperation's separate destructor
-    /// address list. If a live destructor-bearing local (e.g. a per-record scratch value referenced inside a
-    /// loop) is pruned this way, ExceptionRegionPreparationPass later builds a landing pad from the stale,
-    /// now-dangling Operation*, and MLIRLoweringProvider fails to compile with "no SSA value recorded for
-    /// operation $N" even though a live operation with the same identifier exists. Disabling the pass avoids
-    /// the miscompile at the cost of a minor, compile-time-only code quality regression (redundant block
-    /// arguments are no longer pruned). Remove once the nautilus fix lands.
-    options.setOption("ir.disableBlockArgumentPruning", true);
     /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
     options.setOption("ir.verifyAfterEachPass", true);
     options.setOption("ir.failOnVerifyError", true);

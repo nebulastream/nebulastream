@@ -16,8 +16,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "9f6576a126ced9d21e1d1c2f54b0972370870da8";
-    hash = "sha256-IO0vfvVM9J2MVWrFf4LFMq8gxkHtSetYEN56MKSAKYs=";
+    rev = "da656acdb7d15877ab90ef7464410bf447240e1e";
+    hash = "sha256-9HlxjQxqhfQT4tIsp7c3yEBYd8e0wjyqrJiqiOZmUsk=";
   };
 
   baseBuildInputs = [
@@ -50,10 +50,6 @@ let
       version = "0.1";
 
       src = nautilusSrc;
-
-      patches = [
-        ./patches/0001-disable-ubsan-function-call-check.patch
-      ];
 
       nativeBuildInputs = [
         pkgs.cmake

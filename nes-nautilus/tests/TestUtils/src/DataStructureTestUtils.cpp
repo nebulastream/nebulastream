@@ -72,11 +72,6 @@ nautilus::engine::NautilusEngine makeEngine(const EngineMode mode, const std::st
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", mode == EngineMode::Compiler);
     options.setOption("engine.backend", std::string{"mlir"});
-    /// Workaround for a nautilus bug (https://github.com/nebulastream/nautilus/issues/478):
-    /// BlockArgumentPruningPass can prune a block argument whose destructor address is still referenced by a
-    /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
-    /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
-    options.setOption("ir.disableBlockArgumentPruning", true);
     /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
     options.setOption("ir.verifyAfterEachPass", true);
     options.setOption("ir.failOnVerifyError", true);
