@@ -387,6 +387,68 @@ Therefore, this user-defined type approach does not allow to customize physical 
 Unlike Beam, Spark does not include support for type parameters.
 Spark also supports the `STRUCT` type, which consists of named and typed fields. However, the `STRUCT` itself is not named, so the system cannot distinguish two `STRUCT` types with the same fields.
 
+#### PostgreSQL
+Unlike most other systems, PostgreSQL already offers a very large selection of implemented types. Notable are geospatial types like `path`, `point`, `circle`, and `polygon`.
+PostgresSQL allows to create `enum` types with unique identifiers.
+Furthermore, a `composite` type exists, which allows to define a type with identifier, consisting out of multiple named and typed fields. The creation of such a type is similar to the creation of a table.
+The `domain` type allows users to create a named type based on any underlying data type (this could potentially be another user-defined type). Additionally, the user can restrict the value range of the domain type during the definition: 
+```sql
+CREATE DOMAIN posint AS integer CHECK (VALUE > 0);
+CREATE TABLE mytable (id posint);
+INSERT INTO mytable VALUES(1); -- works
+INSERT INTO mytable VALUES(-1); -- fails
+```
+Domain types are automatically down-cast to the underlying type when applying a function of the underlying type.
+
+Besides these fully implemented data types, PostgreSQL also offers users to create entirely new base types, known as `User-Defined Types`.
+The user needs to define the following properties inside a library:
+- In-memory representation (for example as C struct)
+- input function, receives a string of the value and converts it into the in-memory representation
+- output function, receives the in-memory representation of the value and converts it into a string
+- (optional) receive function, receives a binary representation of a value and converts it into the in-memory representation
+- (optional) send function, receives the in-memory representation of the value and converts it into the external binary format
+
+For variable-sized types, PostgreSQL demands that the first 4 bytes of the internal representation describe the length of the whole datum.
+These functions can then be used in the SQL definition of the data type:
+```c++
+typedef struct Complex {
+double x;
+double y;
+} Complex;
+```
+
+```sql
+CREATE TYPE complex (
+internallength = 16,
+input = complex_in,
+output = complex_out,
+receive = complex_recv,
+send = complex_send,
+alignment = double
+);
+```
+`User-defined Functions` may take `User-defined Types` as argument or return them.
+
+This approach is mightier than our PoC, as it gives the user full control over the object used to represent the data type and therefore over the physical representation.
+The approach of defining input, output, receive, and send functions is very similar to our concept of registering several `Serde` for data type plugins.
+
+#### DuckDB
+DuckDB supports the logical `STRUCT` data type, which contains potentially nested fields of a name and a type.
+Furthermore, the `UNION` type allows to define multiple types which a value of this column might belong to.
+Similar to PostgreSQL, DuckDB enables users to define `ENUM` types.
+Extending the data types can be done via extensions consisting of additional c++ code. However, there is no dedicated SQL interface for this like in PostgreSQL.
+
+#### Apache Arrow
+Apache Arrow's `DataType` class has the `ExtensionType` subclass.
+Users can implement subclasses of `ExtensionType` to create new logical types.
+Users need to define:
+- the extension name, which identifies the type
+- the underlying physical type, which defines how the values are interpreted by the system. This can be any of the supported datatypes (`INT32`, `FIXED_SIZE_BINARY`, `LIST`, `STRUCT`...)
+- (optional) parameters of the data type. These can add additional properties to a datatype without defining an entirely new datatype. For example, this could be a `freq` parameter for a `Period` data type.
+- serialize and deserialize functions to convert the data type (meaning the parameters) to a string and construct the data type from a string.
+
+This type of extension is similar to what Apache Beam offers for their `LogicalType` extensions.
+
 # Summary
 The PoC adds three extensible variants (`FIXEDSIZED`, `VECTOR`, `STRUCT`) to `DataType`, a generic SQL `T(...)` constructor pipeline, and multiple plugins for several real-life use cases that demonstrate the full path from registration to physical execution.
 P1 is addressed by routing all type-specific logic through the existing registry pattern and through generic `Construct`/`Cast` functions instead of per-type switch cases.
