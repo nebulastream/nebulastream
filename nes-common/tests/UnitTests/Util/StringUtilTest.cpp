@@ -304,9 +304,46 @@ TEST(FromCharsTest, SmallFloatInput)
 
 TEST(FromCharsTest, DigitsWithCharacterInTheMiddle)
 {
+    /// The whole string must be consumed; a trailing non-digit suffix is a parse error, not truncation.
     auto result = from_chars<int>("12a34");
-    EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), 12);
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST(FromCharsTest, WholeStringConsumedSucceeds)
+{
+    auto result = from_chars<int>("42");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value(), 42);
+}
+
+TEST(FromCharsTest, DecimalPointRejectedForIntegerType)
+{
+    /// "1.5" must not silently parse as 1.
+    EXPECT_FALSE(from_chars<int>("1.5").has_value());
+}
+
+TEST(FromCharsTest, TrailingCharactersRejectedForIntegerType)
+{
+    EXPECT_FALSE(from_chars<int>("12abc").has_value());
+}
+
+TEST(FromCharsTest, TrailingNonWhitespaceCharacterRejected)
+{
+    EXPECT_FALSE(from_chars<int>("42x").has_value());
+}
+
+TEST(FromCharsTest, TrailingWhitespaceIsTrimmedAndAccepted)
+{
+    /// Trailing whitespace is trimmed (not "consumed" by from_chars), so this must still succeed.
+    auto result = from_chars<int>("42   ");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value(), 42);
+}
+
+TEST(FromCharsTest, EmbeddedWhitespaceRejected)
+{
+    /// A space in the middle of the value is not outer whitespace, so it must not be silently trimmed away.
+    EXPECT_FALSE(from_chars<int>("42 3").has_value());
 }
 
 TEST(FromCharsTest, FromCharsWithBoolean)
