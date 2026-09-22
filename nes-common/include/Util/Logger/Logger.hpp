@@ -133,8 +133,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
 #define NES_LOG(LEVEL, ...) \
     do \
     { \
-        auto constexpr __level = getLogLevel(LEVEL); \
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) \
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= getLogLevel(LEVEL)) \
         { \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
         } \
