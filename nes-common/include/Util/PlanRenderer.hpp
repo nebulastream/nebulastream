@@ -31,7 +31,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
-#include <gtest/gtest_prod.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -139,7 +138,13 @@ public:
         /// Don't crash NES just because we failed to print the queryplan.
         CPPTRACE_TRY
         {
-            const size_t maxWidth = calculateLayers(rootOperators);
+            size_t maxWidth = calculateLayers(rootOperators);
+            /// `insertVerticalBranches` can widen layers that were already finalised (and thus already accounted for in the `maxWidth`
+            /// returned above). Recompute so no layer can exceed `maxWidth`, which would underflow the centering math in `drawTree`.
+            for (const auto& layer : processedDag)
+            {
+                maxWidth = std::max(maxWidth, layer.layerWidth);
+            }
             const std::stringstream asciiOutput = drawTree(maxWidth);
             dumpAndUseUnicodeBoxDrawing(asciiOutput.str());
         }
@@ -151,8 +156,6 @@ public:
     }
 
 private:
-    FRIEND_TEST(PlanRenderer, printQuerySourceFilterMapSink);
-    FRIEND_TEST(PlanRenderer, printQueryMapFilterTwoSinks);
     std::ostream& out;
     ExplainVerbosity verbosity;
 
@@ -228,7 +231,17 @@ private:
             /// Now that the current Node has been created, we can save its pointer in the parents.
             for (const auto& parent : parentPtrs)
             {
-                parent.lock()->children.emplace_back(layerNode);
+                /// Re-parenting in `insertVerticalBranches` can drop the last strong reference to a parent `PrintNode` while a
+                /// still-queued child holds a `weak_ptr` to it. Dereferencing an expired `weak_ptr` is UB, which asserts-disabled
+                /// builds compile out and `CPPTRACE_CATCH` cannot catch, so guard it the same way as the sibling site there.
+                const auto parentNode = parent.lock();
+                INVARIANT(parentNode != nullptr, "queued node's parent must still be alive");
+                if (parentNode == nullptr)
+                {
+                    NES_WARNING("PlanRenderer: skipping edge from a parent that is no longer alive.");
+                    continue;
+                }
+                parentNode->children.emplace_back(layerNode);
             }
             /// Only add children to the queue if they haven't been added yet (this is the case if one node has multiple parents)
             for (const auto& child : GetChildren<Operator>{}(currentNode))
@@ -290,7 +303,7 @@ private:
                 if (it != nodes.end())
                 {
                     const size_t nodeIndex = std::distance(nodes.begin(), it);
-                    insertVerticalBranches(depthLayer, depth, nodeIndex, child, queueIt, nodesPerLayer, alreadySeen);
+                    insertVerticalBranches(depthLayer, depth, nodeIndex, child, queueIt, nodesPerLayer, alreadySeen, layerNode);
                     found = true;
                     break;
                 }
@@ -344,23 +357,31 @@ private:
         Operator operatorToBeReplaced,
         const std::ranges::borrowed_iterator_t<std::deque<QueueItem>&>& queueIt,
         NodesPerLayerCounter& nodesPerLayer,
-        std::unordered_set<IdType>& alreadySeen)
+        std::unordered_set<IdType>& alreadySeen,
+        const std::shared_ptr<PrintNode>& reParentingNode)
     {
         const auto node = processedDag.at(startDepth).nodes.at(nodesIndex);
 
         {
             auto parents = node->parents;
-            for (auto depthDiff = startDepth; depthDiff < endDepth; ++depthDiff)
+            /// The re-queued node will be placed one layer below its deepest parent (`endDepth + 1`), so the branch column has to
+            /// span every layer from the node`s old position down to and including `endDepth`. Using `<=` (not `<`) also guarantees
+            /// at least one iteration when `startDepth == endDepth` (a shared node re-parented from its own layer): without it the
+            /// original node was never replaced by a placeholder yet still re-queued, so it rendered twice.
+            for (auto depthDiff = startDepth; depthDiff <= endDepth; ++depthDiff)
             {
                 auto verticalBranchNode = std::make_shared<PrintNode>(PrintNode{"|", {}, parents, {}, true, IdType{}});
+                auto& layer = processedDag.at(depthDiff);
                 if (depthDiff == startDepth)
                 {
-                    processedDag.at(depthDiff).nodes.at(nodesIndex) = verticalBranchNode;
+                    /// Replace the node in place with a placeholder; the layer keeps the same node count but loses the node`s width.
+                    layer.nodes.at(nodesIndex) = verticalBranchNode;
+                    layer.layerWidth = layer.layerWidth - node->nodeAsString.size() + 1;
                 }
                 else
                 {
                     /// Here we use `nodesIndex` as a "heuristic" of where to put the verticalBranchNode
-                    auto& nodes = processedDag.at(depthDiff).nodes;
+                    auto& nodes = layer.nodes;
                     if (nodes.size() > nodesIndex)
                     {
                         nodes.insert(nodes.begin() + static_cast<int64_t>(nodesIndex), verticalBranchNode);
@@ -369,22 +390,44 @@ private:
                     {
                         nodes.emplace_back(verticalBranchNode);
                     }
+                    /// Account for the added placeholder (width 1). Already-finalised layers (`depthDiff < endDepth`) also need its
+                    /// inter-node separator (+1); the `endDepth` layer is still being built, so its separators are added wholesale at
+                    /// finalisation in `calculateLayers` and must not be counted a second time here.
+                    layer.layerWidth += (depthDiff == endDepth) ? 1 : 2;
                 }
                 for (const auto& parent : parents)
                 {
+                    /// Assert the invariant (bug in debug builds) but also guard defensively: dereferencing an expired `weak_ptr`
+                    /// or writing through `end()` is UB, which asserts-disabled builds compile out and `CPPTRACE_CATCH` cannot catch.
+                    const auto parentNode = parent.lock();
+                    INVARIANT(parentNode != nullptr, "re-parented node's parent must still be alive");
+                    if (parentNode == nullptr)
+                    {
+                        NES_WARNING("PlanRenderer: skipping re-parenting of a node whose parent is no longer alive.");
+                        continue;
+                    }
                     if (depthDiff == startDepth)
                     {
-                        auto it = std::ranges::find(parent.lock()->children, node);
+                        auto it = std::ranges::find(parentNode->children, node);
+                        INVARIANT(it != parentNode->children.end(), "parent must reference the node being re-parented");
+                        if (it == parentNode->children.end())
+                        {
+                            NES_WARNING("PlanRenderer: parent does not reference the node being re-parented; edge left un-rewired.");
+                            continue;
+                        }
                         *it = verticalBranchNode;
                     }
                     else
                     {
-                        parent.lock()->children.emplace_back(verticalBranchNode);
+                        parentNode->children.emplace_back(verticalBranchNode);
                     }
                 }
                 /// Prepare next iteration
                 parents = {verticalBranchNode};
             }
+            /// The node moves below `reParentingNode`, so record that edge too; otherwise the connection to the re-parenting node
+            /// is dropped.
+            parents.push_back(reParentingNode);
             /// Remove from alreadySeen so calculateLayers can re-process the node at the correct depth.
             alreadySeen.erase(GetId<Operator>{}(operatorToBeReplaced));
             /// Add the final dummy as parent of the to be drawn child
@@ -396,6 +439,7 @@ private:
             else
             {
                 queueIt->parents.push_back(parents.at(0));
+                queueIt->parents.push_back(reParentingNode);
             }
         }
     }
