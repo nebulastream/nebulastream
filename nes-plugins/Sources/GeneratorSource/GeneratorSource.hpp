@@ -155,7 +155,11 @@ struct ConfigParametersGenerator
             {
                 return DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
             }
-            return std::optional<std::string>();
+            /// Throwing instead of returning nullopt lets the error name the accepted forms.
+            throw InvalidConfigParameter(
+                "GENERATOR_RATE_CONFIG is '{}', but it must be either 'emit_rate <tuples per second>' (e.g. 'emit_rate 1000') or "
+                "'amplitude <number>, frequency <number>' (e.g. 'amplitude 100, frequency 0.5')",
+                optToken.value());
         }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{

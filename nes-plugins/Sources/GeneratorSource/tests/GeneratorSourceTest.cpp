@@ -21,11 +21,13 @@
 #include <string_view>
 #include <tuple>
 
+#include <Configurations/Descriptor.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
+#include <GeneratorSource.hpp>
 #include <SinusGeneratorRate.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access) -- test values, deterministic seeds, and gtest ASSERT_TRUE guards are intentional
@@ -423,6 +425,35 @@ TEST_F(SinusGeneratorRateTest, calcNumberOfTuplesReturnsNonNegative)
     const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
     /// We just check it does not crash and returns some value (uint64_t is always >= 0)
     EXPECT_GE(tuples, 0U);
+}
+
+/// --- ConfigParametersGenerator Tests ---
+
+TEST(ConfigParametersGeneratorTest, invalidRateConfigThrowsNamingValueAndAcceptedForms)
+{
+    try
+    {
+        ConfigParametersGenerator::GENERATOR_RATE_CONFIG.validate({{"GENERATOR_RATE_CONFIG", "emit_rate"}});
+        FAIL() << "Expected the validation to throw";
+    }
+    catch (const Exception& exception)
+    {
+        EXPECT_EQ(exception.code(), ErrorCode::InvalidConfigParameter);
+        const std::string_view message = exception.what();
+        EXPECT_TRUE(message.contains("'emit_rate'")) << message;
+        EXPECT_TRUE(message.contains("emit_rate <tuples per second>")) << message;
+        EXPECT_TRUE(message.contains("amplitude <number>, frequency <number>")) << message;
+    }
+}
+
+TEST(ConfigParametersGeneratorTest, validRateConfigIsAccepted)
+{
+    for (const std::string valid : {"emit_rate 10", "amplitude 100, frequency 0.5"})
+    {
+        EXPECT_EQ(
+            ConfigParametersGenerator::GENERATOR_RATE_CONFIG.validate({{"GENERATOR_RATE_CONFIG", valid}}),
+            DescriptorConfig::ConfigType(valid));
+    }
 }
 
 }
