@@ -185,7 +185,13 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
     {
         return;
     }
-    INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
+    /// Buffers can still be queued here when the query is torn down mid-backpressure or after the broker
+    /// dropped the connection. That is undelivered data worth reporting, but it is a reachable runtime
+    /// state rather than a broken invariant, so it must not terminate the worker.
+    if (!backpressureHandler.empty())
+    {
+        NES_WARNING("MQTTSink for topic {} is stopping with buffers still queued for {}; they will not be delivered", topic, serverURI);
+    }
     if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
     {
         throw CannotOpenSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);

@@ -133,6 +133,43 @@ EOF
   wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$query_id" --require-healthy "worker-1"
 }
 
+@test "worker survives broker loss while backpressured" {
+  # Provoke backpressure (low MAX_OUTSTANDING_MESSAGES + thresholds, high emit rate) so the sink's
+  # BackpressureHandler is non-empty, then drop the broker. Losing the connection while the handler is
+  # non-empty previously fired an INVARIANT in stop() and terminated the worker. The query must Fail
+  # while worker-1 stays healthy.
+  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
+    SELECT * FROM GENERATOR(
+        'CSV' AS "INPUT_FORMATTER"."TYPE",
+        'worker-1:8080' AS "SOURCE"."HOST",
+        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
+        'EMIT_RATE 100000' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
+    ) INTO MQTT(
+        'worker-1:8080' AS "SINK"."HOST",
+        'mqtt-sink-test' AS "SINK"."TOPIC",
+        'mqtt-broker' AS "SINK"."SERVER_URI",
+        2 AS "SINK"."QOS",
+        'CSV' AS "SINK"."OUTPUT_FORMAT",
+        4 AS "SINK"."MAX_OUTSTANDING_MESSAGES",
+        '2' AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
+        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD"
+    )
+EOF
+)"
+  assert_success
+  query_id=$output
+
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy "worker-1"
+  # Wait until backpressure has actually engaged (a buffer parked in the handler) before dropping the broker, so
+  # teardown deterministically hits the non-empty-handler stop() path this test targets instead of racing a fixed sleep.
+  wait_until grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
+  docker compose stop mqtt-broker
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$query_id" --require-healthy "worker-1"
+}
+
 @test "fails query when broker is unavailable at startup" {
   setup_distributed tests/good/single-worker-with-4k-buffers.yaml
   docker compose kill mqtt-broker
