@@ -15,7 +15,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -31,7 +30,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <librdkafka/rdkafkacpp.h>
-#include <nes-network-bindings/lib.h>
 #include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -44,7 +42,6 @@ class KafkaSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Kafka";
-    static constexpr auto BACKPRESSURE_RETRY_INTERVAL = std::chrono::milliseconds(10);
     /// How long start() waits for broker metadata before giving up.
     static constexpr int32_t METADATA_TIMEOUT_IN_MILLISECONDS = 5000;
 
@@ -67,11 +64,12 @@ private:
         std::atomic<RdKafka::ErrorCode> error{RdKafka::ERR_NO_ERROR};
     };
 
-    /// Outcome of a single publish attempt:
-    ///   Ok     - librdkafka accepted the message into its outbound queue.
-    ///   Closed - non-recoverable producer error (disconnected, protocol, etc.); caller should fail the query.
-    ///   Full   - outbound queue is at capacity; caller should buffer & retry.
-    SendResult tryProduce(const TupleBuffer& buffer);
+    /// Throws if librdkafka reported a failed delivery.
+    void throwIfDeliveryFailed() const;
+
+    /// Returns true if librdkafka accepted the message into its outbound queue and false if that queue is at capacity.
+    /// Throws on a non-recoverable producer error (disconnected, protocol, etc.).
+    bool tryProduce(const TupleBuffer& buffer);
 
     std::string bootstrapServers;
     std::string topic;
