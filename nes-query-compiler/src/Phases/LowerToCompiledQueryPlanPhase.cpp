@@ -104,6 +104,9 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// the miscompile at the cost of a minor, compile-time-only code quality regression (redundant block
     /// arguments are no longer pruned). Remove once the nautilus fix lands.
     options.setOption("ir.disableBlockArgumentPruning", true);
+    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+    options.setOption("ir.verifyAfterEachPass", true);
+    options.setOption("ir.failOnVerifyError", true);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {

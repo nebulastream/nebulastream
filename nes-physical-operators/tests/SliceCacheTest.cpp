@@ -223,6 +223,9 @@ public:
         /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
         /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
         options.setOption("ir.disableBlockArgumentPruning", true);
+        /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+        options.setOption("ir.verifyAfterEachPass", true);
+        options.setOption("ir.failOnVerifyError", true);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 

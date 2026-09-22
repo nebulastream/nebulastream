@@ -119,6 +119,9 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
         /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
         /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
         options.setOption("ir.disableBlockArgumentPruning", true);
+        /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+        options.setOption("ir.verifyAfterEachPass", true);
+        options.setOption("ir.failOnVerifyError", true);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         const nautilus::engine::NautilusEngine engine(options);
         compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
@@ -265,6 +268,9 @@ void NautilusTestUtils::compileFillBufferFunction(
     /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
     /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
     options.setOption("ir.disableBlockArgumentPruning", true);
+    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+    options.setOption("ir.verifyAfterEachPass", true);
+    options.setOption("ir.failOnVerifyError", true);
     auto engine = nautilus::engine::NautilusEngine(options);
     options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
     auto compiledFunction = engine.registerFunction(tmp);

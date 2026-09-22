@@ -187,6 +187,9 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
     /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
     nautilusOptions.setOption("ir.disableBlockArgumentPruning", true);
+    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+    nautilusOptions.setOption("ir.verifyAfterEachPass", true);
+    nautilusOptions.setOption("ir.failOnVerifyError", true);
     nautilusOptions.setOption("mlir.enableMultithreading", false);
     return std::make_shared<CompiledExecutablePipelineStage>(
         physicalScanPipeline, physicalScanPipeline->getOperatorHandlers(), nautilusOptions);

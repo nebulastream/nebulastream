@@ -332,6 +332,9 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
@@ -394,6 +397,9 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
@@ -456,6 +462,9 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
@@ -526,6 +535,9 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
@@ -589,6 +601,9 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
@@ -639,6 +654,9 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
     /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
     options.setOption("ir.disableBlockArgumentPruning", true);
+    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+    options.setOption("ir.verifyAfterEachPass", true);
+    options.setOption("ir.failOnVerifyError", true);
     CompiledExecutablePipelineStage stage(pipeline, handlers, options);
 
     folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
@@ -766,6 +784,9 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
                 /// stale CallOperation/IndirectCallOperation destructor list, causing MLIRLoweringProvider to fail with
                 /// "no SSA value recorded for operation $N". Remove once the nautilus fix lands.
                 opt.setOption("ir.disableBlockArgumentPruning", true);
+                /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+                opt.setOption("ir.verifyAfterEachPass", true);
+                opt.setOption("ir.failOnVerifyError", true);
                 return opt;
             }());
 
