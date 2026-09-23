@@ -31,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/Synchronized.h>
+#include <gtest/gtest_prod.h>
 #include <mqtt/async_client.h>
 #include <nes-network-bindings/lib.h>
 #include <BackpressureChannel.hpp>
@@ -86,6 +87,10 @@ private:
     ConnectionCallback connectionCallback;
     std::unique_ptr<mqtt::async_client> client;
     BackpressureHandler backpressureHandler;
+
+    /// Test-only seam: stop()'s handling of a non-empty backpressureHandler is only reachable once `client` is set,
+    /// which normally requires a live broker connection via start(). The regression test sets up that state directly.
+    FRIEND_TEST(MQTTSinkTest, StopWithQueuedBufferWarnsInsteadOfAborting);
 };
 
 /// Defines the names, (optional) default values, (optional) validation & config functions for all MQTT sink config parameters.
