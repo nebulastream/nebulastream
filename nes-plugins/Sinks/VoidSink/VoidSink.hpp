@@ -55,13 +55,13 @@ struct ConfigParametersVoid
     /// which injects file_path into every sink.
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+        "OUTPUT_FORMAT", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
 
     /// Optional (default empty): Void ignores the path entirely but must not *require* it, so that sinks
     /// configured without a file_path (e.g. DistributedPlanningTest's empty config) still validate.
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
+        "FILE_PATH",
         "",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
