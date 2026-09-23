@@ -45,7 +45,7 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
     const uint64_t windowSize, const uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration)
     : sliceCacheConfiguration(std::move(sliceCacheConfiguration))
     , sliceAssigner(windowSize, windowSlide)
-    , sequenceNumber(SequenceNumber::INITIAL)
+    , sequenceNumber(SequenceNumber::INVALID)
     , numberOfActiveInputPipelines(0)
 {
 }

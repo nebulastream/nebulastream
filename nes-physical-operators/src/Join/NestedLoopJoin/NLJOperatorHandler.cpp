@@ -65,6 +65,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
     ProbeTaskType probeTaskType,
     const WindowInfo& windowInfo,
     const SequenceData& sequenceData,
+    std::vector<std::string> barriers,
     PipelineExecutionContext* pipelineCtx)
 {
     /// Combine paged vectors for all slices on both sides
@@ -116,6 +117,7 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedNLJWindowTrigger{windowInfo, leftSliceEnds, rightSliceEnds, probeTaskType};
+    tupleBuffer.setBarriers(std::move(barriers));
 
     pipelineCtx->emitBuffer(tupleBuffer);
 }

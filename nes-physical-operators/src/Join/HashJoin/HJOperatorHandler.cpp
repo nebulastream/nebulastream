@@ -130,6 +130,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     ProbeTaskType probeTaskType,
     const WindowInfo& windowInfo,
     const SequenceData& sequenceData,
+    std::vector<std::string> barriers,
     PipelineExecutionContext* pipelineCtx)
 {
     const auto leftHashMapBuffers = getHashMapsFromSlices(leftSlices, JoinBuildSideType::Left);
@@ -165,7 +166,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setOriginEpoch(pipelineCtx->getCurrentEpoch());
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-
+    tupleBuffer.setBarriers(std::move(barriers));
     /// Writing all necessary information for the probe to the buffer via the placement constructor
     new (tupleBuffer.getAvailableMemoryArea().data())
         EmittedHJWindowTrigger{windowInfo, leftHashMapBuffers.size(), rightHashMapBuffers.size(), probeTaskType};

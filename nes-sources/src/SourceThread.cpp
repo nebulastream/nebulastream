@@ -66,7 +66,13 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
     /// Set the sequence number of this buffer.
     /// A data source generates a monotonic increasing sequence number
     buffer.setSequenceNumber(sequenceNumber);
-    buffer.setPredecessor(SequenceNumber(sequenceNumber.getRawValue() - 1));
+    if (sequenceNumber != INITIAL_SEQ_NUMBER)
+    {
+        buffer.setPredecessor(SequenceNumber(sequenceNumber.getRawValue() - 1));
+    } else
+    {
+        buffer.setPredecessor(SequenceNumber(INVALID_SEQ_NUMBER));
+    }
     buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
     buffer.setLastChunk(true);
     NES_TRACE(

@@ -53,6 +53,7 @@ protected:
     /// Delegates to the configured JoinTriggerStrategy for each triggered window.
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        std::vector<std::string> barriers,
         PipelineExecutionContext* pipelineCtx) override;
 
     /// Emits probe buffers for a given set of left and right slices with the specified task type.
@@ -63,6 +64,7 @@ protected:
         ProbeTaskType probeTaskType,
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
+        std::vector<std::string> barriers,
         PipelineExecutionContext* pipelineCtx)
         = 0;
 

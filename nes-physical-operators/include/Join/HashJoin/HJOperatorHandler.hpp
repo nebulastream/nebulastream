@@ -78,6 +78,7 @@ protected:
         ProbeTaskType probeTaskType,
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
+        std::vector<std::string> barriers,
         PipelineExecutionContext* pipelineCtx) override;
 };
 

@@ -66,10 +66,14 @@ AggregationOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArgu
 
 void AggregationOperatorHandler::triggerSlices(
     const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+    std::vector<std::string> barriers,
     PipelineExecutionContext* pipelineCtx)
 {
+    size_t i = 0;
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
+        bool isLastWindow = i == slicesAndWindowInfo.size() -1;
+        i++;
         /// Getting all hashmaps for each slice that has at least one tuple
         std::vector<TupleBuffer> allHashMapBuffers;
         uint64_t totalNumberOfTuples = 0;
@@ -124,7 +128,10 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
         tupleBuffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-
+        if (isLastWindow)
+        {
+            tupleBuffer.setBarriers(std::move(barriers));
+        }
 
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor
         auto tmp = tupleBuffer.getAvailableMemoryArea();

@@ -39,16 +39,16 @@ void garbageCollectSlicesProxy(
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
     const ChunkNumber chunkNumber,
+    const SequenceNumber predecessor,
     const bool lastChunk,
     const OriginId originId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    // TODO predecessor?
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk, SequenceNumber(SequenceNumber::INVALID)), originId);
+    BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk, predecessor), originId, std::vector<std::string>());
 
-    opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
+    opHandler->garbageCollectSlicesAndWindows(std::move(bufferMetaData));
 }
 
 void setupProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
@@ -92,6 +92,7 @@ void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,
         executionCtx.chunkNumber,
+        executionCtx.predecessor,
         executionCtx.lastChunk,
         executionCtx.originId);
 

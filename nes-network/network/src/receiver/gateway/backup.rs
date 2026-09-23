@@ -81,10 +81,10 @@ impl LogManager {
 
     // Return result: (is_closed, ongoing_checkpoint)
     pub async fn recover(&mut self, snd_state: &mut SNDState) -> Result<(bool, bool)> {
-        fs::create_dir_all(&self.base_path).expect("failed to create parent dirs");
+        fs::create_dir_all(&self.base_path)?;
 
+        // Collect all epochs on disk (should currently only be 2)
         let mut epochs = Vec::new();
-
         for entry in fs::read_dir(&self.base_path)? {
             let entry = entry?;
 
@@ -100,41 +100,43 @@ impl LogManager {
                 continue;
             };
 
-            epochs.push((epoch, entry.path()));
+            let watermarks = fs::read(entry.path().join("barriers.bin"))
+                .ok()
+                .and_then(|bytes| serde_cbor::from_slice(&bytes).ok());
+
+            epochs.push((epoch, entry.path(), watermarks));
         }
+
+        epochs.sort_unstable_by_key(|(epoch, _, _)| *epoch);
         assert!(epochs.len() <= 2);
-        epochs.sort_unstable_by_key(|(epoch, _)| *epoch);
+
+        // Delete epochs that can be discarded (all epochs before the last epoch with watermarks)
+        if let Some(start) = epochs
+            .iter()
+            .rposition(|(_, _, watermarks)| watermarks.is_some())
+        {
+            for (_, path, _) in epochs.drain(..start) {
+                fs::remove_dir_all(path)?;
+            }
+        }
+
+        // Restart uncompleted checkpoint immediately
+        let ongoing_checkpoint = epochs.last().map_or(false, |(_, _, watermarks)| {
+            watermarks.is_none() && epochs.len() > 1
+        });
+        if ongoing_checkpoint {
+            let epoch = epochs.last().unwrap().0;
+            self.writer_backchannel_tx
+                .send(LogBackchannelMessage::LogfileClosed(epoch));
+        }
+
+        // Replay epochs in order
         let mut closed = false;
-        let mut ongoing_checkpoint = false;
-        for (i, (epoch, path)) in epochs.iter().enumerate() {
-            self.current_epoch = *epoch;
-            if path.join("barriers.bin").exists() {
-                let bytes = fs::read(path.join("barriers.bin"))?;
-                let watermark_res = serde_cbor::from_slice(&bytes);
-                match watermark_res {
-                    Ok(watermarks) => {
-                        snd_state.restore_watermarks(watermarks);
-                        if i == 1 {
-                            let (_, old_epoch_path) = &epochs[0];
-                            if let Err(e) = fs::remove_dir_all(old_epoch_path) {
-                                warn!("failed to delete old epoch {e}");
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        // Restart checkpointing
-                        ongoing_checkpoint = true;
-                        self.writer_backchannel_tx
-                            .send(LogBackchannelMessage::LogfileClosed(*epoch));
-                    }
-                }
-            } else {
-                if i == 1 {
-                    // Restart checkpointing
-                    ongoing_checkpoint = true;
-                    self.writer_backchannel_tx
-                        .send(LogBackchannelMessage::LogfileClosed(*epoch));
-                }
+        for (epoch, path, watermarks) in epochs {
+            self.current_epoch = epoch;
+
+            if let Some(watermarks) = watermarks {
+                snd_state.restore_watermarks(watermarks);
             }
 
             let log_file = path.join("log.bin");

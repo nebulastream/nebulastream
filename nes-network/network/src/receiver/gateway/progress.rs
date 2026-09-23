@@ -7,6 +7,7 @@ use crate::receiver::gateway::{ChunkNumber, Epoch, OriginId, SequenceNumber};
 
 pub struct SNDState {
     origins : HashMap<OriginId, OriginSNDState>,
+    recovered_from: HashMap<OriginId, SequenceNumber>,
 }
 
 pub enum SNDResult {
@@ -20,10 +21,12 @@ impl SNDState {
     pub fn new() -> Self {
         Self {
             origins: HashMap::new(),
+            recovered_from: HashMap::new(),
         }
     }
 
     pub fn restore_watermarks(&mut self, watermarks: HashMap<OriginId, SequenceNumber>) {
+        self.recovered_from = watermarks.clone();
         for (origin_id, watermark) in watermarks {
             let origin_state = self.origins.entry(origin_id).or_insert_with(OriginSNDState::new);
             origin_state.lwm = watermark;
@@ -38,7 +41,7 @@ impl SNDState {
             .collect()
     }
 
-    pub fn process(&mut self, buffer: TupleBuffer) -> SNDResult {
+    pub fn process(&mut self, mut buffer: TupleBuffer) -> SNDResult {
         // get or create record for given sequence number
         let origin_state = self.origins
             .entry(buffer.origin_id)
@@ -52,6 +55,18 @@ impl SNDState {
         // Progress high watermark
         origin_state.hwm = max(origin_state.hwm, buffer.sequence_number);
 
+        // Stitch together diconnected sequences from upstream node
+        // relevant when upstream node crashes and recovers. It doesn't know about the SNs from previous epochs
+        if buffer.predecessor == 0 {
+            buffer.predecessor = origin_state.lwm;
+        }
+
+        // after recovery, let the sequence start at predecessor 0
+        // relevant for window operators in the same region, so that they can make progress
+        let recovered_from = self.recovered_from.get(&buffer.origin_id).copied().unwrap_or(0);
+        if buffer.predecessor <= recovered_from {
+            buffer.predecessor = 0;
+        }
 
         let sn_record = origin_state.sequence_numbers
             .entry(buffer.sequence_number)

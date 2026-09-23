@@ -63,6 +63,7 @@ public:
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        std::vector<std::string> barriers,
         PipelineExecutionContext* pipelineCtx) override;
 };
 

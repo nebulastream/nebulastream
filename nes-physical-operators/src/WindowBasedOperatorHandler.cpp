@@ -55,7 +55,7 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
     return *sliceAndWindowStore;
 }
 
-void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
+void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(BufferMetaData bufferMetaData) const
 {
     const auto newGlobalWaterMarkProbe
         = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
@@ -69,29 +69,57 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
     sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
 }
 
-void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
+void WindowBasedOperatorHandler::checkAndTriggerWindows(BufferMetaData bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
+    /// Barriers carried by this tuple buffer are stored under its watermark, so they can be emitted once the corresponding window triggers.
+    if (!bufferMetaData.barriers.empty())
+    {
+        auto wlocked = barriers.wlock();
+        auto& entry = (*wlocked)[bufferMetaData.watermarkTs];
+        entry.insert(
+            entry.end(),
+            std::make_move_iterator(bufferMetaData.barriers.begin()),
+            std::make_move_iterator(bufferMetaData.barriers.end()));
+    }
+
     /// The watermark processor handles the minimal watermark across both streams
-    const auto newGlobalWatermark
+    const auto watermarkProcessorRes
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
 
     NES_TRACE(
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
-        newGlobalWatermark,
+        watermarkProcessorRes,
         bufferMetaData.originId,
         bufferMetaData.seqNumber,
         bufferMetaData.watermarkTs);
 
     /// Getting all slices that can be triggered and triggering them
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
+    const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(watermarkProcessorRes);
+
+    // Collect all pending barriers that are < the start time of the last window emitted in this step
+    std::vector<std::string> collectedBarriers;
+    if (!slicesAndWindowInfo.empty())
+    {
+        const auto windowStart = slicesAndWindowInfo.rbegin()->first.windowInfo.windowStart;
+
+        auto wlocked = barriers.wlock();
+        auto it = wlocked->begin();
+        while (it != wlocked->end() && it->first < windowStart)
+        {
+            collectedBarriers.insert(
+                collectedBarriers.end(), std::make_move_iterator(it->second.begin()), std::make_move_iterator(it->second.end()));
+            it = wlocked->erase(it);
+        }
+    }
+
+    triggerSlices(slicesAndWindowInfo, std::move(collectedBarriers), pipelineCtx);
 }
 
 void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
 {
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
+    triggerSlices(slicesAndWindowInfo, {}, pipelineCtx);
 }
 
 }

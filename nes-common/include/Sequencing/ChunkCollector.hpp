@@ -13,16 +13,14 @@
 */
 
 #pragma once
-#include <algorithm>
-#include <array>
 #include <atomic>
 #include <cassert>
-#include <cstddef>
-#include <functional>
 #include <limits>
-#include <list>
+#include <map>
 #include <optional>
+#include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
@@ -35,15 +33,8 @@ namespace NES
 /// The purpose of the ChunkCollector is to keep track of SequenceNumber which have been split into multiple chunks.
 /// The ChunkCollector is able to collect chunks in a multithreaded scenario and return if all chunks for a specific sequence number
 /// have been seen.
-/// @tparam NodeSize Internally the ChunkCollector uses a linked list of arrays, which are called nodes. Usually a larger size of nodes will
-/// yield better performance, but will use more memory.
-/// @tparam Alignment From benchmarking, changing the alignment of the atomic counters does not appear to increase performance. However, this
-/// could change in the future and an alignment of `std::hardware_destructive_interference_size` could improve performance
-template <size_t NodeSize = 1024, size_t Alignment = 8>
 class ChunkCollector
 {
-    static_assert(NodeSize > 0, "NodeSize must be greater than 0");
-
 public:
     /// Collect a chunk and return a sequenceNumber and the associated watermark if all chunks have been collected.
     std::optional<std::pair<SequenceNumber, Timestamp>> collect(SequenceData data, Timestamp watermark);
@@ -89,67 +80,25 @@ private:
         }
     };
 
-    template <typename T>
-    struct Padded
-    {
-        alignas(Alignment) T v;
-    };
-
-    struct Node
-    {
-        explicit Node(size_t start) : start(start) { }
-
-        size_t start;
-        std::atomic<size_t> missing = NodeSize;
-        std::array<Padded<Chunk<Timestamp::Underlying, std::greater<>, std::numeric_limits<Timestamp::Underlying>::min()>>, NodeSize>
-            data{};
-    };
-
-    folly::Synchronized<std::list<Node>> nodes;
+    folly::Synchronized<std::map<
+        SequenceNumber::Underlying,
+        Chunk<Timestamp::Underlying, std::greater<>, std::numeric_limits<Timestamp::Underlying>::min()>>>
+        chunks;
 };
 
-/// We store the chunk number counter for every non-completed sequence number. We want to be able to release completed chunk numbers so
-/// they do not grow infinitely.
-/// We use a linked list with each node holding N chunk number counters. Once all sequence numbers in one such node have been completed,
-/// we can remove the node from the linked list without invalidating (moving) other counters.
-
-/// We have to lock the linked list to locate the relevant node; if no such node exists, we append a new one. Within the node, we locate
-/// the chunk counter for the sequence number. We decrease the counter for every non-last chunk. Once we receive the last chunk, we
-/// increase the chunk counter by the current chunk number (which will be the maximum chunk number for this sequence). If the result of
-/// updating the chunk number is 0, we know that the SequenceNumber is complete.
-
-/// Each node in the linked list has a counter of completed sequences, the thread that completes a sequence number will decrease the nodes
-/// counter. We assume that once a sequence number is completed, it will never reappear. Thus, we can delete the node from the linked
-/// list when a thread decrements the last node counter.
-template <size_t NodeSize, size_t Alignment>
-std::optional<std::pair<SequenceNumber, Timestamp>> ChunkCollector<NodeSize, Alignment>::collect(SequenceData data, Timestamp watermark)
+inline std::optional<std::pair<SequenceNumber, Timestamp>>
+ChunkCollector::collect(SequenceData data, Timestamp watermark)
 {
     PRECONDITION(data.sequenceNumber != SequenceNumber::INVALID, "SequenceNumber is invalid");
     PRECONDITION(data.chunkNumber != ChunkNumber::INVALID, "ChunkNumber is invalid");
-    auto sequence = data.sequenceNumber - SequenceNumber::INITIAL;
 
-    auto& node = [&]() -> Node&
-    {
-        auto locked = nodes.ulock();
-        auto it = std::ranges::find_if(*locked, [&](const auto& n) { return n.start <= sequence && sequence < n.start + NodeSize; });
-        if (it == locked->end())
-        {
-            auto wlocked = locked.moveFromUpgradeToWrite();
-            wlocked->emplace_back((sequence / NodeSize) * NodeSize);
-            return wlocked->back();
-        }
-        return const_cast<Node&>(*it);
-    }();
+    auto wlocked = chunks.wlock();
 
-    auto& chunk = node.data[sequence % NodeSize].v;
+    auto& chunk = (*wlocked)[data.sequenceNumber];
 
     if (auto finalWatermark = chunk.update(data, watermark.getRawValue()))
     {
-        if (node.missing.fetch_sub(1) == 1)
-        {
-            auto wlocked = nodes.wlock();
-            std::erase_if(*wlocked, [&](auto& n) { return n.start == node.start; });
-        }
+        wlocked->erase(data.sequenceNumber);
         return {{SequenceNumber(data.sequenceNumber), Timestamp(*finalWatermark)}};
     }
     return {};

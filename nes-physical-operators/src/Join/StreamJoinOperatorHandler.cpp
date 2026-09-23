@@ -40,6 +40,7 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
 
 void StreamJoinOperatorHandler::triggerSlices(
     const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+    std::vector<std::string> barriers,
     PipelineExecutionContext* pipelineCtx)
 {
     const EmitSlicesFn emitFn
@@ -49,11 +50,21 @@ void StreamJoinOperatorHandler::triggerSlices(
               ProbeTaskType probeTaskType,
               const WindowInfo& windowInfo,
               const SequenceData& sequenceData,
-              PipelineExecutionContext* ctx) { emitSlicesToProbe(leftSlices, rightSlices, probeTaskType, windowInfo, sequenceData, ctx); };
+              std::vector<std::string> barriers,
+              PipelineExecutionContext* ctx) { emitSlicesToProbe(leftSlices, rightSlices, probeTaskType, windowInfo, sequenceData, std::move(barriers), ctx); };
 
+    size_t i = 0;
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx); }, triggerStrategy);
+        bool isLastWindow = i == slicesAndWindowInfo.size() -1;
+        i++;
+        if (isLastWindow)
+        {
+            std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx, std::move(barriers)); }, triggerStrategy);
+        } else
+        {
+            std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx, std::vector<std::string>()); }, triggerStrategy);
+        }
     }
 }
 

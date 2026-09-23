@@ -31,7 +31,8 @@ struct InnerJoinTriggerStrategy
         const std::vector<std::shared_ptr<Slice>>& allSlices,
         const WindowInfoAndSequenceNumber& windowInfo,
         const EmitSlicesFn& emitFn,
-        PipelineExecutionContext* pipelineCtx);
+        PipelineExecutionContext* pipelineCtx,
+        std::vector<std::string> barriers);
 };
 
 /// Trigger strategy for outer joins (left, right, full).
@@ -47,7 +48,8 @@ struct OuterJoinTriggerStrategy
         const std::vector<std::shared_ptr<Slice>>& allSlices,
         const WindowInfoAndSequenceNumber& windowInfo,
         const EmitSlicesFn& emitFn,
-        PipelineExecutionContext* pipelineCtx);
+        PipelineExecutionContext* pipelineCtx,
+        std::vector<std::string> barriers);
 };
 
 }

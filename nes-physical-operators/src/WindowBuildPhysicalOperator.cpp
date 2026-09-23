@@ -40,16 +40,18 @@ void checkWindowsTriggerProxy(
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
     const ChunkNumber chunkNumber,
+    const SequenceNumber predecessor,
     const bool lastChunk,
-    const OriginId originId)
+    const OriginId originId,
+    const int8_t* barriers_ptr)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    // TODO predecessor?
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk, SequenceNumber(SequenceNumber::INVALID)), originId);
-    opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
+    auto barriers = std::vector<std::string>(*reinterpret_cast<const std::vector<std::string>*>(barriers_ptr));
+    BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk, predecessor), originId, std::move(barriers));
+    opHandler->checkAndTriggerWindows(std::move(bufferMetaData), pipelineCtx);
 }
 
 void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* piplineContext)
@@ -80,8 +82,10 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,
         executionCtx.chunkNumber,
+        executionCtx.predecessor,
         executionCtx.lastChunk,
-        executionCtx.originId);
+        executionCtx.originId,
+        executionCtx.barriers);
 }
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const

@@ -11,6 +11,7 @@ use crate::receiver::gateway::{OriginId, SequenceNumber};
 use async_channel::SendError;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use log::{info, trace};
 use tokio::sync::mpsc::{
     Receiver, Sender, UnboundedReceiver, UnboundedSender, channel, unbounded_channel,
 };
@@ -146,7 +147,7 @@ impl ReceiverGateway {
         mut buffer: TupleBuffer,
     ) -> Result<(), SendError<TupleBuffer>> {
         if buffer.sequence_number
-            >= self
+            > self
                 .checkpointing_state
                 .barriers_to_inject
                 .get(&buffer.origin_id)
@@ -160,7 +161,7 @@ impl ReceiverGateway {
             buffer
                 .barriers
                 .push(format!("{host}|{channel_id}|{oid}|{epoch}").to_string());
-            //println!("Creating barrier {host}|{channel_id}|{oid}|{epoch}");
+            trace!("{host} {channel_id} injected barrier origin={oid} epoch={epoch} seq={}", buffer.sequence_number);
             self.checkpointing_state
                 .barriers_to_inject
                 .remove(&buffer.origin_id);
@@ -183,7 +184,7 @@ impl ReceiverGateway {
                 },
                 _ = &mut checkpoint_timer, if !checkpoint_in_progress => {
                     checkpoint_in_progress = true;
-                    //let _ = self.writer_control_tx.send(LogControlMessage::StartCheckpoint);
+                    let _ = self.writer_control_tx.send(LogControlMessage::StartCheckpoint);
                 }
                 maybe_backchannel_msg = self.writer_backchannel_rx.recv() => {
                     let Some(backchannel_msg) = maybe_backchannel_msg else { break };
@@ -191,13 +192,11 @@ impl ReceiverGateway {
                     match backchannel_msg {
                         LogBackchannelMessage::LogfileClosed(epoch) => {
                             // HWM snapshot of the SND is not strictly in sync with the log but always at least as far ahead
-                            let mut hwm_snapshot = self.snd.collect_hwms();
-                            for value in hwm_snapshot.values_mut() {
-                                *value += 1;
-                            }
+                            let hwm_snapshot = self.snd.collect_hwms();
                             self.checkpointing_state.checkpoint_position = hwm_snapshot.clone();
                             self.checkpointing_state.barriers_to_inject = hwm_snapshot;
                             self.checkpointing_state.checkpointing_epoch = epoch;
+                            trace!("{} {} started checkpoint for epoch {epoch}", self.host, self.channel_id);
                         },
                     }
                 }
@@ -214,14 +213,16 @@ impl ReceiverGateway {
 
                             on_complete.send(());
                         },
-                        GatewayControlMessage::BarrierComplete(oid, for_epoch) => {
+                        GatewayControlMessage::BarrierComplete(origin_id, for_epoch) => {
                             // epoch guards against late re-transmission of barriers from a previous epoch
                             // TODO right now we assume that there will be at most one network sink for each barrier
+                            trace!("{} {} barrier complete for origin={origin_id} epoch={for_epoch}", self.host, self.channel_id);
                             if for_epoch == self.checkpointing_state.checkpointing_epoch {
                                 let was_unfinished = !self.checkpointing_state.inflight_barriers.is_empty();
-                                let was_inflight = self.checkpointing_state.inflight_barriers.remove(&oid);
+                                let was_inflight = self.checkpointing_state.inflight_barriers.remove(&origin_id);
                                 if was_unfinished && was_inflight && self.checkpointing_state.inflight_barriers.is_empty(){
                                     // complete checkpoint
+                                    trace!("{} {} checkpoint complete for epoch {}", self.host, self.channel_id, self.checkpointing_state.checkpointing_epoch);
                                     self.writer_control_tx.send(CompleteCheckpoint(self.checkpointing_state.checkpoint_position.clone()));
                                     checkpoint_in_progress = false;
                                     checkpoint_timer.as_mut().reset(tokio::time::Instant::now() + checkpoint_timeout);
@@ -232,13 +233,6 @@ impl ReceiverGateway {
                 }
                 maybe_buffer = self.input_rx.recv() => {
                     let Some((mut buffer, ack_tx)) = maybe_buffer else { break };
-                    /*
-                    TODO remove 
-                    ack_tx.send((AckData(buffer.sequence(), 0), buffer.closing));
-                    if !buffer.closing {
-                        self.send_to_source(buffer).await;
-                    }
-                    continue;*/
                     if !buffer.barriers.is_empty(){
                         failpoint!("gateway.before_upstream_barrier_recieve");
                     }

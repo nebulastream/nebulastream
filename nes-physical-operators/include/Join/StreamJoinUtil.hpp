@@ -56,6 +56,7 @@ using EmitSlicesFn = std::function<void(
     ProbeTaskType probeTaskType,
     const WindowInfo& windowInfo,
     const SequenceData& sequenceData,
+    std::vector<std::string> barriers,
     PipelineExecutionContext* pipelineCtx)>;
 
 /// Concept: a hash join probe operator must declare which join types it supports via a static constexpr method.

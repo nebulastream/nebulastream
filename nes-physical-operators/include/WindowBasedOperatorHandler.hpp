@@ -27,6 +27,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -35,8 +36,8 @@ namespace NES
 /// Stores the metadata for a RecordBuffer
 struct BufferMetaData
 {
-    BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
+    BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId, std::vector<std::string> barriers)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId), barriers(std::move(barriers))
     {
     }
 
@@ -48,6 +49,7 @@ struct BufferMetaData
     Timestamp watermarkTs;
     SequenceData seqNumber;
     OriginId originId;
+    std::vector<std::string> barriers;
 };
 
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
@@ -70,11 +72,11 @@ public:
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore.
-    void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
+    void garbageCollectSlicesAndWindows(BufferMetaData bufferMetaData) const;
 
     /// Checks and triggers windows that are ready to be triggered, e.g., the watermark has passed the window end for time-based windows.
     /// This method updates the watermarkProcessor and is thread-safe
-    virtual void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
+    virtual void checkAndTriggerWindows(BufferMetaData bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
     /// Triggers all windows that have not been already emitted to the probe
     virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
@@ -89,10 +91,12 @@ protected:
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
     virtual void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        std::vector<std::string> barriers,
         PipelineExecutionContext* pipelineCtx)
         = 0;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    folly::Synchronized<std::map<Timestamp, std::vector<std::string>>> barriers;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads = 0;

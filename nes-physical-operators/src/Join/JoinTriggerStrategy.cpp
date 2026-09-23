@@ -29,7 +29,8 @@ void InnerJoinTriggerStrategy::triggerWindow(
     const std::vector<std::shared_ptr<Slice>>& allSlices,
     const WindowInfoAndSequenceNumber& windowInfo,
     const EmitSlicesFn& emitFn,
-    PipelineExecutionContext* pipelineCtx)
+    PipelineExecutionContext* pipelineCtx,
+    std::vector<std::string> barriers)
 {
     const auto totalChunks = allSlices.size() * allSlices.size();
     ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
@@ -40,7 +41,7 @@ void InnerJoinTriggerStrategy::triggerWindow(
         {
             const bool isLastChunk = chunkNumber == totalChunks;
             const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
-            emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, pipelineCtx);
+            emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, isLastChunk ? std::move(barriers) : std::vector<std::string>{}, pipelineCtx);
             ++chunkNumber;
         }
     }
@@ -51,7 +52,8 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
     const std::vector<std::shared_ptr<Slice>>& allSlices,
     const WindowInfoAndSequenceNumber& windowInfo,
     const EmitSlicesFn& emitFn,
-    PipelineExecutionContext* pipelineCtx)
+    PipelineExecutionContext* pipelineCtx,
+    std::vector<std::string> barriers)
 {
     const auto numSlices = allSlices.size();
     auto totalChunks = numSlices * numSlices;
@@ -73,7 +75,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         {
             const bool isLastChunk = chunkNumber == totalChunks;
             const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
-            emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, pipelineCtx);
+            emitFn({sliceLeft}, {sliceRight}, ProbeTaskType::MATCH_PAIRS, windowInfo.windowInfo, sequenceData, isLastChunk ? std::move(barriers) : std::vector<std::string>{}, pipelineCtx);
             ++chunkNumber;
         }
     }
@@ -85,7 +87,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         {
             const bool isLastChunk = chunkNumber == totalChunks;
             const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
-            emitFn({slice}, allSlices, ProbeTaskType::LEFT_NULL_FILL, windowInfo.windowInfo, sequenceData, pipelineCtx);
+            emitFn({slice}, allSlices, ProbeTaskType::LEFT_NULL_FILL, windowInfo.windowInfo, sequenceData, isLastChunk ? std::move(barriers) : std::vector<std::string>{}, pipelineCtx);
             ++chunkNumber;
         }
     }
@@ -97,7 +99,7 @@ void OuterJoinTriggerStrategy<EmitLeftNullFill, EmitRightNullFill>::triggerWindo
         {
             const bool isLastChunk = chunkNumber == totalChunks;
             const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk, windowInfo.predecessor};
-            emitFn(allSlices, {slice}, ProbeTaskType::RIGHT_NULL_FILL, windowInfo.windowInfo, sequenceData, pipelineCtx);
+            emitFn(allSlices, {slice}, ProbeTaskType::RIGHT_NULL_FILL, windowInfo.windowInfo, sequenceData, isLastChunk ? std::move(barriers) : std::vector<std::string>{}, pipelineCtx);
             ++chunkNumber;
         }
     }
