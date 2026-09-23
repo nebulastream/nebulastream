@@ -39,7 +39,7 @@
 namespace NES
 {
 
-/// Regression tests for issue #79: a mid-stream socket error must not be reported as end-of-stream.
+/// Regression tests: a mid-stream socket error must not be reported as end-of-stream.
 class TCPSourceReadClassificationTest : public Testing::BaseUnitTest
 {
 public:
@@ -54,7 +54,7 @@ TEST_F(TCPSourceReadClassificationTest, ZeroBytesIsEndOfStream)
     EXPECT_EQ(TCPSource::classifyReadResult(0, ECONNRESET), TCPSource::ReadOutcome::EndOfStream);
 }
 
-/// The core of #79: a genuine mid-stream error (read() returns -1) must NOT be treated as end-of-stream.
+/// The core of the bug: a genuine mid-stream error (read() returns -1) must NOT be treated as end-of-stream.
 TEST_F(TCPSourceReadClassificationTest, ConnectionResetIsErrorNotEndOfStream)
 {
     const auto outcome = TCPSource::classifyReadResult(-1, ECONNRESET);
@@ -90,7 +90,7 @@ TEST_F(TCPSourceReadClassificationTest, PositiveBytesAreData)
     EXPECT_EQ(TCPSource::classifyReadResult(4096, 0), TCPSource::ReadOutcome::Data);
 }
 
-/// Regression tests for issue #131: a peer that sends fewer bytes than one TupleBuffer and then closes
+/// Regression tests: a peer that sends fewer bytes than one TupleBuffer and then closes
 /// the connection must make the source flush the partial buffer and report end-of-stream on the next
 /// call. Before the fix the drain loop spun on a sticky read()==0 (100% CPU, query never completed)
 /// under the default flush_interval_ms=0.
@@ -119,7 +119,7 @@ protected:
     };
 
     /// Runs one fillTupleBuffer on a worker thread and fails (rather than hanging the suite) if it does
-    /// not return within the timeout, which is exactly the #131 spin. request_stop() only breaks the
+    /// not return within the timeout, which is exactly the busy-spin. request_stop() only breaks the
     /// drain between reads, so it relies on the injected fd carrying a receive timeout (set below) to
     /// bound any read() the worker might be parked in; together they guarantee the worker unwinds.
     /// Each call gets a fresh stop_source so a prior timeout can never pre-stop a later call.
@@ -130,7 +130,7 @@ protected:
         if (pending.wait_for(std::chrono::seconds(5)) != std::future_status::ready)
         {
             stopSource.request_stop();
-            ADD_FAILURE() << "fillTupleBuffer hung " << what << " (#131 regression)";
+            ADD_FAILURE() << "fillTupleBuffer hung " << what;
         }
         return pending.get();
     }
@@ -156,7 +156,7 @@ TEST_F(TCPSourcePartialThenCloseTest, PartialBufferThenPeerCloseFlushesThenEoSWi
     ASSERT_EQ(::close(sockets.fds[1]), 0);
     sockets.fds[1] = -1; /// closed above; prevent the guard from double-closing it
 
-    /// flush_interval_ms = 0 is the default and the exact trigger for #131. The source now owns fds[0];
+    /// flush_interval_ms = 0 is the default and the exact trigger for the busy-spin. The source now owns fds[0];
     /// the guard still closes it at scope exit (the source's destructor does not).
     TCPSource source{TCPSource::InjectedSocketTag{}, sockets.fds[0], "127.0.0.1", "0", 0.0F};
 
@@ -164,7 +164,7 @@ TEST_F(TCPSourcePartialThenCloseTest, PartialBufferThenPeerCloseFlushesThenEoSWi
     auto bufferManager = BufferManager::create(totalMemory, 0.9, BufferAlignment{64}, 8192, std::make_shared<NesDefaultMemoryAllocator>());
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    /// First call flushes the partial bytes and must return promptly (a hang here is the #131 spin).
+    /// First call flushes the partial bytes and must return promptly (a hang here is the busy-spin).
     const auto firstResult = drainWithWatchdog(source, tupleBuffer, "on the partial buffer");
     ASSERT_FALSE(firstResult.isEoS());
     EXPECT_EQ(firstResult.getNumberOfBytes(), payload.size());
@@ -174,7 +174,7 @@ TEST_F(TCPSourcePartialThenCloseTest, PartialBufferThenPeerCloseFlushesThenEoSWi
     EXPECT_TRUE(secondResult.isEoS());
 }
 
-/// Regression tests for issues #145/#146: an idle-but-open connection (peer connected, sending nothing)
+/// Regression tests: an idle-but-open connection (peer connected, sending nothing)
 /// must keep polling without pinning a CPU core, and must unwind promptly when the query is stopped. The
 /// bounded, stop-token-interruptible backoff in the WouldBlock path is what guarantees the latter.
 class TCPSourceIdlePollTest : public Testing::BaseUnitTest
@@ -204,7 +204,7 @@ TEST_F(TCPSourceIdlePollTest, IdleOpenConnectionKeepsPollingAndStopsPromptly)
 {
     /// A socketpair whose peer stays connected but never sends data reproduces an idle source. The
     /// source-side fd is made non-blocking so read() returns EAGAIN immediately, which is both the
-    /// #146 leftover-non-blocking case and the worst case for the #145 busy-spin.
+    /// leftover-non-blocking case and the worst case for the busy-spin.
     SocketPairGuard sockets;
     ASSERT_EQ(::socketpair(AF_UNIX, SOCK_STREAM, 0, sockets.fds.data()), 0) << "socketpair failed: " << std::strerror(errno);
 
@@ -242,7 +242,7 @@ TEST_F(TCPSourceIdlePollTest, IdleOpenConnectionKeepsPollingAndStopsPromptly)
     EXPECT_TRUE(pending.get().isEoS());
 }
 
-/// Regression test for #130 (harden #99): the classifyReadResult unit tests above only exercise the pure
+/// Regression test: the classifyReadResult unit tests above only exercise the pure
 /// classifier; they never confirm that fillBuffer's read loop actually wires ReadOutcome::Error to a thrown
 /// RunningRoutineFailure rather than the old "treat as EoS" behavior that silently truncated results. This
 /// drives a real mid-stream socket error end to end through fillTupleBuffer.
