@@ -1,0 +1,42 @@
+--- a/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp
++++ b/src/cpu/x64/injectors/jit_uni_eltwise_injector.hpp
+@@ -337,7 +337,10 @@
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key); // search an entry for a key
++        // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++        // returns the first one), but the offsets below assume the first entry of the key.
++        const auto range = entry_map_.equal_range(key);
++        const auto it = range.first == range.second ? entry_map_.end() : range.first; // search an entry for a key
+         if (it == entry_map_.end()) {
+             assert(!"Non-existent key");
+             return 0;
+--- a/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp
++++ b/src/cpu/x64/injectors/jit_uni_eltwise_injector.cpp
+@@ -1043,7 +1043,10 @@
+             vlen_ / sizeof(float)); // equal to 2/3/4 for xmm/ymm/zmm
+     vec_shift(vmm_aux(1), vmm_aux(1), true, simd_w);
+ 
+-    const auto it = entry_map_.find(log_predefined_vals);
++    // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++    // returns the first one), but the offsets below assume the first entry of the key.
++    const auto range = entry_map_.equal_range(log_predefined_vals);
++    const auto it = range.first == range.second ? entry_map_.end() : range.first;
+     if (it == entry_map_.end()) {
+         assert(it != entry_map_.end());
+         return;
+--- a/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp
++++ b/src/cpu/aarch64/injectors/jit_uni_eltwise_injector.hpp
+@@ -320,7 +320,10 @@
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key); // search an entry for a key
++        // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++        // returns the first one), but the offsets below assume the first entry of the key.
++        const auto range = entry_map_.equal_range(key);
++        const auto it = range.first == range.second ? entry_map_.end() : range.first; // search an entry for a key
+         assert(it != entry_map_.end());
+         const auto &te = (*it).second;
+         const auto scale = te.bcast ? vlen : sizeof(table_entry_val_t);

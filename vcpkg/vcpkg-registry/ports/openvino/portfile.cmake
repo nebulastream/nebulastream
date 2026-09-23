@@ -24,6 +24,7 @@ vcpkg_from_github(
         fix-types-libcxx.patch
         use-system-xbyak.patch
         guard-docs-and-template-extension.patch
+        fix-multimap-first-entry.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
@@ -68,7 +69,9 @@ if(ENABLE_INTEL_CPU)
         REPO openvinotoolkit/oneDNN
         REF 3d7a6f1d068d8ae08f189aa4baa93d177bc07507
         SHA512 f5de57f7a8972b4c3aefe359beeb51bd9a5cde6bbc6316891f73148555ef9f299145449faf7d761a8e801fb8ddee68b4455d2b9486067915fe7f445f6b099d6c
-        PATCHES disable-onednn-jit-traces.patch
+        PATCHES
+            disable-onednn-jit-traces.patch
+            onednn-multimap-first-entry.patch
     )
 
     # Ironically, we have to keep intel's own xbyak when building for arm. We remove it for x86 as this could actually

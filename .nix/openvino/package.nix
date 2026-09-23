@@ -71,12 +71,14 @@ let
         ../../vcpkg/vcpkg-registry/ports/openvino/fix-clang19-stringify.patch
         ../../vcpkg/vcpkg-registry/ports/openvino/fix-libcxx.patch
         ../../vcpkg/vcpkg-registry/ports/openvino/fix-types-libcxx.patch
+        ../../vcpkg/vcpkg-registry/ports/openvino/fix-multimap-first-entry.patch
       ];
 
       postPatch = ''
         rm -rf src/plugins/intel_cpu/thirdparty/onednn
         mkdir -p src/plugins/intel_cpu/thirdparty/onednn
         tar -xzf ${oneDnnCpuSrc} --strip-components=1 -C src/plugins/intel_cpu/thirdparty/onednn
+        patch -p1 -d src/plugins/intel_cpu/thirdparty/onednn < ${../../vcpkg/vcpkg-registry/ports/openvino/onednn-multimap-first-entry.patch}
 
         rm -rf src/plugins/intel_cpu/thirdparty/mlas
         mkdir -p src/plugins/intel_cpu/thirdparty/mlas

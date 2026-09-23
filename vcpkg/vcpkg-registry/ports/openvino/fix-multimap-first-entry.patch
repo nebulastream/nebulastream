@@ -1,0 +1,42 @@
+--- a/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/x64/jit_emitter.hpp
+@@ -187,7 +187,10 @@
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+         // TODO: enforce through data structure
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++        // returns the first one), but the offsets below assume the first entry of the key.
++        const auto range = entry_map_.equal_range(key);
++        const auto it = range.first == range.second ? entry_map_.end() : range.first;  // search an entry for a key
+         OV_CPU_JIT_EMITTER_ASSERT(it != entry_map_.end(), "Value has not been found in the table");
+         const auto& te = (*it).second;
+         const auto scale = te.bcast ? get_vec_length() : sizeof(table_entry_val_t);
+--- a/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/aarch64/jit_emitter.hpp
+@@ -171,7 +171,10 @@
+     size_t table_off(const std::string& key, const size_t key_off_val_shift = 0) const {
+         // assumption: all table entries sharing the same key also
+         // share their broadcast property
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++        // returns the first one), but the offsets below assume the first entry of the key.
++        const auto range = entry_map_.equal_range(key);
++        const auto it = range.first == range.second ? entry_map_.end() : range.first;  // search an entry for a key
+         assert(it != entry_map_.end());
+         const auto& te = (*it).second;
+         const auto scale = te.bcast ? get_vec_length() : sizeof(table_entry_val_t);
+--- a/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp
++++ b/src/plugins/intel_cpu/src/emitters/plugin/riscv64/jit_emitter.hpp
+@@ -206,7 +206,10 @@
+     const size_t vlen = Xbyak_riscv::CPU().getVlen() / 8;
+ 
+     size_t table_off(const std::string& key, size_t key_off_val_shift = 0) const {
+-        const auto it = entry_map_.find(key);  // search an entry for a key
++        // std::multimap::find may return any entry with a matching key (libc++ 22 no longer
++        // returns the first one), but the offsets below assume the first entry of the key.
++        const auto range = entry_map_.equal_range(key);
++        const auto it = range.first == range.second ? entry_map_.end() : range.first;  // search an entry for a key
+         OV_CPU_JIT_EMITTER_ASSERT(it != entry_map_.end(), "Value has not been found in the table");
+         const auto& te = (*it).second;
+         const auto scale = sizeof(table_entry_val_t);
