@@ -26,6 +26,61 @@ docker_mqtt_subscribe() {
   sleep 1
 }
 
+# Shared by "fails query when broker stops during processing" and "worker survives broker loss while
+# backpressured": both start the same GENERATOR->MQTT query and drop the broker mid-flight, differing only
+# in EMIT_RATE and the backpressure knobs. Sets $query_id.
+#
+# $1 - EMIT_RATE
+# $2 - MAX_OUTSTANDING_MESSAGES, or empty to omit the backpressure knobs entirely (default thresholds)
+# $3 - BACKPRESSURE_LOWER_THRESHOLD (ignored if $2 is empty)
+# $4 - BACKPRESSURE_UPPER_THRESHOLD (ignored if $2 is empty)
+run_query_and_drop_broker_while_running() {
+  local emit_rate=$1
+  local max_outstanding_messages=$2
+  local backpressure_lower_threshold=$3
+  local backpressure_upper_threshold=$4
+
+  local backpressure_options=""
+  if [[ -n "$max_outstanding_messages" ]]; then
+    backpressure_options=",
+        $max_outstanding_messages AS \"SINK\".\"MAX_OUTSTANDING_MESSAGES\",
+        '$backpressure_lower_threshold' AS \"SINK\".\"BACKPRESSURE_LOWER_THRESHOLD\",
+        '$backpressure_upper_threshold' AS \"SINK\".\"BACKPRESSURE_UPPER_THRESHOLD\""
+  fi
+
+  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
+  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<EOF
+    SELECT * FROM GENERATOR(
+        'CSV' AS "INPUT_FORMATTER"."TYPE",
+        'worker-1:8080' AS "SOURCE"."HOST",
+        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
+        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
+        'EMIT_RATE $emit_rate' AS "SOURCE"."GENERATOR_RATE_CONFIG",
+        SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
+    ) INTO MQTT(
+        'worker-1:8080' AS "SINK"."HOST",
+        'mqtt-sink-test' AS "SINK"."TOPIC",
+        'mqtt-broker' AS "SINK"."SERVER_URI",
+        2 AS "SINK"."QOS",
+        'CSV' AS "SINK"."OUTPUT_FORMAT"$backpressure_options
+    )
+EOF
+)"
+  assert_success
+  query_id=$output
+
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy "worker-1"
+  if [[ -n "$max_outstanding_messages" ]]; then
+    # Wait until backpressure has actually engaged (a buffer parked in the handler) before dropping the broker, so
+    # teardown deterministically hits the non-empty-handler stop() path instead of racing a fixed sleep.
+    wait_until grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
+  else
+    sleep 1
+  fi
+  docker compose stop mqtt-broker
+  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$query_id" --require-healthy "worker-1"
+}
+
 @test "example test with small data" {
   setup_distributed tests/good/example.yaml
 
@@ -106,31 +161,7 @@ EOF
 }
 
 @test "fails query when broker stops during processing" {
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM GENERATOR(
-        'CSV' AS "INPUT_FORMATTER"."TYPE",
-        'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
-        'EMIT_RATE 10' AS "SOURCE"."GENERATOR_RATE_CONFIG",
-        SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO MQTT(
-        'worker-1:8080' AS "SINK"."HOST",
-        'mqtt-sink-test' AS "SINK"."TOPIC",
-        'mqtt-broker' AS "SINK"."SERVER_URI",
-        2 AS "SINK"."QOS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT"
-    )
-EOF
-)"
-  assert_success
-  query_id=$output
-
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy "worker-1"
-  sleep 1
-  docker compose stop mqtt-broker
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$query_id" --require-healthy "worker-1"
+  run_query_and_drop_broker_while_running 10 "" "" ""
 }
 
 @test "worker survives broker loss while backpressured" {
@@ -138,36 +169,7 @@ EOF
   # BackpressureHandler is non-empty, then drop the broker. Losing the connection while the handler is
   # non-empty previously fired an INVARIANT in stop() and terminated the worker. The query must Fail
   # while worker-1 stays healthy.
-  setup_distributed tests/good/single-worker-with-4k-buffers.yaml
-  run docker_nes_cli -t tests/good/single-worker-with-4k-buffers.yaml start "$(cat <<'EOF'
-    SELECT * FROM GENERATOR(
-        'CSV' AS "INPUT_FORMATTER"."TYPE",
-        'worker-1:8080' AS "SOURCE"."HOST",
-        'ALL' AS "SOURCE"."STOP_GENERATOR_WHEN_SEQUENCE_FINISHES",
-        'SEQUENCE UINT64 0 10000000 1' AS "SOURCE"."GENERATOR_SCHEMA",
-        'EMIT_RATE 100000' AS "SOURCE"."GENERATOR_RATE_CONFIG",
-        SCHEMA(id UINT64 NOT NULL) AS "SOURCE"."SCHEMA"
-    ) INTO MQTT(
-        'worker-1:8080' AS "SINK"."HOST",
-        'mqtt-sink-test' AS "SINK"."TOPIC",
-        'mqtt-broker' AS "SINK"."SERVER_URI",
-        2 AS "SINK"."QOS",
-        'CSV' AS "SINK"."OUTPUT_FORMAT",
-        4 AS "SINK"."MAX_OUTSTANDING_MESSAGES",
-        '2' AS "SINK"."BACKPRESSURE_LOWER_THRESHOLD",
-        '4' AS "SINK"."BACKPRESSURE_UPPER_THRESHOLD"
-    )
-EOF
-)"
-  assert_success
-  query_id=$output
-
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Running" "$query_id" --require-healthy "worker-1"
-  # Wait until backpressure has actually engaged (a buffer parked in the handler) before dropping the broker, so
-  # teardown deterministically hits the non-empty-handler stop() path this test targets instead of racing a fixed sleep.
-  wait_until grep -q "Backpressure acquired:" worker-1/singleNodeWorker.log
-  docker compose stop mqtt-broker
-  wait_until_status tests/good/single-worker-with-4k-buffers.yaml "Failed" "$query_id" --require-healthy "worker-1"
+  run_query_and_drop_broker_while_running 100000 4 2 4
 }
 
 @test "fails query when broker is unavailable at startup" {
