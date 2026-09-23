@@ -120,6 +120,21 @@
               hash = "sha256-8pmFtMpML7tTXbH1E3aIpSTQkNF8TFcIPOm2nwnKxkA=";
             };
           });
+        # OpenVINO 2025.3 does not compile against the xbyak 7.36 in nixpkgs (ambiguous RegExp operator+);
+        # pin the version vcpkg uses.
+        xbyakBasePkg =
+          let
+            version = "7.28";
+          in
+          pkgs.xbyak.overrideAttrs (_: {
+            inherit version;
+            src = pkgs.fetchFromGitHub {
+              owner = "herumi";
+              repo = "xbyak";
+              rev = "v${version}";
+              hash = "sha256-jBxpNeA2Ed13zpJ++ODsjKgSC14z/RTFX3px4SapeS0=";
+            };
+          });
 
         packagesForStdlib = { stdlib, extraInputs ? [ ], sanitizer ? sanitizerOptions.none }:
           let
@@ -188,7 +203,7 @@
             boostPkg = overrideStdenv pkgs.boost;
             tbbPkg = overrideStdenv pkgs.tbb;
             pugixmlPkg = overrideStdenv pkgs.pugixml;
-            xbyakPkg = overrideStdenv pkgs.xbyak;
+            xbyakPkg = overrideStdenv xbyakBasePkg;
             simdjsonPkg = overrideStdenv simdjsonBasePkg;
             nlohmannJsonPkg = nlohmannJsonPackages.withSanitizer {
               extraBuildInputs = extraInputs;
