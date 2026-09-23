@@ -158,13 +158,15 @@ struct ConfigParametersTCP
 
 class TCPSource : public Source
 {
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
     constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
     /// We implicitly add one microsecond to avoid operation from never timing out
     /// (https://linux.die.net/man/7/socket)
     constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
     constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
+    /// Bounded backoff between polls of an idle connection. Keeps an idle/slow peer (or a sub-millisecond
+    /// SO_RCVTIMEO) from pinning a CPU core at 100% while staying responsive to query teardown.
+    constexpr static std::chrono::milliseconds IDLE_POLL_BACKOFF{10};
 
 public:
     static const std::string& name()
@@ -175,6 +177,15 @@ public:
 
     explicit TCPSource(const SourceDescriptor& sourceDescriptor);
     ~TCPSource() override = default;
+
+    /// Test-only seam. Constructs a source around an already-connected socket file descriptor,
+    /// bypassing open()/SourceDescriptor so the fillBuffer drain loop can be exercised directly
+    /// against a socketpair(2). Not for production use.
+    struct InjectedSocketTag
+    {
+    };
+
+    TCPSource(InjectedSocketTag, int connectedSocketFd, std::string host, std::string port, float flushIntervalMs);
 
     TCPSource(const TCPSource&) = delete;
     TCPSource& operator=(const TCPSource&) = delete;
@@ -196,12 +207,29 @@ public:
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
+    /// Classification of a single read() result. It separates a clean end-of-stream (read returns 0)
+    /// from transient conditions and a genuine socket error, so that a mid-stream failure is not
+    /// silently reported as end-of-stream. Exposed for focused unit testing of this distinction.
+    enum class ReadOutcome : uint8_t
+    {
+        Data, /// read returned > 0 bytes
+        EndOfStream, /// peer closed the connection cleanly (read returned 0)
+        Retry, /// interrupted before any data arrived (EINTR); read must be retried
+        WouldBlock, /// no data within the receive timeout (EAGAIN/EWOULDBLOCK); poll again
+        Error, /// genuine socket error (e.g. ECONNRESET); caller must surface it
+    };
+
+    [[nodiscard]] static ReadOutcome classifyReadResult(ssize_t bytesReceived, int errnoValue);
+
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool tryToConnect(const addrinfo* result);
+    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes, const std::stop_token& stopToken);
 
     int connection = -1;
     int sockfd = -1;
+    /// The socket's fcntl flags, captured after socket() creates sockfd (see tryToConnect()) and restored,
+    /// with O_NONBLOCK cleared, once the connection is established.
+    int originalFlags = 0;
 
     /// buffer for thread-safe strerror_r
     std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
