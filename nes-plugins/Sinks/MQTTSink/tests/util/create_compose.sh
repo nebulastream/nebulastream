@@ -35,6 +35,14 @@ if [ -z "$TEST_DIR" ]; then
   exit 1
 fi
 
+if [ -z "$NES_DIR" ]; then
+  echo "ERROR: NES_DIR is not set"
+  exit 1
+fi
+
+# shellcheck source=/dev/null
+source "$NES_DIR/scripts/testing/precreate_worker_logdir.sh"
+
 # Check if the argument is an existing file
 if [ ! -f "$1" ]; then
   echo "Error: '$1' is not a valid file or does not exist"
@@ -115,12 +123,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   HOST_PORT=$(echo $HOST | cut -d':' -f2)
   DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
 
-  # The worker runs as the unprivileged image user (uid 10000) and writes
-  # singleNodeWorker.log into its working dir. Pre-create that bind-mounted dir
-  # world-writable; otherwise docker auto-creates it root-owned and the non-root
-  # worker cannot write its log (and crashes at startup).
-  mkdir -p "$TEST_DIR/$HOST_NAME"
-  chmod 0777 "$TEST_DIR/$HOST_NAME"
+  nes_precreate_worker_logdir "$TEST_DIR/$HOST_NAME"
 
   # Check if worker has config
   HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
