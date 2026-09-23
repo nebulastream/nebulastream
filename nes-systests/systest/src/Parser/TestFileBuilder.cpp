@@ -143,12 +143,13 @@ public:
         /// One statement per pairing of overrides, as for a normal query statement.
         for (auto& alternative : blockOverrides)
         {
-            statements.emplace_back(DifferentialStatement{
-                .firstSql = firstSql,
-                .firstId = firstId,
-                .secondSql = secondSql,
-                .secondId = secondId,
-                .overrides = std::move(alternative)});
+            statements.emplace_back(
+                DifferentialStatement{
+                    .firstSql = firstSql,
+                    .firstId = firstId,
+                    .secondSql = secondSql,
+                    .secondId = secondId,
+                    .overrides = std::move(alternative)});
         }
     }
 

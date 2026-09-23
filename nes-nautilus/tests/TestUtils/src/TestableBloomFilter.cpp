@@ -45,24 +45,26 @@ TestableBloomFilter::TestableBloomFilter(Nautilus::Interface::BloomFilterParams 
     : params{params}
     , bits(divRoundUp(params.getBitCount(), 64), 0)
     , engine{std::make_unique<nautilus::engine::NautilusEngine>(makeEngine(mode))}
-    , addFn{engine->registerFunction(std::function(
-          [params](nautilus::val<uint64_t*> bitsPtr, nautilus::val<uint64_t> key)
-          {
-              const MurMur3HashFunction hashFunc;
-              const HashFunction& hashFunction = hashFunc;
-              auto hash = hashFunction.calculate(VarVal{key});
-              const Nautilus::Interface::BloomFilterRef bloomFilter{bitsPtr, params};
-              bloomFilter.add(hash);
-          }))}
-    , mightContainFn{engine->registerFunction(std::function(
-          [params](nautilus::val<uint64_t*> bitsPtr, nautilus::val<uint64_t> key) -> nautilus::val<bool>
-          {
-              const MurMur3HashFunction hashFunc;
-              const HashFunction& hashFunction = hashFunc;
-              auto hash = hashFunction.calculate(VarVal{key});
-              const Nautilus::Interface::BloomFilterRef bloomFilter{bitsPtr, params};
-              return bloomFilter.mightContain(hash);
-          }))}
+    , addFn{engine->registerFunction(
+          std::function(
+              [params](nautilus::val<uint64_t*> bitsPtr, nautilus::val<uint64_t> key)
+              {
+                  const MurMur3HashFunction hashFunc;
+                  const HashFunction& hashFunction = hashFunc;
+                  auto hash = hashFunction.calculate(VarVal{key});
+                  const Nautilus::Interface::BloomFilterRef bloomFilter{bitsPtr, params};
+                  bloomFilter.add(hash);
+              }))}
+    , mightContainFn{engine->registerFunction(
+          std::function(
+              [params](nautilus::val<uint64_t*> bitsPtr, nautilus::val<uint64_t> key) -> nautilus::val<bool>
+              {
+                  const MurMur3HashFunction hashFunc;
+                  const HashFunction& hashFunction = hashFunc;
+                  auto hash = hashFunction.calculate(VarVal{key});
+                  const Nautilus::Interface::BloomFilterRef bloomFilter{bitsPtr, params};
+                  return bloomFilter.mightContain(hash);
+              }))}
 {
 }
 

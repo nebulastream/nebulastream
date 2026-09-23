@@ -107,8 +107,9 @@ struct ReflectedCountAggregationLogicalFunction
 Reflected Reflector<CountAggregationLogicalFunction>::operator()(
     const CountAggregationLogicalFunction& function, const ReflectionContext& context) const
 {
-    return context.reflect(detail::ReflectedCountAggregationLogicalFunction{
-        .inputFunction = function.getInputFunction(), .includeNullValues = function.shallIncludeNullValues()});
+    return context.reflect(
+        detail::ReflectedCountAggregationLogicalFunction{
+            .inputFunction = function.getInputFunction(), .includeNullValues = function.shallIncludeNullValues()});
 }
 
 CountAggregationLogicalFunction

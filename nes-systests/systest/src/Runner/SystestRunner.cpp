@@ -146,10 +146,11 @@ Verdict checkSucceededQuery(const SystestQuery& query)
             DifferentialCheck{.firstResultFile = query.resultFile(), .secondResultFile = query.resultFileForDifferentialQuery()});
     }
 
-    return runCheck(QueryResultCheck{
-        .resultFile = query.resultFile(),
-        .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
-        .expectedTuples = NES::get<ExpectedRows>(query.expectation).rows});
+    return runCheck(
+        QueryResultCheck{
+            .resultFile = query.resultFile(),
+            .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
+            .expectedTuples = NES::get<ExpectedRows>(query.expectation).rows});
 }
 
 /// Checks the plan an EXPLAIN printed, which the binder computed, because an EXPLAIN never reaches the worker.
@@ -190,14 +191,15 @@ Verdict checkFailedQuery(const std::optional<DistributedException>& failure, con
         return std::unexpected(Mismatch{fmt::format("Query Failed with unexpected error: {}", actual)});
     }
 
-    auto allExceptionByAddress = std::views::join(std::views::transform(
-        actual.details(),
-        [](auto& exceptionsByAddress)
-        {
-            return std::views::transform(
-                exceptionsByAddress.second,
-                [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
-        }));
+    auto allExceptionByAddress = std::views::join(
+        std::views::transform(
+            actual.details(),
+            [](auto& exceptionsByAddress)
+            {
+                return std::views::transform(
+                    exceptionsByAddress.second,
+                    [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
+            }));
 
     const auto expectedErrorOccurred = std::ranges::any_of(
         allExceptionByAddress | std::views::values,
@@ -210,11 +212,12 @@ Verdict checkFailedQuery(const std::optional<DistributedException>& failure, con
 
     if (not expectedErrorOccurred)
     {
-        return std::unexpected(Mismatch{fmt::format(
-            "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
-            expectedError->message.value_or(""),
-            expectedError->code,
-            actual)});
+        return std::unexpected(
+            Mismatch{fmt::format(
+                "Expected error \"{}({})\" to occur, but it did not! Actual: {}",
+                expectedError->message.value_or(""),
+                expectedError->code,
+                actual)});
     }
 
     return Success{};
@@ -314,8 +317,9 @@ std::vector<RunningQuery> runQueries(
                     std::make_shared<RunningQuery>(nextQuery),
                     progressTracker,
                     failed,
-                    DistributedException(std::unordered_map<Host, std::vector<Exception>>{
-                        {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
+                    DistributedException(
+                        std::unordered_map<Host, std::vector<Exception>>{
+                            {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
                     queryPerformanceMessage);
             }
         }

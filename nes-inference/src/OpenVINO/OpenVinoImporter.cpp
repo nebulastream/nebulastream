@@ -124,12 +124,13 @@ std::expected<std::vector<size_t>, ImportError> shapeFromPartial(const ov::Parti
 
         if (isDynamic && index != 0)
         {
-            return std::unexpected(ImportError{fmt::format(
-                "OpenVINO model {} tensor has a dynamic dimension at index {} (shape {}). Only the first (batch) "
-                "dimension may be dynamic.",
-                role,
-                index,
-                partialShape.to_string())});
+            return std::unexpected(
+                ImportError{fmt::format(
+                    "OpenVINO model {} tensor has a dynamic dimension at index {} (shape {}). Only the first (batch) "
+                    "dimension may be dynamic.",
+                    role,
+                    index,
+                    partialShape.to_string())});
         }
 
         if (isDynamic)
@@ -161,11 +162,12 @@ std::expected<void, ImportError> validateBatchDimension(const std::vector<size_t
 {
     if (shape.size() >= 2 && shape.front() > 1)
     {
-        return std::unexpected(ImportError{fmt::format(
-            "OpenVINO model input tensor has a fixed batch dimension of {} (shape [{}]). Model inference evaluates one tuple at a "
-            "time, so the leading dimension must be 1 or dynamic.",
-            shape.front(),
-            fmt::join(shape, ", "))});
+        return std::unexpected(
+            ImportError{fmt::format(
+                "OpenVINO model input tensor has a fixed batch dimension of {} (shape [{}]). Model inference evaluates one tuple at a "
+                "time, so the leading dimension must be 1 or dynamic.",
+                shape.front(),
+                fmt::join(shape, ", "))});
     }
     return {};
 }
