@@ -56,7 +56,7 @@ setup() {
 
   # Fresh random port per test: tests that don't care about the bind address still
   # launch a real worker, and the default [::]:8080 collides across suites running
-  # in parallel (ctest -j). See issue #61.
+  # in parallel (ctest -j).
   PORT=$(( 20000 + (RANDOM % 20000) ))
 
   echo "# Using TEST_DIR: $TMP_DIR (port $PORT)" >&3
