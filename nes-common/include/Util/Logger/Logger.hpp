@@ -47,7 +47,7 @@ template <LogLevel L>
 struct LogCaller
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...)
+    constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, const arguments&...)
     {
         /// nop
     }
@@ -57,11 +57,11 @@ template <>
 struct LogCaller<LogLevel::LOG_INFO>
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, const arguments&... args)
     {
         if (auto instance = Logger::getInstance())
         {
-            instance->info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+            instance->info(std::move(loc), fmt::runtime(format.get()), args...);
         }
     }
 };
@@ -70,11 +70,11 @@ template <>
 struct LogCaller<LogLevel::LOG_TRACE>
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, const arguments&... args)
     {
         if (auto instance = Logger::getInstance())
         {
-            instance->trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+            instance->trace(std::move(loc), fmt::runtime(format.get()), args...);
         }
     }
 };
@@ -83,11 +83,11 @@ template <>
 struct LogCaller<LogLevel::LOG_DEBUG>
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, const arguments&... args)
     {
         if (auto instance = Logger::getInstance())
         {
-            instance->debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+            instance->debug(std::move(loc), fmt::runtime(format.get()), args...);
         }
     }
 };
@@ -96,11 +96,11 @@ template <>
 struct LogCaller<LogLevel::LOG_ERROR>
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, const arguments&... args)
     {
         if (auto instance = Logger::getInstance())
         {
-            instance->error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+            instance->error(std::move(loc), fmt::runtime(format.get()), args...);
         }
     }
 };
@@ -109,11 +109,11 @@ template <>
 struct LogCaller<LogLevel::LOG_WARNING>
 {
     template <typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args)
+    constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, const arguments&... args)
     {
         if (auto instance = Logger::getInstance())
         {
-            instance->warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+            instance->warn(std::move(loc), fmt::runtime(format.get()), args...);
         }
     }
 };
@@ -124,7 +124,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
     { \
         if (false) \
         { \
-            [](auto&&... args) { ((void)args, ...); }(__VA_ARGS__); \
+            [](const auto&... args) { ((void)args, ...); }(__VA_ARGS__); \
         } \
     } while (0)
 
