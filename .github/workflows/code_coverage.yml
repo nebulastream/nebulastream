@@ -32,7 +32,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
     timeout-minutes: 90
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:

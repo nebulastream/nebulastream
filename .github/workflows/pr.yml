@@ -9,6 +9,17 @@ on:
   merge_group:
     branches: [ main ]
 
+# cancel previous runs of same PR / branch.
+# In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
+# gh-readonly-queue ref) to avoid queued runs cancelling each other.
+# A title/body edit ('edited' without a base change) dispatches nothing (see the code/docs job
+# gates), but concurrency is evaluated before those gates — so isolate those runs in a unique group,
+# otherwise cancel-in-progress would kill a legit in-progress build before the skip even happens.
+concurrency:
+  # run_id suffix gives no-op edits a private group; drop it if 'edited' is ever removed from triggers.
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr${{ (github.event.action == 'edited' && github.event.changes.base == null) && format('-noop-{0}', github.run_id) || '' }}
+  cancel-in-progress: true
+
 jobs:
   # Classify the PR diff once (see .github/ci/full-ci-skip-paths.txt) and hand the result to the two
   # pipelines below. A docs-only PR skips pr_code.yml; a code-only PR skips pr_docs.yml.
