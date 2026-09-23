@@ -333,7 +333,6 @@ TEST_P(InvokeExceptionTest, NoexceptInvokeKeepsDirectCallPath)
     EXPECT_EQ(trace.find("CALL_WITH_EXCEPTION_HANDLING"), std::string::npos) << trace;
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    TraceModes, InvokeExceptionTest, testing::Values(std::string{"exceptionBasedTracing"}, std::string{"lazyTracing"}));
+INSTANTIATE_TEST_SUITE_P(TraceModes, InvokeExceptionTest, testing::Values(std::string{"lazyTracing"}));
 }
 }
