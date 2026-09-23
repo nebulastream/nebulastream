@@ -19,7 +19,6 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
@@ -40,9 +39,10 @@ BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThre
 std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
 {
     auto rstate = stateLock.ulock();
+    const BufferId bufferId{buffer.getOriginId(), buffer.getSequenceNumber(), buffer.getChunkNumber()};
 
     /// If this is the pending retry buffer, re-emit it to keep the retry loop alive.
-    if (buffer.getSequenceNumber() == rstate->pendingSequenceNumber && buffer.getChunkNumber() == rstate->pendingChunkNumber)
+    if (rstate->pending == bufferId)
     {
         return buffer;
     }
@@ -59,23 +59,26 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     }
 
     /// Ensure there is always one pending buffer being retried to avoid deadlocks.
-    if (wstate->pendingSequenceNumber == INVALID<SequenceNumber>)
+    if (not wstate->pending)
     {
         auto pending = std::move(wstate->buffered.front());
         wstate->buffered.pop_front();
-        wstate->pendingSequenceNumber = pending.getSequenceNumber();
-        wstate->pendingChunkNumber = pending.getChunkNumber();
+        wstate->pending = BufferId{pending.getOriginId(), pending.getSequenceNumber(), pending.getChunkNumber()};
         return pending;
     }
 
     return {};
 }
 
-std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController& backpressureController)
+std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buffer, BackpressureController& backpressureController)
 {
     const auto state = stateLock.wlock();
-    state->pendingSequenceNumber = INVALID<SequenceNumber>;
-    state->pendingChunkNumber = INVALID<ChunkNumber>;
+    const BufferId bufferId{buffer.getOriginId(), buffer.getSequenceNumber(), buffer.getChunkNumber()};
+    if (state->pending != bufferId)
+    {
+        return {};
+    }
+    state->pending.reset();
 
     /// Release backpressure when the buffer count drops to the lower hysteresis threshold.
     if (state->hasBackpressure && state->buffered.size() <= lowerThreshold)
@@ -89,6 +92,7 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(BackpressureController
     {
         auto nextBuffer = std::move(state->buffered.front());
         state->buffered.pop_front();
+        state->pending = BufferId{nextBuffer.getOriginId(), nextBuffer.getSequenceNumber(), nextBuffer.getChunkNumber()};
         return {nextBuffer};
     }
     return {};
