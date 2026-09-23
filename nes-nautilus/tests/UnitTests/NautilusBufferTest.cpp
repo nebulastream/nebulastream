@@ -62,7 +62,9 @@ nautilus::engine::NautilusEngine makeEngine(EngineMode mode)
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", mode == EngineMode::Compiler);
     options.setOption("engine.backend", std::string("mlir"));
-    options.setOption("engine.compilationStrategy", std::string("legacy"));
+    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
+    options.setOption("ir.verifyAfterEachPass", true);
+    options.setOption("ir.failOnVerifyError", true);
     options.setOption("mlir.enableMultithreading", false);
     return nautilus::engine::NautilusEngine{options};
 }

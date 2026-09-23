@@ -12,7 +12,7 @@
 
 # Picks a standard c++ library. By default we opt into libc++ for its hardening mode. However if libc++ is not available
 # we fallback to libstdc++. The user can manually opt out of libc++ by disabling the USE_LIBCXX_IF_AVAILABLE option.
-# Currently NebulaStream requires Libc++-19 or Libstdc++-14 or above.
+# Currently NebulaStream requires Libc++-22 or Libstdc++-15 or above.
 
 include(CheckCXXSourceCompiles)
 
@@ -21,14 +21,14 @@ SET(USING_LIBCXX OFF)
 SET(USING_LIBSTDCXX OFF)
 
 if (USE_LIBCXX_IF_AVAILABLE)
-    # check if libc++ available and at least version 19
+    # check if libc++ available and at least version 22
     set(CMAKE_REQUIRED_FLAGS "-std=c++23 -stdlib=libc++")
     check_cxx_source_compiles("
         #include <cstddef>
-        #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 190000
+        #if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION >= 220000
             int main() { return 0; }
         #else
-            #error \"libc++ version is below 19\"
+            #error \"libc++ version is below 22\"
         #endif
     " LIBCXX_VERSION_CHECK)
 
@@ -46,18 +46,18 @@ if (NOT ${USING_LIBCXX})
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
         #include <cstddef>
-        #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
+        #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 15
             int main() { return 0; }
         #else
-            #error \"libstdc++ version is below 14\"
+            #error \"libstdc++ version is below 15\"
         #endif
     " LIBSTDCXX_VERSION_CHECK)
 
     if (LIBSTDCXX_VERSION_CHECK)
         set(USING_LIBSTDCXX ON)
-        message(STATUS "Libstdc++ >= 14")
+        message(STATUS "Libstdc++ >= 15")
     else ()
-        message(FATAL_ERROR "Requires Libstdc++ >= 14. On ubuntu systems this can be installed via g++-14")
+        message(FATAL_ERROR "Requires Libstdc++ >= 15. On ubuntu systems this can be installed via g++-15")
     endif ()
 endif ()
 

@@ -64,7 +64,7 @@ private:
 };
 
 template <DerivedBaseOption T>
-SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description){};
+SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description) { };
 
 template <DerivedBaseOption T>
 void SequenceOption<T>::clear()

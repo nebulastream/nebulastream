@@ -98,6 +98,7 @@ Checks: [
   "-hicpp-use-nullptr",
   "-hicpp-use-override",
   "-hicpp-vararg",
+  "-llvm-prefer-static-over-anonymous-namespace", # conflicts with misc-use-anonymous-namespace and our convention
   "-llvm-else-after-return",
   "-llvm-qualified-auto",
   "-llvm-header-guard",
@@ -111,6 +112,7 @@ WarningsAsErrors: '
   -bugprone-exception-escape,
   -bugprone-implicit-widening-of-multiplication-result,
   -bugprone-unchecked-optional-access,
+  -clang-analyzer-cplusplus.NewDeleteLeaks,
   -cert-err58-cpp,
   -cert-msc50-cpp,
   -cert-msc51-cpp,
@@ -119,6 +121,7 @@ WarningsAsErrors: '
   -cppcoreguidelines-avoid-non-const-global-variables,
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-missing-std-forward,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-narrowing-conversions,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,

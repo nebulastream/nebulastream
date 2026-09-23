@@ -1,6 +1,6 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   fetchFromGitHub,
   cmake,
   ninja,
@@ -22,7 +22,7 @@
 }:
 
 let
-  llvm = llvmPackages_19;
+  llvm = llvmPackages;
   clangStdenv = llvm.stdenv;
   libcxxStdenv = llvm.libcxxStdenv;
 
@@ -97,6 +97,8 @@ let
         ("-DFOLLY_USE_LIBCPP=" + (if useLibcxx then "ON" else "OFF"))
         "-DCMAKE_INSTALL_INCLUDEDIR=include"
         "-DCMAKE_INSTALL_LIBDIR=lib"
+        # folly requires CMake 3.0.2, and CMake 4 removed compatibility with versions below 3.5.
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
       ]
       ++ libcxxFlags;
 

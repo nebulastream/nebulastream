@@ -393,17 +393,18 @@ struct Reflector<QualifiedIdentifierBase<Extent>>
     Reflected operator()(const QualifiedIdentifierBase<Extent>& identifierList, const ReflectionContext& context) const
     {
         /// Preserve quotes so case-sensitive identifier components survive deserialization.
-        return context.reflect(fmt::format(
-            "{}",
-            fmt::join(
-                identifierList
-                    | std::views::transform(
-                        [](const Identifier& identifier)
-                        {
-                            return identifier.isCaseSensitive() ? std::string(identifier.getOriginalString())
-                                                                : identifier.asCanonicalString();
-                        }),
-                ".")));
+        return context.reflect(
+            fmt::format(
+                "{}",
+                fmt::join(
+                    identifierList
+                        | std::views::transform(
+                            [](const Identifier& identifier)
+                            {
+                                return identifier.isCaseSensitive() ? std::string(identifier.getOriginalString())
+                                                                    : identifier.asCanonicalString();
+                            }),
+                    ".")));
     }
 };
 

@@ -183,12 +183,13 @@ private:
                 throw InvalidOptimizerRuleset(
                     "unregistered rule '{}' in dependency graph. rule needed by: {}",
                     dependency.name(),
-                    fmt::to_string(fmt::join(
-                        neededBy
-                            | std::views::transform(
-                                [this](const std::type_index dependent)
-                                { return (rules.contains(dependent) ? rules.at(dependent).getName() : dependent.name()); }),
-                        " ,")));
+                    fmt::to_string(
+                        fmt::join(
+                            neededBy
+                                | std::views::transform(
+                                    [this](const std::type_index dependent)
+                                    { return (rules.contains(dependent) ? rules.at(dependent).getName() : dependent.name()); }),
+                            " ,")));
             }
             for (auto dependent : neededBy)
             {
@@ -210,10 +211,11 @@ private:
     /// followed by "N unregistered rule(s)" if the set references any type not registered in this manager.
     [[nodiscard]] std::string formatEdges(const std::set<std::type_index>& types) const
     {
-        std::string names = fmt::to_string(fmt::join(
-            types | std::views::filter([this](std::type_index type) { return rules.contains(type); })
-                | std::views::transform([this](std::type_index type) { return rules.at(type).getName(); }),
-            ", "));
+        std::string names = fmt::to_string(
+            fmt::join(
+                types | std::views::filter([this](std::type_index type) { return rules.contains(type); })
+                    | std::views::transform([this](std::type_index type) { return rules.at(type).getName(); }),
+                ", "));
 
         const auto unregistered = std::ranges::count_if(types, [this](std::type_index type) { return !rules.contains(type); });
         if (unregistered == 0)

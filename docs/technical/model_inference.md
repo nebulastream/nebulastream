@@ -57,6 +57,11 @@ pip install openvino==2025.3.0
 ovc --version  # sanity check
 ```
 
+OpenVINO 2025.3.0 only provides wheels up to Python 3.13. On systems with a newer default Python (e.g. Ubuntu 26.04
+ships 3.14), create the environment on an older interpreter, for example with
+[uv](https://docs.astral.sh/uv/): `uv venv --python 3.13 ~/openvino && uv pip install --python ~/openvino/bin/python openvino==2025.3.0`.
+The provided Docker images already do this.
+
 `ovc` must be reachable on the `$PATH` of every process that handles
 `CREATE MODEL` — the coordinator for a deployed cluster, or the offline
 `nebucli`. Workers do not need it: they receive the already-converted IR.

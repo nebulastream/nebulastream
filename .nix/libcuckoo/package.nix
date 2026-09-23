@@ -1,6 +1,6 @@
 {
   lib,
-  llvmPackages_19,
+  llvmPackages,
   cmake,
   ninja,
   pkg-config,
@@ -8,7 +8,6 @@
 }:
 
 let
-  llvmPackages = llvmPackages_19;
   clangStdenv = llvmPackages.stdenv;
   libcxxStdenv = llvmPackages.libcxxStdenv;
 
@@ -51,6 +50,8 @@ let
         "-DBUILD_STRESS_TESTS=OFF"
         "-DBUILD_UNIT_TESTS=OFF"
         "-DBUILD_UNIVERSAL_BENCHMARK=OFF"
+        # libcuckoo requires CMake 3.1, and CMake 4 removed compatibility with versions below 3.5.
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
       ]
       ++ libcxxFlags;
 

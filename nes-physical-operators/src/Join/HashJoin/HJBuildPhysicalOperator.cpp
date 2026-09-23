@@ -137,7 +137,8 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     ChainedHashMapConfig hashMapConfig,
     std::vector<PhysicalFunction> keyFunctions,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
-    : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
+    : StreamJoinBuildPhysicalOperator{
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(tupleLayout), std::move(sliceStoreRef)}
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
 {
