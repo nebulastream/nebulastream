@@ -14,7 +14,13 @@ add_subdirectory(src)
 get_source(nes-statistics NES_STATISTICS_SOURCE_FILES)
 
 add_library(nes-statistics ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PUBLIC nes-common nes-logical-operators)
+target_link_libraries(nes-statistics PUBLIC nes-common nes-logical-operators nes-nautilus)
+
+# The decoders for stored statistic payloads, keyed by the blob type their aggregation writes. Entries are static
+# create members on the iterator classes; a blob type without an entry decodes as a scalar.
+create_runtime_registry(StatisticIterator nes-statistics
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}StatisticIterator::create"
+        HEADER_TEMPLATE "\${PLUGIN_NAME}StatisticIterator.hpp")
 
 target_include_directories(nes-statistics PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

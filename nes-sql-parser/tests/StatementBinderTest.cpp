@@ -47,6 +47,7 @@
 #include <Operators/Windows/Aggregations/AggregationLogicalFunctionProvider.hpp>
 #include <Operators/Windows/Aggregations/AggregationParameters.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/EquiWidthHistogramAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -844,6 +845,25 @@ TEST_F(StatementBinderTest, RegisteredSynopsisIsBuiltFlat)
     }
 }
 
+TEST_F(StatementBinderTest, EquiWidthHistogramIsBuiltFlatFromAMemoryBudget)
+{
+    const auto plan = bindPlan(fmt::format("SELECT EQUIWIDTHHISTOGRAM(44, x, 120, 0, 25){}", WINDOWED));
+    const auto writers = getOperatorByType<StatisticStoreWriterLogicalOperator>(plan);
+    ASSERT_EQ(writers.size(), 1);
+    EXPECT_EQ(writers.front()->getStatisticId(), StatisticId(44));
+    EXPECT_EQ(writers.front()->getTypeName(), StatisticBlobType{"EquiWidthHistogram"});
+
+    const auto projected = getOperatorByType<WindowedAggregationLogicalOperator>(plan).front()->getWindowAggregation();
+    ASSERT_EQ(projected.size(), 2);
+    const auto histogram = projected.at(0).function.tryGetAs<EquiWidthHistogramAggregationLogicalFunction>();
+    ASSERT_TRUE(histogram.has_value());
+    /// The budget of 120 bytes pays for the 24 byte header and twelve 8 byte counters.
+    EXPECT_EQ(histogram.value()->getNumberOfBins(), 12);
+    EXPECT_EQ(histogram.value()->getMinValue(), 0);
+    EXPECT_EQ(histogram.value()->getMaxValue(), 25);
+    EXPECT_TRUE(projected.at(1).function.tryGetAs<CountAggregationLogicalFunction>().has_value());
+}
+
 TEST_F(StatementBinderTest, RegisteredAggregationByNameIsAnOrdinaryAggregation)
 {
     const auto plan = bindPlan(fmt::format("SELECT TESTAGGREGATION(x, 5){}", WINDOWED));
@@ -954,6 +974,15 @@ TEST_F(StatementBinderTest, StatisticCallsWithBadArgumentsAreInvalidQuerySyntax)
         "STATISTIC_BUILD(1, SUM(x)), STATISTIC_BUILD(2, SUM(y))",
         "TESTSYNOPSIS(1, 10), TESTSYNOPSIS(2, 10)",
         "RESERVOIR(42, 100)",
+        /// EQUIWIDTHHISTOGRAM(statisticId, field, budgetInBytes, min, max)
+        "EQUIWIDTHHISTOGRAM(44, x, 120, 0)",
+        "EQUIWIDTHHISTOGRAM(44, x, 120, 0, 25, 1)",
+        "EQUIWIDTHHISTOGRAM(x, 120, 0, 25)",
+        "EQUIWIDTHHISTOGRAM(44, 1, 120, 0, 25)",
+        "EQUIWIDTHHISTOGRAM(44, x, 120, 25, 0)",
+        "EQUIWIDTHHISTOGRAM(44, x, 120, 25, 25)",
+        "EQUIWIDTHHISTOGRAM(44, x, 16, 0, 25)",
+        "EQUIWIDTHHISTOGRAM(44, x, 1024, 0, 25)",
     };
     for (const auto& select : selects)
     {

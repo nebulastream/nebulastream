@@ -1,0 +1,225 @@
+# name: aggregation/statistics/WindowAggregationHistograms.test
+# description: The equi-width histogram synopsis end to end: EQUIWIDTHHISTOGRAM builds one histogram per window into
+#              the statistic store and EQUIWIDTHHISTOGRAM_PROBE reads it back as one row per bin.
+# groups: [Aggregation, WindowOperators, Statistics]
+
+# The statistic store is process-global and keeps every blob written for a key, so a statistic id must be used by
+# exactly one query in the whole systest tree. This file owns the ids 200-299.
+#
+# Every expected histogram below is worked out from the input rows in the comment above it, never from the layout the
+# code under test writes.
+
+CREATE LOGICAL SOURCE stream(value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,100
+3,200
+5,300
+23,400
+7,1100
+25,1200
+0,2100
+
+CREATE SINK sinkBuild(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkBins(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, binStart UINT64 NOT NULL, binCounter UINT64 NOT NULL, binEnd UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkRemainder(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, binStart UINT64 NOT NULL, binCounter UINT64 NOT NULL, binEnd UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkRange(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, binStart UINT64 NOT NULL, binCounter UINT64 NOT NULL, binEnd UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkOutOfRange(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, binStart UINT64 NOT NULL, binCounter UINT64 NOT NULL, binEnd UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkManyBins(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL, binStart UINT64 NOT NULL, binCounter UINT64 NOT NULL, binEnd UINT64 NOT NULL)  TYPE File;
+CREATE SINK sinkRejected(STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL, STATISTICNUMBEROFSEENMEASUREMENTS UINT64 NOT NULL)  TYPE File;
+
+# Write only: the build re-emits the statistic metadata, the histogram itself stays in the store. The COUNT the
+# statistic build pairs every synopsis with is what STATISTICNUMBEROFSEENMEASUREMENTS reports, so the three windows
+# hold 4, 2 and 1 values.
+SELECT EQUIWIDTHHISTOGRAM(200, value, 120, 0, 25)
+FROM stream WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkBuild;
+----
+200,0,1000,4
+200,1000,2000,2
+200,2000,3000,1
+
+# Write and read back in one query, all bins.
+# A budget of 120 bytes pays for the 24 byte header and twelve 8 byte counters, so w = (25 - 0) / 12 = 2 and the bins
+# are [0,2), [2,4), ... [20,22) and finally [22,25] -- the last one inclusive and three values wider.
+# Window [0,1000) holds 1, 3, 5 and 23: 1 -> bin 0, 3 -> bin 1, 5 -> bin 2, 23 -> bin 11.
+# Window [1000,2000) holds 7 and 25: 7 -> bin 3, and 25 is the maximum, which belongs to the last bin, 11.
+# Window [2000,3000) holds 0: bin 0.
+SELECT *
+FROM (
+    SELECT EQUIWIDTHHISTOGRAM_PROBE(201, binStart, uint64, binCounter, uint64, binEnd, uint64)
+    FROM (
+        SELECT EQUIWIDTHHISTOGRAM(201, value, 120, 0, 25)
+        FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkBins;
+----
+201,0,1000,4,0,1,2
+201,0,1000,4,2,1,4
+201,0,1000,4,4,1,6
+201,0,1000,4,6,0,8
+201,0,1000,4,8,0,10
+201,0,1000,4,10,0,12
+201,0,1000,4,12,0,14
+201,0,1000,4,14,0,16
+201,0,1000,4,16,0,18
+201,0,1000,4,18,0,20
+201,0,1000,4,20,0,22
+201,0,1000,4,22,1,25
+201,1000,2000,2,0,0,2
+201,1000,2000,2,2,0,4
+201,1000,2000,2,4,0,6
+201,1000,2000,2,6,1,8
+201,1000,2000,2,8,0,10
+201,1000,2000,2,10,0,12
+201,1000,2000,2,12,0,14
+201,1000,2000,2,14,0,16
+201,1000,2000,2,16,0,18
+201,1000,2000,2,18,0,20
+201,1000,2000,2,20,0,22
+201,1000,2000,2,22,1,25
+201,2000,3000,1,0,1,2
+201,2000,3000,1,2,0,4
+201,2000,3000,1,4,0,6
+201,2000,3000,1,6,0,8
+201,2000,3000,1,8,0,10
+201,2000,3000,1,10,0,12
+201,2000,3000,1,12,0,14
+201,2000,3000,1,14,0,16
+201,2000,3000,1,16,0,18
+201,2000,3000,1,18,0,20
+201,2000,3000,1,20,0,22
+201,2000,3000,1,22,0,25
+
+# A range that does not divide evenly. A budget of 56 bytes pays for the header and four counters, so
+# w = (25 - 0) / 4 = 6 and the bins are [0,6), [6,12), [12,18) and [18,25]: the last one holds the remainder 25 % 4 = 1
+# and the value 25 itself, which makes it seven values wide instead of six, and its binEnd is the inclusive 25.
+# Window [0,1000): 1, 3 and 5 -> bin 0, 23 -> bin 3.
+# Window [1000,2000): 7 -> bin 1, 25 -> the last bin, 3.
+# Window [2000,3000): 0 -> bin 0.
+SELECT *
+FROM (
+    SELECT EQUIWIDTHHISTOGRAM_PROBE(202, binStart, uint64, binCounter, uint64, binEnd, uint64)
+    FROM (
+        SELECT EQUIWIDTHHISTOGRAM(202, value, 56, 0, 25)
+        FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkRemainder;
+----
+202,0,1000,4,0,3,6
+202,0,1000,4,6,0,12
+202,0,1000,4,12,0,18
+202,0,1000,4,18,1,25
+202,1000,2000,2,0,0,6
+202,1000,2000,2,6,1,12
+202,1000,2000,2,12,0,18
+202,1000,2000,2,18,1,25
+202,2000,3000,1,0,1,6
+202,2000,3000,1,6,0,12
+202,2000,3000,1,12,0,18
+202,2000,3000,1,18,0,25
+
+# The _PROBE_RANGE form reads every statistic contained in the window bounds it is handed, rather than the one that
+# matches them exactly. Chained straight onto the build, those bounds are a single window, so this pins that the range
+# form parses, lowers and decodes -- a range genuinely spanning several windows needs a second query to drive the
+# probe, and the systest runner does not order the queries of a file against each other.
+# Same geometry as query 202, so the same bins.
+SELECT *
+FROM (
+    SELECT EQUIWIDTHHISTOGRAM_PROBE_RANGE(203, binStart, uint64, binCounter, uint64, binEnd, uint64)
+    FROM (
+        SELECT EQUIWIDTHHISTOGRAM(203, value, 56, 0, 25)
+        FROM stream WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkRange;
+----
+203,0,1000,4,0,3,6
+203,0,1000,4,6,0,12
+203,0,1000,4,12,0,18
+203,0,1000,4,18,1,25
+203,1000,2000,2,0,0,6
+203,1000,2000,2,6,1,12
+203,1000,2000,2,12,0,18
+203,1000,2000,2,18,1,25
+203,2000,3000,1,0,1,6
+203,2000,3000,1,6,0,12
+203,2000,3000,1,12,0,18
+203,2000,3000,1,18,0,25
+
+
+CREATE LOGICAL SOURCE outOfRange(value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR outOfRange TYPE File;
+ATTACH INLINE
+5,100
+10,200
+40,300
+35,400
+100,500
+
+# A value outside the histogram's range is counted in the last bin rather than dropped, on both sides, and so is the
+# maximum itself. A budget of 56 bytes over 10..35 gives four bins of w = (35 - 10) / 4 = 6: [10,16), [16,22),
+# [22,28) and [28,35].
+# All five values fall in the one window [0,1000): 10 -> bin 0; 5 is below the minimum -> last bin; 35 is the
+# maximum -> last bin; 40 and 100 are above the maximum -> last bin. So bin 0 counts 1 and bin 3 counts 4.
+SELECT *
+FROM (
+    SELECT EQUIWIDTHHISTOGRAM_PROBE(204, binStart, uint64, binCounter, uint64, binEnd, uint64)
+    FROM (
+        SELECT EQUIWIDTHHISTOGRAM(204, value, 56, 10, 35)
+        FROM outOfRange WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+INTO sinkOutOfRange;
+----
+204,0,1000,5,10,1,16
+204,0,1000,5,16,0,22
+204,0,1000,5,22,0,28
+204,0,1000,5,28,4,35
+
+
+CREATE LOGICAL SOURCE manyBins(value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR manyBins TYPE File;
+ATTACH INLINE
+0,100
+5,200
+6819,300
+6820,400
+10000,500
+
+# A histogram far larger than one hash-map page. A budget of 5480 bytes pays for 682 bins, so the aggregation state
+# alone is 5456 bytes and the hash-map entry does not fit the default 4096 byte page; the lowering grows the page to
+# hold that one entry instead of rejecting the query. This is the statistics-side regression test for that rule.
+# w = (6820 - 0) / 682 = 10, so bin i is [10i, 10i + 10) and the last bin is [6810, 6820].
+# 0 and 5 -> bin 0; 6819 -> bin 681, the last one; 6820 is the maximum and 10000 is above it, so both land there too.
+# Only the populated bins are kept, since 682 rows of goldens would say nothing the two below do not.
+SELECT *
+FROM (
+    SELECT EQUIWIDTHHISTOGRAM_PROBE(205, binStart, uint64, binCounter, uint64, binEnd, uint64)
+    FROM (
+        SELECT EQUIWIDTHHISTOGRAM(205, value, 5480, 0, 6820)
+        FROM manyBins WINDOW TUMBLING(ts, size 1 sec)
+    )
+)
+WHERE binCounter > UINT64(0)
+INTO sinkManyBins;
+----
+205,0,1000,5,0,2,10
+205,0,1000,5,6810,3,6820
+
+# A statistic is written under one id for the whole window, so it cannot also be split per group.
+SELECT EQUIWIDTHHISTOGRAM(206, value, 120, 0, 25)
+FROM stream GROUP BY (value) WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkRejected;
+----
+ERROR 2000
+
+# One build per query, so two histograms in one query are rejected. The POC's multi-histogram scenario is therefore
+# not ported.
+SELECT EQUIWIDTHHISTOGRAM(207, value, 120, 0, 25), EQUIWIDTHHISTOGRAM(208, value, 120, 0, 25)
+FROM stream WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkRejected;
+----
+ERROR 2000

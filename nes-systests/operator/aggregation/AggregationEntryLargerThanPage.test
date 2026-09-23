@@ -1,0 +1,31 @@
+# name: aggregation/AggregationEntryLargerThanPage.test
+# description: A hash-map entry larger than the configured page size still works: the aggregation lowering grows the
+#              page to hold one entry instead of computing zero entries per page.
+# groups: [Aggregation, WindowOperators]
+
+# One entry is the ChainedHashMap entry header plus the grouping key plus every aggregation's state, so five
+# aggregations over a 64 byte page already do not fit. The page is a knob for how many entries share an allocation,
+# not a cap on how large one entry may be -- an aggregation that needs a large state (a synopsis sized by a memory
+# budget, say) says so through its state size and gets a page of its own.
+GlobalConfiguration worker.default_query_execution.page_size: [64]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,100
+2,20,200
+1,30,300
+2,40,400
+1,50,1100
+2,60,1200
+
+CREATE SINK sinkWideEntry(start UINT64 NOT NULL, end UINT64 NOT NULL, id UINT64 NOT NULL, total UINT64 NOT NULL, mean FLOAT64 NOT NULL, smallest UINT64 NOT NULL, largest UINT64 NOT NULL, seen UINT64 NOT NULL)  TYPE File;
+
+SELECT start, end, id, SUM(value) AS total, AVG(value) AS mean, MIN(value) AS smallest, MAX(value) AS largest, COUNT(value) AS seen
+FROM stream GROUP BY (id) WINDOW TUMBLING(ts, size 1 sec)
+INTO sinkWideEntry;
+----
+0,1000,1,40,20,10,30,2
+0,1000,2,60,30,20,40,2
+1000,2000,1,50,50,50,50,1
+1000,2000,2,60,60,60,60,1

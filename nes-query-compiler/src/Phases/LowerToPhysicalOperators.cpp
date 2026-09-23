@@ -121,7 +121,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
     return root;
 }
 
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf)
 {
     const auto registryArgument = LoweringRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;

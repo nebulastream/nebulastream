@@ -10,9 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(StatisticStore)
-add_subdirectory(Statistics)
-
 add_source_files(nes-statistics
-        StatisticTuple.cpp
+        EquiWidthHistogramBlob.cpp
+        EquiWidthHistogramStatisticIterator.cpp
+        StatisticIterator.cpp
+        StatisticIteratorProvider.cpp
+        StatisticIteratorRegistry.cpp
+        ScalarStatisticIterator.cpp
 )
+
+add_registry_entry(StatisticIterator EquiWidthHistogram)
