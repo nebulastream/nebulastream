@@ -203,13 +203,14 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
 void Emitter::emitQuery(SelectStatement query)
 {
     auto [sql, resultFile, inputFiles] = emitSelect(query.sql, query.id, {});
-    runnable.testCases.push_back(RewrittenTestCase{
-        .action = RewrittenQuery{
-            .sql = std::move(sql),
-            .id = query.id,
-            .resultFile = std::move(resultFile),
-            .inputFiles = std::move(inputFiles),
-            .expectation = std::move(query.expected)}});
+    runnable.testCases.push_back(
+        RewrittenTestCase{
+            .action = RewrittenQuery{
+                .sql = std::move(sql),
+                .id = query.id,
+                .resultFile = std::move(resultFile),
+                .inputFiles = std::move(inputFiles),
+                .expectation = std::move(query.expected)}});
 }
 
 void Emitter::emitExplain(ExplainStatement explain)
@@ -229,8 +230,9 @@ void Emitter::emitExplain(ExplainStatement explain)
         rewriter.replace(sink->getStart(), sink->getStop(), sinkRewriter.inlineSink(parse, sink, candidate).sql);
     }
 
-    runnable.testCases.push_back(RewrittenTestCase{
-        .action = RewrittenExplain{.sql = rewriter.getText(), .id = explain.id, .expected = std::move(explain.expected)}});
+    runnable.testCases.push_back(
+        RewrittenTestCase{
+            .action = RewrittenExplain{.sql = rewriter.getText(), .id = explain.id, .expected = std::move(explain.expected)}});
 }
 
 void Emitter::emitDifferential(const DifferentialStatement& block)
@@ -245,14 +247,15 @@ void Emitter::emitDifferential(const DifferentialStatement& block)
         throw TestException("a differential query has to write a result to compare: {}", block.firstSql);
     }
 
-    runnable.testCases.push_back(RewrittenTestCase{
-        .action = RewrittenDifferential{
-            .firstSql = std::move(firstSql),
-            .firstId = block.firstId,
-            .firstResultFile = std::move(*firstResultFile),
-            .secondSql = std::move(secondSql),
-            .secondId = block.secondId,
-            .secondResultFile = std::move(*secondResultFile)}});
+    runnable.testCases.push_back(
+        RewrittenTestCase{
+            .action = RewrittenDifferential{
+                .firstSql = std::move(firstSql),
+                .firstId = block.firstId,
+                .firstResultFile = std::move(*firstResultFile),
+                .secondSql = std::move(secondSql),
+                .secondId = block.secondId,
+                .secondResultFile = std::move(*secondResultFile)}});
 }
 
 }
