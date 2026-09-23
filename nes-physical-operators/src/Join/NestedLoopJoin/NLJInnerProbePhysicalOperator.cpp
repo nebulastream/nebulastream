@@ -87,36 +87,7 @@ void NLJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordB
 
     const PagedVectorRef leftPagedVector(BorrowedNautilusBuffer::from(leftPagedVectorRef), leftTupleLayout);
     const PagedVectorRef rightPagedVector(BorrowedNautilusBuffer::from(rightPagedVectorRef), rightTupleLayout);
-    const auto numberOfTuplesLeft = leftPagedVector.getNumberOfRecords();
-    const auto numberOfTuplesRight = rightPagedVector.getNumberOfRecords();
-
-    /// Outer loop should have more no. tuples
-    if (numberOfTuplesLeft < numberOfTuplesRight)
-    {
-        performNLJ(
-            leftPagedVector,
-            rightPagedVector,
-            *leftTupleLayout,
-            *rightTupleLayout,
-            leftKeyFieldNames,
-            rightKeyFieldNames,
-            executionCtx,
-            windowStart,
-            windowEnd);
-    }
-    else
-    {
-        performNLJ(
-            rightPagedVector,
-            leftPagedVector,
-            *rightTupleLayout,
-            *leftTupleLayout,
-            rightKeyFieldNames,
-            leftKeyFieldNames,
-            executionCtx,
-            windowStart,
-            windowEnd);
-    }
+    performNLJSmallerSideOuter(leftPagedVector, rightPagedVector, executionCtx, windowStart, windowEnd);
 }
 
 }
