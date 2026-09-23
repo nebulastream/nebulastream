@@ -78,21 +78,6 @@ jobs:
         run: |
           ./.nix/nix-cmake.sh -DCMAKE_BUILD_TYPE=Debug -DUSE_BUILD_CACHE=OFF -DNES_SPLIT_TEST_BINARIES=OFF -DCMAKE_C_COMPILER_LAUNCHER="$SCCACHE_BIN" -DCMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_BIN" -G Ninja -S . -B cmake-build-nix
 
-      # TEMP DIAGNOSTIC: the devShell build fails with "collect2: posix_spawn: Argument list too long"
-      - name: Diagnose devShell environment size
-        continue-on-error: true
-        run: |
-          printf 'int main(){return 0;}\n' > /tmp/nes-diag.c
-          ./.nix/nix-run.sh bash -c '
-            echo "env bytes: $(env | wc -c)"
-            env | awk -F= "{print length(\$0), \$1}" | sort -rn | head -10
-            echo "which cc: $(command -v cc) ld: $(command -v ld)"
-            echo "cc -### bytes: $(cc -### /tmp/nes-diag.c -o /tmp/nes-diag 2>&1 | wc -c)"
-            cc -### /tmp/nes-diag.c -o /tmp/nes-diag 2>&1 | grep -o "COLLECT_GCC_OPTIONS=.*" | head -c 600; echo
-            NIX_DEBUG=1 cc /tmp/nes-diag.c -o /tmp/nes-diag 2>&1 | tail -c 3000
-            echo "link exit: $?"
-          '
-
       - name: Build via devShell
         run: |
           "$SCCACHE_BIN" --show-stats

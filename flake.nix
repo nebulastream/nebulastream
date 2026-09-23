@@ -904,6 +904,7 @@
               cmakeFlags = cmakeFlagsList;
               shellHook = ''
                 unset NES_PREBUILT_VCPKG_ROOT
+                source ${./.nix/dedup-nix-flags.sh}
                 export LD_LIBRARY_PATH="${runtimeLibraryPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
               '' + ccacheShellHook;
             }
