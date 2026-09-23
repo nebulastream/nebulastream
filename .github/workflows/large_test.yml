@@ -40,7 +40,7 @@ jobs:
   build-and-test-linux:
     name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}} in ${{ matrix.build_type }}"
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:

@@ -42,7 +42,7 @@ jobs:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
