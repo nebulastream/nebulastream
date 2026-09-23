@@ -31,7 +31,7 @@
 # its vcpkg build path (`CPPTRACE_VCPKG` -> `target_link_libraries(... libdwarf::dwarf)`) and the
 # name the real upstream libdwarf CMake config exports (`libdwarf::dwarf` / `libdwarf::dwarf-static`,
 # NAMESPACE `libdwarf::`). This is the single source of truth for the libdwarf target name/shim
-# behavior in this repo (qa-finding #133); `.nix/cpptrace/package.nix` mirrors it (see the comment
+# behavior in this repo; `.nix/cpptrace/package.nix` mirrors it (see the comment
 # there for why it can't just include this file), and flake.nix intentionally defines no shim of
 # its own because CMAKE_MODULE_PATH prepends this directory (see CMakeLists.txt), so any nix-side
 # copy for the main project's own configure would be shadowed by this one anyway.
@@ -72,7 +72,7 @@ if (libdwarf_FOUND)
                 INTERFACE_INCLUDE_DIRECTORIES "${libdwarf_INCLUDE_DIR}")
     endif ()
     # Defensive alias: some historical nix-side shims used `libdwarf::libdwarf` instead of the
-    # canonical `libdwarf::dwarf` (qa-finding #133). Keep both names resolvable so a consumer
+    # canonical `libdwarf::dwarf`. Keep both names resolvable so a consumer
     # written against either one keeps working. Guarded on libdwarf::dwarf existing too, so this
     # can't ever try to alias a target that was not actually created above.
     if (TARGET libdwarf::dwarf AND NOT TARGET libdwarf::libdwarf)
