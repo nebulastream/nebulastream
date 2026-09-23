@@ -46,19 +46,14 @@ AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* p
     return pipelineCtx->getBufferManager().get();
 }
 
-/// Returns the raw underlying value rather than WorkerThreadId: nautilus's exception-handling wiring for
-/// invoke() instantiates a fallback `return R{};` for the return type R regardless of whether the call can
-/// actually throw, and NESStrongType is deliberately not default-constructible. The mem-initializer below
-/// wraps the result back into WorkerThreadId via nautilus::val<WorkerThreadId>'s converting constructor.
-WorkerThreadId::Underlying getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
+WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec) noexcept
 {
-    return pec->getWorkerThreadId().getRawValue();
+    return pec->getWorkerThreadId();
 }
 
-/// See getWorkerThreadIdProxy for why this returns the raw underlying value instead of PipelineId.
-PipelineId::Underlying getPipelineIdProxy(const PipelineExecutionContext* pec)
+PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec) noexcept
 {
-    return pec->getPipelineId().getRawValue();
+    return pec->getPipelineId();
 }
 }
 

@@ -55,7 +55,7 @@ nautilus::val<TupleBuffer*> RecordBuffer::getReference() const
 
 nautilus::val<OriginId> RecordBuffer::getOriginId()
 {
-    return nautilus::val<OriginId>{invoke(ProxyFunctions::NES_Memory_TupleBuffer_getOriginId, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getOriginId, buffer.asArg());
 }
 
 void RecordBuffer::setOriginId(const nautilus::val<OriginId>& originId)
@@ -75,7 +75,7 @@ void RecordBuffer::setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber)
 
 nautilus::val<ChunkNumber> RecordBuffer::getChunkNumber()
 {
-    return nautilus::val<ChunkNumber>{invoke(ProxyFunctions::NES_Memory_TupleBuffer_getChunkNumber, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getChunkNumber, buffer.asArg());
 }
 
 void RecordBuffer::setLastChunk(const nautilus::val<bool>& isLastChunk)
@@ -90,7 +90,7 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
 
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
-    return nautilus::val<Timestamp>{invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, buffer.asArg());
 }
 
 void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
@@ -100,12 +100,12 @@ void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
 
 nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
 {
-    return nautilus::val<SequenceNumber>{invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg());
 }
 
 nautilus::val<Timestamp> RecordBuffer::getCreatingTs()
 {
-    return nautilus::val<Timestamp>{invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, buffer.asArg());
 }
 
 void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)
