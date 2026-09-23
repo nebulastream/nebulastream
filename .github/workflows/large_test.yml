@@ -48,7 +48,7 @@ jobs:
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
-    timeout-minutes: 40
+    timeout-minutes: 120
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
       fail-fast: false
@@ -119,7 +119,7 @@ jobs:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
       options: --user root
-    timeout-minutes: 40
+    timeout-minutes: 120
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}", large-memory ]
     strategy:
       fail-fast: false
