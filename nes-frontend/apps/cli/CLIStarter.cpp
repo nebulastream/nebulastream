@@ -143,7 +143,7 @@ struct WorkerConfig
     std::string dataAddress;
     std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
+    YAML::Node config; /// Structured worker 'config:' subtree, applied verbatim via overwriteConfigWithYAMLNode
 };
 
 struct Model
@@ -319,33 +319,6 @@ void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Nod
     }
 }
 
-/// Recursively flattens a nested YAML map into dot-separated key-value pairs.
-/// e.g., {worker: {network: {receiver_queue_size: 2}}} -> {"worker.network.receiver_queue_size": "2"}
-void flattenYAMLNode(const YAML::Node& node, const std::string& prefix, std::unordered_map<std::string, std::string>& result)
-{
-    if (node.IsMap())
-    {
-        for (const auto& entry : node)
-        {
-            auto key = entry.first.as<std::string>();
-            auto childPrefix = prefix.empty() ? key : fmt::format("{}.{}", prefix, key);
-            flattenYAMLNode(entry.second, childPrefix, result);
-        }
-    }
-    else if (node.IsScalar() && !prefix.empty())
-    {
-        result[prefix] = node.as<std::string>();
-    }
-    else
-    {
-        /// Fail loud on shapes the flat string config path cannot represent (sequences, null/empty
-        /// leaves, a non-map top-level 'config:'); dropping them silently would bypass the worker's
-        /// unknown-key/empty-value validation, the very silent-drop bug this fix removes.
-        throw NES::InvalidConfigParameter(
-            "Worker 'config' value at '{}' must be a scalar or nested map", prefix.empty() ? "config" : prefix);
-    }
-}
-
 }
 
 namespace YAML
@@ -418,9 +391,13 @@ struct convert<NES::CLI::WorkerConfig>
         rhs.downstream = getOrDefault<std::vector<std::string>>(node, "downstream");
         rhs.host = getValue<std::string>(node, "host");
         rhs.dataAddress = getOrDefault<std::string>(node, "data_address");
+        /// Store the raw 'config:' subtree; it is applied verbatim at worker registration via
+        /// overwriteConfigWithYAMLNode, which validates nesting/sequences/empty values natively.
+        /// Guard on IsDefined(): assigning an undefined node (absent 'config:') throws in yaml-cpp,
+        /// and leaving rhs.config default-constructed already means "no per-worker config".
         if (node["config"].IsDefined())
         {
-            flattenYAMLNode(node["config"], "", rhs.config);
+            rhs.config = node["config"];
         }
         return true;
     }

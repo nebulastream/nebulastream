@@ -451,9 +451,19 @@ std::expected<ShowVersionStatementResult, Exception> TopologyStatementHandler::o
 std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::operator()(const CreateWorkerStatement& statement)
 {
     SingleNodeWorkerConfiguration config;
-    if (!statement.config.empty())
+    if (statement.config.IsDefined())
     {
-        config.overwriteConfigWithCommandLineInput(statement.config);
+        /// Apply the structured 'config:' subtree directly. This is the same non-lossy YAML-node path the optimizer
+        /// config uses; it natively handles nesting, sequences, and empty-value validation without a flatten/re-split
+        /// round-trip (a null/empty node is a no-op inside overwriteConfigWithYAMLNode).
+        try
+        {
+            config.overwriteConfigWithYAMLNode(statement.config);
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
     }
     auto added = workerCatalog->addWorker(
         Host(statement.host),
