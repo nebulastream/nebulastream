@@ -143,6 +143,25 @@ TEST_F(NormalDistributionFieldTest, validateInvalidSchemaLineThrows)
     EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION FLOAT64 0.0 -1.0"), Exception);
 }
 
+TEST_F(NormalDistributionFieldTest, validateRejectsConfigsConstructionCannotHandle)
+{
+    /// Output types without a normal or binomial distribution
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION BOOLEAN 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION CHAR 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION VARSIZED 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INVALID 1 1"), Exception);
+    /// Mean does not fit the output type
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT8 300 0.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT32 -1 0.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION FLOAT32 1e60 1.0"), Exception);
+    /// Negative number of binomial trials
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 -5 0.5"), Exception);
+    /// Binomial success probability outside [0, 1]
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 10 1.5"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION INT32 10 nan"), Exception);
+    EXPECT_NO_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION UINT8 255 1"));
+}
+
 /// --- RandomStrField Tests ---
 
 class RandomStrFieldTest : public ::testing::Test
