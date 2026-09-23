@@ -30,7 +30,10 @@ permissions:
 jobs:
   nix-build:
     name: "Nix Build"
-    timeout-minutes: 90
+    # A change to the toolchain or the nixpkgs pin invalidates every dependency in the Magic Nix Cache, and building
+    # them all from source (OpenVINO, grpc, folly, ...) takes well over 90 minutes on a GitHub-hosted runner.
+    # With a warm cache the job finishes in 20-60 minutes.
+    timeout-minutes: 300
     runs-on: [ ubuntu-latest ]
     steps:
       - name: Checkout repository
