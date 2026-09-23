@@ -105,8 +105,6 @@ struct ExecutionContext final
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
-    void resetLocalPipelineState();
-
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;
     nautilus::val<PipelineId> pipelineId;

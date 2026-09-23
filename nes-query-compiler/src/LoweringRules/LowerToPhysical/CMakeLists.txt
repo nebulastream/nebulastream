@@ -22,7 +22,6 @@ add_source_files(nes-query-compiler
         LowerToPhysicalIngestionTimeWatermarkAssigner.cpp
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
-        LowerToPhysicalSNDeduplication.cpp
 )
 
 add_registry_entry(LoweringRule NLJoin)
@@ -36,4 +35,3 @@ add_registry_entry(LoweringRule Source KEY SourceDescriptor)
 add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
 add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
 add_registry_entry(LoweringRule InferModel)
-add_registry_entry(LoweringRule SNDeduplication)

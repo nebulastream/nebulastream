@@ -125,11 +125,6 @@ OpenReturnState ExecutionContext::getOpenReturnState() const
     return this->openReturnState;
 }
 
-void ExecutionContext::resetLocalPipelineState()
-{
-    localStateMap.clear();
-}
-
 OperatorState* ExecutionContext::getLocalState(const OperatorId operatorId)
 {
     const auto stateEntry = localStateMap.find(operatorId);

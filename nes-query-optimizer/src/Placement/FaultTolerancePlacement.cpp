@@ -15,7 +15,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <string>
 #include <Placement/FaultTolerancePlacement.hpp>
 
-#include <Operators/FaultTolerance/SNDeduplicationLogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Sources/NetworkSource.hpp>
