@@ -32,6 +32,7 @@ docker_kafka_consume() {
 
   docker_kafka_consume "kafka-sink-test" results.csv
   run docker_nes_cli -t tests/good/example.yaml start
+  sleep 5
   assert_success
 
   # wait until the query stops
