@@ -316,9 +316,6 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 
 std::expected<void, std::vector<Exception>> QueryManager::stop(const DistributedQueryId& queryId)
 {
-    /// queryId is taken by const-ref (and so is getQuery's parameter): a prior bug was a use-after-move
-    /// on a by-value id that got moved into getQuery(), leaving an empty id for the erase below to miss.
-    /// Taking it by reference throughout removes that failure mode structurally.
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
