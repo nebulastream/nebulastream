@@ -58,7 +58,7 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
 }
 }
 
-std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
+std::expected<DistributedQuery, Exception> QueryManager::getQuery(const DistributedQueryId& query) const
 {
     const auto it = state.queries.find(query);
     if (it == state.queries.end())
@@ -314,9 +314,12 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 
-std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::stop(const DistributedQueryId& queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    /// queryId is taken by const-ref (and so is getQuery's parameter): a prior bug was a use-after-move
+    /// on a by-value id that got moved into getQuery(), leaving an empty id for the erase below to miss.
+    /// Taking it by reference throughout removes that failure mode structurally.
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
