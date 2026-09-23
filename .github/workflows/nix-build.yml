@@ -41,10 +41,10 @@ jobs:
           submodules: recursive
 
       - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-        with:
-          use-flakehub: false
-          use-gha-cache: true
+#      - uses: DeterminateSystems/magic-nix-cache-action@main
+#        with:
+#          use-flakehub: false
+#          use-gha-cache: true
 
       - uses: ./.github/steps/setup-sccache
         with:
