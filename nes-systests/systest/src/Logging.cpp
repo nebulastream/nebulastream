@@ -34,7 +34,7 @@ namespace NES
 {
 namespace
 {
-/// #144: A temp symlink (`latest.log.<pid>.<rand>.tmp`) is orphaned if the process is hard-killed
+/// A temp symlink (`latest.log.<pid>.<rand>.tmp`) is orphaned if the process is hard-killed
 /// (OOM, CI cancel, signal) in the window between create_symlink() and rename() below. Because temp
 /// names are unique, no later run ever reclaims another run's leftover, so dangling temps slowly
 /// accumulate in the shared work dir. Sweep clearly-stale temps here.
@@ -42,7 +42,7 @@ namespace
 /// Cleanup is scoped strictly by age, never by a blind `latest.log.*.tmp` name match: a live
 /// in-flight temp exists only for the microseconds between create_symlink() and rename(), so any
 /// temp older than the generous threshold below cannot belong to a concurrent agent mid-rename.
-/// This keeps the concurrency guarantee #125 added intact. An age gate is also correct across PID
+/// This keeps the concurrency guarantee intact. An age gate is also correct across PID
 /// namespaces (containerized runners), where an "is the owning PID still alive?" check would misfire
 /// on a colliding PID and could delete another agent's live temp.
 constexpr std::time_t staleTempMaxAgeSeconds = 3600;
@@ -91,7 +91,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
         return;
     }
 
-    /// #116: Two runner agents can share a work dir and race on the fixed `latest.log` path. A
+    /// Two runner agents can share a work dir and race on the fixed `latest.log` path. A
     /// remove-then-create sequence is not atomic, so concurrent jobs fail with "File exists" (or
     /// "Permission denied" removing a symlink owned by the other agent). Create a unique temp
     /// symlink and rename() it over the target instead: rename is atomic and replaces the
