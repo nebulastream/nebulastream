@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Regression topology for #59 (harden) / #148 / #149: a null-valued nested worker config leaf. The worker
+# Regression topology: a null-valued nested worker config leaf. The worker
 # 'config:' subtree is now applied verbatim via overwriteConfigWithYAMLNode, so the null leaf must be
 # rejected with an InvalidConfigParameter that names the offending key -- not the misleading
 # "not a valid yaml file" error (the file is valid YAML; only the value is bad).

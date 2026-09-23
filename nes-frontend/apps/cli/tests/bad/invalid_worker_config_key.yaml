@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Regression topology for #59: a per-worker 'config:' block used to be silently
+# Regression topology: a per-worker 'config:' block used to be silently
 # dropped by the decoder. With the fix it is flattened and applied, so the
 # unknown key below must be rejected at worker registration.
 

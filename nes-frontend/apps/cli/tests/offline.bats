@@ -276,7 +276,7 @@ TOPEOF
   grep "Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 
-# Regression for #59: a per-worker 'config:' block must be applied, not silently dropped.
+# Regression: a per-worker 'config:' block must be applied, not silently dropped.
 # The nested config below carries an unknown key, so worker registration must reject it.
 # Before the fix the block was dropped and this dump succeeded.
 @test "topology validation: per-worker config is applied (rejects unknown worker config key)" {
@@ -286,7 +286,7 @@ TOPEOF
   grep "idontexist" nes-cli.log
 }
 
-# Regression for #59 (harden): a null-valued nested worker config leaf is neither a map nor a
+# Regression: a null-valued nested worker config leaf is neither a map nor a
 # scalar. It used to fall through flattenYAMLNode and vanish silently, bypassing validation.
 # With the fix it must be rejected up front, naming the offending dotted path.
 @test "topology validation: null-valued worker config leaf is rejected, not dropped" {
