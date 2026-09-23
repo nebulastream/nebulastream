@@ -165,4 +165,102 @@ TEST_F(PlanRendererTest, longLabelGetsTruncated)
     EXPECT_NE(output.find("..."), std::string::npos);
 }
 
+/// Shared node re-parented from a parent on its own layer.
+/// `shared` is first placed on a layer via `branchA`, then referenced again by `mid`, which sits on that same layer. This drives
+/// `insertVerticalBranches` with `startDepth == endDepth`; the node must move one layer down and still render only once.
+TEST_F(PlanRendererTest, sharedNodeReParentedFromSameLayerRendersOnce)
+{
+    const MockOperator shared{.label = "SHARED(node)", .opId = MockOperator::IdType(1), .children = {}};
+    const MockOperator branchA{.label = "BRANCH(a)", .opId = MockOperator::IdType(2), .children = {shared}};
+    const MockOperator mid{.label = "MID(b)", .opId = MockOperator::IdType(3), .children = {shared}};
+    const MockOperator branchB{.label = "BRANCH(b)", .opId = MockOperator::IdType(4), .children = {mid}};
+    const MockOperator sink{.label = "SINK(out)", .opId = MockOperator::IdType(5), .children = {branchA, branchB}};
+
+    const MockPlan plan{.roots = {sink}};
+
+    std::ostringstream oss;
+    PlanRenderer<MockPlan, MockOperator> renderer(oss, ExplainVerbosity::Short);
+    renderer.dump(plan);
+
+    const auto output = oss.str();
+    EXPECT_NE(output.find("SHARED(node)"), std::string::npos);
+    EXPECT_NE(output.find("BRANCH(a)"), std::string::npos);
+    EXPECT_NE(output.find("MID(b)"), std::string::npos);
+
+    /// The shared node must appear exactly once despite being reachable from two parents on different layers.
+    const auto firstPos = output.find("SHARED(node)");
+    const auto secondPos = output.find("SHARED(node)", firstPos + 1);
+    EXPECT_EQ(secondPos, std::string::npos) << "SHARED node should appear only once in the DAG rendering";
+}
+
+/// Deep DAG with several layers between a shared node and its deepest parent.
+/// The shared node is placed early, then re-parented from a much deeper parent, forcing placeholder branches into already-finalised
+/// layers. Those placeholders widen their layers, and no layer may end up wider than the maximum width the tree is drawn with.
+TEST_F(PlanRendererTest, deepDagWithSharedNodeDoesNotCrash)
+{
+    const MockOperator shared{.label = "SHARED(leaf)", .opId = MockOperator::IdType(1), .children = {}};
+    /// A chain deep enough to put >= 3 layers between `shared` and `deep`.
+    const MockOperator deep{.label = "DEEP(v)", .opId = MockOperator::IdType(2), .children = {shared}};
+    const MockOperator l4{.label = "L4(w)", .opId = MockOperator::IdType(3), .children = {deep}};
+    const MockOperator l3{.label = "L3(z)", .opId = MockOperator::IdType(4), .children = {l4}};
+    const MockOperator l2{.label = "L2(y)", .opId = MockOperator::IdType(5), .children = {l3}};
+    /// A shallow parent that places `shared` early on a shallow layer.
+    const MockOperator shallow{.label = "SHALLOW(a)", .opId = MockOperator::IdType(6), .children = {shared}};
+    const MockOperator sink{.label = "SINK(out)", .opId = MockOperator::IdType(7), .children = {shallow, l2}};
+
+    const MockPlan plan{.roots = {sink}};
+
+    std::ostringstream oss;
+    PlanRenderer<MockPlan, MockOperator> renderer(oss, ExplainVerbosity::Short);
+    renderer.dump(plan);
+
+    const auto output = oss.str();
+    EXPECT_NE(output.find("SHARED(leaf)"), std::string::npos);
+    EXPECT_NE(output.find("DEEP(v)"), std::string::npos);
+
+    /// Still rendered exactly once.
+    const auto firstPos = output.find("SHARED(leaf)");
+    const auto secondPos = output.find("SHARED(leaf)", firstPos + 1);
+    EXPECT_EQ(secondPos, std::string::npos) << "SHARED node should appear only once in the deep DAG rendering";
+
+    /// The first line is an empty branch line of exactly the maximum width. Every node line (odd lines, plain ASCII) must fit into it.
+    std::istringstream lines(output);
+    std::string firstLine;
+    ASSERT_TRUE(std::getline(lines, firstLine));
+    size_t lineIdx = 1;
+    for (std::string line; std::getline(lines, line); ++lineIdx)
+    {
+        if (lineIdx % 2 == 1)
+        {
+            EXPECT_LE(line.size(), firstLine.size()) << "node line " << lineIdx << " exceeds the maximum width:\n" << output;
+        }
+    }
+}
+
+/// DAG (edges) 1->2, 1->4, 2->3, 3->4, 4->5. Node 4 is reachable both directly from node 1 and via 1->2->3, so
+/// `insertVerticalBranches` re-parents it while node 5 is still queued holding a `weak_ptr` to the original (about to be destroyed)
+/// node 4. The edge from that expired parent must be skipped and every node must still render exactly once.
+TEST_F(PlanRendererTest, sharedNodeReparentedWhileChildQueuedDoesNotCrash)
+{
+    const MockOperator node5{.label = "NODE_5", .opId = MockOperator::IdType(5), .children = {}};
+    const MockOperator node4{.label = "NODE_4", .opId = MockOperator::IdType(4), .children = {node5}};
+    const MockOperator node3{.label = "NODE_3", .opId = MockOperator::IdType(3), .children = {node4}};
+    const MockOperator node2{.label = "NODE_2", .opId = MockOperator::IdType(2), .children = {node3}};
+    const MockOperator node1{.label = "NODE_1", .opId = MockOperator::IdType(1), .children = {node2, node4}};
+
+    const MockPlan plan{.roots = {node1}};
+
+    std::ostringstream oss;
+    PlanRenderer<MockPlan, MockOperator> renderer(oss, ExplainVerbosity::Short);
+    renderer.dump(plan);
+
+    const auto output = oss.str();
+    for (const auto* const label : {"NODE_1", "NODE_2", "NODE_3", "NODE_4", "NODE_5"})
+    {
+        const auto firstPos = output.find(label);
+        ASSERT_NE(firstPos, std::string::npos) << label << " is missing:\n" << output;
+        EXPECT_EQ(output.find(label, firstPos + 1), std::string::npos) << label << " is rendered more than once:\n" << output;
+    }
+}
+
 }
