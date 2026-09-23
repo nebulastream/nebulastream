@@ -19,6 +19,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
@@ -27,7 +28,6 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <QueryManager/QueryManager.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -95,3 +95,4 @@ TEST_F(QueryManagerTest, stopRemovesTheRegisteredQuery)
 }
 
 }
+
