@@ -58,7 +58,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, Build, "${{inputs.arch}}" ]
     strategy:
       matrix:
         stdlib: [ 'libcxx' ]

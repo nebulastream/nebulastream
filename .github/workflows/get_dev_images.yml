@@ -123,7 +123,7 @@ jobs:
     name: "Build Runtime Base Image"
     needs: [ detect-dependency-changes, lock ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
     strategy:
       fail-fast: false
       matrix:
@@ -156,7 +156,7 @@ jobs:
     name: "Build Dev Images"
     needs: [ detect-dependency-changes, lock ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
     concurrency:
       group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
       # To reduce the amount of work, i.e., building the same deps multiple times, we only allow one job to continue.
@@ -238,7 +238,7 @@ jobs:
     name: "Merge Dev Images"
     needs: [ build-dev-images, build-runtime-image, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true' && needs.build-dev-images.result == 'success' && needs.build-runtime-image.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, linux, Build, x64 ]
     steps:
       - uses: actions/checkout@v5
         with:

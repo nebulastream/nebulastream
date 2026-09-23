@@ -820,6 +820,7 @@
             transitiveRuntimeDeps = [
               pkgs.icu
               pkgs.zlib.out
+              pkgs.zstd.out
               pkgs.c-ares
               pkgs.openssl.out
               pkgs.libuuid.lib
