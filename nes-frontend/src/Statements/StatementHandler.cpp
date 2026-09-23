@@ -43,6 +43,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <yaml-cpp/node/node.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <Model.hpp>
