@@ -35,9 +35,6 @@ if [ -z "$NES_DIR" ]; then
   exit 1
 fi
 
-# shellcheck source=/dev/null
-source "$NES_DIR/scripts/testing/precreate_worker_logdir.sh"
-
 if [ -z "$CONTAINER_WORKDIR" ]; then
   echo "ERROR: CONTAINER_WORKDIR is not set"
   exit 1
@@ -134,7 +131,12 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     CONFIG_ARG="\"--workerConfig=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
   fi
 
-  nes_precreate_worker_logdir "$TEST_DIR/$HOST_NAME"
+  # The worker runs as the unprivileged image user (uid 10000) and writes
+  # singleNodeWorker.log into its working dir. Pre-create that bind-mounted dir
+  # world-writable; otherwise docker auto-creates it root-owned and the non-root
+  # worker cannot write its log.
+  mkdir -p "$TEST_DIR/$HOST_NAME"
+  chmod 0777 "$TEST_DIR/$HOST_NAME"
 
   cat <<EOF
   $HOST_NAME:
