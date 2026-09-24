@@ -33,6 +33,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <nautilus/region.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
@@ -199,7 +200,27 @@ private:
 
         void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
 
-        void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
+        /// Traces every operator's execute() as an isolated nautilus region named after the operator. The tracer explores the
+        /// branches inside the region locally, and the region shows up by name in trace/IR dumps and debug info.
+        /// Operators write new fields into the record they receive. As no value created inside a region may outlive it, the
+        /// operator works on a region-local copy of the record. No operator reads the record after its child returns.
+        void execute(ExecutionContext& executionCtx, Record& record) const override
+        {
+            nautilus::region(
+                regionName(),
+                [&]
+                {
+                    Record regionLocalRecord = record;
+                    data.execute(executionCtx, regionLocalRecord);
+                });
+        }
+
+        /// nautilus stores the region name without copying it, so it has to outlive every trace.
+        static const char* regionName()
+        {
+            static const std::string name{NAMEOF_SHORT_TYPE(OperatorType)};
+            return name.c_str();
+        }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };
