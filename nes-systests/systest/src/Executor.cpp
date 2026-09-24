@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <expected>
 #include <functional>
@@ -70,6 +71,33 @@ void printProgress(ProgressTracker& progress, const TestCaseId& id, const Verdic
         fmt::print("{}\n", verdict.error().detail);
     }
     static_cast<void>(std::fflush(stdout));
+}
+
+/// How many rounds the repetition asks for. Zero stands for no round limit, which only the time limit or a failure ends.
+uint64_t roundsOf(const RepetitionPolicy& repetition)
+{
+    if (const auto* fixed = std::get_if<SubmitRounds>(&repetition))
+    {
+        return fixed->count;
+    }
+    return std::holds_alternative<SubmitUntilStopped>(repetition) ? 0 : 1;
+}
+
+/// Records how long one checked test case ran, keeping each query's best time across rounds.
+/// Only a query that ran and passed is measured: a differential block has no input files, an EXPLAIN never runs,
+/// and a negative test would measure the time to its failure.
+void recordTiming(
+    Benchmark& benchmark,
+    const TestCaseId& id,
+    const RewrittenTestCase& testCase,
+    const Verdict& verdict,
+    const std::span<const QueryTiming> timings)
+{
+    if (const auto* query = std::get_if<RewrittenQuery>(&testCase.action);
+        query != nullptr and verdict.has_value() and not timings.empty() and not std::holds_alternative<ExpectedError>(query->expectation))
+    {
+        benchmark.record(fmt::format("{}", id), query->inputFiles, timings.front().execution);
+    }
 }
 
 }
@@ -182,12 +210,9 @@ ExecutorResult Executor::runOnce(TestRunner& runner, const RunPolicy& plan, Prep
         = [&](const TestCaseId& id, const RewrittenTestCase& testCase, const Verdict& verdict, const std::span<const QueryTiming> timings)
     {
         printProgress(progress, id, verdict);
-        /// Only a query that ran and passed is measured: a differential block has no input files, an EXPLAIN never runs,
-        /// and a negative test would measure the time to its failure.
-        if (const auto* query = std::get_if<RewrittenQuery>(&testCase.action); benchmark.has_value() and verdict.has_value()
-            and not timings.empty() and not std::holds_alternative<ExpectedError>(query->expectation))
+        if (benchmark.has_value())
         {
-            benchmark->record(fmt::format("{}", id), query->inputFiles, timings.front().execution);
+            recordTiming(*benchmark, id, testCase, verdict, timings);
         }
     };
 
@@ -213,31 +238,65 @@ ExecutorResult Executor::runRounds(TestRunner& runner, const RunPolicy& plan, co
     {
         return summarize(setUp.rejected);
     }
+    /// A selection that matches nothing would otherwise repeat an empty round forever.
     if (std::ranges::all_of(setUp.ready, [](const auto& runnable) { return runnable.get().testCases.empty(); }))
     {
         return summarize({});
     }
 
-    fmt::print("Repeating the queries of {} test files\n", setUp.ready.size());
-    for (size_t round = 1;; ++round)
+    /// Measuring is the only difference to a load run: each round then records how long every passing query took, and
+    /// the run ends in the written report rather than a tally. The checks keep running underneath either way, because
+    /// a fast wrong answer is not a measurement.
+    const bool measuring = plan.measureReport.has_value();
+    Benchmark benchmark;
+    const TestRunner::QueryObserver observe
+        = [&](const TestCaseId& id, const RewrittenTestCase& testCase, const Verdict& verdict, const std::span<const QueryTiming> timings)
+    { recordTiming(benchmark, id, testCase, verdict, timings); };
+
+    const auto rounds = roundsOf(plan.repetition);
+    if (not measuring)
+    {
+        fmt::print("Repeating the queries of {} test files\n", setUp.ready.size());
+    }
+
+    const auto startedAt = std::chrono::steady_clock::now();
+    for (uint64_t round = 1; rounds == 0 or round <= rounds; ++round)
     {
         const auto roundStartedAt = std::chrono::steady_clock::now();
-        const auto checked = runner.submitQueries(setUp.ready, plan.concurrency);
+        const auto checked = measuring ? runner.submitQueries(setUp.ready, plan.concurrency, observe)
+                                       : runner.submitQueries(setUp.ready, plan.concurrency);
         const auto failed = std::ranges::count_if(checked, [](const ReportEntry& query) { return not hasPassed(query.outcome); });
-        fmt::print(
-            "round {}: {} passed, {} failed in {} ms\n",
-            round,
-            checked.size() - static_cast<size_t>(failed),
-            failed,
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - roundStartedAt).count());
+        if (measuring)
+        {
+            fmt::print("round {} of {} measured\n", round, rounds);
+        }
+        else
+        {
+            fmt::print(
+                "round {}: {} passed, {} failed in {} ms\n",
+                round,
+                checked.size() - static_cast<size_t>(failed),
+                failed,
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - roundStartedAt).count());
+        }
         static_cast<void>(std::fflush(stdout));
 
-        /// A wrong result ends the run
+        /// A wrong result ends the run, because the rounds after it would measure or load the same wrong query.
         if (failed > 0)
         {
             return summarize(checked);
         }
+        if (plan.runLimit.has_value() and std::chrono::steady_clock::now() - startedAt >= *plan.runLimit)
+        {
+            break;
+        }
     }
+
+    if (measuring)
+    {
+        return RunSucceeded{.report = benchmark.writeTo(*plan.measureReport)};
+    }
+    return RunSucceeded{.report = "every round passed\n"};
 }
 
 ExecutorResult Executor::execute()
@@ -253,10 +312,14 @@ ExecutorResult Executor::execute()
 
     TestRunner runner{config};
     auto prepared = this->prepareAll();
-    if (std::holds_alternative<RunInShuffledOrder>(runPolicy.ordering))
+    if (const auto* shuffle = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))
     {
-        /// Shuffle both the test files and the cases within them
-        std::ranges::shuffle(prepared.runnablePartitions, std::mt19937{std::random_device{}()});
+        /// The seed is printed, so a failure this finds can be repeated with the same seed.
+        /// That repeats the order the files are submitted in, not the order their queries finish, which the pool decides.
+        const uint64_t seed = shuffle->seed.has_value() ? *shuffle->seed : std::random_device{}();
+        fmt::print("Running {} test files in random order, with seed {}\n", prepared.runnablePartitions.size(), seed);
+        std::ranges::shuffle(prepared.runnablePartitions, std::mt19937_64{seed});
+        /// The test cases of a file are shuffled too, so a test case that depends on the one written above it is found.
         for (auto& [_, test] : prepared.runnablePartitions)
         {
             std::ranges::shuffle(test.testCases, std::mt19937{std::random_device{}()});
