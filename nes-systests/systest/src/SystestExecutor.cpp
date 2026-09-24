@@ -36,8 +36,11 @@
 #include <vector>
 #include <Config/Config.hpp>
 #include <Config/RunPolicy.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
+#include <Identifiers/QualifiedIdentifier.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
@@ -45,6 +48,8 @@
 #include <QueryManager/QueryManager.hpp>
 #include <Runner/QuerySubmitter.hpp>
 #include <Runner/SystestRunner.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -55,7 +60,6 @@
 #include <ErrorHandling.hpp>
 #include <Logging.hpp>
 #include <Progress.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
@@ -73,6 +77,29 @@ namespace NES
 namespace
 {
 using OverrideQueriesMap = std::unordered_map<ConfigurationOverride, std::vector<SystestQuery>>;
+
+/// Merge the run configuration for one override group: the systest file's override parameters
+/// (fully qualified keys, e.g. `worker.total_memory_in_bytes`) are layered over the command-line
+/// literals and intentionally overwrite them, matching the previous overwrite semantics.
+Schema<LiteralConfigValue, Ordered>
+mergeRunConfigLiterals(const Schema<LiteralConfigValue, Ordered>& commandLineLiterals, const ConfigurationOverride& overrideConfig)
+{
+    std::vector<LiteralConfigValue> overrideLiterals;
+    overrideLiterals.reserve(overrideConfig.size());
+    for (const auto& [key, value] : overrideConfig)
+    {
+        auto literal = parseConfigLiteral(value);
+        if (!literal.has_value())
+        {
+            throw std::move(literal.error());
+        }
+        overrideLiterals.emplace_back(QualifiedIdentifier::parse(key), std::move(literal).value());
+    }
+    auto [literals, overwrites] = mergeConfigLayers(
+        {ConfigLayer{.name = "command line", .literals = commandLineLiterals},
+         ConfigLayer{.name = "systest file", .literals = createConfigLiteralSchema(std::move(overrideLiterals))}});
+    return literals;
+}
 
 void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const size_t totalQueries)
 {
@@ -128,7 +155,7 @@ void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const SingleNodeWorkerConfiguration& baseConfiguration,
+    const Schema<LiteralConfigValue, Ordered>& commandLineLiterals,
     SystestProgressTracker& progressTracker)
 {
     while (true)
@@ -142,15 +169,11 @@ void exitOnFailureIfNeeded(const std::vector<RunningQuery>& failedQueries, const
         progressTracker.setTotalQueries(totalLocal);
         for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
         {
-            auto configCopy = baseConfiguration;
-            for (const auto& [key, value] : overrideConfig)
-            {
-                configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-            }
-
             auto workerCatalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-            QuerySubmitter querySubmitter(std::make_unique<QueryManager>(std::move(workerCatalog), createEmbeddedBackend(configCopy)));
+            QuerySubmitter querySubmitter(std::make_unique<QueryManager>(
+                std::move(workerCatalog),
+                createEmbeddedBackend(makeRunConfigResolver(mergeRunConfigLiterals(commandLineLiterals, overrideConfig)))));
 
             auto shuffledQueries = queriesForConfig;
             std::ranges::shuffle(shuffledQueries, rng);
@@ -171,15 +194,6 @@ void SystestExecutor::runEndlessMode(const std::vector<SystestQuery>& queries, c
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
     const auto numberConcurrentQueries = policy.concurrency;
-    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-    if (not config.workerConfig.getValue().empty())
-    {
-        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-    }
-    else if (config.singleNodeWorkerConfig.has_value())
-    {
-        singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-    }
 
     OverrideQueriesMap queriesByOverride;
     for (const auto& query : queries)
@@ -189,14 +203,14 @@ void SystestExecutor::runEndlessMode(const std::vector<SystestQuery>& queries, c
 
     std::mt19937 rng(std::random_device{}());
 
-    if (config.remoteWorker.getValue())
+    if (config.remoteWorker)
     {
         runEndlessRemote(queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, progressTracker);
     }
     else
     {
         runEndlessLocal(
-            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, singleNodeWorkerConfiguration, progressTracker);
+            queriesByOverride, rng, numberConcurrentQueries, config.clusterConfig, config.workerOptimizerConfigLiterals, progressTracker);
     }
 }
 
@@ -208,15 +222,10 @@ SystestExecutorResult SystestExecutor::executeSystests()
     CPPTRACE_TRY
     {
         /// Read the configuration
-        const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
+        const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir};
 
         auto discoveredTestFiles = discoverTestFiles(config);
-        SystestBinder binder{
-            config.workingDir.getValue(),
-            config.testDataDir.getValue(),
-            config.configDir.getValue(),
-            config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
-            config.clusterConfig};
+        SystestBinder binder{config.workingDir, config.testDataDir, config.configDir, config.queryOptimizerConfig, config.clusterConfig};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -226,7 +235,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .errorCode = ErrorCode::TestException};
         }
 
-        if (!config.remoteWorker.getValue())
+        if (!config.remoteWorker)
         {
             /// Enable in-memory communication between workers
             enable_memcom();
@@ -258,11 +267,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         const auto numberConcurrentQueries = policy.concurrency;
         std::vector<RunningQuery> failedQueries;
-        if (config.remoteWorker.getValue())
+        if (config.remoteWorker)
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
-            const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+            const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance
                 ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                 : QueryPerformanceMessageBuilder{discardPerformanceMessage};
@@ -272,15 +281,6 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         else
         {
-            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-            if (not config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-            }
-            else if (config.singleNodeWorkerConfig.has_value())
-            {
-                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-            }
             if (policy.measureReport.has_value())
             {
                 std::vector<BenchmarkResult> benchmarkResults;
@@ -318,13 +318,12 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(benchmarkQueries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : benchmarkQueriesByOverride)
                 {
-                    auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
-                    auto failed
-                        = runQueriesAndBenchmark(queriesForConfig, configCopy, benchmarkResults, config.clusterConfig, progressTracker);
+                    auto failed = runQueriesAndBenchmark(
+                        queriesForConfig,
+                        mergeRunConfigLiterals(config.workerOptimizerConfigLiterals, overrideConfig),
+                        benchmarkResults,
+                        config.clusterConfig,
+                        progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
                 const auto serializedResults = rfl::json::write(benchmarkResults, rfl::json::pretty);
@@ -346,17 +345,18 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(queries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
-                    auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
-                    const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+                    const auto runConfigLiterals = mergeRunConfigLiterals(config.workerOptimizerConfigLiterals, overrideConfig);
+                    const QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance
                         ? QueryPerformanceMessageBuilder{[](RunningQuery& runningQuery)
                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
                         : QueryPerformanceMessageBuilder{discardPerformanceMessage};
                     auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);
+                        queriesForConfig,
+                        numberConcurrentQueries,
+                        config.clusterConfig,
+                        runConfigLiterals,
+                        progressTracker,
+                        performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

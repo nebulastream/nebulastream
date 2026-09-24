@@ -40,6 +40,9 @@
 #include <variant>
 #include <vector>
 #include <Config/Config.hpp>
+#include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/ConfigParsing.hpp>
+#include <Configurations/Util.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Model/Expectation.hpp>
@@ -55,17 +58,21 @@
 #include <ResultChecker/ExplainChecker.hpp>
 #include <ResultChecker/QueryResultChecker.hpp>
 #include <Runner/QuerySubmitter.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <Util/Variant.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include <WorkerConfig.hpp>
+#include <WorkerOptimizerConfig.hpp>
 
 namespace NES
 {
@@ -390,6 +397,25 @@ std::vector<RunningQuery> runQueries(
 
 /// NOLINTEND(readability-function-cognitive-complexity)
 
+/// The run configuration (command line plus per-test-file overrides, already merged by the
+/// executor) is layered over the per-worker topology config and resolved against the declared
+/// schema. Matches the previous precedence: the run configuration wins over the topology.
+WorkerConfigResolver makeRunConfigResolver(Schema<LiteralConfigValue, Ordered> runConfigLiterals)
+{
+    return [runConfigLiterals = std::move(runConfigLiterals)](const WorkerConfig& worker)
+    {
+        auto [literals, overwrites] = mergeConfigLayers(
+            {ConfigLayer{.name = "topology", .literals = worker.config},
+             ConfigLayer{.name = "run configuration", .literals = runConfigLiterals}});
+        auto resolved = resolveConfiguration<WorkerOptimizerConfig>(literals);
+        if (not resolved.has_value())
+        {
+            throw InvalidConfigParameter("{}", resolved.error());
+        }
+        return std::move(resolved)->worker;
+    };
+}
+
 void printQueryResultToStdOut(
     const RunningQuery& runningQuery, SystestProgressTracker& progressTracker, const std::string_view queryPerformanceMessage)
 {
@@ -432,13 +458,14 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    QuerySubmitter submitter(
+        std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(makeRunConfigResolver(runConfigLiterals))));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -473,7 +500,7 @@ void recordProcessedInput(RunningQuery& runningQuery)
 
 std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
-    const SingleNodeWorkerConfiguration& configuration,
+    const Schema<LiteralConfigValue, Ordered>& runConfigLiterals,
     std::vector<BenchmarkResult>& benchmarkResults,
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
@@ -493,7 +520,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     };
 
     /// Benchmarking runs one query at a time so that the timings are not skewed by concurrently running queries.
-    return runQueriesAtLocalWorker(queries, 1, clusterConfig, configuration, progressTracker, benchmarkQuery);
+    return runQueriesAtLocalWorker(queries, 1, clusterConfig, runConfigLiterals, progressTracker, benchmarkQuery);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(

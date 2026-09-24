@@ -66,7 +66,7 @@ void setupLogging(const SystestConfiguration& config)
     std::filesystem::path absoluteLogPath;
     const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
 
-    if (config.logFilePath.getValue().empty())
+    if (config.logFilePath.empty())
     {
         std::error_code errorCode;
         create_directories(logDir, errorCode);
@@ -84,7 +84,7 @@ void setupLogging(const SystestConfiguration& config)
     }
     else
     {
-        absoluteLogPath = config.logFilePath.getValue();
+        absoluteLogPath = config.logFilePath;
         const std::filesystem::path parentDir = absoluteLogPath.parent_path();
         if (not exists(parentDir) or not is_directory(parentDir))
         {

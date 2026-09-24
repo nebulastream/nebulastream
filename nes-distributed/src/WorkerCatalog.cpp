@@ -21,8 +21,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -41,7 +43,7 @@ bool WorkerCatalog::addWorker(
     std::string dataAddress,
     Capacity maxOperators,
     const std::vector<Host>& downstream,
-    SingleNodeWorkerConfiguration config)
+    Schema<LiteralConfigValue, Ordered> config)
 {
     const bool added = workers
                            .try_emplace(

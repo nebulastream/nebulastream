@@ -38,16 +38,16 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
     auto bufferManager = BufferManager::create(
-        workerConfiguration.totalMemoryInBytes.getValue(),
-        workerConfiguration.unpooledMemoryFraction.getValue(),
-        NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes.getValue())},
-        static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue()),
+        workerConfiguration.totalMemoryInBytes,
+        workerConfiguration.unpooledMemoryFraction,
+        NES::BufferAlignment{static_cast<uint32_t>(workerConfiguration.bufferAlignmentInBytes)},
+        static_cast<uint32_t>(workerConfiguration.defaultQueryExecution.operatorBufferSize),
         std::make_shared<NesDefaultMemoryAllocator>());
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
-    auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
+    auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers, bufferManager);
 
     return std::make_unique<NodeEngine>(
         std::move(bufferManager), statisticsListener, std::move(queryLog), std::move(queryEngine), std::move(sourceProvider));

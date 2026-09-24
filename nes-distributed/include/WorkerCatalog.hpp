@@ -20,9 +20,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Configurations/ConfigLiteral.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Schema/Schema.hpp>
+#include <Schema/SchemaFwd.hpp>
 #include <NetworkTopology.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -50,7 +52,7 @@ public:
         std::string dataAddress,
         Capacity maxOperators,
         const std::vector<Host>& downstream,
-        SingleNodeWorkerConfiguration config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
+        Schema<LiteralConfigValue, Ordered> config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
     [[nodiscard]] size_t size() const;
