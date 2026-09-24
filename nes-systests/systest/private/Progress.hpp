@@ -20,11 +20,11 @@
 namespace NES
 {
 
-class SystestProgressTracker
+class ProgressTracker
 {
 public:
-    SystestProgressTracker();
-    explicit SystestProgressTracker(size_t totalQueries);
+    ProgressTracker();
+    explicit ProgressTracker(size_t totalQueries);
 
     void incrementQueryCounter();
     [[nodiscard]] size_t getQueryCounter() const;

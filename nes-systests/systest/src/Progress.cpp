@@ -17,38 +17,38 @@
 namespace NES
 {
 
-SystestProgressTracker::SystestProgressTracker() = default;
+ProgressTracker::ProgressTracker() = default;
 
-SystestProgressTracker::SystestProgressTracker(size_t totalQueries) : totalQueries(totalQueries)
+ProgressTracker::ProgressTracker(size_t totalQueries) : totalQueries(totalQueries)
 {
 }
 
-void SystestProgressTracker::incrementQueryCounter()
+void ProgressTracker::incrementQueryCounter()
 {
     ++queryCounter;
 }
 
-size_t SystestProgressTracker::getQueryCounter() const
+size_t ProgressTracker::getQueryCounter() const
 {
     return queryCounter.load();
 }
 
-void SystestProgressTracker::setTotalQueries(size_t total)
+void ProgressTracker::setTotalQueries(size_t total)
 {
     totalQueries = total;
 }
 
-size_t SystestProgressTracker::getTotalQueries() const
+size_t ProgressTracker::getTotalQueries() const
 {
     return totalQueries;
 }
 
-double SystestProgressTracker::getProgressInPercent() const
+double ProgressTracker::getProgressInPercent() const
 {
     return totalQueries > 0 ? (static_cast<double>(queryCounter.load()) * 100.0) / static_cast<double>(totalQueries) : 0.0;
 }
 
-void SystestProgressTracker::reset()
+void ProgressTracker::reset()
 {
     queryCounter.store(0);
 }
