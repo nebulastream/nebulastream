@@ -94,9 +94,6 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
-    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
-    options.setOption("ir.verifyAfterEachPass", true);
-    options.setOption("ir.failOnVerifyError", true);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
@@ -136,6 +133,14 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             break;
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+    /// Resolving the name of every invoked runtime function costs a dladdr lookup (~1 ms each in our binaries), which is about
+    /// half of the tracing time (nebulastream/nautilus#491). Callees are bound by address, so names only matter for readable IR
+    /// dumps. Needs a nautilus version that knows the option; older versions ignore it.
+    options.setOption("engine.resolveFunctionNames", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
+    /// Function attribute inference scales quadratically with the number of blocks and alone takes ~25% of the IR pass time
+    /// of large pipelines. It only derives attributes for calls between nautilus functions, which our pipelines do not make.
+    /// Re-enable once nebulastream/nautilus#492 is fixed.
+    options.setOption("ir.disableAttributeInference", true);
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
