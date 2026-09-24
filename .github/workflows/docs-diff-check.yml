@@ -1,0 +1,75 @@
+name: Docs Drift Check
+description: |
+  Runs weekly (Sunday night, so results are ready Monday morning), checking
+  every PR merged in the last 7 days for whether it has made docs/ stale. A
+  PR touching docs/ itself is not skipped - that doesn't guarantee the docs
+  update was correct or complete for the change made.
+
+  For each PR, a locally-hosted LLM (Qwen2.5-Coder, served from the
+  cached image built by build-docs-drift-llm-image.yml) summarizes what the
+  diff changes; that summary is embedded (mxbai-embed-large, same image) and
+  matched against a RAG index built fresh this run from every docs/ section
+  (fresh because jobs land on a random self-hosted worker each time, so
+  there's nothing to cache between runs); the LLM then cross-references the
+  diff against the retrieved excerpts and flags it, with a detailed reason,
+  only if a specific documented statement has gone stale. Flags are posted to
+  the same Zulip "ci" stream/bot used by nightly.yml.
+
+on:
+  schedule:
+    - cron: '0 22 * * 0'
+  workflow_dispatch: {}
+
+concurrency:
+  group: docs-drift-check
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+  packages: read
+
+jobs:
+  check-docs-drift:
+    runs-on: [ self-hosted, linux, Build, x64 ]
+    # Runtime is dominated by one generation call per PR (~230-450s on
+    # CPU-only inference in local testing; the model/embeddings are already
+    # cached, only per-PR generation calls scale with batch size), so this
+    # leaves headroom for a week with a larger-than-usual number of merged PRs.
+    timeout-minutes: 240
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/docs-drift-llm:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCS_ROOT: ${{ github.workspace }}/docs
+      LLM_API_BASE: http://localhost:11434/v1
+      LLM_MODEL: qwen2.5-coder:7b
+      EMBED_MODEL: mxbai-embed-large
+      ZULIP_SITE: https://nebulastream.zulipchat.com
+      ZULIP_BOT_EMAIL: pr-reminder-bot@nebulastream.zulipchat.com
+      ZULIP_BOT_API_KEY: ${{ secrets.PRBOT_API_KEY }}
+      ZULIP_STREAM: ci
+      ZULIP_TOPIC: docs drift warnings
+      ZULIP_NOTIFY_USERS: oczerwia-2010,keyseven123
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Start local LLM
+        run: |
+          nohup ollama serve > /tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            ollama list >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          echo "::error::local LLM did not become ready in time"
+          echo "::group::ollama serve log"
+          cat /tmp/ollama.log || true
+          echo "::endgroup::"
+          exit 1
+
+      - name: Run docs drift check
+        run: python3 scripts/docs-diff-check/check_docs_impact.py
