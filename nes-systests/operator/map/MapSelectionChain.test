@@ -1,0 +1,35 @@
+# name: map/MapSelectionChain.test
+# description: A long chain of selections and maps over nullable fields in a single pipeline
+# groups: [Map, Selection, NullHandling]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, a INT64 NOT NULL, b INT64, c INT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,5,3,1
+2,-2,4,2
+3,10,,3
+4,7,7,
+5,0,1,1
+6,60,50,-4
+7,3,-9,2
+8,40,20,
+9,1,1,1
+10,-5,,
+11,99,0,5
+12,8,2,-1
+
+CREATE SINK sinkChain(id UINT64 NOT NULL, sd INT64, s2 INT64, d3 INT64, p1 INT64, sp INT64, dd INT64, pc INT64, sc INT64) TYPE File;
+
+# Scan -> Selection -> 3x Map -> Selection -> 8x Map -> Emit, where b and c are nullable
+SELECT id, s + d AS sd, s * 2 AS s2, d - 3 AS d3, p + 1 AS p1, s - p AS sp, d * d AS dd, p + c AS pc, s * c AS sc
+FROM (SELECT id, c, a + b AS s, a - b AS d, a * b AS p FROM stream WHERE a > 0)
+WHERE s < 100
+INTO sinkChain;
+----
+1,10,16,-1,16,-7,4,16,8
+4,14,28,-3,50,-35,0,NULL,NULL
+7,6,-12,9,-26,21,144,-25,-12
+8,80,120,17,801,-740,400,NULL,NULL
+9,2,4,-3,2,1,0,2,2
+11,198,198,96,1,99,9801,5,495
+12,16,20,3,17,-6,36,15,-10
