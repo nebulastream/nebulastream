@@ -108,7 +108,7 @@ LogicalFunctionRegistryReturnType AndLogicalFunction::createAnd(LogicalFunctionR
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
 }

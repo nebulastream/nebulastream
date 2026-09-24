@@ -102,7 +102,7 @@ LogicalFunctionRegistryReturnType OctetLengthLogicalFunction::createOCTET_LENGTH
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("OCTET_LENGTH requires exactly one argument, but got {}", arguments.children.size());
+        throw InvalidLogicalFunctionArgument("OCTET_LENGTH requires exactly one argument, but got {}", arguments.children.size());
     }
     return OctetLengthLogicalFunction(arguments.children.back());
 }

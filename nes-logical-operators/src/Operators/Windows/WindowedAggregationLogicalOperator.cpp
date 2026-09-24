@@ -441,7 +441,7 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogica
     auto children = plan->getChildrenFor(id, context);
     if (children.size() != 1)
     {
-        throw CannotDeserialize("WindowedAggregationLogicalOperator must have exactly one child, but got {}", children.size());
+        throw InvalidLogicalFunctionArgument("WindowedAggregationLogicalOperator must have exactly one child, but got {}", children.size());
     }
     return WindowedAggregationLogicalOperator::create(children.at(0), keys, aggregations, windowType, timestampField);
 }
