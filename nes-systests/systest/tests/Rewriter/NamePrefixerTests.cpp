@@ -15,11 +15,11 @@
 #include <array>
 #include <filesystem>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include <gtest/gtest.h>
 
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,19 +46,33 @@ public:
     const DiscoveryRoot root{rootPath};
 };
 
-TEST(StripPrefixTest, RemovesEveryOccurrenceOfThePrefix)
+TEST(RestoreNamesTest, RestoresEveryRegisteredName)
 {
-    EXPECT_EQ(stripPrefix("SINK(TESTKEY_SINKONETUPLE) <- SOURCE(TESTKEY_ONETUPLE)", "TESTKEY_"), "SINK(SINKONETUPLE) <- SOURCE(ONETUPLE)");
+    const OriginalNames names{{"TESTKEY_SINKONETUPLE", "SINKONETUPLE"}, {"TESTKEY_ONETUPLE", "ONETUPLE"}};
+    EXPECT_EQ(restoreNames("SINK(TESTKEY_SINKONETUPLE) <- SOURCE(TESTKEY_ONETUPLE)", names), "SINK(SINKONETUPLE) <- SOURCE(ONETUPLE)");
 }
 
-TEST(StripPrefixTest, KeepsTextWithoutPrefix)
+TEST(RestoreNamesTest, KeepsTextWithoutRegisteredNames)
 {
-    EXPECT_EQ(stripPrefix("SINK(SINKONETUPLE)", "TESTKEY_"), "SINK(SINKONETUPLE)");
+    const OriginalNames names{{"TESTKEY_ONETUPLE", "ONETUPLE"}};
+    EXPECT_EQ(restoreNames("SINK(SINKONETUPLE)", names), "SINK(SINKONETUPLE)");
 }
 
-TEST(StripPrefixTest, RemovesAdjacentOccurrences)
+/// A declared name may start with the key itself, so stripping the prefix textually would eat into the name.
+/// Restoring the registered name as a whole keeps the declared spelling, and the restored text is not matched again.
+TEST(RestoreNamesTest, RestoresANameThatStartsLikeThePrefix)
 {
-    EXPECT_EQ(stripPrefix("A_A_NAME", "A_"), "NAME");
+    const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}, {"ORDERS_INPUT", "INPUT"}};
+    EXPECT_EQ(restoreNames("SOURCE(ORDERS_ORDERS_INPUT) SOURCE(ORDERS_INPUT)", names), "SOURCE(ORDERS_INPUT) SOURCE(INPUT)");
+}
+
+/// A field is never prefixed, so a field whose name starts like the prefix has to stay as printed.
+TEST(RestoreNamesTest, LeavesAnUnregisteredNameAlone)
+{
+    const OriginalNames names{{"ORDERS_ORDERS_INPUT", "ORDERS_INPUT"}};
+    EXPECT_EQ(
+        restoreNames("PROJECTION(fields: [ORDERS_TOTAL, ORDERS_ORDERS_INPUT2])", names),
+        "PROJECTION(fields: [ORDERS_TOTAL, ORDERS_ORDERS_INPUT2])");
 }
 
 /// Asserts that the directory prefix separates duplicate file stems (i.e. without the .test extension).
@@ -139,7 +153,6 @@ TEST_F(NamePrefixerTest, PartKeysCannotCollideWithFileKeys)
 /// rather than assuming the directory that the run happened to start in.
 TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysLikeTheAbsoluteOne)
 {
-    /// A relative root only becomes absolute when its first element exists, so the sandbox has to hold it.
     const Testing::TemporaryDirectory sandbox;
     const std::filesystem::path relativeRoot{"nes-systests"};
     std::filesystem::create_directories(sandbox.get() / relativeRoot);
@@ -155,10 +168,37 @@ TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysLikeTheAbsoluteOne)
     std::filesystem::current_path(previous);
 }
 
-/// A file that is not under the discovery root has no key, so this should throw.
-TEST_F(NamePrefixerTest, RejectsATestFileOutsideTheDiscoveryRoot)
+/// A relative root resolves against the current directory whether or not it exists, so a missing root still keys
+/// the files under it by their position, not by their absolute paths.
+TEST_F(NamePrefixerTest, RelativeDiscoveryRootKeysTheSameWhenItDoesNotExist)
 {
-    EXPECT_THROW(std::ignore = root.keyOf("/elsewhere/benchmark/Nexmark.test", 0, 1), Exception);
+    const Testing::TemporaryDirectory sandbox;
+    const auto previous = std::filesystem::current_path();
+    std::filesystem::current_path(sandbox.get());
+
+    const std::filesystem::path relativeRoot{"absent"};
+    const auto testFile = std::filesystem::current_path() / relativeRoot / "benchmark" / "Nexmark.test";
+
+    EXPECT_EQ(DiscoveryRoot{relativeRoot}.keyOf(testFile, 0, 1).value(), "BENCHMARK_D_NEXMARK");
+
+    std::filesystem::current_path(previous);
+}
+
+/// A file under the root never produces a leading separator token, so an outside file's key cannot collide with it.
+TEST_F(NamePrefixerTest, KeysATestFileOutsideTheDiscoveryRootByItsAbsolutePath)
+{
+    EXPECT_EQ(root.keyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK");
+    EXPECT_EQ(root.keyOf("/elsewhere/benchmark/Nexmark.test", 1, 3).value(), "_D_ELSEWHERE_D_BENCHMARK_D_NEXMARK_C1");
+    EXPECT_NE(root.keyOf("/elsewhere/benchmark/Nexmark.test", 0, 1).value(), root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1).value());
+}
+
+/// A spelling that only one file claims passes, and so does one that two parts of a file claim under their own keys.
+TEST_F(NamePrefixerTest, RejectsASpellingThatTwoFilesDeclare)
+{
+    PrefixedNameOwners owners;
+    owners.claim(OriginalNames{{"A_D_B_S", "D_B_S"}, {"A_OUT", "OUT"}}, rootPath / "a.test");
+    owners.claim(OriginalNames{{"A_D_B_OUT", "OUT"}}, rootPath / "a/b.test");
+    EXPECT_THROW(owners.claim(OriginalNames{{"A_D_B_S", "S"}}, rootPath / "a/b.test"), Exception);
 }
 
 /// An unquoted name gets the same prefixed spelling however it is cased, because the catalog compares it case-insensitively.
@@ -180,12 +220,15 @@ TEST_F(NamePrefixerTest, QuotesAPrefixedNameThatWasQuoted)
     EXPECT_EQ(registry.declare("bid").getOriginalString(), "BENCHMARK_D_NEXMARK_BID");
 }
 
-/// The sealed names hold the prefix that was put in front of every name, so a consumer can strip it from a printed plan again.
-TEST_F(NamePrefixerTest, SealContainsThePrefix)
+/// The sealed names remember the declared spelling of every prefixed name, so a consumer can restore a printed plan.
+TEST_F(NamePrefixerTest, SealMapsPrefixedNamesBackToTheDeclaredSpelling)
 {
     NameRegistry registry{root.keyOf(rootPath / "benchmark/Nexmark.test", 0, 1)};
     registry.declare("bid");
-    EXPECT_EQ(std::move(registry).seal().prefix(), "BENCHMARK_D_NEXMARK_");
+    registry.declare(R"("Input Stream")");
+    EXPECT_EQ(
+        std::move(registry).seal().originalNames(),
+        (OriginalNames{{"BENCHMARK_D_NEXMARK_BID", "BID"}, {"BENCHMARK_D_NEXMARK_Input Stream", "Input Stream"}}));
 }
 
 /// The grammar admits any text between quotes, so a test file can declare a name that no identifier can hold.
