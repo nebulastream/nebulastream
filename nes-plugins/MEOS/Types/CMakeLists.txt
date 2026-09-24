@@ -13,5 +13,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(Functions)
 add_plugin_as_library(TemporalPoint DataType temporal_point_data_type_plugin TemporalPointDataType.cpp)
+add_plugin_as_library(TemporalPointSequence DataType temporal_point_sequence_data_type_plugin TemporalPointSequenceDataType.cpp)
 
 target_include_directories(temporal_point_data_type_plugin PRIVATE .)
+target_include_directories(temporal_point_sequence_data_type_plugin PRIVATE .)

@@ -22,11 +22,12 @@
 namespace NES
 {
 
-/// Calculates the distance between two temporal points
-class TemporalPointNearestApproachDistancePhysicalFunction final
+/// Calculates the minimal distance between two TemporalPointSequence objects.
+/// We treat the contained points in a discrete manner, meaning that we can only measure the distance between two contained points, if they have the same timestamp.
+class TemporalPointSequenceNearestApproachDistancePhysicalFunction final
 {
 public:
-    explicit TemporalPointNearestApproachDistancePhysicalFunction(
+    explicit TemporalPointSequenceNearestApproachDistancePhysicalFunction(
         PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
@@ -35,6 +36,6 @@ private:
     PhysicalFunction rightPhysicalFunction;
 };
 
-static_assert(PhysicalFunctionConcept<TemporalPointNearestApproachDistancePhysicalFunction>);
+static_assert(PhysicalFunctionConcept<TemporalPointSequenceNearestApproachDistancePhysicalFunction>);
 
 }

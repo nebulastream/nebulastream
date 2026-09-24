@@ -22,6 +22,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // Include MEOS wrapper after standard headers
 #include <MEOSWrapper.hpp>
@@ -363,15 +364,35 @@ int Meos::TemporalGeometry::containsStatic(const StaticGeometry& static_geom) co
 }
 
 // Constructor for creating a trajectory from multiple temporal instants
-Meos::TemporalSequence::TemporalSequence(const std::vector<TemporalInstant*>& /*instants*/)
+Meos::TemporalSequence::TemporalSequence(const std::vector<TemporalInstant*>& instants)
 {
     // Ensure MEOS is initialized
     ensureMeosInitialized();
-
     sequence = nullptr;
-    // TODO:call the aggregation function
 
-    //TODO: with the result of the aggregation function, we can create a temporal sequence
+    /// Create a vector for the raw TInstants and push the underlying TInstants of the instants vector.
+    std::vector<TInstant*> rawInstants;
+    rawInstants.reserve(instants.size());
+    for (TemporalInstant* instant : instants)
+    {
+        if (instant == nullptr || instant->getGeometry() == nullptr)
+        {
+            return;
+        }
+        rawInstants.push_back(reinterpret_cast<TInstant*>(instant->getGeometry()));
+    }
+
+    /// tsequence_make rejects a non-positive count.
+    if (rawInstants.empty())
+    {
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lk(meos_parse_mutex);
+        sequence = reinterpret_cast<Temporal*>(
+            tsequence_make(rawInstants.data(), static_cast<int>(rawInstants.size()), true, true, DISCRETE, false));
+    }
 }
 
 Meos::TemporalSequence::~TemporalSequence()
@@ -385,6 +406,11 @@ double Meos::TemporalSequence::length(const TemporalInstant& /* instant */) cons
     // Placeholder implementation
     // Using comment to avoid unused parameter warning
     return 0.0;
+}
+
+Temporal* Meos::TemporalSequence::getGeometry()
+{
+    return sequence;
 }
 
 // Static wrapper functions for MEOS API

@@ -154,11 +154,11 @@ class Meos {
         TemporalSequence& operator=(const TemporalSequence&) = delete;
         TemporalSequence(TemporalSequence&& other) noexcept : sequence(other.sequence) { other.sequence = nullptr; }
         TemporalSequence& operator=(TemporalSequence&& other) noexcept { if (this!=&other){ sequence = other.sequence; other.sequence=nullptr;} return *this; }
-
         
         // bool intersects(const TemporalInstant& point) const;
         // double distance(const TemporalInstant& point) const;
         double length(const TemporalInstant& instant) const;
+        Temporal* getGeometry();
 
     private:
         Temporal* sequence;
