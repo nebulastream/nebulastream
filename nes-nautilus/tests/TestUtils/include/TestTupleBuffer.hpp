@@ -107,11 +107,11 @@ class FieldView;
 
 using TestSchema = Schema<UnqualifiedUnboundField, Ordered>;
 
-/// Entry point. Holds schema config.
+/// Entry point. Holds physical layout configuration.
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(TestSchema schema);
+    explicit TestTupleBuffer(std::shared_ptr<TupleBufferRef> tupleBufferRef);
 
     /// Wraps an existing TupleBuffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
@@ -119,7 +119,7 @@ public:
     TestTupleBufferView open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider = nullptr);
 
 private:
-    TestSchema schema;
+    std::shared_ptr<TupleBufferRef> tupleBufferRef;
 };
 
 /// View over a TupleBuffer. Supports append and indexed record access.
@@ -144,7 +144,6 @@ private:
 
     struct Impl
     {
-        TestSchema schema;
         TupleBuffer&
             buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
         AbstractBufferProvider* bufferProvider;
@@ -290,13 +289,14 @@ template <typename... Args>
 void TestTupleBufferView::append(Args&&... values)
 {
     static_assert(sizeof...(Args) > 0, "append requires at least one argument");
-    if (sizeof...(Args) != impl->schema.size())
+    auto dataTypes = impl->bufRef->getAllDataTypes();
+    if (sizeof...(Args) != dataTypes.size())
     {
-        throw TestException("append requires exactly {} arguments, got {}", impl->schema.size(), sizeof...(Args));
+        throw TestException("append requires exactly {} arguments, got {}", dataTypes.size(), sizeof...(Args));
     }
-    auto fieldIt = impl->schema.begin();
+    auto fieldIt = dataTypes.begin();
     const std::array<std::optional<FieldValue>, sizeof...(Args)> fieldValues{
-        toFieldValue(std::forward<Args>(values), (fieldIt++)->getDataType().type)...};
+        toFieldValue(std::forward<Args>(values), (fieldIt++)->type)...};
     appendImpl(fieldValues);
 }
 
