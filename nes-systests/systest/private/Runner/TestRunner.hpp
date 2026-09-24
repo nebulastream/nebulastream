@@ -16,27 +16,35 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <span>
 #include <thread>
 #include <vector>
 
 #include <Config/Config.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
+#include <Runner/Cluster.hpp>
 #include <Util/Pointers.hpp>
 
 namespace NES
 {
 
-/// Owns the workers that a run submits to, and runs rewritten test files against them.
-/// A worker takes its settings at startup, so the run holds one worker per set of settings that its test files ask for.
+/// Owns an embedded coordinator and the workers a run registers with it, and runs rewritten test files against them.
+/// The coordinator plans every statement and places it on the workers, so this process holds no catalog of its own.
 class TestRunner
 {
 public:
+    /// Starts the coordinator with the optimizer settings the command line gave, then registers the workers the run
+    /// places its test files on.
     explicit TestRunner(const SystestConfiguration& config);
     ~TestRunner();
+
+    /// Returns where a test file asking for these settings goes, and nothing when the run cannot give it those settings.
+    [[nodiscard]] std::optional<Placement> placementFor(const ConfigurationOverride& settings);
 
     /// Receives each test case as it is checked, so a caller can report it while the rest of the run continues.
     /// The timings hold one entry per submitted statement, in submission order.
@@ -52,10 +60,9 @@ public:
         std::vector<std::jthread> servers;
     };
 
-    /// Stages the data, puts the setup statements of every test file into the catalogs, and binds its test cases.
+    /// Stages the data and submits the setup statements of every test file to the coordinator.
     /// Separate from submitting the queries, because a caller that submits them more than once must set up only once:
-    /// a second CREATE of the same name is a catalog conflict rather than more load, and binding again would measure
-    /// the optimizer rather than the query.
+    /// a second CREATE of the same name is a catalog conflict rather than more load.
     [[nodiscard]] SetUpRun setUpAll(const std::vector<RunnablePartition>& partitions);
 
     /// Submits the test cases of the test files that were set up, up to `concurrency` at a time, and checks each one.
@@ -66,7 +73,7 @@ public:
         const QueryObserver& observe = {});
 
     /// Sets every test file up, then submits their test cases up to `concurrency` at a time and checks each one.
-    /// A file whose setup is rejected yields one failed check and none of its test cases run.
+    /// A file whose setup the coordinator rejects yields one failed check and none of its test cases run.
     [[nodiscard]] std::vector<ReportEntry>
     runAll(const std::vector<RunnablePartition>& partitions, size_t concurrency, const QueryObserver& observe = {});
 

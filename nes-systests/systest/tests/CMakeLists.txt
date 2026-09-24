@@ -47,5 +47,8 @@ add_nes_test_systest(systest-name-prefixer-test
 add_nes_test_systest(systest-test-file-rewriter-test
         "Rewriter/TestFileRewriterTests.cpp")
 
+add_nes_test_systest(systest-runner-test
+        "Runner/RunnerTests.cpp")
+
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")

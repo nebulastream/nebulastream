@@ -40,13 +40,10 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/UUID.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -287,7 +284,7 @@ TEST_F(JoinLogicalOperatorTest, ReflectionRoundTripPreservesOuterJoinTypes)
         const auto sinkDescriptor
             = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(leftNullable, rightNullable));
         const auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({join});
-        const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+        const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
         const auto serialized = QueryPlanSerializationUtil::serializeQueryPlan(plan);
         const auto restored = QueryPlanSerializationUtil::deserializeQueryPlan(serialized);

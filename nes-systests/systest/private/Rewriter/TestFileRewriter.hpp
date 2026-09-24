@@ -15,27 +15,35 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
+#include <optional>
 #include <vector>
 
 #include <Config/Config.hpp>
 #include <Discovery/TestDiscovery.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/ParsedTestFile.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/NamePrefixer.hpp>
 #include <Rewriter/RewriteContext.hpp>
+#include <Runner/Cluster.hpp>
 
 namespace NES
 {
 
-/// Turns one discovered test file into the partitions that the binder takes.
+/// Turns one discovered test file into the partitions that the runner takes.
 /// It parses the file, splits it by the worker settings that its queries state, keeps the selected queries,
 /// and rewrites each partition under its own key.
 class TestFileRewriter
 {
 public:
-    explicit TestFileRewriter(const SystestConfiguration& config);
+    /// Answers where a partition asking for these settings goes, and nothing when the run cannot place it there.
+    /// The rewriter needs the hosts before it emits SQL, and asking for them registers the worker for these settings.
+    using PlacementResolver = std::function<std::optional<Placement>(const ConfigurationOverride&)>;
+
+    TestFileRewriter(const SystestConfiguration& config, PlacementResolver resolvePlacement);
 
     /// Throws when the file cannot be read or parsed, which the caller reports as one failed check for the file.
     [[nodiscard]] std::vector<RunnablePartition> rewrite(const DiscoveredTestFile& testFile);
@@ -59,9 +67,7 @@ private:
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
     DiscoveryRoot discoveryRoot;
-    /// The worker for a statement that states no placement of its own.
-    Host defaultSourceHost;
-    Host defaultSinkHost;
+    PlacementResolver resolvePlacement;
     /// One registry for the whole invocation, so two files cannot claim the same prefixed name.
     PrefixedNameOwners nameOwners;
 };

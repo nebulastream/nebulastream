@@ -50,9 +50,6 @@
 
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
-#include <Util/UUID.hpp>
-#include <DistributedQuery.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -152,8 +149,7 @@ TEST_F(DecideFieldMappingsTest, TestNoCollisions)
     const auto projectionOperator
         = ProjectionLogicalOperator::create(sourceDescriptorLogicalOperator, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOperator = SinkLogicalOperator::create(projectionOperator, sinkDescriptor);
-    const LogicalPlan logicalPlan{
-        QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOperator->withInferredSchema()}};
+    const LogicalPlan logicalPlan{QueryId{1}, {sinkOperator->withInferredSchema()}};
 
     auto annotated = DecideFieldMappings{}.apply(logicalPlan);
 
@@ -218,7 +214,7 @@ TEST_F(DecideFieldMappingsTest, TestCollisions)
     auto projectionOperator
         = ProjectionLogicalOperator::create(sourceDescriptorLogicalOperator, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOperator = SinkLogicalOperator::create(projectionOperator, sinkDescriptor);
-    const LogicalPlan logicalPlan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOperator}};
+    const LogicalPlan logicalPlan{QueryId{1}, {sinkOperator}};
     projectionOperator = logicalPlan.getRootOperators().at(0)->getChildren().at(0).tryGetAs<ProjectionLogicalOperator>().value();
 
     auto projectionOutputSchema = projectionOperator->getOutputSchema();
@@ -300,8 +296,7 @@ TEST_F(DecideFieldMappingsTest, TestProjectionToNewField)
     const auto projectionOperator
         = ProjectionLogicalOperator::create(sourceDescriptorLogicalOperator, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOperator = SinkLogicalOperator::create(projectionOperator, sinkDescriptorWithNew);
-    const LogicalPlan logicalPlan{
-        QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOperator->withInferredSchema()}};
+    const LogicalPlan logicalPlan{QueryId{1}, {sinkOperator->withInferredSchema()}};
 
     auto annotated = DecideFieldMappings{}.apply(logicalPlan);
 
@@ -362,7 +357,7 @@ TEST_F(DecideFieldMappingsTest, RenameProjectionShouldBeReportedAsAccessed)
          FieldAccessLogicalFunction{sourceOp.getOutputSchema().getFieldByName(Identifier::parse("attribute_c")).value()}}};
     auto projectionOp = ProjectionLogicalOperator::create(sourceOp, projections, ProjectionLogicalOperator::Asterisk{false});
     const auto sinkOp = SinkLogicalOperator::create(projectionOp, renamedSink);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
     const auto projectionFromPlan = plan.getRootOperators().at(0)->getChildren().at(0).tryGetAs<ProjectionLogicalOperator>().value();
     EXPECT_TRUE(projectionFromPlan->getAccessedFieldsForOutput().contains(
         projectionFromPlan->getOutputSchema()[Identifier::parse("renamed_a")].value()));

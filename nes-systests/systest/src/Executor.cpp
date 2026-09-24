@@ -37,6 +37,7 @@
 
 #include <Config/RunPolicy.hpp>
 #include <Discovery/TestDiscovery.hpp>
+#include <Model/ConfigurationOverride.hpp>
 #include <Model/Expectation.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
@@ -49,10 +50,6 @@
 #include <Logging.hpp>
 #include <Progress.hpp>
 #include <WorkingDirectoryGuard.hpp>
-
-/// Switches the workers to in-memory communication, which the systest run needs because it starts its workers in this
-/// process: the transport otherwise binds one receiver socket per process and a second worker cannot come up.
-extern void enable_memcom();
 
 namespace NES
 {
@@ -102,11 +99,12 @@ void recordTiming(
 
 }
 
-Executor::Executor(SystestConfiguration config) : config{std::move(config)}, rewriter{this->config}
+Executor::Executor(SystestConfiguration config) : config{std::move(config)}
 {
 }
 
-std::expected<std::vector<RunnablePartition>, ReportEntry> Executor::prepare(const DiscoveredTestFile& discoveredTestFile)
+std::expected<std::vector<RunnablePartition>, ReportEntry>
+Executor::prepare(TestFileRewriter& rewriter, const DiscoveredTestFile& discoveredTestFile)
 {
     try
     {
@@ -123,13 +121,13 @@ std::expected<std::vector<RunnablePartition>, ReportEntry> Executor::prepare(con
     }
 }
 
-Executor::PreparedRun Executor::prepareAll()
+Executor::PreparedRun Executor::prepareAll(TestFileRewriter& rewriter)
 {
     PreparedRun run;
     for (const auto& discoveredTestFile : discoverTestFiles(config))
     {
         fmt::print("Loading queries from test file: file://{}\n", discoveredTestFile.getLogFilePath());
-        if (auto preparedTestFile = prepare(discoveredTestFile))
+        if (auto preparedTestFile = prepare(rewriter, discoveredTestFile))
         {
             std::ranges::move(*preparedTestFile, std::back_inserter(run.runnablePartitions));
         }
@@ -305,13 +303,11 @@ ExecutorResult Executor::execute()
     const auto runPolicy = RunPolicy::create(config);
     const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
-    if (not config.remoteWorker.getValue())
-    {
-        enable_memcom();
-    }
-
+    /// One coordinator with the workers this invocation configured serves every one of its test files.
     TestRunner runner{config};
-    auto prepared = this->prepareAll();
+    /// The rewriter asks the runner where each partition goes, which registers the worker for that partition's settings.
+    TestFileRewriter rewriter{config, [&runner](const ConfigurationOverride& settings) { return runner.placementFor(settings); }};
+    auto prepared = prepareAll(rewriter);
     if (const auto* shuffle = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))
     {
         /// The seed is printed, so a failure this finds can be repeated with the same seed.

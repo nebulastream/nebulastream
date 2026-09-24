@@ -49,14 +49,6 @@ namespace NES
 namespace
 {
 
-/// The config parser rejects an empty placement list, but a configuration that is built in code skips the parser,
-/// so the check is repeated here.
-const Host& defaultHost(const std::vector<Host>& allowed, const std::string_view option)
-{
-    PRECONDITION(not allowed.empty(), "Topology must list at least one worker in {} to assign a default host", option);
-    return allowed.front();
-}
-
 /// A selected number that the file does not have is most likely a typo in the invocation.
 /// For `-t Filter.test:3,7` on a file with queries 1 to 5, query 3 runs and 7 is reported;
 /// the run goes on with the rest.
@@ -77,13 +69,12 @@ void warnNumbersNotInFile(
 
 }
 
-TestFileRewriter::TestFileRewriter(const SystestConfiguration& config)
+TestFileRewriter::TestFileRewriter(const SystestConfiguration& config, PlacementResolver resolvePlacement)
     : workingDir{config.workingDir.getValue()}
     , testDataDir{config.testDataDir.getValue()}
     , configDir{config.configDir.getValue()}
     , discoveryRoot{config.testDiscoverRoot.getValue()}
-    , defaultSourceHost{defaultHost(config.clusterConfig.allowSourcePlacement, "allow_source_placement")}
-    , defaultSinkHost{defaultHost(config.clusterConfig.allowSinkPlacement, "allow_sink_placement")}
+    , resolvePlacement{std::move(resolvePlacement)}
 {
 }
 
@@ -138,6 +129,13 @@ std::vector<RunnablePartition> TestFileRewriter::rewrite(const DiscoveredTestFil
         {
             continue;
         }
+        /// The rewriter needs the hosts before it emits SQL, and asking for them registers the worker for these settings.
+        const auto placement = resolvePlacement(overrides);
+        if (not placement.has_value())
+        {
+            fmt::print("Skipping {} because it asks for worker settings the run cannot give it\n", testFile.getName().getRawValue());
+            continue;
+        }
         const auto partitionKey = discoveryRoot.keyOf(testFile.file, partitionIdx, partitions.size());
         /// The rewrite consumes the partition's statements.
         /// Only its overrides are read afterwards.
@@ -148,8 +146,8 @@ std::vector<RunnablePartition> TestFileRewriter::rewrite(const DiscoveredTestFil
                 .name = testFile.getName().getRawValue(),
                 .workingDir = workingDir,
                 .testDataDir = testDataDir,
-                .sourceHost = defaultSourceHost,
-                .sinkHost = defaultSinkHost});
+                .sourceHost = placement->sources,
+                .sinkHost = placement->sinks});
         nameOwners.claim(runnable.originalNames, testFile.file);
         rewritten.push_back(RunnablePartition{.overrides = overrides, .test = std::move(runnable)});
     }

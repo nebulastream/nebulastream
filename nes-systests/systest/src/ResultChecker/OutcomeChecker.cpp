@@ -14,14 +14,15 @@
 
 #include <ResultChecker/OutcomeChecker.hpp>
 
-#include <algorithm>
-#include <ranges>
+#include <cstdint>
+#include <optional>
 #include <span>
 #include <string>
 #include <variant>
-#include <vector>
 
 #include <fmt/format.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <BridgeError.hpp>
 
 #include <Model/Expectation.hpp>
 #include <Model/RunnableTestFile.hpp>
@@ -33,7 +34,6 @@
 #include <Rewriter/NamePrefixer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
-#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -41,84 +41,41 @@ namespace NES
 namespace
 {
 
-/// Whether every local query of this statement stopped, which is the only state that leaves a complete result file.
-bool stopped(const StatementOutcome& outcome)
-{
-    return outcome.reached.has_value() and outcome.reached->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
-}
-
-/// What went wrong with a statement, whether it failed before reaching the workers or on them.
-/// The errors are flattened over the workers that reported one, because a test states the code that it expects and
-/// not where it came from.
-struct Failure
-{
-    std::vector<Exception> errors;
-    std::string description;
-};
-
-Failure failureOf(const StatementOutcome& outcome)
-{
-    if (not outcome.reached.has_value())
-    {
-        return Failure{.errors = {outcome.reached.error()}, .description = outcome.reached.error().what()};
-    }
-
-    Failure failure;
-    for (const auto& exceptions : outcome.reached->getExceptions() | std::views::values)
-    {
-        failure.errors.insert(failure.errors.end(), exceptions.begin(), exceptions.end());
-    }
-    if (const auto coalesced = outcome.reached->coalesceException(); coalesced.has_value())
-    {
-        failure.description = coalesced->what();
-    }
-    return failure;
-}
-
 /// Checks a statement that failed against the error that the test expects.
-/// Errors beyond the expected one are tolerated, because a failure on one pipeline can raise further errors on the
-/// pipelines connected to it.
-Verdict checkFailed(const Failure& actual, const Expectation& expectation)
+/// The coordinator reports one code for the statement: the planner's when planning failed, and the failed fragment's
+/// otherwise, so a test states the code that it expects and not where it came from.
+Verdict checkFailed(const Bridge::StatementOutcome& outcome, const Expectation& expectation)
 {
-    if (actual.errors.empty())
-    {
-        return std::unexpected(Mismatch{"the query failed without reporting an error"});
-    }
-
+    const std::string message{outcome.error.msg};
     const auto* expectedError = std::get_if<ExpectedError>(&expectation);
     if (expectedError == nullptr)
     {
-        return std::unexpected(Mismatch{fmt::format("the query failed with an unexpected error: {}", actual.description)});
+        return std::unexpected(Mismatch{fmt::format("the query failed with an unexpected error: {}", message)});
     }
 
-    const auto occurred = std::ranges::any_of(
-        actual.errors,
-        [&](const Exception& error)
-        {
-            return error.code() == expectedError->code
-                and (not expectedError->message.has_value()
-                     or std::string_view{error.what()}.find(*expectedError->message) != std::string_view::npos);
-        });
-    if (not occurred)
+    const auto expectedCode = static_cast<uint16_t>(expectedError->code);
+    if (outcome.error.code != expectedCode
+        or (expectedError->message.has_value() and message.find(*expectedError->message) == std::string::npos))
     {
         return std::unexpected(Mismatch{fmt::format(
-            "expected the error \"{}({})\" to occur, but it did not. Actual: {}",
+            "expected the error \"{}({})\" to occur, but it did not. Actual: {}({})",
             expectedError->message.value_or(""),
-            expectedError->code,
-            actual.description)});
+            expectedCode,
+            message,
+            outcome.error.code)});
     }
     return Success{};
 }
 
-/// Checks the plan that an EXPLAIN printed, which is computed while binding because an EXPLAIN never reaches a worker.
+/// Checks the plan that an EXPLAIN printed, which the coordinator answers with instead of a result file.
 /// The printed plan uses the prefixed names, so they are restored to the declared spelling before the comparison.
-Verdict checkExplained(const StatementOutcome& outcome, const ExpectedPlan& expected, const OriginalNames& originalNames)
+Verdict checkExplained(const Bridge::StatementOutcome& outcome, const ExpectedPlan& expected, const OriginalNames& originalNames)
 {
-    if (not outcome.explained.has_value())
+    if (not Bridge::isNone(outcome.error))
     {
-        return checkFailed(failureOf(outcome), Expectation{expected});
+        return checkFailed(outcome, Expectation{expected});
     }
-    auto actual = restoreNames(*outcome.explained, originalNames);
+    auto actual = restoreNames(std::string{outcome.result}, originalNames);
     if (hasExplainRegexTags(expected.lines))
     {
         return runCheck(ExplainRegexCheck{.expected = expected.lines, .actual = std::move(actual)});
@@ -127,7 +84,8 @@ Verdict checkExplained(const StatementOutcome& outcome, const ExpectedPlan& expe
 }
 
 /// Checks a query that stopped against the rows that the test expects in its result file.
-Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, const ExpectedRows& expected)
+/// The coordinator holds the schema the sink was planned with, so the check reads it back from the file's header.
+Verdict checkRows(const RewrittenQuery& query, const ExpectedRows& expected)
 {
     /// A query whose sink discards its input writes no file, so there is nothing to compare.
     if (not query.resultFile.has_value())
@@ -139,16 +97,14 @@ Verdict checkRows(const StatementOutcome& outcome, const RewrittenQuery& query, 
         NES_INFO("Skipping the result check for {} because it writes no result file.", query.id);
         return Success{};
     }
-    INVARIANT(outcome.sinkOutputSchema.has_value(), "a query that ran has a bound plan and so a sink schema");
-    return runCheck(
-        QueryResultCheck{.resultFile = *query.resultFile, .expectedSchema = *outcome.sinkOutputSchema, .expectedTuples = expected.rows});
+    return runCheck(QueryResultCheck{.resultFile = *query.resultFile, .expectedSchema = std::nullopt, .expectedTuples = expected.rows});
 }
 
-Verdict checkQuery(const StatementOutcome& outcome, const RewrittenQuery& query)
+Verdict checkQuery(const Bridge::StatementOutcome& outcome, const RewrittenQuery& query)
 {
-    if (not stopped(outcome))
+    if (not Bridge::isNone(outcome.error))
     {
-        return checkFailed(failureOf(outcome), query.expectation);
+        return checkFailed(outcome, query.expectation);
     }
     if (const auto* expectedError = std::get_if<ExpectedError>(&query.expectation))
     {
@@ -156,18 +112,18 @@ Verdict checkQuery(const StatementOutcome& outcome, const RewrittenQuery& query)
     }
     const auto* expectedRows = std::get_if<ExpectedRows>(&query.expectation);
     INVARIANT(expectedRows != nullptr, "a query that is neither an EXPLAIN nor an expected error states its rows");
-    return checkRows(outcome, query, *expectedRows);
+    return checkRows(query, *expectedRows);
 }
 
 /// Checks that the two halves of a differential block agree.
-/// A half that did not stop leaves an incomplete result file, so the block reports that failure instead of comparing.
-Verdict checkDifferential(const std::span<const StatementOutcome> outcomes, const RewrittenDifferential& block)
+/// A half that failed leaves an incomplete result file, so the block reports that failure instead of comparing.
+Verdict checkDifferential(const std::span<const Bridge::StatementOutcome> outcomes, const RewrittenDifferential& block)
 {
     for (const auto& outcome : outcomes)
     {
-        if (not stopped(outcome))
+        if (not Bridge::isNone(outcome.error))
         {
-            return checkFailed(failureOf(outcome), Expectation{ExpectedRows{}});
+            return checkFailed(outcome, Expectation{ExpectedRows{}});
         }
     }
     if (outcomes.size() < 2)
@@ -179,8 +135,8 @@ Verdict checkDifferential(const std::span<const StatementOutcome> outcomes, cons
 
 }
 
-Verdict
-checkTestCase(const std::span<const StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames)
+Verdict checkTestCase(
+    const std::span<const Bridge::StatementOutcome> outcomes, const RewrittenTestCase& testCase, const OriginalNames& originalNames)
 {
     INVARIANT(not outcomes.empty(), "a checked test case submitted at least one statement");
     return std::visit(

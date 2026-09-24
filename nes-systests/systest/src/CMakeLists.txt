@@ -25,6 +25,5 @@ add_source_files(nes-systest-lib
         Executor.cpp
         Logging.cpp
         Progress.cpp
-        SystestBinder.cpp
         WorkingDirectoryGuard.cpp
 )

@@ -17,9 +17,8 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <deque>
+#include <cstdint>
 #include <exception>
-#include <expected>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -30,66 +29,79 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <fmt/format.h>
+#include <folly/MPMCQueue.h>
+#include <nes-coordinator-bridge/coordinator.h>
+#include <rfl/json/write.hpp>
+#include <rust/cxx.h>
+#include <BridgeError.hpp>
 
+#include <Config/Config.hpp>
 #include <Model/ConfigurationOverride.hpp>
 #include <Model/RunnablePartition.hpp>
 #include <Model/RunnableTestFile.hpp>
 #include <Model/TestCaseId.hpp>
 #include <Model/Verdict.hpp>
-#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
-#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
-#include <QueryManager/QueryManager.hpp>
 #include <ResultChecker/OutcomeChecker.hpp>
-#include <Runner/QuerySubmitter.hpp>
-#include <DistributedQuery.hpp>
+#include <Rewriter/SourceRewriting.hpp>
+#include <Runner/Cluster.hpp>
+#include <Runner/DataStaging.hpp>
+#include <Util/Overloaded.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestBinder.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
 namespace
 {
 
-/// A worker's starting configuration: what the command line gave, with the test file's settings applied on top.
-SingleNodeWorkerConfiguration configuredWith(const SingleNodeWorkerConfiguration& base, const ConfigurationOverride& settings)
+/// Starts the coordinator with the optimizer settings the command line gave.
+/// A separate function, so the JSON string outlives the call, which it would not if the member init list built it.
+/// Empty settings pass nothing rather than an empty object, so the optimizer keeps its own defaults.
+/// In the embedded mode the coordinator starts a worker in this process for each one registered with it.
+/// In the remote mode it starts none and answers no default host, because it sends its commands over gRPC to the
+/// worker already running at each registered address.
+rust::Box<Bridge::Coordinator>
+startCoordinator(const std::unordered_map<std::string, std::string>& optimizer, const Bridge::WorkerMode workers)
 {
-    auto configured = base;
-    for (const auto& [key, value] : settings)
+    if (optimizer.empty())
     {
-        configured.overwriteConfigWithCommandLineInput({{key, value}});
+        return Bridge::start_coordinator(rust::Str{}, workers, rust::Str{});
     }
-    return configured;
+    const auto json = rfl::json::write(optimizer);
+    return Bridge::start_coordinator(rust::Str{}, workers, rust::Str{json.data(), json.size()});
 }
 
-/// The span that the workers recorded between the query running and stopping.
-/// Running rather than starting, so the time excludes bringing up sources and pipelines, as the measurements before this runner did.
-/// A query that reported neither timestamp took no measurable time of its own.
-std::chrono::milliseconds executionTime(const DistributedQueryStatusSnapshot& snapshot)
+Bridge::WorkerMode workerModeOf(const SystestConfiguration& config)
 {
-    const auto metrics = snapshot.coalesceQueryMetrics();
-    if (not metrics.running.has_value() or not metrics.stop.has_value())
-    {
-        return std::chrono::milliseconds::zero();
-    }
-    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(*metrics.stop - *metrics.running);
-    return elapsed.count() > 0 ? elapsed : std::chrono::milliseconds::zero();
+    return config.remoteWorker.getValue() ? Bridge::WorkerMode::Remote : Bridge::WorkerMode::Embedded;
 }
 
-/// The time a finished query ran. A query that ran past the timeout reached no terminal state, so it took no measurable time.
-std::chrono::milliseconds executionTimeOf(const FinishedQuery& finished)
+/// One test case of one test file in the submitted group, and the slot its check takes in the report.
+struct Job
 {
-    return finished.outcome.has_value() ? executionTime(*finished.outcome) : std::chrono::milliseconds::zero();
-}
+    size_t runnable = 0;
+    size_t index = 0;
+    size_t position = 0;
+};
 
-/// Whether a finished query ran to completion, as opposed to failing or running past the timeout.
-bool completed(const FinishedQuery& finished)
+/// A test case whose statements the coordinator has all answered: one for a query or an EXPLAIN, up to two for a differential block.
+/// The submissions hold how long this process waited for each answer, in the same order as the outcomes.
+struct Submitted
 {
-    return finished.outcome.has_value() and finished.outcome->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
+    Job job;
+    std::vector<Bridge::StatementOutcome> outcomes;
+    std::vector<std::chrono::steady_clock::duration> submissions;
+};
+
+/// The span the coordinator recorded between the query starting and stopping.
+/// A statement that started no query reports neither timestamp, and takes no measurable time of its own.
+std::chrono::milliseconds executionTime(const Bridge::StatementOutcome& outcome)
+{
+    return outcome.stop_ms > outcome.start_ms ? std::chrono::milliseconds{outcome.stop_ms - outcome.start_ms}
+                                              : std::chrono::milliseconds::zero();
 }
 
 }
@@ -97,198 +109,70 @@ bool completed(const FinishedQuery& finished)
 struct TestRunner::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : binder(config)
-        , clusterConfig(config.clusterConfig)
-        , remote(config.remoteWorker.getValue())
-        , baseWorker(config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{}))
-        , queryTimeout(std::chrono::seconds{config.queryTimeoutSeconds.getValue()})
+        /// An empty database path selects an in-memory catalog.
+        : coordinator{startCoordinator(config.optimizerOverrides, workerModeOf(config))}
+        , cluster{*coordinator, Cluster::Settings{.mode = workerModeOf(config), .topology = config.clusterConfig, .workerSettings = config.workerOverrides}}
+        , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds.getValue()}}
     {
-        if (not config.workerConfig.getValue().empty())
-        {
-            baseWorker.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig.getValue());
-        }
     }
 
-    /// One test file partition that is set up: the settings that it runs under, and its test cases bound.
-    struct Prepared
+    /// Stages the data the sources read, then submits the setup statements of one test file.
+    /// Returns the servers that are still sending, which have to outlive every query reading from them.
+    /// Throws on the first statement the coordinator rejects, leaving the rest of that file's setup unsubmitted.
+    /// The servers it had already started stop as the throw unwinds, because nothing will read from them.
+    [[nodiscard]] std::vector<std::jthread> submitSetup(const RunnableTestFile& runnable)
     {
-        ConfigurationOverride settings;
-        std::vector<std::vector<PlannedStatement>> testCases;
-    };
-
-    /// A submitter for these settings, which owns the worker that it submits to.
-    /// One at a time: an embedded worker binds a receiver in this process, and the transport allows only one of those,
-    /// so the group that runs under one set of settings finishes before the next group starts its worker.
-    QuerySubmitter submitterFor(const ConfigurationOverride& settings)
-    {
-        auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
-        auto manager = remote
-            ? std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend())
-            : std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuredWith(baseWorker, settings)));
-        return QuerySubmitter{std::move(manager), queryTimeout};
-    }
-
-    /// One test case of one test file in the submitted group.
-    struct Job
-    {
-        size_t runnable = 0;
-        size_t index = 0;
-    };
-
-    /// One test case in flight: which of its statements is running, and what the statements answered so far.
-    struct InFlight
-    {
-        Job job;
-        size_t statement = 0;
-        std::vector<StatementOutcome> outcomes;
-        std::vector<QueryTiming> timings;
-        std::chrono::steady_clock::time_point startedAt;
-    };
-
-    /// Runs the test files that asked for one set of settings, against the worker that has them.
-    /// Submitting is asynchronous, so this starts up to `concurrency` test cases and then waits for whichever finishes
-    /// first, rather than holding a thread per test case.
-    void submitGroup(
-        const std::vector<std::reference_wrapper<const RunnableTestFile>>& inGroup,
-        const std::vector<size_t>& indices,
-        const std::vector<size_t>& offsets,
-        const ConfigurationOverride& settings,
-        const size_t concurrency,
-        const TestRunner::QueryObserver& observe,
-        std::vector<ReportEntry>& checked)
-    {
-        auto submitter = submitterFor(settings);
-
-        const auto statementsOf = [&](const Job& job) -> const std::vector<PlannedStatement>&
-        { return prepared.at(indices.at(job.runnable)).testCases.at(job.index); };
-
-        std::deque<Job> pending;
-        for (size_t runnable = 0; runnable < inGroup.size(); ++runnable)
+        std::vector<std::jthread> servers;
+        /// The staged SQL is what reaches the coordinator, so a served source includes the endpoint that its server bound.
+        for (auto setup : runnable.setupStatements)
         {
-            for (size_t index = 0; index < inGroup.at(runnable).get().testCases.size(); ++index)
+            std::visit(
+                Overloaded{
+                    [](const PlainStatement&) {},
+                    [](const StatementWithInlineData& withInline) { writeInlineData(withInline.data); },
+                    [&](StatementWithServedData& withServed)
+                    {
+                        /// The server binds a port on the host running this process and advertises it as `localhost`.
+                        /// A worker in another process resolves that to itself and connects somewhere unrelated, so
+                        /// reporting the file is better than letting it read whatever answers.
+                        /// The distributed harness excludes the `tcp` group for the same reason.
+                        if (not cluster.runsInThisProcess())
+                        {
+                            throw TestException("a source served over a socket cannot reach a remote worker: exclude the tcp group");
+                        }
+                        auto server = serve(std::move(withServed.data));
+                        withServed.sql = addSourceOptions(withServed.sql, server.options);
+                        servers.push_back(std::move(server.thread));
+                    }},
+                setup);
+            /// A CREATE cannot state an expected error, because only a query can, so a rejected one is a broken test file.
+            /// Throwing skips the rest of this file's setup, since a statement below usually needs the one that failed.
+            /// What is already in the catalog stays there, which costs nothing: this file's queries never run, and its names
+            /// carry its key so no other file can reach them.
+            const auto& sql = sqlOf(setup);
+            if (const auto outcome
+                = coordinator->submit(rust::Str{sql.data(), sql.size()}, Bridge::WaitMode::UntilCompleted, timeoutMillis(), false);
+                not Bridge::isNone(outcome.error))
             {
-                pending.push_back(Job{.runnable = runnable, .index = index});
+                throw TestException("setup statement failed: {}: {}", sql, std::string{outcome.error.msg});
             }
         }
-        const auto total = pending.size();
-        std::unordered_map<DistributedQueryId, InFlight> running;
-        std::deque<InFlight> answered;
-
-        /// Submits the flight's next statement, or answers it here when it has no plan to run.
-        /// Returns false once the test case has nothing further to submit, which is when it can be checked.
-        const auto advance = [&](InFlight& flight)
-        {
-            const auto& statements = statementsOf(flight.job);
-            if (flight.statement >= statements.size())
-            {
-                return false;
-            }
-            const auto& statement = statements.at(flight.statement);
-            if (not statement.plan.has_value())
-            {
-                /// A statement that did not bind, and an EXPLAIN, are answered without reaching a worker.
-                flight.outcomes.push_back(StatementOutcome{
-                    .reached = std::unexpected{statement.plan.error()},
-                    .sinkOutputSchema = std::nullopt,
-                    .explained = statement.explained,
-                    .execution = {}});
-                flight.timings.emplace_back();
-                ++flight.statement;
-                return false;
-            }
-            auto started = submitter.startQuery(statement.plan->plan);
-            if (not started.has_value())
-            {
-                flight.outcomes.push_back(StatementOutcome{
-                    .reached = std::unexpected{started.error()},
-                    .sinkOutputSchema = statement.plan->sinkOutputSchema,
-                    .explained = std::nullopt,
-                    .execution = {}});
-                flight.timings.emplace_back();
-                ++flight.statement;
-                return false;
-            }
-            flight.startedAt = std::chrono::steady_clock::now();
-            running.emplace(*started, std::move(flight));
-            return true;
-        };
-
-        const auto check = [&](InFlight& flight)
-        {
-            const RunnableTestFile& runnable = inGroup.at(flight.job.runnable);
-            const auto& testCase = runnable.testCases.at(flight.job.index);
-            auto verdict = checkTestCase(flight.outcomes, testCase, runnable.originalNames);
-            TestCaseId id{.originFile = runnable.name, .queryIdInFile = testCaseNumber(testCase), .overrides = settings};
-            if (observe)
-            {
-                observe(id, testCase, verdict, flight.timings);
-            }
-            checked.at(offsets.at(indices.at(flight.job.runnable)) + flight.job.index)
-                = ReportEntry{.id = std::move(id), .outcome = std::move(verdict), .timings = std::move(flight.timings)};
-        };
-
-        for (size_t reported = 0; reported < total;)
-        {
-            while (running.size() < std::max(concurrency, size_t{1}) and not pending.empty())
-            {
-                InFlight flight{.job = pending.front(), .statement = 0, .outcomes = {}, .timings = {}, .startedAt = {}};
-                pending.pop_front();
-                if (not advance(flight))
-                {
-                    answered.push_back(std::move(flight));
-                }
-            }
-
-            while (not answered.empty())
-            {
-                auto flight = std::move(answered.front());
-                answered.pop_front();
-                check(flight);
-                ++reported;
-            }
-            if (running.empty())
-            {
-                continue;
-            }
-
-            for (auto& finished : submitter.finishedQueries())
-            {
-                const auto inFlight = running.find(finished.id);
-                INVARIANT(inFlight != running.end(), "a finished query was submitted by this run");
-                auto flight = std::move(inFlight->second);
-                running.erase(inFlight);
-
-                const auto& statement = statementsOf(flight.job).at(flight.statement);
-                const auto execution = executionTimeOf(finished);
-                const auto succeeded = completed(finished);
-                flight.outcomes.push_back(StatementOutcome{
-                    .reached = std::move(finished.outcome),
-                    .sinkOutputSchema = statement.plan.has_value() ? std::optional{statement.plan->sinkOutputSchema} : std::nullopt,
-                    .explained = std::nullopt,
-                    .execution = execution});
-                flight.timings.push_back(
-                    QueryTiming{.submission = std::chrono::steady_clock::now() - flight.startedAt, .execution = execution});
-                ++flight.statement;
-
-                /// The halves of a differential block run one after the other, so the second reads a complete result file.
-                /// A failed first half leaves the second unsubmitted, because its result would compare against nothing.
-                if (not succeeded or not advance(flight))
-                {
-                    answered.push_back(std::move(flight));
-                }
-            }
-        }
+        return servers;
     }
 
-    SystestBinder binder;
-    SystestClusterConfiguration clusterConfig;
-    bool remote;
-    SingleNodeWorkerConfiguration baseWorker;
-    /// How long one submitted query may take to reach a terminal state. Zero waits forever.
+    /// The deadline for one submission, in the unit the bridge takes.
+    [[nodiscard]] uint64_t timeoutMillis() const { return static_cast<uint64_t>(queryTimeout.count()); }
+
+    rust::Box<Bridge::Coordinator> coordinator;
+
+    /// Declared after the coordinator, because registering the workers and reading the default host both need one.
+    Cluster cluster;
+
+    /// How long one submission waits before the coordinator gives up on it. Zero waits forever.
     std::chrono::milliseconds queryTimeout;
 
-    /// What setting up produced, in the order of the ready list that the caller then submits.
-    std::vector<Prepared> prepared;
+    /// The settings of each test file that is ready to submit, in the order of the ready list, which label its checks.
+    std::vector<ConfigurationOverride> prepared;
 };
 
 TestRunner::TestRunner(const SystestConfiguration& config) : impl(std::make_unique<Impl>(config))
@@ -296,6 +180,11 @@ TestRunner::TestRunner(const SystestConfiguration& config) : impl(std::make_uniq
 }
 
 TestRunner::~TestRunner() = default;
+
+std::optional<Placement> TestRunner::placementFor(const ConfigurationOverride& settings)
+{
+    return impl->cluster.placementFor(settings);
+}
 
 TestRunner::SetUpRun TestRunner::setUpAll(const std::vector<RunnablePartition>& partitions)
 {
@@ -306,26 +195,11 @@ TestRunner::SetUpRun TestRunner::setUpAll(const std::vector<RunnablePartition>& 
 
     for (const auto& [asked, runnable] : partitions)
     {
-        /// Workers started elsewhere take no settings from this run, so a file that asks for some is skipped rather than failed,
-        /// as the runner before this one did.
-        if (impl->remote and not asked.empty())
-        {
-            for (const auto& testCase : runnable.testCases)
-            {
-                run.rejected.push_back(ReportEntry{
-                    .id = TestCaseId{.originFile = runnable.name, .queryIdInFile = testCaseNumber(testCase), .overrides = asked},
-                    .outcome
-                    = Skipped{.reason = "a run against workers started elsewhere cannot apply the settings that this file asks for"},
-                    .timings = {}});
-            }
-            continue;
-        }
         /// Each file is set up on its own, so a failure reaches no further than that file.
         try
         {
-            auto bound = impl->binder.bind(runnable);
-            std::ranges::move(bound.servers, std::back_inserter(run.servers));
-            impl->prepared.push_back(Impl::Prepared{.settings = asked, .testCases = std::move(bound.testCases)});
+            std::ranges::move(impl->submitSetup(runnable), std::back_inserter(run.servers));
+            impl->prepared.push_back(asked);
             run.ready.emplace_back(runnable);
         }
         catch (const std::exception& exception)
@@ -355,43 +229,104 @@ std::vector<ReportEntry> TestRunner::submitQueries(
 {
     INVARIANT(impl->prepared.size() == runnables.size(), "every test file that is ready to submit was set up");
 
-    /// Where each test file's checks start in the report, so a test case keeps its place however the run groups the files.
-    std::vector<size_t> offsets;
-    offsets.reserve(runnables.size());
-    size_t total = 0;
-    for (const RunnableTestFile& runnable : runnables)
+    /// Every test case of every test file, with the slot its check takes in the report, so a test case keeps its place
+    /// however the run interleaves them.
+    std::vector<Job> jobs;
+    for (size_t runnable = 0; runnable < runnables.size(); ++runnable)
     {
-        offsets.push_back(total);
-        total += runnable.testCases.size();
-    }
-    std::vector<ReportEntry> checked(total);
-
-    /// A worker takes its settings at startup, so the files are run one group of settings at a time, and each group
-    /// waits for the group before it.
-    /// Registering a worker per set of settings replaces this.
-    std::vector<ConfigurationOverride> groups;
-    for (const auto& prepared : impl->prepared)
-    {
-        if (std::ranges::find(groups, prepared.settings) == groups.end())
+        for (size_t index = 0; index < runnables.at(runnable).get().testCases.size(); ++index)
         {
-            groups.push_back(prepared.settings);
+            jobs.push_back(Job{.runnable = runnable, .index = index, .position = jobs.size()});
         }
     }
 
-    for (const auto& settings : groups)
+    /// Each queue holds a fixed number of slots, so neither grows without a limit.
+    /// The run writes every job once, plus one empty job per thread, which sizes the first.
+    /// A thread takes its next job only after handing its answer over, so at most one answer per thread waits, which sizes the second.
+    const auto threads = std::max(concurrency, size_t{1});
+    folly::MPMCQueue<std::optional<Job>> toSubmit{jobs.size() + threads};
+    folly::MPMCQueue<Submitted> answered{threads};
+
+    /// One thread per concurrent test case, because a submission blocks until its statement is terminal.
+    /// Each thread takes a job, submits its statements and hands the answers back, so at most this many test cases run at once.
+    /// The coordinator serves each submission on a request of its own, so several threads may wait inside one at the same time.
+    /// An empty job releases a thread, and the loop below writes one per thread once every answer is in.
+    const auto nextJob = [&toSubmit]
     {
-        std::vector<std::reference_wrapper<const RunnableTestFile>> inGroup;
-        std::vector<size_t> indices;
-        for (size_t index = 0; index < runnables.size(); ++index)
+        std::optional<Job> job;
+        toSubmit.blockingRead(job);
+        return job;
+    };
+    const auto submitOne = [&](const std::string& sql, Submitted& answer)
+    {
+        const auto startedAt = std::chrono::steady_clock::now();
+        answer.outcomes.push_back(
+            impl->coordinator->submit(rust::Str{sql.data(), sql.size()}, Bridge::WaitMode::UntilCompleted, impl->timeoutMillis(), false));
+        answer.submissions.push_back(std::chrono::steady_clock::now() - startedAt);
+    };
+    const auto submit = [&]
+    {
+        while (const auto job = nextJob())
         {
-            if (impl->prepared.at(index).settings == settings)
-            {
-                inGroup.emplace_back(runnables.at(index));
-                indices.push_back(index);
-            }
+            const RunnableTestFile& runnable = runnables.at(job->runnable);
+            Submitted answer{.job = *job, .outcomes = {}, .submissions = {}};
+            std::visit(
+                Overloaded{
+                    [&](const RewrittenQuery& query) { submitOne(query.sql, answer); },
+                    [&](const RewrittenDifferential& block)
+                    {
+                        /// The halves run one after the other on this thread, so a block takes one slot for its whole
+                        /// span and the second half reads a result file that is complete.
+                        /// A failed first half leaves the second unsubmitted, because its result would compare against nothing.
+                        submitOne(block.firstSql, answer);
+                        if (Bridge::isNone(answer.outcomes.back().error))
+                        {
+                            submitOne(block.secondSql, answer);
+                        }
+                    },
+                    [&](const RewrittenExplain& explain) { submitOne(explain.sql, answer); }},
+                runnable.testCases.at(job->index).action);
+            answered.blockingWrite(std::move(answer));
         }
-        impl->submitGroup(inGroup, indices, offsets, settings, concurrency, observe, checked);
+    };
+    std::vector<std::jthread> submitters;
+    submitters.reserve(threads);
+    while (submitters.size() < threads)
+    {
+        submitters.emplace_back(submit);
     }
+
+    /// Checking stays on this thread, so the checks and the observer need no locking.
+    /// The threads above spend the time, because running a query costs far more than comparing its result.
+    /// Writing a job never blocks, because the queue has a slot for every one, so a thread waiting to hand an answer over
+    /// is always let through.
+    std::vector<ReportEntry> checked(jobs.size());
+    for (const auto& job : jobs)
+    {
+        toSubmit.blockingWrite(job);
+    }
+    for (size_t reported = 0; reported < jobs.size(); ++reported)
+    {
+        Submitted answer;
+        answered.blockingRead(answer);
+        const auto& [job, outcomes, submissions] = answer;
+        const RunnableTestFile& runnable = runnables.at(job.runnable);
+        const auto& testCase = runnable.testCases.at(job.index);
+        auto verdict = checkTestCase(outcomes, testCase, runnable.originalNames);
+        std::vector<QueryTiming> timings;
+        timings.reserve(outcomes.size());
+        for (size_t statement = 0; statement < outcomes.size(); ++statement)
+        {
+            timings.push_back(QueryTiming{.submission = submissions.at(statement), .execution = executionTime(outcomes.at(statement))});
+        }
+        TestCaseId id{.originFile = runnable.name, .queryIdInFile = testCaseNumber(testCase), .overrides = impl->prepared.at(job.runnable)};
+        if (observe)
+        {
+            observe(id, testCase, verdict, timings);
+        }
+        checked.at(job.position) = ReportEntry{.id = std::move(id), .outcome = std::move(verdict), .timings = std::move(timings)};
+    }
+    std::ranges::for_each(submitters, [&](const auto&) { toSubmit.blockingWrite(std::nullopt); });
     return checked;
 }
 

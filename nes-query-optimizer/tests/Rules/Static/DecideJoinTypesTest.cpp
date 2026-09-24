@@ -55,10 +55,7 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 
 #include <Operators/LogicalOperatorFwd.hpp>
-#include <Util/UUID.hpp>
-#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryId.hpp>
 
 namespace NES
 {
@@ -150,7 +147,7 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 
     auto selectionOp = SelectionLogicalOperator::create(sourceOp, selectionFn);
     auto sinkOp = SinkLogicalOperator::create(selectionOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -206,7 +203,7 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -259,7 +256,7 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
     auto result = rule.apply(plan);
@@ -316,7 +313,7 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::HASH_JOIN);
     auto result = rule.apply(plan);
@@ -375,7 +372,7 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), sinkSchema);
     auto sinkOp = SinkLogicalOperator::create(joinOp, sinkDescriptor);
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -418,7 +415,7 @@ TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -461,7 +458,7 @@ TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, false));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -504,7 +501,7 @@ TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(true, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
@@ -547,7 +544,7 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
     auto result = rule.apply(plan);
@@ -595,7 +592,7 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
 
     auto sinkDescriptor = createSinkDescriptor(Identifier::parse("test_sink"), createJoinOutputSchema(false, true));
     auto sinkOp = SinkLogicalOperator::create(sinkDescriptor).withChildrenUnsafe({joinOp});
-    const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
+    const LogicalPlan plan{QueryId{1}, {sinkOp->withInferredSchema()}};
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
