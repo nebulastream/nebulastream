@@ -12,6 +12,15 @@ ATTACH INLINE
 -73.9857,40.7485,-110.9857,40.7485,1609459440
 -73.9855,40.7485,-120.9855,40.7485,1609459500
 
+CREATE LOGICAL SOURCE temporalSequences(seq1 TemporalPointSequence NOT NULL, seq2 TemporalPointSequence NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporalSequences TYPE FILE SET(
+'Json' as INPUT_FORMATTER."TYPE"
+);
+ATTACH INLINE
+{"SEQ1": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459200}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459260}]}, "SEQ2": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459200}, {"lon": -80.9857, "lat": 40.7484, "ts": 1609459260}]}}
+{"SEQ1": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459320}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459380}]}, "SEQ2": {"sequence": [{"lon": -90.9857, "lat": 40.7484, "ts": 1609459320}, {"lon": -100.9857, "lat": 40.7484, "ts": 1609459380}]}}
+{"SEQ1": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459440}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459500}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459560}]}, "SEQ2": {"sequence": [{"lon": -110.9857, "lat": 40.7484, "ts": 1609459440}, {"lon": -120.9857, "lat": 40.7484, "ts": 1609459500}, {"lon": -109.9857, "lat": 40.7484, "ts": 1609459560}]}}
+
 # Check if TemporalPoint plugin works
 SELECT TemporalPoint(lon1, lat1, ts) AS mp FROM temporal WHERE ts == UINT64(1609459200) INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
 ----
@@ -40,6 +49,16 @@ SELECT start, end, MIN(nearest_approach_distance(TemporalPoint(lon1, lat1, ts), 
 {"START":1609459320,"END":1609459440,"NAD":17.0}
 {"START":1609459440,"END":1609459560,"NAD":37.0}
 
+# Check if TemporalPointSequence plugin works
+SELECT * FROM temporalSequences INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"SEQ1":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459200},{"lon":-73.9857,"lat":40.7484,"ts":1609459260}]},"SEQ2":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459200},{"lon":-80.9857,"lat":40.7484,"ts":1609459260}]}}
+{"SEQ1":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459320},{"lon":-73.9857,"lat":40.7484,"ts":1609459380}]},"SEQ2":{"sequence":[{"lon":-90.9857,"lat":40.7484,"ts":1609459320},{"lon":-100.9857,"lat":40.7484,"ts":1609459380}]}}
+{"SEQ1":{"sequence":[{"lon":-73.9857,"lat":40.7484,"ts":1609459440},{"lon":-73.9857,"lat":40.7484,"ts":1609459500},{"lon":-73.9857,"lat":40.7484,"ts":1609459560}]},"SEQ2":{"sequence":[{"lon":-110.9857,"lat":40.7484,"ts":1609459440},{"lon":-120.9857,"lat":40.7484,"ts":1609459500},{"lon":-109.9857,"lat":40.7484,"ts":1609459560}]}}
 
-
-
+# NearestApproachDistance between temporal sequences is implemented and should return the minimal distance between two points of the same timestamp in the two sequences
+SELECT nearest_approach_distance(seq1, seq2) AS distance FROM temporalSequences INTO FILE();
+----
+0.0
+17.0
+36.0

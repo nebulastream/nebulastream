@@ -1,0 +1,44 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <DataTypes/VarVal.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Interface/Record.hpp>
+#include <Arena.hpp>
+#include <PhysicalFunctionRegistry.hpp>
+
+namespace NES
+{
+
+/// Calculates the minimal distance between two TemporalPointSequence objects.
+/// We treat the contained points in a discrete manner, meaning that we can only measure the distance between two contained points, if they have the same timestamp.
+class TemporalPointSequenceNearestApproachDistancePhysicalFunction final
+{
+public:
+    explicit TemporalPointSequenceNearestApproachDistancePhysicalFunction(
+        PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    static PhysicalFunctionRegistryReturnType
+    createNEAREST_APPROACH_DISTANCE_TemporalPointSequence_TemporalPointSequence(PhysicalFunctionRegistryArguments arguments);
+
+private:
+    PhysicalFunction leftPhysicalFunction;
+    PhysicalFunction rightPhysicalFunction;
+};
+
+static_assert(PhysicalFunctionConcept<TemporalPointSequenceNearestApproachDistancePhysicalFunction>);
+
+}

@@ -215,6 +215,7 @@ public:
         /// bool intersects(const TemporalInstant& point) const;
         /// double distance(const TemporalInstant& point) const;
         double length(const TemporalInstant& instant) const;
+        Temporal* getGeometry();
 
     private:
         Temporal* sequence;
