@@ -90,17 +90,23 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     nautilus::engine::Options options;
     /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
     options.setOption("mlir.enableMultithreading", false);
-    /// Pinning the backend makes nautilus compile single-tier and synchronously with MLIR. Otherwise nautilus defaults
-    /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
-    /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
-    options.setOption("engine.backend", std::string("mlir"));
+    /// Pinning the backend makes nautilus compile single-tier and synchronously with it. Otherwise nautilus defaults to its
+    /// tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), which would conflict with the thread
+    /// model above.
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
+            options.setOption("engine.backend", std::string("mlir"));
+            options.setOption("engine.Compilation", true);
+            break;
+        }
+        case ExecutionMode::ASMJIT: {
+            options.setOption("engine.backend", std::string("asmjit"));
             options.setOption("engine.Compilation", true);
             break;
         }
         case ExecutionMode::INTERPRETER: {
+            options.setOption("engine.backend", std::string("mlir"));
             options.setOption("engine.Compilation", false);
             break;
         }
