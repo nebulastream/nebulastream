@@ -31,6 +31,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Schema/Schema.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/region.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -105,7 +106,12 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                 auto rightItStart = rightPagedVector.begin();
                 auto rightItEnd = rightPagedVector.end();
 
-                if (const auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef); leftEntry != nullptr)
+                /// Traced as an isolated region: the lookup's paths (walking the chain, found, not found) keep different values
+                /// alive, which stops the tracer from merging them, so the whole match loop and everything downstream would be
+                /// traced once per path. The entry leaves the region through a value declared outside it.
+                nautilus::val<ChainedHashMapEntry*> leftEntry = nullptr;
+                nautilus::region("FindMatchingEntry", [&] { leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef); });
+                if (leftEntry != nullptr)
                 {
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         static_cast<nautilus::val<ChainedHashMapEntry*>>(leftEntry),
