@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 use crate::query_gen::{self, CollectRequest, GenerateError, VALUE};
-use crate::registry::{CollectionDomain, Key, Metric, Registry, Report, Trigger};
+use crate::registry::{CollectionDomain, Key, Metric, Registered, Registry, Report, Trigger};
+use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::Notify;
@@ -23,6 +23,9 @@ use tokio::sync::Notify;
 pub const DEFAULT_PROBE_TIMEOUT: Duration = Duration::from_secs(30);
 pub const DEFAULT_PROBE_SETTLE: Duration = Duration::from_millis(500);
 pub const PROBE_SOURCE_PORT_BASE: u16 = 10000;
+/// Probe sources take the ports above the base in turn, so probes deployed together or at the same time do not ask one
+/// worker for the same port.
+pub const PROBE_SOURCE_PORT_RANGE: u16 = 100;
 pub const PROBE_SOURCE_PORT_ATTEMPTS: u16 = 10;
 
 #[derive(Debug, thiserror::Error)]
@@ -33,10 +36,28 @@ pub enum StatisticError {
     UnknownKey,
     #[error("the statistic service has no address; start its gRPC server first")]
     NoServiceAddress,
+    #[error("logical source {0} has no physical source to collect a statistic over")]
+    NoPhysicalSource(String),
+    #[error("no worker can take the sink of the statistic query over {logical_source}: {reason}")]
+    NoPlacement {
+        logical_source: String,
+        reason: String,
+    },
+    #[error("looking up the workers failed: {0}")]
+    Catalog(String),
     #[error("no probe query could be deployed")]
     ProbeNotDeployed,
     #[error("submitting the statistic query failed: {0}")]
     Submit(String),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SubmitError {
+    /// The planner found no placement for the query, for example because its sink is not downstream of its sources.
+    #[error("{0}")]
+    Placement(String),
+    #[error("{0}")]
+    Other(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -48,8 +69,17 @@ pub struct CollectResult {
 
 #[async_trait::async_trait]
 pub trait QuerySubmitter: Send + Sync {
-    async fn submit(&self, sql: String) -> Result<u64, String>;
+    async fn submit(&self, sql: String) -> Result<u64, SubmitError>;
     async fn stop(&self, query_id: u64) -> Result<(), String>;
+}
+
+/// What the service needs to know about the workers to place its queries.
+#[async_trait::async_trait]
+pub trait WorkerCatalog: Send + Sync {
+    /// The workers hosting a physical source of the logical source.
+    async fn source_workers(&self, logical_source: &str) -> Result<Vec<NetworkAddr>, String>;
+    /// Every registered worker.
+    async fn workers(&self) -> Result<Vec<NetworkAddr>, String>;
 }
 
 #[async_trait::async_trait]
@@ -59,9 +89,10 @@ pub trait SchemaResolver: Send + Sync {
 
 #[async_trait::async_trait]
 pub trait ProbeImpulse: Send + Sync {
+    /// Asks the probe source listening at `endpoint` for the statistic's windows within [start_ts, end_ts].
     async fn request(
         &self,
-        port: u16,
+        endpoint: &NetworkAddr,
         statistic_id: u64,
         start_ts: u64,
         end_ts: u64,
@@ -75,11 +106,20 @@ struct PendingProbe {
     probe_id: u64,
 }
 
+/// A deployed probe query and the endpoint its source listens on.
+struct ProbeQuery {
+    statistic_id: u64,
+    query_id: u64,
+    source: NetworkAddr,
+}
+
 pub struct StatisticService {
     registry: Registry,
     next_statistic_id: AtomicU64,
     next_probe_id: AtomicU64,
+    next_probe_port: AtomicU16,
     submitter: Arc<dyn QuerySubmitter>,
+    catalog: Arc<dyn WorkerCatalog>,
     resolver: Arc<dyn SchemaResolver>,
     impulse: Arc<dyn ProbeImpulse>,
     service_address: String,
@@ -92,6 +132,7 @@ pub struct StatisticService {
 impl StatisticService {
     pub fn new(
         submitter: Arc<dyn QuerySubmitter>,
+        catalog: Arc<dyn WorkerCatalog>,
         resolver: Arc<dyn SchemaResolver>,
         impulse: Arc<dyn ProbeImpulse>,
         service_address: String,
@@ -100,7 +141,9 @@ impl StatisticService {
             registry: Registry::default(),
             next_statistic_id: AtomicU64::new(1),
             next_probe_id: AtomicU64::new(1),
+            next_probe_port: AtomicU16::new(0),
             submitter,
+            catalog,
             resolver,
             impulse,
             service_address,
@@ -140,35 +183,97 @@ impl StatisticService {
         let address = self.address()?;
         let key = Self::key_of(request);
 
-        if let Some((query_id, statistic_id)) = self.registry.find(&key) {
+        if let Some(registered) = self.registry.find(&key) {
             if let Some(trigger) = trigger {
                 self.registry.add_trigger(&key, trigger);
             }
             return Ok(CollectResult {
-                query_id,
-                statistic_id,
+                query_id: registered.query_id,
+                statistic_id: registered.statistic_id,
                 already_existed: true,
             });
         }
+
+        // A request this port cannot serve is rejected before any worker is looked up.
+        let (logical_source, _) = query_gen::collected_field(request)?;
+        query_gen::aggregation(request.metric)?;
 
         let statistic_id = self.next_statistic_id.fetch_add(1, Ordering::Relaxed);
         let payload_type = self
             .scalar_payload_type(request.metric, &request.domain)
             .await;
-        let sql =
-            query_gen::collection_query(request, statistic_id, &address, payload_type.as_deref())?;
-        let query_id = self
-            .submitter
-            .submit(sql)
-            .await
-            .map_err(StatisticError::Submit)?;
 
-        self.registry.register(key, query_id, statistic_id, trigger);
-        Ok(CollectResult {
-            query_id,
-            statistic_id,
-            already_existed: false,
+        let mut reason = String::new();
+        for worker in self.sink_candidates(logical_source).await? {
+            let sql = query_gen::collection_query(
+                request,
+                statistic_id,
+                address,
+                payload_type.as_deref(),
+                &worker,
+            )?;
+            match self.submitter.submit(sql).await {
+                Ok(query_id) => {
+                    let registered = Registered {
+                        query_id,
+                        statistic_id,
+                        worker,
+                    };
+                    self.registry.register(key, registered, trigger);
+                    return Ok(CollectResult {
+                        query_id,
+                        statistic_id,
+                        already_existed: false,
+                    });
+                }
+                Err(SubmitError::Placement(error)) => {
+                    tracing::debug!(%worker, %error, "the statistic query cannot be placed with its sink on this worker");
+                    reason = error;
+                }
+                Err(SubmitError::Other(error)) => return Err(StatisticError::Submit(error)),
+            }
+        }
+        Err(StatisticError::NoPlacement {
+            logical_source: logical_source.to_string(),
+            reason,
         })
+    }
+
+    /// The workers to try the sink of a statistic query on, best first.
+    ///
+    /// The source's own workers come first: with one physical source, a sink on its worker keeps the whole query there.
+    /// With several on different workers only a worker downstream of all of them can take the sink, and the planner is
+    /// what knows the topology, so the remaining workers follow for it to accept or reject.
+    async fn sink_candidates(
+        &self,
+        logical_source: &str,
+    ) -> Result<Vec<NetworkAddr>, StatisticError> {
+        let mut candidates: Vec<NetworkAddr> = Vec::new();
+        for worker in self
+            .catalog
+            .source_workers(logical_source)
+            .await
+            .map_err(StatisticError::Catalog)?
+        {
+            if !candidates.contains(&worker) {
+                candidates.push(worker);
+            }
+        }
+        if candidates.is_empty() {
+            return Err(StatisticError::NoPhysicalSource(logical_source.to_string()));
+        }
+
+        let mut others: Vec<NetworkAddr> = self
+            .catalog
+            .workers()
+            .await
+            .map_err(StatisticError::Catalog)?
+            .into_iter()
+            .filter(|worker| !candidates.contains(worker))
+            .collect();
+        others.sort_by_key(ToString::to_string);
+        candidates.extend(others);
+        Ok(candidates)
     }
 
     async fn scalar_payload_type(
@@ -204,17 +309,6 @@ impl StatisticService {
         self.registry.len()
     }
 
-    fn resolve_ids(&self, keys: &[Key]) -> Result<Vec<u64>, StatisticError> {
-        keys.iter()
-            .map(|key| {
-                self.registry
-                    .find(key)
-                    .map(|(_, id)| id)
-                    .ok_or(StatisticError::UnknownKey)
-            })
-            .collect()
-    }
-
     pub async fn get_statistics(
         &self,
         keys: &[Key],
@@ -228,7 +322,10 @@ impl StatisticService {
                 "a probe decodes one metric at a time, but the request mixes several".into(),
             )));
         }
-        let statistic_ids = self.resolve_ids(keys)?;
+        let targets = keys
+            .iter()
+            .map(|key| self.registry.find(key).ok_or(StatisticError::UnknownKey))
+            .collect::<Result<Vec<_>, _>>()?;
         let aggregation = query_gen::aggregation(metric)?;
 
         let domain = first.domain.clone();
@@ -242,7 +339,7 @@ impl StatisticService {
             })?;
         let payload = vec![(VALUE.to_string(), payload_type)];
 
-        self.run_probe(&statistic_ids, aggregation, &payload, start_ts, end_ts)
+        self.run_probe(&targets, aggregation, &payload, start_ts, end_ts)
             .await
     }
 
@@ -264,9 +361,10 @@ impl StatisticService {
         self.registry.dispatch(report);
     }
 
+    /// Reads each target statistic back through a probe query of its own, placed on the worker that holds it.
     async fn run_probe(
         &self,
-        statistic_ids: &[u64],
+        targets: &[Registered],
         aggregation: &str,
         payload: &[(String, String)],
         start_ts: u64,
@@ -275,34 +373,25 @@ impl StatisticService {
         let address = self.address()?;
         let probe_id = self.next_probe_id.fetch_add(1, Ordering::Relaxed);
 
-        let mut deployed = None;
-        for attempt in 0..PROBE_SOURCE_PORT_ATTEMPTS {
-            let port = PROBE_SOURCE_PORT_BASE + attempt;
-            let sql = query_gen::probe_query(
-                statistic_ids,
-                aggregation,
-                payload,
-                port,
-                address,
-                probe_id,
-            )?;
-            match self.submitter.submit(sql).await {
-                Ok(query_id) => {
-                    deployed = Some((port, query_id));
-                    break;
+        let mut probes = Vec::with_capacity(targets.len());
+        for target in targets {
+            match self
+                .deploy_probe(target, aggregation, payload, address, probe_id)
+                .await
+            {
+                Ok(probe) => probes.push(probe),
+                Err(error) => {
+                    self.stop_probes(&probes).await;
+                    return Err(error);
                 }
-                Err(error) => tracing::warn!(port, %error, "probe query could not be deployed"),
             }
         }
-        let Some((source_port, probe_query_id)) = deployed else {
-            return Err(StatisticError::ProbeNotDeployed);
-        };
 
         {
             let mut pending = self.pending.lock().expect("pending probes poisoned");
-            for statistic_id in statistic_ids {
+            for probe in &probes {
                 pending.insert(
-                    *statistic_id,
+                    probe.statistic_id,
                     PendingProbe {
                         probe_id,
                         ..PendingProbe::default()
@@ -311,12 +400,12 @@ impl StatisticService {
             }
         }
 
-        futures::future::join_all(statistic_ids.iter().map(|statistic_id| async move {
+        futures::future::join_all(probes.iter().map(|probe| async move {
             let deadline = tokio::time::Instant::now() + self.probe_timeout;
             while tokio::time::Instant::now() < deadline {
                 if self
                     .impulse
-                    .request(source_port, *statistic_id, start_ts, end_ts)
+                    .request(&probe.source, probe.statistic_id, start_ts, end_ts)
                     .await
                     .is_ok()
                 {
@@ -324,16 +413,21 @@ impl StatisticService {
                 }
                 tokio::time::sleep(Duration::from_millis(50)).await;
             }
-            tracing::warn!(statistic_id, "the probe source never accepted a request");
+            tracing::warn!(
+                statistic_id = probe.statistic_id,
+                source = %probe.source,
+                "the probe source never accepted a request"
+            );
         }))
         .await;
 
+        let statistic_ids: Vec<u64> = probes.iter().map(|probe| probe.statistic_id).collect();
         let all_reported = tokio::time::timeout(self.probe_timeout, async {
             loop {
                 let notified = self.reported.notified();
                 tokio::pin!(notified);
                 notified.as_mut().enable();
-                if self.all_reported(statistic_ids) {
+                if self.all_reported(&statistic_ids) {
                     return;
                 }
                 notified.await;
@@ -349,7 +443,7 @@ impl StatisticService {
         let mut sum = 0.0;
         {
             let mut pending = self.pending.lock().expect("pending probes poisoned");
-            for statistic_id in statistic_ids {
+            for statistic_id in &statistic_ids {
                 if let Some(entry) = pending.remove(statistic_id) {
                     sum += entry.sum;
                     if entry.reports == 0 {
@@ -359,11 +453,55 @@ impl StatisticService {
             }
         }
 
-        if let Err(error) = self.submitter.stop(probe_query_id).await {
-            tracing::warn!(probe_query_id, %error, "the probe query could not be stopped");
-        }
-
+        self.stop_probes(&probes).await;
         Ok(all_reported.then_some(sum))
+    }
+
+    async fn deploy_probe(
+        &self,
+        target: &Registered,
+        aggregation: &str,
+        payload: &[(String, String)],
+        address: &str,
+        probe_id: u64,
+    ) -> Result<ProbeQuery, StatisticError> {
+        for _ in 0..PROBE_SOURCE_PORT_ATTEMPTS {
+            let port = PROBE_SOURCE_PORT_BASE
+                + self.next_probe_port.fetch_add(1, Ordering::Relaxed) % PROBE_SOURCE_PORT_RANGE;
+            let sql = query_gen::probe_query(
+                target.statistic_id,
+                aggregation,
+                payload,
+                port,
+                address,
+                probe_id,
+                &target.worker,
+            )?;
+            match self.submitter.submit(sql).await {
+                Ok(query_id) => {
+                    return Ok(ProbeQuery {
+                        statistic_id: target.statistic_id,
+                        query_id,
+                        source: NetworkAddr {
+                            host: target.worker.host.clone(),
+                            port,
+                        },
+                    });
+                }
+                Err(error) => {
+                    tracing::warn!(port, worker = %target.worker, %error, "probe query could not be deployed");
+                }
+            }
+        }
+        Err(StatisticError::ProbeNotDeployed)
+    }
+
+    async fn stop_probes(&self, probes: &[ProbeQuery]) {
+        for probe in probes {
+            if let Err(error) = self.submitter.stop(probe.query_id).await {
+                tracing::warn!(probe_query_id = probe.query_id, %error, "the probe query could not be stopped");
+            }
+        }
     }
 
     fn all_reported(&self, statistic_ids: &[u64]) -> bool {

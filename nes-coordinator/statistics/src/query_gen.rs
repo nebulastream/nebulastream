@@ -13,6 +13,7 @@
 */
 
 use crate::registry::{CollectionDomain, Metric};
+use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 
 pub const STATISTIC_ID: &str = "STATISTICID";
@@ -161,10 +162,17 @@ fn sends_always(condition: &str) -> bool {
     condition.trim().to_lowercase() == "true"
 }
 
-fn grpc_sink(address: &str, probe_id: u64) -> Result<String, GenerateError> {
+/// Places a source or sink on a worker. The coordinator only fills in a missing host in embedded deployments, and the
+/// worker a statistic query runs on is what decides which worker's statistic store it reaches.
+fn on_worker(group: &str, worker: &NetworkAddr) -> String {
+    format!("'{worker}' AS \"{group}\".\"HOST\"")
+}
+
+fn grpc_sink(address: &str, probe_id: u64, worker: &NetworkAddr) -> Result<String, GenerateError> {
     let (host, port) = split_address(address)?;
     Ok(format!(
-        "INTO Grpc('{host}' AS \"SINK\".GRPC_HOST, '{port}' AS \"SINK\".GRPC_PORT, '{probe_id}' AS \"SINK\".PROBE_ID, 'CSV' AS \"SINK\".OUTPUT_FORMAT)"
+        "INTO Grpc('{host}' AS \"SINK\".GRPC_HOST, '{port}' AS \"SINK\".GRPC_PORT, '{probe_id}' AS \"SINK\".PROBE_ID, 'CSV' AS \"SINK\".OUTPUT_FORMAT, {})",
+        on_worker("SINK", worker)
     ))
 }
 
@@ -187,39 +195,45 @@ pub fn intrinsic_payload_type(metric: Metric) -> Option<&'static str> {
     }
 }
 
+/// The logical source and field a request collects over. Only the data domain can be collected so far.
+pub fn collected_field(request: &CollectRequest) -> Result<(&str, &str), GenerateError> {
+    match &request.domain {
+        CollectionDomain::Data {
+            logical_source_name,
+            field_name,
+        } => Ok((logical_source_name, field_name)),
+        CollectionDomain::Workload {
+            query_id,
+            operator_id,
+            ..
+        } => Err(GenerateError::NotImplemented(format!(
+            "Collecting a statistic over the output of query {query_id} operator {operator_id} is not implemented"
+        ))),
+        CollectionDomain::Infrastructure { host_id } => Err(GenerateError::NotImplemented(
+            format!("Collecting infrastructure statistics for worker {host_id} is not implemented"),
+        )),
+    }
+}
+
+/// The query that builds a statistic, and probes it right back when the request reports on a condition.
+/// Its sink is placed on `sink_worker`; the build and the probe land between that worker and the source's workers.
 pub fn collection_query(
     request: &CollectRequest,
     statistic_id: u64,
     service_address: &str,
     payload_type: Option<&str>,
+    sink_worker: &NetworkAddr,
 ) -> Result<String, GenerateError> {
-    let (source, field) = match &request.domain {
-        CollectionDomain::Data {
-            logical_source_name,
-            field_name,
-        } => (logical_source_name, field_name),
-        CollectionDomain::Workload {
-            query_id,
-            operator_id,
-            ..
-        } => {
-            return Err(GenerateError::NotImplemented(format!(
-                "Collecting a statistic over the output of query {query_id} operator {operator_id} is not implemented"
-            )));
-        }
-        CollectionDomain::Infrastructure { host_id } => {
-            return Err(GenerateError::NotImplemented(format!(
-                "Collecting infrastructure statistics for worker {host_id} is not implemented"
-            )));
-        }
-    };
-
+    let (source, field) = collected_field(request)?;
     let build = build_expression(request, statistic_id, field)?;
     let window = window_clause(request.window, &request.time_characteristic);
     let inner = format!("SELECT {build} FROM {source} {window}");
 
     if sends_never(&request.condition) {
-        return Ok(format!("{inner} INTO Void()"));
+        return Ok(format!(
+            "{inner} INTO Void({})",
+            on_worker("SINK", sink_worker)
+        ));
     }
 
     let aggregation = aggregation(request.metric)?;
@@ -240,44 +254,39 @@ pub fn collection_query(
 
     Ok(format!(
         "SELECT {STATISTIC_ID}, {START_TS}, {END_TS}, {VALUE} FROM ({probe}){filter} {}",
-        grpc_sink(service_address, 0)?
+        grpc_sink(service_address, 0, sink_worker)?
     ))
 }
 
-pub fn probe_source(port: u16) -> String {
+pub fn probe_source(port: u16, worker: &NetworkAddr) -> String {
     format!(
         "Grpc('{port}' AS \"SOURCE\".GRPC_PORT, 'CSV' AS INPUT_FORMATTER.\"TYPE\", \
-         SCHEMA({STATISTIC_ID} UINT64 NOT NULL, {START_TS} UINT64 NOT NULL, {END_TS} UINT64 NOT NULL) AS \"SOURCE\".\"SCHEMA\")"
+         SCHEMA({STATISTIC_ID} UINT64 NOT NULL, {START_TS} UINT64 NOT NULL, {END_TS} UINT64 NOT NULL) AS \"SOURCE\".\"SCHEMA\", {})",
+        on_worker("SOURCE", worker)
     )
 }
 
+/// The query that reads one statistic back out of the store of `worker`, the worker its build wrote it to.
+/// Its source and sink are both placed on that worker, which leaves the placement no other worker for the read.
 pub fn probe_query(
-    statistic_ids: &[u64],
+    statistic_id: u64,
     aggregation: &str,
     payload: &[(String, String)],
     source_port: u16,
     service_address: &str,
     probe_id: u64,
+    worker: &NetworkAddr,
 ) -> Result<String, GenerateError> {
-    if statistic_ids.is_empty() {
-        return Err(GenerateError::InvalidRequest(
-            "a probe needs at least one statistic".into(),
-        ));
-    }
     let declared = payload
         .iter()
         .map(|(name, type_name)| format!("{name}, {type_name}"))
         .collect::<Vec<_>>()
         .join(", ");
 
-    let mut inner = format!("SELECT * FROM {}", probe_source(source_port));
-    for statistic_id in statistic_ids {
-        inner =
-            format!("SELECT {aggregation}_PROBE_RANGE({statistic_id}, {declared}) FROM ({inner})");
-    }
-
     Ok(format!(
-        "SELECT {STATISTIC_ID}, {START_TS}, {END_TS}, {VALUE} FROM ({inner}) {}",
-        grpc_sink(service_address, probe_id)?
+        "SELECT {STATISTIC_ID}, {START_TS}, {END_TS}, {VALUE} FROM (\
+         SELECT {aggregation}_PROBE_RANGE({statistic_id}, {declared}) FROM (SELECT * FROM {})) {}",
+        probe_source(source_port, worker),
+        grpc_sink(service_address, probe_id, worker)?
     ))
 }

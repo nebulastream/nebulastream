@@ -18,30 +18,52 @@ use crate::query_gen::{
 };
 use crate::registry::{CollectionDomain, Metric, Report};
 use crate::service::{
-    ProbeImpulse, QuerySubmitter, SchemaResolver, StatisticError, StatisticService,
+    PROBE_SOURCE_PORT_BASE, PROBE_SOURCE_PORT_RANGE, ProbeImpulse, QuerySubmitter, SchemaResolver,
+    StatisticError, StatisticService, SubmitError, WorkerCatalog,
 };
+use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 const SOURCE: &str = "teststream";
 const ADDRESS: &str = "localhost:1234";
+const SOURCE_WORKER: &str = "source-node:8080";
+
+fn worker(address: &str) -> NetworkAddr {
+    address.parse().unwrap()
+}
+
+fn sink_on(address: &str) -> String {
+    format!("'{address}' AS \"SINK\".\"HOST\"")
+}
 
 #[derive(Default)]
 struct StubSubmitter {
     submitted: Mutex<Vec<String>>,
     stopped: Mutex<Vec<u64>>,
     fail: bool,
+    /// Workers the planner refuses to place a sink on.
+    unplaceable_sinks: Vec<String>,
 }
 
 #[async_trait::async_trait]
 impl QuerySubmitter for StubSubmitter {
-    async fn submit(&self, sql: String) -> Result<u64, String> {
-        if self.fail {
-            return Err("submission refused".into());
-        }
+    async fn submit(&self, sql: String) -> Result<u64, SubmitError> {
         let mut submitted = self.submitted.lock().unwrap();
-        submitted.push(sql);
+        submitted.push(sql.clone());
+        if self.fail {
+            return Err(SubmitError::Other("submission refused".into()));
+        }
+        if let Some(refused) = self
+            .unplaceable_sinks
+            .iter()
+            .find(|refused| sql.contains(&sink_on(refused)))
+        {
+            return Err(SubmitError::Placement(format!(
+                "no path from the source to the sink on {refused}"
+            )));
+        }
         Ok(submitted.len() as u64)
     }
 
@@ -61,6 +83,36 @@ impl StubSubmitter {
     }
 }
 
+struct StubCatalog {
+    source_workers: Vec<String>,
+    workers: Vec<String>,
+}
+
+impl Default for StubCatalog {
+    fn default() -> Self {
+        Self {
+            source_workers: vec![SOURCE_WORKER.into()],
+            workers: vec![SOURCE_WORKER.into()],
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl WorkerCatalog for StubCatalog {
+    async fn source_workers(&self, logical_source: &str) -> Result<Vec<NetworkAddr>, String> {
+        assert_eq!(logical_source, SOURCE);
+        Ok(self
+            .source_workers
+            .iter()
+            .map(|address| worker(address))
+            .collect())
+    }
+
+    async fn workers(&self) -> Result<Vec<NetworkAddr>, String> {
+        Ok(self.workers.iter().map(|address| worker(address)).collect())
+    }
+}
+
 struct StubResolver;
 
 #[async_trait::async_trait]
@@ -70,18 +122,22 @@ impl SchemaResolver for StubResolver {
     }
 }
 
+/// Accepts every request and remembers the endpoints it was sent to.
 #[derive(Default)]
-struct SilentImpulse;
+struct RecordingImpulse {
+    endpoints: Mutex<Vec<NetworkAddr>>,
+}
 
 #[async_trait::async_trait]
-impl ProbeImpulse for SilentImpulse {
+impl ProbeImpulse for RecordingImpulse {
     async fn request(
         &self,
-        _port: u16,
+        endpoint: &NetworkAddr,
         _statistic_id: u64,
         _start: u64,
         _end: u64,
     ) -> Result<(), String> {
+        self.endpoints.lock().unwrap().push(endpoint.clone());
         Ok(())
     }
 }
@@ -98,15 +154,28 @@ fn probe_id_in(sql: &str) -> u64 {
         .expect("the probe id must be a number")
 }
 
-fn service(submitter: Arc<StubSubmitter>) -> Arc<StatisticService> {
+fn service_with(
+    submitter: Arc<StubSubmitter>,
+    catalog: StubCatalog,
+    impulse: Arc<RecordingImpulse>,
+) -> Arc<StatisticService> {
     Arc::new(
         StatisticService::new(
             submitter,
+            Arc::new(catalog),
             Arc::new(StubResolver),
-            Arc::new(SilentImpulse),
+            impulse,
             ADDRESS.into(),
         )
         .with_probe_timings(Duration::from_millis(80), Duration::from_millis(10)),
+    )
+}
+
+fn service(submitter: Arc<StubSubmitter>) -> Arc<StatisticService> {
+    service_with(
+        submitter,
+        StubCatalog::default(),
+        Arc::new(RecordingImpulse::default()),
     )
 }
 
@@ -145,7 +214,10 @@ async fn never_send_terminates_in_a_void_sink_and_never_probes() {
 
     let sql = submitter.queries().pop().unwrap();
     assert!(sql.contains("STATISTIC_BUILD(1, AVG(value))"), "{sql}");
-    assert!(sql.ends_with("INTO Void()"), "{sql}");
+    assert!(
+        sql.ends_with(&format!("INTO Void({})", sink_on(SOURCE_WORKER))),
+        "{sql}"
+    );
     assert!(!sql.contains("_PROBE"), "{sql}");
     assert!(!sql.contains("Grpc"), "{sql}");
 }
@@ -369,7 +441,7 @@ async fn a_failing_submission_surfaces_as_an_error() {
         fail: true,
         ..Default::default()
     });
-    let service = service(submitter);
+    let service = service(submitter.clone());
 
     assert!(matches!(
         service
@@ -377,12 +449,26 @@ async fn a_failing_submission_surfaces_as_an_error() {
             .await,
         Err(StatisticError::Submit(_))
     ));
+    assert_eq!(
+        submitter.queries().len(),
+        1,
+        "only a placement failure moves on to another worker"
+    );
 }
 
 #[test]
-fn a_probe_stacks_one_range_read_per_statistic_over_the_request_source() {
+fn a_probe_reads_one_statistic_on_the_worker_it_names() {
     let payload = vec![(VALUE.to_string(), "float64".to_string())];
-    let sql = probe_query(&[3, 4], "AVG", &payload, 10000, "localhost:1234", 9).unwrap();
+    let sql = probe_query(
+        3,
+        "AVG",
+        &payload,
+        10000,
+        "localhost:1234",
+        9,
+        &worker("worker-2:8080"),
+    )
+    .unwrap();
 
     assert!(
         sql.contains(
@@ -391,12 +477,182 @@ fn a_probe_stacks_one_range_read_per_statistic_over_the_request_source() {
         "{sql}"
     );
     assert!(
-        sql.contains(
-            "SELECT AVG_PROBE_RANGE(4, STATISTICVALUE, float64) FROM (SELECT AVG_PROBE_RANGE(3"
-        ),
+        sql.contains("'worker-2:8080' AS \"SOURCE\".\"HOST\""),
         "{sql}"
     );
+    assert!(sql.contains(&sink_on("worker-2:8080")), "{sql}");
     assert!(sql.contains("'9' AS \"SINK\".PROBE_ID"), "{sql}");
+}
+
+#[tokio::test]
+async fn the_sink_is_placed_on_the_source_worker() {
+    for condition in ["false", "true"] {
+        let submitter = Arc::new(StubSubmitter::default());
+        let service = service(submitter.clone());
+
+        service
+            .collect_new_statistic(&average_over_value(condition), None)
+            .await
+            .unwrap();
+
+        let sql = submitter.queries().pop().unwrap();
+        assert!(sql.contains(&sink_on(SOURCE_WORKER)), "{sql}");
+    }
+}
+
+#[tokio::test]
+async fn a_sink_the_planner_cannot_place_moves_on_to_the_next_worker() {
+    let submitter = Arc::new(StubSubmitter {
+        unplaceable_sinks: vec!["source-a:8080".into(), "source-b:8080".into()],
+        ..Default::default()
+    });
+    let catalog = StubCatalog {
+        source_workers: vec![
+            "source-b:8080".into(),
+            "source-a:8080".into(),
+            "source-b:8080".into(),
+        ],
+        workers: vec![
+            "source-a:8080".into(),
+            "source-b:8080".into(),
+            "sink-node:8080".into(),
+        ],
+    };
+    let service = service_with(
+        submitter.clone(),
+        catalog,
+        Arc::new(RecordingImpulse::default()),
+    );
+
+    let collected = service
+        .collect_new_statistic(&average_over_value("false"), None)
+        .await
+        .unwrap();
+
+    let tried: Vec<bool> = submitter
+        .queries()
+        .iter()
+        .map(|sql| sql.contains(&sink_on("sink-node:8080")))
+        .collect();
+    assert_eq!(
+        tried,
+        vec![false, false, true],
+        "each source worker is tried once, in order, before the other workers"
+    );
+    assert!(submitter.queries()[0].contains(&sink_on("source-b:8080")));
+    assert!(submitter.queries()[1].contains(&sink_on("source-a:8080")));
+    assert_eq!(collected.query_id, 3);
+}
+
+#[tokio::test]
+async fn a_statistic_no_worker_can_place_is_rejected() {
+    let submitter = Arc::new(StubSubmitter {
+        unplaceable_sinks: vec![SOURCE_WORKER.into()],
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+    let request = average_over_value("false");
+
+    assert!(matches!(
+        service.collect_new_statistic(&request, None).await,
+        Err(StatisticError::NoPlacement { .. })
+    ));
+    assert_eq!(
+        service.registered_statistics(),
+        0,
+        "a statistic nothing deployed must not be registered"
+    );
+}
+
+#[tokio::test]
+async fn a_source_without_physical_sources_is_rejected() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let catalog = StubCatalog {
+        source_workers: vec![],
+        ..Default::default()
+    };
+    let service = service_with(
+        submitter.clone(),
+        catalog,
+        Arc::new(RecordingImpulse::default()),
+    );
+
+    assert!(matches!(
+        service
+            .collect_new_statistic(&average_over_value("false"), None)
+            .await,
+        Err(StatisticError::NoPhysicalSource(_))
+    ));
+    assert!(submitter.queries().is_empty());
+}
+
+#[tokio::test]
+async fn each_statistic_is_probed_on_its_own_worker() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let catalog = StubCatalog {
+        source_workers: vec!["source-a:8080".into()],
+        workers: vec!["source-a:8080".into()],
+    };
+    let impulse = Arc::new(RecordingImpulse::default());
+    let service = service_with(submitter.clone(), catalog, impulse.clone());
+
+    let first = average_over_value("false");
+    let mut second = average_over_value("false");
+    second.window = WindowType::Tumbling {
+        size: TimeMeasure {
+            value: 2000,
+            unit: TimeUnit::Milliseconds,
+        },
+    };
+    service.collect_new_statistic(&first, None).await.unwrap();
+    service.collect_new_statistic(&second, None).await.unwrap();
+
+    let keys = [
+        StatisticService::key_of(&first),
+        StatisticService::key_of(&second),
+    ];
+    assert_eq!(
+        service.get_statistics(&keys, 0, 10_000).await.unwrap(),
+        None
+    );
+
+    let probes: Vec<String> = submitter.queries().split_off(2);
+    assert_eq!(probes.len(), 2, "one probe query per statistic: {probes:?}");
+    assert!(probes[0].contains("AVG_PROBE_RANGE(1,"), "{}", probes[0]);
+    assert!(probes[1].contains("AVG_PROBE_RANGE(2,"), "{}", probes[1]);
+    for probe in &probes {
+        assert!(
+            probe.contains("'source-a:8080' AS \"SOURCE\".\"HOST\""),
+            "{probe}"
+        );
+        assert!(probe.contains(&sink_on("source-a:8080")), "{probe}");
+    }
+
+    let endpoints = impulse.endpoints.lock().unwrap().clone();
+    assert_eq!(endpoints.len(), 2);
+    assert!(endpoints.iter().all(|endpoint| endpoint.host == "source-a"));
+    assert!(endpoints.iter().all(|endpoint| {
+        (PROBE_SOURCE_PORT_BASE..PROBE_SOURCE_PORT_BASE + PROBE_SOURCE_PORT_RANGE)
+            .contains(&endpoint.port)
+    }));
+    assert_ne!(
+        endpoints[0].port, endpoints[1].port,
+        "probes on one worker must not share a port"
+    );
+    assert_eq!(submitter.stopped(), vec![3, 4]);
+}
+
+#[test]
+fn the_service_listens_on_loopback_only_when_advertised_there() {
+    use crate::hosting::bind_ip;
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+    assert_eq!(bind_ip("localhost"), IpAddr::V4(Ipv4Addr::LOCALHOST));
+    assert_eq!(bind_ip("127.0.0.1"), IpAddr::V4(Ipv4Addr::LOCALHOST));
+    assert_eq!(bind_ip("[::1]"), IpAddr::V6(Ipv6Addr::LOCALHOST));
+    assert_eq!(bind_ip("coordinator"), IpAddr::V4(Ipv4Addr::UNSPECIFIED));
+    assert_eq!(bind_ip("10.0.0.5"), IpAddr::V4(Ipv4Addr::UNSPECIFIED));
+    assert_eq!(bind_ip("fd00::5"), IpAddr::V6(Ipv6Addr::UNSPECIFIED));
 }
 
 #[tokio::test]
@@ -534,10 +790,12 @@ mod transport {
     }
 
     async fn serve(service: Arc<StatisticService>) -> String {
-        let address: std::net::SocketAddr =
-            format!("127.0.0.1:{}", crate::hosting::pick_port(0).unwrap())
-                .parse()
-                .unwrap();
+        let address: std::net::SocketAddr = format!(
+            "127.0.0.1:{}",
+            crate::hosting::pick_port(std::net::Ipv4Addr::LOCALHOST.into(), 0).unwrap()
+        )
+        .parse()
+        .unwrap();
 
         let control = proto::statistic_control_service_server::StatisticControlServiceServer::new(
             ControlService::new(service.clone()),

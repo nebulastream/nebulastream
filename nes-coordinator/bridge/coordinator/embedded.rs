@@ -49,6 +49,7 @@ pub(crate) fn start_embedded_coordinator(
     mode: ffi::WorkerMode,
     optimizer_config: &str,
     statistic_service_port: u16,
+    statistic_service_host: &str,
 ) -> Result<Box<EmbeddedCoordinator>, FfiError> {
     let state_backend = if db_path.is_empty() {
         StateBackend::Memory
@@ -61,6 +62,7 @@ pub(crate) fn start_embedded_coordinator(
             mode,
             optimizer_config,
             statistic_service_port,
+            statistic_service_host,
         )?,
         cancel: watch::channel(false).0,
         default_host: default_host_for(mode).to_string(),
