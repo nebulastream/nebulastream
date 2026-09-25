@@ -55,22 +55,9 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
 
-    /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    /// Traced as an isolated region for the same reason as the hash-map lookup below: the slice lookup's paths (cache hit, cache
-    /// miss) keep different values alive and would otherwise duplicate everything after them. The slice cache lends the hash map
-    /// out of its cache entry, so only the pointer has to leave the region.
-    nautilus::val<const TupleBuffer*> hashMapBufferPtr = nullptr;
-    nautilus::region(
-        "GetSliceDataStructure",
-        [&]
-        {
-            const auto hashMapBuffer = sliceStoreRef->getDataStructureRef(
-                timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
-            INVARIANT(
-                !hashMapBuffer.isOwned(), "The slice cache must lend its data structure, as only a borrowed buffer may leave the region");
-            hashMapBufferPtr = hashMapBuffer.asArg();
-        });
+    /// Getting the corresponding slice so that we can update the aggregation states
+    const auto hashMapBufferPtr = getSliceDataStructure(ctx, timestamp, operatorHandler);
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBufferPtr);
     ChainedHashMapRef hashMap{borrowedHashMapBuffer, hashMapConfig};
 

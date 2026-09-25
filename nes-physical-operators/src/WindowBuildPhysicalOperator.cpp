@@ -23,6 +23,7 @@
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <nautilus/region.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -131,4 +132,22 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysic
     , sliceStoreRef(other.sliceStoreRef ? other.sliceStoreRef->clone() : nullptr)
 {
 }
+
+nautilus::val<const TupleBuffer*> WindowBuildPhysicalOperator::getSliceDataStructure(
+    ExecutionContext& ctx, const nautilus::val<Timestamp>& timestamp, const nautilus::val<OperatorHandler*>& operatorHandler) const
+{
+    /// The slice cache lends the data structure out of its cache entry, so only the pointer has to leave the region.
+    nautilus::val<const TupleBuffer*> dataStructure = nullptr;
+    nautilus::region(
+        "GetSliceDataStructure",
+        [&]
+        {
+            const auto buffer = sliceStoreRef->getDataStructureRef(
+                timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
+            INVARIANT(!buffer.isOwned(), "The slice cache must lend its data structure, as only a borrowed buffer may leave the region");
+            dataStructure = buffer.asArg();
+        });
+    return dataStructure;
+}
+
 }
