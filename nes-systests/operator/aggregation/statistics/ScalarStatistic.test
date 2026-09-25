@@ -1,0 +1,107 @@
+# name: operator/aggregation/statistics/ScalarStatistic.test
+# description: Tests the STATISTIC_BUILD scalar statistic build and the chained <AGGREGATION>_PROBE over the worker's statistic store
+# groups: [Aggregation, WindowOperators, Statistics]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,1000
+2,20,2000
+3,30,3000
+4,41,4000
+5,100,5000
+6,201,6000
+7,7,10000
+8,8,11000
+
+CREATE SINK sinkStreamBuild(statisticId UINT64 NOT NULL, statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticNumberOfSeenMeasurements UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkAvg(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticValue FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkMax(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticValue UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkMin(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticValue UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkSum(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticValue UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCount(statisticStart UINT64 NOT NULL, statisticEnd UINT64 NOT NULL, statisticValue UINT64 NOT NULL) TYPE File;
+
+SELECT STATISTIC_BUILD(51, AVG(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStreamBuild;
+----
+51 0 5000 4
+51 5000 10000 2
+51 10000 15000 2
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT AVG_PROBE(52, statisticValue, float64)
+    FROM (
+        SELECT STATISTIC_BUILD(52, AVG(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkAvg;
+----
+0 5000 25.25
+5000 10000 150.5
+10000 15000 7.5
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT MAX_PROBE(53, statisticValue, uint64)
+    FROM (
+        SELECT STATISTIC_BUILD(53, MAX(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkMax;
+----
+0 5000 41
+5000 10000 201
+10000 15000 8
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT MIN_PROBE(54, statisticValue, uint64)
+    FROM (
+        SELECT STATISTIC_BUILD(54, MIN(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkMin;
+----
+0 5000 10
+5000 10000 100
+10000 15000 7
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT SUM_PROBE(55, statisticValue, uint64)
+    FROM (
+        SELECT STATISTIC_BUILD(55, SUM(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkSum;
+----
+0 5000 101
+5000 10000 301
+10000 15000 15
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT COUNT_PROBE(56, statisticValue, uint64)
+    FROM (
+        SELECT STATISTIC_BUILD(56, COUNT(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkCount;
+----
+0 5000 4
+5000 10000 2
+10000 15000 2
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT MEDIAN_PROBE(57, statisticValue, float64)
+    FROM (
+        SELECT STATISTIC_BUILD(57, MEDIAN(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkAvg;
+----
+0 5000 25
+5000 10000 150.5
+10000 15000 7.5
+
+SELECT STATISTIC_BUILD(0, AVG(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStreamBuild;
+----
+ERROR 2000
+
+SELECT statisticStart, statisticEnd, statisticValue FROM (
+    SELECT AVG_PROBE(58, statisticValue, float64)
+    FROM (
+        SELECT STATISTIC_BUILD(58, MAX(value)) FROM stream WINDOW TUMBLING(timestamp, size 5 sec)
+    )
+) INTO sinkAvg;
+----
+ERROR 4005

@@ -32,6 +32,7 @@ target_include_directories(nes-repl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_e2e_test(
     NAME embedded-repl-test
     BATS_FILE tests/embedded.bats
+    EXTRA_ENV NES_STATISTIC_CLI=$<TARGET_FILE:nes-statistic-cli>
 )
 
 add_e2e_test(
