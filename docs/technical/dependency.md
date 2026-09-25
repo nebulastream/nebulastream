@@ -126,9 +126,12 @@ patch throws all transient dependencies which would otherwise be introduced via 
 
 ### LLVM
 
-Based on the current vcpkg version. The LLVM patch simply disables all default features. This is not possible via
+Based on the current vcpkg version (22.1.8). The LLVM patch simply disables all default features. This is not possible via
 `vcpkg.json` because llvm is included via
-nautilus.
+nautilus. The remaining patches only fix install directories and disable the libomp aliases so that the port installs
+into the vcpkg layout. This port is only used when MLIR is built via vcpkg; the docker images and the nix flake use the
+prebuilt MLIR binaries from [clang-binaries](https://github.com/nebulastream/clang-binaries) (release `vmlir-22-clang19`,
+MLIR 22 built with our clang 19 toolchain, so that it only needs libc++ 19 runtime symbols).
 
 ### Paho MQTT
 
@@ -139,7 +142,12 @@ non-standard specialization; the standard only mandates it for `char`, `wchar_t`
 
 ### Nautilus
 
-Nautilus is not currently on vcpkg.
+Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
+[nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port disables all optional backends and plugins
+we do not use (bytecode/tbc, C++, asmjit, simd, profiling, ...) and only builds the MLIR backend. It carries no patches:
+exception handling for `invoke` calls (destructors of live values, rethrow at the host boundary) and the other fixes we
+needed are part of nautilus itself. The nix flake builds the same nautilus commit (`.nix/nautilus`), keep both in sync
+when bumping.
 
 ### libuuid
 
