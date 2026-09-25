@@ -53,7 +53,9 @@ requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + inp
 {
     auto trimmed = trimWhiteSpaces(input);
     T value;
-    if (auto result = std::from_chars<T>(trimmed.data(), trimmed.data() + trimmed.size(), value); result.ec != std::errc())
+    const auto* const end = trimmed.data() + trimmed.size();
+    auto result = std::from_chars<T>(trimmed.data(), end, value);
+    if (result.ec != std::errc() || result.ptr != end)
     {
         return {};
     }
