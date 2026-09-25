@@ -84,11 +84,18 @@ use tracing::info;
 
 pub const DEFAULT_REQUEST_QUEUE_CAPACITY: usize = 1024;
 
+#[derive(Clone, Copy, Debug)]
+pub struct StatisticsConfig {
+    pub port: u16,
+}
+
 pub async fn run(
     db: Database,
     planner: Option<Arc<dyn SqlPlanner>>,
     factory: Option<Arc<dyn WorkerFactory>>,
     receiver: async_channel::Receiver<Request>,
+    sender: Option<async_channel::Sender<Request>>,
+    statistics: Option<StatisticsConfig>,
 ) {
     let (intent_tx, intent_rx) = watch::channel(());
     let (state_tx, state_rx) = watch::channel(());
@@ -101,9 +108,17 @@ pub async fn run(
     );
     let handler = RequestHandler::new(receiver, db, intent_tx, state_rx, planner, factory);
 
+    let statistic_service = async {
+        if let (Some(sender), Some(config)) = (sender, statistics) {
+            statistics::hosting::run(sender, config.port).await;
+        }
+        std::future::pending::<()>().await
+    };
+
     tokio::select! {
         () = controller.run().instrument(info_span!("controller")) => {}
         () = handler.run().instrument(info_span!("request_handler")) => {}
+        () = statistic_service.instrument(info_span!("statistic_service")) => {}
     }
 }
 
@@ -114,10 +129,12 @@ pub fn start_with_runtime(
     planner: Option<Arc<dyn SqlPlanner>>,
     worker_factory: Option<Arc<dyn WorkerFactory>>,
     request_buffer_size: Option<usize>,
+    statistics: Option<StatisticsConfig>,
 ) -> anyhow::Result<async_channel::Sender<Request>> {
     info!("starting");
     let (sender, receiver) =
         async_channel::bounded(request_buffer_size.unwrap_or(DEFAULT_REQUEST_QUEUE_CAPACITY));
+    let statistics_sender = sender.clone();
 
     runtime.block_on(async {
         let db = Database::with(state_backend.unwrap_or(StateBackend::Memory))
@@ -127,7 +144,14 @@ pub fn start_with_runtime(
             .await
             .context("failed to run database migrations")?;
 
-        tokio::spawn(run(db, planner, worker_factory, receiver));
+        tokio::spawn(run(
+            db,
+            planner,
+            worker_factory,
+            receiver,
+            Some(statistics_sender),
+            statistics,
+        ));
         anyhow::Ok(())
     })?;
 

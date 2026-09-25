@@ -63,10 +63,10 @@ rust::Box<EmbeddedCoordinator> startCoordinator(const std::unordered_map<std::st
 {
     if (optimizer.empty())
     {
-        return start_embedded_coordinator(rust::Str{}, workers, rust::Str{});
+        return start_embedded_coordinator(rust::Str{}, workers, rust::Str{}, 0);
     }
     const auto json = rfl::json::write(optimizer);
-    return start_embedded_coordinator(rust::Str{}, workers, rust::Str{json.data(), json.size()});
+    return start_embedded_coordinator(rust::Str{}, workers, rust::Str{json.data(), json.size()}, 0);
 }
 
 /// A case whose statements the coordinator has all answered: one for a query, up to two for a differential block.

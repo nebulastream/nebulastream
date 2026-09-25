@@ -255,6 +255,7 @@ pub mod ffi {
             db_path: &str,
             worker_mode: WorkerMode,
             optimizer_config: &str,
+            statistic_service_port: u16,
         ) -> Result<Box<EmbeddedCoordinator>>;
         fn submit_sql(self: &EmbeddedCoordinator, sql: &str, as_json: bool) -> Result<String>;
         fn await_termination(self: &EmbeddedCoordinator, as_json: bool) -> Result<String>;

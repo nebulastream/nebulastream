@@ -136,6 +136,10 @@ int main(const int argc, char** argv)
         program.add_argument("--db")
             .default_value(std::string{})
             .help("path to a persistent sqlite catalog; empty (the default) uses an ephemeral in-memory catalog");
+        program.add_argument("--statistic-service-port")
+            .default_value(uint16_t{0})
+            .scan<'u', uint16_t>()
+            .help("port the statistic service listens on; 0 picks a free one");
         program.add_argument("--worker")
             .default_value<std::vector<std::string>>({})
             .append()
@@ -204,8 +208,12 @@ int main(const int argc, char** argv)
 #endif
         /// An empty --db uses an ephemeral in-memory catalog; a path uses a persistent sqlite one.
         const auto dbPath = program.get<std::string>("--db");
+        const auto statisticServicePort = program.get<uint16_t>("--statistic-service-port");
         auto coordinator = NES::start_embedded_coordinator(
-            rust::Str{dbPath.data(), dbPath.size()}, workerMode, rust::Str{optimizerConfigJson.data(), optimizerConfigJson.size()});
+            rust::Str{dbPath.data(), dbPath.size()},
+            workerMode,
+            rust::Str{optimizerConfigJson.data(), optimizerConfigJson.size()},
+            statisticServicePort);
 
 #ifdef EMBED_ENGINE
         /// The embedded worker runs in-process; register it in the catalog so the coordinator can

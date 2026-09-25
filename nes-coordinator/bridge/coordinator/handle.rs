@@ -22,7 +22,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use controller::embedded::WorkerFactory;
-use coordinator::{SqlPlanner, start_with_runtime};
+use coordinator::{SqlPlanner, StatisticsConfig, start_with_runtime};
 use model::database::StateBackend;
 use model::request::{Payload, Request};
 use model::statement::StatementResult;
@@ -101,6 +101,7 @@ pub(crate) fn build_coordinator(
     state_backend: StateBackend,
     mode: ffi::WorkerMode,
     optimizer_config: &str,
+    statistic_service_port: u16,
 ) -> Result<CoordinatorHandle> {
     let runtime = Builder::new_multi_thread()
         .enable_time()
@@ -122,7 +123,16 @@ pub(crate) fn build_coordinator(
         _ => None,
     };
 
-    let sender = start_with_runtime(&runtime, Some(state_backend), Some(planner), factory, None)?;
+    let sender = start_with_runtime(
+        &runtime,
+        Some(state_backend),
+        Some(planner),
+        factory,
+        None,
+        Some(StatisticsConfig {
+            port: statistic_service_port,
+        }),
+    )?;
     Ok(CoordinatorHandle {
         sender,
         runtime: Some(runtime),
@@ -133,6 +143,12 @@ pub fn start_coordinator(
     db_path: &str,
     mode: ffi::WorkerMode,
     optimizer_config: &str,
+    statistic_service_port: u16,
 ) -> Result<CoordinatorHandle> {
-    build_coordinator(StateBackend::sqlite(db_path), mode, optimizer_config)
+    build_coordinator(
+        StateBackend::sqlite(db_path),
+        mode,
+        optimizer_config,
+        statistic_service_port,
+    )
 }
