@@ -218,9 +218,6 @@ public:
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
         options.setOption("engine.backend", std::string("mlir"));
-        /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
-        options.setOption("ir.verifyAfterEachPass", true);
-        options.setOption("ir.failOnVerifyError", true);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
