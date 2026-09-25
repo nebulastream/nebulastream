@@ -9,16 +9,6 @@ on:
   merge_group:
     branches: [ main ]
 
-# cancel previous runs of same PR / branch.
-# In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
-# gh-readonly-queue ref) to avoid queued runs cancelling each other.
-# A title/body edit ('edited' without a base change) dispatches nothing (see the code/docs job
-# gates), but concurrency is evaluated before those gates — so isolate those runs in a unique group,
-# otherwise cancel-in-progress would kill a legit in-progress build before the skip even happens.
-concurrency:
-  # run_id suffix gives no-op edits a private group; drop it if 'edited' is ever removed from triggers.
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr${{ (github.event.action == 'edited' && github.event.changes.base == null) && format('-noop-{0}', github.run_id) || '' }}
-  cancel-in-progress: true
 
 jobs:
   # Classify the PR diff once (see .github/ci/full-ci-skip-paths.txt) and hand the result to the two
@@ -38,6 +28,9 @@ jobs:
         with:
           base-sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           head-sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+      - name: List changed files
+        run: |
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
   # 'edited' fires on title/body/base changes; only (re)dispatch a pipeline when the base branch
   # changed. Also skipped when the classify gate found no changes of that kind.
