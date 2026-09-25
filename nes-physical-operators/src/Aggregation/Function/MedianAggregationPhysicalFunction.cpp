@@ -14,9 +14,12 @@
 
 #include <Aggregation/Function/MedianAggregationPhysicalFunction.hpp>
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -31,6 +34,7 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -42,6 +46,69 @@
 
 namespace NES
 {
+
+namespace
+{
+/// Median of the first count values of type T at data, as the average of the two middle values (for an odd count both are
+/// the same value). Reorders the values.
+template <typename T>
+double medianOf(int8_t* data, const uint64_t count) noexcept
+{
+    auto* const values = reinterpret_cast<T*>(data); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    /// NaN is ordered after all numbers, so that the comparison stays a strict weak ordering.
+    const auto less = [](const T lhs, const T rhs)
+    {
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return lhs < rhs || (!std::isnan(lhs) && std::isnan(rhs));
+        }
+        else
+        {
+            return lhs < rhs;
+        }
+    };
+    auto* const lowerMiddle = values + ((count - 1) / 2);
+    std::nth_element(values, lowerMiddle, values + count, less);
+    const auto lowerMedian = static_cast<double>(*lowerMiddle);
+    if (count % 2 == 1)
+    {
+        return lowerMedian;
+    }
+    /// After nth_element, all values after lowerMiddle are not smaller than it, so the upper middle is their minimum.
+    const auto upperMedian = static_cast<double>(*std::min_element(lowerMiddle + 1, values + count, less));
+    return (lowerMedian + upperMedian) / 2;
+}
+
+nautilus::val<double> selectMedian(const DataType::Type type, const nautilus::val<int8_t*>& values, const nautilus::val<uint64_t>& count)
+{
+    switch (type)
+    {
+        case DataType::Type::UINT8:
+            return nautilus::invoke(medianOf<uint8_t>, values, count);
+        case DataType::Type::UINT16:
+            return nautilus::invoke(medianOf<uint16_t>, values, count);
+        case DataType::Type::UINT32:
+            return nautilus::invoke(medianOf<uint32_t>, values, count);
+        case DataType::Type::UINT64:
+            return nautilus::invoke(medianOf<uint64_t>, values, count);
+        case DataType::Type::INT8:
+            return nautilus::invoke(medianOf<int8_t>, values, count);
+        case DataType::Type::INT16:
+            return nautilus::invoke(medianOf<int16_t>, values, count);
+        case DataType::Type::INT32:
+            return nautilus::invoke(medianOf<int32_t>, values, count);
+        case DataType::Type::INT64:
+            return nautilus::invoke(medianOf<int64_t>, values, count);
+        case DataType::Type::FLOAT32:
+            return nautilus::invoke(medianOf<float>, values, count);
+        case DataType::Type::FLOAT64:
+            return nautilus::invoke(medianOf<double>, values, count);
+        default:
+            INVARIANT(false, "Median is only supported on numeric types, but got {}", magic_enum::enum_name(type));
+            std::unreachable();
+    }
+}
+}
 
 MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     DataType inputType,
@@ -181,72 +248,22 @@ Record MedianAggregationPhysicalFunction::lower(
             },
             pagedVecBuffer.asArg());
 
-        /// Iterating in two nested loops over all the records in the paged vector to get the median.
-        /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
-        const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
-        const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
-        nautilus::val<uint64_t> medianItemPos1 = 0;
-        nautilus::val<uint64_t> medianItemPos2 = 0;
-        nautilus::val<bool> medianFound1{false};
-        nautilus::val<bool> medianFound2{false};
-
-
-        /// Picking a candidate and counting how many items are smaller or equal to the candidate.
-        /// Iterator-based scan: the page lookup is amortized per page-crossing instead of paid per access,
-        /// which matters here because the outer/inner pair is O(N^2) over the paged vector.
+        /// Copy the values into a contiguous array and select the median in C++ with std::nth_element. This is O(n) instead of
+        /// comparing every value against every other value, and it traces a single loop instead of two nested ones.
+        const nautilus::val<uint64_t> valueSize = inputType.getSizeInBytesWithoutNull();
+        const auto values = pipelineMemoryProvider.arena.allocateMemory(numberOfEntries * valueSize);
         const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVecBuffer.asArg()), tupleLayout);
-        const auto pagedVectorEnd = pagedVectorRef.end();
-        nautilus::val<uint64_t> candidatePos = 0;
-        for (auto candidateIt = pagedVectorRef.begin(); candidateIt != pagedVectorEnd; ++candidateIt)
+        nautilus::val<int8_t*> valuePtr = values;
+        for (const auto& itemRecord : pagedVectorRef)
         {
-            nautilus::val<int64_t> countLessThan = 0;
-            nautilus::val<int64_t> countEqual = 0;
-            const auto candidateRecord = *candidateIt;
-            const auto candidateValue = inputFunction.execute(candidateRecord, pipelineMemoryProvider.arena);
-
-            /// Counting how many items are smaller or equal for the current candidate
-            for (const auto& itemRecord : pagedVectorRef)
-            {
-                const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
-                if (itemValue < candidateValue)
-                {
-                    countLessThan = countLessThan + 1;
-                }
-                if (itemValue == candidateValue)
-                {
-                    countEqual = countEqual + 1;
-                }
-            }
-
-            /// Checking if the current candidate is the median, and if so, storing the position of the median
-            /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
-            if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
-            {
-                medianItemPos1 = candidatePos;
-                medianFound1 = true;
-            }
-            if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
-            {
-                medianItemPos2 = candidatePos;
-                medianFound2 = true;
-            }
-            candidatePos = candidatePos + 1;
+            inputFunction.execute(itemRecord, pipelineMemoryProvider.arena).castToType(inputType.type).writeToMemory(valuePtr);
+            valuePtr = valuePtr + valueSize;
         }
 
-        if (medianFound1 and medianFound2)
-        {
-            /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
-            /// For even numbers of entries, this is its natural definition.
-            /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
-            const auto medianRecord1 = pagedVectorRef.at(medianItemPos1);
-            const auto medianRecord2 = pagedVectorRef.at(medianItemPos2);
-
-            const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
-            const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-            const VarVal two = nautilus::val<uint64_t>{2};
-            medianValue
-                = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
-        }
+        /// The result's nullability is a static property of the VarVal, so it has to match on both branches of containsNull.
+        medianValue
+            = VarVal{selectMedian(inputType.type, values, numberOfEntries), resultType.nullable, nautilus::val<bool>{false}}.castToType(
+                resultType.type);
     }
 
 
