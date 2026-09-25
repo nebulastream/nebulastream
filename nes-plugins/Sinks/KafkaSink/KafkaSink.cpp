@@ -14,11 +14,15 @@
 
 #include <KafkaSink.hpp>
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
@@ -34,6 +38,47 @@
 
 namespace NES
 {
+
+/// Ownership of the block stays with the caller until produce() accepts it.
+std::pair<KafkaSink::OwnedPayload, size_t> KafkaSink::serializePayload(const TupleBuffer& buffer)
+{
+    size_t payloadSize = 0;
+    BufferIterator sizeIterator{buffer};
+    for (auto element = sizeIterator.getNextElement(); element.has_value(); element = sizeIterator.getNextElement())
+    {
+        payloadSize += element->contentLength;
+    }
+
+    /// malloc(0) may return nullptr, which librdkafka would produce as a *null* message rather than an
+    /// empty one; always allocate at least one byte so an empty buffer keeps producing an empty message.
+    OwnedPayload payload{std::malloc(std::max<size_t>(payloadSize, 1))}; /// NOLINT(cppcoreguidelines-no-malloc)
+    if (not payload)
+    {
+        throw CannotOpenSink("KafkaSink failed to allocate {} bytes for the outgoing message", payloadSize);
+    }
+
+    size_t offset = 0;
+    BufferIterator iterator{buffer};
+    for (auto element = iterator.getNextElement(); element.has_value(); element = iterator.getNextElement())
+    {
+        /// Sizing and copying are two independent walks of the same buffer; bound every write rather
+        /// than only checking the total afterwards, so a disagreement cannot overflow the block.
+        INVARIANT(
+            offset + element->contentLength <= payloadSize,
+            "KafkaSink payload grew past the {} bytes reserved for it while serializing",
+            payloadSize);
+        const auto data = element->buffer.getAvailableMemoryArea<char>().first(element->contentLength);
+        std::memcpy(static_cast<char*>(payload.get()) + offset, data.data(), element->contentLength);
+        offset += element->contentLength;
+    }
+    INVARIANT(offset == payloadSize, "KafkaSink serialized {} bytes but reserved {}", offset, payloadSize);
+    return {std::move(payload), payloadSize};
+}
+
+void KafkaSink::MallocDeleter::operator()(void* pointer) const noexcept
+{
+    std::free(pointer); /// NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory)
+}
 
 void KafkaSink::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
 {
@@ -97,41 +142,55 @@ void KafkaSink::start(PipelineExecutionContext&)
     }
 }
 
-SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
+KafkaSink::PublishResult KafkaSink::tryProduce(const TupleBuffer& buffer)
 {
     /// librdkafka only releases a produce()'d message's queue slot once its delivery report has
     /// been popped via poll() se we need to poll on every try (repeat or new one)
     producer->poll(0);
 
-    std::string payload;
-    BufferIterator iterator{buffer};
-    for (auto element = iterator.getNextElement(); element.has_value(); element = iterator.getNextElement())
+    /// Reuse the payload if this is the retry of the buffer librdkafka last rejected.
+    OwnedPayload payload;
+    size_t payloadSize = 0;
     {
-        const auto data = element->buffer.getAvailableMemoryArea<char>().first(element->contentLength);
-        payload.append(data.begin(), data.end());
+        const auto pending = retryPayload.wlock();
+        if (pending->payload && pending->originId == buffer.getOriginId() && pending->sequenceNumber == buffer.getSequenceNumber()
+            && pending->chunkNumber == buffer.getChunkNumber())
+        {
+            payload = std::move(pending->payload);
+            payloadSize = pending->payloadSize;
+        }
+    }
+    if (not payload)
+    {
+        std::tie(payload, payloadSize) = serializePayload(buffer);
     }
 
+    /// RK_MSG_FREE hands the serialized block to librdkafka instead of letting it copy the payload a
+    /// second time; librdkafka takes ownership only if produce() succeeds.
+    /// Ordering: an unassigned partition and a null key spread consecutive buffers over the
+    /// topic's partitions, so only per-partition order is guaranteed - see the class comment for why a
+    /// fixed partition or a stable key would not restore stream order.
     const auto err = producer->produce(
-        topic,
-        RdKafka::Topic::PARTITION_UA,
-        RdKafka::Producer::RK_MSG_COPY,
-        payload.data(),
-        payload.size(),
-        nullptr,
-        0,
-        0,
-        nullptr,
-        nullptr);
+        topic, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_FREE, payload.get(), payloadSize, nullptr, 0, 0, nullptr, nullptr);
 
     if (err == RdKafka::ERR__QUEUE_FULL)
     {
-        return SendResult::Full;
+        /// produce() failed, so the payload is still ours: keep it for the retry of this buffer.
+        const auto pending = retryPayload.wlock();
+        pending->originId = buffer.getOriginId();
+        pending->sequenceNumber = buffer.getSequenceNumber();
+        pending->chunkNumber = buffer.getChunkNumber();
+        pending->payloadSize = payloadSize;
+        pending->payload = std::move(payload);
+        return PublishResult::Full;
     }
     if (err != RdKafka::ERR_NO_ERROR)
     {
         throw CannotOpenSink("KafkaSink produce to topic {} failed: {}", topic, RdKafka::err2str(err));
     }
-    return SendResult::Ok;
+    /// Accepted: librdkafka owns the block now and frees it once the message is delivered.
+    std::ignore = payload.release();
+    return PublishResult::Ok;
 }
 
 void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
@@ -149,20 +208,16 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
     {
         switch (tryProduce(*currentBuffer))
         {
-            case SendResult::Ok: {
+            case PublishResult::Ok: {
                 currentBuffer = backpressureHandler.onSuccess(backpressureController);
                 continue;
             }
-            case SendResult::Full: {
+            case PublishResult::Full: {
                 if (const auto emit = backpressureHandler.onFull(*currentBuffer, backpressureController))
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
                 return;
-            }
-            case SendResult::Closed: {
-                /// tryProduce() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
-                INVARIANT(false, "tryProduce unexpectedly returned SendResult::Closed");
             }
         }
     }
@@ -188,6 +243,9 @@ void KafkaSink::stop(PipelineExecutionContext& pec)
     }
     NES_INFO("Kafka Sink completed.");
     producer.reset();
+    /// Drop any payload still held for a retry: sequence numbers restart from the beginning if this
+    /// sink is started again, so a stale entry could be matched by an unrelated buffer.
+    *retryPayload.wlock() = {};
 }
 
 DescriptorConfig::Config KafkaSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
