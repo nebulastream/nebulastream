@@ -94,9 +94,6 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// to its tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), whose tier-0 backends are
     /// intentionally not built into our nautilus package and which would also conflict with the thread model above.
     options.setOption("engine.backend", std::string("mlir"));
-    /// TEMP DEBUG: verify nautilus IR after every pass, catches pass bugs early.
-    options.setOption("ir.verifyAfterEachPass", true);
-    options.setOption("ir.failOnVerifyError", true);
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
@@ -136,6 +133,25 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             break;
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+    /// Resolving the name of every invoked runtime function costs a dladdr lookup (~1 ms each in our binaries), which is about
+    /// half of the tracing time (nebulastream/nautilus#491). Callees are bound by address, so names only matter for readable IR
+    /// dumps. Needs a nautilus version that knows the option; older versions ignore it.
+    options.setOption("engine.resolveFunctionNames", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
+    /// Disable all of nautilus' pure optimization IR passes: MLIR/LLVM perform the same optimizations, and the nautilus passes
+    /// scale poorly with the size of our pipelines (nebulastream/nautilus#492). The passes the backend depends on (no-throw
+    /// inference and exception-region preparation) cannot be disabled and keep running.
+    for (const auto* optimizationPass :
+         {"ir.disableAttributeInference",
+          "ir.disableConstantFolding",
+          "ir.disableAlgebraicSimplification",
+          "ir.disableConstantBranchFolding",
+          "ir.disableEmptyBlockElimination",
+          "ir.disableBlockMerging",
+          "ir.disableDeadCodeElimination",
+          "ir.disableBlockArgumentPruning"})
+    {
+        options.setOption(optimizationPass, true);
+    }
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
