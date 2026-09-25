@@ -432,12 +432,14 @@ std::expected<WorkerStatusStatementResult, Exception> TopologyStatementHandler::
         return WorkerStatusStatementResult{status};
     }
 
+    /// Keep only the requested hosts: erase_if drops the entries the predicate accepts, so the
+    /// predicate has to match the hosts that were *not* asked for.
     std::erase_if(
         status.workerStatus,
         [&](const auto& it)
         {
             auto found = std::ranges::find(statement.host, it.first.getRawValue());
-            return found != statement.host.end();
+            return found == statement.host.end();
         });
 
     return WorkerStatusStatementResult{status};
