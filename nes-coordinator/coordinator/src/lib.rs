@@ -84,9 +84,11 @@ use tracing::info;
 
 pub const DEFAULT_REQUEST_QUEUE_CAPACITY: usize = 1024;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct StatisticsConfig {
     pub port: u16,
+    /// The host workers reach the statistic service at; empty means localhost.
+    pub advertised_host: String,
 }
 
 pub async fn run(
@@ -110,7 +112,7 @@ pub async fn run(
 
     let statistic_service = async {
         if let (Some(sender), Some(config)) = (sender, statistics) {
-            statistics::hosting::run(sender, config.port).await;
+            statistics::hosting::run(sender, config.port, &config.advertised_host).await;
         }
         std::future::pending::<()>().await
     };

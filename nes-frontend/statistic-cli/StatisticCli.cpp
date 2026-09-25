@@ -78,6 +78,7 @@ int main(const int argc, char** argv)
 
     argparse::ArgumentParser arguments("nes-statistic-cli");
     arguments.add_argument("command").help("one of collect, get, deregister");
+    arguments.add_argument("--host").default_value(std::string{"127.0.0.1"}).help("the statistic service host");
     arguments.add_argument("--port").required().help("the statistic service port");
     arguments.add_argument("--source").default_value(std::string{}).help("the logical source name");
     arguments.add_argument("--field").default_value(std::string{}).help("the field to collect over");
@@ -107,7 +108,7 @@ int main(const int argc, char** argv)
         return 2;
     }
 
-    const auto endpoint = "127.0.0.1:" + arguments.get<std::string>("--port");
+    const auto endpoint = arguments.get<std::string>("--host") + ":" + arguments.get<std::string>("--port");
     const auto stub = StatisticControlService::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
 
     grpc::ClientContext context;

@@ -47,6 +47,11 @@ struct Cli {
     #[arg(long = "statistic-service-port", default_value_t = 0)]
     statistic_service_port: u16,
 
+    /// Host the workers reach the statistic service at. A host other than localhost makes the service listen on every
+    /// interface.
+    #[arg(long = "statistic-service-host", default_value = "localhost")]
+    statistic_service_host: String,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -145,6 +150,7 @@ fn run_inner() -> anyhow::Result<()> {
         mode,
         &optimizer_config,
         cli.statistic_service_port,
+        &cli.statistic_service_host,
     )?;
 
     match cli.command {

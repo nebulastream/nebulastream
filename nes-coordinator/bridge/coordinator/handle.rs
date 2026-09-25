@@ -102,6 +102,7 @@ pub(crate) fn build_coordinator(
     mode: ffi::WorkerMode,
     optimizer_config: &str,
     statistic_service_port: u16,
+    statistic_service_host: &str,
 ) -> Result<CoordinatorHandle> {
     let runtime = Builder::new_multi_thread()
         .enable_time()
@@ -131,6 +132,7 @@ pub(crate) fn build_coordinator(
         None,
         Some(StatisticsConfig {
             port: statistic_service_port,
+            advertised_host: statistic_service_host.to_string(),
         }),
     )?;
     Ok(CoordinatorHandle {
@@ -144,11 +146,13 @@ pub fn start_coordinator(
     mode: ffi::WorkerMode,
     optimizer_config: &str,
     statistic_service_port: u16,
+    statistic_service_host: &str,
 ) -> Result<CoordinatorHandle> {
     build_coordinator(
         StateBackend::sqlite(db_path),
         mode,
         optimizer_config,
         statistic_service_port,
+        statistic_service_host,
     )
 }

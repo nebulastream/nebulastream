@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -59,9 +60,16 @@ pub struct Report {
 
 pub type Trigger = async_channel::Sender<Report>;
 
-pub struct Entry {
+/// A deployed statistic: the query building it, its id, and the worker whose statistic store holds it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Registered {
     pub query_id: u64,
     pub statistic_id: u64,
+    pub worker: NetworkAddr,
+}
+
+pub struct Entry {
+    pub registered: Registered,
     pub triggers: Vec<Trigger>,
 }
 
@@ -71,20 +79,17 @@ pub struct Registry {
 }
 
 impl Registry {
-    pub fn find(&self, key: &Key) -> Option<(u64, u64)> {
+    pub fn find(&self, key: &Key) -> Option<Registered> {
         let entries = self.entries.lock().expect("statistic registry poisoned");
-        entries
-            .get(key)
-            .map(|entry| (entry.query_id, entry.statistic_id))
+        entries.get(key).map(|entry| entry.registered.clone())
     }
 
-    pub fn register(&self, key: Key, query_id: u64, statistic_id: u64, trigger: Option<Trigger>) {
+    pub fn register(&self, key: Key, registered: Registered, trigger: Option<Trigger>) {
         let mut entries = self.entries.lock().expect("statistic registry poisoned");
         entries.insert(
             key,
             Entry {
-                query_id,
-                statistic_id,
+                registered,
                 triggers: trigger.into_iter().collect(),
             },
         );
@@ -116,7 +121,7 @@ impl Registry {
     pub fn dispatch(&self, report: Report) {
         let mut entries = self.entries.lock().expect("statistic registry poisoned");
         for entry in entries.values_mut() {
-            if entry.statistic_id != report.statistic_id {
+            if entry.registered.statistic_id != report.statistic_id {
                 continue;
             }
             entry
