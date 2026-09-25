@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+use crate::placement;
 use crate::query_gen::{
     CollectRequest, GenerateError, TimeCharacteristic, TimeMeasure, TimeUnit, VALUE, WindowType,
     probe_query, window_clause,
 };
 use crate::registry::{CollectionDomain, Metric, Report};
 use crate::service::{
-    PROBE_SOURCE_PORT_BASE, PROBE_SOURCE_PORT_RANGE, ProbeImpulse, QuerySubmitter, SchemaResolver,
-    StatisticError, StatisticService, SubmitError, WorkerCatalog,
+    Deployment, PROBE_SOURCE_PORT_BASE, PROBE_SOURCE_PORT_RANGE, ProbeImpulse, QuerySubmitter,
+    SchemaResolver, StatisticError, StatisticService, SubmitError, WorkerCatalog,
 };
 use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
@@ -38,6 +39,21 @@ fn sink_on(address: &str) -> String {
     format!("'{address}' AS \"SINK\".\"HOST\"")
 }
 
+/// The worker a generated query puts its sink on.
+fn sink_worker_in(sql: &str) -> String {
+    let end = sql
+        .find("' AS \"SINK\".\"HOST\"")
+        .expect("a statistic query places its sink");
+    let start = sql[..end].rfind('\'').unwrap() + 1;
+    sql[start..end].to_string()
+}
+
+/// The statistic a generated query builds, if it builds one.
+fn statistic_built_in(sql: &str) -> Option<u64> {
+    let rest = &sql[sql.find("STATISTIC_BUILD(")? + "STATISTIC_BUILD(".len()..];
+    rest[..rest.find(',')?].parse().ok()
+}
+
 #[derive(Default)]
 struct StubSubmitter {
     submitted: Mutex<Vec<String>>,
@@ -45,11 +61,15 @@ struct StubSubmitter {
     fail: bool,
     /// Workers the planner refuses to place a sink on.
     unplaceable_sinks: Vec<String>,
+    /// The worker the planner puts a statistic store writer on; the sink's worker when unset.
+    writer_on: Option<String>,
+    /// Deploys a build without its writer, as a planner that lost it would.
+    omit_writer: bool,
 }
 
 #[async_trait::async_trait]
 impl QuerySubmitter for StubSubmitter {
-    async fn submit(&self, sql: String) -> Result<u64, SubmitError> {
+    async fn submit(&self, sql: String) -> Result<Deployment, SubmitError> {
         let mut submitted = self.submitted.lock().unwrap();
         submitted.push(sql.clone());
         if self.fail {
@@ -64,7 +84,23 @@ impl QuerySubmitter for StubSubmitter {
                 "no path from the source to the sink on {refused}"
             )));
         }
-        Ok(submitted.len() as u64)
+        let fragments = match statistic_built_in(&sql) {
+            Some(statistic_id) if !self.omit_writer => {
+                let worker = self
+                    .writer_on
+                    .clone()
+                    .unwrap_or_else(|| sink_worker_in(&sql));
+                let writer = format!(
+                    r#"{{"type": "StatisticStoreWriter", "config": {{"statisticId": {statistic_id}}}}}"#
+                );
+                vec![placement::fragment(&worker, &[&writer])]
+            }
+            _ => vec![],
+        };
+        Ok(Deployment {
+            query_id: submitted.len() as u64,
+            fragments,
+        })
     }
 
     async fn stop(&self, query_id: u64) -> Result<(), String> {
@@ -640,6 +676,58 @@ async fn each_statistic_is_probed_on_its_own_worker() {
         "probes on one worker must not share a port"
     );
     assert_eq!(submitter.stopped(), vec![3, 4]);
+}
+
+#[tokio::test]
+async fn a_statistic_is_probed_where_its_writer_ran_not_where_its_sink_is() {
+    let submitter = Arc::new(StubSubmitter {
+        writer_on: Some("middle-node:8080".into()),
+        ..Default::default()
+    });
+    let impulse = Arc::new(RecordingImpulse::default());
+    let service = service_with(submitter.clone(), StubCatalog::default(), impulse.clone());
+
+    let request = average_over_value("false");
+    service.collect_new_statistic(&request, None).await.unwrap();
+    assert!(submitter.queries()[0].contains(&sink_on(SOURCE_WORKER)));
+
+    let key = StatisticService::key_of(&request);
+    service.get_statistics(&[key], 0, 10_000).await.unwrap();
+
+    let probe = submitter.queries().pop().unwrap();
+    assert!(
+        probe.contains("'middle-node:8080' AS \"SOURCE\".\"HOST\""),
+        "{probe}"
+    );
+    assert!(probe.contains(&sink_on("middle-node:8080")), "{probe}");
+    let endpoints = impulse.endpoints.lock().unwrap().clone();
+    assert_eq!(endpoints.len(), 1);
+    assert_eq!(endpoints[0].host, "middle-node");
+}
+
+#[tokio::test]
+async fn a_build_whose_writer_cannot_be_found_is_stopped_and_rejected() {
+    let submitter = Arc::new(StubSubmitter {
+        omit_writer: true,
+        ..Default::default()
+    });
+    let service = service(submitter.clone());
+
+    assert!(matches!(
+        service
+            .collect_new_statistic(&average_over_value("false"), None)
+            .await,
+        Err(StatisticError::WriterNotPlaced {
+            query_id: 1,
+            statistic_id: 1
+        })
+    ));
+    assert_eq!(
+        submitter.stopped(),
+        vec![1],
+        "a statistic that cannot be read back must not keep running"
+    );
+    assert_eq!(service.registered_statistics(), 0);
 }
 
 #[test]

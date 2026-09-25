@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+use crate::placement;
 use crate::query_gen::{self, CollectRequest, GenerateError, VALUE};
 use crate::registry::{CollectionDomain, Key, Metric, Registered, Registry, Report, Trigger};
 use model::worker::endpoint::NetworkAddr;
@@ -45,6 +46,8 @@ pub enum StatisticError {
     },
     #[error("looking up the workers failed: {0}")]
     Catalog(String),
+    #[error("the deployed query {query_id} writes statistic {statistic_id} on no worker")]
+    WriterNotPlaced { query_id: u64, statistic_id: u64 },
     #[error("no probe query could be deployed")]
     ProbeNotDeployed,
     #[error("submitting the statistic query failed: {0}")]
@@ -60,6 +63,19 @@ pub enum SubmitError {
     Other(String),
 }
 
+/// One fragment of a deployed query: the worker it runs on and its serialized plan.
+#[derive(Clone, Debug)]
+pub struct Fragment {
+    pub worker: NetworkAddr,
+    pub plan: Vec<u8>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Deployment {
+    pub query_id: u64,
+    pub fragments: Vec<Fragment>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CollectResult {
     pub query_id: u64,
@@ -69,7 +85,7 @@ pub struct CollectResult {
 
 #[async_trait::async_trait]
 pub trait QuerySubmitter: Send + Sync {
-    async fn submit(&self, sql: String) -> Result<u64, SubmitError>;
+    async fn submit(&self, sql: String) -> Result<Deployment, SubmitError>;
     async fn stop(&self, query_id: u64) -> Result<(), String>;
 }
 
@@ -213,11 +229,26 @@ impl StatisticService {
                 &worker,
             )?;
             match self.submitter.submit(sql).await {
-                Ok(query_id) => {
+                Ok(deployment) => {
+                    let query_id = deployment.query_id;
+                    // The statistic is read back where it is written, which is up to the planner and need not be the
+                    // sink's worker.
+                    let Some(writer) =
+                        placement::writer_worker(&deployment.fragments, statistic_id)
+                    else {
+                        if let Err(error) = self.submitter.stop(query_id).await {
+                            tracing::warn!(query_id, %error, "the statistic query could not be stopped");
+                        }
+                        return Err(StatisticError::WriterNotPlaced {
+                            query_id,
+                            statistic_id,
+                        });
+                    };
+                    tracing::debug!(statistic_id, sink = %worker, %writer, "statistic query deployed");
                     let registered = Registered {
                         query_id,
                         statistic_id,
-                        worker,
+                        worker: writer,
                     };
                     self.registry.register(key, registered, trigger);
                     return Ok(CollectResult {
@@ -478,10 +509,10 @@ impl StatisticService {
                 &target.worker,
             )?;
             match self.submitter.submit(sql).await {
-                Ok(query_id) => {
+                Ok(deployment) => {
                     return Ok(ProbeQuery {
                         statistic_id: target.statistic_id,
-                        query_id,
+                        query_id: deployment.query_id,
                         source: NetworkAddr {
                             host: target.worker.host.clone(),
                             port,
