@@ -74,6 +74,18 @@ TestablePagedVector::TestablePagedVector(
             storeRecordToAnyVec(out, record, projections, dataTypes);
         })));
 
+    replaceAtFn.emplace(engine->registerFunction(std::function(
+        [layout, dataTypes = dataTypes, projections = projections](
+            nautilus::val<TupleBuffer*> pagedVector,
+            nautilus::val<uint64_t> index,
+            nautilus::val<AbstractBufferProvider*> bm,
+            nautilus::val<AnyVec*> rec)
+        {
+            const Record record = buildRecordFromAnyVec(rec, projections, dataTypes);
+            PagedVectorRef pvRef{BorrowedNautilusBuffer::from(pagedVector), layout};
+            pvRef.replaceRecord(record, index, bm);
+        })));
+
     readAll.emplace(engine->registerFunction(std::function(
         [layout, dataTypes = dataTypes, projections = projections](
             nautilus::val<TupleBuffer*> pagedVector, nautilus::val<std::vector<AnyVec>*> outVector)
@@ -94,6 +106,13 @@ void TestablePagedVector::pushBack(const AnyVec& record)
     /// const_cast: pushbackFn's signature requires AnyVec* even though the trace lambda only reads from it.
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, bugprone-unchecked-optional-access)
     (*pushbackFn)(&pagedVector, &bufferManager, const_cast<AnyVec*>(&record));
+}
+
+void TestablePagedVector::replaceAt(uint64_t index, const AnyVec& record)
+{
+    /// const_cast: replaceAtFn's signature requires AnyVec* even though the trace lambda only reads from it.
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast, bugprone-unchecked-optional-access)
+    (*replaceAtFn)(&pagedVector, index, &bufferManager, const_cast<AnyVec*>(&record));
 }
 
 AnyVec TestablePagedVector::readAt(uint64_t index)

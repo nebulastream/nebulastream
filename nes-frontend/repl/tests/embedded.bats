@@ -384,3 +384,121 @@ SQL
   # The feed drops rather than blocks, so a drop means it was too small for the row rate.
   grep -q "Closing the BufferEvents source .* 0 rows were dropped" nes-repl.log
 }
+
+
+statistic_fixture() {
+  cat > measurements.csv <<'CSV'
+1,10,1000
+2,20,2000
+3,30,3000
+4,41,4000
+5,100,5000
+6,201,6000
+7,7,10000
+8,8,11000
+CSV
+
+  cat > statistics.sql <<'SQL'
+CREATE LOGICAL SOURCE measurements(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR measurements TYPE File SET(
+       'measurements.csv' as "SOURCE".FILE_PATH,
+       'CSV' as INPUT_FORMATTER."TYPE");
+
+CREATE LOGICAL SOURCE keepalive(ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR keepalive TYPE Generator SET(
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as INPUT_FORMATTER."TYPE",
+       120000 AS "SOURCE".MAX_RUNTIME_MS,
+       'emit_rate 1' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10000000 1' AS "SOURCE".GENERATOR_SCHEMA);
+CREATE SINK keepaliveSink(ts UINT64 NOT NULL) TYPE File
+       SET('keepalive.csv' as "SINK".FILE_PATH, 'CSV' as "SINK".OUTPUT_FORMAT);
+
+SELECT ts FROM keepalive INTO keepaliveSink;
+SQL
+}
+
+pick_free_port() {
+  local port
+  for _ in $(seq 50); do
+    port=$(( 20000 + RANDOM % 12000 ))
+    if ! (exec 3<>/dev/tcp/127.0.0.1/"$port") 2>/dev/null; then
+      echo "$port"
+      return 0
+    fi
+    exec 3<&-
+  done
+  return 1
+}
+
+start_statistic_repl() {
+  nes_require_env NES_STATISTIC_CLI
+  statistic_fixture
+  STATISTIC_PORT=$(pick_free_port)
+  timeout -s TERM 120 "$NES_REPL" -d --statistic-service-port "$STATISTIC_PORT" \
+          --on-exit=WAIT_FOR_QUERY_TERMINATION <statistics.sql &
+  REPL_PID=$!
+}
+
+stop_statistic_repl() {
+  kill -TERM "$REPL_PID" 2>/dev/null || true
+  wait "$REPL_PID" 2>/dev/null || true
+}
+
+@test "collect new statistic deploys a statistic query and deduplicates the request" {
+  start_statistic_repl
+
+  run "$NES_STATISTIC_CLI" collect --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric AVG --window-ms 20000 --event-time-field ts --condition true --timeout-sec 90
+  [ "$status" -eq 0 ]
+  echo "$output" > collected.csv
+  echo "# collected: $output" >&3
+  [[ "$output" =~ ^[0-9]+,[0-9]+,false$ ]]
+  local statistic_id="${output%,false}"
+  statistic_id="${statistic_id#*,}"
+
+  run "$NES_STATISTIC_CLI" collect --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric AVG --window-ms 20000 --event-time-field ts --condition true --timeout-sec 90
+  [ "$status" -eq 0 ]
+  echo "$output" >> collected.csv
+  [[ "$output" =~ ^[0-9]+,${statistic_id},true$ ]]
+
+  assert_file_line_count collected.csv 2
+  stop_statistic_repl
+}
+
+@test "get statistics writes the collected statistic into a file" {
+  start_statistic_repl
+
+  run "$NES_STATISTIC_CLI" collect --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric AVG --window-ms 20000 --event-time-field ts --condition true --timeout-sec 90
+  [ "$status" -eq 0 ]
+
+  sleep 5
+
+  run "$NES_STATISTIC_CLI" get --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric AVG --window-ms 20000 --start 0 --end 20000 --timeout-sec 90
+  [ "$status" -eq 0 ]
+  echo "$output" > statistics.csv
+  echo "# statistics: $output" >&3
+  [ "$(cat statistics.csv)" = "true,52.125" ]
+
+  run "$NES_STATISTIC_CLI" deregister --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric AVG --window-ms 20000 --timeout-sec 90
+  [ "$status" -eq 0 ]
+  [ "$output" = "true" ]
+
+  stop_statistic_repl
+}
+
+@test "get statistics on a statistic that was never collected fails" {
+  start_statistic_repl
+
+  run "$NES_STATISTIC_CLI" get --port "$STATISTIC_PORT" --source measurements --field value \
+      --metric MAX --window-ms 20000 --start 0 --end 20000 --timeout-sec 90
+  [ "$status" -ne 0 ]
+  echo "$output" | grep -q "not registered"
+
+  stop_statistic_repl
+}
