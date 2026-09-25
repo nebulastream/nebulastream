@@ -21,10 +21,10 @@ add_subdirectory(Runner)
 add_subdirectory(ResultChecker)
 
 add_source_files(nes-systest-lib
-        SystestExecutor.cpp
+        Benchmark.cpp
+        Executor.cpp
         Logging.cpp
         Progress.cpp
-        SystestState.cpp
         SystestBinder.cpp
         WorkingDirectoryGuard.cpp
 )

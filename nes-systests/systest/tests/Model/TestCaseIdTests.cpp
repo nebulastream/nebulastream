@@ -14,6 +14,7 @@
 
 /// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
 
+#include <optional>
 #include <string>
 
 #include <fmt/format.h>
@@ -43,9 +44,7 @@ TEST_F(TestCaseIdTest, PrintsFileAndQueryNumber)
         "operator/join/JoinNull:7");
     EXPECT_EQ(
         fmt::format("{}", TestCaseId{.originFile = "large/Many", .queryIdInFile = SystestQueryId(123), .overrides = {}}), "large/Many:123");
-    EXPECT_EQ(
-        fmt::format("{}", TestCaseId{.originFile = "bug/NoQuery", .queryIdInFile = INVALID<SystestQueryId>, .overrides = {}}),
-        "bug/NoQuery");
+    EXPECT_EQ(fmt::format("{}", TestCaseId{.originFile = "bug/NoQuery", .queryIdInFile = std::nullopt, .overrides = {}}), "bug/NoQuery");
 }
 
 /// A query with configuration alternatives runs once per alternative, so the overrides are part of what tells the runs apart.

@@ -131,6 +131,9 @@ struct RunnableTestFile
 {
     /// Name for reporting failure/progress.
     std::string name;
+    /// Identifies this partition in a run, so the ids of its statements stay unique.
+    /// All partitions of one test file share query numbers (e.g., :01), so we need the key to distinguish.
+    std::string key;
     OriginalNames originalNames;
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;

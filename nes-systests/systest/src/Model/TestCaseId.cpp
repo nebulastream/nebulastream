@@ -21,17 +21,15 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <Identifiers/Identifiers.hpp>
-
 namespace NES
 {
 
 std::ostream& operator<<(std::ostream& os, const TestCaseId& id)
 {
     os << id.originFile;
-    if (id.queryIdInFile != INVALID<SystestQueryId>)
+    if (id.queryIdInFile.has_value())
     {
-        os << ':' << id.queryIdInFile.getRawValue();
+        os << ':' << id.queryIdInFile->getRawValue();
     }
     if (not id.overrides.empty())
     {
