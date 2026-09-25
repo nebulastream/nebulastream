@@ -34,7 +34,9 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/nautilus_function.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -227,43 +229,28 @@ Record MedianAggregationPhysicalFunction::lower(
 
     if (!containsNull)
     {
-        /// Load the paged vector buffer from the parent via its stored child index
-        auto memArea
-            = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-        OwnedNautilusBuffer pagedVecBuffer;
-        nautilus::invoke(
-            +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
-            { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
-            parentBuffer.asArg(),
-            pagedVecBuffer.asArg(),
-            static_cast<nautilus::val<uint32_t*>>(memArea));
-
-        const auto numberOfEntries = invoke(
-            +[](const TupleBuffer* pagedVectorBuffer)
-            {
-                const auto pagedVector = PagedVector::load(*pagedVectorBuffer);
-                const auto numberOfEntriesVal = pagedVector.getTotalNumberOfRecords();
-                INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
-                return numberOfEntriesVal;
-            },
-            pagedVecBuffer.asArg());
-
-        /// Copy the values into a contiguous array and select the median in C++ with std::nth_element. This is O(n) instead of
-        /// comparing every value against every other value, and it traces a single loop instead of two nested ones.
-        const nautilus::val<uint64_t> valueSize = inputType.getSizeInBytesWithoutNull();
-        const auto values = pipelineMemoryProvider.arena.allocateMemory(numberOfEntries * valueSize);
-        const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVecBuffer.asArg()), tupleLayout);
-        nautilus::val<int8_t*> valuePtr = values;
-        for (const auto& itemRecord : pagedVectorRef)
+        /// Copying the values and selecting the median is compiled as its own nautilus function: traced inline, the copy loop's
+        /// blocks would carry every value live in the probe pipeline as block arguments.
+        if (!medianFunction)
         {
-            inputFunction.execute(itemRecord, pipelineMemoryProvider.arena).castToType(inputType.type).writeToMemory(valuePtr);
-            valuePtr = valuePtr + valueSize;
+            medianFunction = std::make_shared<nautilus::NautilusFunction<MedianFunction>>(
+                fmt::format("median_{}", resultFieldIdentifier),
+                MedianFunction(
+                    [this](
+                        nautilus::val<AggregationState*> state,
+                        nautilus::val<const TupleBuffer*> parent,
+                        nautilus::val<Arena*> arena,
+                        nautilus::val<AbstractBufferProvider*> bufferProvider)
+                    {
+                        PipelineMemoryProvider memoryProvider{arena, bufferProvider};
+                        return computeMedian(state, BorrowedNautilusBuffer::from(parent), memoryProvider);
+                    }));
         }
+        const nautilus::val<double> median = (*medianFunction)(
+            aggregationState, parentBuffer.asArg(), pipelineMemoryProvider.arena.getArena(), pipelineMemoryProvider.bufferProvider);
 
         /// The result's nullability is a static property of the VarVal, so it has to match on both branches of containsNull.
-        medianValue
-            = VarVal{selectMedian(inputType.type, values, numberOfEntries), resultType.nullable, nautilus::val<bool>{false}}.castToType(
-                resultType.type);
+        medianValue = VarVal{median, resultType.nullable, nautilus::val<bool>{false}}.castToType(resultType.type);
     }
 
 
@@ -272,6 +259,46 @@ Record MedianAggregationPhysicalFunction::lower(
     resultRecord.write(resultFieldIdentifier, medianValue);
 
     return resultRecord;
+}
+
+nautilus::val<double> MedianAggregationPhysicalFunction::computeMedian(
+    const nautilus::val<AggregationState*>& aggregationState,
+    const BorrowedNautilusBuffer& parentBuffer,
+    PipelineMemoryProvider& memoryProvider) const
+{
+    /// Load the paged vector buffer from the parent via its stored child index
+    auto memArea
+        = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+    OwnedNautilusBuffer pagedVecBuffer;
+    nautilus::invoke(
+        +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
+        { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
+        parentBuffer.asArg(),
+        pagedVecBuffer.asArg(),
+        static_cast<nautilus::val<uint32_t*>>(memArea));
+
+    const auto numberOfEntries = invoke(
+        +[](const TupleBuffer* pagedVectorBuffer)
+        {
+            const auto pagedVector = PagedVector::load(*pagedVectorBuffer);
+            const auto numberOfEntriesVal = pagedVector.getTotalNumberOfRecords();
+            INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
+            return numberOfEntriesVal;
+        },
+        pagedVecBuffer.asArg());
+
+    /// Copy the values into a contiguous array and select the median in C++ with std::nth_element. This is O(n) instead of
+    /// comparing every value against every other value, and it traces a single loop instead of two nested ones.
+    const nautilus::val<uint64_t> valueSize = inputType.getSizeInBytesWithoutNull();
+    const auto values = memoryProvider.arena.allocateMemory(numberOfEntries * valueSize);
+    const PagedVectorRef pagedVectorRef(BorrowedNautilusBuffer::from(pagedVecBuffer.asArg()), tupleLayout);
+    nautilus::val<int8_t*> valuePtr = values;
+    for (const auto& itemRecord : pagedVectorRef)
+    {
+        inputFunction.execute(itemRecord, memoryProvider.arena).castToType(inputType.type).writeToMemory(valuePtr);
+        valuePtr = valuePtr + valueSize;
+    }
+    return selectMedian(inputType.type, values, numberOfEntries);
 }
 
 void MedianAggregationPhysicalFunction::reset(
