@@ -16,7 +16,6 @@
 
 #include <atomic>
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -201,31 +200,12 @@ private:
 
         void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
 
-        /// EXPERIMENTAL: traces an operator's execute() as an isolated nautilus region named after the operator. Opt-in via
-        /// NES_OPERATOR_REGIONS, either `*` for all operators or a comma-separated list of operator type names, e.g.
-        /// `EmitPhysicalOperator,ScanPhysicalOperator`. Off by default: with the current nautilus, every region scope resolves the
-        /// names of the runtime functions it invokes via dladdr again (per-scope name cache, ~0.75 ms per lookup in our binaries),
-        /// and each region adds two seam blocks that the IR passes have to collapse. Both currently outweigh what the local
-        /// exploration saves.
+        /// Traces every operator's execute() as an isolated nautilus region named after the operator. The tracer explores the
+        /// branches inside the region locally, and the region shows up by name in trace/IR dumps and debug info.
         /// Operators write new fields into the record they receive. As no value created inside a region may outlive it, the
         /// operator works on a region-local copy of the record. No operator reads the record after its child returns.
         void execute(ExecutionContext& executionCtx, Record& record) const override
         {
-            static const bool regionEnabled = []
-            {
-                const char* enabled = std::getenv("NES_OPERATOR_REGIONS");
-                if (enabled == nullptr)
-                {
-                    return false;
-                }
-                const std::string list = std::string{","} + enabled + ",";
-                return list == ",*," || list.find(std::string{","} + regionName() + ",") != std::string::npos;
-            }();
-            if (!regionEnabled)
-            {
-                data.execute(executionCtx, record);
-                return;
-            }
             nautilus::region(
                 regionName(),
                 [&]
