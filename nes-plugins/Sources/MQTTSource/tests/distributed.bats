@@ -60,7 +60,7 @@ docker_mqtt_subscribe() {
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32.0
   docker_mqtt_produce mqtt-source-test 32.0
   sleep 1
@@ -89,7 +89,7 @@ EOF
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
   sleep 1
@@ -119,7 +119,7 @@ EOF
   assert_success
   query_id=$output
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 3
   docker_mqtt_produce mqtt-source-test $'2\n'
   wait_until docker compose exec -T worker-1 grep -qx 32 results.csv
@@ -148,7 +148,7 @@ EOF
 
   [ "$status" -eq 0 ]
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
 
@@ -174,7 +174,7 @@ EOF
 
   [ "$status" -eq 0 ]
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   docker_mqtt_produce mqtt-source-test 32
   docker_mqtt_produce mqtt-source-test 32
   sleep 5
@@ -205,7 +205,7 @@ EOF
   [ "$status" -eq 0 ]
   query_id=$output
 
-  sleep 1
+  wait_until docker compose exec -T worker-1 grep -q "Subscribed to topic response codes" singleNodeWorker.log
   local payloads=()
   for i in {1..68}; do
     payloads+=($'32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32\n32')
