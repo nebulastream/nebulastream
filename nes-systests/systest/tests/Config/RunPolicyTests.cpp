@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <cstdint>
+#include <optional>
+#include <variant>
 #include <Config/Config.hpp>
 #include <Config/RunPolicy.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -54,6 +58,123 @@ TEST_F(RunPolicyTest, AMeasuringRunSubmitsOneQueryAtATime)
     config.numberConcurrentQueries = 4;
 
     EXPECT_EQ(RunPolicy::create(config).concurrency, 1);
+}
+
+TEST_F(RunPolicyTest, ARunSubmitsOnceUnlessAskedToRepeat)
+{
+    const SystestConfiguration config;
+
+    const auto policy = RunPolicy::create(config);
+
+    EXPECT_TRUE(std::holds_alternative<RunInFileOrder>(policy.ordering));
+    EXPECT_TRUE(std::holds_alternative<SubmitOnce>(policy.repetition));
+    EXPECT_FALSE(policy.runLimit.has_value());
+    EXPECT_FALSE(policy.measureReport.has_value());
+}
+
+TEST_F(RunPolicyTest, AShuffledRunWithoutASeedDrawsOne)
+{
+    SystestConfiguration config;
+    config.randomQueryOrder = true;
+
+    const auto policy = RunPolicy::create(config);
+
+    const auto* shuffled = std::get_if<RunInShuffledOrder>(&policy.ordering);
+    ASSERT_NE(shuffled, nullptr);
+    EXPECT_FALSE(shuffled->seed.has_value());
+}
+
+TEST_F(RunPolicyTest, AShuffledRunKeepsTheSeedItWasGiven)
+{
+    SystestConfiguration config;
+    constexpr uint64_t seed = 42;
+    config.randomQueryOrder = true;
+    config.shuffleSeed = seed;
+
+    const auto policy = RunPolicy::create(config);
+
+    const auto* shuffled = std::get_if<RunInShuffledOrder>(&policy.ordering);
+    ASSERT_NE(shuffled, nullptr);
+    EXPECT_EQ(shuffled->seed, std::optional{seed});
+}
+
+TEST_F(RunPolicyTest, AnEndlessRunRepeatsUntilStopped)
+{
+    SystestConfiguration config;
+    config.endlessMode = true;
+
+    const auto policy = RunPolicy::create(config);
+
+    EXPECT_TRUE(std::holds_alternative<SubmitUntilStopped>(policy.repetition));
+    EXPECT_FALSE(policy.runLimit.has_value());
+}
+
+TEST_F(RunPolicyTest, EndlessRoundsBoundAnEndlessRun)
+{
+    SystestConfiguration config;
+    config.endlessMode = true;
+    config.endlessRounds = 3;
+
+    const auto policy = RunPolicy::create(config);
+
+    const auto* rounds = std::get_if<SubmitRounds>(&policy.repetition);
+    ASSERT_NE(rounds, nullptr);
+    EXPECT_EQ(rounds->count, 3);
+}
+
+TEST_F(RunPolicyTest, EndlessSecondsLimitAnEndlessRun)
+{
+    SystestConfiguration config;
+    constexpr uint64_t seconds = 30;
+    config.endlessMode = true;
+    config.endlessSeconds = seconds;
+
+    const auto policy = RunPolicy::create(config);
+
+    EXPECT_TRUE(std::holds_alternative<SubmitUntilStopped>(policy.repetition));
+    EXPECT_EQ(policy.runLimit, std::optional{std::chrono::seconds{seconds}});
+}
+
+TEST_F(RunPolicyTest, AMeasuringRunRepeatsAtLeastOnce)
+{
+    SystestConfiguration config;
+    config.benchmark = true;
+    config.benchmarkRounds = 0;
+
+    const auto policy = RunPolicy::create(config);
+
+    const auto* rounds = std::get_if<SubmitRounds>(&policy.repetition);
+    ASSERT_NE(rounds, nullptr);
+    EXPECT_EQ(rounds->count, 1);
+}
+
+TEST_F(RunPolicyTest, AMeasuringRunRepeatsItsRounds)
+{
+    SystestConfiguration config;
+    constexpr uint64_t rounds = 5;
+    config.benchmark = true;
+    config.benchmarkRounds = rounds;
+
+    const auto policy = RunPolicy::create(config);
+
+    const auto* fixed = std::get_if<SubmitRounds>(&policy.repetition);
+    ASSERT_NE(fixed, nullptr);
+    EXPECT_EQ(fixed->count, rounds);
+}
+
+TEST_F(RunPolicyTest, AMeasuringRunTakesPrecedenceOverEndlessMode)
+{
+    SystestConfiguration config;
+    constexpr uint64_t seconds = 30;
+    config.benchmark = true;
+    config.endlessMode = true;
+    config.endlessSeconds = seconds;
+
+    const auto policy = RunPolicy::create(config);
+
+    EXPECT_TRUE(std::holds_alternative<SubmitRounds>(policy.repetition));
+    EXPECT_FALSE(policy.runLimit.has_value());
+    EXPECT_TRUE(policy.measureReport.has_value());
 }
 
 }
