@@ -1,0 +1,173 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+/// Runs in the REPL. gRPC sinks call this to report statistic results.
+service StatisticReportService {
+  rpc ReportStatistics (StatisticReportBatch) returns (google.protobuf.Empty) {}
+}
+
+/// Runs on the worker (inside gRPC source). The statistic service calls this to trigger probes.
+service StatisticSourceService {
+  rpc RequestStatistic (StatisticRequest) returns (google.protobuf.Empty) {}
+}
+
+message StatisticRequest {
+  uint64 statistic_id = 1;
+  uint64 start_ts = 2;
+  uint64 end_ts = 3;
+}
+
+message StatisticReport {
+  uint64 statistic_id = 1;
+  uint64 start_ts = 2;
+  uint64 end_ts = 3;
+  double value = 4;
+  uint64 probe_id = 5;
+}
+
+message StatisticReportBatch {
+  repeated StatisticReport reports = 1;
+}
+
+service StatisticControlService {
+  rpc CollectNewStatistic (CollectStatisticRequest) returns (CollectStatisticResponse) {}
+  rpc GetStatistics (GetStatisticsRequest) returns (GetStatisticsResponse) {}
+  rpc DeregisterStatistic (DeregisterStatisticRequest) returns (DeregisterStatisticResponse) {}
+  rpc WatchStatistic (WatchStatisticRequest) returns (stream StatisticReport) {}
+}
+
+enum Metric {
+  METRIC_UNSPECIFIED = 0;
+  METRIC_CARDINALITY = 1;
+  METRIC_MIN_VAL = 2;
+  METRIC_MAX_VAL = 3;
+  METRIC_RATE = 4;
+  METRIC_AVERAGE = 5;
+  METRIC_SELECTIVITY = 6;
+}
+
+enum TimeUnit {
+  TIME_UNIT_UNSPECIFIED = 0;
+  TIME_UNIT_MILLISECONDS = 1;
+  TIME_UNIT_SECONDS = 2;
+  TIME_UNIT_MINUTES = 3;
+  TIME_UNIT_HOURS = 4;
+  TIME_UNIT_DAYS = 5;
+}
+
+message TimeMeasure {
+  uint64 value = 1;
+  TimeUnit unit = 2;
+}
+
+message DataDomain {
+  string logical_source_name = 1;
+  string field_name = 2;
+}
+
+message WorkloadDomain {
+  uint64 query_id = 1;
+  uint64 operator_id = 2;
+  string field_name = 3;
+}
+
+message InfrastructureDomain {
+  string host_id = 1;
+}
+
+message CollectionDomain {
+  oneof domain {
+    DataDomain data = 1;
+    WorkloadDomain workload = 2;
+    InfrastructureDomain infrastructure = 3;
+  }
+}
+
+message TumblingWindow {
+  TimeMeasure size = 1;
+}
+
+message SlidingWindow {
+  TimeMeasure size = 1;
+  TimeMeasure slide = 2;
+}
+
+message TimeBasedWindowType {
+  oneof window {
+    TumblingWindow tumbling = 1;
+    SlidingWindow sliding = 2;
+  }
+}
+
+message IngestionTime {}
+
+message EventTime {
+  string field_name = 1;
+  TimeUnit unit = 2;
+}
+
+message TimeCharacteristic {
+  oneof characteristic {
+    IngestionTime ingestion = 1;
+    EventTime event = 2;
+  }
+}
+
+message StatisticKey {
+  Metric metric = 1;
+  CollectionDomain domain = 2;
+  TimeMeasure window_size = 3;
+}
+
+message CollectStatisticRequest {
+  CollectionDomain domain = 1;
+  Metric metric = 2;
+  TimeBasedWindowType window_type = 3;
+  TimeCharacteristic time_characteristic = 4;
+  string condition = 5;
+  map<string, string> options = 6;
+}
+
+message CollectStatisticResponse {
+  uint64 query_id = 1;
+  uint64 statistic_id = 2;
+  bool already_existed = 3;
+}
+
+message GetStatisticsRequest {
+  repeated StatisticKey keys = 1;
+  uint64 start_ts = 2;
+  uint64 end_ts = 3;
+}
+
+message GetStatisticsResponse {
+  bool has_value = 1;
+  double value = 2;
+}
+
+message DeregisterStatisticRequest {
+  StatisticKey key = 1;
+}
+
+message DeregisterStatisticResponse {
+  bool removed = 1;
+}
+
+message WatchStatisticRequest {
+  StatisticKey key = 1;
+  string condition = 2;
+}

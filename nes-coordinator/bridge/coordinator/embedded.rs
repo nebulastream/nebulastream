@@ -48,6 +48,7 @@ pub(crate) fn start_embedded_coordinator(
     db_path: &str,
     mode: ffi::WorkerMode,
     optimizer_config: &str,
+    statistic_service_port: u16,
 ) -> Result<Box<EmbeddedCoordinator>, FfiError> {
     let state_backend = if db_path.is_empty() {
         StateBackend::Memory
@@ -55,7 +56,12 @@ pub(crate) fn start_embedded_coordinator(
         StateBackend::sqlite(db_path)
     };
     Ok(Box::new(EmbeddedCoordinator {
-        handle: build_coordinator(state_backend, mode, optimizer_config)?,
+        handle: build_coordinator(
+            state_backend,
+            mode,
+            optimizer_config,
+            statistic_service_port,
+        )?,
         cancel: watch::channel(false).0,
         default_host: default_host_for(mode).to_string(),
     }))

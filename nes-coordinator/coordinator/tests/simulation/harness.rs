@@ -143,7 +143,7 @@ impl TestHarness {
                         db.migrate()
                             .await
                             .expect("failed to run database migrations");
-                        coordinator::run(db, None, None, receiver).await;
+                        coordinator::run(db, None, None, receiver, None, None).await;
                     }
                 }
             })

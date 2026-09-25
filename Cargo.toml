@@ -23,6 +23,7 @@ members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-coordinator/statistics",
     "nes-coordinator/bridge",
     "nes-frontend/nebucli",
 ]
@@ -37,6 +38,7 @@ default-members = [
     "nes-coordinator/migration",
     "nes-coordinator/controller",
     "nes-coordinator/coordinator",
+    "nes-coordinator/statistics",
 ]
 
 [workspace.package]
@@ -50,6 +52,7 @@ migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }
 controller = { path = "nes-coordinator/controller" }
 coordinator = { path = "nes-coordinator/coordinator" }
+statistics = { path = "nes-coordinator/statistics" }
 coordinator_bridge = { path = "nes-coordinator/bridge" }
 
 anyhow = "1.0"

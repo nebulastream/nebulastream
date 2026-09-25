@@ -10,9 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find_package(argparse CONFIG REQUIRED)
-find_package(replxx CONFIG REQUIRED)
-
-add_subdirectory(repl)
-add_subdirectory(nebucli)
-add_subdirectory(statistic-cli)
+add_executable(nes-statistic-cli StatisticCli.cpp)
+target_link_libraries(nes-statistic-cli PRIVATE nes-grpc nes-common argparse::argparse)
