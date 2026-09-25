@@ -327,7 +327,6 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
@@ -385,7 +384,6 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
@@ -443,7 +441,6 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
@@ -509,7 +506,6 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
@@ -568,7 +564,6 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
@@ -614,7 +609,6 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", true);
     options.setOption("engine.backend", std::string("mlir"));
-    options.setOption("engine.compilationStrategy", std::string("legacy"));
     CompiledExecutablePipelineStage stage(pipeline, handlers, options);
 
     folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
@@ -737,7 +731,6 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
                 nautilus::engine::Options opt;
                 opt.setOption("engine.Compilation", compiled);
                 opt.setOption("engine.backend", std::string("mlir"));
-                opt.setOption("engine.compilationStrategy", std::string("legacy"));
                 return opt;
             }());
 
