@@ -20,8 +20,10 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
+#include <Util/Logger/LogLevel.hpp>
 
 namespace NES
 {
@@ -41,6 +43,9 @@ please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)",
            {std::make_shared<EndpointValidation>(EndpointValidation::GRPC)}};
+
+    /// Runtime log level of the worker. Applied after configuration parsing; messages emitted before that use LOG_INFO.
+    EnumOption<LogLevel> logLevel = {"log_level", LogLevel::LOG_INFO, "Log level of the worker process."};
 
     /// Enable Google Event Trace logging (Chrome tracing format)
     BoolOption enableGoogleEventTrace
