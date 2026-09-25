@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -24,7 +25,10 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <nautilus/nautilus_function.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
+#include <Arena.hpp>
+#include <ExecutionContext.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -66,7 +70,21 @@ public:
     static AggregationPhysicalFunctionRegistryReturnType create(AggregationPhysicalFunctionRegistryArguments arguments);
 
 private:
+    /// Median of the values in the aggregation state's paged vector, which must contain at least one value.
+    nautilus::val<double> computeMedian(
+        const nautilus::val<AggregationState*>& aggregationState,
+        const BorrowedNautilusBuffer& parentBuffer,
+        PipelineMemoryProvider& memoryProvider) const;
+
+    using MedianFunction = std::function<nautilus::val<double>(
+        nautilus::val<AggregationState*>,
+        nautilus::val<const TupleBuffer*>,
+        nautilus::val<Arena*>,
+        nautilus::val<AbstractBufferProvider*>)>;
+
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
+    /// computeMedian as a dedicated nautilus function; created on first use, so that it captures this object in its final place.
+    std::shared_ptr<nautilus::NautilusFunction<MedianFunction>> medianFunction;
 };
 
 }
