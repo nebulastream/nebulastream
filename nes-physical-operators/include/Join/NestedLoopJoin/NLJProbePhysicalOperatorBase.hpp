@@ -67,6 +67,14 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
+    /// Runs performNLJ with the side that has fewer tuples as the outer loop.
+    void performNLJSmallerSideOuter(
+        const PagedVectorRef& leftPagedVector,
+        const PagedVectorRef& rightPagedVector,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
+
     /// Resolves the slice owning `sliceEnd` via the operator handler and returns the buffer ref backing its
     /// `side` PagedVector (worker-thread 0, where all pages are consolidated at trigger time). Wrap the result
     /// in BorrowedNautilusBuffer::from(...) together with the matching tuple layout to build a PagedVectorRef.
@@ -77,5 +85,23 @@ protected:
     std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout;
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
+
+private:
+    /// Both take the paged vectors in (left, right) order and are kept out of line on purpose. Calling performNLJ
+    /// directly from both branches of performNLJSmallerSideOuter with swapped reference arguments lets the host
+    /// compiler tail-merge the two calls into one call site. Nautilus then traces both branches as the same code and
+    /// binds the same paged vector to outer and inner on one of them (https://github.com/nebulastream/nautilus/issues/487).
+    [[gnu::noinline]] void performNLJLeftOuter(
+        const PagedVectorRef& leftPagedVector,
+        const PagedVectorRef& rightPagedVector,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
+    [[gnu::noinline]] void performNLJRightOuter(
+        const PagedVectorRef& leftPagedVector,
+        const PagedVectorRef& rightPagedVector,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const;
 };
 }

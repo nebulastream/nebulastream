@@ -1,13 +1,5 @@
-Subject: [PATCH] 0002-fix-tools-install-dir
----
-Index: bolt/cmake/modules/AddBOLT.cmake
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/bolt/cmake/modules/AddBOLT.cmake b/bolt/cmake/modules/AddBOLT.cmake
---- a/bolt/cmake/modules/AddBOLT.cmake	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/bolt/cmake/modules/AddBOLT.cmake	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+--- a/bolt/cmake/modules/AddBOLT.cmake
++++ b/bolt/cmake/modules/AddBOLT.cmake
 @@ -16,7 +16,7 @@
      get_target_export_arg(${name} BOLT export_to_bolttargets)
      install(TARGETS ${name}
@@ -15,16 +7,10 @@ diff --git a/bolt/cmake/modules/AddBOLT.cmake b/bolt/cmake/modules/AddBOLT.cmake
 -      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 +      RUNTIME DESTINATION "${BOLT_TOOLS_INSTALL_DIR}"
        COMPONENT bolt)
-
+ 
      if(NOT LLVM_ENABLE_IDE)
-Index: clang-tools-extra/clang-tidy/tool/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt b/clang-tools-extra/clang-tidy/tool/CMakeLists.txt
---- a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang-tools-extra/clang-tidy/tool/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+--- a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt
++++ b/clang-tools-extra/clang-tidy/tool/CMakeLists.txt
 @@ -66,6 +66,6 @@
    DESTINATION "${CMAKE_INSTALL_DATADIR}/clang"
    COMPONENT clang-tidy)
@@ -33,29 +19,17 @@ diff --git a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt b/clang-tools-extr
 +  DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
    COMPONENT clang-tidy
    RENAME run-clang-tidy)
-Index: clang-tools-extra/modularize/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang-tools-extra/modularize/CMakeLists.txt b/clang-tools-extra/modularize/CMakeLists.txt
---- a/clang-tools-extra/modularize/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang-tools-extra/modularize/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
-@@ -27,5 +27,5 @@
+--- a/clang-tools-extra/modularize/CMakeLists.txt
++++ b/clang-tools-extra/modularize/CMakeLists.txt
+@@ -28,5 +28,5 @@
    )
-
+ 
  install(TARGETS modularize
 -        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 +        RUNTIME DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
          COMPONENT clang-extras)
-Index: clang/cmake/modules/AddClang.cmake
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/cmake/modules/AddClang.cmake b/clang/cmake/modules/AddClang.cmake
---- a/clang/cmake/modules/AddClang.cmake	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/cmake/modules/AddClang.cmake	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+--- a/clang/cmake/modules/AddClang.cmake
++++ b/clang/cmake/modules/AddClang.cmake
 @@ -183,7 +183,7 @@
        get_target_export_arg(${name} Clang export_to_clangtargets)
        install(TARGETS ${name}
@@ -63,33 +37,21 @@ diff --git a/clang/cmake/modules/AddClang.cmake b/clang/cmake/modules/AddClang.c
 -        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 +        RUNTIME DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
          COMPONENT ${name})
-
+ 
        if (LLVM_ENABLE_PDB)
-Index: clang/tools/c-index-test/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/tools/c-index-test/CMakeLists.txt b/clang/tools/c-index-test/CMakeLists.txt
---- a/clang/tools/c-index-test/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/tools/c-index-test/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
-@@ -48,7 +48,7 @@
+--- a/clang/tools/c-index-test/CMakeLists.txt
++++ b/clang/tools/c-index-test/CMakeLists.txt
+@@ -49,7 +49,7 @@
      set_property(TARGET c-index-test APPEND PROPERTY INSTALL_RPATH
         "@executable_path/../../lib")
    else()
 -    set(INSTALL_DESTINATION "${CMAKE_INSTALL_BINDIR}")
 +    set(INSTALL_DESTINATION "${CLANG_TOOLS_INSTALL_DIR}")
    endif()
-
+ 
    install(TARGETS c-index-test
-Index: clang/tools/clang-format/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/tools/clang-format/CMakeLists.txt b/clang/tools/clang-format/CMakeLists.txt
---- a/clang/tools/clang-format/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/tools/clang-format/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+--- a/clang/tools/clang-format/CMakeLists.txt
++++ b/clang/tools/clang-format/CMakeLists.txt
 @@ -36,7 +36,7 @@
    DESTINATION "${CMAKE_INSTALL_DATADIR}/clang"
    COMPONENT clang-format)
@@ -97,42 +59,30 @@ diff --git a/clang/tools/clang-format/CMakeLists.txt b/clang/tools/clang-format/
 -  DESTINATION "${CMAKE_INSTALL_BINDIR}"
 +  DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
    COMPONENT clang-format)
-
+ 
  if (WIN32 AND NOT CYGWIN)
-Index: clang/tools/scan-build-py/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/tools/scan-build-py/CMakeLists.txt b/clang/tools/scan-build-py/CMakeLists.txt
---- a/clang/tools/scan-build-py/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/tools/scan-build-py/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
-@@ -43,7 +43,7 @@
-                          ${CMAKE_BINARY_DIR}/bin/scan-build-py
-                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/scan-build)
-     install (PROGRAMS "bin/scan-build"
--             DESTINATION "${CMAKE_INSTALL_BINDIR}"
-+             DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
-              RENAME scan-build-py
-              COMPONENT scan-build-py)
-     list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/scan-build-py)
-@@ -56,7 +56,7 @@
-                          ${CMAKE_BINARY_DIR}/bin/
-                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile})
-     install(PROGRAMS bin/${BinFile}
--            DESTINATION "${CMAKE_INSTALL_BINDIR}"
-+            DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
-             COMPONENT scan-build-py)
-     list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
-   endif()
-Index: clang/tools/scan-build/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/tools/scan-build/CMakeLists.txt b/clang/tools/scan-build/CMakeLists.txt
---- a/clang/tools/scan-build/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/tools/scan-build/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+--- a/clang/tools/scan-build-py/CMakeLists.txt
++++ b/clang/tools/scan-build-py/CMakeLists.txt
+@@ -46,7 +46,7 @@
+                            ${CMAKE_BINARY_DIR}/bin/scan-build-py
+                          DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/scan-build)
+       install (PROGRAMS "bin/scan-build"
+-               DESTINATION "${CMAKE_INSTALL_BINDIR}"
++               DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
+                RENAME scan-build-py
+                COMPONENT scan-build-py)
+       list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/scan-build-py)
+@@ -59,7 +59,7 @@
+                            ${CMAKE_BINARY_DIR}/bin/
+                          DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile})
+       install(PROGRAMS bin/${BinFile}
+-              DESTINATION "${CMAKE_INSTALL_BINDIR}"
++              DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
+               COMPONENT scan-build-py)
+       list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
+     endif()
+--- a/clang/tools/scan-build/CMakeLists.txt
++++ b/clang/tools/scan-build/CMakeLists.txt
 @@ -47,7 +47,7 @@
                         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile})
      list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
@@ -141,15 +91,9 @@ diff --git a/clang/tools/scan-build/CMakeLists.txt b/clang/tools/scan-build/CMak
 +            DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
              COMPONENT scan-build)
    endforeach()
-
-Index: clang/tools/scan-view/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/clang/tools/scan-view/CMakeLists.txt b/clang/tools/scan-view/CMakeLists.txt
---- a/clang/tools/scan-view/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/clang/tools/scan-view/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+ 
+--- a/clang/tools/scan-view/CMakeLists.txt
++++ b/clang/tools/scan-view/CMakeLists.txt
 @@ -20,7 +20,7 @@
                         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin/${BinFile})
      list(APPEND Depends ${CMAKE_BINARY_DIR}/bin/${BinFile})
@@ -158,15 +102,9 @@ diff --git a/clang/tools/scan-view/CMakeLists.txt b/clang/tools/scan-view/CMakeL
 +            DESTINATION "${CLANG_TOOLS_INSTALL_DIR}"
              COMPONENT scan-view)
    endforeach()
-
-Index: flang/cmake/modules/AddFlang.cmake
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/flang/cmake/modules/AddFlang.cmake b/flang/cmake/modules/AddFlang.cmake
---- a/flang/cmake/modules/AddFlang.cmake	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/flang/cmake/modules/AddFlang.cmake	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
+ 
+--- a/flang/cmake/modules/AddFlang.cmake
++++ b/flang/cmake/modules/AddFlang.cmake
 @@ -122,7 +122,7 @@
      get_target_export_arg(${name} Flang export_to_flangtargets)
      install(TARGETS ${name}
@@ -174,38 +112,26 @@ diff --git a/flang/cmake/modules/AddFlang.cmake b/flang/cmake/modules/AddFlang.c
 -      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 +      RUNTIME DESTINATION "${FLANG_TOOLS_INSTALL_DIR}"
        COMPONENT ${name})
-
+ 
      if(NOT LLVM_ENABLE_IDE)
-Index: flang/tools/flang-driver/CMakeLists.txt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/flang/tools/flang-driver/CMakeLists.txt b/flang/tools/flang-driver/CMakeLists.txt
---- a/flang/tools/flang-driver/CMakeLists.txt	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/flang/tools/flang-driver/CMakeLists.txt	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
-@@ -40,10 +40,10 @@
+--- a/flang/tools/flang-driver/CMakeLists.txt
++++ b/flang/tools/flang-driver/CMakeLists.txt
+@@ -41,10 +41,10 @@
  # Enable support for plugins, which need access to symbols from flang
  if(FLANG_PLUGIN_SUPPORT)
    set(LLVM_LIBRARY_OUTPUT_INTDIR ${LLVM_LIBRARY_DIR})
 -  export_executable_symbols_for_plugins(flang)
 +  export_executable_symbols_for_plugins(flang-new)
  endif()
-
+ 
 -install(TARGETS flang DESTINATION "${CMAKE_INSTALL_BINDIR}")
 +install(TARGETS flang-new DESTINATION "${FLANG_TOOLS_INSTALL_DIR}")
-
+ 
  # Keep "flang-new" as a symlink for backwards compatiblity. Remove once "flang"
  # is a widely adopted name.
-Index: lldb/cmake/modules/AddLLDB.cmake
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/lldb/cmake/modules/AddLLDB.cmake b/lldb/cmake/modules/AddLLDB.cmake
---- a/lldb/cmake/modules/AddLLDB.cmake	(revision a172007134ce5bc4ba2394a4afc2d553b52f7ad3)
-+++ b/lldb/cmake/modules/AddLLDB.cmake	(revision 37a104129d6b267e19311d2d45042d5dfbfebfad)
-@@ -184,7 +184,7 @@
+--- a/lldb/cmake/modules/AddLLDB.cmake
++++ b/lldb/cmake/modules/AddLLDB.cmake
+@@ -203,7 +203,7 @@
    endif()
  
    if(ARG_GENERATE_INSTALL)

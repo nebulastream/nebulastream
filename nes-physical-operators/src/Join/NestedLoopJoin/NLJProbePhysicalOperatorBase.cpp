@@ -119,4 +119,59 @@ nautilus::val<const TupleBuffer*> NLJProbePhysicalOperatorBase::getPagedVectorBu
         nautilus::val<JoinBuildSideType>(side));
 }
 
+void NLJProbePhysicalOperatorBase::performNLJSmallerSideOuter(
+    const PagedVectorRef& leftPagedVector,
+    const PagedVectorRef& rightPagedVector,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    if (leftPagedVector.getNumberOfRecords() < rightPagedVector.getNumberOfRecords())
+    {
+        performNLJLeftOuter(leftPagedVector, rightPagedVector, executionCtx, windowStart, windowEnd);
+    }
+    else
+    {
+        performNLJRightOuter(leftPagedVector, rightPagedVector, executionCtx, windowStart, windowEnd);
+    }
+}
+
+void NLJProbePhysicalOperatorBase::performNLJLeftOuter(
+    const PagedVectorRef& leftPagedVector,
+    const PagedVectorRef& rightPagedVector,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    performNLJ(
+        leftPagedVector,
+        rightPagedVector,
+        *leftTupleLayout,
+        *rightTupleLayout,
+        leftKeyFieldNames,
+        rightKeyFieldNames,
+        executionCtx,
+        windowStart,
+        windowEnd);
+}
+
+void NLJProbePhysicalOperatorBase::performNLJRightOuter(
+    const PagedVectorRef& leftPagedVector,
+    const PagedVectorRef& rightPagedVector,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    performNLJ(
+        rightPagedVector,
+        leftPagedVector,
+        *rightTupleLayout,
+        *leftTupleLayout,
+        rightKeyFieldNames,
+        leftKeyFieldNames,
+        executionCtx,
+        windowStart,
+        windowEnd);
+}
+
 }
