@@ -44,6 +44,7 @@
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
+#include <val_enum.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -388,7 +389,7 @@ void InputFormatter::readBuffer(
     /// All three are parsed by a single loop with a single call of executeChild, so the rest of the pipeline is traced once instead
     /// of once per kind of tuple. 'advance' selects where the next tuple comes from. It only assigns values declared outside of it,
     /// so its paths merge before the tuple is parsed.
-    enum Phase : uint8_t
+    enum class Phase : uint8_t
     {
         LEADING,
         BUFFER,
@@ -403,7 +404,7 @@ void InputFormatter::readBuffer(
     const nautilus::val<RawBufferIndex*> rawBufferIndex
         = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, rawBufferIndex));
 
-    nautilus::val<uint8_t> phase = LEADING;
+    nautilus::val<Phase> phase = Phase::LEADING;
     nautilus::val<uint64_t> bufferTupleIdx = 0;
     nautilus::val<bool> hasTuple = false;
     nautilus::val<int8_t*> tuplePtr = nullptr;
@@ -412,9 +413,9 @@ void InputFormatter::readBuffer(
     const auto advance = [&]
     {
         hasTuple = false;
-        if (phase == nautilus::val<uint8_t>(LEADING))
+        if (phase == Phase::LEADING)
         {
-            phase = BUFFER;
+            phase = Phase::BUFFER;
             if (hasLeadingSpanningTuple)
             {
                 hasTuple = true;
@@ -426,14 +427,14 @@ void InputFormatter::readBuffer(
             else if (not hasTupleDelimiter)
             {
                 /// A buffer without a tuple delimiter can only form one (leading) spanning tuple
-                phase = DONE;
+                phase = Phase::DONE;
             }
         }
-        else if (phase == nautilus::val<uint8_t>(BUFFER) and not hasTupleDelimiter)
+        else if (phase == Phase::BUFFER and not hasTupleDelimiter)
         {
-            phase = DONE;
+            phase = Phase::DONE;
         }
-        if (not hasTuple and phase == nautilus::val<uint8_t>(BUFFER))
+        if (not hasTuple and phase == Phase::BUFFER)
         {
             if (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferTupleIdx, rawBufferIndex))
             {
@@ -445,12 +446,12 @@ void InputFormatter::readBuffer(
             }
             else
             {
-                phase = TRAILING;
+                phase = Phase::TRAILING;
             }
         }
-        if (not hasTuple and phase == nautilus::val<uint8_t>(TRAILING))
+        if (not hasTuple and phase == Phase::TRAILING)
         {
-            phase = DONE;
+            phase = Phase::DONE;
             if (nautilus::invoke(
                     indexTrailingSpanningTupleProxy,
                     recordBuffer.getReference(),
