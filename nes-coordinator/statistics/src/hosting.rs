@@ -14,7 +14,8 @@
 use crate::grpc::{ControlService, ReportService};
 use crate::proto;
 use crate::service::{
-    ProbeImpulse, QuerySubmitter, SchemaResolver, StatisticService, SubmitError, WorkerCatalog,
+    Deployment, Fragment, ProbeImpulse, QuerySubmitter, SchemaResolver, StatisticService,
+    SubmitError, WorkerCatalog,
 };
 use model::error::{CodedError, ErrorCode};
 use model::identifier::QueryId;
@@ -68,13 +69,22 @@ impl ChannelSubmitter {
 
 #[async_trait::async_trait]
 impl QuerySubmitter for ChannelSubmitter {
-    async fn submit(&self, sql: String) -> Result<u64, SubmitError> {
+    async fn submit(&self, sql: String) -> Result<Deployment, SubmitError> {
         let payload = Payload::sql(sql).until_running(Some(SUBMIT_TIMEOUT));
         match execute(&self.sender, payload)
             .await
             .map_err(SubmitError::Other)?
         {
-            Ok(StatementResult::CreatedQuery(query, _)) => Ok(*query.id as u64),
+            Ok(StatementResult::CreatedQuery(query, fragments)) => Ok(Deployment {
+                query_id: *query.id as u64,
+                fragments: fragments
+                    .into_iter()
+                    .map(|fragment| Fragment {
+                        worker: fragment.host_addr,
+                        plan: fragment.plan,
+                    })
+                    .collect(),
+            }),
             Ok(other) => Err(SubmitError::Other(format!(
                 "a statistic query answered with {other:?} instead of a query"
             ))),

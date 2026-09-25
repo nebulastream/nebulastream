@@ -3222,6 +3222,7 @@ dependencies = [
  "madsim-tonic-build",
  "model",
  "prost",
+ "serde_json",
  "thiserror 2.0.20",
  "tracing",
 ]

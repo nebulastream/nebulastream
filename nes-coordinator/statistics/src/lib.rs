@@ -14,6 +14,7 @@
 
 pub mod grpc;
 pub mod hosting;
+pub mod placement;
 pub mod query_gen;
 pub mod registry;
 pub mod service;
