@@ -137,10 +137,21 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// half of the tracing time (nebulastream/nautilus#491). Callees are bound by address, so names only matter for readable IR
     /// dumps. Needs a nautilus version that knows the option; older versions ignore it.
     options.setOption("engine.resolveFunctionNames", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
-    /// Function attribute inference scales quadratically with the number of blocks and alone takes ~25% of the IR pass time
-    /// of large pipelines. It only derives attributes for calls between nautilus functions, which our pipelines do not make.
-    /// Re-enable once nebulastream/nautilus#492 is fixed.
-    options.setOption("ir.disableAttributeInference", true);
+    /// Disable all of nautilus' pure optimization IR passes: MLIR/LLVM perform the same optimizations, and the nautilus passes
+    /// scale poorly with the size of our pipelines (nebulastream/nautilus#492). The passes the backend depends on (no-throw
+    /// inference and exception-region preparation) cannot be disabled and keep running.
+    for (const auto* optimizationPass :
+         {"ir.disableAttributeInference",
+          "ir.disableConstantFolding",
+          "ir.disableAlgebraicSimplification",
+          "ir.disableConstantBranchFolding",
+          "ir.disableEmptyBlockElimination",
+          "ir.disableBlockMerging",
+          "ir.disableDeadCodeElimination",
+          "ir.disableBlockArgumentPruning"})
+    {
+        options.setOption(optimizationPass, true);
+    }
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
