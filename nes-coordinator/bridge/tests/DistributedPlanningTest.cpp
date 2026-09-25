@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -28,12 +29,15 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <coordinator/lib.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -780,6 +784,71 @@ TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
     const auto sourcePlans = plan[Host("source-node:8080")];
     ASSERT_EQ(sourcePlans.size(), 4);
     EXPECT_EQ(flatten(source2Plans.front()).size(), 2);
+}
+
+/// The statistic store is local to a worker, so a reader reading back the statistic its own query writes has to run where
+/// the writer runs. The source node has room for one operator and the middle node for two: a placement that only minimises
+/// the distance to the source fills both and leaves the rest of the query, the reader included, to the sink node.
+TEST_F(DistributedPlanningTest, StatisticStoreReaderIsPlacedWithItsWriter)
+{
+    const auto prepared = loadAndBind(
+        R"(
+        CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA, 10 AS "CAPACITY");
+        CREATE WORKER 'middle-node:8080' SET ('middle-node:9090' AS DATA, 2 AS "CAPACITY", 'sink-node:8080' AS "DOWNSTREAM");
+        CREATE WORKER 'source-node:8080' SET ('source-node:9090' AS DATA, 1 AS "CAPACITY", 'middle-node:8080' AS "DOWNSTREAM");
+        CREATE LOGICAL SOURCE stream (value UINT64 NOT NULL, ts UINT64 NOT NULL);
+        CREATE PHYSICAL SOURCE FOR stream TYPE File
+            SET ('source-node:8080' AS "SOURCE"."HOST", 'does_not_exist' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE");
+        CREATE SINK statistics (STATISTICID UINT64 NOT NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL,
+            STATISTICVALUE FLOAT64 NOT NULL) TYPE VOID SET ('sink-node:8080' AS "SINK"."HOST");
+        )",
+        "SELECT STATISTICID, STATISTICSTART, STATISTICEND, STATISTICVALUE FROM (SELECT AVG_PROBE(1, STATISTICVALUE, float64) FROM "
+        "(SELECT STATISTIC_BUILD(1, AVG(value)) FROM stream WINDOW TUMBLING(ts, size 1 sec))) INTO statistics");
+    const auto placement = prepared.optimize();
+
+    std::string placed;
+    std::optional<Host> writerHost;
+    std::optional<Host> readerHost;
+    for (const auto& [host, plans] : placement)
+    {
+        for (const auto& plan : plans)
+        {
+            placed += fmt::format("\n{}: {}", host.getRawValue(), plan);
+            if (not getOperatorByType<StatisticStoreWriterLogicalOperator>(plan).empty())
+            {
+                writerHost = host;
+            }
+            if (not getOperatorByType<StatisticStoreReaderLogicalOperator>(plan).empty())
+            {
+                readerHost = host;
+            }
+        }
+    }
+    ASSERT_TRUE(writerHost.has_value() and readerHost.has_value()) << placed;
+    EXPECT_EQ(writerHost.value(), readerHost.value()) << placed;
+}
+
+/// The statistic service reads a statistic back on the worker its writer ran on, by placing the probe's source and sink there.
+/// Nothing may pull the read to another worker, even one closer to where the probe's data comes from.
+TEST_F(DistributedPlanningTest, StatisticProbeRunsOnTheWorkerItNames)
+{
+    const auto prepared = loadAndBind(
+        R"(
+        CREATE WORKER 'sink-node:8080' SET ('sink-node:9090' AS DATA, 10 AS "CAPACITY");
+        CREATE WORKER 'middle-node:8080' SET ('middle-node:9090' AS DATA, 10 AS "CAPACITY", 'sink-node:8080' AS "DOWNSTREAM");
+        CREATE WORKER 'source-node:8080' SET ('source-node:9090' AS DATA, 10 AS "CAPACITY", 'middle-node:8080' AS "DOWNSTREAM");
+        )",
+        "SELECT STATISTICID, STATISTICSTART, STATISTICEND, STATISTICVALUE FROM (SELECT AVG_PROBE_RANGE(1, STATISTICVALUE, float64) "
+        "FROM (SELECT * FROM Grpc('10000' AS \"SOURCE\".GRPC_PORT, 'CSV' AS INPUT_FORMATTER.\"TYPE\", SCHEMA(STATISTICID UINT64 NOT "
+        "NULL, STATISTICSTART UINT64 NOT NULL, STATISTICEND UINT64 NOT NULL) AS \"SOURCE\".\"SCHEMA\", 'middle-node:8080' AS "
+        "\"SOURCE\".\"HOST\"))) INTO Grpc('localhost' AS \"SINK\".GRPC_HOST, '1234' AS \"SINK\".GRPC_PORT, '9' AS \"SINK\".PROBE_ID, "
+        "'CSV' AS \"SINK\".OUTPUT_FORMAT, 'middle-node:8080' AS \"SINK\".\"HOST\")");
+    auto placement = prepared.optimize();
+
+    ASSERT_EQ(placement.size(), 1);
+    const auto& plans = placement[Host("middle-node:8080")];
+    ASSERT_EQ(plans.size(), 1);
+    EXPECT_EQ(getOperatorByType<StatisticStoreReaderLogicalOperator>(plans.front()).size(), 1);
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access, readability-identifier-length)

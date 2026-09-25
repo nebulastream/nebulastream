@@ -31,6 +31,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreReaderLogicalOperator.hpp>
+#include <Operators/Statistic/StatisticStoreWriterLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/PlacementTrait.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -353,6 +355,36 @@ void addConnectivityConstraints(PlacementModel& model, const LogicalPlan& logica
     }
 }
 
+/// Constraint: A statistic store reader runs on the node of the writer below it that writes the statistic it reads.
+/// Every worker has a statistic store of its own, so a reader on any other node would look into a store the writer never filled.
+void addStatisticColocationConstraints(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
+{
+    for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
+    {
+        const auto reader = op.tryGetAs<StatisticStoreReaderLogicalOperator>();
+        if (not reader)
+        {
+            continue;
+        }
+        for (const LogicalOperator& descendant : BFSRange(op))
+        {
+            const auto writer = descendant.tryGetAs<StatisticStoreWriterLogicalOperator>();
+            if (not writer or writer->get().getStatisticId() != reader->get().getStatisticId())
+            {
+                continue;
+            }
+            for (const NetworkTopology::NodeId& nodeId : topology | std::views::keys)
+            {
+                /// reader on node - writer on node = 0
+                std::array index{
+                    model.operatorPlacementMatrix.at({op.getId(), nodeId}), model.operatorPlacementMatrix.at({descendant.getId(), nodeId})};
+                std::array values{1.0, -1.0};
+                checkError(Highs_addRow(model.highs, 0, 0, index.size(), index.data(), values.data()), model.highs);
+            }
+        }
+    }
+}
+
 /// Objective: minimize the sum of distances for all operator placements to their descendant sources
 void addDistanceObjective(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
 {
@@ -425,6 +457,7 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
     addSourcePlacementConstraints(model, logicalPlan);
     addSinkPlacementConstraint(model, logicalPlan);
     addConnectivityConstraints(model, logicalPlan, topology);
+    addStatisticColocationConstraints(model, logicalPlan, topology);
     addDistanceObjective(model, logicalPlan, topology);
     return extractPlacement(model);
 }
