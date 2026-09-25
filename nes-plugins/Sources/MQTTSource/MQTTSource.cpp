@@ -143,7 +143,7 @@ Source::FillTupleBufferResult MQTTSource::fillTupleBuffer(NES::TupleBuffer& tupl
 
         if (!client->is_connected())
         {
-            throw CannotOpenSource("Connection lost");
+            throw CannotReadFromSource("Connection lost");
         }
 
         mqtt::const_message_ptr message;
@@ -212,10 +212,18 @@ void MQTTSource::writePayloadToBuffer(const std::string_view payload, TupleBuffe
 
 void MQTTSource::close()
 {
-    if (client->is_connected())
+    if (!client->is_connected())
+    {
+        return;
+    }
+    try
     {
         client->unsubscribe(topic);
         client->disconnect();
+    }
+    catch (const mqtt::exception& e)
+    {
+        NES_WARNING("When closing MQTT source: {}", e.what());
     }
 }
 

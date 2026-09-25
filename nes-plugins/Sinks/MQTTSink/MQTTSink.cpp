@@ -140,7 +140,7 @@ SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
         {
             return SendResult::Full;
         }
-        throw CannotOpenSink("MQTTSink publish to topic {} failed: {}", topic, e.what());
+        throw CannotWriteToSink("MQTTSink publish to topic {} failed: {}", topic, e.what());
     }
     return SendResult::Ok;
 }
@@ -152,7 +152,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 
     if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
     {
-        throw CannotOpenSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+        throw CannotWriteToSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
     }
 
     auto currentBuffer = std::optional(inputTupleBuffer);
@@ -188,7 +188,7 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
     INVARIANT(backpressureHandler.empty(), "BackpressureHandler is not empty");
     if (const auto cause = *connectionCallback.lostCause.rlock(); !cause.empty())
     {
-        throw CannotOpenSink("MQTTSink lost connection to broker {}: {}", serverURI, cause);
+        NES_WARNING("MQTTSink lost connection to broker {}: {}", serverURI, cause);
     }
     try
     {
@@ -209,7 +209,7 @@ void MQTTSink::stop(PipelineExecutionContext& pec)
     }
     catch (const mqtt::exception& e)
     {
-        throw CannotOpenSink("When closing MQTT sink: {}", e.what());
+        NES_WARNING("When closing MQTT sink: {}", e.what());
     }
     NES_INFO("MQTT Sink completed.");
     client.reset();
