@@ -77,7 +77,7 @@ int main(const int argc, char** argv)
     }
 
     argparse::ArgumentParser arguments("nes-statistic-cli");
-    arguments.add_argument("command").help("one of collect, get, deregister");
+    arguments.add_argument("command").help("one of collect, get, deregister, watch");
     arguments.add_argument("--host").default_value(std::string{"127.0.0.1"}).help("the statistic service host");
     arguments.add_argument("--port").required().help("the statistic service port");
     arguments.add_argument("--source").default_value(std::string{}).help("the logical source name");
@@ -88,6 +88,7 @@ int main(const int argc, char** argv)
     arguments.add_argument("--event-time-field").default_value(std::string{}).help("event time field; ingestion time when omitted");
     arguments.add_argument("--start").default_value(uint64_t{0}).scan<'u', uint64_t>().help("the probe window start");
     arguments.add_argument("--end").default_value(std::numeric_limits<uint64_t>::max()).scan<'u', uint64_t>().help("the probe window end");
+    arguments.add_argument("--count").default_value(uint64_t{1}).scan<'u', uint64_t>().help("the reports watch waits for");
     arguments.add_argument("--timeout-sec").default_value(uint64_t{120}).scan<'u', uint64_t>().help("the RPC deadline in seconds");
 
     try
@@ -174,6 +175,29 @@ int main(const int argc, char** argv)
             return report(status);
         }
         std::cout << (response.removed() ? "true" : "false") << "\n";
+        return 0;
+    }
+
+    if (command == "watch")
+    {
+        WatchStatisticRequest request;
+        fillKey(*request.mutable_key(), arguments, metric.value());
+
+        /// Prints each report the statistic's query sends while its condition holds, until --count arrived.
+        const auto reader = stub->WatchStatistic(&context, request);
+        StatisticReport statisticReport;
+        const auto count = arguments.get<uint64_t>("--count");
+        for (uint64_t received = 0; received < count; ++received)
+        {
+            if (not reader->Read(&statisticReport))
+            {
+                return report(reader->Finish());
+            }
+            std::cout << statisticReport.statistic_id() << "," << statisticReport.start_ts() << "," << statisticReport.end_ts() << ","
+                      << statisticReport.value() << "\n"
+                      << std::flush;
+        }
+        context.TryCancel();
         return 0;
     }
 

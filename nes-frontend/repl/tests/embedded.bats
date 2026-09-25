@@ -404,6 +404,15 @@ CREATE PHYSICAL SOURCE FOR measurements TYPE File SET(
        'measurements.csv' as "SOURCE".FILE_PATH,
        'CSV' as INPUT_FORMATTER."TYPE");
 
+CREATE LOGICAL SOURCE readings(id UINT64 NOT NULL, value UINT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE Generator SET(
+       'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as INPUT_FORMATTER."TYPE",
+       120000 AS "SOURCE".MAX_RUNTIME_MS,
+       'emit_rate 10' AS "SOURCE".GENERATOR_RATE_CONFIG,
+       1 AS "SOURCE".SEED,
+       'SEQUENCE UINT64 0 10000000 1, SEQUENCE UINT64 0 10000000 1, SEQUENCE UINT64 0 10000000000 1000' AS "SOURCE".GENERATOR_SCHEMA);
+
 CREATE LOGICAL SOURCE keepalive(ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR keepalive TYPE Generator SET(
        'ALL' as "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
@@ -499,6 +508,28 @@ stop_statistic_repl() {
       --metric MAX --window-ms 20000 --start 0 --end 20000 --timeout-sec 90
   [ "$status" -ne 0 ]
   echo "$output" | grep -q "not registered"
+
+  stop_statistic_repl
+}
+
+@test "a collected statistic reports to a watching client while its condition holds" {
+  start_statistic_repl
+
+  # Value and event time both advance with every reading, so each 20 s window averages 20 more than the one before:
+  # 9.5, 29.5, 49.5, ... The condition holds from the second window on.
+  run "$NES_STATISTIC_CLI" collect --port "$STATISTIC_PORT" --source readings --field value \
+      --metric AVG --window-ms 20000 --event-time-field ts --condition "STATISTICVALUE > 20.0" --timeout-sec 90
+  [ "$status" -eq 0 ]
+
+  run "$NES_STATISTIC_CLI" watch --port "$STATISTIC_PORT" --source readings --field value \
+      --metric AVG --window-ms 20000 --count 2 --timeout-sec 60
+  [ "$status" -eq 0 ]
+  echo "# watched: $output" >&3
+  [ "${#lines[@]}" -eq 2 ]
+  for line in "${lines[@]}"; do
+    [[ "$line" =~ ^[0-9]+,[0-9]+,[0-9]+,([0-9.]+)$ ]]
+    awk -v value="${BASH_REMATCH[1]}" 'BEGIN { exit !(value > 20.0) }'
+  done
 
   stop_statistic_repl
 }
