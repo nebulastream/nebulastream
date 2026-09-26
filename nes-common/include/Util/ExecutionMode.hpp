@@ -26,6 +26,12 @@ enum class ExecutionMode : uint8_t
     COMPILER,
     /// Uses the compilation based execution mode with nautilus' AsmJit backend. It compiles much faster than COMPILER, but
     /// generates less optimized code.
-    ASMJIT
+    ASMJIT,
+    /// Uses the compilation based execution mode with nautilus' threaded-bytecode (TBC) backend in its copy-and-patch JIT mode.
+    /// Like ASMJIT, it trades code quality for compilation speed.
+    TBC,
+    /// Uses nautilus' tiered compilation: each pipeline is compiled with the TBC JIT first and runs immediately, while the
+    /// MLIR backend compiles it again on a background thread; the pipeline switches to the MLIR code once it is ready.
+    TIERED
 };
 }
