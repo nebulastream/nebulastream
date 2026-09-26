@@ -121,6 +121,20 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , tupleLayout(std::move(tupleLayout))
 {
+    /// Copying the values and selecting the median is compiled as its own nautilus function: traced inline, the copy loop's
+    /// blocks would carry every value live in the probe pipeline as block arguments.
+    medianFunction = std::make_shared<nautilus::NautilusFunction<MedianFunction>>(
+        fmt::format("median_{}", this->resultFieldIdentifier),
+        MedianFunction(
+            [this](
+                nautilus::val<AggregationState*> state,
+                nautilus::val<const TupleBuffer*> parent,
+                nautilus::val<Arena*> arena,
+                nautilus::val<AbstractBufferProvider*> bufferProvider)
+            {
+                PipelineMemoryProvider memoryProvider{arena, bufferProvider};
+                return computeMedian(state, BorrowedNautilusBuffer::from(parent), memoryProvider);
+            }));
 }
 
 void MedianAggregationPhysicalFunction::lift(
@@ -229,23 +243,7 @@ Record MedianAggregationPhysicalFunction::lower(
 
     if (!containsNull)
     {
-        /// Copying the values and selecting the median is compiled as its own nautilus function: traced inline, the copy loop's
-        /// blocks would carry every value live in the probe pipeline as block arguments.
-        if (!medianFunction)
-        {
-            medianFunction = std::make_shared<nautilus::NautilusFunction<MedianFunction>>(
-                fmt::format("median_{}", resultFieldIdentifier),
-                MedianFunction(
-                    [this](
-                        nautilus::val<AggregationState*> state,
-                        nautilus::val<const TupleBuffer*> parent,
-                        nautilus::val<Arena*> arena,
-                        nautilus::val<AbstractBufferProvider*> bufferProvider)
-                    {
-                        PipelineMemoryProvider memoryProvider{arena, bufferProvider};
-                        return computeMedian(state, BorrowedNautilusBuffer::from(parent), memoryProvider);
-                    }));
-        }
+        /// Copying the values and selecting the median is compiled as its own nautilus function (see the constructor).
         const nautilus::val<double> median = (*medianFunction)(
             aggregationState, parentBuffer.asArg(), pipelineMemoryProvider.arena.getArena(), pipelineMemoryProvider.bufferProvider);
 

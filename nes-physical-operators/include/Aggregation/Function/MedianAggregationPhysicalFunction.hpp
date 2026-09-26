@@ -44,6 +44,11 @@ public:
         PhysicalFunction inputFunction,
         Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<PagedVectorTupleLayout> tupleLayout);
+    /// medianFunction captures this object, so it must stay in place.
+    MedianAggregationPhysicalFunction(const MedianAggregationPhysicalFunction&) = delete;
+    MedianAggregationPhysicalFunction(MedianAggregationPhysicalFunction&&) = delete;
+    MedianAggregationPhysicalFunction& operator=(const MedianAggregationPhysicalFunction&) = delete;
+    MedianAggregationPhysicalFunction& operator=(MedianAggregationPhysicalFunction&&) = delete;
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
@@ -83,7 +88,8 @@ private:
         nautilus::val<AbstractBufferProvider*>)>;
 
     std::shared_ptr<PagedVectorTupleLayout> tupleLayout;
-    /// computeMedian as a dedicated nautilus function; created on first use, so that it captures this object in its final place.
+    /// computeMedian as a dedicated nautilus function. It is created in the constructor, as lower() runs concurrently on the worker
+    /// threads when the pipeline is interpreted.
     std::shared_ptr<nautilus::NautilusFunction<MedianFunction>> medianFunction;
 };
 
