@@ -103,6 +103,29 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
     return runningQuery->verdict.has_value() and runningQuery->verdict->has_value();
 }
 
+/// Checks one sink of a query against the result block at the same position.
+Verdict checkSink(const SystestQuery& query, const size_t sinkIndex)
+{
+    const auto& expectedRows = NES::get<ExpectedRows>(query.expectation).rowsPerSink.at(sinkIndex);
+    const auto& resultFile = query.resultFiles.at(sinkIndex);
+    /// No result file means nothing to check, e.g., for a void sink.
+    /// Expected rows on such a sink would never be compared, so they fail it, not pass it.
+    if (not resultFile.has_value())
+    {
+        if (not expectedRows.empty())
+        {
+            return std::unexpected(Mismatch{"the test expects rows, but the sink writes no result file to compare them against"});
+        }
+        NES_INFO("Skipping result check for sink #{} of {}:{} because it writes no result.", sinkIndex, query.testName, query.queryIdInFile);
+        return Success{};
+    }
+
+    return runCheck(QueryResultCheck{
+        .resultFile = *resultFile,
+        .expectedSchema = query.planInfoOrException.value().sinkOutputSchemas.at(sinkIndex),
+        .expectedTuples = expectedRows});
+}
+
 /// Checks a query that reached a successful terminal state against what the test expects of its result.
 Verdict checkSucceededQuery(const SystestQuery& query)
 {
@@ -115,27 +138,39 @@ Verdict checkSucceededQuery(const SystestQuery& query)
     if (query.differentialQueryPlan.has_value())
     {
         INVARIANT(
-            query.resultFile.has_value() and query.differentialResultFile.has_value(), "a differential pair requires both result files");
-        return runCheck(DifferentialCheck{.firstResultFile = *query.resultFile, .secondResultFile = *query.differentialResultFile});
+            query.resultFiles.size() == 1 and query.resultFiles.front().has_value() and query.differentialResultFile.has_value(),
+            "a differential pair requires both result files");
+        return runCheck(DifferentialCheck{.firstResultFile = *query.resultFiles.front(), .secondResultFile = *query.differentialResultFile});
     }
 
-    const auto& expectedRows = NES::get<ExpectedRows>(query.expectation).rows;
-    /// No result file means nothing to check, e.g., for a query into a void sink.
-    /// Expected rows on such a query would never be compared, so they fail it, not pass it.
-    if (not query.resultFile.has_value())
+    const auto resultBlocks = NES::get<ExpectedRows>(query.expectation).rowsPerSink.size();
+    if (query.resultFiles.size() != resultBlocks)
     {
-        if (not expectedRows.empty())
-        {
-            return std::unexpected(Mismatch{"the test expects rows, but the query writes no result file to compare them against"});
-        }
-        NES_INFO("Skipping result check for {}:{} because it writes no result.", query.testName, query.queryIdInFile);
-        return Success{};
+        return std::unexpected(Mismatch{fmt::format(
+            "the query writes into {} sink(s) but the test gives {} result block(s); every sink needs its own result block",
+            query.resultFiles.size(),
+            resultBlocks)});
     }
+    INVARIANT(
+        query.planInfoOrException.value().sinkOutputSchemas.size() == query.resultFiles.size(),
+        "the optimized plan has {} sink(s) but the rewriter chose {} result file(s)",
+        query.planInfoOrException.value().sinkOutputSchemas.size(),
+        query.resultFiles.size());
 
-    return runCheck(QueryResultCheck{
-        .resultFile = *query.resultFile,
-        .expectedSchema = query.planInfoOrException.value().sinkOutputSchema,
-        .expectedTuples = expectedRows});
+    for (size_t sinkIndex = 0; sinkIndex < resultBlocks; ++sinkIndex)
+    {
+        auto verdict = checkSink(query, sinkIndex);
+        if (not verdict.has_value())
+        {
+            /// Only a query with more than one sink needs to say which of them mismatched.
+            if (resultBlocks > 1)
+            {
+                verdict.error().detail = fmt::format("Sink #{} of the query:\n{}", sinkIndex, verdict.error().detail);
+            }
+            return verdict;
+        }
+    }
+    return Success{};
 }
 
 /// The printed plan uses the prefixed names, so they are restored to the declared spelling before the comparison.

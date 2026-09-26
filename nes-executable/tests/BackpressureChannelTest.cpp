@@ -49,6 +49,41 @@ TEST_F(BackpressureChannelTest, BasicConstruction)
     EXPECT_TRUE(backpressureController.releasePressure()); /// Should return true (was closed)
 }
 
+/// Sinks must outlive sources: a listener used after the last controller is gone reports it, whether or not that
+/// controller had applied pressure. A destroyed channel reads as open, so the open path has to check for it too.
+TEST_F(BackpressureChannelTest, ListenerDetectsControllerDestroyedBeforeWait)
+{
+    SKIP_IF_TSAN();
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+
+    auto listener = []
+    {
+        auto [controller, listener] = createBackpressureChannel();
+        return listener;
+    }();
+
+    EXPECT_DEATH_DEBUG(listener.wait({}), "");
+}
+
+/// Assigning over a controller ends it, so the pressure it applied is released with it. Otherwise that pressure has no
+/// owner left to release it and every listener on the channel waits forever.
+TEST_F(BackpressureChannelTest, MoveAssignmentReleasesPreviousControllerState)
+{
+    auto [controllers, listener] = createBackpressureChannel(2);
+    ASSERT_TRUE(controllers[0].applyPressure());
+    controllers[0] = std::move(controllers[1]);
+
+    std::atomic waitReturned{false};
+    std::jthread waiter(
+        [&](const std::stop_token& stopToken)
+        {
+            listener.wait(stopToken);
+            waitReturned = true;
+        });
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_TRUE(waitReturned);
+}
+
 /// Test basic functionality with 1 Backpressure Controller and 1 backpressureListener
 TEST_F(BackpressureChannelTest, BasicFunctionality)
 {

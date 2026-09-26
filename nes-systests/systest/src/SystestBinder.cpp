@@ -85,18 +85,27 @@ const Schema<UnqualifiedUnboundField, Ordered>& getChecksumSchema()
     return ChecksumSchema;
 }
 
-/// The schema of the rows in the query's result file, which the result check aligns the expected rows against.
-Schema<UnqualifiedUnboundField, Ordered> getSinkOutputSchema(const DistributedLogicalPlan& plan)
+/// The schema of the rows in each sink's result file, which the result check aligns that sink's expected rows against.
+/// The plan keeps its sinks as roots in the order the query lists them, which is also the order of the result files.
+std::vector<Schema<UnqualifiedUnboundField, Ordered>> getSinkOutputSchemas(const DistributedLogicalPlan& plan)
 {
-    const auto sinkOperator = plan.getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
-    INVARIANT(sinkOperator.has_value(), "The optimized plan should have a sink operator");
-    const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
-    INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
-    if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+    std::vector<Schema<UnqualifiedUnboundField, Ordered>> schemas;
+    for (const auto& root : plan.getGlobalPlan().getRootOperators())
     {
-        return getChecksumSchema();
+        const auto sinkOperator = root.tryGetAs<SinkLogicalOperator>();
+        INVARIANT(sinkOperator.has_value(), "Every root of the optimized plan should be a sink operator");
+        const auto& descriptor = sinkOperator.value()->getSinkDescriptor(); /// NOLINT(bugprone-unchecked-optional-access)
+        INVARIANT(descriptor.has_value(), "The sink operator should have a sink descriptor");
+        if (Sql::sameName(descriptor->getSinkType(), Sql::Checksum))
+        {
+            schemas.push_back(getChecksumSchema());
+        }
+        else
+        {
+            schemas.push_back(*get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema()));
+        }
     }
-    return *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(descriptor->getSchema());
+    return schemas;
 }
 
 /// Throws the failure of a catalog submission, so one CREATE that the catalog rejects fails its whole test file.
@@ -143,7 +152,7 @@ SystestQuery makeQuery(
         .configurationOverride = {},
         .differentialQueryPlan = std::nullopt,
         .actualExplainOutput = std::nullopt,
-        .resultFile = std::nullopt,
+        .resultFiles = {},
         .differentialResultFile = std::nullopt,
         .originalNames = {},
         .inputFiles = {}};
@@ -395,12 +404,12 @@ private:
             [&]
             {
                 auto optimized = optimizedPlan(runnableQuery.sql, fmt::format("{}:{}", partKey, runnableQuery.id.getRawValue()));
-                auto schema = getSinkOutputSchema(optimized);
-                return SystestQuery::PlanInfo{std::move(optimized), std::move(schema)};
+                auto schemas = getSinkOutputSchemas(optimized);
+                return SystestQuery::PlanInfo{std::move(optimized), std::move(schemas)};
             });
 
         auto query = makeQuery(testfile, runnableQuery.id, runnableQuery.sql, std::move(planInfoOrException), runnableQuery.expectation);
-        query.resultFile = runnableQuery.resultFile;
+        query.resultFiles = runnableQuery.resultFiles;
         query.inputFiles = runnableQuery.inputFiles;
         return query;
     }
@@ -415,13 +424,13 @@ private:
                 const auto number = block.firstId.getRawValue();
                 auto optimized = optimizedPlan(block.firstSql, fmt::format("{}:{}", partKey, number));
                 differentialPlan = optimizedPlan(block.secondSql, fmt::format("{}:{}-differential", partKey, number));
-                auto schema = getSinkOutputSchema(optimized);
-                return SystestQuery::PlanInfo{std::move(optimized), std::move(schema)};
+                auto schemas = getSinkOutputSchemas(optimized);
+                return SystestQuery::PlanInfo{std::move(optimized), std::move(schemas)};
             });
 
         auto query = makeQuery(testfile, block.firstId, block.firstSql, std::move(planInfoOrException), Expectation{ExpectedRows{}});
         query.differentialQueryPlan = std::move(differentialPlan);
-        query.resultFile = block.firstResultFile;
+        query.resultFiles = {block.firstResultFile};
         query.differentialResultFile = block.secondResultFile;
         return query;
     }

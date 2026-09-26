@@ -97,7 +97,7 @@ NES::SystestQuery makeQuery(
     const std::expected<NES::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
     NES::Expectation expected,
     NES::SystestQueryId queryId,
-    std::optional<std::filesystem::path> resultFile)
+    std::vector<std::optional<std::filesystem::path>> resultFiles)
 {
     return NES::SystestQuery{
         .testName = NES::TestName{"test_query"},
@@ -110,7 +110,7 @@ NES::SystestQuery makeQuery(
         .configurationOverride = NES::ConfigurationOverride{},
         .differentialQueryPlan = std::nullopt,
         .actualExplainOutput = std::nullopt,
-        .resultFile = std::move(resultFile),
+        .resultFiles = std::move(resultFiles),
         .differentialResultFile = std::nullopt,
         .originalNames = {},
         .inputFiles = {}};
@@ -181,7 +181,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId, std::nullopt)},
+        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, dummyQueryId, {})},
         1,
         submitter,
         progressTracker,
@@ -215,7 +215,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId, std::nullopt)},
+        {makeQuery(SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}}, {}, dummyQueryId, {})},
         1,
         submitter,
         progressTracker,
@@ -254,10 +254,10 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     const auto result = runQueries(
         {makeQuery(
-            SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}},
+            SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}},
             ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
             dummyQueryId,
-            std::nullopt)},
+            {})},
         1,
         submitter,
         progressTracker,
@@ -300,7 +300,7 @@ TEST_F(SystestRunnerTest, StopsTheFirstHalfWhenTheSecondHalfOfADifferentialPairD
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     auto query
-        = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema<UnqualifiedUnboundField, Ordered>{}}, {}, dummyQueryId, std::nullopt);
+        = makeQuery(SystestQuery::PlanInfo{distributedPlan, {Schema<UnqualifiedUnboundField, Ordered>{}}}, {}, dummyQueryId, {});
     query.differentialQueryPlan = distributedPlan;
 
     const auto result = runQueries({query}, 1, submitter, progressTracker, discardPerformanceMessage);

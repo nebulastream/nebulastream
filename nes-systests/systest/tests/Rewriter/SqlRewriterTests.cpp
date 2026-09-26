@@ -14,6 +14,7 @@
 
 #include <filesystem>
 #include <initializer_list>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -253,10 +254,12 @@ TEST_F(SqlRewriterTest, RewritesInlineSourceNamedSinkAndQuery)
         std::get<RewrittenQuery>(queries.at(0).action).sql,
         R"(SELECT field_1 FROM TESTKEY_ONETUPLE INTO File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", )"
         R"('CSV' AS "SINK"."OUTPUT_FORMAT", SCHEMA(field_1 UINT64 NOT NULL) AS "SINK"."SCHEMA");)");
-    EXPECT_EQ(std::get<RewrittenQuery>(queries.at(0).action).resultFile, "/work/TESTKEY_1.csv");
+    EXPECT_EQ(
+        std::get<RewrittenQuery>(queries.at(0).action).resultFiles,
+        (std::vector<std::optional<std::filesystem::path>>{"/work/TESTKEY_1.csv"}));
     const auto* expectedRows = std::get_if<ExpectedRows>(&std::get<RewrittenQuery>(queries.at(0).action).expectation);
     ASSERT_NE(expectedRows, nullptr);
-    EXPECT_EQ(expectedRows->rows, (std::vector<std::string>{"1"}));
+    EXPECT_EQ(expectedRows->rowsPerSink, (std::vector<std::vector<std::string>>{{"1"}}));
 
     /// The sink is inlined, not registered, so only the source has a prefixed name to restore.
     EXPECT_EQ(originalNames, (OriginalNames{{"TESTKEY_ONETUPLE", "ONETUPLE"}}));
@@ -334,7 +337,7 @@ TEST_F(SqlRewriterTest, PassesAQueryThatDoesNotParseThrough)
     EXPECT_EQ(
         std::get<RewrittenQuery>(queries.at(0).action).sql,
         "SELECT field_1 FROM oneTuple GROUP BY field_1 WHERE field_1 > UINT64(1) INTO sinkOneTuple;");
-    EXPECT_FALSE(std::get<RewrittenQuery>(queries.at(0).action).resultFile.has_value());
+    EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).resultFiles.empty());
 }
 
 /// A query that infers with a model refers to it, so a model is prefixed like a source.
@@ -485,14 +488,14 @@ TEST_F(SqlRewriterTest, GivesASinkThatDiscardsItsInputNoResultFile)
                                      R"(SELECT id FROM File('small/stream8.csv' AS "SOURCE".FILE_PATH) INTO discard;)"
                                      "\n----\n");
     ASSERT_EQ(declared.testCases.size(), 1U);
-    EXPECT_FALSE(std::get<RewrittenQuery>(declared.testCases.at(0).action).resultFile.has_value());
+    EXPECT_EQ(std::get<RewrittenQuery>(declared.testCases.at(0).action).resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
     EXPECT_TRUE(std::get<RewrittenQuery>(declared.testCases.at(0).action)
                     .sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST", SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA"))"));
 
     const auto written = rewriteSlt(R"(SELECT id FROM File('small/stream8.csv' AS "SOURCE".FILE_PATH) INTO Void();)"
                                     "\n----\n");
     ASSERT_EQ(written.testCases.size(), 1U);
-    EXPECT_FALSE(std::get<RewrittenQuery>(written.testCases.at(0).action).resultFile.has_value());
+    EXPECT_EQ(std::get<RewrittenQuery>(written.testCases.at(0).action).resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
     EXPECT_TRUE(std::get<RewrittenQuery>(written.testCases.at(0).action).sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST"))"));
 }
 
@@ -616,6 +619,25 @@ TEST_F(SqlRewriterTest, KeepsTheHostASinkWrittenIntoTheQueryChose)
     ASSERT_EQ(queries.size(), 1U);
     EXPECT_TRUE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('elsewhere:9999' AS "SINK"."HOST")"));
     EXPECT_FALSE(std::get<RewrittenQuery>(queries.at(0).action).sql.contains(R"('localhost:8080' AS "SINK"."HOST")"));
+}
+
+/// A declared sink keeps the host it chose when a query inlines it, so the sinks of one query can sit on different workers.
+/// Its other options carry over too, and the rewriter adds no second value for any of them.
+TEST_F(SqlRewriterTest, KeepsTheOptionsADeclaredSinkChose)
+{
+    const auto [name, originalNames, setup, queries]
+        = rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                     "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('elsewhere:9999' AS \"SINK\".\"HOST\", 'JSON' AS \"SINK\".OUTPUT_FORMAT);\n"
+                     "\n"
+                     "SELECT id FROM stream INTO out;\n"
+                     "----\n"
+                     "1\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    EXPECT_EQ(
+        std::get<RewrittenQuery>(queries.at(0).action).sql,
+        R"(SELECT id FROM TESTKEY_STREAM INTO File('/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA", )"
+        R"('elsewhere:9999' AS "SINK"."HOST", 'JSON' AS "SINK".OUTPUT_FORMAT);)");
 }
 
 /// A physical source reads the data of its ATTACH, and the rewrite resolves that path against the test data directory.
@@ -762,7 +784,7 @@ TEST_F(SqlRewriterTest, PassesAnUnknownSinkTypeThroughForTheEngineToReject)
 
     ASSERT_EQ(queries.size(), 1U);
     const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
-    EXPECT_FALSE(query.resultFile.has_value());
+    EXPECT_EQ(query.resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
     EXPECT_TRUE(query.sql.contains("INTO FileSink("));
 }
 
@@ -776,7 +798,7 @@ TEST_F(SqlRewriterTest, KeepsAVoidSinkThatWritesNoResult)
                                                                   "----\n");
 
     ASSERT_EQ(queries.size(), 1U);
-    EXPECT_FALSE(std::get<RewrittenQuery>(queries.at(0).action).resultFile.has_value());
+    EXPECT_EQ(std::get<RewrittenQuery>(queries.at(0).action).resultFiles, (std::vector<std::optional<std::filesystem::path>>{std::nullopt}));
 }
 
 /// The grammar allows one SET clause per sink, so the options that the rewriter adds merge into the clause that the test
@@ -800,7 +822,7 @@ TEST_F(SqlRewriterTest, MergesTheRewrittenSinkOptionsIntoTheOnesTheTestWrote)
 }
 
 /// The checker reads the file that the rewriter chose, so a sink that chooses its own result file would write where nothing looks.
-/// A sink written into a query is rejected for the same reason.
+/// A sink written into a query is rejected for the same reason, and so is a declared sink that a query inlines.
 TEST_F(SqlRewriterTest, RejectsADeclaredSinkThatChoosesItsResultFile)
 {
     EXPECT_THROW(
@@ -810,6 +832,14 @@ TEST_F(SqlRewriterTest, RejectsADeclaredSinkThatChoosesItsResultFile)
                    "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream INTO out;\n"
                    "----\n"
                    "== Optimized Plan ==\n"),
+        Exception);
+    EXPECT_THROW(
+        rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                   "CREATE SINK out(id UINT64 NOT NULL) TYPE File SET ('/tmp/mine.csv' AS \"SINK\".\"FILE_PATH\");\n"
+                   "\n"
+                   "SELECT id FROM stream INTO out;\n"
+                   "----\n"
+                   "1\n"),
         Exception);
 }
 
@@ -858,6 +888,80 @@ TEST_F(SqlRewriterTest, MixesAnExplainWithAQueryIntoTheSameDeclaredSink)
     const auto* query = std::get_if<RewrittenQuery>(&queries.at(1).action);
     ASSERT_NE(query, nullptr);
     EXPECT_TRUE(query->sql.starts_with("SELECT id FROM TESTKEY_STREAM INTO File("));
+}
+
+/// A query with several sinks has one result block per sink, so each sink writes a file of its own, listed in the order the query
+/// lists the sinks. The first keeps the file a single sink writes, and a sink that discards its input still takes its position.
+TEST_F(SqlRewriterTest, GivesEachSinkOfAQueryItsOwnResultFile)
+{
+    const auto [name, originalNames, setup, queries] = rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                                                                  "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
+                                                                  "\n"
+                                                                  "SELECT id FROM stream INTO out, Void(), File();\n"
+                                                                  "----\n"
+                                                                  "1\n"
+                                                                  "----\n"
+                                                                  "----\n"
+                                                                  "1\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
+    EXPECT_EQ(
+        query.resultFiles,
+        (std::vector<std::optional<std::filesystem::path>>{"/work/TESTKEY_1.csv", std::nullopt, "/work/TESTKEY_1_sink2.csv"}));
+    EXPECT_EQ(
+        query.sql,
+        R"(SELECT id FROM TESTKEY_STREAM INTO )"
+        R"(File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1.csv' AS "SINK"."FILE_PATH", 'CSV' AS "SINK"."OUTPUT_FORMAT", )"
+        R"(SCHEMA(id UINT64 NOT NULL) AS "SINK"."SCHEMA"), )"
+        R"(Void('localhost:8080' AS "SINK"."HOST"), )"
+        R"(File('localhost:8080' AS "SINK"."HOST", '/work/TESTKEY_1_sink2.csv' AS "SINK"."FILE_PATH", 'CSV' AS "SINK"."OUTPUT_FORMAT");)");
+}
+
+/// The engine rejects a query that lists one sink twice. Inlining would turn the two listings into two anonymous sinks it accepts,
+/// so the query is submitted with its sinks as written and the test can expect that error.
+TEST_F(SqlRewriterTest, LeavesADeclaredSinkListedTwiceForTheEngineToReject)
+{
+    const auto [name, originalNames, setup, queries] = rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                                                                  "CREATE SINK out(id UINT64 NOT NULL) TYPE File;\n"
+                                                                  "\n"
+                                                                  "SELECT id FROM stream INTO out, OUT;\n"
+                                                                  "----\n"
+                                                                  "ERROR 2000\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    const auto& query = std::get<RewrittenQuery>(queries.at(0).action);
+    EXPECT_EQ(query.sql, "SELECT id FROM TESTKEY_STREAM INTO out, OUT;");
+    EXPECT_TRUE(query.resultFiles.empty());
+}
+
+/// Every sink an EXPLAIN writes inline is completed, not only the first.
+TEST_F(SqlRewriterTest, ExplainInlinesEverySinkThatItsQueryWrites)
+{
+    const auto [name, originalNames, setup, queries] = rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                                                                  "\n"
+                                                                  "EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT id FROM stream "
+                                                                  "INTO Void(), File();\n"
+                                                                  "----\n"
+                                                                  "== Optimized Plan ==\n");
+
+    ASSERT_EQ(queries.size(), 1U);
+    const auto* explain = std::get_if<RewrittenExplain>(&queries.at(0).action);
+    ASSERT_NE(explain, nullptr);
+    EXPECT_TRUE(explain->sql.contains(R"(INTO Void('localhost:8080' AS "SINK"."HOST"), File('localhost:8080' AS "SINK"."HOST", )"));
+    EXPECT_TRUE(explain->sql.contains(R"('/work/TESTKEY_1_sink1.csv' AS "SINK"."FILE_PATH")"));
+}
+
+/// A differential block compares one result file against another, so neither half may write into more than one sink.
+TEST_F(SqlRewriterTest, RejectsADifferentialHalfWritingIntoSeveralSinks)
+{
+    EXPECT_THROW(
+        rewriteSlt("CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL);\n"
+                   "\n"
+                   "SELECT id FROM stream INTO File(), File();\n"
+                   "====\n"
+                   "SELECT id FROM stream INTO File();\n"),
+        Exception);
 }
 
 }
