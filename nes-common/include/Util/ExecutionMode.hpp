@@ -22,7 +22,10 @@ enum class ExecutionMode : uint8_t
 {
     /// Uses the interpretation based execution mode.
     INTERPRETER,
-    /// Uses the compilation based execution mode.
-    COMPILER
+    /// Uses the compilation based execution mode with nautilus' optimizing MLIR/LLVM backend.
+    COMPILER,
+    /// Uses the compilation based execution mode with nautilus' AsmJit backend. It compiles much faster than COMPILER, but
+    /// generates less optimized code.
+    ASMJIT
 };
 }

@@ -46,7 +46,8 @@ public:
         = {"execution_mode",
            ExecutionMode::COMPILER,
            "Execution mode for the query compiler"
-           "[COMPILER|INTERPRETER]."};
+           "[COMPILER|ASMJIT|INTERPRETER]. ASMJIT compiles with nautilus' AsmJit backend: much faster compilation, less "
+           "optimized code."};
     UIntOption numberOfPartitions
         = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),

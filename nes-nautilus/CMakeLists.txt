@@ -32,6 +32,13 @@ target_include_directories(nes-nautilus PUBLIC
 # Link with the nautilus library
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
+# nautilus links its bundled asmjit, but its exported config does not define asmjit::asmjit.
+# Point the target at the libasmjit.a that nautilus installs next to itself.
+if (NOT TARGET asmjit::asmjit)
+    find_library(NES_ASMJIT_LIBRARY NAMES asmjit REQUIRED)
+    add_library(asmjit::asmjit STATIC IMPORTED)
+    set_target_properties(asmjit::asmjit PROPERTIES IMPORTED_LOCATION "${NES_ASMJIT_LIBRARY}")
+endif ()
 find_package(nautilus REQUIRED CONFIG)
 
 # We have to set the nes-nautilus to public to use the nautilus library in other modules
