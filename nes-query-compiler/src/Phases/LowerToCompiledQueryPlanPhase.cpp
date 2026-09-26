@@ -90,9 +90,8 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     nautilus::engine::Options options;
     /// We disable multithreading in MLIR by default to not interfere with NebulaStream's thread model
     options.setOption("mlir.enableMultithreading", false);
-    /// Pinning the backend makes nautilus compile single-tier and synchronously with it. Otherwise nautilus defaults to its
-    /// tiered JIT (fast tier-0 backend, MLIR tier-1 promoted on a background thread), which would conflict with the thread
-    /// model above.
+    /// Pinning the backend makes nautilus compile single-tier and synchronously with it. Otherwise nautilus uses its tiered JIT
+    /// (fast tier-0 backend, MLIR tier-1 promoted on a background thread per pipeline), which only TIERED opts into.
     switch (pipelineQueryPlan->getExecutionMode())
     {
         case ExecutionMode::COMPILER: {
@@ -102,6 +101,21 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
         }
         case ExecutionMode::ASMJIT: {
             options.setOption("engine.backend", std::string("asmjit"));
+            options.setOption("engine.Compilation", true);
+            break;
+        }
+        case ExecutionMode::TBC: {
+            options.setOption("engine.backend", std::string("tbc"));
+            /// 'jit' fails the compilation instead of silently falling back to the bytecode interpreter
+            options.setOption("tbc.mode", std::string("jit"));
+            options.setOption("engine.Compilation", true);
+            break;
+        }
+        case ExecutionMode::TIERED: {
+            options.setOption("engine.tier0.backend", std::string("tbc"));
+            options.setOption("engine.tier1.backend", std::string("mlir"));
+            options.setOption("engine.tiered.backgroundPromotion", true);
+            options.setOption("tbc.mode", std::string("jit"));
             options.setOption("engine.Compilation", true);
             break;
         }

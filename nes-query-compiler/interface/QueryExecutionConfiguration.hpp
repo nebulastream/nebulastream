@@ -46,8 +46,9 @@ public:
         = {"execution_mode",
            ExecutionMode::COMPILER,
            "Execution mode for the query compiler"
-           "[COMPILER|ASMJIT|INTERPRETER]. ASMJIT compiles with nautilus' AsmJit backend: much faster compilation, less "
-           "optimized code."};
+           "[COMPILER|ASMJIT|TBC|TIERED|INTERPRETER]. ASMJIT and TBC compile with nautilus' AsmJit and threaded-bytecode "
+           "copy-and-patch JIT backends: much faster compilation, less optimized code. TIERED runs a pipeline with the TBC JIT "
+           "right away and switches to MLIR-compiled code once a background thread per pipeline has compiled it."};
     UIntOption numberOfPartitions
         = {"number_of_partitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),

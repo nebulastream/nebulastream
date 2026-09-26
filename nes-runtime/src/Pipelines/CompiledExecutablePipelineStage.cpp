@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -103,6 +104,23 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     pipeline->getRootOperator().terminate(ctx);
+
+    /// With tiered compilation, the module switches to the tier-1 executable once its background compilation is done;
+    /// its statistics then replace the tier-0 ones reported by start().
+    if (compiledModule.has_value())
+    {
+        if (const auto statistics = compiledModule->getStatistics())
+        {
+            if (const auto* tier = statistics->find("tier");
+                tier != nullptr && std::get<std::string>(*tier) == "tier1" && engine.getNameOfBackend().starts_with("tiered"))
+            {
+                NES_DEBUG(
+                    "Nautilus promoted pipeline {} to tier 1:\n{}",
+                    pipeline->getPipelineId(),
+                    statistics->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), engine.getNameOfBackend()));
+            }
+        }
+    }
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const

@@ -1,0 +1,66 @@
+From 6c9144dbf9199e275643deb9b0d1a83cf71f4e78 Mon Sep 17 00:00:00 2001
+From: Philipp Grulich <pgrulichhh@gmail.com>
+Date: Sat, 26 Sep 2026 07:28:39 +0000
+Subject: [PATCH] Compile dyncall's .S sources as ASM instead of C
+
+dyncall marks its GNU-assembler sources (dyncall_call.S,
+dyncall_callback_arch.S) as LANGUAGE C and relies on the compiler to pick
+the assembler from the .S extension. Under vcpkg's toolchain CMake passes
+the language explicitly (-x c), so the preprocessed assembly is compiled as
+C and the build fails with 'expected identifier or (' at the first
+directive. This breaks every vcpkg build with ENABLE_TBC_BACKEND or
+ENABLE_BC_BACKEND.
+
+Mark the sources as ASM, and enable the ASM language for every Clang
+(including AppleClang), as it already is for GCC.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01ULpekWyTy3FrujQ1ECahJE
+---
+ third_party/dyncall/CMakeLists.txt             | 2 +-
+ third_party/dyncall/dyncall/CMakeLists.txt     | 2 +-
+ third_party/dyncall/dyncallback/CMakeLists.txt | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/third_party/dyncall/CMakeLists.txt b/third_party/dyncall/CMakeLists.txt
+index bd99f322..25ece36c 100644
+--- a/third_party/dyncall/CMakeLists.txt
++++ b/third_party/dyncall/CMakeLists.txt
+@@ -131,7 +131,7 @@ elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "SunPro")
+   set(CMAKE_ASM_COMPILER_ARG1 "${CPPFLAGS} -c")
+   enable_language(ASM)
+ else()
+-  if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
++  if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+   if(COMPILER_HAS_FPIC)
+     add_definitions("-fPIC")
+   endif()
+diff --git a/third_party/dyncall/dyncall/CMakeLists.txt b/third_party/dyncall/dyncall/CMakeLists.txt
+index 6439badf..c1f2aa02 100644
+--- a/third_party/dyncall/dyncall/CMakeLists.txt
++++ b/third_party/dyncall/dyncall/CMakeLists.txt
+@@ -29,7 +29,7 @@ if(MSVC)
+   endif()
+ else()
+   set(ASM_SRC dyncall_call.S)
+-  set_source_files_properties(${ASM_SRC} PROPERTIES LANGUAGE "C")
++  set_source_files_properties(${ASM_SRC} PROPERTIES LANGUAGE ASM)
+ endif()
+ 
+ add_library(dyncall_s STATIC ${ASM_SRC} 
+diff --git a/third_party/dyncall/dyncallback/CMakeLists.txt b/third_party/dyncall/dyncallback/CMakeLists.txt
+index e83df1b1..5ff55550 100644
+--- a/third_party/dyncall/dyncallback/CMakeLists.txt
++++ b/third_party/dyncall/dyncallback/CMakeLists.txt
+@@ -31,7 +31,7 @@ if(MSVC)
+   endif()
+ else()
+   set(ASM_SRC dyncall_callback_arch.S)
+-  set_source_files_properties(${ASM_SRC} PROPERTIES LANGUAGE "C")
++  set_source_files_properties(${ASM_SRC} PROPERTIES LANGUAGE ASM)
+ endif()
+ 
+ add_library(dyncallback_s STATIC ${ASM_SRC}
+-- 
+2.43.0
+

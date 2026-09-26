@@ -1,0 +1,252 @@
+From 83e73d9b4c7c56c07b1ff182862f6424934bb516 Mon Sep 17 00:00:00 2001
+From: Philipp Grulich <pgrulichhh@gmail.com>
+Date: Sat, 26 Sep 2026 10:28:50 +0000
+Subject: [PATCH] Lower casts to bool as value != 0 in the AsmJit, TBC and MLIR
+ backends
+
+A cast to bool must follow C++ semantics (value != 0), but:
+- AsmJit (x64 and AArch64) truncated the value to its low byte, so
+  256 or 0.5 became false; x64 constant folding did the same.
+- TBC had no lowering for casts to bool and threw "unsupported cast".
+- MLIR threw for float -> bool (integer -> bool already used cmpi ne).
+
+AsmJit now tests the source width against zero and sets the flag (for
+floats, ucomis + setne/setp on x64, fcmp #0 + cset ne on AArch64, so NaN is
+true); its constant folding yields value != 0. TBC emits NE against a zero
+slot. MLIR uses cmpf une against 0.0.
+
+Adds a cast-to-bool test for all backends except bc, which still has no
+lowering for these casts. The previous to_bool section in createCastTest
+stays commented out, as it also runs the interpreter-only min/max values
+through bc.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01ULpekWyTy3FrujQ1ECahJE
+---
+ .../backends/amsjit/A64LoweringProvider.cpp   | 26 ++++++++++
+ .../backends/amsjit/X64LoweringProvider.cpp   | 48 +++++++++++++++++++
+ .../backends/mlir/MLIRLoweringProvider.cpp    |  9 ++++
+ .../backends/tbc/TBCLoweringProvider.cpp      | 17 ++++++-
+ .../execution-tests/CastExecutionTest.cpp     | 34 +++++++++++++
+ 5 files changed, 133 insertions(+), 1 deletion(-)
+
+diff --git a/nautilus/src/nautilus/compiler/backends/amsjit/A64LoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/amsjit/A64LoweringProvider.cpp
+index 86280df3..bad960dc 100644
+--- a/nautilus/src/nautilus/compiler/backends/amsjit/A64LoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/amsjit/A64LoweringProvider.cpp
+@@ -1009,6 +1009,32 @@ void AsmJitLoweringProvider::LoweringContext::visitCast(ir::CastOperation* op, R
+ 	const bool srcIsFloat = isFloatType(srcType);
+ 	const bool dstIsFloat = isFloatType(dstType);
+ 
++	if (dstType == Type::b && srcType != Type::b) {
++		// A cast to bool is `value != 0` (C++ semantics), not a truncation to
++		// the low byte: 256 and 0.5 are true. Registers hold the canonical
++		// extension of their stamp, so testing W suffices up to 32 bits. For
++		// floats, NE also holds for NaN (fcmp clears Z when unordered).
++		auto gDst = toGp(result);
++		if (srcIsFloat) {
++			cc.fcmp(toVec(src), Imm(0));
++		} else {
++			auto gSrc = toGp(src);
++			switch (srcType) {
++			case Type::i64:
++			case Type::ui64:
++			case Type::ptr:
++				cc.cmp(gSrc.x(), Imm(0));
++				break;
++			default:
++				cc.cmp(gSrc.w(), Imm(0));
++				break;
++			}
++		}
++		cc.cset(gDst.w(), Imm(static_cast<uint32_t>(arm::CondCode::kNE)));
++		bindResult(op->getIdentifier(), result, frame);
++		return;
++	}
++
+ 	if (!srcIsFloat && !dstIsFloat) {
+ 		// Integer → integer: first extend from source width, then narrow to destination width.
+ 		auto gSrc = toGp(src);
+diff --git a/nautilus/src/nautilus/compiler/backends/amsjit/X64LoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/amsjit/X64LoweringProvider.cpp
+index 7a815014..7bd5b026 100644
+--- a/nautilus/src/nautilus/compiler/backends/amsjit/X64LoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/amsjit/X64LoweringProvider.cpp
+@@ -285,6 +285,10 @@ std::optional<int64_t> AsmJitLoweringProvider::LoweringContext::foldableConstVal
+ 		const Type dstType = cast->getStamp();
+ 		if (!isFloatType(srcType) && !isFloatType(dstType)) {
+ 			if (const auto inner = foldableConstValue(cast->getInput())) {
++				// A cast to bool is `value != 0`, not a truncation to the low byte.
++				if (dstType == Type::b) {
++					return *inner != 0 ? 1 : 0;
++				}
+ 				return canonicalizeToStamp(*inner, dstType);
+ 			}
+ 		}
+@@ -1556,6 +1560,50 @@ void AsmJitLoweringProvider::LoweringContext::visitCast(ir::CastOperation* op, R
+ 	const bool srcIsFloat = isFloatType(srcType);
+ 	const bool dstIsFloat = isFloatType(dstType);
+ 
++	if (dstType == Type::b && srcType != Type::b) {
++		// A cast to bool is `value != 0` (C++ semantics), not a truncation to
++		// the low byte: 256 and 0.5 are true. Only the source width is tested.
++		auto gDst = toGp(result);
++		if (srcIsFloat) {
++			auto xSrc = toXmm(src);
++			auto xZero = srcType == Type::f32 ? cc.newXmmSs() : cc.newXmmSd();
++			auto unordered = cc.newInt64();
++			cc.xorps(xZero, xZero);
++			if (srcType == Type::f32) {
++				cc.ucomiss(xSrc, xZero);
++			} else {
++				cc.ucomisd(xSrc, xZero);
++			}
++			// ZF is also set for NaN, which is true in C++; PF flags it.
++			cc.setne(gDst.r8());
++			cc.setp(unordered.r8());
++			cc.or_(gDst.r8(), unordered.r8());
++		} else {
++			auto gSrc = toGp(src);
++			switch (srcType) {
++			case Type::i8:
++			case Type::ui8:
++				cc.test(gSrc.r8(), gSrc.r8());
++				break;
++			case Type::i16:
++			case Type::ui16:
++				cc.test(gSrc.r16(), gSrc.r16());
++				break;
++			case Type::i32:
++			case Type::ui32:
++				cc.test(gSrc.r32(), gSrc.r32());
++				break;
++			default:
++				cc.test(gSrc.r64(), gSrc.r64());
++				break;
++			}
++			cc.setne(gDst.r8());
++		}
++		cc.movzx(gDst.r32(), gDst.r8());
++		bindResult(op->getIdentifier(), result, frame);
++		return;
++	}
++
+ 	if (!srcIsFloat && !dstIsFloat) {
+ 		// Integer → integer: first extend from source width to get a clean
+ 		// 64-bit representation, then narrow to destination width. The second
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+index 6f684b66..dba56486 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -1581,6 +1581,15 @@ void MLIRLoweringProvider::visitCast(ir::CastOperation* castOperation, MLIRLower
+ 		                                           mlirInput, mlirZero);
+ 		bind(frame, castOperation, mlirCmp);
+ 		return;
++	} else if (isFloat(inputStamp) && outputStamp == Type::b) {
++		// Unordered not-equal: NaN converts to true, as in C++.
++		auto floatType = getMLIRType(inputStamp);
++		auto mlirZero = mlir::arith::ConstantOp::create(*builder, getNameLoc("location"), floatType,
++		                                                builder->getFloatAttr(floatType, 0.0));
++		auto mlirCmp = mlir::arith::CmpFOp::create(*builder, getNameLoc("location"), mlir::arith::CmpFPredicate::UNE,
++		                                           mlirInput, mlirZero);
++		bind(frame, castOperation, mlirCmp);
++		return;
+ 	}
+ 
+ 	throw NotImplementedException(
+diff --git a/nautilus/src/nautilus/compiler/backends/tbc/TBCLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/tbc/TBCLoweringProvider.cpp
+index 164b7909..7b85b659 100644
+--- a/nautilus/src/nautilus/compiler/backends/tbc/TBCLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/tbc/TBCLoweringProvider.cpp
+@@ -738,7 +738,7 @@ private:
+ 		const auto result = getResultRegister(opt, frame);
+ 		frame.setValue(opt->getIdentifier(), result);
+ 
+-		const auto srcType = opt->getInput()->getStamp();
++		auto srcType = opt->getInput()->getStamp();
+ 		const auto dstType = opt->getStamp();
+ 		// Identity casts (two C++ types mapping to the same nautilus Type,
+ 		// e.g. size_t and uint64_t on macOS) and ui64 <-> ptr are register
+@@ -747,6 +747,21 @@ private:
+ 			emit(block, Op::MOV, result, input);
+ 			return;
+ 		}
++		// A cast to bool is `input != 0`. The zero slot's raw bits are also
++		// 0.0 for f32/f64, and pointers compare as i64 (as in visitCompare).
++		if (dstType == Type::b) {
++			const int cmpIdx = numTypeIndex(srcType == Type::ptr ? Type::i64 : srcType);
++			if (cmpIdx < 0) {
++				throw NotImplementedException("tbc: unsupported cast");
++			}
++			const auto notEqual = static_cast<Op>(opIndex(Op::EQ_i8) + static_cast<int>(ir::CompareOperation::NE) * 10);
++			emit(block, typedOp(notEqual, cmpIdx, "cast"), result, input, constSlot(0));
++			return;
++		}
++		// Bool slots are normalized to 0/1, so a cast from bool converts like ui8.
++		if (srcType == Type::b) {
++			srcType = Type::ui8;
++		}
+ 		const int srcIdx = numTypeIndex(srcType == Type::ptr ? Type::ui64 : srcType);
+ 		const int dstIdx = numTypeIndex(dstType == Type::ptr ? Type::ui64 : dstType);
+ 		if (srcIdx < 0 || dstIdx < 0) {
+diff --git a/nautilus/test/execution-tests/CastExecutionTest.cpp b/nautilus/test/execution-tests/CastExecutionTest.cpp
+index d9fda928..fda43eb1 100644
+--- a/nautilus/test/execution-tests/CastExecutionTest.cpp
++++ b/nautilus/test/execution-tests/CastExecutionTest.cpp
+@@ -4,6 +4,7 @@
+ #include "nautilus/val_concepts.hpp"
+ #include <catch2/catch_all.hpp>
+ #include <catch2/matchers/catch_matchers_floating_point.hpp>
++#include <limits>
+ namespace nautilus::engine {
+ 
+ template <typename BaseType>
+@@ -210,6 +211,35 @@ void floatToUnsignedCastTest(engine::NautilusEngine& engine) {
+ 	                          16500484545456129080.0, 18446744073709549568.0 /*largest f64 < 2^64*/});
+ }
+ 
++// Casts to bool are `x != 0`. The bc backend has no lowering for them yet, so it
++// is skipped; every other backend must match the native conversion.
++template <typename In>
++void checkCastToBool(engine::NautilusEngine& engine, std::string name, std::initializer_list<In> inputs) {
++	DYNAMIC_SECTION(name) {
++		auto f = engine.registerFunction(staticCastExpression<In, bool>);
++		for (In in : inputs) {
++			INFO("input " << +in);
++			REQUIRE(f(in) == static_cast<bool>(in));
++		}
++	}
++}
++
++void castToBoolTest(engine::NautilusEngine& engine) {
++	if (engine.getNameOfBackend() == "bc") {
++		return;
++	}
++	checkCastToBool<int8_t>(engine, "i8_to_bool", {0, 1, -1, INT8_MIN, INT8_MAX});
++	checkCastToBool<int16_t>(engine, "i16_to_bool", {0, 1, -1, INT16_MIN, INT16_MAX});
++	checkCastToBool<int32_t>(engine, "i32_to_bool", {0, 1, -1, 256, INT32_MIN, INT32_MAX});
++	checkCastToBool<int64_t>(engine, "i64_to_bool", {0, 1, -1, int64_t {1} << 40, INT64_MIN, INT64_MAX});
++	checkCastToBool<uint8_t>(engine, "ui8_to_bool", {0, 1, 2, UINT8_MAX});
++	checkCastToBool<uint16_t>(engine, "ui16_to_bool", {0, 1, 256, UINT16_MAX});
++	checkCastToBool<uint32_t>(engine, "ui32_to_bool", {0, 1, 65536, UINT32_MAX});
++	checkCastToBool<uint64_t>(engine, "ui64_to_bool", {0, 1, uint64_t {1} << 40, UINT64_MAX});
++	checkCastToBool<float>(engine, "f32_to_bool", {0.0f, -0.0f, 0.5f, -1.0f, std::numeric_limits<float>::quiet_NaN()});
++	checkCastToBool<double>(engine, "f64_to_bool", {0.0, -0.0, 0.5, -1.0, std::numeric_limits<double>::quiet_NaN()});
++}
++
+ TEST_CASE("Cast Interpreter Test") {
+ 	auto engine = nautilus::testing::makeEngine("interpreter");
+ 	castTest(engine);
+@@ -223,6 +253,10 @@ TEST_CASE("Cast Compiler Test") {
+ 	nautilus::testing::forEachBackend([](engine::NautilusEngine& engine) { castTest(engine); }, false);
+ }
+ 
++TEST_CASE("Cast To Bool Compiler Test") {
++	nautilus::testing::forEachBackend([](engine::NautilusEngine& engine) { castToBoolTest(engine); }, true);
++}
++
+ TEST_CASE("Pointer Cast Compiler Test") {
+ 	nautilus::testing::forEachBackend([](engine::NautilusEngine& engine) { ptrCastTest(engine); }, false);
+ }
+-- 
+2.43.0
+
