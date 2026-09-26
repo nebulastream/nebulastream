@@ -302,12 +302,21 @@ Record PagedVectorRef::at(const nautilus::val<uint64_t>& entryPos) const
 
 PagedVectorRefIter PagedVectorRef::begin() const
 {
-    if (getNumberOfRecords() == 0)
-    {
-        return PagedVectorRefIter(*this, tupleLayout, OwnedNautilusBuffer{}, 0, 0);
-    }
-
-    return PagedVectorRefIter(*this, tupleLayout, pagedVectorBuffer.getChild(0), 0, 0);
+    /// Loads the first page, or leaves it empty for an empty paged vector, inside a single runtime call. Branching on the number of
+    /// records in traced code would give the two paths different live values, so the tracer could not merge them and would trace
+    /// the whole iteration, and everything traced after it, once per path.
+    OwnedNautilusBuffer firstPage;
+    nautilus::invoke(
+        +[](const TupleBuffer* pagedVectorBuffer, TupleBuffer* outFirstPage)
+        {
+            if (PagedVector::load(*pagedVectorBuffer).getTotalNumberOfRecords() > 0)
+            {
+                *outFirstPage = pagedVectorBuffer->loadChildBuffer(ChildBufferIndex{0});
+            }
+        },
+        pagedVectorBuffer.asArg(),
+        firstPage.asArg());
+    return PagedVectorRefIter(*this, tupleLayout, std::move(firstPage), 0, 0);
 }
 
 PagedVectorRefIterSentinel PagedVectorRef::end() const

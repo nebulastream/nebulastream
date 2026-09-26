@@ -44,6 +44,7 @@
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
+#include <val_enum.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -324,94 +325,6 @@ IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
 }
 
-void parseLeadingRecord(
-    ExecutionContext& executionCtx,
-    const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-    const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
-    const std::vector<Record::RecordFieldIdentifier>& projections,
-    const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
-{
-    if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
-    {
-        /// Get leading RawBufferIndex and a pointer to the spanning tuple 'record'
-        auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
-        auto leadingRawBufferIndex
-            = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleRawBufferIndex));
-
-        auto record = getIndexPhaseResult()->leadingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections,
-            spanningRecordPtr,
-            nautilus::val<uint64_t>(0),
-            indexer,
-            leadingRawBufferIndex,
-            bufferRef,
-            executionCtx.pipelineMemoryProvider.arena);
-        executeChild(executionCtx, record);
-    }
-}
-
-void parseRecordsInRawBuffer(
-    ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
-    const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-    const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
-    const std::vector<Record::RecordFieldIdentifier>& projections,
-    const InputFormatIndexer& indexer,
-    const TupleBufferRef& bufferRef)
-{
-    nautilus::val<uint64_t> bufferRecordIdx = 0;
-    auto rawBufferIndexVal = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, rawBufferIndex));
-    while (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferRecordIdx, rawBufferIndexVal))
-    {
-        auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            projections,
-            recordBuffer.getMemArea(),
-            bufferRecordIdx,
-            indexer,
-            rawBufferIndexVal,
-            bufferRef,
-            executionCtx.pipelineMemoryProvider.arena);
-        executeChild(executionCtx, record);
-        bufferRecordIdx += 1;
-    }
-}
-
-void parseTrailingRecord(
-    ExecutionContext& executionCtx,
-    const RecordBuffer& recordBuffer,
-    const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-    const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
-    const std::vector<Record::RecordFieldIdentifier>& projections,
-    InputFormatIndexer& indexer,
-    SequenceShredder& sequenceShredder,
-    const TupleBufferRef& bufferRef)
-{
-    const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
-        indexTrailingSpanningTupleProxy,
-        recordBuffer.getReference(),
-        executionCtx.pipelineMemoryProvider.arena.getArena(),
-        nautilus::val<InputFormatIndexer*>(&indexer),
-        nautilus::val<SequenceShredder*>(&sequenceShredder));
-
-    if (hasTrailingSpanningTuple)
-    {
-        auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
-        auto trailingRawBufferIndex
-            = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleRawBufferIndex));
-
-        auto record = getIndexPhaseResult()->trailingSpanningTupleRawBufferIndex->readSpanningRecord(
-            projections,
-            spanningRecordPtr,
-            nautilus::val<uint64_t>(0),
-            indexer,
-            trailingRawBufferIndex,
-            bufferRef,
-            executionCtx.pipelineMemoryProvider.arena);
-        executeChild(executionCtx, record);
-    }
-}
-
 }
 
 std::vector<DataType> InputFormatter::getAllDataTypes() const
@@ -466,34 +379,110 @@ void InputFormatter::readBuffer(
     /// @Note: the order below is important
     const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResult);
 
-    /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
-    /// we count such a spanning tuple as a leading spanning tuple
-    /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
-    parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
-
-    /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
-    /// such a buffer can only form one (leading) spanning tuple, so returning is safe
-    if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
+    /// A raw buffer yields, in this order:
+    /// 1. a leading spanning tuple, if it completes a tuple that started in prior buffers (a buffer that only contains data from a
+    ///    single tuple may connect two buffers that delimit tuples; we count such a spanning tuple as a leading spanning tuple),
+    /// 2. if it delimits tuples: all complete tuples in the raw buffer (determining the offset of a tuple may require parsing the
+    ///    prior tuple),
+    /// 3. if it delimits tuples: a trailing spanning tuple, if it completes a tuple that continues in later buffers (determining the
+    ///    offset of its start may require parsing all prior tuples of the raw buffer).
+    /// All three are parsed by a single loop with a single call of executeChild, so the rest of the pipeline is traced once instead
+    /// of once per kind of tuple. 'advance' selects where the next tuple comes from. It only assigns values declared outside of it,
+    /// so its paths merge before the tuple is parsed.
+    enum class Phase : uint8_t
     {
-        return;
+        LEADING,
+        BUFFER,
+        TRAILING,
+        DONE
+    };
+
+    const auto hasLeadingSpanningTuple
+        = nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)));
+    const auto hasTupleDelimiter
+        = nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)));
+    const nautilus::val<RawBufferIndex*> rawBufferIndex
+        = *getMemberWithOffset<RawBufferIndex*>(indexPhaseResult, offsetof(IndexPhaseResult, rawBufferIndex));
+
+    nautilus::val<Phase> phase = Phase::LEADING;
+    nautilus::val<uint64_t> bufferTupleIdx = 0;
+    nautilus::val<bool> hasTuple = false;
+    nautilus::val<int8_t*> tuplePtr = nullptr;
+    nautilus::val<uint64_t> tupleIdx = 0;
+    nautilus::val<RawBufferIndex*> tupleRawBufferIndex = nullptr;
+    const auto advance = [&]
+    {
+        hasTuple = false;
+        if (phase == Phase::LEADING)
+        {
+            phase = Phase::BUFFER;
+            if (hasLeadingSpanningTuple)
+            {
+                hasTuple = true;
+                tuplePtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
+                tupleIdx = 0;
+                tupleRawBufferIndex = *getMemberWithOffset<RawBufferIndex*>(
+                    indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleRawBufferIndex));
+            }
+            else if (not hasTupleDelimiter)
+            {
+                /// A buffer without a tuple delimiter can only form one (leading) spanning tuple
+                phase = Phase::DONE;
+            }
+        }
+        else if (phase == Phase::BUFFER and not hasTupleDelimiter)
+        {
+            phase = Phase::DONE;
+        }
+        if (not hasTuple and phase == Phase::BUFFER)
+        {
+            if (getIndexPhaseResult()->rawBufferIndex->hasNext(bufferTupleIdx, rawBufferIndex))
+            {
+                hasTuple = true;
+                tuplePtr = recordBuffer.getMemArea();
+                tupleIdx = bufferTupleIdx;
+                tupleRawBufferIndex = rawBufferIndex;
+                bufferTupleIdx += 1;
+            }
+            else
+            {
+                phase = Phase::TRAILING;
+            }
+        }
+        if (not hasTuple and phase == Phase::TRAILING)
+        {
+            phase = Phase::DONE;
+            if (nautilus::invoke(
+                    indexTrailingSpanningTupleProxy,
+                    recordBuffer.getReference(),
+                    executionCtx.pipelineMemoryProvider.arena.getArena(),
+                    nautilus::val<InputFormatIndexer*>(this->inputFormatIndexer.get()),
+                    nautilus::val<SequenceShredder*>(this->sequenceShredder.get())))
+            {
+                hasTuple = true;
+                tuplePtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
+                tupleIdx = 0;
+                tupleRawBufferIndex = *getMemberWithOffset<RawBufferIndex*>(
+                    indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleRawBufferIndex));
+            }
+        }
+    };
+
+    advance();
+    while (hasTuple)
+    {
+        /// All three RawBufferIndices are of the indexer's type; the one to read from is passed at runtime.
+        auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
+            this->projections,
+            tuplePtr,
+            tupleIdx,
+            *this->inputFormatIndexer,
+            tupleRawBufferIndex,
+            *this->memoryProvider,
+            executionCtx.pipelineMemoryProvider.arena);
+        executeChild(executionCtx, record);
+        advance();
     }
-
-    /// a buffer that delimits tuples may contain multiple complete tuples
-    /// determining the offset of a tuple may require parsing the prior tuple
-    parseRecordsInRawBuffer(
-        executionCtx, recordBuffer, executeChild, indexPhaseResult, this->projections, *this->inputFormatIndexer, *this->memoryProvider);
-
-    /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
-    /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
-    parseTrailingRecord(
-        executionCtx,
-        recordBuffer,
-        executeChild,
-        indexPhaseResult,
-        this->projections,
-        *this->inputFormatIndexer,
-        *this->sequenceShredder,
-        *this->memoryProvider);
 }
 
 std::ostream& InputFormatter::toString(std::ostream& os) const

@@ -130,7 +130,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
         writePreValueContents,
-        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(0),
+        nautilus::val<bool>{fieldIndex == 0},
         fieldName,
         currentRemainingSize,
         recordBuffer.getReference(),
@@ -179,12 +179,11 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
             getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
     }
 
-    /// Either write a , or a }\n depending on if this is the last value of the record
-    const nautilus::val<const char*> delimiter
-        = nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1 ? "}\n" : ",";
-
-    const nautilus::val<size_t> delimiterSize
-        = nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1 ? 2 : 1;
+    /// Either write a , or a }\n depending on if this is the last value of the record.
+    /// The field index is known at trace time, so this is not a traced branch.
+    const std::string_view delimiterString = fieldIndex + 1 == fieldNames.size() ? "}\n" : ",";
+    const nautilus::val<const char*> delimiter{delimiterString.data()};
+    const nautilus::val<size_t> delimiterSize{delimiterString.size()};
 
     written += nautilus::invoke(
         writeValueToBuffer,
