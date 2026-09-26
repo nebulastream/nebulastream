@@ -74,21 +74,23 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
 {
     Record record;
     const auto indexBufferPtr = nautilus::invoke(getIndexValuesProxy, rawBufferIndex);
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters build a new vector, so they must not be called per field.
+    const auto fieldNames = bufferRef.getAllFieldNames();
+    const auto fieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = fieldDataTypes.size();
+    /// The offsets of the record's fields, followed by the offset of its end
+    const auto recordFieldOffsets = indexBufferPtr + recordIndex * (numberOfFields + 1);
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto& fieldName = fieldNames.at(i);
+        const auto& fieldDataType = fieldDataTypes.at(i);
         if (not includesField(projections, fieldName))
         {
             continue;
         }
 
-        const auto numPriorFields = recordIndex * (numberOfFields + 1);
-        const auto fieldOffsetAddress = indexBufferPtr + (numPriorFields + i);
-        const auto fieldOffsetEndAddress = indexBufferPtr + (numPriorFields + i + 1);
-        const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(fieldOffsetAddress);
-        const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(fieldOffsetEndAddress);
+        const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordFieldOffsets + nautilus::val<uint64_t>{i});
+        const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordFieldOffsets + nautilus::val<uint64_t>{i + 1});
 
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;

@@ -146,10 +146,13 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
     const ArenaRef& arena) const
 {
     Record record;
-    const auto numberOfFields = bufferRef.getAllDataTypes().size();
+    /// Both getters build a new vector, so they must not be called per field.
+    const auto fieldNames = bufferRef.getAllFieldNames();
+    const auto fieldDataTypes = bufferRef.getAllDataTypes();
+    const auto numberOfFields = fieldDataTypes.size();
     for (nautilus::static_val<uint64_t> i = 0; i < numberOfFields; ++i)
     {
-        const auto fieldName = bufferRef.getAllFieldNames().at(i);
+        const auto& fieldName = fieldNames.at(i);
 
         if (std::ranges::find(projections, fieldName) == projections.end())
         {
@@ -157,7 +160,7 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         }
 
         auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
-        const auto fieldDataType = bufferRef.getAllDataTypes().at(i);
+        const auto& fieldDataType = fieldDataTypes.at(i);
 
         nautilus::val<RawJsonAccessResult> fieldAccessResult;
         /// Retrieve the address and size of the raw field value
