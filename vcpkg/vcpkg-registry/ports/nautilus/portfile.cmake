@@ -15,6 +15,9 @@ vcpkg_from_github(
         REPO nebulastream/nautilus
 		REF 669d4afce539500a90c5b7e9290db004d9292f7f
         SHA512 196d6d44c9397e3d81b39a7944bf4a3827f6eae257d407e0f4194e88a503da59b8ba167ee20fe87b09606d3f5416c9ffe94652f96eb39cdb33c2c30230f5f765
+        PATCHES
+            # Until nebulastream/nautilus#509 is merged: dyncall's .S sources are compiled as C under vcpkg's toolchain
+            0001-dyncall-compile-S-as-ASM.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
