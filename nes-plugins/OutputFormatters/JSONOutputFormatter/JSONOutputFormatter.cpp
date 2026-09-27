@@ -21,7 +21,6 @@
 #include <ostream>
 #include <ranges>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -181,9 +180,9 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
 
     /// Either write a , or a }\n depending on if this is the last value of the record.
     /// The field index is known at trace time, so this is not a traced branch.
-    const std::string_view delimiterString = fieldIndex + 1 == fieldNames.size() ? "}\n" : ",";
-    const nautilus::val<const char*> delimiter{delimiterString.data()};
-    const nautilus::val<size_t> delimiterSize{delimiterString.size()};
+    const bool isLastField = fieldIndex + 1 == fieldNames.size();
+    const nautilus::val<const char*> delimiter{isLastField ? "}\n" : ","};
+    const nautilus::val<size_t> delimiterSize{isLastField ? 2UL : 1UL};
 
     written += nautilus::invoke(
         writeValueToBuffer,

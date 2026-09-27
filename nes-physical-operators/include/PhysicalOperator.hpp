@@ -218,8 +218,8 @@ private:
         /// nautilus stores the region name without copying it, so it has to outlive every trace.
         static const char* regionName()
         {
-            static const std::string name{NAMEOF_SHORT_TYPE(OperatorType)};
-            return name.c_str();
+            static const std::string Name{NAMEOF_SHORT_TYPE(OperatorType)};
+            return Name.c_str();
         }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
