@@ -18,13 +18,17 @@
 #include <memory>
 #include <optional>
 
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {

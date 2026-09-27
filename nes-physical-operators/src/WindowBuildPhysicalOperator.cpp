@@ -18,8 +18,10 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -30,6 +32,7 @@
 #include <PhysicalOperator.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 #include <function.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
