@@ -59,15 +59,18 @@ VarVal AbsolutePhysicalFunction::execute(const Record& record, ArenaRef& arena) 
     }
 
     /// Cast to the widened output type first, so that negating the minimum value does not overflow.
-    /// Non-const so the `return widenedValue` path can move rather than copy (performance-no-automatic-move).
-    auto widenedValue = value.castToType(outputType.type);
+    const auto widenedValue = value.castToType(outputType.type);
     const auto zero = VarVal{0}.castToType(outputType.type);
     const auto negativeOne = VarVal{-1}.castToType(outputType.type);
+    /// Both paths assign to the same value, so the tracer merges them after the branch. Returning a different value from each
+    /// path would keep them apart, and everything after this function would be traced once per path, for every ABS in a query.
+    auto magnitude = widenedValue;
     if (widenedValue < zero)
     {
-        return widenedValue * negativeOne;
+        /// The product is promoted like C++ integers (e.g. INT16 * INT16 = INT32); the merged value keeps the output type.
+        magnitude = (widenedValue * negativeOne).castToType(outputType.type);
     }
-    return widenedValue;
+    return magnitude;
 }
 
 PhysicalFunctionRegistryReturnType AbsolutePhysicalFunction::createAbs(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
