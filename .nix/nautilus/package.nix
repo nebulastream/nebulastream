@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "669d4afce539500a90c5b7e9290db004d9292f7f";
-    hash = "sha256-wkdax7ve1vtX+c0IV0j/d2gvSsdcwBfVew5p5JhiSmI=";
+    rev = "3a49d8eaf40a34aadf3e76023cd209027f7a247e";
+    hash = "sha256-/U2uPDl7qKKP2QELvJ4wZk3W46BRNik/rMafvGGilvE=";
   };
 
   baseBuildInputs = [
@@ -74,14 +74,15 @@ let
         "-DENABLE_MLIR_BACKEND=ON"
         "-DENABLE_C_BACKEND=ON"
         "-DENABLE_BC_BACKEND=OFF"
-        "-DENABLE_ASMJIT_BACKEND=OFF"
-        "-DENABLE_TBC_BACKEND=OFF"
-        "-DENABLE_BUILTIN_PLUGIN=OFF"
-        "-DENABLE_PROFILING_PLUGIN=OFF"
-        "-DENABLE_SIMD_PLUGIN=OFF"
+        "-DENABLE_ASMJIT_BACKEND=ON"
+        "-DENABLE_TBC_BACKEND=ON"
+        "-DENABLE_TBC_JIT=ON"
+        "-DENABLE_BUILTIN_PLUGIN=ON"
+        "-DENABLE_PROFILING_PLUGIN=ON"
+        "-DENABLE_SIMD_PLUGIN=ON"
         "-DENABLE_STD_PLUGIN=ON"
-        "-DENABLE_SPECIALIZATION_PLUGIN=OFF"
-        "-DENABLE_INLINING_PLUGIN=OFF"
+        "-DENABLE_SPECIALIZATION_PLUGIN=ON"
+        "-DENABLE_INLINING_PLUGIN=ON"
         "-DENABLE_GPU_PLUGIN=OFF"
         "-DENABLE_TESTS=OFF"
         "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"

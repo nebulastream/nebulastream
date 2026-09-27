@@ -269,7 +269,7 @@ nautilus::val<double> MedianAggregationPhysicalFunction::computeMedian(
         = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
     OwnedNautilusBuffer pagedVecBuffer;
     nautilus::invoke(
-        +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
+        +[](const TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
         { *out = parent->loadChildBuffer(ChildBufferIndex{*indexPtr}); },
         parentBuffer.asArg(),
         pagedVecBuffer.asArg(),

@@ -43,14 +43,15 @@ void RecordBuffer::setNumRecords(const nautilus::val<uint64_t>& numRecordsValue)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setNumberOfTuples, buffer.asArg(), numRecordsValue);
 }
 
+/// The record buffer grants mutable access to its buffer; nautilus only drops const through an explicit cast.
 nautilus::val<int8_t*> RecordBuffer::getMemArea() const
 {
-    return buffer.data();
+    return static_cast<nautilus::val<int8_t*>>(buffer.data());
 }
 
 nautilus::val<TupleBuffer*> RecordBuffer::getReference() const
 {
-    return buffer.asArg();
+    return static_cast<nautilus::val<TupleBuffer*>>(buffer.asArg());
 }
 
 nautilus::val<OriginId> RecordBuffer::getOriginId()

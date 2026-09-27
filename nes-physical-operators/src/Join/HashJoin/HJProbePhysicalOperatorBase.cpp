@@ -110,7 +110,9 @@ void HJProbePhysicalOperatorBase::performMatchPairsProbe(
                 /// alive, which stops the tracer from merging them, so the whole match loop and everything downstream would be
                 /// traced once per path. The entry leaves the region through a value declared outside it.
                 nautilus::val<ChainedHashMapEntry*> leftEntry = nullptr;
-                nautilus::region("FindMatchingEntry", [&] { leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef); });
+                nautilus::region(
+                    "FindMatchingEntry",
+                    [&] { leftEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(leftHashMap.findEntry(rightEntryRef.entryRef)); });
                 if (leftEntry != nullptr)
                 {
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{

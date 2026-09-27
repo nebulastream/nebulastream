@@ -88,7 +88,7 @@ VarVal CastVarSizedToNumericPhysicalFunction::execute(const Record& record, Aren
 
     const auto var = value.getRawValueAs<VariableSizedData>();
     const auto size = var.getSize();
-    const auto ptr = var.getContent();
+    const auto ptr = static_cast<nautilus::val<const char*>>(var.getContent());
 
     switch (outputType.type)
     {

@@ -118,7 +118,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                                 throw BufferAllocationFailure(
                                     "No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                             },
-                            borrowedHashMapBuffer.asArg(),
+                            static_cast<nautilus::val<TupleBuffer*>>(borrowedHashMapBuffer.asArg()),
                             static_cast<nautilus::val<uint32_t*>>(state),
                             ctx.pipelineMemoryProvider.bufferProvider,
                             tupleSize,
