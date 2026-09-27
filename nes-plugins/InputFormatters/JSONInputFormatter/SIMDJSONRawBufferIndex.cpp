@@ -183,7 +183,8 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> valueDeserializer
             = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal parsedVal = valueDeserializer->deserializeToVarVal(address, size, indexer.getNullValues(), arena);
+        const VarVal parsedVal
+            = valueDeserializer->deserializeToVarVal(static_cast<nautilus::val<int8_t*>>(address), size, indexer.getNullValues(), arena);
         record.write(fieldName, parsedVal);
     }
     /// Increment iterator and return record

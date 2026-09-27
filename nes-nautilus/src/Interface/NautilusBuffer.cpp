@@ -108,7 +108,7 @@ BorrowedNautilusBuffer::BorrowedNautilusBuffer(const nautilus::val<NES::TupleBuf
 
 BorrowedNautilusBuffer BorrowedNautilusBuffer::from(const nautilus::val<const TupleBuffer*>& originalBuffer)
 {
-    return BorrowedNautilusBuffer{originalBuffer};
+    return BorrowedNautilusBuffer{static_cast<nautilus::val<TupleBuffer*>>(originalBuffer)};
 }
 
 nautilus::val<int8_t*> BorrowedNautilusBuffer::data()
