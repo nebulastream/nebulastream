@@ -49,7 +49,9 @@ FieldOffsetRawBufferIndex::FieldOffsetRawBufferIndex()
 FieldOffsetRawBufferIndex::hasNext(const nautilus::val<uint64_t>& tupleIdx, const nautilus::val<RawBufferIndex*>& rawBufferIndex) const
 {
     nautilus::val<uint64_t> numTuples
-        = readValueFromMemRef<size_t>(getMemberRef(rawBufferIndex, &FieldOffsetRawBufferIndex::totalNumberOfTuples));
+        /// The base subobject lies at offset 0 (checked in the constructor), so the base pointer addresses the derived object.
+        = readValueFromMemRef<size_t>(getMemberRef(
+            static_cast<nautilus::val<FieldOffsetRawBufferIndex*>>(rawBufferIndex), &FieldOffsetRawBufferIndex::totalNumberOfTuples));
     return tupleIdx < numTuples;
 }
 

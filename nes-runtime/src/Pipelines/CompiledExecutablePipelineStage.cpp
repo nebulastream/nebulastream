@@ -68,14 +68,13 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<Arena*>)>
         compiledFunction = [this](
                                nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
                                nautilus::val<const TupleBuffer*> recordBufferRef,
-                               nautilus::val<const Arena*> arenaRef)
+                               nautilus::val<Arena*> arenaRef)
     {
-        /// The arena is passed as const through the pipeline signature; the execution context allocates from it.
-        auto ctx = ExecutionContext(pipelineExecutionContext, static_cast<nautilus::val<Arena*>>(arenaRef));
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);
