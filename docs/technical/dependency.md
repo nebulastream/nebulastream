@@ -143,11 +143,10 @@ non-standard specialization; the standard only mandates it for `char`, `wchar_t`
 ### Nautilus
 
 Nautilus is not in the vcpkg registry, we provide our own port pinned to a commit of
-[nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port disables all optional backends and plugins
-we do not use (bytecode/tbc, C++, asmjit, simd, profiling, ...) and only builds the MLIR backend. It carries no patches:
-exception handling for `invoke` calls (destructors of live values, rethrow at the host boundary) and the other fixes we
-needed are part of nautilus itself. The nix flake builds the same nautilus commit (`.nix/nautilus`), keep both in sync
-when bumping.
+[nebulastream/nautilus](https://github.com/nebulastream/nautilus). The port builds the MLIR, AsmJit and threaded-bytecode
+(TBC, including its copy-and-patch JIT) backends and all plugins except the GPU plugin; the bytecode (bc) and C++ backends
+are disabled. It carries no patches: fixes we need go into nautilus itself. The nix flake builds the same nautilus commit
+(`.nix/nautilus`), keep both in sync when bumping.
 
 ### libuuid
 
