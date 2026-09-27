@@ -73,7 +73,8 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
                                nautilus::val<const TupleBuffer*> recordBufferRef,
                                nautilus::val<const Arena*> arenaRef)
     {
-        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        /// The arena is passed as const through the pipeline signature; the execution context allocates from it.
+        auto ctx = ExecutionContext(pipelineExecutionContext, static_cast<nautilus::val<Arena*>>(arenaRef));
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
         pipeline->getRootOperator().open(ctx, recordBuffer);

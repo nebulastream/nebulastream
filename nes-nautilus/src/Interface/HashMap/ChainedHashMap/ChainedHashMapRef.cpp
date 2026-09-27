@@ -126,7 +126,7 @@ HashFunction::HashValue ChainedHashMapRef::ChainedEntryRef::getHash() const
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext() const
 {
     const auto nextRef = getMemberRef(entryRef, &ChainedHashMapEntry::next);
-    auto next = readValueFromMemRef<ChainedHashMapEntry**>(nextRef);
+    auto next = readValueFromMemRef<ChainedHashMapEntry*>(nextRef);
     return next;
 }
 
@@ -139,6 +139,19 @@ ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     , hashMapBuffer(std::move(hashMapBuffer))
     , memoryProviderKeys(std::move(fieldsKey))
     , memoryProviderValues(std::move(fieldsValue))
+{
+}
+
+ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
+    const nautilus::val<AbstractHashMapEntry*>& entryRef,
+    BorrowedNautilusBuffer hashMapBuffer,
+    std::vector<FieldOffsets> fieldsKey,
+    std::vector<FieldOffsets> fieldsValue)
+    : ChainedEntryRef(
+          static_cast<nautilus::val<ChainedHashMapEntry*>>(entryRef),
+          std::move(hashMapBuffer),
+          std::move(fieldsKey),
+          std::move(fieldsValue))
 {
 }
 
@@ -292,7 +305,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
 
     return {
         buffer,
-        currentEntry,
+        static_cast<nautilus::val<ChainedHashMapEntry*>>(currentEntry),
         nautilus::val<uint64_t>{config.entrySize},
         tupleIndex,
         indexOnPage,
@@ -479,7 +492,7 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
         }
         ++pageIndex;
         nautilus::val<PageCounts> args;
-        currentEntry = nautilus::invoke(
+        currentEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(nautilus::invoke(
             +[](TupleBuffer* buffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal, PageCounts* args)
             {
                 const auto chm = ChainedHashMap::load(*buffer);
@@ -495,11 +508,11 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
             buffer.asArg(),
             pageIndex,
             indexOnPage,
-            &args);
+            &args));
         numberOfTuplesInCurrentPage = args.get(&PageCounts::numTuplesInPage);
         return *this;
     }
-    currentEntry = static_cast<nautilus::val<int8_t*>>(currentEntry) + entrySize;
+    currentEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(static_cast<nautilus::val<int8_t*>>(currentEntry) + entrySize);
 
     return *this;
 }
