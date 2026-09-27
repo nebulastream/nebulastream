@@ -59,7 +59,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer
+    /// Not const: the paged vectors of new entries are stored as child buffers of the hash map buffer.
+    auto hashMapBuffer
         = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
     const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
 
@@ -110,7 +111,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                         }
                         throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                     },
-                    static_cast<nautilus::val<TupleBuffer*>>(hashMapBuffer.asArg()),
+                    hashMapBuffer.asArg(),
                     static_cast<nautilus::val<uint32_t*>>(state),
                     ctx.pipelineMemoryProvider.bufferProvider,
                     tupleSize,

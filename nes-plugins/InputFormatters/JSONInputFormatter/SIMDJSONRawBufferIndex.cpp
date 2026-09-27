@@ -132,7 +132,8 @@ SIMDJSONRawBufferIndex::SIMDJSONRawBufferIndex()
 [[nodiscard]] nautilus::val<bool>
 SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::val<RawBufferIndex*>& rawBufferIndex) const
 {
-    const nautilus::val<bool> lastTuple = readValueFromMemRef<bool>(getMemberRef(rawBufferIndex, &SIMDJSONRawBufferIndex::isAtLastTuple));
+    const nautilus::val<bool> lastTuple = readValueFromMemRef<bool>(
+        getMemberRef(static_cast<nautilus::val<SIMDJSONRawBufferIndex*>>(rawBufferIndex), &SIMDJSONRawBufferIndex::isAtLastTuple));
     return not lastTuple;
 }
 
