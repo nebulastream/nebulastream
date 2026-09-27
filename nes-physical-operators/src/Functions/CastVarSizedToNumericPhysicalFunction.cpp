@@ -80,41 +80,50 @@ VarVal invokeConvertAndWrap(const nautilus::val<uint64_t>& size, const nautilus:
 VarVal CastVarSizedToNumericPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = child.execute(record, arena);
-
-    if (value.isNullable() && value.isNull())
+    const auto convert = [&]
     {
-        return VarVal{0, true, true}.castToType(outputType.type);
-    }
+        const auto var = value.getRawValueAs<VariableSizedData>();
+        const auto size = var.getSize();
+        const auto ptr = static_cast<nautilus::val<const char*>>(var.getContent());
+        switch (outputType.type)
+        {
+            case DataType::Type::INT8:
+                return invokeConvertAndWrap<int8_t>(size, ptr, outputType.nullable);
+            case DataType::Type::INT16:
+                return invokeConvertAndWrap<int16_t>(size, ptr, outputType.nullable);
+            case DataType::Type::INT32:
+                return invokeConvertAndWrap<int32_t>(size, ptr, outputType.nullable);
+            case DataType::Type::INT64:
+                return invokeConvertAndWrap<int64_t>(size, ptr, outputType.nullable);
+            case DataType::Type::UINT8:
+                return invokeConvertAndWrap<uint8_t>(size, ptr, outputType.nullable);
+            case DataType::Type::UINT16:
+                return invokeConvertAndWrap<uint16_t>(size, ptr, outputType.nullable);
+            case DataType::Type::UINT32:
+                return invokeConvertAndWrap<uint32_t>(size, ptr, outputType.nullable);
+            case DataType::Type::UINT64:
+                return invokeConvertAndWrap<uint64_t>(size, ptr, outputType.nullable);
+            case DataType::Type::FLOAT32:
+                return invokeConvertAndWrap<float>(size, ptr, outputType.nullable);
+            case DataType::Type::FLOAT64:
+                return invokeConvertAndWrap<double>(size, ptr, outputType.nullable);
+            default:
+                throw FormattingError("VarSizedToNumeric: unsupported target type {}", outputType);
+        }
+    };
 
-    const auto var = value.getRawValueAs<VariableSizedData>();
-    const auto size = var.getSize();
-    const auto ptr = static_cast<nautilus::val<const char*>>(var.getContent());
-
-    switch (outputType.type)
+    if (not value.isNullable())
     {
-        case DataType::Type::INT8:
-            return invokeConvertAndWrap<int8_t>(size, ptr, outputType.nullable);
-        case DataType::Type::INT16:
-            return invokeConvertAndWrap<int16_t>(size, ptr, outputType.nullable);
-        case DataType::Type::INT32:
-            return invokeConvertAndWrap<int32_t>(size, ptr, outputType.nullable);
-        case DataType::Type::INT64:
-            return invokeConvertAndWrap<int64_t>(size, ptr, outputType.nullable);
-        case DataType::Type::UINT8:
-            return invokeConvertAndWrap<uint8_t>(size, ptr, outputType.nullable);
-        case DataType::Type::UINT16:
-            return invokeConvertAndWrap<uint16_t>(size, ptr, outputType.nullable);
-        case DataType::Type::UINT32:
-            return invokeConvertAndWrap<uint32_t>(size, ptr, outputType.nullable);
-        case DataType::Type::UINT64:
-            return invokeConvertAndWrap<uint64_t>(size, ptr, outputType.nullable);
-        case DataType::Type::FLOAT32:
-            return invokeConvertAndWrap<float>(size, ptr, outputType.nullable);
-        case DataType::Type::FLOAT64:
-            return invokeConvertAndWrap<double>(size, ptr, outputType.nullable);
-        default:
-            throw FormattingError("VarSizedToNumeric: unsupported target type {}", outputType);
+        return convert();
     }
+    /// A NULL input yields NULL and must not be parsed. Both paths assign to the same value, so the tracer merges them after the
+    /// branch; returning a different value from each path would trace everything after this cast once per path.
+    auto result = VarVal{0, true, true}.castToType(outputType.type);
+    if (not value.isNull())
+    {
+        result = convert();
+    }
+    return result;
 }
 
 CastVarSizedToNumericPhysicalFunction::CastVarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType)
