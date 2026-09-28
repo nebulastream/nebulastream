@@ -26,6 +26,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <limits>
 #include <span>
 #include <string>
 #include <string_view>
@@ -90,6 +91,36 @@ std::string lowerExtension(const std::filesystem::path& path)
     std::ranges::transform(
         extension, extension.begin(), [](unsigned char character) { return static_cast<char>(std::tolower(character)); });
     return extension;
+}
+
+/// change 'inf' to float max value, otherwise OpenVino tries to import these values as 0f
+std::string replaceInfiniteAttributeValues(std::string xml)
+{
+    static const auto positive = fmt::format("=\"{}\"", std::numeric_limits<double>::max());
+    static const auto negative = fmt::format("=\"{}\"", std::numeric_limits<double>::lowest());
+    const auto replaceAll = [](std::string& text, std::string_view from, std::string_view to)
+    {
+        for (auto pos = text.find(from); pos != std::string::npos; pos = text.find(from, pos + to.size()))
+        {
+            text.replace(pos, from.size(), to);
+        }
+    };
+
+    /// Attributes live on the `<data .../>` element of each layer; names and other elements stay untouched.
+    for (auto pos = xml.find("<data "); pos != std::string::npos; pos = xml.find("<data ", pos))
+    {
+        const auto end = xml.find('>', pos);
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        auto element = xml.substr(pos, end - pos);
+        replaceAll(element, "=\"inf\"", positive);
+        replaceAll(element, "=\"-inf\"", negative);
+        xml.replace(pos, end - pos, element);
+        pos += element.size();
+    }
+    return xml;
 }
 
 std::string outputStemFor(const std::filesystem::path& modelPath)
@@ -279,8 +310,7 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
 
     try
     {
-        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-text for OpenVINO XML payload
-        const std::string xmlContent(reinterpret_cast<const char*>(xmlBytes->data()), xmlBytes->size());
+        const auto xmlContent = replaceInfiniteAttributeValues(std::string(reinterpret_cast<const char*>(xmlBytes->data()), xmlBytes->size()));
         std::vector<std::uint8_t> weights(binBytes->size());
         std::ranges::transform(*binBytes, weights.begin(), [](std::byte value) { return static_cast<std::uint8_t>(value); });
 
@@ -340,7 +370,7 @@ std::expected<ImportedModel, ImportError> OpenVinoImporter::importModel(const st
 
         return detail::ModelAccess::makeImported(
             detail::OpenVinoModel{
-                .modelGraph = detail::RefCountedByteBuffer::fromBytes(*xmlBytes),
+                .modelGraph = detail::RefCountedByteBuffer::fromBytes(std::as_bytes(std::span(xmlContent))),
                 .modelWeights = detail::RefCountedByteBuffer::fromBytes(*binBytes)},
             {},
             std::move(inShape),

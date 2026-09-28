@@ -167,6 +167,23 @@ TEST(InferenceRuntimeTest, InfersModelWithTwoInputs)
     EXPECT_EQ(runInference(*twoInputs, input), input);
 }
 
+/// tiny_clip_infinite_max.onnx computes Clip(x, 0, +inf), which `ovc` writes as a Clamp with max="inf".
+/// OpenVINO's IR reader parses "inf" as 0, so without the importer's rewrite every output would be 0.
+TEST(InferenceRuntimeTest, InfiniteClampBoundSurvivesImport)
+{
+    if (!inferenceEnabled())
+    {
+        GTEST_SKIP() << "OpenVINO import unavailable in this environment";
+    }
+
+    auto clip = load("tiny_clip_infinite_max.onnx");
+    ASSERT_TRUE(clip.has_value()) << clip.error();
+
+    const std::vector<float> input{-1.0F, 0.5F, 2.0F, 1e30F};
+    const std::vector<float> expected{0.0F, 0.5F, 2.0F, 1e30F};
+    EXPECT_EQ(runInference(*clip, input), expected);
+}
+
 /// When the buffer runs out part-way through, the error names the input tensor that did not fit.
 TEST(InferenceRuntimeTest, InputBufferTooSmallNamesTheTensor)
 {
