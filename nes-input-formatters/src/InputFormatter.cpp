@@ -35,6 +35,7 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <nautilus/region.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -471,16 +472,24 @@ void InputFormatter::readBuffer(
     advance();
     while (hasTuple)
     {
-        /// All three RawBufferIndices are of the indexer's type; the one to read from is passed at runtime.
-        auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
-            this->projections,
-            tuplePtr,
-            tupleIdx,
-            *this->inputFormatIndexer,
-            tupleRawBufferIndex,
-            *this->memoryProvider,
-            executionCtx.pipelineMemoryProvider.arena);
-        executeChild(executionCtx, record);
+        /// Parsing the record and running the rest of the pipeline on it is traced as a region: the tracer explores the loop and
+        /// 'advance' once per path, and without the region it would re-trace the parsing of every field and everything downstream
+        /// on each of these passes. The record lives only inside the region.
+        nautilus::region(
+            "ParseAndProcessRecord",
+            [&]
+            {
+                /// All three RawBufferIndices are of the indexer's type; the one to read from is passed at runtime.
+                auto record = getIndexPhaseResult()->rawBufferIndex->readSpanningRecord(
+                    this->projections,
+                    tuplePtr,
+                    tupleIdx,
+                    *this->inputFormatIndexer,
+                    tupleRawBufferIndex,
+                    *this->memoryProvider,
+                    executionCtx.pipelineMemoryProvider.arena);
+                executeChild(executionCtx, record);
+            });
         advance();
     }
 }
