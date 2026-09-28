@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -70,10 +71,25 @@ LogicalFunction TgeoAtStboxLogicalFunction::withInferredDataType(const Schema<Fi
     }
     const auto nullable = leftType.nullable || rightType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
 
-    /// For now, we fix the return type t boolean, as we only support the function for singular moving points anyway.
-    /// As soon as we add trajectory support, we need to infer the return type here.
-    auto newDataType = DataType{DataType::Type::BOOLEAN, nullable};
-    return withDataType(newDataType).withChildren(newChildren);
+    /// Return type is based on the temporal geometry type.
+    /// For TemporalInstants (TemporalPoint...), this function answers whether the point is contained in the box.
+    /// For TemporalSequences (TemporalPointSequence...), the sequence is truncated to the part that lies within the box.
+    if (leftType.type == DataType::Type::STRUCT)
+    {
+        if (leftType.structName == "TemporalPoint")
+        {
+            auto newDataType = DataType{DataType::Type::BOOLEAN, nullable};
+            return withDataType(newDataType).withChildren(newChildren);
+        }
+        if (leftType.structName == "TemporalPointSequence")
+        {
+            auto newDataType = DataTypeProvider::provideDataType("TemporalPointSequence");
+            return withDataType(newDataType).withChildren(newChildren);
+        }
+        throw DifferentFieldTypeExpected("TgeoAtStbox currently does not support {} as left argument type", leftType.structName);
+    }
+    throw DifferentFieldTypeExpected(
+        "TgeoAtStbox expects a STRUCT data type (plugin) as left argument type, but got: {}", magic_enum::enum_name(leftType.type));
 }
 
 std::vector<LogicalFunction> TgeoAtStboxLogicalFunction::getChildren() const
@@ -81,8 +97,7 @@ std::vector<LogicalFunction> TgeoAtStboxLogicalFunction::getChildren() const
     return {leftChild, rightChild};
 }
 
-TgeoAtStboxLogicalFunction
-TgeoAtStboxLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+TgeoAtStboxLogicalFunction TgeoAtStboxLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "TgeoAtStboxLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -111,12 +126,14 @@ std::string TgeoAtStboxLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("tego_at_stbox({}, {})", leftChild.explain(verbosity), rightChild.explain(verbosity));
 }
 
-Reflected Reflector<TgeoAtStboxLogicalFunction>::operator()(const TgeoAtStboxLogicalFunction& function, const ReflectionContext& context) const
+Reflected
+Reflector<TgeoAtStboxLogicalFunction>::operator()(const TgeoAtStboxLogicalFunction& function, const ReflectionContext& context) const
 {
     return context.reflect(detail::ReflectedTgeoAtStboxLogicalFunction{.left = function.leftChild, .right = function.rightChild});
 }
 
-TgeoAtStboxLogicalFunction Unreflector<TgeoAtStboxLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+TgeoAtStboxLogicalFunction
+Unreflector<TgeoAtStboxLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedTgeoAtStboxLogicalFunction>(reflected);
     return TgeoAtStboxLogicalFunction(left, right);
@@ -127,8 +144,7 @@ LogicalFunctionGeneratedRegistrar::RegisterTGEO_AT_STBOXLogicalFunction(LogicalF
 {
     if (arguments.children.size() != 2)
     {
-        throw CannotDeserialize(
-            "TgeoAtStboxLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+        throw CannotDeserialize("TgeoAtStboxLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     }
     return TgeoAtStboxLogicalFunction(arguments.children[0], arguments.children[1]);
 }

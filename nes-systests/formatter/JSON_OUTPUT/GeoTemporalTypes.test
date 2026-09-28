@@ -21,6 +21,15 @@ ATTACH INLINE
 {"SEQ1": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459320}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459380}]}, "SEQ2": {"sequence": [{"lon": -90.9857, "lat": 40.7484, "ts": 1609459320}, {"lon": -100.9857, "lat": 40.7484, "ts": 1609459380}]}}
 {"SEQ1": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459440}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459500}, {"lon": -73.9857, "lat": 40.7484, "ts": 1609459560}]}, "SEQ2": {"sequence": [{"lon": -110.9857, "lat": 40.7484, "ts": 1609459440}, {"lon": -120.9857, "lat": 40.7484, "ts": 1609459500}, {"lon": -109.9857, "lat": 40.7484, "ts": 1609459560}]}}
 
+CREATE LOGICAL SOURCE temporalSequences2(seq TemporalPointSequence NOT NULL);
+CREATE PHYSICAL SOURCE FOR temporalSequences2 TYPE FILE SET(
+'NestedJSON' as INPUT_FORMATTER."TYPE"
+);
+ATTACH INLINE
+{"SEQ": {"sequence": [{"lon": -73.9857, "lat": 40.7484, "ts": 1609459200}, {"lon": -80.9857, "lat": 40.7484, "ts": 1609459260}]}}
+{"SEQ": {"sequence": [{"lon": -90.9857, "lat": 40.7484, "ts": 1609459320}, {"lon": -100.9857, "lat": 40.7484, "ts": 1609459380}]}}
+{"SEQ": {"sequence": [{"lon": -110.9857, "lat": 40.7484, "ts": 1609459440}, {"lon": -120.9857, "lat": 40.7484, "ts": 1609459500}, {"lon": -109.9857, "lat": 40.7484, "ts": 1609459560}]}}
+
 CREATE LOGICAL SOURCE sncb_stream(ts UINT64 NOT NULL, deviceid UINT64 NOT NULL, vbat FLOAT64 NOT NULL, pcfa_mbar FLOAT64 NOT NULL, pcff_mbar FLOAT64 NOT NULL, pcf1_mbar FLOAT64 NOT NULL, pcf2_mbar FLOAT64 NOT NULL, t1_mbar FLOAT64 NOT NULL, t2_mbar FLOAT64 NOT NULL, code1 FLOAT64 NOT NULL, code2 FLOAT64 NOT NULL, gsp_speed FLOAT64 NOT NULL, gps_lat FLOAT64 NOT NULL, gps_lon FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR sncb_stream TYPE FILE;
 ATTACH FILE small/input_sncb.csv
@@ -83,3 +92,10 @@ SELECT * FROM sncb_stream WHERE tgeo_at_stbox(TemporalPoint(gps_lon, gps_lat, ts
 1722520459,3,29.3,4.983,0.0,0.0,0.003,47.37,4.3,0.0,1280.0,48.8641,50.6471,4.3678
 1722520469,3,29.3,4.98,0.0,0.003,0.003,46.87,4.275,0.0,1280.0,48.8641,50.6471,4.3678
 1722520479,3,29.2,4.983,0.0,0.0,0.0,46.56,4.412,0.0,1280.0,48.8641,50.6471,4.3678
+
+# tgeo_at_stbox should clip the temporal sequences to only the part within the box
+SELECT tgeo_at_stbox(seq, SpatioTemporalBox(FLOAT64(-119.0), FLOAT64(0.0), FLOAT64(40.0), FLOAT64(41.0), UINT64(1609459250), UINT64(1609459580))) AS RESULTSEQ FROM temporalSequences2 INTO FILE('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"RESULTSEQ":{"sequence":[{"lon":-80.9857,"lat":40.7484,"ts":1609459260}]}}
+{"RESULTSEQ":{"sequence":[{"lon":-90.9857,"lat":40.7484,"ts":1609459320},{"lon":-100.9857,"lat":40.7484,"ts":1609459380}]}}
+{"RESULTSEQ":{"sequence":[{"lon":-110.9857,"lat":40.7484,"ts":1609459440},{"lon":-109.9857,"lat":40.7484,"ts":1609459560}]}}

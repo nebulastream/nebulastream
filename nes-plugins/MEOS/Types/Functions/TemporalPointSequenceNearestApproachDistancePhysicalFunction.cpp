@@ -30,37 +30,13 @@
 
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <MEOSUtil.hpp>
 #include <MEOSWrapper.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
-
-/// Iterate over the byte-aligned values of the TemporalPoint plugin and convert them into a TemporalSequence of the MEOSWrapper
-MEOS::Meos::TemporalSequence constructTInstantVector(const int8_t* seqAddress, const uint64_t& seqElements)
-{
-    std::vector<MEOS::Meos::TemporalInstant> tInstantVector;
-    tInstantVector.reserve(seqElements);
-    tInstantVector.reserve(seqElements);
-    /// A single temporal point consists of the doubles for lon and lat, and a uint64 for the timestamp
-    constexpr size_t temporalPointSize = sizeof(double) * 2 + sizeof(uint64_t);
-    for (size_t i = 0; i < seqElements; ++i)
-    {
-        const double lon = *reinterpret_cast<const double*>(seqAddress + (i * temporalPointSize));
-        const double lat = *reinterpret_cast<const double*>(seqAddress + (i * temporalPointSize) + sizeof(double));
-        const uint64_t ts = *reinterpret_cast<const uint64_t*>(seqAddress + (i * temporalPointSize) + (sizeof(double) * 2));
-        tInstantVector.push_back(MEOS::Meos::TemporalInstant(lon, lat, ts));
-    }
-    /// Create a seperate vector for pointers to the tInstants
-    std::vector<MEOS::Meos::TemporalInstant*> tInstantAddresses;
-    tInstantAddresses.reserve(seqElements);
-    for (MEOS::Meos::TemporalInstant& tInstant : tInstantVector)
-    {
-        tInstantAddresses.push_back(&tInstant);
-    }
-    return MEOS::Meos::TemporalSequence{tInstantAddresses};
-}
 
 TemporalPointSequenceNearestApproachDistancePhysicalFunction::TemporalPointSequenceNearestApproachDistancePhysicalFunction(
     PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
@@ -87,8 +63,8 @@ VarVal TemporalPointSequenceNearestApproachDistancePhysicalFunction::execute(con
             {
                 MEOS::Meos::ensureMeosInitialized();
                 /// Convert the left and right sequence into a TemporalSequence
-                MEOS::Meos::TemporalSequence lSequenceWrapper = constructTInstantVector(lSeqAddress, lSeqElements);
-                MEOS::Meos::TemporalSequence rSequenceWrapper = constructTInstantVector(rSeqAddress, rSeqElements);
+                MEOS::Meos::TemporalSequence lSequenceWrapper = constructTemporalSequence(lSeqAddress, lSeqElements);
+                MEOS::Meos::TemporalSequence rSequenceWrapper = constructTemporalSequence(rSeqAddress, rSeqElements);
 
                 //call MEOS nearest approach distance function
                 return MEOS::Meos::safe_nad_tgeo_tgeo(lSequenceWrapper.getGeometry(), rSequenceWrapper.getGeometry());

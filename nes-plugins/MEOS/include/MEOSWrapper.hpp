@@ -15,6 +15,7 @@
 #ifndef NES_PLUGINS_MEOS_HPP
 #define NES_PLUGINS_MEOS_HPP
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -68,6 +69,7 @@ class Meos {
     class TemporalInstant {
     public:
         explicit TemporalInstant(double lon, double lat, long long ts, int srid=4326);
+        explicit TemporalInstant(TInstant* instant);
         ~TemporalInstant();
 
         TemporalInstant(const TemporalInstant&) = delete;
@@ -77,6 +79,16 @@ class Meos {
 
         bool intersects(const TemporalInstant& point) const;
         Temporal* getGeometry();
+
+        struct RawInstant
+        {
+            double x;
+            double y;
+            unsigned long long timestamp;
+        };
+
+        /// Returns the x, y of the underlying 2D point and its timestamp as unix epoch milliseconds, or nullopt if the instant is null
+        std::optional<RawInstant> getRawInstant() const;
 
     private:
         Temporal* instant;
@@ -144,6 +156,7 @@ class Meos {
     public:
         // Constructor for creating trajectory from multiple points
         explicit TemporalSequence(const std::vector<TemporalInstant*>& instants);
+        explicit TemporalSequence(TSequence* sequence);
         
         // Constructor for creating trajectory from coordinate arrays
         TemporalSequence(const std::vector<double>& longitudes, 
@@ -162,6 +175,11 @@ class Meos {
         // double distance(const TemporalInstant& point) const;
         double length(const TemporalInstant& instant) const;
         Temporal* getGeometry();
+
+        /// Returns the number of instants in the sequence, or 0 if the sequence is null
+        int numInstants() const;
+        /// Returns a copy of the instant at the 0-based index i; wraps a nullptr if i is out of range
+        TemporalInstant instantAt(int i) const;
 
     private:
         Temporal* sequence;
@@ -193,11 +211,15 @@ class Meos {
     // Common thresholds: 10 digits (seconds), 13 (ms), 16 (us), 19 (ns).
     static std::string convertEpochToTimestamp(unsigned long long epochLike);
 
-    /// Converts epoch-like value that may be in  milliseconds, microseconds, or nanoseconds to the
+    /// Converts a unix epoch timestamp in milliseconds (the unit NebulaStream uses for event time) to the
     /// Meos-compatible version of the timestamp (microseconds since the PostgreSQL epoch, 2000-01-01 00:00:00 UTC)
     /// This does not require a int -> string conversion by avoiding the creation of a human-readable timestamp thus saving parsing time.
-    /// Common thresholds: 10 digits (seconds), 13 (ms), 16 (us), 19 (ns)
-    static TimestampTz convertEpochToTimestampTz(unsigned long long epochLike);
+    /// Timestamps after 2100-01-01 are clamped.
+    static TimestampTz convertEpochToTimestampTz(unsigned long long epochMillis);
+
+    /// Reverse of convertEpochToTimestampTz: converts a Meos timestamp (microseconds since the PostgreSQL epoch) to milliseconds since the unix epoch.
+    /// Sub-millisecond precision is truncated and timestamps before the unix epoch are clamped to 0.
+    static unsigned long long convertTimestampTzToEpoch(TimestampTz timestamp);
 
     // Thread-safe wrappers around selected MEOS functions to avoid internal races
     static int safe_edwithin_tgeo_geo(const Temporal* temp, const GSERIALIZED* gs, double dist);
