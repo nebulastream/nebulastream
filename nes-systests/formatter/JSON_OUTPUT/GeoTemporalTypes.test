@@ -113,3 +113,21 @@ SELECT lon, lat, ts FROM tInstantPoints WHERE temporal_eintersects_geometry(Temp
 ----
 2.5,2.5,100
 0.0,0.0,130
+
+
+# temporal_eintersects_geometry with a TemporalPointSequence on the left side. Sequences are treated as discrete, so only the contained instants are checked:
+# 1: all instants inside, 2: one instant inside, 3: all instants outside, 4: the segment between the instants crosses the polygon but no instant lies in it, 5: instant on the boundary
+CREATE LOGICAL SOURCE tSequencePoints(id UINT64 NOT NULL, seq TemporalPointSequence NOT NULL, polygon Polygon NOT NULL);
+CREATE PHYSICAL SOURCE FOR tSequencePoints TYPE File SET('NestedJSON' as INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "SEQ": {"sequence": [{"lon": 1.0, "lat": 1.0, "ts": 100}, {"lon": 2.0, "lat": 2.0, "ts": 110}]}, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"ID": 2, "SEQ": {"sequence": [{"lon": 6.0, "lat": 6.0, "ts": 100}, {"lon": 2.5, "lat": 2.5, "ts": 110}, {"lon": 7.0, "lat": 7.0, "ts": 120}]}, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"ID": 3, "SEQ": {"sequence": [{"lon": 6.0, "lat": 1.0, "ts": 100}, {"lon": 7.0, "lat": 2.0, "ts": 110}]}, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"ID": 4, "SEQ": {"sequence": [{"lon": -1.0, "lat": 2.5, "ts": 100}, {"lon": 6.0, "lat": 2.5, "ts": 110}]}, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+{"ID": 5, "SEQ": {"sequence": [{"lon": 5.0, "lat": 5.0, "ts": 100}]}, "POLYGON": {"vertices": [{"x": 0, "y": 0}, {"x": 5, "y": 0}, {"x": 5, "y": 5}, {"x": 0, "y": 5}, {"x": 0, "y": 0}]}}
+
+SELECT id FROM tSequencePoints WHERE temporal_eintersects_geometry(seq, polygon) INTO FILE('CSV' as "SINK".OUTPUT_FORMAT);
+----
+1
+2
+5
