@@ -153,7 +153,7 @@ void MedianAggregationPhysicalFunction::lift(
             storeNull(aggregationState, false);
 
             /// Skipping the first byte (null); the paged vector lives right after it.
-            const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+            const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState + 1);
             OwnedNautilusBuffer pagedVecBuffer;
             nautilus::invoke(
                 +[](TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
@@ -201,8 +201,8 @@ void MedianAggregationPhysicalFunction::combine(
         storeNull(aggregationState1, containsNull1 and containsNull2);
 
         /// Skipping the first byte (null)
-        memArea1 += nautilus::val<uint64_t>{1};
-        memArea2 += nautilus::val<uint64_t>{1};
+        memArea1 += 1;
+        memArea2 += 1;
     }
 
     /// Load both paged vector buffers via their stored child indices, then copy pages from source into destination
@@ -248,7 +248,7 @@ Record MedianAggregationPhysicalFunction::lower(
             aggregationState, parentBuffer.asArg(), pipelineMemoryProvider.arena.getArena(), pipelineMemoryProvider.bufferProvider);
 
         /// The result's nullability is a static property of the VarVal, so it has to match on both branches of containsNull.
-        medianValue = VarVal{median, resultType.nullable, nautilus::val<bool>{false}}.castToType(resultType.type);
+        medianValue = VarVal{median, resultType.nullable, false}.castToType(resultType.type);
     }
 
 
@@ -265,8 +265,7 @@ nautilus::val<double> MedianAggregationPhysicalFunction::computeMedian(
     PipelineMemoryProvider& memoryProvider) const
 {
     /// Load the paged vector buffer from the parent via its stored child index
-    auto memArea
-        = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
+    auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState + static_cast<uint64_t>(inputType.nullable));
     OwnedNautilusBuffer pagedVecBuffer;
     nautilus::invoke(
         +[](const TupleBuffer* parent, TupleBuffer* out, const uint32_t* indexPtr)
@@ -329,7 +328,7 @@ void MedianAggregationPhysicalFunction::reset(
         /// Initialize the null flag to "no value seen yet" so all-NULL windows correctly emit NULL
         storeNull(aggregationState, true);
         /// Skipping the first byte (null); the paged vector lives right after it.
-        memArea += nautilus::val<uint64_t>{1};
+        memArea += 1;
     }
     auto indexMemArea = static_cast<nautilus::val<uint32_t*>>(memArea);
     *indexMemArea = childBufferIndexVal;
