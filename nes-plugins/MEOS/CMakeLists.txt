@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # Create MEOS plugin library
-add_library(nes-meos STATIC MEOSWrapper.cpp)
+add_library(nes-meos STATIC MEOSWrapper.cpp MEOSUtil.cpp)
 add_subdirectory(Types)
 
 # Set include directories

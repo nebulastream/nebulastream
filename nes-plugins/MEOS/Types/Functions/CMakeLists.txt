@@ -24,7 +24,8 @@ target_include_directories(meos_logical_functions PUBLIC ${CMAKE_CURRENT_SOURCE_
 add_library(meos_physical_functions STATIC
         TemporalPointNearestApproachDistancePhysicalFunction.cpp
         TemporalPointSequenceNearestApproachDistancePhysicalFunction.cpp
-        TpointAtStboxPhysicalFunction.cpp)
+        TpointAtStboxPhysicalFunction.cpp
+        TpointSequenceAtStboxPhysicalFunction.cpp)
 target_link_libraries(meos_physical_functions PRIVATE nes-physical-operators)
 target_link_libraries(meos_physical_functions PUBLIC nes-meos)
 target_include_directories(meos_physical_functions PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -39,6 +40,7 @@ link_plugin_library(nes-physical-operators meos_physical_functions)
 add_registry_entry(PhysicalFunction TemporalPointNearestApproachDistance KEY NEAREST_APPROACH_DISTANCE_TemporalPoint_TemporalPoint)
 add_registry_entry(PhysicalFunction TemporalPointSequenceNearestApproachDistance KEY NEAREST_APPROACH_DISTANCE_TemporalPointSequence_TemporalPointSequence)
 add_registry_entry(PhysicalFunction TpointAtStbox KEY TGEO_AT_STBOX_TemporalPoint_SpatioTemporalBox)
+add_registry_entry(PhysicalFunction TpointSequenceAtStbox KEY TGEO_AT_STBOX_TemporalPointSequence_SpatioTemporalBox)
 
 # Unreflection registrations
 add_unreflection_entry(LogicalFunction NearestApproachDistance KEY NEAREST_APPROACH_DISTANCE)
