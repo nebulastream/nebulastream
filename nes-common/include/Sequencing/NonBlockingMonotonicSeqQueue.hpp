@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/ChunkCollector.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -96,6 +97,9 @@ public:
             /// First emplace the value to the specific block of the sequenceNumber.
             /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
             emplaceValueInBlock(sequenceNumber.getRawValue(), value.getRawValue());
+            /// Makes the slot visible before shifting. Otherwise this thread and a concurrently shifting one could each miss the other's
+            /// write, stalling currentSeq until the next emplace. Pairs with the seq_cst loads in lastInsertedFrom.
+            std::atomic_thread_fence(std::memory_order::seq_cst);
             /// Try to shift the current sequence number
             shiftCurrentValue();
         }
@@ -164,65 +168,68 @@ private:
             seq,
             ((currentBlock->blockIndex * BlockSize) + BlockSize));
 
-        /// Emplace value in block
-        /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
-        /// and thus can't modify this value.
-        /// Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
-        auto seqIndexInBlock = seq % BlockSize;
-        currentBlock->log[seqIndexInBlock].seq.store(seq, std::memory_order::relaxed);
-        currentBlock->log[seqIndexInBlock].value.store(value, std::memory_order::relaxed);
+        /// Emplace value in block. The value is stored first, so whoever sees the sequence number also sees the value.
+        auto& slot = currentBlock->log[seq % BlockSize];
+        slot.value.store(value, std::memory_order::relaxed);
+        slot.seq.store(seq, std::memory_order::release);
     }
 
-    /// @brief This method shifts tries to shift the current value.
-    /// To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
-    /// If the next sequence number is available it replaces the currentSeq with the next one.
-    /// If the next sequence number is in a new block this method also replaces the pointer to the next block.
+    /// @brief Advances currentSeq to the last sequence number before the first one not yet inserted, and the head to its block.
+    /// Reads ahead and advances with one exchange per run instead of one per sequence number. Repeats until no inserted sequence
+    /// number follows currentSeq.
     void shiftCurrentValue()
     {
-        auto checkForUpdate = true;
-        while (checkForUpdate)
+        /// Load the head before currentSeq, so the head is never past currentSeq's block.
+        auto currentBlock = std::atomic_load(&head);
+        auto currentSequenceNumber = currentSeq.load();
+        while (true)
         {
-            auto currentBlock = std::atomic_load(&head);
-            /// we are looking for the next sequence number
-            auto currentSequenceNumber = currentSeq.load();
-            /// find the correct block, that contains the current sequence number.
-            auto targetBlockIndex = currentSequenceNumber / BlockSize;
-            currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
+            currentBlock = getTargetBlock(std::move(currentBlock), currentSequenceNumber / BlockSize);
+            const auto lastInserted = lastInsertedFrom(currentBlock.get(), currentSequenceNumber);
+            if (lastInserted == currentSequenceNumber)
+            {
+                return;
+            }
+            /// On failure the exchange loads the sequence number another thread shifted to, and the loop continues from there.
+            if (currentSeq.compare_exchange_strong(currentSequenceNumber, lastInserted))
+            {
+                /// The thread whose exchange moves `currentSeq` into a new block advances `head`.
+                const auto changesBlock = lastInserted / BlockSize != currentSequenceNumber / BlockSize;
+                currentSequenceNumber = lastInserted;
+                if (changesBlock)
+                {
+                    currentBlock = getTargetBlock(std::move(currentBlock), currentSequenceNumber / BlockSize);
+                    advanceHead(currentBlock);
+                }
+            }
+        }
+    }
 
-            /// check if next value is set
-            /// next seqNumber
-            auto nextSeqNumber = currentSequenceNumber + 1;
-            if (nextSeqNumber % BlockSize == 0)
+    /// @brief Returns the last sequence number of the consecutive run of inserted sequence numbers that follows from.
+    static SequenceNumber::Underlying lastInsertedFrom(const Block* block, const SequenceNumber::Underlying from)
+    {
+        auto last = from;
+        while (true)
+        {
+            const auto next = last + 1;
+            if (next % BlockSize == 0)
             {
-                /// the next sequence number is the first element in the next block.
-                auto nextBlock = std::atomic_load(&currentBlock->next);
-                if (nextBlock != nullptr)
-                {
-                    /// this will always be the first element
-                    auto& value = nextBlock->log[0];
-                    if (value.seq.load(std::memory_order::relaxed) == nextSeqNumber)
-                    {
-                        /// Modify currentSeq and head
-                        if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
-                        {
-                            std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
-                        }
-                        continue;
-                    }
-                }
+                block = std::atomic_load(&block->next).get();
             }
-            else
+            if (block == nullptr || block->log[next % BlockSize].seq.load(std::memory_order::seq_cst) != next)
             {
-                auto seqIndexInBlock = nextSeqNumber % BlockSize;
-                auto& value = currentBlock->log[seqIndexInBlock];
-                if (value.seq == nextSeqNumber)
-                {
-                    /// the next sequence number is still in the current block thus we only have to exchange the currentSeq.
-                    std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
-                    continue;
-                }
+                return last;
             }
-            checkForUpdate = false;
+            last = next;
+        }
+    }
+
+    /// @brief Moves the head forward to `block`
+    void advanceHead(const std::shared_ptr<Block>& block)
+    {
+        auto expectedHead = std::atomic_load(&head);
+        while (expectedHead->blockIndex < block->blockIndex && !std::atomic_compare_exchange_weak(&head, &expectedHead, block))
+        {
         }
     }
 
