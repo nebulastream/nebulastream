@@ -91,8 +91,8 @@ Record FieldOffsetRawBufferIndex::readSpanningRecord(
             continue;
         }
 
-        const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordFieldOffsets + nautilus::val<uint64_t>{i});
-        const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordFieldOffsets + nautilus::val<uint64_t>{i + 1});
+        const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordFieldOffsets + static_cast<uint64_t>(i));
+        const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordFieldOffsets + (static_cast<uint64_t>(i) + 1));
 
         const auto sizeOfDelimiter = (i + 1 == numberOfFields) ? 0 : indexer.getFieldDelimitingBytes().size();
         const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;

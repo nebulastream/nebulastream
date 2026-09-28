@@ -51,8 +51,10 @@ namespace NES
 {
 namespace
 {
+/// The first field of a record opens the JSON object. Whether a field is the first one is known while tracing, so the caller picks
+/// the instantiation instead of passing a flag.
+template <bool IsFirstField>
 uint64_t writePreValueContents(
-    const bool isFirstField,
     const char* fieldIdentifier,
     const uint64_t remainingSpace,
     TupleBuffer* buffer,
@@ -60,7 +62,7 @@ uint64_t writePreValueContents(
     int8_t* bufferAddress)
 {
     std::string preValueContentString = "\"" + std::string(fieldIdentifier) + "\":";
-    if (isFirstField)
+    if constexpr (IsFirstField)
     {
         preValueContentString = "{" + preValueContentString;
     }
@@ -128,8 +130,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     const nautilus::val<const char*> fieldName{canonicalFieldNames.at(fieldIndex).c_str()};
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-        writePreValueContents,
-        nautilus::val<bool>{fieldIndex == 0},
+        fieldIndex == 0 ? writePreValueContents<true> : writePreValueContents<false>,
         fieldName,
         currentRemainingSize,
         recordBuffer.getReference(),
