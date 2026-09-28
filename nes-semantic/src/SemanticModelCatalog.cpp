@@ -18,13 +18,15 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
-#include <ErrorHandling.hpp>
 #include <Util/Reflection.hpp>
+#include <ErrorHandling.hpp>
+#include <MockSemanticBackend.hpp>
 
 namespace NES::detail
 {
@@ -66,6 +68,18 @@ namespace NES
 namespace
 {
 
+/// Wire payloads are untrusted: a numeric value outside the enum's range would otherwise
+/// become an invalid enumerator that every later switch silently mishandles.
+template <typename Enum>
+Enum unreflectEnum(const int64_t raw, const Enum last, const std::string_view what)
+{
+    if (raw < 0 || raw > static_cast<int64_t>(last))
+    {
+        throw CannotDeserialize("Failed to deserialize {}: value {} is out of range", what, raw);
+    }
+    return static_cast<Enum>(raw);
+}
+
 Reflected reflectStep(const SemanticStep& step, const ReflectionContext& context)
 {
     return context.reflect(detail::ReflectedSemanticStep{
@@ -85,7 +99,7 @@ SemanticStep unreflectStep(const Reflected& rfl, const ReflectionContext& contex
         throw CannotDeserialize("Failed to deserialize SemanticStep");
     }
     return SemanticStep{
-        .kind = static_cast<SemanticStep::Kind>(reflected.kind.value()),
+        .kind = unreflectEnum(reflected.kind.value(), SemanticStep::Kind::FILTER, "SemanticStep::Kind"),
         .prompt = std::move(reflected.prompt).value(),
         .outputColumn = std::move(reflected.outputColumn).value(),
         .outputValues = std::move(reflected.outputValues).value(),
@@ -102,15 +116,27 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     }
     if (config.modelName.empty())
     {
-        throw InvalidSemanticModel("Semantic model '{}': MODEL must not be empty", name);
+        throw InvalidSemanticModel("Semantic model '{}': MODEL_NAME must not be empty", name);
     }
     if (config.backend != "http" && config.backend != "mock")
     {
         throw InvalidSemanticModel("Semantic model '{}': BACKEND must be 'http' or 'mock', but was '{}'", name, config.backend);
     }
+    if (config.backend == "mock" && !MockSemanticBackend::isValidBehaviour(config.endpoint))
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': ENDPOINT '{}' is not a mock behaviour (echo, label:<X>, unparseable or fail)", name, config.endpoint);
+    }
     if (config.batchSize == 0)
     {
         throw InvalidSemanticModel("Semantic model '{}': BATCH_SIZE must be at least 1", name);
+    }
+    /// Stage 1 sends one record per request. Accepting a larger value would silently run with
+    /// batch size 1, so it is rejected until stage 2 (asynchronous batching) lands.
+    if (config.batchSize > 1)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': BATCH_SIZE {} is not supported yet; batching arrives with stage 2, use 1", name, config.batchSize);
     }
     if (config.maxConcurrency == 0)
     {
@@ -146,6 +172,16 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
         }
     }
 
+    /// Stage 1 builds the prompt from raw text only; there is no numeric-to-text conversion in
+    /// the physical operator yet, so non-text inputs are rejected here instead of at lowering.
+    for (const auto& field : schema.inputs)
+    {
+        if (field.getDataType().type != DataType::Type::VARSIZED)
+        {
+            throw InvalidSemanticModel("Semantic model '{}' input field '{}': type must be VARSIZED", name, field.getFullyQualifiedName());
+        }
+    }
+
     /// The model answers with text, so every output field is a string. Numeric answers
     /// are the caller's job to cast downstream, exactly as the Python reference does
     /// (it stringifies every answer with `str()`).
@@ -153,18 +189,26 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     {
         if (field.getDataType().type != DataType::Type::VARSIZED)
         {
-            throw InvalidSemanticModel(
-                "Semantic model '{}' output field '{}': type must be VARSIZED", name, field.getFullyQualifiedName());
+            throw InvalidSemanticModel("Semantic model '{}' output field '{}': type must be VARSIZED", name, field.getFullyQualifiedName());
         }
     }
 
+    /// Enforced here rather than only in the statement handler, so the optimizer tests and any
+    /// embedded caller cannot silently replace an entry either.
+    if (entries.contains(name))
+    {
+        throw SemanticModelAlreadyExists("Semantic model '{}' is already registered", name);
+    }
     auto registered = RegisteredSemanticModel{name, std::move(config), std::move(schema)};
-    entries.insert_or_assign(std::move(name), std::move(registered));
+    entries.emplace(std::move(name), std::move(registered));
 }
 
 void SemanticModelCatalog::removeModel(const std::string& modelName)
 {
-    entries.erase(modelName);
+    if (entries.erase(modelName) == 0)
+    {
+        throw UnknownSemanticModelName("Semantic model '{}' was never registered", modelName);
+    }
 }
 
 bool SemanticModelCatalog::hasModel(const std::string& modelName) const
@@ -256,7 +300,7 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .modelName = std::move(reflected.modelName).value(),
         .datasetPrompt = std::move(reflected.datasetPrompt).value(),
         .steps = std::move(steps),
-        .payloadFormat = static_cast<PayloadFormat>(reflected.payloadFormat.value()),
+        .payloadFormat = unreflectEnum(reflected.payloadFormat.value(), PayloadFormat::JSON_OBJECT, "PayloadFormat"),
         .batchSize = static_cast<size_t>(reflected.batchSize.value()),
         .maxConcurrency = static_cast<size_t>(reflected.maxConcurrency.value()),
         .maxRetries = static_cast<size_t>(reflected.maxRetries.value()),

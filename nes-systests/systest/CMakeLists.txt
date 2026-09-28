@@ -121,8 +121,10 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the OpenVINO converter;
 # when ENABLE_INFERENCE_TESTS is OFF (e.g. `ovc` not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
+# Semantic-Nightly needs a real LLM endpoint (Ollama on localhost), so it is never part of ctest;
+# run nes-systests/semantic/SemanticMapRealEndpoint.test by hand instead.
+set(SYSTEST_EXCLUDE_GROUPS large Semantic-Nightly)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive Semantic-Nightly)
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)

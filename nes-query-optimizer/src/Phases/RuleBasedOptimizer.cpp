@@ -28,6 +28,7 @@
 #include <ModelCatalog.hpp>
 #include <PlanRuleRegistry.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SemanticModelCatalog.hpp>
 
 namespace NES
 {
@@ -36,11 +37,13 @@ RuleBasedOptimizer::RuleBasedOptimizer(
     QueryOptimizerConfiguration defaultQueryOptimization,
     std::shared_ptr<const SourceCatalog> sourceCatalog,
     std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const ModelCatalog> modelCatalog)
+    std::shared_ptr<const ModelCatalog> modelCatalog,
+    std::shared_ptr<const SemanticModelCatalog> semanticModelCatalog)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
     , sourceCatalog(std::move(sourceCatalog))
     , sinkCatalog(std::move(sinkCatalog))
     , modelCatalog(std::move(modelCatalog))
+    , semanticModelCatalog(std::move(semanticModelCatalog))
 {
     RuleManager<LogicalPlan> ruleManager;
 
@@ -50,6 +53,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(
         .sourceCatalog = this->sourceCatalog,
         .sinkCatalog = this->sinkCatalog,
         .modelCatalog = this->modelCatalog,
+        .semanticModelCatalog = this->semanticModelCatalog,
     };
 
     for (auto ruleName : PlanRuleRegistry::instance().getRegisteredNames())

@@ -38,8 +38,8 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <SemanticModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 

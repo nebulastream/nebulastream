@@ -1,0 +1,143 @@
+# name: semantic/SemanticMap.test
+# description: SEM_MAP(model, input) end to end under a real worker, against the mock backend
+#              ('mock' AS LLM.BACKEND). Grammar, catalog, resolution rule, lowering and JIT execution
+#              all run for real while no socket is opened. The mock answers through the real codec,
+#              so the parse cascade and answer normalization are exercised as against a live model.
+#              Every query asserts all input records, so record count in == record count out.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,POSITIVE
+2,negative
+3,POSITIVE(unsure)
+4,clearly-negative
+5,pozitive
+6,zzzz
+
+CREATE LOGICAL SOURCE articles(id UINT64 NOT NULL, title VARSIZED NOT NULL, body VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR articles TYPE File;
+ATTACH INLINE
+1,Good news,all is well
+2,Bad news,nothing works
+
+# Free text (no OUTPUT_VALUES): the echoed answer passes through unchanged.
+CREATE SEMANTIC MODEL freeText
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Closed answer set: the echo runs through the normalization cascade.
+CREATE SEMANTIC MODEL restricted
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'NEUTRAL' AS LLM.DEFAULT_VALUE);
+
+# A model that answers with prose instead of JSON.
+CREATE SEMANTIC MODEL garbage
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'n/a' AS LLM.DEFAULT_VALUE);
+
+# An endpoint that cannot be reached.
+CREATE SEMANTIC MODEL downEndpoint
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# A constant answer, for filtering on the model output.
+CREATE SEMANTIC MODEL alwaysPositive
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'label:positive' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES);
+
+# A second model over the same input with a different output, for stacking.
+CREATE SEMANTIC MODEL summarizer
+INPUT (description VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize the description' AS LLM.PROMPT, 'label:short' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Two inputs with their field names in the payload.
+CREATE SEMANTIC MODEL headline
+INPUT (title VARSIZED, body VARSIZED)
+OUTPUT (gist VARSIZED)
+SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'JSON_OBJECT' AS LLM.PAYLOAD_FORMAT, 'Short news articles' AS LLM.DATASET_PROMPT);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+CREATE SINK stacked(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL, summary VARSIZED NOT NULL) TYPE File;
+CREATE SINK gists(id UINT64 NOT NULL, title VARSIZED NOT NULL, body VARSIZED NOT NULL, gist VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# Free text: every description comes back upper-cased, every other field passes through.
+SELECT * FROM SEM_MAP(freeText, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# One rung per row: exact, case-insensitive, parenthetical strip, containment. There is no fuzzy
+# rung, so the misspelt 'pozitive' falls through to the default like 'zzzz'.
+SELECT * FROM SEM_MAP(restricted, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE
+4,clearly-negative,NEGATIVE
+5,pozitive,NEUTRAL
+6,zzzz,NEUTRAL
+
+# An unparseable response is the record's problem, not the query's: every record is kept and
+# carries the default value.
+SELECT * FROM SEM_MAP(garbage, reviews) INTO out;
+----
+1,POSITIVE,n/a
+2,negative,n/a
+3,POSITIVE(unsure),n/a
+4,clearly-negative,n/a
+5,pozitive,n/a
+6,zzzz,n/a
+
+# An unreachable endpoint fails the query instead of default-filling it.
+SELECT * FROM SEM_MAP(downEndpoint, reviews) INTO out;
+----
+ERROR 3006 "unreachable"
+
+# The declared OUTPUT field can be filtered on like any other column.
+SELECT id FROM SEM_MAP(alwaysPositive, reviews) WHERE sentiment = 'POSITIVE' INTO ids;
+----
+1
+2
+3
+4
+5
+6
+
+# SEM_MAP over a subquery.
+SELECT * FROM SEM_MAP(freeText, (SELECT * FROM reviews WHERE id > UINT64(4))) INTO out;
+----
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# Stacked SEM_MAPs: each appends its own output field.
+SELECT * FROM SEM_MAP(summarizer, SEM_MAP(freeText, reviews)) INTO stacked;
+----
+1,POSITIVE,POSITIVE,short
+2,negative,NEGATIVE,short
+3,POSITIVE(unsure),POSITIVE(UNSURE),short
+4,clearly-negative,CLEARLY-NEGATIVE,short
+5,pozitive,POZITIVE,short
+6,zzzz,ZZZZ,short
+
+# JSON_OBJECT payload with a dataset prompt: the mock joins the object's values in declared order.
+SELECT * FROM SEM_MAP(headline, articles) INTO gists;
+----
+1,Good news,all is well,GOOD NEWS ALL IS WELL
+2,Bad news,nothing works,BAD NEWS NOTHING WORKS

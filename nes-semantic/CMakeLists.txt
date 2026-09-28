@@ -10,9 +10,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+find_package(CURL REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 add_library(nes-semantic
-        src/SemanticModelCatalog.cpp)
+        src/SemanticModelCatalog.cpp
+        src/ResponseParsing.cpp
+        src/SemanticMapCodec.cpp
+        src/HttpSemanticBackend.cpp
+        src/MockSemanticBackend.cpp
+        src/SemanticBackendFactory.cpp)
 target_include_directories(nes-semantic PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(nes-semantic PUBLIC nes-data-types nes-schema PRIVATE nes-common)
+# nlohmann is public because ResponseParsing.hpp, the envelope decoding shared by all semantic
+# operator codecs, returns nlohmann::json.
+target_link_libraries(nes-semantic
+        PUBLIC nes-data-types nes-schema nlohmann_json::nlohmann_json
+        PRIVATE nes-common CURL::libcurl)
+
+add_tests_if_enabled(tests)

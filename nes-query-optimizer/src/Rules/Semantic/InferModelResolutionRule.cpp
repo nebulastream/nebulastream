@@ -31,6 +31,7 @@
 #include <Rules/PlanVisitor.hpp>
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/SemanticMapResolutionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <ErrorHandling.hpp>
@@ -69,7 +70,10 @@ LogicalPlan InferModelResolutionRule::apply(const LogicalPlan& queryPlan) const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> InferModelResolutionRule::needs() const
 {
-    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule)};
+    /// The traversal below rebuilds every operator with withChildren, which re-infers schemas, so
+    /// SEM_MAP placeholders must already be resolved (also declared as SemanticMapResolutionRule's neededBy).
+    return {
+        typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(AnonymousSinkBindingRule), typeid(SemanticMapResolutionRule)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

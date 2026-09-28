@@ -292,8 +292,7 @@ public:
             .outputs = std::move(outputSchemaExp).value()};
     }
 
-    CreateSemanticModelStatement
-    bindCreateSemanticModelStatement(AntlrSQLParser::CreateSemanticModelDefinitionContext* modelDefAST) const
+    CreateSemanticModelStatement bindCreateSemanticModelStatement(AntlrSQLParser::CreateSemanticModelDefinitionContext* modelDefAST) const
     {
         const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
 
@@ -325,28 +324,35 @@ public:
             throw FieldAlreadyExists("Field name collision in semantic model output schema {}", outputSchemaExp.error());
         }
 
-        /// Every option is qualified exactly once (`LLM.PROMPT`), because `bindConfigOptions`
-        /// rejects unqualified keys. Flattened to strings here; typing happens in the handler.
+        /// Every option is qualified exactly once (`LLM.PROMPT`), the same convention as SOURCE.* and
+        /// SINK.*. Flattened to strings here; typing happens in the handler. Bound with duplicates
+        /// kept so a repeated key is reported as such rather than one value silently winning.
         static const auto LlmNamespace = Identifier::parse("LLM");
         std::unordered_map<Identifier, std::string> config;
         if (modelDefAST->optionsClause() != nullptr)
         {
-            const auto options = bindConfigOptions(modelDefAST->optionsClause()->options->namedConfigExpression());
-            for (const auto& [rootIdentifier, entries] : options)
+            const auto options = bindConfigOptionsWithDuplicates(modelDefAST->optionsClause()->options->namedConfigExpression());
+            for (const auto& [path, value] : options)
             {
+                if (path.size() != 2)
+                {
+                    throw InvalidConfigParameter("Config key needs to be qualified exactly once, but was {}", path);
+                }
+                const auto& rootIdentifier = *std::ranges::begin(path);
+                const auto& optionName = *std::ranges::next(std::ranges::begin(path));
                 if (not(rootIdentifier == LlmNamespace))
                 {
                     throw InvalidConfigParameter(
                         "CREATE SEMANTIC MODEL only accepts options in the LLM namespace, but got '{}'", rootIdentifier);
                 }
-                for (const auto& [optionName, value] : entries)
+                const auto* const literal = std::get_if<Literal>(&value);
+                if (literal == nullptr)
                 {
-                    const auto* const literal = std::get_if<Literal>(&value);
-                    if (literal == nullptr)
-                    {
-                        throw InvalidConfigParameter("Option 'LLM.{}' must be a literal, not a schema", optionName);
-                    }
-                    config.emplace(optionName, literalToString(*literal));
+                    throw InvalidConfigParameter("Option 'LLM.{}' must be a literal, not a schema", optionName);
+                }
+                if (not config.try_emplace(optionName, literalToString(*literal)).second)
+                {
+                    throw InvalidConfigParameter("Duplicate option 'LLM.{}' in CREATE SEMANTIC MODEL", optionName);
                 }
             }
         }
@@ -509,8 +515,7 @@ public:
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
         }
-        if (const auto* semanticModelsSubject
-            = dynamic_cast<AntlrSQLParser::ShowSemanticModelsSubjectContext*>(showAST->showSubject());
+        if (const auto* semanticModelsSubject = dynamic_cast<AntlrSQLParser::ShowSemanticModelsSubjectContext*>(showAST->showSubject());
             semanticModelsSubject != nullptr)
         {
             const std::optional<StatementOutputFormat> format
@@ -590,8 +595,7 @@ public:
 
     static DropSemanticModelStatement bindDropSemanticModel(const std::pair<Identifier, Literal>& filter)
     {
-        return DropSemanticModelStatement{
-            .name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEMANTIC MODEL")};
+        return DropSemanticModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEMANTIC MODEL")};
     }
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const

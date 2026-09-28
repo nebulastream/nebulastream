@@ -1,0 +1,35 @@
+# name: semantic/SemanticMapRealEndpoint.test
+# description: SEM_MAP against a real, locally running OpenAI-compatible endpoint. Not hermetic: the
+#              Semantic-Nightly group is excluded from every ctest systest run (SYSTEST_EXCLUDE_GROUPS
+#              in nes-systests/systest/CMakeLists.txt). Needs Ollama on localhost:11434 with
+#              llama3.1:latest (8B) pulled, and a container started with --network host.
+#
+#              A live model's wording is not deterministic, so the query asserts only what the Python
+#              reference's test_map_executes_against_real_local_llm asserts: every record receives a
+#              non-empty answer. The default value is the empty string, so any record the model failed
+#              to answer is filtered out and its id goes missing from the result.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,This movie was a delight from start to finish
+2,Two hours I will never get back
+3,A solid effort but forgettable
+
+CREATE SEMANTIC MODEL sentiment
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT,
+     'llama3.1:latest' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES);
+
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# The SQL grammar has no empty string literal, hence CHAR_LENGTH rather than sentiment != ''.
+SELECT id FROM SEM_MAP(sentiment, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
