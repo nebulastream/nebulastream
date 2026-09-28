@@ -29,6 +29,7 @@
 extern "C" {
 #include <meos.h>
 #include <meos_geo.h>
+#include <meos_internal_geo.h>
 }
 
 namespace MEOS
@@ -157,35 +158,28 @@ std::string Meos::convertEpochToTimestamp(unsigned long long epochLike)
     return convertSecondsToTimestamp(static_cast<long long>(secondsUll));
 }
 
-TimestampTz Meos::convertEpochToTimestampTz(unsigned long long epochLike)
+TimestampTz Meos::convertEpochToTimestampTz(unsigned long long epochMillis)
 {
-    /// 1) Normalize to microseconds
-    unsigned long long unixMicros;
-    if (epochLike >= 1000000000000000000ULL)
-    { /// nanoseconds  (~1.7e18 today)
-        unixMicros = epochLike / 1000ULL;
-    }
-    else if (epochLike >= 1000000000000000ULL)
-    { /// microseconds (~1.7e15)
-        unixMicros = epochLike;
-    }
-    else if (epochLike >= 1000000000000ULL)
-    { /// milliseconds (~1.7e12)
-        unixMicros = epochLike * 1000ULL;
-    }
-    else
-    { /// seconds      (~1.7e9)
-        unixMicros = epochLike * 1000000ULL;
-    }
-
-    /// Clamp in the Unix domain
-    const unsigned long long kMaxUnixMicros = 4102444800000000ULL; /// 2100-01-01Z
-    if (unixMicros > kMaxUnixMicros)
-        unixMicros = kMaxUnixMicros;
+    /// Clamp in the Unix domain before scaling to avoid overflowing when converting to microseconds
+    const unsigned long long kMaxUnixMillis = 4102444800000ULL; /// 2100-01-01Z
+    if (epochMillis > kMaxUnixMillis)
+        epochMillis = kMaxUnixMillis;
 
     /// Re-base from Unix epoch (1970) to PostgreSQL/MEOS epoch (2000).
     const long long kPgEpochOffsetMicros = 946684800LL * 1000000LL; /// 946684800000000
-    return static_cast<TimestampTz>(static_cast<long long>(unixMicros) - kPgEpochOffsetMicros);
+    return static_cast<TimestampTz>(static_cast<long long>(epochMillis) * 1000LL - kPgEpochOffsetMicros);
+}
+
+unsigned long long Meos::convertTimestampTzToEpoch(TimestampTz timestamp)
+{
+    /// Re-base from PostgreSQL/MEOS epoch (2000) to Unix epoch (1970).
+    const long long kPgEpochOffsetMicros = 946684800LL * 1000000LL; /// 946684800000000
+    const long long unixMicros = static_cast<long long>(timestamp) + kPgEpochOffsetMicros;
+    if (unixMicros < 0)
+    {
+        return 0;
+    }
+    return static_cast<unsigned long long>(unixMicros) / 1000ULL;
 }
 
 /// TemporalInstant constructor
@@ -219,6 +213,10 @@ Meos::TemporalInstant::TemporalInstant(double lon, double lat, long long ts, int
     }
 }
 
+Meos::TemporalInstant::TemporalInstant(TInstant* instant) : instant(reinterpret_cast<Temporal*>(instant))
+{
+}
+
 Meos::TemporalInstant::~TemporalInstant()
 {
     /// Do not free here: lifetime managed by MEOS/PG memory context.
@@ -229,6 +227,18 @@ Meos::TemporalInstant::~TemporalInstant()
 Temporal* Meos::TemporalInstant::getGeometry()
 {
     return instant;
+}
+
+std::optional<Meos::TemporalInstant::RawInstant> Meos::TemporalInstant::getRawInstant() const
+{
+    if (instant == nullptr)
+    {
+        return std::nullopt;
+    }
+    const auto* inst = reinterpret_cast<const TInstant*>(instant);
+    /// Read the point directly out of the GSERIALIZED without copying it or creating an LWGEOM
+    const POINT2D* point = DATUM_POINT2D_P(tinstant_value_p(inst));
+    return RawInstant{point->x, point->y, convertTimestampTzToEpoch(inst->t)};
 }
 
 bool Meos::TemporalInstant::intersects(const TemporalInstant& point) const
@@ -394,6 +404,10 @@ Meos::TemporalSequence::TemporalSequence(const std::vector<TemporalInstant*>& in
     }
 }
 
+Meos::TemporalSequence::TemporalSequence(TSequence* sequence) : sequence(reinterpret_cast<Temporal*>(sequence))
+{
+}
+
 Meos::TemporalSequence::~TemporalSequence()
 {
     /// Do not free; lifetime is managed by MEOS/PG memory context.
@@ -410,6 +424,25 @@ double Meos::TemporalSequence::length(const TemporalInstant& /* instant */) cons
 Temporal* Meos::TemporalSequence::getGeometry()
 {
     return sequence;
+}
+
+int Meos::TemporalSequence::numInstants() const
+{
+    if (sequence == nullptr)
+    {
+        return 0;
+    }
+    return temporal_num_instants(sequence);
+}
+
+Meos::TemporalInstant Meos::TemporalSequence::instantAt(int i) const
+{
+    if (sequence == nullptr || i < 0 || i >= numInstants())
+    {
+        return TemporalInstant(static_cast<TInstant*>(nullptr));
+    }
+    /// MEOS uses 1-based indexing and returns a copy of the instant
+    return TemporalInstant(temporal_instant_n(sequence, i + 1));
 }
 
 /// Static wrapper functions for MEOS API
