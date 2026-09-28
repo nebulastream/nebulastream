@@ -1,5 +1,7 @@
 # SEM_MAP as a native operator in NebulaStream
 
+> **Status:** implementation plan for the `feat/semantic-map` branch, not a reviewed design document.
+
 ## Context
 
 A Python prototype of semantic LLM operators (`sem_map`, `sem_filter`, `sem_join`, `sem_agg`, `sem_groupby`, `sem_redact`) exists as part of a VLDB 2027 submission — *Semantic Stream Processing: Enabling LLM-Based Operators in Real-Time Data Pipelines* (TU Berlin). Today it is bolted onto NebulaStream **externally**: NES ships rows over HTTP (NDJSON) to `POST /operator/process` on port 3000, and results come back as headerless CSV over a TCP socket on port 5000. The measured baseline of that path is **0.0218 rows/s**, so the external coupling is not just architecturally unsatisfying — it is the actual bottleneck.
@@ -30,20 +32,20 @@ That is the goal here: **`SEM_MAP` as the first semantic operator, natively and 
 
 ## The template to follow
 
-With `MODEL_INFERENCE`, NebulaStream already has a complete model axis running from SQL to runtime, documented in [docs/technical/model_inference.md](docs/technical/model_inference.md). `SEM_MAP` mirrors it stop by stop:
+With `MODEL_INFERENCE`, NebulaStream already has a complete model axis running from SQL to runtime, documented in [docs/technical/model_inference.md](../../docs/technical/model_inference.md). `SEM_MAP` mirrors it stop by stop:
 
 | Stage | Template |
 |---|---|
-| Grammar | [AntlrSQL.g4:81-85](nes-sql-parser/AntlrSQL.g4#L81-L85) (DDL), [:173-180](nes-sql-parser/AntlrSQL.g4#L173-L180) (TVF) |
-| Catalog | [ModelCatalog.hpp](nes-inference/include/ModelCatalog.hpp) |
-| Statement handler | [StatementHandler.hpp:256](nes-frontend/include/Statements/StatementHandler.hpp#L256) |
-| Logical (unresolved → resolved) | `InferModelNameLogicalOperator` → [InferModelLogicalOperator.hpp](nes-logical-operators/include/Operators/InferModelLogicalOperator.hpp) |
-| Optimizer rule | [InferModelResolutionRule.cpp](nes-query-optimizer/src/Rules/Semantic/InferModelResolutionRule.cpp) |
-| Lowering | [LowerToPhysicalInferModel.cpp](nes-query-compiler/src/LoweringRules/LowerToPhysical/LowerToPhysicalInferModel.cpp) |
-| Physical | [InferModelPhysicalOperator.cpp](nes-physical-operators/src/Inference/InferModelPhysicalOperator.cpp) |
-| System tests | [nes-systests/inference/](nes-systests/inference/) |
+| Grammar | [AntlrSQL.g4:81-85](../../nes-sql-parser/AntlrSQL.g4#L81-L85) (DDL), [:173-180](../../nes-sql-parser/AntlrSQL.g4#L173-L180) (TVF) |
+| Catalog | [ModelCatalog.hpp](../../nes-inference/include/ModelCatalog.hpp) |
+| Statement handler | [StatementHandler.hpp:256](../../nes-frontend/include/Statements/StatementHandler.hpp#L256) |
+| Logical (unresolved → resolved) | `InferModelNameLogicalOperator` → [InferModelLogicalOperator.hpp](../../nes-logical-operators/include/Operators/InferModelLogicalOperator.hpp) |
+| Optimizer rule | [InferModelResolutionRule.cpp](../../nes-query-optimizer/src/Rules/Semantic/InferModelResolutionRule.cpp) |
+| Lowering | [LowerToPhysicalInferModel.cpp](../../nes-query-compiler/src/LoweringRules/LowerToPhysical/LowerToPhysicalInferModel.cpp) |
+| Physical | [InferModelPhysicalOperator.cpp](../../nes-physical-operators/src/Inference/InferModelPhysicalOperator.cpp) |
+| System tests | [nes-systests/inference/](../../nes-systests/inference/) |
 
-For the **stateful** part (stage 2) the template is the windowed aggregation instead: [LowerToPhysicalWindowedAggregation.cpp](nes-query-compiler/src/LoweringRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.cpp) shows how an `OperatorHandler` is created during lowering and attached to the `PhysicalOperatorWrapper`.
+For the **stateful** part (stage 2) the template is the windowed aggregation instead: [LowerToPhysicalWindowedAggregation.cpp](../../nes-query-compiler/src/LoweringRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.cpp) shows how an `OperatorHandler` is created during lowering and attached to the `PhysicalOperatorWrapper`.
 
 ---
 
@@ -73,7 +75,7 @@ Two constraints on the option names, both verified against the grammar:
 
 Output schema: every field of `reviews`, plus `sentiment VARSIZED`.
 
-**Why the configuration belongs in `SET (...)`.** The grammar has **no `nonReserved` rule** — `identifier: strictIdentifier` directly. Every new lexer keyword therefore becomes globally reserved and can no longer be used as a column or source name. A `PROMPT` keyword would forbid any column called `prompt`. The existing `optionsClause` ([:75](nes-sql-parser/AntlrSQL.g4#L75), of the form `value AS name`) avoids that entirely, because option names are ordinary identifiers.
+**Why the configuration belongs in `SET (...)`.** The grammar has **no `nonReserved` rule** — `identifier: strictIdentifier` directly. Every new lexer keyword therefore becomes globally reserved and can no longer be used as a column or source name. A `PROMPT` keyword would forbid any column called `prompt`. The existing `optionsClause` ([:75](../../nes-sql-parser/AntlrSQL.g4#L75), of the form `value AS name`) avoids that entirely, because option names are ordinary identifiers.
 
 That leaves exactly **two new tokens**: `SEMANTIC` and `SEM_MAP`. `MODEL`, `INPUT`, `OUTPUT` and `SET` already exist.
 
@@ -151,13 +153,13 @@ Note that in Python the timeout and retries are only silently inherited OpenAI S
 
 ### Phase 0 — HTTP client as a dependency
 
-There is **no HTTP client** today. [vcpkg/vcpkg.json](vcpkg/vcpkg.json) carries `boost-asio`, `boost-url`, `boost-process` and `grpc`, but nothing for HTTP requests; `boost/asio` appears only in the test helper [TCPDataServer.cpp](nes-plugins/Sources/TCPSource/TCPDataServer.cpp), and [TCPSource.cpp](nes-plugins/Sources/TCPSource/TCPSource.cpp) uses raw POSIX sockets.
+There is **no HTTP client** today. [vcpkg/vcpkg.json](../../vcpkg/vcpkg.json) carries `boost-asio`, `boost-url`, `boost-process` and `grpc`, but nothing for HTTP requests; `boost/asio` appears only in the test helper [TCPDataServer.cpp](../../nes-plugins/Sources/TCPSource/TCPDataServer.cpp), and [TCPSource.cpp](../../nes-plugins/Sources/TCPSource/TCPSource.cpp) uses raw POSIX sockets.
 
 JSON, by contrast, is already available: **simdjson** for parsing and **nlohmann-json** for building requests.
 
-→ Add `cpr` to [vcpkg/vcpkg.json](vcpkg/vcpkg.json). Rationale: libcurl gives HTTPS, proxy and timeout handling for free, and is present in the runtime image anyway. The alternative, `boost-beast`, would require wiring up TLS by hand.
+→ Add `cpr` to [vcpkg/vcpkg.json](../../vcpkg/vcpkg.json). Rationale: libcurl gives HTTPS, proxy and timeout handling for free, and is present in the runtime image anyway. The alternative, `boost-beast`, would require wiring up TLS by hand.
 
-Note that the manifest lives under `vcpkg/`, not at the repository root, and that [vcpkg/vcpkg-registry/ports/](vcpkg/vcpkg-registry/ports/) is an overlay registry for ports NebulaStream patches itself (openvino, folly, nautilus and others). A stock `cpr` should come straight from the baseline and need no overlay entry.
+Note that the manifest lives under `vcpkg/`, not at the repository root, and that [vcpkg/vcpkg-registry/ports/](../../vcpkg/vcpkg-registry/ports/) is an overlay registry for ports NebulaStream patches itself (openvino, folly, nautilus and others). A stock `cpr` should come straight from the baseline and need no overlay entry.
 
 ### Phase 1 — Catalog (new module `nes-semantic/`)
 
@@ -189,34 +191,34 @@ struct SemanticModelConfig {
 
 The Python reference gets this right: `_fused_steps` is a list from the outset, even for a single step, and the generated prompt literally says "Apply the following **1 operation** to each row". Today the list costs almost nothing.
 
-`SemanticModelCatalog` provides `registerModel/hasModel/load/removeModel/getRegisteredModels` plus `Reflector`/`Unreflector` for `RegisteredSemanticModel` — the pattern taken verbatim from [ModelCatalog.hpp](nes-inference/include/ModelCatalog.hpp).
+`SemanticModelCatalog` provides `registerModel/hasModel/load/removeModel/getRegisteredModels` plus `Reflector`/`Unreflector` for `RegisteredSemanticModel` — the pattern taken verbatim from [ModelCatalog.hpp](../../nes-inference/include/ModelCatalog.hpp).
 
 **Credentials.** The catalog entry is serialized and shipped from the coordinator to the worker. Only the **name of an environment variable** is stored; it is resolved worker-locally during lowering — the same deferral that makes `compileModel` run at lowering time rather than at registration.
 
-Add error codes to [ExceptionDefinitions.inc](nes-common/include/ExceptionDefinitions.inc) (`UnknownSemanticModelName`, `SemanticModelAlreadyExists`), following the model codes 2040-2042.
+Add error codes to [ExceptionDefinitions.inc](../../nes-common/include/ExceptionDefinitions.inc) (`UnknownSemanticModelName`, `SemanticModelAlreadyExists`), following the model codes 2040-2042.
 
 ### Phase 2 — SQL surface
 
-**Grammar** ([AntlrSQL.g4](nes-sql-parser/AntlrSQL.g4)). ANTLR is regenerated on every build and the generated code is not checked in, so no CMake change is needed:
+**Grammar** ([AntlrSQL.g4](../../nes-sql-parser/AntlrSQL.g4)). ANTLR is regenerated on every build and the generated code is not checked in, so no CMake change is needed:
 
-1. Add the `SEMANTIC` and `SEM_MAP` tokens to the keyword block at [:555](nes-sql-parser/AntlrSQL.g4#L555).
-2. Add `createSemanticModelDefinition` as an alternative of `createDefinition` ([:69](nes-sql-parser/AntlrSQL.g4#L69)), structured like `createModelDefinition` but with `optionsClause?` in place of the path literal.
-3. Add `semanticMapSource` as a **labeled** alternative of `relationPrimary` ([:164-171](nes-sql-parser/AntlrSQL.g4#L164-L171)) — the label is what generates the `…RelationContext` and the listener hooks. Alongside it, `semanticMapInput` with the same three forms as `modelInferenceInput` (stream name, subquery, nested).
+1. Add the `SEMANTIC` and `SEM_MAP` tokens to the keyword block at [:555](../../nes-sql-parser/AntlrSQL.g4#L555).
+2. Add `createSemanticModelDefinition` as an alternative of `createDefinition` ([:69](../../nes-sql-parser/AntlrSQL.g4#L69)), structured like `createModelDefinition` but with `optionsClause?` in place of the path literal.
+3. Add `semanticMapSource` as a **labeled** alternative of `relationPrimary` ([:164-171](../../nes-sql-parser/AntlrSQL.g4#L164-L171)) — the label is what generates the `…RelationContext` and the listener hooks. Alongside it, `semanticMapInput` with the same three forms as `modelInferenceInput` (stream name, subquery, nested).
 4. Add `dropSemanticModel` and `SHOW SEMANTIC MODELS` the same way.
 
 **Parser** — follow the `ModelInference` pattern:
-- `enter/exitSemanticMapRelation` in [AntlrSQLQueryPlanCreator.hpp:69-70](nes-sql-parser/private/AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp#L69-L70)
-- an `isSemanticMap` flag in [AntlrSQLHelper.hpp](nes-sql-parser/private/AntlrSQLParser/AntlrSQLHelper.hpp) and the FROM-clause guard at [AntlrSQLQueryPlanCreator.cpp:730](nes-sql-parser/src/AntlrSQLQueryPlanCreator.cpp#L730)
-- a recursive `buildSemanticMapPlan` modelled on [:1498-1556](nes-sql-parser/src/AntlrSQLQueryPlanCreator.cpp#L1498-L1556)
-- `LogicalPlanBuilder::addSemanticMap(name, childPlan)` in [LogicalPlanBuilder.hpp/.cpp](nes-logical-operators/include/Plans/LogicalPlanBuilder.hpp)
+- `enter/exitSemanticMapRelation` in [AntlrSQLQueryPlanCreator.hpp:69-70](../../nes-sql-parser/private/AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp#L69-L70)
+- an `isSemanticMap` flag in [AntlrSQLHelper.hpp](../../nes-sql-parser/private/AntlrSQLParser/AntlrSQLHelper.hpp) and the FROM-clause guard at [AntlrSQLQueryPlanCreator.cpp:730](../../nes-sql-parser/src/AntlrSQLQueryPlanCreator.cpp#L730)
+- a recursive `buildSemanticMapPlan` modelled on [:1498-1556](../../nes-sql-parser/src/AntlrSQLQueryPlanCreator.cpp#L1498-L1556)
+- `LogicalPlanBuilder::addSemanticMap(name, childPlan)` in [LogicalPlanBuilder.hpp/.cpp](../../nes-logical-operators/include/Plans/LogicalPlanBuilder.hpp)
 
-**Statement binding** — add `CreateSemanticModelStatement` to [StatementBinder.hpp:162](nes-sql-parser/include/SQLQueryParser/StatementBinder.hpp#L162) **and to the `Statement` variant at [:205-224](nes-sql-parser/include/SQLQueryParser/StatementBinder.hpp#L205-L224)**; forgetting the variant fails silently. Then `bindCreateSemanticModelStatement` plus its dispatch in [StatementBinder.cpp](nes-sql-parser/src/StatementBinder.cpp), and the same for drop and show.
+**Statement binding** — add `CreateSemanticModelStatement` to [StatementBinder.hpp:162](../../nes-sql-parser/include/SQLQueryParser/StatementBinder.hpp#L162) **and to the `Statement` variant at [:205-224](../../nes-sql-parser/include/SQLQueryParser/StatementBinder.hpp#L205-L224)**; forgetting the variant fails silently. Then `bindCreateSemanticModelStatement` plus its dispatch in [StatementBinder.cpp](../../nes-sql-parser/src/StatementBinder.cpp), and the same for drop and show.
 
-**Statement handler** — `SemanticModelStatementHandler` in [StatementHandler.hpp](nes-frontend/include/Statements/StatementHandler.hpp), result structs added to the `StatementResult` variant, and a `StatementOutputAssembler` specialization per result type. Dispatch is compile-time overload resolution (`tryCall`); there is **no central switch**, so the handler must be threaded into the handler packs in **four** places or one of the frontends silently loses the feature:
+**Statement handler** — `SemanticModelStatementHandler` in [StatementHandler.hpp](../../nes-frontend/include/Statements/StatementHandler.hpp), result structs added to the `StatementResult` variant, and a `StatementOutputAssembler` specialization per result type. Dispatch is compile-time overload resolution (`tryCall`); there is **no central switch**, so the handler must be threaded into the handler packs in **four** places or one of the frontends silently loses the feature:
 
-- [CLIStarter.cpp](nes-frontend/apps/cli/CLIStarter.cpp)
-- [ReplStarter.cpp](nes-frontend/apps/repl/ReplStarter.cpp) and [Repl.cpp](nes-frontend/apps/repl/Repl.cpp)
-- [SystestBinder.cpp](nes-systests/systest/src/SystestBinder.cpp) — here it is a **manual `holds_alternative` chain** that must be extended explicitly; without it the system tests do not run
+- [CLIStarter.cpp](../../nes-frontend/apps/cli/CLIStarter.cpp)
+- [ReplStarter.cpp](../../nes-frontend/apps/repl/ReplStarter.cpp) and [Repl.cpp](../../nes-frontend/apps/repl/Repl.cpp)
+- [SystestBinder.cpp](../../nes-systests/systest/src/SystestBinder.cpp) — here it is a **manual `holds_alternative` chain** that must be extended explicitly; without it the system tests do not run
 
 ### Phase 3 — Logical operator
 
@@ -224,7 +226,7 @@ Two operators, as with InferModel, because the parser has no access to the catal
 - `SemanticMapNameLogicalOperator` — carries only the name string
 - `SemanticMapLogicalOperator` — carries the resolved catalog entry
 
-Mandatory parts (template: [InferModelLogicalOperator.hpp](nes-logical-operators/include/Operators/InferModelLogicalOperator.hpp)):
+Mandatory parts (template: [InferModelLogicalOperator.hpp](../../nes-logical-operators/include/Operators/InferModelLogicalOperator.hpp)):
 - Base classes `public Reorderer, public ManagedByOperator`. `ManagedByOperator` requires `WeakLogicalOperator self` as the **first** constructor parameter.
 - `static constexpr std::string_view NAME = "SemanticMap";` — this string is simultaneously the serialization type, the unreflection registry key **and** the name that determines the lowering rule (`LowerToPhysicalSemanticMap`). All three must match exactly.
 - The full `LogicalOperatorConcept` surface. In particular: `withChildrenUnsafe` sets children **without** re-inference, `withChildren` **with** — confusing the two is a classic source of bugs.
@@ -239,7 +241,7 @@ Schema inference in `inferLocalSchema`: verify that every `INPUT` field exists i
 
 Do **not** inherit from `OriginIdAssigner` — SEM_MAP is a 1:1 mapping and starts no new origin stream. That holds in stage 2 as well: the defer-and-poll scheme defers the **entire input buffer** and reprocesses it unchanged later, so order and sequence numbers are preserved.
 
-Registration is **one CMake line** in [nes-logical-operators/src/Operators/CMakeLists.txt](nes-logical-operators/src/Operators/CMakeLists.txt):
+Registration is **one CMake line** in [nes-logical-operators/src/Operators/CMakeLists.txt](../../nes-logical-operators/src/Operators/CMakeLists.txt):
 ```cmake
 add_unreflection_entry(LogicalOperator SemanticMap)
 add_unreflection_entry(LogicalOperator SemanticMapName)
@@ -247,7 +249,7 @@ add_unreflection_entry(LogicalOperator SemanticMapName)
 
 ### Phase 4 — Optimizer rule
 
-`SemanticMapResolutionRule` under [nes-query-optimizer/src/Rules/Semantic/](nes-query-optimizer/src/Rules/Semantic/), following [InferModelResolutionRule.cpp](nes-query-optimizer/src/Rules/Semantic/InferModelResolutionRule.cpp) one to one: a `PlanVisitor` that swaps `SemanticMapName` → `SemanticMap`, with
+`SemanticMapResolutionRule` under [nes-query-optimizer/src/Rules/Semantic/](../../nes-query-optimizer/src/Rules/Semantic/), following [InferModelResolutionRule.cpp](../../nes-query-optimizer/src/Rules/Semantic/InferModelResolutionRule.cpp) one to one: a `PlanVisitor` that swaps `SemanticMapName` → `SemanticMap`, with
 
 ```cpp
 needs()    → {LogicalSourceExpansionRule, SinkBindingRule, AnonymousSinkBindingRule}
@@ -258,21 +260,21 @@ The ordering is mandatory: schema inference needs the output fields, which only 
 
 Registration: `add_registry_entry(PlanRule SemanticMapResolutionRule KEY SemanticMapResolution)`.
 
-**Mind the cascade:** the new catalog has to become a field of `PlanRuleRegistryArguments` ([PlanRuleRegistry.hpp](nes-query-optimizer/registry/include/PlanRuleRegistry.hpp)), which propagates through `RuleBasedOptimizer.hpp/.cpp` and `QueryOptimizer.hpp`.
+**Mind the cascade:** the new catalog has to become a field of `PlanRuleRegistryArguments` ([PlanRuleRegistry.hpp](../../nes-query-optimizer/registry/include/PlanRuleRegistry.hpp)), which propagates through `RuleBasedOptimizer.hpp/.cpp` and `QueryOptimizer.hpp`.
 
 `TypeInferenceRule`, `DecideMemoryLayoutRule`, `DecideFieldOrder`, `DecideFieldMappings` and `OriginIdInferenceRule` are generic and need **no** change — they dispatch on the marker interfaces.
 
 ### Phase 5 — Lowering and physical operator
 
-`LowerToPhysicalSemanticMap` in [nes-query-compiler/](nes-query-compiler/src/LoweringRules/LowerToPhysical/), with its header under `private/`. This is where the API key is resolved from the environment. Registration: `add_registry_entry(LoweringRule SemanticMap)`. The lookup key is the logical operator's `getName()`, which is why the naming is rigid.
+`LowerToPhysicalSemanticMap` in [nes-query-compiler/](../../nes-query-compiler/src/LoweringRules/LowerToPhysical/), with its header under `private/`. This is where the API key is resolved from the environment. Registration: `add_registry_entry(LoweringRule SemanticMap)`. The lookup key is the logical operator's `getName()`, which is why the naming is rigid.
 
 Stage 1 uses the six-argument `PhysicalOperatorWrapper` constructor with `PipelineLocation::INTERMEDIATE` — **no OperatorHandler**, exactly like InferModel.
 
-**Physical operator.** Structured like [InferModelPhysicalOperator.cpp](nes-physical-operators/src/Inference/InferModelPhysicalOperator.cpp): a `shared_ptr` to a wrapper holding one HTTP client per worker thread (the `shared_ptr` is required because the type erasure returns the operator by value), reached through `nautilus::invoke`. Physical operators are **not registered anywhere** — just add the source file to the CMakeLists.
+**Physical operator.** Structured like [InferModelPhysicalOperator.cpp](../../nes-physical-operators/src/Inference/InferModelPhysicalOperator.cpp): a `shared_ptr` to a wrapper holding one HTTP client per worker thread (the `shared_ptr` is required because the type erasure returns the operator by value), reached through `nautilus::invoke`. Physical operators are **not registered anywhere** — just add the source file to the CMakeLists.
 
 Per record: read `depends_on`, build the prompt, POST synchronously, parse, write the output field.
 
-**Writing text fields** — the exact template is [ToBase64PhysicalFunction.cpp:56-71](nes-physical-operators/src/Functions/ToBase64PhysicalFunction.cpp#L56-L71): estimate an upper bound, call `arena.allocateVariableSizedData(maxSize)`, `nautilus::invoke` a free C++ function that writes into it and returns the **actual** length, then return `VariableSizedData(ptr, actualSize)` over the same pointer. Precisely the pattern for a response of unknown length.
+**Writing text fields** — the exact template is [ToBase64PhysicalFunction.cpp:56-71](../../nes-physical-operators/src/Functions/ToBase64PhysicalFunction.cpp#L56-L71): estimate an upper bound, call `arena.allocateVariableSizedData(maxSize)`, `nautilus::invoke` a free C++ function that writes into it and returns the **actual** length, then return `VariableSizedData(ptr, actualSize)` over the same pointer. Precisely the pattern for a response of unknown length.
 
 Responses larger than a TupleBuffer are unproblematic: they land in their own unpooled child buffer automatically. The only real ceiling is `unpooledMemoryBudgetInBytes`; beyond it `CannotAllocateBuffer` is thrown and the query fails cleanly. Exceptions propagate correctly out of `nautilus::invoke` (non-`noexcept` invokes are traced as `CALL_WITH_EXCEPTION_HANDLING`).
 
@@ -302,45 +304,43 @@ Stage 2 therefore changes the call site, not the logic. A `MockSemanticBackend` 
 
 ### Phase 6 — Tests
 
-- **Parser unit tests** in [StatementBinderTest.cpp](nes-sql-parser/tests/StatementBinderTest.cpp), modelled on the `CreateModelStatement` tests including a negative case.
-- **Logical operator test** (schema inference, serialization round-trip) in [nes-logical-operators/tests/](nes-logical-operators/tests/).
-- **Physical operator test** against the mock backend, modelled on [InferModelPhysicalOperatorTest.cpp](nes-physical-operators/tests/InferModelPhysicalOperatorTest.cpp).
+- **Parser unit tests** in [StatementBinderTest.cpp](../../nes-sql-parser/tests/StatementBinderTest.cpp), modelled on the `CreateModelStatement` tests including a negative case.
+- **Logical operator test** (schema inference, serialization round-trip) in [nes-logical-operators/tests/](../../nes-logical-operators/tests/).
+- **Physical operator test** against the mock backend, modelled on [InferModelPhysicalOperatorTest.cpp](../../nes-physical-operators/tests/InferModelPhysicalOperatorTest.cpp).
 - **System tests** in a new `nes-systests/semantic/` directory. `.test` files are discovered automatically; no CMake change needed.
 
-**The determinism problem.** System tests compare exact output — [InferModel.test](nes-systests/inference/InferModel.test) asserts `0.946717,0.051443,…`. LLM output is not deterministic. The answer is the `MockSemanticBackend`, selected through a catalog option (`'mock' AS backend`). That makes grammar, catalog, schema inference, lowering and record flow fully testable without ever touching a model.
+**The determinism problem.** System tests compare exact output — [InferModel.test](../../nes-systests/inference/InferModel.test) asserts `0.946717,0.051443,…`. LLM output is not deterministic. The answer is the `MockSemanticBackend`, selected through a catalog option (`'mock' AS backend`). That makes grammar, catalog, schema inference, lowering and record flow fully testable without ever touching a model.
 
-The real endpoint gets a separate `.test_nightly` that only asserts the output column is non-empty — exactly what `test_map_executes_against_real_local_llm` does in the reference, which likewise only checks `sentiment != ""`. If a fuzzy comparison is needed later, [Check.hpp](nes-systests/systest/private/ResultChecker/Check.hpp) is a clean extension point: add a new type to the `AnyCheck` variant; the concept only requires `check() -> Verdict`.
+The real endpoint gets a separate `.test_nightly` that only asserts the output column is non-empty — exactly what `test_map_executes_against_real_local_llm` does in the reference, which likewise only checks `sentiment != ""`. If a fuzzy comparison is needed later, [Check.hpp](../../nes-systests/systest/private/ResultChecker/Check.hpp) is a clean extension point: add a new type to the `AnyCheck` variant; the concept only requires `check() -> Verdict`.
 
 ---
 
 ## Stage 2: asynchrony (follow-up work)
 
-> **Alternative design:** [docs/design/async_operators.md](docs/design/async_operators.md) splits an async operator into a dispatch sink and a result source instead of defer-and-poll.
-
 The Python prototype gets its throughput from batching (61 % fewer tokens) and concurrency (39× speedup at 30 parallel requests). For the native implementation there is a hard constraint that only surfaced during exploration:
 
-> **A background thread cannot feed results into the pipeline itself.** `PipelineExecutionContext::emitBuffer` is a lambda bound to the stack frame of the currently running `WorkTask` ([QueryEngine.cpp:493-519](nes-query-engine/QueryEngine.cpp#L493-L519)). The PEC is a stack object and dies when `execute()` returns. An `&pec` held by your own thread is a dangling reference — and `emitWork` additionally relies on the thread-local `WorkerThread::id`.
+> **A background thread cannot feed results into the pipeline itself.** `PipelineExecutionContext::emitBuffer` is a lambda bound to the stack frame of the currently running `WorkTask` ([QueryEngine.cpp:493-519](../../nes-query-engine/QueryEngine.cpp#L493-L519)). The PEC is a stack object and dies when `execute()` returns. An `&pec` held by your own thread is a dangling reference — and `emitWork` additionally relies on the thread-local `WorkerThread::id`.
 
 So the obvious design ("the I/O thread calls `emitBuffer`") does not work. The viable path is **defer and poll** via `repeatTask`:
 
-1. **`SemanticMapOperatorHandler : OperatorHandler`**, created during lowering (`getNextOperatorHandlerId()` plus the eight-argument `PhysicalOperatorWrapper`), owns the in-flight table keyed on `(OriginId, SequenceNumber, ChunkNumber)` and its own thread pool of [`NES::Thread`](nes-common/include/Thread.hpp). Cache the handler pointer once in `open()` in operator-local state (template: `WindowOperatorBuildLocalState`) — `ExecutionContext::getGlobalOperatorHandler` deep-copies the entire handler map on every call.
-2. **`execute()` enqueues the record and returns immediately** — the template is [NetworkSink::execute](nes-sinks/src/NetworkSink.cpp#L153-L166), which has exactly this shape (`SendResult::Full` → stash + retry).
+1. **`SemanticMapOperatorHandler : OperatorHandler`**, created during lowering (`getNextOperatorHandlerId()` plus the eight-argument `PhysicalOperatorWrapper`), owns the in-flight table keyed on `(OriginId, SequenceNumber, ChunkNumber)` and its own thread pool of [`NES::Thread`](../../nes-common/include/Thread.hpp). Cache the handler pointer once in `open()` in operator-local state (template: `WindowOperatorBuildLocalState`) — `ExecutionContext::getGlobalOperatorHandler` deep-copies the entire handler map on every call.
+2. **`execute()` enqueues the record and returns immediately** — the template is [NetworkSink::execute](../../nes-sinks/src/NetworkSink.cpp#L153-L166), which has exactly this shape (`SendResult::Full` → stash + retry).
 3. **`close()` checks for completion.** Still outstanding → call `pec->repeatTask(inputBuffer, ~10ms)` through a proxy and return **immediately**. Done → write the results into the records and let the pipeline continue normally.
-4. **`terminate()` → `handler->stop(...)`** through a proxy (template: [WindowProbePhysicalOperator.cpp:62-69](nes-physical-operators/src/WindowProbePhysicalOperator.cpp#L62-L69)). With requests still outstanding, `pec.repeatTask({}, 10ms)` — the `StopPipelineTask` repeat path calls `stop()` again, the same way `MQTTSink::stop` drains its QoS tokens.
+4. **`terminate()` → `handler->stop(...)`** through a proxy (template: [WindowProbePhysicalOperator.cpp:62-69](../../nes-physical-operators/src/WindowProbePhysicalOperator.cpp#L62-L69)). With requests still outstanding, `pec.repeatTask({}, 10ms)` — the `StopPipelineTask` repeat path calls `stop()` again, the same way `MQTTSink::stop` drains its QoS tokens.
 
 ### Three details that are painful to learn the hard way
 
 **Arena memory dies at the end of `execute()`.** Anything parked for a later `repeatTask` must be copied into handler-owned memory — a `TupleBuffer` from `allocateBuffer()`, or simply a `std::string` in the handler. An arena-allocated prompt is invalid the moment the call returns.
 
-**Backpressure comes for free.** `repeatTask` **moves the `TaskCallback` into the repeated task**. The source's in-flight semaphore is only released by that callback's `onComplete`, so it stays held for as long as you keep polling. Once `inflightBufferLimit` is exhausted, the source throttles itself. **Nothing** in the [BackpressureChannel](nes-executable/include/BackpressureChannel.hpp) needs to change, and its single-controller invariant stays intact. This is exactly how `NetworkSink` gets by with two threshold knobs.
+**Backpressure comes for free.** `repeatTask` **moves the `TaskCallback` into the repeated task**. The source's in-flight semaphore is only released by that callback's `onComplete`, so it stays held for as long as you keep polling. Once `inflightBufferLimit` is exhausted, the source throttles itself. **Nothing** in the [BackpressureChannel](../../nes-executable/include/BackpressureChannel.hpp) needs to change, and its single-controller invariant stays intact. This is exactly how `NetworkSink` gets by with two threshold knobs.
 
-**`repeatTask` is strictly once per execution.** Afterwards **no** PEC method may be touched — every one of them asserts on `!wasRepeated` ([QueryEngine.cpp:235-288](nes-query-engine/QueryEngine.cpp#L235-L288)). On top of that, in-flight HTTP requests are **invisible** to the engine's `pendingTasks` counter, so a stop will not wait for them on its own. Draining in `stop()` is mandatory, not optional.
+**`repeatTask` is strictly once per execution.** Afterwards **no** PEC method may be touched — every one of them asserts on `!wasRepeated` ([QueryEngine.cpp:235-288](../../nes-query-engine/QueryEngine.cpp#L235-L288)). On top of that, in-flight HTTP requests are **invisible** to the engine's `pendingTasks` counter, so a stop will not wait for them on its own. Draining in `stop()` is mandatory, not optional.
 
 ### A note on the Python repository's design document
 
-Under "Alternatives → A2" it records two variants proposed by the NES maintainers. "Put the element back in the queue with a flag saying *waiting for an answer*" is **exactly** what [`repeatTask(buffer, ms)`](nes-executable/include/PipelineExecutionContext.hpp#L52) already offers through the `DelayedTaskSubmitter`, delay included rather than a busy loop. The race condition feared there, between the admission queue and the internal queue, does not exist: repeated tasks always go to the internal queue, and the internal queue is read first. The mechanism is present and used in production by two sinks; the document simply does not know about it.
+Under "Alternatives → A2" it records two variants proposed by the NES maintainers. "Put the element back in the queue with a flag saying *waiting for an answer*" is **exactly** what [`repeatTask(buffer, ms)`](../../nes-executable/include/PipelineExecutionContext.hpp#L52) already offers through the `DelayedTaskSubmitter`, delay included rather than a busy loop. The race condition feared there, between the admission queue and the internal queue, does not exist: repeated tasks always go to the internal queue, and the internal queue is read first. The mechanism is present and used in production by two sinks; the document simply does not know about it.
 
-The one genuinely new thing would be an **operator-owned thread**, which nothing in the codebase does today. Threads exist only for sources, the delayed task submitter and the engine itself. If that meets resistance: the Rust side already has a complete async stack with `tokio` (`rt-multi-thread`) and the cxx bridge in [nes-network/](nes-network/), including `identifyThread` for correct logging from tokio threads. `NetworkSource`/`NetworkSink` prove that a blocking C++ interface can sit cleanly on top of an async Rust runtime.
+The one genuinely new thing would be an **operator-owned thread**, which nothing in the codebase does today. Threads exist only for sources, the delayed task submitter and the engine itself. If that meets resistance: the Rust side already has a complete async stack with `tokio` (`rt-multi-thread`) and the cxx bridge in [nes-network/](../../nes-network/), including `identifyThread` for correct logging from tokio threads. `NetworkSource`/`NetworkSink` prove that a blocking C++ interface can sit cleanly on top of an async Rust runtime.
 
 ---
 
@@ -370,9 +370,9 @@ This plan is deliberately cut so the expensive infrastructure is built once. It 
 
 This plan targets a **1:1 mapping**: `Reorderer`, no `OriginIdAssigner`, `PipelineLocation::INTERMEDIATE`. That still holds for `SEM_FILTER`. It does not hold for the window-based operators, which need `WindowBasedOperatorHandler`, the slice store, the EMIT/SCAN pipeline break and `OriginIdAssigner` — a different lowering shape altogether. In the codebase exactly three operators implement `OriginIdAssigner`: source, windowed aggregation and join.
 
-The grammar attachment point is different too. Windows in NebulaStream are **not a TVF**: `windowedAggregationClause` hangs off [querySpecification](nes-sql-parser/AntlrSQL.g4#L139), and joins have their own [windowClause](nes-sql-parser/AntlrSQL.g4#L149-L150). These three therefore do *not* follow the `MODEL_INFERENCE` template that runs through this plan.
+The grammar attachment point is different too. Windows in NebulaStream are **not a TVF**: `windowedAggregationClause` hangs off [querySpecification](../../nes-sql-parser/AntlrSQL.g4#L139), and joins have their own [windowClause](../../nes-sql-parser/AntlrSQL.g4#L149-L150). These three therefore do *not* follow the `MODEL_INFERENCE` template that runs through this plan.
 
-One useful conclusion falls out of that: **`SEM_AGG` should probably not be an operator at all, but an aggregation function.** [Avg/Count/Max/Median/Min/Sum](nes-logical-operators/include/Operators/Windows/Aggregations/) already exist, along with an `AggregationLogicalFunctionRegistry`. A `SELECT SEM_AGG(notes, '...') FROM s WINDOW TUMBLING(...)` would then inherit the slice store, watermarks and window triggering for free instead of reimplementing them.
+One useful conclusion falls out of that: **`SEM_AGG` should probably not be an operator at all, but an aggregation function.** [Avg/Count/Max/Median/Min/Sum](../../nes-logical-operators/include/Operators/Windows/Aggregations/) already exist, along with an `AggregationLogicalFunctionRegistry`. A `SELECT SEM_AGG(notes, '...') FROM s WINDOW TUMBLING(...)` would then inherit the slice store, watermarks and window triggering for free instead of reimplementing them.
 
 ### Deliberately left open
 
@@ -399,7 +399,7 @@ docker run --workdir $(pwd) -v $(pwd):$(pwd) nebulastream/nes-development:local 
    cmake-build-debug/nes-systests/systest/systest -t nes-systests/semantic/SemanticMap.test
    ```
    It asserts: the output schema is correct, pass-through fields are unchanged, **record count in == record count out** (SEM_MAP never drops rows), and a deliberately malformed mock response leaves `default_value` in the column.
-3. **Against a real endpoint** — start Ollama or vLLM locally and run the `.test_nightly`, or drive it through [topology.yaml](topology.yaml) with a generator source.
+3. **Against a real endpoint** — start Ollama or vLLM locally and run the `.test_nightly`.
 4. **Equivalence with the Python reference** — this is the actual acceptance test. Run the same query through both paths: `d1q1` (Rotten Tomatoes, `prompt='Determine if the review is positive or negative'`, `depends_on=['reviewText']`, `output_column='sentiment'`) once through the Python prototype and once through NES against the same endpoint with `PayloadFormat::SPACE_JOINED`. At `temperature=0` the label distributions should agree.
 5. **Full suite**: `ctest --test-dir cmake-build-debug -j`
 
@@ -431,20 +431,3 @@ Phases 4–6 were implemented on this branch, porting the proven parts of the in
 | Failure semantics | — | Transport failure after retries (unreachable, non-2xx) throws `InferenceRuntimeFailure` (3006) and fails the query; a malformed envelope, unparseable JSON, a missing row/field or an off-label answer writes `default_value`. Rows are never dropped. |
 | Systest DROP/SHOW | — | Not expressible: the systest parser only knows CREATE/SELECT/EXPLAIN. Covered by `SemanticMapStatementTest`. |
 | Nightly | `.test_nightly` | `nes-systests/semantic/SemanticMapRealEndpoint.test`, group `Semantic-Nightly` (excluded from ctest). It asserts non-empty answers with `CHAR_LENGTH(sentiment) > UINT64(0)`, because the grammar has no empty string literal. Needs `--network host` and `llama3.1:latest`. It is flaky by nature: one of four runs on 2026-09-26 had a default-filled row. |
-
-### M5 re-run (2026-09-26, `tims-home-server`, `llama3.1:latest` 8B with temperature 0 via a derived Ollama tag)
-
-d1q1 (`'Determine if the review is positive or negative'`, `SPACE_JOINED`, declared
-`POSITIVE,NEGATIVE`) over the first 200 Rotten Tomatoes reviews with text. Python baseline: the
-reference's own prompt builders, `_parse_llm_json` and `_normalize_answer`, run serially.
-
-| | rows/s (wall, incl. ~1 s startup) | POSITIVE / NEGATIVE / default | accuracy vs `scoreSentiment` |
-|---|---|---|---|
-| NES, 1 thread | 1.94 | 117 / 65 / 18 | 157/200 |
-| NES, 4 threads | 3.14 | 119 / 65 / 16 | 163/200 |
-| NES, 16 threads | 3.06 | 114 / 64 / 22 | 152/200 |
-| Python, serial | 1.95 | 123 / 65 / 12 | 164/200 |
-
-- The prototype measured 2.01 / 2.74 / 2.90 rows/s. The shape is the same: the gain stops at 4 threads because Ollama serializes inference.
-- Temperature 0 does not make Ollama deterministic. Two NES runs disagree on 24–31 of 200 rows, about the same as NES vs Python (30), so the parity gap is endpoint noise rather than a port drift.
-- Dropping the fuzzy rung changed 0 Python labels in this run. In the NES 1-thread run it affected one row (answer `NATIVE`, which difflib would have mapped to NEGATIVE). The other default-fills are genuine off-label answers (`neutral`, `mixed`, `-1`) that the reference default-fills too.
