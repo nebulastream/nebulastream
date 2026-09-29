@@ -15,6 +15,7 @@
 #pragma once
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -50,6 +51,13 @@ public:
     /// This method can only be called once per pipeline execution! The Pipeline should immediately finish its execution as the exact same task could be executed
     /// immediately.
     virtual void repeatTask(const TupleBuffer&, std::chrono::milliseconds) = 0;
+
+    /// Runs `callback` on a worker thread after at least `delay`. Buffers it emits go to the successors of this pipeline.
+    /// It never runs during or after the pipeline's stop. One still pending is dropped without running once it becomes due or the
+    /// engine shuts down, so the pipeline's stop must do its work.
+    /// Its context has no operator handlers and cannot repeat a task.
+    /// The callback can run concurrently with the pipeline's tasks and other callbacks.
+    virtual void scheduleCallback(std::chrono::microseconds delay, std::function<void(PipelineExecutionContext&)> callback) = 0;
 
     virtual TupleBuffer allocateTupleBuffer() = 0;
     [[nodiscard]] virtual WorkerThreadId getWorkerThreadId() const = 0;

@@ -15,6 +15,7 @@
 #include <Task.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <tuple>
 #include <utility>
@@ -24,6 +25,7 @@
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
 
 namespace NES
@@ -154,6 +156,16 @@ StartQueryTask::StartQueryTask(
     : BaseTask(std::move(queryId), std::move(callback)), queryPlan(std::move(queryPlan)), catalog(std::move(catalog))
 {
 }
+
+PipelineCallbackTask::PipelineCallbackTask(
+    QueryId queryId, std::weak_ptr<RunningQueryPlanNode> pipeline, std::function<void(PipelineExecutionContext&)> function)
+    : BaseTask(std::move(queryId), TaskCallback{})
+    , pipeline(std::move(pipeline))
+    , function(std::make_unique<std::function<void(PipelineExecutionContext&)>>(std::move(function)))
+{
+}
+
+static_assert(sizeof(PipelineCallbackTask) <= sizeof(WorkTask), "A pipeline callback must not grow the task queue's slots");
 
 PendingPipelineStopTask::PendingPipelineStopTask(
     QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback)
