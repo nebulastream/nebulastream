@@ -1,4 +1,4 @@
-Logical operator# SEM_MAP as a native operator in NebulaStream
+Logical operator SEM_MAP as a native operator in NebulaStream
 
 ## Context
 
