@@ -64,9 +64,9 @@ void RecordBuffer::setOriginId(const nautilus::val<OriginId>& originId)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setOriginId, buffer.asArg(), originId);
 }
 
-void RecordBuffer::setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber)
+void RecordBuffer::setSequenceRange(const nautilus::val<SequenceNumber>& last, const nautilus::val<uint32_t>& offset)
 {
-    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSequenceNumber, buffer.asArg(), seqNumber);
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSequenceRange, buffer.asArg(), last, offset);
 }
 
 void RecordBuffer::setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber)
@@ -102,6 +102,11 @@ void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
 nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
 {
     return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg());
+}
+
+nautilus::val<uint32_t> RecordBuffer::getSequenceRangeOffset()
+{
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceRangeOffset, buffer.asArg());
 }
 
 nautilus::val<Timestamp> RecordBuffer::getCreatingTs()

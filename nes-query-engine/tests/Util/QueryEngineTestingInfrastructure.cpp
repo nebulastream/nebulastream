@@ -126,7 +126,10 @@ std::vector<TupleBuffer> TestSinkController::takeBuffers()
     std::ranges::sort(
         buffers,
         std::less{},
-        [](const auto& buffer) { return SequenceData{buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()}; });
+        [](const auto& buffer)
+        {
+            return SequenceData{buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk()};
+        });
     return buffers;
 }
 

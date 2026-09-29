@@ -33,6 +33,7 @@ pub mod ffi {
 
     struct SerializedTupleBufferHeader {
         sequence_number: u64,
+        sequence_range_offset: u32,
         origin_id: u64,
         chunk_number: u64,
         number_of_tuples: u64,
@@ -384,6 +385,7 @@ fn receive_buffer(
         .as_mut()
         .setMetadata(&ffi::SerializedTupleBufferHeader {
             sequence_number: buffer.sequence_number as u64,
+            sequence_range_offset: buffer.sequence_range_offset,
             origin_id: buffer.origin_id as u64,
             watermark: buffer.watermark as u64,
             chunk_number: buffer.chunk_number as u64,
@@ -464,6 +466,7 @@ fn send_buffer(
 ) -> ffi::SendResult {
     let buffer = TupleBuffer {
         sequence_number: metadata.sequence_number,
+        sequence_range_offset: metadata.sequence_range_offset,
         origin_id: metadata.origin_id,
         chunk_number: metadata.chunk_number,
         number_of_tuples: metadata.number_of_tuples,

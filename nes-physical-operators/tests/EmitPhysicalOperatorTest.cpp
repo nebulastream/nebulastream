@@ -32,11 +32,13 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/VarVal.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Interface/NautilusBuffer.hpp>
+#include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -147,6 +149,7 @@ public:
         ExecutionContext executionContext{&pec, &arena};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
+        executionContext.sequenceRangeOffset = buffer.getSequenceRangeOffset();
         executionContext.originId = buffer.getOriginId();
 
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(std::addressof(buffer))};
@@ -184,9 +187,14 @@ public:
     void checkForDups(std::source_location location = std::source_location::current())
     {
         const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkForDups");
-        auto uniqueSequences = (*buffers.rlock())
-            | std::views::transform([](const auto& buffer)
-                                    { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
+        auto uniqueSequences
+            = (*buffers.rlock())
+            | std::views::transform(
+                  [](const auto& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
             | std::ranges::to<std::set>();
 
         EXPECT_EQ(buffers.rlock()->size(), uniqueSequences.size()) << "Received duplicate sequences";
@@ -241,6 +249,45 @@ public:
     ///NOLINTEND(fuchsia-default-arguments-declarations)
 
     void reset() { buffers.wlock()->clear(); }
+
+    void runTask(const EmitPhysicalOperator& emit, TupleBuffer buffer, const uint32_t numberOfRecords)
+    {
+        run(
+            [&](auto& executionContext, auto& recordBuffer)
+            {
+                emit.open(executionContext, recordBuffer);
+                for (uint32_t value = 0; value < numberOfRecords; ++value)
+                {
+                    Record record{std::unordered_map<Record::RecordFieldIdentifier, VarVal>{
+                        {Identifier::parse("A_FIELD"), VarVal{nautilus::val<uint32_t>{value}}}}};
+                    emit.execute(executionContext, record);
+                }
+                emit.close(executionContext, recordBuffer);
+            },
+            std::move(buffer));
+    }
+
+    /// Runs an input covering 5 sequence numbers whose 300 records spill over several output buffers, and checks that every output
+    /// keeps its range.
+    void expectSpilledOutputKeepsRange(const EmitPhysicalOperator& emit)
+    {
+        constexpr uint32_t numberOfRecords = 300;
+        auto buffer = createBuffer(SequenceNumber::INITIAL + 9, ChunkNumber::INITIAL, true);
+        buffer.setSequenceRange(SequenceNumber(SequenceNumber::INITIAL + 9), 4);
+        runTask(emit, buffer, numberOfRecords);
+
+        ASSERT_GT(buffers.rlock()->size(), 1);
+        checkForDups();
+        checkLastChunks();
+        uint64_t numberOfTuples = 0;
+        for (const auto& output : *buffers.rlock())
+        {
+            EXPECT_EQ(output.getSequenceNumber(), SequenceNumber(SequenceNumber::INITIAL + 9));
+            EXPECT_EQ(output.getSequenceRangeOffset(), 4);
+            numberOfTuples += output.getNumberOfTuples();
+        }
+        EXPECT_EQ(numberOfTuples, numberOfRecords);
+    }
 
     folly::Synchronized<std::vector<TupleBuffer>> buffers;
     std::shared_ptr<BufferManager> bm = BufferManager::create(
@@ -302,12 +349,16 @@ TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
         checkForDups();
         checkLastChunks();
 
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
+        hasMorePermutations
+            = std::ranges::next_permutation(
+                  inputBuffers,
+                  std::less{},
+                  [](const TupleBuffer& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
+                  .found;
     }
 }
 
@@ -346,12 +397,16 @@ TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
         checkNumberOfBuffers(8);
         checkForDups();
         checkLastChunks();
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
+        hasMorePermutations
+            = std::ranges::next_permutation(
+                  inputBuffers,
+                  std::less{},
+                  [](const TupleBuffer& buffer)
+                  {
+                      return SequenceData(
+                          buffer.getSequenceNumber(), buffer.getSequenceRangeOffset(), buffer.getChunkNumber(), buffer.isLastChunk());
+                  })
+                  .found;
     };
 }
 
@@ -405,4 +460,10 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
         checkLastChunks();
     }
 }
+
+TEST_F(EmitPhysicalOperatorTest, SpilledOutputIsChunkedAndKeepsRange)
+{
+    expectSpilledOutputKeepsRange(createUUT());
+}
+
 }

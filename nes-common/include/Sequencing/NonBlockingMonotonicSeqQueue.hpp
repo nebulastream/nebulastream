@@ -84,24 +84,32 @@ public:
         return *this;
     }
 
+    /// Stores `newValue` for every sequence number of the range of `sequenceData` once all of its chunks arrived.
+    /// Ranges must not overlap, and all chunks of a range must carry the same offset.
     void emplace(SequenceData sequenceData, T newValue)
     {
         if (auto opt = chunks.collect(sequenceData, Timestamp(newValue)))
         {
-            auto [sequenceNumber, value] = *opt;
+            auto [last, value] = *opt;
+            PRECONDITION(
+                last.getRawValue() >= SequenceNumber::INITIAL + sequenceData.sequenceRangeOffset,
+                "Sequence range [{} - {}, {}] starts below the first sequence number",
+                last,
+                sequenceData.sequenceRangeOffset,
+                last);
+            const auto first = last.getRawValue() - sequenceData.sequenceRangeOffset;
             INVARIANT(
-                sequenceNumber.getRawValue() > currentSeq,
+                first > currentSeq.load(),
                 "Invalid sequenceNumber: {} has already been seen. Current Sequence: {}",
-                sequenceNumber,
-                currentSeq);
-            /// First emplace the value to the specific block of the sequenceNumber.
-            /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
-            emplaceValueInBlock(sequenceNumber.getRawValue(), value.getRawValue());
-            /// Makes the slot visible before shifting. Otherwise this thread and a concurrently shifting one could each miss the other's
-            /// write, stalling currentSeq until the next emplace. Pairs with the seq_cst loads in lastInsertedFrom.
+                first,
+                currentSeq.load());
+            emplaceValues(first, last.getRawValue(), value.getRawValue());
+            /// Pairs with the seq_cst loads in `lastInsertedFrom`: of this thread and a concurrently shifting one, at least one sees
+            /// the other's write.
             std::atomic_thread_fence(std::memory_order::seq_cst);
             /// Try to shift the current sequence number
             shiftCurrentValue();
+            chunks.releaseUpTo(SequenceNumber(currentSeq.load()));
         }
     }
 
@@ -121,65 +129,50 @@ public:
         return value.value.load(std::memory_order_relaxed);
     }
 
+    [[nodiscard]] size_t getNumberOfChunkNodes() const { return chunks.getNumberOfNodes(); }
+
 private:
-    /// @brief Emplace a value T to the specific location of the passed sequence number
-    ///
-    /// The method is split in two phased:
-    /// 1. Find the correct block for this sequence number. If the block not yet exists we add a new block to the linked-list.
-    /// 2. Place value at the correct slot associated with the sequence number.\
-    ///
-    /// @param seq the sequence number of the value
-    /// @param value the value that should be stored.
-    void emplaceValueInBlock(SequenceNumber::Underlying seq, T value)
+    /// Stores `value` at the slots of [`first`, `last`] and appends the blocks they need.
+    void emplaceValues(const SequenceNumber::Underlying first, const SequenceNumber::Underlying last, const T value)
     {
-        /// Each block contains blockSize elements and covers sequence numbers from
-        /// [blockIndex * blockSize] till [blockIndex * blockSize + blockSize]
-        /// Calculate the target block index, which contains the sequence number
-        auto targetBlockIndex = seq / BlockSize;
-        /// Lookup the current block
         auto currentBlock = std::atomic_load(&head);
-        /// if the blockIndex is smaller the target block index we travers the next block
-        while (currentBlock->blockIndex < targetBlockIndex)
+        for (auto seq = first; seq <= last; ++seq)
         {
-            /// append new block if the next block is a nullptr
-            auto nextBlock = std::atomic_load(&currentBlock->next);
-            if (nextBlock == nullptr)
+            while (currentBlock->blockIndex < seq / BlockSize)
             {
-                auto newBlock = std::make_shared<Block>(currentBlock->blockIndex + 1);
-                std::atomic_compare_exchange_weak(&currentBlock->next, &nextBlock, newBlock);
-                /// we don't care if this or another thread succeeds, as we just start over again in the loop
-                /// and use what ever is now stored in currentBlock.next
+                auto nextBlock = std::atomic_load(&currentBlock->next);
+                if (nextBlock == nullptr)
+                {
+                    /// If another thread appended first, the loop continues with its block.
+                    std::atomic_compare_exchange_strong(
+                        &currentBlock->next, &nextBlock, std::make_shared<Block>(currentBlock->blockIndex + 1));
+                }
+                else
+                {
+                    currentBlock = std::move(nextBlock);
+                }
             }
-            else
-            {
-                /// move to the next block
-                currentBlock = nextBlock;
-            }
+            INVARIANT(
+                seq >= currentBlock->blockIndex * BlockSize,
+                "sequence number: {} was in prior block: {}",
+                seq,
+                currentBlock->blockIndex * BlockSize);
+
+            /// The value is stored first, so whoever sees the sequence number also sees the value.
+            auto& slot = currentBlock->log[seq % BlockSize];
+            slot.value.store(value, std::memory_order::relaxed);
+#ifndef NO_ASSERT
+            INVARIANT(slot.seq.exchange(seq, std::memory_order::release) != seq, "sequence number: {} was emplaced twice", seq);
+#else
+            slot.seq.store(seq, std::memory_order::release);
+#endif
         }
-
-        /// check if we really found the correct block
-        const auto sequenceNumberIsNotInPriorBlock = seq >= (currentBlock->blockIndex * BlockSize);
-        INVARIANT(
-            sequenceNumberIsNotInPriorBlock, "sequence number: {} was in prior block: {}", seq, (currentBlock->blockIndex * BlockSize));
-        const auto sequenceNumberIsNotInSubsequentBlock = seq < ((currentBlock->blockIndex * BlockSize) + BlockSize);
-        INVARIANT(
-            sequenceNumberIsNotInSubsequentBlock,
-            "sequence number: {} was in subsequent block: {}",
-            seq,
-            ((currentBlock->blockIndex * BlockSize) + BlockSize));
-
-        /// Emplace value in block. The value is stored first, so whoever sees the sequence number also sees the value.
-        auto& slot = currentBlock->log[seq % BlockSize];
-        slot.value.store(value, std::memory_order::relaxed);
-        slot.seq.store(seq, std::memory_order::release);
     }
 
-    /// @brief Advances currentSeq to the last sequence number before the first one not yet inserted, and the head to its block.
-    /// Reads ahead and advances with one exchange per run instead of one per sequence number. Repeats until no inserted sequence
-    /// number follows currentSeq.
+    /// Advances `currentSeq` to the end of the run of inserted sequence numbers that follows it, and `head` to its block.
     void shiftCurrentValue()
     {
-        /// Load the head before currentSeq, so the head is never past currentSeq's block.
+        /// Loads `head` before `currentSeq`, so `head` is never past the block of `currentSeq`.
         auto currentBlock = std::atomic_load(&head);
         auto currentSequenceNumber = currentSeq.load();
         while (true)
@@ -190,7 +183,6 @@ private:
             {
                 return;
             }
-            /// On failure the exchange loads the sequence number another thread shifted to, and the loop continues from there.
             if (currentSeq.compare_exchange_strong(currentSequenceNumber, lastInserted))
             {
                 /// The thread whose exchange moves `currentSeq` into a new block advances `head`.
@@ -205,7 +197,7 @@ private:
         }
     }
 
-    /// @brief Returns the last sequence number of the consecutive run of inserted sequence numbers that follows from.
+    /// Returns the end of the run of inserted sequence numbers that follows `from`, or `from` if the next one is missing.
     static SequenceNumber::Underlying lastInsertedFrom(const Block* block, const SequenceNumber::Underlying from)
     {
         auto last = from;
@@ -214,6 +206,7 @@ private:
             const auto next = last + 1;
             if (next % BlockSize == 0)
             {
+                /// Stays valid, as the caller holds the first block and `next` is never reset.
                 block = std::atomic_load(&block->next).get();
             }
             if (block == nullptr || block->log[next % BlockSize].seq.load(std::memory_order::seq_cst) != next)
@@ -224,7 +217,6 @@ private:
         }
     }
 
-    /// @brief Moves the head forward to `block`
     void advanceHead(const std::shared_ptr<Block>& block)
     {
         auto expectedHead = std::atomic_load(&head);

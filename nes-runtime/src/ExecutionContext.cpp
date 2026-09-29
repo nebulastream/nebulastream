@@ -66,6 +66,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , watermarkTs(uint64_t{0})
     , currentTs(uint64_t{0})
     , sequenceNumber(INVALID<SequenceNumber>)
+    , sequenceRangeOffset(uint32_t{0})
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
 {

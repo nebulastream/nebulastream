@@ -71,9 +71,11 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
 
     if (isRawScan)
     {
+        /// Raw buffers cover one sequence number (@see InputFormatter).
         rawScan(executionCtx, recordBuffer);
         return;
     }
+    executionCtx.sequenceRangeOffset = recordBuffer.getSequenceRangeOffset();
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer

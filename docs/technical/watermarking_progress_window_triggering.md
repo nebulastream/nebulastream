@@ -116,6 +116,11 @@ The `SequenceNumber` is set to 1 for the first tuple buffer of each source and i
 | 1, 3, 4, 6       | 1 (Missing 2)                |
 ```
 
+A tuple buffer can also cover a range of sequence numbers, `[SequenceNumber - SequenceRangeOffset, SequenceNumber]`, for example
+when the outputs of consecutive input buffers are merged into one buffer.
+Such a buffer counts as seen for every sequence number of its range, and its `ChunkNumber` and last chunk flag refer to the whole range.
+Each sequence number of a source belongs to exactly one range.
+
 ## ChunkNumber
 As a default, sources write as many tuples to tuple buffers as possible.
 During the execution of a pipeline, it might happen that the output size of an operator is larger than the input size.

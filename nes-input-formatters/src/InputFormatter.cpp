@@ -282,6 +282,8 @@ bool indexTrailingSpanningTupleProxy(
 IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
     const TupleBuffer* tupleBuffer, Arena* arenaRef, InputFormatIndexer* indexer, SequenceShredder* sequenceShredder)
 {
+    /// The `SequenceShredder` takes consecutive sequence numbers as neighbouring raw buffers.
+    PRECONDITION(tupleBuffer->getSequenceRangeOffset() == 0, "A raw buffer must cover exactly one sequence number");
     IndexPhaseResultBuilder::startBuildingIndex();
     const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
         = IndexPhaseResultBuilder::indexRawBuffer(*indexer, *tupleBuffer);

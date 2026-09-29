@@ -53,7 +53,7 @@ TupleBuffer deepCopyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& pr
     std::ranges::copy(bufferData, copiedBuffer.getAvailableMemoryArea().begin());
     copiedBuffer.setWatermark(buffer.getWatermark());
     copiedBuffer.setChunkNumber(buffer.getChunkNumber());
-    copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
+    copiedBuffer.setSequenceRange(buffer.getSequenceNumber(), buffer.getSequenceRangeOffset());
     copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setOriginId(buffer.getOriginId());

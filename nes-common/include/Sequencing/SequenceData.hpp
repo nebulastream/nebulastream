@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <ostream>
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
@@ -21,19 +22,22 @@
 namespace NES
 {
 
+/// Position of a buffer in the sequence of its origin. It covers [`sequenceNumber` - `sequenceRangeOffset`, `sequenceNumber`],
+/// and `chunkNumber` and `lastChunk` refer to the whole range.
 struct SequenceData
 {
-    SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk);
+    SequenceData(SequenceNumber sequenceNumber, uint32_t sequenceRangeOffset, ChunkNumber chunkNumber, bool lastChunk);
     explicit SequenceData();
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj);
 
-    /// Checks sequenceNumber, then chunkNumber, then lastChunk
+    /// Checks sequenceNumber, then chunkNumber, then lastChunk, then sequenceRangeOffset
     friend auto operator<=>(const SequenceData& lhs, const SequenceData& rhs) = default;
 
     SequenceNumber::Underlying sequenceNumber;
     ChunkNumber::Underlying chunkNumber;
     bool lastChunk;
+    uint32_t sequenceRangeOffset;
 };
 
 }
