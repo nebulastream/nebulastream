@@ -122,6 +122,8 @@ pub enum DataChannelResponse {
 #[derive(Eq, PartialEq, Clone)]
 pub struct TupleBuffer {
     pub sequence_number: u64,
+    /// Number of sequence numbers before `sequence_number` that this buffer also covers.
+    pub sequence_range_offset: u32,
     pub origin_id: u64,
     pub watermark: u64,
     pub chunk_number: u64,
@@ -139,7 +141,7 @@ impl TupleBuffer {
 
 impl Debug for TupleBuffer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
+        f.write_fmt(format_args!("TupleBuffer{{ sequence_number: {}, sequence_range_offset: {}, origin_id: {}, chunk_number: {}, watermark: {}, number_of_tuples: {}, bufferSize: {}, children: {:?}}}", self.sequence_number, self.sequence_range_offset, self.origin_id, self.chunk_number, self.watermark, self.number_of_tuples, self.data.len(), self.child_buffers.iter().map(|buffer| buffer.len()).collect::<Vec<_>>()))
     }
 }
 
@@ -149,16 +151,17 @@ impl Debug for TupleBuffer {
 ///
 /// ```text
 /// Close: u8 tag = 0
-/// Data:  u8 tag = 1, u64 sequence_number, u64 origin_id, u64 watermark, u64 chunk_number, u64 number_of_tuples,
-///        u8 last_chunk, u32 data_len, u32 child_count, data bytes, child_count * (u32 child_len, child bytes)
+/// Data:  u8 tag = 1, u64 sequence_number, u32 sequence_range_offset, u64 origin_id, u64 watermark, u64 chunk_number,
+///        u64 number_of_tuples, u8 last_chunk, u32 data_len, u32 child_count, data bytes,
+///        child_count * (u32 child_len, child bytes)
 /// ```
 #[derive(Debug, Default)]
 pub struct RawDataRequestCodec;
 
 const TAG_CLOSE: u8 = 0;
 const TAG_DATA: u8 = 1;
-/// tag + 5 * u64 + last_chunk + data_len + child_count
-const DATA_HEADER_LEN: usize = 1 + 5 * 8 + 1 + 4 + 4;
+/// tag + 5 * u64 + sequence_range_offset + last_chunk + data_len + child_count
+const DATA_HEADER_LEN: usize = 1 + 5 * 8 + 4 + 1 + 4 + 4;
 
 fn invalid_data(message: &str) -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, message.to_string())
@@ -187,6 +190,7 @@ impl Serializer<DataChannelRequest> for RawDataRequestCodec {
                 let mut out = BytesMut::with_capacity(DATA_HEADER_LEN + payload_len);
                 out.put_u8(TAG_DATA);
                 out.put_u64_le(buffer.sequence_number);
+                out.put_u32_le(buffer.sequence_range_offset);
                 out.put_u64_le(buffer.origin_id);
                 out.put_u64_le(buffer.watermark);
                 out.put_u64_le(buffer.chunk_number);
@@ -226,6 +230,14 @@ impl Deserializer<DataChannelRequest> for RawDataRequestCodec {
                     return Err(invalid_data("truncated data channel header"));
                 }
                 let sequence_number = src.get_u64_le();
+                let sequence_range_offset = src.get_u32_le();
+                // The range must start at or after the first sequence number, 1.
+                if sequence_range_offset != 0 && u64::from(sequence_range_offset) >= sequence_number
+                {
+                    return Err(invalid_data(
+                        "sequence range starts below the first sequence number",
+                    ));
+                }
                 let origin_id = src.get_u64_le();
                 let watermark = src.get_u64_le();
                 let chunk_number = src.get_u64_le();
@@ -262,6 +274,7 @@ impl Deserializer<DataChannelRequest> for RawDataRequestCodec {
 
                 Ok(DataChannelRequest::Data(TupleBuffer {
                     sequence_number,
+                    sequence_range_offset,
                     origin_id,
                     watermark,
                     chunk_number,
@@ -486,6 +499,7 @@ mod raw_codec_tests {
     fn sample(data: Vec<u8>, children: Vec<Vec<u8>>) -> TupleBuffer {
         TupleBuffer {
             sequence_number: 7,
+            sequence_range_offset: 5,
             origin_id: u64::MAX,
             watermark: 42,
             chunk_number: 3,
@@ -554,6 +568,17 @@ mod raw_codec_tests {
         assert!(
             Pin::new(&mut codec)
                 .deserialize(&BytesMut::from(&[9u8][..]))
+                .is_err()
+        );
+        // a range reaching below the first sequence number is invalid
+        let mut below_first = sample(vec![], vec![]);
+        below_first.sequence_range_offset = 7;
+        let bytes = Pin::new(&mut codec)
+            .serialize(&DataChannelRequest::Data(below_first))
+            .unwrap();
+        assert!(
+            Pin::new(&mut codec)
+                .deserialize(&BytesMut::from(&bytes[..]))
                 .is_err()
         );
         // a huge child count in a tiny frame must not allocate
