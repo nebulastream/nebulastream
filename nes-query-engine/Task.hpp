@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <tuple>
 #include <utility>
@@ -28,6 +29,7 @@
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <QueryId.hpp>
 
 namespace NES
@@ -185,6 +187,18 @@ struct StartQueryTask : BaseTask
     std::weak_ptr<QueryCatalog> catalog;
 };
 
+/// Runs a callback that a pipeline scheduled for later (@see PipelineExecutionContext::scheduleCallback).
+/// A pending callback does not keep its pipeline alive.
+struct PipelineCallbackTask : BaseTask
+{
+    PipelineCallbackTask(
+        QueryId queryId, std::weak_ptr<RunningQueryPlanNode> pipeline, std::function<void(PipelineExecutionContext&)> function);
+
+    std::weak_ptr<RunningQueryPlanNode> pipeline;
+    /// On the heap, so this task is no larger than a `WorkTask`.
+    std::unique_ptr<std::function<void(PipelineExecutionContext&)>> function;
+};
+
 struct PendingPipelineStopTask : BaseTask
 {
     PendingPipelineStopTask(QueryId queryId, std::shared_ptr<RunningQueryPlanNode> pipeline, size_t attempts, TaskCallback callback);
@@ -201,7 +215,8 @@ using Task = std::variant<
     StopSourceTask,
     PendingPipelineStopTask,
     StopPipelineTask,
-    StartPipelineTask>;
+    StartPipelineTask,
+    PipelineCallbackTask>;
 
 void succeedTask(Task& task);
 
