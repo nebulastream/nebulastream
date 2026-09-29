@@ -67,14 +67,20 @@ NAUTILUS_INLINE inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS
     return tupleBuffer->getCreationTimestampInMS();
 };
 
-NAUTILUS_INLINE inline void NES_Memory_TupleBuffer_setSequenceNumber(TupleBuffer* tupleBuffer, const SequenceNumber sequenceNumber)
+NAUTILUS_INLINE inline void
+NES_Memory_TupleBuffer_setSequenceRange(TupleBuffer* tupleBuffer, const SequenceNumber last, const uint32_t offset)
 {
-    tupleBuffer->setSequenceNumber(sequenceNumber);
+    tupleBuffer->setSequenceRange(last, offset);
 };
 
 NAUTILUS_INLINE inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getSequenceNumber();
+}
+
+NAUTILUS_INLINE inline uint32_t NES_Memory_TupleBuffer_getSequenceRangeOffset(const TupleBuffer* tupleBuffer) noexcept
+{
+    return tupleBuffer->getSequenceRangeOffset();
 }
 
 NAUTILUS_INLINE inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(TupleBuffer* tupleBuffer, const Timestamp value)
