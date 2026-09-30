@@ -64,17 +64,16 @@ public:
         handler = std::make_shared<SemanticModelStatementHandler>(semanticModelCatalog);
     }
 
-    static constexpr auto SentimentModel
-        = "CREATE SEMANTIC MODEL sentiment_clf "
-          "INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
-          "SET ('Determine if the review is positive or negative' AS LLM.PROMPT, "
-          "     'http://localhost:8000/v1' AS LLM.ENDPOINT, "
-          "     'meta-llama/Llama-3.3-70B-Instruct' AS LLM.MODEL_NAME, "
-          "     'POSITIVE, NEGATIVE,' AS LLM.OUTPUT_VALUES, "
-          "     10 AS LLM.BATCH_SIZE, "
-          "     'JSON_OBJECT' AS LLM.PAYLOAD_FORMAT, "
-          "     'OPENAI_API_KEY' AS LLM.API_KEY_ENV, "
-          "     'mock' AS LLM.BACKEND)";
+    static constexpr auto SentimentModel = "CREATE SEMANTIC MODEL sentiment_clf "
+                                           "INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
+                                           "SET ('Determine if the review is positive or negative' AS LLM.PROMPT, "
+                                           "     'http://localhost:8000/v1' AS LLM.ENDPOINT, "
+                                           "     'meta-llama/Llama-3.3-70B-Instruct' AS LLM.MODEL_NAME, "
+                                           "     'POSITIVE, NEGATIVE,' AS LLM.OUTPUT_VALUES, "
+                                           "     4 AS LLM.MAX_CONCURRENCY, "
+                                           "     'JSON_OBJECT' AS LLM.PAYLOAD_FORMAT, "
+                                           "     'OPENAI_API_KEY' AS LLM.API_KEY_ENV, "
+                                           "     'http' AS LLM.BACKEND)";
 
     /// Binds a CREATE SEMANTIC MODEL statement and runs it through the handler.
     std::expected<CreateSemanticModelStatementResult, Exception> create(const std::string& sql) const
@@ -113,7 +112,7 @@ TEST_F(SemanticMapStatementTest, BindCreateSemanticModelKeepsOptionsAsFlatString
     EXPECT_EQ(create.outputs.size(), 1);
     EXPECT_EQ(create.config.size(), 8);
     EXPECT_EQ(create.config.at(Identifier::parse("PROMPT")), "Determine if the review is positive or negative");
-    EXPECT_EQ(create.config.at(Identifier::parse("BATCH_SIZE")), "10");
+    EXPECT_EQ(create.config.at(Identifier::parse("MAX_CONCURRENCY")), "4");
 }
 
 TEST_F(SemanticMapStatementTest, CreateRegistersTypedConfigInCatalog)
@@ -135,8 +134,9 @@ TEST_F(SemanticMapStatementTest, CreateRegistersTypedConfigInCatalog)
     EXPECT_EQ(step.outputValues, (std::vector<std::string>{"POSITIVE", "NEGATIVE"}));
     EXPECT_EQ(step.defaultValue, "");
     EXPECT_EQ(config.payloadFormat, PayloadFormat::JSON_OBJECT);
-    EXPECT_EQ(config.batchSize, 10);
-    EXPECT_EQ(config.backend, "mock");
+    EXPECT_EQ(config.batchSize, 1);
+    EXPECT_EQ(config.maxConcurrency, 4);
+    EXPECT_EQ(config.backend, "http");
     ASSERT_TRUE(config.apiKeyEnvVar.has_value());
     EXPECT_EQ(config.apiKeyEnvVar.value(), "OPENAI_API_KEY");
 }
@@ -158,11 +158,23 @@ TEST_F(SemanticMapStatementTest, CreateAppliesPythonReferenceDefaults)
     EXPECT_TRUE(config.steps.front().outputValues.empty());
 }
 
+TEST_F(SemanticMapStatementTest, MockBackendTakesItsBehaviourFromTheEndpoint)
+{
+    for (const auto* behaviour : {"echo", "label:POSITIVE", "unparseable", "fail"})
+    {
+        const auto result = create(
+            std::string{"CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, '"} + behaviour
+            + "' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND)");
+        ASSERT_TRUE(result.has_value()) << behaviour << ": " << result.error().what();
+        EXPECT_EQ(semanticModelCatalog->load("M").getConfig().endpoint, behaviour);
+        semanticModelCatalog->removeModel("M");
+    }
+}
+
 TEST_F(SemanticMapStatementTest, OptionNamesAreCaseInsensitive)
 {
-    const auto result = create(
-        "CREATE SEMANTIC MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
-        "SET ('Classify' AS llm.prompt, 'http://x' AS llm.endpoint, 'm' AS llm.model_name)");
+    const auto result = create("CREATE SEMANTIC MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
+                               "SET ('Classify' AS llm.prompt, 'http://x' AS llm.endpoint, 'm' AS llm.model_name)");
     ASSERT_TRUE(result.has_value()) << result.error().what();
 }
 
@@ -230,11 +242,20 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
          "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT)"},
         {"no SET clause at all", "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED)"},
         {"unknown BACKEND", withOptions("o VARSIZED", ", 'onnx' AS LLM.BACKEND")},
+        {"mock BACKEND with an endpoint that is no mock behaviour", withOptions("o VARSIZED", ", 'mock' AS LLM.BACKEND")},
         {"BATCH_SIZE of zero", withOptions("o VARSIZED", ", 0 AS LLM.BATCH_SIZE")},
         {"non-numeric BATCH_SIZE", withOptions("o VARSIZED", ", 'ten' AS LLM.BATCH_SIZE")},
         {"MAX_CONCURRENCY of zero", withOptions("o VARSIZED", ", 0 AS LLM.MAX_CONCURRENCY")},
+        {"BATCH_SIZE above 1 (batching is stage 2)", withOptions("o VARSIZED", ", 2 AS LLM.BATCH_SIZE")},
+        {"MAX_CONCURRENCY above the upper bound", withOptions("o VARSIZED", ", 100000 AS LLM.MAX_CONCURRENCY")},
+        {"MAX_RETRIES above the upper bound", withOptions("o VARSIZED", ", 11 AS LLM.MAX_RETRIES")},
+        {"TIMEOUT_SECONDS above the upper bound", withOptions("o VARSIZED", ", 999999999 AS LLM.TIMEOUT_SECONDS")},
+        {"misspelt option key", withOptions("o VARSIZED", ", 'A,B' AS LLM.OUTPUT_VALUE")},
         {"unknown PAYLOAD_FORMAT", withOptions("o VARSIZED", ", 'XML' AS LLM.PAYLOAD_FORMAT")},
         {"non-VARSIZED output", withOptions("o FLOAT32", "")},
+        {"non-VARSIZED input",
+         "CREATE SEMANTIC MODEL m INPUT (t UINT64) OUTPUT (o VARSIZED) "
+         "SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
         {"two outputs (fusion is not supported yet)", withOptions("o VARSIZED, p VARSIZED", "")},
     };
 
@@ -253,14 +274,26 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
 TEST_F(SemanticMapStatementTest, BinderRejectsMalformedOptionKeys)
 {
     /// Unqualified key: bindConfigOptions requires PREFIX.NAME.
-    EXPECT_FALSE(binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS PROMPT)")
-                     .has_value());
+    EXPECT_FALSE(
+        binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS PROMPT)").has_value());
     /// Wrong namespace.
     EXPECT_FALSE(binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SOURCE.PROMPT)")
                      .has_value());
     /// MODEL is a reserved keyword, which is why the option is called MODEL_NAME.
-    EXPECT_FALSE(binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('x' AS LLM.MODEL)")
-                     .has_value());
+    EXPECT_FALSE(
+        binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('x' AS LLM.MODEL)").has_value());
+}
+
+TEST_F(SemanticMapStatementTest, BinderRejectsDuplicateOptionKeys)
+{
+    /// Neither value may silently win; option names are case-insensitive identifiers, so the
+    /// second spelling is the same key.
+    const auto duplicate
+        = binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) "
+                                     "SET ('a' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'b' AS llm.prompt)");
+    ASSERT_FALSE(duplicate.has_value());
+    EXPECT_EQ(duplicate.error().code(), ErrorCode::InvalidConfigParameter);
+    EXPECT_NE(std::string{duplicate.error().what()}.find("Duplicate option"), std::string::npos) << duplicate.error().what();
 }
 
 TEST_F(SemanticMapStatementTest, SemMapQueryBuildsUnresolvedPlaceholder)

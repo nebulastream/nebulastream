@@ -67,10 +67,10 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <SemanticModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -731,8 +731,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     NES::SemanticModelStatementHandler semanticModelHandler{semanticModelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler, semanticModelHandler);
@@ -774,8 +774,8 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     NES::ModelStatementHandler modelHandler{modelCatalog};
     NES::SemanticModelStatementHandler semanticModelHandler{semanticModelCatalog};
-    auto queryOptimizer
-        = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+        queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler, semanticModelHandler);
 
     if (program.is_subcommand_used("start"))

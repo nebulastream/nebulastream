@@ -39,7 +39,9 @@ namespace NES
 {
 
 /// Name-based semantic map operator that holds a semantic model name for deferred catalog resolution.
-/// Schema inference requires the actual model; attempting withInferredSchema throws CannotInferSchema.
+/// Schema inference requires the actual model, so withInferredSchema and the schema accessors are
+/// PRECONDITION-guarded. withChildren is not: generic plan rules rebuild through it before
+/// SemanticMapResolutionRule has run.
 class SemanticMapNameLogicalOperator : public Reorderer, public ManagedByOperator
 {
 public:

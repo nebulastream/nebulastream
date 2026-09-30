@@ -514,8 +514,13 @@ struct StatementOutputAssembler<DropModelStatementResult>
     }
 };
 
-using SemanticModelInfoOutputRowType = std::
-    tuple<std::string, std::string, std::string, std::string, Schema<UnqualifiedUnboundField, Ordered>, Schema<UnqualifiedUnboundField, Ordered>>;
+using SemanticModelInfoOutputRowType = std::tuple<
+    std::string,
+    std::string,
+    std::string,
+    std::string,
+    Schema<UnqualifiedUnboundField, Ordered>,
+    Schema<UnqualifiedUnboundField, Ordered>>;
 constexpr std::array<std::string_view, 6> semanticModelInfoOutputColumns{
     "model_name", "endpoint", "model", "prompt", "input_schema", "output_schema"};
 

@@ -727,8 +727,8 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(bindIdentifier(context)));
     }
     else if (
-        helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference
-        and not helpers.top().isSemanticMap and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+        helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference and not helpers.top().isSemanticMap
+        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));

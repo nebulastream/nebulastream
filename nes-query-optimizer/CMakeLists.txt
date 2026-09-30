@@ -44,7 +44,7 @@ target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 find_package(highs CONFIG REQUIRED)
 # nes-async: AsyncOperatorSplitter encodes the executor configuration and the handoff schema into
 # the generated descriptors, using the same helpers the consumer source decodes them with.
-target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider nes-async highs::highs)
+target_link_libraries(nes-query-optimizer PUBLIC nes-schema nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed nes-semantic PRIVATE nes-input-formatter-provider nes-async highs::highs)
 
 
 add_tests_if_enabled(tests)

@@ -15,6 +15,7 @@
 #include <Statements/StatementHandler.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <expected>
@@ -51,8 +52,8 @@
 #include <ErrorHandling.hpp>
 #include <Model.hpp>
 #include <ModelCatalog.hpp>
-#include <SemanticModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -312,6 +313,9 @@ SemanticModelStatementHandler::SemanticModelStatementHandler(std::shared_ptr<Sem
 namespace
 {
 
+/// Shows the first step only. That is complete while SEM_MAP registers exactly one step, but
+/// once operator fusion adds a second step to the same entry, SHOW silently drops it (along with
+/// the per-step OUTPUT_VALUES and DEFAULT_VALUE, which are not shown at all today).
 SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
 {
     const auto& config = model.getConfig();
@@ -347,7 +351,9 @@ std::string optionalOption(const std::unordered_map<Identifier, std::string>& co
     return value == nullptr ? std::move(fallback) : *value;
 }
 
-size_t numericOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, size_t fallback)
+/// `maxValue` keeps every knob far below the int64 range the catalog entry is serialized with,
+/// and rejects values that can only be typos (a 10^9-second timeout parks a worker thread forever).
+size_t numericOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, size_t fallback, size_t maxValue)
 {
     const auto* const value = findOption(config, key);
     if (value == nullptr)
@@ -359,7 +365,43 @@ size_t numericOption(const std::unordered_map<Identifier, std::string>& config, 
     {
         throw InvalidSemanticModel("Option LLM.{} must be a non-negative integer, but was '{}'", key, *value);
     }
+    if (parsed.value() > maxValue)
+    {
+        throw InvalidSemanticModel("Option LLM.{} must be at most {}, but was {}", key, maxValue, parsed.value());
+    }
     return parsed.value();
+}
+
+/// Every option the handler reads. The binder only checks the LLM namespace, so without this a
+/// typo such as LLM.OUTPUT_VALUE would be dropped silently and the model registered without it.
+constexpr std::array KnownSemanticModelOptions{
+    std::string_view{"PROMPT"},
+    std::string_view{"ENDPOINT"},
+    std::string_view{"MODEL_NAME"},
+    std::string_view{"DATASET_PROMPT"},
+    std::string_view{"OUTPUT_VALUES"},
+    std::string_view{"DEFAULT_VALUE"},
+    std::string_view{"PAYLOAD_FORMAT"},
+    std::string_view{"BATCH_SIZE"},
+    std::string_view{"MAX_CONCURRENCY"},
+    std::string_view{"MAX_RETRIES"},
+    std::string_view{"MAX_WAIT_MS"},
+    std::string_view{"TIMEOUT_SECONDS"},
+    std::string_view{"API_KEY_ENV"},
+    std::string_view{"BACKEND"},
+};
+
+void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
+{
+    for (const auto& [key, _] : config)
+    {
+        const bool known = std::ranges::any_of(
+            KnownSemanticModelOptions, [&key](std::string_view name) { return key == Identifier::parse(std::string{name}); });
+        if (!known)
+        {
+            throw InvalidSemanticModel("Unknown option LLM.{}", key);
+        }
+    }
 }
 
 /// Splits a comma-separated option such as 'POSITIVE,NEGATIVE,NEUTRAL'. Empty entries are
@@ -391,11 +433,18 @@ PayloadFormat bindPayloadFormat(const std::unordered_map<Identifier, std::string
     throw InvalidSemanticModel("Option LLM.PAYLOAD_FORMAT must be SPACE_JOINED or JSON_OBJECT, but was '{}'", raw);
 }
 
+constexpr size_t MaxBatchSize = 1024;
+constexpr size_t MaxConcurrency = 1024;
+constexpr size_t MaxRetries = 10;
+constexpr size_t MaxWaitMs = 3'600'000;
+constexpr size_t MaxTimeoutSeconds = 86'400;
+
 /// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
 /// SEM_MAP has exactly one step, so exactly one OUTPUT field is accepted; the step list
 /// exists so that operator fusion can add a second entry without a format change.
 SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
 {
+    rejectUnknownOptions(statement.config);
     if (statement.outputs.size() != 1)
     {
         throw InvalidSemanticModel(
@@ -418,11 +467,11 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .datasetPrompt = optionalOption(statement.config, "DATASET_PROMPT", ""),
         .steps = {std::move(step)},
         .payloadFormat = bindPayloadFormat(statement.config),
-        .batchSize = numericOption(statement.config, "BATCH_SIZE", 1),
-        .maxConcurrency = numericOption(statement.config, "MAX_CONCURRENCY", 10),
-        .maxRetries = numericOption(statement.config, "MAX_RETRIES", 2),
-        .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000)},
-        .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600)},
+        .batchSize = numericOption(statement.config, "BATCH_SIZE", 1, MaxBatchSize),
+        .maxConcurrency = numericOption(statement.config, "MAX_CONCURRENCY", 10, MaxConcurrency),
+        .maxRetries = numericOption(statement.config, "MAX_RETRIES", 2, MaxRetries),
+        .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000, MaxWaitMs)},
+        .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
         .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
         .backend = optionalOption(statement.config, "BACKEND", "http")};
 }
@@ -432,11 +481,7 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
 std::expected<CreateSemanticModelStatementResult, Exception>
 SemanticModelStatementHandler::operator()(const CreateSemanticModelStatement& statement)
 {
-    if (semanticModelCatalog->hasModel(statement.name))
-    {
-        return std::unexpected{SemanticModelAlreadyExists(statement.name)};
-    }
-
+    /// Duplicate names are rejected by the catalog itself (SemanticModelAlreadyExists).
     try
     {
         semanticModelCatalog->registerModel(
@@ -468,11 +513,14 @@ SemanticModelStatementHandler::operator()(const ShowSemanticModelsStatement&) co
 std::expected<DropSemanticModelStatementResult, Exception>
 SemanticModelStatementHandler::operator()(const DropSemanticModelStatement& statement)
 {
-    if (!semanticModelCatalog->hasModel(statement.name))
+    try
     {
-        return std::unexpected{UnknownSemanticModelName(statement.name)};
+        semanticModelCatalog->removeModel(statement.name);
     }
-    semanticModelCatalog->removeModel(statement.name);
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
     return DropSemanticModelStatementResult{.name = statement.name};
 }
 

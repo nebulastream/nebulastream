@@ -57,10 +57,10 @@
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
-#include <SemanticModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
+#include <SemanticModelCatalog.hpp>
 #include <Thread.hpp>
 #include <Version.hpp>
 #include <WorkerCatalog.hpp>
@@ -296,8 +296,8 @@ int main(int argc, char** argv)
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         NES::ModelStatementHandler modelStatementHandler{modelCatalog};
         NES::SemanticModelStatementHandler semanticModelStatementHandler{semanticModelCatalog};
-        auto queryOptimizer
-            = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog);
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(
+            queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog, modelCatalog, semanticModelCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
