@@ -99,10 +99,11 @@ RewrittenRun rewriteAll(TestFileRewriter& rewriter, const SystestConfiguration& 
     return run;
 }
 
-RunOutcome runOnce(TestRunner& runner, const RunPolicy& policy, RewrittenRun rewritten)
+/// `rejectedAtRewrite` are the files that never reached the runner. The runner reports those that failed at setup itself.
+RunOutcome runOnce(TestRunner& runner, const RunPolicy& policy, std::vector<ReportEntry> rejectedAtRewrite)
 {
-    std::vector<ReportEntry> report = std::move(rewritten.rejected);
-    std::ranges::move(runner.setUpAll(std::move(rewritten.partitions)), std::back_inserter(report));
+    std::vector<ReportEntry> report = std::move(rejectedAtRewrite);
+    std::ranges::copy(runner.getRejected(), std::back_inserter(report));
     const auto totalTestCases = runner.countTestCases();
 
     size_t checkedSoFar = 0;
@@ -121,21 +122,20 @@ RunOutcome runOnce(TestRunner& runner, const RunPolicy& policy, RewrittenRun rew
     return summarize(report, benchmark.has_value() ? benchmark->writeTo(*policy.measureReport) : std::string{});
 }
 
-/// Sets up once, then resubmits the bound plans every round until one fails.
-RunOutcome runRounds(TestRunner& runner, const RunPolicy& policy, RewrittenRun rewritten)
+/// Resubmits the bound plans of the set-up runner every round until one fails.
+RunOutcome runRounds(TestRunner& runner, const RunPolicy& policy, const std::vector<ReportEntry>& rejectedAtRewrite)
 {
     /// A rejected file would shrink every round's set, and an empty set would loop forever, so the run ends here.
-    if (not rewritten.rejected.empty() or rewritten.partitions.empty())
+    if (not rejectedAtRewrite.empty())
     {
-        return summarize(rewritten.rejected);
+        return summarize(rejectedAtRewrite);
     }
-    const auto fileCount = rewritten.partitions.size();
-    if (const auto rejectedAtSetup = runner.setUpAll(std::move(rewritten.partitions)); not rejectedAtSetup.empty())
+    if (not runner.getRejected().empty() or runner.countPartitions() == 0)
     {
-        return summarize(rejectedAtSetup);
+        return summarize(runner.getRejected());
     }
 
-    fmt::print("Repeating the queries of {} test files\n", fileCount);
+    fmt::print("Repeating the queries of {} test files\n", runner.countPartitions());
     for (size_t round = 1;; ++round)
     {
         const auto roundStartedAt = std::chrono::steady_clock::now();
@@ -213,17 +213,18 @@ RunOutcome Executor::execute()
     const auto runPolicy = RunPolicy::create(config);
     const WorkingDirectoryGuard workingDirectoryGuard{config.workingDir.getValue()};
 
-    TestRunner runner{config};
     /// One rewriter per run, because it records the names that each file claimed.
     TestFileRewriter rewriter{config};
-    auto rewritten = rewriteAll(rewriter, config);
+    auto [partitions, rejectedAtRewrite] = rewriteAll(rewriter, config);
     if (std::holds_alternative<RunInShuffledOrder>(runPolicy.ordering))
     {
-        shuffle(rewritten.partitions);
+        shuffle(partitions);
     }
 
-    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(runner, runPolicy, std::move(rewritten))
-                                                                    : runRounds(runner, runPolicy, std::move(rewritten));
+    /// Constructing sets the partitions up, so the runner only ever submits what it has set up.
+    TestRunner runner{config, std::move(partitions)};
+    return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(runner, runPolicy, std::move(rejectedAtRewrite))
+                                                                    : runRounds(runner, runPolicy, rejectedAtRewrite);
 }
 
 }

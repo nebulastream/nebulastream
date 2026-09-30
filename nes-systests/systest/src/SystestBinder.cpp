@@ -115,37 +115,57 @@ struct SystestBinder::Impl
         }
     }
 
-    /// Id includes the partition key: partitions repeat query numbers, and the coordinator rejects duplicate ids.
-    [[nodiscard]] BoundTestFile
-    bind(const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+    /// Binds every partition in order, so a partition's setup is in the catalogs before its test cases bind.
+    void bindAll(const std::span<const PartitionToBind> partitions)
     {
-        BoundTestFile bound;
-        for (const auto& sql : setupSql)
+        bound.reserve(partitions.size());
+        for (const auto& partition : partitions)
         {
-            writeToCatalogs(sql);
+            bound.push_back(bindOne(partition));
+        }
+    }
+
+    /// One result per bound partition, in binding order.
+    std::vector<BindResult> bound;
+
+private:
+    /// A rejected setup statement fails the partition. The error also covers an exception that is not ours, such as
+    /// from parsing a number, so the partition is reported rather than the run ending.
+    [[nodiscard]] BindResult bindOne(const PartitionToBind& partition)
+    {
+        try
+        {
+            for (const auto& sql : partition.setupSql)
+            {
+                writeToCatalogs(sql);
+            }
+        }
+        catch (...)
+        {
+            return std::unexpected{wrapExternalException()};
         }
 
-        bound.testCases.reserve(testCases.size());
-        for (const auto& [action] : testCases)
+        BoundTestFile file;
+        file.testCases.reserve(partition.testCases.size());
+        for (const auto& [action] : partition.testCases)
         {
             try
             {
-                bound.testCases.push_back(std::visit(
+                file.testCases.push_back(std::visit(
                     Overloaded{
-                        [&](const RewrittenQuery& query) { return bindQuery(query, partitionKey); },
-                        [&](const RewrittenDifferential& block) { return bindDifferential(block, partitionKey); },
+                        [&](const RewrittenQuery& query) { return bindQuery(query, partition.partitionKey); },
+                        [&](const RewrittenDifferential& block) { return bindDifferential(block, partition.partitionKey); },
                         [&](const RewrittenExplain& explain) { return bindExplain(explain); }},
                     action));
             }
             catch (const Exception& exception)
             {
-                bound.testCases.push_back({BoundStatement{.plan = std::unexpected{exception}, .explained = std::nullopt}});
+                file.testCases.push_back({BoundStatement{.plan = std::unexpected{exception}, .explained = std::nullopt}});
             }
         }
-        return bound;
+        return file;
     }
 
-private:
     void writeToCatalogs(const std::string& sql)
     {
         const auto binding = bindStatement(sql);
@@ -232,14 +252,20 @@ private:
     QueryOptimizer queryOptimizer;
 };
 
-SystestBinder::SystestBinder(const SystestConfiguration& config) : impl{std::make_unique<Impl>(config)}
+SystestBinder::SystestBinder(const SystestConfiguration& config, const std::span<const PartitionToBind> partitions)
+    : impl{std::make_unique<Impl>(config)}
 {
+    impl->bindAll(partitions);
 }
 
-BoundTestFile SystestBinder::bind(
-    const std::span<const std::string> setupSql, const std::span<const RewrittenTestCase> testCases, const std::string& partitionKey)
+const std::vector<BindResult>& SystestBinder::getBound() const&
 {
-    return impl->bind(setupSql, testCases, partitionKey);
+    return impl->bound;
+}
+
+std::vector<BindResult> SystestBinder::getBound() &&
+{
+    return std::move(impl->bound);
 }
 
 SystestBinder::~SystestBinder() = default;

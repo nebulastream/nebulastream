@@ -51,18 +51,34 @@ struct BoundTestFile
     std::vector<std::vector<BoundStatement>> testCases;
 };
 
-/// Binds rewritten statements into plans, between the rewriter and the runner.
-/// Runs after rewriting: binding needs the partition's setup in the catalogs.
+/// One partition's statements to bind: its staged setup and the test cases that run against it.
+struct PartitionToBind
+{
+    std::span<const std::string> setupSql;
+    std::span<const RewrittenTestCase> testCases;
+    /// Goes into every query id, because partitions repeat query numbers and the coordinator rejects duplicate ids.
+    std::string partitionKey;
+};
+
+/// A partition's bound test cases, or the setup statement that the catalogs rejected.
+using BindResult = std::expected<BoundTestFile, Exception>;
+
+/// Binds the rewritten statements of one run into plans, between the rewriter and the runner.
+/// Single shot: constructing binds every partition, in order, against one shared catalog set, and the results stay on
+/// the binder. There is no second call, so no caller can observe the catalogs between two partitions.
 class SystestBinder
 {
 public:
-    explicit SystestBinder(const SystestConfiguration& config);
+    /// Writes each partition's setup statements into the catalogs and binds its test cases.
+    /// A setup statement that the catalogs reject fails its partition, because the statements after it depend on it.
+    /// The statements accepted before it stay in the catalogs, which cannot affect another partition: every name
+    /// carries its partition's key.
+    /// An unbindable test case yields an error entry, not a failed partition: a test may expect that error.
+    SystestBinder(const SystestConfiguration& config, std::span<const PartitionToBind> partitions);
 
-    /// Writes the staged setup statements into the shared catalogs and binds the file's test cases.
-    /// Throws on the first setup statement that the catalogs reject, because other statements depend on it.
-    /// An unbindable test case yields an error entry, not a throw: a test may expect that error.
-    [[nodiscard]] BoundTestFile
-    bind(std::span<const std::string> setupSql, std::span<const RewrittenTestCase> testCases, const std::string& partitionKey);
+    /// One result per partition, in the order they were given.
+    [[nodiscard]] const std::vector<BindResult>& getBound() const&;
+    [[nodiscard]] std::vector<BindResult> getBound() &&;
 
     ~SystestBinder();
 

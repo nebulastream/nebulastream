@@ -28,22 +28,27 @@
 namespace NES
 {
 
-/// Sets up rewritten partitions once, then submits and checks their test cases as often as the caller asks.
-/// A second setup would fail on the repeated CREATEs, and rebinding would time the optimizer.
+/// Sets up rewritten partitions on construction, then submits and checks their test cases as often as the caller asks.
+/// Setting up is part of construction, so a runner is either fully set up or does not exist: there is no runner that can
+/// submit before its setup and none that sets up twice, which would fail on the repeated CREATEs and time the optimizer.
 class TestRunner
 {
 public:
-    explicit TestRunner(const SystestConfiguration& config);
+    /// Stages data, writes setup statements into the catalogs, and binds test cases.
+    /// A partition whose setup fails is left out of the run and reported through `getRejected()`.
+    TestRunner(const SystestConfiguration& config, std::vector<RunnablePartition> partitions);
     ~TestRunner();
 
     /// The runner calls the observer serially, once per checked test case, so the observer needs no locking.
     using Observer = std::function<void(const ReportEntry&, const RewrittenTestCase&, std::span<const StatementTiming>)>;
 
-    /// Stages data, writes setup statements into the catalogs, and binds test cases.
-    /// Returns the entries of the files whose setup failed.
-    [[nodiscard]] std::vector<ReportEntry> setUpAll(std::vector<RunnablePartition> partitions);
+    /// The entries of the partitions that the setup rejected: one failure for the file and one skip per test case.
+    [[nodiscard]] const std::vector<ReportEntry>& getRejected() const;
 
-    /// Counts only the test cases of partitions that the last setup accepted.
+    /// Counts only the partitions that the setup accepted.
+    [[nodiscard]] size_t countPartitions() const;
+
+    /// Counts only the test cases of partitions that the setup accepted.
     [[nodiscard]] size_t countTestCases() const;
 
     /// Submits the test cases of the set-up files, up to `concurrency` at a time, and checks each one.

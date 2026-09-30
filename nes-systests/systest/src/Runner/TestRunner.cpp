@@ -97,8 +97,7 @@ void appendSkipped(std::vector<ReportEntry>& rejected, const RunnablePartition& 
 struct TestRunner::Impl
 {
     explicit Impl(const SystestConfiguration& config)
-        : binder{config}
-        , clusterConfig{config.clusterConfig}
+        : clusterConfig{config.clusterConfig}
         , remote{config.remoteWorker.getValue()}
         , baseWorker{config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{})}
     {
@@ -257,52 +256,96 @@ struct TestRunner::Impl
         }
     }
 
-    SystestBinder binder;
+    struct StagedPartition
+    {
+        RunnablePartition partition;
+        std::vector<std::string> setupSql;
+    };
+
+    /// Stages every partition's data first, because the binder binds all partitions of the run in one go.
+    /// A partition that fails is reported and left out, so one bad file does not end the run.
+    void setUpAll(const SystestConfiguration& config, std::vector<RunnablePartition> partitions)
+    {
+        std::vector<StagedPartition> staged;
+        staged.reserve(partitions.size());
+        for (auto& partition : partitions)
+        {
+            const auto& [overrides, runnable] = partition;
+            if (remote and not overrides.empty())
+            {
+                appendSkipped(
+                    rejected, partition, "a run against workers started elsewhere cannot apply the settings that this file asks for");
+                continue;
+            }
+            try
+            {
+                auto [setupSql, stagedServers] = stage(runnable);
+                std::ranges::move(stagedServers, std::back_inserter(servers));
+                staged.push_back(StagedPartition{.partition = std::move(partition), .setupSql = std::move(setupSql)});
+            }
+            catch (const std::exception& exception)
+            {
+                rejected.push_back(createFailedFileEntry(runnable.name, overrides, "could not run", exception));
+                appendSkipped(rejected, partition, "the file's setup failed");
+            }
+        }
+
+        const auto toBind = staged
+            | std::views::transform(
+                                [](const StagedPartition& entry)
+                                {
+                                    return PartitionToBind{
+                                        .setupSql = entry.setupSql,
+                                        .testCases = entry.partition.file.testCases,
+                                        .partitionKey = entry.partition.file.key};
+                                })
+            | std::ranges::to<std::vector>();
+        /// The plans own everything they need, so the binder and its catalogs end with the setup.
+        auto bound = SystestBinder{config, toBind}.getBound();
+
+        setUp.reserve(staged.size());
+        for (auto&& [entry, result] : std::views::zip(staged, bound))
+        {
+            if (result.has_value())
+            {
+                setUp.push_back(SetUpPartition{.partition = std::move(entry.partition), .testCases = std::move(result->testCases)});
+            }
+            else
+            {
+                const auto& [overrides, runnable] = entry.partition;
+                rejected.push_back(createFailedFileEntry(runnable.name, overrides, "could not run", result.error()));
+                appendSkipped(rejected, entry.partition, "the file's setup failed");
+            }
+        }
+    }
+
     SystestClusterConfiguration clusterConfig;
     bool remote;
     SingleNodeWorkerConfiguration baseWorker;
 
-    /// The partitions that the last set up accepted, which the next submit runs.
+    /// The partitions that the setup accepted, which every submit runs.
     std::vector<SetUpPartition> setUp;
+    /// The entries of the partitions that the setup rejected.
+    std::vector<ReportEntry> rejected;
     /// Must outlive every query reading from them.
     std::vector<std::jthread> servers;
 };
 
-TestRunner::TestRunner(const SystestConfiguration& config) : impl{std::make_unique<Impl>(config)}
+TestRunner::TestRunner(const SystestConfiguration& config, std::vector<RunnablePartition> partitions) : impl{std::make_unique<Impl>(config)}
 {
+    impl->setUpAll(config, std::move(partitions));
 }
 
 TestRunner::~TestRunner() = default;
 
-std::vector<ReportEntry> TestRunner::setUpAll(std::vector<RunnablePartition> partitions)
+const std::vector<ReportEntry>& TestRunner::getRejected() const
 {
-    std::vector<ReportEntry> rejected;
-    impl->setUp.clear();
-    impl->setUp.reserve(partitions.size());
-    impl->servers.clear();
+    return impl->rejected;
+}
 
-    for (auto& partition : partitions)
-    {
-        const auto& [overrides, runnable] = partition;
-        if (impl->remote and not overrides.empty())
-        {
-            appendSkipped(rejected, partition, "a run against workers started elsewhere cannot apply the settings that this file asks for");
-            continue;
-        }
-        try
-        {
-            auto [setupSql, servers] = stage(runnable);
-            auto bound = impl->binder.bind(setupSql, runnable.testCases, runnable.key);
-            std::ranges::move(servers, std::back_inserter(impl->servers));
-            impl->setUp.push_back(Impl::SetUpPartition{.partition = std::move(partition), .testCases = std::move(bound.testCases)});
-        }
-        catch (const std::exception& exception)
-        {
-            rejected.push_back(createFailedFileEntry(runnable.name, overrides, "could not run", exception));
-            appendSkipped(rejected, partition, "the file's setup failed");
-        }
-    }
-    return rejected;
+size_t TestRunner::countPartitions() const
+{
+    return impl->setUp.size();
 }
 
 size_t TestRunner::countTestCases() const
