@@ -170,6 +170,7 @@ private:
         std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources;
         std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
         std::unique_ptr<ExecutableQueryPlan> qep;
+        bool stopping = false;
 
         /// The entire graph of the query has been destroyed.
         CallbackOwner allPipelinesExpired;
