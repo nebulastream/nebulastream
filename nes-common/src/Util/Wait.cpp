@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <bits/chrono.h>
 #include <sys/eventfd.h>
 #include <sys/poll.h>
 #include <ErrorHandling.hpp>
