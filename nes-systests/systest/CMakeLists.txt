@@ -161,10 +161,25 @@ endif ()
 # PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
 # packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
 # PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
-# All three are permanently opt-in, like `large`, and never run as part of the default invocations below.
-set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree CompilerOnly)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree)
-set(SYSTEST_EXCLUDE_GROUPS_INTERPRETER large LongRunning PythonUdfVenv PythonUdfOnnx PythonUdfIree)
+# PythonUdfNumpy needs numpy in a machine-local venv (nes-toolchain/python-venvs/udf-cpython or udf-pypy).
+# All four are permanently opt-in, like `large`, and never run as part of the default invocations below.
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy CompilerOnly)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy)
+set(SYSTEST_EXCLUDE_GROUPS_INTERPRETER large LongRunning PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy)
+# MemoryBudget tests bound the memory a query may hold. How much is held at once depends on how fast the pipelines
+# drain their inputs, so only optimized builds without sanitizers or buffer leak tracking can hold such a budget.
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR NOT SANITIZER_OPTION STREQUAL "none" OR NES_DEBUG_TUPLE_BUFFER_LEAKS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS MemoryBudget)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER MemoryBudget)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER MemoryBudget)
+endif ()
+# SlowWhenInstrumented tests take minutes each once every allocation is tracked, which pushes the whole suite
+# past its ctest timeout and the individual queries past theirs.
+if (NOT SANITIZER_OPTION STREQUAL "none" OR NES_DEBUG_TUPLE_BUFFER_LEAKS)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS SlowWhenInstrumented)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER SlowWhenInstrumented)
+    list(APPEND SYSTEST_EXCLUDE_GROUPS_INTERPRETER SlowWhenInstrumented)
+endif ()
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)
