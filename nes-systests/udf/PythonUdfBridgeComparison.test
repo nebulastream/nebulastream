@@ -1,7 +1,8 @@
 # name: udf/PythonUdfBridgeComparison.test
 # description: same 10% discount UDF (one portable module) on Nexmark bid prices through every Python execution backend
-# (CPython bridge, PyPy bridge, Codon as a catalog UDF, Codon inline) plus a native-SQL baseline; each filters on the
+# (CPython bridge, PyPy bridge, Codon), all registered as catalog UDFs, plus a native-SQL baseline; each filters on the
 # output of the discount, so it is evaluated for every row. Run with -b to compare the per-backend cost.
+# The inline PYTHON(...) variant is PythonUdfInlineBridgeComparison.test.
 # groups: [PythonUdf, PyPyUdf, PythonUDF, CompilerOnly, large]
 
 CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
@@ -33,17 +34,6 @@ INTO FILE();
 # Codon as a catalog UDF (CREATE FUNCTION ... BRIDGE 'codon'), same portable module, filter on OUTPUT
 SELECT * FROM (
     SELECT auctionId, bidder, discount_price_codon(price) AS discountedPrice FROM bidLarge
-) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
-INTO FILE();
-----
-999994,126934,131.4
-999994,23774,36.0
-
-# Codon inline (PYTHON(...) in the query text, AOT-compiled into the pipeline), same discount, filter on OUTPUT
-SELECT * FROM (
-    SELECT auctionId, bidder, PYTHON((price): $python$
-        return price * 0.9
-    $python$) AS FLOAT64 BRIDGE 'codon' AS discountedPrice FROM bidLarge
 ) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
 INTO FILE();
 ----

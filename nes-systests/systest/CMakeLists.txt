@@ -161,9 +161,10 @@ endif ()
 # PythonUdfOnnx/PythonUdfIree need the same, but pointed at a venv with onnxruntime or IREE's Python
 # packages installed (too large/platform-specific to ship in-tree, unlike small_venv -- see
 # PythonUdfIrisClassification.test / PythonUdfIrisClassificationIree.test).
-# All three are permanently opt-in, like `large`, and never run as part of the default invocations below.
-set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree CompilerOnly)
-set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree)
+# PythonUdfNumpy needs numpy in a machine-local venv (nes-toolchain/python-venvs/udf-cpython or udf-pypy).
+# All four are permanently opt-in, like `large`, and never run as part of the default invocations below.
+set(SYSTEST_EXCLUDE_GROUPS large PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy CompilerOnly)
+set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive PythonUdfVenv PythonUdfOnnx PythonUdfIree PythonUdfNumpy)
 if (NOT ENABLE_INFERENCE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
     list(APPEND SYSTEST_EXCLUDE_GROUPS_COMPILER Inference)

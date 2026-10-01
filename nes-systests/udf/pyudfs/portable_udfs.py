@@ -31,3 +31,23 @@ def add(a, b):
 def shout(text):
     """Uppercase a VARSIZED value."""
     return text.upper()
+
+
+def double(x):
+    """Double an integer."""
+    return x * 2
+
+
+def increment(x):
+    """Add one to an integer."""
+    return x + 1
+
+
+def square(x):
+    """Square an integer."""
+    return x * x
+
+
+def negate(x):
+    """Negate an integer."""
+    return -x
