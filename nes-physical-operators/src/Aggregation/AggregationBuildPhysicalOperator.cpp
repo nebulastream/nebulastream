@@ -30,6 +30,7 @@
 #include <Interface/Record.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
+#include <nautilus/region.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -54,11 +55,10 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
 
-    /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapBuffer
-        = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler, ctx.pipelineMemoryProvider.bufferProvider);
-    const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBuffer.asArg());
+    /// Getting the corresponding slice so that we can update the aggregation states
+    const auto hashMapBufferPtr = getSliceDataStructure(ctx, timestamp, operatorHandler);
+    const auto borrowedHashMapBuffer = BorrowedNautilusBuffer::from(hashMapBufferPtr);
     ChainedHashMapRef hashMap{borrowedHashMapBuffer, hashMapConfig};
 
     /// Calling the key functions to add/update the keys to the record
@@ -70,22 +70,31 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         record.write(fieldIdentifier, value);
     }
 
-    /// Finding or creating the entry for the provided record
-    const auto hashMapEntry = hashMap.findOrCreateEntry(
-        record,
-        [&](const nautilus::val<AbstractHashMapEntry*>& entry)
+    /// Finding or creating the entry for the provided record. Traced as an isolated region: its paths (entry found, entry
+    /// created, walking the chain) keep different values alive, which stops the tracer from merging them, so everything after
+    /// the lookup would be traced once per path. Values created inside a region die at its end, so all paths leave the region
+    /// in the same state and merge there. The entry is carried out through a value declared outside the region.
+    nautilus::val<AbstractHashMapEntry*> hashMapEntry = nullptr;
+    nautilus::region(
+        "FindOrCreateEntry",
+        [&]
         {
-            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
-            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-            for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
-            {
-                aggFunction->reset(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider);
-                state = state + aggFunction->getSizeOfStateInBytes();
-            }
-        },
-        ctx.pipelineMemoryProvider.bufferProvider);
+            hashMapEntry = hashMap.findOrCreateEntry(
+                record,
+                [&](const nautilus::val<AbstractHashMapEntry*>& entry)
+                {
+                    /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
+                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                        entry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
+                    auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
+                    {
+                        aggFunction->reset(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                },
+                ctx.pipelineMemoryProvider.bufferProvider);
+        });
 
     /// Updating the aggregation states
     const ChainedHashMapRef::ChainedEntryRef entryRef{
