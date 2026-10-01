@@ -1,10 +1,12 @@
 # name: udf/PythonUdfIrisClassificationIree.test
 # description: same as PythonUdfIrisClassification.test, but via IREE instead of onnxruntime -- the
 # same execution engine MODEL_INFERENCE itself uses (import -> compile -> run at UDF-import time).
-# Needs iree-base-compiler + iree-base-runtime + onnx in a venv passed via --worker.python_udf.venv.
+# Needs iree-base-compiler + iree-base-runtime + onnx in a CPython venv (nes-toolchain/python-venvs/iris-iree-udf, set below).
 # No PyPy wheels exist for either onnxruntime or IREE's Python packages -- CPython only.
 # Do not combine with PythonUdfVenv/PythonUdfOnnx in one invocation -- one interpreter per process.
 # groups: [PythonUdfIree]
+
+GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/iris-iree-udf
 
 CREATE LOGICAL SOURCE stream(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
