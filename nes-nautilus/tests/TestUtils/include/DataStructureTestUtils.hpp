@@ -52,7 +52,7 @@ enum class EngineMode : std::uint8_t
     Compiler
 };
 
-/// Builds a NautilusEngine configured for either interpreted or compiled execution (mlir/legacy backend).
+/// Builds a NautilusEngine configured for either interpreted or compiled execution (pinned mlir backend).
 nautilus::engine::NautilusEngine makeEngine(EngineMode mode);
 
 /// Builds a NautilusEngine with the selected trace mode and optionally enables tracing/MLIR dumps.

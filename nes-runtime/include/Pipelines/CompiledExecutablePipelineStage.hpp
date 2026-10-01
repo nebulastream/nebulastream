@@ -49,7 +49,7 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
+    using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, Arena*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
 
     /// Registers the pipeline's main traced function in the pipeline's module.

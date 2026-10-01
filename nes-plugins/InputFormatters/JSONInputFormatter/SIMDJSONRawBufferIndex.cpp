@@ -132,7 +132,8 @@ SIMDJSONRawBufferIndex::SIMDJSONRawBufferIndex()
 [[nodiscard]] nautilus::val<bool>
 SIMDJSONRawBufferIndex::hasNext(const nautilus::val<uint64_t>&, const nautilus::val<RawBufferIndex*>& rawBufferIndex) const
 {
-    const nautilus::val<bool> lastTuple = readValueFromMemRef<bool>(getMemberRef(rawBufferIndex, &SIMDJSONRawBufferIndex::isAtLastTuple));
+    const nautilus::val<bool> lastTuple = readValueFromMemRef<bool>(
+        getMemberRef(static_cast<nautilus::val<SIMDJSONRawBufferIndex*>>(rawBufferIndex), &SIMDJSONRawBufferIndex::isAtLastTuple));
     return not lastTuple;
 }
 
@@ -183,7 +184,8 @@ Record SIMDJSONRawBufferIndex::readSpanningRecord(
         const ValueDeserializerConfig deserializerConfig{.nullable = fieldDataType.nullable, .quoted = true, .hasTrailingSpaces = true};
         const std::unique_ptr<ValueDeserializer> valueDeserializer
             = provideValueDeserializer(indexer.getDeserializerType(fieldName, fieldDataType.type), deserializerConfig);
-        const VarVal parsedVal = valueDeserializer->deserializeToVarVal(address, size, indexer.getNullValues(), arena);
+        const VarVal parsedVal
+            = valueDeserializer->deserializeToVarVal(static_cast<nautilus::val<int8_t*>>(address), size, indexer.getNullValues(), arena);
         record.write(fieldName, parsedVal);
     }
     /// Increment iterator and return record
