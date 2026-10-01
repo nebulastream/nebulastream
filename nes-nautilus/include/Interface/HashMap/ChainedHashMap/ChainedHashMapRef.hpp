@@ -62,6 +62,13 @@ public:
             std::vector<FieldOffsets> fieldsKey,
             std::vector<FieldOffsets> fieldsValue);
 
+        /// For entries handed out by the generic hash map interface. The entry must belong to a chained hash map.
+        ChainedEntryRef(
+            const nautilus::val<AbstractHashMapEntry*>& entryRef,
+            BorrowedNautilusBuffer hashMapBuffer,
+            std::vector<FieldOffsets> fieldsKey,
+            std::vector<FieldOffsets> fieldsValue);
+
         ChainedEntryRef(
             const nautilus::val<ChainedHashMapEntry*>& entryRef,
             BorrowedNautilusBuffer hashMapBuffer,

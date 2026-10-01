@@ -63,7 +63,7 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
             std::format_to(outTimestampIso8601Utc, "{:%FT%T}Z", utcTimePoint);
         },
         milliSeconds,
-        payload);
+        static_cast<nautilus::val<char*>>(payload));
 
     return VarVal{timestampAsIso8601, value.isNullable(), false};
 }

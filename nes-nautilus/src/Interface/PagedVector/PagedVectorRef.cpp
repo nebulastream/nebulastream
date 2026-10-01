@@ -78,7 +78,7 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
         auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(fieldSlot);
         auto varSizedPtr = invoke(
             {.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
-            +[](TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
+            +[](const TupleBuffer* pageBuffer, const VariableSizedAccess* access) -> int8_t*
             {
                 INVARIANT(pageBuffer != nullptr, "Page buffer MUST NOT be null");
                 INVARIANT(access != nullptr, "VariableSizedAccess MUST NOT be null");
@@ -108,10 +108,11 @@ auto makeVarSizedLoadFunction(const NautilusBuffer& pageBuffer)
 /// When the lambda is invoked, its arguments should be the memory pointing to the start where the record will be written to and the record's size.
 auto makeVarSizedAllocFunction(const NautilusBuffer& lastPageBuffer, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
+    /// The lambda captures a non-const copy of the page buffer, as it stores new var-sized buffers as its children.
     return /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         /// NOLINTNEXTLINE(bugprone-exception-escape): nautilus::invoke ignores the lambda's exception spec; INVARIANT may throw on bad input.
-        [lastPageBuffer,
-         bufferProvider](const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) -> nautilus::val<int8_t*>
+        [lastPageBuffer = NautilusBuffer{lastPageBuffer}, bufferProvider](
+            const nautilus::val<int8_t*>& fieldSlot, const nautilus::val<uint64_t>& allocationSize) mutable -> nautilus::val<int8_t*>
     {
         return invoke( /// NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
             +[](TupleBuffer* pageBuffer, AbstractBufferProvider* bufferProvider, int8_t* fieldSlot, uint64_t allocationSize) -> int8_t*

@@ -41,7 +41,7 @@ void inline NES_Memory_TupleBuffer_setNumberOfTuples(TupleBuffer* tupleBuffer, c
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 
-inline OriginId NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffer)
+inline OriginId NES_Memory_TupleBuffer_getOriginId(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getOriginId();
 };
@@ -51,7 +51,7 @@ inline void NES_Memory_TupleBuffer_setOriginId(TupleBuffer* tupleBuffer, const O
     tupleBuffer->setOriginId(OriginId(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getWatermark(const TupleBuffer* tupleBuffer)
+inline Timestamp NES_Memory_TupleBuffer_getWatermark(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getWatermark();
 };
@@ -61,7 +61,7 @@ inline void NES_Memory_TupleBuffer_setWatermark(TupleBuffer* tupleBuffer, const 
     tupleBuffer->setWatermark(Timestamp(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const TupleBuffer* tupleBuffer)
+inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getCreationTimestampInMS();
 };
@@ -71,7 +71,7 @@ inline void NES_Memory_TupleBuffer_setSequenceNumber(TupleBuffer* tupleBuffer, c
     tupleBuffer->setSequenceNumber(sequenceNumber);
 };
 
-inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer* tupleBuffer)
+inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getSequenceNumber();
 }
@@ -91,7 +91,7 @@ inline void NES_Memory_TupleBuffer_setLastChunk(TupleBuffer* tupleBuffer, const 
     tupleBuffer->setLastChunk(isLastChunk);
 };
 
-inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const TupleBuffer* tupleBuffer)
+inline ChunkNumber NES_Memory_TupleBuffer_getChunkNumber(const TupleBuffer* tupleBuffer) noexcept
 {
     return tupleBuffer->getChunkNumber();
 };
