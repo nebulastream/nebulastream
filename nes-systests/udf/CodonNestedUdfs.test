@@ -1,0 +1,48 @@
+# name: udf/CodonNestedUdfs.test
+# description: nested catalog UDFs executed by Codon (CREATE FUNCTION ... BRIDGE 'codon'): chains of two and three UDFs,
+# two independent pairs in one projection, and one pair nested inside the other.
+# groups: [PythonUDF, CompilerOnly]
+
+CREATE LOGICAL SOURCE numbers(a INT64 NOT NULL, b INT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,2
+3,-4
+10,5
+
+CREATE FUNCTION double_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.double';
+CREATE FUNCTION increment_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.increment';
+CREATE FUNCTION square_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.square';
+CREATE FUNCTION negate_codon (x INT64) RETURNS INT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.negate';
+
+# Two nested UDFs: a * 2 + 1
+SELECT increment_codon(double_codon(a)) AS result FROM numbers
+INTO file();
+----
+3
+7
+21
+
+# Three nested UDFs: (a * 2 + 1)^2
+SELECT square_codon(increment_codon(double_codon(a))) AS result FROM numbers
+INTO file();
+----
+9
+49
+441
+
+# Two different nested pairs side by side: a * 2 + 1 and -(b^2)
+SELECT increment_codon(double_codon(a)) AS first, negate_codon(square_codon(b)) AS second FROM numbers
+INTO file();
+----
+3,-4
+7,-16
+21,-25
+
+# One pair nested inside the other: -(a^2) * 2 + 1
+SELECT increment_codon(double_codon(negate_codon(square_codon(a)))) AS result FROM numbers
+INTO file();
+----
+-1
+-17
+-199
