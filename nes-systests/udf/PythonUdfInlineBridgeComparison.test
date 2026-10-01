@@ -1,39 +1,40 @@
-# name: udf/PythonUdfBridgeComparison.test
-# description: same 10% discount UDF (one portable module) on Nexmark bid prices through every Python execution backend
-# (CPython bridge, PyPy bridge, Codon), all registered as catalog UDFs, plus a native-SQL baseline; each filters on the
-# output of the discount, so it is evaluated for every row. Run with -b to compare the per-backend cost.
-# The inline PYTHON(...) variant is PythonUdfInlineBridgeComparison.test.
+# name: udf/PythonUdfInlineBridgeComparison.test
+# description: inline counterpart of PythonUdfBridgeComparison.test: the same 10% discount written as an inline PYTHON(...)
+# UDF on Nexmark bid prices through every Python execution backend (CPython bridge, PyPy bridge, Codon) plus a native-SQL
+# baseline; each filters on the output of the discount, so it is evaluated for every row. Run with -b to compare the per-backend cost.
 # groups: [PythonUdf, PyPyUdf, PythonUDF, CompilerOnly, large]
 
 CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
 ATTACH FILE large/nexmark/bid_653M.csv
 
-CREATE FUNCTION discount_price_cpython (price FLOAT64) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'portable_udfs.apply_discount';
-CREATE FUNCTION discount_price_pypy (price FLOAT64) RETURNS FLOAT64 BRIDGE 'pypy' ENTRYPOINT 'portable_udfs.apply_discount';
-CREATE FUNCTION discount_price_codon (price FLOAT64) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'portable_udfs.apply_discount';
-
-# CPython bridge, filter on simple scalar UDF OUTPUT
+# CPython bridge, inline UDF, filter on OUTPUT
 SELECT * FROM (
-    SELECT auctionId, bidder, discount_price_cpython(price) AS discountedPrice FROM bidLarge
+    SELECT auctionId, bidder, PYTHON((price): $python$
+        return price * 0.9
+    $python$) AS FLOAT64 BRIDGE 'cpython' AS discountedPrice FROM bidLarge
 ) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
 INTO FILE();
 ----
 999994,126934,131.4
 999994,23774,36.0
 
-# PyPy bridge, filter on simple scalar UDF OUTPUT
+# PyPy bridge, inline UDF, filter on OUTPUT
 SELECT * FROM (
-    SELECT auctionId, bidder, discount_price_pypy(price) AS discountedPrice FROM bidLarge
+    SELECT auctionId, bidder, PYTHON((price): $python$
+        return price * 0.9
+    $python$) AS FLOAT64 BRIDGE 'pypy' AS discountedPrice FROM bidLarge
 ) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
 INTO FILE();
 ----
 999994,126934,131.4
 999994,23774,36.0
 
-# Codon as a catalog UDF (CREATE FUNCTION ... BRIDGE 'codon'), same portable module, filter on OUTPUT
+# Codon, inline UDF (AOT-compiled into the pipeline), filter on OUTPUT
 SELECT * FROM (
-    SELECT auctionId, bidder, discount_price_codon(price) AS discountedPrice FROM bidLarge
+    SELECT auctionId, bidder, PYTHON((price): $python$
+        return price * 0.9
+    $python$) AS FLOAT64 BRIDGE 'codon' AS discountedPrice FROM bidLarge
 ) WHERE (auctionId = 999994 AND bidder = 126934 AND discountedPrice = 131.4) OR (auctionId = 999994 AND bidder = 23774 AND discountedPrice = 36.0)
 INTO FILE();
 ----
