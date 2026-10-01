@@ -1,0 +1,48 @@
+# name: udf/PythonUdfLogisticScoreLarge.test
+# description: numpy logistic-regression score over four Nexmark bid columns, through the CPython bridge and Codon
+# (both catalog UDFs, one portable module) plus a native-SQL baseline; each filters on the score, so it is evaluated
+# for every row. Scores are compared with a tolerance since numpy, Codon and POW round differently.
+# Needs numpy in a CPython venv (nes-toolchain/python-venvs/udf-cpython, set below). The PyPy variant is
+# PythonUdfLogisticScorePyPyLarge.test: one interpreter venv per process, so it cannot share this invocation.
+# groups: [PythonUdf, PythonUDF, CompilerOnly, large]
+
+GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/udf-cpython
+
+CREATE LOGICAL SOURCE bidLarge(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, datetime INT64 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bidLarge TYPE File;
+ATTACH FILE large/nexmark/bid_653M.csv
+
+CREATE FUNCTION logistic_score_cpython (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 BRIDGE 'cpython' ENTRYPOINT 'expensive_udfs.logistic_score';
+CREATE FUNCTION logistic_score_codon (price FLOAT64, datetime INT64, auctionId INT32, bidder INT32) RETURNS FLOAT64 BRIDGE 'codon' ENTRYPOINT 'expensive_udfs.logistic_score';
+
+# CPython bridge, filter on UDF OUTPUT
+SELECT auctionId, bidder FROM (
+    SELECT auctionId, bidder, logistic_score_cpython(price, datetime, auctionId, bidder) AS score FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND ABS(score - 0.8903934199230211) < 0.000000001)
+     OR (auctionId = 999994 AND bidder = 23774 AND ABS(score - 0.6268856016812011) < 0.000000001)
+INTO FILE();
+----
+999994,126934
+999994,23774
+
+# Codon catalog UDF, same module, filter on UDF OUTPUT
+SELECT auctionId, bidder FROM (
+    SELECT auctionId, bidder, logistic_score_codon(price, datetime, auctionId, bidder) AS score FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND ABS(score - 0.8903934199230211) < 0.000000001)
+     OR (auctionId = 999994 AND bidder = 23774 AND ABS(score - 0.6268856016812011) < 0.000000001)
+INTO FILE();
+----
+999994,126934
+999994,23774
+
+# Native-SQL baseline, no UDF: sigmoid(w . x + b) with exp(-z) written as POW(e, -z)
+SELECT auctionId, bidder FROM (
+    SELECT auctionId, bidder,
+        1.0 / (1.0 + POW(2.718281828459045, 1.0 - 0.01 * price - 0.000001 * datetime + 0.000001 * auctionId - 0.000005 * bidder)) AS score
+    FROM bidLarge
+) WHERE (auctionId = 999994 AND bidder = 126934 AND ABS(score - 0.8903934199230211) < 0.000000001)
+     OR (auctionId = 999994 AND bidder = 23774 AND ABS(score - 0.6268856016812011) < 0.000000001)
+INTO FILE();
+----
+999994,126934
+999994,23774

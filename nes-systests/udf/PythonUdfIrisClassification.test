@@ -1,9 +1,11 @@
 # name: udf/PythonUdfIrisClassification.test
 # description: reproduces InferModel.test through three scalar Python UDFs (BRIDGE 'cpython'), one
 # per output class, running the same iris.onnx model via onnxruntime.
-# Needs onnxruntime in a venv passed via --worker.python_udf.venv (after --); not run by default.
+# Needs onnxruntime in a CPython venv (nes-toolchain/python-venvs/iris-onnx-udf, set below); not run by default.
 # Do not combine with PythonUdfVenv in one invocation -- one interpreter per process, first venv wins.
 # groups: [PythonUdfOnnx]
+
+GLOBALCONFIGURATION worker.python_udf.venv: /home/thanasis/Documents/nes-toolchain/python-venvs/iris-onnx-udf
 
 CREATE LOGICAL SOURCE stream(p1 FLOAT32 NOT NULL, p2 FLOAT32 NOT NULL, p3 FLOAT32 NOT NULL, p4 FLOAT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
