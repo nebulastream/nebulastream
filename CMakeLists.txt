@@ -279,12 +279,17 @@ if (CODE_COVERAGE)
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-single-node-worker")
     # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-plugins")
+    # 'nes-network' is not a target on its own either; it only add_subdirectory()s
+    # nes-network-interface (header-only, nothing to instrument) and
+    # nes-network-bindings (the real Rust cxx-bridge C++ code), so it is re-added
+    # below by its actual target name instead of being silently dropped.
     list(REMOVE_ITEM NES_COVERAGE_DIRECTORIES "nes-network")
     foreach (NES_DIR ${NES_COVERAGE_DIRECTORIES})
         target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
     endforeach ()
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
     target_code_coverage(nes-frontend-lib PUBLIC AUTO ALL)
+    target_code_coverage(nes-network-bindings PUBLIC AUTO ALL)
 endif ()
 
 # Registers the `package-docker-images-all` target (and per-binary sub-targets) that
