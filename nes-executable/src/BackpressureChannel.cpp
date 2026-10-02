@@ -22,9 +22,18 @@
 #include <stop_token>
 #include <utility>
 
+#include <ittnotify.h>
 #include <folly/Synchronized.h>
 
 #include <ErrorHandling.hpp>
+
+namespace
+{
+__itt_domain* backpressureDomain = __itt_domain_create("engine.backpressure");
+__itt_string_handle* backpressureWait = __itt_string_handle_create("Backpressure wait");
+__itt_string_handle* backpressureApplied = __itt_string_handle_create("Sink backpressure applied");
+__itt_string_handle* backpressureReleased = __itt_string_handle_create("Sink backpressure released");
+}
 
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
 /// The channel is initially open.
@@ -57,9 +66,13 @@ BackpressureController::~BackpressureController()
 bool BackpressureController::applyPressure()
 {
     const auto old = std::exchange(*channel->stateMtx.lock(), Channel::State::CLOSED);
-    INVARIANT(
-        old != Channel::State::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
-    return old == Channel::State::OPEN;
+    INVARIANT(old != Channel::State::DESTROYED, "The backpressureController is still alive thus the channel should not have been destroyed");
+    if (old == Channel::State::OPEN)
+    {
+        __itt_marker(backpressureDomain, __itt_null, backpressureApplied, __itt_marker_scope_thread);
+        return true;
+    }
+    return false;
 }
 
 bool BackpressureController::releasePressure()
@@ -70,6 +83,7 @@ bool BackpressureController::releasePressure()
     if (old == Channel::State::CLOSED)
     {
         /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
+        __itt_marker(backpressureDomain, __itt_null, backpressureReleased, __itt_marker_scope_thread);
         channel->change.notify_all();
         return true;
     }
@@ -85,6 +99,7 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
         return;
     }
 
+    __itt_task_begin(backpressureDomain, __itt_null, __itt_null, backpressureWait);
     bool destroyed = false;
     /// Wait for the channel state to change
     channel->change.wait(
@@ -95,6 +110,7 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
             destroyed = *state == Channel::State::DESTROYED;
             return destroyed || *state == Channel::State::OPEN;
         });
+    __itt_task_end(backpressureDomain);
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
 }
