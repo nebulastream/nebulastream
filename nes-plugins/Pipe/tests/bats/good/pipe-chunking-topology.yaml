@@ -1,0 +1,187 @@
+# Topology to trigger aggressive chunking through the pipe WITH window aggregation.
+# Generator produces (val UINT8, ts UINT64).
+# Projection expands val to 40 UINT8 fields + keeps ts before writing to pipe sink.
+# This causes each input buffer to split into ~40 output buffer chunks.
+# Consumer reads chunked data from pipe source and runs a tumbling window aggregation.
+
+sinks:
+  - name: PIPE_SINK
+    host: worker-node:8080
+    schema:
+      - { name: val, type: UINT8 }
+      - { name: "V02", type: UINT8 }
+      - { name: "V03", type: UINT8 }
+      - { name: "V04", type: UINT8 }
+      - { name: "V05", type: UINT8 }
+      - { name: "V06", type: UINT8 }
+      - { name: "V07", type: UINT8 }
+      - { name: "V08", type: UINT8 }
+      - { name: "V09", type: UINT8 }
+      - { name: "V10", type: UINT8 }
+      - { name: "V11", type: UINT8 }
+      - { name: "V12", type: UINT8 }
+      - { name: "V13", type: UINT8 }
+      - { name: "V14", type: UINT8 }
+      - { name: "V15", type: UINT8 }
+      - { name: "V16", type: UINT8 }
+      - { name: "V17", type: UINT8 }
+      - { name: "V18", type: UINT8 }
+      - { name: "V19", type: UINT8 }
+      - { name: "V20", type: UINT8 }
+      - { name: "V21", type: UINT8 }
+      - { name: "V22", type: UINT8 }
+      - { name: "V23", type: UINT8 }
+      - { name: "V24", type: UINT8 }
+      - { name: "V25", type: UINT8 }
+      - { name: "V26", type: UINT8 }
+      - { name: "V27", type: UINT8 }
+      - { name: "V28", type: UINT8 }
+      - { name: "V29", type: UINT8 }
+      - { name: "V30", type: UINT8 }
+      - { name: "V31", type: UINT8 }
+      - { name: "V32", type: UINT8 }
+      - { name: "V33", type: UINT8 }
+      - { name: "V34", type: UINT8 }
+      - { name: "V35", type: UINT8 }
+      - { name: "V36", type: UINT8 }
+      - { name: "V37", type: UINT8 }
+      - { name: "V38", type: UINT8 }
+      - { name: "V39", type: UINT8 }
+      - { name: "V40", type: UINT8 }
+      - { name: ts, type: UINT64 }
+    type: Pipe
+    config:
+      pipe_name: "chunked_pipe"
+    parser_config: { }
+  - name: PASSTHROUGH_SINK
+    host: worker-node:8080
+    schema:
+      - { name: val, type: UINT8 }
+      - { name: v02, type: UINT8 }
+      - { name: v03, type: UINT8 }
+      - { name: v04, type: UINT8 }
+      - { name: v05, type: UINT8 }
+      - { name: v06, type: UINT8 }
+      - { name: v07, type: UINT8 }
+      - { name: v08, type: UINT8 }
+      - { name: v09, type: UINT8 }
+      - { name: v10, type: UINT8 }
+      - { name: v11, type: UINT8 }
+      - { name: v12, type: UINT8 }
+      - { name: v13, type: UINT8 }
+      - { name: v14, type: UINT8 }
+      - { name: v15, type: UINT8 }
+      - { name: v16, type: UINT8 }
+      - { name: v17, type: UINT8 }
+      - { name: v18, type: UINT8 }
+      - { name: v19, type: UINT8 }
+      - { name: v20, type: UINT8 }
+      - { name: v21, type: UINT8 }
+      - { name: v22, type: UINT8 }
+      - { name: v23, type: UINT8 }
+      - { name: v24, type: UINT8 }
+      - { name: v25, type: UINT8 }
+      - { name: v26, type: UINT8 }
+      - { name: v27, type: UINT8 }
+      - { name: v28, type: UINT8 }
+      - { name: v29, type: UINT8 }
+      - { name: v30, type: UINT8 }
+      - { name: v31, type: UINT8 }
+      - { name: v32, type: UINT8 }
+      - { name: v33, type: UINT8 }
+      - { name: v34, type: UINT8 }
+      - { name: v35, type: UINT8 }
+      - { name: v36, type: UINT8 }
+      - { name: v37, type: UINT8 }
+      - { name: v38, type: UINT8 }
+      - { name: v39, type: UINT8 }
+      - { name: v40, type: UINT8 }
+      - { name: ts, type: UINT64 }
+    type: Void
+    config: { }
+    parser_config: { }
+  - name: WINDOW_SINK
+    host: worker-node:8080
+    schema:
+      - { name: val_count, type: UINT64 }
+    type: File
+    config:
+      output_format: CSV
+      file_path: "/workdir/worker-node/window_output.csv"
+    parser_config: { }
+
+logical:
+  - name: GEN
+    schema:
+      - { name: val, type: UINT8 }
+      - { name: ts, type: UINT64 }
+  - name: READER
+    schema:
+      - { name: val, type: UINT8 }
+      - { name: v02, type: UINT8 }
+      - { name: v03, type: UINT8 }
+      - { name: v04, type: UINT8 }
+      - { name: v05, type: UINT8 }
+      - { name: v06, type: UINT8 }
+      - { name: v07, type: UINT8 }
+      - { name: v08, type: UINT8 }
+      - { name: v09, type: UINT8 }
+      - { name: v10, type: UINT8 }
+      - { name: v11, type: UINT8 }
+      - { name: v12, type: UINT8 }
+      - { name: v13, type: UINT8 }
+      - { name: v14, type: UINT8 }
+      - { name: v15, type: UINT8 }
+      - { name: v16, type: UINT8 }
+      - { name: v17, type: UINT8 }
+      - { name: v18, type: UINT8 }
+      - { name: v19, type: UINT8 }
+      - { name: v20, type: UINT8 }
+      - { name: v21, type: UINT8 }
+      - { name: v22, type: UINT8 }
+      - { name: v23, type: UINT8 }
+      - { name: v24, type: UINT8 }
+      - { name: v25, type: UINT8 }
+      - { name: v26, type: UINT8 }
+      - { name: v27, type: UINT8 }
+      - { name: v28, type: UINT8 }
+      - { name: v29, type: UINT8 }
+      - { name: v30, type: UINT8 }
+      - { name: v31, type: UINT8 }
+      - { name: v32, type: UINT8 }
+      - { name: v33, type: UINT8 }
+      - { name: v34, type: UINT8 }
+      - { name: v35, type: UINT8 }
+      - { name: v36, type: UINT8 }
+      - { name: v37, type: UINT8 }
+      - { name: v38, type: UINT8 }
+      - { name: v39, type: UINT8 }
+      - { name: v40, type: UINT8 }
+      - { name: ts, type: UINT64 }
+
+physical:
+  - logical: GEN
+    host: worker-node:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 1000"
+      generator_schema: |
+        SEQUENCE UINT8 0 255 1, SEQUENCE UINT64 1000 100000 100
+  - logical: READER
+    host: worker-node:8080
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "chunked_pipe"
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000

@@ -1,0 +1,66 @@
+# A fast producer and slow pipe consumer on one constrained worker.
+# The tiny admission queue and slow PrintSink reproduce the saturation cycle
+# where PipeSource cannot submit while PipeSink finds its consumer queue full.
+
+query:
+  - SELECT * FROM GEN_SOURCE INTO PIPE_SINK
+  - SELECT * FROM PIPE_READER INTO PRINT_SINK
+
+sinks:
+  - name: PIPE_SINK
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+    type: Pipe
+    config:
+      pipe_name: "backpressure_pipe"
+    parser_config: { }
+  - name: PRINT_SINK
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+    type: Print
+    config:
+      ingestion: 50
+      output_format: CSV
+    parser_config: { }
+
+logical:
+  - name: GEN_SOURCE
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+  - name: PIPE_READER
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+
+physical:
+  - logical: GEN_SOURCE
+    host: worker-node:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 1000000"
+      generator_schema: |
+        SEQUENCE UINT64 0 1000000 1, SEQUENCE UINT64 0 1000000 1
+  - logical: PIPE_READER
+    host: worker-node:8080
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "backpressure_pipe"
+      queue_capacity: 4
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000
