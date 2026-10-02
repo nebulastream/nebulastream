@@ -34,9 +34,12 @@ if (NES_ENABLES_TESTS)
   add_plugin("Sinks/ChecksumSink")
 endif()
 
+add_plugin("Sources/VideoSource")
 
+add_plugin("ImageManip")
 
 add_plugin("Pipe")
 
+add_plugin("Sources/AudioSource")
 
 add_plugin("Sources/ProcessSource")
