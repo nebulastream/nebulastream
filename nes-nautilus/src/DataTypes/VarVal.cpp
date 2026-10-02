@@ -167,43 +167,43 @@ VarVal VarVal::castToType(const DataType::Type type) const
     switch (type)
     {
         case DataType::Type::CHAR: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<char>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<char>>(), nullFlag};
         }
         case DataType::Type::BOOLEAN: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<bool>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<bool>>(), nullFlag};
         }
         case DataType::Type::INT8: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<int8_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<int8_t>>(), nullFlag};
         }
         case DataType::Type::INT16: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<int16_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<int16_t>>(), nullFlag};
         }
         case DataType::Type::INT32: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<int32_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<int32_t>>(), nullFlag};
         }
         case DataType::Type::INT64: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<int64_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<int64_t>>(), nullFlag};
         }
         case DataType::Type::UINT8: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<uint8_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<uint8_t>>(), nullFlag};
         }
         case DataType::Type::UINT16: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<uint16_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<uint16_t>>(), nullFlag};
         }
         case DataType::Type::UINT32: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<uint32_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<uint32_t>>(), nullFlag};
         }
         case DataType::Type::UINT64: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<uint64_t>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<uint64_t>>(), nullFlag};
         }
         case DataType::Type::FLOAT32: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<float>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<float>>(), nullFlag};
         }
         case DataType::Type::FLOAT64: {
-            return {detail::var_val_t{getRawValueAs<nautilus::val<double>>()}, nullFlag};
+            return {getRawValueAs<nautilus::val<double>>(), nullFlag};
         }
         case DataType::Type::VARSIZED: {
-            return {detail::var_val_t{getRawValueAs<VariableSizedData>()}, nullFlag};
+            return {getRawValueAs<VariableSizedData>(), nullFlag};
         }
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
