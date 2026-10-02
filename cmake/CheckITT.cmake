@@ -10,14 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-list(APPEND VCPKG_HASH_ADDITIONAL_FILES "${CMAKE_CURRENT_LIST_FILE}")
+include(FetchContent)
+FetchContent_Declare(
+        ittapi
+        GIT_REPOSITORY https://github.com/intel/ittapi.git
+        GIT_TAG v3.26.7
+)
+FetchContent_MakeAvailable(ittapi)
 
-set(VCPKG_TARGET_ARCHITECTURE arm64)
-set(VCPKG_CRT_LINKAGE dynamic)
-set(VCPKG_LIBRARY_LINKAGE static)
-set(VCPKG_CMAKE_SYSTEM_NAME Linux)
-
-# These ports require the aarch64 CMake architecture name.
-if (PORT STREQUAL "boost-context" OR PORT STREQUAL "openvino")
-    SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
-endif ()
+# Keep NES instrumentation separate from the ITT implementation embedded in static TBB.
+# Consumers need the same prefix because ittnotify.h expands calls to these symbols.
+target_compile_definitions(ittnotify PUBLIC INTEL_ITTNOTIFY_PREFIX=__nes_itt_)

@@ -181,7 +181,7 @@ jobs:
       - create-nightly-image
       - quick-start
     runs-on: [ self-hosted ]
-    if: ${{ failure() && !github.event.act }}
+    if: ${{ failure() && !github.event.act && github.ref == 'refs/heads/main' }}
     steps:
       - name: Notify Zulip
         uses: zulip/github-actions-zulip/send-message@v1

@@ -10,8 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(VCPKG_CXX_FLAGS -fsanitize=undefined)
-set(VCPKG_C_FLAGS -fsanitize=undefined)
+list(APPEND VCPKG_HASH_ADDITIONAL_FILES "${CMAKE_CURRENT_LIST_FILE}")
+
+# ARM64 emits compiler-rt builtins such as __muloti4 for 128-bit arithmetic.
+# Select compiler-rt explicitly so sanitizer link commands include those builtins.
+set(VCPKG_CXX_FLAGS "-fsanitize=undefined")
+set(VCPKG_C_FLAGS "-fsanitize=undefined")
+set(VCPKG_LINKER_FLAGS "--rtlib=compiler-rt")
 
 # Building LLVM with the `-fsanitize=undefined` flag causes the sanitizer itself to be built sanitized which is not
 # possible. In general if the port supports sanitization via a CMake Option this should be the preferred way, to avoid
@@ -19,6 +24,7 @@ set(VCPKG_C_FLAGS -fsanitize=undefined)
 if (PORT STREQUAL llvm)
     set(VCPKG_CXX_FLAGS "")
     set(VCPKG_C_FLAGS "")
+    set(VCPKG_LINKER_FLAGS "")
     set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined" -DLLVM_REQUIRES_RTTI=ON)
 endif()
 
