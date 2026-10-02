@@ -22,6 +22,7 @@
 #include <ostream>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -33,6 +34,8 @@
 #include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
+#include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -99,6 +102,8 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider>) override;
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return "Test"; }
+
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -111,7 +116,7 @@ private:
     std::shared_ptr<TestSourceControl> control;
 };
 
-std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
+std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>> getTestSource(
+    BackpressureListener backpressureListener, QueryId queryId, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
 }

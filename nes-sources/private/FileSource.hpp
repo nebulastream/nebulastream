@@ -56,6 +56,7 @@ public:
     /// Close file socket.
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 

@@ -23,6 +23,7 @@
 #include <optional>
 #include <ostream>
 #include <stop_token>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -149,6 +150,8 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& str) const override { return str << *inner; }
+
+    [[nodiscard]] std::string_view getType() const override { return inner->getType(); }
 
 private:
     std::unique_ptr<NES::Source> inner;

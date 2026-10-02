@@ -49,6 +49,7 @@
 #include <ControlChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <InterceptorSource.hpp>
+#include <QueryId.hpp>
 #include <Reply.hpp>
 #include <SessionCommand.hpp>
 #include <SourceRegistry.hpp>
@@ -240,7 +241,12 @@ private:
         /// The handle is built here, not by the source provider, so that the wrapper can be injected.
         /// The in-flight limit is not enforced here; the bounded queue applies the backpressure.
         handle = std::make_unique<SourceHandle>(
-            std::move(listener), NES::OriginId(1), NES::SourceRuntimeConfiguration{options.bufferCount}, pool, std::move(wrapped));
+            std::move(listener),
+            NES::INVALID_QUERY_ID,
+            NES::OriginId(1),
+            NES::SourceRuntimeConfiguration{options.bufferCount},
+            pool,
+            std::move(wrapped));
         handle->start(makeEmitFunction());
 
         if (openedFuture.wait_for(options.stepTimeout) != std::future_status::ready)
