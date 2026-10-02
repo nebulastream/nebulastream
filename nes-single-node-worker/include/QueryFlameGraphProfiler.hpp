@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -34,7 +35,9 @@ namespace NES
 {
 
 /// Samples every query with nautilus' in-process profiler (the nautilus-profiling plugin, built on perf-cpp) and writes a flame graph
-/// per query to `<directory>/query-<id>.svg` once its last pipeline stopped, or the query failed.
+/// per query to `<directory>/query-<id>.svg` once its last pipeline stopped, or the query failed. All queries of the process are also
+/// collected into one flame graph, `<directory>/all-queries.svg`, with the query and the worker as its top frames, which is written when
+/// the last worker of the process shuts down.
 ///
 /// Worker threads run the tasks of all queries, so each query has its own sampler, and a worker samples into it only while it executes
 /// one of that query's tasks (between TaskExecutionStart and TaskExecutionComplete, which the query engine emits on the worker thread).
@@ -49,7 +52,7 @@ namespace NES
 class QueryFlameGraphProfiler final : public QueryEngineStatisticListener
 {
 public:
-    explicit QueryFlameGraphProfiler(std::filesystem::path directory);
+    QueryFlameGraphProfiler(std::filesystem::path directory, std::string workerName);
     ~QueryFlameGraphProfiler() override;
 
     QueryFlameGraphProfiler(const QueryFlameGraphProfiler&) = delete;
@@ -79,6 +82,9 @@ private:
     [[nodiscard]] std::shared_ptr<nautilus::profiling::Sampler> findSampler(const QueryId& queryId) const;
 
     std::filesystem::path directory;
+    std::string workerName;
+    /// Shared by every profiler of the process; writes all-queries.svg when the last one is gone.
+    std::shared_ptr<struct GlobalFlameGraph> global;
     mutable std::mutex mutex;
     std::unordered_map<QueryId, QueryProfile> profiles;
     bool reportedUnavailable = false;

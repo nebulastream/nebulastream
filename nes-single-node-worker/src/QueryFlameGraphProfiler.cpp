@@ -15,10 +15,12 @@
 #include <QueryFlameGraphProfiler.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <system_error>
 #include <unordered_set>
 #include <utility>
@@ -28,6 +30,7 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <nautilus/compiler/JitSymbolRegistry.hpp>
+#include <nautilus/profiling/sample_report.hpp>
 #include <nautilus/profiling/sampler.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryId.hpp>
@@ -35,7 +38,77 @@
 namespace NES
 {
 
-QueryFlameGraphProfiler::QueryFlameGraphProfiler(std::filesystem::path directory) : directory(std::move(directory))
+/// Collects the call stacks of every profiled query in the process and renders them as one flame graph when the last profiler is gone.
+struct GlobalFlameGraph
+{
+    explicit GlobalFlameGraph(std::filesystem::path directory) : directory(std::move(directory)) { }
+
+    GlobalFlameGraph(const GlobalFlameGraph&) = delete;
+    GlobalFlameGraph(GlobalFlameGraph&&) = delete;
+    GlobalFlameGraph& operator=(const GlobalFlameGraph&) = delete;
+    GlobalFlameGraph& operator=(GlobalFlameGraph&&) = delete;
+
+    ~GlobalFlameGraph()
+    {
+        if (total == 0)
+        {
+            return;
+        }
+        const nautilus::profiling::SampleReport report({}, std::move(stacks), total);
+        const auto path = directory / "all-queries.svg";
+        if (report.writeFlameGraph(path.string(), "NebulaStream, all queries"))
+        {
+            NES_INFO("Wrote the flame graph of all queries ({} samples) to {}", total, path.string());
+        }
+        else
+        {
+            NES_WARNING("Could not write the flame graph of all queries to {}", path.string());
+        }
+    }
+
+    /// Adds a query's stacks below a frame for the query and one for the worker that ran them.
+    void add(const nautilus::profiling::SampleReport& report, const std::string& queryName, const std::string& workerName)
+    {
+        const std::scoped_lock lock(mutex);
+        for (const auto& stack : report.stacks())
+        {
+            nautilus::profiling::SampleStack prefixed;
+            prefixed.samples = stack.samples;
+            prefixed.frames.reserve(stack.frames.size() + 2);
+            prefixed.frames.push_back({.name = "query " + queryName, .origin = nautilus::profiling::SymbolOrigin::Host});
+            prefixed.frames.push_back({.name = workerName, .origin = nautilus::profiling::SymbolOrigin::Host});
+            prefixed.frames.insert(prefixed.frames.end(), stack.frames.begin(), stack.frames.end());
+            stacks.push_back(std::move(prefixed));
+        }
+        total += report.total();
+    }
+
+    std::filesystem::path directory;
+    std::mutex mutex;
+    std::vector<nautilus::profiling::SampleStack> stacks;
+    uint64_t total = 0;
+};
+
+namespace
+{
+/// The global flame graph of the process: created by the first profiler, written once the last one is destroyed.
+std::shared_ptr<GlobalFlameGraph> globalFlameGraph(const std::filesystem::path& directory)
+{
+    static std::mutex mutex;
+    static std::weak_ptr<GlobalFlameGraph> current;
+    const std::scoped_lock lock(mutex);
+    auto global = current.lock();
+    if (not global)
+    {
+        global = std::make_shared<GlobalFlameGraph>(directory);
+        current = global;
+    }
+    return global;
+}
+}
+
+QueryFlameGraphProfiler::QueryFlameGraphProfiler(std::filesystem::path directory, std::string workerName)
+    : directory(std::move(directory)), workerName(std::move(workerName)), global(globalFlameGraph(this->directory))
 {
     std::error_code error;
     std::filesystem::create_directories(this->directory, error);
@@ -199,6 +272,10 @@ void QueryFlameGraphProfiler::finishQuery(const QueryId& queryId)
         NES_INFO("No samples for query {}, so no flame graph was written", queryId);
         return;
     }
+    global->add(
+        report,
+        queryId.isDistributed() ? queryId.getDistributedQueryId().getRawValue() : queryId.getLocalQueryId().getRawValue(),
+        workerName);
     if (not report.writeFlameGraph(path.string(), fmt::format("NebulaStream query {}", queryId)))
     {
         NES_WARNING("Could not write the flame graph of query {} to {}", queryId, path.string());
