@@ -70,6 +70,8 @@ public:
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
     void close() override;
 
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

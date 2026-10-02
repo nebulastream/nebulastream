@@ -21,6 +21,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -39,7 +40,7 @@ public:
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     [[nodiscard]] std::unique_ptr<SourceHandle>
-    lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
+    lower(QueryId queryId, OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
 
     [[nodiscard]] bool contains(const std::string& sourceType) const;
 };

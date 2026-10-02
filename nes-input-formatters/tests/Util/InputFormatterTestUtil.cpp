@@ -69,6 +69,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -150,7 +151,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
                                       .value();
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(OriginId{1}, backpressureListener, sourceDescriptor)};
+    return {std::move(backpressureController), sourceProvider.lower(INVALID_QUERY_ID, OriginId{1}, backpressureListener, sourceDescriptor)};
 }
 
 InputFormatterDescriptor
