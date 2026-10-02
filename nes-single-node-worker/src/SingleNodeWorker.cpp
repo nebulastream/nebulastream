@@ -195,7 +195,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 break;
             }
             case QueryStatus::Stopped: {
-                INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+                /// A query stopped during setup may never have reported Running.
                 INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
                 if (metrics.stop.value() >= after)
                 {

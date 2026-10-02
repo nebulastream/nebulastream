@@ -81,13 +81,18 @@ void reportResult(
     runningQuery->verdict = std::move(verdict);
 
     std::string performanceMessage;
-    /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
+    /// A stopped query may lack a Running event if it was stopped during setup or completed before onRunning.
+    /// Only invoke performance builders when all local queries supplied the timestamps needed to calculate a duration.
     if (performanceMessageBuilder
         and runningQuery->queryStatus.has_value()
         /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) guarded by has_value() above
         and runningQuery->queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped)
     {
-        performanceMessage = performanceMessageBuilder(*runningQuery);
+        const auto metrics = runningQuery->queryStatus->coalesceQueryMetrics();
+        if (metrics.running.has_value() and metrics.stop.has_value())
+        {
+            performanceMessage = performanceMessageBuilder(*runningQuery);
+        }
     }
 
     progressTracker.incrementQueryCounter();
@@ -506,8 +511,8 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    /// The performance message builder is invoked exactly once per query that reached the stopped state, which is exactly the set of
-    /// queries that can be timed. That makes it the hook for collecting the benchmark results.
+    /// The performance message builder is invoked once per stopped query with complete timing metrics.
+    /// Queries without a Running timestamp still have their results checked, but cannot contribute a benchmark sample.
     const QueryPerformanceMessageBuilder benchmarkQuery = [&benchmarkResults](RunningQuery& runningQuery)
     {
         recordProcessedInput(runningQuery);
