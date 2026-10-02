@@ -131,6 +131,13 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
     CONFIG_ARG="\"--workerConfig=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
   fi
 
+  # The worker runs as the unprivileged image user (uid 10000) and writes
+  # singleNodeWorker.log into its working dir. Pre-create that bind-mounted dir
+  # world-writable; otherwise docker auto-creates it root-owned and the non-root
+  # worker cannot write its log.
+  mkdir -p "$TEST_DIR/$HOST_NAME"
+  chmod 0777 "$TEST_DIR/$HOST_NAME"
+
   cat <<EOF
   $HOST_NAME:
     image: $WORKER_IMAGE

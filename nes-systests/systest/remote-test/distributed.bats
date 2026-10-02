@@ -53,6 +53,9 @@ INSTANCE_PID=0
 setup() {
   mkdir -p "$NES_TEST_TMP_DIR"
   export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
+  # Containers run as the unprivileged image user (uid 10000), which must be
+  # able to write into the bind-mounted test directory regardless of host uid.
+  chmod -R a+rwX "$TMP_DIR"
 
   cd "$TMP_DIR" || exit
 
