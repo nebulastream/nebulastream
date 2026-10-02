@@ -29,8 +29,8 @@ namespace NES
 class LowerToCompiledQueryPlanPhase
 {
 public:
-    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
+    explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations, const bool samplingProfile = false)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), samplingProfile(samplingProfile)
     {
     }
 
@@ -56,5 +56,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
+    bool samplingProfile;
 };
 }

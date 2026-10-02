@@ -28,6 +28,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -156,7 +157,13 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     /// Resolving the name of every invoked runtime function costs a dladdr lookup (~1 ms each in our binaries), which is about
     /// half of the tracing time (nebulastream/nautilus#491). Callees are bound by address, so names only matter for readable IR
     /// dumps. Needs a nautilus version that knows the option; older versions ignore it.
-    options.setOption("engine.resolveFunctionNames", dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
+    options.setOption("engine.resolveFunctionNames", samplingProfile or dumpQueryCompilationIR.getDumpOption() != DumpMode::Options::NONE);
+    if (samplingProfile)
+    {
+        /// Publishes the compiled code, named by its nautilus regions, to the JIT symbol registry an in-process sampler resolves against.
+        /// Only the MLIR backend registers code, so other modes are sampled without names for JIT frames.
+        options.setOption("perf.sample", true);
+    }
     /// Disable all of nautilus' pure optimization IR passes: MLIR/LLVM perform the same optimizations, and the nautilus passes
     /// scale poorly with the size of our pipelines (nebulastream/nautilus#492). The passes the backend depends on (no-throw
     /// inference and exception-region preparation) cannot be disabled and keep running.
@@ -199,6 +206,12 @@ std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperat
 std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
 {
     this->pipelineQueryPlan = pipelineQueryPlan;
+    if (samplingProfile and pipelineQueryPlan->getExecutionMode() != ExecutionMode::COMPILER)
+    {
+        NES_WARNING(
+            "Query {} is profiled, but flame graphs name JIT-compiled code only with execution mode COMPILER",
+            pipelineQueryPlan->getQueryId());
+    }
 
     /// Process all pipelines recursively.
     for (auto sourcePipelines = pipelineQueryPlan->getSourcePipelines(); const auto& pipeline : sourcePipelines)
