@@ -45,7 +45,10 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    : engine(options)
+    , operatorHandlers(std::move(operatorHandlers))
+    , rootOperator(pipeline->getRootOperator())
+    , pipelineId(pipeline->getPipelineId())
 {
 }
 
@@ -60,11 +63,10 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
 
 void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine::NautilusModule& module) const
 {
-    /// Capture the stage by pointer rather than the pipeline shared_ptr: this compiled function is only ever invoked
-    /// through execute()/start()/stop() on the owning stage, so the stage (and thus its pipeline) outlives every call.
-    /// Capturing the pipeline shared_ptr by value instead makes the compiled module co-own the pipeline, and because
-    /// cached slices keep that module alive through their cleanup handle, it retains the pipeline (and its slice
-    /// buffers) past teardown -- which leaks buffers in the sliceCache systests.
+    /// Capture the stage by pointer: this compiled function is only ever invoked through execute()/start()/stop() on
+    /// the owning stage, so the stage (and thus its root operator) outlives every call. Capturing the root operator by
+    /// value instead makes the compiled module co-own its state, and cached slices can keep that module alive past
+    /// teardown, which leaks buffers in the sliceCache systests.
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<Arena*>)>
@@ -76,11 +78,11 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
         RecordBuffer recordBuffer{BorrowedNautilusBuffer::from(recordBufferRef)};
 
-        pipeline->getRootOperator().open(ctx, recordBuffer);
+        rootOperator.open(ctx, recordBuffer);
         switch (ctx.getOpenReturnState())
         {
             case OpenReturnState::CONTINUE: {
-                pipeline->getRootOperator().close(ctx, recordBuffer);
+                rootOperator.close(ctx, recordBuffer);
                 break;
             }
             case OpenReturnState::REPEAT: {
@@ -95,14 +97,29 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     };
     /// NOLINTEND(performance-unnecessary-value-param)
     module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+
+
+    /// Capture the stage by pointer: this compiled function is only ever invoked through execute()/start()/stop() on
+    /// the owning stage, so the stage (and thus its root operator) outlives every call. Capturing the root operator by
+    /// value instead makes the compiled module co-own its state, and cached slices can keep that module alive past
+    /// teardown, which leaks buffers in the sliceCache systests.
+    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<Arena*>)> terminateFunction
+        = [this](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<Arena*> arenaRef)
+    {
+        auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+        rootOperator.terminate(ctx);
+    };
+    /// NOLINTEND(performance-unnecessary-value-param)
+    module.registerFunction(std::string{TERMINATE_FUNCTION_NAME}, terminateFunction);
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    pipeline->getRootOperator().terminate(ctx);
+    (*terminateFunction)(std::addressof(pipelineExecutionContext), std::addressof(arena));
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -122,11 +139,12 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     {
         auto module = engine.createModule();
         CompilationContext compilationCtx{module};
-        pipeline->getRootOperator().setup(ctx, compilationCtx);
+        rootOperator.setup(ctx, compilationCtx);
         registerPipelineFunction(module);
         compiledModule = module.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        terminateFunction = compiledModule->getFunction<TerminateSignature>(std::string{TERMINATE_FUNCTION_NAME});
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
@@ -134,13 +152,13 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         {
             NES_DEBUG(
                 "Nautilus compilation statistics for pipeline {}:\n{}",
-                pipeline->getPipelineId(),
-                statistics->formatReport(fmt::format("pipeline-{}", pipeline->getPipelineId()), engine.getNameOfBackend()));
+                pipelineId,
+                statistics->formatReport(fmt::format("pipeline-{}", pipelineId), engine.getNameOfBackend()));
         }
     }
     CPPTRACE_CATCH(...)
     {
-        throw wrapExternalException(fmt::format("Could not query compile pipeline: {}", *pipeline));
+        throw wrapExternalException(fmt::format("Could not query compile pipeline {}", pipelineId));
     }
 }
 

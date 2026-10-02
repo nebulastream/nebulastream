@@ -25,8 +25,10 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -94,6 +96,24 @@ public:
         JoinLogicalOperator::JoinType joinType,
         Windowing::TimeCharacteristic leftCharacteristic,
         Windowing::TimeCharacteristic rightCharacteristic);
+
+    /// Adds an asymmetric growing-table inner join. The left input is the
+    /// stream and the right input is the table. Without time characteristics,
+    /// stream tuples are held until the table reaches EOS.
+    static LogicalPlan addStreamTableJoin(
+        LogicalPlan streamPlan,
+        LogicalPlan tablePlan,
+        const LogicalFunction& joinFunction,
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics);
+
+    /// Adds a directional ASOF join. The left input produces output by selecting
+    /// the latest qualifying right tuple at or before its timestamp.
+    static LogicalPlan addAsOfJoin(
+        LogicalPlan leftPlan,
+        LogicalPlan rightPlan,
+        const LogicalFunction& joinFunction,
+        AsOfJoinTimeCharacteristics timeCharacteristics,
+        bool rightIsTable);
 
     static LogicalPlan addInferModel(Identifier modelName, const LogicalPlan& childPlan);
 

@@ -34,3 +34,10 @@ add_unreflection_entry(LogicalOperator IngestionTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator EventTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator InferModel)
 add_unreflection_entry(LogicalOperator InferModelName)
+
+add_source_files(nes-logical-operators StreamTableJoinLogicalOperator.cpp)
+add_unreflection_entry(LogicalOperator StreamTableJoin)
+
+
+add_source_files(nes-logical-operators AsOfJoinLogicalOperator.cpp)
+add_unreflection_entry(LogicalOperator AsOfJoin)

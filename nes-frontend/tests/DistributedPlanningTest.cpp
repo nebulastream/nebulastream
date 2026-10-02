@@ -371,11 +371,11 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
+  SELECT *, id0 + 1 AS projected_id FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
 
 sinks:
   - name: sink
-    schema: [ start, end, ts0, id0, ts1, id1, a, b ]
+    schema: [ start, end, ts0, id0, ts1, id1, a, b, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -405,7 +405,8 @@ workers:
     auto plan = opt->optimize(boundPlan);
 
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
-    EXPECT_EQ(flatten(sourceNode0Plan).size(), 3);
+    EXPECT_EQ(flatten(sourceNode0Plan).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourceNode0Plan).size(), 1);
     EXPECT_EQ(getLeafOperators(sourceNode0Plan).size(), 1);
     EXPECT_EQ(
         getLeafOperators(sourceNode0Plan)
@@ -419,7 +420,8 @@ workers:
     EXPECT_EQ(sourceNode0Plan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sourceNode1Plan = plan[Host("source-node1:8080")].front();
-    EXPECT_EQ(flatten(sourceNode1Plan).size(), 4);
+    EXPECT_EQ(flatten(sourceNode1Plan).size(), 5);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getLeafOperators(sourceNode1Plan).size(), 1);
     EXPECT_EQ(
         getLeafOperators(sourceNode1Plan)
@@ -434,7 +436,8 @@ workers:
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourceNode1Plan).size(), 1);
 
     const auto sinkNodePlan = plan[Host("sink-node:8080")].front();
-    EXPECT_EQ(flatten(sinkNodePlan).size(), 4);
+    EXPECT_EQ(flatten(sinkNodePlan).size(), 5);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkNodePlan).size(), 1);
     EXPECT_EQ(getLeafOperators(sinkNodePlan).size(), 2);
     EXPECT_EQ(
         getLeafOperators(sinkNodePlan)[0].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(),
@@ -451,11 +454,11 @@ TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT ts0, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
+  SELECT *, id0 + 1 AS projected_id FROM (SELECT ts0, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
 
 sinks:
   - name: sink
-    schema: [ start, end, ts0, a, id0, ts1, id1, c, d ]
+    schema: [ start, end, ts0, a, id0, ts1, id1, c, d, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -494,7 +497,8 @@ workers:
         getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(plan0).size(), 1);
-    EXPECT_EQ(flatten(plan0).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(plan0).size(), 1);
+    EXPECT_EQ(flatten(plan0).size(), 5);
 
     const auto plan1 = plan[Host("source-node0:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan1).size(), 1);
@@ -511,18 +515,19 @@ workers:
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(plan2).size(), 1);
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(plan1).size(), 1);
-    EXPECT_EQ(flatten(plan2).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(plan2).size(), 1);
+    EXPECT_EQ(flatten(plan2).size(), 5);
 }
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
+  SELECT *, id0 + 1 AS projected_id FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
 
 sinks:
   - name: sink
-    schema: [ start, end, ts0, id0, ts1, id1, a, b ]
+    schema: [ start, end, ts0, id0, ts1, id1, a, b, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -561,14 +566,16 @@ workers:
         getOperatorByType<SourceDescriptorLogicalOperator>(plan0)[1].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(plan0).size(), 1);
-    EXPECT_EQ(flatten(plan0).size(), 5);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(plan0).size(), 2);
+    EXPECT_EQ(flatten(plan0).size(), 7);
 
     const auto plan1 = plan[Host("source-node0:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan1).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan1).front().get().getSinkDescriptor()->getSinkType(), "NETWORK");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(plan1).size(), 1);
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(plan1).size(), 1);
-    EXPECT_EQ(flatten(plan1).size(), 3);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(plan1).size(), 1);
+    EXPECT_EQ(flatten(plan1).size(), 4);
 
     const auto plan2 = plan[Host("source-node1:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan2).size(), 1);
@@ -582,11 +589,11 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
+  SELECT *, id0 + 1 AS projected_id FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
 
 sinks:
   - name: sink
-    schema: [ start, end, ts0, id0, ts1, id1, a, b ]
+    schema: [ start, end, ts0, id0, ts1, id1, a, b, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -605,7 +612,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 10
   - host: "source-node:8080"
-    max_operators: 3
+    max_operators: 5
     downstream:
       - "sink-node:8080"
 )");
@@ -616,7 +623,8 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).front().get().getSinkDescriptor()->getSinkType(), "VOID");
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 2);
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 1);
-    EXPECT_EQ(flatten(sinkPlan).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkPlan).size(), 1);
+    EXPECT_EQ(flatten(sinkPlan).size(), 5);
 
     const auto sourcePlan1 = plan[Host("source-node:8080")][0];
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1).size(), 1);
@@ -626,7 +634,8 @@ workers:
         getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan1).size(), 1);
-    EXPECT_EQ(flatten(sourcePlan1).size(), 3);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourcePlan1).size(), 1);
+    EXPECT_EQ(flatten(sourcePlan1).size(), 4);
 
     const auto sourcePlan2 = plan[Host("source-node:8080")][1];
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan2).size(), 1);
@@ -637,7 +646,8 @@ workers:
         Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourcePlan2).size(), 1);
-    EXPECT_EQ(flatten(sourcePlan2).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourcePlan2).size(), 1);
+    EXPECT_EQ(flatten(sourcePlan2).size(), 5);
 }
 
 TEST_F(DistributedPlanningTest, FourWayJoin)
@@ -845,11 +855,11 @@ TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
+  SELECT *, id0 + 1 AS projected_id FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts0, ts1, size 1 sec) INTO sink
 
 sinks:
   - name: sink
-    schema: [ start, end, ts0, id0, ts1, id1, a, b ]
+    schema: [ start, end, ts0, id0, ts1, id1, a, b, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -866,7 +876,7 @@ physical:
 
 workers:
   - host: "source-node:8080"
-    max_operators: 3
+    max_operators: 5
     downstream:
       - "intermediate-node:8080"
   - host: "intermediate-node:8080"
@@ -879,7 +889,8 @@ workers:
     auto plan = opt->optimize(boundPlan);
 
     const auto sourcePlan1 = plan[Host("source-node:8080")][0];
-    EXPECT_EQ(flatten(sourcePlan1).size(), 3);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourcePlan1).size(), 1);
+    EXPECT_EQ(flatten(sourcePlan1).size(), 4);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1).size(), 1);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan1)[0].get().getSourceDescriptor().getSourceType(),
@@ -889,7 +900,7 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourcePlan1)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sourcePlan2 = plan[Host("source-node:8080")][1];
-    EXPECT_EQ(flatten(sourcePlan2).size(), 4);
+    EXPECT_EQ(flatten(sourcePlan2).size(), 5);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2).size(), 1);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sourcePlan2)[0].get().getSourceDescriptor().getSourceType(),
@@ -918,7 +929,8 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediatePlan2)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
-    EXPECT_EQ(flatten(sinkPlan).size(), 4);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkPlan).size(), 1);
+    EXPECT_EQ(flatten(sinkPlan).size(), 5);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 2);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
@@ -935,7 +947,7 @@ TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 {
     auto [opt, boundPlan] = loadAndBind(R"(
 query: |
-  SELECT * FROM (
+  SELECT *, id0 + 1 AS projected_id FROM (
     SELECT * FROM (
       SELECT start as start2, end as end2, start1, end1, ts0, id0, ts1, id1, ts2, id2
       FROM (
@@ -955,7 +967,7 @@ query: |
 
 sinks:
   - name: sink
-    schema: [ start, end, start2, end2, start1, end1, ts0, id0, ts1, id1, ts2, id2, ts3, id3 ]
+    schema: [ start, end, start2, end2, start1, end1, ts0, id0, ts1, id1, ts2, id2, ts3, id3, projected_id ]
     host: "sink-node:8080"
 
 logical:
@@ -980,11 +992,11 @@ physical:
 
 workers:
   - host: "source-node0:8080"
-    max_operators: 3
+    max_operators: 5
     downstream:
       - "sink-node:8080"
   - host: "source-node1:8080"
-    max_operators: 1
+    max_operators: 2
     downstream:
       - "intermediate-node0:8080"
   - host: "source-node2:8080"
@@ -996,11 +1008,11 @@ workers:
     downstream:
       - "sink-node:8080"
   - host: "intermediate-node1:8080"
-    max_operators: 1
+    max_operators: 2
     downstream:
       - "sink-node:8080"
   - host: "sink-node:8080"
-    max_operators: 6
+    max_operators: 10
 )");
     auto plan = opt->optimize(boundPlan);
 
@@ -1012,7 +1024,7 @@ workers:
         }
     }
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
-    EXPECT_EQ(flatten(sourceNode0Plan).size(), 6);
+    EXPECT_EQ(flatten(sourceNode0Plan).size(), 8);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan).size(), 2);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode0Plan)[0].get().getSourceDescriptor().getSourceType(),
@@ -1022,16 +1034,18 @@ workers:
         Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sourceNode0Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourceNode0Plan).size(), 2);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourceNode0Plan).size(), 2);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode0Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode0Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sourceNode1Plan = plan[Host("source-node1:8080")].front();
-    EXPECT_EQ(flatten(sourceNode1Plan).size(), 3);
+    EXPECT_EQ(flatten(sourceNode1Plan).size(), 4);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sourceNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("FILE"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sourceNode1Plan).size(), 1);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sourceNode1Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
@@ -1054,17 +1068,18 @@ workers:
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode0Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto intermediateNode1Plan = plan[Host("intermediate-node1:8080")].front();
-    EXPECT_EQ(flatten(intermediateNode1Plan).size(), 3);
+    EXPECT_EQ(flatten(intermediateNode1Plan).size(), 4);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode1Plan).size(), 1);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(intermediateNode1Plan)[0].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(intermediateNode1Plan).size(), 1);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(intermediateNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode1Plan).size(), 1);
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(intermediateNode1Plan)[0].get().getSinkDescriptor()->getSinkType(), "NETWORK");
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
-    EXPECT_EQ(flatten(sinkPlan).size(), 8);
+    EXPECT_EQ(flatten(sinkPlan).size(), 12);
     EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan).size(), 3);
     EXPECT_EQ(
         getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[0].get().getSourceDescriptor().getSourceType(),
@@ -1076,7 +1091,7 @@ workers:
         getOperatorByType<SourceDescriptorLogicalOperator>(sinkPlan)[2].get().getSourceDescriptor().getSourceType(),
         Identifier::parse("NETWORK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkPlan).size(), 2);
-    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkPlan).size(), 2);
+    EXPECT_EQ(getOperatorByType<ProjectionLogicalOperator>(sinkPlan).size(), 6);
     /// Watermark assignments are pushed fully upstream — stream2's watermark applies on source-node1,
     /// stream3's on intermediate-node1 — so the sink-node plan no longer carries any of its own.
     EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(sinkPlan).size(), 0);
