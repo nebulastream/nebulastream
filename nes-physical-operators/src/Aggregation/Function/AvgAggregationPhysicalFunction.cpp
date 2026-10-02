@@ -24,7 +24,9 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <nautilus/std/cstring.h>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
@@ -48,7 +50,9 @@ void AvgAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)

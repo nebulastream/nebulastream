@@ -46,7 +46,7 @@ namespace NES
 namespace
 {
 
-constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}};
+constexpr std::array NonNumericAggregations{std::string_view{"COUNT"}, std::string_view{"LAST"}};
 
 class AggregationInputTypeTest : public ::testing::Test
 {
@@ -91,14 +91,30 @@ TEST_F(AggregationInputTypeTest, RejectsNonNumericInput)
         try
         {
             std::ignore = createAggregation(name, Identifier::parse("key")).withInferredType(schema);
-            ADD_FAILURE() << "Expected an UnsupportedQuery exception";
+            ADD_FAILURE() << "Expected the aggregation to reject variable-sized input";
         }
         catch (const Exception& exception)
         {
-            EXPECT_EQ(exception.code(), ErrorCode::UnsupportedQuery);
-            EXPECT_TRUE(toUpperCase(exception.what()).contains(fmt::format("{} IS ONLY SUPPORTED ON NUMERIC FIELDS", name)));
+            if (name == "ARRAYAGG")
+            {
+                EXPECT_EQ(exception.code(), ErrorCode::CannotInferStamp);
+                EXPECT_TRUE(std::string_view{exception.what()}.contains("requires a fixed-size input field"));
+            }
+            else
+            {
+                EXPECT_EQ(exception.code(), ErrorCode::UnsupportedQuery);
+                EXPECT_TRUE(toUpperCase(exception.what()).contains(fmt::format("{} IS ONLY SUPPORTED ON NUMERIC FIELDS", name)));
+            }
         }
     }
+}
+
+TEST_F(AggregationInputTypeTest, LastAcceptsVariableSizedInput)
+{
+    SourceCatalog catalog;
+    const auto schema = makeSource(catalog)->getOutputSchema();
+    const auto last = createAggregation("LAST", Identifier::parse("key")).withInferredType(schema);
+    EXPECT_EQ(last->getAggregateType().type, DataType::Type::VARSIZED);
 }
 
 TEST_F(AggregationInputTypeTest, AcceptsNumericInput)

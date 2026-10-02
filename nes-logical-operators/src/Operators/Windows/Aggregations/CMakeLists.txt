@@ -19,6 +19,8 @@ add_source_files(nes-logical-operators
         MedianAggregationLogicalFunction.cpp
         MinAggregationLogicalFunction.cpp
         SumAggregationLogicalFunction.cpp
+        ArrayAggAggregationLogicalFunction.cpp
+        LastAggregationLogicalFunction.cpp
 )
 
 
@@ -35,3 +37,11 @@ add_registry_entry(AggregationLogicalFunction Max)
 add_registry_entry(AggregationLogicalFunction Median)
 add_registry_entry(AggregationLogicalFunction Min)
 add_registry_entry(AggregationLogicalFunction Sum)
+
+add_registry_entry(AggregationLogicalFunction Last)
+add_unreflection_entry(AggregationLogicalFunction Last)
+
+add_registry_entry(AggregationLogicalFunction ArrayAgg)
+add_unreflection_entry(AggregationLogicalFunction ArrayAgg)
+
+
