@@ -57,7 +57,9 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/ArrayAggAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
@@ -165,6 +167,7 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
     {
         case AntlrSQLLexer::EQ:
             return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+        case AntlrSQLLexer::NEQ:
         case AntlrSQLLexer::NEQJ:
             return NegateLogicalFunction(EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
         case AntlrSQLLexer::LT:
@@ -574,11 +577,12 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     {
         throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
     }
+    auto& functions = helpers.top().getActiveFunctionBuilder();
     LogicalFunction function;
 
-    if (helpers.top().functionBuilder.size() < 2)
+    if (functions.size() < 2)
     {
-        if (helpers.top().functionBuilder.size() + helpers.top().constantBuilder.size() == 2)
+        if (functions.size() + helpers.top().constantBuilder.size() == 2)
         {
             throw InvalidQuerySyntax(
                 "Attempted to use a raw constant in a binary expression. {} in `{}`.",
@@ -588,10 +592,10 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
         throw InvalidQuerySyntax(
             "There were less than 2 functions in the functionBuilder in exitArithmeticBinary. `{}`.", context->getText());
     }
-    const auto rightFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
-    const auto leftFunction = helpers.top().functionBuilder.back();
-    helpers.top().functionBuilder.pop_back();
+    const auto rightFunction = functions.back();
+    functions.pop_back();
+    const auto leftFunction = functions.back();
+    functions.pop_back();
     auto opTokenType = context->op->getType();
     switch (opTokenType)
     {
@@ -613,7 +617,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helpers.top().functionBuilder.push_back(function);
+    functions.push_back(function);
 }
 
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
@@ -1068,13 +1072,14 @@ void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallCon
 void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)
 {
     const auto targetDataType = bindDataType(context->targetType, DataType::NULLABLE::NOT_NULLABLE);
-    if (helpers.top().functionBuilder.empty())
+    auto& functions = helpers.top().getActiveFunctionBuilder();
+    if (functions.empty())
     {
         throw InvalidQuerySyntax("CAST requires exactly one child expression at {}", context->getText());
     }
-    auto child = std::move(helpers.top().functionBuilder.back());
-    helpers.top().functionBuilder.pop_back();
-    helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
+    auto child = std::move(functions.back());
+    functions.pop_back();
+    functions.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
 }
 
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
@@ -1160,6 +1165,8 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().joinKeyRelationHelper.clear();
+    helpers.top().windowTimestamp.reset();
+    helpers.top().windowType.reset();
     helpers.top().isJoinRelation = true;
     AntlrSQLBaseListener::enterJoinRelation(context);
 }
@@ -1214,17 +1221,63 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto rightQueryPlan = helpers.top().queryPlans[1];
     helpers.top().queryPlans.clear();
 
+    auto windowTypeOpt = helpers.top().windowType;
+    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+    if (context->ASOF() != nullptr)
+    {
+        if (helpers.top().joinKeyRelationHelper.size() > 1)
+        {
+            throw InvalidQuerySyntax("ASOF join requires at most one join function at {}", context->getText());
+        }
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax("ASOF JOIN requires TIME(left_timestamp, right_timestamp)");
+        }
+        if (!helpers.top().joinKeyRelationHelper.empty() && !helpers.top().joinKeyRelationHelper.front().tryGetAs<EqualsLogicalFunction>())
+        {
+            throw UnsupportedQuery("ASOF JOIN supports only equality predicates or no predicate");
+        }
+
+        const auto joinFunction = helpers.top().joinKeyRelationHelper.empty()
+            ? LogicalFunction{ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true")}
+            : helpers.top().joinKeyRelationHelper.at(0);
+        AsOfJoinTimeCharacteristics timeCharacteristics{
+            std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value())};
+        helpers.top().queryPlans.push_back(LogicalPlanBuilder::addAsOfJoin(
+            leftQueryPlan, rightQueryPlan, joinFunction, std::move(timeCharacteristics), context->TABLE() != nullptr));
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
     if (helpers.top().joinKeyRelationHelper.size() != 1)
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
-    auto windowTypeOpt = helpers.top().windowType;
+    if (context->TABLE() != nullptr)
+    {
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
+        if (currentWindowTimestampOpt.has_value())
+        {
+            if (!std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+            {
+                throw InvalidQuerySyntax("stream-table TIME requires stream and table timestamp fields");
+            }
+            const auto characteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
+            timeCharacteristics.emplace(characteristics);
+        }
+        const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(
+            leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), std::move(timeCharacteristics));
+        helpers.top().queryPlans.push_back(queryPlan);
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
     if (!windowTypeOpt)
     {
         throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
     }
 
-    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
     if (!currentWindowTimestampOpt.has_value()
         || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
     {
@@ -1398,6 +1451,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             break;
         default:
             helpers.top().hasUnnamedAggregation = false;
+            auto& functions = helpers.top().getActiveFunctionBuilder();
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
@@ -1414,25 +1468,22 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto value = std::move(helpers.top().constantBuilder.back());
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
-                helpers.top().functionBuilder.emplace_back(constFunctionItem);
+                functions.emplace_back(constFunctionItem);
             }
             else
             {
                 const auto numArgs = context->argument.size();
-                if (numArgs > helpers.top().functionBuilder.size())
+                if (numArgs > functions.size())
                 {
                     throw InvalidQuerySyntax(
-                        "Function '{}' expects {} arguments but only {} are available",
-                        funcName,
-                        numArgs,
-                        helpers.top().functionBuilder.size());
+                        "Function '{}' expects {} arguments but only {} are available", funcName, numArgs, functions.size());
                 }
-                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
-                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                auto argsBegin = functions.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> funcArgs(argsBegin, functions.end());
                 if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
                 {
-                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
-                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                    functions.resize(functions.size() - numArgs);
+                    functions.push_back(*logicalFunction);
                 }
                 else
                 {

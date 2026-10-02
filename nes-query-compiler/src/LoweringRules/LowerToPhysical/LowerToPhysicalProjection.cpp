@@ -23,6 +23,7 @@
 
 
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -116,6 +117,16 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     {
         auto targetName = fieldMappingTrait->getMapping(unbind(fieldName));
         PRECONDITION(targetName.has_value(), "Projection name was not in field mapping");
+        /// Output ordering is carried by the schema; copying a field onto itself adds no work.
+        /// Avoid a deep chain of identity maps when an ordering projection retains many fields.
+        if (const auto fieldAccess = function.tryGetAs<FieldAccessLogicalFunction>())
+        {
+            const auto sourceName = childTraitSet.get<FieldMappingTrait>()->getMapping(unbind(fieldAccess.value()->getField()));
+            if (sourceName == targetName)
+            {
+                continue;
+            }
+        }
         auto physicalFunction
             = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
         auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);

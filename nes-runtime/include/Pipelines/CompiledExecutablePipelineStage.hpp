@@ -19,12 +19,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <nautilus/Module.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 
 namespace NES
@@ -50,7 +52,9 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, Arena*);
+    using TerminateSignature = void(PipelineExecutionContext*, Arena*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
+    static constexpr std::string_view TERMINATE_FUNCTION_NAME = "terminate";
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
@@ -59,8 +63,14 @@ private:
     /// Both are created lazily in start(); neither type is default-constructible.
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
+    std::optional<nautilus::engine::ModuleFunction<TerminateSignature>> terminateFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::shared_ptr<Pipeline> pipeline;
+    /// The executable stage must not retain the compiler's Pipeline DAG. Running pipeline nodes are stopped and
+    /// destroyed independently on query-engine workers; retaining the DAG here would make those workers concurrently
+    /// tear down Pipeline successor/predecessor ownership. Only these immutable execution properties are needed after
+    /// lowering.
+    PhysicalOperator rootOperator;
+    PipelineId pipelineId;
 };
 
 }

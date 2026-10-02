@@ -1,0 +1,126 @@
+# name: join/StreamTableJoinStress.test
+# description: Multi-origin and nested stream-table join concurrency stress tests
+# groups: [Join, StreamTableJoin, Concurrency, LongRunning]
+# Oracle: DuckDB joins over the attached CSV files, with UNION ALL copies matching physical-source expansion.
+# Timed joins add table_timestamp <= stream_timestamp. Oracle CSVs are reduced with the repository checksum tool.
+
+CREATE LOGICAL SOURCE stress_events(event_id UINT64 NOT NULL, event_value UINT64 NOT NULL, event_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+CREATE PHYSICAL SOURCE FOR stress_events TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+CREATE LOGICAL SOURCE stress_lookup(lookup_key UINT64 NOT NULL, lookup_value UINT64 NOT NULL, lookup_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+CREATE PHYSICAL SOURCE FOR stress_lookup TYPE File;
+ATTACH FILE small/outer_join_right.csv
+
+CREATE LOGICAL SOURCE stress_third(third_key UINT64 NOT NULL, third_value UINT64 NOT NULL, third_ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stress_third TYPE File;
+ATTACH FILE small/outer_join_left.csv
+
+# Nexmark bids are ordered by their first (event-time) column. Unlike the
+# deliberately unordered outer-join fixtures above, they therefore provide
+# valid maximum-seen watermarks for the timed stress cases.
+CREATE LOGICAL SOURCE timed_events(
+    timed_event_ts UINT64 NOT NULL,
+    timed_auction UINT64 NOT NULL,
+    timed_event_bidder UINT64 NOT NULL,
+    timed_event_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE timed_lookup(
+    timed_lookup_ts UINT64 NOT NULL,
+    timed_lookup_auction UINT64 NOT NULL,
+    timed_lookup_bidder UINT64 NOT NULL,
+    timed_lookup_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE timed_third(
+    timed_third_ts UINT64 NOT NULL,
+    timed_third_auction UINT64 NOT NULL,
+    timed_third_bidder UINT64 NOT NULL,
+    timed_third_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR timed_third TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+
+CREATE LOGICAL SOURCE asymmetric_events(
+    asymmetric_event_ts UINT64 NOT NULL,
+    asymmetric_auction UINT64 NOT NULL,
+    asymmetric_event_bidder UINT64 NOT NULL,
+    asymmetric_event_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_events TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE LOGICAL SOURCE asymmetric_lookup(
+    asymmetric_lookup_ts UINT64 NOT NULL,
+    asymmetric_lookup_auction UINT64 NOT NULL,
+    asymmetric_lookup_bidder UINT64 NOT NULL,
+    asymmetric_lookup_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_100K.csv
+CREATE PHYSICAL SOURCE FOR asymmetric_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE LOGICAL SOURCE early_lookup(
+    early_ts UINT64 NOT NULL,
+    early_auction UINT64 NOT NULL,
+    early_bidder UINT64 NOT NULL,
+    early_price UINT64 NOT NULL
+);
+CREATE PHYSICAL SOURCE FOR early_lookup TYPE File;
+ATTACH FILE small/nexmark/bid_5K.csv
+
+CREATE SINK stress_checksum(signature UINT64 NOT NULL) TYPE Checksum;
+
+# Multi-origin EOS-only release: 3 stream origins, 4 table origins, and 277K output rows.
+SELECT event_id * UINT64(1000000007) + event_value * UINT64(1000003) + event_ts * UINT64(101)
+       + lookup_value * UINT64(17) + lookup_ts AS signature
+FROM (
+    SELECT * FROM stress_events
+    WHERE event_id >= UINT64(151) AND event_id < UINT64(170)
+)
+INNER JOIN TABLE (
+    SELECT * FROM stress_lookup
+    WHERE lookup_key >= UINT64(151) AND lookup_key < UINT64(170)
+)
+ON event_id = lookup_key
+INTO stress_checksum;
+----
+277344 176968656
