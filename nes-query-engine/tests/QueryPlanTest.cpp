@@ -401,6 +401,39 @@ void leak(std::unique_ptr<RunningQueryPlan> runningQueryPlan, std::shared_ptr<Te
     static_cast<void>(runningQueryPlan.release()); /// NOLINT(bugprone-unused-return-value) - intentional leak for test
 }
 
+TEST_F(QueryPlanTest, SkippedPipelineStartupDoesNotRequireTermination)
+{
+    auto [expirationOwner, expirationRef] = Callback::create();
+    auto [setupOwner, setupRef] = Callback::create();
+    auto control = std::make_shared<TestPipelineController>();
+    TestWorkEmitter emitter;
+    TaskCallback startupCallback;
+    EXPECT_CALL(emitter, emitPipelineStart(::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke([&](auto, const auto&, auto callback) { startupCallback = std::move(callback); }));
+    EXPECT_CALL(emitter, emitPipelineStop(::testing::_, ::testing::_, ::testing::_)).Times(0);
+
+    const auto queryId = randomQueryId();
+    const auto pipelineId = PipelineId(1);
+    auto node = RunningQueryPlanNode::create(
+        queryId,
+        pipelineId,
+        emitter,
+        {},
+        std::make_unique<TestPipeline>(control),
+        [](auto) { },
+        std::move(expirationRef),
+        std::move(setupRef));
+
+    /// Shutdown skips pending startup tasks but still invokes their completion callbacks.
+    handleTask([](auto&) { return false; }, Task{StartPipelineTask{queryId, pipelineId, std::move(startupCallback), node}});
+    EXPECT_FALSE(control->wasStarted());
+    EXPECT_FALSE(node->requiresTermination);
+    /// Keep teardown safe even if the regression assertion above fails.
+    node->requiresTermination = false;
+    node.reset();
+    EXPECT_FALSE(control->wasStopped());
+}
+
 TEST_F(QueryPlanTest, RunningQueryNodeSetup)
 {
     /// Setup Callbacks that trigger once all pipelines have been initilaized and once all pipelines have been destroyed
