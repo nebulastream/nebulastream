@@ -12,7 +12,10 @@
 
 list(APPEND VCPKG_HASH_ADDITIONAL_FILES "${CMAKE_CURRENT_LIST_FILE}")
 
+# ARM64 emits compiler-rt builtins such as __muloti4 for 128-bit arithmetic.
+# Select compiler-rt explicitly so sanitizer link commands include those builtins.
 set(VCPKG_CXX_FLAGS -fsanitize=undefined)
 set(VCPKG_C_FLAGS -fsanitize=undefined)
+set(VCPKG_LINKER_FLAGS --rtlib=compiler-rt)
 
 set(NES_VCPKG_SANITIZER ubsan)
