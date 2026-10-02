@@ -1,0 +1,36 @@
+# name: function/CastNullable.test
+# description: Tests CASTTOTYPE execution for nullable inputs
+# groups: [Function, FunctionCaseWhen, NullHandling]
+
+CREATE LOGICAL SOURCE nullable_values(id UINT64 NOT NULL, value INT32);
+CREATE PHYSICAL SOURCE FOR nullable_values TYPE File;
+ATTACH INLINE
+1,10
+2,
+3,-1
+
+CREATE SINK cast_state(id UINT64 NOT NULL, cast_is_null BOOLEAN NOT NULL) TYPE File;
+CREATE SINK recovered_values(id UINT64 NOT NULL, value INT32 NOT NULL) TYPE File;
+
+# CASTTOTYPE is logically non-nullable, but its physical value retains the input null flag.
+SELECT id, ISNULL(CASTTOTYPE(value AS INT32)) AS cast_is_null
+FROM nullable_values
+INTO cast_state;
+----
+1,false
+2,true
+3,false
+
+# The null cast is evaluated eagerly, but the guarded CASE selects the non-null fallback.
+SELECT
+    id,
+    CASE
+        WHEN value IS NOT NULL THEN CASTTOTYPE(value AS INT32)
+        ELSE INT32(0)
+    END AS value
+FROM nullable_values
+INTO recovered_values;
+----
+1,10
+2,0
+3,-1
