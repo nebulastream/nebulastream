@@ -86,6 +86,7 @@ public:
     void exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context) override;
     void exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context) override;
     void exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context) override;
+    void exitCaseExpression(AntlrSQLParser::CaseExpressionContext* context) override;
     void exitLogicalNot(AntlrSQLParser::LogicalNotContext* context) override;
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
