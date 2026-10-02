@@ -52,4 +52,4 @@ WHERE text1 IN (VARSIZED('test3')) INTO sinkStreamWithText;
 # An unknown scalar function should be reported and specify the set of supported functions.
 SELECT UPPER(text1) AS t FROM streamWithText INTO sinkStreamWithText;
 ----
-ERROR 2000 "Unknown function: UPPER. Supported aggregation functions are AVG, COUNT, MAX, MEDIAN, MIN, SUM."
+ERROR 2000 "Unknown function: UPPER. Supported aggregation functions are ARRAYAGG, AVG, COUNT, LAST, MAX, MEDIAN, MIN, SUM."
