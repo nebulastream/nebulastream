@@ -703,6 +703,30 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     functions.push_back(function);
 }
 
+void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpressionContext* context)
+{
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
+    }
+
+    /// Without ELSE, the Conditional function gets no default result and returns NULL when no condition holds.
+    const auto numberOfChildren = (context->whenClause().size() * 2) + (context->elseExpression != nullptr ? 1 : 0);
+    if (helpers.top().functionBuilder.size() < numberOfChildren)
+    {
+        throw InvalidQuerySyntax(
+            "CASE expression requires {} child expressions, but only {} were parsed at {}",
+            numberOfChildren,
+            helpers.top().functionBuilder.size(),
+            context->getText());
+    }
+
+    auto childrenBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numberOfChildren);
+    std::vector<LogicalFunction> children(childrenBegin, helpers.top().functionBuilder.end());
+    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numberOfChildren);
+    helpers.top().functionBuilder.push_back(LogicalFunctionProvider::provide("Conditional", std::move(children)));
+}
+
 void AntlrSQLQueryPlanCreator::exitStar(AntlrSQLParser::StarContext* context)
 {
     if (!helpers.top().isSelect)

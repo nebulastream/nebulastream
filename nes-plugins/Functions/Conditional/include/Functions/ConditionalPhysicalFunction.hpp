@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -34,18 +35,18 @@ struct WhenThenPhysicalFunction
 };
 
 /// Executes a CASE WHEN expression at runtime. Evaluates the conditions in order and returns the
-/// result of the first condition that holds, or the default result if none hold.
+/// result of the first condition that holds, or the default result (NULL if there is none) if none hold.
 class ConditionalPhysicalFunction final
 {
 public:
-    ConditionalPhysicalFunction(std::vector<WhenThenPhysicalFunction> whenThens, PhysicalFunction elseCase, DataType resultType);
+    ConditionalPhysicalFunction(std::vector<WhenThenPhysicalFunction> whenThens, std::optional<PhysicalFunction> elseCase, DataType resultType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
     static PhysicalFunctionRegistryReturnType createConditional(PhysicalFunctionRegistryArguments arguments);
 
 private:
     std::vector<WhenThenPhysicalFunction> whenThens;
-    PhysicalFunction elseCase;
+    std::optional<PhysicalFunction> elseCase;
     DataType resultType;
 };
 

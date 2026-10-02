@@ -215,7 +215,7 @@ namedExpression
 identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER #unquotedIdentifier
+    : (IDENTIFIER | END) #unquotedIdentifier
     | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
@@ -429,8 +429,17 @@ primaryExpression
     | '(' namedExpression (',' namedExpression)+ ')'                                           #rowConstructor
     | '(' valueExpression ')'                                                                  #parenthesizedExpression
     | '(' predicate ')'                                                                        #parenthesizedPredicateExpression
+    | caseExpression                                                                           #caseExpressionDefault
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
+    ;
+
+caseExpression
+    : CASE whenClause+ (ELSE elseExpression=expression)? END
+    ;
+
+whenClause
+    : WHEN condition=booleanExpression THEN result=expression
     ;
 
 qualifiedName
@@ -470,6 +479,7 @@ AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';
 CAST: 'CASTTOTYPE' | 'casttotype';
+CASE: 'CASE' | 'case';
 COMMENT: 'COMMENT';
 CUBE: 'CUBE';
 DELETE: 'DELETE';
@@ -477,8 +487,8 @@ DESC: 'DESC' | 'desc';
 DISTINCT: 'DISTINCT';
 DIV: 'DIV';
 DROP: 'DROP';
-ELSE: 'ELSE';
-END: 'END';
+ELSE: 'ELSE' | 'else';
+END: 'END' | 'end';
 ESCAPE: 'ESCAPE';
 EXISTS: 'EXISTS';
 FALSE: 'FALSE';
@@ -523,6 +533,7 @@ SETS: 'SETS';
 SOME: 'SOME';
 START: 'START';
 TABLE: 'TABLE';
+THEN: 'THEN' | 'then';
 TO: 'TO';
 TRUE: 'TRUE';
 TYPE: 'TYPE';
@@ -531,7 +542,7 @@ UNKNOWN: 'UNKNOWN';
 USE: 'USE';
 USING: 'USING';
 VALUES: 'VALUES';
-WHEN: 'WHEN';
+WHEN: 'WHEN' | 'when';
 WHERE: 'WHERE' | 'where';
 WINDOW: 'WINDOW' | 'window';
 WITH: 'WITH';
