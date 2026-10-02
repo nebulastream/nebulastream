@@ -59,6 +59,8 @@ public:
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
+    [[nodiscard]] bool preservesBufferOriginId() const override { return true; }
+
     [[nodiscard]] std::string_view getType() const override { return name(); }
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
