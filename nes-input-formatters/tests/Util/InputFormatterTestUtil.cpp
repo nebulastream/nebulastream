@@ -63,6 +63,7 @@
 #include <InputFormatterDescriptor.hpp>
 #include <InputFormatterProvider.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -144,7 +145,9 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+    return {
+        std::move(backpressureController),
+        sourceProvider.lower(INVALID_QUERY_ID, NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

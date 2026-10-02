@@ -23,6 +23,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <SourceRegistry.hpp>
 
 namespace NES
@@ -33,8 +34,8 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 {
 }
 
-std::unique_ptr<SourceHandle>
-SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
+std::unique_ptr<SourceHandle> SourceProvider::lower(
+    QueryId queryId, OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     if (const auto sourceFactory = SourceRegistry::instance().find(sourceDescriptor.getSourceType()))
@@ -48,7 +49,12 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
         return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source));
+            std::move(backpressureListener),
+            std::move(queryId),
+            std::move(originId),
+            std::move(runtimeConfig),
+            bufferPool,
+            std::move(source));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
