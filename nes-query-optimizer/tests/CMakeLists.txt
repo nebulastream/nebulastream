@@ -17,6 +17,7 @@ function(add_nes_optimizer_test)
     target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
 endfunction()
 
+add_subdirectory(Placement)
 add_subdirectory(Rules)
 add_subdirectory(Util)
 

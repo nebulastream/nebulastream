@@ -14,6 +14,7 @@
 
 #include <Phases/OperatorPlacer.hpp>
 
+#include <Placement/AsyncOperatorSplitter.hpp>
 #include <Placement/BottomUpPlacement.hpp>
 #include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -26,7 +27,11 @@ DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
 {
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
 
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
-        .decompose(plan, defaultQueryOptimization.network);
+    auto decomposedPlan = QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+                              .decompose(plan, defaultQueryOptimization.network);
+
+    /// Runs on the already decomposed plan, because it needs every operator to be placed: both
+    /// halves of an asynchronous operator stay on the worker the operator was assigned to.
+    return AsyncOperatorSplitter(copyPtr(sourceCatalog), copyPtr(sinkCatalog)).split(decomposedPlan);
 }
 }
