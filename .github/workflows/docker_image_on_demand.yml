@@ -12,6 +12,11 @@ on:
         description: 'Branch (or head_sha) to build docker executable images for'
         required: true
         default: 'main'
+      hardened:
+        description: 'Build RelWithDebInfo images with DEBUG logging, AddressSanitizer, libc++, and FAST libc++ hardening'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   sanitize:
@@ -25,9 +30,15 @@ jobs:
         shell: bash
         run: |
           BRANCH_NAME="${{ inputs.branch }}"
+          SUFFIX=""
+          if [[ "${{ inputs.hardened }}" == "true" ]]; then
+            SUFFIX="-hardened"
+          fi
           # Docker tags allow only [a-zA-Z0-9._-] and max 128 chars.
           # Replace all invalid characters (e.g. '/') with '-', strip leading '.' or '-'.
-          SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)
+          MAX_BASE_LENGTH=$((128 - ${#SUFFIX}))
+          SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-"$MAX_BASE_LENGTH")
+          SANITIZED="${SANITIZED}${SUFFIX}"
           echo "Sanitized branch name: '$BRANCH_NAME' -> '$SANITIZED'"
           echo "tag=$SANITIZED" >> "$GITHUB_OUTPUT"
 
@@ -38,3 +49,4 @@ jobs:
     with:
       head_sha: ${{ inputs.branch }}
       dockerhub-tag: ${{ needs.sanitize.outputs.tag }}
+      hardened: ${{ inputs.hardened }}

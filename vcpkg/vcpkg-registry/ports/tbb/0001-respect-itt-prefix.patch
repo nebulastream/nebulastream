@@ -1,0 +1,35 @@
+--- a/src/tbb/itt_notify.cpp
++++ b/src/tbb/itt_notify.cpp
+@@ -54,7 +54,7 @@
+     if (dlopen == nullptr)
+         return 0;
+ #endif
+-    return __itt_init_ittlib(nullptr,       // groups for:
++    return ITT_JOIN(INTEL_ITTNOTIFY_PREFIX, init_ittlib)(nullptr,       // groups for:
+       (__itt_group_id)(__itt_group_sync     // prepare/cancel/acquired/releasing
+                        | __itt_group_thread // name threads
+                        | __itt_group_stitch // stack stitching
+--- a/src/tbb/itt_notify.h
++++ b/src/tbb/itt_notify.h
+@@ -33,8 +33,8 @@
+ 
+ #include "tools_api/ittnotify.h"
+ #include "tools_api/legacy/ittnotify.h"
+-extern "C" void __itt_fini_ittlib(void);
+-extern "C" void __itt_release_resources(void);
++extern "C" void ITT_JOIN(INTEL_ITTNOTIFY_PREFIX, fini_ittlib)(void);
++extern "C" void ITT_JOIN(INTEL_ITTNOTIFY_PREFIX, release_resources)(void);
+ 
+ #if _WIN32||_WIN64
+     #undef _T
+@@ -75,8 +75,8 @@
+ // const_cast<void*>() is necessary to cast off volatility
+ #define ITT_NOTIFY(name,obj)            __itt_##name(const_cast<void*>(static_cast<volatile void*>(obj)))
+ #define ITT_THREAD_SET_NAME(name)       __itt_thread_set_name(name)
+-#define ITT_FINI_ITTLIB()               __itt_fini_ittlib()
+-#define ITT_RELEASE_RESOURCES()         __itt_release_resources()
++#define ITT_FINI_ITTLIB()               ITT_JOIN(INTEL_ITTNOTIFY_PREFIX, fini_ittlib)()
++#define ITT_RELEASE_RESOURCES()         ITT_JOIN(INTEL_ITTNOTIFY_PREFIX, release_resources)()
+ #define ITT_SYNC_CREATE(obj, type, name) __itt_sync_create((void*)(obj), type, name, 2)
+ #define ITT_STACK_CREATE(obj)           obj = __itt_stack_caller_create()
+ #define ITT_STACK_DESTROY(obj)          (obj!=nullptr) ? __itt_stack_caller_destroy(static_cast<__itt_caller>(obj)) : ((void)0)
