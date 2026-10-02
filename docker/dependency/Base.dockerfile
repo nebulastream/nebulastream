@@ -29,6 +29,14 @@ RUN apt update -y && apt install \
     python3-venv \
     ccache \
     ninja-build \
+    bison \
+    autoconf \
+    autoconf-archive \
+    automake \
+    libtool \
+    libglib2.0-dev-bin \
+    libasound2-dev \
+    libudev-dev \
     pkg-config \
     -y \
     && apt clean && rm -rf /var/lib/apt/lists/*
