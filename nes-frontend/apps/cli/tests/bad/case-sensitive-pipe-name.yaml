@@ -1,0 +1,18 @@
+query:
+  - name: pipe_consumer
+    query: |
+      SELECT *
+      FROM PIPE("video_frames")
+      INTO VOID_SINK
+  - name: pipe_producer
+    query: |
+      SELECT *
+      FROM UNUSED_SOURCE
+      INTO PIPE("Video_Frames", "localhost:8080")
+
+logical: []
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090
+
