@@ -53,6 +53,8 @@ public:
     void close() override;
 
     /// validates and formats a string to string configuration
+    [[nodiscard]] std::string_view getType() const override { return NAME; }
+
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
