@@ -166,7 +166,7 @@ message(STATUS "CMAKE_CXX_FLAGS_BENCHMARK: ${CMAKE_CXX_FLAGS_BENCHMARK}")
 # Find Protobuf installation
 # Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
 set(protobuf_MODULE_COMPATIBLE TRUE)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${protobuf_VERSION}")
 
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
@@ -187,7 +187,20 @@ if (CMAKE_CROSSCOMPILING)
 else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif ()
-set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+
+# gRPC's static libs reference ZSTD_decompress (transport compression), but the CONFIG
+# dependency graph (used so the nix devShell can configure) does not propagate zstd
+# through gRPC::grpc++'s transitive closure. Link it explicitly and last, where it
+# resolves gRPC's reference on both vcpkg and nix.
+find_package(zstd CONFIG QUIET)
+if (TARGET zstd::libzstd_static)
+    set(_NES_ZSTD zstd::libzstd_static)
+elseif (TARGET zstd::libzstd)
+    set(_NES_ZSTD zstd::libzstd)
+else ()
+    find_library(_NES_ZSTD NAMES zstd libzstd REQUIRED)
+endif ()
+set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF} ${_NES_ZSTD})
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
