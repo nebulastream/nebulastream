@@ -27,6 +27,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <argparse/argparse.hpp>
+#include <fmt/format.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
+
 #include <Config/Config.hpp>
 #include <Configurations/Util.hpp>
 #include <Discovery/TestDiscovery.hpp>
@@ -34,10 +40,6 @@
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <argparse/argparse.hpp>
-#include <fmt/format.h>
-#include <yaml-cpp/node/node.h>
-#include <yaml-cpp/node/parse.h>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
@@ -113,7 +115,6 @@ void configureArgumentParser(ArgumentParser& program)
         .help("Benchmark (time) all specified queries and store results into 'BenchmarkResults.json' in the result directory")
         .default_value(false)
         .implicit_value(true);
-    program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
 }
 
 void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -425,11 +426,6 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
     if (program.is_used("--sequential"))
     {
         config.numberConcurrentQueries = 1;
-    }
-
-    if (program.is_used("--show-query-performance"))
-    {
-        config.showQueryPerformance = true;
     }
 
     if (program.is_used("--endless"))

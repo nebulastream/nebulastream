@@ -1,0 +1,13 @@
+# name: NothingSelected
+# description: one passing query, which the test does not select
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+----
+1

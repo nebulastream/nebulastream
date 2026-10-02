@@ -14,8 +14,15 @@
 
 #pragma once
 
+#include <chrono>
+#include <exception>
 #include <expected>
 #include <string>
+#include <string_view>
+#include <variant>
+
+#include <Model/ConfigurationOverride.hpp>
+#include <Model/TestCaseId.hpp>
 
 namespace NES
 {
@@ -31,7 +38,33 @@ struct Success
 {
 };
 
-/// The outcome of one check.
 using Verdict = std::expected<Success, Mismatch>;
+
+struct Skipped
+{
+    std::string reason;
+};
+
+using CaseOutcome = std::variant<Verdict, Skipped>;
+
+[[nodiscard]] bool hasPassed(const CaseOutcome& outcome);
+
+struct StatementTiming
+{
+    /// Worker-recorded time from running to stopped.
+    std::chrono::nanoseconds execution{};
+};
+
+/// One report line, for a test case or for a whole file that failed.
+struct ReportEntry
+{
+    TestCaseId id;
+    CaseOutcome outcome;
+};
+
+/// A report entry for a file that failed before it planned or ran any actual test cases.
+/// For example, a query that failed to parse or a setup statement that threw.
+[[nodiscard]] ReportEntry
+createFailedFileEntry(std::string originFile, ConfigurationOverride overrides, std::string_view activity, const std::exception& exception);
 
 }

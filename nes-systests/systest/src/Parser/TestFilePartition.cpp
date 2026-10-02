@@ -20,7 +20,6 @@
 #include <variant>
 #include <vector>
 
-#include <Model/ConfigurationOverride.hpp>
 #include <Model/ParsedTestFile.hpp>
 
 namespace NES
@@ -28,18 +27,15 @@ namespace NES
 
 std::vector<TestFilePartition> partitionByOverrides(const ParsedTestFile& testFile)
 {
-    /// Each partition runs under its own key, and that key prefixes every qualified name.
-    /// CREATE statements are repeated into every partition, each declaring its sources under the prefix that its queries reference.
+    /// Each partition repeats the CREATEs, since its key prefixes their names.
     const auto isCreate = [](const TestStatement& statement) { return std::holds_alternative<CreateStatement>(statement); };
     const auto creates = testFile.statements | std::views::filter(isCreate) | std::ranges::to<std::vector<TestStatement>>();
 
     std::vector<TestFilePartition> partitions;
-    /// Iterate only over the checkable statements (without the setup statements)
     for (const auto& testCase : testFile.statements | std::views::filter(std::not_fn(isCreate)))
     {
         const auto overrides = getOverridesOf(testCase);
         const auto found = std::ranges::find(partitions, overrides, &TestFilePartition::overrides);
-        /// Either return the existing partition based on matching overrides, or create a new one, initializing it with the setup stmts.
         TestFilePartition& partition = found == partitions.end()
             ? partitions.emplace_back(overrides, ParsedTestFile{.path = testFile.path, .statements = creates})
             : *found;

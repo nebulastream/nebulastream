@@ -28,7 +28,6 @@ namespace NES
 {
 
 /// The worker settings that one configuration block of a test file overrides, as raw key value pairs.
-/// Construction from pairs, lookup, iteration, and equality behave as on the `std::unordered_map` that holds them.
 class ConfigurationOverride
 {
 public:

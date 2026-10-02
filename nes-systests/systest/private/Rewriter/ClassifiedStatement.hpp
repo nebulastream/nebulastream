@@ -35,7 +35,7 @@ struct LogicalSourceDeclaration
 struct PhysicalSourceDeclaration
 {
     AntlrSQLParser::CreatePhysicalSourceDefinitionContext* definition;
-    /// Empty when the source produces its own rows (e.g., `GeneratorSource`) instead of reading attached data.
+    /// Empty when the source produces its own buildRows (e.g., `GeneratorSource`) instead of reading attached data.
     std::optional<AttachedData> attached;
 };
 

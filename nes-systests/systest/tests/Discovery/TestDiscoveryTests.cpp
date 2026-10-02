@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -48,11 +47,11 @@ namespace NES
 namespace
 {
 /// This file's discovered name, so a test can refer to the file directly (instead of its position in the result).
-std::string nameOf(const std::vector<DiscoveredTestFile>& discovered, const std::filesystem::path& file)
+std::string findNameOf(const std::vector<DiscoveredTestFile>& discovered, const std::filesystem::path& file)
 {
     const auto canonical = std::filesystem::weakly_canonical(file);
     const auto found = std::ranges::find(discovered, canonical, &DiscoveredTestFile::file);
-    return found == discovered.end() ? std::string{"<not discovered>"} : found->name().getRawValue();
+    return found == discovered.end() ? std::string{"<not discovered>"} : found->getName().getRawValue();
 }
 }
 
@@ -85,8 +84,8 @@ TEST_F(TestDiscoveryTest, NarrowingTheSearchKeepsTheNamesOfAFullRun)
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 2);
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "benchmark" / "a" / "DEBS.test"), "benchmark/a/DEBS");
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "benchmark" / "b" / "DEBS.test"), "benchmark/b/DEBS");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "benchmark" / "a" / "DEBS.test"), "benchmark/a/DEBS");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "benchmark" / "b" / "DEBS.test"), "benchmark/b/DEBS");
 }
 
 /// A relative search directory selects the same files under the same test names as its absolute form.
@@ -106,7 +105,7 @@ TEST_F(TestDiscoveryTest, RelativeSearchDirectoriesResolveAgainstTheWorkingDirec
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 1);
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "benchmark" / "a" / "DEBS.test"), "benchmark/a/DEBS");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "benchmark" / "a" / "DEBS.test"), "benchmark/a/DEBS");
 }
 
 /// A run without -t has no search directory, and every file below the root is a candidate.
@@ -192,9 +191,9 @@ TEST_F(TestDiscoveryTest, NamesAreThePathBelowTheRoot)
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 3);
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "left" / "same.test"), "left/same");
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "right" / "same.test"), "right/same");
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "right" / "unique.test"), "right/unique");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "left" / "same.test"), "left/same");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "right" / "same.test"), "right/same");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "right" / "unique.test"), "right/unique");
 }
 
 TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesKeepTheNamesOfAFullRun)
@@ -213,11 +212,10 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesKeepTheNamesOfAFullRun)
 
     ASSERT_EQ(directlySpecified.size(), 1);
     ASSERT_EQ(queryFiltered.size(), 1);
-    EXPECT_EQ(directlySpecified.front().name().getRawValue(), "left/same");
-    EXPECT_EQ(queryFiltered.front().name().getRawValue(), "left/same");
-    /// Without numbers every query runs, which is a missing filter rather than an empty one.
-    EXPECT_FALSE(directlySpecified.front().enabledQueries.has_value());
-    EXPECT_EQ(queryFiltered.front().enabledQueries, std::optional{std::unordered_set<SystestQueryId>{SystestQueryId(1)}});
+    EXPECT_EQ(directlySpecified.front().getName().getRawValue(), "left/same");
+    EXPECT_EQ(queryFiltered.front().getName().getRawValue(), "left/same");
+    EXPECT_TRUE(directlySpecified.front().queryFilter.empty());
+    EXPECT_EQ(queryFiltered.front().queryFilter, std::unordered_set<SystestQueryId>{SystestQueryId(1)});
 }
 
 /// The command line can give a directly specified file as a relative path.
@@ -238,7 +236,7 @@ TEST_F(TestDiscoveryTest, RelativeDirectlySpecifiedTestFilesResolveAgainstTheWor
 
     ASSERT_EQ(discovered.size(), 1);
     EXPECT_EQ(discovered.front().file, std::filesystem::weakly_canonical(testFile));
-    EXPECT_EQ(discovered.front().name().getRawValue(), "left/same");
+    EXPECT_EQ(discovered.front().getName().getRawValue(), "left/same");
 }
 
 TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesOutsideTheRootAreNamedFromTheirDirectory)
@@ -255,12 +253,10 @@ TEST_F(TestDiscoveryTest, DirectlySpecifiedTestFilesOutsideTheRootAreNamedFromTh
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 1);
-    EXPECT_EQ(discovered.front().name().getRawValue(), "sub/Alpha");
+    EXPECT_EQ(discovered.front().getName().getRawValue(), "sub/Alpha");
 }
 
-/// A directory outside the root has no path below the root, so its files are named from the directory's parent: the
-/// directory's own name is part of the test name, and no name contains `..`, which would put a result file outside
-/// 'results/'.
+/// The name starts at the directory's parent, so it never contains `..` and stays inside `results/`.
 TEST_F(TestDiscoveryTest, FilesOutsideTheRootAreNamedFromTheirDirectory)
 {
     const Testing::TemporaryDirectory root;
@@ -277,8 +273,8 @@ TEST_F(TestDiscoveryTest, FilesOutsideTheRootAreNamedFromTheirDirectory)
 
     ASSERT_EQ(discovered.size(), 2);
     const auto outsideName = outside.get().filename().string();
-    EXPECT_EQ(nameOf(discovered, outside.get() / "sub" / "Alpha.test"), outsideName + "/sub/Alpha");
-    EXPECT_EQ(nameOf(discovered, outside.get() / "other" / "Alpha.test"), outsideName + "/other/Alpha");
+    EXPECT_EQ(findNameOf(discovered, outside.get() / "sub" / "Alpha.test"), outsideName + "/sub/Alpha");
+    EXPECT_EQ(findNameOf(discovered, outside.get() / "other" / "Alpha.test"), outsideName + "/other/Alpha");
 }
 
 /// Two directories outside the root can each hold a file of the same name. Each name starts with the directory that
@@ -299,8 +295,8 @@ TEST_F(TestDiscoveryTest, FilesOfTheSameNameInSeparateSearchDirectoriesStayApart
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 2);
-    EXPECT_EQ(nameOf(discovered, outside.get() / "a" / "Dup.test"), "a/Dup");
-    EXPECT_EQ(nameOf(discovered, outside.get() / "b" / "Dup.test"), "b/Dup");
+    EXPECT_EQ(findNameOf(discovered, outside.get() / "a" / "Dup.test"), "a/Dup");
+    EXPECT_EQ(findNameOf(discovered, outside.get() / "b" / "Dup.test"), "b/Dup");
 }
 
 TEST_F(TestDiscoveryTest, OverlappingSearchDirectoriesNameFromTheOutermostInAnyOrder)
@@ -326,12 +322,12 @@ TEST_F(TestDiscoveryTest, OverlappingSearchDirectoriesNameFromTheOutermostInAnyO
 
     ASSERT_EQ(nestedFirstDiscovered.size(), 1);
     ASSERT_EQ(outerFirstDiscovered.size(), 1);
-    EXPECT_EQ(nestedFirstDiscovered.front().name().getRawValue(), "a/nested/F");
-    EXPECT_EQ(outerFirstDiscovered.front().name().getRawValue(), "a/nested/F");
+    EXPECT_EQ(nestedFirstDiscovered.front().getName().getRawValue(), "a/nested/F");
+    EXPECT_EQ(outerFirstDiscovered.front().getName().getRawValue(), "a/nested/F");
 }
 
-/// Two directories outside the root can share their own name as well, and then two files would run under one name and
-/// write one result file. Discovery rejects that instead of the run failing later.
+/// Two outside directories with the same name would put two files under one name and one result file.
+/// Discovery rejects that instead of the run failing later.
 TEST_F(TestDiscoveryTest, RejectsTwoFilesThatWouldShareAName)
 {
     const Testing::TemporaryDirectory root;
@@ -391,7 +387,7 @@ TEST_F(TestDiscoveryTest, SeveralSearchDirectoriesNarrowToTheirUnionWithoutRepea
     const auto discovered = discoverTestFiles(config);
 
     ASSERT_EQ(discovered.size(), 2);
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "wanted" / "a.test"), "wanted/a");
-    EXPECT_EQ(nameOf(discovered, tempDir.get() / "wanted" / "nested" / "b.test"), "wanted/nested/b");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "wanted" / "a.test"), "wanted/a");
+    EXPECT_EQ(findNameOf(discovered, tempDir.get() / "wanted" / "nested" / "b.test"), "wanted/nested/b");
 }
 }

@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <algorithm>
 #include <cstddef>
 #include <exception>
 #include <optional>
@@ -35,9 +34,6 @@
 #include <fmt/format.h>
 #include <tree/ParseTree.h>
 
-#include <Rewriter/Constants.hpp>
-#include <ErrorHandling.hpp>
-
 /// One parse of a statement, and the read-only queries that the rewriting passes run against it.
 namespace NES
 {
@@ -50,11 +46,7 @@ public:
 
 private:
     void
-    syntaxError(antlr4::Recognizer*, antlr4::Token*, const size_t line, const size_t column, const std::string& message, std::exception_ptr)
-        override
-    {
-        throw TestException("Could not parse a statement at {}:{}: {} in {}", line, column, message, statement);
-    }
+    syntaxError(antlr4::Recognizer*, antlr4::Token*, size_t line, size_t column, const std::string& message, std::exception_ptr) override;
 
     std::string statement;
 };
@@ -82,20 +74,13 @@ public:
     [[nodiscard]] antlr4::CommonTokenStream& tokenStream() { return tokens; }
 
     /// Returns a subtree exactly as the statement wrote it, whitespace and quoting included.
-    [[nodiscard]] std::string textOf(antlr4::ParserRuleContext* node) { return node != nullptr ? tokens.getText(node) : std::string{}; }
+    [[nodiscard]] std::string getTextOf(antlr4::ParserRuleContext* node) { return node != nullptr ? tokens.getText(node) : std::string{}; }
 
 private:
     /// Installs the throwing listener on the lexer and the parser, then parses the whole statement.
     /// The default error strategy reports the first syntax error to that listener, which throws before attempting recovery.
     /// A bail-out strategy would instead raise a parser exception with no message, losing the location and the offending token.
-    AntlrSQLParser::SingleStatementContext* parse()
-    {
-        lexer.removeErrorListeners();
-        parser.removeErrorListeners();
-        lexer.addErrorListener(&listener);
-        parser.addErrorListener(&listener);
-        return parser.singleStatement();
-    }
+    AntlrSQLParser::SingleStatementContext* parse();
 
     ThrowingErrorListener listener;
     antlr4::ANTLRInputStream input;
@@ -182,51 +167,21 @@ void insertSetClause(antlr4::TokenStreamRewriter& rewriter, Definition* definiti
 /// Returns whether a config option has exactly the given group and key.
 /// The comparison canonicalizes both names as the binder does, so a quoted and an unquoted spelling of one name match.
 /// Comparing the parsed name rather than the statement text also stops a value that reads like the name from matching.
-inline bool
-namesOption(const AntlrSQLParser::NamedConfigExpressionContext* option, const std::string_view group, const std::string_view key)
-{
-    const auto& parts = option->name->strictIdentifier();
-    return parts.size() == 2 and Sql::sameName(parts.at(0)->getText(), group) and Sql::sameName(parts.at(1)->getText(), key);
-}
+[[nodiscard]] bool isOption(const AntlrSQLParser::NamedConfigExpressionContext* option, std::string_view group, std::string_view key);
 
 /// Returns whether an option list sets the given name, so a default is only added where the test set nothing.
 /// A statement without an option list sets nothing.
-inline bool
-declaresOption(AntlrSQLParser::NamedConfigExpressionSeqContext* options, const std::string_view group, const std::string_view key)
-{
-    return options != nullptr
-        and std::ranges::any_of(options->namedConfigExpression(), [&](auto* option) { return namesOption(option, group, key); });
-}
+[[nodiscard]] bool declaresOption(AntlrSQLParser::NamedConfigExpressionSeqContext* options, std::string_view group, std::string_view key);
 
 /// Returns the node holding a config option's value when that value is a string literal, and null for a number or a schema.
 /// The node rather than the text, so the caller can replace the value in place.
-inline AntlrSQLParser::StringLiteralContext* stringValueOf(AntlrSQLParser::NamedConfigExpressionContext* option)
-{
-    return dynamic_cast<AntlrSQLParser::StringLiteralContext*>(option->constant());
-}
+[[nodiscard]] AntlrSQLParser::StringLiteralContext* getStringValueOf(AntlrSQLParser::NamedConfigExpressionContext* option);
 
 /// Returns the content of a string literal, without the quotes around it.
-inline std::string unquote(const std::string& literal)
-{
-    return literal.substr(1, literal.size() - 2);
-}
+[[nodiscard]] std::string unquote(const std::string& literal);
 
 /// Returns a config option's value, or nullopt when the list does not set the option or sets it to something other than a string literal.
-inline std::optional<std::string>
-declaredOptionValue(AntlrSQLParser::NamedConfigExpressionSeqContext* options, const std::string_view group, const std::string_view key)
-{
-    if (options == nullptr)
-    {
-        return std::nullopt;
-    }
-    for (auto* option : options->namedConfigExpression())
-    {
-        if (auto* value = stringValueOf(option); value != nullptr and namesOption(option, group, key))
-        {
-            return unquote(value->getText());
-        }
-    }
-    return std::nullopt;
-}
+[[nodiscard]] std::optional<std::string>
+declaredOptionValue(AntlrSQLParser::NamedConfigExpressionSeqContext* options, std::string_view group, std::string_view key);
 
 }

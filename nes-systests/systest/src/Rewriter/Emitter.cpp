@@ -27,6 +27,7 @@
 
 #include <AntlrSQLParser.h>
 #include <TokenStreamRewriter.h>
+#include <fmt/format.h>
 
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -41,7 +42,6 @@
 #include <Rewriter/SourceRewriting.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Util/Overloaded.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -69,7 +69,8 @@ Emitter::Emitter(const RewriteContext& context, Declarations declarations)
     , sinkRewriter{context, this->declarations.names, this->declarations.sinkByName}
 {
     runnable.name = context.name;
-    runnable.originalNames = this->declarations.names.originalNames();
+    runnable.key = context.testFileKey.value();
+    runnable.originalNames = this->declarations.names.collectOriginalNames();
 }
 
 RunnableTestFile Emitter::emit(ClassifiedTestFile classified) &&
@@ -209,18 +210,15 @@ void Emitter::emitQuery(SelectStatement query)
             .id = query.id,
             .resultFile = std::move(resultFile),
             .inputFiles = std::move(inputFiles),
-            .expectation = std::move(query.expected)}});
+            .expected = std::move(query.expected)}});
 }
 
 void Emitter::emitExplain(ExplainStatement explain)
 {
     SqlParse parse{explain.sql};
-    /// The VISUAL format, which is also the default, centres the plan on the width of each operator label.
-    /// The check restores the declared names afterwards, but the layout was computed for the prefixed ones.
-    auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat();
-    const auto isVisual = [](AntlrSQLParser::ExplainFormatContext* format)
-    { return format->identifier() != nullptr and Identifier::parse(format->identifier()->getText()) == Identifier::parse("visual"); };
-    if (format == nullptr or isVisual(format))
+    /// VISUAL (the default) aligns on label widths, which restoring names breaks.
+    if (auto* format = findFirst<AntlrSQLParser::ExplainStatementContext>(parse.tree())->explainFormat(); format == nullptr
+        or (format->identifier() != nullptr and Identifier::parse(format->identifier()->getText()) == Identifier::parse("visual")))
     {
         throw TestException(
             "An EXPLAIN check has to state FORMAT TEXT or FORMAT VERBOSE, because the VISUAL layout depends on the prefixed names: {}",

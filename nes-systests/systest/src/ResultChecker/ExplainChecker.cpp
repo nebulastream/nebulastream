@@ -202,7 +202,7 @@ std::vector<std::string> normalize(Lines&& lines)
 }
 
 /// Splits a printed plan into trimmed lines.
-std::vector<std::string> normalizedLinesOf(const std::string& output)
+std::vector<std::string> normalizeLinesOf(const std::string& output)
 {
     return normalize(
         output | std::views::split('\n')
@@ -237,7 +237,7 @@ bool hasExplainRegexTags(const std::vector<std::string>& expected)
 Verdict ExplainLinesCheck::check() const
 {
     const auto expectedLines = normalize(expected);
-    const auto actualLines = normalizedLinesOf(actual);
+    const auto actualLines = normalizeLinesOf(actual);
     if (expectedLines == actualLines)
     {
         return Success{};
@@ -252,7 +252,7 @@ Verdict ExplainRegexCheck::check() const
     {
         return std::unexpected(Mismatch{std::move(assertions).error()});
     }
-    return checkExplainRegexAssertions(assertions.value(), fmt::to_string(fmt::join(normalizedLinesOf(actual), "\n")));
+    return checkExplainRegexAssertions(assertions.value(), fmt::to_string(fmt::join(normalizeLinesOf(actual), "\n")));
 }
 
 }

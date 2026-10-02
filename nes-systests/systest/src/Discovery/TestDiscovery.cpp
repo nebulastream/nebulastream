@@ -202,8 +202,8 @@ findTestFilesBelow(const std::filesystem::path& searchRoot, const std::optional<
     return files;
 }
 
-TestName
-nameFor(const std::filesystem::path& file, const std::filesystem::path& discoverRoot, std::span<const std::filesystem::path> searchRoots)
+TestName deriveNameFor(
+    const std::filesystem::path& file, const std::filesystem::path& discoverRoot, std::span<const std::filesystem::path> searchRoots)
 {
     if (isBelow(file, discoverRoot))
     {
@@ -265,9 +265,8 @@ std::vector<TestGroup> readGroups(const DiscoveredTestFile& testfile)
 
 }
 
-DiscoveredTestFile::DiscoveredTestFile(
-    const std::filesystem::path& file, TestName testName, std::optional<std::unordered_set<SystestQueryId>> enabledQueries)
-    : file(weakly_canonical(file)), testName(std::move(testName)), enabledQueries(std::move(enabledQueries)), groups(readGroups(*this)) { };
+DiscoveredTestFile::DiscoveredTestFile(const std::filesystem::path& file, TestName testName, std::unordered_set<SystestQueryId> queryFilter)
+    : file(weakly_canonical(file)), testName(std::move(testName)), queryFilter(std::move(queryFilter)), groups(readGroups(*this)) { };
 
 namespace
 {
@@ -308,15 +307,11 @@ std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& co
 
     if (not config.directlySpecifiedTestFiles.getValue().empty())
     {
-        std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
-        if (not config.testQueryNumbers.empty())
-        {
-            enabledQueries = std::ranges::to<std::unordered_set<SystestQueryId>>(
-                config.testQueryNumbers.getValues()
-                | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
-        }
+        auto queryFilter = std::ranges::to<std::unordered_set<SystestQueryId>>(
+            config.testQueryNumbers.getValues()
+            | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
         const auto file = std::filesystem::weakly_canonical(config.directlySpecifiedTestFiles.getValue());
-        const DiscoveredTestFile testfile{file, nameFor(file, discoverRoot, {}), std::move(enabledQueries)};
+        const DiscoveredTestFile testfile{file, deriveNameFor(file, discoverRoot, {}), std::move(queryFilter)};
         if (matchesDisabledTestFile(testfile, filters.disabledTestFiles))
         {
             std::cout << fmt::format(
@@ -352,7 +347,7 @@ std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& co
     testFiles.reserve(files.size());
     for (const auto& file : files)
     {
-        testFiles.emplace_back(file, nameFor(file, discoverRoot, searchRoots));
+        testFiles.emplace_back(file, deriveNameFor(file, discoverRoot, searchRoots));
     }
     std::erase_if(
         testFiles,

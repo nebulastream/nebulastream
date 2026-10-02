@@ -1,0 +1,14 @@
+# name: DifferentialDisagrees
+# description: the two halves of the block return different rows, so the block fails
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+2
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+====
+SELECT id FROM s WHERE id > 1 INTO sinkA;

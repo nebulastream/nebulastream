@@ -33,20 +33,25 @@ namespace NES
 namespace
 {
 
-TestStatement query(const uint64_t number)
+TestStatement createQuery(const uint64_t number)
 {
     return SelectStatement{.sql = "", .id = SystestQueryId{number}, .expected = Expectation{ExpectedRows{}}, .overrides = {}};
 }
 
-TestStatement create()
+TestStatement createCreateStatement()
 {
     return CreateStatement{.sql = "CREATE", .attach = std::nullopt};
 }
 
-TestStatement differential(const uint64_t first, const uint64_t second)
+TestStatement createDifferential(const uint64_t first, const uint64_t second)
 {
     return DifferentialStatement{
         .firstSql = "", .firstId = SystestQueryId{first}, .secondSql = "", .secondId = SystestQueryId{second}, .overrides = {}};
+}
+
+TestStatement createExplain(const uint64_t number)
+{
+    return ExplainStatement{.sql = "", .id = SystestQueryId{number}, .expected = ExpectedPlan{.lines = {}}};
 }
 
 }
@@ -57,44 +62,49 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("KeepSelectedStatements.log", LogLevel::LOG_DEBUG); }
 };
 
-/// A run without query numbers runs the whole file, so the empty selection has to keep everything, not nothing.
 TEST_F(KeepSelectedStatementsTest, EmptySelectionKeepsEveryStatement)
 {
-    std::vector statements{create(), query(1), query(2), query(3)};
+    std::vector statements{createCreateStatement(), createQuery(1), createQuery(2), createQuery(3)};
     retainSelectedStatements(statements, {});
     EXPECT_EQ(statements.size(), 4U);
 }
 
-/// The CREATEs stay, because the selected query may read from any of them.
 TEST_F(KeepSelectedStatementsTest, DropsTheStatementsTheSelectionOmitsAndKeepsTheCreates)
 {
-    std::vector statements{create(), query(1), query(2), query(3)};
+    std::vector statements{createCreateStatement(), createQuery(1), createQuery(2), createQuery(3)};
     retainSelectedStatements(statements, {SystestQueryId{2}});
     ASSERT_EQ(statements.size(), 2U);
     EXPECT_TRUE(std::holds_alternative<CreateStatement>(statements.at(0)));
     EXPECT_EQ(getQueryNumbersOf(statements.at(1)), (std::vector{SystestQueryId{2}}));
 }
 
-/// A differential block is one statement covering both its query numbers, so selecting either number keeps the block.
 TEST_F(KeepSelectedStatementsTest, EitherNumberOfADifferentialBlockKeepsIt)
 {
-    std::vector selectedBySecond{differential(1, 2)};
+    std::vector selectedBySecond{createDifferential(1, 2)};
     retainSelectedStatements(selectedBySecond, {SystestQueryId{2}});
     EXPECT_EQ(selectedBySecond.size(), 1U);
 
-    std::vector unselected{differential(1, 2)};
+    std::vector unselected{createDifferential(1, 2)};
     retainSelectedStatements(unselected, {SystestQueryId{3}});
     EXPECT_TRUE(unselected.empty());
 }
 
-/// A partition keeps its CREATEs however the selection falls, so whether it runs depends on the other statements.
 TEST_F(KeepSelectedStatementsTest, OnlyCreatesLeftMeansNothingToRun)
 {
-    std::vector statements{create(), query(1), query(2)};
+    std::vector statements{createCreateStatement(), createQuery(1), createQuery(2)};
     EXPECT_TRUE(hasTestCases(statements));
     retainSelectedStatements(statements, {SystestQueryId{3}});
     EXPECT_FALSE(hasTestCases(statements));
     EXPECT_FALSE(hasTestCases({}));
+}
+
+/// Unlike a CREATE, an EXPLAIN has a query number.
+TEST_F(KeepSelectedStatementsTest, ASelectionDropsAnUnselectedExplain)
+{
+    std::vector statements{createCreateStatement(), createQuery(1), createExplain(2)};
+    retainSelectedStatements(statements, {SystestQueryId{1}});
+    ASSERT_EQ(statements.size(), 2U);
+    EXPECT_EQ(getQueryNumbersOf(statements.at(1)), (std::vector{SystestQueryId{1}}));
 }
 
 }
