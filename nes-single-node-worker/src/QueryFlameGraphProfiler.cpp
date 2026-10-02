@@ -14,26 +14,34 @@
 
 #include <QueryFlameGraphProfiler.hpp>
 
-#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
-#include <iterator>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <system_error>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Pipelines/CompiledCodeRetention.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
-#include <nautilus/compiler/JitSymbolRegistry.hpp>
+#include <nautilus/profiling/sample_report.hpp>
 #include <nautilus/profiling/sampler.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryId.hpp>
 
 namespace NES
 {
+
+namespace
+{
+/// Lines of unannotated IR kept around each sampled line of an annotated IR.
+constexpr size_t ANNOTATED_IR_CONTEXT_LINES = 3;
+}
 
 QueryFlameGraphProfiler::QueryFlameGraphProfiler(std::filesystem::path directory) : directory(std::move(directory))
 {
@@ -45,17 +53,24 @@ QueryFlameGraphProfiler::QueryFlameGraphProfiler(std::filesystem::path directory
     }
 }
 
-QueryFlameGraphProfiler::~QueryFlameGraphProfiler() = default;
+QueryFlameGraphProfiler::~QueryFlameGraphProfiler()
+{
+    /// Queries that never terminated keep no compiled code alive beyond the worker.
+    const std::scoped_lock lock(mutex);
+    for (const auto& [queryId, profile] : profiles)
+    {
+        CompiledCodeRetention::release(queryId);
+    }
+}
 
 void QueryFlameGraphProfiler::onEvent(Event event)
 {
     std::visit(
         Overloaded{
             [this](const QueryStart& start) { startQuery(start.queryId); },
-            [this](const TaskExecutionStart& start) { startTask(start.queryId); },
-            [this](const TaskExecutionComplete& complete) { stopTask(complete.queryId); },
             [this](const PipelineStart& start) { startPipeline(start.queryId, start.pipelineId); },
-            [this](const PipelineStop& stop) { stopPipeline(stop.queryId, stop.pipelineId); },
+            [this](const TaskExecutionStart& start) { startTask(start.queryId, start.pipelineId); },
+            [this](const TaskExecutionComplete& complete) { stopTask(complete.queryId, complete.pipelineId); },
             [this](const QueryStop& stop) { finishQuery(stop.queryId); },
             [this](const QueryFail& fail) { finishQuery(fail.queryId); },
             [](const auto&) {}},
@@ -64,89 +79,62 @@ void QueryFlameGraphProfiler::onEvent(Event event)
 
 void QueryFlameGraphProfiler::startQuery(const QueryId& queryId)
 {
+    const std::scoped_lock lock(mutex);
+    profiles.try_emplace(queryId);
+}
+
+void QueryFlameGraphProfiler::startPipeline(const QueryId& queryId, const PipelineId pipelineId)
+{
     nautilus::profiling::Sampler::Options options;
     /// Record call stacks, so the flame graph shows the worker and the host code a JIT frame was called from.
     options.callchain = true;
     auto sampler = std::make_shared<nautilus::profiling::Sampler>(options);
 
     const std::scoped_lock lock(mutex);
+    const auto it = profiles.find(queryId);
+    if (it == profiles.end())
+    {
+        return;
+    }
     if (not sampler->available())
     {
         if (not reportedUnavailable)
         {
-            NES_WARNING("Cannot write query flame graphs, perf sampling is unavailable: {}", sampler->unavailableReason());
+            NES_WARNING("Cannot profile queries, perf sampling is unavailable: {}", sampler->unavailableReason());
             reportedUnavailable = true;
         }
         return;
     }
-    profiles.emplace(queryId, QueryProfile{.sampler = std::move(sampler), .runningPipelines = {}, .jitSymbols = {}});
+    it->second.try_emplace(pipelineId, std::move(sampler));
 }
 
-std::shared_ptr<nautilus::profiling::Sampler> QueryFlameGraphProfiler::findSampler(const QueryId& queryId) const
+std::shared_ptr<nautilus::profiling::Sampler>
+QueryFlameGraphProfiler::findSampler(const QueryId& queryId, const PipelineId pipelineId) const
 {
     const std::scoped_lock lock(mutex);
-    if (const auto it = profiles.find(queryId); it != profiles.end())
+    if (const auto query = profiles.find(queryId); query != profiles.end())
     {
-        return it->second.sampler;
+        if (const auto pipeline = query->second.find(pipelineId); pipeline != query->second.end())
+        {
+            return pipeline->second;
+        }
     }
     return nullptr;
 }
 
-void QueryFlameGraphProfiler::startTask(const QueryId& queryId)
+void QueryFlameGraphProfiler::startTask(const QueryId& queryId, const PipelineId pipelineId)
 {
-    if (const auto sampler = findSampler(queryId))
+    if (const auto sampler = findSampler(queryId, pipelineId))
     {
         sampler->start();
     }
 }
 
-void QueryFlameGraphProfiler::stopTask(const QueryId& queryId)
+void QueryFlameGraphProfiler::stopTask(const QueryId& queryId, const PipelineId pipelineId)
 {
-    if (const auto sampler = findSampler(queryId))
+    if (const auto sampler = findSampler(queryId, pipelineId))
     {
         sampler->stop();
-    }
-}
-
-void QueryFlameGraphProfiler::startPipeline(const QueryId& queryId, const PipelineId pipelineId)
-{
-    const std::scoped_lock lock(mutex);
-    if (const auto it = profiles.find(queryId); it != profiles.end())
-    {
-        it->second.runningPipelines.insert(pipelineId);
-    }
-}
-
-void QueryFlameGraphProfiler::stopPipeline(const QueryId& queryId, const PipelineId pipelineId)
-{
-    bool lastPipeline = false;
-    {
-        const std::scoped_lock lock(mutex);
-        if (const auto it = profiles.find(queryId); it != profiles.end())
-        {
-            /// The stopping pipeline's compiled code is still alive here, but freed soon after.
-            rememberJitSymbols(it->second);
-            lastPipeline = it->second.runningPipelines.erase(pipelineId) > 0 and it->second.runningPipelines.empty();
-        }
-    }
-    if (lastPipeline)
-    {
-        finishQuery(queryId);
-    }
-}
-
-void QueryFlameGraphProfiler::rememberJitSymbols(QueryProfile& profile)
-{
-    for (auto& symbol : nautilus::compiler::JitSymbolRegistry::instance().snapshot())
-    {
-        if (symbol.moduleIndex != nautilus::compiler::NO_MODULE)
-        {
-            auto& symbols = profile.jitSymbols[symbol.moduleIndex];
-            if (std::ranges::none_of(symbols, [&](const auto& known) { return known.start == symbol.start; }))
-            {
-                symbols.push_back(std::move(symbol));
-            }
-        }
     }
 }
 
@@ -163,53 +151,51 @@ void QueryFlameGraphProfiler::finishQuery(const QueryId& queryId)
         profile = std::move(it->second);
         profiles.erase(it);
     }
-    rememberJitSymbols(profile);
+    writeProfile(queryId, profile);
+    CompiledCodeRetention::release(queryId);
+}
 
-    /// Registers the names of the query's modules that were freed in the meantime again, for as long as the samples are resolved.
-    auto& registry = nautilus::compiler::JitSymbolRegistry::instance();
-    std::unordered_set<nautilus::compiler::ModuleIndex> registered;
-    for (const auto& symbol : registry.snapshot())
+void QueryFlameGraphProfiler::writeProfile(const QueryId& queryId, const QueryProfile& profile) const
+{
+    const auto queryName = queryId.getLocalQueryId().getRawValue();
+    std::vector<nautilus::profiling::SampleStack> stacks;
+    uint64_t total = 0;
+    uint64_t jitSamples = 0;
+    for (const auto& [pipelineId, sampler] : profile)
     {
-        registered.insert(symbol.moduleIndex);
-    }
-    std::vector<nautilus::compiler::ModuleIndex> restored;
-    std::vector<nautilus::compiler::JitSymbol> restoredSymbols;
-    for (auto& [moduleIndex, symbols] : profile.jitSymbols)
-    {
-        if (not registered.contains(moduleIndex))
+        /// Stops the threads that still sample into this pipeline (e.g. after a task failed) and merges every thread's samples.
+        sampler->stopAll();
+        const auto& report = sampler->report();
+        total += report.total();
+        jitSamples += report.jitSamples();
+        stacks.insert(stacks.end(), report.stacks().begin(), report.stacks().end());
+
+        /// A pipeline's samples only land in its own module, so its line table annotates exactly that pipeline's IR.
+        if (not report.sourceLines().empty())
         {
-            restored.push_back(moduleIndex);
-            std::ranges::move(symbols, std::back_inserter(restoredSymbols));
+            const auto irPath = directory / fmt::format("query-{}-pipeline_{}.ir.txt", queryName, pipelineId);
+            std::ofstream irFile(irPath);
+            irFile << report.annotateSource({}, ANNOTATED_IR_CONTEXT_LINES);
+            if (not irFile)
+            {
+                NES_WARNING("Could not write the annotated IR of pipeline {} of query {} to {}", pipelineId, queryId, irPath.string());
+            }
         }
     }
-    registry.addAll(std::move(restoredSymbols));
 
-    /// Stops the threads that still sample into this query (e.g. after a task failed) and merges every thread's samples.
-    const auto sampler = std::move(profile.sampler);
-    sampler->stopAll();
-    for (const auto moduleIndex : restored)
-    {
-        registry.remove(moduleIndex);
-    }
-
-    const auto& report = sampler->report();
-    const auto path = directory / fmt::format("query-{}.svg", queryId.getLocalQueryId().getRawValue());
-    if (report.empty())
+    if (total == 0)
     {
         NES_INFO("No samples for query {}, so no flame graph was written", queryId);
         return;
     }
-    if (not report.writeFlameGraph(path.string(), fmt::format("NebulaStream query {}", queryId)))
+    const nautilus::profiling::SampleReport merged({}, std::move(stacks), total);
+    const auto path = directory / fmt::format("query-{}.svg", queryName);
+    if (not merged.writeFlameGraph(path.string(), fmt::format("NebulaStream query {}", queryId)))
     {
         NES_WARNING("Could not write the flame graph of query {} to {}", queryId, path.string());
         return;
     }
-    NES_INFO(
-        "Wrote the flame graph of query {} ({} samples, {} in JIT code) to {}",
-        queryId,
-        report.total(),
-        report.jitSamples(),
-        path.string());
+    NES_INFO("Wrote the flame graph of query {} ({} samples, {} in JIT code) to {}", queryId, total, jitSamples, path.string());
 }
 
 }

@@ -15,8 +15,8 @@
 
 #include <iostream>
 #include <memory>
-#include <string>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -27,6 +27,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -41,7 +42,13 @@ public:
     CompiledExecutablePipelineStage(
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
-        nautilus::engine::Options options);
+        nautilus::engine::Options options,
+        std::optional<QueryId> retainCompiledCodeFor = std::nullopt);
+    ~CompiledExecutablePipelineStage() override;
+    CompiledExecutablePipelineStage(const CompiledExecutablePipelineStage&) = delete;
+    CompiledExecutablePipelineStage(CompiledExecutablePipelineStage&&) = delete;
+    CompiledExecutablePipelineStage& operator=(const CompiledExecutablePipelineStage&) = delete;
+    CompiledExecutablePipelineStage& operator=(CompiledExecutablePipelineStage&&) = delete;
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -64,6 +71,8 @@ private:
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
+    /// Set for a profiled query: on destruction, the compiled code is handed to CompiledCodeRetention instead of being freed.
+    std::optional<QueryId> retainCompiledCodeFor;
 };
 
 }

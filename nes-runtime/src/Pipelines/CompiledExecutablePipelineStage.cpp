@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Pipelines/CompiledCodeRetention.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
 #include <chrono>
@@ -44,9 +45,23 @@ namespace NES
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
-    nautilus::engine::Options options)
-    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    nautilus::engine::Options options,
+    std::optional<QueryId> retainCompiledCodeFor)
+    : engine(options)
+    , operatorHandlers(std::move(operatorHandlers))
+    , pipeline(std::move(pipeline))
+    , retainCompiledCodeFor(std::move(retainCompiledCodeFor))
 {
+}
+
+CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage()
+{
+    if (retainCompiledCodeFor.has_value() and compiledModule.has_value())
+    {
+        compiledPipelineFunction.reset();
+        CompiledCodeRetention::retain(
+            *retainCompiledCodeFor, std::make_shared<nautilus::engine::CompiledModule>(std::move(*compiledModule)));
+    }
 }
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)

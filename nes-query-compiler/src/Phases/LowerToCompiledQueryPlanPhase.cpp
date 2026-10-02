@@ -179,7 +179,11 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     {
         options.setOption(optimizationPass, true);
     }
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
+    return std::make_unique<CompiledExecutablePipelineStage>(
+        pipeline,
+        pipeline->getOperatorHandlers(),
+        options,
+        samplingProfile ? std::optional{pipelineQueryPlan->getQueryId()} : std::nullopt);
 }
 
 std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperatorPipeline(const std::shared_ptr<Pipeline>& pipeline)
