@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <string>
 #include <set>
 #include <typeindex>
 #include <typeinfo>
@@ -24,6 +25,8 @@
 #include <variant>
 #include <vector>
 
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/SemanticMapLogicalOperator.hpp>
@@ -36,12 +39,56 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Traits/AsyncExecutionTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
+#include <SemanticAsyncWiring.hpp>
 #include <SemanticModelCatalog.hpp>
 
 namespace NES
 {
+
+namespace
+{
+
+/// Enough room that the producer keeps the executor's threads busy without parking a large
+/// share of the shared buffer pool: two buffers per concurrent call, never fewer than the
+/// framework's own default.
+constexpr size_t MinimumChannelCapacity = 64;
+
+/// Turns the model's configuration into the marker `AsyncOperatorSplitter` acts on. Only the
+/// model knows what the executor needs, and only here is it loaded, so the whole payload is
+/// assembled once and travels as plain data from this point on.
+AsyncExecutionTrait asyncExecution(const RegisteredSemanticModel& model)
+{
+    const auto& config = model.getConfig();
+    const auto canonicalNames = [](const SemanticFieldList& fields)
+    {
+        return fields
+            | std::views::transform([](const UnqualifiedUnboundField& field)
+                                    { return static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(); })
+            | std::ranges::to<std::vector>();
+    };
+
+    auto encoded = encodeSemanticMapPayload(
+        SemanticMapAsyncPayload{
+            .config = config,
+            .inputFields = canonicalNames(model.getSchema().inputs),
+            .outputFields = canonicalNames(model.getSchema().outputs)});
+
+    return AsyncExecutionTrait{
+        "SemanticMap",
+        {{std::string{SemanticMapConfigKey}, std::move(encoded)}},
+        config.batchSize,
+        config.maxConcurrency,
+        std::max(MinimumChannelCapacity, 2 * config.maxConcurrency),
+        /// SEM_MAP appends a field per record and reorders nothing; keeping input order makes
+        /// its output comparable to the synchronous path's, record for record.
+        true};
+}
+
+}
 
 LogicalPlan SemanticMapResolutionRule::apply(const LogicalPlan& queryPlan) const
 {
@@ -67,10 +114,18 @@ LogicalPlan SemanticMapResolutionRule::apply(const LogicalPlan& queryPlan) const
                 /// local schema eagerly, which reads the child's output schema — absent on a Union
                 /// straight out of LogicalSourceExpansionRule and guarded on an unresolved
                 /// InferModelName.
-                return {
-                    LogicalOperator{TypedLogicalOperator<SemanticMapLogicalOperator>{semanticModelCatalog->load(modelName)}}
-                        .withChildrenUnsafe(std::move(children)),
-                    true};
+                auto model = semanticModelCatalog->load(modelName);
+                auto resolved = LogicalOperator{TypedLogicalOperator<SemanticMapLogicalOperator>{model}};
+                if (model.getConfig().execution == SemanticExecution::ASYNCHRONOUS)
+                {
+                    /// Attached here, where the model is loaded, and read much later by
+                    /// AsyncOperatorSplitter: the trait set is stored on the operator, so it
+                    /// survives the rebuilding the remaining rules and the decomposition do.
+                    auto traits = resolved.getTraitSet();
+                    traits.insert(asyncExecution(model));
+                    resolved = resolved.withTraitSet(std::move(traits));
+                }
+                return {resolved.withChildrenUnsafe(std::move(children)), true};
             }
             /// Subtrees without a resolved SEM_MAP are returned as they are. Rebuilding them would
             /// gain nothing and would put other placeholders (InferModelName) through code paths

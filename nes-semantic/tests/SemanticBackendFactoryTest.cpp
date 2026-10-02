@@ -14,6 +14,7 @@
 
 #include <SemanticBackendFactory.hpp>
 
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
@@ -113,6 +114,27 @@ TEST(SemanticBackendFactoryTest, MockFailFailsLikeAnUnreachableEndpoint)
         = backend->complete(CompletionRequest{.prompt = "p", .modelName = "m", .timeout = {}, .connectTimeout = {}, .maxRetries = 5});
     ASSERT_FALSE(response.has_value());
     EXPECT_EQ(response.error().kind, BackendError::Kind::UNREACHABLE);
+}
+
+/// The delay suffix is what lets a hermetic test stand in for a model's latency.
+TEST(SemanticBackendFactoryTest, MockDelaySuffixMakesARequestTakeTime)
+{
+    EXPECT_TRUE(MockSemanticBackend::isValidBehaviour("echo@50"));
+    EXPECT_EQ(roundTrip(configFor("mock", "echo@50"), "still echoes"), "STILL ECHOES");
+
+    const auto start = std::chrono::steady_clock::now();
+    (void)roundTrip(configFor("mock", "echo@50"), "waits");
+    EXPECT_GE(std::chrono::steady_clock::now() - start, std::chrono::milliseconds{50});
+}
+
+TEST(SemanticBackendFactoryTest, MockDelaySuffixOnlyCountsWhenItIsAllDigits)
+{
+    /// A label is free text, so an '@' in it must not be read as a delay.
+    EXPECT_TRUE(MockSemanticBackend::isValidBehaviour("label:a@b"));
+    EXPECT_EQ(roundTrip(configFor("mock", "label:a@b"), "anything"), "a@b");
+
+    EXPECT_FALSE(MockSemanticBackend::isValidBehaviour("echo@"));
+    EXPECT_FALSE(MockSemanticBackend::isValidBehaviour("nonsense@10"));
 }
 
 }

@@ -56,6 +56,7 @@ struct
     std::optional<int64_t> requestTimeoutSeconds;
     std::optional<std::string> apiKeyEnvVar;
     std::optional<std::string> backend;
+    std::optional<int64_t> execution;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -272,6 +273,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
         .requestTimeoutSeconds = std::make_optional(static_cast<int64_t>(config.requestTimeout.count())),
         .apiKeyEnvVar = config.apiKeyEnvVar,
         .backend = std::make_optional(config.backend),
+        .execution = std::make_optional(static_cast<int64_t>(config.execution)),
         .inputs = std::make_optional(model.getSchema().inputs),
         .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -283,7 +285,7 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         || !reflected.datasetPrompt.has_value() || !reflected.steps.has_value() || !reflected.payloadFormat.has_value()
         || !reflected.batchSize.has_value() || !reflected.maxConcurrency.has_value() || !reflected.maxRetries.has_value()
         || !reflected.maxWaitTimeMs.has_value() || !reflected.requestTimeoutSeconds.has_value() || !reflected.backend.has_value()
-        || !reflected.inputs.has_value() || !reflected.outputs.has_value())
+        || !reflected.execution.has_value() || !reflected.inputs.has_value() || !reflected.outputs.has_value())
     {
         throw CannotDeserialize("Failed to deserialize RegisteredSemanticModel");
     }
@@ -307,7 +309,9 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .maxWaitTime = std::chrono::milliseconds{reflected.maxWaitTimeMs.value()},
         .requestTimeout = std::chrono::seconds{reflected.requestTimeoutSeconds.value()},
         .apiKeyEnvVar = reflected.apiKeyEnvVar,
-        .backend = std::move(reflected.backend).value()};
+        .backend = std::move(reflected.backend).value(),
+        .execution
+        = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution")};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

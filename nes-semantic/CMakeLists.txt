@@ -12,6 +12,7 @@
 
 find_package(CURL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(reflectcpp REQUIRED)
 
 add_library(nes-semantic
         src/SemanticModelCatalog.cpp
@@ -19,7 +20,8 @@ add_library(nes-semantic
         src/SemanticMapCodec.cpp
         src/HttpSemanticBackend.cpp
         src/MockSemanticBackend.cpp
-        src/SemanticBackendFactory.cpp)
+        src/SemanticBackendFactory.cpp
+        src/SemanticAsyncWiring.cpp)
 target_include_directories(nes-semantic PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -27,6 +29,9 @@ target_include_directories(nes-semantic PUBLIC
 # operator codecs, returns nlohmann::json.
 target_link_libraries(nes-semantic
         PUBLIC nes-data-types nes-schema nlohmann_json::nlohmann_json
-        PRIVATE nes-common CURL::libcurl)
+        PRIVATE nes-common CURL::libcurl reflectcpp::reflectcpp)
+
+# Registers the executor that lets SEM_MAP run on the asynchronous framework.
+add_subdirectory(async)
 
 add_tests_if_enabled(tests)

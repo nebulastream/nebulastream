@@ -1,0 +1,258 @@
+# name: semantic/SemanticMapAsyncThroughput.test
+# description: The measurement behind the asynchronous framework, with the mock backend's delay
+#              suffix ('echo@200') standing in for a model's latency. Deliberately slow — seconds
+#              of waiting is the whole point — so it sits in Semantic-Nightly and is excluded from
+#              every ctest systest run. Drive it with scripts/measure_async_semantic_map.sh, which
+#              reads the per-query timings from --show-query-performance.
+#
+#              The results asserted here are the same for every query and for both execution modes;
+#              what differs is how long each takes. That is what makes the comparison a comparison.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,a
+2,b
+3,c
+4,d
+5,e
+6,f
+7,g
+8,h
+9,i
+10,j
+11,k
+12,l
+13,m
+14,n
+15,o
+16,p
+17,q
+18,r
+19,s
+20,t
+21,u
+22,v
+23,w
+24,x
+25,y
+26,z
+27,aa
+28,bb
+29,cc
+30,dd
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# One record per request, one request at a time: 30 records at 200 ms each is the serial baseline.
+CREATE SEMANTIC MODEL c1
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL c5
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 5 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL c10
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL c30
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 30 AS LLM.MAX_CONCURRENCY);
+
+# The synchronous path over the same delay, as the point of comparison. One record per request on a
+# worker thread, so the wait is paid inside the worker pool.
+CREATE SEMANTIC MODEL sync1
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+# Query 1: maxConcurrency 1
+SELECT id FROM SEM_MAP(c1, reviews) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+
+# Query 2: maxConcurrency 5
+SELECT id FROM SEM_MAP(c5, reviews) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+
+# Query 3: maxConcurrency 10
+SELECT id FROM SEM_MAP(c10, reviews) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+
+# Query 4: maxConcurrency 30
+SELECT id FROM SEM_MAP(c30, reviews) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+
+# Query 5: the synchronous path, same delay
+SELECT id FROM SEM_MAP(sync1, reviews) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+
+# Query 6: an ordinary query with no model in it at all. Run concurrently with query 1 or 5 on a
+# worker configured with a single thread, it answers the question the framework exists for: does a
+# waiting operator hold up unrelated work?
+SELECT id FROM reviews WHERE id > UINT64(28) INTO ids;
+----
+29
+30

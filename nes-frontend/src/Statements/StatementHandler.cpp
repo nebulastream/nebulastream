@@ -389,6 +389,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"TIMEOUT_SECONDS"},
     std::string_view{"API_KEY_ENV"},
     std::string_view{"BACKEND"},
+    std::string_view{"EXECUTION"},
 };
 
 void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
@@ -433,6 +434,20 @@ PayloadFormat bindPayloadFormat(const std::unordered_map<Identifier, std::string
     throw InvalidSemanticModel("Option LLM.PAYLOAD_FORMAT must be SPACE_JOINED or JSON_OBJECT, but was '{}'", raw);
 }
 
+SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "EXECUTION", "SYNC");
+    if (raw == "SYNC")
+    {
+        return SemanticExecution::SYNCHRONOUS;
+    }
+    if (raw == "ASYNC")
+    {
+        return SemanticExecution::ASYNCHRONOUS;
+    }
+    throw InvalidSemanticModel("Option LLM.EXECUTION must be SYNC or ASYNC, but was '{}'", raw);
+}
+
 constexpr size_t MaxBatchSize = 1024;
 constexpr size_t MaxConcurrency = 1024;
 constexpr size_t MaxRetries = 10;
@@ -473,7 +488,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .maxWaitTime = std::chrono::milliseconds{numericOption(statement.config, "MAX_WAIT_MS", 1000, MaxWaitMs)},
         .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
         .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
-        .backend = optionalOption(statement.config, "BACKEND", "http")};
+        .backend = optionalOption(statement.config, "BACKEND", "http"),
+        .execution = bindExecution(statement.config)};
 }
 
 }

@@ -1,0 +1,141 @@
+# name: semantic/SemanticMapAsync.test
+# description: SEM_MAP with 'ASYNC' AS LLM.EXECUTION, i.e. on the framework in nes-async. The
+#              optimizer splits the plan into a producer half ending in a handoff sink and a
+#              consumer half whose source runs the model call on its own thread. Deployment,
+#              handoff, batching, ordering and termination are therefore all exercised.
+#              The expected results are those of semantic/SemanticMap.test verbatim: the two
+#              execution modes must not differ in what they produce, which is what makes a
+#              throughput comparison between them meaningful.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,POSITIVE
+2,negative
+3,POSITIVE(unsure)
+4,clearly-negative
+5,pozitive
+6,zzzz
+
+CREATE LOGICAL SOURCE articles(id UINT64 NOT NULL, title VARSIZED NOT NULL, body VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR articles TYPE File;
+ATTACH INLINE
+1,Good news,all is well
+2,Bad news,nothing works
+
+# One record per request, one request at a time: the plain case, differing from the synchronous
+# path only in where the call happens.
+CREATE SEMANTIC MODEL asyncEcho
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+# Four records per prompt and four calls in flight: results arrive out of order and have to be
+# put back into input order before they are emitted.
+CREATE SEMANTIC MODEL asyncBatched
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 4 AS LLM.MAX_CONCURRENCY);
+
+# The normalization cascade, to show the codec is the same one the synchronous path uses.
+CREATE SEMANTIC MODEL asyncRestricted
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'NEUTRAL' AS LLM.DEFAULT_VALUE,
+     'ASYNC' AS LLM.EXECUTION, 3 AS LLM.BATCH_SIZE, 2 AS LLM.MAX_CONCURRENCY);
+
+# An unparseable response stays the record's problem on this path too.
+CREATE SEMANTIC MODEL asyncGarbage
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'n/a' AS LLM.DEFAULT_VALUE, 'ASYNC' AS LLM.EXECUTION);
+
+CREATE SEMANTIC MODEL asyncSummarizer
+INPUT (description VARSIZED)
+OUTPUT (summary VARSIZED)
+SET ('Summarize the description' AS LLM.PROMPT, 'label:short' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 2 AS LLM.BATCH_SIZE);
+
+# Two input fields, so the payload carries field names across the handoff as well.
+CREATE SEMANTIC MODEL asyncHeadline
+INPUT (title VARSIZED, body VARSIZED)
+OUTPUT (gist VARSIZED)
+SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'JSON_OBJECT' AS LLM.PAYLOAD_FORMAT, 'Short news articles' AS LLM.DATASET_PROMPT, 'ASYNC' AS LLM.EXECUTION);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
+CREATE SINK stacked(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL, summary VARSIZED NOT NULL) TYPE File;
+CREATE SINK gists(id UINT64 NOT NULL, title VARSIZED NOT NULL, body VARSIZED NOT NULL, gist VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# The baseline: identical to the synchronous freeText query.
+SELECT * FROM SEM_MAP(asyncEcho, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# Batched and concurrent, same result: no record is lost, duplicated or reordered.
+SELECT * FROM SEM_MAP(asyncBatched, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+SELECT * FROM SEM_MAP(asyncRestricted, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE
+4,clearly-negative,NEGATIVE
+5,pozitive,NEUTRAL
+6,zzzz,NEUTRAL
+
+SELECT * FROM SEM_MAP(asyncGarbage, reviews) INTO out;
+----
+1,POSITIVE,n/a
+2,negative,n/a
+3,POSITIVE(unsure),n/a
+4,clearly-negative,n/a
+5,pozitive,n/a
+6,zzzz,n/a
+
+# The declared OUTPUT field is an ordinary column downstream of the consumer source, so the
+# filter runs in the consumer plan and sees the model's answer.
+SELECT id FROM SEM_MAP(asyncEcho, reviews) WHERE sentiment = 'POSITIVE' INTO ids;
+----
+1
+
+# An asynchronous SEM_MAP over a subquery: the producer half is more than a bare source.
+SELECT * FROM SEM_MAP(asyncEcho, (SELECT * FROM reviews WHERE id > UINT64(4))) INTO out;
+----
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ
+
+# Two asynchronous operators in one query: the splitter cuts twice, giving three local plans
+# chained by two handoff channels.
+SELECT * FROM SEM_MAP(asyncSummarizer, SEM_MAP(asyncEcho, reviews)) INTO stacked;
+----
+1,POSITIVE,POSITIVE,short
+2,negative,NEGATIVE,short
+3,POSITIVE(unsure),POSITIVE(UNSURE),short
+4,clearly-negative,CLEARLY-NEGATIVE,short
+5,pozitive,POZITIVE,short
+6,zzzz,ZZZZ,short
+
+# Two input fields and a dataset prompt, to show the whole payload survives the handoff.
+SELECT * FROM SEM_MAP(asyncHeadline, articles) INTO gists;
+----
+1,Good news,all is well,GOOD NEWS ALL IS WELL
+2,Bad news,nothing works,BAD NEWS NOTHING WORKS

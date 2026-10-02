@@ -33,6 +33,20 @@ namespace NES
 
 class SemanticModelCatalog;
 
+/// Where the model call is made. A semantic operator waits for a remote model, which under
+/// SYNCHRONOUS execution happens on one of the engine's worker threads: a handful of concurrent
+/// calls then occupy the whole pool and stall unrelated queries. ASYNCHRONOUS hands the operator
+/// to the framework in `nes-async`, which runs it on threads of its own.
+///
+/// SYNCHRONOUS stays the default because it is the simpler deployment; a query that needs
+/// throughput sets LLM.EXECUTION to 'ASYNC'. Both produce the same results, which is what makes
+/// them comparable in a measurement.
+enum class SemanticExecution : uint8_t
+{
+    SYNCHRONOUS,
+    ASYNCHRONOUS,
+};
+
 /// How the values of the declared input fields are serialized into the prompt payload.
 enum class PayloadFormat : uint8_t
 {
@@ -95,6 +109,8 @@ struct SemanticModelConfig
     /// Selects the backend implementation. "http" talks to `endpoint`; "mock" is the
     /// deterministic, network-free backend the system tests run against.
     std::string backend = "http";
+    /// Whether the operator runs on a worker thread or on the asynchronous framework's own.
+    SemanticExecution execution = SemanticExecution::SYNCHRONOUS;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };
