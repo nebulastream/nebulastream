@@ -106,6 +106,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data_address=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
+      "--log_level=LOG_DEBUG",
     ]
     volumes:
       - type: bind

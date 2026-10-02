@@ -156,7 +156,8 @@ int main(const int argc, const char* argv[])
     {
         return 1;
     }
-    NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+    /// Configuration is not parsed yet; start at LOG_INFO so config warnings and errors reach the log file.
+    NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_INFO);
     SCOPE_EXIT
     {
         if (const auto logger = NES::Logger::getInstance())
@@ -218,6 +219,8 @@ int main(const int argc, const char* argv[])
         {
             return 0;
         }
+        /// Changing the level in place keeps the logger object the Rust network layer is bound to.
+        NES::Logger::getInstance()->changeLogLevel(configuration->logLevel.getValue());
         {
             NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
