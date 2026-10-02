@@ -19,6 +19,7 @@ vcpkg_from_github(
         0001-fmt-fix.patch
         0002-move-function-wrapper.patch
         0003-inlining-clang-22-arm64.patch
+        0002-preserve-jit-frame-pointers.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
