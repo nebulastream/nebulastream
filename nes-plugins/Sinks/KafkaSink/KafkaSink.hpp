@@ -85,6 +85,22 @@ private:
 
 struct ConfigParametersKafkaSink
 {
+    /// Shared by config parameters that must be a positive int32 (MAX_OUTSTANDING_MESSAGES and
+    /// DELIVERY_TIMEOUT_MS below both reject <= 0, since librdkafka treats 0 as "unlimited"/"infinite" for
+    /// each of them respectively).
+    template <typename ConfigParameter>
+    static std::optional<typename ConfigParameter::Type>
+    requirePositive(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
+    {
+        auto value = DescriptorConfig::tryGet(configParameter, config);
+        if (!value || value.value() <= 0)
+        {
+            NES_ERROR("{} must be positive, got {}.", configParameter.name, value.value_or(-1));
+            return std::nullopt;
+        }
+        return value;
+    }
+
     ///NOLINTBEGIN(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> BROKERS{
         "BROKERS",
@@ -102,32 +118,14 @@ struct ConfigParametersKafkaSink
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_OUTSTANDING_MESSAGES{
         "MAX_OUTSTANDING_MESSAGES",
         100000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int32_t>
-        {
-            auto value = DescriptorConfig::tryGet(MAX_OUTSTANDING_MESSAGES, config);
-            if (!value || value.value() <= 0)
-            {
-                NES_ERROR("MAX_OUTSTANDING_MESSAGES must be positive, got {}.", value.value_or(-1));
-                return std::nullopt;
-            }
-            return value;
-        }};
+        [](const std::unordered_map<std::string, std::string>& config) { return requirePositive(MAX_OUTSTANDING_MESSAGES, config); }};
 
     /// How long librdkafka retries a produced message before reporting it failed (message.timeout.ms).
     /// Must be positive: librdkafka treats 0 as "infinite", which could block a query forever.
     static inline const DescriptorConfig::ConfigParameter<int32_t> DELIVERY_TIMEOUT_MS{
         "DELIVERY_TIMEOUT_MS",
         5000,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int32_t>
-        {
-            auto value = DescriptorConfig::tryGet(DELIVERY_TIMEOUT_MS, config);
-            if (!value || value.value() <= 0)
-            {
-                NES_ERROR("DELIVERY_TIMEOUT_MS must be positive, got {}.", value.value_or(-1));
-                return std::nullopt;
-            }
-            return value;
-        }};
+        [](const std::unordered_map<std::string, std::string>& config) { return requirePositive(DELIVERY_TIMEOUT_MS, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
