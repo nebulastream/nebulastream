@@ -38,7 +38,7 @@ namespace NES
 {
 
 PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , outputStream(&std::cout)
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {
@@ -52,7 +52,7 @@ void PrintSink::stop(PipelineExecutionContext&)
 {
 }
 
-void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
+Sink::BufferResult PrintSink::executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
     {
@@ -71,6 +71,7 @@ void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
         (*wlocked)->flush();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds{ingestion});
+    return BufferResult::COMPLETED;
 }
 
 std::ostream& PrintSink::toString(std::ostream& str) const

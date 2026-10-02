@@ -44,7 +44,7 @@ void KafkaSink::DeliveryReportCallback::dr_cb(RdKafka::Message& message)
 }
 
 KafkaSink::KafkaSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , bootstrapServers(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::BROKERS))
     , topic(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::TOPIC))
     , maxOutstandingMessages(sinkDescriptor.getFromConfig(ConfigParametersKafkaSink::MAX_OUTSTANDING_MESSAGES))
@@ -134,7 +134,7 @@ SendResult KafkaSink::tryProduce(const TupleBuffer& buffer)
     return SendResult::Ok;
 }
 
-void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
+Sink::BufferResult KafkaSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(producer, "KafkaSink producer is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in KafkaSink.");
@@ -158,7 +158,7 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
-                return;
+                return BufferResult::RETRY;
             }
             case SendResult::Closed: {
                 /// tryProduce() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
@@ -166,6 +166,7 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
             }
         }
     }
+    return BufferResult::COMPLETED;
 }
 
 void KafkaSink::stop(PipelineExecutionContext& pec)

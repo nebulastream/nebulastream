@@ -26,7 +26,8 @@
 
 namespace NES
 {
-VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor&) : Sink(std::move(backpressureController))
+VoidSink::VoidSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(backpressureController), sinkDescriptor)
 {
 }
 
@@ -35,14 +36,12 @@ void VoidSink::start(PipelineExecutionContext&)
     NES_DEBUG("Setting up void sink: {}", *this);
 }
 
-void VoidSink::stop(PipelineExecutionContext&)
-{
-    NES_INFO("Void Sink completed.")
-}
+void VoidSink::stop(PipelineExecutionContext&){NES_INFO("Void Sink completed.")}
 
-void VoidSink::execute([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult VoidSink::executeBuffer([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
+    return BufferResult::COMPLETED;
 }
 
 DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
