@@ -15,9 +15,61 @@
 #include <Sinks/Sink.hpp>
 
 #include <ostream>
+#include <utility>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <BackpressureChannel.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
+namespace
+{
+SequenceData getSequenceData(const TupleBuffer& buffer)
+{
+    return {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
+}
+
+template <typename SequencerType, typename Process>
+void processOrdered(SequencerType& sequencer, const TupleBuffer& inputBuffer, Process&& process)
+{
+    auto current = sequencer.take(getSequenceData(inputBuffer), inputBuffer);
+    while (current)
+    {
+        const auto sequence = getSequenceData(*current);
+        if (process(*current) == Sink::BufferResult::RETRY)
+        {
+            sequencer.defer(sequence);
+            return;
+        }
+        current = sequencer.acknowledge(sequence);
+    }
+}
+}
+
+void Sink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
+{
+    switch (outputOrderPolicy)
+    {
+        case OutputOrderPolicy::IGNORE_ORDER:
+            executeBuffer(inputTupleBuffer, pipelineExecutionContext);
+            return;
+        case OutputOrderPolicy::ENFORCE_ORDER:
+            processOrdered(
+                sequencer,
+                inputTupleBuffer,
+                [this, &pipelineExecutionContext](const TupleBuffer& buffer) { return executeBuffer(buffer, pipelineExecutionContext); });
+            return;
+        case OutputOrderPolicy::DROP_OUT_OF_ORDER:
+            processOrdered(
+                dropOutOfOrderSequencer,
+                inputTupleBuffer,
+                [this, &pipelineExecutionContext](const TupleBuffer& buffer) { return executeBuffer(buffer, pipelineExecutionContext); });
+            return;
+    }
+}
 
 std::ostream& operator<<(std::ostream& out, const Sink& sink)
 {

@@ -55,9 +55,10 @@ void VoidSink::stop(PipelineExecutionContext&)
     NES_INFO("Void Sink completed.")
 }
 
-void VoidSink::execute([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult VoidSink::executeBuffer([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
+    return BufferResult::COMPLETED;
 }
 
 }

@@ -68,12 +68,13 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override;
+
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec) override;
 
 private:
     TCPChannel channel;

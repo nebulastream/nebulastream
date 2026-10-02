@@ -30,6 +30,7 @@
 
 #include <Configurations/ConfigField.hpp>
 #include <Configurations/ConfigLiteral.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -46,6 +47,13 @@ namespace NES
 {
 class SinkCatalog;
 struct GeneralSinkConfig;
+
+enum class OutputOrderPolicy : uint8_t
+{
+    IGNORE_ORDER,
+    ENFORCE_ORDER,
+    DROP_OUT_OF_ORDER,
+};
 }
 
 namespace NES
@@ -87,6 +95,7 @@ public:
     [[nodiscard]] bool getAddTimestamp() const;
     [[nodiscard]] size_t getBackpressureUpperThreshold() const;
     [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    [[nodiscard]] OutputOrderPolicy getOutputOrder() const;
     [[nodiscard]] const PluginSinkConfiguration& getPluginSinkConfiguration() const;
     [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
 
@@ -99,6 +108,7 @@ private:
         bool addTimestamp,
         size_t backpressureUpperThreshold,
         size_t backpressureLowerThreshold,
+        OutputOrderPolicy outputOrder,
         PluginSinkConfiguration pluginSinkConfig,
         OutputFormatterDescriptor outputFormatterDescriptor);
 
@@ -109,6 +119,7 @@ private:
     bool addTimestamp;
     size_t backpressureUpperThreshold;
     size_t backpressureLowerThreshold;
+    OutputOrderPolicy outputOrder;
     PluginSinkConfiguration pluginSinkConfig;
     OutputFormatterDescriptor outputFormatterDescriptor;
 
@@ -142,6 +153,7 @@ public:
     [[nodiscard]] bool getAddTimestamp() const;
     [[nodiscard]] size_t getBackpressureUpperThreshold() const;
     [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    [[nodiscard]] OutputOrderPolicy getOutputOrder() const;
     [[nodiscard]] const PluginSinkConfiguration& getPluginSinkConfiguration() const;
     [[nodiscard]] const OutputFormatterDescriptor& getOutputFormatterDescriptor() const;
 
@@ -153,6 +165,7 @@ private:
         bool addTimestamp,
         size_t backpressureUpperThreshold,
         size_t backpressureLowerThreshold,
+        OutputOrderPolicy outputOrder,
         PluginSinkConfiguration pluginSinkConfig,
         OutputFormatterDescriptor outputFormatterDescriptor);
 
@@ -164,6 +177,7 @@ private:
     bool addTimestamp;
     size_t backpressureUpperThreshold;
     size_t backpressureLowerThreshold;
+    OutputOrderPolicy outputOrder;
     PluginSinkConfiguration pluginSinkConfig;
     OutputFormatterDescriptor outputFormatterDescriptor;
 
@@ -228,6 +242,7 @@ public:
     [[nodiscard]] bool getAddTimestamp() const;
     [[nodiscard]] size_t getBackpressureUpperThreshold() const;
     [[nodiscard]] size_t getBackpressureLowerThreshold() const;
+    [[nodiscard]] OutputOrderPolicy getOutputOrder() const;
     /// The sink-defined config struct (e.g. FileSinkConfig), type-erased. Produced by the sink's
     /// SinkConfigRegistry entry, so the sink factory can safely any_cast it back.
     [[nodiscard]] const ExplicitAny& getPluginData() const;
@@ -285,7 +300,28 @@ public:
         size_t{200}};
 
     /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
-    static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP);
+    static inline const ConfigField<OutputOrderPolicy> OUTPUT_ORDER{
+        Identifier::parse("OUTPUT_ORDER"),
+        "One of IGNORE_ORDER, ENFORCE_ORDER or DROP_OUT_OF_ORDER. Controls whether the sink emits buffers in sequence order.",
+        [](const ConfigLiteral& literal)
+        {
+            return tryGetOr<std::string>(literal, expectedType<std::string>())
+                .and_then(
+                    [](const std::string& value) -> std::expected<OutputOrderPolicy, Exception>
+                    {
+                        auto policy = EnumWrapper{value}.asEnum<OutputOrderPolicy>();
+                        if (not policy.has_value())
+                        {
+                            return std::unexpected{InvalidConfigParameter(
+                                "Invalid value, must be IGNORE_ORDER, ENFORCE_ORDER or DROP_OUT_OF_ORDER, but was: {}!", value)};
+                        }
+                        return policy.value();
+                    });
+        },
+        OutputOrderPolicy::IGNORE_ORDER};
+
+    /// NOLINTNEXTLINE(bugprone-throwing-static-initialization,cert-err58-cpp)
+    static inline auto configSchema = createConfigSchema(Identifier::parse("SINK"), HOST, SCHEMA, ADD_TIMESTAMP, OUTPUT_ORDER);
 
     friend struct SinkLogicalOperator;
 };
@@ -324,6 +360,7 @@ struct ReflectedAnonymousSinkDescriptor
     bool addTimestamp;
     size_t backpressureUpperThreshold;
     size_t backpressureLowerThreshold;
+    OutputOrderPolicy outputOrder;
     PluginSinkConfiguration pluginSinkConfig;
     OutputFormatterDescriptor outputFormatterDescriptor;
 };
@@ -337,6 +374,7 @@ struct ReflectedNamedSinkDescriptor
     bool addTimestamp;
     size_t backpressureUpperThreshold;
     size_t backpressureLowerThreshold;
+    OutputOrderPolicy outputOrder;
     PluginSinkConfiguration pluginSinkConfig;
     OutputFormatterDescriptor outputFormatterDescriptor;
 };
