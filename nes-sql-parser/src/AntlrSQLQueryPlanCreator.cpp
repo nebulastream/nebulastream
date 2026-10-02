@@ -59,7 +59,9 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountDistinctAggregationLogicalFunction.hpp>
@@ -190,6 +192,7 @@ static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction,
     {
         case AntlrSQLLexer::EQ:
             return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
+        case AntlrSQLLexer::NEQ:
         case AntlrSQLLexer::NEQJ:
             return NegateLogicalFunction(EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
         case AntlrSQLLexer::LT:
@@ -1226,6 +1229,8 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().joinKeyRelationHelper.clear();
+    helpers.top().windowTimestamp.reset();
+    helpers.top().windowType.reset();
     helpers.top().isJoinRelation = true;
     AntlrSQLBaseListener::enterJoinRelation(context);
 }
@@ -1280,10 +1285,59 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     const auto rightQueryPlan = helpers.top().queryPlans[1];
     helpers.top().queryPlans.clear();
 
+    auto windowTypeOpt = helpers.top().windowType;
+    const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
+    if (context->ASOF() != nullptr)
+    {
+        if (helpers.top().joinKeyRelationHelper.size() > 1)
+        {
+            throw InvalidQuerySyntax("ASOF join requires at most one join function at {}", context->getText());
+        }
+        if (!currentWindowTimestampOpt.has_value()
+            || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+        {
+            throw InvalidQuerySyntax("ASOF JOIN requires TIME(left_timestamp, right_timestamp)");
+        }
+        if (!helpers.top().joinKeyRelationHelper.empty() && !helpers.top().joinKeyRelationHelper.front().tryGetAs<EqualsLogicalFunction>())
+        {
+            throw UnsupportedQuery("ASOF JOIN supports only equality predicates or no predicate");
+        }
+
+        const auto joinFunction = helpers.top().joinKeyRelationHelper.empty()
+            ? LogicalFunction{ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), "true")}
+            : helpers.top().joinKeyRelationHelper.at(0);
+        AsOfJoinTimeCharacteristics timeCharacteristics{
+            std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value())};
+        helpers.top().queryPlans.push_back(
+            LogicalPlanBuilder::addAsOfJoin(
+                leftQueryPlan, rightQueryPlan, joinFunction, std::move(timeCharacteristics), context->TABLE() != nullptr));
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
     if (helpers.top().joinKeyRelationHelper.size() != 1)
     {
         throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
     }
+    if (context->TABLE() != nullptr)
+    {
+        std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics;
+        if (currentWindowTimestampOpt.has_value())
+        {
+            if (!std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
+            {
+                throw InvalidQuerySyntax("stream-table TIME requires stream and table timestamp fields");
+            }
+            const auto characteristics = std::get<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value());
+            timeCharacteristics.emplace(characteristics);
+        }
+        const auto queryPlan = LogicalPlanBuilder::addStreamTableJoin(
+            leftQueryPlan, rightQueryPlan, helpers.top().joinKeyRelationHelper.at(0), std::move(timeCharacteristics));
+        helpers.top().queryPlans.push_back(queryPlan);
+        AntlrSQLBaseListener::exitJoinRelation(context);
+        return;
+    }
+
 
     const LogicalPlan queryPlan = [&]
     {
@@ -1316,13 +1370,11 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
                 helpers.top().joinType);
         }
 
-        auto windowTypeOpt = helpers.top().windowType;
         if (!windowTypeOpt)
         {
             throw InvalidQuerySyntax("windowType is required but empty at {}", context->getText());
         }
 
-        const auto currentWindowTimestampOpt = helpers.top().windowTimestamp;
         if (!currentWindowTimestampOpt.has_value()
             || !std::holds_alternative<std::array<Windowing::UnboundTimeCharacteristic, 2>>(currentWindowTimestampOpt.value()))
         {

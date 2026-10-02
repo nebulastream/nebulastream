@@ -32,6 +32,7 @@
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/AsOfJoinLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -43,6 +44,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/AnonymousSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/StreamTableJoinLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/IntervalJoinLogicalOperator.hpp>
@@ -228,6 +230,46 @@ LogicalPlan LogicalPlanBuilder::addIntervalJoin(
         leftLogicalPlan,
         rightLogicalPlan);
     return leftLogicalPlan;
+}
+
+LogicalPlan LogicalPlanBuilder::addStreamTableJoin(
+    LogicalPlan streamPlan,
+    LogicalPlan tablePlan,
+    const LogicalFunction& joinFunction,
+    std::optional<StreamTableJoinTimeCharacteristics> timeCharacteristics)
+{
+    if (timeCharacteristics.has_value())
+    {
+        std::visit(
+            [&](const auto& characteristics)
+            {
+                streamPlan = checkAndAddWatermarkAssigner(streamPlan, characteristics[0]);
+                tablePlan = checkAndAddWatermarkAssigner(tablePlan, characteristics[1]);
+            },
+            timeCharacteristics.value());
+    }
+
+    return addBinaryOperatorAndUpdateSource(
+        StreamTableJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics)), streamPlan, tablePlan);
+}
+
+LogicalPlan LogicalPlanBuilder::addAsOfJoin(
+    LogicalPlan leftPlan,
+    LogicalPlan rightPlan,
+    const LogicalFunction& joinFunction,
+    AsOfJoinTimeCharacteristics timeCharacteristics,
+    const bool rightIsTable)
+{
+    std::visit(
+        [&](const auto& characteristics)
+        {
+            leftPlan = checkAndAddWatermarkAssigner(leftPlan, characteristics[0]);
+            rightPlan = checkAndAddWatermarkAssigner(rightPlan, characteristics[1]);
+        },
+        timeCharacteristics);
+
+    return addBinaryOperatorAndUpdateSource(
+        AsOfJoinLogicalOperator::create(joinFunction, std::move(timeCharacteristics), rightIsTable), leftPlan, rightPlan);
 }
 
 LogicalPlan LogicalPlanBuilder::addInferModel(Identifier modelName, const LogicalPlan& childPlan)
