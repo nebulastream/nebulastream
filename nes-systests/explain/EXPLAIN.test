@@ -58,11 +58,14 @@ INTO sinkJoin;
 ----
 == Optimized Global Plan ==
 SINK(SINKJOIN)
-  Join(INNER_JOIN, ID = ID2)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM2)
+  PROJECTION(fields: [END, ID, ID2, START, TIMESTAMP, TIMESTAMP2, VALUE, VALUE2])
+    Join(INNER_JOIN, ID = ID2)
+      PROJECTION(fields: [ID, TIMESTAMP, VALUE])
+        WATERMARK_ASSIGNER(Event time)
+          SOURCE(STREAM)
+      PROJECTION(fields: [ID2, TIMESTAMP2, VALUE2])
+        WATERMARK_ASSIGNER(Event time)
+          SOURCE(STREAM2)
 ==END==
 # At least one EXPLAIN call for each logical operators
 
