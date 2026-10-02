@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
+#include <optional>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
@@ -49,6 +52,32 @@ struct is_one_of<T, std::variant<Ts...>> : std::bool_constant<(std::is_same_v<T,
 };
 }
 
+/// The null argument of a VarVal constructor: a traced nautilus::val<bool>, or a bool when nullness is known while tracing.
+template <typename Null>
+concept NullArgument = std::same_as<std::remove_cvref_t<Null>, bool> || std::same_as<std::remove_cvref_t<Null>, nautilus::val<bool>>;
+
+namespace detail
+{
+/// Only a nullable VarVal traces a null flag. A non-nullable one would otherwise trace a constant false, and a copy of it with every
+/// copy and operation of the VarVal.
+template <NullArgument Null>
+std::optional<nautilus::val<bool>> makeNullFlag(const bool nullable, Null&& null)
+{
+    if (not nullable)
+    {
+        return std::nullopt;
+    }
+    if constexpr (std::same_as<std::remove_cvref_t<Null>, bool>)
+    {
+        return nautilus::val<bool>{null};
+    }
+    else
+    {
+        return nautilus::val<bool>{std::forward<Null>(null)};
+    }
+}
+}
+
 /// This class is the base class for all data types in our Nautilus-Backend.
 /// It sits on top of the nautilus library and its val<> data type.
 /// We derive all specific data types, e.g., variable and fixed data types, from this base class.
@@ -58,14 +87,14 @@ class VarVal
 public:
     /// Construct a VarVal object from memory
     static VarVal readNonNullableVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type);
-    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type, const nautilus::val<bool>& null);
+    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, DataType type, nautilus::val<bool> null);
     static VarVal select(const nautilus::val<bool>& condition, const VarVal& trueValue, const VarVal& falseValue);
 
     /// Construct a VarVal object for example via VarVal(32)
-    template <typename T>
-    explicit VarVal(const T value, const bool nullable, const nautilus::val<bool>& null)
+    template <typename T, NullArgument Null>
+    explicit VarVal(const T value, const bool nullable, Null&& null)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(nautilus::val<T>(value)), null(null), nullable(nullable)
+        : value(nautilus::val<T>(value)), nullFlag(detail::makeNullFlag(nullable, std::forward<Null>(null)))
     {
     }
 
@@ -73,36 +102,37 @@ public:
     template <typename T>
     explicit VarVal(const T value)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(nautilus::val<T>(value)), null(false), nullable(false)
+        : value(nautilus::val<T>(value))
     {
     }
 
     /// Construct via VarVal(nautilus::val<int>(32)), also allows conversion from static to dynamic
-    template <typename T>
-    VarVal(const nautilus::val<T> value, const bool nullable, const nautilus::val<bool>& null)
+    template <typename T, NullArgument Null>
+    VarVal(nautilus::val<T> value, const bool nullable, Null&& null)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(value), null(null), nullable(nullable)
+        : value(std::move(value)), nullFlag(detail::makeNullFlag(nullable, std::forward<Null>(null)))
     {
     }
 
     template <typename T>
-    VarVal(const nautilus::val<T> value)
+    VarVal(nautilus::val<T> value)
     requires(detail::is_one_of<nautilus::val<T>, detail::var_val_t>::value)
-        : value(value), null(false), nullable(false)
+        : value(std::move(value))
     {
     }
 
     /// Construct a VarVal object for all other types that are part of var_val_helper but are not wrapped
     /// in a nautilus::val<> can be constructed via this constructor, e.g, VarVal(VariableSize).
-    template <typename T>
+    template <typename T, NullArgument Null>
     requires(detail::is_one_of<T, detail::var_val_t>::value)
-    VarVal(const T value, const bool nullable, const nautilus::val<bool>& null) : value(value), null(null), nullable(nullable)
+    VarVal(T value, const bool nullable, Null&& null)
+        : value(std::move(value)), nullFlag(detail::makeNullFlag(nullable, std::forward<Null>(null)))
     {
     }
 
     template <typename T>
     requires(detail::is_one_of<T, detail::var_val_t>::value)
-    VarVal(const T value) : value(value), null(false), nullable(false)
+    VarVal(T value) : value(std::move(value))
     {
     }
 
@@ -181,16 +211,23 @@ public:
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     /// NOLINTBEGIN(google-explicit-constructor)
-    VarVal(detail::var_val_t t, const bool nullable, const nautilus::val<bool>& null) : value(std::move(t)), null(null), nullable(nullable)
+    VarVal(detail::var_val_t underlying, std::optional<nautilus::val<bool>> nullFlag)
+        : value(std::move(underlying)), nullFlag(std::move(nullFlag))
     {
     }
 
-    VarVal(detail::var_val_t t) : value(std::move(t)), null(false), nullable(false) { }
+    VarVal(detail::var_val_t underlying) : value(std::move(underlying)) { }
 
     /// NOLINTEND(google-explicit-constructor)
+
+    template <NullArgument Null>
+    static VarVal readVarValFromMemoryImpl(const nautilus::val<int8_t*>& memRef, DataType type, Null&& null);
+
     detail::var_val_t value;
-    nautilus::val<bool> null;
-    bool nullable; /// Allows us to not run the null code parts, if the VarVal is not nullable
+    /// Engaged exactly if the VarVal is nullable, which is known while tracing: a non-nullable VarVal traces no null flag. A nullable
+    /// VarVal stays nullable when a non-nullable value is assigned to it, so a VarVal that is assigned on several traced paths keeps
+    /// the same traced variables on all of them.
+    std::optional<nautilus::val<bool>> nullFlag;
 };
 
 static_assert(!std::is_default_constructible_v<VarVal>, "Should not be default constructible");
