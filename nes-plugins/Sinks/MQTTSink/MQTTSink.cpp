@@ -161,7 +161,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         switch (tryPublish(*currentBuffer))
         {
             case SendResult::Ok: {
-                currentBuffer = backpressureHandler.onSuccess(backpressureController);
+                currentBuffer = backpressureHandler.onSuccess(*currentBuffer, backpressureController);
                 continue;
             }
             case SendResult::Full: {

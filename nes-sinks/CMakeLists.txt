@@ -40,3 +40,4 @@ add_subdirectory(src)
 get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 target_sources(nes-sinks PRIVATE ${NES_SINKS_SOURCE_FILES})
 
+add_tests_if_enabled(tests)

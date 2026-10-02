@@ -18,7 +18,6 @@
 #include <deque>
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/Synchronized.h>
 #include <BackpressureChannel.hpp>
@@ -32,21 +31,28 @@ namespace NES
 /// The handler stashes the buffer in an internal deque and acquires backpressure from the
 /// associated `BackpressureController` once the deque hits `upperThreshold`.
 ///
-/// Exactly one buffer is kept "pending" at any time so the sink has something to retry on its next
-/// call, breaking the deadlock that would arise if both deque and pending slot were empty while
-/// upstream is blocked on backpressure.
+/// While rejected buffers remain, exactly one is marked "pending": it is either being attempted by
+/// the sink or held by a scheduled retry task, outside the deque. Other rejected buffers stay queued.
 ///
-/// `onSuccess` is called when a buffer was accepted by the channel. The handler clears the pending
-/// slot, releases backpressure once the deque drops to `lowerThreshold`, and returns the next
-/// queued buffer (if any) so the sink can immediately attempt the next send.
+/// `onSuccess` is called with the buffer accepted by the channel. Only success of the pending buffer
+/// clears its marker and transfers it to the next queued buffer (if any) for an immediate attempt.
+/// Success of an unrelated buffer leaves the pending retry and deque unchanged.
 class BackpressureHandler
 {
+    struct BufferId
+    {
+        OriginId originId;
+        SequenceNumber sequenceNumber;
+        ChunkNumber chunkNumber;
+
+        bool operator==(const BufferId&) const = default;
+    };
+
     struct State
     {
         bool hasBackpressure = false;
         std::deque<TupleBuffer> buffered;
-        SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
-        ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
+        std::optional<BufferId> pending;
     };
 
     folly::Synchronized<State> stateLock;
@@ -59,7 +65,7 @@ public:
     explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0); /// NOLINT(fuchsia-default-arguments-declarations)
 
     std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
-    std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
+    std::optional<TupleBuffer> onSuccess(const TupleBuffer& buffer, BackpressureController& backpressureController);
     [[nodiscard]] bool empty() const;
 };
 
