@@ -14,10 +14,16 @@
 
 #pragma once
 
+#include <cstdint>
 #include <ostream>
+#include <utility>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/Sequencer.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
@@ -25,12 +31,30 @@ namespace NES
 class Sink : public ExecutablePipelineStage
 {
 public:
+    enum class BufferResult : uint8_t
+    {
+        COMPLETED,
+        RETRY,
+    };
+
     explicit Sink(BackpressureController backpressureController) : backpressureController(std::move(backpressureController)) { }
 
     ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
 
+    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) final;
+
+    void setOutputOrderPolicy(OutputOrderPolicy policy) { outputOrderPolicy = policy; }
+
     BackpressureController backpressureController;
+
+protected:
+    virtual BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
+
+private:
+    OutputOrderPolicy outputOrderPolicy = OutputOrderPolicy::IGNORE_ORDER;
+    Sequencer<TupleBuffer> sequencer;
+    DropOutOfOrderSequencer<TupleBuffer> dropOutOfOrderSequencer;
 };
 
 }

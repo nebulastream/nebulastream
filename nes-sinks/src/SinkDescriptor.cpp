@@ -59,6 +59,7 @@ SinkDescriptor SinkDescriptor::createNamed(
         general.addTimestamp,
         general.backpressureUpperThreshold,
         general.backpressureLowerThreshold,
+        general.outputOrder,
         std::move(plugin),
         std::move(formatter)}};
 }
@@ -74,6 +75,7 @@ SinkDescriptor SinkDescriptor::createAnonymous(
         general.addTimestamp,
         general.backpressureUpperThreshold,
         general.backpressureLowerThreshold,
+        general.outputOrder,
         std::move(plugin),
         std::move(formatter)}};
 }
@@ -141,6 +143,7 @@ NamedSinkDescriptor::NamedSinkDescriptor(
     const bool addTimestamp,
     const size_t backpressureUpperThreshold,
     const size_t backpressureLowerThreshold,
+    const OutputOrderPolicy outputOrder,
     PluginSinkConfiguration pluginSinkConfig,
     OutputFormatterDescriptor outputFormatterDescriptor)
     : sinkId(sinkId)
@@ -150,6 +153,7 @@ NamedSinkDescriptor::NamedSinkDescriptor(
     , addTimestamp(addTimestamp)
     , backpressureUpperThreshold(backpressureUpperThreshold)
     , backpressureLowerThreshold(backpressureLowerThreshold)
+    , outputOrder(outputOrder)
     , pluginSinkConfig(std::move(pluginSinkConfig))
     , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
@@ -170,6 +174,11 @@ size_t NamedSinkDescriptor::getBackpressureLowerThreshold() const
     return backpressureLowerThreshold;
 }
 
+OutputOrderPolicy NamedSinkDescriptor::getOutputOrder() const
+{
+    return outputOrder;
+}
+
 AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     SinkId sinkId,
     AnonymousSinkSchema schema,
@@ -177,6 +186,7 @@ AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     const bool addTimestamp,
     const size_t backpressureUpperThreshold,
     const size_t backpressureLowerThreshold,
+    const OutputOrderPolicy outputOrder,
     PluginSinkConfiguration pluginSinkConfig,
     OutputFormatterDescriptor outputFormatterDescriptor)
     : sinkId(sinkId)
@@ -185,6 +195,7 @@ AnonymousSinkDescriptor::AnonymousSinkDescriptor(
     , addTimestamp(addTimestamp)
     , backpressureUpperThreshold(backpressureUpperThreshold)
     , backpressureLowerThreshold(backpressureLowerThreshold)
+    , outputOrder(outputOrder)
     , pluginSinkConfig(std::move(pluginSinkConfig))
     , outputFormatterDescriptor(std::move(outputFormatterDescriptor))
 {
@@ -203,6 +214,11 @@ size_t AnonymousSinkDescriptor::getBackpressureUpperThreshold() const
 size_t AnonymousSinkDescriptor::getBackpressureLowerThreshold() const
 {
     return backpressureLowerThreshold;
+}
+
+OutputOrderPolicy AnonymousSinkDescriptor::getOutputOrder() const
+{
+    return outputOrder;
 }
 
 std::ostream& operator<<(std::ostream& out, const AnonymousSinkDescriptor& sinkDescriptor)
@@ -345,6 +361,11 @@ size_t SinkDescriptor::getBackpressureLowerThreshold() const
     return std::visit([](const auto& var) { return var.getBackpressureLowerThreshold(); }, underlying);
 }
 
+OutputOrderPolicy SinkDescriptor::getOutputOrder() const
+{
+    return std::visit([](const auto& var) { return var.getOutputOrder(); }, underlying);
+}
+
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     std::visit([&out](const auto& var) { out << var; }, sinkDescriptor.underlying);
@@ -403,6 +424,7 @@ Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& 
             .addTimestamp = descriptor.getAddTimestamp(),
             .backpressureUpperThreshold = descriptor.getBackpressureUpperThreshold(),
             .backpressureLowerThreshold = descriptor.getBackpressureLowerThreshold(),
+            .outputOrder = descriptor.getOutputOrder(),
             .pluginSinkConfig = descriptor.getPluginSinkConfiguration(),
             .outputFormatterDescriptor = descriptor.getOutputFormatterDescriptor()});
 }
@@ -417,6 +439,7 @@ NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected
          addTimestamp,
          backpressureUpperThreshold,
          backpressureLowerThreshold,
+         outputOrder,
          pluginSinkConfig,
          outputFormatterDescriptor] = context.unreflect<detail::ReflectedNamedSinkDescriptor>(reflected);
     return NamedSinkDescriptor{
@@ -427,6 +450,7 @@ NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected
         addTimestamp,
         backpressureUpperThreshold,
         backpressureLowerThreshold,
+        outputOrder,
         std::move(pluginSinkConfig),
         std::move(outputFormatterDescriptor)};
 }
@@ -448,6 +472,7 @@ Reflected Reflector<AnonymousSinkDescriptor>::operator()(const AnonymousSinkDesc
             .addTimestamp = descriptor.getAddTimestamp(),
             .backpressureUpperThreshold = descriptor.getBackpressureUpperThreshold(),
             .backpressureLowerThreshold = descriptor.getBackpressureLowerThreshold(),
+            .outputOrder = descriptor.getOutputOrder(),
             .pluginSinkConfig = descriptor.getPluginSinkConfiguration(),
             .outputFormatterDescriptor = descriptor.getOutputFormatterDescriptor()});
 }
@@ -461,6 +486,7 @@ AnonymousSinkDescriptor Unreflector<AnonymousSinkDescriptor>::operator()(const R
          addTimestamp,
          backpressureUpperThreshold,
          backpressureLowerThreshold,
+         outputOrder,
          pluginSinkConfig,
          outputFormatterDescriptor] = context.unreflect<detail::ReflectedAnonymousSinkDescriptor>(reflected);
     auto sinkSchema = std::visit(
@@ -484,6 +510,7 @@ AnonymousSinkDescriptor Unreflector<AnonymousSinkDescriptor>::operator()(const R
         addTimestamp,
         backpressureUpperThreshold,
         backpressureLowerThreshold,
+        outputOrder,
         std::move(pluginSinkConfig),
         std::move(outputFormatterDescriptor)};
 }

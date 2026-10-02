@@ -46,6 +46,7 @@ struct GeneralSinkConfig
     bool addTimestamp = false;
     size_t backpressureUpperThreshold = 1000;
     size_t backpressureLowerThreshold = 200;
+    OutputOrderPolicy outputOrder = OutputOrderPolicy::IGNORE_ORDER;
 
     friend std::ostream& operator<<(std::ostream& os, const GeneralSinkConfig& config);
 };

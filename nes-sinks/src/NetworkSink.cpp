@@ -166,7 +166,7 @@ void NetworkSink::stop(PipelineExecutionContext& pec)
     NES_DEBUG("Sender channel {} closed", channelId);
 }
 
-void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
+Sink::BufferResult NetworkSink::executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(channel, "Sender channel is not initialized");
     PRECONDITION(inputBuffer, "Invalid input buffer in NetworkSink.");
@@ -174,7 +174,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
     if (closed)
     {
         NES_WARNING("Sink is closed dropping buffer: {}-{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
-        return;
+        return BufferResult::COMPLETED;
     }
 
     auto currentBuffer = std::optional(inputBuffer);
@@ -229,10 +229,11 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
-                return;
+                return BufferResult::RETRY;
             }
         }
     }
+    return BufferResult::COMPLETED;
 }
 
 std::ostream& NetworkSink::toString(std::ostream& str) const

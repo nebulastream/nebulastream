@@ -249,7 +249,7 @@ KafkaSink::PublishResult KafkaSink::tryProduce(const TupleBuffer& buffer)
     return PublishResult::Ok;
 }
 
-void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
+Sink::BufferResult KafkaSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(producer, "KafkaSink producer is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in KafkaSink.");
@@ -273,10 +273,11 @@ void KafkaSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCo
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
-                return;
+                return BufferResult::RETRY;
             }
         }
     }
+    return BufferResult::COMPLETED;
 }
 
 void KafkaSink::stop(PipelineExecutionContext& pec)

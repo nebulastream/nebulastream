@@ -134,7 +134,7 @@ void FileSink::start(PipelineExecutionContext&)
     }
 }
 
-void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult FileSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
@@ -154,6 +154,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         }
         wlocked->flush();
     }
+    return BufferResult::COMPLETED;
 }
 
 void FileSink::stop(PipelineExecutionContext&)

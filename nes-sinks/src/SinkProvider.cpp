@@ -30,7 +30,9 @@ std::unique_ptr<Sink> lower(BackpressureController backpressureController, const
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
     if (const auto sinkFactory = SinkRegistry::instance().find(sinkDescriptor.getSinkType()))
     {
-        return (*sinkFactory)(SinkRegistryArguments(std::move(backpressureController), sinkDescriptor));
+        auto sink = (*sinkFactory)(SinkRegistryArguments(std::move(backpressureController), sinkDescriptor));
+        sink->setOutputOrderPolicy(sinkDescriptor.getOutputOrder());
+        return sink;
     }
     throw UnknownSinkType("Unknown Sink Descriptor Type: {}", sinkDescriptor.getSinkType());
 }
