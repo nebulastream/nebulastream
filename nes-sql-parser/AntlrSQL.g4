@@ -147,7 +147,13 @@ relation
 
 joinRelation
     : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
+    | INNER? JOIN TABLE right=relationPrimary joinCriteria streamTableTimeClause?
+    | ASOF JOIN TABLE? right=relationPrimary joinCriteria? streamTableTimeClause
     | NATURAL joinType JOIN right=relationPrimary windowClause
+    ;
+
+streamTableTimeClause
+    : TIME '(' timestampParameter ')'
     ;
 
 joinType
@@ -467,6 +473,7 @@ AND: 'AND' | 'and';
 ANY: 'ANY';
 AS: 'AS' | 'as';
 ASC: 'ASC' | 'asc';
+ASOF: 'ASOF' | 'asof';
 AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';
@@ -526,6 +533,7 @@ SOME: 'SOME';
 START: 'START';
 TABLE: 'TABLE';
 THEN: 'THEN' | 'then';
+TIME: 'TIME' | 'time';
 TO: 'TO';
 TRUE: 'TRUE';
 TYPE: 'TYPE';

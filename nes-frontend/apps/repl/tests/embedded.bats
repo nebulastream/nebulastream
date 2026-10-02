@@ -128,11 +128,14 @@ EOF
   assert_equal "$(extract_explain "${lines[$i_optimized_text]}")" "$(cat <<'EOF'
 == Optimized Global Plan ==
 SINK(VOID)
-  Join(INNER_JOIN, ID = ID2)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM)
-    WATERMARK_ASSIGNER(Event time)
-      SOURCE(STREAM2)
+  PROJECTION(fields: [END, ID, ID2, START, TIMESTAMP, TIMESTAMP2, VALUE, VALUE2])
+    Join(INNER_JOIN, ID = ID2)
+      PROJECTION(fields: [ID, TIMESTAMP, VALUE])
+        WATERMARK_ASSIGNER(Event time)
+          SOURCE(STREAM)
+      PROJECTION(fields: [ID2, TIMESTAMP2, VALUE2])
+        WATERMARK_ASSIGNER(Event time)
+          SOURCE(STREAM2)
 EOF
 )"
 
@@ -141,9 +144,12 @@ EOF
 -- 1 plan(s) on sink-node:8080 --
 0:
 SINK(VOID)
-  Join(INNER_JOIN, ID = ID2)
-    SOURCE(NETWORK)
-    SOURCE(NETWORK)
+  PROJECTION(fields: [END, ID, ID2, START, TIMESTAMP, TIMESTAMP2, VALUE, VALUE2])
+    Join(INNER_JOIN, ID = ID2)
+      PROJECTION(fields: [ID, TIMESTAMP, VALUE])
+        SOURCE(NETWORK)
+      PROJECTION(fields: [ID2, TIMESTAMP2, VALUE2])
+        SOURCE(NETWORK)
 
 
 -- 2 plan(s) on source-node:8080 --
@@ -182,13 +188,17 @@ EOF
   assert_equal "$(extract_explain "${lines[$i_optimized_visual]}")" "$(cat <<'EOF'
 == Optimized Global Plan ==
 
-                         SINK(VOID)
-                              │
-                 Join(INNER_JOIN, ID = ID2)
-               ┌──────────────┴───────────────┐
-WATERMARK_ASSIGNER(Event time) WATERMARK_ASSIGNER(Event time)
-              ┌┘                             ┌┘
-       SOURCE(STREAM)                SOURCE(STREAM2)
+                                       SINK(VOID)
+                                            │
+              PROJECTION(fields: [END, ID, ID2, START, TIMESTAMP, TIMES...
+                                            │
+                               Join(INNER_JOIN, ID = ID2)
+                     ┌──────────────────────┴────────────────────┐
+PROJECTION(fields: [ID, TIMESTAMP, VALUE]) PROJECTION(fields: [ID2, TIMESTAMP2, VALUE2])
+                     │                                           │
+      WATERMARK_ASSIGNER(Event time)              WATERMARK_ASSIGNER(Event time)
+                     │                                           └┐
+              SOURCE(STREAM)                              SOURCE(STREAM2)
 EOF
 )"
 
@@ -197,11 +207,15 @@ EOF
 -- 1 plan(s) on sink-node:8080 --
 0:
 
-          SINK(VOID)
-               │
-  Join(INNER_JOIN, ID = ID2)
-       ┌───────┴───────┐
-SOURCE(NETWORK) SOURCE(NETWORK)
+                                       SINK(VOID)
+                                            │
+              PROJECTION(fields: [END, ID, ID2, START, TIMESTAMP, TIMES...
+                                            │
+                               Join(INNER_JOIN, ID = ID2)
+                     ┌──────────────────────┴────────────────────┐
+PROJECTION(fields: [ID, TIMESTAMP, VALUE]) PROJECTION(fields: [ID2, TIMESTAMP2, VALUE2])
+                     │                                           │
+              SOURCE(NETWORK)                             SOURCE(NETWORK)
 
 
 -- 2 plan(s) on source-node:8080 --
@@ -224,4 +238,3 @@ WATERMARK_ASSIGNER(Event time)
 EOF
 )"
 }
-
