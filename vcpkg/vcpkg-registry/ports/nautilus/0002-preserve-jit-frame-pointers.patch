@@ -1,0 +1,18 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+@@ -20,6 +20,13 @@ LLVMIROptimizer::~LLVMIROptimizer() = default;
+ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const engine::Options& options,
+                                                                                     const DumpHandler& handler) {
+ 	// Return LLVM optimizer pipeline.
+ 	return [options, &handler](llvm::Module* llvmIRModule) {
++		// Compiled pipelines are sampled with frame-pointer unwinding.
++		for (auto& function : *llvmIRModule) {
++			if (!function.isDeclaration()) {
++				function.addFnAttr("frame-pointer", "all");
++			}
++		}
++
+ 		// Currently, we do not increase the sizeLevel requirement of the
+ 		// optimizingTransformer beyond 0.
+ 		constexpr int SIZE_LEVEL = 0;

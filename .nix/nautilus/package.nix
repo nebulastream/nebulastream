@@ -49,6 +49,7 @@ let
       version = "0.1";
 
       src = nautilusSrc;
+      patches = [ ./patches/0002-preserve-jit-frame-pointers.patch ];
 
       nativeBuildInputs = [
         pkgs.cmake
