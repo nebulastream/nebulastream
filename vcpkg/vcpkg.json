@@ -39,6 +39,7 @@
   "dependencies": [
     "antlr4",
     "argparse",
+    "aravis",
     "boost-asio",
     "boost-filesystem",
     "boost-graph",
@@ -72,7 +73,16 @@
     "simdjson",
     "spdlog",
     "yaml-cpp",
-    "rapidcheck"
+    "rapidcheck",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "calib3d",
+        "jpeg",
+        "png"
+      ]
+    }
   ],
   "default-features": [
     "mqtt",
