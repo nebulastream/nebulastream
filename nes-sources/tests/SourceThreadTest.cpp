@@ -395,7 +395,7 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
                 return SourceReturnType::EmitResult::SUCCESS;
             });
         wait_for_emits(recorder, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_TRUE(control->waitUntilOpened());
         EXPECT_FALSE(control->wasClosed());
         wait_for_emits(recorder, 0);
         backpressureController.releasePressure();
@@ -436,7 +436,7 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
                 return SourceReturnType::EmitResult::SUCCESS;
             });
         wait_for_emits(recorder, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_TRUE(control->waitUntilOpened());
         EXPECT_FALSE(control->wasClosed());
         wait_for_emits(recorder, 0);
         verify_non_blocking_stop(sourceThread);
