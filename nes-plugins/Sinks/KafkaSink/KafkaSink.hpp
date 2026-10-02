@@ -24,12 +24,15 @@
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/BackpressureHandler.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/Synchronized.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <nes-network-bindings/lib.h>
 #include <BackpressureChannel.hpp>
@@ -67,11 +70,41 @@ private:
         std::atomic<RdKafka::ErrorCode> error{RdKafka::ERR_NO_ERROR};
     };
 
+    /// librdkafka frees a RK_MSG_FREE payload with free(3), so such a payload must come from malloc(3).
+    struct MallocDeleter
+    {
+        void operator()(void* pointer) const noexcept;
+    };
+
+    using OwnedPayload = std::unique_ptr<void, MallocDeleter>;
+
     /// Outcome of a single publish attempt:
-    ///   Ok     - librdkafka accepted the message into its outbound queue.
-    ///   Closed - non-recoverable producer error (disconnected, protocol, etc.); caller should fail the query.
-    ///   Full   - outbound queue is at capacity; caller should buffer & retry.
-    SendResult tryProduce(const TupleBuffer& buffer);
+    ///   Ok   - librdkafka accepted the message into its outbound queue.
+    ///   Full - outbound queue is at capacity; caller should buffer & retry.
+    enum class PublishResult : uint8_t
+    {
+        Ok,
+        Full,
+    };
+    PublishResult tryProduce(const TupleBuffer& buffer);
+
+    /// Serializes a buffer and all of its child buffers into one malloc'd block, sized up front so the
+    /// bytes are written exactly once.
+    static std::pair<OwnedPayload, size_t> serializePayload(const TupleBuffer& buffer);
+
+    /// Payload of the buffer librdkafka last rejected with ERR__QUEUE_FULL, kept so that the
+    /// backpressure retry of that buffer does not serialize it a second time.
+    /// Keyed by origin/sequence/chunk number: a sequence number is only unique *within* an origin, so
+    /// a sink fed by several origins would otherwise publish one buffer's bytes under another buffer's
+    /// identity. Synchronized because the engine calls execute() concurrently from several worker threads.
+    struct RetryPayload
+    {
+        OriginId originId = INVALID<OriginId>;
+        SequenceNumber sequenceNumber = INVALID<SequenceNumber>;
+        ChunkNumber chunkNumber = INVALID<ChunkNumber>;
+        OwnedPayload payload;
+        size_t payloadSize = 0;
+    };
 
     std::string bootstrapServers;
     std::string topic;
@@ -81,6 +114,7 @@ private:
     DeliveryReportCallback deliveryReportCallback;
     std::unique_ptr<RdKafka::Producer> producer;
     BackpressureHandler backpressureHandler;
+    folly::Synchronized<RetryPayload> retryPayload;
 };
 
 struct ConfigParametersKafkaSink
