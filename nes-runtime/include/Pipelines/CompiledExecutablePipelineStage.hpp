@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <memory>
+#include <string>
 #include <optional>
 #include <string_view>
 #include <unordered_map>
@@ -50,7 +51,9 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, Arena*);
-    static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
+    /// Name of the pipeline's main function in its module, e.g. `pipeline_3`. Profiles and dumps name the JIT code after it, so each
+    /// pipeline of a query shows up as its own function.
+    [[nodiscard]] std::string pipelineFunctionName() const;
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;

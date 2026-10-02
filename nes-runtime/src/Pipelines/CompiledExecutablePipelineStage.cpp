@@ -94,7 +94,12 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
         }
     };
     /// NOLINTEND(performance-unnecessary-value-param)
-    module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+    module.registerFunction(pipelineFunctionName(), compiledFunction);
+}
+
+std::string CompiledExecutablePipelineStage::pipelineFunctionName() const
+{
+    return fmt::format("pipeline_{}", pipeline->getPipelineId());
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
@@ -126,7 +131,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         registerPipelineFunction(module);
         compiledModule = module.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
-        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(pipelineFunctionName());
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.
