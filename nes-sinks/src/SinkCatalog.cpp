@@ -142,6 +142,7 @@ SinkConfigSchema::resolveConfigs(const Schema<LiteralConfigValue, Ordered>& valu
         .addTimestamp = addTimestamp,
         .backpressureUpperThreshold = backpressureUpperThreshold,
         .backpressureLowerThreshold = backpressureLowerThreshold,
+        .outputOrder = config.get(SinkDescriptor::OUTPUT_ORDER),
     };
 
     auto sinkSchemaVariant = [&] -> AnonymousSinkSchema

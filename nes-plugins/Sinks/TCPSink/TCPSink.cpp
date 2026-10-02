@@ -125,7 +125,7 @@ void TCPSink::start(PipelineExecutionContext&)
     channel.start();
 }
 
-void TCPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
+Sink::BufferResult TCPSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in TCPSink.");
 
@@ -143,10 +143,11 @@ void TCPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCont
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
-                return;
+                return BufferResult::RETRY;
             }
         }
     }
+    return BufferResult::COMPLETED;
 }
 
 void TCPSink::stop(PipelineExecutionContext& pec)

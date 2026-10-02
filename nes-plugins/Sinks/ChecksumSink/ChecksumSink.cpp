@@ -118,7 +118,7 @@ void ChecksumSink::stop(PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
+Sink::BufferResult ChecksumSink::executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     /// Create a buffer iterator to help iterate through the tuplebuffer and its children
@@ -133,6 +133,7 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
         /// Get the next buffer
         element = iterator.getNextElement();
     }
+    return BufferResult::COMPLETED;
 }
 
 }

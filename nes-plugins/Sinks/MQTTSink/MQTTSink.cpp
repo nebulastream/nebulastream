@@ -211,7 +211,7 @@ SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
     return SendResult::Ok;
 }
 
-void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
+Sink::BufferResult MQTTSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pec)
 {
     PRECONDITION(client, "MQTTSink client is not initialized");
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in MQTTSink.");
@@ -235,7 +235,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
                 {
                     pec.repeatTask(*emit, BACKPRESSURE_RETRY_INTERVAL);
                 }
-                return;
+                return BufferResult::RETRY;
             }
             case SendResult::Closed: {
                 /// tryPublish() can only return SendResult::Full or SendResult::Ok. If this point is reached, it means something went wrong.
@@ -243,6 +243,7 @@ void MQTTSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
             }
         }
     }
+    return BufferResult::COMPLETED;
 }
 
 void MQTTSink::stop(PipelineExecutionContext& pec)

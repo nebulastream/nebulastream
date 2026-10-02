@@ -59,11 +59,12 @@ public:
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
+
+    BufferResult executeBuffer(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
 
 private:
     bool isOpen;

@@ -64,7 +64,7 @@ public:
 
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
 
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
