@@ -18,12 +18,14 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 
 namespace NES
@@ -49,13 +51,22 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, Arena*);
+    using TerminateSignature = void(PipelineExecutionContext*, Arena*);
     /// Registers the pipeline's main traced function in the pipeline's compilation context.
     PipelineFunction<PipelineSignature> registerPipelineFunction(CompilationContext& compilationContext) const;
+    /// Registers the traced terminate function: operators may emit records while terminating (e.g. the stream-table join).
+    PipelineFunction<TerminateSignature> registerTerminateFunction(CompilationContext& compilationContext) const;
 
     nautilus::engine::NautilusEngine engine;
     std::optional<PipelineFunction<PipelineSignature>> compiledPipelineFunction;
+    std::optional<PipelineFunction<TerminateSignature>> compiledTerminateFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::shared_ptr<Pipeline> pipeline;
+    /// The executable stage must not retain the compiler's Pipeline DAG. Running pipeline nodes are stopped and
+    /// destroyed independently on query-engine workers; retaining the DAG here would make those workers concurrently
+    /// tear down Pipeline successor/predecessor ownership. Only these immutable execution properties are needed after
+    /// lowering.
+    PhysicalOperator rootOperator;
+    PipelineId pipelineId;
 };
 
 }
