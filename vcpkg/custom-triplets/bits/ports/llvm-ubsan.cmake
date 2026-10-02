@@ -13,4 +13,5 @@
 # Use LLVM's sanitizer option rather than instrumenting the sanitizer runtimes themselves.
 set(VCPKG_CXX_FLAGS "")
 set(VCPKG_C_FLAGS "")
+set(VCPKG_LINKER_FLAGS "")
 list(APPEND VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined" -DLLVM_REQUIRES_RTTI=ON)

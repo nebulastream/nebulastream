@@ -127,6 +127,7 @@ include(cmake/UseMold.cmake)
 include(cmake/EnableRust.cmake)
 include(cmake/CheckTestUtilities.cmake)
 include(cmake/NautilusInlining.cmake)
+include(cmake/CheckITT.cmake)
 
 # Native/Generic march support
 if (NES_BUILD_NATIVE)

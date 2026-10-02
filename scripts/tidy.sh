@@ -99,7 +99,7 @@ if [ "$MODE" = "full" ]; then
     # generated sources and cxxbridge output by their build-tree structure, so
     # adding a Rust crate never requires updating this filter.
     HEADER_FILTER='^(?!.*corrosion_generated/cxxbridge/).*'
-    SOURCE_FILTER='^(?!.*_generated_src/)(?!.*corrosion_generated/cxxbridge/).+$'
+    SOURCE_FILTER='^(?!.*_generated_src/)(?!.*corrosion_generated/cxxbridge/)(?!.*/_deps/).+$'
 
     echo -e "${COLOR_BOLD}clang-tidy: analyzing every translation unit in ${COMPILE_DB_DIR}${COLOR_RESET}"
     echo
