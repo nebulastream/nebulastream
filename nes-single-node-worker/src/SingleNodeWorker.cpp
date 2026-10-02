@@ -75,7 +75,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     }
     if (const auto& flameGraphDirectory = configuration.flameGraphDirectory.getValue(); not flameGraphDirectory.empty())
     {
-        listener->addQueryEngineListener(std::make_shared<QueryFlameGraphProfiler>(flameGraphDirectory, host.getRawValue()));
+        listener->addQueryEngineListener(std::make_shared<QueryFlameGraphProfiler>(flameGraphDirectory));
     }
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
