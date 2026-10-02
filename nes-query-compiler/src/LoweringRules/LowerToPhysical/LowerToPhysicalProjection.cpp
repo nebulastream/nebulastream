@@ -23,6 +23,7 @@
 
 
 #include <DataTypes/UnboundField.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
@@ -100,16 +101,10 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
 
     auto bufferSize = conf.operatorBufferSize;
 
-    std::shared_ptr<PhysicalOperatorWrapper> child;
-    std::shared_ptr<PhysicalOperatorWrapper> leaf;
-    /// Create a scan if this projection was placed directly after the source.
-    /// Any other projection does not receive a scan here, otherwise we might create an unnecessary pipeline.
-    /// Scans needed for UNION are inserted in the Pipelining-Phase already.
-    if (projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>())
+    const auto createScanWrapper = [&]
     {
-        auto scan = createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType);
-        auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
-            scan,
+        return std::make_shared<PhysicalOperatorWrapper>(
+            createScanOperator(projection, bufferSize, inputSchema, memoryLayoutType),
             inputSchema,
             outputSchema,
             memoryLayoutType,
@@ -117,9 +112,17 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
             std::nullopt,
             std::nullopt,
             PhysicalOperatorWrapper::PipelineLocation::SCAN);
+    };
 
-        child = scanWrapper;
-        leaf = scanWrapper;
+    std::shared_ptr<PhysicalOperatorWrapper> child;
+    std::shared_ptr<PhysicalOperatorWrapper> leaf;
+    /// Create a scan if this projection was placed directly after the source.
+    /// Any other projection does not receive a scan here, otherwise we might create an unnecessary pipeline.
+    /// Scans needed for UNION are inserted in the Pipelining-Phase already.
+    if (projection->getChild().tryGetAs<SourceDescriptorLogicalOperator>())
+    {
+        child = createScanWrapper();
+        leaf = child;
     }
 
     auto fieldMappingTrait = traitSet.get<FieldMappingTrait>();
@@ -127,6 +130,16 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     {
         auto targetName = fieldMappingTrait->getMapping(unbind(fieldName));
         PRECONDITION(targetName.has_value(), "Projection name was not in field mapping");
+        /// Output ordering is carried by the schema; copying a field onto itself adds no work.
+        /// Avoid a deep chain of identity maps when an ordering projection retains many fields.
+        if (const auto fieldAccess = function.tryGetAs<FieldAccessLogicalFunction>())
+        {
+            const auto sourceName = childTraitSet.get<FieldMappingTrait>()->getMapping(unbind(fieldAccess.value()->getField()));
+            if (sourceName == targetName)
+            {
+                continue;
+            }
+        }
         auto physicalFunction
             = QueryCompilation::FunctionProvider::lowerFunction(function, *projection->getChild()->getTraitSet().get<FieldMappingTrait>());
         auto physicalOperator = MapPhysicalOperator(std::move(targetName).value(), physicalFunction);
@@ -146,6 +159,12 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
         {
             leaf = child;
         }
+    }
+    /// All projections were identity maps, e.g. a pure reordering: there is no map to carry the output schema, so a scan has to.
+    if (child == nullptr)
+    {
+        child = createScanWrapper();
+        leaf = child;
     }
     return {.root = child, .leaves = {leaf}};
 }
