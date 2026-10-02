@@ -90,6 +90,7 @@ INGORED_ENDINGS = {
     "gitattributes",
     "html",
     "scss",
+    "conf",
 }
 
 VENDORED_FILES = {
@@ -110,7 +111,19 @@ VENDORED_FILES = {
     "vcpkg/vcpkg-registry/ports/libuuid/config.linux.h",
     "vcpkg/vcpkg-registry/ports/libuuid/portfile.cmake",
     "vcpkg/vcpkg-registry/ports/libuuid/unofficial-libuuid-config.cmake.in",
+    "vcpkg/vcpkg-registry/ports/aravis/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/libpng-config.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/libpng/vcpkg-cmake-wrapper.cmake",
+    "vcpkg/vcpkg-registry/ports/opencv4/0020-fix-narrow-filesystem.diff",
+    "vcpkg/vcpkg-registry/ports/opencv4/portfile.cmake",
+    "vcpkg/vcpkg-registry/ports/opencv4/usage.in",
 }
+
+# Third-party trees checked in verbatim, e.g. a Python venv fixture.
+VENDORED_DIRECTORIES = ("nes-systests/udf/small_venv/",)
+# Test inputs read byte for byte, which a preamble would change.
+TEST_INPUT_FILES = {"nes-systests/testdata/python_udf/file_input.txt"}
 
 if __name__ == "__main__":
 
@@ -124,9 +137,9 @@ if __name__ == "__main__":
 
         suffix = filename.split(".")[-1]
 
-        if filename in VENDORED_FILES:
+        if filename in VENDORED_FILES or filename in TEST_INPUT_FILES or filename.startswith(VENDORED_DIRECTORIES):
             pass
-        elif suffix in {"cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
+        elif suffix in {"c", "cpp", "proto", "java", "g4", "inc", "rs"} or filename.endswith(".cpp.in") or filename.endswith(".hpp.in"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text):
@@ -140,13 +153,13 @@ if __name__ == "__main__":
                 if not re.match(pattern, content, re.DOTALL):
                     print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble followed by #pragma once: {filename}:1')
                     result = False
-        elif filename.endswith("CMakeLists.txt") or suffix == "cmake":
+        elif filename.endswith("CMakeLists.txt") or suffix == "cmake" or filename.endswith(".cmake.in"):
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if not content.startswith(license_text_cmake):
                     print(f'{COLOR_RED_BOLD}Error{COLOR_RESET}: file lacks license preamble: {filename}:1')
                     result = False
-        elif suffix in {"sh", "py", "bats", "toml", "bash"}:
+        elif suffix in {"sh", "py", "bats", "toml", "bash", "codon"}:
             with open(filename, "r", encoding="utf-8") as fp:
                 content = fp.read()
                 if license_text_cmake not in content:
