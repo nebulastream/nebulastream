@@ -1,0 +1,13 @@
+query:
+  name: missing_pipe_consumer
+  query: |
+    SELECT *
+    FROM PIPE(missing)
+    INTO VOID_SINK
+
+logical: []
+
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+
