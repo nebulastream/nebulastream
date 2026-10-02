@@ -61,12 +61,12 @@ terminatedStatement: statement SEMICOLON;
 multipleStatements: (statement (SEMICOLON statement)* SEMICOLON?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN query;
-EXPLAIN: E X P L A I N;
 explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
+EXPLAIN: E X P L A I N;
 explainStages: explainStage (',' explainStage)*;
 explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
+TEXT: T E X T;
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createCatalogItemDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
@@ -117,7 +117,8 @@ showQueriesSubject: QUERIES;
 showLogicalSourcesSubject: LOGICAL SOURCES;
 showPhysicalSourcesSubject: PHYSICAL SOURCES;
 showSinksSubject: SINKS;
- | VERSION #showVersionSubject;
+showVersionSubject: VERSION;
+VERSION: V E R S I O N;
 
 showFilter: attr=identifier EQ value=scalarLiteral;
 
@@ -146,9 +147,13 @@ INTO: I N T O;
 sink: identifier | literalFunctionCall;
 
 openRelationalExpression: closedRelationalExpression | joinRelationalExpression;
-closedRelationalExpression: functionCall | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS | closedRelationalExpression AS identifier;
+closedRelationalExpression: functionCall | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
 AS: A S;
-joinRelationalExpression: closedRelationalExpression inbuildJoins closedRelationalExpression ON openScalarExpression binaryWindowLiteral;
+joinRelationalExpression: closedNamedRelationalExpression inbuildJoins closedNamedRelationalExpression ON openScalarExpression binaryWindowLiteral;
+/// Separated the named version to avoid syntactic ambiguity with named function call parameters.
+/// Its only really needed for joins, and if we would want people to be able to just rename the outer-most relation,
+// I would rather add this to the evaluation context, i.e. the SELECT, since this matches the named function parameter syntax.
+closedNamedRelationalExpression: closedRelationalExpression | closedRelationalExpression AS identifier;
 
 binaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
 unaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
@@ -172,22 +177,28 @@ UNION_ALL: UNION ALL?;
 fragment ALL: A L L;
 fragment UNION: U N I O N;
 
-openScalarExpression: infixScalarExpression | intervalExpression | closedScalarExpression;
+openScalarExpression: infixScalarExpression | openScalarExpression scalarPostfixes | intervalExpression | closedScalarExpression;
 closedScalarExpression: literal
     | prefixScalarExpression
     | castFunctionalScalarExpression
     | functionCall
-    | OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS;
-//    | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
+    | OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS
+    | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
 
 prefixScalarExpression: prefixScalarOperator closedScalarExpression;
 infixScalarExpression: closedScalarExpression infixScalarOperator closedScalarExpression;
 castFunctionalScalarExpression: DATA_TYPE OPEN_PARANTHESIS openScalarExpression CLOSE_PARANTHESIS;
 
-functionCall: positionalFunctionCall | namedFunctionCall | identifier;
-positionalFunctionCall: identifier OPEN_PARANTHESIS positionalFunctionCallArgument (COMMA positionalFunctionCallArgument)* CLOSE_PARANTHESIS;
+
+/// Using named alternatives here because antlr can only resolve mutual left recursion inside a single rule
+functionCall
+    : identifier                                                                   # functionReference
+    | functionCall OPEN_PARANTHESIS positionalFunctionCallArgument
+          (COMMA positionalFunctionCallArgument)* CLOSE_PARANTHESIS                # positionalFunctionCall
+    | functionCall OPEN_PARANTHESIS namedFunctionCallArgument
+          (COMMA namedFunctionCallArgument)* CLOSE_PARANTHESIS                     # namedFunctionCall
+    ;
 positionalFunctionCallArgument: closedScalarExpression | closedRelationalExpression;
-namedFunctionCall: identifier OPEN_PARANTHESIS namedFunctionCallArgument (COMMA namedFunctionCallArgument)* CLOSE_PARANTHESIS;
 namedFunctionCallArgument: positionalFunctionCallArgument AS qualifiedIdentifier;
 
 /// Once we have better literal folding, this separate block can be removed and its usages be replaced by functionCall
@@ -214,7 +225,10 @@ fragment MILLISECOND: M I L L I S E C O N D;
 
 INTERVAL: I N T E R V A L;
 
-isExpression: nan | null | type;
+
+scalarPostfixes: IS NULL | IS NAN;
+IS: I S;
+NAN: N A N;
 
 prefixScalarOperator: MINUS | NOT;
 infixScalarOperator: MINUS | PLUS | EQ | DIV | NEQ | AND | OR | GREATER | GREATER_EQUALS | LESSER | LESSER_EQUALS;
@@ -228,9 +242,9 @@ NEQ: '<>' | '!=';
 AND: A N D;
 OR: O R;
 GREATER: '>';
-GREATER_EQUALS: '>=';
+GREATER_EQUALS: '>=' | '!<';
 LESSER: '<';
-LESSER_EQUALS: '<=';
+LESSER_EQUALS: '<=' | '!>';
 
 
 literal: scalarLiteral | schemaCtor;
