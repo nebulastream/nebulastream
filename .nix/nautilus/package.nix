@@ -52,6 +52,7 @@ let
       patches = [
         ../../vcpkg/vcpkg-registry/ports/nautilus/0001-fmt-fix.patch
         ../../vcpkg/vcpkg-registry/ports/nautilus/0002-move-function-wrapper.patch
+        ./patches/0002-preserve-jit-frame-pointers.patch
       ];
 
       nativeBuildInputs = [
