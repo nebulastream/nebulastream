@@ -1,0 +1,28 @@
+services:
+  worker:
+    image: nebulastream/worker:demo-rebase
+    network_mode: host
+    working_dir: ${PWD}
+    volumes:
+      - ${PWD}:${PWD}
+    devices:
+      - /dev/snd:/dev/snd
+    command:
+      - --
+      - --grpc=localhost:8080
+      - --data_address=localhost:9090
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883" # MQTT
+      - "9001:9001" # MQTT over WebSocket
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  viewer:
+    image: nginx:1.29-alpine
+    ports:
+      - "8081:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
