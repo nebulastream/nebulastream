@@ -18,13 +18,17 @@
 #include <memory>
 #include <optional>
 
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -68,6 +72,13 @@ public:
     void setChild(PhysicalOperator child) override;
 
 protected:
+    /// Returns the data structure of the slice that the timestamp belongs to, borrowed from the slice cache.
+    /// The slice lookup is traced as an isolated region: its paths (cache hit, cache miss) keep different values alive, which
+    /// stops the tracer from merging them, so everything after the lookup would be traced once per path. Values created inside
+    /// a region die at its end, so all paths leave it in the same state and merge there.
+    [[nodiscard]] nautilus::val<const TupleBuffer*> getSliceDataStructure(
+        ExecutionContext& ctx, const nautilus::val<Timestamp>& timestamp, const nautilus::val<OperatorHandler*>& operatorHandler) const;
+
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;

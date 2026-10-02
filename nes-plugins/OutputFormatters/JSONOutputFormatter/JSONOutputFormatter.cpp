@@ -21,7 +21,6 @@
 #include <ostream>
 #include <ranges>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -52,8 +51,10 @@ namespace NES
 {
 namespace
 {
+/// The first field of a record opens the JSON object. Whether a field is the first one is known while tracing, so the caller picks
+/// the instantiation instead of passing a flag.
+template <bool IsFirstField>
 uint64_t writePreValueContents(
-    const bool isFirstField,
     const char* fieldIdentifier,
     const uint64_t remainingSpace,
     TupleBuffer* buffer,
@@ -61,7 +62,7 @@ uint64_t writePreValueContents(
     int8_t* bufferAddress)
 {
     std::string preValueContentString = "\"" + std::string(fieldIdentifier) + "\":";
-    if (isFirstField)
+    if constexpr (IsFirstField)
     {
         preValueContentString = "{" + preValueContentString;
     }
@@ -129,8 +130,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     const nautilus::val<const char*> fieldName{canonicalFieldNames.at(fieldIndex).c_str()};
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-        writePreValueContents,
-        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(0),
+        fieldIndex == 0 ? writePreValueContents<true> : writePreValueContents<false>,
         fieldName,
         currentRemainingSize,
         recordBuffer.getReference(),
@@ -179,12 +179,11 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
             getSerializerType(fieldNames.at(fieldIndex), fieldType.type));
     }
 
-    /// Either write a , or a }\n depending on if this is the last value of the record
-    const nautilus::val<const char*> delimiter
-        = nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1 ? "}\n" : ",";
-
-    const nautilus::val<size_t> delimiterSize
-        = nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1 ? 2 : 1;
+    /// Either write a , or a }\n depending on if this is the last value of the record.
+    /// The field index is known at trace time, so this is not a traced branch.
+    const bool isLastField = fieldIndex + 1 == fieldNames.size();
+    const nautilus::val<const char*> delimiter{isLastField ? "}\n" : ","};
+    const nautilus::val<size_t> delimiterSize{isLastField ? 2UL : 1UL};
 
     written += nautilus::invoke(
         writeValueToBuffer,

@@ -151,10 +151,10 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     }
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index
-    const nautilus::val<const char*> delimiter{(fieldIndex + 1 == fieldNames.size() ? tupleDelimiter : fieldDelimiter).c_str()};
-
-    const nautilus::val<size_t> delimiterSize
-        = fieldIndex == nautilus::val<uint64_t>{fieldNames.size()} - 1 ? tupleDelimiter.size() : fieldDelimiter.size();
+    /// The field index is known at trace time, so this is not a traced branch.
+    const auto& delimiterString = fieldIndex + 1 == fieldNames.size() ? tupleDelimiter : fieldDelimiter;
+    const nautilus::val<const char*> delimiter{delimiterString.c_str()};
+    const nautilus::val<size_t> delimiterSize{delimiterString.size()};
 
     /// As formatting is finished fo this value after this function, currentRemainingSize does not have to be adjusted anymore
     written += nautilus::invoke(
