@@ -1,0 +1,172 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <PipeService.hpp>
+
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <utility>
+#include <variant>
+#include <Util/Logger/Logger.hpp>
+#include <BackpressureChannel.hpp>
+#include <ErrorHandling.hpp>
+
+namespace NES
+{
+
+/// --- SinkHandle ---
+
+PipeService::SinkHandle::SinkHandle(BackpressureController* bpController) : bpController(bpController)
+{
+}
+
+void PipeService::SinkHandle::addConsumer(std::shared_ptr<PipeQueue> queue)
+{
+    queues.withWLock(
+        [&](auto& queues)
+        {
+            queues.pending.push_back(std::move(queue));
+            updateBackpressure(queues);
+        });
+}
+
+void PipeService::SinkHandle::removeConsumer(const std::shared_ptr<PipeQueue>& queue)
+{
+    queues.withWLock(
+        [&](auto& queues)
+        {
+            std::erase_if(queues.active, [&](const auto& consumer) { return consumer.queue == queue; });
+            std::erase(queues.pending, queue);
+            updateBackpressure(queues);
+        });
+
+    /// Drain the consumer channel to not block a producer that might be stuck on a full queue, which is never going to drain.
+    PipeChannelMessage message;
+    while (queue->read(message))
+    {
+        if (std::holds_alternative<PipeEoS>(message) || std::holds_alternative<PipeError>(message))
+        {
+            break;
+        }
+    }
+}
+
+bool PipeService::SinkHandle::setConsumerQueueFull(bool full)
+{
+    return queues.withWLock(
+        [&](auto& queues)
+        {
+            queues.consumerQueueFull = full;
+            return updateBackpressure(queues);
+        });
+}
+
+bool PipeService::SinkHandle::updateBackpressure(const Queues& queues) const
+{
+    if (bpController == nullptr)
+    {
+        return false;
+    }
+    if (queues.consumerQueueFull || (queues.active.empty() && queues.pending.empty()))
+    {
+        return bpController->applyPressure();
+    }
+    return bpController->releasePressure();
+}
+
+/// --- PipeService ---
+
+PipeService& PipeService::instance()
+{
+    static PipeService service;
+    return service;
+}
+
+std::shared_ptr<PipeService::SinkHandle> PipeService::registerSink(
+    const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, BackpressureController* bpController)
+{
+    return pipes.withWLock(
+        [&](auto& map) -> std::shared_ptr<SinkHandle>
+        {
+            auto it = map.find(pipeName);
+            if (it != map.end())
+            {
+                throw CannotOpenSink("Pipe sink already registered for name '{}'", pipeName);
+            }
+            auto sinkHandle = std::make_shared<SinkHandle>(bpController);
+            map.emplace(pipeName, PipeEntry{.schema = schema, .sinkHandle = sinkHandle});
+            NES_INFO("PipeService: registered sink for pipe '{}'", pipeName);
+            return sinkHandle;
+        });
+}
+
+void PipeService::unregisterSink(const std::string& pipeName)
+{
+    pipes.withWLock(
+        [&](auto& map)
+        {
+            auto it = map.find(pipeName);
+            if (it != map.end())
+            {
+                NES_INFO("PipeService: unregistered sink for pipe '{}'", pipeName);
+                map.erase(it);
+            }
+        });
+}
+
+std::shared_ptr<PipeQueue>
+PipeService::registerSource(const std::string& pipeName, const std::shared_ptr<const PipeSchema>& schema, const size_t queueCapacity)
+{
+    return pipes.withWLock(
+        [&](auto& map) -> std::shared_ptr<PipeQueue>
+        {
+            auto queue = std::make_shared<PipeQueue>(queueCapacity);
+            auto it = map.find(pipeName);
+            if (it != map.end())
+            {
+                auto& entry = it->second;
+                /// Verify schema match
+                if (*entry.schema != *schema)
+                {
+                    throw CannotOpenSource(
+                        "Schema mismatch for pipe '{}': expected sink schema {}, but source provides {}", pipeName, *entry.schema, *schema);
+                }
+                INVARIANT(entry.sinkHandle, "PipeEntry exists but sinkHandle is null for pipe '{}'", pipeName);
+                entry.sinkHandle->addConsumer(queue);
+                NES_INFO("PipeService: registered source for pipe '{}' (pending activation at next sequence boundary)", pipeName);
+                return queue;
+            }
+            /// No entry for this pipe name — no sink has ever been registered
+            throw CannotOpenSource("No pipe sink registered for name '{}'", pipeName);
+        });
+}
+
+void PipeService::unregisterSource(const std::string& pipeName, const std::shared_ptr<PipeQueue>& queue)
+{
+    pipes.withWLock(
+        [&](auto& map)
+        {
+            auto it = map.find(pipeName);
+            if (it == map.end())
+            {
+                return;
+            }
+            auto& entry = it->second;
+            entry.sinkHandle->removeConsumer(queue);
+            NES_INFO("PipeService: unregistered source for pipe '{}'", pipeName);
+        });
+}
+
+}

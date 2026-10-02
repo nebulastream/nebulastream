@@ -1,0 +1,611 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <random>
+#include <stop_token>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Interface/VariableSizedAccess.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <cpptrace/from_current_macros.hpp>
+#include <gtest/gtest.h>
+#include <BackpressureChannel.hpp>
+#include <PipeService.hpp>
+#include <PipeSink.hpp>
+#include <PipeSource.hpp>
+#include <PipelineExecutionContext.hpp>
+
+using namespace NES;
+
+namespace
+{
+constexpr uint32_t POOLED_BUFFER_SIZE = 4096;
+constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 1024;
+constexpr BufferAlignment BUFFER_ALIGNMENT{64};
+constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
+constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+}
+
+/// Minimal stub that captures tasks repeated by PipeSink.
+class StubPipelineExecutionContext final : public PipelineExecutionContext
+{
+public:
+    bool emitBuffer(const TupleBuffer&, ContinuationPolicy) override { return true; }
+
+    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds) override { repeatedBuffers.push_back(buffer); }
+
+    std::optional<TupleBuffer> takeRepeatedBuffer()
+    {
+        if (repeatedBuffers.empty())
+        {
+            return std::nullopt;
+        }
+        auto buffer = std::move(repeatedBuffers.front());
+        repeatedBuffers.pop_front();
+        return buffer;
+    }
+
+    TupleBuffer allocateTupleBuffer() override { return {}; }
+
+    [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return WorkerThreadId(0); }
+
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
+
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return nullptr; }
+
+    [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return handlers; }
+
+    void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) override { }
+
+private:
+    std::unordered_map<NES::OperatorHandlerId, std::shared_ptr<NES::OperatorHandler>> handlers;
+    std::deque<TupleBuffer> repeatedBuffers;
+};
+
+class PipeIntegrationTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        schema = PipeSchema{
+            UnqualifiedUnboundField{Identifier::parse("id"), DataType::Type::UINT64},
+            UnqualifiedUnboundField{Identifier::parse("value"), DataType::Type::UINT64}};
+        bufferManager = BufferManager::create(
+            TOTAL_MEMORY_IN_BYTES,
+            UNPOOLED_MEMORY_FRACTION,
+            BUFFER_ALIGNMENT,
+            POOLED_BUFFER_SIZE,
+            std::make_shared<NesDefaultMemoryAllocator>());
+    }
+
+    void TearDown() override { PipeService::instance().unregisterSink("test_pipe"); }
+
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+    std::unique_ptr<PipeSink> makePipeSink(BackpressureController bpController, const std::string& pipeName = "test_pipe")
+    {
+        auto desc = sinkCatalog.getAnonymousSink(
+            schema, Identifier::parse("Pipe"), Host{"localhost"}, {{Identifier::parse("pipe_name"), pipeName}}, {});
+        EXPECT_TRUE(desc.has_value());
+        return std::make_unique<PipeSink>(std::move(bpController), desc.value());
+    }
+
+    ///NOLINTNEXTLINE(fuchsia-default-arguments-declarations)
+    std::unique_ptr<PipeSource> makePipeSource(const std::string& pipeName = "test_pipe")
+    {
+        auto desc = sourceCatalog.getAnonymousSource(
+            Identifier::parse("Pipe"),
+            schema,
+            Host{"localhost"},
+            {{Identifier::parse("type"), "NATIVE"}},
+            {{Identifier::parse("pipe_name"), pipeName}});
+        EXPECT_TRUE(desc.has_value());
+        return std::make_unique<PipeSource>(desc.value());
+    }
+
+    PipeSchema schema;
+    std::shared_ptr<BufferManager> bufferManager;
+    SinkCatalog sinkCatalog;
+    SourceCatalog sourceCatalog;
+    StubPipelineExecutionContext pipeCtx;
+};
+
+TEST_F(PipeIntegrationTest, DataFlowThroughRealSinkAndSource)
+{
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    auto source = makePipeSource();
+    source->open(bufferManager);
+
+    /// Write data through the sink
+    auto buffer = bufferManager->getBufferBlocking();
+    auto mem = buffer.getAvailableMemoryArea<uint64_t>();
+    mem[0] = 42;
+    mem[1] = 99;
+    buffer.setNumberOfTuples(1);
+    buffer.setSequenceNumber(INITIAL_SEQ_NUMBER);
+    buffer.setLastChunk(true);
+    sink->execute(buffer, pipeCtx);
+
+    /// Read from the source
+    auto outBuffer = bufferManager->getBufferBlocking();
+    const std::stop_source stopSource;
+    auto result = source->fillTupleBuffer(outBuffer, stopSource.get_token());
+
+    ASSERT_FALSE(result.isEoS());
+    EXPECT_EQ(result.getNumberOfBytes(), 1U);
+
+    auto outMem = outBuffer.getAvailableMemoryArea<uint64_t>();
+    EXPECT_EQ(outMem[0], 42U);
+    EXPECT_EQ(outMem[1], 99U);
+
+    source->close();
+    sink->stop(pipeCtx);
+}
+
+TEST_F(PipeIntegrationTest, ChildBuffersSharedForVariableSizedData)
+{
+    static constexpr size_t NumChildren = 5;
+
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    auto source = makePipeSource();
+    source->open(bufferManager);
+
+    /// Build a buffer with N child buffers, each containing a known byte pattern.
+    auto buffer = bufferManager->getBufferBlocking();
+    auto mem = buffer.getAvailableMemoryArea<VariableSizedAccess>();
+    for (size_t idx = 0; idx < NumChildren; ++idx)
+    {
+        auto child = bufferManager->getBufferBlocking();
+        auto childMem = child.getAvailableMemoryArea<uint8_t>();
+        /// Fill child with a recognizable pattern: child 0 → all 0xA0, child 1 → all 0xA1, etc.
+        const auto pattern = static_cast<uint8_t>(0xA0 + idx);
+        std::fill_n(childMem.data(), 64, pattern);
+        child.setNumberOfTuples(64);
+
+        auto childIndex = buffer.storeChildBuffer(child);
+        mem[idx] = VariableSizedAccess(childIndex, VariableSizedAccess::Size(64));
+    }
+    buffer.setNumberOfTuples(NumChildren);
+    buffer.setSequenceNumber(INITIAL_SEQ_NUMBER);
+    buffer.setLastChunk(true);
+    sink->execute(buffer, pipeCtx);
+
+    /// Read from source — the main buffer is copied while its immutable children are shared.
+    auto outBuffer = bufferManager->getBufferBlocking();
+    const std::stop_source stopSource;
+    auto result = source->fillTupleBuffer(outBuffer, stopSource.get_token());
+
+    ASSERT_FALSE(result.isEoS());
+    EXPECT_NE(outBuffer.getAvailableMemoryArea().data(), buffer.getAvailableMemoryArea().data());
+    ASSERT_EQ(outBuffer.getNumberOfChildBuffers(), NumChildren);
+
+    auto outMem = outBuffer.getAvailableMemoryArea<VariableSizedAccess>();
+    for (size_t idx = 0; idx < NumChildren; ++idx)
+    {
+        auto originalChildBuffer = buffer.loadChildBuffer(outMem[idx].getIndex());
+        auto childBuffer = outBuffer.loadChildBuffer(outMem[idx].getIndex());
+        auto childMem = childBuffer.getAvailableMemoryArea<uint8_t>();
+        EXPECT_EQ(childMem.data(), originalChildBuffer.getAvailableMemoryArea<uint8_t>().data());
+        const auto expectedPattern = static_cast<uint8_t>(0xA0 + idx);
+        for (size_t byte = 0; byte < 64; ++byte)
+        {
+            EXPECT_EQ(childMem[byte], expectedPattern) << "child " << idx << " byte " << byte;
+        }
+    }
+
+    source->close();
+    sink->stop(pipeCtx);
+}
+
+TEST_F(PipeIntegrationTest, FullConsumerRetriesWithoutDuplicatingFanout)
+{
+    static constexpr uint64_t QueueCapacity = 1024;
+
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    /// The fast source comes first so it accepts the overflow buffer before the slow source rejects it.
+    auto fastSource = makePipeSource();
+    fastSource->open(bufferManager);
+    auto slowSource = makePipeSource();
+    slowSource->open(bufferManager);
+
+    const std::stop_source stopSource;
+    for (uint64_t value = 0; value < QueueCapacity; ++value)
+    {
+        auto buffer = bufferManager->getBufferBlocking();
+        buffer.getAvailableMemoryArea<uint64_t>()[0] = value;
+        buffer.setNumberOfTuples(1);
+        buffer.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + value));
+        buffer.setLastChunk(true);
+        sink->execute(buffer, pipeCtx);
+
+        auto fastOutput = bufferManager->getBufferBlocking();
+        ASSERT_FALSE(fastSource->fillTupleBuffer(fastOutput, stopSource.get_token()).isEoS());
+        EXPECT_EQ(fastOutput.getAvailableMemoryArea<uint64_t>()[0], value);
+    }
+
+    auto overflow = bufferManager->getBufferBlocking();
+    overflow.getAvailableMemoryArea<uint64_t>()[0] = QueueCapacity;
+    overflow.setNumberOfTuples(1);
+    overflow.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + QueueCapacity));
+    overflow.setLastChunk(true);
+    sink->execute(overflow, pipeCtx);
+
+    auto repeatedOverflow = pipeCtx.takeRepeatedBuffer();
+    ASSERT_TRUE(repeatedOverflow);
+    auto fastOverflow = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(fastSource->fillTupleBuffer(fastOverflow, stopSource.get_token()).isEoS());
+    EXPECT_EQ(fastOverflow.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity);
+
+    std::atomic<bool> pressureReleased{false};
+    auto pressureWaiter = std::jthread(
+        [&](const std::stop_token& token)
+        {
+            bpListener.wait(token);
+            pressureReleased = !token.stop_requested();
+        });
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_FALSE(pressureReleased.load());
+
+    /// A subscriber joining during overflow must wait behind the failed source.
+    auto lateSource = makePipeSource();
+    lateSource->open(bufferManager);
+
+    auto buffered = bufferManager->getBufferBlocking();
+    buffered.getAvailableMemoryArea<uint64_t>()[0] = QueueCapacity + 1;
+    buffered.setNumberOfTuples(1);
+    buffered.setSequenceNumber(SequenceNumber(SequenceNumber::INITIAL + QueueCapacity + 1));
+    buffered.setLastChunk(true);
+    sink->execute(buffered, pipeCtx);
+    EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
+
+    auto slowOutput = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(slowSource->fillTupleBuffer(slowOutput, stopSource.get_token()).isEoS());
+    sink->execute(*repeatedOverflow, pipeCtx);
+
+    auto repeatedBuffered = pipeCtx.takeRepeatedBuffer();
+    ASSERT_TRUE(repeatedBuffered);
+    auto lateOverflow = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(lateSource->fillTupleBuffer(lateOverflow, stopSource.get_token()).isEoS());
+    EXPECT_EQ(lateOverflow.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity);
+
+    auto fastBuffered = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(fastSource->fillTupleBuffer(fastBuffered, stopSource.get_token()).isEoS());
+    EXPECT_EQ(fastBuffered.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity + 1);
+
+    ASSERT_FALSE(slowSource->fillTupleBuffer(slowOutput, stopSource.get_token()).isEoS());
+    sink->execute(*repeatedBuffered, pipeCtx);
+
+    auto lateBuffered = bufferManager->getBufferBlocking();
+    ASSERT_FALSE(lateSource->fillTupleBuffer(lateBuffered, stopSource.get_token()).isEoS());
+    EXPECT_EQ(lateBuffered.getAvailableMemoryArea<uint64_t>()[0], QueueCapacity + 1);
+    EXPECT_FALSE(pipeCtx.takeRepeatedBuffer());
+
+    pressureWaiter.join();
+    EXPECT_TRUE(pressureReleased.load());
+
+    lateSource->close();
+    slowSource->close();
+    fastSource->close();
+    sink->stop(pipeCtx);
+}
+
+TEST_F(PipeIntegrationTest, EoSPropagation)
+{
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    auto source = makePipeSource();
+    source->open(bufferManager);
+
+    /// Send a data buffer to activate the pending source
+    auto buffer = bufferManager->getBufferBlocking();
+    buffer.setNumberOfTuples(0);
+    buffer.setSequenceNumber(INITIAL_SEQ_NUMBER);
+    buffer.setLastChunk(true);
+    sink->execute(buffer, pipeCtx);
+
+    /// Stop the sink — should send EoS to all sources
+    sink->stop(pipeCtx);
+
+    const std::stop_source stopSource;
+
+    /// First read drains the activation buffer
+    auto dataBuf = bufferManager->getBufferBlocking();
+    auto dataResult = source->fillTupleBuffer(dataBuf, stopSource.get_token());
+    ASSERT_FALSE(dataResult.isEoS());
+
+    /// Second read should receive EoS
+    auto eosBuf = bufferManager->getBufferBlocking();
+    auto eosResult = source->fillTupleBuffer(eosBuf, stopSource.get_token());
+    EXPECT_TRUE(eosResult.isEoS());
+
+    source->close();
+}
+
+TEST_F(PipeIntegrationTest, DestructorPropagatesError)
+{
+    std::unique_ptr<PipeSource> source;
+    {
+        auto [bpController, bpListener] = createBackpressureChannel();
+        auto sink = makePipeSink(std::move(bpController));
+        sink->start(pipeCtx);
+
+        source = makePipeSource();
+        source->open(bufferManager);
+
+        /// Activate the source by sending a buffer
+        auto buffer = bufferManager->getBufferBlocking();
+        buffer.setNumberOfTuples(0);
+        buffer.setSequenceNumber(INITIAL_SEQ_NUMBER);
+        buffer.setLastChunk(true);
+        sink->execute(buffer, pipeCtx);
+
+        /// Sink destroyed without calling stop() — destructor sends PipeError
+    }
+
+    const std::stop_source stopSource;
+
+    /// First read drains the activation buffer
+    auto dataBuf = bufferManager->getBufferBlocking();
+    auto dataResult = source->fillTupleBuffer(dataBuf, stopSource.get_token());
+    ASSERT_FALSE(dataResult.isEoS());
+
+    /// Second read should receive PipeError → returns EoS
+    auto errBuf = bufferManager->getBufferBlocking();
+    auto errResult = source->fillTupleBuffer(errBuf, stopSource.get_token());
+    EXPECT_TRUE(errResult.isEoS());
+
+    source->close();
+}
+
+TEST_F(PipeIntegrationTest, SourceStopsAtSequenceBoundary)
+{
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    auto source = makePipeSource();
+    source->open(bufferManager);
+
+    /// Send chunk 0 (activates pending source at sequence boundary)
+    auto buf1 = bufferManager->getBufferBlocking();
+    buf1.getAvailableMemoryArea<uint64_t>()[0] = 1;
+    buf1.getAvailableMemoryArea<uint64_t>()[1] = 0;
+    buf1.setNumberOfTuples(1);
+    buf1.setSequenceNumber(INITIAL_SEQ_NUMBER);
+    buf1.setChunkNumber(ChunkNumber(0));
+    buf1.setLastChunk(false);
+    sink->execute(buf1, pipeCtx);
+
+    /// Send chunk 1 (last chunk of sequence)
+    auto buf2 = bufferManager->getBufferBlocking();
+    buf2.getAvailableMemoryArea<uint64_t>()[0] = 2;
+    buf2.getAvailableMemoryArea<uint64_t>()[1] = 0;
+    buf2.setNumberOfTuples(1);
+    buf2.setSequenceNumber(INITIAL_SEQ_NUMBER);
+    buf2.setChunkNumber(ChunkNumber(1));
+    buf2.setLastChunk(true);
+    sink->execute(buf2, pipeCtx);
+
+    /// Request stop before reading — source should still deliver both chunks
+    const std::stop_source stopSource;
+    stopSource.request_stop();
+
+    auto out1 = bufferManager->getBufferBlocking();
+    auto res1 = source->fillTupleBuffer(out1, stopSource.get_token());
+    ASSERT_FALSE(res1.isEoS());
+    EXPECT_EQ(out1.getAvailableMemoryArea<uint64_t>()[0], 1U);
+
+    auto out2 = bufferManager->getBufferBlocking();
+    auto res2 = source->fillTupleBuffer(out2, stopSource.get_token());
+    ASSERT_FALSE(res2.isEoS());
+    EXPECT_EQ(out2.getAvailableMemoryArea<uint64_t>()[0], 2U);
+
+    /// Now at sequence boundary (lastChunk was true) — next read should return eos
+    auto out3 = bufferManager->getBufferBlocking();
+    auto res3 = source->fillTupleBuffer(out3, stopSource.get_token());
+    EXPECT_TRUE(res3.isEoS());
+
+    source->close();
+    sink->stop(pipeCtx);
+}
+
+TEST_F(PipeIntegrationTest, StaggeredConsumersChunkedDataIntegrity)
+{
+    static constexpr uint64_t NumTuples = 100000;
+    static constexpr uint64_t TuplesPerChunk = 1;
+    static constexpr uint64_t ChunksPerSeq = 8;
+    static constexpr uint64_t TuplesPerSequence = TuplesPerChunk * ChunksPerSeq;
+    static constexpr int NumLateJoiners = 4;
+
+    auto [bpController, bpListener] = createBackpressureChannel();
+    auto sink = makePipeSink(std::move(bpController));
+    sink->start(pipeCtx);
+
+    /// Build values with intra-sequence OOO shuffling
+    std::vector<uint64_t> values(NumTuples);
+    for (uint64_t idx = 0; idx < NumTuples; ++idx)
+    {
+        values[idx] = idx;
+    }
+    {
+        std::mt19937 rng(42);
+        for (uint64_t i = 0; i + TuplesPerSequence <= NumTuples; i += TuplesPerSequence)
+        {
+            std::shuffle(
+                values.begin() + static_cast<std::ptrdiff_t>(i), values.begin() + static_cast<std::ptrdiff_t>(i + TuplesPerSequence), rng);
+        }
+    }
+
+    /// Consumer helper: reads from an already-opened PipeSource until EoS
+    auto consumeFrom = [this](PipeSource& src) -> std::vector<uint64_t>
+    {
+        std::vector<uint64_t> received;
+        const std::stop_source stopSrc;
+        while (true)
+        {
+            auto buf = bufferManager->getBufferBlocking();
+            auto result = src.fillTupleBuffer(buf, stopSrc.get_token());
+            if (result.isEoS())
+            {
+                break;
+            }
+            auto mem = buf.getAvailableMemoryArea<uint64_t>();
+            for (uint64_t idx = 0; idx < result.getNumberOfBytes(); ++idx)
+            {
+                received.push_back(mem[idx * 2]);
+            }
+        }
+        return received;
+    };
+
+    /// Open consumer 1 before producer starts
+    auto src1 = makePipeSource();
+    src1->open(bufferManager);
+    std::vector<uint64_t> result1;
+    auto consumer1Thread = std::jthread([&] { result1 = consumeFrom(*src1); });
+
+    /// Producer: blasts multi-chunk sequences (2 chunks of 4 tuples each), no pauses
+    std::atomic<bool> producerRunning{false};
+    auto producer = std::jthread(
+        [&]
+        {
+            producerRunning.store(true);
+            uint64_t produced = 0;
+            size_t seqNumCounter = SequenceNumber::INITIAL;
+            while (produced < NumTuples)
+            {
+                for (uint64_t chunk = 0; chunk < ChunksPerSeq && produced < NumTuples; ++chunk)
+                {
+                    auto buffer = bufferManager->getBufferBlocking();
+                    auto mem = buffer.getAvailableMemoryArea<uint64_t>();
+                    const uint64_t count = std::min(TuplesPerChunk, NumTuples - produced);
+                    for (uint64_t idx = 0; idx < count; ++idx)
+                    {
+                        mem[idx * 2] = values[produced + idx];
+                        mem[(idx * 2) + 1] = 0;
+                    }
+                    buffer.setNumberOfTuples(count);
+                    buffer.setSequenceNumber(SequenceNumber(seqNumCounter));
+                    buffer.setChunkNumber(ChunkNumber(chunk));
+                    buffer.setLastChunk(chunk == ChunksPerSeq - 1 || produced + count >= NumTuples);
+                    sink->execute(buffer, pipeCtx);
+                    produced += count;
+                }
+                ++seqNumCounter;
+            }
+            sink->stop(pipeCtx);
+        });
+
+    /// Spawn multiple late-joining consumer threads concurrently while the producer runs.
+    /// Each thread opens a PipeSource, reads until EoS, and closes.
+    /// With 8 chunks per sequence, there are 7 inter-chunk gaps per sequence where
+    /// a join can race the producer — maximizing the chance of triggering the bug.
+    while (!producerRunning.load())
+    {
+        std::this_thread::yield();
+    }
+
+    std::vector<std::vector<uint64_t>> lateResults(NumLateJoiners);
+    std::vector<std::thread> lateThreads;
+    lateThreads.reserve(NumLateJoiners);
+
+    for (int i = 0; i < NumLateJoiners; ++i)
+    {
+        lateThreads.emplace_back(
+            [&, i]
+            {
+                auto src = makePipeSource();
+                CPPTRACE_TRY
+                {
+                    src->open(bufferManager);
+                }
+                CPPTRACE_CATCH(...)
+                {
+                    return;
+                }
+                lateResults[i] = consumeFrom(*src);
+                src->close();
+            });
+    }
+
+    producer.join();
+    consumer1Thread.join();
+    for (auto& thr : lateThreads)
+    {
+        thr.join();
+    }
+
+    src1->close();
+
+    /// Verify no gaps via Gauss sum
+    auto verifyNoGaps = [](std::vector<uint64_t>& data, const std::string& label)
+    {
+        ASSERT_FALSE(data.empty()) << label << ": received no data";
+        std::ranges::sort(data);
+        const uint64_t minVal = data.front();
+        const uint64_t maxVal = data.back();
+        ASSERT_EQ(data.size(), maxVal - minVal + 1) << label << ": expected contiguous range";
+        uint64_t expectedSum = maxVal * (maxVal + 1) / 2;
+        if (minVal > 0)
+        {
+            expectedSum -= (minVal - 1) * minVal / 2;
+        }
+        const uint64_t actualSum = std::accumulate(data.begin(), data.end(), uint64_t{0});
+        EXPECT_EQ(actualSum, expectedSum) << label << ": Gauss sum mismatch";
+    };
+
+    EXPECT_EQ(result1.size(), NumTuples) << "Consumer 1 should receive all data";
+    verifyNoGaps(result1, "Consumer1");
+
+    for (int i = 0; i < NumLateJoiners; ++i)
+    {
+        if (!lateResults[i].empty())
+        {
+            verifyNoGaps(lateResults[i], "LateConsumer" + std::to_string(i));
+        }
+    }
+}
