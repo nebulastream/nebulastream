@@ -21,8 +21,10 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -43,7 +45,9 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record) override;
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp,
+        const AggregationInputBuffer& inputBuffer) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         BorrowedNautilusBuffer,
