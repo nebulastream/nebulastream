@@ -96,7 +96,7 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        TaskCallback{TaskCallback::OnComplete(
+        TaskCallback{TaskCallback::OnSuccess(
             [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
             {
                 if (const auto nodeLocked = weakRef.lock())
