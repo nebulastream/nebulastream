@@ -44,7 +44,9 @@ public:
         const nautilus::val<AggregationState*>& aggregationState,
         BorrowedNautilusBuffer parentBuffer,
         PipelineMemoryProvider& pipelineMemoryProvider,
-        const Record& record) override;
+        const Record& record,
+        const nautilus::val<Timestamp>& timestamp,
+        const AggregationInputBuffer& inputBuffer) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         BorrowedNautilusBuffer parentBuffer1,

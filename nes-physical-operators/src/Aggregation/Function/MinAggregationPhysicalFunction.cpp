@@ -24,7 +24,9 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <Interface/TimestampRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
 #include <Util.hpp>
@@ -45,7 +47,9 @@ void MinAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     BorrowedNautilusBuffer,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Record& record)
+    const Record& record,
+    const nautilus::val<Timestamp>&,
+    const AggregationInputBuffer&)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
 

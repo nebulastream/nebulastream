@@ -91,9 +91,11 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const ChainedHashMapRef::ChainedEntryRef entryRef{
         hashMapEntry, borrowedHashMapBuffer, hashMapConfig.fieldKeys, hashMapConfig.fieldValues};
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+    const AggregationInputBuffer inputBuffer{
+        .originId = ctx.originId, .sequenceNumber = ctx.sequenceNumber, .chunkNumber = ctx.chunkNumber};
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, borrowedHashMapBuffer, ctx.pipelineMemoryProvider, record, timestamp, inputBuffer);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }
