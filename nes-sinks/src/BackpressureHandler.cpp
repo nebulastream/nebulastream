@@ -55,7 +55,7 @@ std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, Backp
     if (!wstate->hasBackpressure && wstate->buffered.size() >= upperThreshold)
     {
         backpressureController.applyPressure();
-        NES_DEBUG("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
+        NES_WARNING("Backpressure acquired: {} buffered (upper threshold: {})", wstate->buffered.size(), upperThreshold);
         wstate->hasBackpressure = true;
     }
 
@@ -87,7 +87,7 @@ std::optional<TupleBuffer> BackpressureHandler::onSuccess(const TupleBuffer& buf
     if (state->hasBackpressure && state->buffered.size() <= lowerThreshold)
     {
         backpressureController.releasePressure();
-        NES_DEBUG("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
+        NES_WARNING("Backpressure released: {} buffered (lower threshold: {})", state->buffered.size(), lowerThreshold);
         state->hasBackpressure = false;
     }
 
