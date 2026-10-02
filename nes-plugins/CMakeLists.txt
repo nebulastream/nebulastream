@@ -40,3 +40,4 @@ endif()
 add_plugin("Pipe")
 
 
+add_plugin("Sources/ProcessSource")
