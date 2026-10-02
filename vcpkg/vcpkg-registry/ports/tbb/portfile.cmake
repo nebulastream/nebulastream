@@ -19,6 +19,7 @@ vcpkg_from_github(
     SHA512 fdc50589785b1949ca1dd4429bbcedb180be4b8966da5243ddd1f8e9f97310dd603681e0bb83c1d6c2d3e27932f577ef6739e4e82f3c54af147f4d6d906b39f1
     HEAD_REF master
     PATCHES
+        0001-respect-itt-prefix.patch
 )
 
 # oneTBB may inject -fcf-protection=* hardening flags.
@@ -43,6 +44,10 @@ vcpkg_check_features(
     OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     INVERTED_FEATURES
         hwloc TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH)
+
+# Keep static TBB ITT symbols separate from LLVM IntelJITProfiling.
+string(APPEND VCPKG_C_FLAGS " -DINTEL_ITTNOTIFY_PREFIX=__nes_tbb_itt_")
+string(APPEND VCPKG_CXX_FLAGS " -DINTEL_ITTNOTIFY_PREFIX=__nes_tbb_itt_")
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"

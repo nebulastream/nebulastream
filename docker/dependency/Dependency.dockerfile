@@ -86,7 +86,7 @@ RUN --mount=type=secret,id=VCPKG_CACHE_ACCESS_KEY \
     git clone https://github.com/microsoft/vcpkg.git vcpkg_repository; \
     git -C vcpkg_repository checkout "$(grep -o "\"builtin-baseline\": \"[0-9a-f]*\"" vcpkg.json | cut -d\" -f4)"; \
     ./vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics; \
-    ./vcpkg_repository/vcpkg install \
+    if ! ./vcpkg_repository/vcpkg install \
         --keep-going \
         --overlay-triplets=custom-triplets \
         --overlay-ports=vcpkg-registry/ports \
