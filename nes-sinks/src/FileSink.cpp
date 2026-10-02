@@ -47,7 +47,7 @@ namespace NES
 {
 
 FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
@@ -99,7 +99,7 @@ void FileSink::start(PipelineExecutionContext&)
     }
 }
 
-void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult FileSink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
@@ -119,6 +119,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
         }
         wlocked->flush();
     }
+    return BufferResult::COMPLETED;
 }
 
 void FileSink::stop(PipelineExecutionContext&)

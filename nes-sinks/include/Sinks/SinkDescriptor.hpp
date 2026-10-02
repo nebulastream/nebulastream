@@ -40,6 +40,13 @@ namespace NES
 {
 class OperatorSerializationUtil;
 class SinkCatalog;
+
+enum class OutputOrderPolicy : uint8_t
+{
+    IGNORE_ORDER,
+    ENFORCE_ORDER,
+    DROP_OUT_OF_ORDER,
+};
 }
 
 namespace NES
@@ -176,8 +183,15 @@ public:
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, OutputOrderPolicy> OUTPUT_ORDER{
+        "OUTPUT_ORDER",
+        EnumWrapper(OutputOrderPolicy::IGNORE_ORDER),
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_ORDER, config); }};
+
+
+    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP, OUTPUT_ORDER);
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs);

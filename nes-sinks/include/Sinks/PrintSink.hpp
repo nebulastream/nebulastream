@@ -47,13 +47,13 @@ public:
     PrintSink(PrintSink&&) = delete;
     PrintSink& operator=(PrintSink&&) = delete;
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
@@ -73,7 +73,7 @@ struct ConfigParametersPrint
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT, SinkDescriptor::OUTPUT_ORDER);
 };
 
 }
