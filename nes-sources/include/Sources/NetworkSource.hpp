@@ -68,6 +68,8 @@ public:
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
+    [[nodiscard]] bool preservesBufferOriginId() const override { return true; }
+
     static Schema<QualifiedErasedConfigField, Ordered> getConfigSchema();
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

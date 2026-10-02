@@ -1,0 +1,105 @@
+# Three consumers receive the same finite range. Two deliberately slow PrintSinks
+# use tiny PipeSource queues to exercise partial fan-out retries.
+
+query:
+  - SELECT id FROM GEN INTO PIPE_SINK
+  - SELECT id, UINT8(1) AS consumer FROM READER_FAST WHERE id >= UINT64(1000) INTO PRINT_FAST
+  - SELECT id, UINT8(2) AS consumer FROM READER_SLOW_1 WHERE id >= UINT64(1000) INTO PRINT_SLOW_1
+  - SELECT id, UINT8(3) AS consumer FROM READER_SLOW_2 WHERE id >= UINT64(1000) INTO PRINT_SLOW_2
+
+sinks:
+  - name: PIPE_SINK
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+    type: Pipe
+    config:
+      pipe_name: "multi_consumer_backpressure"
+    parser_config: { }
+  - name: PRINT_FAST
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: consumer, type: UINT8 }
+    type: Print
+    config:
+      ingestion: 0
+      output_format: CSV
+    parser_config: { }
+  - name: PRINT_SLOW_1
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: consumer, type: UINT8 }
+    type: Print
+    config:
+      ingestion: 25
+      output_format: CSV
+    parser_config: { }
+  - name: PRINT_SLOW_2
+    host: worker-node:8080
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: consumer, type: UINT8 }
+    type: Print
+    config:
+      ingestion: 50
+      output_format: CSV
+    parser_config: { }
+
+logical:
+  - name: GEN
+    schema:
+      - { name: id, type: UINT64 }
+  - name: READER_FAST
+    schema:
+      - { name: id, type: UINT64 }
+  - name: READER_SLOW_1
+    schema:
+      - { name: id, type: UINT64 }
+  - name: READER_SLOW_2
+    schema:
+      - { name: id, type: UINT64 }
+
+physical:
+  - logical: GEN
+    host: worker-node:8080
+    parser_config:
+      type: CSV
+      field_delimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 1000"
+      generator_schema: |
+        SEQUENCE UINT64 0 2000 1
+  - logical: READER_FAST
+    host: worker-node:8080
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "multi_consumer_backpressure"
+  - logical: READER_SLOW_1
+    host: worker-node:8080
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "multi_consumer_backpressure"
+      queue_capacity: 2
+  - logical: READER_SLOW_2
+    host: worker-node:8080
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "multi_consumer_backpressure"
+      queue_capacity: 2
+
+workers:
+  - host: worker-node:8080
+    data_address: worker-node:9090
+    max_operators: 10000

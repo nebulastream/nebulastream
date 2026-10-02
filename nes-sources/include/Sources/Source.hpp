@@ -74,6 +74,11 @@ public:
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
 
+    /// Whether the source-provided origin id identifies the logical origin of each buffer. Most sources are assigned
+    /// exactly one origin during compilation. Multiplexing sources such as NetworkSource can carry buffers for several
+    /// logical origins and must preserve the origin id encoded in each buffer.
+    [[nodiscard]] virtual bool preservesBufferOriginId() const { return false; }
+
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
