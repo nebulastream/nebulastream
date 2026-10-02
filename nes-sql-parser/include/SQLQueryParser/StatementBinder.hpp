@@ -41,6 +41,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
+#include <yaml-cpp/node/node.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -193,7 +194,10 @@ struct CreateWorkerStatement
     std::string dataAddress;
     std::optional<size_t> capacity;
     std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
+    /// Structured worker 'config:' subtree, applied verbatim via BaseConfiguration::overwriteConfigWithYAMLNode.
+    /// Kept as a YAML node (not a flat string map) so nested maps and sequences survive without a lossy flatten/re-split round-trip.
+    /// An undefined/null node means "no per-worker config".
+    YAML::Node config;
 };
 
 struct DropWorkerStatement

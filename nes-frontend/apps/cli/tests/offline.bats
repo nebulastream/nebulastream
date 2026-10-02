@@ -276,6 +276,49 @@ TOPEOF
   grep "Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 
+# Regression: a per-worker 'config:' block must be applied, not silently dropped.
+# The nested config below carries an unknown key, so worker registration must reject it.
+# Before the fix the block was dropped and this dump succeeded.
+@test "topology validation: per-worker config is applied (rejects unknown worker config key)" {
+  run $NES_CLI -d -t tests/bad/invalid_worker_config_key.yaml dump
+  [ "$status" -eq 1 ]
+  grep -i "Unrecognized configuration key" nes-cli.log
+  grep "idontexist" nes-cli.log
+}
+
+# Regression: a null-valued nested worker config leaf must be rejected, not dropped. The 'config:'
+# subtree is applied verbatim via overwriteConfigWithYAMLNode, so the null leaf must be rejected
+# with a config-value error that names the offending key -- and NOT the misleading "not a valid yaml
+# file" error (the file is valid YAML; only the value is bad).
+@test "topology validation: null-valued worker config leaf is rejected, not dropped" {
+  run $NES_CLI -d -t tests/bad/null_worker_config_value.yaml dump
+  [ "$status" -eq 1 ]
+  # Rejected with a config error that names the offending key.
+  grep "receiver_queue_size" nes-cli.log
+  # The value is bad, not the file -- so the file-level error must not appear.
+  ! grep -q "not a valid yaml file" nes-cli.log
+}
+
+# Regression: an unconvertible worker config value (a sequence where a scalar is expected) used to
+# surface as the misleading "not a valid yaml file". ScalarOption::parseFromYAMLNode now wraps the
+# raw yaml-cpp conversion failure into an InvalidConfigParameter naming the offending option.
+@test "topology validation: unconvertible worker config value reports the key, not a file error" {
+  run $NES_CLI -d -t tests/bad/worker_config_unconvertible_value.yaml dump
+  [ "$status" -eq 1 ]
+  grep "Invalid value for 'receiver_queue_size'" nes-cli.log
+  ! grep -q "not a valid yaml file" nes-cli.log
+}
+
+# Regression: a literal dotted worker config key ("a.b") must not silently collide with the nested
+# form ({a: {b: ...}}). A flatten/re-split path collapses both to the same synthesized key; the
+# direct YAML-node path treats the literal key as its own (unrecognized) key and rejects it.
+@test "topology validation: literal dotted worker config key is not silently merged into a nested path" {
+  run $NES_CLI -d -t tests/bad/worker_config_dotted_literal_key.yaml dump
+  [ "$status" -eq 1 ]
+  grep -i "Unrecognized configuration key" nes-cli.log
+  grep "worker.network.receiver_queue_size" nes-cli.log
+}
+
 # --- Error message quality tests ---
 # Each test starts from a valid base topology and introduces exactly one error.
 # The base topology is tests/good/select-gen-into-void.yaml.
