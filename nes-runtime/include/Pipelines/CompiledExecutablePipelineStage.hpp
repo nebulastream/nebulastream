@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
@@ -26,6 +27,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutionContext.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -40,7 +42,13 @@ public:
     CompiledExecutablePipelineStage(
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
-        nautilus::engine::Options options);
+        nautilus::engine::Options options,
+        std::optional<QueryId> retainCompiledCodeFor = std::nullopt);
+    ~CompiledExecutablePipelineStage() override;
+    CompiledExecutablePipelineStage(const CompiledExecutablePipelineStage&) = delete;
+    CompiledExecutablePipelineStage(CompiledExecutablePipelineStage&&) = delete;
+    CompiledExecutablePipelineStage& operator=(const CompiledExecutablePipelineStage&) = delete;
+    CompiledExecutablePipelineStage& operator=(CompiledExecutablePipelineStage&&) = delete;
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -50,7 +58,9 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, Arena*);
-    static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
+    /// Name of the pipeline's main function in its module, e.g. `pipeline_3`. Profiles and dumps name the JIT code after it, so each
+    /// pipeline of a query shows up as its own function.
+    [[nodiscard]] std::string pipelineFunctionName() const;
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
@@ -61,6 +71,8 @@ private:
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
+    /// Set for a profiled query: on destruction, the compiled code is handed to CompiledCodeRetention instead of being freed.
+    std::optional<QueryId> retainCompiledCodeFor;
 };
 
 }

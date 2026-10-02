@@ -48,6 +48,14 @@ connections.  Valid values include dns:///localhost:1234,
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 
+    /// Samples every query with perf and writes a flame graph per query
+    StringOption flameGraphDirectory
+        = {"flame_graph_directory",
+           "",
+           "If set, samples every query with perf (nautilus' profiling plugin) and writes a flame graph per query to "
+           "<directory>/query-<id>.svg when the query terminates. JIT-compiled code is named by its nautilus regions with execution "
+           "mode COMPILER. Needs perf_event_open, i.e. perf_event_paranoid <= 2 and, in a container, a seccomp profile that allows it."};
+
 protected:
     std::vector<BaseOption*> getOptions() override;
 

@@ -24,12 +24,17 @@ add_library(nes-single-node-worker-lib ${NES_WORKER_SOURCE_FILES})
 
 target_include_directories(nes-single-node-worker-lib PUBLIC include)
 
+# nautilus' in-process sampler (perf-cpp) for the per-query flame graphs. nautilus' targets refer to MLIR's, so MLIR comes first.
+find_package(MLIR REQUIRED CONFIG)
+find_package(nautilus REQUIRED CONFIG)
 target_link_libraries(nes-single-node-worker-lib
         PUBLIC
         nes-grpc
         nes-query-compiler
         nes-query-optimizer
         nes-single-node-worker-interface
+        PRIVATE
+        nautilus::nautilus-profiling
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)

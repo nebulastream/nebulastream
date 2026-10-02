@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Pipelines/CompiledCodeRetention.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
 #include <chrono>
@@ -44,9 +45,23 @@ namespace NES
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
-    nautilus::engine::Options options)
-    : engine(options), operatorHandlers(std::move(operatorHandlers)), pipeline(std::move(pipeline))
+    nautilus::engine::Options options,
+    std::optional<QueryId> retainCompiledCodeFor)
+    : engine(options)
+    , operatorHandlers(std::move(operatorHandlers))
+    , pipeline(std::move(pipeline))
+    , retainCompiledCodeFor(std::move(retainCompiledCodeFor))
 {
+}
+
+CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage()
+{
+    if (retainCompiledCodeFor.has_value() and compiledModule.has_value())
+    {
+        compiledPipelineFunction.reset();
+        CompiledCodeRetention::retain(
+            *retainCompiledCodeFor, std::make_shared<nautilus::engine::CompiledModule>(std::move(*compiledModule)));
+    }
 }
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -94,7 +109,12 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
         }
     };
     /// NOLINTEND(performance-unnecessary-value-param)
-    module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
+    module.registerFunction(pipelineFunctionName(), compiledFunction);
+}
+
+std::string CompiledExecutablePipelineStage::pipelineFunctionName() const
+{
+    return fmt::format("pipeline_{}", pipeline->getPipelineId());
 }
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
@@ -126,7 +146,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         registerPipelineFunction(module);
         compiledModule = module.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
-        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(pipelineFunctionName());
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.

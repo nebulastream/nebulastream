@@ -32,6 +32,8 @@ struct QueryCompilationRequest
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
+    /// Registers the compiled code with nautilus' JIT symbol registry, so an in-process sampling profiler can name JIT frames.
+    bool samplingProfile = false;
 };
 
 /// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
