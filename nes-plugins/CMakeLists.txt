@@ -38,6 +38,8 @@ endif()
 
 add_plugin("Sources/VideoSource")
 
+add_plugin("ImageManip")
+
 add_plugin("Pipe")
 
 add_plugin("Sources/AudioSource")
