@@ -74,13 +74,10 @@ public:
     virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getTriggerableWindowSlices(Timestamp globalWatermark)
         = 0;
 
+    virtual SequenceNumber nextSequenceNumber() = 0;
+
     /// Retrieves the slice by its end timestamp. If no slice exists for the given slice end, the optional return value is nullopt
     virtual std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) = 0;
-
-    /// Retrieves all current non-deleted slices that have not been triggered yet
-    /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp
-    /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.
-    virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() = 0;
 
     /// Garbage collect all slices and windows that are not valid anymore
     /// It is open for the implementation to delete the slices in this call or to mark them for deletion
@@ -89,11 +86,6 @@ public:
 
     /// Deletes all slices, directly in this call
     virtual void deleteState() = 0;
-
-    /// Increments the number of pipelines that contain a build(!) operator using this slice store, in order to track the expected number of terminations.
-    /// This should be called each time an operator whose handler uses this store is set up.
-    /// Note: This should not be inferred when the store is created during the lowering stage, as the same build operator may appear in multiple pipelines.
-    virtual void incrementNumberOfInputPipelines() = 0;
 
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;

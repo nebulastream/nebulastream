@@ -46,7 +46,6 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
     : sliceCacheConfiguration(std::move(sliceCacheConfiguration))
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfActiveInputPipelines(0)
 {
 }
 
@@ -105,12 +104,8 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
 DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
-    /// For performance reasons, we check if we can acquire a lock and if not we then simply skip checking if we can trigger anything
-    const auto windowsWriteLocked = windows.tryWLock();
-    if (windowsWriteLocked.isNull())
-    {
-        return {};
-    }
+    /// Every watermark advance must be checked; a skipped check could leave a window untriggered.
+    const auto windowsWriteLocked = windows.wlock();
 
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if all sides have been filled and the window end is smaller than the new global watermark
@@ -148,66 +143,9 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
     return {};
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStore::getAllNonTriggeredSlices()
+SequenceNumber DefaultTimeBasedSliceStore::nextSequenceNumber()
 {
-    /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
-    const auto windowsWriteLocked = windows.wlock();
-
-    /// numberOfActiveInputPipelines is guarded by the windows lock.
-    /// If this method gets called, we know that an input pipeline has terminated.
-    INVARIANT(numberOfActiveInputPipelines > 0, "Method should not be called if all input pipelines have terminated.");
-    numberOfActiveInputPipelines -= 1;
-
-    /// Creating a lambda to add all slices to the return map windowsToSlices
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
-    auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
-    {
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
-        for (auto& slice : windowSlicesAndState.windowSlices)
-        {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
-        }
-        windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
-    };
-
-    /// We are iterating over all windows and check if they can be triggered
-    for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
-    {
-        switch (windowSlicesAndState.windowState)
-        {
-            case WindowInfoState::EMITTED_TO_PROBE:
-                continue;
-            case WindowInfoState::WINDOW_FILLING: {
-                /// If we are waiting on another pipeline to terminate, we can not trigger the window yet
-                if (numberOfActiveInputPipelines > 0)
-                {
-                    windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
-                    NES_TRACE(
-                        "Waiting on termination for window end {} and number of active input pipelines {}",
-                        windowInfo.windowEnd,
-                        numberOfActiveInputPipelines);
-                    break;
-                }
-                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
-                break;
-            }
-            case WindowInfoState::WAITING_ON_TERMINATION: {
-                /// Checking if all input pipelines have terminated (i.e., the number of active input pipelines is 0, as we will decrement it during fetch_sub)
-                NES_TRACE(
-                    "Checking if all input pipelines have terminated for window with window end {} and number of active pipelines {}",
-                    windowInfo.windowEnd,
-                    numberOfActiveInputPipelines);
-                if (numberOfActiveInputPipelines > 0)
-                {
-                    continue;
-                }
-                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
-                break;
-            }
-        }
-    }
-
-    return windowsToSlices;
+    return SequenceNumber(sequenceNumber++);
 }
 
 void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
@@ -277,11 +215,6 @@ void DefaultTimeBasedSliceStore::deleteState()
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
-}
-
-void DefaultTimeBasedSliceStore::incrementNumberOfInputPipelines()
-{
-    numberOfActiveInputPipelines += 1;
 }
 
 uint64_t DefaultTimeBasedSliceStore::getWindowSize() const

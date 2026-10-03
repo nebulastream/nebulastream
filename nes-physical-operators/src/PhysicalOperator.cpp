@@ -97,8 +97,10 @@ void PhysicalOperatorConcept::executeChild(ExecutionContext& executionCtx, Recor
 
 void PhysicalOperatorConcept::terminateChild(ExecutionContext& executionCtx) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().terminate(executionCtx);
+    if (const auto child = getChild())
+    {
+        child->terminate(executionCtx);
+    }
 }
 
 PhysicalOperator::PhysicalOperator() = default;

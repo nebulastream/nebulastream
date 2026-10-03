@@ -33,7 +33,6 @@ EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOp
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
-    executionCtx.watermarkTs = nautilus::val<Timestamp>(Timestamp(Timestamp::INITIAL_VALUE));
     timeFunction.open(executionCtx, recordBuffer);
 }
 
