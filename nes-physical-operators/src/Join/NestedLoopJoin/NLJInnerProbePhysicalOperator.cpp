@@ -69,6 +69,11 @@ void NLJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordB
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
+    if (recordBuffer.getNumRecords() == nautilus::val<uint64_t>{0})
+    {
+        return;
+    }
+
     /// Parse trigger buffer — for inner join, always 1 left + 1 right slice end
     const auto triggerRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto windowInfoRef = getMemberRef(triggerRef, &EmittedNLJWindowTrigger::windowInfo);

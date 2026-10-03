@@ -83,7 +83,7 @@ void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
 
 void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// Update the watermark for the probe and delete all slices that can be deleted
+    /// Update the watermark for the probe and delete all slices and windows that are no longer needed.
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(
         garbageCollectSlicesProxy,
