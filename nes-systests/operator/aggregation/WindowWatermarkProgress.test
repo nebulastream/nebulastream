@@ -1,0 +1,22 @@
+# name: aggregation/WindowWatermarkProgress.test
+# description: A later filtered event advances the watermark without producing another first-stage window result.
+# groups: [Aggregation, WindowOperators]
+
+CREATE LOGICAL SOURCE stream(value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE TCP;
+ATTACH INLINE
+1,100
+0,5000
+
+CREATE SINK sink(start UINT64 NOT NULL, end UINT64 NOT NULL, total UINT64 NOT NULL) TYPE File;
+
+# The event at 5000 advances the input watermark but is filtered out. The first window emits
+# its result for [0, 1000), then forwards a watermark of 4000 without another result.
+# With a live TCP connection, the second window should emit before the connection closes.
+# The ordinary systest checks final rows, so it cannot distinguish this from a termination flush.
+SELECT start, end, SUM(total) AS total FROM (
+    SELECT start, SUM(value) AS total FROM stream WHERE value > 0
+    WINDOW TUMBLING(timestamp, size 1 sec)
+) WINDOW TUMBLING(start, size 1 sec) INTO sink;
+----
+0 1000 1

@@ -142,6 +142,11 @@ void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBu
 {
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
+    if (recordBuffer.getNumRecords() == nautilus::val<uint64_t>{0})
+    {
+        return;
+    }
+
     /// Parse the trigger buffer
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto leftNumberOfHashMaps

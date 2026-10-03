@@ -169,9 +169,9 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ExpectStats::QueryStopRequest(0),
         ExpectStats::PipelineStart(2),
         ExpectStats::PipelineStop(2),
-        ExpectStats::TaskExecutionStart(8),
-        ExpectStats::TaskExecutionComplete(8),
-        ExpectStats::TaskEmit(4));
+        ExpectStats::TaskExecutionStart(10), /// (4 data buffers + EoS watermark buffer) * (P1 + Sink)
+        ExpectStats::TaskExecutionComplete(10),
+        ExpectStats::TaskEmit(5));
 
     test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
@@ -198,7 +198,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     test.stop();
 
     auto buffers = sinkCtrl->takeBuffers();
-    EXPECT_EQ(buffers.size(), 4);
+    EXPECT_EQ(buffers.size(), 5); /// 4 data buffers + EoS watermark buffer
     EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
 }
 
@@ -1208,8 +1208,8 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSink)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(1), /// Sink
         ExpectStats::PipelineStop(1),
-        ExpectStats::TaskExecutionStart(4), ///  Sink + Sink* repeatCount
-        ExpectStats::TaskExecutionComplete(4),
+        ExpectStats::TaskExecutionStart(5), ///  Sink + Sink* repeatCount + Sink (EoS watermark buffer, never repeated)
+        ExpectStats::TaskExecutionComplete(5),
         ExpectStats::TaskEmit(3)); /// (Source Emits to P1) not counted, (Sink emits to Sink) * repeatCount
 
     {
@@ -1241,9 +1241,9 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingPipeline)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(2), /// P1 + Sink
         ExpectStats::PipelineStop(2),
-        ExpectStats::TaskExecutionStart(5), /// P1* repeatCount + Sink
-        ExpectStats::TaskExecutionComplete(5),
-        ExpectStats::TaskEmit(4)); /// (Source Emits to P1) not counted, (P1 emits to P1) * repeatCount, P1 emits to Sink
+        ExpectStats::TaskExecutionStart(7), /// P1 + P1 * repeatCount + Sink + (P1 + Sink) for the EoS watermark buffer
+        ExpectStats::TaskExecutionComplete(7),
+        ExpectStats::TaskEmit(5)); /// (Source Emits to P1) not counted, (P1 emits to P1) * repeatCount, P1 emits to Sink twice
     /// NOLINTEND(readability-magic-numbers)
     {
         test.start();
@@ -1274,9 +1274,9 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSinkDuringQueryStop)
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(2), /// P1 + Sink
         ExpectStats::PipelineStop(5), /// P1 + (Sink * Repeated) + Sink
-        ExpectStats::TaskExecutionStart(2), /// P1* repeatCount + Sink
-        ExpectStats::TaskExecutionComplete(2), /// P1 + Sink
-        ExpectStats::TaskEmit(1)); /// P1 emits to Sink
+        ExpectStats::TaskExecutionStart(4), /// (data buffer + EoS watermark buffer) * (P1 + Sink)
+        ExpectStats::TaskExecutionComplete(4),
+        ExpectStats::TaskEmit(2)); /// P1 emits both buffers to Sink
     /// NOLINTEND(readability-magic-numbers)
 
     {
@@ -1309,9 +1309,9 @@ TEST_F(QueryEngineTest, SingleQueryWithMultipleSinksDuringQueryStopOneIsRepeated
         ExpectStats::QueryStop(1),
         ExpectStats::PipelineStart(3), /// P1 + Sink1 + Sink2
         ExpectStats::PipelineStop(5), /// P1 + (Sink1 * Repeated) + Sink1 + Sink2
-        ExpectStats::TaskExecutionStart(3), /// Sink1 + Sink2
-        ExpectStats::TaskExecutionComplete(3), /// P1 + Sink1 + Sink2
-        ExpectStats::TaskEmit(2)); /// P1 emits to Sink1 and Sink2
+        ExpectStats::TaskExecutionStart(6), /// (data buffer + EoS watermark buffer) * (P1 + Sink1 + Sink2)
+        ExpectStats::TaskExecutionComplete(6),
+        ExpectStats::TaskEmit(4)); /// P1 emits both buffers to Sink1 and Sink2
     /// NOLINTEND(readability-magic-numbers)
 
     {
