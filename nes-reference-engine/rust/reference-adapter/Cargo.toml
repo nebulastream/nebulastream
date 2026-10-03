@@ -1,0 +1,13 @@
+[package]
+name = "nes_reference_adapter"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+resolver = "3"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+reference-query-manager = { path = "../../../../reference-engine/query-manager" }

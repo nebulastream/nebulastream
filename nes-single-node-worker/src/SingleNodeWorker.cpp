@@ -29,7 +29,9 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
+#ifndef NES_USE_REFERENCE_QUERY_ENGINE
+    #include <Runtime/NodeEngineBuilder.hpp>
+#endif
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -73,7 +75,11 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
+#ifdef NES_USE_REFERENCE_QUERY_ENGINE
+    nodeEngine = std::make_unique<ReferenceNodeEngine>(configuration.workerConfiguration, copyPtr(listener), host);
+#else
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+#endif
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
     if (!configuration.dataAddress.getValue().empty())

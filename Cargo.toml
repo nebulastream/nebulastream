@@ -21,6 +21,7 @@ members = [
     "nes-common/rust/spdlog-bindings",
     "nes-physical-operators/rust/cast-to-unix-timestamp",
 ]
+exclude = ["nes-reference-engine/rust/reference-adapter"]
 
 [workspace.package]
 version = "0.1.0"

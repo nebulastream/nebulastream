@@ -22,7 +22,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
+#ifdef NES_USE_REFERENCE_QUERY_ENGINE
+    #include <ReferenceNodeEngine.hpp>
+#else
+    #include <Runtime/NodeEngine.hpp>
+#endif
 
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
@@ -46,7 +50,11 @@ inline constexpr std::string_view SingleNodeWorkerBinaryName{"nes-single-node-wo
 class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
+#ifdef NES_USE_REFERENCE_QUERY_ENGINE
+    SharedPtr<ReferenceNodeEngine> nodeEngine;
+#else
     SharedPtr<NodeEngine> nodeEngine;
+#endif
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
 

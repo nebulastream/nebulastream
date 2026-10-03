@@ -31,6 +31,10 @@ target_link_libraries(nes-single-node-worker-lib
         nes-query-optimizer
         nes-single-node-worker-interface
 )
+if(NES_USE_REFERENCE_QUERY_ENGINE)
+    target_compile_definitions(nes-single-node-worker-lib PUBLIC NES_USE_REFERENCE_QUERY_ENGINE)
+    target_link_libraries(nes-single-node-worker-lib PUBLIC nes-reference-engine)
+endif()
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 find_package(argparse CONFIG REQUIRED)

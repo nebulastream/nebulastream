@@ -148,6 +148,12 @@ list(JOIN CXXFLAGS_LIST " " ADDITIONAL_CXXFLAGS)
 list(JOIN RUSTFLAGS_LIST " " ADDITIONAL_RUSTFLAGS)
 set(ENV_VARS_LIST "")
 
+# The optional reference engine depends on crates outside the NES vendored set.
+# Give its adapters and generated umbrellas an isolated online Cargo home.
+if (NES_USE_REFERENCE_QUERY_ENGINE)
+    list(APPEND ENV_VARS_LIST "CARGO_HOME=${CMAKE_BINARY_DIR}/cargo-home-reference" "CARGO_NET_OFFLINE=false")
+endif ()
+
 if (NOT "${ADDITIONAL_CXXFLAGS}" STREQUAL "")
     list(APPEND ENV_VARS_LIST CXXFLAGS=${ADDITIONAL_CXXFLAGS})
 endif ()
