@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -76,9 +77,6 @@ public:
     /// This method updates the watermarkProcessor and is thread-safe
     virtual void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
-    /// Triggers all windows that have not been already emitted to the probe
-    virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
-
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -98,5 +96,7 @@ protected:
     uint64_t numberOfWorkerThreads = 0;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+    std::mutex triggerMutex;
+    Timestamp lastForwardedWatermark{Timestamp::INITIAL_VALUE};
 };
 }

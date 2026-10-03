@@ -27,6 +27,7 @@ public:
     using Underlying = uint64_t;
     static constexpr Underlying INITIAL_VALUE = 0;
     static constexpr Underlying INVALID_VALUE = UINT64_MAX;
+    static constexpr Underlying INFINITE_VALUE = UINT64_MAX;
 
     explicit constexpr Timestamp(const Underlying value) : value(value) { }
 
@@ -39,6 +40,16 @@ public:
     Timestamp operator-(const Timestamp other) const { return Timestamp(value - other.value); }
 
     Timestamp operator-=(const Underlying offset) const { return Timestamp(value - offset); }
+
+    /// Subtract without underflow. Infinity remains infinity when advancing a watermark through an operator.
+    [[nodiscard]] constexpr Timestamp saturatingSubtract(const Underlying offset) const
+    {
+        if (value == INFINITE_VALUE)
+        {
+            return *this;
+        }
+        return Timestamp(value > offset ? value - offset : INITIAL_VALUE);
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
 

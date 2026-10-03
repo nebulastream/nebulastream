@@ -14,6 +14,7 @@
 
 #include <SourceThread.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <exception>
@@ -161,6 +162,10 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
+        else
+        {
+            sequenceNumberGenerator = std::max(sequenceNumberGenerator, static_cast<size_t>(buffer.getSequenceNumber().getRawValue() + 1));
+        }
         emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
     };
 
@@ -168,12 +173,18 @@ void dataSourceThread(
     cpptrace::try_catch(
         [&]()
         {
-            result.set_value_at_thread_exit(
-                dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
-            if (!stopToken.stop_requested())
+            const auto termination = dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, bufferProvider, dataEmit);
+            if (termination.result == SourceImplementationTermination::EndOfStream)
             {
-                emit(originId, SourceReturnType::EoS{}, stopToken);
+                auto watermarkBuffer = bufferProvider->getBufferBlocking();
+                watermarkBuffer.setNumberOfTuples(0);
+                addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator), watermarkBuffer);
+                watermarkBuffer.setWatermark(Timestamp{Timestamp::INFINITE_VALUE});
+                /// A watermark-only buffer is regular data and must pass through execute before EoS.
+                emit(originId, SourceReturnType::Data{std::move(watermarkBuffer)}, std::stop_token{});
+                emit(originId, SourceReturnType::EoS{}, std::stop_token{});
             }
+            result.set_value_at_thread_exit(termination);
         },
         [&](NES::Exception& e)
         {

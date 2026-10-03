@@ -14,13 +14,16 @@
 
 #include <WindowBasedOperatorHandler.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -71,6 +74,7 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
 
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
+    const std::scoped_lock lock(triggerMutex);
     /// The watermark processor handles the minimal watermark across both streams
     const auto newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
@@ -85,13 +89,25 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
     /// Getting all slices that can be triggered and triggering them
     const auto slicesAndWindowInfo = sliceAndWindowStore->getTriggerableWindowSlices(newGlobalWatermark);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
-}
 
-void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipelineCtx)
-{
-    const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
-    NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
-    triggerSlices(slicesAndWindowInfo, pipelineCtx);
+    /// Window results use the window start as their timestamp. An input watermark can therefore only
+    /// advance the output watermark past starts whose entire window has already closed.
+    const auto windowSize = sliceAndWindowStore->getWindowSize();
+    const auto outputWatermark = newGlobalWatermark.saturatingSubtract(windowSize);
+    if (outputWatermark > lastForwardedWatermark)
+    {
+        auto watermarkBuffer = pipelineCtx->allocateTupleBuffer();
+        watermarkBuffer.setNumberOfTuples(0);
+        watermarkBuffer.setOriginId(outputOriginId);
+        watermarkBuffer.setSequenceNumber(sliceAndWindowStore->nextSequenceNumber());
+        watermarkBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
+        watermarkBuffer.setLastChunk(true);
+        watermarkBuffer.setWatermark(outputWatermark);
+        watermarkBuffer.setCreationTimestampInMS(Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+        pipelineCtx->emitBuffer(watermarkBuffer);
+        lastForwardedWatermark = outputWatermark;
+    }
 }
 
 }
