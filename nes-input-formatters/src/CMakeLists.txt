@@ -17,7 +17,6 @@ add_source_files(nes-input-formatters
         InputFormatterValidationRegistry.cpp
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
-        SpanningTupleBufferState.cpp
         ValueDeserializerUtil.cpp
         InputFormatter.cpp
         FieldOffsetRawBufferIndex.cpp

@@ -42,7 +42,7 @@ namespace NES
 
 SequenceShredder::SequenceShredder()
 {
-    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER);
+    this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>();
 }
 
 SequenceShredder::~SequenceShredder()
@@ -82,10 +82,6 @@ SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const
 SequenceShredderResult
 SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer, const SequenceNumber sequenceNumber)
 {
-    /// (Planned) Atomically count the number of out of range attempts
-    /// (Planned) Thread that increases atomic counter to threshold blocks access to the current SpanningTupleBUffer, allocates new SpanningTupleBuffer
-    /// (Planned) with double the size, copies over the current state, swaps out the pointer to the SpanningTupleBuffer, and then enables other
-    /// (Planned) threads to access the new SpanningTupleBuffer
     return spanningTupleBuffer->tryFindLeadingSpanningTupleForBufferWithDelimiter(sequenceNumber, indexedRawBuffer);
 }
 
@@ -99,7 +95,7 @@ SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedR
     }
     else
     {
-        NES_WARNING("Sequence number: {} was out of range of SpanningTupleBuffer", sequenceNumber);
+        NES_WARNING("Sequence number {} was already registered with the sequence shredder", sequenceNumber);
         return stSearchResult;
     }
 }

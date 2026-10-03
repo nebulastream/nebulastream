@@ -30,7 +30,7 @@ using FieldIndex = uint32_t;
 using SequenceNumberType = SequenceNumber::Underlying;
 
 /// Wraps a TupleBuffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
-/// the underlying TupleBuffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
+/// the underlying TupleBuffer reachable only to classes that legitimately need it (e.g. SequenceShredder).
 class RawTupleBuffer
 {
 public:

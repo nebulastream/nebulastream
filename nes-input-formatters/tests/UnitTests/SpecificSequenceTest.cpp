@@ -19,12 +19,16 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <InputFormatterValidationProvider.hpp>
+#include <RawTupleBuffer.hpp>
+#include <SequenceShredder.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers, bugprone-unchecked-optional-access, google-build-using-namespace)
 namespace NES
@@ -81,6 +85,67 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .rawBytesPerThread
         = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
            /* buffer 2 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"}}});
+}
+
+TEST_F(SpecificSequenceTest, emptyBufferBetweenSpanningTupleFragments)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 4, /// 3 raw buffers, 1 result buffer
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value(),
+        .testSchema = {INT32, INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
+        .rawBytesPerThread
+        = {{.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
+           {.sequenceNumber = SequenceNumber(2), .rawBytes = "", .watermark = Timestamp(42)},
+           {.sequenceNumber = SequenceNumber(3), .rawBytes = "789\n"}}});
+}
+
+TEST_F(SpecificSequenceTest, longRunOfEmptyBuffersDoesNotRetainPooledBuffers)
+{
+    using namespace InputFormatterTestUtil;
+    constexpr size_t rawBufferSize = 16;
+    constexpr size_t pooledBufferCount = 3;
+    constexpr size_t emptyBufferCount = 5000;
+    const auto totalMemory = UNPOOLED_MEMORY_BUDGET_IN_BYTES + pooledBufferCount * rawBufferSize;
+    auto bufferManager = BufferManager::create(
+        totalMemory,
+        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(totalMemory),
+        BUFFER_ALIGNMENT,
+        rawBufferSize,
+        std::make_shared<NesDefaultMemoryAllocator>());
+
+    SequenceShredder shredder;
+    auto first = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(first.has_value());
+    copyStringDataToTupleBuffer("12,", *first);
+    first->setSequenceNumber(SequenceNumber(1));
+    ASSERT_TRUE(shredder.findSpanningTupleWithoutDelimiter(StagedBuffer{RawTupleBuffer{*first}, 0, 0}).isInRange);
+
+    for (size_t i = 0; i < emptyBufferCount; ++i)
+    {
+        auto empty = bufferManager->getBufferNoBlocking();
+        ASSERT_TRUE(empty.has_value()) << "Pooled buffers were exhausted after " << i << " empty buffers";
+        empty->setNumberOfTuples(0);
+        empty->setSequenceNumber(SequenceNumber(2 + i));
+        ASSERT_TRUE(shredder.findSpanningTupleWithoutDelimiter(StagedBuffer{RawTupleBuffer{*empty}, 0, 0}).isInRange);
+    }
+
+    auto last = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(last.has_value());
+    copyStringDataToTupleBuffer("34\n", *last);
+    last->setSequenceNumber(SequenceNumber(2 + emptyBufferCount));
+    const auto result = shredder.findLeadingSpanningTupleWithDelimiter(StagedBuffer{RawTupleBuffer{*last}, 2, 2});
+    ASSERT_TRUE(result.isInRange);
+    ASSERT_EQ(result.spanningBuffers.getSize(), 4);
+    EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[1].getBufferView(), "12,");
+    EXPECT_TRUE(result.spanningBuffers.getSpanningBuffers()[2].getBufferView().empty());
+    EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[3].getLeadingBytes(), "34");
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.

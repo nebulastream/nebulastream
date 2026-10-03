@@ -35,9 +35,8 @@ namespace NES
 class SpanningTupleBuffer;
 
 /// Contains an empty 'spanningBuffers' vector, if the SequenceShredder could not claim any spanning tuples for the calling thread
-/// Otherwise, 'spanningBuffers' contains the buffers of the 1-2 spanning tuples and 'indexOfInputBuffer' indicates which of the buffers
-/// matches the buffer that the calling thread provided to search for spanning tuples
-/// May return 'false' for 'isInRange', if the calling thread provides a sequence number that the spanning tuple buffer can't process yet
+/// Otherwise, 'spanningBuffers' contains the buffers of a claimed spanning tuple in sequence order.
+/// A run of zero-byte buffers contributes one empty placeholder.
 class SpanningBuffers
 {
 public:
@@ -57,18 +56,16 @@ private:
 
 struct SequenceShredderResult
 {
+    /// False if the same sequence number was already registered.
     bool isInRange = false;
     SpanningBuffers spanningBuffers;
 };
 
 /// The SequenceShredder concurrently takes StagedBuffers and uses a (thread-safe) spanning tuple buffer (SpanningTupleBuffer) to determine whether
 /// the provided buffer completes spanning tuples with buffers that (usually) other threads processed
-/// (Planned) The SequenceShredder keeps track of sequence numbers that were not in range of the SpanningTupleBuffer
-/// (Planned) Given enough out-of-range requests, the SequenceShredder doubles the size of the SpanningTupleBuffer
+/// Empty raw buffers are represented by sequence ranges, without retaining their TupleBuffers.
 class SequenceShredder
 {
-    static constexpr size_t INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER = 1024;
-
 public:
     SequenceShredder();
     /// Destructor validates (final) state of spanning tuple buffer

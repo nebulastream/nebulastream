@@ -85,6 +85,7 @@ struct ThreadInputBuffers
 {
     SequenceNumber sequenceNumber;
     std::string rawBytes;
+    std::optional<Timestamp> watermark = std::nullopt;
 };
 
 template <typename TupleSchemaTemplate>
@@ -531,6 +532,10 @@ std::vector<TupleBuffer> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
         {
             copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, tupleBuffer.value());
             tupleBuffer.value().setSequenceNumber(rawInputBuffer.sequenceNumber);
+            if (rawInputBuffer.watermark)
+            {
+                tupleBuffer.value().setWatermark(*rawInputBuffer.watermark);
+            }
             tupleBuffer.value().setChunkNumber(INITIAL_CHUNK_NUMBER);
             rawTupleBuffers.emplace_back(tupleBuffer.value());
         }
