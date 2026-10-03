@@ -15,6 +15,7 @@
 #include <Rewriter/Emitter.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <iterator>
 #include <memory>
@@ -41,6 +42,7 @@
 #include <Rewriter/SourceRewriting.hpp>
 #include <Rewriter/SqlParse.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
@@ -49,6 +51,13 @@ namespace NES
 
 namespace
 {
+
+/// Distinguishes the result files of a query's sinks.
+/// The first sink keeps the query's own suffix, so a query with a single sink writes the file it always did.
+std::string sinkSuffix(const std::string_view querySuffix, const size_t sinkIndex)
+{
+    return sinkIndex == 0 ? std::string{querySuffix} : fmt::format("{}_sink{}", querySuffix, sinkIndex);
+}
 
 std::optional<Identifier> sourceName(const std::string& written)
 {
@@ -161,7 +170,7 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
         /// A statement that the parser rejects is submitted unchanged,
         /// so the syntax error is reported against this one query rather than the rewrite failing every query of the file.
         /// Many test files assert exactly that error.
-        return RewrittenSql{.sql = sql, .resultFile = std::nullopt, .inputFiles = {}};
+        return RewrittenSql{.sql = sql, .resultFiles = {}, .inputFiles = {}};
     }
 
     antlr4::TokenStreamRewriter rewriter{&parse->tokenStream()};
@@ -177,9 +186,19 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
     const auto suffix
         = resultDiscriminator.empty() ? fmt::format("{}", queryNumber) : fmt::format("{}_{}", resultDiscriminator, queryNumber);
 
-    auto* sink = requireSingleSink(*parse, sql);
-    auto [inlinedSink, resultFile] = sinkRewriter.inlineSink(*parse, sink, context.resultFile(suffix));
-    rewriter.replace(sink->getStart(), sink->getStop(), inlinedSink);
+    const auto sinks = requireSinks(*parse, sql);
+    std::vector<std::optional<std::filesystem::path>> resultFiles;
+    /// A query that lists one declared sink twice is submitted with its sinks as written, so the engine reports that error against
+    /// this one query.
+    if (not listsADeclaredSinkTwice(sinks))
+    {
+        for (const auto& [sinkIndex, sink] : sinks | views::enumerate)
+        {
+            auto [inlinedSink, resultFile] = sinkRewriter.inlineSink(*parse, sink, context.resultFile(sinkSuffix(suffix, sinkIndex)));
+            rewriter.replace(sink->getStart(), sink->getStop(), inlinedSink);
+            resultFiles.push_back(std::move(resultFile));
+        }
+    }
 
     std::vector<std::filesystem::path> inputFiles;
     for (auto* namedSource : findAll<AntlrSQLParser::NamedSourceContext>(parse->tree()))
@@ -197,17 +216,17 @@ Emitter::RewrittenSql Emitter::emitSelect(const std::string& sql, const SystestQ
         }
     }
 
-    return RewrittenSql{.sql = rewriter.getText(), .resultFile = std::move(resultFile), .inputFiles = std::move(inputFiles)};
+    return RewrittenSql{.sql = rewriter.getText(), .resultFiles = std::move(resultFiles), .inputFiles = std::move(inputFiles)};
 }
 
 void Emitter::emitQuery(SelectStatement query)
 {
-    auto [sql, resultFile, inputFiles] = emitSelect(query.sql, query.id, {});
+    auto [sql, resultFiles, inputFiles] = emitSelect(query.sql, query.id, {});
     runnable.testCases.push_back(RewrittenTestCase{
         .action = RewrittenQuery{
             .sql = std::move(sql),
             .id = query.id,
-            .resultFile = std::move(resultFile),
+            .resultFiles = std::move(resultFiles),
             .inputFiles = std::move(inputFiles),
             .expectation = std::move(query.expected)}});
 }
@@ -233,11 +252,14 @@ void Emitter::emitExplain(ExplainStatement explain)
     makeAnonymousSourcePathsAbsolute(parse, rewriter, context.testDataDir);
     completeAnonymousSources(parse, rewriter, context.sourceHost);
 
-    if (auto* sink = requireSingleSink(parse, explain.sql); sink->identifier() == nullptr)
+    for (const auto& [sinkIndex, sink] : requireSinks(parse, explain.sql) | views::enumerate)
     {
-        /// An EXPLAIN starts no query, so the file is never written, but the sink descriptor is still validated and needs a path.
-        const auto candidate = context.resultFile(fmt::format("{}", explain.id.getRawValue()));
-        rewriter.replace(sink->getStart(), sink->getStop(), sinkRewriter.inlineSink(parse, sink, candidate).sql);
+        if (sink->identifier() == nullptr)
+        {
+            /// An EXPLAIN starts no query, so the file is never written, but the sink descriptor is still validated and needs a path.
+            const auto candidate = context.resultFile(sinkSuffix(fmt::format("{}", explain.id.getRawValue()), sinkIndex));
+            rewriter.replace(sink->getStart(), sink->getStop(), sinkRewriter.inlineSink(parse, sink, candidate).sql);
+        }
     }
 
     runnable.testCases.push_back(RewrittenTestCase{
@@ -249,21 +271,24 @@ void Emitter::emitDifferential(const DifferentialStatement& block)
     /// The second half needs its own result file name, because the halves share a query number.
     static constexpr auto SecondHalf = "DIFFERENTIAL";
 
-    auto [firstSql, firstResultFile, unmeasuredFirstInput] = emitSelect(block.firstSql, block.firstId, {});
-    auto [secondSql, secondResultFile, unmeasuredSecondInput] = emitSelect(block.secondSql, block.secondId, SecondHalf);
-    if (not firstResultFile.has_value() or not secondResultFile.has_value())
+    auto [firstSql, firstResultFiles, unmeasuredFirstInput] = emitSelect(block.firstSql, block.firstId, {});
+    auto [secondSql, secondResultFiles, unmeasuredSecondInput] = emitSelect(block.secondSql, block.secondId, SecondHalf);
+    /// The check compares one result file against another, so each half writes exactly one.
+    const auto writesOneResult = [](const std::vector<std::optional<std::filesystem::path>>& resultFiles)
+    { return resultFiles.size() == 1 and resultFiles.front().has_value(); };
+    if (not writesOneResult(firstResultFiles) or not writesOneResult(secondResultFiles))
     {
-        throw TestException("a differential query has to write a result to compare: {}", block.firstSql);
+        throw TestException("a differential query has to write one result to compare, into a single sink: {}", block.firstSql);
     }
 
     runnable.testCases.push_back(RewrittenTestCase{
         .action = RewrittenDifferential{
             .firstSql = std::move(firstSql),
             .firstId = block.firstId,
-            .firstResultFile = std::move(*firstResultFile),
+            .firstResultFile = std::move(*firstResultFiles.front()),
             .secondSql = std::move(secondSql),
             .secondId = block.secondId,
-            .secondResultFile = std::move(*secondResultFile)}});
+            .secondResultFile = std::move(*secondResultFiles.front())}});
 }
 
 }

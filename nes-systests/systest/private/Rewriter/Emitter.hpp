@@ -49,7 +49,7 @@ private:
     struct RewrittenSql
     {
         std::string sql;
-        std::optional<std::filesystem::path> resultFile;
+        std::vector<std::optional<std::filesystem::path>> resultFiles;
         std::vector<std::filesystem::path> inputFiles;
     };
 

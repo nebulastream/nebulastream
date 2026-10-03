@@ -29,6 +29,7 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/OriginSplitLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -355,6 +356,116 @@ workers:
     const auto networkSource = leaf.back().tryGetAs<SourceDescriptorLogicalOperator>();
     EXPECT_TRUE(networkSource.has_value());
     EXPECT_EQ(networkSource->get().getSourceDescriptor().getSourceType(), "NETWORK");
+}
+
+/// Two sinks reading one source, with the fan-out point left on the node below the boundary: both branches read the
+/// shared operator across the same boundary, so they are served by ONE channel rather than one each. Without that,
+/// the operator's output would be shipped to the node twice and the receiving side would hold two copies of it.
+TEST_F(DistributedPlanningTest, SinksSharingAnOperatorAcrossTheBoundaryShareItsChannel)
+{
+    auto [opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO sink_one, sink_two
+
+sinks:
+  - name: sink_one
+    schema: [ a, b ]
+    host: "sink-node:8080"
+  - name: sink_two
+    schema: [ a, b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "source-node:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node:8080"
+    max_operators: 1
+    downstream:
+      - "sink-node:8080"
+)");
+    auto plan = opt->optimize(boundPlan);
+
+    /// The sending side keeps what the branches share, and sends it once.
+    const auto& sourceNodePlans = plan[Host("source-node:8080")];
+    ASSERT_EQ(sourceNodePlans.size(), 1U) << "the shared sub-plan was deployed once per consumer instead of once";
+    const auto sourceNodePlan = sourceNodePlans.front();
+    ASSERT_EQ(sourceNodePlan.getRootOperators().size(), 1U) << "the operator shared by both sinks opened a channel per consumer";
+    const auto networkSink = sourceNodePlan.getRootOperators().front().tryGetAs<SinkLogicalOperator>();
+    ASSERT_TRUE(networkSink.has_value());
+    EXPECT_EQ(networkSink->get().getSinkDescriptor()->getSinkType(), "NETWORK");
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNodePlan).size(), 1U) << "the source was deployed more than once";
+
+    /// The receiving side reads that one channel from both branches, each of which heads itself with a split so the
+    /// two streams stay apart even though they arrive under one origin.
+    const auto& sinkNodePlans = plan[Host("sink-node:8080")];
+    ASSERT_EQ(sinkNodePlans.size(), 1U) << "sinks reading one channel were split across plans";
+    const auto sinkNodePlan = sinkNodePlans.front();
+    EXPECT_EQ(sinkNodePlan.getRootOperators().size(), 2U) << "a sink root was dropped";
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sinkNodePlan).size(), 1U)
+        << "the branches were given a network source each instead of sharing the one channel";
+    EXPECT_EQ(getOperatorByType<OriginSplitLogicalOperator>(sinkNodePlan).size(), 2U) << "a branch was left without an identity of its own";
+}
+
+/// The same query with the fan-out point left on the node above the boundary: each branch now crosses on its own, so
+/// each gets a channel of its own. The two must stay separate — a branch is headed by a split and carries origin ids
+/// no other branch carries, which only holds if the branches do not end up sharing one channel.
+TEST_F(DistributedPlanningTest, BranchesCrossingSeparatelyGetAChannelEach)
+{
+    auto [opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO sink_one, sink_two
+
+sinks:
+  - name: sink_one
+    schema: [ a, b ]
+    host: "sink-node:8080"
+  - name: sink_two
+    schema: [ a, b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "source-node:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node:8080"
+    max_operators: 3
+    downstream:
+      - "sink-node:8080"
+)");
+    auto plan = opt->optimize(boundPlan);
+
+    const auto& sourceNodePlans = plan[Host("source-node:8080")];
+    ASSERT_EQ(sourceNodePlans.size(), 1U) << "the sub-plan the branches share was deployed once per branch";
+    const auto sourceNodePlan = sourceNodePlans.front();
+    ASSERT_EQ(sourceNodePlan.getRootOperators().size(), 2U) << "the branches did not get a channel each";
+    for (const auto& root : sourceNodePlan.getRootOperators())
+    {
+        const auto networkSink = root.tryGetAs<SinkLogicalOperator>();
+        ASSERT_TRUE(networkSink.has_value());
+        EXPECT_EQ(networkSink->get().getSinkDescriptor()->getSinkType(), "NETWORK");
+    }
+    EXPECT_EQ(getOperatorByType<SourceDescriptorLogicalOperator>(sourceNodePlan).size(), 1U)
+        << "the source below the fan-out was deployed once per branch";
+    EXPECT_EQ(getOperatorByType<OriginSplitLogicalOperator>(sourceNodePlan).size(), 2U)
+        << "a branch was left without an identity of its own";
+
+    /// Nothing is shared on the receiving side, so the sinks stay in plans of their own.
+    EXPECT_EQ(plan[Host("sink-node:8080")].size(), 2U);
 }
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
