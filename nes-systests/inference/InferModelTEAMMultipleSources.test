@@ -1,0 +1,92 @@
+# name: inference/InferModelTEAMMultipleSources.test
+# description: TEAM inference over one logical source fed by several physical sources, each delivering whole input tensors
+# groups: [Inference]
+
+# Stepping stone towards a distributed TEAM pipeline: every physical source stands for a separate site that delivers
+# complete, preprocessed events, i.e. model inputs that already hold all stations of an event. Assembling one tensor
+# from the streams of several stations is not covered here. The systest framework places the sources on the topology's
+# source workers; their tuples travel to the sink side, where MODEL_INFERENCE runs on the merged stream with the
+# unmodified model. Each source carries a different event, so a tensor that mixes bytes from two sources changes the result.
+#
+# See InferModelTEAM.test for the model's inputs and outputs. The input files hold events 3, 26 and 47 of the test set,
+# preprocessed for a prediction at t = 5 s by model/team_baseline/prepare_team_input.py. The events have 6, 5 and 10
+# stations with a P pick before the cutout. The expected results come from running the SavedModel in TensorFlow.
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+CREATE LOGICAL SOURCE team(event_idx UINT64 NOT NULL, event_id UINT64 NOT NULL, waveforms VARSIZED NOT NULL, coords VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR team TYPE File;
+ATTACH FILE model/team_baseline/team_input_t5_event3.csv
+CREATE PHYSICAL SOURCE FOR team TYPE File;
+ATTACH FILE model/team_baseline/team_input_t5_event26.csv
+CREATE PHYSICAL SOURCE FOR team TYPE File;
+ATTACH FILE model/team_baseline/team_input_t5_event47.csv
+
+CREATE MODEL teamBaseline ('model/team_baseline/saved_model_single_output')
+INPUT (waveforms VARSIZED, coords VARSIZED)
+OUTPUT (
+    mag0_alpha FLOAT32, mag0_mu FLOAT32, mag0_sigma FLOAT32,
+    mag1_alpha FLOAT32, mag1_mu FLOAT32, mag1_sigma FLOAT32,
+    mag2_alpha FLOAT32, mag2_mu FLOAT32, mag2_sigma FLOAT32,
+    mag3_alpha FLOAT32, mag3_mu FLOAT32, mag3_sigma FLOAT32,
+    mag4_alpha FLOAT32, mag4_mu FLOAT32, mag4_sigma FLOAT32,
+    loc0_alpha FLOAT32, loc0_lat FLOAT32, loc0_lon FLOAT32, loc0_depth FLOAT32, loc0_sigma_lat FLOAT32, loc0_sigma_lon FLOAT32, loc0_sigma_depth FLOAT32,
+    loc1_alpha FLOAT32, loc1_lat FLOAT32, loc1_lon FLOAT32, loc1_depth FLOAT32, loc1_sigma_lat FLOAT32, loc1_sigma_lon FLOAT32, loc1_sigma_depth FLOAT32,
+    loc2_alpha FLOAT32, loc2_lat FLOAT32, loc2_lon FLOAT32, loc2_depth FLOAT32, loc2_sigma_lat FLOAT32, loc2_sigma_lon FLOAT32, loc2_sigma_depth FLOAT32,
+    loc3_alpha FLOAT32, loc3_lat FLOAT32, loc3_lon FLOAT32, loc3_depth FLOAT32, loc3_sigma_lat FLOAT32, loc3_sigma_lon FLOAT32, loc3_sigma_depth FLOAT32,
+    loc4_alpha FLOAT32, loc4_lat FLOAT32, loc4_lon FLOAT32, loc4_depth FLOAT32, loc4_sigma_lat FLOAT32, loc4_sigma_lon FLOAT32, loc4_sigma_depth FLOAT32,
+    loc5_alpha FLOAT32, loc5_lat FLOAT32, loc5_lon FLOAT32, loc5_depth FLOAT32, loc5_sigma_lat FLOAT32, loc5_sigma_lon FLOAT32, loc5_sigma_depth FLOAT32,
+    loc6_alpha FLOAT32, loc6_lat FLOAT32, loc6_lon FLOAT32, loc6_depth FLOAT32, loc6_sigma_lat FLOAT32, loc6_sigma_lon FLOAT32, loc6_sigma_depth FLOAT32,
+    loc7_alpha FLOAT32, loc7_lat FLOAT32, loc7_lon FLOAT32, loc7_depth FLOAT32, loc7_sigma_lat FLOAT32, loc7_sigma_lon FLOAT32, loc7_sigma_depth FLOAT32,
+    loc8_alpha FLOAT32, loc8_lat FLOAT32, loc8_lon FLOAT32, loc8_depth FLOAT32, loc8_sigma_lat FLOAT32, loc8_sigma_lon FLOAT32, loc8_sigma_depth FLOAT32,
+    loc9_alpha FLOAT32, loc9_lat FLOAT32, loc9_lon FLOAT32, loc9_depth FLOAT32, loc9_sigma_lat FLOAT32, loc9_sigma_lon FLOAT32, loc9_sigma_depth FLOAT32,
+    loc10_alpha FLOAT32, loc10_lat FLOAT32, loc10_lon FLOAT32, loc10_depth FLOAT32, loc10_sigma_lat FLOAT32, loc10_sigma_lon FLOAT32, loc10_sigma_depth FLOAT32,
+    loc11_alpha FLOAT32, loc11_lat FLOAT32, loc11_lon FLOAT32, loc11_depth FLOAT32, loc11_sigma_lat FLOAT32, loc11_sigma_lon FLOAT32, loc11_sigma_depth FLOAT32,
+    loc12_alpha FLOAT32, loc12_lat FLOAT32, loc12_lon FLOAT32, loc12_depth FLOAT32, loc12_sigma_lat FLOAT32, loc12_sigma_lon FLOAT32, loc12_sigma_depth FLOAT32,
+    loc13_alpha FLOAT32, loc13_lat FLOAT32, loc13_lon FLOAT32, loc13_depth FLOAT32, loc13_sigma_lat FLOAT32, loc13_sigma_lon FLOAT32, loc13_sigma_depth FLOAT32,
+    loc14_alpha FLOAT32, loc14_lat FLOAT32, loc14_lon FLOAT32, loc14_depth FLOAT32, loc14_sigma_lat FLOAT32, loc14_sigma_lon FLOAT32, loc14_sigma_depth FLOAT32);
+
+CREATE SINK magnitudeMixture(event_idx UINT64 NOT NULL,
+    mag0_alpha FLOAT32 NOT NULL, mag0_mu FLOAT32 NOT NULL, mag0_sigma FLOAT32 NOT NULL,
+    mag1_alpha FLOAT32 NOT NULL, mag1_mu FLOAT32 NOT NULL, mag1_sigma FLOAT32 NOT NULL,
+    mag2_alpha FLOAT32 NOT NULL, mag2_mu FLOAT32 NOT NULL, mag2_sigma FLOAT32 NOT NULL,
+    mag3_alpha FLOAT32 NOT NULL, mag3_mu FLOAT32 NOT NULL, mag3_sigma FLOAT32 NOT NULL,
+    mag4_alpha FLOAT32 NOT NULL, mag4_mu FLOAT32 NOT NULL, mag4_sigma FLOAT32 NOT NULL) TYPE File;
+CREATE SINK prediction(event_idx UINT64 NOT NULL, event_id UINT64 NOT NULL, magnitude FLOAT32 NOT NULL,
+    latitude FLOAT64 NOT NULL, longitude FLOAT64 NOT NULL, depth_km FLOAT64 NOT NULL) TYPE File;
+
+# The raw magnitude mixture of every source's event, straight from the model output.
+SELECT event_idx,
+    mag0_alpha, mag0_mu, mag0_sigma,
+    mag1_alpha, mag1_mu, mag1_sigma,
+    mag2_alpha, mag2_mu, mag2_sigma,
+    mag3_alpha, mag3_mu, mag3_sigma,
+    mag4_alpha, mag4_mu, mag4_sigma
+FROM MODEL_INFERENCE(teamBaseline, (SELECT event_idx, FROM_BASE64(waveforms) AS waveforms, FROM_BASE64(coords) AS coords FROM team))
+INTO magnitudeMixture;
+----
+3,0.196561,3.502080,0.507412,0.200414,3.501259,0.501596,0.196361,3.519382,0.468256,0.207077,3.472917,0.495705,0.199586,3.482626,0.468006
+26,0.190267,3.476165,0.441067,0.199008,3.500422,0.490703,0.195546,3.596494,0.436005,0.204867,3.432896,0.468506,0.210312,3.420833,0.447203
+47,0.198728,3.511707,0.525228,0.200758,3.500594,0.513714,0.195849,3.514019,0.471373,0.206876,3.471182,0.502957,0.197788,3.483970,0.469274
+
+# TEAM post-processing as in InferModelTEAM.test: the mixture mean sum(alpha * mu), locations converted to degrees.
+SELECT event_idx, event_id,
+    mag0_alpha * mag0_mu + mag1_alpha * mag1_mu + mag2_alpha * mag2_mu + mag3_alpha * mag3_mu + mag4_alpha * mag4_mu AS magnitude,
+    (loc0_alpha * loc0_lat + loc1_alpha * loc1_lat + loc2_alpha * loc2_lat + loc3_alpha * loc3_lat + loc4_alpha * loc4_lat
+        + loc5_alpha * loc5_lat + loc6_alpha * loc6_lat + loc7_alpha * loc7_lat + loc8_alpha * loc8_lat + loc9_alpha * loc9_lat
+        + loc10_alpha * loc10_lat + loc11_alpha * loc11_lat + loc12_alpha * loc12_lat + loc13_alpha * loc13_lat + loc14_alpha * loc14_lat)
+        * 100.0 / 111.195 + 42.0 AS latitude,
+    (loc0_alpha * loc0_lon + loc1_alpha * loc1_lon + loc2_alpha * loc2_lon + loc3_alpha * loc3_lon + loc4_alpha * loc4_lon
+        + loc5_alpha * loc5_lon + loc6_alpha * loc6_lon + loc7_alpha * loc7_lon + loc8_alpha * loc8_lon + loc9_alpha * loc9_lon
+        + loc10_alpha * loc10_lon + loc11_alpha * loc11_lon + loc12_alpha * loc12_lon + loc13_alpha * loc13_lon + loc14_alpha * loc14_lon)
+        * 100.0 / 111.195 + 12.0 AS longitude,
+    (loc0_alpha * loc0_depth + loc1_alpha * loc1_depth + loc2_alpha * loc2_depth + loc3_alpha * loc3_depth + loc4_alpha * loc4_depth
+        + loc5_alpha * loc5_depth + loc6_alpha * loc6_depth + loc7_alpha * loc7_depth + loc8_alpha * loc8_depth + loc9_alpha * loc9_depth
+        + loc10_alpha * loc10_depth + loc11_alpha * loc11_depth + loc12_alpha * loc12_depth + loc13_alpha * loc13_depth + loc14_alpha * loc14_depth)
+        * 100.0 AS depth_km
+FROM MODEL_INFERENCE(teamBaseline, (SELECT event_idx, event_id, FROM_BASE64(waveforms) AS waveforms, FROM_BASE64(coords) AS coords FROM team))
+INTO prediction;
+----
+3,20485461,3.495391,41.980669,12.108277,52.812177
+26,20705401,3.484021,41.981246,12.127388,51.288474
+47,21063921,3.496059,41.999821,12.096440,52.312624
