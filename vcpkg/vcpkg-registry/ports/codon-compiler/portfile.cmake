@@ -21,6 +21,7 @@ vcpkg_from_github(
         0002-configurable-llvm-optimization.patch
         0003-fix-int64-min-unary-negation.patch
         0004-avoid-null-zero-length-memory-operations.patch
+        0005-port-to-llvm-22.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
