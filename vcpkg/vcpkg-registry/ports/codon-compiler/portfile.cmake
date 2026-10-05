@@ -33,6 +33,8 @@ endif()
 
 vcpkg_cmake_configure(
         SOURCE_PATH "${SOURCE_PATH}"
+        # Codon's CMakeLists writes config.h into the source tree; dbg/rel configuring in parallel races on it.
+        DISABLE_PARALLEL_CONFIGURE
         OPTIONS
         -DCODON_COMPILER_ONLY=ON
         ${ADDITIONAL_CMAKE_OPTIONS}
