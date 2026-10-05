@@ -11,12 +11,17 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -31,7 +36,9 @@
 #include <Functions/PythonUDF/PythonUdfRuntime.hpp>
 #include <Interface/Record.hpp>
 #include <NESCodonPlugin/Registry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -53,6 +60,7 @@
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -547,6 +555,69 @@ std::string writeBitcode(const llvm::Module& module)
     return {bitcode.data(), bitcode.size()};
 }
 
+/// The Codon plugins are built next to the worker and their build-time paths are compiled in. A worker that runs somewhere
+/// else, e.g. in a container image, finds them in the `nes-codon-plugins` directory next to its executable instead.
+std::string codonPluginPath(const std::string& builtPath)
+{
+    if (std::filesystem::exists(builtPath))
+    {
+        return builtPath;
+    }
+    const auto besideExecutable = currentExecutableDirectory() / "nes-codon-plugins" / std::filesystem::path{builtPath}.filename();
+    return std::filesystem::exists(besideExecutable) ? besideExecutable.string() : builtPath;
+}
+
+/// Every UDF is compiled under this symbol and renamed to its instance's symbol after loading, so that equal UDFs share
+/// one entry in the Codon cache.
+constexpr std::string_view CachedPythonUdfSymbol = "__nes_python_udf_cached";
+
+std::filesystem::path codonCacheDirectory()
+{
+    if (const char* directory = std::getenv("NES_CODON_CACHE_DIR"); directory != nullptr && *directory != '\0')
+    {
+        return directory;
+    }
+    return std::filesystem::temp_directory_path() / "nes-codon-cache";
+}
+
+/// The Codon output depends on the worker build (Codon, its plugins, the runtime ABI), so the worker binary's path and
+/// modification time are part of the key. Modules imported from the import paths are not.
+std::string codonCacheKey(const std::string& source, const std::vector<std::string>& importPaths)
+{
+    const auto worker = std::filesystem::read_symlink("/proc/self/exe");
+    return fmt::format(
+        "worker: {} {}\nimports: {}\n{}",
+        worker.string(),
+        std::filesystem::last_write_time(worker).time_since_epoch().count(),
+        fmt::join(importPaths, ":"),
+        source);
+}
+
+std::optional<std::string> readFile(const std::filesystem::path& path)
+{
+    std::ifstream file{path, std::ios::binary};
+    if (!file)
+    {
+        return std::nullopt;
+    }
+    return std::string{std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
+}
+
+/// Writes through a temporary file and a rename, so that workers sharing the cache directory never read a partial file.
+void writeFileAtomically(const std::filesystem::path& path, const std::string_view content)
+{
+    const auto temporaryPath = std::filesystem::path{fmt::format("{}.{}.tmp", path.string(), ::getpid())};
+    {
+        std::ofstream file{temporaryPath, std::ios::binary | std::ios::trunc};
+        file.write(content.data(), static_cast<std::streamsize>(content.size()));
+        if (!file)
+        {
+            throw std::runtime_error("Could not write " + temporaryPath.string());
+        }
+    }
+    std::filesystem::rename(temporaryPath, path);
+}
+
 CompiledPythonUdf compilePythonUdf(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
@@ -561,16 +632,40 @@ CompiledPythonUdf compilePythonUdf(
     const auto compilationStart = std::chrono::steady_clock::now();
     try
     {
-        loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
-        loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
-        const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
-        const auto sourcePath
-            = (std::filesystem::temp_directory_path() / fmt::format("{}_{}.py", symbol, static_cast<uint64_t>(::getpid()))).string();
-        const auto codonResult = compileWithCodon(sourcePath, source, importPaths);
+        loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
+        loadCodonPlugin(codonPluginPath(NES_CODON_OPENCV_PLUGIN_PATH));
+        const auto source = createPythonUdfSource(std::string{CachedPythonUdfSymbol}, parameterNames, body, argumentTypes, returnType);
+        const auto cacheKey = codonCacheKey(source, importPaths);
+        const auto cacheDirectory = codonCacheDirectory();
+        const auto cacheName = fmt::format("{:016x}", std::hash<std::string>{}(cacheKey));
+        const auto keyPath = cacheDirectory / (cacheName + ".key");
+        const auto bitcodePath = cacheDirectory / (cacheName + ".bc");
+        /// The source stays next to the bitcode because the module's debug info refers to it.
+        const auto sourcePath = (cacheDirectory / (cacheName + ".py")).string();
+        std::filesystem::create_directories(cacheDirectory);
+
+        /// The key is compared in full, so a hash collision is a cache miss.
+        std::optional<CodonCompilationResult> codonResult;
+        auto codonBitcode = readFile(keyPath) == cacheKey ? readFile(bitcodePath) : std::nullopt;
+        if (!codonBitcode)
+        {
+            codonResult = compileWithCodon(sourcePath, source, importPaths);
+            codonBitcode = codonResult->llvmBitcode;
+            try
+            {
+                /// The key is written last: it marks the entry as complete.
+                writeFileAtomically(bitcodePath, *codonBitcode);
+                writeFileAtomically(keyPath, cacheKey);
+            }
+            catch (const std::exception& exception)
+            {
+                NES_WARNING("Could not store Python UDF '{}' in the Codon cache {}: {}", symbol, cacheDirectory.string(), exception.what());
+            }
+        }
+
         llvm::LLVMContext llvmContext;
         auto parsedModule = llvm::parseBitcodeFile(
-            llvm::MemoryBufferRef{llvm::StringRef{codonResult.llvmBitcode.data(), codonResult.llvmBitcode.size()}, sourcePath},
-            llvmContext);
+            llvm::MemoryBufferRef{llvm::StringRef{codonBitcode->data(), codonBitcode->size()}, sourcePath}, llvmContext);
         if (!parsedModule)
         {
             throw QueryCompilerError(
@@ -578,6 +673,10 @@ CompiledPythonUdf compilePythonUdf(
         }
         const auto cleanupStart = std::chrono::steady_clock::now();
         auto pipelineModule = std::move(*parsedModule);
+        if (auto* entryPoint = pipelineModule->getFunction(CachedPythonUdfSymbol))
+        {
+            entryPoint->setName(symbol);
+        }
         replaceCodonStdoutLoads(*pipelineModule);
         addPythonUdfInterpreterAdapter(*pipelineModule, symbol, argumentTypes, returnType);
         auto interpreterModule = llvm::CloneModule(*pipelineModule);
@@ -591,19 +690,32 @@ CompiledPythonUdf compilePythonUdf(
         auto pipelineBitcode = writeBitcode(*pipelineModule);
         auto interpreterBitcode = writeBitcode(*interpreterModule);
         const auto compilationEnd = std::chrono::steady_clock::now();
-        fmt::print(
-            stderr,
-            "[PythonUDF] Compiled '{}' with Codon in {:.3f} ms (mutex wait: {:.3f} ms, parse: {:.3f} ms, compile: {:.3f} "
-            "ms, LLVM optimize: {:.3f} ms, cleanup: {:.3f} ms, bitcode: {:.3f} ms; debug source: '{}')\n",
-            symbol,
-            elapsedMilliseconds(compilationStart, compilationEnd),
-            elapsedMilliseconds(mutexWaitStart, compilationStart),
-            codonResult.parseMilliseconds,
-            codonResult.compileMilliseconds,
-            codonResult.optimizeMilliseconds,
-            elapsedMilliseconds(cleanupStart, bitcodeStart),
-            elapsedMilliseconds(bitcodeStart, compilationEnd),
-            sourcePath);
+        if (codonResult)
+        {
+            fmt::print(
+                stderr,
+                "[PythonUDF] Compiled '{}' with Codon in {:.3f} ms (mutex wait: {:.3f} ms, parse: {:.3f} ms, compile: {:.3f} "
+                "ms, LLVM optimize: {:.3f} ms, cleanup: {:.3f} ms, bitcode: {:.3f} ms; debug source: '{}')\n",
+                symbol,
+                elapsedMilliseconds(compilationStart, compilationEnd),
+                elapsedMilliseconds(mutexWaitStart, compilationStart),
+                codonResult->parseMilliseconds,
+                codonResult->compileMilliseconds,
+                codonResult->optimizeMilliseconds,
+                elapsedMilliseconds(cleanupStart, bitcodeStart),
+                elapsedMilliseconds(bitcodeStart, compilationEnd),
+                sourcePath);
+        }
+        else
+        {
+            fmt::print(
+                stderr,
+                "[PythonUDF] Loaded '{}' from the Codon cache in {:.3f} ms (mutex wait: {:.3f} ms; debug source: '{}')\n",
+                symbol,
+                elapsedMilliseconds(compilationStart, compilationEnd),
+                elapsedMilliseconds(mutexWaitStart, compilationStart),
+                sourcePath);
+        }
         return {std::move(pipelineBitcode), std::move(interpreterBitcode)};
     }
     catch (const Exception&)

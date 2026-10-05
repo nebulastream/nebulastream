@@ -1,8 +1,8 @@
 diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
-index 46a35a5d0e..b6c4d842db 100644
+index a98b2f36..3de9acbb 100644
 --- a/nautilus/include/nautilus/Engine.hpp
 +++ b/nautilus/include/nautilus/Engine.hpp
-@@ -189,6 +189,11 @@ public:
+@@ -191,6 +191,11 @@ public:
  		return udfRegistry_.contains(symbolName);
  	}
  
@@ -12,9 +12,9 @@ index 46a35a5d0e..b6c4d842db 100644
 +	}
 +
  	/// Register and compile a single function pointer. Defined after NautilusModule.
- 	template <typename R, is_val... FunctionArguments>
- 	auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const;
-@@ -248,6 +253,7 @@ private:
+ 	/// @param location Where this call was written; captured for free and shown on the
+ 	/// compiled function's IR signature line and in diagnostics raised while tracing it
+@@ -257,6 +262,7 @@ private:
  	std::unique_ptr<common::ArenaPool> irArenaPool_;
  	std::unique_ptr<compiler::JITCompiler> jit_;
  	UDFRegistry udfRegistry_;
@@ -22,7 +22,7 @@ index 46a35a5d0e..b6c4d842db 100644
  	const Options options;
  };
  
-@@ -270,12 +276,15 @@ private:
+@@ -279,12 +285,15 @@ private:
  class NautilusModule {
  public:
  #ifdef ENABLE_TRACING
@@ -41,15 +41,15 @@ index 46a35a5d0e..b6c4d842db 100644
  	               ModuleOptions moduleOptions)
  	    : moduleOptions_(std::move(moduleOptions)) {
  	}
-@@ -355,6 +364,7 @@ public:
+@@ -372,6 +381,7 @@ public:
  #ifdef ENABLE_TRACING
  		if (compiled_) {
  			moduleOptions_.setUDFRegistrySnapshot(udfRegistry_.snapshot());
 +			moduleOptions_.setExternalSymbolRegistrySnapshot(externalSymbolRegistry_.snapshot());
- 			auto executable = jit_.compile(functions_, moduleOptions_);
- 			auto module = CompiledModule(std::move(executable), std::move(interpretedFunctions_));
- 
-@@ -377,19 +387,20 @@ private:
+ 			// Compile into a freshly created module state. Each compile() carries
+ 			// its own IR to its own (optional, tiered) background promotion, so
+ 			// concurrent compiles on a shared engine share no compiler-level
+@@ -392,19 +402,20 @@ private:
  #ifdef ENABLE_TRACING
  	const compiler::JITCompiler& jit_;
  	const UDFRegistry& udfRegistry_;
@@ -73,10 +73,10 @@ index 46a35a5d0e..b6c4d842db 100644
  
  namespace details {
 diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
-index 1d76d2a34d..f1437eaa22 100644
+index eb5fee73..6aa206dc 100644
 --- a/nautilus/include/nautilus/options.hpp
 +++ b/nautilus/include/nautilus/options.hpp
-@@ -72,6 +72,46 @@ private:
+@@ -64,6 +64,46 @@ private:
  	Entries entries_;
  };
  
@@ -123,7 +123,7 @@ index 1d76d2a34d..f1437eaa22 100644
  using OptionValue = std::variant<int, double, std::string, bool>;
  
  class ModuleOptions;
-@@ -131,6 +171,14 @@ public:
+@@ -116,6 +156,14 @@ public:
  		return udfRegistrySnapshot_;
  	}
  
@@ -136,29 +136,29 @@ index 1d76d2a34d..f1437eaa22 100644
 +	}
 +
  	/**
- 	 * @brief Apply every option value (and JIT listener) set in @p other on
- 	 * top of this one; values present in @p other win.
-@@ -161,6 +209,7 @@ private:
+ 	 * @brief Apply every option value set in @p other on top of this one;
+ 	 * values present in @p other win.
+@@ -142,6 +190,7 @@ public:
+ private:
  	std::unordered_map<std::string, OptionValue> options;
- 	std::vector<llvm::JITEventListener*> mlir_jit_event_listeners_;
  	UDFRegistry::Snapshot udfRegistrySnapshot_;
 +	ExternalSymbolRegistry::Snapshot externalSymbolRegistrySnapshot_;
  };
  
  /**
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
-index 5b13e51e7f..37f61ce3b0 100644
+index 6b1b06b9..fb27c9ff 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
-@@ -14,6 +14,7 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
-                                                        llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
-                                                        const std::vector<std::string>& jitProxyFunctionSymbols,
-                                                        const std::vector<void*>& jitProxyFunctionTargetAddresses,
-+                                                       const engine::ExternalSymbolRegistry::Snapshot& externalSymbols,
-                                                        const std::vector<llvm::JITEventListener*>& eventListeners,
-                                                        llvm::CodeGenOptLevel codeGenOptLevel) {
- 
-@@ -45,6 +46,12 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+@@ -13,6 +13,7 @@ namespace nautilus::compiler::mlir {
+ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(
+     ::mlir::OwningOpRef<::mlir::ModuleOp>& mlirModule, llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+     const std::vector<std::string>& jitProxyFunctionSymbols, const std::vector<void*>& jitProxyFunctionTargetAddresses,
++    const engine::ExternalSymbolRegistry::Snapshot& externalSymbols,
+     llvm::CodeGenOptLevel codeGenOptLevel, bool enableDebuggerSupport, bool enablePerfSupport, bool perfEmitDebugInfo,
+     bool perfEmitUnwindInfo, bool perfRegionSymbols, bool enableJitSymbolRegistration,
+     const std::string& compilationUnitId) {
+@@ -51,6 +52,12 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(
  			symbolMap[interner(jitProxyFunctionSymbols.at(i))] = {llvm::orc::ExecutorAddr::fromPtr(address),
  			                                                      llvm::JITSymbolFlags::Exported};
  		}
@@ -172,7 +172,7 @@ index 5b13e51e7f..37f61ce3b0 100644
  		// Let plugins contribute additional (name -> address) entries to the
  		// ORC symbol map (e.g. the inlining plugin adds the hex-formatted
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
-index b0ee19a783..0b70e1ff6d 100644
+index 304dbaa8..8d2afb57 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.hpp
 @@ -2,6 +2,7 @@
@@ -180,28 +180,31 @@ index b0ee19a783..0b70e1ff6d 100644
  #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
  #include "nautilus/compiler/backends/mlir/jit/MLIRJit.hpp"
 +#include "nautilus/options.hpp"
- #include <llvm/ExecutionEngine/JITEventListener.h>
  #include <llvm/IR/Module.h>
  #include <llvm/Support/CodeGen.h>
+ #include <mlir/IR/BuiltinOps.h>
 @@ -25,6 +26,7 @@ public:
  	                 llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
  	                 const std::vector<std::string>& jitProxyFunctionSymbols,
  	                 const std::vector<void*>& jitProxyFunctionTargetAddresses,
 +	                 const engine::ExternalSymbolRegistry::Snapshot& externalSymbols,
- 	                 const std::vector<llvm::JITEventListener*>& eventListeners,
- 	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive);
- };
+ 	                 llvm::CodeGenOptLevel codeGenOptLevel = llvm::CodeGenOptLevel::Aggressive,
+ 	                 bool enableDebuggerSupport = false, bool enablePerfSupport = false, bool perfEmitDebugInfo = true,
+ 	                 bool perfEmitUnwindInfo = true, bool perfRegionSymbols = true,
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
-index a7de81ff8c..b2c28f7629 100644
+index a8e20af4..2441156b 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
-@@ -152,7 +152,8 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
- 	const auto jitCodeGenLevel = debugInfo.enable ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
- 	auto engine =
- 	    JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
--	                                  loweringProvider->getJitProxyTargetAddresses(), eventListeners, jitCodeGenLevel);
-+	                                  loweringProvider->getJitProxyTargetAddresses(),
-+	                                  options.getExternalSymbolRegistrySnapshot(), eventListeners, jitCodeGenLevel);
+@@ -176,9 +176,9 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	    debugInfo.enableDebug ? llvm::CodeGenOptLevel::Less : llvm::CodeGenOptLevel::Aggressive;
+ 	auto engine = JITCompiler::jitCompileModule(
+ 	    mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	    loweringProvider->getJitProxyTargetAddresses(), jitCodeGenLevel, debugInfo.enableDebug, debugInfo.enablePerf,
+-	    debugInfo.perfEmitDebugInfo, debugInfo.perfEmitUnwindInfo, debugInfo.perfRegionSymbols,
+-	    debugInfo.enableSampleSymbols, ir->getId());
++	    loweringProvider->getJitProxyTargetAddresses(), options.getExternalSymbolRegistrySnapshot(), jitCodeGenLevel,
++	    debugInfo.enableDebug, debugInfo.enablePerf, debugInfo.perfEmitDebugInfo, debugInfo.perfEmitUnwindInfo,
++	    debugInfo.perfRegionSymbols, debugInfo.enableSampleSymbols, ir->getId());
  	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
  		auto result = engine->lookupPacked("execute");
  		if (!result) {
