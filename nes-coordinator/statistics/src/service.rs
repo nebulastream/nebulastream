@@ -12,7 +12,7 @@
     limitations under the License.
 */
 use crate::placement;
-use crate::query_gen::{self, CollectRequest, GenerateError, VALUE};
+use crate::query_gen::{self, CollectRequest, GenerateError, QueryShape, VALUE};
 use crate::registry::{CollectionDomain, Key, Metric, Registered, Registry, Report, Trigger};
 use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
@@ -35,6 +35,13 @@ pub enum StatisticError {
     Generate(#[from] GenerateError),
     #[error("statistic key is not registered")]
     UnknownKey,
+    #[error(
+        "statistic {statistic_id} is already collected with {differences}; deregister it to collect it differently"
+    )]
+    CollectedDifferently {
+        statistic_id: u64,
+        differences: String,
+    },
     #[error("the statistic service has no address; start its gRPC server first")]
     NoServiceAddress,
     #[error("logical source {0} has no physical source to collect a statistic over")]
@@ -198,8 +205,17 @@ impl StatisticService {
     ) -> Result<CollectResult, StatisticError> {
         let address = self.address()?;
         let key = Self::key_of(request);
+        let shape = QueryShape::of(request);
 
         if let Some(registered) = self.registry.find(&key) {
+            // The running query keeps its shape, so a request asking for another one would silently get the wrong
+            // statistic or the wrong reports.
+            if let Some(differences) = shape.differences_from(&registered.shape) {
+                return Err(StatisticError::CollectedDifferently {
+                    statistic_id: registered.statistic_id,
+                    differences,
+                });
+            }
             if let Some(trigger) = trigger {
                 self.registry.add_trigger(&key, trigger);
             }
@@ -249,6 +265,7 @@ impl StatisticService {
                         query_id,
                         statistic_id,
                         worker: writer,
+                        shape,
                     };
                     self.registry.register(key, registered, trigger);
                     return Ok(CollectResult {

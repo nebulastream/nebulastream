@@ -322,6 +322,114 @@ async fn identical_requests_are_deduplicated() {
 }
 
 #[tokio::test]
+async fn a_request_for_the_same_key_with_another_shape_is_rejected() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let service = service(submitter.clone());
+    let collected = service
+        .collect_new_statistic(&average_over_value("false"), None)
+        .await
+        .unwrap();
+
+    let other_condition = average_over_value("STATISTICVALUE > 100.0");
+    let mut other_slide = average_over_value("false");
+    other_slide.window = WindowType::Sliding {
+        size: TimeMeasure {
+            value: 1000,
+            unit: TimeUnit::Milliseconds,
+        },
+        slide: TimeMeasure {
+            value: 500,
+            unit: TimeUnit::Milliseconds,
+        },
+    };
+    let mut other_time = average_over_value("false");
+    other_time.time_characteristic = TimeCharacteristic::Ingestion;
+
+    for (request, expected) in [
+        (
+            other_condition,
+            "condition 'false' (requested: 'STATISTICVALUE > 100.0')",
+        ),
+        (
+            other_slide,
+            "window tumbling 1000 ms (requested: sliding 1000 ms advancing by 500 ms)",
+        ),
+        (
+            other_time,
+            "event time from ts in ms (requested: ingestion time)",
+        ),
+    ] {
+        let error = service
+            .collect_new_statistic(&request, None)
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(
+                &error,
+                StatisticError::CollectedDifferently { statistic_id, .. }
+                    if *statistic_id == collected.statistic_id
+            ),
+            "{error}"
+        );
+        assert!(error.to_string().contains(expected), "{error}");
+    }
+
+    assert_eq!(
+        submitter.queries().len(),
+        1,
+        "a rejected request must deploy nothing"
+    );
+    assert_eq!(service.registered_statistics(), 1);
+}
+
+#[tokio::test]
+async fn equivalent_spellings_of_a_shape_share_the_statistic() {
+    let submitter = Arc::new(StubSubmitter::default());
+    let service = service(submitter.clone());
+
+    let reporting = service
+        .collect_new_statistic(&average_over_value("true"), None)
+        .await
+        .unwrap();
+    let mut same_window_as_sliding = average_over_value(" TRUE ");
+    same_window_as_sliding.window = WindowType::Sliding {
+        size: TimeMeasure {
+            value: 1,
+            unit: TimeUnit::Seconds,
+        },
+        slide: TimeMeasure {
+            value: 1000,
+            unit: TimeUnit::Milliseconds,
+        },
+    };
+    let again = service
+        .collect_new_statistic(&same_window_as_sliding, None)
+        .await
+        .unwrap();
+    assert!(again.already_existed);
+    assert_eq!(again.statistic_id, reporting.statistic_id);
+
+    let mut never_reporting = average_over_value("");
+    never_reporting.domain = CollectionDomain::Data {
+        logical_source_name: SOURCE.into(),
+        field_name: "other".into(),
+    };
+    let first = service
+        .collect_new_statistic(&never_reporting, None)
+        .await
+        .unwrap();
+    never_reporting.condition = "False".into();
+    let second = service
+        .collect_new_statistic(&never_reporting, None)
+        .await
+        .unwrap();
+    assert!(second.already_existed);
+    assert_eq!(second.statistic_id, first.statistic_id);
+
+    assert_eq!(submitter.queries().len(), 2);
+}
+
+#[tokio::test]
 async fn unsupported_requests_fail_with_not_implemented() {
     let submitter = Arc::new(StubSubmitter::default());
     let service = service(submitter.clone());
@@ -951,6 +1059,38 @@ mod transport {
     }
 
     #[tokio::test]
+    async fn collecting_a_statistic_differently_is_already_exists_on_the_wire() {
+        let submitter = Arc::new(StubSubmitter::default());
+        let service = service(submitter.clone());
+        let endpoint = serve(service).await;
+
+        let mut client =
+            proto::statistic_control_service_client::StatisticControlServiceClient::connect(
+                endpoint,
+            )
+            .await
+            .unwrap();
+        client
+            .collect_new_statistic(collect_request("false"))
+            .await
+            .unwrap();
+
+        let status = client
+            .collect_new_statistic(collect_request("true"))
+            .await
+            .unwrap_err();
+        assert_eq!(status.code(), tonic::Code::AlreadyExists);
+        assert!(
+            status
+                .message()
+                .contains("condition 'false' (requested: 'true')"),
+            "{}",
+            status.message()
+        );
+        assert_eq!(submitter.queries().len(), 1);
+    }
+
+    #[tokio::test]
     async fn an_unspecified_metric_is_rejected_rather_than_guessed() {
         let submitter = Arc::new(StubSubmitter::default());
         let service = service(submitter.clone());
@@ -991,7 +1131,6 @@ mod transport {
         let mut stream = control
             .watch_statistic(proto::WatchStatisticRequest {
                 key: Some(statistic_key()),
-                condition: "true".into(),
             })
             .await
             .unwrap()
@@ -1038,7 +1177,6 @@ mod transport {
         let status = client
             .watch_statistic(proto::WatchStatisticRequest {
                 key: Some(statistic_key()),
-                condition: "true".into(),
             })
             .await
             .unwrap_err();

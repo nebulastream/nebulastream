@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+use crate::query_gen::QueryShape;
 use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -60,12 +61,14 @@ pub struct Report {
 
 pub type Trigger = async_channel::Sender<Report>;
 
-/// A deployed statistic: the query building it, its id, and the worker whose statistic store holds it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// A deployed statistic: the query building it, its id, the worker whose statistic store holds it, and the shape the
+/// query was built with.
+#[derive(Clone, Debug)]
 pub struct Registered {
     pub query_id: u64,
     pub statistic_id: u64,
     pub worker: NetworkAddr,
+    pub shape: QueryShape,
 }
 
 pub struct Entry {

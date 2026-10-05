@@ -15,7 +15,7 @@
 use crate::proto;
 use crate::query_gen::{CollectRequest, TimeCharacteristic, TimeMeasure, TimeUnit, WindowType};
 use crate::registry::{CollectionDomain, Key, Metric, Report};
-use crate::service::StatisticService;
+use crate::service::{StatisticError, StatisticService};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -195,7 +195,12 @@ impl proto::statistic_control_service_server::StatisticControlService for Contro
             .service
             .collect_new_statistic(&request, None)
             .await
-            .map_err(|error| Status::failed_precondition(error.to_string()))?;
+            .map_err(|error| match error {
+                StatisticError::CollectedDifferently { .. } => {
+                    Status::already_exists(error.to_string())
+                }
+                error => Status::failed_precondition(error.to_string()),
+            })?;
         Ok(Response::new(proto::CollectStatisticResponse {
             query_id: result.query_id,
             statistic_id: result.statistic_id,

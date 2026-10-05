@@ -107,6 +107,84 @@ pub struct CollectRequest {
     pub options: HashMap<String, String>,
 }
 
+/// What a statistic's query is built from beyond its key. A request shares a registered statistic only if it asks for
+/// the same shape: a different window, time characteristic or condition needs a query of its own.
+#[derive(Clone, Debug)]
+pub struct QueryShape {
+    pub window: WindowType,
+    pub time_characteristic: TimeCharacteristic,
+    pub condition: String,
+}
+
+impl QueryShape {
+    pub fn of(request: &CollectRequest) -> Self {
+        Self {
+            window: request.window,
+            time_characteristic: request.time_characteristic.clone(),
+            condition: request.condition.clone(),
+        }
+    }
+
+    /// How this shape differs from the `existing` one, or `None` if both build the same query. Windows compare by size
+    /// and slide, so a tumbling window equals a sliding one that advances by its size. Conditions compare after
+    /// trimming, with the literal ones matched as the query generator reads them.
+    pub fn differences_from(&self, existing: &QueryShape) -> Option<String> {
+        let mut differences = Vec::new();
+        if window_millis(self.window) != window_millis(existing.window) {
+            differences.push(format!(
+                "window {} (requested: {})",
+                describe_window(existing.window),
+                describe_window(self.window)
+            ));
+        }
+        if self.time_characteristic != existing.time_characteristic {
+            differences.push(format!(
+                "{} (requested: {})",
+                describe_time_characteristic(&existing.time_characteristic),
+                describe_time_characteristic(&self.time_characteristic)
+            ));
+        }
+        if normalised_condition(&self.condition) != normalised_condition(&existing.condition) {
+            differences.push(format!(
+                "condition '{}' (requested: '{}')",
+                existing.condition.trim(),
+                self.condition.trim()
+            ));
+        }
+        (!differences.is_empty()).then(|| differences.join(", "))
+    }
+}
+
+/// A window's size and slide in milliseconds.
+fn window_millis(window: WindowType) -> (u64, u64) {
+    match window {
+        WindowType::Tumbling { size } => (size.as_millis(), size.as_millis()),
+        WindowType::Sliding { size, slide } => (size.as_millis(), slide.as_millis()),
+    }
+}
+
+fn describe_window(window: WindowType) -> String {
+    match window {
+        WindowType::Tumbling { size } => format!("tumbling {} {}", size.value, size.unit.sql()),
+        WindowType::Sliding { size, slide } => format!(
+            "sliding {} {} advancing by {} {}",
+            size.value,
+            size.unit.sql(),
+            slide.value,
+            slide.unit.sql()
+        ),
+    }
+}
+
+fn describe_time_characteristic(characteristic: &TimeCharacteristic) -> String {
+    match characteristic {
+        TimeCharacteristic::Ingestion => "ingestion time".into(),
+        TimeCharacteristic::Event { field_name, unit } => {
+            format!("event time from {field_name} in {}", unit.sql())
+        }
+    }
+}
+
 /// The SQL aggregation a metric is built with. Its probes are named after it: `AVG_PROBE`, `AVG_PROBE_RANGE`.
 pub fn aggregation(metric: Metric) -> Result<&'static str, GenerateError> {
     match metric {
@@ -165,6 +243,17 @@ fn sends_never(condition: &str) -> bool {
 
 fn sends_always(condition: &str) -> bool {
     condition.trim().to_lowercase() == "true"
+}
+
+/// The condition as the query generator reads it: the literal ones in one spelling, any other trimmed.
+fn normalised_condition(condition: &str) -> &str {
+    if sends_never(condition) {
+        "false"
+    } else if sends_always(condition) {
+        "true"
+    } else {
+        condition.trim()
+    }
 }
 
 /// Places a source or sink on a worker. The coordinator only fills in a missing host in embedded deployments, and the
