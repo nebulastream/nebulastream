@@ -123,7 +123,7 @@ void StreamTableJoinOperatorHandler::prepareTableTimestampOrder()
         return;
     }
     tableTimestampOrder.resize(tableTimestamps.size());
-    std::ranges::iota(tableTimestampOrder, uint64_t{0});
+    std::iota(tableTimestampOrder.begin(), tableTimestampOrder.end(), uint64_t{0});
     std::ranges::sort(
         tableTimestampOrder,
         [&](const uint64_t left, const uint64_t right)
@@ -239,7 +239,7 @@ StreamTableJoinOperatorHandler::updateOutputWatermark(const Timestamp watermark,
 
 bool StreamTableJoinOperatorHandler::isTableOrigin(const OriginId originId) const
 {
-    return std::ranges::contains(tableOrigins, originId);
+    return std::find(tableOrigins.begin(), tableOrigins.end(), originId) != tableOrigins.end();
 }
 
 SequenceNumber StreamTableJoinOperatorHandler::getNextOutputSequence()
