@@ -71,10 +71,16 @@ constexpr std::array audioFields{
 
 constexpr size_t MAX_FRAMES_PER_READ = 1024;
 
-/// A read whose capture time differs from where the sample timeline expects it by more than this is not a continuation
-/// of that timeline: the stream restarted, samples were dropped (the ring buffer overran while the source was blocked),
-/// or the device clock drifted away from the system clock. The timeline is then anchored again.
-constexpr uint64_t TIMELINE_TOLERANCE_NS = 5'000'000;
+/// The capture time ALSA reports for a read is only accurate to a few milliseconds (the hardware pointer advances once
+/// per period), so the sample timeline is not re-anchored on every read. Samples are spaced exactly 1/sampleRate apart.
+/// The timeline is steered towards the reported capture times by SERVO_DIVISOR-th of the deviation per read, at most half
+/// a sample period at a time, which keeps the timestamps strictly increasing and still follows the clock drift between
+/// the device and the system clock.
+constexpr int64_t SERVO_DIVISOR = 128;
+/// A read whose capture time is further from the timeline than this is a discontinuity, not noise: the stream restarted,
+/// or samples were dropped because the ring buffer (100 ms) overran while the source was blocked. The timeline is then
+/// anchored again, so the gap shows in the timestamps.
+constexpr int64_t TIMELINE_RESYNC_NS = 50'000'000;
 
 constexpr uint64_t nanosecondsOf(const snd_htimestamp_t& timestamp)
 {
@@ -223,12 +229,18 @@ Source::FillTupleBufferResult AudioSource::fillTupleBuffer(TupleBuffer& tupleBuf
         if (realTimestamps)
         {
             const auto expectedNs = timestampFor(startTimestampNs, samplesCaptured, sampleRate);
-            const auto deviationNs = captureTimeNs > expectedNs ? captureTimeNs - expectedNs : expectedNs - captureTimeNs;
-            if (!timelineAnchored || deviationNs > TIMELINE_TOLERANCE_NS)
+            const auto deviationNs = static_cast<int64_t>(captureTimeNs) - static_cast<int64_t>(expectedNs);
+            if (!timelineAnchored || deviationNs > TIMELINE_RESYNC_NS || deviationNs < -TIMELINE_RESYNC_NS)
             {
                 startTimestampNs = captureTimeNs;
                 samplesCaptured = 0;
                 timelineAnchored = true;
+            }
+            else
+            {
+                const int64_t maxStepNs = 500'000'000LL / sampleRate;
+                const int64_t stepNs = std::clamp(deviationNs / SERVO_DIVISOR, -maxStepNs, maxStepNs);
+                startTimestampNs = static_cast<uint64_t>(static_cast<int64_t>(startTimestampNs) + stepNs);
             }
         }
 
