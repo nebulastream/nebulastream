@@ -389,6 +389,10 @@ booleanComparison
 
 valueExpression
     : CAST '(' expression AS targetType=typeDefinition ')'                                    #castExpression
+    | TENSOR_AGG '(' tensorValue+=expression (',' tensorValue+=expression)*
+        AT '(' tensorIndex+=expression (',' tensorIndex+=expression)* ')'
+        SHAPE '(' tensorDimension+=INTEGER_VALUE (',' tensorDimension+=INTEGER_VALUE)* ')'
+        (DEFAULT tensorDefault=number)? ')'                                                   #tensorAggregation
     | (functionName | typeDefinition) '(' (starArg=ASTERISK | argument+=expression (',' argument+=expression)*)? ')'  #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
@@ -545,6 +549,9 @@ SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 ARRAY_AGG: 'ARRAY_AGG' | 'array_agg';
+TENSOR_AGG: 'TENSOR_AGG' | 'tensor_agg';
+SHAPE: 'SHAPE';
+DEFAULT: 'DEFAULT';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';

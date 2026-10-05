@@ -361,13 +361,16 @@ pushBeyondWindowedAggregation(const TypedLogicalOperator<WindowedAggregationLogi
         }
         newAggregations.push_back(agg);
 
-        INVARIANT(
-            std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(agg.function.getInputFunction()),
-            "The returned function must always be a bound FieldAccessLogicalFunction");
-        const auto fieldAccessFunction = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(agg.function.getInputFunction());
-        for (const auto& accessedField : getAccessedFields(fieldAccessFunction))
+        for (const auto& inputFunction : agg.function.getInputFunctions())
         {
-            newRequired.insert(accessedField);
+            INVARIANT(
+                std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(inputFunction),
+                "The returned function must always be a bound FieldAccessLogicalFunction");
+            const auto fieldAccessFunction = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(inputFunction);
+            for (const auto& accessedField : getAccessedFields(fieldAccessFunction))
+            {
+                newRequired.insert(accessedField);
+            }
         }
     }
 

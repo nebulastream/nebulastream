@@ -21,6 +21,7 @@ add_source_files(nes-physical-operators
         MinAggregationPhysicalFunction.cpp
         MedianAggregationPhysicalFunction.cpp
         SumAggregationPhysicalFunction.cpp
+        TensorAggAggregationPhysicalFunction.cpp
 )
 
 add_registry_entry(AggregationPhysicalFunction ArrayAgg)
@@ -30,3 +31,4 @@ add_registry_entry(AggregationPhysicalFunction Max)
 add_registry_entry(AggregationPhysicalFunction Median)
 add_registry_entry(AggregationPhysicalFunction Min)
 add_registry_entry(AggregationPhysicalFunction Sum)
+add_registry_entry(AggregationPhysicalFunction TensorAgg)

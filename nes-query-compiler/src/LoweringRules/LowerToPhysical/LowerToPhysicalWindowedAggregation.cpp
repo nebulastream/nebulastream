@@ -112,6 +112,18 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
             resultFieldIdentifier,
             tupleLayout,
             descriptor.function.shallIncludeNullValues());
+        const auto inputFunctions = descriptor.function.getInputFunctions();
+        for (const auto& additionalInput : inputFunctions | std::views::drop(1))
+        {
+            PRECONDITION(
+                std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(additionalInput),
+                "Expected every input of the aggregation function to be bound");
+            const auto additionalFieldAccess = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(additionalInput);
+            aggregationArguments.additionalInputTypes.push_back(additionalFieldAccess->getDataType());
+            aggregationArguments.additionalInputFunctions.push_back(QueryCompilation::FunctionProvider::lowerFunction(
+                additionalFieldAccess, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>()));
+        }
+        aggregationArguments.logicalFunction = descriptor.function;
         if (const auto aggregationFactory = AggregationPhysicalFunctionRegistry::instance().find(std::string{name}))
         {
             aggregationPhysicalFunctions.push_back((*aggregationFactory)(std::move(aggregationArguments)));

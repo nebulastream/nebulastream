@@ -22,6 +22,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <variant>
@@ -65,6 +66,7 @@
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/TensorAggAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
@@ -1439,6 +1441,56 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
         helpers.top().functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
     }
+}
+
+void AntlrSQLQueryPlanCreator::exitTensorAggregation(AntlrSQLParser::TensorAggregationContext* context)
+{
+    auto& helper = helpers.top();
+    const auto numberOfValues = context->tensorValue.size();
+    const auto numberOfArguments = numberOfValues + context->tensorIndex.size();
+    if (helper.functionBuilder.size() < numberOfArguments)
+    {
+        throw InvalidQuerySyntax("TENSOR_AGG expects {} arguments at {}", numberOfArguments, context->getText());
+    }
+
+    std::vector<AggregationFieldAccess> arguments;
+    const auto argumentsBegin = helper.functionBuilder.end() - static_cast<std::ptrdiff_t>(numberOfArguments);
+    for (auto argument = argumentsBegin; argument != helper.functionBuilder.end(); ++argument)
+    {
+        if (argument->tryGetAs<UnboundFieldAccessLogicalFunction>())
+        {
+            arguments.emplace_back(argument->getAs<UnboundFieldAccessLogicalFunction>());
+            continue;
+        }
+        const auto tempName = bindIdentifier(fmt::format("_agg_input_{}", helper.aggExprCounter++));
+        helper.preAggregationProjections.emplace_back(tempName, std::move(*argument));
+        arguments.emplace_back(TypedLogicalFunction<UnboundFieldAccessLogicalFunction>{UnboundFieldAccessLogicalFunction(tempName)});
+    }
+    helper.functionBuilder.erase(argumentsBegin, helper.functionBuilder.end());
+
+    std::vector<uint64_t> shape;
+    for (const auto* dimension : context->tensorDimension)
+    {
+        try
+        {
+            shape.push_back(std::stoull(dimension->getText()));
+        }
+        catch (const std::out_of_range&)
+        {
+            throw InvalidQuerySyntax("TENSOR_AGG SHAPE dimension {} is too large at {}", dimension->getText(), context->getText());
+        }
+    }
+    const float defaultValue = context->tensorDefault == nullptr ? 0.0F : std::stof(context->tensorDefault->getText());
+
+    const auto firstValueName = std::get<TypedLogicalFunction<UnboundFieldAccessLogicalFunction>>(arguments.front())->getFieldName();
+    std::vector<AggregationFieldAccess> values(arguments.begin(), arguments.begin() + static_cast<std::ptrdiff_t>(numberOfValues));
+    std::vector<AggregationFieldAccess> indices(arguments.begin() + static_cast<std::ptrdiff_t>(numberOfValues), arguments.end());
+
+    const auto asField = bindIdentifier(fmt::format("{}_TENSOR_AGG", firstValueName));
+    helper.windowAggs.emplace_back(
+        TensorAggAggregationLogicalFunction{std::move(values), std::move(indices), std::move(shape), defaultValue}, std::optional{asField});
+    helper.functionBuilder.emplace_back(UnboundFieldAccessLogicalFunction(asField));
+    helper.hasUnnamedAggregation = true;
 }
 
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)

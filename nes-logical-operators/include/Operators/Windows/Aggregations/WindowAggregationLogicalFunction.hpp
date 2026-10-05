@@ -23,6 +23,7 @@
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -97,6 +98,7 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
     [[nodiscard]] virtual DataType getAggregateType() const = 0;
     [[nodiscard]] virtual AggregationFieldAccess getInputFunction() const = 0;
+    [[nodiscard]] virtual std::vector<AggregationFieldAccess> getInputFunctions() const = 0;
 
     [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const = 0;
@@ -278,6 +280,8 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] AggregationFieldAccess getInputFunction() const { return self->getInputFunction(); }
 
+    [[nodiscard]] std::vector<AggregationFieldAccess> getInputFunctions() const { return self->getInputFunctions(); }
+
     [[nodiscard]] bool operator==(const TypedWindowAggregationLogicalFunction& other) const { return self->equals(*other.self); }
 
 private:
@@ -316,6 +320,20 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
     [[nodiscard]] DataType getAggregateType() const override { return impl.getAggregateType(); }
 
     [[nodiscard]] AggregationFieldAccess getInputFunction() const override { return impl.getInputFunction(); }
+
+    [[nodiscard]] std::vector<AggregationFieldAccess> getInputFunctions() const override
+    {
+        if constexpr (requires {
+                          { impl.getInputFunctions() } -> std::convertible_to<std::vector<AggregationFieldAccess>>;
+                      })
+        {
+            return impl.getInputFunctions();
+        }
+        else
+        {
+            return {impl.getInputFunction()};
+        }
+    }
 
     [[nodiscard]] bool equals(const ErasedWindowAggregationFunction& other) const override
     {

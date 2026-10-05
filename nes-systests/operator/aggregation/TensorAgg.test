@@ -1,0 +1,154 @@
+# name: operator/aggregation/TensorAgg.test
+# description: TENSOR_AGG writes every tuple's values into a fixed-shape float32 tensor at the position its index fields select
+# groups: [Aggregation, WindowOperators]
+
+# TENSOR_AGG(v_1, ..., v_k AT (i_1, ..., i_m) SHAPE (d_1, ..., d_m, k) DEFAULT x) returns d_1 * ... * d_m * k float32
+# values, row-major, as VARSIZED bytes. The expected payloads below are Base64 of little-endian float32; the comment
+# above each query lists the decoded values.
+
+GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
+
+# A 2 x 3 grid whose cells arrive in shuffled order and with unrelated timestamps.
+CREATE LOGICAL SOURCE cells(row UINT64 NOT NULL, col UINT64 NOT NULL, v FLOAT32 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR cells TYPE File;
+ATTACH INLINE
+1,2,6.0,7
+0,0,1.0,3
+1,0,4.0,1
+0,2,3.0,9
+0,1,2.0,5
+1,1,5.0,2
+
+# Two value fields per position, of different numeric types; both are converted to float32.
+CREATE LOGICAL SOURCE pairs(i UINT64 NOT NULL, x INT32 NOT NULL, y FLOAT64 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR pairs TYPE File;
+ATTACH INLINE
+2,5,6.0,1
+0,1,2.0,2
+1,3,4.0,3
+
+# Tuples that do not land in the tensor: an index outside the shape, a negative index, a NULL index. A NULL value
+# leaves its cell at the default.
+CREATE LOGICAL SOURCE edges(i INT32, v FLOAT32, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR edges TYPE File;
+ATTACH INLINE
+0,1.5,1
+3,9.0,2
+-1,9.0,3
+,9.0,4
+2,,5
+1,2.5,6
+
+# One logical source fed by two physical sources; every key (id) gets its own tensor, built from both sources.
+CREATE LOGICAL SOURCE stations(id UINT64 NOT NULL, i UINT64 NOT NULL, v FLOAT32 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stations TYPE File;
+ATTACH INLINE
+1,0,1.0,1
+2,1,20.0,2
+1,2,3.0,3
+
+CREATE PHYSICAL SOURCE FOR stations TYPE File;
+ATTACH INLINE
+2,0,10.0,1
+1,1,2.0,2
+2,2,30.0,3
+
+# Two stations recording at the same time, as a sensor network delivers them: sample by sample, with real timestamps.
+CREATE LOGICAL SOURCE readings(station UINT64 NOT NULL, sample UINT64 NOT NULL, v FLOAT32 NOT NULL, ts UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE File;
+ATTACH INLINE
+0,0,1.0,0
+1,0,4.0,0
+0,1,2.0,10
+1,1,5.0,10
+0,2,3.0,20
+1,2,6.0,20
+
+CREATE SINK tensorSink(tensor VARSIZED NOT NULL) TYPE File;
+CREATE SINK keyedTensorSink(id UINT64 NOT NULL, tensor VARSIZED NOT NULL) TYPE File;
+CREATE SINK bytesSink(bytes UINT64 NOT NULL) TYPE File;
+
+# [[1, 2, 3], [4, 5, 6]]: every value lands at (row, col), independent of arrival order and timestamps.
+SELECT TO_BASE64(TENSOR_AGG(v AT (row, col) SHAPE (2, 3))) AS tensor
+FROM cells
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AACAPwAAAEAAAEBAAACAQAAAoEAAAMBA
+
+# Only (0, 1) and (1, 2) are written; every other cell keeps the default: [[-1, 2, -1], [-1, -1, 6]].
+SELECT TO_BASE64(TENSOR_AGG(v AT (row, col) SHAPE (2, 3) DEFAULT -1)) AS tensor
+FROM cells
+WHERE (row = UINT64(0) AND col = UINT64(1)) OR (row = UINT64(1) AND col = UINT64(2))
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AACAvwAAAEAAAIC/AACAvwAAgL8AAMBA
+
+# The size is fixed by SHAPE, so a window with a single tuple still yields 2 * 3 values of 4 bytes.
+SELECT OCTET_LENGTH(TENSOR_AGG(v AT (row, col) SHAPE (2, 3))) AS bytes
+FROM cells
+WHERE row = UINT64(1) AND col = UINT64(1)
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO bytesSink;
+----
+24
+
+# x and y form the last axis: [[1, 2], [3, 4], [5, 6]].
+SELECT TO_BASE64(TENSOR_AGG(x, y AT (i) SHAPE (3, 2))) AS tensor
+FROM pairs
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AACAPwAAAEAAAEBAAACAQAAAoEAAAMBA
+
+# [1.5, 2.5, 0]: indices 3, -1 and NULL are ignored, and the NULL value at index 2 leaves the default. With one value
+# field, SHAPE may leave out the value axis.
+SELECT TO_BASE64(TENSOR_AGG(v AT (i) SHAPE (3))) AS tensor
+FROM edges
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AADAPwAAIEAAAAAA
+
+# Each key's tensor combines tuples from both physical sources: id 1 is [1, 2, 3], id 2 is [10, 20, 30].
+SELECT id, TO_BASE64(TENSOR_AGG(v AT (i) SHAPE (3))) AS tensor
+FROM stations
+GROUP BY id
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO keyedTensorSink;
+----
+1,AACAPwAAAEAAAEBA
+2,AAAgQQAAoEEAAPBB
+
+# ARRAY_AGG orders by arrival and time, so the stations interleave: [1, 4, 2, 5, 3, 6].
+SELECT TO_BASE64(ARRAY_AGG(v)) AS tensor
+FROM readings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AACAPwAAgEAAAABAAACgQAAAQEAAAMBA
+
+# TENSOR_AGG places by (station, sample), so the same stream yields one row per station: [[1, 2, 3], [4, 5, 6]].
+SELECT TO_BASE64(TENSOR_AGG(v AT (station, sample) SHAPE (2, 3))) AS tensor
+FROM readings
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+AACAPwAAAEAAAEBAAACAQAAAoEAAAMBA
+
+# SHAPE must end with the number of value fields (here 1), not 2.
+SELECT TO_BASE64(TENSOR_AGG(v AT (row, col) SHAPE (2, 3, 2))) AS tensor
+FROM cells
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+ERROR 2007
+
+# Index fields must be integers.
+SELECT TO_BASE64(TENSOR_AGG(v AT (v) SHAPE (3))) AS tensor
+FROM cells
+WINDOW TUMBLING(ts, SIZE 1000 MS)
+INTO tensorSink;
+----
+ERROR 2007

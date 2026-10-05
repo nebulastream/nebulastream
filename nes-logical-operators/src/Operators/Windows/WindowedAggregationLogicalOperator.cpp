@@ -385,14 +385,16 @@ std::unordered_map<Field, std::unordered_set<Field>> WindowedAggregationLogicalO
     {
         const auto writeFieldOpt = boundOutputSchema.getFieldByName(name);
         INVARIANT(writeFieldOpt.has_value(), "Field {} not found in output schema", name);
-        const bool fieldAccessInferred
-            = std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(aggFunction->getInputFunction());
-        INVARIANT(
-            fieldAccessInferred,
-            "Field access not inferred for aggregation function but schema inference was called {}",
-            aggFunction->getName());
-        auto fieldAccessFunction = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(aggFunction->getInputFunction());
-        accessedFields[writeFieldOpt.value()].insert(fieldAccessFunction->getField());
+        for (const auto& inputFunction : aggFunction.getInputFunctions())
+        {
+            const bool fieldAccessInferred = std::holds_alternative<TypedLogicalFunction<FieldAccessLogicalFunction>>(inputFunction);
+            INVARIANT(
+                fieldAccessInferred,
+                "Field access not inferred for aggregation function but schema inference was called {}",
+                aggFunction->getName());
+            auto fieldAccessFunction = std::get<TypedLogicalFunction<FieldAccessLogicalFunction>>(inputFunction);
+            accessedFields[writeFieldOpt.value()].insert(fieldAccessFunction->getField());
+        }
     }
     return accessedFields;
 }

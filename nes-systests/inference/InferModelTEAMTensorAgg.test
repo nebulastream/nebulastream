@@ -1,76 +1,69 @@
-# name: inference/InferModelTEAMArrayAgg.test
-# description: TEAM inference on tensors that ARRAY_AGG assembles from 25 per-station sources
+# name: inference/InferModelTEAMTensorAgg.test
+# description: TEAM inference on tensors that TENSOR_AGG assembles from per-station sensor streams
 # groups: [Inference, Aggregation]
 
-# Every station slot of the TEAM input is a separate physical source that streams its preprocessed waveform one float
-# per tuple. ARRAY_AGG assembles the model inputs waveforms [25, 3000, 3] and coords [25, 3] per event, and
-# MODEL_INFERENCE runs the unmodified model on them. See InferModelTEAM.test for the model's inputs and outputs.
+# Every seismic station is a separate physical source that streams its (preprocessed) recording sample by sample,
+# with real timestamps: one tuple per sample with the three channels n, e, z and the station's coordinates.
+# TENSOR_AGG places every tuple by its station slot and sample index, which assembles the unmodified model's inputs
+#     waveforms [25, 3000, 3]   TENSOR_AGG(n, e, z AT (station_slot, sample_idx) SHAPE (25, 3000, 3))
+#     coords    [25, 3]         TENSOR_AGG(latitude, longitude, depth_km AT (station_slot) SHAPE (25, 3))
+# per event, independent of the order in which the stations' tuples arrive. See InferModelTEAM.test for the model.
 #
-# ARRAY_AGG orders values by timestamp: pages of one input buffer keep their tuple order and pages are sorted by
-# their first timestamp. The timestamps are therefore synthetic and encode each value's position in the tensors,
-#     ts = event * 250000 + station * 9000 + sample * 3 + channel,
-# which gives every source a disjoint timestamp range and reproduces the row-major tensor layout. A stream stamped
-# with wall-clock time would interleave the stations instead. coord carries latitude, longitude and depth_km in each
-# station's first three tuples and is NULL elsewhere, so ARRAY_AGG(coord) yields exactly the 75 coordinates.
-#
-# model/team_baseline/split_team_input_by_station.py writes the station files from team_input_t5_event{3,26,47}.csv,
-# the inputs of InferModelTEAMMultipleSources.test. The windows starting at 0, 250000 and 500000 hold events 3, 26
-# and 47, so the expected predictions are the TensorFlow results of that test.
+# The streams hold events 3, 26 and 47 for a prediction at t = 5 s, written by
+#     model/team_baseline/prepare_team_input.py --time 5 --events 3 26 47 --stream-dir stream_t5
+# Only data that exists 5 s into an event is streamed: the first 1000 samples of the stations whose P wave has
+# arrived (6, 5 and 10 of them). Everything else is zero in TEAM's input, which TENSOR_AGG's default fills in.
+# The expected predictions are TensorFlow's results on the same inputs.
 
 GlobalConfiguration worker.query_engine.number_of_worker_threads: [1, 4]
 
-CREATE LOGICAL SOURCE stations(ts UINT64 NOT NULL, value FLOAT32 NOT NULL, coord FLOAT32);
+CREATE LOGICAL SOURCE stations(event_idx UINT64 NOT NULL, station_slot UINT64 NOT NULL, sample_idx UINT64 NOT NULL,
+    timestamp_ms UINT64 NOT NULL, n FLOAT32 NOT NULL, e FLOAT32 NOT NULL, z FLOAT32 NOT NULL,
+    latitude FLOAT32 NOT NULL, longitude FLOAT32 NOT NULL, depth_km FLOAT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_00.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.BCL.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_01.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.CNMT.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_02.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.CSO1.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_03.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.CTD.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_04.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.DUR.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_05.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.LRNO.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_06.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.LSS.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_07.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.MCLF.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_08.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.MMP1.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_09.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.MZZ.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_10.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.NAS.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_11.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.NRN.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_12.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.PLS.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_13.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.PLTA.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_14.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.PTT.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_15.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.SCO.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_16.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.SGMA.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_17.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.SPR.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_18.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.TRL.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_19.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.TRN1.csv
 CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_20.csv
-CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_21.csv
-CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_22.csv
-CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_23.csv
-CREATE PHYSICAL SOURCE FOR stations TYPE File;
-ATTACH FILE model/team_baseline/stations_t5/station_24.csv
+ATTACH FILE model/team_baseline/stream_t5/IT.VSE.csv
 
+# The preprocessed tensors of the same events, as Python builds them (see InferModelTEAMMultipleSources.test).
 CREATE LOGICAL SOURCE team(event_idx UINT64 NOT NULL, event_id UINT64 NOT NULL, waveforms VARSIZED NOT NULL, coords VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR team TYPE File;
 ATTACH FILE model/team_baseline/team_input_t5_event3.csv
@@ -103,33 +96,39 @@ OUTPUT (
     loc13_alpha FLOAT32, loc13_lat FLOAT32, loc13_lon FLOAT32, loc13_depth FLOAT32, loc13_sigma_lat FLOAT32, loc13_sigma_lon FLOAT32, loc13_sigma_depth FLOAT32,
     loc14_alpha FLOAT32, loc14_lat FLOAT32, loc14_lon FLOAT32, loc14_depth FLOAT32, loc14_sigma_lat FLOAT32, loc14_sigma_lon FLOAT32, loc14_sigma_depth FLOAT32);
 
-CREATE SINK tensorSizes(start UINT64 NOT NULL, waveformBytes UINT64 NOT NULL, coordBytes UINT64 NOT NULL) TYPE File;
-CREATE SINK tensors(waveforms VARSIZED NOT NULL, coords VARSIZED NOT NULL) TYPE File;
-CREATE SINK prediction(start UINT64 NOT NULL, magnitude FLOAT32 NOT NULL,
+CREATE SINK tensorSizes(event_idx UINT64 NOT NULL, samples UINT64 NOT NULL, waveformBytes UINT64 NOT NULL, coordBytes UINT64 NOT NULL) TYPE File;
+CREATE SINK tensors(event_idx UINT64 NOT NULL, waveforms VARSIZED NOT NULL, coords VARSIZED NOT NULL) TYPE File;
+CREATE SINK prediction(event_idx UINT64 NOT NULL, magnitude FLOAT32 NOT NULL,
     latitude FLOAT64 NOT NULL, longitude FLOAT64 NOT NULL, depth_km FLOAT64 NOT NULL) TYPE File;
 
-# Every window holds one event: 25 * 3000 * 3 waveform floats and 25 * 3 coordinates, 4 bytes each.
-SELECT start, OCTET_LENGTH(ARRAY_AGG(value)) AS waveformBytes, OCTET_LENGTH(ARRAY_AGG(coord)) AS coordBytes
+# Each event's window holds 1000 samples per streaming station, yet the tensors always have the model's full size:
+# 25 * 3000 * 3 and 25 * 3 float32 values.
+SELECT event_idx, COUNT(n) AS samples,
+    OCTET_LENGTH(TENSOR_AGG(n, e, z AT (station_slot, sample_idx) SHAPE (25, 3000, 3))) AS waveformBytes,
+    OCTET_LENGTH(TENSOR_AGG(latitude, longitude, depth_km AT (station_slot) SHAPE (25, 3))) AS coordBytes
 FROM stations
-WINDOW TUMBLING(ts, SIZE 250000 MS)
+GROUP BY event_idx
+WINDOW TUMBLING(timestamp_ms, SIZE 31 SEC)
 INTO tensorSizes;
 ----
-0,900000,300
-250000,900000,300
-500000,900000,300
+3,6000,900000,300
+26,5000,900000,300
+47,10000,900000,300
 
-# The assembled tensors are byte for byte the preprocessed ones.
-SELECT TO_BASE64(ARRAY_AGG(value)) AS waveforms, TO_BASE64(ARRAY_AGG(coord)) AS coords
+# The assembled tensors are byte for byte the ones Python builds.
+SELECT event_idx,
+    TO_BASE64(TENSOR_AGG(n, e, z AT (station_slot, sample_idx) SHAPE (25, 3000, 3))) AS waveforms,
+    TO_BASE64(TENSOR_AGG(latitude, longitude, depth_km AT (station_slot) SHAPE (25, 3))) AS coords
 FROM stations
-WINDOW TUMBLING(ts, SIZE 250000 MS)
+GROUP BY event_idx
+WINDOW TUMBLING(timestamp_ms, SIZE 31 SEC)
 INTO tensors;
 ====
-SELECT waveforms, coords
+SELECT event_idx, waveforms, coords
 FROM team
 INTO tensors;
 
-# TEAM post-processing as in InferModelTEAM.test, on tensors assembled by ARRAY_AGG.
-SELECT start,
+SELECT event_idx,
     mag0_alpha * mag0_mu + mag1_alpha * mag1_mu + mag2_alpha * mag2_mu + mag3_alpha * mag3_mu + mag4_alpha * mag4_mu AS magnitude,
     (loc0_alpha * loc0_lat + loc1_alpha * loc1_lat + loc2_alpha * loc2_lat + loc3_alpha * loc3_lat + loc4_alpha * loc4_lat
         + loc5_alpha * loc5_lat + loc6_alpha * loc6_lat + loc7_alpha * loc7_lat + loc8_alpha * loc8_lat + loc9_alpha * loc9_lat
@@ -144,11 +143,14 @@ SELECT start,
         + loc10_alpha * loc10_depth + loc11_alpha * loc11_depth + loc12_alpha * loc12_depth + loc13_alpha * loc13_depth + loc14_alpha * loc14_depth)
         * 100.0 AS depth_km
 FROM MODEL_INFERENCE(teamBaseline, (
-    SELECT start, ARRAY_AGG(value) AS waveforms, ARRAY_AGG(coord) AS coords
+    SELECT event_idx,
+        TENSOR_AGG(n, e, z AT (station_slot, sample_idx) SHAPE (25, 3000, 3)) AS waveforms,
+        TENSOR_AGG(latitude, longitude, depth_km AT (station_slot) SHAPE (25, 3)) AS coords
     FROM stations
-    WINDOW TUMBLING(ts, SIZE 250000 MS)))
+    GROUP BY event_idx
+    WINDOW TUMBLING(timestamp_ms, SIZE 31 SEC)))
 INTO prediction;
 ----
-0,3.495391,41.980669,12.108277,52.812177
-250000,3.484021,41.981246,12.127388,51.288474
-500000,3.496059,41.999821,12.096440,52.312624
+3,3.495391,41.980669,12.108277,52.812177
+26,3.484021,41.981246,12.127388,51.288474
+47,3.496059,41.999821,12.096440,52.312624

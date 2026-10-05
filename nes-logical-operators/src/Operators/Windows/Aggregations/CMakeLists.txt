@@ -20,6 +20,7 @@ add_source_files(nes-logical-operators
         MedianAggregationLogicalFunction.cpp
         MinAggregationLogicalFunction.cpp
         SumAggregationLogicalFunction.cpp
+        TensorAggAggregationLogicalFunction.cpp
 )
 
 
@@ -30,6 +31,8 @@ add_unreflection_entry(AggregationLogicalFunction Max)
 add_unreflection_entry(AggregationLogicalFunction Median)
 add_unreflection_entry(AggregationLogicalFunction Min)
 add_unreflection_entry(AggregationLogicalFunction Sum)
+# TensorAgg has no registry entry: it cannot be created from fields alone, as it needs a SHAPE.
+add_unreflection_entry(AggregationLogicalFunction TensorAgg)
 
 add_registry_entry(AggregationLogicalFunction ArrayAgg)
 add_registry_entry(AggregationLogicalFunction Avg)
