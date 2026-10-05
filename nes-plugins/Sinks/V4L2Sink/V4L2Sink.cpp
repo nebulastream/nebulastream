@@ -172,7 +172,7 @@ void validateSchema(const SinkDescriptor& descriptor)
 }
 
 V4L2Sink::V4L2Sink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
+    : Sink(std::move(backpressureController), sinkDescriptor)
     , devicePath(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::DEVICE))
     , frameRate(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::FRAME_RATE))
     , pollTimeoutMs(sinkDescriptor.getFromConfig(ConfigParametersV4L2Sink::POLL_TIMEOUT_MS))
@@ -361,7 +361,7 @@ void V4L2Sink::writeFrame(const std::span<const uint8_t> image)
     }
 }
 
-void V4L2Sink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
+Sink::BufferResult V4L2Sink::executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "V4L2 sink received an invalid buffer");
     const std::scoped_lock lock(mutex);
@@ -432,6 +432,7 @@ void V4L2Sink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
             exception.what());
         throw;
     }
+    return BufferResult::COMPLETED;
 }
 
 void V4L2Sink::stop(PipelineExecutionContext&)

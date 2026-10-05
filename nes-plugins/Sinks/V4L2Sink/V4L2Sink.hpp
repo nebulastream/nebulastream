@@ -82,12 +82,12 @@ public:
     ~V4L2Sink() override;
 
     void start(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
+    BufferResult executeBuffer(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&) override;
     std::ostream& toString(std::ostream& stream) const override;
 
 private:

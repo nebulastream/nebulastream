@@ -99,6 +99,7 @@ public:
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
+    [[nodiscard]] std::string_view getType() const override {return "V4LS";}
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& stream) const override;
 
