@@ -38,8 +38,11 @@ description: |
    This enables developers to easily select the appropriate image for their
    development needs, CI pipelines, or benchmarking tasks.
   
-   This workflow calculates the development image tag of a head_sha. If the development image does not exist yet
-   the workflow will build the new dependency image.
+   This workflow calculates the development image tag of a head_sha. If a requested development image does not exist
+   yet the workflow will build it. Callers choose which standard libraries and sanitizers they need (`stdlibs`,
+   `sanitizers`; by default all of them). Docker Hub is checked for every requested variant separately, and only the
+   missing ones are built and published, so a caller that needs a single variant does not wait for all the others, and a
+   later caller that needs more variants builds just the remaining ones.
 
 
 
@@ -54,6 +57,16 @@ on:
       head_sha:
         required: true
         type: string
+      stdlibs:
+        required: false
+        type: string
+        default: '["libstdcxx","libcxx"]'
+        description: "JSON array of the standard libraries to provide development images for"
+      sanitizers:
+        required: false
+        type: string
+        default: '["address","thread","undefined","none"]'
+        description: "JSON array of the sanitizers to provide development images for"
     outputs:
       image-tag:
         description: "Docker image tag for the current dependencies"
@@ -69,12 +82,15 @@ jobs:
 
   detect-dependency-changes:
     # This job detects changes to files relevant for our dependency management by calculating a hash value
-    # and looking for existing development images with the same hash.
-    # If we find a development image matching the hash we skip building new docker images.
+    # and looking for existing development images with the same hash, for each requested stdlib/sanitizer variant.
+    # If we find the development images matching the hash we skip building new docker images; otherwise only the
+    # missing variants are built.
     # This job also determines the development image tag used for building and testing
     name: Detect changes to dependencies
     outputs:
       build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
+      variants: ${{ steps.hash-and-lookup.outputs.variants }}
+      build-matrix: ${{ steps.hash-and-lookup.outputs.build-matrix }}
       tag: ${{ steps.hash-and-lookup.outputs.tag }}
       hash: ${{ steps.hash-and-lookup.outputs.hash }}
       branch-name: ${{ steps.sanitize.outputs.branch-name }}
@@ -96,34 +112,57 @@ jobs:
           echo "branch-name=$SANITIZED" >> "$GITHUB_OUTPUT"
       - name: Calculate and lookup hash
         id: hash-and-lookup
+        env:
+          STDLIBS: ${{ inputs.stdlibs }}
+          SANITIZERS: ${{ inputs.sanitizers }}
         run: |
           HASH=$(scripts/hash_dependencies.sh)
           echo "Using Hash: $HASH"
-          
+
           # Output the tag (hash) to GitHub Actions
           echo "tag=$HASH" >> "$GITHUB_OUTPUT"
           echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-          
-          # check if tag exists on dockerhub
-          DOCKERHUB_RESPONSE_CODE=$(curl --silent --output respose.txt --write-out '%{http_code}\n' "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags/$HASH")
-          echo dockerhub response code: $DOCKERHUB_RESPONSE_CODE
 
-          if [ "$DOCKERHUB_RESPONSE_CODE" -ge 500 ]; then
-            echo "dockerhub internal server error"
-            cat response.txt
-            exit 1
-          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 403 ]; then
-            echo "dockerhub responded with 403: Forbidden?!"
-            exit 2
-          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 404 ]; then
-            echo "Development image with $HASH does not exist in the docker registry"
-            echo "build-dependency=true" >> "$GITHUB_OUTPUT"
-          elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 200 ]; then
-            echo "found image $HASH"
+          # The merged multi-arch ci image of a variant exists once all of the variant's images were built and merged.
+          # Look for it for every requested variant, and collect the variants that are missing.
+          missing='[]'
+          for stdlib in $(jq -r '.[]' <<<"$STDLIBS"); do
+            for sanitizer in $(jq -r '.[]' <<<"$SANITIZERS"); do
+              variant_tag="$HASH-$stdlib-$sanitizer"
+              DOCKERHUB_RESPONSE_CODE=$(curl --silent --output response.txt --write-out '%{http_code}\n' "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags/$variant_tag")
+              echo "dockerhub response code for $variant_tag: $DOCKERHUB_RESPONSE_CODE"
+
+              if [ "$DOCKERHUB_RESPONSE_CODE" -ge 500 ]; then
+                echo "dockerhub internal server error"
+                cat response.txt
+                exit 1
+              elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 403 ]; then
+                echo "dockerhub responded with 403: Forbidden?!"
+                exit 2
+              elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 404 ]; then
+                echo "Development image $variant_tag does not exist in the docker registry"
+                missing=$(jq -c --arg stdlib "$stdlib" --arg sanitizer "$sanitizer" '. + [{stdlib: $stdlib, sanitizer: $sanitizer}]' <<<"$missing")
+              elif [ "$DOCKERHUB_RESPONSE_CODE" -eq 200 ]; then
+                echo "found image $variant_tag"
+              else
+                echo "unexpected docker response! HTTP Status $DOCKERHUB_RESPONSE_CODE"
+                cat response.txt
+                exit 3
+              fi
+            done
+          done
+
+          # One job per architecture and missing variant (there is no arm64 libstdcxx build).
+          build_matrix=$(jq -c '{include: [.[] | . as $variant | ("x64", "arm64") as $arch
+                                           | select(($arch == "arm64" and $variant.stdlib == "libstdcxx") | not)
+                                           | {arch: $arch, stdlib: $variant.stdlib, sanitizer: $variant.sanitizer}]}' <<<"$missing")
+          echo "Missing variants: $missing"
+          echo "variants=$missing" >> "$GITHUB_OUTPUT"
+          echo "build-matrix=$build_matrix" >> "$GITHUB_OUTPUT"
+          if [ "$missing" = '[]' ]; then
             echo "build-dependency=false" >> "$GITHUB_OUTPUT"
           else
-            echo unexpected docker response! HTTP Status $DOCKERHUB_RESPONSE_CODE
-            cat reponse.txt
+            echo "build-dependency=true" >> "$GITHUB_OUTPUT"
           fi
 
   # Artificial mutex as we need to have the concurrency in a job and not in the workflow.
@@ -184,13 +223,8 @@ jobs:
       cancel-in-progress: false
     strategy:
       fail-fast: false
-      matrix:
-        arch: [ x64, arm64 ]
-        stdlib: [ 'libstdcxx', 'libcxx' ]
-        sanitizer: [ 'address', 'thread', 'undefined', 'none' ]
-        exclude:
-          - arch: arm64
-            stdlib: 'libstdcxx'
+      # arch x stdlib x sanitizer of the variants that are missing for the requested set (see detect-dependency-changes)
+      matrix: ${{ fromJSON(needs.detect-dependency-changes.outputs.build-matrix) }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -286,6 +320,9 @@ jobs:
 
       - name: Combine Manifests
         shell: bash
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          VARIANTS: ${{ needs.detect-dependency-changes.outputs.variants }}
         run: |
           deadline=$((SECONDS + 600))
           retry_merge() {
@@ -307,33 +344,35 @@ jobs:
           pids=()
           merge() { retry_merge "$@" & pids+=("$!"); }
 
-          merge -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }} \
-            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
-            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
+          # Merges the per-architecture images of $1 (name) with tag $2 into one tag: x64 and arm64 for libcxx,
+          # x64 only for libstdcxx.
+          merge_arches() {
+            local name=$1 tag=$2 stdlib=$3
+            if [ "$stdlib" = libcxx ]; then
+              merge -t "nebulastream/$name:$tag" "nebulastream/$name:$tag-x64" "nebulastream/$name:$tag-arm64"
+            else
+              merge -t "nebulastream/$name:$tag" "nebulastream/$name:$tag-x64"
+            fi
+          }
 
-          merge -t nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.tag }} \
-            nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
-            nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
-          
-          for image_tag in development-dependency development ci; do
-          
-            for sanitizer in none address thread undefined; do
-              merge -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
-          
-              merge -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx-$sanitizer 
+          merge -t nebulastream/nes-development-base:$TAG \
+            nebulastream/nes-development-base:$TAG-x64 \
+            nebulastream/nes-development-base:$TAG-arm64
+
+          merge -t nebulastream/nes-runtime-base:$TAG \
+            nebulastream/nes-runtime-base:$TAG-x64 \
+            nebulastream/nes-runtime-base:$TAG-arm64
+
+          # Only the variants that were built in this run.
+          while read -r stdlib sanitizer; do
+            for image_tag in development-dependency development ci; do
+              merge_arches "nes-$image_tag" "$TAG-$stdlib-$sanitizer" "$stdlib"
             done
-          
-          done
-          
-          merge -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
-          
-          merge -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx
+            # The benchmark image only exists for the unsanitized variants.
+            if [ "$sanitizer" = none ]; then
+              merge_arches nes-benchmark "$TAG-$stdlib" "$stdlib"
+            fi
+          done < <(jq -r '.[] | "\(.stdlib) \(.sanitizer)"' <<<"$VARIANTS")
 
           failed=0
           for pid in "${pids[@]}"; do
@@ -343,61 +382,58 @@ jobs:
 
       - name: Combine Manifests for branch specific docker image
         if: ${{ inputs.branch-name != '' }}
+        shell: bash
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          BRANCH: ${{ needs.detect-dependency-changes.outputs.branch-name }}
+          VARIANTS: ${{ needs.detect-dependency-changes.outputs.variants }}
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.branch-name }} \
-            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}
+          docker buildx imagetools create -t nebulastream/nes-development-base:$BRANCH \
+            nebulastream/nes-development-base:$TAG
 
-          docker buildx imagetools create -t nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.branch-name }} \
-            nebulastream/nes-runtime-base:${{ needs.detect-dependency-changes.outputs.tag }}
+          docker buildx imagetools create -t nebulastream/nes-runtime-base:$BRANCH \
+            nebulastream/nes-runtime-base:$TAG
 
-          for image_tag in development-dependency development ci; do
-            for sanitizer in none address thread undefined; do
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }}-libcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }}-libstdcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
+          while read -r stdlib sanitizer; do
+            for image_tag in development-dependency development ci; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:$BRANCH-$stdlib-$sanitizer \
+                nebulastream/nes-$image_tag:$TAG-$stdlib-$sanitizer
             done
-          done
-
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.branch-name }}-libcxx \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.branch-name }}-libstdcxx \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
+            if [ "$sanitizer" = none ]; then
+              docker buildx imagetools create -t nebulastream/nes-benchmark:$BRANCH-$stdlib \
+                nebulastream/nes-benchmark:$TAG-$stdlib
+            fi
+          done < <(jq -r '.[] | "\(.stdlib) \(.sanitizer)"' <<<"$VARIANTS")
 
       - name: Create shortcut images
         if: ${{ inputs.branch-name != '' }}
+        shell: bash
+        env:
+          TAG: ${{ needs.detect-dependency-changes.outputs.tag }}
+          BRANCH: ${{ needs.detect-dependency-changes.outputs.branch-name }}
+          VARIANTS: ${{ needs.detect-dependency-changes.outputs.variants }}
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.branch-name }} \
-            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.branch-name }}-libstdcxx-none
-
-          docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.branch-name }}-libcxx \
-            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.branch-name }}-libcxx-none
-
-          for image_tag in development-dependency development ci; do
-
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }} \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
-
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }} \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
-
-            for sanitizer in none address thread undefined; do
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }}-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }}-libcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.branch-name }}-libstdcxx-$sanitizer \
-                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
+          # The shortcuts without a standard library resolve to libcxx, and without a sanitizer to the unsanitized
+          # variant. A shortcut is only created when its target was built in this run; otherwise it already exists
+          # from the run that built the target.
+          while read -r stdlib sanitizer; do
+            [ "$stdlib" = libcxx ] || continue
+            for image_tag in development-dependency development ci; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:$BRANCH-$sanitizer \
+                nebulastream/nes-$image_tag:$TAG-libcxx-$sanitizer
+              if [ "$sanitizer" = none ]; then
+                docker buildx imagetools create -t nebulastream/nes-$image_tag:$BRANCH \
+                  nebulastream/nes-$image_tag:$TAG-libcxx-none
+                docker buildx imagetools create -t nebulastream/nes-$image_tag:$TAG \
+                  nebulastream/nes-$image_tag:$TAG-libcxx-none
+              fi
             done
-          done
-
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }} \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.branch-name }} \
-            nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-          
+            if [ "$sanitizer" = none ]; then
+              docker buildx imagetools create -t nebulastream/nes-development:$BRANCH-libcxx \
+                nebulastream/nes-development:$TAG-libcxx-none
+              docker buildx imagetools create -t nebulastream/nes-benchmark:$TAG \
+                nebulastream/nes-benchmark:$TAG-libcxx
+              docker buildx imagetools create -t nebulastream/nes-benchmark:$BRANCH \
+                nebulastream/nes-benchmark:$TAG-libcxx
+            fi
+          done < <(jq -r '.[] | "\(.stdlib) \(.sanitizer)"' <<<"$VARIANTS")
