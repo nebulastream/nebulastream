@@ -123,13 +123,11 @@ TEST_F(UdfCatalogTest, RejectsUnsupportedReturnType)
         NES::ErrorCode::CannotLoadUdf);
 }
 
-TEST_F(UdfCatalogTest, RejectsMissingLibraryPath)
+TEST_F(UdfCatalogTest, AcceptsLibraryPathMissingLocally)
 {
     UdfCatalog catalog;
-    ASSERT_EXCEPTION_ERRORCODE(
-        catalog.registerUdf(
-            "missing", std::filesystem::temp_directory_path() / "does_not_exist_nes_udf.so", "m.f", {}, dt(DataType::Type::INT32)),
-        NES::ErrorCode::InvalidStatement);
+    ASSERT_NO_THROW(catalog.registerUdf(
+        "missing", std::filesystem::temp_directory_path() / "does_not_exist_nes_udf.so", "m.f", {}, dt(DataType::Type::INT32)));
 }
 
 TEST_F(UdfCatalogTest, RemoveUdf)

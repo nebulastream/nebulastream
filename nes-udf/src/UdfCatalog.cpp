@@ -35,6 +35,8 @@ void UdfCatalog::registerUdf(
     DataType returnType,
     const UdfExecution execution)
 {
+    /// The library path of an InProcess UDF is not checked here: the worker loads it, possibly on another machine, and
+    /// reports a missing library when it loads the bridge.
     if (execution == UdfExecution::Codon)
     {
         if (!splitEntrypoint(entrypoint).has_value())
@@ -44,17 +46,6 @@ void UdfCatalog::registerUdf(
         if (argTypes.empty())
         {
             throw NES::InvalidStatement("Codon UDF '{}' needs at least one argument", name);
-        }
-    }
-    else
-    {
-        if (!std::filesystem::exists(path))
-        {
-            throw NES::InvalidStatement("UDF library path does not exist: {}", path);
-        }
-        if (!std::filesystem::is_regular_file(path))
-        {
-            throw NES::InvalidStatement("UDF library path is not a regular file: {}", path);
         }
     }
 

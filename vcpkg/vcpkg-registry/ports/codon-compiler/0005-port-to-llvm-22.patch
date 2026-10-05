@@ -1,0 +1,143 @@
+diff --git a/codon/cir/llvm/gpu.cpp b/codon/cir/llvm/gpu.cpp
+index 43ab57c4..a858ac69 100644
+--- a/codon/cir/llvm/gpu.cpp
++++ b/codon/cir/llvm/gpu.cpp
+@@ -519,7 +519,7 @@ void remapFunctions(llvm::Module *M) {
+        [](llvm::IRBuilder<> &B, const std::vector<llvm::Value *> &args) {
+          auto *M = B.GetInsertBlock()->getModule();
+          llvm::Value *mem = B.CreateCall(makeMalloc(M), args[1]);
+-         auto F = llvm::Intrinsic::getDeclaration(
++         auto F = llvm::Intrinsic::getOrInsertDeclaration(
+              M, llvm::Intrinsic::memcpy, {B.getPtrTy(), B.getPtrTy(), B.getInt64Ty()});
+          B.CreateCall(F, {mem, args[0], args[2], B.getFalse()});
+          B.CreateRet(mem);
+@@ -530,7 +530,7 @@ void remapFunctions(llvm::Module *M) {
+          auto *M = B.GetInsertBlock()->getModule();
+          llvm::Value *size = B.CreateMul(args[0], args[1]);
+          llvm::Value *mem = B.CreateCall(makeMalloc(M), size);
+-         auto F = llvm::Intrinsic::getDeclaration(M, llvm::Intrinsic::memset,
++         auto F = llvm::Intrinsic::getOrInsertDeclaration(M, llvm::Intrinsic::memset,
+                                                   {B.getPtrTy(), B.getInt64Ty()});
+          B.CreateCall(F, {mem, B.getInt8(0), size, B.getFalse()});
+          B.CreateRet(mem);
+@@ -541,7 +541,7 @@ void remapFunctions(llvm::Module *M) {
+          auto *M = B.GetInsertBlock()->getModule();
+          llvm::Value *size = B.CreateMul(args[0], args[1]);
+          llvm::Value *mem = B.CreateCall(makeMalloc(M), size);
+-         auto F = llvm::Intrinsic::getDeclaration(M, llvm::Intrinsic::memset,
++         auto F = llvm::Intrinsic::getOrInsertDeclaration(M, llvm::Intrinsic::memset,
+                                                   {B.getPtrTy(), B.getInt64Ty()});
+          B.CreateCall(F, {mem, B.getInt8(0), size, B.getFalse()});
+          B.CreateRet(mem);
+diff --git a/codon/cir/llvm/llvisitor.cpp b/codon/cir/llvm/llvisitor.cpp
+index ca2afaf3..3ece9090 100644
+--- a/codon/cir/llvm/llvisitor.cpp
++++ b/codon/cir/llvm/llvisitor.cpp
+@@ -108,7 +108,6 @@ LLVMVisitor::LLVMVisitor()
+   llvm::initializeInstCombine(registry);
+   llvm::initializeTarget(registry);
+ 
+-  llvm::initializeExpandLargeDivRemLegacyPassPass(registry);
+   llvm::initializeExpandMemCmpLegacyPassPass(registry);
+   llvm::initializeScalarizeMaskedMemIntrinLegacyPassPass(registry);
+   llvm::initializeSelectOptimizePass(registry);
+@@ -1715,7 +1714,7 @@ void LLVMVisitor::makeYield(llvm::Value *value, bool finalYield) {
+     B->CreateStore(value, coro.promise);
+   }
+   llvm::FunctionCallee coroSuspend =
+-      llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_suspend);
++      llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_suspend);
+   auto *suspendResult = B->CreateCall(
+       coroSuspend, {llvm::ConstantTokenNone::get(*context), B->getInt1(finalYield)});
+ 
+@@ -1822,7 +1821,7 @@ void LLVMVisitor::visit(const InternalFunc *x) {
+       result = llvm::ConstantPointerNull::get(B->getVoidTy()->getPointerTo());
+     } else {
+       llvm::FunctionCallee coroPromise =
+-          llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_promise);
++          llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_promise);
+       auto *aln = B->getInt32(M->getDataLayout().getPrefTypeAlign(baseType).value());
+       auto *from = B->getFalse();
+       auto *ptr = B->CreateCall(coroPromise, {args[0], aln, from});
+@@ -2044,17 +2043,17 @@ void LLVMVisitor::visit(const BodiedFunc *x) {
+     seqassertn(generatorType, "{} is not a generator type", *returnType);
+ 
+     llvm::FunctionCallee coroId =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_id);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_id);
+     llvm::FunctionCallee coroBegin =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_begin);
+-    llvm::FunctionCallee coroSize = llvm::Intrinsic::getDeclaration(
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_begin);
++    llvm::FunctionCallee coroSize = llvm::Intrinsic::getOrInsertDeclaration(
+         M.get(), llvm::Intrinsic::coro_size, {B->getInt64Ty()});
+     llvm::FunctionCallee coroEnd =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_end);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_end);
+     llvm::FunctionCallee coroAlloc =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_alloc);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_alloc);
+     llvm::FunctionCallee coroFree =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_free);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_free);
+ 
+     coro.cleanup = llvm::BasicBlock::Create(*context, "coro.cleanup", func);
+     coro.suspend = llvm::BasicBlock::Create(*context, "coro.suspend", func);
+@@ -2627,13 +2626,13 @@ void LLVMVisitor::visit(const ForFlow *x) {
+   // LLVM coroutine intrinsics
+   // https://prereleases.llvm.org/6.0.0/rc3/docs/Coroutines.html
+   llvm::FunctionCallee coroResume =
+-      llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_resume);
++      llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_resume);
+   llvm::FunctionCallee coroDone =
+-      llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_done);
++      llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_done);
+   llvm::FunctionCallee coroPromise =
+-      llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_promise);
++      llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_promise);
+   llvm::FunctionCallee coroDestroy =
+-      llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_destroy);
++      llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_destroy);
+ 
+   process(x->getIter());
+   auto *iter = value;
+@@ -3151,13 +3150,13 @@ void LLVMVisitor::codegenPipeline(
+     // LLVM coroutine intrinsics
+     // https://prereleases.llvm.org/6.0.0/rc3/docs/Coroutines.html
+     llvm::FunctionCallee coroResume =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_resume);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_resume);
+     llvm::FunctionCallee coroDone =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_done);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_done);
+     llvm::FunctionCallee coroPromise =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_promise);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_promise);
+     llvm::FunctionCallee coroDestroy =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_destroy);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_destroy);
+ 
+     auto *iter = value;
+     B->SetInsertPoint(block);
+@@ -3300,7 +3299,7 @@ void LLVMVisitor::visit(const YieldInInstr *x) {
+   B->SetInsertPoint(block);
+   if (x->isSuspending()) {
+     llvm::FunctionCallee coroSuspend =
+-        llvm::Intrinsic::getDeclaration(M.get(), llvm::Intrinsic::coro_suspend);
++        llvm::Intrinsic::getOrInsertDeclaration(M.get(), llvm::Intrinsic::coro_suspend);
+     auto *tok = llvm::ConstantTokenNone::get(*context);
+     auto *final = B->getFalse();
+     auto *susp = B->CreateCall(coroSuspend, {tok, final});
+diff --git a/codon/cir/llvm/optimize.cpp b/codon/cir/llvm/optimize.cpp
+index 489436a7..04201805 100644
+--- a/codon/cir/llvm/optimize.cpp
++++ b/codon/cir/llvm/optimize.cpp
+@@ -37,7 +37,7 @@ getTargetMachine(llvm::Triple triple, llvm::StringRef cpuStr,
+     return nullptr;
+ 
+   return std::unique_ptr<llvm::TargetMachine>(target->createTargetMachine(
+-      triple.getTriple(), cpuStr, featuresStr, options,
++      triple, cpuStr, featuresStr, options,
+       pic ? llvm::Reloc::Model::PIC_ : llvm::codegen::getExplicitRelocModel(),
+       llvm::codegen::getExplicitCodeModel(), llvm::CodeGenOptLevel::Aggressive));
+ }

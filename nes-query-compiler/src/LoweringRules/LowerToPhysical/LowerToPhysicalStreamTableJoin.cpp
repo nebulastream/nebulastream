@@ -72,7 +72,8 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
     auto physicalJoinFunction
-        = QueryCompilation::FunctionProvider::lowerFunction(join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)});
+        = QueryCompilation::FunctionProvider::lowerFunction(
+            join->getJoinFunction(), FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
 
     std::unique_ptr<TimeFunction> streamTimeFunction;
     std::unique_ptr<TimeFunction> tableTimeFunction;
@@ -82,7 +83,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
         PRECONDITION(
             std::holds_alternative<BoundCharacteristics>(characteristics.value()), "Expected bound stream-table join time characteristics");
         const auto& bound = std::get<BoundCharacteristics>(characteristics.value());
-        const auto lowerTimeFunction = [](const Windowing::BoundTimeCharacteristic& characteristic, const FieldMappingTrait& mapping)
+        const auto lowerTimeFunction = [this](const Windowing::BoundTimeCharacteristic& characteristic, const FieldMappingTrait& mapping)
         {
             return std::visit(
                 Overloaded{
@@ -91,7 +92,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStreamTableJoin::apply(LogicalOperator
                     [&](const Windowing::BoundEventTimeCharacteristic& eventTime) -> std::unique_ptr<TimeFunction>
                     {
                         return std::make_unique<EventTimeFunction>(
-                            QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping), eventTime.unit);
+                            QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()), eventTime.unit);
                     }},
                 characteristic);
         };
