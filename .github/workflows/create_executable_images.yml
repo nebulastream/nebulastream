@@ -51,6 +51,10 @@ jobs:
     secrets: inherit
     with:
       head_sha: ${{ needs.sanitize-tag.outputs.sha }}
+      # The executable images are built in the libcxx development image, unsanitized or, hardened, with AddressSanitizer.
+      # No other variant is needed here, so no other variant is built.
+      stdlibs: '["libcxx"]'
+      sanitizers: '["none","address"]'
 
   build-image:
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
