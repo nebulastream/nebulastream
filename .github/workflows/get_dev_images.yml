@@ -344,14 +344,15 @@ jobs:
           pids=()
           merge() { retry_merge "$@" & pids+=("$!"); }
 
-          # Merges the per-architecture images of $1 (name) with tag $2 into one tag: x64 and arm64 for libcxx,
-          # x64 only for libstdcxx.
+          # Merges the per-architecture images of $1 (name) into one tag: x64 and arm64 for libcxx, x64 only for
+          # libstdcxx. $3 is the variant suffix (<stdlib>[-<sanitizer>]); the per-arch images are tagged
+          # <TAG>-<arch>-<suffix> (see build-dev-images), the merged one <TAG>-<suffix>.
           merge_arches() {
-            local name=$1 tag=$2 stdlib=$3
+            local name=$1 stdlib=$2 suffix=$3
             if [ "$stdlib" = libcxx ]; then
-              merge -t "nebulastream/$name:$tag" "nebulastream/$name:$tag-x64" "nebulastream/$name:$tag-arm64"
+              merge -t "nebulastream/$name:$TAG-$suffix" "nebulastream/$name:$TAG-x64-$suffix" "nebulastream/$name:$TAG-arm64-$suffix"
             else
-              merge -t "nebulastream/$name:$tag" "nebulastream/$name:$tag-x64"
+              merge -t "nebulastream/$name:$TAG-$suffix" "nebulastream/$name:$TAG-x64-$suffix"
             fi
           }
 
@@ -366,11 +367,11 @@ jobs:
           # Only the variants that were built in this run.
           while read -r stdlib sanitizer; do
             for image_tag in development-dependency development ci; do
-              merge_arches "nes-$image_tag" "$TAG-$stdlib-$sanitizer" "$stdlib"
+              merge_arches "nes-$image_tag" "$stdlib" "$stdlib-$sanitizer"
             done
             # The benchmark image only exists for the unsanitized variants.
             if [ "$sanitizer" = none ]; then
-              merge_arches nes-benchmark "$TAG-$stdlib" "$stdlib"
+              merge_arches nes-benchmark "$stdlib" "$stdlib"
             fi
           done < <(jq -r '.[] | "\(.stdlib) \(.sanitizer)"' <<<"$VARIANTS")
 
