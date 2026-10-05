@@ -112,13 +112,14 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
         INVARIANT(rightKeyField.has_value(), "Missing physical mapping for ASOF right key {}", rightLogicalField);
     }
     auto physicalJoinFunction
-        = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, FieldMappingTrait{std::move(combinedMappings)});
+        = QueryCompilation::FunctionProvider::lowerFunction(
+            logicalJoinFunction, FieldMappingTrait{std::move(combinedMappings)}, conf.getPythonUdfImportPaths());
 
     using BoundCharacteristics = std::array<Windowing::BoundTimeCharacteristic, 2>;
     const auto characteristics = join->getTimeCharacteristics();
     PRECONDITION(std::holds_alternative<BoundCharacteristics>(characteristics), "Expected bound ASOF join time characteristics");
     const auto& bound = std::get<BoundCharacteristics>(characteristics);
-    const auto lowerTimeFunction = [](const Windowing::BoundTimeCharacteristic& characteristic, const FieldMappingTrait& mapping)
+    const auto lowerTimeFunction = [this](const Windowing::BoundTimeCharacteristic& characteristic, const FieldMappingTrait& mapping)
     {
         return std::visit(
             Overloaded{
@@ -127,7 +128,7 @@ LoweringRuleResultSubgraph LowerToPhysicalAsOfJoin::apply(LogicalOperator logica
                 [&](const Windowing::BoundEventTimeCharacteristic& eventTime) -> std::unique_ptr<TimeFunction>
                 {
                     return std::make_unique<EventTimeFunction>(
-                        QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping), eventTime.unit);
+                        QueryCompilation::FunctionProvider::lowerFunction(eventTime.field, mapping, conf.getPythonUdfImportPaths()), eventTime.unit);
                 }},
             characteristic);
     };
