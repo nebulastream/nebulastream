@@ -29,7 +29,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <bits/ranges_algo.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
