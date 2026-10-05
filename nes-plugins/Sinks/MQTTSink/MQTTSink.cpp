@@ -130,6 +130,13 @@ SendResult MQTTSink::tryPublish(const TupleBuffer& buffer)
         payload.append(childData.begin(), childData.end());
     }
 
+    /// Buffers can reach the sink without any formatted tuple, e.g. when an upstream join or filter emits nothing for an input
+    /// buffer. A zero-length MQTT message carries no data (and clears a retained message), so it is not published.
+    if (payload.empty())
+    {
+        return SendResult::Ok;
+    }
+
     try
     {
         client->publish(mqtt::make_message(topic, mqtt::binary_ref(std::move(payload)), qos, retained));
