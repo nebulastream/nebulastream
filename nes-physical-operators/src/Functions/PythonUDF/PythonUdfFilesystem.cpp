@@ -17,6 +17,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -87,6 +88,28 @@ public:
     }
 };
 
+/// codon::ast::Cache allocates the vector that owns every AST node with `new` and has no destructor, so destroying a
+/// codon::Compiler leaves the whole parsed program (stdlib and imported modules included) allocated. The member is
+/// private; an explicit template instantiation may name it.
+using CacheNodesMember = std::vector<std::unique_ptr<codon::ast::ASTNode>>* codon::ast::Cache::*;
+CacheNodesMember cacheNodesMember();
+
+template <CacheNodesMember Member>
+struct CacheNodesAccess
+{
+    friend CacheNodesMember cacheNodesMember() { return Member; }
+};
+
+template struct CacheNodesAccess<&codon::ast::Cache::_nodes>;
+
+/// The AST nodes are deleted after the compiler, as the compiler's members may still refer to them while being destroyed.
+void deleteCodonCompiler(codon::Compiler* compiler)
+{
+    auto* nodes = compiler->getCache()->*cacheNodesMember();
+    delete compiler; /// NOLINT(cppcoreguidelines-owning-memory)
+    delete nodes; /// NOLINT(cppcoreguidelines-owning-memory)
+}
+
 double elapsedMilliseconds(const std::chrono::steady_clock::time_point start, const std::chrono::steady_clock::time_point end)
 {
     return std::chrono::duration<double, std::milli>{end - start}.count();
@@ -115,7 +138,17 @@ compileWithCodon(const std::string& sourcePath, const std::string& source, const
         filesystem->add_search_path(importPath);
     }
 
-    codon::Compiler compiler("nes-worker", codon::Compiler::Mode::RELEASE, std::vector<std::string>{}, false, false, false, filesystem);
+    const std::unique_ptr<codon::Compiler, decltype(&deleteCodonCompiler)> compilerOwner{
+        new codon::Compiler( /// NOLINT(cppcoreguidelines-owning-memory)
+            "nes-worker",
+            codon::Compiler::Mode::RELEASE,
+            std::vector<std::string>{},
+            false,
+            false,
+            false,
+            filesystem),
+        &deleteCodonCompiler};
+    auto& compiler = *compilerOwner;
     compiler.getLLVMVisitor()->setDebug(true);
     const auto parseStart = std::chrono::steady_clock::now();
     if (auto error = compiler.parseCode(sourcePath, source))
