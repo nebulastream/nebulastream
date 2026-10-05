@@ -83,6 +83,17 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli dump with catalog function topology" {
+  run $NES_CLI -t tests/good/udf-function.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "nebucli rejects a function without bridge or path" {
+  run $NES_CLI -t tests/bad/function-without-bridge-or-path.yaml dump
+  [ "$status" -eq 1 ]
+  assert_output --partial "needs a \`bridge\` or a \`path\`"
+}
+
 @test "nebucli dump using environment" {
 
   NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump
