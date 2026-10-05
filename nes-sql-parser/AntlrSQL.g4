@@ -144,7 +144,7 @@ fragment BY: B Y;
 
 intoTerm: INTO sink;
 INTO: I N T O;
-sink: identifier | literalFunctionCall;
+sink: functionCall;
 
 openRelationalExpression: closedRelationalExpression | joinRelationalExpression;
 closedRelationalExpression: functionCall | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
@@ -202,11 +202,11 @@ positionalFunctionCallArgument: closedScalarExpression | closedRelationalExpress
 namedFunctionCallArgument: positionalFunctionCallArgument AS qualifiedIdentifier;
 
 /// Once we have better literal folding, this separate block can be removed and its usages be replaced by functionCall
-literalFunctionCall: positionalLiteralFunctionCall | namedLiteralFunctionCall;
-positionalLiteralFunctionCall: identifier OPEN_PARANTHESIS positionalLiteralFunctionCallArgument (COMMA positionalLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
-positionalLiteralFunctionCallArgument: literal;
-namedLiteralFunctionCall: identifier OPEN_PARANTHESIS namedLiteralFunctionCallArgument (COMMA namedLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
-namedLiteralFunctionCallArgument: positionalLiteralFunctionCallArgument AS qualifiedIdentifier;
+//literalFunctionCall: positionalLiteralFunctionCall | namedLiteralFunctionCall;
+//positionalLiteralFunctionCall: identifier OPEN_PARANTHESIS positionalLiteralFunctionCallArgument (COMMA positionalLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
+//positionalLiteralFunctionCallArgument: literal;
+//namedLiteralFunctionCall: identifier OPEN_PARANTHESIS namedLiteralFunctionCallArgument (COMMA namedLiteralFunctionCallArgument)* CLOSE_PARANTHESIS;
+//namedLiteralFunctionCallArgument: positionalLiteralFunctionCallArgument AS qualifiedIdentifier;
 
 OPEN_PARANTHESIS: '(';
 CLOSE_PARANTHESIS: ')';
