@@ -3,6 +3,8 @@ description: |
   This workflow is triggered manually by the user to build docker images for the executable image.
   The user can specify the branch for which the docker image needs to be built.
   The docker image is built for the specified branch and pushed to the docker hub.
+  Only the libcxx development images without and with AddressSanitizer are needed for that (see
+  create_executable_images.yml); if they do not exist yet for the branch's dependencies, only those are built.
 
 
 on:
