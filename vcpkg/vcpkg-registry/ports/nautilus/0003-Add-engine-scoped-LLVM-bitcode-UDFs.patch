@@ -1,8 +1,8 @@
 diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
-index d80a081..46a35a5 100644
+index 1652dd89..a98b2f36 100644
 --- a/nautilus/include/nautilus/Engine.hpp
 +++ b/nautilus/include/nautilus/Engine.hpp
-@@ -175,6 +175,20 @@ public:
+@@ -177,6 +177,20 @@ public:
  	NautilusEngine(NautilusEngine&&) noexcept;
  	NautilusEngine& operator=(NautilusEngine&&) noexcept = delete;
  
@@ -21,9 +21,9 @@ index d80a081..46a35a5 100644
 +	}
 +
  	/// Register and compile a single function pointer. Defined after NautilusModule.
- 	template <typename R, is_val... FunctionArguments>
- 	auto registerFunction(R (*fnptr)(val<FunctionArguments>...)) const;
-@@ -233,6 +247,7 @@ private:
+ 	/// @param location Where this call was written; captured for free and shown on the
+ 	/// compiled function's IR signature line and in diagnostics raised while tracing it
+@@ -242,6 +256,7 @@ private:
  	 */
  	std::unique_ptr<common::ArenaPool> irArenaPool_;
  	std::unique_ptr<compiler::JITCompiler> jit_;
@@ -31,7 +31,7 @@ index d80a081..46a35a5 100644
  	const Options options;
  };
  
-@@ -255,11 +270,13 @@ private:
+@@ -264,11 +279,13 @@ private:
  class NautilusModule {
  public:
  #ifdef ENABLE_TRACING
@@ -48,15 +48,15 @@ index d80a081..46a35a5 100644
  	    : moduleOptions_(std::move(moduleOptions)) {
  	}
  #endif
-@@ -337,6 +354,7 @@ public:
+@@ -354,6 +371,7 @@ public:
  	CompiledModule compile() {
  #ifdef ENABLE_TRACING
  		if (compiled_) {
 +			moduleOptions_.setUDFRegistrySnapshot(udfRegistry_.snapshot());
- 			auto executable = jit_.compile(functions_, moduleOptions_);
- 			auto module = CompiledModule(std::move(executable), std::move(interpretedFunctions_));
- 
-@@ -358,19 +376,20 @@ private:
+ 			// Compile into a freshly created module state. Each compile() carries
+ 			// its own IR to its own (optional, tiered) background promotion, so
+ 			// concurrent compiles on a shared engine share no compiler-level
+@@ -373,19 +391,20 @@ private:
  	ModuleOptions moduleOptions_;
  #ifdef ENABLE_TRACING
  	const compiler::JITCompiler& jit_;
@@ -80,10 +80,10 @@ index d80a081..46a35a5 100644
  
  namespace details {
 diff --git a/nautilus/include/nautilus/function.hpp b/nautilus/include/nautilus/function.hpp
-index 803071c..753042e 100644
+index 598e6b20..f22426bf 100644
 --- a/nautilus/include/nautilus/function.hpp
 +++ b/nautilus/include/nautilus/function.hpp
-@@ -4,6 +4,9 @@
+@@ -5,6 +5,9 @@
  #include "nautilus/val.hpp"
  #include "nautilus/val_ptr.hpp"
  #include <functional>
@@ -93,7 +93,7 @@ index 803071c..753042e 100644
  #include <type_traits>
  #include <utility>
  
-@@ -72,6 +75,51 @@ private:
+@@ -93,6 +96,51 @@ private:
  	R (*fnptr)(FunctionArguments...);
  };
  
@@ -145,8 +145,8 @@ index 803071c..753042e 100644
  /// Invoke calls without attributes
  template <typename R, typename... FunctionArguments, typename... ValueArguments>
  auto invoke(R (*fnptr)(FunctionArguments...) noexcept, ValueArguments&&... args) {
-@@ -85,6 +133,14 @@ auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
- 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
+@@ -106,6 +154,14 @@ auto invoke(R (*fnptr)(FunctionArguments...), ValueArguments&&... args) {
+ 	return CallableRuntimeFunction<R, false, FunctionArguments...>(fnptr)(std::forward<ValueArguments>(args)...);
  }
  
 +/// Invoke a compiler-resolved function by LLVM symbol name. The return type
@@ -160,8 +160,8 @@ index 803071c..753042e 100644
  template <typename R, typename... FunctionArguments, typename... ValueArguments>
  auto invoke(std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
  	auto fnptr = func.template target<R(FunctionArguments...)>();
-@@ -109,6 +165,11 @@ auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...),
- 	return CallableRuntimeFunction<R, FunctionArguments...>(fnptr, fnAttrs)(std::forward<ValueArguments>(args)...);
+@@ -132,6 +188,11 @@ auto invoke(const FunctionAttributes fnAttrs, R (*fnptr)(FunctionArguments...),
+ 	                                                               fnAttrs)(std::forward<ValueArguments>(args)...);
  }
  
 +template <typename R, typename... ValueArguments>
@@ -173,10 +173,10 @@ index 803071c..753042e 100644
  auto invoke(const FunctionAttributes fnAttrs, std::function<R(FunctionArguments...)> func, ValueArguments&&... args) {
  	auto fnptr = func.template target<R(FunctionArguments...)>();
 diff --git a/nautilus/include/nautilus/options.hpp b/nautilus/include/nautilus/options.hpp
-index 54f2d0a..1d76d2a 100644
+index d97a0bda..eb5fee73 100644
 --- a/nautilus/include/nautilus/options.hpp
 +++ b/nautilus/include/nautilus/options.hpp
-@@ -1,9 +1,14 @@
+@@ -1,13 +1,69 @@
  #pragma once
  
  #include <iostream>
@@ -189,9 +189,6 @@ index 54f2d0a..1d76d2a 100644
  #include <unordered_map>
 +#include <utility>
  #include <variant>
- #include <vector>
- 
-@@ -16,6 +21,57 @@ class JITEventListener;
  
  namespace nautilus::engine {
  
@@ -249,8 +246,8 @@ index 54f2d0a..1d76d2a 100644
  using OptionValue = std::variant<int, double, std::string, bool>;
  
  class ModuleOptions;
-@@ -67,6 +123,14 @@ public:
- 		return mlir_jit_event_listeners_;
+@@ -52,6 +108,14 @@ public:
+ 		return defaultValue;
  	}
  
 +	void setUDFRegistrySnapshot(UDFRegistry::Snapshot snapshot) {
@@ -262,21 +259,21 @@ index 54f2d0a..1d76d2a 100644
 +	}
 +
  	/**
- 	 * @brief Apply every option value (and JIT listener) set in @p other on
- 	 * top of this one; values present in @p other win.
-@@ -96,6 +160,7 @@ public:
+ 	 * @brief Apply every option value set in @p other on top of this one;
+ 	 * values present in @p other win.
+@@ -77,6 +141,7 @@ public:
+ 
  private:
  	std::unordered_map<std::string, OptionValue> options;
- 	std::vector<llvm::JITEventListener*> mlir_jit_event_listeners_;
 +	UDFRegistry::Snapshot udfRegistrySnapshot_;
  };
  
  /**
 diff --git a/nautilus/include/nautilus/tracing/TracingInterface.hpp b/nautilus/include/nautilus/tracing/TracingInterface.hpp
-index e253770..5510e5c 100644
+index 66b2b2aa..a0d5188b 100644
 --- a/nautilus/include/nautilus/tracing/TracingInterface.hpp
 +++ b/nautilus/include/nautilus/tracing/TracingInterface.hpp
-@@ -7,6 +7,7 @@
+@@ -8,6 +8,7 @@
  #include "nautilus/tracing/Types.hpp"
  #include <cstddef>
  #include <functional>
@@ -284,9 +281,9 @@ index e253770..5510e5c 100644
  #include <vector>
  
  namespace nautilus {
-@@ -75,6 +76,11 @@ public:
- 	virtual void registerDestructor(const TypedValueRef& address, void* destructor) = 0;
- 	virtual void unregisterDestructor(const TypedValueRef& address) = 0;
+@@ -83,6 +84,11 @@ public:
+ 	/// different traced address without re-constructing it.
+ 	virtual void transferDestructor(const TypedValueRef& from, const TypedValueRef& to) = 0;
  
 +	/// Trace a symbolic runtime function call. The symbol must be supplied by
 +	/// a compiler plugin before the generated code is executed.
@@ -294,13 +291,13 @@ index e253770..5510e5c 100644
 +	                                 const std::vector<TypedValueRef>& arguments, FunctionAttributes fnAttrs) = 0;
 +
  	/// Trace a call through a runtime function pointer value (indirect call).
- 	virtual TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
- 	                                         const std::vector<TypedValueRef>& arguments,
+ 	/// @param captureFunc address of a `captureThrowingCall<R, Args...>`
+ 	///                    instantiation for the call's signature, or nullptr for
 diff --git a/nautilus/include/nautilus/tracing/TracingUtil.hpp b/nautilus/include/nautilus/tracing/TracingUtil.hpp
-index cf331b9..3957acc 100644
+index a51b3afd..a3293e51 100644
 --- a/nautilus/include/nautilus/tracing/TracingUtil.hpp
 +++ b/nautilus/include/nautilus/tracing/TracingUtil.hpp
-@@ -66,6 +66,8 @@ TypedValueRef traceCopy(const TypedValueRef& ref);
+@@ -74,6 +74,8 @@ TypedValueRef traceCopy(const TypedValueRef& ref);
  
  TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
                           FunctionAttributes fnAttrs);
@@ -310,10 +307,10 @@ index cf331b9..3957acc 100644
  TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
                                                const std::vector<tracing::TypedValueRef>& arguments,
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
-index 8e2c1fa..5b13e51 100644
+index ccaec4b3..6b1b06b9 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/JITCompiler.cpp
-@@ -35,6 +35,13 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(::mlir::OwningOpRef<::mli
+@@ -41,6 +41,13 @@ std::unique_ptr<MLIRJit> JITCompiler::jitCompileModule(
  		auto symbolMap = llvm::orc::SymbolMap();
  		for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
  			auto address = jitProxyFunctionTargetAddresses.at(i);
@@ -328,7 +325,7 @@ index 8e2c1fa..5b13e51 100644
  			                                                      llvm::JITSymbolFlags::Exported};
  		}
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
-index 84529e5..91c81e9 100644
+index 4dba8df3..fa5d9233 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMBackendHooks.hpp
 @@ -4,6 +4,10 @@
@@ -352,10 +349,10 @@ index 84529e5..91c81e9 100644
  	// Invoked inside the JIT's symbol-map closure. The contributor adds
  	// (name, address) pairs into the ORC symbol map.
 diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
-index 9e7bdd4..0ed9ca3 100644
+index fe7aebb5..aeb443da 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
-@@ -85,7 +85,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
+@@ -111,7 +111,7 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
  		// (e.g. the inlining plugin's JIT-time LLVM inliner).
  		if (options.getOptionOrDefault("mlir.inline_invoke_calls", false)) {
  			if (const auto& hook = getLLVMBackendHooks().preOptModuleTransform) {
@@ -364,75 +361,102 @@ index 9e7bdd4..0ed9ca3 100644
  			}
  		}
  
-diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
-index 1ade214..006707d 100644
---- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
-+++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
-@@ -176,6 +176,19 @@ TypedValueRef& ExceptionBasedTraceContext::traceCallWithExceptionHandling(
- 	});
- }
+diff --git a/nautilus/src/nautilus/compiler/ir/FunctionTable.cpp b/nautilus/src/nautilus/compiler/ir/FunctionTable.cpp
+index 8c0018af..e71b7cfb 100644
+--- a/nautilus/src/nautilus/compiler/ir/FunctionTable.cpp
++++ b/nautilus/src/nautilus/compiler/ir/FunctionTable.cpp
+@@ -141,6 +141,14 @@ FunctionId FunctionTable::intern(const CalleeDescriptor& descriptor) {
+ 		}
+ 	}
  
-+TypedValueRef& ExceptionBasedTraceContext::traceCall(std::string_view symbolName, Type resultType,
-+                                                     const std::vector<tracing::TypedValueRef>& arguments,
-+                                                     FunctionAttributes fnAttrs) {
-+	auto name = std::string(symbolName);
-+	auto op = Op::CALL;
-+	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
-+		auto* functionArguments = state->executionTrace.getArena().create<FunctionCall>(FunctionCall {
-+		    .functionName = name, .mangledName = name, .ptr = nullptr, .arguments = arguments, .fnAttrs = fnAttrs,
-+		    .destructors = {}});
-+		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
-+	});
-+}
++	const bool symbolic = descriptor.key == nullptr && descriptor.kind == CalleeDescriptor::Kind::External &&
++	                      !descriptor.mangledName.empty();
++	if (symbolic) {
++		if (const auto existing = bySymbol_.find(descriptor.mangledName); existing != bySymbol_.end()) {
++			return existing->second;
++		}
++	}
 +
- TypedValueRef& ExceptionBasedTraceContext::traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
-                                                              const std::vector<tracing::TypedValueRef>& arguments,
-                                                              FunctionAttributes fnAttrs) {
-diff --git a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
-index 0109de6..b0808f1 100644
---- a/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
-+++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
-@@ -229,6 +229,8 @@ public:
+ 	const auto id = static_cast<FunctionId>(targets_.size());
  
- 	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
- 	                         FunctionAttributes fnAttrs) override;
-+	TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
-+	                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) override;
- 	TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
- 	                                              const std::vector<tracing::TypedValueRef>& arguments,
- 	                                              FunctionAttributes fnAttrs) override;
-diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
-index ba48aaf..adf06b8 100644
---- a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
-+++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
-@@ -160,6 +160,22 @@ TypedValueRef& LazyTraceContext::traceCallWithExceptionHandling(void* fptn, Type
+ 	FunctionName name;
+@@ -175,6 +183,9 @@ FunctionId FunctionTable::intern(const CalleeDescriptor& descriptor) {
+ 	if (descriptor.key != nullptr) {
+ 		byKey_.emplace(descriptor.key, id);
+ 	}
++	if (symbolic) {
++		bySymbol_.emplace(descriptor.mangledName, id);
++	}
+ 	return id;
+ }
+ 
+diff --git a/nautilus/src/nautilus/compiler/ir/FunctionTable.hpp b/nautilus/src/nautilus/compiler/ir/FunctionTable.hpp
+index de7494a6..f6f5a6be 100644
+--- a/nautilus/src/nautilus/compiler/ir/FunctionTable.hpp
++++ b/nautilus/src/nautilus/compiler/ir/FunctionTable.hpp
+@@ -210,6 +210,9 @@ private:
+ 
+ 	std::vector<FunctionTarget> targets_;
+ 	std::unordered_map<void*, FunctionId> byKey_;
++	/// Symbolic external callees, which have no address to key on. A symbol is the identity of a bitcode UDF that a
++	/// compiler plugin links in, so every call site of one symbol shares one entry (and its exact name).
++	std::unordered_map<std::string, FunctionId> bySymbol_;
+ 	std::unordered_map<const FunctionOperation*, FunctionId> byDefinition_;
+ 	std::unordered_map<std::string, uint32_t> emissionNameUses_;
+ };
+diff --git a/nautilus/src/nautilus/compiler/ir/passes/IRVerifier.cpp b/nautilus/src/nautilus/compiler/ir/passes/IRVerifier.cpp
+index cfa65448..87eca995 100644
+--- a/nautilus/src/nautilus/compiler/ir/passes/IRVerifier.cpp
++++ b/nautilus/src/nautilus/compiler/ir/passes/IRVerifier.cpp
+@@ -547,7 +547,9 @@ void verifyCallTargets(VerificationResult& result, const IRGraph& ir, const Func
+ 					                     target->getName().get()));
+ 					continue;
+ 				}
+-				if (target->getLinkage() != Linkage::Internal && target->getAddress() == nullptr) {
++				// A symbolic callee (a bitcode UDF a compiler plugin links in) has no address, only its symbol.
++				if (target->getLinkage() != Linkage::Internal && target->getAddress() == nullptr &&
++				    target->getName().getMangled().empty()) {
+ 					addError(result, &fn, block,
+ 					         fmt::format("call to native function '{}' with no address -- an intrinsic without a "
+ 					                     "fallback address cannot degrade to an ordinary call",
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+index d2d533e2..4231ac16 100644
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp
+@@ -252,6 +252,28 @@ TypedValueRef& TraceContext::traceCall(void* fptn, Type resultType,
  	});
  }
  
-+TypedValueRef& LazyTraceContext::traceCall(std::string_view symbolName, Type resultType,
-+                                           const std::vector<tracing::TypedValueRef>& arguments,
-+                                           FunctionAttributes fnAttrs) {
++TypedValueRef& TraceContext::traceCall(std::string_view symbolName, Type resultType,
++                                       const std::vector<tracing::TypedValueRef>& arguments,
++                                       FunctionAttributes fnAttrs) {
 +	if (paused_) {
 +		return dummyRef_;
 +	}
++	// A symbolic callee has no address; its name is its identity. Setting mangledName keeps
++	// resolveCalleeNames from looking the (null) address up.
++	auto name = std::string(symbolName);
 +	auto op = Op::CALL;
 +	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
-+		auto name = std::string(symbolName);
-+		auto* functionArguments = state->executionTrace.getArena().create<FunctionCall>(FunctionCall {
-+		    .functionName = name, .mangledName = name, .ptr = nullptr, .arguments = arguments, .fnAttrs = fnAttrs,
-+		    .destructors = {}});
++		auto* functionArguments =
++		    state->executionTrace.getArena().create<FunctionCall>(FunctionCall {.functionName = name,
++		                                                                        .mangledName = name,
++		                                                                        .ptr = nullptr,
++		                                                                        .arguments = arguments,
++		                                                                        .fnAttrs = fnAttrs,
++		                                                                        .destructors = {}});
 +		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
 +	});
 +}
 +
- TypedValueRef& LazyTraceContext::traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
-                                                    const std::vector<tracing::TypedValueRef>& arguments,
-                                                    FunctionAttributes fnAttrs) {
-diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
-index a4bc951..45f35ed 100644
---- a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
-+++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
-@@ -48,6 +48,8 @@ public:
+ TypedValueRef& TraceContext::traceCallWithExceptionHandling(void* fptn, Type resultType,
+                                                             const std::vector<tracing::TypedValueRef>& arguments,
+                                                             FunctionAttributes fnAttrs, void* captureFunc) {
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/TraceContext.hpp
+index ffe3c2c2..6c5e3fce 100644
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/TraceContext.hpp
+@@ -264,6 +264,8 @@ public:
  	void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) override;
  	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
  	                         FunctionAttributes fnAttrs) override;
@@ -440,13 +464,13 @@ index a4bc951..45f35ed 100644
 +	                         const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) override;
  	TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
  	                                              const std::vector<tracing::TypedValueRef>& arguments,
- 	                                              FunctionAttributes fnAttrs) override;
+ 	                                              FunctionAttributes fnAttrs, void* captureFunc = nullptr) override;
 diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
-index db036c1..04919c2 100644
+index 6941cd6b..0611dbd0 100644
 --- a/nautilus/src/nautilus/tracing/TracingUtil.cpp
 +++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp
-@@ -118,6 +118,11 @@ void unregisterDestructor(const TypedValueRef& address) {
- 	activeTracer->unregisterDestructor(address);
+@@ -115,6 +115,11 @@ TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing:
+ 	return activeTracer->traceCall(fptn, resultType, arguments, fnAttrs);
  }
  
 +TypedValueRef& traceCall(std::string_view symbolName, Type resultType,
@@ -454,11 +478,11 @@ index db036c1..04919c2 100644
 +	return activeTracer->traceCall(symbolName, resultType, arguments, fnAttrs);
 +}
 +
- TypedValueRef& traceIndirectCall(const TypedValueRef& fnPtrRef, Type resultType,
-                                  const std::vector<tracing::TypedValueRef>& arguments, FunctionAttributes fnAttrs) {
- 	return activeTracer->traceIndirectCall(fnPtrRef, resultType, arguments, fnAttrs);
+ TypedValueRef& traceCallWithExceptionHandling(void* fptn, Type resultType,
+                                               const std::vector<tracing::TypedValueRef>& arguments,
+                                               FunctionAttributes fnAttrs, void* captureFunc) {
 diff --git a/plugins/inlining/src/InliningPluginInit.cpp b/plugins/inlining/src/InliningPluginInit.cpp
-index e711a79..970d7af 100644
+index e77e82ef..64e62d8a 100644
 --- a/plugins/inlining/src/InliningPluginInit.cpp
 +++ b/plugins/inlining/src/InliningPluginInit.cpp
 @@ -10,6 +10,7 @@
@@ -480,25 +504,8 @@ index e711a79..970d7af 100644
  		};
  
  		// Hook 2: contribute the inline registry's (name -> address) pairs
-@@ -47,13 +48,9 @@ struct InliningPluginRegistrar {
- 			}
- 		};
- 
--		// Hook 3: when lowering an external proxy call whose target has
--		// registered bitcode, emit the hex-formatted pointer address as the
--		// MLIR function name so the JIT-time inliner can pick it up. The
--		// name must match the format produced by `ptrToHex` elsewhere in
--		// the plugin so that `hexToPtr` round-trips and `jitSymbolContributor`
--		// resolves the same symbol — using `ptrToHex` here keeps those
--		// formats in lock-step.
-+		// Hook 3: pointer-backed inline functions keep using their address as
-+		// the proxy name. Name-backed UDF calls retain their original name;
-+		// their declaration is resolved when the UDF module is merged.
- 		hooks.proxyCallNameOverride = [](void* functionPtr) -> std::optional<std::string> {
- 			if (!InlineFunctionRegistry::instance().containsFunctionBitcode(functionPtr)) {
- 				return std::nullopt;
 diff --git a/plugins/inlining/src/LLVMInliningUtils.cpp b/plugins/inlining/src/LLVMInliningUtils.cpp
-index 5474a79..ed1b200 100644
+index 5474a792..ed1b2000 100644
 --- a/plugins/inlining/src/LLVMInliningUtils.cpp
 +++ b/plugins/inlining/src/LLVMInliningUtils.cpp
 @@ -3,17 +3,102 @@
@@ -824,7 +831,7 @@ index 5474a79..ed1b200 100644
  }
  } // namespace nautilus::compiler::mlir
 diff --git a/plugins/inlining/src/LLVMInliningUtils.hpp b/plugins/inlining/src/LLVMInliningUtils.hpp
-index 53fa5b0..d5ca96b 100644
+index 53fa5b02..d5ca96bb 100644
 --- a/plugins/inlining/src/LLVMInliningUtils.hpp
 +++ b/plugins/inlining/src/LLVMInliningUtils.hpp
 @@ -1,5 +1,6 @@

@@ -1,0 +1,30 @@
+diff --git a/codon/cir/util/format.cpp b/codon/cir/util/format.cpp
+index 7648ad6..1d692c1 100644
+--- a/codon/cir/util/format.cpp
++++ b/codon/cir/util/format.cpp
+@@ -36,6 +36,19 @@ struct NodeFormatter {
+   friend std::ostream &operator<<(std::ostream &os, const NodeFormatter &n);
+ };
+ 
++} // namespace util
++} // namespace ir
++} // namespace codon
++
++// Specialized before its first use: newer fmt rejects a specialization after
++// implicit instantiation.
++template <>
++struct fmt::formatter<codon::ir::util::NodeFormatter> : fmt::ostream_formatter {};
++
++namespace codon {
++namespace ir {
++namespace util {
++
+ namespace {
+ std::string escapeString(const std::string &str) {
+   std::stringstream escaped;
+@@ -477,5 +490,3 @@ std::ostream &format(std::ostream &os, const Node *node) {
+ } // namespace ir
+ } // namespace codon
+ 
+-template <>
+-struct fmt::formatter<codon::ir::util::NodeFormatter> : ostream_formatter {};
