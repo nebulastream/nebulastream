@@ -53,6 +53,7 @@
 #include <Arena.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <UdfBridgeRegistry.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -547,6 +548,18 @@ std::string writeBitcode(const llvm::Module& module)
     return {bitcode.data(), bitcode.size()};
 }
 
+/// The Codon plugins are built next to the worker and their build-time paths are compiled in. A worker that runs somewhere
+/// else, e.g. in a container image, finds them in the `nes-codon-plugins` directory next to its executable instead.
+std::string codonPluginPath(const std::string& builtPath)
+{
+    if (std::filesystem::exists(builtPath))
+    {
+        return builtPath;
+    }
+    const auto besideExecutable = currentExecutableDirectory() / "nes-codon-plugins" / std::filesystem::path{builtPath}.filename();
+    return std::filesystem::exists(besideExecutable) ? besideExecutable.string() : builtPath;
+}
+
 CompiledPythonUdf compilePythonUdf(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
@@ -561,8 +574,8 @@ CompiledPythonUdf compilePythonUdf(
     const auto compilationStart = std::chrono::steady_clock::now();
     try
     {
-        loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
-        loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
+        loadCodonPlugin(codonPluginPath(NES_CODON_BLAS_PLUGIN_PATH));
+        loadCodonPlugin(codonPluginPath(NES_CODON_OPENCV_PLUGIN_PATH));
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
         const auto sourcePath
             = (std::filesystem::temp_directory_path() / fmt::format("{}_{}.py", symbol, static_cast<uint64_t>(::getpid()))).string();
