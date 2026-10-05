@@ -55,7 +55,7 @@ struct ConfigParametersAudio
         }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, DEVICE, SAMPLE_RATE);
+        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, REAL_TIMESTAMP, DEVICE, SAMPLE_RATE);
 };
 
 /// Captures mono signed 16-bit PCM through ALSA and produces (SAMPLE FLOAT64, TIMESTAMP UINT64) tuples.
@@ -84,8 +84,18 @@ private:
     uint64_t startTimestampNs = 0;
     uint64_t samplesCaptured = 0;
     snd_pcm_t* pcm = nullptr;
+
+    /// Capture time of the oldest frame that is still unread in the ALSA ring buffer.
+    [[nodiscard]] uint64_t captureTimeOfOldestUnreadFrameNs() const;
     std::vector<int16_t> samples;
-    bool resetTimestampOnFillTupleBuffer = false;
+    /// REAL_TIMESTAMP: stamp samples with the time the device captured them (ALSA hardware timestamps) instead of a
+    /// timeline that starts when the device was opened.
+    bool realTimestamps = false;
+    /// The device delivers hardware timestamps (otherwise the capture time is estimated from the current time).
+    bool hardwareTimestamps = false;
+    /// The sample timeline (startTimestampNs, samplesCaptured) is anchored to a capture time. Cleared whenever the
+    /// stream restarts, so that the next read anchors it again.
+    bool timelineAnchored = false;
 };
 
 }

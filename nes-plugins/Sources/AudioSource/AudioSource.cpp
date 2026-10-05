@@ -71,6 +71,16 @@ constexpr std::array audioFields{
 
 constexpr size_t MAX_FRAMES_PER_READ = 1024;
 
+/// A read whose capture time differs from where the sample timeline expects it by more than this is not a continuation
+/// of that timeline: the stream restarted, samples were dropped (the ring buffer overran while the source was blocked),
+/// or the device clock drifted away from the system clock. The timeline is then anchored again.
+constexpr uint64_t TIMELINE_TOLERANCE_NS = 5'000'000;
+
+constexpr uint64_t nanosecondsOf(const snd_htimestamp_t& timestamp)
+{
+    return (static_cast<uint64_t>(timestamp.tv_sec) * 1'000'000'000ULL) + static_cast<uint64_t>(timestamp.tv_nsec);
+}
+
 void validateSchema(const SourceDescriptor& sourceDescriptor)
 {
     const auto schema = sourceDescriptor.getLogicalSource().getSchema();
@@ -109,7 +119,7 @@ static_assert(timestampFor(0, 48'000, 48'000) == 1'000'000'000ULL);
 AudioSource::AudioSource(const SourceDescriptor& sourceDescriptor)
     : device(sourceDescriptor.getFromConfig(ConfigParametersAudio::DEVICE))
     , sampleRate(sourceDescriptor.getFromConfig(ConfigParametersAudio::SAMPLE_RATE))
-    , resetTimestampOnFillTupleBuffer(sourceDescriptor.getFromConfig(ConfigParametersAudio::REAL_TIMESTAMP))
+    , realTimestamps(sourceDescriptor.getFromConfig(ConfigParametersAudio::REAL_TIMESTAMP))
 {
     validateSchema(sourceDescriptor);
 }
@@ -134,8 +144,39 @@ void AudioSource::open(std::shared_ptr<AbstractBufferProvider>)
         throw CannotOpenSource("Could not configure ALSA capture device '{}': {}", device, snd_strerror(setupResult));
     }
 
+    /// Let ALSA timestamp its ring buffer with the system (realtime) clock, the clock all other timestamps use.
+    hardwareTimestamps = false;
+    snd_pcm_sw_params_t* swParams = nullptr;
+    snd_pcm_sw_params_alloca(&swParams);
+    if (snd_pcm_sw_params_current(pcm, swParams) == 0 && snd_pcm_sw_params_set_tstamp_mode(pcm, swParams, SND_PCM_TSTAMP_ENABLE) == 0
+        && snd_pcm_sw_params_set_tstamp_type(pcm, swParams, SND_PCM_TSTAMP_TYPE_GETTIMEOFDAY) == 0 && snd_pcm_sw_params(pcm, swParams) == 0)
+    {
+        hardwareTimestamps = true;
+    }
+
     startTimestampNs = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     samplesCaptured = 0;
+    timelineAnchored = false;
+}
+
+uint64_t AudioSource::captureTimeOfOldestUnreadFrameNs() const
+{
+    /// The newest frame was captured at the timestamp, and `available` frames precede it that have not been read yet.
+    snd_pcm_uframes_t available = 0;
+    snd_htimestamp_t timestamp{};
+    if (hardwareTimestamps && snd_pcm_htimestamp(pcm, &available, &timestamp) == 0 && (timestamp.tv_sec != 0 || timestamp.tv_nsec != 0))
+    {
+        const uint64_t backlogNs = (static_cast<uint64_t>(available) * 1'000'000'000ULL) / sampleRate;
+        const auto captured = nanosecondsOf(timestamp);
+        return captured > backlogNs ? captured - backlogNs : captured;
+    }
+
+    /// No device timestamp: the frames queued right now were captured before the current time.
+    const auto queued = snd_pcm_avail(pcm);
+    const uint64_t backlogNs = queued > 0 ? (static_cast<uint64_t>(queued) * 1'000'000'000ULL) / sampleRate : 0;
+    const uint64_t now
+        = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return now > backlogNs ? now - backlogNs : now;
 }
 
 Source::FillTupleBufferResult AudioSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
@@ -144,18 +185,20 @@ Source::FillTupleBufferResult AudioSource::fillTupleBuffer(TupleBuffer& tupleBuf
     const auto tupleCapacity = tupleBuffer.getBufferSize() / sizeof(AudioTuple);
     PRECONDITION(tupleCapacity > 0, "Audio tuple does not fit into tuple buffer");
 
-    if (resetTimestampOnFillTupleBuffer)
-    {
-        startTimestampNs
-            = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        samplesCaptured = 0;
-    }
     size_t tuplesWritten = 0;
     auto output = tupleBuffer.getAvailableMemoryArea();
     while (tuplesWritten < tupleCapacity && !stopToken.stop_requested())
     {
         const auto framesToRead = std::min(tupleCapacity - tuplesWritten, MAX_FRAMES_PER_READ);
         samples.resize(framesToRead);
+        /// The read starts at the oldest unread frame, so its capture time is the one to stamp it with, however long the
+        /// source was blocked before this call. The continuous sample timeline is only re-anchored when this capture time
+        /// disagrees with it.
+        uint64_t captureTimeNs = 0;
+        if (realTimestamps)
+        {
+            captureTimeNs = captureTimeOfOldestUnreadFrameNs();
+        }
         const auto framesRead = snd_pcm_readi(pcm, samples.data(), framesToRead);
         if (framesRead == -EAGAIN)
         {
@@ -172,7 +215,21 @@ Source::FillTupleBufferResult AudioSource::fillTupleBuffer(TupleBuffer& tupleBuf
             {
                 throw CannotOpenSource("Could not read from ALSA capture device '{}': {}", device, snd_strerror(framesRead));
             }
+            /// Recovering restarts the stream, so the next frames do not continue the sample timeline.
+            timelineAnchored = false;
             continue;
+        }
+
+        if (realTimestamps)
+        {
+            const auto expectedNs = timestampFor(startTimestampNs, samplesCaptured, sampleRate);
+            const auto deviationNs = captureTimeNs > expectedNs ? captureTimeNs - expectedNs : expectedNs - captureTimeNs;
+            if (!timelineAnchored || deviationNs > TIMELINE_TOLERANCE_NS)
+            {
+                startTimestampNs = captureTimeNs;
+                samplesCaptured = 0;
+                timelineAnchored = true;
+            }
         }
 
         for (snd_pcm_sframes_t index = 0; index < framesRead; ++index)
