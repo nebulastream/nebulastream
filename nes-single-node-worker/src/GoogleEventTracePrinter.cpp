@@ -252,6 +252,32 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     /// Remove from active pipelines
                     activePipelines.erase(pipelineStop.pipelineId);
                 },
+                [&](const PipelineStateExport& stateExport)
+                {
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{}}},"cat":"pipeline","name":"State Export (Pipeline {}, Query {})","ph":"i","pid":{},"tid":{},"ts":{}}})x",
+                        stateExport.pipelineId.getRawValue(),
+                        stateExport.pipelineId,
+                        stateExport.queryId,
+                        pid,
+                        stateExport.threadId.getRawValue(),
+                        timestampToMicroseconds(stateExport.timestamp));
+                },
+                [&](const PipelineStateImport& stateImport)
+                {
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{}}},"cat":"pipeline","name":"State Import (Pipeline {}, Query {})","ph":"i","pid":{},"tid":{},"ts":{}}})x",
+                        stateImport.pipelineId.getRawValue(),
+                        stateImport.pipelineId,
+                        stateImport.queryId,
+                        pid,
+                        stateImport.threadId.getRawValue(),
+                        timestampToMicroseconds(stateImport.timestamp));
+                },
                 [&](const TaskExecutionStart& taskStart)
                 {
                     printComma();

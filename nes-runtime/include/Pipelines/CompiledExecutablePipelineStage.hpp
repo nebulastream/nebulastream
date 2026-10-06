@@ -44,6 +44,10 @@ public:
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    TupleBuffer emit(PipelineExecutionContext& pipelineExecutionContext) override;
+    void absorb(const TupleBuffer& state, PipelineExecutionContext& pipelineExecutionContext) override;
+
+    [[nodiscard]] const Pipeline& getPipeline() const { return *pipeline; }
 
 protected:
     std::ostream& toString(std::ostream& os) const override;

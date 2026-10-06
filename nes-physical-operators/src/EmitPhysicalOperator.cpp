@@ -31,6 +31,8 @@
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
+#include <PipelineExecutionContext.hpp>
+#include <PipelineState.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
 
@@ -85,6 +87,58 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
+}
+
+void EmitPhysicalOperator::emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const
+{
+    auto& handler = dynamic_cast<EmitOperatorHandler&>(*context.getOperatorHandlers().at(operatorHandlerId));
+    const auto active = handler.sequenceStates.rlock();
+    state.append(static_cast<uint64_t>(active->size()));
+    for (const auto& [key, value] : *active)
+    {
+        state.append(key.sequenceNumber.getRawValue());
+        state.append(key.originId.getRawValue());
+        state.append(value.nextChunkNumberCounter);
+        state.append(value.lastChunkNumber.getRawValue());
+        state.append(static_cast<uint64_t>(value.seenChunks));
+    }
+#ifndef NO_ASSERT
+    const auto completed = handler.completedSequences.rlock();
+    state.append(static_cast<uint64_t>(completed->size()));
+    for (const auto& key : *completed)
+    {
+        state.append(key.sequenceNumber.getRawValue());
+        state.append(key.originId.getRawValue());
+    }
+#endif
+}
+
+void EmitPhysicalOperator::absorb(PipelineStateReader& state, PipelineExecutionContext& context) const
+{
+    INVARIANT(state.childCount() == 0, "Unexpected child state for emit operator");
+    auto& handler = dynamic_cast<EmitOperatorHandler&>(*context.getOperatorHandlers().at(operatorHandlerId));
+    const auto active = handler.sequenceStates.wlock();
+    active->clear();
+    for (uint64_t count = state.read<uint64_t>(); count > 0; --count)
+    {
+        const auto sequence = SequenceNumber(state.read<SequenceNumber::Underlying>());
+        const auto origin = OriginId(state.read<OriginId::Underlying>());
+        auto& value = (*active)[SequenceNumberForOriginId(sequence, origin)];
+        value.nextChunkNumberCounter = state.read<ChunkNumber::Underlying>();
+        value.lastChunkNumber = ChunkNumber(state.read<ChunkNumber::Underlying>());
+        value.seenChunks = state.read<uint64_t>();
+    }
+#ifndef NO_ASSERT
+    const auto completed = handler.completedSequences.wlock();
+    completed->clear();
+    for (uint64_t count = state.read<uint64_t>(); count > 0; --count)
+    {
+        const auto sequence = SequenceNumber(state.read<SequenceNumber::Underlying>());
+        const auto origin = OriginId(state.read<OriginId::Underlying>());
+        completed->emplace(sequence, origin);
+    }
+#endif
+    state.ensureConsumed();
 }
 
 namespace

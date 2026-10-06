@@ -41,6 +41,12 @@ public:
     /// `stop` may throw to indicate an error.
     virtual void stop(PipelineExecutionContext& pipelineExecutionContext) = 0;
 
+    /// Export state to one buffer with operator state in its child buffers.
+    virtual TupleBuffer emit(PipelineExecutionContext&) { return {}; }
+
+    /// Import a previous stage's state after start().
+    virtual void absorb(const TupleBuffer&, PipelineExecutionContext&) { }
+
     friend std::ostream& operator<<(std::ostream& os, const ExecutablePipelineStage& eps) { return eps.toString(os); }
 
 protected:

@@ -30,3 +30,13 @@ target_include_directories(nes-reference-engine PUBLIC include)
 target_link_libraries(nes-reference-engine PUBLIC nes-runtime nes-executable nes-sources nes-query-engine-interface)
 target_link_rust_lib(nes-reference-engine nes_reference_adapter)
 add_dependencies(nes-reference-engine cargo-build_nes_reference_adapter)
+
+add_executable(nes-reference-adaptation-prototype AdaptationPrototype.cpp)
+target_link_libraries(nes-reference-adaptation-prototype PRIVATE
+        nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib void_sink_plugin)
+
+if(NES_ENABLES_TESTS)
+    add_test(
+            NAME reference-adaptation-prototype
+            COMMAND $<TARGET_FILE:nes-reference-adaptation-prototype> 2)
+endif()

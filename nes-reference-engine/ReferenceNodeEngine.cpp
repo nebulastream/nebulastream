@@ -53,12 +53,13 @@ ReferenceNodeEngine::~ReferenceNodeEngine()
     bufferManager.reset();
 }
 
-void ReferenceNodeEngine::startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
+void ReferenceNodeEngine::startQuery(
+    QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan, ExecutableQueryPlan::SharingIds sharingIds)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     systemEventListener->onEvent(StartQuerySystemEvent(std::move(queryId)));
-    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider));
+    queryEngine->start(ExecutableQueryPlan::instantiate(*compiledQueryPlan, *sourceProvider, std::move(sharingIds)));
 }
 
 void ReferenceNodeEngine::stopQuery(QueryId queryId)
@@ -68,4 +69,13 @@ void ReferenceNodeEngine::stopQuery(QueryId queryId)
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);
 }
+
+bool ReferenceNodeEngine::adaptQuery(
+    std::unique_ptr<CompiledQueryPlan> replacement,
+    const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers,
+    ExecutableQueryPlan::SharingIds sharingIds)
+{
+    return queryEngine->adapt(ExecutableQueryPlan::instantiate(*replacement, *sourceProvider, std::move(sharingIds)), stateTransfers);
+}
+
 }

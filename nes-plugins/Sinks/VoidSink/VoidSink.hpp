@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -42,20 +44,42 @@ public:
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    TupleBuffer emit(PipelineExecutionContext& pipelineExecutionContext) override;
+    void absorb(const TupleBuffer& state, PipelineExecutionContext& pipelineExecutionContext) override;
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct Metrics
+    {
+        uint64_t receivedTuples;
+        uint64_t lastExportedCount;
+        uint64_t lastImportedCount;
+        uint64_t stoppedCount;
+        uint64_t exports;
+        uint64_t imports;
+    };
+
+    [[nodiscard]] static Metrics getMetrics();
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
+
+private:
+    uint64_t receivedTuples = 0;
+    static std::atomic_uint64_t totalReceivedTuples;
+    static std::atomic_uint64_t lastExportedCount;
+    static std::atomic_uint64_t lastImportedCount;
+    static std::atomic_uint64_t stoppedCount;
+    static std::atomic_uint64_t exports;
+    static std::atomic_uint64_t imports;
 };
 
 struct ConfigParametersVoid
 {
-    /// Void discards every tuple but still accepts the standard sink parameters (file_path,
-    /// output_format) so it can be used as a drop-in null target in systest's --workingDir flow,
-    /// which injects file_path into every sink.
+    /// Native buffers retain their tuple count; CSV output formatting changes that count to bytes.
+    /// Void also accepts file_path for systest's --workingDir flow.
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+        "output_format", "NATIVE", [](const std::unordered_map<std::string, std::string>&) { return std::optional("NATIVE"); }};
 
     /// Optional (default empty): Void ignores the path entirely but must not *require* it, so that sinks
     /// configured without a file_path (e.g. DistributedPlanningTest's empty config) still validate.

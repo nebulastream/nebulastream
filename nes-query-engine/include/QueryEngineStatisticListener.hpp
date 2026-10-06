@@ -139,6 +139,26 @@ struct PipelineStop : EventBase
     PipelineId pipelineId = INVALID<PipelineId>;
 };
 
+struct PipelineStateExport : EventBase
+{
+    PipelineStateExport(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId)
+    {
+    }
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+};
+
+struct PipelineStateImport : EventBase
+{
+    PipelineStateImport(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId)
+    {
+    }
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+};
+
 using Event = std::variant<
     TaskExecutionStart,
     TaskEmit,
@@ -146,6 +166,8 @@ using Event = std::variant<
     TaskExpired,
     PipelineStart,
     PipelineStop,
+    PipelineStateExport,
+    PipelineStateImport,
     QueryStart,
     QueryStopRequest,
     QueryStop,

@@ -43,6 +43,8 @@ public:
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const override;
+    void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const override;
     void emitRecordBuffer(
         ExecutionContext& ctx,
         RecordBuffer& recordBuffer,

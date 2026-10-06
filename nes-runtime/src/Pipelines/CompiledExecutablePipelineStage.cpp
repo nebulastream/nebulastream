@@ -35,6 +35,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
+#include <PipelineState.hpp>
 #include <function.hpp>
 #include <options.hpp>
 
@@ -103,6 +104,21 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     pipeline->getRootOperator().terminate(ctx);
+}
+
+TupleBuffer CompiledExecutablePipelineStage::emit(PipelineExecutionContext& context)
+{
+    context.setOperatorHandlers(operatorHandlers);
+    PipelineStateBuilder state;
+    pipeline->getRootOperator().emit(state, context);
+    return state.finish(context.getBufferManager());
+}
+
+void CompiledExecutablePipelineStage::absorb(const TupleBuffer& buffer, PipelineExecutionContext& context)
+{
+    context.setOperatorHandlers(operatorHandlers);
+    PipelineStateReader state(buffer);
+    pipeline->getRootOperator().absorb(state, context);
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const

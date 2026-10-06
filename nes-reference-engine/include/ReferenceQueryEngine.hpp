@@ -17,6 +17,8 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -39,6 +41,7 @@ public:
     ~ReferenceQueryEngine();
 
     void start(std::unique_ptr<ExecutableQueryPlan> plan);
+    bool adapt(std::unique_ptr<ExecutableQueryPlan> replacement, const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers);
     void stop(QueryId queryId);
 
     std::shared_ptr<BufferManager> bufferManager;

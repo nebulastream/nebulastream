@@ -1,12 +1,12 @@
 //! C ABI between NebulaStream operators and the unmodified reference query manager.
 use reference_query_manager::query_plan::{
-    QueryPlanPipeline, QueryPlanPipelineId, QueryPlanSource, QueryPlanSourceId,
+    QueryAdaptation, QueryPlanPipeline, QueryPlanPipelineId, QueryPlanSource, QueryPlanSourceId,
 };
 use reference_query_manager::traits::{
     DataBuffer, DataUnit, Pipeline, PipelineExecutionContext, Sequence, Source, SourceResult,
 };
-use reference_query_manager::{QueryId, QueryListener, QueryManager, QueryPlan};
-use std::ffi::c_void;
+use reference_query_manager::{QueryId, QueryListener, QueryManager, QueryPlan, SharingId};
+use std::ffi::{CStr, c_char, c_void};
 use std::slice;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
@@ -15,7 +15,8 @@ type Output = unsafe extern "C" fn(*mut c_void, *mut c_void, u64);
 
 unsafe extern "C" {
     fn nes_ref_release_buffer(buffer: *mut c_void);
-    fn nes_ref_pipeline_absorb(pipeline: *mut c_void) -> bool;
+    fn nes_ref_pipeline_absorb(pipeline: *mut c_void, state: *mut c_void) -> bool;
+    fn nes_ref_pipeline_emit(pipeline: *mut c_void, output: Output, context: *mut c_void);
     fn nes_ref_pipeline_execute(
         pipeline: *mut c_void,
         buffer: *mut c_void,
@@ -68,15 +69,20 @@ impl Pipeline for CppPipeline {
         };
     }
 
-    fn absorb(&self, _: &DataUnit, _: &mut dyn PipelineExecutionContext) {
+    fn absorb(&self, data: &DataUnit, _: &mut dyn PipelineExecutionContext) {
+        let state = unsafe { data.data.as_opaque_raw() }.unwrap_or(std::ptr::null_mut());
         self.initialized.store(
-            unsafe { nes_ref_pipeline_absorb(self.handle) },
+            unsafe { nes_ref_pipeline_absorb(self.handle, state) },
             Ordering::Release,
         );
     }
 
-    // NebulaStream has no equivalent state export hook yet.
-    fn emit(&self, _: &mut dyn PipelineExecutionContext) {}
+    fn emit(&self, context: &mut dyn PipelineExecutionContext) {
+        let mut bridge = CppOutput(context);
+        unsafe {
+            nes_ref_pipeline_emit(self.handle, output, (&mut bridge as *mut CppOutput).cast())
+        };
+    }
 }
 
 impl Drop for CppPipeline {
@@ -193,6 +199,7 @@ pub unsafe extern "C" fn rq_plan_add_pipeline(
     handle: *mut c_void,
     successors: *const usize,
     count: usize,
+    sharing_id: *const c_char,
 ) -> bool {
     let successors = if count == 0 {
         &[]
@@ -217,9 +224,18 @@ pub unsafe extern "C" fn rq_plan_add_pipeline(
         &mut InitialContext,
     );
     let initialized = pipeline.initialized.load(Ordering::Acquire);
+    let sharing_id = if sharing_id.is_null() {
+        None
+    } else {
+        Some(SharingId(
+            unsafe { CStr::from_ptr(sharing_id) }
+                .to_string_lossy()
+                .into_owned(),
+        ))
+    };
     unsafe { &mut *plan }.pipelines.push(QueryPlanPipeline {
         id: QueryPlanPipelineId(id),
-        sharing_id: None,
+        sharing_id,
         pipeline: Box::new(pipeline),
         successors,
     });
@@ -238,6 +254,7 @@ pub unsafe extern "C" fn rq_plan_add_source(
     handle: *mut c_void,
     successors: *const usize,
     count: usize,
+    sharing_id: *const c_char,
 ) {
     let successors = if count == 0 {
         &[]
@@ -249,9 +266,18 @@ pub unsafe extern "C" fn rq_plan_add_source(
     .map(QueryPlanPipelineId)
     .collect();
     let (tx, receiver) = mpsc::channel();
+    let sharing_id = if sharing_id.is_null() {
+        None
+    } else {
+        Some(SharingId(
+            unsafe { CStr::from_ptr(sharing_id) }
+                .to_string_lossy()
+                .into_owned(),
+        ))
+    };
     unsafe { &mut *plan }.sources.push(QueryPlanSource {
         id: QueryPlanSourceId(id),
-        sharing_id: None,
+        sharing_id,
         source: Box::new(CppSource {
             handle,
             receiver,
@@ -274,4 +300,25 @@ pub unsafe extern "C" fn rq_manager_start(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rq_manager_stop(manager: *mut QueryManager, query: usize) -> bool {
     unsafe { &*manager }.stop_query(QueryId(query)).is_ok()
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rq_manager_adapt(
+    manager: *mut QueryManager,
+    plan: *mut QueryPlan,
+    donors: *const usize,
+    targets: *const usize,
+    count: usize,
+) -> bool {
+    let plan = unsafe { Box::from_raw(plan) };
+    let mut adaptation = QueryAdaptation::new(*plan);
+    if count != 0 {
+        let donors = unsafe { slice::from_raw_parts(donors, count) };
+        let targets = unsafe { slice::from_raw_parts(targets, count) };
+        for (&donor, &target) in donors.iter().zip(targets) {
+            adaptation =
+                adaptation.transfer_state(QueryPlanPipelineId(donor), QueryPlanPipelineId(target));
+        }
+    }
+    unsafe { &*manager }.adapt_query(adaptation).is_ok()
 }

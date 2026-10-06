@@ -40,6 +40,9 @@
 namespace NES
 {
 struct ExecutionContext;
+class PipelineExecutionContext;
+class PipelineStateBuilder;
+class PipelineStateReader;
 
 /// Unique ID generation for physical operators.
 inline OperatorId getNextPhysicalOperatorId()
@@ -78,6 +81,10 @@ struct PhysicalOperatorConcept
 
     /// Executes the operator on the given record.
     virtual void execute(ExecutionContext& executionCtx, Record& record) const;
+
+    /// Export/import operator-owned state. The default implementation visits the child.
+    virtual void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const;
+    virtual void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const;
 
     /// Unique identifier for this operator.
     const OperatorId id = INVALID_OPERATOR_ID;
@@ -125,6 +132,8 @@ struct PhysicalOperator
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void terminate(ExecutionContext& executionCtx) const;
     void execute(ExecutionContext& executionCtx, Record& record) const;
+    void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const;
+    void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const;
     [[nodiscard]] std::string toString() const;
 
     [[nodiscard]] OperatorId getId() const;
@@ -200,6 +209,10 @@ private:
         void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
+
+        void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const override { data.emit(state, context); }
+
+        void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const override { data.absorb(state, context); }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };

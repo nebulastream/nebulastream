@@ -12,7 +12,10 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
+#include <utility>
+#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -32,8 +35,12 @@ public:
     ReferenceNodeEngine(const WorkerConfiguration& configuration, std::shared_ptr<StatisticListener> statisticsListener, const Host& host);
     ~ReferenceNodeEngine();
 
-    void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
+    void startQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan, ExecutableQueryPlan::SharingIds sharingIds = {});
     void stopQuery(QueryId queryId);
+    bool adaptQuery(
+        std::unique_ptr<CompiledQueryPlan> replacement,
+        const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers,
+        ExecutableQueryPlan::SharingIds sharingIds = {});
 
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 

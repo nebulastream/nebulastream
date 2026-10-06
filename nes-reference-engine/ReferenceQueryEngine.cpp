@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -28,6 +29,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -37,9 +39,10 @@ void* rq_manager_new(void* listener);
 void rq_manager_free(void* manager);
 void* rq_plan_new(size_t query);
 void rq_plan_free(void* plan);
-bool rq_plan_add_pipeline(void* plan, size_t id, void* handle, const size_t* successors, size_t count);
-void rq_plan_add_source(void* plan, size_t id, void* handle, const size_t* successors, size_t count);
+bool rq_plan_add_pipeline(void* plan, size_t id, void* handle, const size_t* successors, size_t count, const char* sharingId);
+void rq_plan_add_source(void* plan, size_t id, void* handle, const size_t* successors, size_t count, const char* sharingId);
 bool rq_manager_start(void* manager, void* plan);
+bool rq_manager_adapt(void* manager, void* plan, const size_t* donors, const size_t* targets, size_t count);
 bool rq_manager_stop(void* manager, size_t query);
 void rq_source_data(void* sender, void* buffer, uint64_t sequence);
 void rq_source_eos(void* sender);
@@ -105,8 +108,13 @@ private:
 
 struct PipelineAdapter
 {
-    explicit PipelineAdapter(std::unique_ptr<ExecutablePipelineStage> stage, PipelineId id, std::shared_ptr<BufferManager> buffers)
-        : stage(std::move(stage)), id(id), buffers(std::move(buffers))
+    explicit PipelineAdapter(
+        std::unique_ptr<ExecutablePipelineStage> stage,
+        QueryId queryId,
+        PipelineId id,
+        std::shared_ptr<BufferManager> buffers,
+        std::shared_ptr<QueryEngineStatisticListener> statisticListener)
+        : stage(std::move(stage)), queryId(queryId), id(id), buffers(std::move(buffers)), statisticListener(std::move(statisticListener))
     {
     }
 
@@ -133,17 +141,80 @@ struct PipelineAdapter
 
     std::mutex mutex;
     std::unique_ptr<ExecutablePipelineStage> stage;
+    QueryId queryId;
     PipelineId id;
     std::shared_ptr<BufferManager> buffers;
+    std::shared_ptr<QueryEngineStatisticListener> statisticListener;
     bool started = false;
 };
 
 struct SourceAdapter
 {
-    explicit SourceAdapter(std::unique_ptr<SourceHandle> source) : source(std::move(source)) { }
+    explicit SourceAdapter(std::unique_ptr<SourceHandle> source, std::shared_ptr<BackpressureController> controller)
+        : controller(std::move(controller)), source(std::move(source))
+    {
+    }
 
+    /// Must outlive the source thread's BackpressureListener.
+    std::shared_ptr<BackpressureController> controller;
     std::unique_ptr<SourceHandle> source;
 };
+
+void* buildRustPlan(
+    ExecutableQueryPlan& plan,
+    size_t referenceId,
+    const std::shared_ptr<BufferManager>& bufferManager,
+    const std::shared_ptr<QueryEngineStatisticListener>& statisticListener)
+{
+    void* rustPlan = rq_plan_new(referenceId);
+    try
+    {
+        for (auto& pipeline : plan.pipelines)
+        {
+            std::vector<size_t> successors;
+            for (const auto& weak : pipeline->successors)
+            {
+                if (const auto successor = weak.lock())
+                {
+                    successors.push_back(successor->id.getRawValue());
+                }
+            }
+            auto adapter = std::make_unique<PipelineAdapter>(
+                std::move(pipeline->stage), plan.queryId, pipeline->id, bufferManager, statisticListener);
+            const auto sharing = plan.sharingIds.pipelines.find(pipeline->id);
+            const auto* sharingId = sharing == plan.sharingIds.pipelines.end() ? nullptr : sharing->second.c_str();
+            if (not rq_plan_add_pipeline(
+                    rustPlan, pipeline->id.getRawValue(), adapter.release(), successors.data(), successors.size(), sharingId))
+            {
+                throw NotImplemented("reference query engine pipeline initialization failed");
+            }
+        }
+        for (auto& [source, weakSuccessors] : plan.sources)
+        {
+            std::vector<size_t> successors;
+            for (const auto& weak : weakSuccessors)
+            {
+                if (const auto successor = weak.lock())
+                {
+                    successors.push_back(successor->id.getRawValue());
+                }
+            }
+            const auto sourceId = source->getSourceId();
+            const auto sharing = plan.sharingIds.sources.find(sourceId);
+            const auto* sharingId = sharing == plan.sharingIds.sources.end() ? nullptr : sharing->second.c_str();
+            const auto controller = plan.sourceBackpressureControllers.find(sourceId);
+            auto adapter = std::make_unique<SourceAdapter>(
+                std::move(source), controller == plan.sourceBackpressureControllers.end() ? nullptr : std::move(controller->second));
+            rq_plan_add_source(rustPlan, sourceId.getRawValue(), adapter.release(), successors.data(), successors.size(), sharingId);
+        }
+    }
+    catch (...)
+    {
+        rq_plan_free(rustPlan);
+        throw;
+    }
+    return rustPlan;
+}
 }
 
 extern "C" void nes_ref_release_buffer(void* buffer)
@@ -151,7 +222,7 @@ extern "C" void nes_ref_release_buffer(void* buffer)
     delete static_cast<TupleBuffer*>(buffer);
 }
 
-extern "C" bool nes_ref_pipeline_absorb(void* pipeline)
+extern "C" bool nes_ref_pipeline_absorb(void* pipeline, void* state)
 {
     auto& adapter = *static_cast<PipelineAdapter*>(pipeline);
     try
@@ -162,6 +233,12 @@ extern "C" bool nes_ref_pipeline_absorb(void* pipeline)
             ReferenceExecutionContext context(adapter.buffers, adapter.id, nullptr, nullptr);
             adapter.stage->start(context);
             adapter.started = true;
+        }
+        if (state != nullptr)
+        {
+            ReferenceExecutionContext context(adapter.buffers, adapter.id, nullptr, nullptr);
+            adapter.stage->absorb(*static_cast<TupleBuffer*>(state), context);
+            adapter.statisticListener->onEvent(PipelineStateImport(WorkerThreadId(0), adapter.queryId, adapter.id));
         }
         return true;
     }
@@ -174,6 +251,31 @@ extern "C" bool nes_ref_pipeline_absorb(void* pipeline)
         NES_ERROR("Reference engine pipeline initialization failed with an unknown exception");
     }
     return false;
+}
+
+extern "C" void nes_ref_pipeline_emit(void* pipeline, Output output, void* outputContext)
+{
+    auto& adapter = *static_cast<PipelineAdapter*>(pipeline);
+    try
+    {
+        const std::scoped_lock lock(adapter.mutex);
+        ReferenceExecutionContext context(adapter.buffers, adapter.id, nullptr, nullptr);
+        auto state = adapter.stage->emit(context);
+        if (!state)
+        {
+            return;
+        }
+        output(outputContext, new TupleBuffer(std::move(state)), 0);
+        adapter.statisticListener->onEvent(PipelineStateExport(WorkerThreadId(0), adapter.queryId, adapter.id));
+    }
+    catch (const std::exception& error)
+    {
+        NES_ERROR("Reference engine pipeline state export failed: {}", error.what());
+    }
+    catch (...)
+    {
+        NES_ERROR("Reference engine pipeline state export failed with an unknown exception");
+    }
 }
 
 extern "C" void nes_ref_pipeline_execute(void* pipeline, void* buffer, Output output, void* outputContext)
@@ -306,43 +408,13 @@ void ReferenceQueryEngine::start(std::unique_ptr<ExecutableQueryPlan> plan)
         const std::scoped_lock lock(referenceQueryMutex);
         referenceQueries.emplace(referenceId, queryId);
     }
-    void* rustPlan = rq_plan_new(referenceId);
+    void* rustPlan = nullptr;
     try
     {
-        for (auto& pipeline : plan->pipelines)
-        {
-            std::vector<size_t> successors;
-            for (const auto& weak : pipeline->successors)
-            {
-                if (const auto successor = weak.lock())
-                {
-                    successors.push_back(successor->id.getRawValue());
-                }
-            }
-            auto adapter = std::make_unique<PipelineAdapter>(std::move(pipeline->stage), pipeline->id, bufferManager);
-            if (not rq_plan_add_pipeline(rustPlan, pipeline->id.getRawValue(), adapter.release(), successors.data(), successors.size()))
-            {
-                throw NotImplemented("reference query engine pipeline initialization failed");
-            }
-        }
-        for (auto& [source, weakSuccessors] : plan->sources)
-        {
-            std::vector<size_t> successors;
-            for (const auto& weak : weakSuccessors)
-            {
-                if (const auto successor = weak.lock())
-                {
-                    successors.push_back(successor->id.getRawValue());
-                }
-            }
-            const auto sourceId = source->getSourceId().getRawValue();
-            auto adapter = std::make_unique<SourceAdapter>(std::move(source));
-            rq_plan_add_source(rustPlan, sourceId, adapter.release(), successors.data(), successors.size());
-        }
+        rustPlan = buildRustPlan(*plan, referenceId, bufferManager, statisticListener);
     }
     catch (...)
     {
-        rq_plan_free(rustPlan);
         const std::scoped_lock lock(referenceQueryMutex);
         referenceQueries.erase(referenceId);
         throw;
@@ -362,6 +434,37 @@ void ReferenceQueryEngine::start(std::unique_ptr<ExecutableQueryPlan> plan)
         }
         statusListener->logQueryFailure(queryId, NotImplemented("reference query manager rejected plan"), std::chrono::system_clock::now());
     }
+}
+
+bool ReferenceQueryEngine::adapt(
+    std::unique_ptr<ExecutableQueryPlan> replacement, const std::vector<std::pair<PipelineId, PipelineId>>& stateTransfers)
+{
+    size_t referenceId = 0;
+    {
+        const std::scoped_lock lock(referenceQueryMutex);
+        for (const auto& [id, original] : referenceQueries)
+        {
+            if (original == replacement->queryId)
+            {
+                referenceId = id;
+                break;
+            }
+        }
+    }
+    PRECONDITION(referenceId != 0, "Cannot adapt a query that is not running");
+    std::vector<size_t> donors;
+    std::vector<size_t> targets;
+    for (const auto& [donor, target] : stateTransfers)
+    {
+        donors.push_back(donor.getRawValue());
+        targets.push_back(target.getRawValue());
+    }
+    return rq_manager_adapt(
+        referenceManager,
+        buildRustPlan(*replacement, referenceId, bufferManager, statisticListener),
+        donors.data(),
+        targets.data(),
+        donors.size());
 }
 
 void ReferenceQueryEngine::stop(QueryId queryId)

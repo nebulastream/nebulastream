@@ -13,6 +13,8 @@
 */
 
 #include <PhysicalOperator.hpp>
+#include <PipelineExecutionContext.hpp>
+#include <PipelineState.hpp>
 
 #include <memory>
 #include <optional>
@@ -69,6 +71,32 @@ void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
 void PhysicalOperatorConcept::execute(ExecutionContext& executionCtx, Record& record) const
 {
     executeChild(executionCtx, record);
+}
+
+void PhysicalOperatorConcept::emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const
+{
+    if (const auto child = getChild())
+    {
+        PipelineStateBuilder childState;
+        child->emit(childState, context);
+        state.addChild(childState.finish(context.getBufferManager()));
+    }
+}
+
+void PhysicalOperatorConcept::absorb(PipelineStateReader& state, PipelineExecutionContext& context) const
+{
+    if (const auto child = getChild())
+    {
+        INVARIANT(state.childCount() == 1, "Expected one child pipeline state");
+        auto childBuffer = state.child(0);
+        PipelineStateReader childState(childBuffer);
+        child->absorb(childState, context);
+    }
+    else
+    {
+        INVARIANT(state.childCount() == 0, "Unexpected child pipeline state");
+    }
+    state.ensureConsumed();
 }
 
 void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -153,6 +181,16 @@ void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
 void PhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     self->execute(executionCtx, record);
+}
+
+void PhysicalOperator::emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const
+{
+    self->emit(state, context);
+}
+
+void PhysicalOperator::absorb(PipelineStateReader& state, PipelineExecutionContext& context) const
+{
+    self->absorb(state, context);
 }
 
 std::string PhysicalOperator::toString() const

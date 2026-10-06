@@ -63,9 +63,10 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan>
-ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider)
+ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, SharingIds sharingIds)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
+    std::unordered_map<OriginId, std::shared_ptr<BackpressureController>> sourceBackpressureControllers;
 
     std::unordered_map<OperatorId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
 
@@ -94,16 +95,38 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        if (sharingIds.sources.contains(originId))
+        {
+            auto [controller, listener] = createBackpressureChannel();
+            sourceBackpressureControllers.emplace(originId, std::make_shared<BackpressureController>(std::move(controller)));
+            instantiatedSources.emplace_back(sourceProvider.lower(originId, listener, descriptor), std::move(successors));
+        }
+        else
+        {
+            instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        }
     }
 
 
-    return std::make_unique<ExecutableQueryPlan>(compiledQueryPlan.queryId, compiledQueryPlan.pipelines, std::move(instantiatedSources));
+    return std::make_unique<ExecutableQueryPlan>(
+        compiledQueryPlan.queryId,
+        compiledQueryPlan.pipelines,
+        std::move(instantiatedSources),
+        std::move(sourceBackpressureControllers),
+        std::move(sharingIds));
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
-    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
-    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    QueryId queryId,
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+    std::vector<SourceWithSuccessor> instantiatedSources,
+    std::unordered_map<OriginId, std::shared_ptr<BackpressureController>> sourceBackpressureControllers,
+    SharingIds sharingIds)
+    : queryId(queryId)
+    , pipelines(std::move(pipelines))
+    , sources(std::move(instantiatedSources))
+    , sourceBackpressureControllers(std::move(sourceBackpressureControllers))
+    , sharingIds(std::move(sharingIds))
 {
 }
 }

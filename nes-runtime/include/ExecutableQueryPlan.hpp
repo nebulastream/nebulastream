@@ -15,12 +15,15 @@
 #pragma once
 #include <memory>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <BackpressureChannel.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryId.hpp>
 
@@ -32,14 +35,28 @@ namespace NES
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor = std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
-    static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
+
+    struct SharingIds
+    {
+        std::unordered_map<PipelineId, std::string> pipelines;
+        std::unordered_map<OriginId, std::string> sources;
+    };
+
+    static std::unique_ptr<ExecutableQueryPlan>
+    instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, SharingIds sharingIds = {});
 
     ExecutableQueryPlan(
-        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
+        QueryId queryId,
+        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
+        std::vector<SourceWithSuccessor> instantiatedSources,
+        std::unordered_map<OriginId, std::shared_ptr<BackpressureController>> sourceBackpressureControllers = {},
+        SharingIds sharingIds = {});
 
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
+    std::unordered_map<OriginId, std::shared_ptr<BackpressureController>> sourceBackpressureControllers;
+    SharingIds sharingIds;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);
 };
 }
