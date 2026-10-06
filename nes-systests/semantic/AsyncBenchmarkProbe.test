@@ -1,0 +1,181 @@
+# name: semantic/AsyncBenchmarkProbe.test
+# description: The cheap discriminator before the full benchmark: does the asynchronous path's
+#              MAX_CONCURRENCY actually put calls in flight? 40 rows against a real model
+#              (qwen2.5:7b on Ollama), three configurations that differ only in how the model call
+#              is scheduled. Each query asserts that every record comes back; the number that
+#              matters is the wall time, read from --show-query-performance.
+#
+#              Query 1 is the synchronous baseline: one record per request on the worker pool.
+#              Query 2 is asynchronous with one record per request. If it is markedly slower than
+#              query 1, concurrency is bounded by input buffers rather than by calls, because 40
+#              rows arrive in a single buffer and one source thread then serializes them.
+#              Query 3 is asynchronous with batching, which hides that effect by making fewer
+#              calls, and is there so the two causes can be told apart.
+#
+#              Needs Ollama on localhost:11434 with qwen2.5:7b. Never part of ctest.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH FILE async/reviews_40.csv
+
+CREATE SEMANTIC MODEL syncBase
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT, 'qwen2.5:7b' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
+     180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
+     4 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL asyncPerRecord
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT, 'qwen2.5:7b' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
+     180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 8 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL asyncBatched
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT, 'qwen2.5:7b' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
+     180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
+     'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 8 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# Query 1: synchronous baseline
+SELECT id FROM SEM_MAP(syncBase, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+
+# Query 2: asynchronous, one record per request
+SELECT id FROM SEM_MAP(asyncPerRecord, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+
+# Query 3: asynchronous, eight records per request
+SELECT id FROM SEM_MAP(asyncBatched, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40

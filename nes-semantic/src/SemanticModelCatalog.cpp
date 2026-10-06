@@ -132,12 +132,15 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     {
         throw InvalidSemanticModel("Semantic model '{}': BATCH_SIZE must be at least 1", name);
     }
-    /// Stage 1 sends one record per request. Accepting a larger value would silently run with
-    /// batch size 1, so it is rejected until stage 2 (asynchronous batching) lands.
-    if (config.batchSize > 1)
+    /// The synchronous operator sends one record per request. Accepting a larger value there would
+    /// silently run with batch size 1, so it stays rejected; the asynchronous executor hands a
+    /// whole batch to one prompt, which is what BATCH_SIZE means in the first place.
+    if (config.batchSize > 1 && config.execution != SemanticExecution::ASYNCHRONOUS)
     {
         throw InvalidSemanticModel(
-            "Semantic model '{}': BATCH_SIZE {} is not supported yet; batching arrives with stage 2, use 1", name, config.batchSize);
+            "Semantic model '{}': BATCH_SIZE {} requires 'ASYNC' AS LLM.EXECUTION; the synchronous operator sends one record per request",
+            name,
+            config.batchSize);
     }
     if (config.maxConcurrency == 0)
     {

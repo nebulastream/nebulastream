@@ -31,7 +31,8 @@ target_link_libraries(nes-semantic
         PUBLIC nes-data-types nes-schema nlohmann_json::nlohmann_json
         PRIVATE nes-common CURL::libcurl reflectcpp::reflectcpp)
 
-# Registers the executor that lets SEM_MAP run on the asynchronous framework.
+# The executor that lets SEM_MAP run on the asynchronous framework. It is a plugin library of its
+# own, so nes-semantic does not depend on nes-async.
 add_subdirectory(async)
 
 add_tests_if_enabled(tests)

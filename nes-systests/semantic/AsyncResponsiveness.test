@@ -1,0 +1,93 @@
+# name: semantic/AsyncResponsiveness.test
+# description: The measurement the asynchronous framework exists for. A worker configured with a
+#              SINGLE thread runs a slow SEM_MAP query and, at the same time, an ordinary query
+#              that contains no model at all. The question is what the ordinary query costs.
+#
+#              Synchronously, the model call happens on the one worker thread, so the ordinary
+#              query's tasks can only run between calls. Asynchronously the call happens on the
+#              source's own thread and the worker pool stays free.
+#
+#              Run it as two concurrent queries on one worker thread:
+#                systest -t <this>:1 -t <this>:3 -n 2 -- --worker.query_engine.number_of_worker_threads=1
+#                systest -t <this>:2 -t <this>:3 -n 2 -- --worker.query_engine.number_of_worker_threads=1
+#              Query 3 on its own is the reference. scripts/measure_async_semantic_map.sh drives it.
+#
+#              Needs Ollama on localhost:11434 with qwen2.5:7b. Never part of ctest.
+# groups: [Semantic-Nightly]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH FILE async/reviews_12.csv
+
+CREATE LOGICAL SOURCE readings(id UINT64 NOT NULL, value UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR readings TYPE File;
+ATTACH FILE async/plain_200.csv
+
+CREATE SEMANTIC MODEL syncModel
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT, 'qwen2.5:7b' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
+     180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
+     4 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL asyncModel
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:11434/v1' AS LLM.ENDPOINT, 'qwen2.5:7b' AS LLM.MODEL_NAME,
+     'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
+     180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 8 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+CREATE SINK readingsOut(id UINT64 NOT NULL, value UINT64 NOT NULL) TYPE File;
+
+# Query 1: the slow query, synchronous - the wait is paid on the worker thread.
+SELECT id FROM SEM_MAP(syncModel, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+# Query 2: the same, asynchronous - the wait is paid on the source's own thread.
+SELECT id FROM SEM_MAP(asyncModel, reviews) WHERE CHAR_LENGTH(sentiment) > UINT64(0) INTO ids;
+----
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+# Query 3: no model anywhere. Its completion time beside query 1 versus beside query 2 is the
+# whole point of the framework.
+SELECT id, value FROM readings WHERE id > UINT64(189) INTO readingsOut;
+----
+190,17
+191,24
+192,31
+193,38
+194,45
+195,52
+196,59
+197,66
+198,73
+199,80
+200,87

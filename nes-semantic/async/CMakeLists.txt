@@ -10,16 +10,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The asynchronous SEM_MAP executor lives here rather than in nes-async: the framework must not
-# depend on any operator that uses it. nes-semantic is configured after nes-async — directories
-# are added in alphabetical order — so the registry already exists at this point.
-target_sources(nes-semantic PRIVATE SemanticMapExecutor.cpp)
-target_include_directories(nes-semantic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(nes-semantic PUBLIC nes-async)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeRegistrationUtil.cmake)
 
+# Its own library, and not part of nes-semantic, for the reason every out-of-module plugin here has
+# one (see nes-plugins/OutputFormatters/JSONOutputFormatter): the registry entry is compiled into
+# nes-async's generated glue translation unit, so everything linking nes-async has to be able to
+# resolve this executor's symbols — while nes-async itself must not depend on any operator that
+# uses it. link_plugin_library adds exactly that one edge, and keeps nes-semantic free of any
+# dependency on the framework.
+add_library(semantic_map_async_plugin STATIC SemanticMapExecutor.cpp)
+target_include_directories(semantic_map_async_plugin PUBLIC include)
+target_link_libraries(semantic_map_async_plugin PRIVATE nes-semantic nes-async nes-common)
+
+link_plugin_library(nes-async semantic_map_async_plugin)
 add_registry_entry(AsyncExecutor SemanticMap)
 
-# The generated glue translation unit includes Async/SemanticMapExecutor.hpp by that path and is
-# compiled into the AsyncExecutor glue library, which does not inherit nes-semantic's includes.
-# Only this one directory is needed: the header deliberately exposes no semantic type.
+# The generated glue translation unit includes Async/SemanticMapExecutor.hpp by that path and does
+# not inherit this plugin's include directories. Only this one is needed: the header deliberately
+# exposes no semantic type.
 nes_async_add_glue_include_dir(AsyncExecutor ${CMAKE_CURRENT_SOURCE_DIR}/include)

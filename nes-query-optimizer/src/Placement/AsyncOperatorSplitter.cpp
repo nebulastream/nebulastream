@@ -33,6 +33,7 @@
 #include <Traits/FieldOrderingTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <DistributedLogicalPlan.hpp>
@@ -54,6 +55,14 @@ struct SplitContext
     /// Producer halves discovered while rewriting; they become additional local plans.
     std::vector<LogicalPlan> producerPlans;
 };
+
+/// Everything except the marker itself. A marker left on an operator would make a later pass try
+/// to split it again, and `AsyncOperatorSplitter` is meant to be idempotent.
+TraitSet withoutAsyncExecution(const TraitSet& traits)
+{
+    return traits | std::views::filter([](const auto& existing) { return existing.getTypeInfo() != typeid(AsyncExecutionTrait); })
+        | std::ranges::to<TraitSet>();
+}
 
 /// Replaces one marked operator by a sink/source pair and records the producer half.
 LogicalOperator cut(SplitContext& context, const LogicalOperator& asyncOperator, const LogicalOperator& child, const AsyncExecutionTrait& trait)
@@ -102,11 +111,8 @@ LogicalOperator cut(SplitContext& context, const LogicalOperator& asyncOperator,
     auto sinkOperator = SinkLogicalOperator::create(child, sinkDescriptor.value())->withTraitSet(child.getTraitSet()).withInferredSchema();
     context.producerPlans.emplace_back(INVALID_QUERY_ID, std::vector<LogicalOperator>{sinkOperator});
 
-    /// Everything except the marker itself: the source now *is* the operator, and a marker left on
-    /// it would make a second pass try to split a leaf that has no input.
-    const auto sourceTraits = asyncOperator.getTraitSet()
-        | std::views::filter([](const auto& existing) { return existing.getTypeInfo() != typeid(AsyncExecutionTrait); })
-        | std::ranges::to<TraitSet>();
+    /// The source now *is* the operator, but it must not keep the marker.
+    const auto sourceTraits = withoutAsyncExecution(asyncOperator.getTraitSet());
 
     NES_DEBUG("Split out asynchronous operator '{}' onto channel {}", trait.executorType, channelId);
     return SourceDescriptorLogicalOperator::create(sourceDescriptor.value())->withTraitSet(sourceTraits);
@@ -126,10 +132,28 @@ LogicalOperator splitRecursive(SplitContext& context, const LogicalOperator& op)
 
     if (const auto trait = op.getTraitSet().tryGet<AsyncExecutionTrait>(); trait.has_value())
     {
+        /// The marker belongs to an inner operator — one that reads from a child and feeds a
+        /// parent. `QueryDecomposition::connect()` copies the whole trait set of the operator it
+        /// cuts onto *both* boundary operators it generates, so the network sink ending the
+        /// producer half and the network source starting the consumer half both carry this marker
+        /// without being that operator. The real operator sits in the local plan of the host it
+        /// was placed on and is split there; everywhere else the marker is an artifact.
+        ///
+        /// Without this, the generated network sink would be split as well, and since it is the
+        /// root of its local plan the consumer half would come out rooted in a source.
+        if (op.tryGetAs<SourceDescriptorLogicalOperator>() || op.tryGetAs<SinkLogicalOperator>())
+        {
+            NES_DEBUG("Dropping the asynchronous execution marker from a generated boundary operator for '{}'", trait.value()->executorType);
+            return op.withChildren(std::move(newChildren)).withTraitSet(withoutAsyncExecution(op.getTraitSet()));
+        }
+
         if (newChildren.size() != 1)
         {
             throw UnsupportedQuery(
-                "An asynchronous operator must have exactly one input, but '{}' has {}", trait.value()->executorType, newChildren.size());
+                "An asynchronous operator must have exactly one input, but '{}' has {}: {}",
+                trait.value()->executorType,
+                newChildren.size(),
+                op.explain(ExplainVerbosity::Debug));
         }
         return cut(context, op, newChildren.front(), *trait.value());
     }
@@ -154,6 +178,8 @@ DistributedLogicalPlan AsyncOperatorSplitter::split(const DistributedLogicalPlan
         {
             const auto roots = localPlan.getRootOperators();
             INVARIANT(roots.size() == 1, "A local plan is expected to have exactly one root, but has {}", roots.size());
+
+            NES_DEBUG("Splitting local plan on host {}:\n{}", host, explain(localPlan, ExplainVerbosity::Debug));
 
             SplitContext context{
                 .sourceCatalog = copyPtr(sourceCatalog), .sinkCatalog = copyPtr(sinkCatalog), .host = host, .producerPlans = {}};
