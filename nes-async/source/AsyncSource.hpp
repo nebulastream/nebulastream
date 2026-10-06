@@ -16,9 +16,9 @@
 
 #include <condition_variable>
 #include <cstddef>
-#include <deque>
 #include <cstdint>
-#include <utility>
+#include <deque>
+#include <exception>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -27,6 +27,7 @@
 #include <stop_token>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <Async/AsyncOperatorExecutor.hpp>
@@ -132,6 +133,14 @@ private:
     /// ticket order is the order buffers arrived in, which is what `preserveOrder` restores.
     void intakeLoop(const std::stop_token& stopToken);
     void processingLoop(const std::stop_token& stopToken);
+
+    /// Keeps the first failure and wakes everyone. Our threads are not the engine's, so an
+    /// exception must never leave one of them: `NES::Thread` has no handler, and terminate would
+    /// take the whole worker down. It is carried to the source thread instead.
+    void recordFailure(std::exception_ptr reason);
+    /// Rethrows a worker's failure on the source thread, where SourceThread catches it and fails
+    /// the query — the same outcome the synchronous operator produces for the same cause.
+    void rethrowIfFailed();
     std::optional<BatchWork> takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken);
     std::optional<Processed> takeNextCompleted(const std::stop_token& stopToken);
     void assignChunkNumber(bool isEndOfIncomingChunk, const TupleBuffer& input, TupleBuffer& output);
@@ -176,6 +185,7 @@ private:
     size_t maxPendingBuffers = 1;
     bool intakeDone = false;
     bool inputExhausted = false;
+    std::exception_ptr failure;
     std::optional<Processed> partiallyEmitted;
 
     /// Only touched from fillTupleBuffer, i.e. from the source thread alone.
@@ -233,8 +243,15 @@ struct ConfigParametersAsyncSource
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap, CHANNEL, CHANNEL_CAPACITY, EXECUTOR_TYPE, EXECUTOR_CONFIG, INPUT_SCHEMA, BATCH_SIZE,
-            MAX_CONCURRENCY, PRESERVE_ORDER);
+            SourceDescriptor::parameterMap,
+            CHANNEL,
+            CHANNEL_CAPACITY,
+            EXECUTOR_TYPE,
+            EXECUTOR_CONFIG,
+            INPUT_SCHEMA,
+            BATCH_SIZE,
+            MAX_CONCURRENCY,
+            PRESERVE_ORDER);
 };
 
 }

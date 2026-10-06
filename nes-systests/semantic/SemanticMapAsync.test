@@ -68,6 +68,23 @@ OUTPUT (gist VARSIZED)
 SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'JSON_OBJECT' AS LLM.PAYLOAD_FORMAT, 'Short news articles' AS LLM.DATASET_PROMPT, 'ASYNC' AS LLM.EXECUTION);
 
+# An endpoint that cannot be reached, to check that this path fails the query rather than taking
+# the worker down. The call happens on a thread of the source, which is not the engine's, so an
+# exception escaping it would hit NES::Thread's missing handler and terminate the process. It is
+# carried to the source thread and rethrown there instead, which is where the engine sees it.
+CREATE SEMANTIC MODEL asyncDown
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.MAX_CONCURRENCY);
+
+# Results in completion order rather than input order. Only the asynchronous path has the choice.
+CREATE SEMANTIC MODEL asyncUnordered
+INPUT (description VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 4 AS LLM.MAX_CONCURRENCY, 'FALSE' AS LLM.PRESERVE_ORDER);
+
 CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
 CREATE SINK stacked(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL, summary VARSIZED NOT NULL) TYPE File;
 CREATE SINK gists(id UINT64 NOT NULL, title VARSIZED NOT NULL, body VARSIZED NOT NULL, gist VARSIZED NOT NULL) TYPE File;
@@ -139,3 +156,21 @@ SELECT * FROM SEM_MAP(asyncHeadline, articles) INTO gists;
 ----
 1,Good news,all is well,GOOD NEWS ALL IS WELL
 2,Bad news,nothing works,BAD NEWS NOTHING WORKS
+
+# An unreachable endpoint fails the query here exactly as it does synchronously, with the same error
+# code. Before the failure was carried to the source thread, this took the whole worker down.
+SELECT * FROM SEM_MAP(asyncDown, reviews) INTO out;
+----
+ERROR 3006 "unreachable"
+
+# Without the ordering requirement every record still arrives exactly once and unchanged; only the
+# order it leaves the operator in is free. The comparison is over sorted results, so this asserts
+# the multiset, which is all that is promised here.
+SELECT * FROM SEM_MAP(asyncUnordered, reviews) INTO out;
+----
+1,POSITIVE,POSITIVE
+2,negative,NEGATIVE
+3,POSITIVE(unsure),POSITIVE(UNSURE)
+4,clearly-negative,CLEARLY-NEGATIVE
+5,pozitive,POZITIVE
+6,zzzz,ZZZZ

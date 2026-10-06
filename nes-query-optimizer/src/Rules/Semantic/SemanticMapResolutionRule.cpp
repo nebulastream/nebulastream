@@ -16,8 +16,8 @@
 
 #include <algorithm>
 #include <ranges>
-#include <string>
 #include <set>
+#include <string>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -71,11 +71,10 @@ AsyncExecutionTrait asyncExecution(const RegisteredSemanticModel& model)
             | std::ranges::to<std::vector>();
     };
 
-    auto encoded = encodeSemanticMapPayload(
-        SemanticMapAsyncPayload{
-            .config = config,
-            .inputFields = canonicalNames(model.getSchema().inputs),
-            .outputFields = canonicalNames(model.getSchema().outputs)});
+    auto encoded = encodeSemanticMapPayload(SemanticMapAsyncPayload{
+        .config = config,
+        .inputFields = canonicalNames(model.getSchema().inputs),
+        .outputFields = canonicalNames(model.getSchema().outputs)});
 
     return AsyncExecutionTrait{
         "SemanticMap",
@@ -83,9 +82,7 @@ AsyncExecutionTrait asyncExecution(const RegisteredSemanticModel& model)
         config.batchSize,
         config.maxConcurrency,
         std::max(MinimumChannelCapacity, 2 * config.maxConcurrency),
-        /// SEM_MAP appends a field per record and reorders nothing; keeping input order makes
-        /// its output comparable to the synchronous path's, record for record.
-        true};
+        config.preserveOrder};
 }
 
 }

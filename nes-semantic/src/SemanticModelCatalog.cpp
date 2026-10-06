@@ -57,6 +57,7 @@ struct
     std::optional<std::string> apiKeyEnvVar;
     std::optional<std::string> backend;
     std::optional<int64_t> execution;
+    std::optional<bool> preserveOrder;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -145,6 +146,15 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     if (config.maxConcurrency == 0)
     {
         throw InvalidSemanticModel("Semantic model '{}': MAX_CONCURRENCY must be at least 1", name);
+    }
+    /// The synchronous operator handles one record at a time on each worker thread, so its output
+    /// is in input order whatever is configured. Accepting PRESERVE_ORDER false there would
+    /// promise a latency gain it cannot deliver.
+    if (!config.preserveOrder && config.execution != SemanticExecution::ASYNCHRONOUS)
+    {
+        throw InvalidSemanticModel(
+            "Semantic model '{}': PRESERVE_ORDER false requires 'ASYNC' AS LLM.EXECUTION; the synchronous operator is ordered anyway",
+            name);
     }
 
     if (schema.inputs.size() == 0)
@@ -277,6 +287,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
         .apiKeyEnvVar = config.apiKeyEnvVar,
         .backend = std::make_optional(config.backend),
         .execution = std::make_optional(static_cast<int64_t>(config.execution)),
+        .preserveOrder = std::make_optional(config.preserveOrder),
         .inputs = std::make_optional(model.getSchema().inputs),
         .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -288,7 +299,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         || !reflected.datasetPrompt.has_value() || !reflected.steps.has_value() || !reflected.payloadFormat.has_value()
         || !reflected.batchSize.has_value() || !reflected.maxConcurrency.has_value() || !reflected.maxRetries.has_value()
         || !reflected.maxWaitTimeMs.has_value() || !reflected.requestTimeoutSeconds.has_value() || !reflected.backend.has_value()
-        || !reflected.execution.has_value() || !reflected.inputs.has_value() || !reflected.outputs.has_value())
+        || !reflected.execution.has_value() || !reflected.preserveOrder.has_value() || !reflected.inputs.has_value()
+        || !reflected.outputs.has_value())
     {
         throw CannotDeserialize("Failed to deserialize RegisteredSemanticModel");
     }
@@ -313,8 +325,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .requestTimeout = std::chrono::seconds{reflected.requestTimeoutSeconds.value()},
         .apiKeyEnvVar = reflected.apiKeyEnvVar,
         .backend = std::move(reflected.backend).value(),
-        .execution
-        = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution")};
+        .execution = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution"),
+        .preserveOrder = reflected.preserveOrder.value()};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

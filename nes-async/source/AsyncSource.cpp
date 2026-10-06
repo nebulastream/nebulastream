@@ -19,30 +19,32 @@
 #include <cstdint>
 #include <iterator>
 #include <map>
-#include <ranges>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <exception>
 #include <Async/AsyncOperatorExecutor.hpp>
 #include <Async/AsyncRecordLayout.hpp>
 #include <Async/AsyncWiring.hpp>
 #include <Async/HandoffChannel.hpp>
-#include <AsyncExecutorRegistry.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <AsyncExecutorRegistry.hpp>
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -77,10 +79,8 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     {
         throw InvalidConfigParameter("No asynchronous executor is registered under '{}'", executorType);
     }
-    executor = (*factory)(
-        AsyncExecutorRegistryArguments{
-            AsyncOperatorContext{
-                .inputLayout = &inputLayout, .outputLayout = &outputLayout, .config = executorConfig, .batchSize = batchSize}});
+    executor = (*factory)(AsyncExecutorRegistryArguments{AsyncOperatorContext{
+        .inputLayout = &inputLayout, .outputLayout = &outputLayout, .config = executorConfig, .batchSize = batchSize}});
 
     /// Read-ahead is bounded by queued work, not by buffers: two batches per concurrent call keeps
     /// every worker fed without pulling the channel into memory. One large buffer usually yields
@@ -98,8 +98,40 @@ void AsyncSource::open(std::shared_ptr<AbstractBufferProvider> provider)
     }
     intake.emplace(fmt::format("AsyncIn-{}", executorType), [this](const std::stop_token& stopToken) { intakeLoop(stopToken); });
 
-    NES_DEBUG(
-        "Async source for '{}' started {} worker(s) and one intake thread on channel {}", executorType, maxConcurrency, channelId);
+    NES_DEBUG("Async source for '{}' started {} worker(s) and one intake thread on channel {}", executorType, maxConcurrency, channelId);
+}
+
+void AsyncSource::recordFailure(std::exception_ptr reason)
+{
+    {
+        const std::lock_guard lock(mutex);
+        /// The first reason is the interesting one; later ones are usually consequences of it.
+        if (!failure)
+        {
+            failure = std::move(reason);
+        }
+        /// Nothing is going to finish the outstanding work now, so let every waiter out: the
+        /// workers leave their loops and fillTupleBuffer stops waiting for a buffer that will
+        /// never complete.
+        intakeDone = true;
+        inputExhausted = true;
+    }
+    workerStop.request_stop();
+    workArrived.notify_all();
+    completedArrived.notify_all();
+}
+
+void AsyncSource::rethrowIfFailed()
+{
+    std::exception_ptr reason;
+    {
+        const std::lock_guard lock(mutex);
+        reason = failure;
+    }
+    if (reason)
+    {
+        std::rethrow_exception(reason);
+    }
 }
 
 void AsyncSource::intakeLoop(const std::stop_token& stopToken)
@@ -108,63 +140,70 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
     const std::stop_callback forwardStop(stopToken, [this] { workerStop.request_stop(); });
     const auto token = workerStop.get_token();
 
-    while (true)
+    try
     {
+        while (true)
         {
-            /// Never pull more of the channel in than the workers can chew on: every pending
-            /// buffer is one the shared pool cannot hand out, and a timeout there fails the query.
-            std::unique_lock lock(mutex);
-            completedArrived.wait(
-                lock, token, [this] { return work.size() < queuedWorkHighWatermark && pending.size() < maxPendingBuffers; });
-            if (token.stop_requested())
+            {
+                /// Never pull more of the channel in than the workers can chew on: every pending
+                /// buffer is one the shared pool cannot hand out, and a timeout there fails the query.
+                std::unique_lock lock(mutex);
+                completedArrived.wait(
+                    lock, token, [this] { return work.size() < queuedWorkHighWatermark && pending.size() < maxPendingBuffers; });
+                if (token.stop_requested())
+                {
+                    break;
+                }
+            }
+
+            auto input = channel->popBlocking(token);
+            if (!input.has_value())
             {
                 break;
             }
-        }
 
-        auto input = channel->popBlocking(token);
-        if (!input.has_value())
-        {
-            break;
-        }
-
-        const auto recordCount = input->getNumberOfTuples();
-        {
-            const std::lock_guard lock(mutex);
-            const auto ticket = nextTicket++;
-
-            if (recordCount == 0)
+            const auto recordCount = input->getNumberOfTuples();
             {
-                /// No batches means nothing would ever complete this buffer, so it is done now.
-                completed.emplace(ticket, Processed{.input = std::move(*input), .results = {}, .emittedRecords = 0});
-            }
-            else
-            {
-                auto& entry = pending[ticket];
-                entry.input = std::move(*input);
-                /// Sized once and never again, so every batch can write its own range of it
-                /// without holding the lock.
-                entry.results.resize(recordCount);
-                for (uint64_t offset = 0; offset < recordCount; offset += batchSize)
+                const std::lock_guard lock(mutex);
+                const auto ticket = nextTicket++;
+
+                if (recordCount == 0)
                 {
-                    work.push_back(
-                        BatchWork{.ticket = ticket, .begin = offset, .end = std::min<uint64_t>(offset + batchSize, recordCount)});
-                    entry.outstandingBatches += 1;
+                    /// No batches means nothing would ever complete this buffer, so it is done now.
+                    completed.emplace(ticket, Processed{.input = std::move(*input), .results = {}, .emittedRecords = 0});
+                }
+                else
+                {
+                    auto& entry = pending[ticket];
+                    entry.input = std::move(*input);
+                    /// Sized once and never again, so every batch can write its own range of it
+                    /// without holding the lock.
+                    entry.results.resize(recordCount);
+                    for (uint64_t offset = 0; offset < recordCount; offset += batchSize)
+                    {
+                        work.push_back(
+                            BatchWork{.ticket = ticket, .begin = offset, .end = std::min<uint64_t>(offset + batchSize, recordCount)});
+                        entry.outstandingBatches += 1;
+                    }
                 }
             }
+            workArrived.notify_all();
+            completedArrived.notify_all();
         }
+
+        {
+            const std::lock_guard lock(mutex);
+            intakeDone = true;
+            inputExhausted = work.empty() && pending.empty();
+        }
+        /// Both, because idle workers wait on one and fillTupleBuffer on the other.
         workArrived.notify_all();
         completedArrived.notify_all();
     }
-
+    catch (...)
     {
-        const std::lock_guard lock(mutex);
-        intakeDone = true;
-        inputExhausted = work.empty() && pending.empty();
+        recordFailure(std::current_exception());
     }
-    /// Both, because idle workers wait on one and fillTupleBuffer on the other.
-    workArrived.notify_all();
-    completedArrived.notify_all();
 }
 
 std::optional<AsyncSource::BatchWork> AsyncSource::takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken)
@@ -185,63 +224,72 @@ void AsyncSource::processingLoop(const std::stop_token& stopToken)
     const std::stop_callback forwardStop(stopToken, [this] { workerStop.request_stop(); });
     const auto token = workerStop.get_token();
 
-    while (true)
+    try
     {
-        std::unique_lock lock(mutex);
-        const auto item = takeNextBatch(lock, token);
-        if (!item.has_value())
+        while (true)
         {
-            break;
-        }
+            std::unique_lock lock(mutex);
+            const auto item = takeNextBatch(lock, token);
+            if (!item.has_value())
+            {
+                break;
+            }
 
-        /// `pending` is node-based, so this reference stays valid while other tickets come and go,
-        /// and the buffer handle is copied to keep the records alive for the duration of the call.
-        auto& entry = pending.at(item->ticket);
-        const TupleBuffer input = entry.input;
-        auto* const resultSlots = entry.results.data() + item->begin;
-        lock.unlock();
-
-        std::vector<AsyncRecordView> batch;
-        batch.reserve(item->end - item->begin);
-        for (uint64_t index = item->begin; index < item->end; ++index)
-        {
-            batch.emplace_back(inputLayout, input, index);
-        }
-
-        /// This is where the slow external call happens — on this thread, never on a worker
-        /// thread of the engine. One batch is one call, so `maxConcurrency` bounds calls in
-        /// flight rather than input buffers.
-        auto batchResults = executor->process(batch);
-        if (batchResults.size() != batch.size())
-        {
-            throw UnsupportedQuery(
-                "Executor '{}' returned {} results for {} records; results must align with the input",
-                executorType,
-                batchResults.size(),
-                batch.size());
-        }
-        std::ranges::move(batchResults, resultSlots);
-
-        lock.lock();
-        const auto entryIterator = pending.find(item->ticket);
-        INVARIANT(entryIterator != pending.end(), "A batch completed for a buffer that is no longer pending");
-        entryIterator->second.outstandingBatches -= 1;
-        if (entryIterator->second.outstandingBatches == 0)
-        {
-            completed.emplace(
-                item->ticket,
-                Processed{
-                    .input = std::move(entryIterator->second.input),
-                    .results = std::move(entryIterator->second.results),
-                    .emittedRecords = 0});
-            pending.erase(entryIterator);
-            inputExhausted = intakeDone && work.empty() && pending.empty();
+            /// `pending` is node-based, so this reference stays valid while other tickets come and go,
+            /// and the buffer handle is copied to keep the records alive for the duration of the call.
+            auto& entry = pending.at(item->ticket);
+            const TupleBuffer input = entry.input;
+            auto* const resultSlots = entry.results.data() + item->begin;
             lock.unlock();
-            /// Wakes fillTupleBuffer, and the intake thread, for which a slot just freed up.
-            completedArrived.notify_all();
-            continue;
+
+            std::vector<AsyncRecordView> batch;
+            batch.reserve(item->end - item->begin);
+            for (uint64_t index = item->begin; index < item->end; ++index)
+            {
+                batch.emplace_back(inputLayout, input, index);
+            }
+
+            /// This is where the slow external call happens — on this thread, never on a worker
+            /// thread of the engine. One batch is one call, so `maxConcurrency` bounds calls in
+            /// flight rather than input buffers.
+            auto batchResults = executor->process(batch);
+            if (batchResults.size() != batch.size())
+            {
+                throw UnsupportedQuery(
+                    "Executor '{}' returned {} results for {} records; results must align with the input",
+                    executorType,
+                    batchResults.size(),
+                    batch.size());
+            }
+            std::ranges::move(batchResults, resultSlots);
+
+            lock.lock();
+            const auto entryIterator = pending.find(item->ticket);
+            INVARIANT(entryIterator != pending.end(), "A batch completed for a buffer that is no longer pending");
+            entryIterator->second.outstandingBatches -= 1;
+            if (entryIterator->second.outstandingBatches == 0)
+            {
+                completed.emplace(
+                    item->ticket,
+                    Processed{
+                        .input = std::move(entryIterator->second.input),
+                        .results = std::move(entryIterator->second.results),
+                        .emittedRecords = 0});
+                pending.erase(entryIterator);
+                inputExhausted = intakeDone && work.empty() && pending.empty();
+                lock.unlock();
+                /// Wakes fillTupleBuffer, and the intake thread, for which a slot just freed up.
+                completedArrived.notify_all();
+                continue;
+            }
+            lock.unlock();
         }
-        lock.unlock();
+    }
+    catch (...)
+    {
+        /// Most often a transport failure the executor gave up on. The synchronous operator fails
+        /// the query for the same cause, which is what makes the two modes comparable.
+        recordFailure(std::current_exception());
     }
 }
 
@@ -311,12 +359,18 @@ void AsyncSource::assignChunkNumber(const bool isEndOfIncomingChunk, const Tuple
 
 Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
+    /// Before anything else, so a failure is not mistaken for end of stream and does not come out
+    /// as a short result either.
+    rethrowIfFailed();
+
     if (!partiallyEmitted.has_value())
     {
         partiallyEmitted = takeNextCompleted(stopToken);
     }
     if (!partiallyEmitted.has_value())
     {
+        /// A worker may have failed while we waited, which also releases the wait above.
+        rethrowIfFailed();
         /// Nothing left. Whether this is the end of the stream or a requested stop is decided
         /// by SourceThread, which suppresses end-of-stream when a stop was asked for.
         return FillTupleBufferResult::eos();

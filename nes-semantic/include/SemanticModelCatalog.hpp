@@ -111,6 +111,11 @@ struct SemanticModelConfig
     std::string backend = "http";
     /// Whether the operator runs on a worker thread or on the asynchronous framework's own.
     SemanticExecution execution = SemanticExecution::SYNCHRONOUS;
+    /// Whether results leave the operator in input order. Only the asynchronous path has a choice:
+    /// it has several calls in flight and finishes them out of order. Ordering costs latency,
+    /// because a finished record waits for the ones before it, so it is worth turning off where
+    /// downstream does not care.
+    bool preserveOrder = true;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };

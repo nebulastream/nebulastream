@@ -390,6 +390,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"API_KEY_ENV"},
     std::string_view{"BACKEND"},
     std::string_view{"EXECUTION"},
+    std::string_view{"PRESERVE_ORDER"},
 };
 
 void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
@@ -432,6 +433,20 @@ PayloadFormat bindPayloadFormat(const std::unordered_map<Identifier, std::string
         return PayloadFormat::JSON_OBJECT;
     }
     throw InvalidSemanticModel("Option LLM.PAYLOAD_FORMAT must be SPACE_JOINED or JSON_OBJECT, but was '{}'", raw);
+}
+
+bool bindPreserveOrder(const std::unordered_map<Identifier, std::string>& config)
+{
+    const auto raw = optionalOption(config, "PRESERVE_ORDER", "TRUE");
+    if (raw == "TRUE")
+    {
+        return true;
+    }
+    if (raw == "FALSE")
+    {
+        return false;
+    }
+    throw InvalidSemanticModel("Option LLM.PRESERVE_ORDER must be TRUE or FALSE, but was '{}'", raw);
 }
 
 SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
@@ -489,7 +504,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .requestTimeout = std::chrono::seconds{numericOption(statement.config, "TIMEOUT_SECONDS", 600, MaxTimeoutSeconds)},
         .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
         .backend = optionalOption(statement.config, "BACKEND", "http"),
-        .execution = bindExecution(statement.config)};
+        .execution = bindExecution(statement.config),
+        .preserveOrder = bindPreserveOrder(statement.config)};
 }
 
 }
