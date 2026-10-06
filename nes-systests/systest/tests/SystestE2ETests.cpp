@@ -194,7 +194,7 @@ TEST_F(SystestE2ETest, ADifferentialBlockWhoseHalfDoesNotBindFailsAlone)
     EXPECT_TRUE(failed->report.contains(formatFailLine("errors", "DifferentialHalfUnbound", 1))) << failed->report;
 }
 
-/// A failed round is a repeating run's only exit.
+/// Without a round or time limit, a failed round is a repeating run's only exit.
 TEST_F(SystestE2ETest, ARepeatingRunStopsAtTheFirstFailedRound)
 {
     auto config = createConfigFor("MultipleCorrectAndIncorrect");
@@ -204,6 +204,30 @@ TEST_F(SystestE2ETest, ARepeatingRunStopsAtTheFirstFailedRound)
     const auto* failed = std::get_if<RunFailed>(&result);
     ASSERT_NE(failed, nullptr);
     EXPECT_EQ(countFailedCases(failed->report), 4) << failed->report;
+}
+
+TEST_F(SystestE2ETest, ARepeatingRunThatKeepsPassingEndsAfterItsRounds)
+{
+    auto config = createConfigFor("NothingSelected");
+    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/NothingSelectedRounds", PATH_TO_BINARY_DIR));
+    config.endlessMode = true;
+    config.endlessRounds = 2;
+    const auto result = Executor{config}.execute();
+    const auto* succeeded = std::get_if<RunSucceeded>(&result);
+    ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
+    EXPECT_TRUE(succeeded->report.starts_with("1 queries passed, 0 failed\n")) << succeeded->report;
+}
+
+TEST_F(SystestE2ETest, AMeasuringRunOverSeveralRoundsWritesOneReport)
+{
+    auto config = createConfigFor("Measured");
+    config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MeasuredRounds", PATH_TO_BINARY_DIR));
+    config.benchmark = true;
+    config.benchmarkRounds = 2;
+    const auto result = Executor{config}.execute();
+    const auto* succeeded = std::get_if<RunSucceeded>(&result);
+    ASSERT_NE(succeeded, nullptr) << std::get<RunFailed>(result).report;
+    EXPECT_TRUE(succeeded->report.contains("1 queries measured, written to")) << succeeded->report;
 }
 
 TEST_F(SystestE2ETest, ARepeatingRunWithNothingSelectedFailsInsteadOfLooping)

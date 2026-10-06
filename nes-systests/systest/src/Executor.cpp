@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <exception>
 #include <functional>
@@ -75,13 +76,28 @@ void printProgress(const size_t done, const size_t total, const ReportEntry& ent
 
 /// Shuffling exposes tests that depend on the order of other tests.
 /// This shuffles both the test file partitions and the cases within each partition.
-void shuffle(std::vector<RunnablePartition>& partitions)
+/// The seed is printed, so the order that exposed a failure can be repeated.
+/// It repeats the order of submission, not the order in which concurrent queries finish.
+void shuffle(std::vector<RunnablePartition>& partitions, const RunInShuffledOrder& ordering)
 {
-    std::ranges::shuffle(partitions, std::mt19937{std::random_device{}()});
+    const uint64_t seed = ordering.seed.has_value() ? *ordering.seed : uint64_t{std::random_device{}()};
+    fmt::print("Running {} test files in random order, with seed {}\n", partitions.size(), seed);
+    std::mt19937_64 engine{seed};
+    std::ranges::shuffle(partitions, engine);
     for (auto& [_, file] : partitions)
     {
-        std::ranges::shuffle(file.testCases, std::mt19937{std::random_device{}()});
+        std::ranges::shuffle(file.testCases, engine);
     }
+}
+
+/// Zero means no round limit, so only the time limit or a failed round ends the run.
+uint64_t countRounds(const RepetitionPolicy& repetition)
+{
+    if (const auto* rounds = std::get_if<SubmitRounds>(&repetition))
+    {
+        return rounds->count;
+    }
+    return std::holds_alternative<SubmitUntilStopped>(repetition) ? 0 : 1;
 }
 
 /// Type that holds all test file partitions that should be tested in the current invocation.
@@ -122,22 +138,16 @@ RunOutcome runOnce(const SystestConfiguration& config, const RunPolicy& policy, 
     const auto totalTestCases = runner.countTestCases();
 
     size_t checkedSoFar = 0;
-    auto benchmark = policy.measureReport.has_value() ? std::optional{Benchmark{}} : std::nullopt;
     const TestRunner::Observer observe
-        = [&](const ReportEntry& entry, const RewrittenTestCase& testCase, const std::span<const StatementTiming> timings)
-    {
-        printProgress(++checkedSoFar, totalTestCases, entry, timings);
-        if (benchmark.has_value())
-        {
-            benchmark->record(entry, testCase, timings);
-        }
-    };
+        = [&](const ReportEntry& entry, const RewrittenTestCase&, const std::span<const StatementTiming> timings)
+    { printProgress(++checkedSoFar, totalTestCases, entry, timings); };
 
     std::ranges::move(runner.submitAll(policy.concurrency, observe), std::back_inserter(report));
-    return summarize(report, benchmark.has_value() ? Benchmark::writeReport(benchmark->buildRows(), *policy.measureReport) : std::string{});
+    return summarize(report);
 }
 
-/// Sets up once, then resubmits the bound plans every round until one fails.
+/// Sets up once, then resubmits the bound plans every round until the rounds or the time run out, or a round fails.
+/// A measuring run keeps each query's best time across rounds.
 RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy, PreparedRun rewritten)
 {
     /// A rejected file would shrink every round's set, and an empty set would loop forever, so the run ends here.
@@ -152,11 +162,24 @@ RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy
         return summarize(runner.getRejected());
     }
 
+    auto benchmark = policy.measureReport.has_value() ? std::optional{Benchmark{}} : std::nullopt;
+    const TestRunner::Observer observe
+        = [&](const ReportEntry& entry, const RewrittenTestCase& testCase, const std::span<const StatementTiming> timings)
+    {
+        if (benchmark.has_value())
+        {
+            benchmark->record(entry, testCase, timings);
+        }
+    };
+
+    const auto rounds = countRounds(policy.repetition);
     fmt::print("Repeating the queries of {} test files\n", fileCount);
-    for (size_t round = 1;; ++round)
+    const auto startedAt = std::chrono::steady_clock::now();
+    std::vector<ReportEntry> checked;
+    for (uint64_t round = 1; rounds == 0 or round <= rounds; ++round)
     {
         const auto roundStartedAt = std::chrono::steady_clock::now();
-        const auto checked = runner.submitAll(policy.concurrency);
+        checked = runner.submitAll(policy.concurrency, observe);
         const auto failed = std::ranges::count_if(checked, [](const ReportEntry& entry) { return not hasPassed(entry.outcome); });
         fmt::print(
             "round {}: {} passed, {} failed in {} ms\n",
@@ -166,11 +189,18 @@ RunOutcome runRounds(const SystestConfiguration& config, const RunPolicy& policy
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - roundStartedAt).count());
         static_cast<void>(std::fflush(stdout));
 
+        /// The rounds after a failed one would measure or load the same wrong query.
         if (failed > 0)
         {
             return summarize(checked);
         }
+        if (policy.runLimit.has_value() and std::chrono::steady_clock::now() - startedAt >= *policy.runLimit)
+        {
+            break;
+        }
     }
+    return summarize(
+        checked, benchmark.has_value() ? Benchmark::writeReport(benchmark->buildRows(), *policy.measureReport) : std::string{});
 }
 
 }
@@ -232,9 +262,9 @@ RunOutcome Executor::execute() const
     const auto guard = WorkingDirectoryGuard{config.workingDir.getValue()};
 
     auto prepared = prepareAll(config);
-    if (std::holds_alternative<RunInShuffledOrder>(runPolicy.ordering))
+    if (const auto* ordering = std::get_if<RunInShuffledOrder>(&runPolicy.ordering))
     {
-        shuffle(prepared.partitions);
+        shuffle(prepared.partitions, *ordering);
     }
 
     return std::holds_alternative<SubmitOnce>(runPolicy.repetition) ? runOnce(config, runPolicy, std::move(prepared))
