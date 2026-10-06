@@ -51,10 +51,18 @@ responsiveness)
     ;;
 throughput)
     T=$SUITE/SemanticMapAsyncThroughput.test
-    for query in 01 02 03 04; do
-        run "Throughput, asynchronous, query $query" 4 1 -t "$T:$query"
+    # One worker thread throughout for the asynchronous queries: they do not use the pool, and
+    # holding it at one makes that visible.
+    run "Single buffer, asynchronous, MAX_CONCURRENCY 1" 1 1 -t "$T:1"
+    run "Single buffer, asynchronous, MAX_CONCURRENCY 10" 1 1 -t "$T:2"
+    for q in 3 4 5 6; do
+        run "Many buffers, asynchronous, query $q" 1 1 -t "$T:$q"
     done
-    run "Throughput, synchronous, query 05" 4 1 -t "$T:05"
+    run "Many buffers, synchronous, concurrency pinned to one" 1 1 -t "$T:7"
+    # The synchronous path buys throughput with worker threads, so it is scanned over them.
+    for threads in 1 4 8; do
+        run "Many buffers, synchronous, MAX_CONCURRENCY 30" "$threads" 1 -t "$T:8"
+    done
     ;;
 probe)
     T=$SUITE/AsyncBenchmarkProbe.test

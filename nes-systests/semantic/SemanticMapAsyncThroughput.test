@@ -1,258 +1,133 @@
 # name: semantic/SemanticMapAsyncThroughput.test
-# description: The measurement behind the asynchronous framework, with the mock backend's delay
-#              suffix ('echo@200') standing in for a model's latency. Deliberately slow — seconds
-#              of waiting is the whole point — so it sits in Semantic-Nightly and is excluded from
-#              every ctest systest run. Drive it with scripts/measure_async_semantic_map.sh, which
-#              reads the per-query timings from --show-query-performance.
+# description: Does MAX_CONCURRENCY put model calls in flight? Measured against the mock backend's
+#              delay suffix ('echo@200', 200 ms per request) rather than a model server, so what is
+#              measured is this framework and nothing else. A real endpoint caps concurrency of its
+#              own -- Ollama serves four requests in parallel by default -- which is why a
+#              real-model throughput comparison says little.
 #
-#              The results asserted here are the same for every query and for both execution modes;
-#              what differs is how long each takes. That is what makes the comparison a comparison.
+#              Two cases, and the first is the one that decides the question:
+#
+#              SINGLE BUFFER (30 rows, queries 1 and 2). Concurrency can only come from within one
+#              input buffer here. If query 2 (MAX_CONCURRENCY 10) takes as long as query 1
+#              (MAX_CONCURRENCY 1), then the unit of work is the input buffer and not the call, and
+#              MAX_CONCURRENCY does not mean what it says.
+#
+#              MANY BUFFERS (760 rows, queries 3 to 7). Several hundred rows arrive in many buffers,
+#              so concurrency across buffers is available too. Query 7 is the synchronous path over
+#              the same input and delay, as the point of comparison.
+#
+#              Every query asserts record count and checksum, so a configuration that loses or
+#              duplicates a record fails rather than looking fast. The numbers to read are the wall
+#              times from --show-query-performance; drive it with
+#              scripts/measure_async_semantic_map.sh throughput.
+#
+#              Always pass the worker thread count explicitly. Left out, systest uses a single
+#              worker thread, which costs the synchronous path everything and the asynchronous path
+#              nothing -- it runs the calls on the source's own threads. Query 8 is therefore worth
+#              running at several thread counts, which is what the script does.
+#
+#              Deliberately slow -- seconds of waiting is the point -- hence never part of ctest.
 # groups: [Semantic-Nightly]
 
-CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR reviews TYPE File;
-ATTACH INLINE
-1,a
-2,b
-3,c
-4,d
-5,e
-6,f
-7,g
-8,h
-9,i
-10,j
-11,k
-12,l
-13,m
-14,n
-15,o
-16,p
-17,q
-18,r
-19,s
-20,t
-21,u
-22,v
-23,w
-24,x
-25,y
-26,z
-27,aa
-28,bb
-29,cc
-30,dd
+CREATE LOGICAL SOURCE small(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR small TYPE File;
+ATTACH FILE async/reviews_30.csv
 
-CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL, sentiment VARSIZED NOT NULL) TYPE File;
-CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+CREATE LOGICAL SOURCE large(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR large TYPE File;
+ATTACH FILE async/reviews_760.csv
 
-# One record per request, one request at a time: 30 records at 200 ms each is the serial baseline.
-CREATE SEMANTIC MODEL c1
-INPUT (description VARSIZED)
+CREATE SEMANTIC MODEL sb1
+INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
-SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
-     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
 
-CREATE SEMANTIC MODEL c5
-INPUT (description VARSIZED)
+CREATE SEMANTIC MODEL sb10
+INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
-SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
-     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 5 AS LLM.MAX_CONCURRENCY);
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
 
-CREATE SEMANTIC MODEL c10
-INPUT (description VARSIZED)
+CREATE SEMANTIC MODEL mb1
+INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
-SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
-     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
 
-CREATE SEMANTIC MODEL c30
-INPUT (description VARSIZED)
+CREATE SEMANTIC MODEL mb5
+INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
-SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
-     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 30 AS LLM.MAX_CONCURRENCY);
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 5 AS LLM.MAX_CONCURRENCY);
 
-# The synchronous path over the same delay, as the point of comparison. One record per request on a
-# worker thread, so the wait is paid inside the worker pool.
-CREATE SEMANTIC MODEL sync1
-INPUT (description VARSIZED)
+CREATE SEMANTIC MODEL mb10
+INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
-SET ('Echo' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
-     1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
 
-# Query 1: maxConcurrency 1
-SELECT id FROM SEM_MAP(c1, reviews) INTO ids;
-----
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
+CREATE SEMANTIC MODEL mb30
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 30 AS LLM.MAX_CONCURRENCY);
 
-# Query 2: maxConcurrency 5
-SELECT id FROM SEM_MAP(c5, reviews) INTO ids;
-----
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
+CREATE SEMANTIC MODEL msync
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 1 AS LLM.MAX_CONCURRENCY);
 
-# Query 3: maxConcurrency 10
-SELECT id FROM SEM_MAP(c10, reviews) INTO ids;
-----
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
+CREATE SEMANTIC MODEL msyncWide
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo@200' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 30 AS LLM.MAX_CONCURRENCY);
 
-# Query 4: maxConcurrency 30
-SELECT id FROM SEM_MAP(c30, reviews) INTO ids;
-----
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
+CREATE SINK idsum(id UINT64 NOT NULL) TYPE Checksum;
 
-# Query 5: the synchronous path, same delay
-SELECT id FROM SEM_MAP(sync1, reviews) INTO ids;
+# Query 1: single buffer, one call at a time -- the serial baseline.
+SELECT id FROM SEM_MAP(sb1, small) INTO idsum;
 ----
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
+30, 2916
 
-# Query 6: an ordinary query with no model in it at all. Run concurrently with query 1 or 5 on a
-# worker configured with a single thread, it answers the question the framework exists for: does a
-# waiting operator hold up unrelated work?
-SELECT id FROM reviews WHERE id > UINT64(28) INTO ids;
+# Query 2: single buffer, ten calls allowed. Same time as query 1 means buffer granularity.
+SELECT id FROM SEM_MAP(sb10, small) INTO idsum;
 ----
-29
-30
+30, 2916
+
+# Query 3: many buffers, one call at a time.
+SELECT id FROM SEM_MAP(mb1, large) INTO idsum;
+----
+760, 121109
+
+# Query 4: many buffers, five calls.
+SELECT id FROM SEM_MAP(mb5, large) INTO idsum;
+----
+760, 121109
+
+# Query 5: many buffers, ten calls.
+SELECT id FROM SEM_MAP(mb10, large) INTO idsum;
+----
+760, 121109
+
+# Query 6: many buffers, thirty calls.
+SELECT id FROM SEM_MAP(mb30, large) INTO idsum;
+----
+760, 121109
+
+# Query 7: the synchronous path with its own concurrency pinned to one, so that the serial cost of
+# 760 calls is on the record for both execution modes.
+SELECT id FROM SEM_MAP(msync, large) INTO idsum;
+----
+760, 121109
+
+# Query 8: the synchronous path allowed thirty concurrent calls. It cannot reach them from the
+# configuration alone, because its requests are issued from the worker pool: measured at 152.7 s,
+# 39.6 s and 22.8 s on 1, 4 and 8 worker threads. Reaching query 6's time would take roughly twenty
+# worker threads, all of them parked in a model call -- which is the cost the framework exists to
+# avoid, and what semantic/AsyncResponsiveness.test measures.
+SELECT id FROM SEM_MAP(msyncWide, large) INTO idsum;
+----
+760, 121109

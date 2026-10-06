@@ -59,14 +59,14 @@ def main() -> None:
         assert "," not in text and '"' not in text
         rows.append(f"{identifier},{text}")
 
-    for count in (12, 40, 760):
+    for count in (12, 30, 40, 760):
         (out / f"reviews_{count}.csv").write_text("\n".join(rows[:count]) + "\n")
 
     # A second stream with no model in it, for the responsiveness measurement.
     (out / "plain_200.csv").write_text(
         "\n".join(f"{i},{i * 7 % 101}" for i in range(1, 201)) + "\n")
 
-    print(f"wrote reviews_12/40/760.csv and plain_200.csv to {out}")
+    print(f"wrote reviews_12/30/40/760.csv and plain_200.csv to {out}")
 
 
 if __name__ == "__main__":
