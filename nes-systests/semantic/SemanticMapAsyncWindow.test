@@ -1,0 +1,173 @@
+# name: semantic/SemanticMapAsyncWindow.test
+# description: A tumbling window downstream of SEM_MAP, synchronously and asynchronously over the
+#              same input, asserting the same counts.
+#
+#              This is the one place where the asynchronous framework's hardest constraint is
+#              actually checked. The consumer source hands the engine records it did not produce
+#              itself, so it carries OriginId, SequenceNumber and watermark of the incoming buffer
+#              through verbatim and only assigns chunk numbers. Get that wrong and nothing visible
+#              breaks here: a window whose watermark never advances simply never fires, so the
+#              failure is missing output rather than wrong output -- which is exactly what a result
+#              assertion catches and a checksum over the records does not.
+#
+#              Both sizes matter. The small case is three windows over one input buffer. The large
+#              case is 760 rows over 76 seconds, so many buffers, fifteen windows and ten calls in
+#              flight: results complete out of order inside the source and have to be put back in
+#              input order before the watermark processor sees them. The counts sum to exactly 760,
+#              so a lost or duplicated record cannot hide in an aggregate.
+#
+#              The mock backend echoes the input upper-cased, and the inputs are the literal labels,
+#              so every answer is deterministic and the counts can be asserted exactly.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviewsSmall(id UINT64 NOT NULL, ts UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviewsSmall TYPE File;
+ATTACH FILE async/windowed_small.csv
+
+CREATE LOGICAL SOURCE reviewsLarge(id UINT64 NOT NULL, ts UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviewsLarge TYPE File;
+ATTACH FILE async/windowed_large.csv
+
+CREATE SEMANTIC MODEL winSync
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES);
+
+CREATE SEMANTIC MODEL winAsync
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEMANTIC MODEL winAsyncWide
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK counts(start UINT64 NOT NULL, end UINT64 NOT NULL, sentiment VARSIZED NOT NULL, n UINT64 NOT NULL) TYPE File;
+
+# Query 1: the synchronous reference. Whatever the asynchronous queries produce has to match this.
+SELECT start, end, sentiment, COUNT(id) AS n
+FROM SEM_MAP(winSync, reviewsSmall)
+GROUP BY sentiment
+WINDOW TUMBLING(ts, SIZE 5 SEC)
+INTO counts;
+----
+0,5000,NEGATIVE,1
+0,5000,POSITIVE,3
+5000,10000,NEGATIVE,3
+5000,10000,POSITIVE,1
+10000,15000,NEGATIVE,1
+10000,15000,POSITIVE,3
+
+# Query 2: asynchronous, one call at a time. Isolates metadata pass-through from concurrency.
+SELECT start, end, sentiment, COUNT(id) AS n
+FROM SEM_MAP(winAsync, reviewsSmall)
+GROUP BY sentiment
+WINDOW TUMBLING(ts, SIZE 5 SEC)
+INTO counts;
+----
+0,5000,NEGATIVE,1
+0,5000,POSITIVE,3
+5000,10000,NEGATIVE,3
+5000,10000,POSITIVE,1
+10000,15000,NEGATIVE,1
+10000,15000,POSITIVE,3
+
+# Query 3: asynchronous, four records per call and ten calls in flight, so batches complete out of
+# order within each buffer.
+SELECT start, end, sentiment, COUNT(id) AS n
+FROM SEM_MAP(winAsyncWide, reviewsSmall)
+GROUP BY sentiment
+WINDOW TUMBLING(ts, SIZE 5 SEC)
+INTO counts;
+----
+0,5000,NEGATIVE,1
+0,5000,POSITIVE,3
+5000,10000,NEGATIVE,3
+5000,10000,POSITIVE,1
+10000,15000,NEGATIVE,1
+10000,15000,POSITIVE,3
+
+# Query 4: the synchronous reference over many buffers and fifteen windows.
+SELECT start, end, sentiment, COUNT(id) AS n
+FROM SEM_MAP(winSync, reviewsLarge)
+GROUP BY sentiment
+WINDOW TUMBLING(ts, SIZE 5 SEC)
+INTO counts;
+----
+0,5000,NEGATIVE,16
+0,5000,POSITIVE,33
+5000,10000,NEGATIVE,17
+5000,10000,POSITIVE,33
+10000,15000,NEGATIVE,16
+10000,15000,POSITIVE,34
+15000,20000,NEGATIVE,17
+15000,20000,POSITIVE,33
+20000,25000,NEGATIVE,17
+20000,25000,POSITIVE,33
+25000,30000,NEGATIVE,16
+25000,30000,POSITIVE,34
+30000,35000,NEGATIVE,17
+30000,35000,POSITIVE,33
+35000,40000,NEGATIVE,17
+35000,40000,POSITIVE,33
+40000,45000,NEGATIVE,16
+40000,45000,POSITIVE,34
+45000,50000,NEGATIVE,17
+45000,50000,POSITIVE,33
+50000,55000,NEGATIVE,17
+50000,55000,POSITIVE,33
+55000,60000,NEGATIVE,16
+55000,60000,POSITIVE,34
+60000,65000,NEGATIVE,17
+60000,65000,POSITIVE,33
+65000,70000,NEGATIVE,17
+65000,70000,POSITIVE,33
+70000,75000,NEGATIVE,16
+70000,75000,POSITIVE,34
+75000,80000,NEGATIVE,4
+75000,80000,POSITIVE,7
+
+# Query 5: the same asynchronously, with ten calls in flight across many buffers. This is the case
+# that would stall on a sequence-number gap.
+SELECT start, end, sentiment, COUNT(id) AS n
+FROM SEM_MAP(winAsyncWide, reviewsLarge)
+GROUP BY sentiment
+WINDOW TUMBLING(ts, SIZE 5 SEC)
+INTO counts;
+----
+0,5000,NEGATIVE,16
+0,5000,POSITIVE,33
+5000,10000,NEGATIVE,17
+5000,10000,POSITIVE,33
+10000,15000,NEGATIVE,16
+10000,15000,POSITIVE,34
+15000,20000,NEGATIVE,17
+15000,20000,POSITIVE,33
+20000,25000,NEGATIVE,17
+20000,25000,POSITIVE,33
+25000,30000,NEGATIVE,16
+25000,30000,POSITIVE,34
+30000,35000,NEGATIVE,17
+30000,35000,POSITIVE,33
+35000,40000,NEGATIVE,17
+35000,40000,POSITIVE,33
+40000,45000,NEGATIVE,16
+40000,45000,POSITIVE,34
+45000,50000,NEGATIVE,17
+45000,50000,POSITIVE,33
+50000,55000,NEGATIVE,17
+50000,55000,POSITIVE,33
+55000,60000,NEGATIVE,16
+55000,60000,POSITIVE,34
+60000,65000,NEGATIVE,17
+60000,65000,POSITIVE,33
+65000,70000,NEGATIVE,17
+65000,70000,POSITIVE,33
+70000,75000,NEGATIVE,16
+70000,75000,POSITIVE,34
+75000,80000,NEGATIVE,4
+75000,80000,POSITIVE,7

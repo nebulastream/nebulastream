@@ -66,7 +66,17 @@ def main() -> None:
     (out / "plain_200.csv").write_text(
         "\n".join(f"{i},{i * 7 % 101}" for i in range(1, 201)) + "\n")
 
-    print(f"wrote reviews_12/30/40/760.csv and plain_200.csv to {out}")
+    # For the window test: a timestamp column, and the review text is the literal label, so the
+    # mock backend's echo makes every answer deterministic and the counts can be asserted exactly.
+    # The small set is three windows in one buffer; the large one is 76 seconds over many buffers.
+    (out / "windowed_small.csv").write_text("\n".join([
+        "1,1000,POSITIVE", "2,2000,negative", "3,3000,POSITIVE", "4,4000,POSITIVE",
+        "5,6000,negative", "6,7000,negative", "7,8000,POSITIVE", "8,9000,negative",
+        "9,11000,POSITIVE", "10,12000,POSITIVE", "11,13000,negative", "12,14000,POSITIVE"]) + "\n")
+    (out / "windowed_large.csv").write_text("\n".join(
+        f"{i},{i * 100}," + ("POSITIVE" if (i * 7) % 3 else "negative") for i in range(1, 761)) + "\n")
+
+    print(f"wrote reviews_12/30/40/760.csv, plain_200.csv and windowed_small/large.csv to {out}")
 
 
 if __name__ == "__main__":
