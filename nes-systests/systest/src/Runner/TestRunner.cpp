@@ -101,6 +101,7 @@ struct TestRunner::Impl
         , clusterConfig{config.clusterConfig}
         , remote{config.remoteWorker.getValue()}
         , baseWorker{config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{})}
+        , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds.getValue()}}
     {
         if (not config.workerConfig.getValue().empty())
         {
@@ -122,7 +123,8 @@ struct TestRunner::Impl
     QuerySubmitter createSubmitterFor(const ConfigurationOverride& overrides)
     {
         auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(applyOverrides(baseWorker, overrides));
-        return QuerySubmitter{std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend))};
+        return QuerySubmitter{
+            std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend)), queryTimeout};
     }
 
     struct Job
@@ -228,17 +230,18 @@ struct TestRunner::Impl
                 continue;
             }
 
-            for (auto& snapshot : submitter.finishedQueries())
+            for (auto& [queryId, outcome] : submitter.finishedQueries())
             {
-                auto node = running.extract(snapshot.queryId);
+                auto node = running.extract(queryId);
                 INVARIANT(not node.empty(), "a finished query was submitted by this run");
                 auto& flight = node.mapped();
 
                 const auto& [plan, explained] = setUp.at(flight.job.setUpIndex).testCases.at(flight.job.testCaseIndex).at(flight.statement);
-                const auto execution = extractExecutionTime(snapshot);
-                const auto stopped = snapshot.getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
+                /// A query that ran past the timeout has no status, so it shows no time and counts as not stopped.
+                const auto execution = outcome.has_value() ? extractExecutionTime(*outcome) : std::chrono::nanoseconds::zero();
+                const auto stopped = outcome.has_value() and outcome->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
                 flight.outcomes.push_back(StatementOutcome{
-                    .reached = std::move(snapshot),
+                    .reached = std::move(outcome),
                     .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
                     .explained = std::nullopt});
                 flight.timings.push_back(StatementTiming{.execution = execution});
@@ -262,6 +265,7 @@ struct TestRunner::Impl
     SystestClusterConfiguration clusterConfig;
     bool remote;
     SingleNodeWorkerConfiguration baseWorker;
+    std::chrono::milliseconds queryTimeout;
 
     void prepare(std::vector<RunnablePartition> partitions)
     {
