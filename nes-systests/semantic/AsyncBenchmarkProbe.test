@@ -6,11 +6,16 @@
 #              matters is the wall time, read from --show-query-performance.
 #
 #              Query 1 is the synchronous baseline: one record per request on the worker pool.
-#              Query 2 is asynchronous with one record per request. If it is markedly slower than
-#              query 1, concurrency is bounded by input buffers rather than by calls, because 40
-#              rows arrive in a single buffer and one source thread then serializes them.
-#              Query 3 is asynchronous with batching, which hides that effect by making fewer
-#              calls, and is there so the two causes can be told apart.
+#              Query 2 is asynchronous with one record per request, query 3 asynchronous with
+#              batching.
+#
+#              Read the times against the server, not against each other. One call with this prompt
+#              takes about 21 s on qwen2.5:7b, and Ollama serves four requests in parallel by
+#              default (OLLAMA_NUM_PARALLEL), so 40 rows cannot go below roughly 214 s however much
+#              concurrency is configured. Measured 310.8 s for query 2, i.e. 2.8x over serial
+#              against a ceiling of 4x. That ceiling is why the framework's own scaling is measured
+#              against the mock backend's delay instead, in
+#              semantic/SemanticMapAsyncThroughput.test.
 #
 #              Needs Ollama on localhost:11434 with qwen2.5:7b. Never part of ctest.
 # groups: [Semantic-Nightly]

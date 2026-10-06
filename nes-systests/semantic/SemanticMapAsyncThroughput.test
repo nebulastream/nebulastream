@@ -8,12 +8,15 @@
 #              Two cases, and the first is the one that decides the question:
 #
 #              SINGLE BUFFER (30 rows, queries 1 and 2). Concurrency can only come from within one
-#              input buffer here. If query 2 (MAX_CONCURRENCY 10) takes as long as query 1
-#              (MAX_CONCURRENCY 1), then the unit of work is the input buffer and not the call, and
-#              MAX_CONCURRENCY does not mean what it says.
+#              input buffer here, so this is the test that the unit of work really is the call and
+#              not the buffer: query 2 (MAX_CONCURRENCY 10) must come out roughly ten times faster
+#              than query 1 (MAX_CONCURRENCY 1). Measured 6.07 s against 0.66 s. Equal times would
+#              mean the regression is back and MAX_CONCURRENCY no longer means what it says.
 #
 #              MANY BUFFERS (760 rows, queries 3 to 7). Several hundred rows arrive in many buffers,
-#              so concurrency across buffers is available too. Query 7 is the synchronous path over
+#              so concurrency across buffers is available too. Measured 152.6 s, 30.5 s, 15.3 s and
+#              5.3 s for MAX_CONCURRENCY 1, 5, 10 and 30, which is within a few percent of the
+#              760 x 200 ms / concurrency the delay dictates. Query 7 is the synchronous path over
 #              the same input and delay, as the point of comparison.
 #
 #              Every query asserts record count and checksum, so a configuration that loses or

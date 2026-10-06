@@ -16,6 +16,7 @@
 
 #include <condition_variable>
 #include <cstddef>
+#include <deque>
 #include <cstdint>
 #include <utility>
 #include <map>
@@ -87,14 +88,33 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    /// One processed input buffer: the buffer itself, kept alive because the results still
-    /// reference its variable-sized contents, and one result per record.
+    /// One processed input buffer: the buffer itself, kept alive because emitting still reads its
+    /// variable-sized contents, and one result per record.
     struct Processed
     {
         TupleBuffer input;
         std::vector<AsyncRecordResult> results;
         /// Records already written out; non-zero once a buffer had to be split into chunks.
         uint64_t emittedRecords = 0;
+    };
+
+    /// An input buffer whose batches are still being worked on. `results` is sized to the record
+    /// count up front, so each batch writes its own disjoint range without further locking.
+    struct Pending
+    {
+        TupleBuffer input;
+        std::vector<AsyncRecordResult> results;
+        size_t outstandingBatches = 0;
+    };
+
+    /// One call to the executor: the records [begin, end) of the buffer under `ticket`. This, and
+    /// not the input buffer, is the unit of work — `maxConcurrency` therefore means calls in
+    /// flight, which is what it says.
+    struct BatchWork
+    {
+        uint64_t ticket;
+        uint64_t begin;
+        uint64_t end;
     };
 
     /// Per (sequence number, origin id): how chunk numbers are handed out while one incoming
@@ -108,7 +128,11 @@ private:
 
     using SequenceKey = std::pair<uint64_t, uint64_t>;
 
+    /// Takes buffers from the channel in order and turns each into batch work. One thread, so the
+    /// ticket order is the order buffers arrived in, which is what `preserveOrder` restores.
+    void intakeLoop(const std::stop_token& stopToken);
     void processingLoop(const std::stop_token& stopToken);
+    std::optional<BatchWork> takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken);
     std::optional<Processed> takeNextCompleted(const std::stop_token& stopToken);
     void assignChunkNumber(bool isEndOfIncomingChunk, const TupleBuffer& input, TupleBuffer& output);
 
@@ -127,20 +151,30 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::unique_ptr<AsyncOperatorExecutor> executor;
     std::vector<Thread> workers;
+    /// Separate from the workers so that waiting for a buffer never occupies one of them.
+    std::optional<Thread> intake;
     std::stop_source workerStop;
 
-    /// Held while a worker takes a buffer from the channel, so that the ticket a worker gets
-    /// matches the order in which buffers were actually received.
-    std::mutex popMutex;
-
-    /// Ordering bookkeeping. Input buffers are numbered as they are taken from the channel,
-    /// so that results can be handed on in input order when the operator asks for it.
     std::mutex mutex;
+    /// Raised when a batch becomes available, and when intake ends so idle workers can leave.
+    std::condition_variable_any workArrived;
+    /// Raised when a buffer is fully processed, when intake ends, and when a slot in `pending`
+    /// frees up — the last one is what lets the intake thread continue.
     std::condition_variable_any completedArrived;
+
+    /// Input buffers are numbered as they are taken from the channel, so that results can be
+    /// handed on in input order when the operator asks for it.
     uint64_t nextTicket = 0;
     uint64_t nextToEmit = 0;
+    std::deque<BatchWork> work;
+    std::map<uint64_t, Pending> pending;
     std::map<uint64_t, Processed> completed;
-    size_t activeWorkers = 0;
+    /// How far intake may read ahead: primarily in queued batches, which is what keeps the workers
+    /// fed, and secondarily in buffers, which is what bounds the share of the buffer pool parked
+    /// here. Both are set from `maxConcurrency` when the source opens.
+    size_t queuedWorkHighWatermark = 1;
+    size_t maxPendingBuffers = 1;
+    bool intakeDone = false;
     bool inputExhausted = false;
     std::optional<Processed> partiallyEmitted;
 
