@@ -151,10 +151,10 @@ A faster path that quietly drops records is worthless, so every measurement asse
 
 | | |
 |---|---|
-| Asynchronous system tests (mock backend) | 8 / 8 |
+| Asynchronous system tests (mock backend) | 10 / 10 |
 | Synchronous system tests (mock backend) | 8 / 8 |
 | Window downstream of SEM_MAP, synchronous and asynchronous | 5 / 5 |
-| Unit tests (framework, executor, splitter, catalog) | 41 / 41 |
+| Unit tests (framework, executor, splitter, catalog, binder) | 50 / 50 |
 
 The window test is the one worth naming in a meeting. The consumer source hands the engine records
 it did not produce itself, so it passes `OriginId`, `SequenceNumber` and the watermark of the
@@ -165,6 +165,38 @@ for 760 rows across sixteen windows with ten calls in flight, summing to exactly
 and asynchronously, and the two agree row for row.
 
 ---
+
+## 5. The planned comparison at concurrency 256
+
+The next run is blocking against asynchronous on a vLLM cluster, batch size 1 and
+`MAX_CONCURRENCY 256` on both sides, 256 being that deployment's default concurrency. One thing
+about that setup has to be said out loud, because it decides how the result may be read.
+
+**`MAX_CONCURRENCY` does nothing for the blocking path.** That operator issues its request per
+record from an engine worker thread and blocks there, so its semaphore only binds *below* the
+thread count — the code says so at
+[`SemanticMapPhysicalOperator.cpp:116`](../../nes-physical-operators/src/Semantic/SemanticMapPhysicalOperator.cpp#L116).
+Its real concurrency is the number of worker threads, which section 2c measures directly: 152.7 s,
+39.6 s and 22.8 s at 1, 4 and 8 threads, linear in threads and indifferent to the configuration.
+
+So the run compares 256-way against *W*-way, where *W* is whatever the worker is configured with.
+The difference is real, but the obvious objection — "then give the engine 256 worker threads" — has
+to be answered inside the experiment, not afterwards. The answer is section 1: those 256 threads
+would all be parked in HTTP calls, and anything else submitted to that worker waits behind them.
+Therefore:
+
+- run the blocking path at several thread counts (1, 4, 16, 64, 256), not just one;
+- at the highest, run the model-free query alongside, which is what shows the cost;
+- report records per second as well as wall time, and per-record latency separately — at 256
+  concurrency vLLM trades latency for throughput, so the asynchronous run should be far better on
+  throughput and *worse* per record;
+- size the input so the slowest configuration still finishes: at roughly 2 s per call, 5 000 rows
+  is about 42 minutes blocking at four threads against 40 seconds asynchronously, while 50 000 rows
+  would be seven hours blocking.
+
+Expect something between 30x and 100x rather than the nominal 256/*W*, because per-request latency
+rises with concurrency. If the asynchronous run comes out below about 10x, then the limit is not
+vLLM, and it is the same unexplained ceiling as in section 3.
 
 ## How to read these numbers
 
@@ -188,17 +220,15 @@ and asynchronously, and the two agree row for row.
 ## What is not measured yet
 
 - The real-model concurrency curve of section 3, which is what would close the open question there.
-- `preserveOrder = false`. The resolution rule hardcodes it to `true`, so it is not reachable from
-  SQL; only unit tests cover the unordered path. Time-to-first-result, where dropping the ordering
-  requirement should help most, is therefore also unmeasured.
+- Time-to-first-result. `'FALSE' AS LLM.PRESERVE_ORDER` now exists and is covered by a system
+  test, but the latency it is meant to buy has not been measured — only that the records all
+  arrive.
 - Several asynchronous queries at once. Ten queries at `MAX_CONCURRENCY 16` would be 160 threads,
   which nothing currently bounds.
 - Chunking, when output records do not fit one buffer. The code mirrors
   `EmitOperatorHandler::setChunkNumber`, but the answers in these tests are short enough that the
   path never runs.
 - Cancellation while calls are in flight, including whether buffers return to the pool cleanly.
-- Error propagation from a source thread: an unreachable endpoint fails the synchronous query with
-  `ERROR 3006`, and whether the asynchronous path reports the same is untested.
 
 ## Reproducing
 
