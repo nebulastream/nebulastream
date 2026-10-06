@@ -207,7 +207,7 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 /// Currently there is no way to propagate a query stop without a failure from a sink.
                 /// There is no operator that propagates a query stop in upstream direction, so receiving a query stop
                 /// from the downstream operator is unexpected, thus failing the query is reasonable.
-                throw CannotWriteToSink("NetworkSink was closed by the other side");
+                throw CannotWriteToSink("NetworkSink channel was closed by the other side or failed permanently");
             }
             case SendResult::Ok: {
                 NES_TRACE("Sending buffer {}", currentBuffer->getSequenceNumber());

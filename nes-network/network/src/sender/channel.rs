@@ -16,13 +16,14 @@ use crate::channel::{Channel, Communication};
 use crate::protocol::*;
 use futures::SinkExt;
 use std::collections::{HashMap, VecDeque};
+use std::io;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::select;
 use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::{Instrument, Span, debug, info, info_span, trace, warn};
+use tracing::{Instrument, Span, debug, error, info, info_span, trace, warn};
 
 use super::control::*;
 pub type Result<T> = std::result::Result<T, Error>;
@@ -40,6 +41,9 @@ enum ChannelHandlerStatus {
     ClosedBySoftwareButFailedToPropagate(Error),
     /// The channel was cancelled via the cancellation token.
     Cancelled,
+    /// A buffer can never be sent (e.g. it exceeds the maximum frame size). Retrying would block the channel
+    /// forever, so the channel is terminated and its command queue closed, which fails the sending sink.
+    Failed(Error),
 }
 
 /// Establishes a network connection and performs channel identification handshake.
@@ -283,6 +287,21 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                     "Logic Error: Sequence Number was already in the wait_for_ack map. This indicates that the same sequence number was sent via a single channel."
                 );
             }
+            Err(e)
+                if matches!(
+                    e.kind(),
+                    io::ErrorKind::InvalidData | io::ErrorKind::InvalidInput
+                ) =>
+            {
+                // The encoding is deterministic, so retrying can never succeed.
+                return Err(ErrorOrStatus::Status(ChannelHandlerStatus::Failed(
+                    format!(
+                        "Buffer {sequence_number:?} ({} bytes) cannot be sent: {e}",
+                        buffer.data.len()
+                    )
+                    .into(),
+                )));
+            }
             Err(_) => {
                 // feed() failed — buffer stays in pending_writes for retry
                 warn!("Sending {:?} failed", sequence_number);
@@ -411,6 +430,12 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
             ErrorOrStatus::Error(e) => return Err(e),
             ErrorOrStatus::Status(status) => status,
         };
+
+        if let ChannelHandlerStatus::Failed(_) = status {
+            // Makes `try_send_data` return `Closed`, which fails the query.
+            self.queue.close();
+            return Ok(status);
+        }
 
         // Fixup the ClosedBySoftwareButFailedToPropagate created in read_from_software
         if let ChannelHandlerStatus::ClosedBySoftwareButFailedToPropagate(_) = status {
@@ -551,6 +576,10 @@ pub(super) fn create_channel_handler(
                     }
                     ChannelHandlerStatus::Cancelled => {
                         info!("Channel Closed by cancellation.");
+                        return;
+                    }
+                    ChannelHandlerStatus::Failed(e) => {
+                        error!("Channel failed permanently, failing the sender: {e}");
                         return;
                     }
                 }
