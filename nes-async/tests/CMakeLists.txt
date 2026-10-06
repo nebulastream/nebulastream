@@ -22,3 +22,7 @@ target_link_libraries(async-executor-test nes-async nes-memory)
 # Links the sink and source libraries so that their plugin registrations are pulled in.
 add_nes_test(async-plugin-registration-test AsyncPluginRegistrationTest.cpp)
 target_link_libraries(async-plugin-registration-test nes-async nes-sinks nes-sources)
+
+# Drives HandoffSink and AsyncSource through their registries, so it needs both plugin libraries.
+add_nes_test(async-lifecycle-test AsyncLifecycleTest.cpp)
+target_link_libraries(async-lifecycle-test nes-async nes-sinks nes-sources nes-memory)

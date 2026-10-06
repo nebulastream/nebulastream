@@ -116,6 +116,9 @@ void AsyncSource::recordFailure(std::exception_ptr reason)
         intakeDone = true;
         inputExhausted = true;
     }
+    /// The query is failing, so nothing will read the channel again; let the producer know now
+    /// rather than once the engine gets round to close().
+    channel->closeConsumer();
     workerStop.request_stop();
     workArrived.notify_all();
     completedArrived.notify_all();
@@ -209,7 +212,10 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
 std::optional<AsyncSource::BatchWork> AsyncSource::takeNextBatch(std::unique_lock<std::mutex>& lock, const std::stop_token& stopToken)
 {
     workArrived.wait(lock, stopToken, [this] { return not work.empty() || intakeDone; });
-    if (work.empty())
+    /// The wait returns as soon as its predicate holds, stop or not, so a stop with batches still
+    /// queued has to be checked separately. Taking them would mean one more model call each — up
+    /// to the request timeout apiece — whose results nobody will emit, while close() waits.
+    if (work.empty() || stopToken.stop_requested())
     {
         /// Either the input ended or a stop was requested; this worker is done either way.
         return std::nullopt;
@@ -420,6 +426,13 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
 
 void AsyncSource::close()
 {
+    /// Tell the producer first: from here on nothing reads this channel, so its sink must stop
+    /// retrying, and the buffers parked in the channel can go back to the pool now. Null only if
+    /// open() never got as far as attaching.
+    if (channel != nullptr)
+    {
+        channel->closeConsumer();
+    }
     workerStop.request_stop();
     /// Thread's destructor joins, so clearing waits for every worker to leave its loop, and
     /// resetting does the same for the intake thread.

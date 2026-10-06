@@ -64,6 +64,14 @@ void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecution
             continue;
         }
 
+        /// Nobody will ever read again, so retrying would only hold the upstream sources under
+        /// backpressure forever. Failing is what NetworkSink does when the receiver closes: there
+        /// is no operator that could propagate a stop upstream instead.
+        if (channel->isConsumerClosed())
+        {
+            throw CannotOpenSink("The consumer of handoff channel {} is gone", channelId);
+        }
+
         /// Channel full. Stash the buffer and let the engine come back to us; this is the
         /// only thing that throttles the upstream sources.
         if (const auto retry = backpressureHandler.onFull(*currentBuffer, backpressureController))
@@ -76,7 +84,22 @@ void HandoffSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecution
 
 void HandoffSink::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    INVARIANT(channel != nullptr, "HandoffSink::stop was called before start()");
+    /// A pipeline can be stopped without ever having been started, e.g. when the deployment of a
+    /// query is cancelled because another pipeline failed to start. Nothing was attached, so there
+    /// is nothing to flush or close — the same case NetworkSink::stop handles.
+    if (channel == nullptr)
+    {
+        NES_DEBUG("Handoff sink for channel {} was never started, nothing to close", channelId);
+        return;
+    }
+
+    /// With the consumer gone the stash can never be delivered, and retrying the stop would
+    /// never finish. Whatever is left is dropped together with this sink.
+    if (channel->isConsumerClosed())
+    {
+        NES_WARNING("Consumer of handoff channel {} is gone; dropping undelivered buffers on stop", channelId);
+        return;
+    }
 
     /// Hand over whatever is still stashed before closing, otherwise those records are lost.
     /// Not finishing the stop is expressed the way NetworkSink expresses it: repeat the task.

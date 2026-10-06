@@ -38,7 +38,7 @@ bool HandoffChannel::tryPush(TupleBuffer buffer)
 {
     {
         const std::lock_guard lock(mutex);
-        if (closed || queue.size() >= capacityLimit)
+        if (closed || consumerClosed || queue.size() >= capacityLimit)
         {
             return false;
         }
@@ -75,10 +75,29 @@ void HandoffChannel::close()
     notEmpty.notify_all();
 }
 
+void HandoffChannel::closeConsumer()
+{
+    /// Moved out under the lock and released after it, so returning buffers to the pool does
+    /// not happen while a producer waits for the mutex.
+    std::deque<TupleBuffer> abandoned;
+    {
+        const std::lock_guard lock(mutex);
+        consumerClosed = true;
+        abandoned.swap(queue);
+    }
+    notEmpty.notify_all();
+}
+
 bool HandoffChannel::isClosed() const
 {
     const std::lock_guard lock(mutex);
     return closed;
+}
+
+bool HandoffChannel::isConsumerClosed() const
+{
+    const std::lock_guard lock(mutex);
+    return consumerClosed;
 }
 
 size_t HandoffChannel::size() const

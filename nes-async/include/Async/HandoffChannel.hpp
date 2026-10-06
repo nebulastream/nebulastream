@@ -50,7 +50,8 @@ public:
 
     /// Enqueues a buffer. Returns false when the channel is full — the producer's cue to
     /// stash the buffer and retry, the way `NetworkSink` reacts to a full send queue — or
-    /// when the channel has already been closed.
+    /// when the channel has already been closed by either side. A producer tells the two
+    /// apart with `isConsumerClosed`: retrying only makes sense while someone still reads.
     bool tryPush(TupleBuffer buffer);
 
     /// Returns the next buffer, blocking until one is available.
@@ -66,7 +67,15 @@ public:
     /// Drain first, then close.
     void close();
 
+    /// Marks the consumer side as gone — it stopped or failed — so nothing will ever read
+    /// from this channel again. Queued buffers are released right away, so they go back to
+    /// the pool instead of waiting for the producer to let go of the channel, and every
+    /// further `tryPush` fails. Without this the producer would keep retrying into a full
+    /// channel forever and hold its upstream sources under backpressure.
+    void closeConsumer();
+
     [[nodiscard]] bool isClosed() const;
+    [[nodiscard]] bool isConsumerClosed() const;
     [[nodiscard]] size_t size() const;
     [[nodiscard]] size_t capacity() const;
 
@@ -76,6 +85,7 @@ private:
     std::deque<TupleBuffer> queue;
     size_t capacityLimit;
     bool closed = false;
+    bool consumerClosed = false;
 };
 
 /// Process-wide directory of channels, keyed by the id that both halves carry in their
