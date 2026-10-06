@@ -395,7 +395,7 @@ EOF
   done
 
   grep "Backpressure" worker-2/singleNodeWorker.log
-  grep "NetworkSink was closed by the other side" worker-2/singleNodeWorker.log
+  grep "NetworkSink channel was closed by the other side or failed permanently" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
   run docker_nes_cli status $query_id
