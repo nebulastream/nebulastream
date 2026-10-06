@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <deque>
 #include <functional>
@@ -132,6 +133,7 @@ private:
     SystestClusterConfiguration clusterConfig;
     bool remote;
     SingleNodeWorkerConfiguration baseWorker;
+    std::chrono::milliseconds queryTimeout;
     /// The partitions that setup accepted, which every submit runs.
     std::vector<SetUpPartition> setUpPartitions;
     std::vector<ReportEntry> rejected;
