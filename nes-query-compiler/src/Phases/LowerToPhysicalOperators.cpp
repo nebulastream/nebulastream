@@ -74,14 +74,20 @@ resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRe
 }
 }
 
-LoweringRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument)
+LoweringRuleResultSubgraph::SubGraphRoot lowerOperatorRecursively(
+    const LogicalOperator& logicalOperator,
+    const std::optional<LogicalOperator>& donorOperator,
+    const LoweringRuleRegistryArguments& registryArgument)
 {
+    if (donorOperator)
+    {
+        INVARIANT(logicalOperator.getName() == donorOperator->getName(), "Migration changed logical operator topology");
+    }
     /// Try to resolve lowering rule for the current logical operator
     const auto rule = resolveLoweringRule(logicalOperator, registryArgument);
 
     /// We apply the rule and receive a subgraph
-    const auto [root, leaves] = rule->apply(logicalOperator);
+    const auto [root, leaves] = rule->applyWithDonor(logicalOperator, donorOperator);
     INVARIANT(
         leaves.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
@@ -97,12 +103,17 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
                 logicalOperator.getChildren().size() == 1,
                 "Empty lowering results of operators with multiple keys are not supported for {}",
                 logicalOperator);
-            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+            const auto donorChildren = donorOperator ? donorOperator->getChildren() : std::vector<LogicalOperator>{};
+            INVARIANT(not donorOperator || donorChildren.size() == 1, "Migration changed logical operator topology");
+            return lowerOperatorRecursively(
+                logicalOperator.getChildren()[0], donorOperator ? std::optional{donorChildren[0]} : std::nullopt, registryArgument);
         }
         return {};
     }
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
+    const auto donorChildren = donorOperator ? donorOperator->getChildren() : std::vector<LogicalOperator>{};
+    INVARIANT(not donorOperator || donorChildren.size() == children.size(), "Migration changed logical operator topology");
     INVARIANT(
         children.size() == leaves.size(),
         "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
@@ -110,25 +121,28 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
         leaves.size(),
         logicalOperator);
 
-    std::ranges::for_each(
-        std::views::zip(children, leaves),
-        [&registryArgument](const auto& zippedPair)
-        {
-            const auto& [child, leaf] = zippedPair;
-            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
-            leaf->addChild(rootNodeOfLoweredChild);
-        });
+    for (size_t index = 0; index < children.size(); ++index)
+    {
+        auto rootNodeOfLoweredChild = lowerOperatorRecursively(
+            children[index], donorOperator ? std::optional{donorChildren[index]} : std::nullopt, registryArgument);
+        leaves[index]->addChild(rootNodeOfLoweredChild);
+    }
     return root;
 }
 
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
+PhysicalPlan
+apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, const std::optional<LogicalPlan>& donorQueryPlan) /// NOLINT
 {
     const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    const auto donorRoots = donorQueryPlan ? donorQueryPlan->getRootOperators() : std::vector<LogicalOperator>{};
+    const auto roots = queryPlan.getRootOperators();
+    INVARIANT(not donorQueryPlan || roots.size() == donorRoots.size(), "Migration changed logical plan roots");
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
-    newRootOperators.reserve(queryPlan.getRootOperators().size());
-    for (const auto& logicalRoot : queryPlan.getRootOperators())
+    newRootOperators.reserve(roots.size());
+    for (size_t index = 0; index < roots.size(); ++index)
     {
-        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+        newRootOperators.push_back(
+            lowerOperatorRecursively(roots[index], donorQueryPlan ? std::optional{donorRoots[index]} : std::nullopt, registryArgument));
     }
 
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");

@@ -95,6 +95,9 @@ public:
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild);
 
+    [[nodiscard]] SequenceShredder::Snapshot snapshotShredder() const { return sequenceShredder->snapshot(); }
+
+    void restoreShredder(SequenceShredder::Snapshot snapshot) { sequenceShredder->restore(std::move(snapshot)); }
 
     std::ostream& toString(std::ostream& os) const;
 

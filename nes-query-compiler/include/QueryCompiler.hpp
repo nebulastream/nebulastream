@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
@@ -28,14 +29,16 @@ namespace NES::QueryCompilation
 struct QueryCompilationRequest
 {
     LogicalPlan queryPlan;
+    /// The optimized plan whose running state this plan will absorb. The lowering
+    /// pass pairs corresponding logical operators before pipelines are formed.
+    std::optional<LogicalPlan> donorQueryPlan;
 
-    /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
+    /// Only the query and optional donor plans influence the compiled result; other request options control diagnostics.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
 };
 
-/// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
-/// This guarantees that identical QueryPlan instances produce identical CompiledQueryPlan results.
+/// The query compiler behaves as a pure function of the query plan and optional donor plan.
 class QueryCompiler
 {
 public:

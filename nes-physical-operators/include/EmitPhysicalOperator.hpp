@@ -45,6 +45,8 @@ public:
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const override;
     void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const override;
+    void lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const override;
+    void lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const override;
     void emitRecordBuffer(
         ExecutionContext& ctx,
         RecordBuffer& recordBuffer,

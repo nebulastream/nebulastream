@@ -74,6 +74,38 @@ private:
 public:
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) { }
 
+    struct ContiguousSnapshot
+    {
+        SequenceNumber::Underlying sequence;
+        T value;
+    };
+
+    /// Migration supports a quiescent queue with no incomplete chunks or later completed sequences.
+    [[nodiscard]] ContiguousSnapshot snapshotContiguous() const
+    {
+        INVARIANT(not chunks.hasIncompleteChunks(), "Cannot migrate a watermark with incomplete chunks");
+        const auto sequence = currentSeq.load();
+        for (auto block = std::atomic_load(&head); block != nullptr; block = std::atomic_load(&block->next))
+        {
+            for (size_t index = 0; index < BlockSize; ++index)
+            {
+                INVARIANT(block->log[index].seq.load() <= sequence, "Cannot migrate a watermark with out-of-order completed sequences");
+            }
+        }
+        return {.sequence = sequence, .value = getCurrentValue()};
+    }
+
+    void restoreContiguous(ContiguousSnapshot snapshot)
+    {
+        INVARIANT(currentSeq.load() == 0, "Watermark queue was already used before state import");
+        auto block = std::make_shared<Block>(snapshot.sequence / BlockSize);
+        auto& slot = block->log[snapshot.sequence % BlockSize];
+        slot.seq.store(snapshot.sequence);
+        slot.value.store(snapshot.value);
+        std::atomic_store(&head, std::move(block));
+        currentSeq.store(snapshot.sequence);
+    }
+
     ~NonBlockingMonotonicSeqQueue() = default;
 
     NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other)

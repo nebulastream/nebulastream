@@ -14,8 +14,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -146,6 +148,78 @@ TEST_F(SpecificSequenceTest, longRunOfEmptyBuffersDoesNotRetainPooledBuffers)
     EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[1].getBufferView(), "12,");
     EXPECT_TRUE(result.spanningBuffers.getSpanningBuffers()[2].getBufferView().empty());
     EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[3].getLeadingBytes(), "34");
+}
+
+TEST_F(SpecificSequenceTest, restoredShredderCompletesPendingTupleAcrossEmptyBuffers)
+{
+    using namespace InputFormatterTestUtil;
+    auto bufferManager = BufferManager::create(
+        UNPOOLED_MEMORY_BUDGET_IN_BYTES + 3 * 16,
+        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES + 3 * 16),
+        BUFFER_ALIGNMENT,
+        16,
+        std::make_shared<NesDefaultMemoryAllocator>());
+
+    auto donor = std::make_unique<SequenceShredder>();
+    auto first = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(first.has_value());
+    copyStringDataToTupleBuffer("12,", *first);
+    first->setSequenceNumber(SequenceNumber(1));
+    ASSERT_TRUE(donor->findSpanningTupleWithoutDelimiter(StagedBuffer{RawTupleBuffer{*first}, 0, 0}).isInRange);
+
+    auto empty = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(empty.has_value());
+    empty->setNumberOfTuples(0);
+    empty->setSequenceNumber(SequenceNumber(2));
+    ASSERT_TRUE(donor->findSpanningTupleWithoutDelimiter(StagedBuffer{RawTupleBuffer{*empty}, 0, 0}).isInRange);
+
+    auto snapshot = donor->snapshot();
+    donor.reset();
+    SequenceShredder restored;
+    restored.restore(std::move(snapshot));
+
+    auto last = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(last.has_value());
+    copyStringDataToTupleBuffer("34\n", *last);
+    last->setSequenceNumber(SequenceNumber(3));
+    const auto result = restored.findLeadingSpanningTupleWithDelimiter(StagedBuffer{RawTupleBuffer{*last}, 2, 2});
+    ASSERT_TRUE(result.isInRange);
+    ASSERT_EQ(result.spanningBuffers.getSize(), 4);
+    EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[1].getBufferView(), "12,");
+    EXPECT_TRUE(result.spanningBuffers.getSpanningBuffers()[2].getBufferView().empty());
+    EXPECT_EQ(result.spanningBuffers.getSpanningBuffers()[3].getLeadingBytes(), "34");
+}
+
+TEST_F(SpecificSequenceTest, restoredShredderKeepsPartiallyConsumedDelimiterBuffer)
+{
+    using namespace InputFormatterTestUtil;
+    auto bufferManager = BufferManager::create(
+        UNPOOLED_MEMORY_BUDGET_IN_BYTES + 2 * 16,
+        static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES) / static_cast<double>(UNPOOLED_MEMORY_BUDGET_IN_BYTES + 2 * 16),
+        BUFFER_ALIGNMENT,
+        16,
+        std::make_shared<NesDefaultMemoryAllocator>());
+
+    SequenceShredder donor;
+    auto first = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(first.has_value());
+    copyStringDataToTupleBuffer("12\n34", *first);
+    first->setSequenceNumber(SequenceNumber(1));
+    const auto leading = donor.findLeadingSpanningTupleWithDelimiter(StagedBuffer{RawTupleBuffer{*first}, 2, 2});
+    ASSERT_TRUE(leading.isInRange);
+    ASSERT_EQ(leading.spanningBuffers.getSize(), 2);
+
+    SequenceShredder restored;
+    restored.restore(donor.snapshot());
+    auto last = bufferManager->getBufferNoBlocking();
+    ASSERT_TRUE(last.has_value());
+    copyStringDataToTupleBuffer("56\n", *last);
+    last->setSequenceNumber(SequenceNumber(2));
+    const auto trailing = restored.findLeadingSpanningTupleWithDelimiter(StagedBuffer{RawTupleBuffer{*last}, 2, 2});
+    ASSERT_TRUE(trailing.isInRange);
+    ASSERT_EQ(trailing.spanningBuffers.getSize(), 2);
+    EXPECT_EQ(trailing.spanningBuffers.getSpanningBuffers()[0].getTrailingBytes(1), "34");
+    EXPECT_EQ(trailing.spanningBuffers.getSpanningBuffers()[1].getLeadingBytes(), "56");
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.

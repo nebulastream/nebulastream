@@ -98,6 +98,22 @@ void CompiledExecutablePipelineStage::registerPipelineFunction(nautilus::engine:
     module.registerFunction(std::string{PIPELINE_FUNCTION_NAME}, compiledFunction);
 }
 
+void CompiledExecutablePipelineStage::registerEmitFunction(nautilus::engine::NautilusModule& module) const
+{
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<PipelineStateBuilder*>)> compiledFunction
+        = [this](nautilus::val<PipelineExecutionContext*> context, nautilus::val<PipelineStateBuilder*> state)
+    { pipeline->getRootOperator().lowerEmit(state, context); };
+    module.registerFunction(std::string{EMIT_FUNCTION_NAME}, compiledFunction);
+}
+
+void CompiledExecutablePipelineStage::registerAbsorbFunction(nautilus::engine::NautilusModule& module) const
+{
+    const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<PipelineStateReader*>)> compiledFunction
+        = [this](nautilus::val<PipelineExecutionContext*> context, nautilus::val<PipelineStateReader*> state)
+    { pipeline->getRootOperator().lowerAbsorb(state, context); };
+    module.registerFunction(std::string{ABSORB_FUNCTION_NAME}, compiledFunction);
+}
+
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
@@ -108,17 +124,20 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
 
 TupleBuffer CompiledExecutablePipelineStage::emit(PipelineExecutionContext& context)
 {
+    INVARIANT(compiledEmitFunction.has_value(), "emit() was called before start() compiled the pipeline");
     context.setOperatorHandlers(operatorHandlers);
     PipelineStateBuilder state;
-    pipeline->getRootOperator().emit(state, context);
+    (*compiledEmitFunction)(std::addressof(context), std::addressof(state));
     return state.finish(context.getBufferManager());
 }
 
 void CompiledExecutablePipelineStage::absorb(const TupleBuffer& buffer, PipelineExecutionContext& context)
 {
+    INVARIANT(compiledAbsorbFunction.has_value(), "absorb() was called before start() compiled the pipeline");
     context.setOperatorHandlers(operatorHandlers);
     PipelineStateReader state(buffer);
-    pipeline->getRootOperator().absorb(state, context);
+    (*compiledAbsorbFunction)(std::addressof(context), std::addressof(state));
+    state.ensureConsumed();
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -140,9 +159,13 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
         CompilationContext compilationCtx{module};
         pipeline->getRootOperator().setup(ctx, compilationCtx);
         registerPipelineFunction(module);
+        registerEmitFunction(module);
+        registerAbsorbFunction(module);
         compiledModule = module.compile();
         compilationCtx.resolveAfterCompilation(*compiledModule);
         compiledPipelineFunction = compiledModule->getFunction<PipelineSignature>(std::string{PIPELINE_FUNCTION_NAME});
+        compiledEmitFunction = compiledModule->getFunction<EmitSignature>(std::string{EMIT_FUNCTION_NAME});
+        compiledAbsorbFunction = compiledModule->getFunction<AbsorbSignature>(std::string{ABSORB_FUNCTION_NAME});
 
         /// Surface nautilus' per-compilation statistics (tracing/IR/backend timings, generated code size).
         /// getStatistics() is null in interpreted mode; the report is only formatted when debug logging is on.

@@ -222,6 +222,53 @@ uint64_t DefaultTimeBasedSliceStore::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
+DefaultTimeBasedSliceStore::Snapshot DefaultTimeBasedSliceStore::snapshot() const
+{
+    Snapshot result{.slices = {}, .windows = {}, .nextSequence = sequenceNumber.load()};
+    const auto lockedSlices = slices.rlock();
+    const auto lockedWindows = windows.rlock();
+    result.slices.reserve(lockedSlices->size());
+    result.windows.reserve(lockedWindows->size());
+    for (const auto& entry : *lockedSlices)
+    {
+        result.slices.push_back(entry.second);
+    }
+    for (const auto& [info, window] : *lockedWindows)
+    {
+        result.windows.push_back({info, window.windowState});
+    }
+    return result;
+}
+
+void DefaultTimeBasedSliceStore::restore(
+    std::vector<std::shared_ptr<Slice>> restoredSlices,
+    const std::vector<WindowSnapshot>& restoredWindows,
+    const SequenceNumber::Underlying nextSequence)
+{
+    auto [lockedSlices, lockedWindows] = acquireLocked(slices, windows);
+    INVARIANT(lockedSlices->empty() && lockedWindows->empty(), "Window store was already populated before state import");
+    const auto expectedSlices = sliceAssigner.getWindowSize() / sliceAssigner.getWindowSlide();
+    for (const auto& window : restoredWindows)
+    {
+        auto [it, inserted] = lockedWindows->try_emplace(window.info, expectedSlices);
+        INVARIANT(inserted, "Duplicate migrated window");
+        it->second.windowState = window.state;
+    }
+    for (auto& slice : restoredSlices)
+    {
+        INVARIANT(lockedSlices->emplace(slice->getSliceEnd(), slice).second, "Duplicate migrated slice");
+        for (const auto& info : sliceAssigner.getAllWindowsForSlice(*slice))
+        {
+            if (const auto it = lockedWindows->find(info); it != lockedWindows->end())
+            {
+                INVARIANT(it->first.windowStart == info.windowStart, "Migrated window start changed");
+                it->second.windowSlices.push_back(slice);
+            }
+        }
+    }
+    sequenceNumber.store(nextSequence);
+}
+
 std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
     uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider)
 {

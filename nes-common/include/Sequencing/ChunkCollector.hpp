@@ -48,6 +48,22 @@ public:
     /// Collect a chunk and return a sequenceNumber and the associated watermark if all chunks have been collected.
     std::optional<std::pair<SequenceNumber, Timestamp>> collect(SequenceData data, Timestamp watermark);
 
+    [[nodiscard]] bool hasIncompleteChunks() const
+    {
+        const auto locked = nodes.rlock();
+        for (const auto& node : *locked)
+        {
+            for (const auto& entry : node.data)
+            {
+                if (entry.v.isPending())
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 private:
     template <typename T, typename MergeFunction, T InitialValue>
     class Chunk
@@ -59,6 +75,8 @@ private:
         std::atomic<T> value = {InitialValue};
 
     public:
+        [[nodiscard]] bool isPending() const { return counter.load() != 0; }
+
         std::optional<T> update(const SequenceData& sequence, T newWatermark)
         {
             const auto chunk = sequence.chunkNumber - ChunkNumber::INITIAL;

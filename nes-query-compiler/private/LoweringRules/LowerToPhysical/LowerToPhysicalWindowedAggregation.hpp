@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <optional>
 
 #include <utility>
 #include <LoweringRules/AbstractLoweringRule.hpp>
@@ -27,9 +28,11 @@ struct LowerToPhysicalWindowedAggregation : AbstractLoweringRule
     explicit LowerToPhysicalWindowedAggregation(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
 
     LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    LoweringRuleResultSubgraph applyWithDonor(LogicalOperator logicalOperator, const std::optional<LogicalOperator>& donor) override;
 
 private:
     QueryExecutionConfiguration conf;
+    std::optional<LogicalOperator> donorOperator;
 };
 
 }

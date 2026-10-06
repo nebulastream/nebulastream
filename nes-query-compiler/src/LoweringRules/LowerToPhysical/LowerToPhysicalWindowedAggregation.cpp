@@ -21,6 +21,7 @@
 #include <optional>
 #include <ranges>
 #include <span>
+#include <typeinfo>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -125,6 +126,13 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
 }
 }
 
+LoweringRuleResultSubgraph
+LowerToPhysicalWindowedAggregation::applyWithDonor(LogicalOperator logicalOperator, const std::optional<LogicalOperator>& donor)
+{
+    donorOperator = donor;
+    return apply(std::move(logicalOperator));
+}
+
 LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
     auto aggregation = logicalOperator.getAs<WindowedAggregationLogicalOperator>();
@@ -147,6 +155,45 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     auto timeFunction = TimeFunction::create(std::get<Windowing::BoundTimeCharacteristic>(aggregation->getCharacteristic()));
     auto windowType = aggregation->getWindowType();
     auto aggregationPhysicalFunctions = getAggregationPhysicalFunctions(*aggregation, conf);
+    std::optional<AggregationBuildPhysicalOperator::DonorLayout> donorLayout;
+    if (donorOperator)
+    {
+        const auto oldAggregation = donorOperator->getAs<WindowedAggregationLogicalOperator>();
+        const auto oldInputOriginIds = oldAggregation->getChild().getTraitSet().get<OutputOriginIdsTrait>();
+        const auto oldOutputOriginIds = donorOperator->getTraitSet().get<OutputOriginIdsTrait>();
+        INVARIANT(
+            *oldInputOriginIds == *inputOriginIds && *oldOutputOriginIds == *outputOriginIds, "Window origins changed during migration");
+        INVARIANT(oldAggregation->getWindowType() == aggregation->getWindowType(), "Window configuration changed during migration");
+        const auto oldFunctions = getAggregationPhysicalFunctions(*oldAggregation, conf);
+        INVARIANT(oldFunctions.size() == aggregationPhysicalFunctions.size(), "Aggregation count changed during migration");
+        for (size_t index = 0; index < oldFunctions.size(); ++index)
+        {
+            const auto& oldFunction = *oldFunctions[index];
+            const auto& newFunction = *aggregationPhysicalFunctions[index];
+            INVARIANT(
+                typeid(oldFunction) == typeid(newFunction) && oldFunction.getSizeOfStateInBytes() == newFunction.getSizeOfStateInBytes(),
+                "Aggregation layout changed during migration");
+        }
+        const auto oldKeys = oldAggregation->getGroupingKeys();
+        const auto newKeys = aggregation->getGroupingKeys();
+        INVARIANT(oldKeys.size() == newKeys.size(), "Window key count changed during migration");
+        for (size_t index = 0; index < oldKeys.size(); ++index)
+        {
+            INVARIANT(oldKeys[index].getDataType() == newKeys[index].getDataType(), "Window key layout changed during migration");
+        }
+        const auto oldKeySize = std::accumulate(
+            oldKeys.begin(),
+            oldKeys.end(),
+            size_t{0},
+            [](const auto size, const auto& key) { return size + key.getDataType().getSizeInBytesWithNull(); });
+        const auto oldValueSize = std::accumulate(
+            oldFunctions.begin(),
+            oldFunctions.end(),
+            size_t{0},
+            [](const auto size, const auto& function) { return size + function->getSizeOfStateInBytes(); });
+        donorLayout = AggregationBuildPhysicalOperator::DonorLayout{
+            .entrySize = sizeof(ChainedHashMapEntry) + oldKeySize + oldValueSize, .functions = std::move(oldFunctions)};
+    }
 
     const auto physicalInputSchema = createPhysicalOutputSchema(childTraitSet);
     const auto physicalOutputSchema = createPhysicalOutputSchema(traitSet);
@@ -168,6 +215,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
+    INVARIANT(not donorLayout || donorLayout->entrySize == entrySize, "Aggregation entry layout changed during migration");
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
 
@@ -213,7 +261,13 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     const AggregationBuildPhysicalOperator build{
-        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapConfig, keyFunctions};
+        handlerId,
+        std::move(timeFunction),
+        std::move(sliceStoreRef),
+        aggregationPhysicalFunctions,
+        hashMapConfig,
+        keyFunctions,
+        std::move(donorLayout)};
     const AggregationProbePhysicalOperator probe{hashMapConfig, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto handler = std::make_shared<AggregationOperatorHandler>(

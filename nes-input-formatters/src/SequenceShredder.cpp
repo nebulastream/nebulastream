@@ -74,6 +74,16 @@ SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const S
     return spanningTupleBuffer->tryFindTrailingSpanningTupleForBufferWithDelimiter(sequenceNumber);
 }
 
+SequenceShredder::Snapshot SequenceShredder::snapshot() const
+{
+    return spanningTupleBuffer->snapshot();
+}
+
+void SequenceShredder::restore(Snapshot snapshot)
+{
+    spanningTupleBuffer->restore(std::move(snapshot));
+}
+
 SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
     return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());

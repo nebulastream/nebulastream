@@ -36,9 +36,37 @@
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <function.hpp>
 
 namespace NES
 {
+PipelineStateBuilder* createChildState(PipelineStateBuilder* parent)
+{
+    return parent->own(std::make_unique<PipelineStateBuilder>());
+}
+
+void finishChildState(PipelineStateBuilder* parent, PipelineStateBuilder* child, PipelineExecutionContext* context)
+{
+    parent->addChild(child->finish(context->getBufferManager()));
+}
+
+PipelineStateReader* createChildReader(PipelineStateReader* parent)
+{
+    INVARIANT(parent->childCount() == 1, "Expected one child pipeline state");
+    return parent->own(std::make_unique<PipelineStateReader>(parent->child(0)));
+}
+
+void finishChildReader(PipelineStateReader* parent, PipelineStateReader* child)
+{
+    child->ensureConsumed();
+    parent->ensureConsumed();
+}
+
+void finishLeafReader(PipelineStateReader* state)
+{
+    INVARIANT(state->childCount() == 0, "Unexpected child pipeline state");
+    state->ensureConsumed();
+}
 
 PhysicalOperatorConcept::PhysicalOperatorConcept() : id(getNextPhysicalOperatorId())
 {
@@ -97,6 +125,30 @@ void PhysicalOperatorConcept::absorb(PipelineStateReader& state, PipelineExecuti
         INVARIANT(state.childCount() == 0, "Unexpected child pipeline state");
     }
     state.ensureConsumed();
+}
+
+void PhysicalOperatorConcept::lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    if (const auto child = getChild())
+    {
+        const auto childState = nautilus::invoke(createChildState, state);
+        child->lowerEmit(childState, context);
+        nautilus::invoke(finishChildState, state, childState, context);
+    }
+}
+
+void PhysicalOperatorConcept::lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    if (const auto child = getChild())
+    {
+        const auto childState = nautilus::invoke(createChildReader, state);
+        child->lowerAbsorb(childState, context);
+        nautilus::invoke(finishChildReader, state, childState);
+    }
+    else
+    {
+        nautilus::invoke(finishLeafReader, state);
+    }
 }
 
 void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -191,6 +243,16 @@ void PhysicalOperator::emit(PipelineStateBuilder& state, PipelineExecutionContex
 void PhysicalOperator::absorb(PipelineStateReader& state, PipelineExecutionContext& context) const
 {
     self->absorb(state, context);
+}
+
+void PhysicalOperator::lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    self->lowerEmit(state, context);
+}
+
+void PhysicalOperator::lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    self->lowerAbsorb(state, context);
 }
 
 std::string PhysicalOperator::toString() const

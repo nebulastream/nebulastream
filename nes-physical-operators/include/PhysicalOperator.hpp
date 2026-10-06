@@ -36,6 +36,7 @@
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -85,6 +86,9 @@ struct PhysicalOperatorConcept
     /// Export/import operator-owned state. The default implementation visits the child.
     virtual void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const;
     virtual void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const;
+    virtual void lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const;
+    /// Emits operator-specific code while Nautilus traces the pipeline's absorb entry point.
+    virtual void lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const;
 
     /// Unique identifier for this operator.
     const OperatorId id = INVALID_OPERATOR_ID;
@@ -134,6 +138,8 @@ struct PhysicalOperator
     void execute(ExecutionContext& executionCtx, Record& record) const;
     void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const;
     void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const;
+    void lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const;
+    void lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const;
     [[nodiscard]] std::string toString() const;
 
     [[nodiscard]] OperatorId getId() const;
@@ -213,6 +219,16 @@ private:
         void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const override { data.emit(state, context); }
 
         void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const override { data.absorb(state, context); }
+
+        void lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const override
+        {
+            data.lowerEmit(state, context);
+        }
+
+        void lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const override
+        {
+            data.lowerAbsorb(state, context);
+        }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };

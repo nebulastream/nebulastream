@@ -141,6 +141,26 @@ void EmitPhysicalOperator::absorb(PipelineStateReader& state, PipelineExecutionC
     state.ensureConsumed();
 }
 
+void emitSinkState(const EmitPhysicalOperator* sink, PipelineStateBuilder* state, PipelineExecutionContext* context)
+{
+    sink->emit(*state, *context);
+}
+
+void absorbSinkState(const EmitPhysicalOperator* sink, PipelineStateReader* state, PipelineExecutionContext* context)
+{
+    sink->absorb(*state, *context);
+}
+
+void EmitPhysicalOperator::lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    nautilus::invoke(emitSinkState, nautilus::val<const EmitPhysicalOperator*>{this}, state, context);
+}
+
+void EmitPhysicalOperator::lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const
+{
+    nautilus::invoke(absorbSinkState, nautilus::val<const EmitPhysicalOperator*>{this}, state, context);
+}
+
 namespace
 {
 void setChunkNumber(

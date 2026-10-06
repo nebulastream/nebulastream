@@ -52,6 +52,8 @@ public:
     tryFindSpanningTupleForBufferWithoutDelimiter(SequenceNumber sequenceNumber, const StagedBuffer& indexedRawBuffer);
 
     [[nodiscard]] bool validate() const;
+    [[nodiscard]] SequenceShredder::Snapshot snapshot() const;
+    void restore(SequenceShredder::Snapshot snapshot);
 
     friend std::ostream& operator<<(std::ostream& os, const SpanningTupleBuffer& sequenceRingBuffer);
 

@@ -33,6 +33,10 @@ public:
     explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const override;
+    void absorb(PipelineStateReader& state, PipelineExecutionContext& context) const override;
+    void lowerEmit(nautilus::val<PipelineStateBuilder*> state, nautilus::val<PipelineExecutionContext*> context) const override;
+    void lowerAbsorb(nautilus::val<PipelineStateReader*> state, nautilus::val<PipelineExecutionContext*> context) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

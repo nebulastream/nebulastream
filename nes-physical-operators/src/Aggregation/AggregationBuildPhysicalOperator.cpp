@@ -13,27 +13,36 @@
 */
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <utility>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/CountAggregationPhysicalFunction.hpp>
+#include <Aggregation/Function/SumAggregationPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/NautilusBuffer.hpp>
 #include <Interface/Record.hpp>
+#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapSlice.hpp>
+#include <PipelineExecutionContext.hpp>
+#include <PipelineState.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 #include <options.hpp>
@@ -42,6 +51,16 @@
 
 namespace NES
 {
+void AggregationBuildPhysicalOperator::emit(PipelineStateBuilder& state, PipelineExecutionContext& context) const
+{
+    emitCompiled(state, context);
+    PhysicalOperatorConcept::emit(state, context);
+}
+
+void AggregationBuildPhysicalOperator::absorb(PipelineStateReader& state, PipelineExecutionContext& context) const
+{
+    absorbCompiled(state, context);
+}
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
@@ -104,11 +123,13 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     std::unique_ptr<SliceStoreRef> sliceStoreRef,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     ChainedHashMapConfig hashMapConfig,
-    std::vector<PhysicalFunction> keyFunctions)
+    std::vector<PhysicalFunction> keyFunctions,
+    std::optional<DonorLayout> donorLayout)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapConfig(std::move(hashMapConfig))
     , keyFunctions(std::move(keyFunctions))
+    , donorLayout(std::move(donorLayout))
 {
 }
 

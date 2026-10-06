@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
 #include <PhysicalOperator.hpp>
@@ -41,6 +43,12 @@ struct LoweringRuleResultSubgraph
 struct AbstractLoweringRule
 {
     virtual LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) = 0;
+
+    virtual LoweringRuleResultSubgraph applyWithDonor(LogicalOperator logicalOperator, const std::optional<LogicalOperator>&)
+    {
+        return apply(std::move(logicalOperator));
+    }
+
     virtual ~AbstractLoweringRule() = default;
 };
 

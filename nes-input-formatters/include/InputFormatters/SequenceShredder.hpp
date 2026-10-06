@@ -67,6 +67,22 @@ struct SequenceShredderResult
 class SequenceShredder
 {
 public:
+    struct EntrySnapshot
+    {
+        uint64_t sequenceNumber;
+        StagedBuffer leading;
+        StagedBuffer trailing;
+        bool hasDelimiter;
+        bool leadingUsed;
+        bool trailingUsed;
+    };
+
+    struct Snapshot
+    {
+        std::vector<EntrySnapshot> entries;
+        std::vector<std::pair<uint64_t, uint64_t>> emptyRanges;
+    };
+
     SequenceShredder();
     /// Destructor validates (final) state of spanning tuple buffer
     ~SequenceShredder();
@@ -84,6 +100,10 @@ public:
     /// Assumes findLeadingSpanningTupleWithDelimiter was already called and the StagedBuffer for 'sequenceNumber' already set
     /// Searches for a reachable buffer that delimits tuples in trailing direction (higher SequenceNumbers)
     SpanningBuffers findTrailingSpanningTupleWithDelimiter(SequenceNumber sequenceNumber);
+
+    /// Requires a quiescent formatter. Retained raw buffers stay alive through TupleBuffer references.
+    [[nodiscard]] Snapshot snapshot() const;
+    void restore(Snapshot snapshot);
 
     friend std::ostream& operator<<(std::ostream& os, const SequenceShredder& sequenceShredder);
 

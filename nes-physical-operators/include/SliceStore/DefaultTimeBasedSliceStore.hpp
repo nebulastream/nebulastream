@@ -55,6 +55,19 @@ struct SlicesAndState
 class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
+    struct WindowSnapshot
+    {
+        WindowInfo info;
+        WindowInfoState state;
+    };
+
+    struct Snapshot
+    {
+        std::vector<std::shared_ptr<Slice>> slices;
+        std::vector<WindowSnapshot> windows;
+        SequenceNumber::Underlying nextSequence;
+    };
+
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration);
 
     ~DefaultTimeBasedSliceStore() override;
@@ -67,6 +80,14 @@ public:
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
+
+    [[nodiscard]] uint64_t getWindowSlide() const { return sliceAssigner.getWindowSlide(); }
+
+    [[nodiscard]] Snapshot snapshot() const;
+    void restore(
+        std::vector<std::shared_ptr<Slice>> restoredSlices,
+        const std::vector<WindowSnapshot>& restoredWindows,
+        SequenceNumber::Underlying nextSequence);
     std::span<std::byte>
     allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
 

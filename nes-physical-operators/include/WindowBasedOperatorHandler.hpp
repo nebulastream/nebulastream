@@ -58,6 +58,13 @@ struct BufferMetaData
 class WindowBasedOperatorHandler : public OperatorHandler
 {
 public:
+    struct WatermarkSnapshot
+    {
+        std::vector<MultiOriginWatermarkProcessor::OriginSnapshot> build;
+        std::vector<MultiOriginWatermarkProcessor::OriginSnapshot> probe;
+        Timestamp::Underlying lastForwarded;
+    };
+
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
@@ -69,6 +76,8 @@ public:
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+    [[nodiscard]] WatermarkSnapshot snapshotWatermarkState() const;
+    void restoreWatermarkState(const WatermarkSnapshot& state);
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore.
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;

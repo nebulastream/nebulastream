@@ -28,6 +28,13 @@ namespace NES
 class MultiOriginWatermarkProcessor
 {
 public:
+    struct OriginSnapshot
+    {
+        OriginId origin;
+        SequenceNumber::Underlying sequence;
+        uint64_t watermark;
+    };
+
     explicit MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins);
     static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
 
@@ -38,6 +45,9 @@ public:
     [[nodiscard]] Timestamp getCurrentWatermark() const;
 
     std::string getCurrentStatus();
+
+    [[nodiscard]] std::vector<OriginSnapshot> snapshotContiguous() const;
+    void restoreContiguous(const std::vector<OriginSnapshot>& snapshot);
 
 private:
     const std::vector<OriginId> origins;

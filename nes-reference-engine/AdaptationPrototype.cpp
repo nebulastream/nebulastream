@@ -179,7 +179,6 @@ ExecutableQueryPlan::SharingIds sharingFor(const PlanShape& shape)
 {
     ExecutableQueryPlan::SharingIds sharing;
     sharing.sources.emplace(shape.source, "prototype:source");
-    sharing.pipelines.emplace(shape.input, "prototype:input");
     return sharing;
 }
 
@@ -198,10 +197,7 @@ std::vector<std::pair<PipelineId, PipelineId>> makeTransfers(const PlanShape& do
         {
             throw std::runtime_error("Input pipeline moved in the replacement plan");
         }
-        if (from != donor.input)
-        {
-            transfers.emplace_back(from, to);
-        }
+        transfers.emplace_back(from, to);
     }
     transfers.emplace_back(donor.sink, target.sink);
     return transfers;

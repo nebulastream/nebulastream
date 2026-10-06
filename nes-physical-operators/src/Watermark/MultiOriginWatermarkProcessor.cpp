@@ -82,4 +82,26 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return Timestamp(minimalWatermark);
 }
 
+std::vector<MultiOriginWatermarkProcessor::OriginSnapshot> MultiOriginWatermarkProcessor::snapshotContiguous() const
+{
+    std::vector<OriginSnapshot> result;
+    result.reserve(origins.size());
+    for (size_t index = 0; index < origins.size(); ++index)
+    {
+        const auto snapshot = watermarkProcessors[index]->snapshotContiguous();
+        result.push_back({origins[index], snapshot.sequence, snapshot.value});
+    }
+    return result;
+}
+
+void MultiOriginWatermarkProcessor::restoreContiguous(const std::vector<OriginSnapshot>& snapshot)
+{
+    INVARIANT(snapshot.size() == origins.size(), "Watermark origin count changed during migration");
+    for (size_t index = 0; index < origins.size(); ++index)
+    {
+        INVARIANT(snapshot[index].origin == origins[index], "Watermark origin changed during migration");
+        watermarkProcessors[index]->restoreContiguous({snapshot[index].sequence, snapshot[index].watermark});
+    }
+}
+
 }

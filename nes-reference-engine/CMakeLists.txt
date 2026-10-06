@@ -35,8 +35,17 @@ add_executable(nes-reference-adaptation-prototype AdaptationPrototype.cpp)
 target_link_libraries(nes-reference-adaptation-prototype PRIVATE
         nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib void_sink_plugin)
 
+add_executable(nes-reference-window-adaptation-prototype WindowAdaptationPrototype.cpp)
+set_target_properties(nes-reference-window-adaptation-prototype PROPERTIES ENABLE_EXPORTS ON)
+target_link_libraries(nes-reference-window-adaptation-prototype PRIVATE
+        nes-reference-engine nes-frontend-lib nes-sql-parser nes-query-optimizer nes-query-compiler nes-single-node-worker-lib)
+
 if(NES_ENABLES_TESTS)
     add_test(
             NAME reference-adaptation-prototype
             COMMAND $<TARGET_FILE:nes-reference-adaptation-prototype> 2)
+    add_test(
+            NAME reference-window-adaptation-prototype
+            COMMAND $<TARGET_FILE:nes-reference-window-adaptation-prototype>
+                    ${CMAKE_CURRENT_BINARY_DIR}/window-adaptation-prototype-test.csv 2)
 endif()

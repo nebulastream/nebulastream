@@ -319,6 +319,48 @@ bool SpanningTupleBuffer::validate() const
     return true;
 }
 
+SequenceShredder::Snapshot SpanningTupleBuffer::snapshot() const
+{
+    const std::scoped_lock lock(mutex);
+    SequenceShredder::Snapshot snapshot;
+    snapshot.entries.reserve(entries.size());
+    snapshot.emptyRanges.reserve(emptyRanges.size());
+    for (const auto& [sequenceNumber, entry] : entries)
+    {
+        snapshot.entries.push_back(
+            {.sequenceNumber = sequenceNumber,
+             .leading = entry.leading,
+             .trailing = entry.trailing,
+             .hasDelimiter = entry.hasDelimiter,
+             .leadingUsed = entry.leadingUsed,
+             .trailingUsed = entry.trailingUsed});
+    }
+    for (const auto& range : emptyRanges)
+    {
+        snapshot.emptyRanges.push_back(range);
+    }
+    return snapshot;
+}
+
+void SpanningTupleBuffer::restore(SequenceShredder::Snapshot snapshot)
+{
+    const std::scoped_lock lock(mutex);
+    INVARIANT(
+        entries.size() == 1 and entries.contains(0) and emptyRanges.empty(), "Sequence shredder was already used before state import");
+    entries.clear();
+    for (auto& entry : snapshot.entries)
+    {
+        const auto [_, inserted] = entries.emplace(
+            entry.sequenceNumber,
+            Entry{std::move(entry.leading), std::move(entry.trailing), entry.hasDelimiter, entry.leadingUsed, entry.trailingUsed});
+        INVARIANT(inserted, "Duplicate migrated shredder sequence");
+    }
+    for (const auto& [first, last] : snapshot.emptyRanges)
+    {
+        INVARIANT(first <= last and emptyRanges.emplace(first, last).second, "Invalid migrated empty sequence range");
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const SpanningTupleBuffer& sequenceRingBuffer)
 {
     const std::scoped_lock lock(sequenceRingBuffer.mutex);

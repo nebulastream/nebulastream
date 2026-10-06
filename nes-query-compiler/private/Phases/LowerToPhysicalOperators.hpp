@@ -13,11 +13,13 @@
 */
 
 #pragma once
+#include <optional>
 #include <Plans/LogicalPlan.hpp>
 #include <PhysicalPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::LowerToPhysicalOperators
 {
-PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
+PhysicalPlan apply(
+    const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf, const std::optional<LogicalPlan>& donorQueryPlan = std::nullopt);
 }

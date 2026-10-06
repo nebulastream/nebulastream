@@ -46,6 +46,14 @@ public:
 
     void addChild(TupleBuffer child) { children.push_back(std::move(child)); }
 
+    template <typename T>
+    T* own(std::unique_ptr<T> value)
+    {
+        auto* pointer = value.get();
+        retained.emplace_back(std::shared_ptr<T>(std::move(value)));
+        return pointer;
+    }
+
     [[nodiscard]] TupleBuffer finish(const std::shared_ptr<AbstractBufferProvider>& provider)
     {
         auto result = provider->getUnpooledBuffer(sizeof(Header) + bytes.size());
@@ -68,6 +76,7 @@ public:
 private:
     std::vector<std::byte> bytes;
     std::vector<TupleBuffer> children;
+    std::vector<std::shared_ptr<void>> retained;
 };
 
 class PipelineStateReader
@@ -100,11 +109,20 @@ public:
 
     [[nodiscard]] size_t childCount() const { return buffer.getNumberOfChildBuffers(); }
 
+    template <typename T>
+    T* own(std::unique_ptr<T> value)
+    {
+        auto* pointer = value.get();
+        retained.emplace_back(std::shared_ptr<T>(std::move(value)));
+        return pointer;
+    }
+
     void ensureConsumed() const { INVARIANT(offset == header.byteCount, "Unexpected trailing pipeline state"); }
 
 private:
-    const TupleBuffer& buffer;
+    TupleBuffer buffer;
     PipelineStateBuilder::Header header;
     size_t offset = 0;
+    std::vector<std::shared_ptr<void>> retained;
 };
 }

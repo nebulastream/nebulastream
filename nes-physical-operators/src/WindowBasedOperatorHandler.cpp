@@ -58,6 +58,21 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
     return *sliceAndWindowStore;
 }
 
+WindowBasedOperatorHandler::WatermarkSnapshot WindowBasedOperatorHandler::snapshotWatermarkState() const
+{
+    return {
+        .build = watermarkProcessorBuild->snapshotContiguous(),
+        .probe = watermarkProcessorProbe->snapshotContiguous(),
+        .lastForwarded = lastForwardedWatermark.getRawValue()};
+}
+
+void WindowBasedOperatorHandler::restoreWatermarkState(const WatermarkSnapshot& state)
+{
+    watermarkProcessorBuild->restoreContiguous(state.build);
+    watermarkProcessorProbe->restoreContiguous(state.probe);
+    lastForwardedWatermark = Timestamp(state.lastForwarded);
+}
+
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {
     const auto newGlobalWaterMarkProbe

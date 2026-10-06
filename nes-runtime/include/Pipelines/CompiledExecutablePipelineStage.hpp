@@ -54,15 +54,23 @@ protected:
 
 private:
     using PipelineSignature = void(PipelineExecutionContext*, const TupleBuffer*, const Arena*);
+    using EmitSignature = void(PipelineExecutionContext*, PipelineStateBuilder*);
+    using AbsorbSignature = void(PipelineExecutionContext*, PipelineStateReader*);
     static constexpr std::string_view PIPELINE_FUNCTION_NAME = "execute";
+    static constexpr std::string_view EMIT_FUNCTION_NAME = "emit";
+    static constexpr std::string_view ABSORB_FUNCTION_NAME = "absorb";
 
     /// Registers the pipeline's main traced function in the pipeline's module.
     void registerPipelineFunction(nautilus::engine::NautilusModule& module) const;
+    void registerEmitFunction(nautilus::engine::NautilusModule& module) const;
+    void registerAbsorbFunction(nautilus::engine::NautilusModule& module) const;
 
     nautilus::engine::NautilusEngine engine;
     /// Both are created lazily in start(); neither type is default-constructible.
     std::optional<nautilus::engine::CompiledModule> compiledModule;
     std::optional<nautilus::engine::ModuleFunction<PipelineSignature>> compiledPipelineFunction;
+    std::optional<nautilus::engine::ModuleFunction<EmitSignature>> compiledEmitFunction;
+    std::optional<nautilus::engine::ModuleFunction<AbsorbSignature>> compiledAbsorbFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };
