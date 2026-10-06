@@ -103,6 +103,11 @@ impl CommunicationListener for TcpCommunicationListener {
             .accept()
             .await
             .map_err(|e| format!("Could not bind to port: {}", e))?;
+        // Acks are tiny messages that are sent one by one. With Nagle's algorithm they wait for the previous ack to be
+        // acknowledged, which together with delayed ACKs on the other side stalls the sliding window for tens of milliseconds.
+        stream
+            .set_nodelay(true)
+            .map_err(|e| format!("Could not set TCP_NODELAY: {e}"))?;
         let (rx, tx) = stream.into_split();
 
         Ok(Channel {
@@ -141,6 +146,9 @@ impl Communication for TcpCommunication {
             .connect(address)
             .await
             .map_err(|e| format!("Could not connect to {address:?}: {e:?}"))?;
+        stream
+            .set_nodelay(true)
+            .map_err(|e| format!("Could not set TCP_NODELAY: {e}"))?;
         let (rx, tx) = stream.into_split();
         Ok(Channel {
             reader: rx,
