@@ -23,8 +23,6 @@
 #include <Sources/LogicalSource.hpp>
 
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 #include <gtest/gtest.h>
 
@@ -57,28 +55,36 @@ namespace NES
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 namespace
 {
-LogicalSource createLogicalTestSource(SourceCatalog& sourceCatalog)
+LogicalSource createLogicalTestSource()
 {
     const Schema<UnqualifiedUnboundField, Ordered> schema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_b"), DataType::Type::UINT64},
         UnqualifiedUnboundField{Identifier::parse("attribute_c"), DataType::Type::VARSIZED}};
-    return sourceCatalog.addLogicalSource(Identifier::parse("testSource"), schema).value();
+    return LogicalSource{Identifier::parse("testSource"), schema};
 }
 
-SourceDescriptor createTestSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+SourceDescriptor createTestSourceDescriptor(const LogicalSource& logicalSource)
 {
     const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("file_path"), "/dev/null"}};
-    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
-    return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), Host("localhost"), sourceConfig, parserConfig).value();
+    return SourceDescriptor::create(
+               PhysicalSourceId{1},
+               logicalSource,
+               Identifier::parse("File"),
+               Host{"localhost"},
+               sourceConfig,
+               {{Identifier::parse("type"), "CSV"}},
+               false)
+        .value();
 }
 
-SinkDescriptor createTestSinkDescriptor(SinkCatalog& sinkCatalog)
+SinkDescriptor createTestSinkDescriptor()
 {
     const std::unordered_map<Identifier, std::string> sinkConfig{
         {Identifier::parse("file_path"), "/dev/null"}, {Identifier::parse("output_format"), "CSV"}};
 
-    return sinkCatalog.getAnonymousSink(std::nullopt, Identifier::parse("file"), Host("localhost"), sinkConfig, {}).value();
+    return SinkDescriptor::createAnonymous(INITIAL_SINK_ID, Identifier::parse("file"), std::nullopt, Host{"localhost"}, sinkConfig, {})
+        .value();
 }
 }
 
@@ -86,17 +92,15 @@ class CalcTargetOrderTest : public ::testing::Test
 {
 public:
     explicit CalcTargetOrderTest()
-        : logicalSource(createLogicalTestSource(sourceCatalog))
-        , sourceDescriptor(createTestSourceDescriptor(sourceCatalog, logicalSource))
-        , sinkDescriptor(createTestSinkDescriptor(sinkCatalog))
+        : logicalSource(createLogicalTestSource())
+        , sourceDescriptor(createTestSourceDescriptor(logicalSource))
+        , sinkDescriptor(createTestSinkDescriptor())
     {
     }
 
 protected:
     void SetUp() override { }
 
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
     LogicalSource logicalSource;
     SourceDescriptor sourceDescriptor;
     SinkDescriptor sinkDescriptor;

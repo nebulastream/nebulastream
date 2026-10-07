@@ -51,19 +51,17 @@ std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
         return std::unexpected{InvalidConfigParameter("Sink name '{}' is invalid: only-digit names are reserved", sinkName)};
     }
 
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
-    if (not descriptorConfigOpt.has_value())
+    auto sinkDescriptor = SinkDescriptor::createNamed(
+        SinkId{nextSinkId.fetch_add(1)}, sinkName, sinkType, schema, std::move(host), std::move(config), formatConfig);
+    if (not sinkDescriptor.has_value())
     {
         return std::unexpected{InvalidConfigParameter("Invalid configuration for sink '{}' of type '{}'", sinkName, sinkType)};
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{NamedSinkDescriptor{
-        sinkName, schema, sinkType.asCanonicalString(), std::move(host), formatConfig, std::move(descriptorConfigOpt.value())}};
-
     /// TODO #1504: duplicate sinks are not registered
-    lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
-    return sinkDescriptor;
+    lockedSinks->emplace(std::move(sinkName), *sinkDescriptor);
+    return *sinkDescriptor;
 }
 
 std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const Identifier& sinkName) const
@@ -84,29 +82,8 @@ std::optional<SinkDescriptor> SinkCatalog::getAnonymousSink(
     std::unordered_map<Identifier, std::string> config,
     const std::unordered_map<Identifier, std::string>& formatConfig) const
 {
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
-
-    const auto anonymousSinkId = AnonymousSinkId{nextAnonymousSinkId.fetch_add(1)};
-
-    if (not descriptorConfigOpt.has_value())
-    {
-        return std::nullopt;
-    }
-
-    const std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schemaVar
-        = schema.has_value()
-        ? std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>>{schema.value()}
-        : std::monostate{};
-
-    auto sinkDescriptor = SinkDescriptor{AnonymousSinkDescriptor{
-        anonymousSinkId.getRawValue(),
-        schemaVar,
-        sinkType.asCanonicalString(),
-        std::move(host),
-        formatConfig,
-        std::move(descriptorConfigOpt.value())}};
-
-    return sinkDescriptor;
+    return SinkDescriptor::createAnonymous(
+        SinkId{nextSinkId.fetch_add(1)}, sinkType, schema, std::move(host), std::move(config), formatConfig);
 }
 
 bool SinkCatalog::removeSinkDescriptor(const Identifier& sinkName)
