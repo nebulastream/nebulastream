@@ -15,3 +15,4 @@
 add_rust_cargo_test(model)
 add_rust_cargo_test(migration)
 add_rust_cargo_test(controller)
+add_rust_cargo_test(coordinator)
