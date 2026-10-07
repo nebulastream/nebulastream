@@ -64,7 +64,8 @@ set(NES_BUILD_INFO_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+add_library(nes-common ${NES_COMMON_SOURCE_FILES}
+        include/Types/NESType.hpp)
 # Version.cpp includes <BuildInfo.hpp> from the active configuration's generated directory.
 target_include_directories(nes-common PRIVATE "${NES_BUILD_INFO_DIR}/$<CONFIG>")
 
