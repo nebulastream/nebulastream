@@ -30,6 +30,7 @@
 
 #include <ErrorHandling.hpp>
 #include <SemanticBackend.hpp>
+#include <SemanticLatencyStats.hpp>
 
 namespace NES
 {
@@ -155,6 +156,9 @@ std::expected<std::string, BackendError> HttpSemanticBackend::complete(const Com
     CURLcode result = CURLE_OK;
     long status = 0;
     std::string responseBody;
+    /// Timed across the retries, because that is the wait the operator actually experiences, and
+    /// it is the figure a throughput number has to be read against.
+    const auto startedAt = std::chrono::steady_clock::now();
     for (size_t attempt = 0;; ++attempt)
     {
         responseBody.clear();
@@ -175,6 +179,10 @@ std::expected<std::string, BackendError> HttpSemanticBackend::complete(const Com
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100) * (1U << attempt));
     }
+
+    const auto elapsed = std::chrono::steady_clock::now() - startedAt;
+    const bool failed = result != CURLE_OK || status < 200 || status >= 300;
+    SemanticLatencyStats::instance().record(elapsed, failed);
 
     if (result != CURLE_OK)
     {

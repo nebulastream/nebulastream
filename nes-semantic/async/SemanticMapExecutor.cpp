@@ -35,6 +35,7 @@
 #include <SemanticAsyncWiring.hpp>
 #include <SemanticBackend.hpp>
 #include <SemanticBackendFactory.hpp>
+#include <SemanticLatencyStats.hpp>
 #include <SemanticMapCodec.hpp>
 #include <SemanticModelCatalog.hpp>
 
@@ -87,10 +88,7 @@ struct SemanticMapExecutorState
 {
     /// Spelled out because the mutex below makes this struct immovable, so it has to be
     /// constructed in place rather than assigned from an aggregate initializer.
-    explicit SemanticMapExecutorState(SemanticModelConfig modelConfig)
-        : config(std::move(modelConfig)), codec(config)
-    {
-    }
+    explicit SemanticMapExecutorState(SemanticModelConfig modelConfig) : config(std::move(modelConfig)), codec(config) { }
 
     SemanticModelConfig config;
     SemanticMapCodec codec;
@@ -161,7 +159,12 @@ SemanticMapExecutor::SemanticMapExecutor(AsyncOperatorContext context)
         state->outputFieldIndices.size());
 }
 
-SemanticMapExecutor::~SemanticMapExecutor() = default;
+SemanticMapExecutor::~SemanticMapExecutor()
+{
+    /// The consumer source destroys the executor when the query stops, which makes this one
+    /// summary line per query rather than per process.
+    SemanticLatencyStats::instance().logAndReset("asynchronous");
+}
 
 std::vector<AsyncRecordResult> SemanticMapExecutor::process(const std::span<const AsyncRecordView> batch)
 {
@@ -186,13 +189,12 @@ std::vector<AsyncRecordResult> SemanticMapExecutor::process(const std::span<cons
         rows.push_back(std::move(row));
     }
 
-    const auto response = state->backendForThisThread().complete(
-        CompletionRequest{
-            .prompt = state->codec.buildPrompt(rows),
-            .modelName = state->config.modelName,
-            .timeout = state->config.requestTimeout,
-            .connectTimeout = ConnectTimeout,
-            .maxRetries = state->config.maxRetries});
+    const auto response = state->backendForThisThread().complete(CompletionRequest{
+        .prompt = state->codec.buildPrompt(rows),
+        .modelName = state->config.modelName,
+        .timeout = state->config.requestTimeout,
+        .connectTimeout = ConnectTimeout,
+        .maxRetries = state->config.maxRetries});
     if (!response.has_value())
     {
         /// Unlike an unusable answer, which the codec turns into the step's default value, a

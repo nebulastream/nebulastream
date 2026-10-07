@@ -40,6 +40,7 @@
 #include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SemanticBackend.hpp>
+#include <SemanticLatencyStats.hpp>
 #include <SemanticMapCodec.hpp>
 #include <SemanticModelCatalog.hpp>
 #include <static.hpp>
@@ -173,6 +174,9 @@ void terminateSemanticMap(SemanticMapState* state)
 {
     /// Closes the endpoint connections when the query stops rather than when the plan is destroyed.
     state->slots.clear();
+    /// One latency summary per query, from the same recorder the asynchronous executor reports
+    /// through, so the two modes are comparable line for line.
+    SemanticLatencyStats::instance().logAndReset("synchronous");
 }
 
 void setInput(SemanticMapState* state, const WorkerThreadId thread, const uint64_t fieldIndex, const int8_t* content, const uint64_t size)

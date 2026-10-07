@@ -6,17 +6,25 @@
 #   ssh -L 8000:<vllm-host>:8000 <cluster>          # in another terminal, leave it open
 #   scripts/run_cluster_benchmark.sh --model <served-model-id>
 #
-# The blocking path's concurrency is its worker thread count, not MAX_CONCURRENCY: it issues one
-# request per record from an engine worker thread and blocks there, so its semaphore only binds
-# below the thread count. That is why it is scanned over --threads while the asynchronous path is
-# run once. See docs/design/20261006_async_operator_measurements.md, section 5.
+# The experiment is two runs: blocking, and asynchronous with 256 calls in flight. Batch size is 1
+# on both sides and nothing else is changed from its default.
+#
+# MAX_CONCURRENCY is set on the asynchronous model only, because it does nothing for the blocking
+# one: that operator issues one request per record from an engine worker thread and blocks there, so
+# its concurrency is the number of worker threads working on the query, and its semaphore only binds
+# below that. The worker thread count is reported with each run for exactly that reason.
+#
+# Latency is not derived from wall time. Both paths go through HttpSemanticBackend, which records
+# every round trip, and each prints one summary line into the systest log when the query stops:
+#   Semantic model latency [asynchronous]: N calls (0 failed), mean .. p50 .. p95 .. max .. calls/s
+# grep the log for "Semantic model latency" after the run.
 set -euo pipefail
 
 ENDPOINT=${ENDPOINT:-http://localhost:8000/v1}
 MODEL=""
 ROWS=${ROWS:-5000}
 CONCURRENCY=${CONCURRENCY:-256}
-THREADS=${THREADS:-"1 4 16 64 256"}
+THREADS=${THREADS:-}            # empty: do not scan, run the blocking path once at the default
 TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-900}
 MAX_RETRIES=${MAX_RETRIES:-3}
 API_KEY_ENV=${API_KEY_ENV:-}
@@ -38,6 +46,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 SYSTEST=$BUILD_DIR/nes-systests/systest/systest
+# What systest's default topology gives the blocking path. Reported with every run, because it, and
+# not MAX_CONCURRENCY, is that path's concurrency.
+DEFAULT_THREADS=$(grep -m1 -oE 'number_of_worker_threads: *[0-9]+' nes-systests/configs/topologies/two-node.yaml 2>/dev/null \
+    | grep -oE '[0-9]+' || echo "unknown")
 DATA_DIR=$BUILD_DIR/bench-data
 SUITE=nes-systests/semantic
 GENERATED=$SUITE/ClusterBenchmark.generated.test
@@ -91,8 +103,7 @@ OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
      '$endpoint' AS LLM.ENDPOINT, '$model' AS LLM.MODEL_NAME, '$backend' AS LLM.BACKEND,
      'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'POSITIVE' AS LLM.DEFAULT_VALUE,
-     $TIMEOUT_SECONDS AS LLM.TIMEOUT_SECONDS, $MAX_RETRIES AS LLM.MAX_RETRIES,${API_KEY_ENV:+ '$API_KEY_ENV' AS LLM.API_KEY_ENV,}
-     $concurrency AS LLM.MAX_CONCURRENCY);
+     $TIMEOUT_SECONDS AS LLM.TIMEOUT_SECONDS, $MAX_RETRIES AS LLM.MAX_RETRIES${API_KEY_ENV:+, '$API_KEY_ENV' AS LLM.API_KEY_ENV});
 
 CREATE SINK idsum(id UINT64 NOT NULL) TYPE Checksum;
 CREATE SINK readingsOut(id UINT64 NOT NULL, value UINT64 NOT NULL) TYPE File;
@@ -106,7 +117,7 @@ SELECT id FROM SEM_MAP(asyncModel, reviews) INTO idsum;
 ----
 $expected
 
-# Query 2: blocking. Its concurrency is the worker thread count, so this is run once per --threads.
+# Query 2: blocking, batch size 1, concurrency left at its default because it cannot use it.
 SELECT id FROM SEM_MAP(syncModel, reviews) INTO idsum;
 ----
 $expected
@@ -144,38 +155,58 @@ echo "   $SMOKE_ROWS rows -> $expected_smoke"
 
 emit_test "$GENERATED" "$ROWS" http "$ENDPOINT" "$MODEL" "$expected" "$CONCURRENCY"
 
+# An empty `threads` leaves the worker configuration alone, which is what "nothing else changed"
+# means. The effective count then comes from the topology file systest uses.
 run() {
     local label=$1 threads=$2 concurrent=$3
     shift 3
     echo
     echo "=============================================================================="
-    echo "$label  (worker threads: $threads, queries at once: $concurrent)"
+    echo "$label"
+    echo "   worker threads: ${threads:-$DEFAULT_THREADS (topology default)}, queries at once: $concurrent"
     echo "=============================================================================="
-    "$SYSTEST" --show-query-performance --workingDir "$BUILD_DIR/cluster" --data "$DATA_DIR" \
-        -n "$concurrent" "$@" -- --worker.query_engine.number_of_worker_threads="$threads"
+    local output
+    if [[ -n $threads ]]; then
+        output=$("$SYSTEST" --show-query-performance --workingDir "$BUILD_DIR/cluster" --data "$DATA_DIR" \
+            -n "$concurrent" "$@" -- --worker.query_engine.number_of_worker_threads="$threads" 2>&1) || true
+    else
+        output=$("$SYSTEST" --show-query-performance --workingDir "$BUILD_DIR/cluster" --data "$DATA_DIR" \
+            -n "$concurrent" "$@" 2>&1) || true
+    fi
+    sed -e 's/\x1b\[[0-9;]*m//g' <<<"$output" | grep -viE '^\[|RUST'
+    # Throughput, because systest prints only wall time. RUN_ROWS is the row count of the query
+    # that just ran, which is not $ROWS for the smoke test.
+    local rows=${RUN_ROWS:-$ROWS}
+    sed -e 's/\x1b\[[0-9;]*m//g' <<<"$output" | grep -oE 'PASSED  in [0-9.]+s' | while read -r _ _ seconds; do
+        python3 -c "s = ${seconds%s}; print(f'   -> $rows rows in {s:.1f} s = {$rows / s:.2f} records/s')"
+    done
 }
 
 # ---- 4. Smoke test, so a wrong model id or a missing token fails in a minute, not in an hour ----
 echo "== smoke test: $SMOKE_ROWS rows, concurrency 4"
 SMOKE=$SUITE/ClusterBenchmarkSmoke.generated.test
 emit_test "$SMOKE" "$SMOKE_ROWS" http "$ENDPOINT" "$MODEL" "$expected_smoke" 4
-run "Smoke test, asynchronous" 4 1 -t "$PWD/$SMOKE:1" || {
+RUN_ROWS=$SMOKE_ROWS run "Smoke test, asynchronous" 4 1 -t "$PWD/$SMOKE:1" || {
     echo "smoke test failed -- fix that before spending model time on the matrix" >&2; exit 1; }
 rm -f "$SMOKE"
 [[ -z ${SMOKE_ONLY:-} ]] || { echo "smoke test passed; stopping as asked"; exit 0; }
 
-# ---- 5. The matrix -----------------------------------------------------------------------------
-run "Asynchronous, MAX_CONCURRENCY $CONCURRENCY" 4 1 -t "$PWD/$GENERATED:1"
-for threads in $THREADS; do
-    run "Blocking, $threads worker thread(s)" "$threads" 1 -t "$PWD/$GENERATED:2"
-done
+# ---- 5. The two runs ---------------------------------------------------------------------------
+run "Asynchronous, MAX_CONCURRENCY $CONCURRENCY, batch size 1" "" 1 -t "$PWD/$GENERATED:1"
+run "Blocking, batch size 1" "" 1 -t "$PWD/$GENERATED:2"
 
-last_threads=${THREADS##* }
-run "Asynchronous beside an unrelated query, 1 worker thread" 1 2 -t "$PWD/$GENERATED:1" "$PWD/$GENERATED:3"
-run "Blocking beside an unrelated query, $last_threads worker thread(s)" "$last_threads" 2 \
-    -t "$PWD/$GENERATED:2" "$PWD/$GENERATED:3"
-run "The unrelated query on its own, for reference" 1 1 -t "$PWD/$GENERATED:3"
+# Optional extras, off unless asked for.
+if [[ -n ${THREADS:-} ]]; then
+    for threads in $THREADS; do
+        run "Blocking, $threads worker thread(s)" "$threads" 1 -t "$PWD/$GENERATED:2"
+    done
+fi
+if [[ -n ${WITH_SIDE_QUERY:-} ]]; then
+    run "Asynchronous beside an unrelated query" "" 2 -t "$PWD/$GENERATED:1" "$PWD/$GENERATED:3"
+    run "Blocking beside an unrelated query" "" 2 -t "$PWD/$GENERATED:2" "$PWD/$GENERATED:3"
+    run "The unrelated query on its own, for reference" "" 1 -t "$PWD/$GENERATED:3"
+fi
 
 echo
-echo "Divide $ROWS by each wall time for records per second. The generated test file is at"
-echo "$GENERATED; it is not meant to be committed."
+echo "Latency: grep the newest log under $BUILD_DIR/nes-systests for 'Semantic model latency'."
+echo "The generated test file is at $GENERATED and is not meant to be committed."

@@ -21,7 +21,8 @@ add_library(nes-semantic
         src/HttpSemanticBackend.cpp
         src/MockSemanticBackend.cpp
         src/SemanticBackendFactory.cpp
-        src/SemanticAsyncWiring.cpp)
+        src/SemanticAsyncWiring.cpp
+        src/SemanticLatencyStats.cpp)
 target_include_directories(nes-semantic PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
