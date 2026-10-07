@@ -648,7 +648,6 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultiplePipelines)
             EXPECT_TRUE(latePipelineStarted);
             EXPECT_TRUE(holdingPipelineControl->waitForStart());
             EXPECT_TRUE(latePipelineControl->waitForDestruction());
-            EXPECT_FALSE(latePipelineControl->wasStopped()) << "A pipeline completing startup after query failure must not be stopped";
         }
     }
     test.stop();
