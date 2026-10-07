@@ -1,8 +1,9 @@
 # Asynchronous operator execution: measurements
 
-> **Status:** measurement record for the `feat/async-operator` branch, 6 October 2026. Numbers are
-> from one machine and a Debug build; read the [caveats](#how-to-read-these-numbers) before quoting
-> any of them.
+> **Status:** measurement record for the `feat/async-operator` branch, last updated 7 October 2026.
+> Sections 1 to 4 are measured; section 5 is the cluster comparison that has not been run yet and
+> section 6 is how to run it. The measured numbers come from one machine and a Debug build, so read
+> the [caveats](#how-to-read-these-numbers) before quoting any of them.
 
 ## What was measured, and why
 
@@ -166,37 +167,122 @@ and asynchronously, and the two agree row for row.
 
 ---
 
-## 5. The planned comparison at concurrency 256
+## 5. The comparison on the cluster
 
-The next run is blocking against asynchronous on a vLLM cluster, batch size 1 and
-`MAX_CONCURRENCY 256` on both sides, 256 being that deployment's default concurrency. One thing
-about that setup has to be said out loud, because it decides how the result may be read.
+The agreed experiment is two runs against a vLLM deployment: **blocking**, and **asynchronous with
+`MAX_CONCURRENCY 256`**, 256 being that deployment's default concurrency. Batch size is 1 on both
+sides and nothing else is changed from its default. Latency and throughput are both reported.
 
-**`MAX_CONCURRENCY` does nothing for the blocking path.** That operator issues its request per
-record from an engine worker thread and blocks there, so its semaphore only binds *below* the
-thread count — the code says so at
+`MAX_CONCURRENCY` is set on the asynchronous model only, because the blocking operator cannot use
+it. That operator issues its request per record from an engine worker thread and blocks there, so
+its semaphore only binds *below* the thread count — the code says so at
 [`SemanticMapPhysicalOperator.cpp:116`](../../nes-physical-operators/src/Semantic/SemanticMapPhysicalOperator.cpp#L116).
-Its real concurrency is the number of worker threads, which section 2c measures directly: 152.7 s,
-39.6 s and 22.8 s at 1, 4 and 8 threads, linear in threads and indifferent to the configuration.
+Its concurrency is the number of worker threads working on the query, which section 2c measures
+directly: 152.7 s, 39.6 s and 22.8 s at 1, 4 and 8 threads, linear in threads and indifferent to
+the configuration.
 
-So the run compares 256-way against *W*-way, where *W* is whatever the worker is configured with.
-The difference is real, but the obvious objection — "then give the engine 256 worker threads" — has
-to be answered inside the experiment, not afterwards. The answer is section 1: those 256 threads
-would all be parked in HTTP calls, and anything else submitted to that worker waits behind them.
-Therefore:
+**That makes one number part of the result, and it should be stated whenever the result is.** The
+blocking run's concurrency is its worker thread count. systest's default topology
+([`two-node.yaml`](../../nes-systests/configs/topologies/two-node.yaml)) gives **one** worker thread
+per node, so with everything at its default the blocking path runs one call at a time. The runner
+prints the effective count with every run for exactly this reason. Anyone asking "why not give the
+engine 256 worker threads" is answered by section 1: those threads would all be parked in HTTP
+calls, and anything else submitted to that worker waits behind them.
 
-- run the blocking path at several thread counts (1, 4, 16, 64, 256), not just one;
-- at the highest, run the model-free query alongside, which is what shows the cost;
-- report records per second as well as wall time, and per-record latency separately — at 256
-  concurrency vLLM trades latency for throughput, so the asynchronous run should be far better on
-  throughput and *worse* per record;
-- size the input so the slowest configuration still finishes: at roughly 2 s per call, 5 000 rows
-  is about 42 minutes blocking at four threads against 40 seconds asynchronously, while 50 000 rows
-  would be seven hours blocking.
+### Latency is measured, not derived
 
-Expect something between 30x and 100x rather than the nominal 256/*W*, because per-request latency
-rises with concurrency. If the asynchronous run comes out below about 10x, then the limit is not
-vLLM, and it is the same unexplained ceiling as in section 3.
+Throughput from wall time cannot tell queueing apart from service time, so the round trips are
+timed where both modes pass through them, in `HttpSemanticBackend`. Each mode writes one summary
+into the systest log when the query stops:
+
+```
+Semantic model latency [asynchronous]: 12 calls (0 failed), mean 41972 ms,
+p50 37864 ms, p95 55932 ms, max 65245 ms, 0.1 calls/s
+```
+
+Mean, median, p95, maximum and the call rate actually achieved. Timed across retries, because that
+is the wait the operator experiences. The runner computes records per second itself, since systest
+reports only wall time.
+
+### What to expect
+
+Asynchronously the limit should be vLLM's; blocking, it is one call at a time at the default thread
+count. The ratio is therefore roughly the concurrency vLLM sustains, less the latency it trades for
+it: per-request latency rises with load, so the asynchronous run should be far better on throughput
+and *worse* per record. Both numbers are in the summary above, which is why both are reported.
+
+A local figure worth carrying into the reading: on Ollama, mean latency per call went from about
+21 s alone to about 42 s at concurrency 4. If vLLM behaves similarly, throughput will scale well
+below the nominal 256. If the asynchronous run comes out below roughly 10x the blocking one, then
+the limit is not the server, and it is the same unexplained ceiling as in section 3.
+
+## 6. Running the cluster benchmark
+
+### Once: a release build
+
+Everything in sections 1 to 4 was measured on a Debug build. For this run it matters, because 257
+threads and a good deal of buffer bookkeeping are on the critical path, so build optimised. Inside
+the development image:
+
+```bash
+cmake -S . -B cmake-build-release -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_TARGET_TRIPLET=x64-linux-none-local -DVCPKG_MANIFEST_MODE=OFF
+cmake --build cmake-build-release --target systest
+```
+
+### Reaching the endpoint
+
+The endpoint is OpenAI-compatible, so an SSH tunnel is enough. Leave it open in its own terminal:
+
+```bash
+ssh -L 8000:<vllm-host>:8000 <cluster>
+```
+
+The development image runs with `--network host`, so a tunnel bound on the host's loopback is
+reachable from inside the container. Then take the exact model id — vLLM rejects a mismatched one:
+
+```bash
+curl -s localhost:8000/v1/models | jq -r '.data[].id'
+```
+
+### The run
+
+```bash
+BUILD_DIR=cmake-build-release scripts/run_cluster_benchmark.sh --model <id> --rows <N> --smoke-only
+BUILD_DIR=cmake-build-release scripts/run_cluster_benchmark.sh --model <id> --rows <N>
+```
+
+Add `--api-key-env <VAR>` if the deployment needs a token; the variable has to be set inside the
+container, which the Docker wrapper does not forward yet.
+
+The script does the parts that are easy to get wrong:
+
+1. Checks the endpoint and that the model id is served.
+2. Generates the input at the requested size.
+3. Learns the expected record count and checksum from the mock backend, which costs no model time,
+   and writes it into the generated test. Only `id` is projected and nothing is filtered, so the
+   expectation does not depend on what the model answers and asserts what a throughput number
+   needs: record count in equals record count out.
+4. Runs a smoke test, so a wrong id or a missing token fails in a minute rather than an hour in.
+5. Then the two runs, printing worker threads, wall time and records per second for each.
+
+### Choosing `--rows`
+
+Do the smoke test first and read the real per-call latency off its latency line, then pick the row
+count so the **blocking** run — one call at a time at the default thread count — still finishes in
+a sensible time. Blocking takes roughly `rows x latency`; asynchronously it is divided by the
+concurrency vLLM sustains. Reporting records per second keeps different row counts comparable.
+
+### Reading the result
+
+```bash
+grep "Semantic model latency" $(ls -t cmake-build-release/nes-systests/SystemTest_*.log | head -1)
+```
+
+One line per run, labelled `[synchronous]` or `[asynchronous]`. Throughput is printed by the script
+after each run. The generated test file under `nes-systests/semantic/` is gitignored: it carries a
+machine's model id and is not meant to be committed.
 
 ## How to read these numbers
 
@@ -211,9 +297,11 @@ vLLM, and it is the same unexplained ceiling as in section 3.
   words). **No quality or accuracy claim can be derived from them.** The real benchmark dataset is
   the Rotten Tomatoes critic reviews the Python reference uses, whose `scoreSentiment` column is the
   ground truth; it was not available on this machine.
-- **Worker thread count must be passed explicitly.** Left out, systest uses a single worker thread.
-  That costs the synchronous path everything and the asynchronous path nothing, which makes any
-  comparison that forgets it far too flattering. The measurement script always passes it.
+- **The worker thread count is the blocking path's concurrency.** Left at its default, systest's
+  topology gives one thread, which costs that path everything and the asynchronous path nothing.
+  The cluster runner deliberately does not override it — the experiment asks for defaults — and
+  prints the effective count with every run, so the number can be read correctly. The local
+  measurement script does pass it, because sections 1 and 2c vary it on purpose.
 - **Ollama's four-way limit** applies to every real-model number here and is a property of that
   installation, not of either execution mode.
 
@@ -230,7 +318,9 @@ vLLM, and it is the same unexplained ceiling as in section 3.
   path never runs.
 - Cancellation while calls are in flight, including whether buffers return to the pool cleanly.
 
-## Reproducing
+## Reproducing the local measurements
+
+Sections 1 to 4. For the cluster comparison see [section 6](#6-running-the-cluster-benchmark).
 
 ```bash
 ninja systest
