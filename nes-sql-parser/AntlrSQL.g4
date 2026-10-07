@@ -61,14 +61,14 @@ terminatedStatement: statement SEMICOLON;
 multipleStatements: (statement (SEMICOLON statement)* SEMICOLON?)? EOF;
 statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
 
-explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? query;
+explainStatement: EXPLAIN ('(' explainStages ')')? (FORMAT explainFormat)? queryWithSink;
 EXPLAIN: E X P L A I N;
 explainStages: explainStage (',' explainStage)*;
 explainStage: identifier | LOGICAL;
 explainFormat: identifier | TEXT;
 TEXT: T E X T;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createCatalogItemDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition | createModelDefinition | createCatalogItemDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -88,11 +88,19 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identi
 
 createWorkerDefinition: WORKER hostaddr=STRING_LITERAL optionsClause?;
 
+createModelDefinition: MODEL modelName=identifier OPEN_PARANTHESIS modelPath=STRING_LITERAL CLOSE_PARANTHESIS
+                       INPUT inputSchema=schemaDefinition
+                       OUTPUT outputSchema=schemaDefinition;
+MODEL: M O D E L;
+INPUT: I N P U T;
+OUTPUT: O U T P U T;
+
 schemaCtor: SCHEMA schemaDefinition;
 SCHEMA: S C H E M A;
 schemaDefinition: OPEN_PARANTHESIS columnDefinition (COMMA columnDefinition)* CLOSE_PARANTHESIS;
 columnDefinition: identifier typeDefinition nullableDefinition?;
 
+/// When enabling custom datatypes, take here identifiers in addition
 typeDefinition: DATA_TYPE;
 nullableDefinition: NOT NULL;
 NULL: N U L L;
@@ -100,7 +108,7 @@ NULL: N U L L;
 dropStatement: DROP dropSubject WHERE dropFilter;
 DROP: D R O P;
 WHERE: W H E R E;
-dropSubject: dropQuery | dropSource | dropSink | dropWorker;
+dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropModel;
 dropQuery: QUERY;
 QUERY: Q U E R Y;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
@@ -108,15 +116,18 @@ dropLogicalSourceSubject: LOGICAL SOURCE;
 dropPhysicalSourceSubject: PHYSICAL SOURCE;
 dropWorker: WORKER;
 dropSink: SINK;
+dropModel: MODEL;
 
 dropFilter: attr=identifier EQ value=scalarLiteral;
 
 showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT identifier)?;
-showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject;
+showSubject: showQueriesSubject | showLogicalSourcesSubject | showPhysicalSourcesSubject | showSinksSubject | showModelsSubject;
 showQueriesSubject: QUERIES;
 showLogicalSourcesSubject: LOGICAL SOURCES;
 showPhysicalSourcesSubject: PHYSICAL SOURCES;
 showSinksSubject: SINKS;
+showModelsSubject: MODELS;
+MODELS: M O D E L S;
 showVersionSubject: VERSION;
 VERSION: V E R S I O N;
 
@@ -125,9 +136,9 @@ showFilter: attr=identifier EQ value=scalarLiteral;
 queryWithOptions: queryWithSink optionsClause?;
 queryWithSink: unionSeq intoTerm;
 unionSeq: query (UNION_ALL query)*;
-query: projectionTerm fromTerm filterTerm? groupByTerm?;
+query: projectionTerm fromTerm filterTerm? windowTerm? groupByTerm?;
 
-projectionTerm: SELECT projectionSeq?;
+projectionTerm: SELECT projectionSeq;
 SELECT: S E L E C T;
 projectionSeq: projection (COMMA projection)*;
 projection: ASTERISK | namedExpression;
@@ -137,7 +148,7 @@ namedExpression: openScalarExpression (AS identifier)?;
 filterTerm: WHERE openScalarExpression;
 fromTerm: FROM openRelationalExpression;
 FROM: F R O M;
-groupByTerm: GROUP_BY openScalarExpression (COMMA openScalarExpression)* unaryWindowLiteral;
+groupByTerm: GROUP_BY openScalarExpression (COMMA openScalarExpression)*;
 GROUP_BY: GROUP WS BY;
 fragment GROUP: G R O U P;
 fragment BY: B Y;
@@ -149,17 +160,20 @@ sink: functionCall;
 openRelationalExpression: closedRelationalExpression | joinRelationalExpression;
 closedRelationalExpression: functionCall | OPEN_PARANTHESIS openRelationalExpression CLOSE_PARANTHESIS | OPEN_PARANTHESIS unionSeq CLOSE_PARANTHESIS;
 AS: A S;
-joinRelationalExpression: closedNamedRelationalExpression inbuildJoins closedNamedRelationalExpression ON openScalarExpression binaryWindowLiteral;
+joinRelationalExpression: closedNamedRelationalExpression inbuildJoins closedNamedRelationalExpression ON openScalarExpression;
 /// Separated the named version to avoid syntactic ambiguity with named function call parameters.
 /// Its only really needed for joins, and if we would want people to be able to just rename the outer-most relation,
 // I would rather add this to the evaluation context, i.e. the SELECT, since this matches the named function parameter syntax.
 closedNamedRelationalExpression: closedRelationalExpression | closedRelationalExpression AS identifier;
 
-binaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
-unaryWindowLiteral: WINDOW WINDOW_TYPE OPEN_PARANTHESIS IDENTIFIER COMMA intervalLiteral CLOSE_PARANTHESIS;
-WINDOW_TYPE: TUMBLING | SLIDING;
-fragment TUMBLING: T U M B L I N G;
-fragment SLIDING: S L I D I N G;
+
+windowTerm: WINDOW functionCall;
+//TODO split up the window definitions into the sliding and tumbling ones, maybe even make them function call, because they require different amounts of parameters
+//binaryWindowExpression: WINDOW windowType OPEN_PARANTHESIS IDENTIFIER COMMA IDENTIFIER COMMA intervalExpression CLOSE_PARANTHESIS;
+//unaryWindowExpression: WINDOW windowType OPEN_PARANTHESIS IDENTIFIER COMMA intervalExpression CLOSE_PARANTHESIS;
+//windowType: TUMBLING | SLIDING;
+//TUMBLING: T U M B L I N G;
+//SLIDING: S L I D I N G;
 WINDOW: W I N D O W;
 ON: O N;
 joinOp: inbuildJoins | functionCall;
@@ -212,23 +226,24 @@ OPEN_PARANTHESIS: '(';
 CLOSE_PARANTHESIS: ')';
 COMMA: ',';
 
-intervalLiteral: INTERVAL literal DATETIME_FIELD;
-intervalExpression: INTERVAL openScalarExpression DATETIME_FIELD;
-DATETIME_FIELD: YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | MILLISECOND;
-fragment YEAR: Y E A R;
-fragment MONTH: M O N T H;
-fragment DAY: D A Y;
-fragment HOUR: H O U R;
-fragment MINUTE: M I N U T E;
-fragment SECOND: S E C O N D;
-fragment MILLISECOND: M I L L I S E C O N D;
+//intervalLiteral: INTERVAL literal DATETIME_FIELD;
+intervalExpression: INTERVAL openScalarExpression datetimeField;
+datetimeField: YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | MILLISECOND;
+YEAR: Y E A R;
+MONTH: M O N T H;
+DAY: D A Y;
+HOUR: H O U R;
+MINUTE: M I N U T E;
+SECOND: S E C O N D;
+MILLISECOND: M I L L I S E C O N D;
 
 INTERVAL: I N T E R V A L;
 
 
-scalarPostfixes: IS NULL | IS NAN;
+/// NAN_ instead of NAN because math.h defines a NAN macro that would collide in the generated code
+scalarPostfixes: IS NULL | IS NAN_;
 IS: I S;
-NAN: N A N;
+NAN_: N A N;
 
 prefixScalarOperator: MINUS | NOT;
 infixScalarOperator: MINUS | PLUS | EQ | DIV | NEQ | AND | OR | GREATER | GREATER_EQUALS | LESSER | LESSER_EQUALS;
@@ -248,7 +263,7 @@ LESSER_EQUALS: '<=' | '!>';
 
 
 literal: scalarLiteral | schemaCtor;
-scalarLiteral: boolLiteral | stringLiteral | signedIntLiteral | unsignedIntLiteral | floatLiteral;
+scalarLiteral: boolLiteral | stringLiteral | signedIntLiteral | floatLiteral | null;
 
 boolLiteral: TRUE | FALSE;
 TRUE: T R U E;
@@ -259,8 +274,6 @@ STRING_LITERAL: '\'' ( ~('\''|'\\') | ('\\' .) )* '\'' ;
 
 signedIntLiteral: SIGNED_INT_LITERAL;
 SIGNED_INT_LITERAL: MINUS? DIGITS;
-unsignedIntLiteral: UNSIGNED_INT_LITERAL;
-UNSIGNED_INT_LITERAL: DIGITS;
 
 floatLiteral: decimalFraction floatExponent?;
 floatExponent: E MINUS? exponent=DIGITS;
@@ -268,6 +281,8 @@ decimalFraction: MINUS? integers=DIGITS DOT fraction=DIGIT* | MINUS? DOT fractio
 
 DIGITS: DIGIT+;
 DIGIT : [0-9] ;
+
+null: NULL;
 
 fragment LETTER : ('a'..'z'|'A'..'Z'|'_') ;
 

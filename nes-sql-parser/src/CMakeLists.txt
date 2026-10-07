@@ -11,10 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-sql-parser
-        AntlrSQLQueryPlanCreator.cpp
-        AntlrSQLHelper.cpp
-        AntlrSQLQueryParser.cpp
-        CommonParserFunctions.cpp
         StatementBinder.cpp
 )
 

@@ -265,7 +265,7 @@ public:
         Schema<ConfigFieldDefault, Ordered> defaultConfigValues,
         Schema<ConfigFieldTransformation, Unordered> configTransformations,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
+        const std::function<LogicalPlan(AntlrSQLParser::QueryWithSinkContext*)>& queryPlanBinder);
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

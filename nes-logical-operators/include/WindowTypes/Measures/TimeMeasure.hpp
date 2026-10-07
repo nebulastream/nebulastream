@@ -39,7 +39,7 @@ public:
     constexpr auto operator<=>(const TimeMeasure& other) const = default;
 
 private:
-    const uint64_t milliSeconds;
+    uint64_t milliSeconds;
     friend class std::hash<TimeMeasure>;
 };
 
