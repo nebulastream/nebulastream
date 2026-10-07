@@ -17,12 +17,15 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 #include <mutex>
 #include <optional>
 #include <string_view>
 #include <vector>
 
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -96,6 +99,26 @@ void SemanticLatencyStats::logAndReset(const std::string_view context)
 {
     if (const auto summary = summarize())
     {
+        /// A release build compiles with NES_LOGLEVEL_WARN, which removes NES_INFO entirely -- and
+        /// a release build is exactly where a benchmark runs. This is a measurement, not a
+        /// diagnostic, so it must not depend on how the logger was compiled. Opt in with
+        /// NES_SEMANTIC_LATENCY_REPORT=1 and it goes to stderr as well, which keeps an ordinary
+        /// deployment quiet.
+        if (std::getenv("NES_SEMANTIC_LATENCY_REPORT") != nullptr)
+        {
+            fmt::print(
+                stderr,
+                "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, max {:.0f} ms, "
+                "{:.1f} calls/s\n",
+                context,
+                summary->calls,
+                summary->failures,
+                summary->meanMs,
+                summary->p50Ms,
+                summary->p95Ms,
+                summary->maxMs,
+                summary->callsPerSecond);
+        }
         NES_INFO(
             "Semantic model latency [{}]: {} calls ({} failed), mean {:.0f} ms, p50 {:.0f} ms, p95 {:.0f} ms, max {:.0f} ms, "
             "{:.1f} calls/s",

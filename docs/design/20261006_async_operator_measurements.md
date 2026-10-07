@@ -1,9 +1,9 @@
 # Asynchronous operator execution: measurements
 
 > **Status:** measurement record for the `feat/async-operator` branch, last updated 7 October 2026.
-> Sections 1 to 4 are measured; section 5 is the cluster comparison that has not been run yet and
-> section 6 is how to run it. The measured numbers come from one machine and a Debug build, so read
-> the [caveats](#how-to-read-these-numbers) before quoting any of them.
+> Sections 1 to 4 were measured locally on a Debug build; section 5 is the cluster comparison,
+> measured on a release build against vLLM, and section 6 is how to repeat it. Read the
+> [caveats](#how-to-read-these-numbers) before quoting any of it.
 
 ## What was measured, and why
 
@@ -103,7 +103,7 @@ driven by `scripts/measure_async_semantic_map.sh throughput`.
 
 ---
 
-## 3. Against a real model, and an open question
+## 3. Against a real model, and a ceiling that turned out to be the server's
 
 `qwen2.5:7b` on Ollama, localhost, default configuration.
 
@@ -129,13 +129,11 @@ construction, which gives the serial reference:
 | asynchronous, `MAX_CONCURRENCY 8`, after the fix | 310.8 s | 1.22× |
 | what the server's 4-way parallelism allows | ≈ 95 s | 4.0× |
 
-**This is an open item, not a result.** The fix helped (0.99× → 1.22×), but 1.22× against an
-available 4× means something still limits the real-model path that the mock path does not hit. The
-mock reaches 29×, so it is not the framework's scheduling. Candidates not yet separated: per-call
-latency rising under load for the codec's actual prompts, connection or model-slot behaviour in
-Ollama, or per-thread curl handle setup. The next measurement is the obvious one and has not been
-run: the asynchronous path against the real model at `MAX_CONCURRENCY` 1, 2, 4 and 8, which shows
-where the curve flattens.
+**This was an open item and section 5 closes it.** The fix helped here (0.99× → 1.22×), but 1.22×
+against an available 4× looked like a ceiling in our code. It was not: against a server that
+serves 256 requests at once, the framework reaches an effective concurrency of 262. What limited
+this measurement was Ollama — its four-way parallelism, and per-call latency that roughly doubled
+under even that load.
 
 > A correction: an earlier commit message put this at 2.76× by using 21.4 s as the per-call latency.
 > That figure came from a hand-written approximation of the prompt, not from the codec. The serial
@@ -167,27 +165,53 @@ and asynchronously, and the two agree row for row.
 
 ---
 
-## 5. The comparison on the cluster
+## 5. The comparison on the cluster: the result
 
-The agreed experiment is two runs against a vLLM deployment: **blocking**, and **asynchronous with
-`MAX_CONCURRENCY 256`**, 256 being that deployment's default concurrency. Batch size is 1 on both
-sides and nothing else is changed from its default. Latency and throughput are both reported.
+Two runs against a vLLM deployment serving `google/gemma-4-E4B-it`, reached over an SSH tunnel.
+2000 rows, batch size 1 on both sides, `MAX_CONCURRENCY 256` on the asynchronous one, everything
+else at its default. Release build. Both runs passed their assertion, so 2000 records went in and
+2000 came out on each side, none lost and none duplicated.
 
-`MAX_CONCURRENCY` is set on the asynchronous model only, because the blocking operator cannot use
-it. That operator issues its request per record from an engine worker thread and blocks there, so
-its semaphore only binds *below* the thread count — the code says so at
-[`SemanticMapPhysicalOperator.cpp:116`](../../nes-physical-operators/src/Semantic/SemanticMapPhysicalOperator.cpp#L116).
-Its concurrency is the number of worker threads working on the query, which section 2c measures
-directly: 152.7 s, 39.6 s and 22.8 s at 1, 4 and 8 threads, linear in threads and indifferent to
-the configuration.
+| | wall time | throughput | mean latency | p50 | p95 | max | calls/s |
+|---|---|---|---|---|---|---|---|
+| **blocking** | 869.3 s | 2.30 rec/s | 434 ms | 308 ms | 533 ms | 9192 ms | 2.3 |
+| **asynchronous, 256** | **10.3 s** | **193.3 rec/s** | 1263 ms | 1147 ms | 1960 ms | 2257 ms | 207.8 |
 
-**That makes one number part of the result, and it should be stated whenever the result is.** The
-blocking run's concurrency is its worker thread count. systest's default topology
-([`two-node.yaml`](../../nes-systests/configs/topologies/two-node.yaml)) gives **one** worker thread
-per node, so with everything at its default the blocking path runs one call at a time. The runner
-prints the effective count with every run for exactly this reason. Anyone asking "why not give the
-engine 256 worker threads" is answered by section 1: those threads would all be parked in HTTP
-calls, and anything else submitted to that worker waits behind them.
+**84x on throughput**, and the trade it is made with is visible in the same table: latency per call
+rose 2.9x, from 434 ms to 1263 ms, because 256 requests in flight load the server while one at a
+time does not. Throughput and latency move in opposite directions, which is why both were asked
+for and why quoting either alone would misrepresent the result.
+
+### The mechanism, not just the outcome
+
+Latency and call rate together give the concurrency actually achieved — rate times mean latency:
+
+| | calls/s × mean latency | configured |
+|---|---|---|
+| blocking | 2.3 × 0.434 s = **1.0** | one worker thread |
+| asynchronous | 207.8 × 1.263 s = **262** | `MAX_CONCURRENCY 256` |
+
+Both sides did exactly what their configuration says. The blocking path kept one call in flight,
+which is its worker thread count — `MAX_CONCURRENCY` is not set on it and would not help, because
+it issues its request per record from a worker thread and blocks there, so its semaphore only binds
+*below* the thread count
+([`SemanticMapPhysicalOperator.cpp:116`](../../nes-physical-operators/src/Semantic/SemanticMapPhysicalOperator.cpp#L116)).
+The asynchronous path kept 262, matching the 256 it was given to within the measurement window.
+
+This is also what closes the open question of section 3. There, 1.22x against an available 4x
+suggested a ceiling somewhere in our code. There is none: given a server that serves 256 requests
+at once, the framework fills it. The Ollama ceiling was Ollama's.
+
+### Two things to say when quoting this
+
+- **The blocking run had one worker thread**, which is what systest's default topology
+  ([`two-node.yaml`](../../nes-systests/configs/topologies/two-node.yaml)) gives, and the
+  experiment asked for defaults. Section 2c measures what more threads buy that path: on the
+  mock backend, 152.7 s, 39.6 s and 22.8 s at 1, 4 and 8 threads. Reaching the asynchronous
+  throughput that way would take on the order of 256 worker threads, every one parked in an HTTP
+  call — which is the cost section 1 measures.
+- **The blocking maximum of 9192 ms is a single outlier** against a p95 of 533 ms. The asynchronous
+  distribution is the tighter one despite the higher mean, its maximum being 2257 ms.
 
 ### Latency is measured, not derived
 
@@ -204,17 +228,11 @@ Mean, median, p95, maximum and the call rate actually achieved. Timed across ret
 is the wait the operator experiences. The runner computes records per second itself, since systest
 reports only wall time.
 
-### What to expect
-
-Asynchronously the limit should be vLLM's; blocking, it is one call at a time at the default thread
-count. The ratio is therefore roughly the concurrency vLLM sustains, less the latency it trades for
-it: per-request latency rises with load, so the asynchronous run should be far better on throughput
-and *worse* per record. Both numbers are in the summary above, which is why both are reported.
-
-A local figure worth carrying into the reading: on Ollama, mean latency per call went from about
-21 s alone to about 42 s at concurrency 4. If vLLM behaves similarly, throughput will scale well
-below the nominal 256. If the asynchronous run comes out below roughly 10x the blocking one, then
-the limit is not the server, and it is the same unexplained ceiling as in section 3.
+Set `NES_SEMANTIC_LATENCY_REPORT=1` to get the same line on stderr. That exists because a release
+build compiles with `NES_LOGLEVEL_WARN`, which removes `NES_INFO` from the binary altogether --
+and a release build is exactly where a benchmark runs, so the first cluster run produced no latency
+line at all. A measurement must not depend on how the logger was compiled; an ordinary deployment
+stays quiet because the variable is not set.
 
 ## 6. Running the cluster benchmark
 
@@ -249,9 +267,13 @@ curl -s localhost:8000/v1/models | jq -r '.data[].id'
 ### The run
 
 ```bash
+export NES_SEMANTIC_LATENCY_REPORT=1   # the latency line; a release build logs nothing otherwise
 BUILD_DIR=cmake-build-release scripts/run_cluster_benchmark.sh --model <id> --rows <N> --smoke-only
 BUILD_DIR=cmake-build-release scripts/run_cluster_benchmark.sh --model <id> --rows <N>
 ```
+
+Pass the variable into the container as well if the build runs inside one (`docker run -e
+NES_SEMANTIC_LATENCY_REPORT ...`).
 
 Add `--api-key-env <VAR>` if the deployment needs a token; the variable has to be set inside the
 container, which the Docker wrapper does not forward yet.
@@ -307,7 +329,6 @@ machine's model id and is not meant to be committed.
 
 ## What is not measured yet
 
-- The real-model concurrency curve of section 3, which is what would close the open question there.
 - Time-to-first-result. `'FALSE' AS LLM.PRESERVE_ORDER` now exists and is covered by a system
   test, but the latency it is meant to buy has not been measured — only that the records all
   arrive.
