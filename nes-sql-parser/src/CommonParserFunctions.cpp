@@ -399,7 +399,7 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
     /// DATA_TYPE token (must be primitive); the count is the bracketed integer.
     /// Constructed directly because `DataTypeRegistryArguments` only carries
     /// `nullable` and can't pass the element type / count through the registry.
-    if (typeDefAST->ARRAY() != nullptr)
+    if (typeDefAST->ARRAY() != nullptr && typeDefAST->count != nullptr)
     {
         const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
         if (not elementType.has_value() || elementType->type == DataType::Type::VARSIZED || elementType->type == DataType::Type::FIXEDSIZED
@@ -426,8 +426,8 @@ DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, const D
         return DataType{DataType::Type::FIXEDSIZED, isNullable, *elementType, count};
     }
 
-    /// T VECTOR -> Vector with element type T -> map to VECTOR type
-    if (typeDefAST->VECTOR() != nullptr)
+    /// T VECTOR or T ARRAY[] -> variablesized container T elements, maps to VECTOR type
+    if (typeDefAST->VECTOR() != nullptr || typeDefAST->ARRAY() != nullptr)
     {
         const auto elementType = DataTypeProvider::tryProvideDataType(dataTypeText, DataType::NULLABLE::NOT_NULLABLE);
         if (not elementType.has_value() || elementType->type == DataType::Type::VARSIZED || elementType->type == DataType::Type::FIXEDSIZED
