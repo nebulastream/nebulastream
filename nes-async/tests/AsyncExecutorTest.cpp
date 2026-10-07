@@ -23,7 +23,6 @@
 
 #include <Async/AsyncOperatorExecutor.hpp>
 #include <Async/AsyncRecordLayout.hpp>
-#include <AsyncExecutorRegistry.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
@@ -33,6 +32,7 @@
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
 #include <gtest/gtest.h>
+#include <AsyncExecutorRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -49,7 +49,11 @@ constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOL
 std::shared_ptr<BufferManager> makeBufferManager()
 {
     return BufferManager::create(
-        TOTAL_MEMORY_IN_BYTES, UNPOOLED_MEMORY_FRACTION, BUFFER_ALIGNMENT, POOLED_BUFFER_SIZE, std::make_shared<NesDefaultMemoryAllocator>());
+        TOTAL_MEMORY_IN_BYTES,
+        UNPOOLED_MEMORY_FRACTION,
+        BUFFER_ALIGNMENT,
+        POOLED_BUFFER_SIZE,
+        std::make_shared<NesDefaultMemoryAllocator>());
 }
 
 UnqualifiedUnboundField field(const std::string& name, const DataType::Type type)
@@ -137,6 +141,27 @@ TEST_F(AsyncExecutorTest, ReturnsOneResultPerRecordInOrder)
     EXPECT_EQ(results[2].fields.front().value, "WILDLY ENTERTAINING");
 }
 
+/// Records keep their result slot when dropped: the framework matches results positionally.
+TEST_F(AsyncExecutorTest, DropPrefixDropsMatchingRecords)
+{
+    const auto bufferManager = makeBufferManager();
+    auto buffer = bufferManager->getBufferBlocking();
+    const auto factory = AsyncExecutorRegistry::instance().find("Delay");
+    ASSERT_TRUE(factory.has_value());
+    auto config = delayConfig("0");
+    config.emplace("drop_prefix", "spam");
+    const auto executor = (*factory)(AsyncExecutorRegistryArguments{contextWith(std::move(config))});
+
+    const auto records = makeRecords(input, buffer, *bufferManager, {"spam offer", "fine", "spam"});
+    const auto results = executor->process(records);
+
+    ASSERT_EQ(results.size(), 3U);
+    EXPECT_FALSE(results[0].keep);
+    EXPECT_TRUE(results[1].keep);
+    EXPECT_EQ(results[1].fields.front().value, "FINE");
+    EXPECT_FALSE(results[2].keep);
+}
+
 TEST_F(AsyncExecutorTest, WaitsOncePerBatchNotPerRecord)
 {
     const auto bufferManager = makeBufferManager();
@@ -215,8 +240,7 @@ TEST_F(AsyncExecutorTest, RejectsIncompleteConfiguration)
     ASSERT_TRUE(factory.has_value());
 
     /// Missing output_field.
-    EXPECT_THROW(
-        (*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "reviewText"}})}), Exception);
+    EXPECT_THROW((*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "reviewText"}})}), Exception);
     /// Field that the schema does not have.
     EXPECT_THROW(
         (*factory)(AsyncExecutorRegistryArguments{contextWith({{"input_field", "nope"}, {"output_field", "sentiment"}})}), Exception);

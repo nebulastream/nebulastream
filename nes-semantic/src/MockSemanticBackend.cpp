@@ -188,6 +188,12 @@ std::expected<std::string, BackendError> MockSemanticBackend::complete(const Com
             for (const auto& [rowId, payload] : dataBlock(request.prompt).items())
             {
                 const auto answer = mode == Mode::ECHO ? toUpper(rowText(payload)) : label;
+                if (outputColumns.empty())
+                {
+                    /// A filter-only prompt asks for one verdict per row, without field names.
+                    response[rowId] = {{"answer", answer}, {"confidence", 1.0}};
+                    continue;
+                }
                 auto fields = nlohmann::json::object();
                 for (const auto& column : outputColumns)
                 {

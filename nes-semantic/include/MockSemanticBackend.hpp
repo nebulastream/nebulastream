@@ -44,6 +44,12 @@ namespace NES
 /// chat-completion envelope, so the real `SemanticMapCodec` decodes it: the system tests exercise
 /// the actual parse cascade and answer normalization. For the same reason the answer envelope uses
 /// lower-cased output field names, the way real models tend to write them.
+///
+/// `outputColumns` are the columns the prompt asks for, filter verdicts (`__filter_<k>`) included;
+/// every one gets the same answer. Without columns the mock answers in the flat
+/// `{row_id: {answer, confidence}}` envelope a filter-only prompt requests. Filter verdicts are
+/// therefore steered through the data or the label: `echo` passes a row whose text is "true" or
+/// "yes", and `label:true` / `label:false` pass or drop every row.
 class MockSemanticBackend final : public SemanticBackend
 {
 public:

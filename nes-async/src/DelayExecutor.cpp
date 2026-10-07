@@ -18,6 +18,7 @@
 #include <cctype>
 #include <chrono>
 #include <cstddef>
+#include <optional>
 #include <span>
 #include <string>
 #include <thread>
@@ -71,6 +72,10 @@ DelayExecutor::DelayExecutor(AsyncOperatorContext operatorContext)
         }
         delay = std::chrono::milliseconds{parsed.value()};
     }
+    if (const auto it = context.config.find("drop_prefix"); it != context.config.end() && !it->second.empty())
+    {
+        dropPrefix = it->second;
+    }
 }
 
 std::vector<AsyncRecordResult> DelayExecutor::process(const std::span<const AsyncRecordView> batch)
@@ -86,6 +91,11 @@ std::vector<AsyncRecordResult> DelayExecutor::process(const std::span<const Asyn
     for (const auto& record : batch)
     {
         auto value = record.readAsText(inputFieldIndex);
+        if (dropPrefix.has_value() && value.starts_with(*dropPrefix))
+        {
+            results.push_back(AsyncRecordResult{.fields = {}, .keep = false});
+            continue;
+        }
         std::ranges::transform(
             value, value.begin(), [](const unsigned char character) { return static_cast<char>(std::toupper(character)); });
         results.push_back(AsyncRecordResult{.fields = {AsyncFieldValue{.fieldIndex = outputFieldIndex, .value = std::move(value)}}});

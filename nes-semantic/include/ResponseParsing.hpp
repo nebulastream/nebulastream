@@ -44,4 +44,18 @@ namespace NES
 [[nodiscard]] std::string
 normalizeAnswer(std::string_view answer, const std::vector<std::string>& outputValues, std::string_view defaultValue);
 
+/// The member named `key`, preferring an exact match and falling back to a case-insensitive one;
+/// null if `object` is not an object or has no such member. Output field names reach the prompt in
+/// their canonical, upper-case form, and real models regularly answer with the key lower-cased; an
+/// exact-only lookup would default-fill every row.
+[[nodiscard]] const nlohmann::json* findMember(const nlohmann::json& object, std::string_view key);
+
+/// Whether a filter verdict lets the row pass: JSON `true`, a non-zero number, or the string "true"
+/// or "yes" in any case and surrounded by any whitespace. Everything else — `false`, null, any other
+/// string, an array or object — drops the row.
+///
+/// Follows the reference's `if passed:` except for one deliberate deviation: Python's truthiness
+/// passes every non-empty string, so a model answering "false" as a string would keep the row.
+[[nodiscard]] bool isAffirmative(const nlohmann::json& verdict);
+
 }

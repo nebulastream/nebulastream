@@ -1,0 +1,103 @@
+# name: semantic/SemanticFilterAsync.test
+# description: SEM_FILTER with 'ASYNC' AS LLM.EXECUTION: the optimizer cuts the plan at the filter and
+#              its consumer source runs the model call on its own threads, dropping the records the
+#              model does not affirm. The expected results are those of semantic/SemanticFilter.test
+#              verbatim -- the two execution modes must not differ in what they keep.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,true
+2,no
+3,YES
+4,false
+5,maybe
+6,True
+
+# One record per request, one request at a time.
+CREATE SEM_MODEL asyncEchoFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+# Four records per prompt and four calls in flight: verdicts come back out of order and per batch.
+CREATE SEM_MODEL asyncBatchedFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 4 AS LLM.MAX_CONCURRENCY);
+
+# Results in completion order.
+CREATE SEM_MODEL asyncUnorderedFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 4 AS LLM.MAX_CONCURRENCY, 'FALSE' AS LLM.PRESERVE_ORDER);
+
+CREATE SEM_MODEL asyncDropAll
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'label:false' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 3 AS LLM.BATCH_SIZE, 2 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL asyncGarbageFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION);
+
+CREATE SEM_MODEL asyncDownFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 4 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL asyncShout
+INPUT (description VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 2 AS LLM.BATCH_SIZE);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL) TYPE File;
+CREATE SINK mapped(id UINT64 NOT NULL, description VARSIZED NOT NULL, loud VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+SELECT * FROM SEM_FILTER(asyncEchoFilter, reviews) INTO out;
+----
+1,true
+3,YES
+6,True
+
+SELECT * FROM SEM_FILTER(asyncBatchedFilter, reviews) INTO out;
+----
+1,true
+3,YES
+6,True
+
+# Sorted comparison: only the multiset is promised without ordering.
+SELECT * FROM SEM_FILTER(asyncUnorderedFilter, reviews) INTO out;
+----
+1,true
+3,YES
+6,True
+
+# Every record of the one input buffer is dropped: the consumer still emits an empty buffer that
+# carries the end of the stream on, and the query ends normally.
+SELECT * FROM SEM_FILTER(asyncDropAll, reviews) INTO out;
+----
+
+SELECT * FROM SEM_FILTER(asyncGarbageFilter, reviews) INTO out;
+----
+
+SELECT * FROM SEM_FILTER(asyncDownFilter, reviews) INTO out;
+----
+ERROR 3006 "unreachable"
+
+# An ordinary predicate downstream runs in the consumer plan.
+SELECT id FROM SEM_FILTER(asyncBatchedFilter, reviews) WHERE id > UINT64(1) INTO ids;
+----
+3
+6
+
+# Two asynchronous operators chained by two handoff channels, a filter feeding a map.
+SELECT * FROM SEM_MAP(asyncShout, SEM_FILTER(asyncBatchedFilter, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE

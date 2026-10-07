@@ -728,7 +728,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (
         helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference and not helpers.top().isSemanticMap
-        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+        and not helpers.top().isSemanticFilter and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));
@@ -1563,55 +1563,85 @@ void AntlrSQLQueryPlanCreator::enterSemanticMapRelation(AntlrSQLParser::Semantic
 
 namespace
 {
-/// Recursively build a LogicalPlan from a semanticMapSource context.
+LogicalPlan buildSemanticPlan(antlr4::ParserRuleContext* source, std::vector<LogicalPlan>& queryPlans);
+
+/// The plan below a SEM_MAP or SEM_FILTER: a stream, a subquery or another semantic source.
 /// For subquery inputs, the inner query plan is already on the queryPlans vector (processed by the listener).
-LogicalPlan buildSemanticMapPlan(AntlrSQLParser::SemanticMapSourceContext* ctx, std::vector<LogicalPlan>& queryPlans)
+LogicalPlan buildSemanticInputPlan(AntlrSQLParser::SemanticInputContext* input, std::vector<LogicalPlan>& queryPlans)
 {
-    auto modelName = bindIdentifier(ctx->modelName);
-
-    auto* input = ctx->semanticMapInput();
-    const LogicalPlan childPlan = [&]() -> LogicalPlan
+    if (auto* streamName = dynamic_cast<AntlrSQLParser::SemanticStreamNameContext*>(input))
     {
-        if (auto* streamName = dynamic_cast<AntlrSQLParser::SemanticMapStreamNameContext*>(input))
+        std::string name;
+        for (auto* part : streamName->multipartIdentifier()->parts)
         {
-            std::string name;
-            for (auto* part : streamName->multipartIdentifier()->parts)
+            if (!name.empty())
             {
-                if (!name.empty())
-                {
-                    name += "$";
-                }
-                name += fmt::format("{}", bindIdentifier(part->identifier()));
+                name += "$";
             }
-            return LogicalPlanBuilder::createLogicalPlan(bindIdentifier(std::move(name)));
+            name += fmt::format("{}", bindIdentifier(part->identifier()));
         }
-        if (auto* nested = dynamic_cast<AntlrSQLParser::SemanticMapNestedContext*>(input))
+        return LogicalPlanBuilder::createLogicalPlan(bindIdentifier(std::move(name)));
+    }
+    if (auto* nested = dynamic_cast<AntlrSQLParser::SemanticMapNestedContext*>(input))
+    {
+        return buildSemanticPlan(nested->semanticMapSource(), queryPlans);
+    }
+    if (auto* nested = dynamic_cast<AntlrSQLParser::SemanticFilterNestedContext*>(input))
+    {
+        return buildSemanticPlan(nested->semanticFilterSource(), queryPlans);
+    }
+    if (dynamic_cast<AntlrSQLParser::SemanticSubqueryContext*>(input))
+    {
+        /// The subquery has already been processed by the listener; its plan is on the queryPlans vector.
+        if (queryPlans.empty())
         {
-            return buildSemanticMapPlan(nested->semanticMapSource(), queryPlans);
+            throw InvalidQuerySyntax("Semantic operator subquery plan not found");
         }
-        if (dynamic_cast<AntlrSQLParser::SemanticMapSubqueryContext*>(input))
-        {
-            /// The subquery has already been processed by the listener; its plan is on the queryPlans vector.
-            if (queryPlans.empty())
-            {
-                throw InvalidQuerySyntax("SEM_MAP subquery plan not found");
-            }
-            auto plan = std::move(queryPlans.back());
-            queryPlans.pop_back();
-            return plan;
-        }
-        throw InvalidQuerySyntax("SEM_MAP: unrecognized input type");
-    }();
+        auto plan = std::move(queryPlans.back());
+        queryPlans.pop_back();
+        return plan;
+    }
+    throw InvalidQuerySyntax("Semantic operator: unrecognized input type");
+}
 
-    return LogicalPlanBuilder::addSemanticMap(std::move(modelName), childPlan);
+/// Recursively build a LogicalPlan from a semanticMapSource or semanticFilterSource context.
+LogicalPlan buildSemanticPlan(antlr4::ParserRuleContext* source, std::vector<LogicalPlan>& queryPlans)
+{
+    if (auto* map = dynamic_cast<AntlrSQLParser::SemanticMapSourceContext*>(source))
+    {
+        auto modelName = bindIdentifier(map->modelName);
+        const auto childPlan = buildSemanticInputPlan(map->semanticInput(), queryPlans);
+        return LogicalPlanBuilder::addSemanticMap(std::move(modelName), childPlan);
+    }
+    if (auto* filter = dynamic_cast<AntlrSQLParser::SemanticFilterSourceContext*>(source))
+    {
+        auto modelName = bindIdentifier(filter->modelName);
+        const auto childPlan = buildSemanticInputPlan(filter->semanticInput(), queryPlans);
+        return LogicalPlanBuilder::addSemanticFilter(std::move(modelName), childPlan);
+    }
+    throw InvalidQuerySyntax("Unrecognized semantic operator source");
 }
 }
 
 void AntlrSQLQueryPlanCreator::exitSemanticMapRelation(AntlrSQLParser::SemanticMapRelationContext* context)
 {
-    auto plan = buildSemanticMapPlan(context->semanticMapSource(), helpers.top().queryPlans);
+    auto plan = buildSemanticPlan(context->semanticMapSource(), helpers.top().queryPlans);
     helpers.top().queryPlans.push_back(std::move(plan));
     helpers.top().isSemanticMap = false;
     AntlrSQLBaseListener::exitSemanticMapRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterSemanticFilterRelation(AntlrSQLParser::SemanticFilterRelationContext* context)
+{
+    helpers.top().isSemanticFilter = true;
+    AntlrSQLBaseListener::enterSemanticFilterRelation(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitSemanticFilterRelation(AntlrSQLParser::SemanticFilterRelationContext* context)
+{
+    auto plan = buildSemanticPlan(context->semanticFilterSource(), helpers.top().queryPlans);
+    helpers.top().queryPlans.push_back(std::move(plan));
+    helpers.top().isSemanticFilter = false;
+    AntlrSQLBaseListener::exitSemanticFilterRelation(context);
 }
 }

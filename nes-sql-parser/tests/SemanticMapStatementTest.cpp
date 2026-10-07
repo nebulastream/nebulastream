@@ -21,6 +21,7 @@
 
 #include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/SemanticFilterNameLogicalOperator.hpp>
 #include <Operators/SemanticMapNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -358,6 +359,105 @@ TEST_F(SemanticMapStatementTest, SemMapDoesNotCaptureModelNameAsSource)
     const auto rendered = explain(plan, ExplainVerbosity::Short);
     EXPECT_NE(rendered.find("SOURCE(REVIEWS)"), std::string::npos) << rendered;
     EXPECT_EQ(rendered.find("SOURCE(SENTIMENT_CLF)"), std::string::npos) << rendered;
+}
+
+/// No OUTPUT clause: a filter model, one FILTER step and no column.
+TEST_F(SemanticMapStatementTest, CreateWithoutOutputRegistersAFilterModel)
+{
+    const auto result = create("CREATE SEM_MODEL is_positive INPUT (reviewText VARSIZED) "
+                               "SET ('The review is positive' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, "
+                               "'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 'TRUE' AS LLM.FUSION)");
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    EXPECT_EQ(result->kind, "FILTER");
+    EXPECT_EQ(result->outputSchema.size(), 0);
+
+    const auto model = semanticModelCatalog->load("IS_POSITIVE");
+    ASSERT_EQ(model.getConfig().steps.size(), 1);
+    EXPECT_EQ(model.getConfig().steps.front().kind, SemanticStep::Kind::FILTER);
+    EXPECT_EQ(model.getConfig().steps.front().prompt, "The review is positive");
+    EXPECT_TRUE(model.getConfig().fusion);
+    EXPECT_EQ(model.getConfig().batchSize, 8);
+}
+
+TEST_F(SemanticMapStatementTest, FusionIsOptIn)
+{
+    ASSERT_TRUE(create(withOptions("summary VARSIZED", "")).has_value());
+    EXPECT_FALSE(semanticModelCatalog->load("M").getConfig().fusion);
+    EXPECT_EQ(create(SentimentModel)->kind, "MAP");
+
+    const auto invalid = create(withOptions("other VARSIZED", ", 'maybe' AS LLM.FUSION"));
+    ASSERT_FALSE(invalid.has_value());
+    EXPECT_EQ(invalid.error().code(), ErrorCode::InvalidSemanticModel);
+}
+
+/// OUTPUT_VALUES and DEFAULT_VALUE describe a column; a filter model has none.
+TEST_F(SemanticMapStatementTest, FilterModelRejectsColumnOptions)
+{
+    for (const auto* option : {"'YES' AS LLM.OUTPUT_VALUES", "'NO' AS LLM.DEFAULT_VALUE"})
+    {
+        const auto result = create(
+            std::string{"CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                        "'m' AS LLM.MODEL_NAME, "}
+            + option + ")");
+        ASSERT_FALSE(result.has_value()) << option;
+        EXPECT_EQ(result.error().code(), ErrorCode::InvalidSemanticModel) << option;
+    }
+    /// The batching rule is the same as SEM_MAP's.
+    const auto batched = create("CREATE SEM_MODEL f INPUT (reviewText VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, "
+                                "'m' AS LLM.MODEL_NAME, 8 AS LLM.BATCH_SIZE)");
+    ASSERT_FALSE(batched.has_value());
+    EXPECT_EQ(batched.error().code(), ErrorCode::InvalidSemanticModel);
+}
+
+TEST_F(SemanticMapStatementTest, SemFilterQueryBuildsUnresolvedPlaceholder)
+{
+    const auto plan = bindQuery("SELECT * FROM SEM_FILTER(is_positive, reviews) INTO result");
+
+    const auto placeholders = getOperatorByType<SemanticFilterNameLogicalOperator>(plan);
+    ASSERT_EQ(placeholders.size(), 1);
+    EXPECT_EQ(placeholders.front()->getModelName(), "IS_POSITIVE");
+
+    EXPECT_EQ(
+        explain(plan, ExplainVerbosity::Short),
+        "SINK(RESULT)\n"
+        "  PROJECTION(fields: [*])\n"
+        "    SEM_FILTER_NAME(model: IS_POSITIVE)\n"
+        "      SOURCE(REVIEWS)\n");
+}
+
+TEST_F(SemanticMapStatementTest, SemFilterAndSemMapNestEitherWay)
+{
+    EXPECT_EQ(
+        explain(bindQuery("SELECT * FROM SEM_FILTER(is_positive, SEM_MAP(sentiment_clf, reviews)) INTO result"), ExplainVerbosity::Short),
+        "SINK(RESULT)\n"
+        "  PROJECTION(fields: [*])\n"
+        "    SEM_FILTER_NAME(model: IS_POSITIVE)\n"
+        "      SEM_MAP_NAME(model: SENTIMENT_CLF)\n"
+        "        SOURCE(REVIEWS)\n");
+    EXPECT_EQ(
+        explain(bindQuery("SELECT * FROM SEM_MAP(sentiment_clf, SEM_FILTER(is_positive, reviews)) INTO result"), ExplainVerbosity::Short),
+        "SINK(RESULT)\n"
+        "  PROJECTION(fields: [*])\n"
+        "    SEM_MAP_NAME(model: SENTIMENT_CLF)\n"
+        "      SEM_FILTER_NAME(model: IS_POSITIVE)\n"
+        "        SOURCE(REVIEWS)\n");
+    EXPECT_EQ(
+        explain(bindQuery("SELECT * FROM SEM_FILTER(b, SEM_FILTER(a, reviews)) INTO result"), ExplainVerbosity::Short),
+        "SINK(RESULT)\n"
+        "  PROJECTION(fields: [*])\n"
+        "    SEM_FILTER_NAME(model: B)\n"
+        "      SEM_FILTER_NAME(model: A)\n"
+        "        SOURCE(REVIEWS)\n");
+}
+
+TEST_F(SemanticMapStatementTest, SemFilterOverSubqueryDoesNotCaptureModelNameAsSource)
+{
+    const auto rendered = explain(
+        bindQuery("SELECT * FROM SEM_FILTER(is_positive, (SELECT reviewText FROM reviews WHERE reviewId > UINT64(2))) INTO result"),
+        ExplainVerbosity::Short);
+    EXPECT_NE(rendered.find("SOURCE(REVIEWS)"), std::string::npos) << rendered;
+    EXPECT_EQ(rendered.find("SOURCE(IS_POSITIVE)"), std::string::npos) << rendered;
+    EXPECT_NE(rendered.find("SELECTION(REVIEWID > 2)"), std::string::npos) << rendered;
 }
 
 }

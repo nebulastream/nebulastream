@@ -12,4 +12,5 @@
 
 add_source_files(nes-physical-operators
         SemanticMapPhysicalOperator.cpp
+        SemanticFilterPhysicalOperator.cpp
 )

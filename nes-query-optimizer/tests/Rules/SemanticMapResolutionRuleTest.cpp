@@ -24,11 +24,14 @@
 #include <Identifiers/Identifier.hpp>
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/SemanticFilterLogicalOperator.hpp>
+#include <Operators/SemanticFilterNameLogicalOperator.hpp>
 #include <Operators/SemanticMapLogicalOperator.hpp>
 #include <Operators/SemanticMapNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Traits/AsyncExecutionTrait.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
@@ -68,6 +71,24 @@ public:
             SemanticModelSchema{
                 .inputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}},
                 .outputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse(outputName), DataType::Type::VARSIZED}}});
+    }
+
+    /// Registers a filter model reading `description`: no OUTPUT, one FILTER step.
+    void registerFilterModel(const std::string& name, const SemanticExecution execution = SemanticExecution::SYNCHRONOUS) const
+    {
+        SemanticModelConfig config;
+        config.endpoint = "echo";
+        config.modelName = "mock-model";
+        config.backend = "mock";
+        config.execution = execution;
+        config.steps = {SemanticStep{
+            .kind = SemanticStep::Kind::FILTER, .prompt = "is positive", .outputColumn = {}, .outputValues = {}, .defaultValue = {}}};
+        catalog->registerModel(
+            name,
+            std::move(config),
+            SemanticModelSchema{
+                .inputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}},
+                .outputs = {}});
     }
 
     TypedLogicalOperator<SourceDescriptorLogicalOperator> descriptionSource(const std::string& name)
@@ -177,6 +198,69 @@ TEST_F(SemanticMapResolutionRuleTest, RelinksTheSpineAboveNestedSemanticMaps)
     const auto inferred = root.withInferredSchema();
     EXPECT_TRUE(inferred.getOutputSchema()[Identifier::parse("sentiment")].has_value());
     EXPECT_TRUE(inferred.getOutputSchema()[Identifier::parse("summary")].has_value());
+}
+
+TEST_F(SemanticMapResolutionRuleTest, ResolvesFilterNameOperator)
+{
+    registerFilterModel("positive");
+    const auto source = descriptionSource("filterSource");
+    const auto plan = planWithRoot(
+        LogicalOperator{TypedLogicalOperator<SemanticFilterNameLogicalOperator>{std::string{"positive"}, LogicalOperator{source}}});
+
+    const auto resolved = SemanticMapResolutionRule{catalog}.apply(plan);
+
+    const auto filter = resolved.getRootOperators().at(0).tryGetAs<SemanticFilterLogicalOperator>();
+    ASSERT_TRUE(filter.has_value());
+    EXPECT_EQ(filter->get().getModel().getName(), "positive");
+    EXPECT_FALSE(resolved.getRootOperators().at(0).getTraitSet().tryGet<AsyncExecutionTrait>().has_value());
+    const auto inferred = resolved.getRootOperators().at(0).withInferredSchema();
+    EXPECT_EQ(inferred.getOutputSchema().size(), 1);
+}
+
+TEST_F(SemanticMapResolutionRuleTest, AsyncFilterGetsTheFilterExecutor)
+{
+    registerFilterModel("positive", SemanticExecution::ASYNCHRONOUS);
+    const auto source = descriptionSource("asyncFilterSource");
+    const auto plan = planWithRoot(
+        LogicalOperator{TypedLogicalOperator<SemanticFilterNameLogicalOperator>{std::string{"positive"}, LogicalOperator{source}}});
+
+    const auto resolved = SemanticMapResolutionRule{catalog}.apply(plan);
+
+    const auto trait = resolved.getRootOperators().at(0).getTraitSet().tryGet<AsyncExecutionTrait>();
+    ASSERT_TRUE(trait.has_value());
+    EXPECT_EQ(trait.value()->executorType, "SemanticFilter");
+}
+
+/// A model is one kind or the other; using it with the wrong operator is the query's mistake.
+TEST_F(SemanticMapResolutionRuleTest, WrongModelKindThrows)
+{
+    registerModel("sentimentModel");
+    registerFilterModel("positive");
+    const auto source = descriptionSource("wrongKindSource");
+
+    const auto mapModelInFilter = planWithRoot(
+        LogicalOperator{TypedLogicalOperator<SemanticFilterNameLogicalOperator>{std::string{"sentimentModel"}, LogicalOperator{source}}});
+    ASSERT_EXCEPTION_ERRORCODE((void)SemanticMapResolutionRule{catalog}.apply(mapModelInFilter), NES::ErrorCode::InvalidSemanticModel);
+
+    const auto filterModelInMap = planWithRoot(
+        LogicalOperator{TypedLogicalOperator<SemanticMapNameLogicalOperator>{std::string{"positive"}, LogicalOperator{source}}});
+    ASSERT_EXCEPTION_ERRORCODE((void)SemanticMapResolutionRule{catalog}.apply(filterModelInMap), NES::ErrorCode::InvalidSemanticModel);
+}
+
+TEST_F(SemanticMapResolutionRuleTest, ResolvesFilterAndMapNestedInEachOther)
+{
+    registerModel("sentimentModel");
+    registerFilterModel("positive");
+    const auto source = descriptionSource("mixedSource");
+    const auto inner
+        = LogicalOperator{TypedLogicalOperator<SemanticMapNameLogicalOperator>{std::string{"sentimentModel"}, LogicalOperator{source}}};
+    const auto outer = LogicalOperator{TypedLogicalOperator<SemanticFilterNameLogicalOperator>{std::string{"positive"}, inner}};
+
+    const auto root = SemanticMapResolutionRule{catalog}.apply(planWithRoot(outer)).getRootOperators().at(0);
+
+    ASSERT_TRUE(root.tryGetAs<SemanticFilterLogicalOperator>().has_value());
+    ASSERT_TRUE(root.getChildren().at(0).tryGetAs<SemanticMapLogicalOperator>().has_value());
+    EXPECT_TRUE(root.withInferredSchema().getOutputSchema()[Identifier::parse("sentiment")].has_value());
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)

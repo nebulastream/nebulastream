@@ -1,0 +1,80 @@
+# name: semantic/SemanticFilterAsyncWindow.test
+# description: A tumbling window downstream of SEM_FILTER, synchronously and asynchronously over the
+#              same input, asserting the same counts.
+#
+#              The first 40 seconds of the input are all "false", so the asynchronous consumer sees
+#              several input buffers in which every record is dropped. Each still leaves the source as
+#              an empty buffer carrying its sequence number, watermark and last-chunk flag, and the
+#              counts must come out exactly as in the synchronous reference.
+#
+#              What this test does not prove: a source that swallowed the empty buffers instead still
+#              passes here (checked by mutation on 2026-10-06), because the end of the finite stream
+#              flushes every window anyway. The emission itself is pinned by
+#              AsyncLifecycleTest.AFullyDroppedBufferStillCarriesItsMetadata.
+#
+#              From 40 s on every second record is "true": 100 of the 200 records of each 10 s window
+#              pass. The data lives in testdata/small/semantic/filter_windowed.csv (2000 rows, one
+#              every 50 ms).
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE verdicts(id UINT64 NOT NULL, ts UINT64 NOT NULL, verdict VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR verdicts TYPE File;
+ATTACH FILE small/semantic/filter_windowed.csv
+
+CREATE SEM_MODEL winFilterSync
+INPUT (verdict VARSIZED)
+SET ('The record is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL winFilterAsync
+INPUT (verdict VARSIZED)
+SET ('The record is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 1 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL winFilterAsyncWide
+INPUT (verdict VARSIZED)
+SET ('The record is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 10 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK counts(start UINT64 NOT NULL, end UINT64 NOT NULL, verdict VARSIZED NOT NULL, n UINT64 NOT NULL) TYPE File;
+
+# Query 1: the synchronous reference.
+SELECT start, end, verdict, COUNT(id) AS n
+FROM SEM_FILTER(winFilterSync, verdicts)
+GROUP BY verdict
+WINDOW TUMBLING(ts, SIZE 10 SEC)
+INTO counts;
+----
+40000,50000,true,100
+50000,60000,true,100
+60000,70000,true,100
+70000,80000,true,100
+80000,90000,true,100
+90000,100000,true,100
+
+# Query 2: asynchronous, one call at a time.
+SELECT start, end, verdict, COUNT(id) AS n
+FROM SEM_FILTER(winFilterAsync, verdicts)
+GROUP BY verdict
+WINDOW TUMBLING(ts, SIZE 10 SEC)
+INTO counts;
+----
+40000,50000,true,100
+50000,60000,true,100
+60000,70000,true,100
+70000,80000,true,100
+80000,90000,true,100
+90000,100000,true,100
+
+# Query 3: asynchronous, eight records per call and ten calls in flight.
+SELECT start, end, verdict, COUNT(id) AS n
+FROM SEM_FILTER(winFilterAsyncWide, verdicts)
+GROUP BY verdict
+WINDOW TUMBLING(ts, SIZE 10 SEC)
+INTO counts;
+----
+40000,50000,true,100
+50000,60000,true,100
+60000,70000,true,100
+70000,80000,true,100
+80000,90000,true,100
+90000,100000,true,100

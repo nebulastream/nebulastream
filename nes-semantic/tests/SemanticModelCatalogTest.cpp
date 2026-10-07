@@ -15,6 +15,7 @@
 #include <SemanticModelCatalog.hpp>
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -56,6 +57,21 @@ SemanticModelSchema validSchema()
     return SemanticModelSchema{
         .inputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}},
         .outputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("sentiment"), DataType::Type::VARSIZED}}};
+}
+
+SemanticModelConfig filterConfig(std::string prompt = "The review is positive")
+{
+    auto config = validConfig();
+    config.steps = {SemanticStep{
+        .kind = SemanticStep::Kind::FILTER, .prompt = std::move(prompt), .outputColumn = {}, .outputValues = {}, .defaultValue = {}}};
+    config.fusion = true;
+    return config;
+}
+
+SemanticModelSchema filterSchema()
+{
+    return SemanticModelSchema{
+        .inputs = SemanticFieldList{UnqualifiedUnboundField{Identifier::parse("description"), DataType::Type::VARSIZED}}, .outputs = {}};
 }
 
 }
@@ -147,6 +163,48 @@ TEST_F(SemanticModelCatalogTest, RejectsInvalidConfigurations)
     }
 }
 
+/// A model without OUTPUT is a filter model: one FILTER step and no column.
+TEST_F(SemanticModelCatalogTest, RegistersFilterModelWithoutOutputs)
+{
+    SemanticModelCatalog catalog;
+    catalog.registerModel("positive", filterConfig(), filterSchema());
+    const auto loaded = catalog.load("positive");
+    EXPECT_TRUE(loaded.hasFilterStep());
+    EXPECT_EQ(loaded.getSchema().outputs.size(), 0);
+    EXPECT_FALSE(catalog.load("positive").getConfig().steps.empty());
+
+    catalog.registerModel("sentiment", validConfig(), validSchema());
+    EXPECT_FALSE(catalog.load("sentiment").hasFilterStep());
+}
+
+TEST_F(SemanticModelCatalogTest, RejectsInvalidFilterModels)
+{
+    const auto expectRejected = [](const std::string& description, const SemanticModelConfig& config, const SemanticModelSchema& schema)
+    {
+        SCOPED_TRACE(description);
+        SemanticModelCatalog catalog;
+        ASSERT_EXCEPTION_ERRORCODE(catalog.registerModel("m", config, schema), ErrorCode::InvalidSemanticModel);
+    };
+
+    auto withValues = filterConfig();
+    withValues.steps.front().outputValues = {"YES"};
+    expectRejected("filter with output values", withValues, filterSchema());
+
+    auto withDefault = filterConfig();
+    withDefault.steps.front().defaultValue = "NO";
+    expectRejected("filter with default value", withDefault, filterSchema());
+
+    expectRejected("filter with an output field", filterConfig(), validSchema());
+    expectRejected("map without an output field", validConfig(), filterSchema());
+
+    auto noSteps = filterConfig();
+    noSteps.steps.clear();
+    expectRejected("no steps at all", noSteps, filterSchema());
+
+    auto emptyPrompt = filterConfig("");
+    expectRejected("filter with empty prompt", emptyPrompt, filterSchema());
+}
+
 TEST_F(SemanticModelCatalogTest, RejectsNonTextFields)
 {
     SemanticModelCatalog catalog;
@@ -184,6 +242,59 @@ TEST_F(SemanticModelCatalogTest, ReflectionRoundTrip)
 
     const ReflectionContext context;
     EXPECT_EQ(context.unreflect<RegisteredSemanticModel>(context.reflect(model)), model);
+}
+
+TEST_F(SemanticModelCatalogTest, ReflectionRoundTripKeepsFilterStepsAndFusion)
+{
+    SemanticModelCatalog catalog;
+    catalog.registerModel("positive", filterConfig(), filterSchema());
+    const auto model = catalog.load("positive");
+    ASSERT_TRUE(model.getConfig().fusion);
+
+    const ReflectionContext context;
+    const auto roundTripped = context.unreflect<RegisteredSemanticModel>(context.reflect(model));
+    EXPECT_EQ(roundTripped, model);
+    EXPECT_TRUE(roundTripped.getConfig().fusion);
+    EXPECT_EQ(roundTripped.getConfig().steps.front().kind, SemanticStep::Kind::FILTER);
+}
+
+/// Steps concatenate upstream first, filters are renumbered across both models, outputs concatenate,
+/// and inputs and transport come from the upstream model.
+TEST_F(SemanticModelCatalogTest, FuseConcatenatesStepsAndRenumbersFilters)
+{
+    SemanticModelCatalog catalog;
+    catalog.registerModel("positive", filterConfig("p"), filterSchema());
+    catalog.registerModel("acting", filterConfig("q"), filterSchema());
+    auto mapConfig = validConfig();
+    mapConfig.fusion = true;
+    catalog.registerModel("sentiment", mapConfig, validSchema());
+
+    const auto filters = fuseSemanticModels(catalog.load("positive"), catalog.load("acting"));
+    EXPECT_EQ(filters.getName(), "positive+acting");
+    ASSERT_EQ(filters.getConfig().steps.size(), 2);
+    EXPECT_EQ(filters.getConfig().steps[0].outputColumn, "__filter_0");
+    EXPECT_EQ(filters.getConfig().steps[1].outputColumn, "__filter_1");
+    EXPECT_EQ(filters.getConfig().steps[1].prompt, "q");
+    EXPECT_EQ(filters.getSchema().outputs.size(), 0);
+    EXPECT_TRUE(filters.hasFilterStep());
+
+    const auto chain = fuseSemanticModels(catalog.load("sentiment"), filters);
+    EXPECT_EQ(chain.getName(), "sentiment+positive+acting");
+    ASSERT_EQ(chain.getConfig().steps.size(), 3);
+    EXPECT_EQ(chain.getConfig().steps[0].kind, SemanticStep::Kind::MAP);
+    EXPECT_EQ(chain.getConfig().steps[0].outputColumn, "SENTIMENT");
+    EXPECT_EQ(chain.getConfig().steps[2].outputColumn, "__filter_1");
+    EXPECT_EQ(chain.getSchema().outputs, validSchema().outputs);
+    EXPECT_EQ(chain.getSchema().inputs, validSchema().inputs);
+    EXPECT_EQ(chain.getConfig().endpoint, mapConfig.endpoint);
+}
+
+TEST_F(SemanticModelCatalogTest, FuseRejectsCollidingOutputs)
+{
+    SemanticModelCatalog catalog;
+    catalog.registerModel("a", validConfig(), validSchema());
+    catalog.registerModel("b", validConfig(), validSchema());
+    ASSERT_EXCEPTION_ERRORCODE((void)fuseSemanticModels(catalog.load("a"), catalog.load("b")), ErrorCode::InvalidSemanticModel);
 }
 
 /// Wire payloads are untrusted: an out-of-range enum value must fail deserialization rather than

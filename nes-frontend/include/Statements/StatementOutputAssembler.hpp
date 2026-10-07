@@ -519,10 +519,11 @@ using SemanticModelInfoOutputRowType = std::tuple<
     std::string,
     std::string,
     std::string,
+    std::string,
     Schema<UnqualifiedUnboundField, Ordered>,
     Schema<UnqualifiedUnboundField, Ordered>>;
-constexpr std::array<std::string_view, 6> semanticModelInfoOutputColumns{
-    "model_name", "endpoint", "model", "prompt", "input_schema", "output_schema"};
+constexpr std::array<std::string_view, 7> semanticModelInfoOutputColumns{
+    "model_name", "kind", "endpoint", "model", "prompt", "input_schema", "output_schema"};
 
 template <>
 struct StatementOutputAssembler<CreateSemanticModelStatementResult>
@@ -533,8 +534,8 @@ struct StatementOutputAssembler<CreateSemanticModelStatementResult>
     {
         return std::make_pair(
             semanticModelInfoOutputColumns,
-            std::vector{
-                std::make_tuple(result.name, result.endpoint, result.modelName, result.prompt, result.inputSchema, result.outputSchema)});
+            std::vector{std::make_tuple(
+                result.name, result.kind, result.endpoint, result.modelName, result.prompt, result.inputSchema, result.outputSchema)});
     }
 };
 
@@ -549,7 +550,8 @@ struct StatementOutputAssembler<ShowSemanticModelsStatementResult>
         output.reserve(result.models.size());
         for (const auto& model : result.models)
         {
-            output.emplace_back(model.name, model.endpoint, model.modelName, model.prompt, model.inputSchema, model.outputSchema);
+            output.emplace_back(
+                model.name, model.kind, model.endpoint, model.modelName, model.prompt, model.inputSchema, model.outputSchema);
         }
         return std::make_pair(semanticModelInfoOutputColumns, output);
     }

@@ -155,6 +155,8 @@ struct DropModelStatementResult
 struct SemanticModelInfo
 {
     std::string name;
+    /// "MAP" for a model with an OUTPUT clause (SEM_MAP), "FILTER" for one without (SEM_FILTER).
+    std::string kind;
     std::string endpoint;
     std::string modelName;
     std::string prompt;

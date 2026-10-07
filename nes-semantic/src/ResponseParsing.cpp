@@ -54,6 +54,12 @@ std::string_view trim(std::string_view text)
     return text.substr(begin, end - begin + 1);
 }
 
+bool equalsIgnoreCase(const std::string_view lhs, const std::string_view rhs)
+{
+    return std::ranges::equal(
+        lhs, rhs, [](const unsigned char left, const unsigned char right) { return std::tolower(left) == std::tolower(right); });
+}
+
 std::string toUpper(std::string_view text)
 {
     std::string result(text);
@@ -181,6 +187,44 @@ normalizeAnswer(const std::string_view answer, const std::vector<std::string>& o
         }
     }
     return std::string(defaultValue);
+}
+
+const nlohmann::json* findMember(const nlohmann::json& object, const std::string_view key)
+{
+    if (!object.is_object())
+    {
+        return nullptr;
+    }
+    if (const auto exact = object.find(std::string(key)); exact != object.end())
+    {
+        return &*exact;
+    }
+    for (const auto& [memberKey, value] : object.items())
+    {
+        if (equalsIgnoreCase(memberKey, key))
+        {
+            return &value;
+        }
+    }
+    return nullptr;
+}
+
+bool isAffirmative(const nlohmann::json& verdict)
+{
+    if (verdict.is_boolean())
+    {
+        return verdict.get<bool>();
+    }
+    if (verdict.is_number())
+    {
+        return verdict.get<double>() != 0.0;
+    }
+    if (verdict.is_string())
+    {
+        const auto text = trim(verdict.get_ref<const std::string&>());
+        return equalsIgnoreCase(text, "true") || equalsIgnoreCase(text, "yes");
+    }
+    return false;
 }
 
 }

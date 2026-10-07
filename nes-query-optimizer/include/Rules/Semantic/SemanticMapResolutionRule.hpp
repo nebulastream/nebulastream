@@ -28,8 +28,10 @@
 namespace NES
 {
 
-/// Resolves SemanticMapNameLogicalOperator nodes to SemanticMapLogicalOperator nodes by loading
-/// the model from the SemanticModelCatalog.
+/// Resolves SemanticMapNameLogicalOperator nodes to SemanticMapLogicalOperator nodes, and
+/// SemanticFilterNameLogicalOperator nodes to SemanticFilterLogicalOperator nodes, by loading the
+/// model from the SemanticModelCatalog. A model is either a map model (with OUTPUT) or a filter
+/// model (without); using it with the other operator throws InvalidSemanticModel.
 ///
 /// Unlike InferModelResolutionRule this rule never infers a schema. It only walks the spine from
 /// a resolved operator up to the root and relinks it with withChildrenUnsafe; TypeInferenceRule,

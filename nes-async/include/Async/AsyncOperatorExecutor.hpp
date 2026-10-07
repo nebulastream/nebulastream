@@ -38,6 +38,9 @@ struct AsyncFieldValue
 struct AsyncRecordResult
 {
     std::vector<AsyncFieldValue> fields;
+    /// Whether the record leaves the operator at all. A filtering operator clears it for the
+    /// records it rejects; their `fields` are then ignored.
+    bool keep = true;
 };
 
 /// Everything an executor needs to know about the operator it implements. Handed over
@@ -76,10 +79,11 @@ public:
     /// Handles one batch of records. Must return exactly one result per input record, in
     /// the same order — the framework matches them positionally.
     ///
-    /// An implementation that cannot produce a value for a record returns an empty result
-    /// for it rather than dropping it; the framework then leaves the output fields at
-    /// their default. Throwing fails the query, so a well-behaved executor exhausts its
-    /// own retries first.
+    /// A record is dropped only by clearing `keep` on its result, which is the operator's
+    /// semantics (a filter's rejection), not error handling. An implementation that cannot
+    /// produce a value for a record returns an empty result for it; the framework then leaves
+    /// the output fields at their default. Throwing fails the query, so a well-behaved executor
+    /// exhausts its own retries first.
     virtual std::vector<AsyncRecordResult> process(std::span<const AsyncRecordView> batch) = 0;
 };
 

@@ -14,13 +14,10 @@
 
 #include <SemanticMapPhysicalOperator.hpp>
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <expected>
 #include <memory>
 #include <optional>
-#include <semaphore>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,116 +39,23 @@
 #include <SemanticBackend.hpp>
 #include <SemanticMapCodec.hpp>
 #include <SemanticModelCatalog.hpp>
+#include <SemanticOperatorState.hpp>
 #include <static.hpp>
 #include <val_ptr.hpp>
 
 namespace NES::detail
 {
 
-/// Everything one worker thread touches while a record is in flight. The traced code takes
-/// pointers into `answers`, which therefore stay untouched until the thread's next record.
-struct SemanticMapSlot
+struct SemanticMapState final : SemanticOperatorState<SemanticMapCodec>
 {
-    std::unique_ptr<SemanticBackend> backend;
-    std::vector<RowPayload> rows;
-    std::vector<std::string> answers;
-};
-
-struct SemanticMapState
-{
-    /// Stage 1 has no configurable connect timeout; ten seconds fails a dead host quickly while
-    /// staying far above any LAN or loopback handshake.
-    static constexpr std::chrono::milliseconds ConnectTimeout{10000};
-
-    SemanticMapState(SemanticBackendProvider backendProvider, const SemanticModelConfig& config, std::vector<std::string> inputNames)
-        : backendProvider(std::move(backendProvider))
-        , codec(config)
-        , request{
-              .prompt = {},
-              .modelName = config.modelName,
-              .timeout = config.requestTimeout,
-              .connectTimeout = ConnectTimeout,
-              .maxRetries = config.maxRetries}
-        , inputNames(std::move(inputNames))
-        , numberOfSteps(config.steps.size())
-        , inFlight(static_cast<std::ptrdiff_t>(config.maxConcurrency))
-    {
-        PRECONDITION(config.maxConcurrency >= 1, "SemanticMap requires a max concurrency of at least 1");
-    }
-
-    void setup(const size_t numberOfWorkerThreads)
-    {
-        slots.clear();
-        slots.reserve(numberOfWorkerThreads);
-        for (size_t i = 0; i < numberOfWorkerThreads; ++i)
-        {
-            auto& slot = slots.emplace_back(SemanticMapSlot{.backend = backendProvider(), .rows = {}, .answers = {}});
-            /// Stage 1 sends one record per request, under the same id the sysprompt's example uses.
-            auto& row = slot.rows.emplace_back(RowPayload{.rowId = "row1", .fields = {}});
-            for (const auto& name : inputNames)
-            {
-                row.fields.emplace_back(name, std::string{});
-            }
-            slot.answers.resize(numberOfSteps);
-        }
-    }
-
-    [[nodiscard]] SemanticMapSlot& getSlot(const WorkerThreadId thread)
-    {
-        /// Direct indexing on purpose: a modulo would let two threads share one non-thread-safe
-        /// backend and one scratch buffer if a thread id ever exceeded the configured worker count.
-        const auto index = thread.getRawValue();
-        INVARIANT(index < slots.size(), "WorkerThreadId {} is out of range for {} semantic map slots", index, slots.size());
-        return slots[index];
-    }
+    using SemanticOperatorState::SemanticOperatorState;
 
     void process(const WorkerThreadId thread)
     {
         auto& slot = getSlot(thread);
-        auto completion = request;
-        completion.prompt = codec.buildPrompt(slot.rows);
-
-        std::expected<std::string, BackendError> response;
-        {
-            /// MAX_CONCURRENCY bounds this operator's requests in flight across all of its worker
-            /// threads. As every thread blocks on its own request, it only binds below the thread count.
-            inFlight.acquire();
-            const Releaser releaser{inFlight};
-            response = slot.backend->complete(completion);
-        }
-
-        if (!response.has_value() && response.error().kind != BackendError::Kind::MALFORMED_RESPONSE)
-        {
-            throw InferenceRuntimeFailure("Semantic model '{}': {}", completion.modelName, response.error().message);
-        }
-        /// A 2xx body that is not a chat completion counts as an unusable answer, not as a failed
-        /// transport: every step falls back to its default value.
-        const auto answers = codec.parse(response.value_or(std::string{}), slot.rows);
-        slot.answers = answers.front();
+        /// Never fails: an unusable answer writes every step's default value.
+        slot.answers = codec.parse(roundTrip(slot), slot.rows).front();
     }
-
-    /// Releases the semaphore on every exit path, including a throwing backend.
-    struct Releaser
-    {
-        std::counting_semaphore<>& semaphore;
-
-        explicit Releaser(std::counting_semaphore<>& semaphore) : semaphore(semaphore) { }
-
-        Releaser(const Releaser&) = delete;
-        Releaser& operator=(const Releaser&) = delete;
-        Releaser(Releaser&&) = delete;
-        Releaser& operator=(Releaser&&) = delete;
-
-        ~Releaser() { semaphore.release(); }
-    };
-
-    SemanticBackendProvider backendProvider;
-    SemanticMapCodec codec;
-    CompletionRequest request;
-    std::vector<std::string> inputNames;
-    size_t numberOfSteps;
-    std::counting_semaphore<> inFlight;
-    std::vector<SemanticMapSlot> slots;
 };
 
 }
@@ -171,8 +75,7 @@ void setupSemanticMap(SemanticMapState* state, PipelineExecutionContext* pec)
 
 void terminateSemanticMap(SemanticMapState* state)
 {
-    /// Closes the endpoint connections when the query stops rather than when the plan is destroyed.
-    state->slots.clear();
+    state->terminate();
 }
 
 void setInput(SemanticMapState* state, const WorkerThreadId thread, const uint64_t fieldIndex, const int8_t* content, const uint64_t size)
@@ -217,7 +120,8 @@ SemanticMapPhysicalOperator::SemanticMapPhysicalOperator(
     {
         inputNames.push_back(fmt::format("{}", field));
     }
-    state = std::make_shared<SemanticMapState>(std::move(backendProvider), config, std::move(inputNames));
+    const auto numberOfSteps = config.steps.size();
+    state = std::make_shared<SemanticMapState>(std::move(backendProvider), config, std::move(inputNames), numberOfSteps);
 }
 
 void SemanticMapPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const

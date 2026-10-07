@@ -58,9 +58,10 @@ enum class PayloadFormat : uint8_t
     JSON_OBJECT,
 };
 
-/// One semantic step. SEM_MAP always registers exactly one. The list exists from the
-/// start so that operator fusion — merging an adjacent MAP and FILTER into a single
-/// prompt — does not later force a change to the catalog entry and its wire format.
+/// One semantic step. `CREATE SEM_MODEL` always registers exactly one: a MAP step when the
+/// model declares an OUTPUT clause, a FILTER step when it does not. Operator fusion
+/// (`fuseSemanticModels`) concatenates the step lists of adjacent operators, so that one prompt
+/// answers all of them.
 struct SemanticStep
 {
     enum class Kind : uint8_t
@@ -71,11 +72,14 @@ struct SemanticStep
 
     Kind kind = Kind::MAP;
     std::string prompt;
+    /// A MAP step's OUTPUT field. A FILTER step produces no column; its verdict is requested under
+    /// `__filter_<k>`, numbered by the codec, so the value stored here is informational only.
     std::string outputColumn;
     /// Closed set of admissible answers. Empty means free text, in which case the
-    /// model's answer is taken verbatim.
+    /// model's answer is taken verbatim. MAP only.
     std::vector<std::string> outputValues;
-    /// Written whenever the model omits this row or the response cannot be parsed.
+    /// Written whenever the model omits this row or the response cannot be parsed. MAP only: a
+    /// FILTER step drops such a row instead.
     std::string defaultValue;
 
     bool operator==(const SemanticStep&) const = default;
@@ -116,6 +120,10 @@ struct SemanticModelConfig
     /// because a finished record waits for the ones before it, so it is worth turning off where
     /// downstream does not care.
     bool preserveOrder = true;
+    /// Whether this model may be fused with an adjacent semantic operator over the same input into a
+    /// single prompt (`SemanticFusionRule`). Opt-in, like the reference's per-query `fusion=False`,
+    /// so the measured unfused baselines stay reproducible.
+    bool fusion = false;
 
     bool operator==(const SemanticModelConfig&) const = default;
 };
@@ -125,7 +133,8 @@ struct SemanticModelConfig
 using SemanticFieldList = Schema<UnqualifiedUnboundField, Ordered>;
 
 /// User-declared input and output field schemas, from the INPUT(...) and OUTPUT(...)
-/// clauses of `CREATE SEM_MODEL`.
+/// clauses of `CREATE SEM_MODEL`. `outputs` holds one field per MAP step, in step order, and is
+/// empty for a filter model, which adds no column.
 struct
     SemanticModelSchema /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding Schema (vector) trip the check; no real escape
 {
@@ -138,8 +147,9 @@ struct
 /// A catalog entry: the user-given name together with the validated configuration
 /// and field schema.
 ///
-/// Constructible only through `SemanticModelCatalog::registerModel` (which validates)
-/// or through reflection (which trusts the coordinator-side checks).
+/// Constructible only through `SemanticModelCatalog::registerModel` (which validates),
+/// through reflection (which trusts the coordinator-side checks) and through
+/// `fuseSemanticModels` (which combines two entries that were each validated).
 class RegisteredSemanticModel
 {
     std::string name;
@@ -154,6 +164,7 @@ class RegisteredSemanticModel
     friend class NES::SemanticModelCatalog;
     friend struct Reflector<RegisteredSemanticModel>;
     friend struct Unreflector<RegisteredSemanticModel>;
+    friend RegisteredSemanticModel fuseSemanticModels(const RegisteredSemanticModel& first, const RegisteredSemanticModel& second);
 
 public:
     [[nodiscard]] const std::string& getName() const { return name; }
@@ -162,8 +173,21 @@ public:
 
     [[nodiscard]] const SemanticModelSchema& getSchema() const { return schema; }
 
+    /// Whether any step drops rows, i.e. whether the entry runs as SEM_FILTER rather than SEM_MAP.
+    [[nodiscard]] bool hasFilterStep() const;
+
     bool operator==(const RegisteredSemanticModel&) const = default;
 };
+
+/// The model `Coordinator._apply_fusion` would build from two adjacent operators: `first` is the
+/// upstream one. Steps are concatenated (upstream first) with FILTER steps renumbered
+/// `__filter_0..n`, OUTPUT fields concatenated, and the INPUT fields and transport configuration
+/// taken from `first`. The name is "<first>+<second>".
+///
+/// Whether the two may be fused at all — equal inputs, equal transport, `fusion` set on both — is
+/// the caller's decision (`SemanticFusionRule`); this only throws `InvalidSemanticModel` when the
+/// combined OUTPUT fields collide.
+[[nodiscard]] RegisteredSemanticModel fuseSemanticModels(const RegisteredSemanticModel& first, const RegisteredSemanticModel& second);
 
 template <>
 struct Reflector<RegisteredSemanticModel>

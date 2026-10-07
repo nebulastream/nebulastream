@@ -59,6 +59,7 @@ struct EncodedPayload
     int64_t requestTimeoutSeconds;
     std::optional<std::string> apiKeyEnvVar;
     std::string backend;
+    bool fusion;
     std::vector<std::string> inputFields;
     std::vector<std::string> outputFields;
 };
@@ -85,31 +86,30 @@ std::string encodeSemanticMapPayload(const SemanticMapAsyncPayload& payload)
     steps.reserve(config.steps.size());
     for (const auto& step : config.steps)
     {
-        steps.emplace_back(
-            EncodedStep{
-                .kind = static_cast<int64_t>(step.kind),
-                .prompt = step.prompt,
-                .outputColumn = step.outputColumn,
-                .outputValues = step.outputValues,
-                .defaultValue = step.defaultValue});
+        steps.emplace_back(EncodedStep{
+            .kind = static_cast<int64_t>(step.kind),
+            .prompt = step.prompt,
+            .outputColumn = step.outputColumn,
+            .outputValues = step.outputValues,
+            .defaultValue = step.defaultValue});
     }
 
-    return rfl::json::write(
-        EncodedPayload{
-            .endpoint = config.endpoint,
-            .modelName = config.modelName,
-            .datasetPrompt = config.datasetPrompt,
-            .steps = std::move(steps),
-            .payloadFormat = static_cast<int64_t>(config.payloadFormat),
-            .batchSize = static_cast<int64_t>(config.batchSize),
-            .maxConcurrency = static_cast<int64_t>(config.maxConcurrency),
-            .maxRetries = static_cast<int64_t>(config.maxRetries),
-            .maxWaitTimeMs = static_cast<int64_t>(config.maxWaitTime.count()),
-            .requestTimeoutSeconds = static_cast<int64_t>(config.requestTimeout.count()),
-            .apiKeyEnvVar = config.apiKeyEnvVar,
-            .backend = config.backend,
-            .inputFields = payload.inputFields,
-            .outputFields = payload.outputFields});
+    return rfl::json::write(EncodedPayload{
+        .endpoint = config.endpoint,
+        .modelName = config.modelName,
+        .datasetPrompt = config.datasetPrompt,
+        .steps = std::move(steps),
+        .payloadFormat = static_cast<int64_t>(config.payloadFormat),
+        .batchSize = static_cast<int64_t>(config.batchSize),
+        .maxConcurrency = static_cast<int64_t>(config.maxConcurrency),
+        .maxRetries = static_cast<int64_t>(config.maxRetries),
+        .maxWaitTimeMs = static_cast<int64_t>(config.maxWaitTime.count()),
+        .requestTimeoutSeconds = static_cast<int64_t>(config.requestTimeout.count()),
+        .apiKeyEnvVar = config.apiKeyEnvVar,
+        .backend = config.backend,
+        .fusion = config.fusion,
+        .inputFields = payload.inputFields,
+        .outputFields = payload.outputFields});
 }
 
 SemanticMapAsyncPayload decodeSemanticMapPayload(const std::string_view encoded)
@@ -125,13 +125,12 @@ SemanticMapAsyncPayload decodeSemanticMapPayload(const std::string_view encoded)
     steps.reserve(value.steps.size());
     for (auto& step : value.steps)
     {
-        steps.emplace_back(
-            SemanticStep{
-                .kind = readEnum(step.kind, SemanticStep::Kind::FILTER, "SemanticStep::Kind"),
-                .prompt = std::move(step.prompt),
-                .outputColumn = std::move(step.outputColumn),
-                .outputValues = std::move(step.outputValues),
-                .defaultValue = std::move(step.defaultValue)});
+        steps.emplace_back(SemanticStep{
+            .kind = readEnum(step.kind, SemanticStep::Kind::FILTER, "SemanticStep::Kind"),
+            .prompt = std::move(step.prompt),
+            .outputColumn = std::move(step.outputColumn),
+            .outputValues = std::move(step.outputValues),
+            .defaultValue = std::move(step.defaultValue)});
     }
 
     return SemanticMapAsyncPayload{
@@ -150,7 +149,8 @@ SemanticMapAsyncPayload decodeSemanticMapPayload(const std::string_view encoded)
             .backend = std::move(value.backend),
             /// Only the synchronous path consults this; the executor exists because the
             /// decision was already made. Recorded so a round trip stays lossless.
-            .execution = SemanticExecution::ASYNCHRONOUS},
+            .execution = SemanticExecution::ASYNCHRONOUS,
+            .fusion = value.fusion},
         .inputFields = std::move(value.inputFields),
         .outputFields = std::move(value.outputFields)};
 }

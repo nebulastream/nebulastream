@@ -17,21 +17,13 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <SemanticModelCatalog.hpp>
+#include <SemanticRowPayload.hpp>
 
 namespace NES
 {
-
-/// One record as the codec sees it: an id unique within one prompt plus the declared INPUT fields'
-/// values, as text, in declared order.
-struct RowPayload
-{
-    std::string rowId;
-    std::vector<std::pair<std::string, std::string>> fields;
-};
 
 /// SEM_MAP's prompt layout and response decoding, following the Python reference
 /// (`_process_fused_steps`). A single user message of four blocks:
@@ -42,7 +34,8 @@ struct RowPayload
 ///     Data: {"<row_id>": ..., ...}
 ///
 /// Operator-specific by design: the transport (`SemanticBackend`) stays the same for every semantic
-/// operator, while filter, agg or redact bring their own codec.
+/// operator, while filter, agg or redact bring their own codec. A step list containing a FILTER step
+/// belongs to `SemanticFilterCodec`; this one handles MAP steps only.
 class SemanticMapCodec
 {
 public:

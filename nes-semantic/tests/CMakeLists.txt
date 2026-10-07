@@ -18,9 +18,12 @@ endfunction()
 
 add_nes_test_semantic(SemanticModelCatalogTest SemanticModelCatalogTest.cpp)
 add_nes_test_semantic(SemanticMapCodecTest SemanticMapCodecTest.cpp)
+add_nes_test_semantic(SemanticFilterCodecTest SemanticFilterCodecTest.cpp)
 add_nes_test_semantic(SemanticBackendFactoryTest SemanticBackendFactoryTest.cpp)
 add_nes_test_semantic(HttpSemanticBackendTest HttpSemanticBackendTest.cpp)
 add_nes_test_semantic(SemanticMapExecutorTest SemanticMapExecutorTest.cpp)
 # nes-async carries the executor plugin as an interface link, so this one target pulls in
 # both the registry and the implementation.
 target_link_libraries(SemanticMapExecutorTest nes-async)
+add_nes_test_semantic(SemanticFilterExecutorTest SemanticFilterExecutorTest.cpp)
+target_link_libraries(SemanticFilterExecutorTest nes-async)

@@ -23,7 +23,8 @@
 namespace NES
 {
 
-/// Everything the asynchronous SEM_MAP executor needs, in the one form it can travel in.
+/// Everything the asynchronous SEM_MAP and SEM_FILTER executors need, in the one form it can
+/// travel in. Both use this payload; which executor reads it is `AsyncExecutionTrait::executorType`.
 ///
 /// `AsyncExecutionTrait` carries plain strings, because it is serialized into a source
 /// descriptor and shipped to the worker. The model configuration is a nested structure, so
@@ -37,7 +38,8 @@ struct SemanticMapAsyncPayload
     SemanticModelConfig config;
     /// The model's declared INPUT fields, canonical names, in declared order.
     std::vector<std::string> inputFields;
-    /// The model's declared OUTPUT fields, canonical names, one per step in step order.
+    /// The model's declared OUTPUT fields, canonical names, one per MAP step in step order. Empty for
+    /// a model of FILTER steps only.
     std::vector<std::string> outputFields;
 };
 

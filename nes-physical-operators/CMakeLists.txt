@@ -36,6 +36,8 @@ target_link_libraries(nes-physical-operators PUBLIC nes-schema nes-sources nes-s
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+# The state the synchronous semantic operators share; not part of the module's interface.
+target_include_directories(nes-physical-operators PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/Semantic)
 
 add_subdirectory(rust/cast-to-unix-timestamp)
 target_link_libraries(nes-physical-operators PRIVATE nes-rust-timestamp-bindings)

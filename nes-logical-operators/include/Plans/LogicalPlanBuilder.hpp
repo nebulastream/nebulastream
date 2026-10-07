@@ -99,6 +99,8 @@ public:
 
     static LogicalPlan addSemanticMap(Identifier modelName, const LogicalPlan& childPlan);
 
+    static LogicalPlan addSemanticFilter(Identifier modelName, const LogicalPlan& childPlan);
+
     static LogicalPlan addSink(Identifier sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addAnonymousSink(
         Identifier type,

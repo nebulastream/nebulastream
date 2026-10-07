@@ -23,6 +23,7 @@ add_source_files(nes-query-compiler
         LowerToPhysicalEventTimeWatermarkAssigner.cpp
         LowerToPhysicalInferModel.cpp
         LowerToPhysicalSemanticMap.cpp
+        LowerToPhysicalSemanticFilter.cpp
 )
 
 add_registry_entry(LoweringRule NLJoin)
@@ -37,3 +38,4 @@ add_registry_entry(LoweringRule IngestionTimeWatermarkAssigner)
 add_registry_entry(LoweringRule EventTimeWatermarkAssigner)
 add_registry_entry(LoweringRule InferModel)
 add_registry_entry(LoweringRule SemanticMap)
+add_registry_entry(LoweringRule SemanticFilter)

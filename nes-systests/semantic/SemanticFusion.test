@@ -1,0 +1,170 @@
+# name: semantic/SemanticFusion.test
+# description: Operator fusion ('TRUE' AS LLM.FUSION): adjacent semantic operators over the same input
+#              and the same model become one operator answering one prompt, as the Python reference's
+#              Coordinator._apply_fusion does. Every fused query is run next to its unfused twin -- same
+#              prompts, same mock, fusion off -- and must produce the same records; EXPLAIN shows the
+#              single fused operator ("<lower>+<upper>") replacing the pair.
+#
+#              The mock answers every requested column with the same text, the record's own upper-cased
+#              for 'echo', so a filter keeps exactly the records reading "true" or "yes" whether it is
+#              asked alone, with another filter, or alongside a map.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,true
+2,no
+3,YES
+4,false
+5,maybe
+6,True
+
+# Fusable models: identical transport, FUSION on.
+CREATE SEM_MODEL fPositive
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'TRUE' AS LLM.FUSION);
+
+CREATE SEM_MODEL fActing
+INPUT (description VARSIZED)
+SET ('The review mentions acting' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'TRUE' AS LLM.FUSION);
+
+CREATE SEM_MODEL fShout
+INPUT (description VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'TRUE' AS LLM.FUSION);
+
+CREATE SEM_MODEL fShoutAgain
+INPUT (description VARSIZED)
+OUTPUT (louder VARSIZED)
+SET ('Echo the description upper-cased again' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND, 'TRUE' AS LLM.FUSION);
+
+# Their unfused twins.
+CREATE SEM_MODEL uPositive
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL uActing
+INPUT (description VARSIZED)
+SET ('The review mentions acting' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL uShout
+INPUT (description VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL uShoutAgain
+INPUT (description VARSIZED)
+OUTPUT (louder VARSIZED)
+SET ('Echo the description upper-cased again' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME,
+     'mock' AS LLM.BACKEND);
+
+# Fusable and asynchronous, batched.
+CREATE SEM_MODEL aPositive
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'TRUE' AS LLM.FUSION, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 2 AS LLM.MAX_CONCURRENCY);
+
+CREATE SEM_MODEL aShout
+INPUT (description VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'TRUE' AS LLM.FUSION, 'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 2 AS LLM.MAX_CONCURRENCY);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL) TYPE File;
+CREATE SINK mapped(id UINT64 NOT NULL, description VARSIZED NOT NULL, loud VARSIZED NOT NULL) TYPE File;
+CREATE SINK mappedTwice(id UINT64 NOT NULL, description VARSIZED NOT NULL, loud VARSIZED NOT NULL, louder VARSIZED NOT NULL) TYPE File;
+
+# filter + filter: one flat-envelope prompt with both conditions.
+SELECT * FROM SEM_FILTER(fActing, SEM_FILTER(fPositive, reviews)) INTO out;
+----
+1,true
+3,YES
+6,True
+
+SELECT * FROM SEM_FILTER(uActing, SEM_FILTER(uPositive, reviews)) INTO out;
+----
+1,true
+3,YES
+6,True
+
+# map + filter: the fused operator is a filter that also writes LOUD.
+SELECT * FROM SEM_FILTER(fPositive, SEM_MAP(fShout, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+SELECT * FROM SEM_FILTER(uPositive, SEM_MAP(uShout, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+# filter + map.
+SELECT * FROM SEM_MAP(fShout, SEM_FILTER(fPositive, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+SELECT * FROM SEM_MAP(uShout, SEM_FILTER(uPositive, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+# map + map: a fused SEM_MAP writing both columns, every record kept.
+SELECT * FROM SEM_MAP(fShoutAgain, SEM_MAP(fShout, reviews)) INTO mappedTwice;
+----
+1,true,TRUE,TRUE
+2,no,NO,NO
+3,YES,YES,YES
+4,false,FALSE,FALSE
+5,maybe,MAYBE,MAYBE
+6,True,TRUE,TRUE
+
+SELECT * FROM SEM_MAP(uShoutAgain, SEM_MAP(uShout, reviews)) INTO mappedTwice;
+----
+1,true,TRUE,TRUE
+2,no,NO,NO
+3,YES,YES,YES
+4,false,FALSE,FALSE
+5,maybe,MAYBE,MAYBE
+6,True,TRUE,TRUE
+
+# A chain of three collapses into one operator.
+SELECT * FROM SEM_FILTER(fActing, SEM_FILTER(fPositive, SEM_MAP(fShout, reviews))) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+# Fused and asynchronous: one executor, batched, answering the fused prompt.
+SELECT * FROM SEM_FILTER(aPositive, SEM_MAP(aShout, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT * FROM SEM_FILTER(fPositive, SEM_MAP(fShout, reviews)) INTO mapped;
+----
+== Optimized Global Plan ==
+SINK(MAPPED)
+  SEM_FILTER(model: FSHOUT+FPOSITIVE, inputFields: [DESCRIPTION])
+    SOURCE(REVIEWS)
+==END==
+
+# Fusion is opt-in on both sides: one unfused model keeps the pair apart.
+EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT * FROM SEM_FILTER(uPositive, SEM_MAP(fShout, reviews)) INTO mapped;
+----
+== Optimized Global Plan ==
+SINK(MAPPED)
+  SEM_FILTER(model: UPOSITIVE, inputFields: [DESCRIPTION])
+    SEM_MAP(model: FSHOUT, inputFields: [DESCRIPTION])
+      SOURCE(REVIEWS)
+==END==

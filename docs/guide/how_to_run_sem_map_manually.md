@@ -126,11 +126,89 @@ every record in it has been answered. That is not batching: every review is stil
   set). It is written when the model's answer is not one of the `OUTPUT_VALUES` or the response
   cannot be parsed. The worker logs the reason for every such row:
   ```shell
-  grep -o "Semantic map answer .* for row\|has no answer for row" singleNodeWorker.log | sort | uniq -c
+  grep -o "Semantic answer .* for row\|has no answer for row" singleNodeWorker.log | sort | uniq -c
   ```
   Expect answers such as `neutral`, `mixed` or `-`, mostly on genuinely mixed reviews. SEM_MAP sets
   no temperature, so the set of empty rows changes from run to run. If the endpoint is unreachable,
   the query fails with error 3006 instead of writing defaults.
+
+## SEM_FILTER: keeping only the positive reviews
+
+A model declared **without** an `OUTPUT` clause is a filter model. It adds no column. `SEM_FILTER`
+keeps a record only if the model affirms it, which means one of these answers:
+
+- JSON `true`
+- the string `"true"` or `"yes"`, in any case
+- a non-zero number
+
+Every other answer drops the record, and so do a missing row and an unparseable response.
+`OUTPUT_VALUES` and `DEFAULT_VALUE` are rejected on a filter model, because there is no column for
+them to describe. Everything else is the same as SEM_MAP: the options, the `ASYNC` execution, and a
+transport failure that fails the query with error 3006.
+
+`~/rt/d1q2.sql`, using the same worker and data as above:
+
+```sql
+CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS DATA);
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File SET(
+  '/data/rt200.csv' AS "SOURCE".FILE_PATH,
+  'localhost:8080'  AS "SOURCE"."HOST",
+  'CSV'             AS INPUT_FORMATTER."TYPE");
+CREATE SEM_MODEL is_positive
+  INPUT (reviewText VARSIZED)
+  SET ('The review is positive'    AS LLM.PROMPT,
+       'http://localhost:11434/v1' AS LLM.ENDPOINT,
+       'llama3.1:latest'           AS LLM.MODEL_NAME,
+       'ASYNC'                     AS LLM.EXECUTION,
+       8                           AS LLM.BATCH_SIZE);
+SELECT id FROM SEM_FILTER(is_positive, reviews)
+  INTO File('/data/rt_positive.csv' AS "SINK".FILE_PATH,
+            'CSV'                   AS "SINK".OUTPUT_FORMAT,
+            'localhost:8080'        AS "SINK"."HOST");
+```
+
+Run it as in step 3, with `d1q2.sql` as the input. To check the kept ids against the labels:
+
+```shell
+python3 - <<'EOF'
+import os
+rt = os.path.expanduser("~/rt")
+truth = dict(l.strip().split(",", 1) for l in open(f"{rt}/rt200_labels.csv"))
+kept = {l.strip() for l in list(open(f"{rt}/rt_positive.csv"))[1:]}
+positive = {k for k, v in truth.items() if v == "POSITIVE"}
+print(f"kept={len(kept)} true_positives={len(kept & positive)} labelled_positive={len(positive)}")
+EOF
+```
+
+### Fusing SEM_FILTER and SEM_MAP into one prompt
+
+Adjacent semantic operators can share one prompt per batch instead of making one round trip each,
+as the Python reference does with `fusion=True`. For this to happen, both models must meet all of
+these conditions:
+
+- both set `'TRUE' AS LLM.FUSION`
+- both read the same INPUT fields, in the same order
+- both use the same endpoint, model and remaining LLM settings, apart from the prompt
+- their OUTPUT fields don't collide
+
+```sql
+CREATE SEM_MODEL sentiment
+  INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED)
+  SET ('Determine if the review is positive or negative' AS LLM.PROMPT,
+       'http://localhost:11434/v1' AS LLM.ENDPOINT, 'llama3.1:latest' AS LLM.MODEL_NAME,
+       'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 'TRUE' AS LLM.FUSION);
+CREATE SEM_MODEL mentions_acting
+  INPUT (reviewText VARSIZED)
+  SET ('The review mentions the acting' AS LLM.PROMPT,
+       'http://localhost:11434/v1' AS LLM.ENDPOINT, 'llama3.1:latest' AS LLM.MODEL_NAME,
+       'ASYNC' AS LLM.EXECUTION, 8 AS LLM.BATCH_SIZE, 'TRUE' AS LLM.FUSION);
+SELECT id, sentiment FROM SEM_FILTER(mentions_acting, SEM_MAP(sentiment, reviews)) INTO ...;
+```
+
+`EXPLAIN (OPTIMIZED) FORMAT TEXT SELECT ...` shows a single
+`SEM_FILTER(model: SENTIMENT+MENTIONS_ACTING, ...)` where the pair used to be. Leave `LLM.FUSION`
+unset to reproduce the unfused baselines.
 
 ## Other OpenAI-compatible endpoints
 

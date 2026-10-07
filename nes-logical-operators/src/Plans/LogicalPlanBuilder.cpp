@@ -37,6 +37,7 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/SemanticFilterNameLogicalOperator.hpp>
 #include <Operators/SemanticMapNameLogicalOperator.hpp>
 #include <Operators/Sinks/AnonymousSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -171,6 +172,12 @@ LogicalPlan LogicalPlanBuilder::addSemanticMap(Identifier modelName, const Logic
 {
     NES_TRACE("LogicalPlanBuilder: add semantic map operator to query plan for model {}", modelName);
     return promoteOperatorToRoot(childPlan, TypedLogicalOperator<SemanticMapNameLogicalOperator>{modelName.asCanonicalString()});
+}
+
+LogicalPlan LogicalPlanBuilder::addSemanticFilter(Identifier modelName, const LogicalPlan& childPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add semantic filter operator to query plan for model {}", modelName);
+    return promoteOperatorToRoot(childPlan, TypedLogicalOperator<SemanticFilterNameLogicalOperator>{modelName.asCanonicalString()});
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(Identifier sinkName, const LogicalPlan& queryPlan)

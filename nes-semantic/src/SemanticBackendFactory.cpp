@@ -18,7 +18,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -26,6 +25,7 @@
 #include <MockSemanticBackend.hpp>
 #include <SemanticBackend.hpp>
 #include <SemanticModelCatalog.hpp>
+#include <SemanticPromptLayout.hpp>
 
 namespace NES
 {
@@ -40,13 +40,9 @@ std::unique_ptr<SemanticBackend> SemanticBackendFactory::create(const SemanticMo
     {
         NES_DEBUG(
             "Semantic model '{}' is answered by the mock backend ('{}'); nothing leaves the process", config.modelName, config.endpoint);
-        std::vector<std::string> outputColumns;
-        outputColumns.reserve(config.steps.size());
-        for (const auto& step : config.steps)
-        {
-            outputColumns.push_back(step.outputColumn);
-        }
-        return std::make_unique<MockSemanticBackend>(config.endpoint, std::move(outputColumns));
+        /// The columns the codec will ask for, so the mock answers in the envelope the prompt requests:
+        /// flat for a list of FILTER steps only, nested under every step's column otherwise.
+        return std::make_unique<MockSemanticBackend>(config.endpoint, detail::responseColumns(config.steps));
     }
     throw InvalidSemanticModel("Unknown semantic model backend '{}' (expected http or mock)", config.backend);
 }

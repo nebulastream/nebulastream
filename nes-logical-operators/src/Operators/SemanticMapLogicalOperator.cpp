@@ -81,9 +81,14 @@ std::string SemanticMapLogicalOperator::explain(ExplainVerbosity verbosity, Oper
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "SEM_MAP(opId: {}, inputFields: [{}], traitSet: {})", opId, fmt::join(inputNames, ", "), traitSet.explain(verbosity));
+            "SEM_MAP(opId: {}, model: {}, inputFields: [{}], traitSet: {})",
+            opId,
+            model.getName(),
+            fmt::join(inputNames, ", "),
+            traitSet.explain(verbosity));
     }
-    return fmt::format("SEM_MAP(inputFields: [{}])", fmt::join(inputNames, ", "));
+    /// The model name tells a fused operator ("a+b") apart from the ones it replaced.
+    return fmt::format("SEM_MAP(model: {}, inputFields: [{}])", model.getName(), fmt::join(inputNames, ", "));
 }
 
 void SemanticMapLogicalOperator::inferLocalSchema()

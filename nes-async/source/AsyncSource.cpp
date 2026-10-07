@@ -173,7 +173,7 @@ void AsyncSource::intakeLoop(const std::stop_token& stopToken)
                 if (recordCount == 0)
                 {
                     /// No batches means nothing would ever complete this buffer, so it is done now.
-                    completed.emplace(ticket, Processed{.input = std::move(*input), .results = {}, .emittedRecords = 0});
+                    completed.emplace(ticket, Processed{.input = std::move(*input), .results = {}, .consumedRecords = 0});
                 }
                 else
                 {
@@ -280,7 +280,7 @@ void AsyncSource::processingLoop(const std::stop_token& stopToken)
                     Processed{
                         .input = std::move(entryIterator->second.input),
                         .results = std::move(entryIterator->second.results),
-                        .emittedRecords = 0});
+                        .consumedRecords = 0});
                 pending.erase(entryIterator);
                 inputExhausted = intakeDone && work.empty() && pending.empty();
                 lock.unlock();
@@ -387,30 +387,43 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
     const auto capacity = outputLayout.capacity(tupleBuffer.getBufferSize());
     INVARIANT(capacity > 0, "Output records do not fit into a single buffer");
 
-    const auto remaining = totalRecords - processed.emittedRecords;
-    const auto toEmit = std::min<uint64_t>(capacity, remaining);
-
-    for (uint64_t index = 0; index < toEmit; ++index)
+    /// Walks the input until the output is full or the input exhausted. A dropped record costs no
+    /// output space, so one output buffer may cover more input records than it holds.
+    uint64_t written = 0;
+    for (; processed.consumedRecords < totalRecords && written < capacity; ++processed.consumedRecords)
     {
-        const auto sourceIndex = processed.emittedRecords + index;
-        const AsyncRecordView inputRecord{inputLayout, processed.input, sourceIndex};
-        AsyncRecordWriter writer{outputLayout, tupleBuffer, *bufferProvider, index};
+        const auto& result = processed.results[processed.consumedRecords];
+        if (!result.keep)
+        {
+            continue;
+        }
+        const AsyncRecordView inputRecord{inputLayout, processed.input, processed.consumedRecords};
+        AsyncRecordWriter writer{outputLayout, tupleBuffer, *bufferProvider, written};
 
         /// Carry the incoming fields over, then apply whatever the operator produced. A field
-        /// the executor left out keeps its default, so a record is never dropped.
+        /// the executor left out keeps its default.
         writer.copyMatchingFields(inputRecord);
-        for (const auto& [fieldIndex, value] : processed.results[sourceIndex].fields)
+        for (const auto& [fieldIndex, value] : result.fields)
         {
             writer.writeAsText(fieldIndex, value);
         }
+        ++written;
     }
 
-    processed.emittedRecords += toEmit;
-    const bool finishedInputBuffer = processed.emittedRecords == totalRecords;
+    /// Dropped records right after a full output take no space either. Consuming them here means an
+    /// input buffer that ends in dropped records finishes with this chunk rather than with an extra,
+    /// empty one.
+    while (processed.consumedRecords < totalRecords && !processed.results[processed.consumedRecords].keep)
+    {
+        ++processed.consumedRecords;
+    }
+    const bool finishedInputBuffer = processed.consumedRecords == totalRecords;
 
     /// Metadata is carried over verbatim; renumbering here would break the downstream
-    /// watermark processing. Only the chunk number is ours to assign.
-    tupleBuffer.setNumberOfTuples(toEmit);
+    /// watermark processing. Only the chunk number is ours to assign. An empty buffer is still
+    /// emitted when every record was dropped: it is what carries the sequence number, the
+    /// watermark and the last-chunk flag on.
+    tupleBuffer.setNumberOfTuples(written);
     tupleBuffer.setOriginId(processed.input.getOriginId());
     tupleBuffer.setSequenceNumber(processed.input.getSequenceNumber());
     tupleBuffer.setWatermark(processed.input.getWatermark());
@@ -421,7 +434,7 @@ Source::FillTupleBufferResult AsyncSource::fillTupleBuffer(TupleBuffer& tupleBuf
         partiallyEmitted.reset();
     }
 
-    return FillTupleBufferResult::withBytes(toEmit);
+    return FillTupleBufferResult::withBytes(written);
 }
 
 void AsyncSource::close()

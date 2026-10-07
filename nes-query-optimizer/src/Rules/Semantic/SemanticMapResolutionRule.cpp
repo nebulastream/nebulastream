@@ -25,10 +25,10 @@
 #include <variant>
 #include <vector>
 
-#include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifier.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/LogicalOperatorFwd.hpp>
+#include <Operators/SemanticFilterLogicalOperator.hpp>
+#include <Operators/SemanticFilterNameLogicalOperator.hpp>
 #include <Operators/SemanticMapLogicalOperator.hpp>
 #include <Operators/SemanticMapNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -37,13 +37,13 @@
 #include <Rules/Semantic/AnonymousSinkBindingRule.hpp>
 #include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/SemanticAsyncExecution.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Traits/AsyncExecutionTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <PlanRuleRegistry.hpp>
-#include <SemanticAsyncWiring.hpp>
 #include <SemanticModelCatalog.hpp>
 
 namespace NES
@@ -52,79 +52,72 @@ namespace NES
 namespace
 {
 
-/// Enough room that the producer keeps the executor's threads busy without parking a large
-/// share of the shared buffer pool: two buffers per concurrent call, never fewer than the
-/// framework's own default.
-constexpr size_t MinimumChannelCapacity = 64;
-
-/// Turns the model's configuration into the marker `AsyncOperatorSplitter` acts on. Only the
-/// model knows what the executor needs, and only here is it loaded, so the whole payload is
-/// assembled once and travels as plain data from this point on.
-AsyncExecutionTrait asyncExecution(const RegisteredSemanticModel& model)
+/// The resolved operator for a placeholder, with the async marker attached when the model asks for
+/// it. Attached here, where the model is loaded, and read much later by AsyncOperatorSplitter: the
+/// trait set is stored on the operator, so it survives the rebuilding the remaining rules and the
+/// decomposition do.
+template <typename Resolved>
+LogicalOperator resolve(const RegisteredSemanticModel& model)
 {
-    const auto& config = model.getConfig();
-    const auto canonicalNames = [](const SemanticFieldList& fields)
+    auto resolved = LogicalOperator{TypedLogicalOperator<Resolved>{model}};
+    if (model.getConfig().execution == SemanticExecution::ASYNCHRONOUS)
     {
-        return fields
-            | std::views::transform([](const UnqualifiedUnboundField& field)
-                                    { return static_cast<const Identifier&>(field.getFullyQualifiedName()).asCanonicalString(); })
-            | std::ranges::to<std::vector>();
-    };
-
-    auto encoded = encodeSemanticMapPayload(SemanticMapAsyncPayload{
-        .config = config,
-        .inputFields = canonicalNames(model.getSchema().inputs),
-        .outputFields = canonicalNames(model.getSchema().outputs)});
-
-    return AsyncExecutionTrait{
-        "SemanticMap",
-        {{std::string{SemanticMapConfigKey}, std::move(encoded)}},
-        config.batchSize,
-        config.maxConcurrency,
-        std::max(MinimumChannelCapacity, 2 * config.maxConcurrency),
-        config.preserveOrder};
+        auto traits = resolved.getTraitSet();
+        traits.insert(semanticAsyncExecution(model));
+        resolved = resolved.withTraitSet(std::move(traits));
+    }
+    return resolved;
 }
 
 }
 
 LogicalPlan SemanticMapResolutionRule::apply(const LogicalPlan& queryPlan) const
 {
-    /// The up-context records whether a subtree contains a resolved SEM_MAP, i.e. whether the
+    /// The up-context records whether a subtree contains a resolved semantic operator, i.e. whether the
     /// operator sits on a spine that has to be relinked.
     using ResolutionVisitor = PlanVisitor<std::monostate, std::monostate, bool>;
     ResolutionVisitor visitor{
         [this](const LogicalOperator& op, std::vector<LogicalOperator> children, std::unordered_map<LogicalOperator, bool> upContexts)
             -> ResolutionVisitor::UpResult
         {
-            if (const auto semanticMapName = op.tryGetAs<SemanticMapNameLogicalOperator>())
+            const auto semanticMapName = op.tryGetAs<SemanticMapNameLogicalOperator>();
+            const auto semanticFilterName = op.tryGetAs<SemanticFilterNameLogicalOperator>();
+            if (semanticMapName || semanticFilterName)
             {
-                const auto modelName = semanticMapName->get().getModelName();
+                const bool isFilter = semanticFilterName.has_value();
+                const auto modelName = isFilter ? semanticFilterName->get().getModelName() : semanticMapName->get().getModelName();
                 if (!semanticModelCatalog->hasModel(modelName))
                 {
                     throw UnknownSemanticModelName("Semantic model '{}' is not registered", modelName);
                 }
                 PRECONDITION(
                     std::ranges::size(children) == 1,
-                    "Expected SemanticMapName Logical Operator to have one child, but has {}",
+                    "Expected {} Logical Operator to have one child, but has {}",
+                    op.getName(),
                     std::ranges::size(children));
+                /// A filter model declares no OUTPUT and a map model no condition, so using one in the
+                /// other's place is a mistake in the query rather than something to guess around.
+                auto model = semanticModelCatalog->load(modelName);
+                if (isFilter && !model.hasFilterStep())
+                {
+                    throw InvalidSemanticModel(
+                        "Semantic model '{}' declares an OUTPUT clause and is a SEM_MAP model; SEM_FILTER needs a model without OUTPUT",
+                        modelName);
+                }
+                if (!isFilter && model.hasFilterStep())
+                {
+                    throw InvalidSemanticModel(
+                        "Semantic model '{}' declares no OUTPUT clause and is a SEM_FILTER model; SEM_MAP needs a model with OUTPUT",
+                        modelName);
+                }
                 /// withChildrenUnsafe, not the child-taking constructor: the constructor infers the
                 /// local schema eagerly, which reads the child's output schema — absent on a Union
                 /// straight out of LogicalSourceExpansionRule and guarded on an unresolved
                 /// InferModelName.
-                auto model = semanticModelCatalog->load(modelName);
-                auto resolved = LogicalOperator{TypedLogicalOperator<SemanticMapLogicalOperator>{model}};
-                if (model.getConfig().execution == SemanticExecution::ASYNCHRONOUS)
-                {
-                    /// Attached here, where the model is loaded, and read much later by
-                    /// AsyncOperatorSplitter: the trait set is stored on the operator, so it
-                    /// survives the rebuilding the remaining rules and the decomposition do.
-                    auto traits = resolved.getTraitSet();
-                    traits.insert(asyncExecution(model));
-                    resolved = resolved.withTraitSet(std::move(traits));
-                }
+                auto resolved = isFilter ? resolve<SemanticFilterLogicalOperator>(model) : resolve<SemanticMapLogicalOperator>(model);
                 return {resolved.withChildrenUnsafe(std::move(children)), true};
             }
-            /// Subtrees without a resolved SEM_MAP are returned as they are. Rebuilding them would
+            /// Subtrees without a resolved semantic operator are returned as they are. Rebuilding them would
             /// gain nothing and would put other placeholders (InferModelName) through code paths
             /// that expect a resolved plan.
             const bool onResolvedSpine = std::ranges::any_of(upContexts, [](const auto& entry) { return entry.second; });
@@ -148,7 +141,7 @@ std::set<std::type_index> SemanticMapResolutionRule::needs() const
 std::set<std::type_index> SemanticMapResolutionRule::neededBy() const
 {
     /// InferModelResolutionRule rebuilds every operator with withChildren, which re-infers schemas;
-    /// it must therefore meet resolved SemanticMap operators rather than placeholders.
+    /// it must therefore meet resolved semantic operators rather than placeholders.
     return {typeid(TypeInferenceRule), typeid(SemanticAnalysisBarrier), typeid(InferModelResolutionRule)};
 }
 

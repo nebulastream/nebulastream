@@ -1,0 +1,137 @@
+# name: semantic/SemanticFilter.test
+# description: SEM_FILTER(model, input) end to end under a real worker, against the mock backend. A
+#              model declared without OUTPUT is a filter model: it adds no column and keeps a record
+#              only if the model affirms it. The mock answers through the real codec in the flat
+#              {row_id: {answer, confidence}} envelope a filter prompt asks for, so the verdict parsing
+#              and its truthiness rules (true / "true" / "yes", any case) run as against a live model.
+#              'echo' answers with the text upper-cased, so each record's text is its own verdict.
+# groups: [Semantic]
+
+CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, description VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR reviews TYPE File;
+ATTACH INLINE
+1,true
+2,no
+3,YES
+4,false
+5,maybe
+6,True
+
+CREATE LOGICAL SOURCE articles(id UINT64 NOT NULL, title VARSIZED NOT NULL, verdict VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR articles TYPE File;
+ATTACH INLINE
+1,Good news,yes
+2,Bad news,no
+
+# The record's own text as the verdict.
+CREATE SEM_MODEL echoFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Constant verdicts.
+CREATE SEM_MODEL keepAll
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'label:true' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SEM_MODEL dropAll
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'label:false' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# A model that answers with prose instead of JSON.
+CREATE SEM_MODEL garbageFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# An endpoint that cannot be reached.
+CREATE SEM_MODEL downFilter
+INPUT (description VARSIZED)
+SET ('The review is positive' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+# Filters on another field of a wider record.
+CREATE SEM_MODEL verdictFilter
+INPUT (verdict VARSIZED)
+SET ('The article is good news' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
+     'News headlines' AS LLM.DATASET_PROMPT);
+
+# A map model, for mixing the two operators.
+CREATE SEM_MODEL shout
+INPUT (description VARSIZED)
+OUTPUT (loud VARSIZED)
+SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
+
+CREATE SINK out(id UINT64 NOT NULL, description VARSIZED NOT NULL) TYPE File;
+CREATE SINK mapped(id UINT64 NOT NULL, description VARSIZED NOT NULL, loud VARSIZED NOT NULL) TYPE File;
+CREATE SINK news(id UINT64 NOT NULL, title VARSIZED NOT NULL, verdict VARSIZED NOT NULL) TYPE File;
+CREATE SINK ids(id UINT64 NOT NULL) TYPE File;
+
+# Query 1: true, "YES" and "True" pass; "no", "false" and "maybe" are dropped. The schema is the input's.
+SELECT * FROM SEM_FILTER(echoFilter, reviews) INTO out;
+----
+1,true
+3,YES
+6,True
+
+# Query 2: a constant true keeps every record.
+SELECT * FROM SEM_FILTER(keepAll, reviews) INTO out;
+----
+1,true
+2,no
+3,YES
+4,false
+5,maybe
+6,True
+
+# Query 3: a constant false drops every record, and the query still ends normally.
+SELECT * FROM SEM_FILTER(dropAll, reviews) INTO out;
+----
+
+# Query 4: an unparseable response is not a verdict, so every record is dropped -- the reference's
+# falsy default -- but the query does not fail.
+SELECT * FROM SEM_FILTER(garbageFilter, reviews) INTO out;
+----
+
+# Query 5: an unreachable endpoint fails the query, as it does for SEM_MAP.
+SELECT * FROM SEM_FILTER(downFilter, reviews) INTO out;
+----
+ERROR 3006 "unreachable"
+
+# Query 6: SEM_FILTER over a subquery, with an ordinary predicate downstream.
+SELECT id FROM SEM_FILTER(echoFilter, (SELECT * FROM reviews WHERE id > UINT64(1))) WHERE id < UINT64(6) INTO ids;
+----
+3
+
+# Query 7: a filter on one field of a wider record keeps the whole record.
+SELECT * FROM SEM_FILTER(verdictFilter, articles) INTO news;
+----
+1,Good news,yes
+
+# Query 8: SEM_MAP over SEM_FILTER: only the surviving records are mapped.
+SELECT * FROM SEM_MAP(shout, SEM_FILTER(echoFilter, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+# Query 9: SEM_FILTER over SEM_MAP: the map's column passes through the filter.
+SELECT * FROM SEM_FILTER(echoFilter, SEM_MAP(shout, reviews)) INTO mapped;
+----
+1,true,TRUE
+3,YES,YES
+6,True,TRUE
+
+# Query 10: two filters in a row.
+SELECT * FROM SEM_FILTER(keepAll, SEM_FILTER(echoFilter, reviews)) INTO out;
+----
+1,true
+3,YES
+6,True
+
+# Query 11: a map model in SEM_FILTER is a mistake in the query.
+SELECT * FROM SEM_FILTER(shout, reviews) INTO mapped;
+----
+ERROR 2046
+
+# Query 12: and so is a filter model in SEM_MAP.
+SELECT * FROM SEM_MAP(echoFilter, reviews) INTO mapped;
+----
+ERROR 2046

@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -37,6 +39,7 @@
 #include <Schema/SchemaFwd.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/UUID.hpp>
 #include <gtest/gtest.h>
 #include <BackpressureChannel.hpp>
@@ -138,8 +141,22 @@ public:
         return sink;
     }
 
+    struct SourceOptions
+    {
+        std::chrono::milliseconds delay{0};
+        /// Records whose text starts with this are dropped by the executor; empty drops nothing.
+        std::string dropPrefix;
+        size_t maxConcurrency = 1;
+        bool preserveOrder = true;
+    };
+
     /// A consumer running the DelayExecutor: one record per call, one call at a time.
     std::unique_ptr<Source> makeSource(const std::chrono::milliseconds delay) const
+    {
+        return makeSource(SourceOptions{.delay = delay, .dropPrefix = {}, .maxConcurrency = 1, .preserveOrder = true});
+    }
+
+    std::unique_ptr<Source> makeSource(const SourceOptions& options) const
     {
         const SourceCatalog sourceCatalog;
         const auto descriptor = sourceCatalog.getAnonymousSource(
@@ -150,10 +167,15 @@ public:
             {{Identifier::parse("channel"), channelId},
              {Identifier::parse("executor_type"), "Delay"},
              {Identifier::parse("executor_config"),
-              encodeConfig({{"input_field", "reviewText"}, {"output_field", "sentiment"}, {"delay_ms", std::to_string(delay.count())}})},
+              encodeConfig(
+                  {{"input_field", "reviewText"},
+                   {"output_field", "sentiment"},
+                   {"delay_ms", std::to_string(options.delay.count())},
+                   {"drop_prefix", options.dropPrefix}})},
              {Identifier::parse("input_schema"), encodeSchema(inputSchema())},
              {Identifier::parse("batch_size"), "1"},
-             {Identifier::parse("max_concurrency"), "1"}});
+             {Identifier::parse("max_concurrency"), std::to_string(options.maxConcurrency)},
+             {Identifier::parse("preserve_order"), options.preserveOrder ? "true" : "false"}});
         EXPECT_TRUE(descriptor.has_value());
         return SourceRegistry::instance().find("Async").value()(SourceRegistryArguments{.sourceDescriptor = descriptor.value()});
     }
@@ -161,18 +183,62 @@ public:
     /// A buffer of `records` input records, in the layout the producer half would hand over.
     TupleBuffer inputBuffer(const size_t records) const
     {
-        const AsyncRecordLayout layout{inputSchema()};
-        auto buffer = bufferManager->getBufferBlocking();
+        std::vector<std::string> texts;
         for (size_t index = 0; index < records; ++index)
         {
-            AsyncRecordWriter writer{layout, buffer, *bufferManager, index};
-            writer.writeText(0, "review " + std::to_string(index));
+            texts.push_back("review " + std::to_string(index));
         }
-        buffer.setNumberOfTuples(records);
+        return inputBuffer(texts);
+    }
+
+    TupleBuffer inputBuffer(const std::vector<std::string>& texts) const
+    {
+        const AsyncRecordLayout layout{inputSchema()};
+        auto buffer = bufferManager->getBufferBlocking();
+        for (size_t index = 0; index < texts.size(); ++index)
+        {
+            AsyncRecordWriter writer{layout, buffer, *bufferManager, index};
+            writer.writeText(0, texts[index]);
+        }
+        buffer.setNumberOfTuples(texts.size());
+        buffer.setOriginId(OriginId(7));
+        buffer.setWatermark(Timestamp(1000 * (nextSequenceNumber + 1)));
+        buffer.setLastChunk(true);
         /// Distinct, because BackpressureHandler recognises its retried buffer by sequence and chunk.
         buffer.setSequenceNumber(SequenceNumber(nextSequenceNumber++));
         buffer.setChunkNumber(INITIAL<ChunkNumber>);
         return buffer;
+    }
+
+    /// One emitted buffer, decoded: what downstream would see.
+    struct Emitted
+    {
+        std::vector<std::string> texts;
+        SequenceNumber sequence = INVALID<SequenceNumber>;
+        ChunkNumber chunk = INVALID<ChunkNumber>;
+        bool lastChunk = false;
+        Timestamp watermark{Timestamp::INVALID_VALUE};
+    };
+
+    Emitted emitOne(Source& source) const
+    {
+        auto buffer = bufferManager->getBufferBlocking();
+        const std::stop_source stop;
+        const auto result = source.fillTupleBuffer(buffer, stop.get_token());
+        EXPECT_FALSE(result.isEoS());
+        const AsyncRecordLayout layout{outputSchema()};
+        Emitted emitted{
+            .texts = {},
+            .sequence = buffer.getSequenceNumber(),
+            .chunk = buffer.getChunkNumber(),
+            .lastChunk = buffer.isLastChunk(),
+            .watermark = buffer.getWatermark()};
+        EXPECT_EQ(buffer.getNumberOfTuples(), result.getNumberOfBytes());
+        for (size_t index = 0; index < buffer.getNumberOfTuples(); ++index)
+        {
+            emitted.texts.push_back(AsyncRecordView{layout, buffer, index}.readAsText(1));
+        }
+        return emitted;
     }
 
     mutable SequenceNumber::Underlying nextSequenceNumber = SequenceNumber::INITIAL;
@@ -279,6 +345,167 @@ TEST_F(AsyncLifecycleTest, SourceCloseDoesNotWorkOffQueuedBatches)
     /// The call in flight cannot be interrupted, but the queued ones must not be made: working
     /// them off would take Records * Delay, i.e. two seconds here.
     EXPECT_LT(elapsed, Delay * 3) << "close() took " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms";
+}
+
+/// A filtering executor drops records; the survivors keep their order and the buffer its metadata.
+TEST_F(AsyncLifecycleTest, DroppedRecordsAreSkipped)
+{
+    const auto source = makeSource(SourceOptions{.delay = {}, .dropPrefix = "drop", .maxConcurrency = 1, .preserveOrder = true});
+    source->open(bufferManager);
+    const auto channel = HandoffChannelRegistry::find(channelId);
+    ASSERT_NE(channel, nullptr);
+
+    ASSERT_TRUE(channel->tryPush(inputBuffer({"keep a", "drop b", "keep c", "drop d"})));
+    const auto emitted = emitOne(*source);
+
+    EXPECT_EQ(emitted.texts, (std::vector<std::string>{"KEEP A", "KEEP C"}));
+    EXPECT_EQ(emitted.sequence, SequenceNumber(SequenceNumber::INITIAL));
+    EXPECT_EQ(emitted.chunk, INITIAL<ChunkNumber>);
+    EXPECT_TRUE(emitted.lastChunk);
+    EXPECT_EQ(emitted.watermark, Timestamp(1000 * (SequenceNumber::INITIAL + 1)));
+    source->close();
+}
+
+/// Nothing survives, yet the buffer must still go out: it alone carries the sequence number, the
+/// watermark and the last-chunk flag, without which a downstream window would wait forever.
+TEST_F(AsyncLifecycleTest, AFullyDroppedBufferStillCarriesItsMetadata)
+{
+    const auto source = makeSource(SourceOptions{.delay = {}, .dropPrefix = "drop", .maxConcurrency = 1, .preserveOrder = true});
+    source->open(bufferManager);
+    const auto channel = HandoffChannelRegistry::find(channelId);
+    ASSERT_NE(channel, nullptr);
+
+    ASSERT_TRUE(channel->tryPush(inputBuffer({"drop a", "drop b"})));
+    ASSERT_TRUE(channel->tryPush(inputBuffer({"keep c"})));
+
+    const auto empty = emitOne(*source);
+    EXPECT_TRUE(empty.texts.empty());
+    EXPECT_EQ(empty.sequence, SequenceNumber(SequenceNumber::INITIAL));
+    EXPECT_EQ(empty.chunk, INITIAL<ChunkNumber>);
+    EXPECT_TRUE(empty.lastChunk);
+    EXPECT_EQ(empty.watermark, Timestamp(1000 * (SequenceNumber::INITIAL + 1)));
+
+    const auto next = emitOne(*source);
+    EXPECT_EQ(next.texts, (std::vector<std::string>{"KEEP C"}));
+    EXPECT_EQ(next.sequence, SequenceNumber(SequenceNumber::INITIAL + 1));
+    EXPECT_TRUE(next.lastChunk);
+    source->close();
+}
+
+/// Dropped records take no output space, so one output buffer covers more input than it holds; and
+/// dropped records after a full output are consumed with it, so they cost no extra, empty chunk.
+TEST_F(AsyncLifecycleTest, DropsAcrossChunks)
+{
+    const auto outputCapacity = AsyncRecordLayout{outputSchema()}.capacity(bufferManager->getBufferSize());
+    const auto inputCapacity = AsyncRecordLayout{inputSchema()}.capacity(bufferManager->getBufferSize());
+    ASSERT_GT(inputCapacity, outputCapacity) << "the test needs input records smaller than output records";
+
+    const auto source = makeSource(SourceOptions{.delay = {}, .dropPrefix = "drop", .maxConcurrency = 1, .preserveOrder = true});
+    source->open(bufferManager);
+    const auto channel = HandoffChannelRegistry::find(channelId);
+    ASSERT_NE(channel, nullptr);
+
+    /// Exactly one output buffer of kept records, then a dropped tail: one chunk, and the last.
+    std::vector<std::string> texts;
+    for (size_t index = 0; index < outputCapacity; ++index)
+    {
+        texts.push_back("keep " + std::to_string(index));
+    }
+    const auto tail = std::min<size_t>(3, inputCapacity - outputCapacity);
+    for (size_t index = 0; index < tail; ++index)
+    {
+        texts.push_back("drop " + std::to_string(index));
+    }
+    ASSERT_TRUE(channel->tryPush(inputBuffer(texts)));
+
+    const auto first = emitOne(*source);
+    EXPECT_EQ(first.texts.size(), outputCapacity);
+    EXPECT_EQ(first.texts.back(), "KEEP " + std::to_string(outputCapacity - 1));
+    EXPECT_EQ(first.chunk, INITIAL<ChunkNumber>);
+    EXPECT_TRUE(first.lastChunk);
+
+    /// One kept record more than fits, with drops in between: the overflow becomes a second chunk.
+    std::vector<std::string> overflow;
+    for (size_t index = 0; index <= outputCapacity && overflow.size() < inputCapacity; ++index)
+    {
+        overflow.push_back("keep " + std::to_string(index));
+        if (overflow.size() < inputCapacity)
+        {
+            overflow.push_back("drop " + std::to_string(index));
+        }
+    }
+    ASSERT_TRUE(channel->tryPush(inputBuffer(overflow)));
+    const auto keptInOverflow
+        = static_cast<size_t>(std::ranges::count_if(overflow, [](const std::string& text) { return text.starts_with("keep"); }));
+    if (keptInOverflow > outputCapacity)
+    {
+        const auto head = emitOne(*source);
+        EXPECT_EQ(head.texts.size(), outputCapacity);
+        EXPECT_EQ(head.chunk, INITIAL<ChunkNumber>);
+        EXPECT_FALSE(head.lastChunk);
+        const auto rest = emitOne(*source);
+        EXPECT_EQ(rest.texts.size(), keptInOverflow - outputCapacity);
+        EXPECT_EQ(rest.sequence, head.sequence);
+        EXPECT_EQ(rest.chunk, ChunkNumber(ChunkNumber::INITIAL + 1));
+        EXPECT_TRUE(rest.lastChunk);
+    }
+    else
+    {
+        /// Input records too large for the interleaving to overflow; everything fits one chunk.
+        const auto combined = emitOne(*source);
+        EXPECT_EQ(combined.texts.size(), keptInOverflow);
+        EXPECT_TRUE(combined.lastChunk);
+    }
+    source->close();
+}
+
+/// With several calls in flight, PRESERVE_ORDER decides whether buffers leave in input order; drops
+/// must not change which records survive either way.
+TEST_F(AsyncLifecycleTest, DropsRespectOrdering)
+{
+    for (const bool preserveOrder : {true, false})
+    {
+        SCOPED_TRACE(preserveOrder ? "ordered" : "unordered");
+        channelId = UUIDToString(generateUUID());
+        const auto source = makeSource(SourceOptions{
+            .delay = std::chrono::milliseconds{5}, .dropPrefix = "drop", .maxConcurrency = 4, .preserveOrder = preserveOrder});
+        source->open(bufferManager);
+        const auto channel = HandoffChannelRegistry::find(channelId);
+        ASSERT_NE(channel, nullptr);
+
+        constexpr size_t Buffers = 8;
+        const auto firstSequence = nextSequenceNumber;
+        for (size_t buffer = 0; buffer < Buffers; ++buffer)
+        {
+            const auto tag = std::to_string(buffer);
+            ASSERT_TRUE(channel->tryPush(inputBuffer({"keep " + tag + "a", "drop " + tag, "keep " + tag + "b"})));
+        }
+
+        std::vector<SequenceNumber::Underlying> sequences;
+        std::vector<std::string> survivors;
+        for (size_t buffer = 0; buffer < Buffers; ++buffer)
+        {
+            const auto emitted = emitOne(*source);
+            EXPECT_TRUE(emitted.lastChunk);
+            ASSERT_EQ(emitted.texts.size(), 2U);
+            sequences.push_back(emitted.sequence.getRawValue());
+            survivors.insert(survivors.end(), emitted.texts.begin(), emitted.texts.end());
+        }
+
+        if (preserveOrder)
+        {
+            EXPECT_TRUE(std::ranges::is_sorted(sequences));
+        }
+        std::ranges::sort(sequences);
+        for (size_t buffer = 0; buffer < Buffers; ++buffer)
+        {
+            EXPECT_EQ(sequences[buffer], firstSequence + buffer);
+        }
+        std::ranges::sort(survivors);
+        EXPECT_EQ(std::ranges::count_if(survivors, [](const std::string& text) { return text.starts_with("DROP"); }), 0);
+        EXPECT_EQ(survivors.size(), 2 * Buffers);
+        source->close();
+    }
 }
 
 }

@@ -89,9 +89,10 @@ modelOutputField: identifier typeDefinition;
 /// optionsClause (SET ('...' AS LLM.PROMPT, ...)) so that no new reserved keyword is
 /// introduced for each setting -- this grammar has no nonReserved rule, so every keyword
 /// would otherwise become unusable as a column name.
+/// Without OUTPUT the model is a filter model: it adds no column and is used with SEM_FILTER.
 createSemanticModelDefinition: SEM_MODEL modelName=identifier
                                INPUT '(' modelInputField (',' modelInputField)* ')'
-                               OUTPUT '(' modelOutputField (',' modelOutputField)* ')'
+                               (OUTPUT '(' modelOutputField (',' modelOutputField)* ')')?
                                optionsClause?;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
@@ -181,6 +182,7 @@ relationPrimary
     | anonymousSource                         #anonymousDefinedSource
     | modelInferenceSource                    #modelInferenceRelation
     | semanticMapSource                       #semanticMapRelation
+    | semanticFilterSource                    #semanticFilterRelation
     ;
 
 modelInferenceSource
@@ -194,13 +196,19 @@ modelInferenceInput
     ;
 
 semanticMapSource
-    : SEM_MAP '(' modelName=identifier ',' semanticMapInput ')'
+    : SEM_MAP '(' modelName=identifier ',' semanticInput ')'
     ;
 
-semanticMapInput
-    : multipartIdentifier                     #semanticMapStreamName
-    | '(' query ')'                           #semanticMapSubquery
+semanticFilterSource
+    : SEM_FILTER '(' modelName=identifier ',' semanticInput ')'
+    ;
+
+/// Shared by SEM_MAP and SEM_FILTER, so either nests inside the other.
+semanticInput
+    : multipartIdentifier                     #semanticStreamName
+    | '(' query ')'                           #semanticSubquery
     | semanticMapSource                       #semanticMapNested
+    | semanticFilterSource                    #semanticFilterNested
     ;
 
 anonymousSource
@@ -583,6 +591,7 @@ OUTPUT: 'OUTPUT';
 SEMANTIC: 'SEMANTIC';
 SEM_MAP: 'SEM_MAP';
 SEM_MODEL: 'SEM_MODEL';
+SEM_FILTER: 'SEM_FILTER';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

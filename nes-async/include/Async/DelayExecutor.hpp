@@ -16,7 +16,9 @@
 
 #include <chrono>
 #include <cstddef>
+#include <optional>
 #include <span>
+#include <string>
 #include <vector>
 
 #include <Async/AsyncOperatorExecutor.hpp>
@@ -31,7 +33,12 @@ namespace NES
 /// delay makes it behave like the thing it stands for — it is what proves that a blocking
 /// executor no longer stalls the engine's worker threads.
 ///
-/// Config keys: `delay_ms` (default 0), `input_field`, `output_field` (both required).
+/// It can also stand in for a filtering operator: a record whose input field starts with
+/// `drop_prefix` is dropped, which is how the framework's handling of dropped records is
+/// tested without a model.
+///
+/// Config keys: `delay_ms` (default 0), `input_field`, `output_field` (both required),
+/// `drop_prefix` (default: drop nothing).
 class DelayExecutor final : public AsyncOperatorExecutor
 {
 public:
@@ -44,6 +51,7 @@ private:
     std::chrono::milliseconds delay;
     size_t inputFieldIndex;
     size_t outputFieldIndex;
+    std::optional<std::string> dropPrefix;
 };
 
 }

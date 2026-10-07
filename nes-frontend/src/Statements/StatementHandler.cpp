@@ -313,14 +313,16 @@ SemanticModelStatementHandler::SemanticModelStatementHandler(std::shared_ptr<Sem
 namespace
 {
 
-/// Shows the first step only. That is complete while SEM_MAP registers exactly one step, but
-/// once operator fusion adds a second step to the same entry, SHOW silently drops it (along with
-/// the per-step OUTPUT_VALUES and DEFAULT_VALUE, which are not shown at all today).
+/// Shows the first step only, which is complete for every catalog entry: CREATE registers exactly
+/// one step, and fused entries exist only inside an optimized plan, never in the catalog. The
+/// per-step OUTPUT_VALUES and DEFAULT_VALUE are not shown.
 SemanticModelInfo toSemanticModelInfo(const RegisteredSemanticModel& model)
 {
     const auto& config = model.getConfig();
+    const auto kind = config.steps.empty() || config.steps.front().kind == SemanticStep::Kind::MAP ? "MAP" : "FILTER";
     return SemanticModelInfo{
         .name = model.getName(),
+        .kind = kind,
         .endpoint = config.endpoint,
         .modelName = config.modelName,
         .prompt = config.steps.empty() ? std::string{} : config.steps.front().prompt,
@@ -391,6 +393,7 @@ constexpr std::array KnownSemanticModelOptions{
     std::string_view{"BACKEND"},
     std::string_view{"EXECUTION"},
     std::string_view{"PRESERVE_ORDER"},
+    std::string_view{"FUSION"},
 };
 
 void rejectUnknownOptions(const std::unordered_map<Identifier, std::string>& config)
@@ -435,9 +438,9 @@ PayloadFormat bindPayloadFormat(const std::unordered_map<Identifier, std::string
     throw InvalidSemanticModel("Option LLM.PAYLOAD_FORMAT must be SPACE_JOINED or JSON_OBJECT, but was '{}'", raw);
 }
 
-bool bindPreserveOrder(const std::unordered_map<Identifier, std::string>& config)
+bool bindBooleanOption(const std::unordered_map<Identifier, std::string>& config, std::string_view key, bool fallback)
 {
-    const auto raw = optionalOption(config, "PRESERVE_ORDER", "TRUE");
+    const auto raw = optionalOption(config, key, fallback ? "TRUE" : "FALSE");
     if (raw == "TRUE")
     {
         return true;
@@ -446,7 +449,7 @@ bool bindPreserveOrder(const std::unordered_map<Identifier, std::string>& config
     {
         return false;
     }
-    throw InvalidSemanticModel("Option LLM.PRESERVE_ORDER must be TRUE or FALSE, but was '{}'", raw);
+    throw InvalidSemanticModel("Option LLM.{} must be TRUE or FALSE, but was '{}'", key, raw);
 }
 
 SemanticExecution bindExecution(const std::unordered_map<Identifier, std::string>& config)
@@ -469,12 +472,33 @@ constexpr size_t MaxRetries = 10;
 constexpr size_t MaxWaitMs = 3'600'000;
 constexpr size_t MaxTimeoutSeconds = 86'400;
 
-/// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
-/// SEM_MAP has exactly one step, so exactly one OUTPUT field is accepted; the step list
-/// exists so that operator fusion can add a second entry without a format change.
-SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
+/// Answers that only make sense for a column; a filter model has none.
+constexpr std::array MapOnlyOptions{std::string_view{"OUTPUT_VALUES"}, std::string_view{"DEFAULT_VALUE"}};
+
+/// The one step a CREATE registers. With an OUTPUT clause it is a MAP step writing exactly that one
+/// field; without, a FILTER step. Longer step lists only arise from operator fusion in the optimizer.
+SemanticStep bindStep(const CreateSemanticModelStatement& statement)
 {
-    rejectUnknownOptions(statement.config);
+    if (statement.outputs.size() == 0)
+    {
+        for (const auto option : MapOnlyOptions)
+        {
+            if (findOption(statement.config, option) != nullptr)
+            {
+                throw InvalidSemanticModel(
+                    "Semantic model '{}': LLM.{} requires an OUTPUT field; a model without OUTPUT is a filter model",
+                    statement.name,
+                    option);
+            }
+        }
+        /// The verdict's response key (`__filter_0`) is numbered by the codec.
+        return SemanticStep{
+            .kind = SemanticStep::Kind::FILTER,
+            .prompt = requireOption(statement.config, "PROMPT"),
+            .outputColumn = {},
+            .outputValues = {},
+            .defaultValue = {}};
+    }
     if (statement.outputs.size() != 1)
     {
         throw InvalidSemanticModel(
@@ -482,12 +506,19 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
     }
 
     const auto& outputField = *statement.outputs.begin();
-    SemanticStep step{
+    return SemanticStep{
         .kind = SemanticStep::Kind::MAP,
         .prompt = requireOption(statement.config, "PROMPT"),
         .outputColumn = static_cast<const Identifier&>(outputField.getFullyQualifiedName()).asCanonicalString(),
         .outputValues = splitCommaSeparated(optionalOption(statement.config, "OUTPUT_VALUES", "")),
         .defaultValue = optionalOption(statement.config, "DEFAULT_VALUE", "")};
+}
+
+/// Turns the binder's flat `LLM.*` string map into the typed catalog configuration.
+SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& statement)
+{
+    rejectUnknownOptions(statement.config);
+    auto step = bindStep(statement);
 
     const auto* const apiKeyEnv = findOption(statement.config, "API_KEY_ENV");
 
@@ -505,7 +536,8 @@ SemanticModelConfig bindSemanticModelConfig(const CreateSemanticModelStatement& 
         .apiKeyEnvVar = apiKeyEnv == nullptr ? std::optional<std::string>{} : std::optional<std::string>{*apiKeyEnv},
         .backend = optionalOption(statement.config, "BACKEND", "http"),
         .execution = bindExecution(statement.config),
-        .preserveOrder = bindPreserveOrder(statement.config)};
+        .preserveOrder = bindBooleanOption(statement.config, "PRESERVE_ORDER", true),
+        .fusion = bindBooleanOption(statement.config, "FUSION", false)};
 }
 
 }

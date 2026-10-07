@@ -17,7 +17,9 @@ find_package(reflectcpp REQUIRED)
 add_library(nes-semantic
         src/SemanticModelCatalog.cpp
         src/ResponseParsing.cpp
+        src/SemanticPromptLayout.cpp
         src/SemanticMapCodec.cpp
+        src/SemanticFilterCodec.cpp
         src/HttpSemanticBackend.cpp
         src/MockSemanticBackend.cpp
         src/SemanticBackendFactory.cpp

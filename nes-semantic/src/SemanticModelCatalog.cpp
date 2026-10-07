@@ -14,13 +14,17 @@
 
 #include <SemanticModelCatalog.hpp>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <fmt/format.h>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
@@ -58,6 +62,7 @@ struct
     std::optional<std::string> backend;
     std::optional<int64_t> execution;
     std::optional<bool> preserveOrder;
+    std::optional<bool> fusion;
     std::optional<SemanticFieldList> inputs;
     std::optional<SemanticFieldList> outputs;
 };
@@ -161,17 +166,22 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
     {
         throw InvalidSemanticModel("Semantic model '{}': at least one INPUT field is required", name);
     }
-    if (schema.outputs.size() == 0)
+    if (config.steps.empty())
+    {
+        throw InvalidSemanticModel("Semantic model '{}': at least one step is required", name);
+    }
+
+    /// A MAP step produces exactly one output column, a FILTER step none. The handler builds both
+    /// sides together, so a mismatch here means the caller bypassed it.
+    const auto mapSteps = static_cast<size_t>(
+        std::ranges::count(config.steps, SemanticStep::Kind::MAP, [](const SemanticStep& step) { return step.kind; }));
+    if (mapSteps > 0 && schema.outputs.size() == 0)
     {
         throw InvalidSemanticModel("Semantic model '{}': at least one OUTPUT field is required", name);
     }
-
-    /// One step produces exactly one output column. The binder builds both sides together,
-    /// so a mismatch here means the caller bypassed it.
-    if (config.steps.size() != schema.outputs.size())
+    if (mapSteps != schema.outputs.size())
     {
-        throw InvalidSemanticModel(
-            "Semantic model '{}': {} OUTPUT field(s) but {} step(s)", name, schema.outputs.size(), config.steps.size());
+        throw InvalidSemanticModel("Semantic model '{}': {} OUTPUT field(s) but {} map step(s)", name, schema.outputs.size(), mapSteps);
     }
 
     for (const auto& step : config.steps)
@@ -180,9 +190,27 @@ void SemanticModelCatalog::registerModel(std::string name, SemanticModelConfig c
         {
             throw InvalidSemanticModel("Semantic model '{}': PROMPT must not be empty", name);
         }
-        if (step.outputColumn.empty())
+        switch (step.kind)
         {
-            throw InvalidSemanticModel("Semantic model '{}': step has no output column", name);
+            case SemanticStep::Kind::MAP:
+                if (step.outputColumn.empty())
+                {
+                    throw InvalidSemanticModel("Semantic model '{}': step has no output column", name);
+                }
+                break;
+            /// A filter keeps or drops the row; there is no column to restrict or default-fill.
+            case SemanticStep::Kind::FILTER:
+                if (!step.outputValues.empty())
+                {
+                    throw InvalidSemanticModel(
+                        "Semantic model '{}': OUTPUT_VALUES requires an OUTPUT field; a filter model has none", name);
+                }
+                if (!step.defaultValue.empty())
+                {
+                    throw InvalidSemanticModel(
+                        "Semantic model '{}': DEFAULT_VALUE requires an OUTPUT field; a filter model has none", name);
+                }
+                break;
         }
     }
 
@@ -252,6 +280,44 @@ std::vector<RegisteredSemanticModel> SemanticModelCatalog::getRegisteredModels()
     return models;
 }
 
+bool RegisteredSemanticModel::hasFilterStep() const
+{
+    return std::ranges::any_of(config.steps, [](const SemanticStep& step) { return step.kind == SemanticStep::Kind::FILTER; });
+}
+
+RegisteredSemanticModel fuseSemanticModels(const RegisteredSemanticModel& first, const RegisteredSemanticModel& second)
+{
+    auto config = first.config;
+    config.steps.insert(config.steps.end(), second.config.steps.begin(), second.config.steps.end());
+    /// `_make_filter_step(prompt, n)` with n counting the filters already fused, i.e. the same
+    /// numbering the codecs derive; stored so that the entry describes itself.
+    size_t filters = 0;
+    for (auto& step : config.steps)
+    {
+        if (step.kind == SemanticStep::Kind::FILTER)
+        {
+            step.outputColumn = fmt::format("__filter_{}", filters++);
+        }
+    }
+
+    std::vector<UnqualifiedUnboundField> outputs{first.schema.outputs.begin(), first.schema.outputs.end()};
+    outputs.insert(outputs.end(), second.schema.outputs.begin(), second.schema.outputs.end());
+    auto fusedOutputs = SemanticFieldList::tryCreateCollisionFree(std::move(outputs));
+    if (!fusedOutputs.has_value())
+    {
+        throw InvalidSemanticModel(
+            "Cannot fuse semantic models '{}' and '{}': their OUTPUT fields collide: {}",
+            first.name,
+            second.name,
+            SemanticFieldList::createCollisionString(fusedOutputs.error()));
+    }
+
+    return RegisteredSemanticModel{
+        fmt::format("{}+{}", first.name, second.name),
+        std::move(config),
+        SemanticModelSchema{.inputs = first.schema.inputs, .outputs = std::move(fusedOutputs).value()}};
+}
+
 RegisteredSemanticModel SemanticModelCatalog::load(const std::string& modelName) const
 {
     if (auto it = entries.find(modelName); it != entries.end())
@@ -288,6 +354,7 @@ Reflected Reflector<RegisteredSemanticModel>::operator()(const RegisteredSemanti
         .backend = std::make_optional(config.backend),
         .execution = std::make_optional(static_cast<int64_t>(config.execution)),
         .preserveOrder = std::make_optional(config.preserveOrder),
+        .fusion = std::make_optional(config.fusion),
         .inputs = std::make_optional(model.getSchema().inputs),
         .outputs = std::make_optional(model.getSchema().outputs)});
 }
@@ -299,8 +366,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         || !reflected.datasetPrompt.has_value() || !reflected.steps.has_value() || !reflected.payloadFormat.has_value()
         || !reflected.batchSize.has_value() || !reflected.maxConcurrency.has_value() || !reflected.maxRetries.has_value()
         || !reflected.maxWaitTimeMs.has_value() || !reflected.requestTimeoutSeconds.has_value() || !reflected.backend.has_value()
-        || !reflected.execution.has_value() || !reflected.preserveOrder.has_value() || !reflected.inputs.has_value()
-        || !reflected.outputs.has_value())
+        || !reflected.execution.has_value() || !reflected.preserveOrder.has_value() || !reflected.fusion.has_value()
+        || !reflected.inputs.has_value() || !reflected.outputs.has_value())
     {
         throw CannotDeserialize("Failed to deserialize RegisteredSemanticModel");
     }
@@ -326,7 +393,8 @@ RegisteredSemanticModel Unreflector<RegisteredSemanticModel>::operator()(const R
         .apiKeyEnvVar = reflected.apiKeyEnvVar,
         .backend = std::move(reflected.backend).value(),
         .execution = unreflectEnum(reflected.execution.value(), SemanticExecution::ASYNCHRONOUS, "SemanticExecution"),
-        .preserveOrder = reflected.preserveOrder.value()};
+        .preserveOrder = reflected.preserveOrder.value(),
+        .fusion = reflected.fusion.value()};
 
     /// Bypasses catalog validation: the coordinator already validated; the worker trusts the
     /// reflected form. Schema's user-declared destructor suppresses its implicit move ctor,

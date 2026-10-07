@@ -60,6 +60,9 @@ namespace NES
 /// One input buffer becomes one output buffer. When the output records do not fit — the
 /// operator appends fields, so they are larger — the remainder is emitted as further
 /// chunks of the same sequence number, which is precisely what chunk numbers are for.
+/// Records the executor drops (`AsyncRecordResult::keep`) are skipped; an input buffer whose
+/// records are all dropped still becomes one empty buffer, so its sequence number, watermark
+/// and last-chunk flag reach downstream.
 class AsyncSource final : public Source
 {
 public:
@@ -95,8 +98,9 @@ private:
     {
         TupleBuffer input;
         std::vector<AsyncRecordResult> results;
-        /// Records already written out; non-zero once a buffer had to be split into chunks.
-        uint64_t emittedRecords = 0;
+        /// Records already looked at, written out or dropped; non-zero once a buffer had to be
+        /// split into chunks.
+        uint64_t consumedRecords = 0;
     };
 
     /// An input buffer whose batches are still being worked on. `results` is sized to the record
