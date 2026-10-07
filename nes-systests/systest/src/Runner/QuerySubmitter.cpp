@@ -36,7 +36,8 @@
 namespace NES
 {
 
-QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager, const std::chrono::milliseconds timeout)
+    : queryManager(std::move(queryManager)), timeout(timeout)
 {
 }
 
@@ -74,7 +75,7 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::startQuery(const Di
         return std::unexpected(std::move(result.error().at(0)));
     }
 
-    ids.emplace(*result);
+    running.emplace(*result, std::chrono::steady_clock::now());
     return result.value();
 }
 
@@ -106,12 +107,13 @@ DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const Dis
     }
 }
 
-std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
+std::vector<FinishedQuery> QuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatusSnapshot>> results;
-        for (const auto& id : ids)
+        std::vector<FinishedQuery> results;
+        const auto now = std::chrono::steady_clock::now();
+        for (const auto& [id, startedAt] : running)
         {
             auto queryStatus = queryManager->status(id);
             if (!queryStatus.has_value())
@@ -123,7 +125,21 @@ std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
             if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
                 || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
-                results.emplace_back(id, std::move(*queryStatus));
+                results.push_back(FinishedQuery{.id = id, .outcome = std::move(*queryStatus)});
+                continue;
+            }
+            if (timeout > std::chrono::milliseconds{0} and now - startedAt >= timeout)
+            {
+                auto message = fmt::format("query {} did not reach a terminal state within {} ms", id.getRawValue(), timeout.count());
+                /// The query is answered as timed out either way. A stop that fails only adds to the message, because there
+                /// is nothing more to do about it here.
+                if (auto stopped = queryManager->stop(id); not stopped.has_value())
+                {
+                    message += fmt::format(
+                        ", and stopping it failed: {}",
+                        fmt::join(stopped.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+                }
+                results.push_back(FinishedQuery{.id = id, .outcome = std::unexpected{QueryWaitTimeout("{}", message)}});
             }
         }
         if (results.empty())
@@ -132,12 +148,11 @@ std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
             continue;
         }
 
-        for (auto& id : results | std::views::keys)
+        for (const auto& finished : results)
         {
-            ids.erase(id);
+            running.erase(finished.id);
         }
-
-        return results | std::views::values | std::ranges::to<std::vector>();
+        return results;
     }
 }
 }
