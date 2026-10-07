@@ -29,19 +29,20 @@ namespace
 {
 /// Header type column. For scalar types this is just the enum name (e.g. `UINT16`).
 /// FIXEDSIZED carries element type and count which scalar types don't, so we encode
-/// them as `FIXEDSIZED<UINT16,16>` to keep the field separator (`:`) count constant
-/// across rows.
+/// them as `FIXEDSIZED<UINT16;16>` to keep the field separator (`:`) count constant
+/// across rows. Element types are formatted recursively, so nested containers are
+/// written as e.g. `FIXEDSIZED<FIXEDSIZED<INT32;2>;3>` or `VECTOR<FIXEDSIZED<INT32;2>>`.
 std::string formatTypeForHeader(const DataType& dataType)
 {
     if (dataType.type == DataType::Type::FIXEDSIZED)
     {
         /// `;` (not `,`) inside the angle brackets so the comma-separated outer
         /// field split in `SystestResultCheck::parseFieldNames` doesn't tokenize it.
-        return fmt::format("FIXEDSIZED<{};{}>", magic_enum::enum_name(dataType.elementType->type), dataType.count);
+        return fmt::format("FIXEDSIZED<{};{}>", formatTypeForHeader(*dataType.elementType), dataType.count);
     }
     if (dataType.type == DataType::Type::VECTOR)
     {
-        return fmt::format("VECTOR<{}>", magic_enum::enum_name(dataType.elementType->type));
+        return fmt::format("VECTOR<{}>", formatTypeForHeader(*dataType.elementType));
     }
     if (dataType.type == DataType::Type::STRUCT)
     {
