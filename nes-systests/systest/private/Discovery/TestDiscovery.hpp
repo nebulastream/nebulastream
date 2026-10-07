@@ -15,7 +15,6 @@
 #pragma once
 
 #include <filesystem>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_set>
@@ -27,8 +26,8 @@
 namespace NES
 {
 
-/// A test file's name: its path relative the discovery root without extension.
-/// E.g., `operator/join/JoinNull` becomes `nes-systests/operator/join/JoinNull.test`.
+/// A file's name: its path relative to the discovery root, without extension.
+/// E.g., `nes-systests/operator/join/JoinNull.test` becomes `operator/join/JoinNull`.
 /// The name labels the file in the report and in the result file path.
 /// Strong types, so a name or a group is not confused with a path or with each other.
 using TestName = NESStrongStringType<struct TestName_, "INVALID">;
@@ -36,23 +35,19 @@ using TestGroup = NESStrongStringType<struct TestGroup_, "INVALID">;
 
 struct DiscoveredTestFile
 {
-    explicit DiscoveredTestFile(
-        const std::filesystem::path& file,
-        TestName testName,
-        std::optional<std::unordered_set<SystestQueryId>> enabledQueries = std::nullopt);
+    explicit DiscoveredTestFile(const std::filesystem::path& file, TestName testName, std::unordered_set<SystestQueryId> queryFilter = {});
     [[nodiscard]] std::string getLogFilePath() const;
 
-    [[nodiscard]] TestName name() const { return testName; }
+    [[nodiscard]] TestName getName() const { return testName; }
 
     std::filesystem::path file;
     TestName testName;
-    /// The query numbers to run. Every query of the file runs when this is not set.
-    std::optional<std::unordered_set<SystestQueryId>> enabledQueries;
+    /// Query numbers to keep; an empty filter keeps every query.
+    std::unordered_set<SystestQueryId> queryFilter;
     std::vector<TestGroup> groups;
 };
 
 std::ostream& operator<<(std::ostream& os, const std::vector<DiscoveredTestFile>& testFiles);
-
 /// Reads the configuration and searches the given directories, returning one invocation's test files.
 std::vector<DiscoveredTestFile> discoverTestFiles(const SystestConfiguration& config);
 

@@ -15,4 +15,5 @@ add_source_files(nes-systest-lib
         ParsedTestFile.cpp
         RunnableTestFile.cpp
         TestCaseId.cpp
+        Verdict.cpp
 )

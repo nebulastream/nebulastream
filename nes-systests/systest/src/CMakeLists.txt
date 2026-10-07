@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # The stages of the systest pipeline, in the order they run:
-# configure, discover test files, read one, parse it, rewrite its statements, run it and check the results.
+# configure, discover test files, rewrite every file up front, bind, run, and check the results.
 add_subdirectory(Config)
 add_subdirectory(Discovery)
 add_subdirectory(Model)
@@ -21,10 +21,9 @@ add_subdirectory(Runner)
 add_subdirectory(ResultChecker)
 
 add_source_files(nes-systest-lib
-        SystestExecutor.cpp
+        Benchmark.cpp
+        Executor.cpp
         Logging.cpp
-        Progress.cpp
-        SystestState.cpp
         SystestBinder.cpp
         WorkingDirectoryGuard.cpp
 )

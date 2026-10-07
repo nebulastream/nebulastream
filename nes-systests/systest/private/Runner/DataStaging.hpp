@@ -38,7 +38,19 @@ struct RunningServer
 
 /// Starts a server on an ephemeral port that sends the given data.
 /// The port is known only once the server binds, so the options come from here rather than from the rewriter.
-/// Takes the data by value, because the server owns it for as long as it sends.
 [[nodiscard]] RunningServer serve(ServedData data);
+
+/// A test file's setup with its data in place (i.e., stored in a file).
+struct StagedSetup
+{
+    /// The CREATE statements in file order, each served source with the endpoint its server bound.
+    std::vector<std::string> sql;
+    /// Must outlive every query reading from them.
+    std::vector<std::jthread> servers;
+};
+
+/// Writes the inline data to disk and starts a server for each served source.
+/// The rewriter cannot do this: a port exists only once a server has bound it.
+[[nodiscard]] StagedSetup stage(const RunnableTestFile& runnable);
 
 }

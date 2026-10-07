@@ -1,0 +1,17 @@
+# name: Measured
+# description: one plain query and one differential block, which a measuring run reports without recording the differential
+
+CREATE LOGICAL SOURCE s(id UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR s TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM s INTO sinkA;
+----
+1
+
+SELECT id FROM s INTO sinkA;
+====
+SELECT id FROM s INTO sinkA;

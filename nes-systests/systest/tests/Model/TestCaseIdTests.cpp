@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-/// Compiles the model headers with nothing included before them, so a header that is missing an include fails to build here.
+/// Compiles the model headers standalone, so a missing include fails here.
 
+#include <optional>
 #include <string>
 
 #include <fmt/format.h>
@@ -43,20 +44,42 @@ TEST_F(TestCaseIdTest, PrintsFileAndQueryNumber)
         "operator/join/JoinNull:7");
     EXPECT_EQ(
         fmt::format("{}", TestCaseId{.originFile = "large/Many", .queryIdInFile = SystestQueryId(123), .overrides = {}}), "large/Many:123");
-    EXPECT_EQ(
-        fmt::format("{}", TestCaseId{.originFile = "bug/NoQuery", .queryIdInFile = INVALID<SystestQueryId>, .overrides = {}}),
-        "bug/NoQuery");
+    EXPECT_EQ(fmt::format("{}", TestCaseId{.originFile = "bug/NoQuery", .queryIdInFile = std::nullopt, .overrides = {}}), "bug/NoQuery");
 }
 
 /// A query with configuration alternatives runs once per alternative, so the overrides are part of what tells the runs apart.
 TEST_F(TestCaseIdTest, PrintsTheOverridesOfTheRun)
 {
-    ConfigurationOverride overrides;
-    overrides["worker.query_engine.number_of_worker_threads"] = "2";
+    const ConfigurationOverride overrides{{"worker.query_engine.number_of_worker_threads", "2"}};
 
     EXPECT_EQ(
-        fmt::format("{}", TestCaseId{.originFile = "operator/join/JoinNull", .queryIdInFile = SystestQueryId(1), .overrides = overrides}),
+        fmt::format("{}", TestCaseId{.originFile = "operator/join/JoinNull", .queryIdInFile = SystestQueryId{1}, .overrides = overrides}),
         "operator/join/JoinNull:1 [worker.query_engine.number_of_worker_threads=2]");
+}
+
+TEST_F(TestCaseIdTest, PrintsTheOverridesWithoutAQueryNumber)
+{
+    const ConfigurationOverride overrides{{"worker.query_engine.number_of_worker_threads", "2"}};
+
+    EXPECT_EQ(
+        fmt::format("{}", TestCaseId{.originFile = "bug/NoQuery", .queryIdInFile = std::nullopt, .overrides = overrides}),
+        "bug/NoQuery [worker.query_engine.number_of_worker_threads=2]");
+}
+
+TEST_F(TestCaseIdTest, PrintsSeveralOverridesInSortedOrder)
+{
+    const ConfigurationOverride overrides{
+        {"worker.query_engine.number_of_worker_threads", "2"},
+        {"worker.default_query_execution.operator_buffer_size", "4096"},
+        {"worker.query_engine.task_queue_size", "64"},
+        {"worker.default_query_execution.page_size", "128"}};
+
+    EXPECT_EQ(
+        fmt::format("{}", TestCaseId{.originFile = "operator/join/JoinNull", .queryIdInFile = SystestQueryId{1}, .overrides = overrides}),
+        "operator/join/JoinNull:1 [worker.default_query_execution.operator_buffer_size=4096, "
+        "worker.default_query_execution.page_size=128, "
+        "worker.query_engine.number_of_worker_threads=2, "
+        "worker.query_engine.task_queue_size=64]");
 }
 
 }

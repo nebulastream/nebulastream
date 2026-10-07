@@ -13,18 +13,19 @@
 */
 
 #include <array>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
 
-#include <cstdlib>
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <Config/Config.hpp>
 #include <Config/ConfigParser.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <fmt/format.h>
-#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
 namespace NES
@@ -35,8 +36,7 @@ class ClusterConfigTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestSuite() { Logger::setupLogging("ClusterConfigTest.log", LogLevel::LOG_DEBUG); }
 
-    /// Writes a topology with the given placement lists and parses a command line that loads it.
-    /// The file is named after the test, because the death tests run as separate processes at the same time.
+    /// One file per test, because the death tests run as parallel processes.
     static SystestConfiguration parseWithPlacement(const std::string_view sourcePlacement, const std::string_view sinkPlacement)
     {
         const auto path = std::filesystem::temp_directory_path()
@@ -60,8 +60,6 @@ TEST_F(ClusterConfigTest, AcceptsATopologyWithADefaultHostForSourcesAndSinks)
     ASSERT_EQ(config.clusterConfig.allowSinkPlacement.size(), 1U);
 }
 
-/// The first entry of a placement list is the default host of a source or sink that names none, so an empty list is rejected
-/// where the file is read, before any test file is loaded.
 TEST_F(ClusterConfigTest, RejectsAnEmptySourcePlacement)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");

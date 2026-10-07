@@ -1,0 +1,16 @@
+# name: SetupRejected
+# description: a physical source for a logical source that was never declared, so the setup fails and every test case is skipped
+
+CREATE PHYSICAL SOURCE FOR missingSource TYPE File;
+ATTACH INLINE
+1
+
+CREATE SINK sinkA(id UINT64 NOT NULL) TYPE File;
+
+SELECT id FROM missingSource INTO sinkA;
+----
+1
+
+SELECT id FROM missingSource INTO sinkA;
+----
+1
