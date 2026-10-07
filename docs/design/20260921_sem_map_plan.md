@@ -52,7 +52,7 @@ For the **stateful** part (stage 2) the template is the windowed aggregation ins
 ## Target syntax
 
 ```sql
-CREATE SEMANTIC MODEL sentiment_clf
+CREATE SEM_MODEL sentiment_clf
   INPUT  (reviewText VARSIZED)
   OUTPUT (sentiment VARSIZED)
   SET ('Determine if the review is positive or negative' AS LLM.PROMPT,

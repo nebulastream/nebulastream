@@ -343,7 +343,7 @@ public:
                 if (not(rootIdentifier == LlmNamespace))
                 {
                     throw InvalidConfigParameter(
-                        "CREATE SEMANTIC MODEL only accepts options in the LLM namespace, but got '{}'", rootIdentifier);
+                        "CREATE SEM_MODEL only accepts options in the LLM namespace, but got '{}'", rootIdentifier);
                 }
                 const auto* const literal = std::get_if<Literal>(&value);
                 if (literal == nullptr)
@@ -352,7 +352,7 @@ public:
                 }
                 if (not config.try_emplace(optionName, literalToString(*literal)).second)
                 {
-                    throw InvalidConfigParameter("Duplicate option 'LLM.{}' in CREATE SEMANTIC MODEL", optionName);
+                    throw InvalidConfigParameter("Duplicate option 'LLM.{}' in CREATE SEM_MODEL", optionName);
                 }
             }
         }
@@ -595,7 +595,7 @@ public:
 
     static DropSemanticModelStatement bindDropSemanticModel(const std::pair<Identifier, Literal>& filter)
     {
-        return DropSemanticModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEMANTIC MODEL")};
+        return DropSemanticModelStatement{.name = requireFilterValue<std::string>(filter, "NAME", "a string", "DROP SEM_MODEL")};
     }
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const

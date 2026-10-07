@@ -23,46 +23,46 @@ ATTACH INLINE
 2,Bad news,nothing works
 
 # Free text (no OUTPUT_VALUES): the echoed answer passes through unchanged.
-CREATE SEMANTIC MODEL freeText
+CREATE SEM_MODEL freeText
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
 
 # Closed answer set: the echo runs through the normalization cascade.
-CREATE SEMANTIC MODEL restricted
+CREATE SEM_MODEL restricted
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES, 'NEUTRAL' AS LLM.DEFAULT_VALUE);
 
 # A model that answers with prose instead of JSON.
-CREATE SEMANTIC MODEL garbage
+CREATE SEM_MODEL garbage
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'n/a' AS LLM.DEFAULT_VALUE);
 
 # An endpoint that cannot be reached.
-CREATE SEMANTIC MODEL downEndpoint
+CREATE SEM_MODEL downEndpoint
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
 
 # A constant answer, for filtering on the model output.
-CREATE SEMANTIC MODEL alwaysPositive
+CREATE SEM_MODEL alwaysPositive
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'label:positive' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES);
 
 # A second model over the same input with a different output, for stacking.
-CREATE SEMANTIC MODEL summarizer
+CREATE SEM_MODEL summarizer
 INPUT (description VARSIZED)
 OUTPUT (summary VARSIZED)
 SET ('Summarize the description' AS LLM.PROMPT, 'label:short' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND);
 
 # Two inputs with their field names in the payload.
-CREATE SEMANTIC MODEL headline
+CREATE SEM_MODEL headline
 INPUT (title VARSIZED, body VARSIZED)
 OUTPUT (gist VARSIZED)
 SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,

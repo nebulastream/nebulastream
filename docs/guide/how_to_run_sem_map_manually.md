@@ -56,7 +56,7 @@ CREATE PHYSICAL SOURCE FOR reviews TYPE File SET(
   '/data/rt200.csv' AS "SOURCE".FILE_PATH,
   'localhost:8080'  AS "SOURCE"."HOST",
   'CSV'             AS INPUT_FORMATTER."TYPE");
-CREATE SEMANTIC MODEL sentiment
+CREATE SEM_MODEL sentiment
   INPUT (reviewText VARSIZED)
   OUTPUT (sentiment VARSIZED)
   SET ('Determine if the review is positive or negative' AS LLM.PROMPT,

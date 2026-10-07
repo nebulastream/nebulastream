@@ -290,7 +290,7 @@ public:
     std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
 };
 
-/// Handles `CREATE/SHOW/DROP SEMANTIC MODEL`. Owns the semantic model catalog and turns the
+/// Handles `CREATE/DROP SEM_MODEL` and `SHOW SEMANTIC MODELS`. Owns the semantic model catalog and turns the
 /// flat `LLM.*` option map produced by the binder into a typed `SemanticModelConfig`.
 class SemanticModelStatementHandler final : public StatementHandler<SemanticModelStatementHandler>
 {

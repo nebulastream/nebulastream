@@ -38,7 +38,7 @@
 namespace NES
 {
 
-/// Covers SEM_MAP up to plan construction: CREATE/SHOW/DROP SEMANTIC MODEL through binder,
+/// Covers SEM_MAP up to plan construction: CREATE/DROP SEM_MODEL and SHOW SEMANTIC MODELS through binder,
 /// handler and catalog, and the logical plan the parser builds for SEM_MAP queries. Resolution
 /// of the placeholder against the catalog is the optimizer's job and is not exercised here.
 /// Field names follow the Rotten Tomatoes reviews dataset used by the Python reference (d1).
@@ -64,7 +64,7 @@ public:
         handler = std::make_shared<SemanticModelStatementHandler>(semanticModelCatalog);
     }
 
-    static constexpr auto SentimentModel = "CREATE SEMANTIC MODEL sentiment_clf "
+    static constexpr auto SentimentModel = "CREATE SEM_MODEL sentiment_clf "
                                            "INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
                                            "SET ('Determine if the review is positive or negative' AS LLM.PROMPT, "
                                            "     'http://localhost:8000/v1' AS LLM.ENDPOINT, "
@@ -75,7 +75,7 @@ public:
                                            "     'OPENAI_API_KEY' AS LLM.API_KEY_ENV, "
                                            "     'http' AS LLM.BACKEND)";
 
-    /// Binds a CREATE SEMANTIC MODEL statement and runs it through the handler.
+    /// Binds a CREATE SEM_MODEL statement and runs it through the handler.
     std::expected<CreateSemanticModelStatementResult, Exception> create(const std::string& sql) const
     {
         const auto statement = binder->parseAndBindSingle(sql);
@@ -87,7 +87,7 @@ public:
     /// A minimal, valid statement with one SET entry replaced or added.
     static std::string withOptions(const std::string& output, const std::string& extraOptions)
     {
-        return "CREATE SEMANTIC MODEL m INPUT (reviewText VARSIZED) OUTPUT (" + output
+        return "CREATE SEM_MODEL m INPUT (reviewText VARSIZED) OUTPUT (" + output
             + ") SET ('Classify' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME" + extraOptions + ")";
     }
 
@@ -163,7 +163,7 @@ TEST_F(SemanticMapStatementTest, MockBackendTakesItsBehaviourFromTheEndpoint)
     for (const auto* behaviour : {"echo", "label:POSITIVE", "unparseable", "fail"})
     {
         const auto result = create(
-            std::string{"CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, '"} + behaviour
+            std::string{"CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, '"} + behaviour
             + "' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND)");
         ASSERT_TRUE(result.has_value()) << behaviour << ": " << result.error().what();
         EXPECT_EQ(semanticModelCatalog->load("M").getConfig().endpoint, behaviour);
@@ -173,7 +173,7 @@ TEST_F(SemanticMapStatementTest, MockBackendTakesItsBehaviourFromTheEndpoint)
 
 TEST_F(SemanticMapStatementTest, OptionNamesAreCaseInsensitive)
 {
-    const auto result = create("CREATE SEMANTIC MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
+    const auto result = create("CREATE SEM_MODEL m INPUT (reviewText VARSIZED) OUTPUT (sentiment VARSIZED) "
                                "SET ('Classify' AS llm.prompt, 'http://x' AS llm.endpoint, 'm' AS llm.model_name)");
     ASSERT_TRUE(result.has_value()) << result.error().what();
 }
@@ -188,7 +188,7 @@ TEST_F(SemanticMapStatementTest, ShowAndDropSemanticModels)
     ASSERT_TRUE(std::holds_alternative<ShowSemanticModelsStatement>(*show));
     EXPECT_EQ(handler->apply(std::get<ShowSemanticModelsStatement>(*show))->models.size(), 2);
 
-    const auto drop = binder->parseAndBindSingle("DROP SEMANTIC MODEL WHERE NAME = 'M'");
+    const auto drop = binder->parseAndBindSingle("DROP SEM_MODEL WHERE NAME = 'M'");
     ASSERT_TRUE(drop.has_value());
     ASSERT_TRUE(std::holds_alternative<DropSemanticModelStatement>(*drop));
     const auto dropResult = handler->apply(std::get<DropSemanticModelStatement>(*drop));
@@ -235,12 +235,11 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
 
     const std::vector<Case> cases{
         {"missing PROMPT",
-         "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
-        {"missing ENDPOINT",
-         "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'm' AS LLM.MODEL_NAME)"},
+         "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
+        {"missing ENDPOINT", "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'm' AS LLM.MODEL_NAME)"},
         {"missing MODEL_NAME",
-         "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT)"},
-        {"no SET clause at all", "CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED)"},
+         "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT)"},
+        {"no SET clause at all", "CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED)"},
         {"unknown BACKEND", withOptions("o VARSIZED", ", 'onnx' AS LLM.BACKEND")},
         {"mock BACKEND with an endpoint that is no mock behaviour", withOptions("o VARSIZED", ", 'mock' AS LLM.BACKEND")},
         {"BATCH_SIZE of zero", withOptions("o VARSIZED", ", 0 AS LLM.BATCH_SIZE")},
@@ -254,7 +253,7 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
         {"unknown PAYLOAD_FORMAT", withOptions("o VARSIZED", ", 'XML' AS LLM.PAYLOAD_FORMAT")},
         {"non-VARSIZED output", withOptions("o FLOAT32", "")},
         {"non-VARSIZED input",
-         "CREATE SEMANTIC MODEL m INPUT (t UINT64) OUTPUT (o VARSIZED) "
+         "CREATE SEM_MODEL m INPUT (t UINT64) OUTPUT (o VARSIZED) "
          "SET ('p' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME)"},
         {"two outputs (fusion is not supported yet)", withOptions("o VARSIZED, p VARSIZED", "")},
     };
@@ -274,14 +273,21 @@ TEST_F(SemanticMapStatementTest, CreateRejectsInvalidDefinitions)
 TEST_F(SemanticMapStatementTest, BinderRejectsMalformedOptionKeys)
 {
     /// Unqualified key: bindConfigOptions requires PREFIX.NAME.
-    EXPECT_FALSE(
-        binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS PROMPT)").has_value());
+    EXPECT_FALSE(binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS PROMPT)").has_value());
     /// Wrong namespace.
-    EXPECT_FALSE(binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SOURCE.PROMPT)")
-                     .has_value());
+    EXPECT_FALSE(
+        binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS SOURCE.PROMPT)").has_value());
     /// MODEL is a reserved keyword, which is why the option is called MODEL_NAME.
     EXPECT_FALSE(
-        binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('x' AS LLM.MODEL)").has_value());
+        binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('x' AS LLM.MODEL)").has_value());
+}
+
+TEST_F(SemanticMapStatementTest, BinderRejectsTwoWordSemanticModelKeyword)
+{
+    /// The keyword is SEM_MODEL; the earlier two-word spelling is gone.
+    EXPECT_FALSE(
+        binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) SET ('p' AS LLM.PROMPT)").has_value());
+    EXPECT_FALSE(binder->parseAndBindSingle("DROP SEMANTIC MODEL WHERE NAME = 'M'").has_value());
 }
 
 TEST_F(SemanticMapStatementTest, BinderRejectsDuplicateOptionKeys)
@@ -289,7 +295,7 @@ TEST_F(SemanticMapStatementTest, BinderRejectsDuplicateOptionKeys)
     /// Neither value may silently win; option names are case-insensitive identifiers, so the
     /// second spelling is the same key.
     const auto duplicate
-        = binder->parseAndBindSingle("CREATE SEMANTIC MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) "
+        = binder->parseAndBindSingle("CREATE SEM_MODEL m INPUT (t VARSIZED) OUTPUT (o VARSIZED) "
                                      "SET ('a' AS LLM.PROMPT, 'http://x' AS LLM.ENDPOINT, 'm' AS LLM.MODEL_NAME, 'b' AS llm.prompt)");
     ASSERT_FALSE(duplicate.has_value());
     EXPECT_EQ(duplicate.error().code(), ErrorCode::InvalidConfigParameter);

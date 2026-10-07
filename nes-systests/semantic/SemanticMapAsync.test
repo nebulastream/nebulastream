@@ -26,7 +26,7 @@ ATTACH INLINE
 
 # One record per request, one request at a time: the plain case, differing from the synchronous
 # path only in where the call happens.
-CREATE SEMANTIC MODEL asyncEcho
+CREATE SEM_MODEL asyncEcho
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
@@ -34,14 +34,14 @@ SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, '
 
 # Four records per prompt and four calls in flight: results arrive out of order and have to be
 # put back into input order before they are emitted.
-CREATE SEMANTIC MODEL asyncBatched
+CREATE SEM_MODEL asyncBatched
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'ASYNC' AS LLM.EXECUTION, 4 AS LLM.BATCH_SIZE, 4 AS LLM.MAX_CONCURRENCY);
 
 # The normalization cascade, to show the codec is the same one the synchronous path uses.
-CREATE SEMANTIC MODEL asyncRestricted
+CREATE SEM_MODEL asyncRestricted
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
@@ -49,20 +49,20 @@ SET ('Classify the sentiment' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model
      'ASYNC' AS LLM.EXECUTION, 3 AS LLM.BATCH_SIZE, 2 AS LLM.MAX_CONCURRENCY);
 
 # An unparseable response stays the record's problem on this path too.
-CREATE SEMANTIC MODEL asyncGarbage
+CREATE SEM_MODEL asyncGarbage
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'unparseable' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'n/a' AS LLM.DEFAULT_VALUE, 'ASYNC' AS LLM.EXECUTION);
 
-CREATE SEMANTIC MODEL asyncSummarizer
+CREATE SEM_MODEL asyncSummarizer
 INPUT (description VARSIZED)
 OUTPUT (summary VARSIZED)
 SET ('Summarize the description' AS LLM.PROMPT, 'label:short' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'ASYNC' AS LLM.EXECUTION, 2 AS LLM.BATCH_SIZE);
 
 # Two input fields, so the payload carries field names across the handoff as well.
-CREATE SEMANTIC MODEL asyncHeadline
+CREATE SEM_MODEL asyncHeadline
 INPUT (title VARSIZED, body VARSIZED)
 OUTPUT (gist VARSIZED)
 SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
@@ -72,14 +72,14 @@ SET ('Echo the article' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS L
 # the worker down. The call happens on a thread of the source, which is not the engine's, so an
 # exception escaping it would hit NES::Thread's missing handler and terminate the process. It is
 # carried to the source thread and rethrown there instead, which is where the engine sees it.
-CREATE SEMANTIC MODEL asyncDown
+CREATE SEM_MODEL asyncDown
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment' AS LLM.PROMPT, 'fail' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,
      'ASYNC' AS LLM.EXECUTION, 4 AS LLM.MAX_CONCURRENCY);
 
 # Results in completion order rather than input order. Only the asynchronous path has the choice.
-CREATE SEMANTIC MODEL asyncUnordered
+CREATE SEM_MODEL asyncUnordered
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Echo the description upper-cased' AS LLM.PROMPT, 'echo' AS LLM.ENDPOINT, 'mock-model' AS LLM.MODEL_NAME, 'mock' AS LLM.BACKEND,

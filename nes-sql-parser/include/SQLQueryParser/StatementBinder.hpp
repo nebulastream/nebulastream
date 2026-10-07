@@ -172,7 +172,7 @@ struct ShowModelsStatement
     std::optional<StatementOutputFormat> format;
 };
 
-/// `CREATE SEMANTIC MODEL`. The binder stays purely syntactic: the SET options arrive as a
+/// `CREATE SEM_MODEL`. The binder stays purely syntactic: the SET options arrive as a
 /// flat string map under the LLM namespace and are typed, defaulted and validated by the
 /// statement handler and the catalog.
 struct CreateSemanticModelStatement

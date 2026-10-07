@@ -82,7 +82,7 @@ struct SemanticStep
 };
 
 /// Everything needed to talk to the remote model. Catalog-side metadata declared
-/// alongside the model in `CREATE SEMANTIC MODEL`; none of it is derived from the
+/// alongside the model in `CREATE SEM_MODEL`; none of it is derived from the
 /// endpoint itself.
 struct SemanticModelConfig
 {
@@ -125,7 +125,7 @@ struct SemanticModelConfig
 using SemanticFieldList = Schema<UnqualifiedUnboundField, Ordered>;
 
 /// User-declared input and output field schemas, from the INPUT(...) and OUTPUT(...)
-/// clauses of `CREATE SEMANTIC MODEL`.
+/// clauses of `CREATE SEM_MODEL`.
 struct
     SemanticModelSchema /// NOLINT(bugprone-exception-escape) defaulted special members on a struct holding Schema (vector) trip the check; no real escape
 {

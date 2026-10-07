@@ -89,7 +89,7 @@ modelOutputField: identifier typeDefinition;
 /// optionsClause (SET ('...' AS LLM.PROMPT, ...)) so that no new reserved keyword is
 /// introduced for each setting -- this grammar has no nonReserved rule, so every keyword
 /// would otherwise become unusable as a column name.
-createSemanticModelDefinition: SEMANTIC MODEL modelName=identifier
+createSemanticModelDefinition: SEM_MODEL modelName=identifier
                                INPUT '(' modelInputField (',' modelInputField)* ')'
                                OUTPUT '(' modelOutputField (',' modelOutputField)* ')'
                                optionsClause?;
@@ -105,7 +105,7 @@ fromQuery: AS query;
 dropStatement: DROP dropSubject WHERE dropFilter;
 dropSubject: dropQuery | dropSource | dropSink | dropWorker | dropSemanticModel | dropModel;
 dropModel: MODEL;
-dropSemanticModel: SEMANTIC MODEL;
+dropSemanticModel: SEM_MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -582,6 +582,7 @@ INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
 SEMANTIC: 'SEMANTIC';
 SEM_MAP: 'SEM_MAP';
+SEM_MODEL: 'SEM_MODEL';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

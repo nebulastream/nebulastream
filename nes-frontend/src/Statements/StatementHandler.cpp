@@ -340,7 +340,7 @@ std::string requireOption(const std::unordered_map<Identifier, std::string>& con
     const auto* const value = findOption(config, key);
     if (value == nullptr || value->empty())
     {
-        throw InvalidSemanticModel("CREATE SEMANTIC MODEL requires option LLM.{}", key);
+        throw InvalidSemanticModel("CREATE SEM_MODEL requires option LLM.{}", key);
     }
     return *value;
 }

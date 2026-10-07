@@ -17,7 +17,7 @@ ATTACH INLINE
 2,Two hours I will never get back
 3,A solid effort but forgettable
 
-CREATE SEMANTIC MODEL sentiment
+CREATE SEM_MODEL sentiment
 INPUT (description VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,

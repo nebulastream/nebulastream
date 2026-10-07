@@ -24,7 +24,7 @@ CREATE LOGICAL SOURCE reviews(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR reviews TYPE File;
 ATTACH FILE async/reviews_40.csv
 
-CREATE SEMANTIC MODEL syncBase
+CREATE SEM_MODEL syncBase
 INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
@@ -33,7 +33,7 @@ SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMP
      180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
      4 AS LLM.MAX_CONCURRENCY);
 
-CREATE SEMANTIC MODEL asyncPerRecord
+CREATE SEM_MODEL asyncPerRecord
 INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
@@ -42,7 +42,7 @@ SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMP
      180 AS LLM.TIMEOUT_SECONDS, 0 AS LLM.MAX_RETRIES,
      'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 8 AS LLM.MAX_CONCURRENCY);
 
-CREATE SEMANTIC MODEL asyncBatched
+CREATE SEM_MODEL asyncBatched
 INPUT (reviewText VARSIZED)
 OUTPUT (sentiment VARSIZED)
 SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
