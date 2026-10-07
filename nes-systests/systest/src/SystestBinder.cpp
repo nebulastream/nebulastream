@@ -174,9 +174,9 @@ struct SystestBinder::Impl
               copyPtr(workerCatalog),
               modelCatalog}
     {
-        for (const auto& [host, data, capacity, downstream, workerConfig] : clusterConfiguration.workers)
+        for (const auto& [host, data, maxOperators, downstream, workerConfig] : clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, data, capacity, downstream, workerConfig);
+            workerCatalog->addWorker(host, data, maxOperators, downstream, workerConfig);
         }
     }
 
