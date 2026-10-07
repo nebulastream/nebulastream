@@ -312,43 +312,56 @@ std::unique_ptr<ExecutableQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<R
 {
     ENGINE_LOG_DEBUG("Disposing Running Query Plan");
 
-    auto lock = runningQueryPlan->internal.lock();
-    auto& internal = *lock;
+    CallbackOwner allPipelinesExpired;
+    std::unique_ptr<ExecutableQueryPlan> plan;
+    {
+        auto lock = runningQueryPlan->internal.lock();
+        auto& internal = *lock;
+        internal.stopping = true;
+        internal.listeners.clear();
+        allPipelinesExpired = std::move(internal.allPipelinesExpired);
+        plan = std::move(internal.qep);
+    }
 
-    internal.listeners.clear();
-    internal.allPipelinesExpired = {};
-    return std::move(internal.qep);
+    /// A destruction callback may be waiting for the plan lock. Cancel it outside that lock.
+    allPipelinesExpired = {};
+    return plan;
 }
 
 RunningQueryPlan::~RunningQueryPlan()
 {
-    /// Destroying a source joins its thread, which may run successor-pipeline callbacks that re-acquire the
-    /// internal AtomicState lock. Destroying sources while holding that lock therefore deadlocks (see the note on
-    /// RunningQueryPlan::stop). Mirror stop(): move the sources out under the lock, release it, then destroy them.
+    CallbackOwner allPipelinesStarted;
+    std::vector<std::shared_ptr<RunningQueryPlanNode>> pipelines;
+    {
+        auto lock = internal.lock();
+        lock->stopping = true;
+        allPipelinesStarted = std::move(lock->allPipelinesStarted);
+        /// Cancelling setup releases its captured source successors. Retain the pipelines until hard-stop flags are set.
+        for (const auto& weakRef : lock->pipelines)
+        {
+            if (auto pipeline = weakRef.lock())
+            {
+                pipelines.emplace_back(std::move(pipeline));
+            }
+        }
+    }
+    /// Cancellation waits for an in-flight setup callback, which may need the plan lock.
+    /// Keep the plan alive, but release its lock before waiting, just as in stop().
+    allPipelinesStarted = {};
+
+    /// Joining source threads can also re-enter the query state, so destroy sources outside the plan lock.
     std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources;
     {
         auto lock = this->internal.lock();
         auto& internal = *lock;
 
-        /// CRITICAL: Disable pipeline setup callback during destruction to prevent race condition.
-        ///
-        /// This prevents any pending pipeline setup callbacks from executing after the
-        /// RunningQueryPlan starts being destroyed. Without this, callbacks could access
-        /// partially destroyed object state, leading to use-after-free errors.
-        ///
-        /// The callback may have captured a raw pointer to this RunningQueryPlan during
-        /// the start() method, and this ensures it cannot execute after destruction begins.
-        internal.allPipelinesStarted = {};
-
-        for (const auto& weakRef : internal.pipelines)
+        for (const auto& pipeline : pipelines)
         {
-            if (auto strongRef = weakRef.lock())
-            {
-                strongRef->requiresTermination = false;
-            }
+            pipeline->requiresTermination = false;
         }
         sources = std::move(internal.sources);
     }
     sources.clear();
+    pipelines.clear();
 }
 }
