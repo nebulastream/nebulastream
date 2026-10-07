@@ -94,7 +94,11 @@ columnDefinition: strictIdentifier typeDefinition nullableDefinition?;
 /// `UINT16 ARRAY[16]`); the element type is the leading type name and the
 /// count must be a positive integer literal. Resolved to `DataType::Type::FIXEDSIZED`.
 /// `typeName ARRAY '[' ']'` (no count) will be dispatched as VECTOR as well.
-typeDefinition: (DATA_TYPE | IDENTIFIER) (ARRAY '[' count=INTEGER_VALUE? ']' | VECTOR)?;
+/// It is possible to define nested arrays via INT32 ARRAY [3][2]...
+/// Furthermore, nesting of vectors and arrays together like INT32 ARRAY [][3] (resulting in a VECTOR of size 3 int32 arrays) or INT32 ARRAY[3][] (resulting in a size 3 arrays of int32 vectors).
+/// The constraint for this is, that the nesting of varsized types is prohibited, so a vector may only contain fixedsized arrays, meaning INT ARRAY[][] or INT ARRAY [][3][2] is not ppossible.
+typeDefinition: (DATA_TYPE | IDENTIFIER) (ARRAY arrayDimension+ | VECTOR)?;
+arrayDimension: '[' count=INTEGER_VALUE? ']';
 nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
