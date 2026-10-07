@@ -15,9 +15,13 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <thread>
 #include <utility>
@@ -48,7 +52,42 @@ public:
         NES_DEBUG("Setup QueryEngineTest test class.");
     }
 
-    void SetUp() override { BaseUnitTest::SetUp(); }
+    /// A deadlocked engine never returns, so abort after a deadline. The core dump or recorder snapshot then shows the stuck threads.
+    void SetUp() override
+    {
+        BaseUnitTest::SetUp();
+        watchdog = std::thread(
+            [this]
+            {
+                std::unique_lock lock(watchdogMutex);
+                if (!watchdogCondition.wait_for(lock, WATCHDOG_TIMEOUT, [this] { return testFinished; }))
+                {
+                    NES_ERROR(
+                        "Watchdog: {} timed out after {}, aborting",
+                        ::testing::UnitTest::GetInstance()->current_test_info()->name(),
+                        WATCHDOG_TIMEOUT);
+                    std::abort();
+                }
+            });
+    }
+
+    void TearDown() override
+    {
+        {
+            const std::scoped_lock lock(watchdogMutex);
+            testFinished = true;
+        }
+        watchdogCondition.notify_all();
+        watchdog.join();
+        BaseUnitTest::TearDown();
+    }
+
+private:
+    static constexpr std::chrono::seconds WATCHDOG_TIMEOUT{60};
+    std::thread watchdog;
+    std::mutex watchdogMutex;
+    std::condition_variable watchdogCondition;
+    bool testFinished = false;
 };
 
 TEST_F(QueryEngineTest, simpleTest)
@@ -526,6 +565,27 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSourcesRaceBetweenFailA
         EXPECT_FALSE(test.sinkControls[sink]->wasStopped())
             << "Successor to failing should not be stopped gracefully even if one child was stopped gracefully";
     }
+    test.stop();
+}
+
+/// Hard cleanup (engine shutdown) racing with the setup callback that starts the sources.
+TEST_F(QueryEngineTest, shutdownRightAfterPipelineStartCompletes)
+{
+    TestingHarness test(2, NUMBER_OF_BUFFERS_PER_SOURCE);
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto pipelineControl = test.pipelineControls[pipeline];
+    pipelineControl->blockOnStart = true;
+
+    test.start();
+    test.startQuery(std::move(query));
+    const auto startEntered = pipelineControl->waitUntilStartEntered();
+    /// Releasing the last pipeline start triggers the setup callback; shut down immediately without waiting for Running.
+    pipelineControl->unblockStart();
+    EXPECT_TRUE(startEntered);
     test.stop();
 }
 
