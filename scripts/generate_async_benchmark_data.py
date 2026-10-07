@@ -46,7 +46,15 @@ CLOSERS = ["The result is hard to shake.", "I wanted to like it more than I did.
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", default="cmake-build-debug/bench-data")
-    out = Path(parser.parse_args().out_dir) / "async"
+    parser.add_argument(
+        "--rows",
+        type=int,
+        action="append",
+        help="additionally write reviews_<N>.csv. Repeatable. The cluster benchmark needs a size "
+        "where its slowest configuration still finishes: at ~2 s per call, 5000 rows is about 40 "
+        "minutes blocking on four worker threads.")
+    arguments = parser.parse_args()
+    out = Path(arguments.out_dir) / "async"
     out.mkdir(parents=True, exist_ok=True)
 
     # Fixed seed: the same files on every machine, so two runs are comparable.
@@ -59,7 +67,15 @@ def main() -> None:
         assert "," not in text and '"' not in text
         rows.append(f"{identifier},{text}")
 
-    for count in (12, 30, 40, 760):
+    sizes = [12, 30, 40, 760]
+    for count in arguments.rows or []:
+        if count > len(rows):
+            # The sentence pool is finite, so a larger set repeats texts with fresh ids. That is
+            # fine for throughput: the prompt sizes stay representative.
+            rows = [f"{i + 1},{rows[i % len(rows)].split(',', 1)[1]}" for i in range(count)]
+        sizes.append(count)
+
+    for count in sorted(set(sizes)):
         (out / f"reviews_{count}.csv").write_text("\n".join(rows[:count]) + "\n")
 
     # A second stream with no model in it, for the responsiveness measurement.
