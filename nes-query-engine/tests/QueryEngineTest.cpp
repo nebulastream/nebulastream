@@ -218,6 +218,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     test.start();
     {
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         ASSERT_TRUE(ctrl->waitUntilOpened());
 
@@ -270,6 +271,8 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
     test.start();
     {
         test.startQuery(std::move(query));
+        /// Source activity can precede the Running notification. Wait before triggering termination.
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         ASSERT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->wasClosed());
@@ -313,6 +316,8 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
     test.start();
     {
         test.startQuery(std::move(query));
+        /// Source activity can precede the Running notification. Wait before triggering termination.
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         ASSERT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->waitUntilClosed());
@@ -693,6 +698,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
     test.start();
     {
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         ASSERT_TRUE(ctrl1->waitUntilOpened());
         EXPECT_FALSE(ctrl1->wasClosed());
@@ -756,6 +762,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     test.start();
     {
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         DataGenerator dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
         ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(numberOfBuffersBeforeTermination));
@@ -797,6 +804,8 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     test.start();
     {
         test.startQuery(std::move(query));
+        /// Source activity can precede the Running notification. Wait before triggering termination.
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         DataGenerator<FailAfter<numberOfBuffersBeforeFailure, 0>> dataGenerator;
         dataGenerator.start(sourcesCtrls);
@@ -1020,6 +1029,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourceExternalStop)
     test.start();
     {
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         ASSERT_TRUE(test.sourceControls[source1]->waitUntilOpened());
         ASSERT_TRUE(test.sourceControls[source2]->waitUntilOpened());
 
@@ -1276,6 +1286,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSink)
         test.start();
         auto queryId = query->queryId;
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(identifiableData(1), 32);
         test.sourceControls[source]->injectEoS();
         EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1309,6 +1320,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingPipeline)
         test.start();
         auto queryId = query->queryId;
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(identifiableData(1), 32);
         test.sourceControls[source]->injectEoS();
         EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1343,6 +1355,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSinkDuringQueryStop)
         test.start();
         auto queryId = query->queryId;
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(identifiableData(1), 32);
         test.sourceControls[source]->injectEoS();
         EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
@@ -1378,6 +1391,7 @@ TEST_F(QueryEngineTest, SingleQueryWithMultipleSinksDuringQueryStopOneIsRepeated
         test.start();
         auto queryId = query->queryId;
         test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(identifiableData(1), 32);
         test.sourceControls[source]->injectEoS();
         EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
