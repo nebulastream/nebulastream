@@ -25,6 +25,7 @@
 
 #include <Model/RunnableTestFile.hpp>
 #include <Rewriter/Constants.hpp>
+#include <Rewriter/SourceRewriting.hpp>
 #include <Util/Files.hpp>
 #include <ErrorHandling.hpp>
 #include <TCPDataServer.hpp>
@@ -59,10 +60,10 @@ RunningServer serve(ServedData data)
     return {
         .thread = std::jthread{[owned = std::move(server)](const std::stop_token& stopToken) { owned->run(stopToken); }},
         .options
-        = {Sql::option(Sql::Source, Sql::SocketHost, "localhost"),
-           Sql::option(Sql::Source, Sql::SocketPort, std::to_string(port)),
+        = {SourceOption{.group = Sql::Source, .key = Sql::SocketHost, .value = "localhost"},
+           SourceOption{.group = Sql::Source, .key = Sql::SocketPort, .value = std::to_string(port)},
            /// The test data sets are small, so a source would otherwise wait on a partial buffer for rows that never come.
-           Sql::option(Sql::Source, Sql::FlushIntervalMs, "100")}};
+           SourceOption{.group = Sql::Source, .key = Sql::FlushIntervalMs, .value = "100"}}};
 }
 
 }

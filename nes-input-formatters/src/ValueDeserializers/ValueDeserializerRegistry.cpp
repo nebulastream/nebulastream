@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <FileDataRegistry.hpp>
+#include <ValueDeserializerRegistry.hpp>
 
 namespace NES
 {
 
-FileDataRegistry& FileDataRegistry::instance()
+ValueDeserializerRegistry& ValueDeserializerRegistry::instance()
 {
-    static FileDataRegistry inst;
+    static ValueDeserializerRegistry inst;
     return inst;
 }
 

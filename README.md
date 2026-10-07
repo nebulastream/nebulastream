@@ -40,7 +40,7 @@ We advance this vision through five core technologies:
 - **Adaptive Resource Management** - Reacts to topology or workload changes without interrupting queries.
 
 The system architecture spans sensor to cloud:
-1. **Sources & Sinks** - Built-in connectors (e.g., JDBC, MQTT, TCP) and formats (e.g., CSV, JSON) with plugin hooks for custom components; extend them via the plugin framework in the [Extensibility guide](docs/guide/extensibility.md).
+1. **Sources & Sinks** - Built-in connectors (MQTT, TCP, Kafka, files) and formats (CSV, JSON) with plugin hooks for custom components; extend them via the plugin framework in the [Extensibility guide](docs/guide/extensibility.md).
 2. **I/O Handling** - Thread-shared source processing and asynchronous callbacks minimize waiting time.
 3. **Query Submission** - SQL-like language with prebuilt operators such as join and aggregation, plus user-defined operator plugins.
 4. **Query Optimization** - Rule-based optimizer generates hardware-aware plans; users can extend the rule engine.

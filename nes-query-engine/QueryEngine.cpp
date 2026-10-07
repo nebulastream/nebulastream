@@ -851,14 +851,17 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
-                locked->transition(
+                const auto didTransition = locked->transition(
                     [](Reserved&&)
                     {
                         INVARIANT(false, "Bug: Jumping from reserved to running state should be impossible.");
                         return Terminated{Terminated::Failed};
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
-                listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
+                if (didTransition)
+                {
+                    listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
+                }
             }
         }
 

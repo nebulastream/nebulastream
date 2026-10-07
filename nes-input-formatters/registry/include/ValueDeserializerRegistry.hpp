@@ -14,33 +14,29 @@
 
 #pragma once
 
-#include <filesystem>
-#include <functional>
+#include <cstddef>
 #include <memory>
 #include <string>
-#include <thread>
-#include <vector>
-#include <Sources/SourceDataProvider.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include <ValueDeserializer.hpp>
 
 namespace NES
 {
 
-using FileDataRegistryReturnType = PhysicalSourceConfig;
+using ValueDeserializerRegistryReturnType = std::unique_ptr<ValueDeserializer>;
 
-struct FileDataRegistryArguments
+struct ValueDeserializerRegistryArguments
 {
-    PhysicalSourceConfig physicalSourceConfig;
-    std::shared_ptr<std::vector<std::jthread>> serverThreads;
-    std::filesystem::path testFilePath;
+    bool quoted;
+    bool hasTrailingSpaces;
 };
 
-using FileDataFn = std::function<FileDataRegistryReturnType(FileDataRegistryArguments)>;
+using ValueDeserializerFactoryFn = std::function<ValueDeserializerRegistryReturnType(ValueDeserializerRegistryArguments)>;
 
-class FileDataRegistry : public RuntimeRegistry<FileDataRegistry, std::string, FileDataFn, /*CaseSensitive*/ false>
+class ValueDeserializerRegistry : public RuntimeRegistry<ValueDeserializerRegistry, std::string, ValueDeserializerFactoryFn, false>
 {
 public:
-    static FileDataRegistry& instance();
+    static ValueDeserializerRegistry& instance();
 };
 
 }

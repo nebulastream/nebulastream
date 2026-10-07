@@ -43,19 +43,20 @@ void RecordBuffer::setNumRecords(const nautilus::val<uint64_t>& numRecordsValue)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setNumberOfTuples, buffer.asArg(), numRecordsValue);
 }
 
+/// The record buffer grants mutable access to its buffer; nautilus only drops const through an explicit cast.
 nautilus::val<int8_t*> RecordBuffer::getMemArea() const
 {
-    return buffer.data();
+    return static_cast<nautilus::val<int8_t*>>(buffer.data());
 }
 
 nautilus::val<TupleBuffer*> RecordBuffer::getReference() const
 {
-    return buffer.asArg();
+    return static_cast<nautilus::val<TupleBuffer*>>(buffer.asArg());
 }
 
 nautilus::val<OriginId> RecordBuffer::getOriginId()
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getOriginId, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getOriginId, buffer.asArg());
 }
 
 void RecordBuffer::setOriginId(const nautilus::val<OriginId>& originId)
@@ -75,7 +76,7 @@ void RecordBuffer::setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber)
 
 nautilus::val<ChunkNumber> RecordBuffer::getChunkNumber()
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getChunkNumber, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getChunkNumber, buffer.asArg());
 }
 
 void RecordBuffer::setLastChunk(const nautilus::val<bool>& isLastChunk)
@@ -90,7 +91,7 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
 
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, buffer.asArg());
 }
 
 void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
@@ -100,12 +101,12 @@ void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
 
 nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, buffer.asArg());
 }
 
 nautilus::val<Timestamp> RecordBuffer::getCreatingTs()
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, buffer.asArg())};
+    return invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, buffer.asArg());
 }
 
 void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)

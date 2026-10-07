@@ -20,5 +20,3 @@ target_include_directories(tcp_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOUR
 link_plugin_library(nes-sources tcp_source_plugin_library)
 add_registry_entry(Source TCP)
 add_registry_entry(SourceValidation TCP)
-add_registry_entry(InlineData TCP)
-add_registry_entry(FileData TCP)

@@ -24,6 +24,7 @@
 #include <TokenStreamRewriter.h>
 
 #include <Identifiers/Identifier.hpp>
+#include <Model/RunnableTestFile.hpp>
 #include <Rewriter/SqlParse.hpp>
 
 namespace NES
@@ -55,12 +56,13 @@ public:
     /// The derivation is injective, so no two different files of one run can share a key and collide.
     /// A test file yields one runnable test per config combination, so each part needs a unique key.
     /// A file with a single part keeps its own key, so the SQL that it emits does not change.
-    /// A file that is not under the root has no position under it and therefore no key, so we throw.
+    /// A file that is not under the root is keyed by its absolute path, so a directly given file runs from anywhere.
     ///
     /// Example, with `/root/nes-systests` as the discovery root:
     ///     /root/nes-systests/benchmark/Nexmark.test           part 0 of 1 -> BENCHMARK_D_NEXMARK
     ///     /root/nes-systests/benchmark/Nexmark.test           part 1 of 3 -> BENCHMARK_D_NEXMARK_C1
     ///     /root/nes-systests/regression/2025-09-10_Join.test  part 0 of 1 -> REGRESSION_D_2025_2D_09_2D_10__JOIN
+    ///     /elsewhere/Nexmark.test                             part 0 of 1 -> _D_ELSEWHERE_D_NEXMARK
     [[nodiscard]] TestFileKey keyOf(const std::filesystem::path& testFile, size_t part, size_t parts) const;
 
 private:
@@ -80,15 +82,32 @@ public:
     /// The rewriter substitutes catalog-visible names and leaves column names, aliases and keywords untouched.
     [[nodiscard]] std::optional<Identifier> prefixed(std::string_view name) const;
 
-    /// The prefix put in front of every name, so a consumer can strip it from a text again.
-    [[nodiscard]] const std::string& prefix() const { return namePrefix; }
+    /// The original spelling of every prefixed name, so a consumer can read a printed plan as the test wrote it.
+    [[nodiscard]] OriginalNames originalNames() const;
 
 private:
     friend class NameRegistry;
-    PrefixedNames(PrefixedByName prefixedByName, std::string prefix);
+    explicit PrefixedNames(PrefixedByName prefixedByName);
 
     PrefixedByName prefixedByName;
-    std::string namePrefix;
+};
+
+/// Records which test file of one invocation declared each prefix.
+/// The key encoding keeps two files apart, but the declared name follows the key as written,
+/// so `d_b_s` in `a.test` and `s` in `a/b.test` both spell `A_D_B_S`.
+class PrefixedNameOwners
+{
+public:
+    void claim(const OriginalNames& names, const std::filesystem::path& testFile);
+
+private:
+    struct Owner
+    {
+        std::filesystem::path testFile;
+        std::string originalName;
+    };
+
+    std::unordered_map<std::string, Owner> ownerBySpelling;
 };
 
 /// Collects the catalog-visible names of one test file, prefixing each with that file's key.
@@ -112,15 +131,16 @@ private:
     PrefixedByName prefixedByName;
 };
 
-/// Removes the name prefix wherever it occurs in text, so a plan reads as the test wrote it.
-std::string stripPrefix(std::string_view text, std::string_view namePrefix);
+/// Replaces every prefixed name in a text with the originally written text.
+/// Only whole identifiers that are registered names change.
+/// One pass over the text, so a restored name is never matched again: with key `ORDERS`, `ORDERS_ORDERS_INPUT` becomes
+/// `ORDERS_INPUT` even when a source `input` is registered as well.
+std::string restoreNames(std::string_view text, const OriginalNames& names);
 
-/// Replaces every identifier that refers to a name that the test file declared with its prefixed spelling.
-/// Only registered names change, so column names, aliases, keywords and string literals stay as the test wrote them.
-/// An identifier that spells a plugin type keeps its spelling, because a type is not a name that any test file declares,
-/// and the grammar admits the same word in both positions: `CREATE PHYSICAL SOURCE FOR File TYPE File`.
-/// The replacements join the given rewriter, so a caller combines them with its own edits in one pass, and an edit that
-/// already covers a name wins over the replacement of that name.
-void prefixNames(SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names);
+/// Replaces every reference to a name that the test file declared with its prefixed spelling.
+/// Only the grammar positions that hold a source, sink or model name change,
+/// so a column/alias/plugin/function are untouched:
+/// `SELECT s FROM s` renames only the second `s`.
+void prefixNames(const SqlParse& parse, antlr4::TokenStreamRewriter& rewriter, const PrefixedNames& names);
 
 }

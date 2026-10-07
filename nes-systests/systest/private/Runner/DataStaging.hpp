@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <Model/RunnableTestFile.hpp>
+#include <Rewriter/SourceRewriting.hpp>
 
 namespace NES
 {
@@ -32,7 +33,7 @@ void writeInlineData(const InlineData& data);
 struct RunningServer
 {
     std::jthread thread;
-    std::vector<std::string> options;
+    std::vector<SourceOption> options;
 };
 
 /// Starts a server on an ephemeral port that sends the given data.

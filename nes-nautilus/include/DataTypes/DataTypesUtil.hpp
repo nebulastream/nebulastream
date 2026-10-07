@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <type_traits>
 #include <unordered_map>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
@@ -29,32 +30,50 @@
 namespace NES
 {
 
+/// Pointers the member-access helpers accept as raw memory: bytes and void, in any constness.
+template <typename Pointee>
+concept RawMemory
+    = std::is_void_v<Pointee> || std::is_same_v<std::remove_cv_t<Pointee>, int8_t> || std::is_same_v<std::remove_cv_t<Pointee>, uint8_t>
+    || std::is_same_v<std::remove_cv_t<Pointee>, char> || std::is_same_v<std::remove_cv_t<Pointee>, std::byte>;
+
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.
 /// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>
 /// This does not work with multiple inheritance, for example, https://godbolt.org/z/qzExEd
-template <typename T, typename U>
-nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::* member)
+/// The object reference must point to the member's class or be raw memory; any other pointer needs an explicit cast at the call
+/// site, as nautilus, like C++, does not convert between unrelated pointer types implicitly.
+/// A pointer to a const object yields a pointer to const memory.
+template <typename T, typename U, typename Object>
+requires std::is_same_v<std::remove_cv_t<Object>, T> || RawMemory<Object>
+auto getMemberRef(const nautilus::val<Object*>& objectReference, U T::* member)
 {
+    using Byte = std::conditional_t<std::is_const_v<Object>, const int8_t, int8_t>;
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
+    return static_cast<nautilus::val<Byte*>>(objectReference) + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT
 }
 
-template <typename T>
-static nautilus::val<T*> getMemberWithOffset(nautilus::val<int8_t*> objectReference, const size_t memberOffset)
+/// Address of the member at a raw byte offset (e.g. offsetof) into the object. The offset is not tied to the object's type, so any
+/// object pointer is accepted.
+template <typename T, typename Object>
+static auto getMemberWithOffset(const nautilus::val<Object*>& objectReference, const size_t memberOffset)
 {
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T*>>(objectReference + memberOffset); /// NOLINT
+    using Member = std::conditional_t<std::is_const_v<Object>, const T, T>;
+    using Byte = std::conditional_t<std::is_const_v<Object>, const int8_t, int8_t>;
+    return static_cast<nautilus::val<Member*>>(static_cast<nautilus::val<Byte*>>(objectReference) + memberOffset); /// NOLINT
 }
 
-template <typename T>
-static nautilus::val<T**> getMemberPtrWithOffset(nautilus::val<T*> objectReference, const size_t memberOffset)
+/// Address of the pointer-typed member at a raw byte offset (e.g. offsetof) into the object; see getMemberWithOffset.
+template <typename T, typename Object>
+static auto getMemberPtrWithOffset(const nautilus::val<Object*>& objectReference, const size_t memberOffset)
 {
-#pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
-    return static_cast<nautilus::val<T**>>(objectReference + memberOffset); /// NOLINT
+    using Member = std::conditional_t<std::is_const_v<Object>, T* const, T*>;
+    using Byte = std::conditional_t<std::is_const_v<Object>, const int8_t, int8_t>;
+    return static_cast<nautilus::val<Member*>>(static_cast<nautilus::val<Byte*>>(objectReference) + memberOffset); /// NOLINT
 }
 
-template <typename T>
-nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
+/// Reads a T from memory that holds a T or is raw memory.
+template <typename T, typename Pointee>
+requires std::is_same_v<std::remove_cv_t<Pointee>, T> || RawMemory<Pointee>
+nautilus::val<T> readValueFromMemRef(const nautilus::val<Pointee*>& memRef)
 {
     return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
 }

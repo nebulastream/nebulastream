@@ -5,19 +5,15 @@ description: |
   the two required-status gates ("Code CI Done" / "Docs CI Done").
 on:
   pull_request:
-    types: [ synchronize, opened, reopened, edited ]
+    types: [ synchronize, opened, reopened ]
   merge_group:
     branches: [ main ]
 
 # cancel previous runs of same PR / branch.
 # In merge_group runs github.head_ref is empty, so fall back to github.ref (the unique
 # gh-readonly-queue ref) to avoid queued runs cancelling each other.
-# A title/body edit ('edited' without a base change) dispatches nothing (see the code/docs job
-# gates), but concurrency is evaluated before those gates — so isolate those runs in a unique group,
-# otherwise cancel-in-progress would kill a legit in-progress build before the skip even happens.
 concurrency:
-  # run_id suffix gives no-op edits a private group; drop it if 'edited' is ever removed from triggers.
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr${{ (github.event.action == 'edited' && github.event.changes.base == null) && format('-noop-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-pr
   cancel-in-progress: true
 
 jobs:
@@ -39,17 +35,16 @@ jobs:
           base-sha: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           head-sha: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
 
-  # 'edited' fires on title/body/base changes; only (re)dispatch a pipeline when the base branch
-  # changed. Also skipped when the classify gate found no changes of that kind.
+  # Dispatch each pipeline only when the classify gate found changes of that kind.
   code:
     needs: [ classify ]
-    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.classify.outputs.hasCodeChanges == 'true' }}
+    if: ${{ needs.classify.outputs.hasCodeChanges == 'true' }}
     uses: ./.github/workflows/pr_code.yml
     secrets: inherit
 
   docs:
     needs: [ classify ]
-    if: ${{ (github.event.action != 'edited' || github.event.changes.base != null) && needs.classify.outputs.hasDocChanges == 'true' }}
+    if: ${{ needs.classify.outputs.hasDocChanges == 'true' }}
     uses: ./.github/workflows/pr_docs.yml
     secrets: inherit
 
@@ -58,12 +53,8 @@ jobs:
   # created under a stable, top-level name — set "Code CI Done" / "Docs CI Done" as the required
   # status checks. Because they are top-level jobs here (not inside the reusable workflows) the
   # context names stay unprefixed; the reusable workflows' own jobs show up as "code / ..." etc.
-  #
-  # Each name is dynamic: a no-op title/body edit publishes under "... (skipped)", which is NOT the
-  # required context — so editing the PR title (which dispatches nothing) can't turn a gate green
-  # over failing code. The real run's green status on the same head SHA stays valid.
   code-ci-done:
-    name: ${{ (github.event.action == 'edited' && github.event.changes.base == null) && 'Code CI Done (skipped)' || 'Code CI Done' }}
+    name: Code CI Done
     needs: [ classify, code ]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
@@ -72,8 +63,6 @@ jobs:
         env:
           CLASSIFY_RESULT: ${{ needs.classify.result }}
           HAS_CODE: ${{ needs.classify.outputs.hasCodeChanges }}
-          # A title/body 'edited' event legitimately dispatches nothing; see the code job gate.
-          NOOP_EDIT: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
           CODE_RESULT: ${{ needs.code.result }}
         run: |
           # Fail-safe order: a broken classify must FAIL the gate, not silently pass it.
@@ -83,16 +72,13 @@ jobs:
           if [ "$HAS_CODE" != "true" ]; then
             echo "No code changes — code CI legitimately skipped; passing."; exit 0
           fi
-          if [ "$NOOP_EDIT" = "true" ]; then
-            echo "No-op PR edit — nothing dispatched; passing."; exit 0
-          fi
           if [ "$CODE_RESULT" = "success" ]; then
             echo "Code CI succeeded."; exit 0
           fi
           echo "::error::Code CI did not succeed: $CODE_RESULT"; exit 1
 
   docs-ci-done:
-    name: ${{ (github.event.action == 'edited' && github.event.changes.base == null) && 'Docs CI Done (skipped)' || 'Docs CI Done' }}
+    name: Docs CI Done
     needs: [ classify, docs ]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
@@ -101,7 +87,6 @@ jobs:
         env:
           CLASSIFY_RESULT: ${{ needs.classify.result }}
           HAS_DOCS: ${{ needs.classify.outputs.hasDocChanges }}
-          NOOP_EDIT: ${{ github.event.action == 'edited' && github.event.changes.base == null }}
           DOCS_RESULT: ${{ needs.docs.result }}
         run: |
           if [ "$CLASSIFY_RESULT" != "success" ]; then
@@ -109,9 +94,6 @@ jobs:
           fi
           if [ "$HAS_DOCS" != "true" ]; then
             echo "No doc changes — docs CI legitimately skipped; passing."; exit 0
-          fi
-          if [ "$NOOP_EDIT" = "true" ]; then
-            echo "No-op PR edit — nothing dispatched; passing."; exit 0
           fi
           if [ "$DOCS_RESULT" = "success" ]; then
             echo "Docs CI succeeded."; exit 0

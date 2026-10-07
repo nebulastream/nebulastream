@@ -232,6 +232,11 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 auto lock = runningPlan.internal.lock();
                 auto& internal = *lock;
 
+                if (internal.stopping)
+                {
+                    return;
+                }
+
                 ENGINE_LOG_DEBUG("Pipeline Setup Completed");
                 for (auto& [source, successors] : sources)
                 {
@@ -272,21 +277,26 @@ RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 
     auto lock = runningQueryPlan->internal.lock();
     auto& internal = *lock;
+    internal.stopping = true;
 
     return {
         std::make_unique<StoppingQueryPlan>(
             std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired)),
         [callbackOwner = std::move(internal.allPipelinesStarted),
          pipelines = std::move(internal.pipelines),
-         sources = std::move(internal.sources)]() mutable
+         sources = std::move(internal.sources),
+         runningQueryPlan = std::move(runningQueryPlan)]() mutable
         {
             /// Destroying the sources needs to ensure that there is no concurrency on the sources vector.
             /// The setup callback may run concurrently so it is essential that the callback owner is destroyed before
             /// however the callback owner will block until the callback is either cancelled or completed. Completing the callback requires
             /// a lock on the AtomicState. Therefore, this callback needs to be called from outside the atomic state.
+            /// The setup callback captures the RunningQueryPlan, so keep it alive until the callback is disarmed. The stopping flag makes
+            /// a late callback return before accessing the state moved out above.
             callbackOwner = {};
             pipelines.clear();
             sources.clear();
+            runningQueryPlan.reset();
         }
 
     };

@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "d63bd8f30298e6761e749769742f34d01d332210";
-    hash = "sha256-UD2msYmFyueMMvCMVrZRDNoKc9qwnEsgmE8pqtPG/60=";
+    rev = "bee5f2723c63a815e40c85f3fa81a7a96399ed28";
+    hash = "sha256-esndXvu/CLuL7P6GKfdxqmwd2N0czeZuU0JsZwwI648=";
   };
 
   baseBuildInputs = [
@@ -50,11 +50,6 @@ let
 
       src = nautilusSrc;
 
-      patches = [
-        ./patches/0001-disable-ubsan-function-call-check.patch
-        ./patches/0002-auto-guard-throwing-invokes.patch
-      ];
-
       nativeBuildInputs = [
         pkgs.cmake
         pkgs.ninja
@@ -79,11 +74,15 @@ let
         "-DENABLE_MLIR_BACKEND=ON"
         "-DENABLE_C_BACKEND=ON"
         "-DENABLE_BC_BACKEND=OFF"
-        "-DENABLE_ASMJIT_BACKEND=OFF"
-        "-DENABLE_SIMD_PLUGIN=OFF"
+        "-DENABLE_ASMJIT_BACKEND=ON"
+        "-DENABLE_TBC_BACKEND=ON"
+        "-DENABLE_TBC_JIT=ON"
+        "-DENABLE_BUILTIN_PLUGIN=ON"
+        "-DENABLE_PROFILING_PLUGIN=ON"
+        "-DENABLE_SIMD_PLUGIN=ON"
         "-DENABLE_STD_PLUGIN=ON"
-        "-DENABLE_SPECIALIZATION_PLUGIN=OFF"
-        "-DENABLE_INLINING_PLUGIN=OFF"
+        "-DENABLE_SPECIALIZATION_PLUGIN=ON"
+        "-DENABLE_INLINING_PLUGIN=ON"
         "-DENABLE_GPU_PLUGIN=OFF"
         "-DENABLE_TESTS=OFF"
         "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"

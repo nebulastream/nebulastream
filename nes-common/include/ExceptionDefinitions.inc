@@ -69,6 +69,8 @@ EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 EXCEPTION(CannotLoadPlugin, 2043, "cannot load plugin")
+EXCEPTION(UnknownValueSerializerType, 2044, "unknown value serializer type")
+EXCEPTION(UnknownValueDeserializerType, 2045, "unknown value deserializer type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -93,6 +95,8 @@ EXCEPTION(RunningRoutineFailure, 4001, "error in running routine of SourceThread
 EXCEPTION(CannotOpenSource, 4002, "failed to open a source")
 EXCEPTION(FormattingError, 4003, "error during formatting")
 EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
+EXCEPTION(CannotWriteToSink, 4005, "failed to write to a sink")
+EXCEPTION(CannotReadFromSource, 4006, "failed to read from a source")
 
 /// 5XXX API errors
 EXCEPTION(QueryNotFound, 5000, "query is not registered")

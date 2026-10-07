@@ -60,10 +60,19 @@ RewrittenSource SourceRewriter::rewrite(SqlParse& parse, PhysicalSourceDeclarati
     /// A physical source reads the data of its ATTACH, whose path is resolved against the test data directory.
     /// The options that the test wrote pass through as written, so a path written here would stay relative,
     /// and one written alongside an ATTACH would set the option twice.
-    if (declaresOption(declaredOptions(declaration.definition), Sql::Source, Sql::FilePath))
+    auto* declared = declaredOptions(declaration.definition);
+    if (declaresOption(declared, Sql::Source, Sql::FilePath))
     {
         throw TestException(
             "A physical source must not choose its data file, because a source reads the data that its ATTACH names: {}",
+            declaration.definition->getText());
+    }
+
+    if (declaration.attached.has_value() and readsFromSocket(declaration.definition->type->getText())
+        and (declaresOption(declared, Sql::Source, Sql::SocketHost) or declaresOption(declared, Sql::Source, Sql::SocketPort)))
+    {
+        throw TestException(
+            "A source with attached data must not choose its socket endpoint, because a server sends it that data: {}",
             declaration.definition->getText());
     }
 
@@ -198,7 +207,7 @@ void completeAnonymousSources(const SqlParse& parse, antlr4::TokenStreamRewriter
     }
 }
 
-std::string addSourceOptions(const std::string& sql, const std::vector<std::string>& options)
+std::string addSourceOptions(const std::string& sql, const std::vector<SourceOption>& options)
 {
     SqlParse parse{sql};
     auto* definition = findFirst<AntlrSQLParser::CreatePhysicalSourceDefinitionContext>(parse.tree());
@@ -207,8 +216,16 @@ std::string addSourceOptions(const std::string& sql, const std::vector<std::stri
         throw TestException("Only a physical source takes source options, but this statement declares something else: {}", sql);
     }
 
-    auto merged = options;
-    if (const auto declaredText = parse.textOf(declaredOptions(definition)); not declaredText.empty())
+    auto* declared = declaredOptions(definition);
+    std::vector<std::string> merged;
+    for (const auto& [group, key, value] : options)
+    {
+        if (not declaresOption(declared, group, key))
+        {
+            merged.push_back(Sql::option(group, key, value));
+        }
+    }
+    if (const auto declaredText = parse.textOf(declared); not declaredText.empty())
     {
         merged.push_back(declaredText);
     }

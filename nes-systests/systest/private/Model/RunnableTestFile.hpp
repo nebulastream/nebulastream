@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -48,14 +49,14 @@ struct PlainStatement
     std::string sql;
 };
 
-/// A physical source whose inline rows the runner writes to a CSV before submitting.
+/// A physical source with inline rows.
 struct StatementWithInlineData
 {
     std::string sql;
     InlineData data;
 };
 
-/// A TCP source whose data a server sends.
+/// A TCP source with data served to a server.
 /// The runner starts the server and merges its endpoint into this statement's sql before submitting.
 struct StatementWithServedData
 {
@@ -63,7 +64,7 @@ struct StatementWithServedData
     ServedData data;
 };
 
-/// One statement to submit before the test cases, with the data that the runner stages for it.
+/// Statement to submit before the test cases with the staged data.
 using SetupStatement = std::variant<PlainStatement, StatementWithInlineData, StatementWithServedData>;
 
 /// The statement text of any setup alternative.
@@ -122,14 +123,15 @@ inline SystestQueryId testCaseNumber(const RewrittenTestCase& testCase)
         testCase.action);
 }
 
+/// Maps a prefixed name back to the name the test declared.
+using OriginalNames = std::unordered_map<std::string, std::string>;
+
 /// The rewriter produces this and the runner consumes it.
 struct RunnableTestFile
 {
     /// Name for reporting failure/progress.
     std::string name;
-    /// The prefix put in front of every catalog-visible name, so a consumer comparing printed
-    /// plans can strip it and read the names that the test wrote.
-    std::string namePrefix;
+    OriginalNames originalNames;
     std::vector<SetupStatement> setupStatements;
     std::vector<RewrittenTestCase> testCases;
 };

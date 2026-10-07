@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -27,19 +28,16 @@
 namespace NES
 {
 
-/// Rows that the test wrote directly beneath the `ATTACH`.
 struct InlineRows
 {
     std::vector<std::string> rows;
 };
 
-/// The data file the `ATTACH` names, relative to the test data directory.
 struct AttachedFile
 {
     std::filesystem::path path;
 };
 
-/// The data that an `ATTACH` clause supplies for a physical source.
 using AttachedData = std::variant<InlineRows, AttachedFile>;
 
 struct CreateStatement
@@ -48,7 +46,6 @@ struct CreateStatement
     std::optional<AttachedData> attach;
 };
 
-/// One query and its expected answer.
 struct SelectStatement
 {
     std::string sql;
@@ -57,7 +54,6 @@ struct SelectStatement
     ConfigurationOverride overrides;
 };
 
-/// Two queries whose results must match.
 struct DifferentialStatement
 {
     std::string firstSql;
@@ -67,7 +63,6 @@ struct DifferentialStatement
     ConfigurationOverride overrides;
 };
 
-/// One `EXPLAIN` and the plan text it expects.
 struct ExplainStatement
 {
     std::string sql;
@@ -76,6 +71,21 @@ struct ExplainStatement
 };
 
 using TestStatement = std::variant<CreateStatement, SelectStatement, DifferentialStatement, ExplainStatement>;
+
+/// The query numbers defined by CLI arguments.
+/// CREATE has none, a differential block two.
+[[nodiscard]] std::vector<SystestQueryId> getQueryNumbersOf(const TestStatement& statement);
+
+/// The worker settings that a test case states; an EXPLAIN states none and runs under the default settings.
+/// A CREATE has no settings of its own, because every partition repeats it.
+[[nodiscard]] ConfigurationOverride getOverridesOf(const TestStatement& statement);
+
+/// An empty selection selects everything.
+/// CREATEs are always kept, because every remaining statement may depend on them.
+void retainSelectedStatements(std::vector<TestStatement>& statements, const std::unordered_set<SystestQueryId>& selected);
+
+/// A partition that keeps only its CREATEs after the selection has nothing to run.
+[[nodiscard]] bool hasTestCases(const std::vector<TestStatement>& statements);
 
 /// The statements of one test file, in file order.
 struct ParsedTestFile

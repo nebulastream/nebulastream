@@ -14,34 +14,28 @@
 
 #pragma once
 
-#include <filesystem>
-#include <functional>
+#include <cstddef>
 #include <memory>
 #include <string>
-#include <thread>
-#include <vector>
-#include <Sources/SourceDataProvider.hpp>
+#include <OutputFormatters/ValueSerializer.hpp>
 #include <Util/RuntimeRegistry.hpp>
 
 namespace NES
 {
 
-using InlineDataRegistryReturnType = PhysicalSourceConfig;
+using ValueSerializerRegistryReturnType = std::unique_ptr<ValueSerializer>;
 
-struct InlineDataRegistryArguments
+struct ValueSerializerRegistryArguments
 {
-    PhysicalSourceConfig physicalSourceConfig;
-    std::vector<std::string> tuples;
-    std::shared_ptr<std::vector<std::jthread>> serverThreads;
-    std::filesystem::path testFilePath;
+    bool quoted;
 };
 
-using InlineDataFn = std::function<InlineDataRegistryReturnType(InlineDataRegistryArguments)>;
+using ValueSerializerFactoryFn = std::function<ValueSerializerRegistryReturnType(ValueSerializerRegistryArguments)>;
 
-class InlineDataRegistry : public RuntimeRegistry<InlineDataRegistry, std::string, InlineDataFn, /*CaseSensitive*/ false>
+class ValueSerializerRegistry : public RuntimeRegistry<ValueSerializerRegistry, std::string, ValueSerializerFactoryFn, false>
 {
 public:
-    static InlineDataRegistry& instance();
+    static ValueSerializerRegistry& instance();
 };
 
 }
