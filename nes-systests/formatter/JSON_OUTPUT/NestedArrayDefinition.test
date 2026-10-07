@@ -1,0 +1,70 @@
+# name: NestedArrayDefinition.test
+# description: Exercises nested `ARRAY[..][..]` type definitions in schemas: nested fixed-size arrays, vectors of fixed-size arrays, fixed-size arrays of vectors, and rejection of nested vectors.
+# groups: [Formatter, JSON]
+
+# Nested fixed-size arrays: INT32 ARRAY[3][2] is an array of 3 arrays of 2 INT32 values
+CREATE LOGICAL SOURCE matrices(id UINT64 NOT NULL, matrix INT32 ARRAY[3][2] NOT NULL);
+CREATE PHYSICAL SOURCE FOR matrices TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "MATRIX": [[1, 2], [3, 4], [5, 6]]}
+{"ID": 2, "MATRIX": [[-1, 0], [7, 8], [2147483647, -2147483648]]}
+
+SELECT * FROM matrices INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2],[3,4],[5,6]]}
+{"ID":2,"MATRIX":[[-1,0],[7,8],[2147483647,-2147483648]]}
+
+# Three levels of nesting: UINT8 ARRAY[2][2][2]
+CREATE LOGICAL SOURCE cubes(cube UINT8 ARRAY[2][2][2] NOT NULL);
+CREATE PHYSICAL SOURCE FOR cubes TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"CUBE": [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]}
+{"CUBE": [[[0, 255], [128, 64]], [[32, 16], [8, 4]]]}
+
+SELECT * FROM cubes INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"CUBE":[[[1,2],[3,4]],[[5,6],[7,8]]]}
+{"CUBE":[[[0,255],[128,64]],[[32,16],[8,4]]]}
+
+# Vector of fixed-size arrays: INT32 ARRAY[][2] is a variable number of INT32 pairs
+CREATE LOGICAL SOURCE pairLists(id UINT64 NOT NULL, pairs INT32 ARRAY[][2] NOT NULL);
+CREATE PHYSICAL SOURCE FOR pairLists TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "PAIRS": [[1, 2], [3, 4], [5, 6]]}
+{"ID": 2, "PAIRS": [[7, 8]]}
+{"ID": 3, "PAIRS": [[9, 10], [11, 12], [13, 14], [15, 16], [17, 18]]}
+
+SELECT * FROM pairLists INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"PAIRS":[[1,2],[3,4],[5,6]]}
+{"ID":2,"PAIRS":[[7,8]]}
+{"ID":3,"PAIRS":[[9,10],[11,12],[13,14],[15,16],[17,18]]}
+
+# Fixed-size array of vectors: INT32 ARRAY[2][] is exactly 2 INT32 vectors of arbitrary length
+CREATE LOGICAL SOURCE vectorPairs(id UINT64 NOT NULL, vecs INT32 ARRAY[2][] NOT NULL);
+CREATE PHYSICAL SOURCE FOR vectorPairs TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "VECS": [[1, 2, 3], [4]]}
+{"ID": 2, "VECS": [[5], [6, 7, 8, 9]]}
+
+SELECT * FROM vectorPairs INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"VECS":[[1,2,3],[4]]}
+{"ID":2,"VECS":[[5],[6,7,8,9]]}
+
+# Nested definitions in an inline sink schema must bind to the same types as the source schema
+SELECT * FROM pairLists INTO File(SCHEMA(id UINT64 NOT NULL, pairs INT32 ARRAY[][2] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"PAIRS":[[1,2],[3,4],[5,6]]}
+{"ID":2,"PAIRS":[[7,8]]}
+{"ID":3,"PAIRS":[[9,10],[11,12],[13,14],[15,16],[17,18]]}
+
+# Nesting two vectors is not allowed: INT32 ARRAY[][]
+SELECT * FROM matrices INTO File(SCHEMA(id UINT64 NOT NULL, matrix INT32 ARRAY[][] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+ERROR 2046
+
+# Two vectors separated by a fixed-size level are still nested vectors: INT32 ARRAY[][3][]
+SELECT * FROM matrices INTO File(SCHEMA(id UINT64 NOT NULL, matrix INT32 ARRAY[][3][] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+ERROR 2046
