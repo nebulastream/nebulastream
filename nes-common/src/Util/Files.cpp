@@ -14,14 +14,13 @@
 
 #include <Util/Files.hpp>
 
-#include <array>
 #include <cerrno>
 #include <cstdlib> ///NOLINT(misc-include-cleaner)
-#include <cstring> ///NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <utility>
 #include <unistd.h>
 #include <fmt/format.h>
@@ -36,10 +35,7 @@ std::string getErrorMessageFromERRNO()
 
 std::string getErrorMessage(int errorNumber)
 {
-    std::array<char, 1024> backupBuffer{};
-    const char* errorMessage = strerror_r(errorNumber, backupBuffer.data(), backupBuffer.size());
-    INVARIANT(errorMessage != nullptr, "strerror_r does not behave as expected");
-    return errorMessage;
+    return std::system_category().message(errorNumber);
 }
 
 std::pair<std::ofstream, std::filesystem::path> createUniqueFile(std::string_view prefix, std::string_view suffix)
