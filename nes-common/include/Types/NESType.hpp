@@ -14,11 +14,35 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #pragma once
 #include "Identifiers/QualifiedIdentifier.hpp"
+#include "Util/Any.hpp"
+
+#include "NESType.hpp"
 
 namespace NES
 {
-    class NESType
-    {
-        QualifiedIdentifier name;
-    };
+
+class NESValue;
+class NamedNESValue;
+class NESType
+{
+    QualifiedIdentifier name;
+    std::function<NESValue(const Schema<NamedNESValue, Ordered>&)> factory;
+};
+
+class NESValue
+{
+    std::shared_ptr<NESType> type;
+    ExplicitAny internalRepresentation;
+};
+
+class NESTypeClass
+{
+    QualifiedIdentifier name;
+    std::function<bool(NESType)> predicate;
+
+public:
+    NESTypeClass(QualifiedIdentifier name, std::function<bool(NESType)> predicate) : name(std::move(name)), predicate(std::move(predicate)) { }
+
+    bool validate(const NESType& type) const;
+};
 }

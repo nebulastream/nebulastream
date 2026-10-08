@@ -22,7 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include "Identifiers/QualifiedIdentifier.hpp"
+#include "Identifiers/Identifier.hpp"
+#include "Types/NESType.hpp"
 
 namespace NES
 {
@@ -39,17 +40,17 @@ enum class InsertResult : uint8_t
 /// plugin system can register entries into it without knowing their types (see provideRegistry).
 struct RegistryProvision
 {
-    Identifier registryClassName;
+    NESTypeClass correspondingTypeClass;
     /// identity of the singleton, for idempotent re-provision checks
     const void* instanceAddress = nullptr;
-    std::function<InsertResult(const QualifiedIdentifier& key, const std::any& entry)> insertEntry;
+    std::function<InsertResult(const std::string& key, const std::any& entry)> insertEntry;
 };
 
 /// An entry a plugin contributes to a registry. Pure data: the plugin system performs the actual
 /// registration (and owns the duplicate/missing-registry/type policies, see PluginLoader).
 struct EntryProvision
 {
-    Identifier registryClassName;
+    QualifiedIdentifier registryClassName;
     Identifier key;
     /// must hold exactly the registry's EntryType (the generated glue coerces to it)
     std::any entry;
