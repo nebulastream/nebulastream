@@ -1,23 +1,23 @@
 # name: udf/StreamUDFBench/StreamUDFBenchScalar.test
 # description: StreamUDFBench queries that use only scalar Python UDFs (Q1, Q20, Q8), on the tiny dataset.
-# UDFs: nes-systests/udf/pyudfs/StreamUDFBench/streamudfbench_scalar.py, data: nes-systests/testdata/streamudfbench/tiny.
+# UDFs: nes-systests/udf/pyudfs/StreamUDFBench/streamudfbench_scalar.py, data: nes-systests/testdata/large/streamudfbench/tiny (ExternalData, see StreamUDFBench engines/nebulastream/scripts/export_nes_testdata.sh).
 # Data files are tab-separated and unquoted, with an event-time column ts (epoch ms) last and rows sorted by ts.
 # Expected results were computed independently in Python with the same UDF code.
-# groups: [StreamUDFBench, PythonUdf]
+# groups: [StreamUDFBench, PythonUdf, large]
 
 CREATE LOGICAL SOURCE artifacts(id VARSIZED, title VARSIZED, publisher VARSIZED, journal VARSIZED, date VARSIZED, year INT32,
     access_mode VARSIZED, embargo_end_date VARSIZED, delayed BOOLEAN, authors INT32, source VARSIZED, abstract BOOLEAN,
     type VARSIZED, peer_reviewed BOOLEAN, green BOOLEAN, gold BOOLEAN, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR artifacts TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
-ATTACH FILE streamudfbench/tiny/artifacts.csv
+ATTACH FILE large/streamudfbench/tiny/artifacts_15M.csv
 
 CREATE LOGICAL SOURCE artifact_citations(artifactid VARSIZED, target VARSIZED, citcount INT64, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR artifact_citations TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
-ATTACH FILE streamudfbench/tiny/artifact_citations.csv
+ATTACH FILE large/streamudfbench/tiny/artifact_citations_284K.csv
 
 CREATE LOGICAL SOURCE artifact_authorlists(artifactid VARSIZED, authorlist VARSIZED, ts UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR artifact_authorlists TYPE File SET('\t' AS INPUT_FORMATTER.FIELD_DELIMITER, false AS INPUT_FORMATTER.ALLOW_COMMAS_IN_STRINGS);
-ATTACH FILE streamudfbench/tiny/artifact_authorlists.csv
+ATTACH FILE large/streamudfbench/tiny/artifact_authorlists_4M.csv
 
 CREATE FUNCTION extractyear (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractyear';
 CREATE FUNCTION extractmonth (arg VARSIZED) RETURNS INT64 BRIDGE 'pypy' ENTRYPOINT 'StreamUDFBench.streamudfbench_scalar.extractmonth';
