@@ -3,7 +3,8 @@
 > **Status:** measurement record for the `feat/async-operator` branch, last updated 7 October 2026.
 > Sections 1 to 4 were measured locally on a Debug build; section 5 is the cluster comparison,
 > measured on a release build against vLLM, and section 6 is how to repeat it. Read the
-> [caveats](#how-to-read-these-numbers) before quoting any of it.
+> [caveats](#how-to-read-these-numbers) before quoting any of it, and
+> [appendix A](#appendix-a-exact-configuration) for the exact configuration behind every number.
 
 ## What was measured, and why
 
@@ -45,8 +46,13 @@ The synchronous number scales with thread count, so on a four-thread worker the 
 would get through sooner — but only by spending threads that are then unavailable for anything
 else. That trade is the subject of section 2.
 
-Test: [`AsyncResponsiveness.test`](../../nes-systests/semantic/AsyncResponsiveness.test),
-driven by `scripts/measure_async_semantic_map.sh responsiveness`.
+**Configuration.** 12 rows (`reviews_12.csv`), `qwen2.5:7b` on Ollama at `localhost:11434/v1`,
+`BATCH_SIZE 1`, `180 AS LLM.TIMEOUT_SECONDS`, `0 AS LLM.MAX_RETRIES`; asynchronous run
+`MAX_CONCURRENCY 8`, synchronous run `MAX_CONCURRENCY 4`; `number_of_worker_threads=1` passed
+explicitly; Debug build. The unrelated query reads
+`plain_200.csv` and filters `id > 189`, giving 11 rows and no model call. Test:
+[`AsyncResponsiveness.test`](../../nes-systests/semantic/AsyncResponsiveness.test), driven by
+`scripts/measure_async_semantic_map.sh responsiveness`.
 
 ---
 
@@ -98,7 +104,11 @@ The synchronous path does scale — but in worker threads, not in configuration.
 asynchronous 5.26 s would take roughly thirty worker threads, every one of them parked in a model
 call. That is the cost section 1 measures the absence of.
 
-Test: [`SemanticMapAsyncThroughput.test`](../../nes-systests/semantic/SemanticMapAsyncThroughput.test),
+**Configuration.** Mock backend with `'echo@200' AS LLM.ENDPOINT`, i.e. 200 ms per request and no
+network; `BATCH_SIZE 1` throughout; 30 rows (`reviews_30.csv`) for 2a and 760
+(`reviews_760.csv`) for 2b and 2c; `number_of_worker_threads=1` for the asynchronous queries, which
+do not use the pool, and 1 / 4 / 8 for 2c; Debug build; `Checksum` sink over `id`. Test:
+[`SemanticMapAsyncThroughput.test`](../../nes-systests/semantic/SemanticMapAsyncThroughput.test),
 driven by `scripts/measure_async_semantic_map.sh throughput`.
 
 ---
@@ -139,7 +149,10 @@ under even that load.
 > That figure came from a hand-written approximation of the prompt, not from the codec. The serial
 > reference above, 9.5 s per call, comes from the synchronous path itself and is the right one.
 
-Test: [`AsyncBenchmarkProbe.test`](../../nes-systests/semantic/AsyncBenchmarkProbe.test),
+**Configuration.** 40 rows (`reviews_40.csv`), `qwen2.5:7b` on Ollama at `localhost:11434/v1`,
+`BATCH_SIZE 1`, `180 AS LLM.TIMEOUT_SECONDS`, `0 AS LLM.MAX_RETRIES`;
+`number_of_worker_threads=1`, which is why the synchronous run is the serial reference; Debug
+build. Test: [`AsyncBenchmarkProbe.test`](../../nes-systests/semantic/AsyncBenchmarkProbe.test),
 driven by `scripts/measure_async_semantic_map.sh probe`.
 
 ---
@@ -168,9 +181,32 @@ and asynchronously, and the two agree row for row.
 ## 5. The comparison on the cluster: the result
 
 Two runs against a vLLM deployment serving `google/gemma-4-E4B-it`, reached over an SSH tunnel.
-2000 rows, batch size 1 on both sides, `MAX_CONCURRENCY 256` on the asynchronous one, everything
-else at its default. Release build. Both runs passed their assertion, so 2000 records went in and
-2000 came out on each side, none lost and none duplicated.
+Both runs passed their assertion, so 2000 records went in and 2000 came out on each side, none lost
+and none duplicated. Full environment in [appendix A](#appendix-a-exact-configuration); what
+differs between the two runs is one clause:
+
+```sql
+-- both models, identical but for the last line
+CREATE SEMANTIC MODEL <name>
+INPUT (reviewText VARSIZED)
+OUTPUT (sentiment VARSIZED)
+SET ('Classify the sentiment of the review as POSITIVE or NEGATIVE' AS LLM.PROMPT,
+     'http://localhost:8000/v1' AS LLM.ENDPOINT, 'google/gemma-4-E4B-it' AS LLM.MODEL_NAME,
+     'http' AS LLM.BACKEND, 'POSITIVE,NEGATIVE' AS LLM.OUTPUT_VALUES,
+     'POSITIVE' AS LLM.DEFAULT_VALUE, 900 AS LLM.TIMEOUT_SECONDS, 3 AS LLM.MAX_RETRIES,
+     -- asynchronous run:
+     'ASYNC' AS LLM.EXECUTION, 1 AS LLM.BATCH_SIZE, 256 AS LLM.MAX_CONCURRENCY);
+     -- blocking run: nothing here. BATCH_SIZE and MAX_CONCURRENCY stay at their defaults of
+     -- 1 and 10, and EXECUTION at SYNC. MAX_CONCURRENCY is irrelevant to it either way.
+```
+
+```sql
+SELECT id FROM SEM_MAP(<name>, reviews) INTO idsum;   -- idsum is a Checksum sink
+```
+
+Projecting only `id` and filtering nothing makes the assertion independent of what the model
+answers, so it checks the one property a throughput number needs: record count in equals record
+count out.
 
 | | wall time | throughput | mean latency | p50 | p95 | max | calls/s |
 |---|---|---|---|---|---|---|---|
@@ -305,6 +341,113 @@ grep "Semantic model latency" $(ls -t cmake-build-release/nes-systests/SystemTes
 One line per run, labelled `[synchronous]` or `[asynchronous]`. Throughput is printed by the script
 after each run. The generated test file under `nes-systests/semantic/` is gitignored: it carries a
 machine's model id and is not meant to be committed.
+
+## Appendix A: exact configuration
+
+Everything needed to repeat a number or to judge whether it transfers.
+
+### Code
+
+| | |
+|---|---|
+| Branch | `feat/async-operator` |
+| Commit | `0cbfb49f09` |
+| Input generator | `scripts/generate_async_benchmark_data.py`, fixed seed `20261006` |
+
+### Build
+
+| | sections 1–4 | section 5 |
+|---|---|---|
+| Directory | `cmake-build-debug` | `cmake-build-release` |
+| `CMAKE_BUILD_TYPE` | `Debug` | `RelWithDebInfo` (`-O2`) |
+| Log level | `NES_LOGLEVEL_TRACE` | `NES_LOGLEVEL_WARN` |
+| Compiler | clang 19.1.7 | clang 19.1.7 |
+| Toolchain | vcpkg, triplet `x64-linux-none-local` | same |
+| Image | `nebulastream/nes-development:160915ef…-x64-libstdcxx-none`, run with `--network host` | same |
+
+The log level is why section 5 needed `NES_SEMANTIC_LATENCY_REPORT=1`: a release build has no
+`NES_INFO` in it.
+
+### Host running the engine
+
+Intel Core i7-8650U, 4 cores / 8 threads, 1.90 GHz, 15 GiB RAM, x86_64, Linux. A laptop — the
+engine side of section 5 ran here while the model ran on the cluster, so the absolute throughput is
+not a statement about engine capacity on server hardware.
+
+### Worker configuration
+
+Everything at its default unless a measurement says otherwise. The defaults that matter:
+
+| Option | Value | Where from |
+|---|---|---|
+| `worker.query_engine.number_of_worker_threads` | **1** | systest topology [`two-node.yaml`](../../nes-systests/configs/topologies/two-node.yaml), on both nodes. The engine's own default is 4. |
+| `worker.query_engine.admission_queue_size` | 1000 | `QueryEngineConfiguration` |
+| `worker.total_memory_in_bytes` | 268435456 (256 MiB) | `WorkerConfiguration` |
+| `worker.unpooled_memory_fraction` | 0.5 | → 128 MiB pooled |
+| `operator_buffer_size` | 4096 bytes | → 32768 pooled buffers |
+| `default_max_inflight_buffers` | 64 | per source |
+
+systest deploys onto **two nodes** (`source-node`, `sink-node`), so every plan is cut once by the
+ordinary network decomposition before the asynchronous splitter sees it.
+
+### What the asynchronous framework derives from `MAX_CONCURRENCY`
+
+Not configurable from SQL; listed because they decide buffer pressure and thread count.
+
+| | Formula | At 256 |
+|---|---|---|
+| Source threads | `maxConcurrency` + 1 intake | 257 |
+| Handoff channel capacity | `max(64, 2 × maxConcurrency)` | 512 buffers |
+| Intake read-ahead | `2 × maxConcurrency` queued batches | 512 |
+| Pending-buffer backstop | `2 × maxConcurrency` | 512 buffers of 32768 |
+| `preserveOrder` | `LLM.PRESERVE_ORDER`, default `TRUE` | `TRUE` in every measurement here |
+
+### Model endpoints
+
+| | sections 1–3 | section 5 |
+|---|---|---|
+| Server | Ollama, `localhost:11434/v1` | vLLM on `sr650-8:8000`, reached as `localhost:8000/v1` through `ssh -N -L 8000:localhost:8000 sr650-8` |
+| Model | `qwen2.5:7b` (4.7 GB) | `google/gemma-4-E4B-it` |
+| Concurrency the server serves | 4 (`OLLAMA_NUM_PARALLEL` default). Measured with a prompt of the codec's own length: 1 → 21.4 s, 4 → 22.7 s, 8 → 45.5 s, so four in parallel are nearly free and the fifth queues. (A shorter throwaway prompt gave 3.4 / 3.9 / 7.9 / 15.9 s for 1 / 4 / 8 / 16 — same shape, and the reason the latency figures in section 3 must come from the real path.) | ≥ 256 (its default); an effective 262 was reached |
+| `LLM.BACKEND` | `http`, or `mock` where stated | `http` |
+
+Section 2 uses the mock backend instead of a server: `'echo@200' AS LLM.ENDPOINT` answers with the
+input upper-cased after sleeping 200 ms, so it measures this framework and nothing else.
+
+### Input data
+
+Synthetic, from the generator above: one short paragraph per row, 11–26 words, mean 18.1, comma-free
+because the CSV source does not quote. Schema `(id UINT64 NOT NULL, reviewText VARSIZED NOT NULL)`,
+except the window test which adds `ts UINT64 NOT NULL`.
+
+**The texts are invented, so no quality or accuracy number can come from any of this.** The real
+benchmark dataset is the Rotten Tomatoes critic reviews the Python reference uses, whose
+`scoreSentiment` column is the ground truth; it is not present in the `llm_operator` checkout on
+this machine, which is a known gap there.
+
+| File | Rows | Used by |
+|---|---|---|
+| `reviews_12.csv` | 12 | section 1 |
+| `reviews_30.csv` | 30 | section 2a |
+| `reviews_40.csv` | 40 | section 3 |
+| `reviews_760.csv` | 760 | sections 2b, 2c |
+| `reviews_2000.csv` | 2000 | section 5 |
+| `plain_200.csv` | 200 | the model-free query of section 1 |
+| `windowed_small.csv` / `windowed_large.csv` | 12 / 760 | section 4's window test |
+
+### Measurement method
+
+Wall time comes from systest's `--show-query-performance`, one query at a time (`--sequential`)
+unless a measurement runs two concurrently (`-n 2`), which only section 1 does. Throughput is rows
+divided by wall time. Latency is recorded per round trip in `HttpSemanticBackend`, across retries,
+and summarised once per query — see [section 5](#latency-is-measured-not-derived). Single runs, no
+repetitions; see the caveats below.
+
+### Dates
+
+Sections 1–4 measured 6 and 7 October 2026, section 5 on the night of 7–8 October 2026. Each
+number is a single run; the real-model ones in particular varied between runs, which is why the
+latency distribution is reported alongside the mean.
 
 ## How to read these numbers
 
