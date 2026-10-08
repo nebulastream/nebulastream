@@ -4,7 +4,7 @@
 # ///
 """Dispatch the reduced-nightly "Flaky Hunt" workflow whenever CI is (nearly) idle.
 
-Each round: wait until few self-hosted jobs are active -> publish <base>+this branch's CI changes as
+Each round (up to --concurrency runs in parallel): wait until few self-hosted jobs of other runs are active -> publish <base>+this branch's CI changes as
 `--target-branch` (force-push!) -> dispatch flaky-hunt.yml -> wait for it -> print failed jobs.
 Needs `gh` (authenticated, push access) and git. No PR is ever opened.
 
@@ -87,32 +87,53 @@ def report(run_id, out):
     print(f"    logs in {d}", flush=True)
 
 
+def run_ids(target):
+    return {r["id"]: r for r in gh(f"repos/{{owner}}/{{repo}}/actions/workflows/{WF}/runs?branch={target}&per_page=20")[0]["workflow_runs"]}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="main")
     ap.add_argument("--target-branch", default="ci/flaky-hunt")
-    ap.add_argument("--max-busy", type=int, default=2, help="max active self-hosted jobs to still count as idle")
+    ap.add_argument("--max-busy", type=int, default=2, help="max active self-hosted jobs of OTHER runs to still count as idle")
+    ap.add_argument("--concurrency", type=int, default=2, help="max simultaneous flaky runs")
     ap.add_argument("--out", default="flaky-logs", help="where failed-run logs are saved")
     ap.add_argument("--poll", type=int, default=120)
     a = ap.parse_args()
+    t = a.target_branch
+    mine = {}  # run id -> url, runs we started and haven't reported yet
+
+    def log(msg):
+        print(f"[{time.strftime('%T')}] {msg}", flush=True)
 
     while True:
-        if active_ours(a.target_branch):
-            time.sleep(a.poll)
-            continue
-        busy = busy_self_hosted(a.target_branch)
-        if busy > a.max_busy:
-            print(f"[{time.strftime('%T')}] {busy} self-hosted jobs active, waiting", flush=True)
-            time.sleep(a.poll)
-            continue
-        sha = publish(a.base, a.target_branch)
-        sh("gh", "workflow", "run", WF, "--ref", a.target_branch)
-        print(f"[{time.strftime('%T')}] dispatched flaky hunt on {a.base}+ci @ {sha[:10]}", flush=True)
-        time.sleep(30)  # let the run register
-        while active_ours(a.target_branch):
-            time.sleep(a.poll)
-        last = sh("gh", "run", "list", "-w", WF, "-b", a.target_branch, "-L", "1", "--json", "databaseId", "-q", ".[0].databaseId")
-        report(last, a.out)
+        cur = active_ours(t)
+        active = {r["id"] for r in cur}
+        for r in cur:  # also adopts runs of a previous monitor instance / runs missed after dispatch
+            mine.setdefault(r["id"], r["html_url"])
+        for rid in [r for r in mine if r not in active]:
+            report(rid, a.out)
+            del mine[rid]
+        if len(active) < a.concurrency:
+            busy = busy_self_hosted(t)
+            if busy <= a.max_busy:
+                known = set(run_ids(t))
+                sha = publish(a.base, t)
+                sh("gh", "workflow", "run", WF, "--ref", t)
+                log(f"dispatched flaky hunt on {a.base}+ci @ {sha[:10]}")
+                for _ in range(12):  # the dispatch API returns no run id: wait for the new run to appear
+                    time.sleep(5)
+                    new = set(run_ids(t)) - known
+                    if new:
+                        rid = new.pop()
+                        mine[rid] = run_ids(t)[rid]["html_url"]
+                        log(f"run {rid}: {mine[rid]}")
+                        break
+                else:
+                    log("new run not visible yet, it will be picked up on the next round")
+                continue  # re-evaluate immediately (maybe start a second one)
+            log(f"{busy} self-hosted jobs of other runs active, waiting ({len(active)} of ours running)")
+        time.sleep(a.poll)
 
 
 if __name__ == "__main__":
