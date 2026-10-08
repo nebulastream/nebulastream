@@ -143,7 +143,7 @@ struct WorkerConfig
     std::string dataAddress;
     std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
+    YAML::Node config; /// Structured worker 'config:' subtree, applied verbatim via overwriteConfigWithYAMLNode
 };
 
 struct Model
@@ -391,6 +391,14 @@ struct convert<NES::CLI::WorkerConfig>
         rhs.downstream = getOrDefault<std::vector<std::string>>(node, "downstream");
         rhs.host = getValue<std::string>(node, "host");
         rhs.dataAddress = getOrDefault<std::string>(node, "data_address");
+        /// Store the raw 'config:' subtree; it is applied verbatim at worker registration via
+        /// overwriteConfigWithYAMLNode, which validates nesting/sequences/empty values natively.
+        /// Guard on IsDefined(): assigning an undefined node (absent 'config:') throws in yaml-cpp,
+        /// and leaving rhs.config default-constructed already means "no per-worker config".
+        if (node["config"].IsDefined())
+        {
+            rhs.config = node["config"];
+        }
         return true;
     }
 };

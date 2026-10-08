@@ -18,6 +18,7 @@
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/URI.hpp>
+#include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
@@ -151,8 +152,18 @@ bool ScalarOption<T>::operator==(const T& other)
 template <class T>
 void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 {
-    this->isValid(node.as<std::string>());
-    this->value = node.as<T>();
+    /// Wrap raw yaml-cpp conversion failures (e.g. a null/empty leaf or an unconvertible value) into an
+    /// InvalidConfigParameter naming the option. Otherwise the raw YAML::Exception bubbles up and is reported as a
+    /// generic "not a valid yaml file" error, pointing the user at the file rather than the offending config value.
+    try
+    {
+        this->isValid(node.as<std::string>());
+        this->value = node.as<T>();
+    }
+    catch (const YAML::Exception& e)
+    {
+        throw InvalidConfigParameter("Invalid value for '{}': {}", this->getName(), e.what());
+    }
     this->explicitlySet = true;
 }
 
