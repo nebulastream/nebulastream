@@ -17,6 +17,11 @@ on:
         type: string
         required: true
         description: "Matrix profile to generate from .github/ci/matrix.yaml (e.g. pr or nightly)"
+      config_ref:
+        type: string
+        required: false
+        default: ''
+        description: "ref to read the CI matrix config from (defaults to head_sha)"
     secrets:
       DOCKER_USER_NAME:
         required: false
@@ -32,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.head_sha }}
+          ref: ${{ inputs.config_ref || inputs.head_sha }}
       - id: gen
         run: python3 .github/ci/generate_matrix.py --config matrix.yaml --profile ${{ inputs.matrix_profile }} --output-github
 

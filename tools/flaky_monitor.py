@@ -4,18 +4,16 @@
 # ///
 """Run the "Flaky Hunt" workflow (reduced nightly), one run at a time, whenever the runner pool is mostly idle.
 
-GitHub only dispatches workflows that exist on main and runs the version found on the given ref, so each round
-force-pushes `ci/flaky-hunt` = origin/main + this branch, with flaky-hunt.yml swapped in for nightly.yml.
-After a run, failed jobs are printed and their logs saved. Needs `gh` (push access, admin:org) and git. No PR.
+Dispatches .github/workflows/nightly.yml *as it exists on --ref* (a pushed branch where nightly.yml is replaced by the
+flaky workflow; GitHub only dispatches workflow files that exist on main). The code under test is --base (default main).
+After a run, failed jobs are printed and their logs saved. Needs `gh` (admin:org for the runner API). No PR.
 
-    tools/flaky_monitor.py [--base main] [--max-busy 10] [--cooldown 1800] [--poll 60]
+    tools/flaky_monitor.py [--ref <this branch, pushed>] [--base main] [--max-busy 10] [--cooldown 1800] [--poll 60]
 """
-import argparse, json, os, re, shutil, subprocess, tempfile, time
+import argparse, json, os, re, subprocess, time
 
 API = "repos/{owner}/{repo}/actions"
 WF = "nightly.yml"
-SRC = ".github/workflows/flaky-hunt.yml"
-BRANCH = "ci/flaky-hunt"
 
 
 def sh(*cmd, cwd=None):
@@ -30,28 +28,13 @@ def log(msg):
     print(f"[{time.strftime('%T')}] {msg}", flush=True)
 
 
-def our_runs():
-    return {r["id"]: r for r in gh(f"{API}/workflows/{WF}/runs?branch={BRANCH}&per_page=20")[0]["workflow_runs"]}
+def our_runs(ref):
+    return {r["id"]: r for r in gh(f"{API}/workflows/{WF}/runs?branch={ref}&per_page=20")[0]["workflow_runs"]}
 
 
 def busy_runners():
     rs = [r for page in gh("orgs/{owner}/actions/runners?per_page=100") for r in page["runners"] if r["status"] == "online"]
     return sum(r["busy"] for r in rs), len(rs)
-
-
-def publish(base):
-    mine = sh("git", "rev-parse", "HEAD")
-    sh("git", "fetch", "-q", "origin", base)
-    with tempfile.TemporaryDirectory() as tmp:
-        wt = os.path.join(tmp, "wt")
-        sh("git", "worktree", "add", "-q", "--detach", wt, f"origin/{base}")
-        try:
-            sh("git", "merge", "-q", "--no-edit", mine, cwd=wt)
-            shutil.copy(os.path.join(wt, SRC), os.path.join(wt, ".github/workflows", WF))
-            sh("git", "commit", "-qam", "flaky-hunt: replace nightly.yml", cwd=wt)
-            sh("git", "push", "-q", "-f", "origin", f"HEAD:refs/heads/{BRANCH}", cwd=wt)
-        finally:
-            sh("git", "worktree", "remove", "-f", wt)
 
 
 def report(run, out):
@@ -73,7 +56,8 @@ def report(run, out):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default="main")
+    ap.add_argument("--ref", default=sh("git", "branch", "--show-current"), help="pushed branch carrying the flaky nightly.yml")
+    ap.add_argument("--base", default="main", help="branch/sha whose code is tested")
     ap.add_argument("--max-busy", type=int, default=10, help="don't start while more org runners than this are busy")
     ap.add_argument("--cooldown", type=int, default=1800, help="pause after a cancelled run (s)")
     ap.add_argument("--out", default="flaky-logs")
@@ -82,7 +66,7 @@ def main():
 
     while True:
         try:
-            run = next((r for r in our_runs().values() if r["status"] != "completed"), None)  # e.g. from an earlier start
+            run = next((r for r in our_runs(a.ref).values() if r["status"] != "completed"), None)  # e.g. from an earlier start
             if run:
                 log(f"watching {run['html_url']}")
             else:
@@ -91,16 +75,15 @@ def main():
                     log(f"{busy}/{online} runners busy (> {a.max_busy}), waiting")
                     time.sleep(a.poll)
                     continue
-                known = set(our_runs())
-                publish(a.base)
-                sh("gh", "workflow", "run", WF, "--ref", BRANCH)
+                known = set(our_runs(a.ref))
+                sh("gh", "workflow", "run", WF, "--ref", a.ref, "-f", f"head_sha={a.base}")
                 while not run:  # the dispatch call returns no run id, wait for the new run to show up
                     time.sleep(5)
-                    run = next((r for i, r in our_runs().items() if i not in known), None)
+                    run = next((r for i, r in our_runs(a.ref).items() if i not in known), None)
                 log(f"dispatched ({busy}/{online} runners busy): {run['html_url']}")
             while run["status"] != "completed":
                 time.sleep(a.poll)
-                run = our_runs()[run["id"]]
+                run = our_runs(a.ref)[run["id"]]
             report(run, a.out)
             if run["conclusion"] == "cancelled":  # probably to free runners: stay away for a while
                 log(f"cancelled, pausing {a.cooldown}s")
