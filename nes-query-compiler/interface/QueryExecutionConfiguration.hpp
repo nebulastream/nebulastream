@@ -40,6 +40,7 @@ struct QueryExecutionConfiguration
         uint64_t numberOfRecordsPerKey,
         uint64_t operatorBufferSize,
         bool tupleBufferInlining,
+        uint64_t emitCoalescingDelay,
         SliceCacheConfiguration sliceCacheConfiguration,
         BloomFilterConfiguration bloomFilterConfiguration,
         bool nautilusPerf = false)
@@ -50,6 +51,7 @@ struct QueryExecutionConfiguration
         , numberOfRecordsPerKey(numberOfRecordsPerKey)
         , operatorBufferSize(operatorBufferSize)
         , tupleBufferInlining(tupleBufferInlining)
+        , emitCoalescingDelay(emitCoalescingDelay)
         , sliceCacheConfiguration(sliceCacheConfiguration)
         , bloomFilterConfiguration(bloomFilterConfiguration)
         , nautilusPerf(nautilusPerf)
@@ -63,6 +65,7 @@ struct QueryExecutionConfiguration
     uint64_t numberOfRecordsPerKey;
     uint64_t operatorBufferSize;
     bool tupleBufferInlining;
+    uint64_t emitCoalescingDelay;
     SliceCacheConfiguration sliceCacheConfiguration;
     BloomFilterConfiguration bloomFilterConfiguration;
     /// Compiled pipelines keep frame pointers and write perf jitdump records, so that `perf record -g` + `perf inject --jit` can
