@@ -1,0 +1,21 @@
+# description: Arena::allocateMemory must not bump-allocate past the current fixed-size buffer after an unpooled allocation.
+# Case 1 (unpooled) stored the oversized request in lastAllocationSize, so the next fit check compared against it
+# instead of the current buffer's size and handed out a span past its end.
+# With a 4096-byte buffer, the two CONCAT(a, a) leave the second fixed buffer at offset ~3800, their 7600-byte CONCAT
+# goes unpooled, and the following 3600-byte CONCAT(b, b) then overflowed that buffer (libc++ hardening / ASan abort).
+# groups: [regression]
+
+GlobalConfiguration worker.default_query_execution.operator_buffer_size: [4096]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, a VARSIZED NOT NULL, b VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+    'ONE' AS "SOURCE".STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    1 AS "SOURCE".SEED,
+    'SEQUENCE UINT64 0 1 1, RANDOMSTR 1900 1900, RANDOMSTR 1800 1800' AS "SOURCE".GENERATOR_SCHEMA
+);
+
+CREATE SINK lengthSink(id UINT64 NOT NULL, len UINT64 NOT NULL) TYPE File;
+
+SELECT id, CHAR_LENGTH(CONCAT(CONCAT(CONCAT(a, a), CONCAT(a, a)), CONCAT(b, b))) AS len FROM stream INTO lengthSink;
+----
+0,11200
