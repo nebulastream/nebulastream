@@ -8,11 +8,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Lookup only: never builds or pushes images. Fails if main's dependency image does not exist yet
+  # (the regular nightly/PR workflows create it).
   get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      head_sha: ${{ github.sha }}
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.lookup.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+      - id: lookup
+        run: |
+          HASH=$(scripts/hash_dependencies.sh)
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-ci/tags/$HASH")
+          [ "$code" = 200 ] || { echo "dev image $HASH not on Docker Hub (HTTP $code); not building it here"; exit 1; }
+          echo "tag=$HASH" >> "$GITHUB_OUTPUT"
 
   build-and-test:
     needs: get-dev-images
