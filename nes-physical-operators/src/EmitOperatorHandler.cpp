@@ -46,13 +46,18 @@ void EmitOperatorHandler::emitClosing(
         const bool firstCompletion = completedSequences.wlock()->emplace(seqNumberOriginId).second;
         INVARIANT(firstCompletion, "Received chunk for sequence {} that was already completed", seqNumberOriginId);
 #endif
-        buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
-        buffer.setLastChunk(true);
-        pec.emitBuffer(buffer);
+        emitCompleteOutput(buffer, pec);
         return;
     }
     setChunkNumber(true, incomingChunkNumber, isIncomingBufferTheLastChunk, buffer);
     pec.emitBuffer(buffer);
+}
+
+void EmitOperatorHandler::emitCompleteOutput(TupleBuffer& output, PipelineExecutionContext& pec)
+{
+    output.setChunkNumber(INITIAL_CHUNK_NUMBER);
+    output.setLastChunk(true);
+    pec.emitBuffer(output);
 }
 
 void EmitOperatorHandler::setChunkNumber(

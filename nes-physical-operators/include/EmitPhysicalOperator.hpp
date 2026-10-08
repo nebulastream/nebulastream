@@ -35,9 +35,8 @@ class EmitPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void setup(ExecutionContext&, CompilationContext&) const override { /*noop*/ }
-
-    void terminate(ExecutionContext&) const override { /*noop*/ }
+    void setup(ExecutionContext& ctx, CompilationContext& compilationCtx) const override;
+    void terminate(ExecutionContext& ctx) const override;
 
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -45,6 +44,10 @@ public:
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
+
+    [[nodiscard]] OperatorHandlerId getOperatorHandlerId() const { return operatorHandlerId; }
+
+    [[nodiscard]] const std::shared_ptr<TupleBufferRef>& getBufferRef() const { return bufferRef; }
 
 private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;

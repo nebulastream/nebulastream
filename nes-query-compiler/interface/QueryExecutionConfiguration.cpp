@@ -97,6 +97,13 @@ const ConfigField<uint64_t> OPERATOR_BUFFER_SIZE{
     [](const ConfigLiteral& literal)
     { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
     uint64_t{4096}};
+
+const ConfigField<uint64_t> EMIT_COALESCING_DELAY{
+    Identifier::parse("emit_coalescing_delay_us"),
+    "Microseconds an emit may hold an output to merge it with those of neighboring inputs. 0 disables coalescing.",
+    [](const ConfigLiteral& literal)
+    { return tryGetOr<int64_t>(literal, expectedType<uint64_t>()).and_then(narrowConfigValue<int64_t, uint64_t>); },
+    uint64_t{0}};
 /// NOLINTEND(bugprone-throwing-static-initialization)
 
 }
@@ -110,6 +117,7 @@ Schema<QualifiedErasedConfigField, Ordered> QueryExecutionConfiguration::getConf
         NUMBER_OF_PARTITIONS,
         NUMBER_OF_RECORDS_PER_KEY,
         OPERATOR_BUFFER_SIZE,
+        EMIT_COALESCING_DELAY,
         SliceCacheConfiguration::getConfigSchema(),
         BloomFilterConfiguration::getConfigSchema());
 }
@@ -122,6 +130,7 @@ QueryExecutionConfiguration QueryExecutionConfiguration::fromConfig(const Instan
         config.get(PAGE_SIZE),
         config.get(NUMBER_OF_RECORDS_PER_KEY),
         config.get(OPERATOR_BUFFER_SIZE),
+        config.get(EMIT_COALESCING_DELAY),
         SliceCacheConfiguration::fromConfig(config),
         BloomFilterConfiguration::fromConfig(config)};
 }

@@ -24,6 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
+#include <CompilationContext.hpp>
 #include <PipelineExecutionContext.hpp>
 
 #ifndef NO_ASSERT
@@ -57,11 +58,14 @@ struct SequenceState
 };
 
 /// Assigns the chunk numbers of the buffers an `EmitPhysicalOperator` emits, such that the outputs of every sequence number carry the
-/// chunk numbers 1 to n and only chunk n is marked last.
-class EmitOperatorHandler final : public OperatorHandler
+/// chunk numbers 1 to n and only chunk n is marked last. Subclasses decide what happens to the complete output of an input.
+class EmitOperatorHandler : public OperatorHandler
 {
 public:
-    void start(PipelineExecutionContext& pipelineExecutionContext) override;
+    /// Called by the emit's `setup` when its pipeline starts, before the pipeline is compiled.
+    virtual void setup(CompilationContext&, PipelineExecutionContext&) { }
+
+    void start(PipelineExecutionContext& pipelineExecutionContext) final;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     /// Emits a full buffer that the input with `incomingChunkNumber` filled before it ended.
@@ -74,6 +78,10 @@ public:
         ChunkNumber incomingChunkNumber,
         bool isIncomingBufferTheLastChunk,
         PipelineExecutionContext& pec);
+
+protected:
+    /// Emits `output`, the only output of its sequence number, as its only chunk.
+    virtual void emitCompleteOutput(TupleBuffer& output, PipelineExecutionContext& pec);
 
 private:
     void setChunkNumber(bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer);

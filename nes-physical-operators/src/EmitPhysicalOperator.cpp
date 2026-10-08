@@ -23,7 +23,9 @@
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <CompilationContext.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -57,6 +59,16 @@ EmitOperatorHandler& asEmitHandler(OperatorHandler* handler)
     return dynamic_cast<EmitOperatorHandler&>(*handler);
 }
 
+void setupHandlerProxy(OperatorHandler* handler, PipelineExecutionContext* pec, CompilationContext* compilationCtx)
+{
+    asEmitHandler(handler).setup(*compilationCtx, *pec);
+}
+
+void stopHandlerProxy(OperatorHandler* handler, PipelineExecutionContext* pec)
+{
+    asEmitHandler(handler).stop(QueryTerminationType::Graceful, *pec);
+}
+
 void emitSpilledProxy(OperatorHandler* handler, PipelineExecutionContext* pec, TupleBuffer* buffer, const ChunkNumber incomingChunkNumber)
 {
     PRECONDITION(buffer != nullptr, "Expects a valid buffer");
@@ -84,6 +96,20 @@ void setMetadata(const ExecutionContext& ctx, RecordBuffer& recordBuffer, const 
     recordBuffer.setSequenceRange(ctx.sequenceNumber, ctx.sequenceRangeOffset);
     recordBuffer.setCreationTs(ctx.currentTs);
 }
+}
+
+void EmitPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compilationCtx) const
+{
+    nautilus::invoke(
+        setupHandlerProxy,
+        ctx.getGlobalOperatorHandler(operatorHandlerId),
+        ctx.pipelineContext,
+        nautilus::val<CompilationContext*>{&compilationCtx});
+}
+
+void EmitPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    nautilus::invoke(stopHandlerProxy, ctx.getGlobalOperatorHandler(operatorHandlerId), ctx.pipelineContext);
 }
 
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const

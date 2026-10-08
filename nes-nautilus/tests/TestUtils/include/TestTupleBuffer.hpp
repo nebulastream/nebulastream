@@ -28,6 +28,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -112,6 +113,7 @@ class TestTupleBuffer
 {
 public:
     explicit TestTupleBuffer(TestSchema schema);
+    TestTupleBuffer(TestSchema schema, MemoryLayoutType layout);
 
     /// Wraps an existing TupleBuffer for schema-aware access.
     /// bufferProvider required for VARSIZED (string) field support.
@@ -120,6 +122,7 @@ public:
 
 private:
     TestSchema schema;
+    MemoryLayoutType layout = MemoryLayoutType::ROW_LAYOUT;
 };
 
 /// View over a TupleBuffer. Supports append and indexed record access.
