@@ -23,6 +23,10 @@
   },
   "dependencies": [
     "codon-cpp-peglib",
+    {
+      "name": "codon-peg2cpp",
+      "host": true
+    },
     "fast-float",
     "fmt",
     {

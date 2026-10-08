@@ -32,6 +32,10 @@ if (NOT "llvm" IN_LIST FEATURES)
     endif()
 endif()
 
+# The build runs peg2cpp to generate parser sources. When cross compiling the custom commands invoke it by name, and the
+# one built in-tree is a target executable that cannot run here, so use the host build.
+vcpkg_add_to_path(PREPEND "${CURRENT_HOST_INSTALLED_DIR}/tools/codon-peg2cpp")
+
 vcpkg_cmake_configure(
         SOURCE_PATH "${SOURCE_PATH}"
         # Codon's CMakeLists writes config.h into the source tree; dbg/rel configuring in parallel races on it.

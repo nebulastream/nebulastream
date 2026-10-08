@@ -1,0 +1,16 @@
+{
+  "name": "codon-peg2cpp",
+  "version": "0.19.6",
+  "description": "Codon's PEG grammar to C++ generator, a build time tool that has to run on the host when cross compiling codon-compiler",
+  "homepage": "https://github.com/exaloop/codon",
+  "license": "Apache-2.0",
+  "supports": "!windows",
+  "dependencies": [
+    "codon-cpp-peglib",
+    "fmt",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}
