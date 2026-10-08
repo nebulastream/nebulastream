@@ -15,16 +15,35 @@ if (NOT NES_DOCKER_AVAILABLE)
     return()
 endif ()
 
+# When cross compiling for arm64 the images are arm64 images, packaged around the cross compiled binaries. Only the
+# runtime base image has to execute arm64 RUN steps (apt), which needs qemu binfmt on the build host or a prebuilt base
+# image; the images that COPY the binaries do not execute anything. The platform is part of the tags so arm64 and amd64
+# images do not overwrite each other on one daemon.
+set(NES_DOCKER_PLATFORM "" CACHE STRING "Docker platform of the packaged images, e.g. linux/arm64 (default: native)")
+if (NOT NES_DOCKER_PLATFORM AND CMAKE_CROSSCOMPILING AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
+    set(NES_DOCKER_PLATFORM "linux/arm64")
+endif ()
+set(NES_DOCKER_PLATFORM_ARGS "")
+set(NES_DOCKER_PLATFORM_LIST "")
+set(NES_DOCKER_TAG_SUFFIX "")
+if (NES_DOCKER_PLATFORM)
+    set(NES_DOCKER_PLATFORM_ARGS "--platform ${NES_DOCKER_PLATFORM}")
+    set(NES_DOCKER_PLATFORM_LIST --platform ${NES_DOCKER_PLATFORM})
+    string(REGEX REPLACE "^linux/" "-" NES_DOCKER_TAG_SUFFIX "${NES_DOCKER_PLATFORM}")
+    string(REPLACE "/" "-" NES_DOCKER_TAG_SUFFIX "${NES_DOCKER_TAG_SUFFIX}")
+endif ()
+set(NES_PACKAGE_BASE_IMAGE "${NES_RUNTIME_BASE_IMAGE}${NES_DOCKER_TAG_SUFFIX}")
+
 # Custom targets are not part of ALL, so Docker images are built only when requested.
 add_custom_target(package-docker-images-all)
 add_custom_target(package-docker-runtime-base
-    COMMAND ${DOCKER_EXECUTABLE} build --pull=false --load
-        --tag "${NES_RUNTIME_BASE_IMAGE}"
+    COMMAND ${DOCKER_EXECUTABLE} build --pull=false --load ${NES_DOCKER_PLATFORM_LIST}
+        --tag "${NES_PACKAGE_BASE_IMAGE}"
         --file "${CMAKE_SOURCE_DIR}/docker/runtime/RuntimeBase.dockerfile"
         "${CMAKE_SOURCE_DIR}/docker/runtime"
     VERBATIM
     USES_TERMINAL
-    COMMENT "Building ${NES_RUNTIME_BASE_IMAGE}"
+    COMMENT "Building ${NES_PACKAGE_BASE_IMAGE}"
 )
 add_dependencies(package-docker-images-all package-docker-runtime-base)
 
@@ -65,7 +84,7 @@ function(nes_add_docker_image IMAGE TARGET)
 
     set(DOCKERFILE "$<TARGET_FILE_DIR:${TARGET}>/${TARGET}.dockerfile")
     string(CONCAT DOCKERFILE_CONTENT
-        "FROM ${NES_RUNTIME_BASE_IMAGE}\n"
+        "FROM ${NES_PACKAGE_BASE_IMAGE}\n"
         "${STATE}"
         "COPY $<TARGET_FILE_NAME:${TARGET}> /usr/bin/$<TARGET_FILE_NAME:${TARGET}>\n"
         "${STAGE_COPY}"
@@ -78,11 +97,11 @@ function(nes_add_docker_image IMAGE TARGET)
     add_custom_target(package-docker-${IMAGE}
         ${STAGE_COMMANDS}
         COMMAND /bin/sh -c
-            "exec \"$1\" build --pull=false --tag \"$2:\${NES_DOCKER_TAG:-local}\" --file \"$3\" \"$4\""
+            "exec \"$1\" build --pull=false ${NES_DOCKER_PLATFORM_ARGS} --tag \"$2:\${NES_DOCKER_TAG:-local}${NES_DOCKER_TAG_SUFFIX}\" --file \"$3\" \"$4\""
             _ "${DOCKER_EXECUTABLE}" "nebulastream/${IMAGE}" "${DOCKERFILE}" "$<TARGET_FILE_DIR:${TARGET}>"
         VERBATIM
         USES_TERMINAL
-        COMMENT "Building nebulastream/${IMAGE} (NES_DOCKER_TAG, default: local)"
+        COMMENT "Building nebulastream/${IMAGE} (NES_DOCKER_TAG, default: local${NES_DOCKER_TAG_SUFFIX})"
     )
     add_dependencies(package-docker-${IMAGE} ${TARGET} package-docker-runtime-base)
     add_dependencies(package-docker-images-all package-docker-${IMAGE})
