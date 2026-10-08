@@ -224,9 +224,11 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
             parse<char>(start, end, step);
             break;
         }
+        /// Must throw, not abort: SequenceField::validate rejects these types with InvalidConfigParameter, so a config that
+        /// bypasses validation must fail the same recoverable way instead of terminating the worker.
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED: {
-            INVARIANT(false, "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
+            throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
         }
     }
     this->stop = false;
@@ -268,8 +270,17 @@ NormalDistributionField::DistributionVariant createDistribution(const std::strin
 {
     const auto parsedMean = from_chars<T>(mean);
     const auto parsedStdDev = from_chars<U>(stdDev);
-    INVARIANT(parsedMean.has_value(), "Could not parse mean from {}", mean);
-    INVARIANT(parsedStdDev.has_value(), "Could not parse std dev from {}", stdDev);
+    /// Must throw, not abort: validate() only checks that mean/stddev parse as `double`, not that they fit the
+    /// narrower configured output type T (e.g. an out-of-range, fractional, or negative mean for an unsigned T).
+    /// Such a config passes validate() and must fail here the same recoverable way, not terminate the worker.
+    if (not parsedMean.has_value())
+    {
+        throw InvalidConfigParameter("Could not parse mean {} as the configured NORMAL_DISTRIBUTION output type", mean);
+    }
+    if (not parsedStdDev.has_value())
+    {
+        throw InvalidConfigParameter("Could not parse std dev {} as the configured NORMAL_DISTRIBUTION output type", stdDev);
+    }
 
     if constexpr (std::is_same_v<T, double> or std::is_same_v<T, float>)
     {
@@ -290,7 +301,12 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
     const auto stddev = parameters[3];
 
 
-    outputType.type = magic_enum::enum_cast<NES::DataType::Type>(type).value();
+    const auto parsedOutputType = magic_enum::enum_cast<NES::DataType::Type>(type);
+    if (not parsedOutputType.has_value())
+    {
+        throw InvalidConfigParameter("Invalid Type \"{}\" in NORMAL_DISTRIBUTION schema line: {}", type, rawSchemaLine);
+    }
+    outputType.type = parsedOutputType.value();
     switch (outputType.type)
     {
         case DataType::Type::UINT8:
@@ -327,13 +343,13 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
         /// We require an integer for binomial_distribution
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR:
-            INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
+            throw InvalidConfigParameter("Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
 
         /// Getting a var sized from a normal_distribution is possible but we might want to do something different than solely converting
         /// the value to a string
         case DataType::Type::UNDEFINED:
         case DataType::Type::VARSIZED: {
-            INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
+            throw InvalidConfigParameter("Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
         }
     }
 }
@@ -369,13 +385,27 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
 
-    if (const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam); not type.has_value())
+    const auto type = magic_enum::enum_cast<NES::DataType::Type>(typeParam);
+    if (not type.has_value())
     {
         constexpr auto allDataTypes = magic_enum::enum_names<DataType::Type>();
         NES_ERROR("Invalid Type in NORMAL_DISTRIBUTION, supported are only {} {}", fmt::join(allDataTypes, ","), rawSchemaLine);
         throw InvalidConfigParameter(
             "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
     }
+    /// Mirrors the constructor's switch: BOOLEAN/CHAR can't back a normal/binomial distribution, and UNDEFINED/VARSIZED
+    /// aren't numeric. Rejecting them here keeps validate() and construction in sync instead of failing later.
+    switch (type.value())
+    {
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::UNDEFINED:
+        case DataType::Type::VARSIZED:
+            throw InvalidConfigParameter("Output Type \"{}\" is not supported for normal or binomial distribution.", typeParam);
+        default:
+            break;
+    }
+
     const auto parsedMean = from_chars<double>(mean);
     const auto parsedStdDev = from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
@@ -385,6 +415,17 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     if (parsedStdDev < 0.0)
     {
         throw InvalidConfigParameter("Stddev must be non-negative");
+    }
+
+    const auto isFloatingPointOutput = type.value() == DataType::Type::FLOAT32 or type.value() == DataType::Type::FLOAT64;
+    if (not isFloatingPointOutput and parsedStdDev > 1.0)
+    {
+        /// Integer output types are generated via std::binomial_distribution, which uses stddev as the success
+        /// probability p. p must lie in [0, 1]; outside that range construction is undefined behavior.
+        throw InvalidConfigParameter(
+            "Stddev {} is out of range: for integer output types it is used as a binomial distribution probability and must be in "
+            "[0, 1]",
+            *parsedStdDev);
     }
 }
 

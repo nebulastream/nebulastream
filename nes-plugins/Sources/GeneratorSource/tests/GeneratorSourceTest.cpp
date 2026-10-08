@@ -143,6 +143,16 @@ TEST_F(NormalDistributionFieldTest, validateInvalidSchemaLineThrows)
     EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION FLOAT64 0.0 -1.0"), Exception);
 }
 
+TEST_F(NormalDistributionFieldTest, unsupportedOutputTypeThrowsInsteadOfAborting)
+{
+    /// BOOLEAN/CHAR cannot back a normal/binomial distribution. Both validation and construction must reject them with a
+    /// recoverable exception; construction used to call INVARIANT(false, ...) and terminate the worker.
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION BOOLEAN 1 1"), Exception);
+    EXPECT_THROW(GeneratorFields::NormalDistributionField::validate("NORMAL_DISTRIBUTION CHAR 1 1"), Exception);
+    EXPECT_THROW({ const GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION BOOLEAN 1 1"); }, Exception);
+    EXPECT_THROW({ const GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION CHAR 1 1"); }, Exception);
+}
+
 /// --- RandomStrField Tests ---
 
 class RandomStrFieldTest : public ::testing::Test
