@@ -10,7 +10,7 @@ vcpkg_from_github(
 
 vcpkg_configure_meson(
         SOURCE_PATH "${SOURCE_PATH}"
-        LANGUAGES C
+        LANGUAGES C CXX
         OPTIONS
         -Dtests=false
         -Dviewer=disabled

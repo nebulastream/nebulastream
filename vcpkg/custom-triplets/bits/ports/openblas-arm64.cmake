@@ -12,3 +12,10 @@
 
 # OpenBLAS needs an explicit processor to detect the ARM64 architecture.
 list(APPEND VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
+
+cmake_host_system_information(RESULT _NES_HOST_PLATFORM QUERY OS_PLATFORM)
+if (_NES_HOST_PLATFORM MATCHES "x86_64|AMD64")
+    # Cross compiling: the SVE cores (NEOVERSEV1, NEOVERSEN2, ARMV8SVE, A64FX) that dynamic-arch adds for clang reference
+    # kernel files missing in OpenBLAS 0.3.29's CMake build. Keep dispatch for the non-SVE cores.
+    list(APPEND VCPKG_CMAKE_CONFIGURE_OPTIONS "-DDYNAMIC_LIST=CORTEXA53;CORTEXA57;THUNDERX;THUNDERX2T99;TSV110;EMAG8180;NEOVERSEN1;THUNDERX3T110")
+endif ()

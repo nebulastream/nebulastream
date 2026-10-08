@@ -29,9 +29,15 @@ vcpkg_from_github(
         0001-bump-cxx-std.patch
 )
 
+set(ADDITIONAL_CMAKE_OPTIONS "")
+if (VCPKG_CROSSCOMPILING)
+    # The cross compiler wrapper has no matching clang-scan-deps, which C++20 module support requires.
+    list(APPEND ADDITIONAL_CMAKE_OPTIONS -DCPPTRACE_DISABLE_CXX_20_MODULES=ON)
+endif ()
+
 vcpkg_cmake_configure(
         SOURCE_PATH "${SOURCE_PATH}"
-        OPTIONS -DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON -DCPPTRACE_USE_EXTERNAL_ZSTD=ON -DCPPTRACE_VCPKG=ON
+        OPTIONS -DCPPTRACE_USE_EXTERNAL_LIBDWARF=ON -DCPPTRACE_USE_EXTERNAL_ZSTD=ON -DCPPTRACE_VCPKG=ON ${ADDITIONAL_CMAKE_OPTIONS}
 )
 
 vcpkg_cmake_install()
