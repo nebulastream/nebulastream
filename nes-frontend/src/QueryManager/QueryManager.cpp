@@ -316,7 +316,7 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 
 std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryId queryId)
 {
-    auto queryResult = getQuery(std::move(queryId));
+    auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
         return std::unexpected(std::vector{queryResult.error()});
