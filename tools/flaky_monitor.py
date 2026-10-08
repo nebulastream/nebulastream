@@ -82,19 +82,22 @@ def main():
 
     while True:
         try:
-            busy, online = busy_runners()
-            if busy > a.max_busy:
-                log(f"{busy}/{online} runners busy (> {a.max_busy}), waiting")
-                time.sleep(a.poll)
-                continue
-            known = set(our_runs())
-            publish(a.base)
-            sh("gh", "workflow", "run", WF, "--ref", BRANCH)
-            run = None
-            while not run:  # the dispatch call returns no run id, wait for the new run to show up
-                time.sleep(5)
-                run = next((r for i, r in our_runs().items() if i not in known), None)
-            log(f"dispatched ({busy}/{online} runners busy): {run['html_url']}")
+            run = next((r for r in our_runs().values() if r["status"] != "completed"), None)  # e.g. from an earlier start
+            if run:
+                log(f"watching {run['html_url']}")
+            else:
+                busy, online = busy_runners()
+                if busy > a.max_busy:
+                    log(f"{busy}/{online} runners busy (> {a.max_busy}), waiting")
+                    time.sleep(a.poll)
+                    continue
+                known = set(our_runs())
+                publish(a.base)
+                sh("gh", "workflow", "run", WF, "--ref", BRANCH)
+                while not run:  # the dispatch call returns no run id, wait for the new run to show up
+                    time.sleep(5)
+                    run = next((r for i, r in our_runs().items() if i not in known), None)
+                log(f"dispatched ({busy}/{online} runners busy): {run['html_url']}")
             while run["status"] != "completed":
                 time.sleep(a.poll)
                 run = our_runs()[run["id"]]
