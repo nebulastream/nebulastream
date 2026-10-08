@@ -25,8 +25,12 @@ vcpkg_from_github(
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
 if (NOT "mlir" IN_LIST FEATURES)
-    if($ENV{MLIR_DIR})
-	    set(ADDITIONAL_CMAKE_OPTIONS "${ADDITIONAL_CMAKE_OPTIONS}-DMLIR_DIR=$ENV{MLIR_DIR} ")
+    # if($ENV{MLIR_DIR}) would evaluate the path itself as a condition, which is always false
+    if (DEFINED ENV{MLIR_DIR} AND NOT "$ENV{MLIR_DIR}" STREQUAL "")
+        list(APPEND ADDITIONAL_CMAKE_OPTIONS "-DMLIR_DIR=$ENV{MLIR_DIR}")
+    endif ()
+    if (DEFINED ENV{LLVM_DIR} AND NOT "$ENV{LLVM_DIR}" STREQUAL "")
+        list(APPEND ADDITIONAL_CMAKE_OPTIONS "-DLLVM_DIR=$ENV{LLVM_DIR}")
     endif ()
 endif ()
 
