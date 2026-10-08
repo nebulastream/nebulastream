@@ -40,6 +40,19 @@ if (${USING_LIBCXX})
     list(APPEND CXXFLAGS_LIST "-stdlib=libc++")
 endif ()
 
+# Cross compiling: crates with C++ (cxx bridges) are compiled by the cc crate, which must use the arm64 compiler wrappers
+# and see the sysroot and its libc++ headers instead of the host ones.
+set(NES_RUST_CC_ENV "")
+if (CMAKE_CROSSCOMPILING AND DEFINED NES_ARM64_COMPILE_FLAGS)
+    list(APPEND CXXFLAGS_LIST "${NES_ARM64_COMPILE_FLAGS} -nostdinc++")
+    string(REPLACE "-" "_" _nes_rust_triple_env "${Rust_CARGO_TARGET}")
+    set(_nes_arm64_bin "${CMAKE_SOURCE_DIR}/cmake/toolchains/arm64-bin")
+    list(APPEND NES_RUST_CC_ENV
+            "CC_${_nes_rust_triple_env}=${_nes_arm64_bin}/aarch64-linux-gnu-gcc"
+            "CXX_${_nes_rust_triple_env}=${_nes_arm64_bin}/aarch64-linux-gnu-g++"
+            "AR_${_nes_rust_triple_env}=${_nes_arm64_bin}/aarch64-linux-gnu-ar")
+endif ()
+
 set(CORROSION_NO_HOSTBUILD ON CACHE BOOL "Enable proper incremental builds for Rust targets")
 add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/corrosion ${CMAKE_BINARY_DIR}/corrosion)
 
@@ -146,7 +159,7 @@ endif()
 # Cache Cargo flags and environment variables for generated umbrella builds.
 list(JOIN CXXFLAGS_LIST " " ADDITIONAL_CXXFLAGS)
 list(JOIN RUSTFLAGS_LIST " " ADDITIONAL_RUSTFLAGS)
-set(ENV_VARS_LIST "")
+set(ENV_VARS_LIST ${NES_RUST_CC_ENV})
 
 if (NOT "${ADDITIONAL_CXXFLAGS}" STREQUAL "")
     list(APPEND ENV_VARS_LIST CXXFLAGS=${ADDITIONAL_CXXFLAGS})
