@@ -37,7 +37,7 @@
 # adds/overrides flags for one specific profile only (e.g. nightly enabling
 # slower, more thorough test flags). Per-job cmake_flags still win over both.
 
-profiles: [pr, nightly]
+profiles: [pr, nightly, flaky]
 
 default_cmake_flags:
   ALL_HASHMAP_TESTS: "1"
@@ -46,9 +46,11 @@ default_cmake_flags:
   ENABLE_DOCKER_TESTS: "ON"
 
 profile_cmake_flags:
-  nightly:
+  nightly: &nightly_flags
     ALL_SLICE_CACHE_TESTS: "ON"
     NES_EXHAUSTIVE_TESTS: "1"
+  # flaky: reduced nightly (tests only, <= ~1h jobs), run repeatedly by tools/flaky_monitor.py
+  flaky: *nightly_flags
 
 runners:
   github-x64: ubuntu-24.04
@@ -134,6 +136,8 @@ jobs:
     overrides:
       nightly:
         build_type: [RelWithDebInfo, Release]
+      flaky:
+        build_type: [RelWithDebInfo, Release]
 
   # === Special flag builds ===
 
@@ -148,6 +152,7 @@ jobs:
     tests: [unit]
 
   - name: "{arch} {stdlib} {build_type} tuple buffer leak (systest+docker)"
+    profiles: [pr, nightly]
     arch: x64
     stdlib: libcxx
     build_type: RelWithDebInfo
@@ -160,6 +165,7 @@ jobs:
   # Validates a full build without compiler-cache assistance. Keep this on the
   # self-hosted runner because every translation unit must be compiled locally.
   - name: "{arch} {stdlib} {build_type} clean build (unit+systest+docker)"
+    profiles: [pr, nightly]
     arch: x64
     stdlib: libcxx
     build_type: Debug
@@ -174,6 +180,7 @@ jobs:
   # nightly widens build_type coverage to also compile-check Benchmark, Release
   # and RelWithDebInfo, not just Debug.
   - name: "{arch} {stdlib} {build_type} (build only)"
+    profiles: [pr, nightly]
     arch: [x64, arm64]
     stdlib: [libcxx, libstdcxx]
     build_type: Debug

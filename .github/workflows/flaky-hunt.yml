@@ -1,0 +1,24 @@
+name: Flaky Hunt
+description: |
+  Reduced nightly (tests only, no long-running/deterministic jobs) to spot flaky tests.
+  Meant to live on a throw-away branch and be dispatched repeatedly by tools/flaky_monitor.py.
+  Tests the commit it is dispatched on (the branch tip = main + these CI changes).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-dev-images:
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ github.sha }}
+
+  build-and-test:
+    needs: get-dev-images
+    uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ github.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      matrix_profile: flaky
