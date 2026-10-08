@@ -17,6 +17,11 @@ on:
         type: string
         required: true
         description: "Matrix profile to generate from .github/ci/matrix.yaml (e.g. pr or nightly)"
+      timeout_minutes:
+        type: number
+        required: false
+        default: 360
+        description: "timeout of each build-and-test job (GitHub's default)"
       config_ref:
         type: string
         required: false
@@ -44,6 +49,7 @@ jobs:
   build-and-test:
     name: ${{ matrix.name }}
     needs: [ generate-matrix ]
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

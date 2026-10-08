@@ -14,6 +14,7 @@ import argparse, json, os, re, subprocess, time
 
 API = "repos/{owner}/{repo}/actions"
 WF = "nightly.yml"
+JOB_TIMEOUT_MIN = 60  # keep in sync with timeout_minutes in nightly.yml; GitHub reports timed-out jobs as "cancelled"
 
 
 def sh(*cmd, cwd=None):
@@ -37,16 +38,23 @@ def busy_runners():
     return sum(r["busy"] for r in rs), len(rs)
 
 
+def timed_out(job):
+    if job["conclusion"] != "cancelled" or not job["started_at"] or not job["completed_at"]:
+        return False
+    t = lambda k: time.mktime(time.strptime(job[k], "%Y-%m-%dT%H:%M:%SZ"))
+    return t("completed_at") - t("started_at") >= (JOB_TIMEOUT_MIN - 1) * 60
+
+
 def report(run, out):
     log(f"run {run['id']} {run['conclusion']}: {run['html_url']}")
     jobs = [j for page in gh(f"{API}/runs/{run['id']}/jobs?per_page=100") for j in page["jobs"]]
-    failed = [j for j in jobs if j["conclusion"] == "failure"]
+    failed = [j for j in jobs if j["conclusion"] == "failure" or timed_out(j)]
     if not failed:
         return
     d = os.path.join(out, str(run["id"]))
     os.makedirs(d, exist_ok=True)
     for j in failed:
-        print(f"    FAILED {j['name']}", flush=True)
+        print(f"    {'TIMED OUT' if timed_out(j) else 'FAILED'} {j['name']}", flush=True)
         with open(os.path.join(d, re.sub(r"[^\w.-]+", "_", j["name"]) + ".log"), "w") as f:
             f.write(sh("gh", "api", f"{API}/jobs/{j['id']}/logs"))
     # test logs uploaded by the failed jobs (may be missing or expired)
