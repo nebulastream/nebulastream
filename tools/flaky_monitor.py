@@ -10,7 +10,7 @@ Needs `gh` (authenticated, push access) and git. No PR is ever opened.
 
     tools/flaky_monitor.py [--base main] [--max-busy 2] [--poll 120]
 """
-import argparse, json, subprocess, tempfile, time, os
+import argparse, json, os, re, subprocess, tempfile, time
 
 WF = "flaky-hunt.yml"
 
@@ -60,14 +60,26 @@ def active_ours():
     return [r for r in runs("in_progress") + runs("queued") if r["path"].endswith(WF)]
 
 
-def report(run_id):
+def report(run_id, out):
     r = gh(f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}")[0]
     jobs = [j for page in gh(f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}/jobs?per_page=100")
             for j in page["jobs"]]
-    failed = sorted(j["name"] for j in jobs if j["conclusion"] == "failure")
+    failed = [j for j in jobs if j["conclusion"] == "failure"]
     print(f"[{time.strftime('%F %T')}] run {run_id} {r['conclusion']}: {r['html_url']}", flush=True)
-    for name in failed:
-        print(f"    FAILED {name}", flush=True)
+    if not failed:
+        return
+    d = os.path.join(out, str(run_id))
+    os.makedirs(d, exist_ok=True)
+    for j in failed:
+        print(f"    FAILED {j['name']}", flush=True)
+        with open(os.path.join(d, re.sub(r"[^\w.-]+", "_", j["name"]) + ".log"), "w") as f:
+            f.write(sh("gh", "api", f"repos/{{owner}}/{{repo}}/actions/jobs/{j['id']}/logs"))
+    # uploaded test logs (artifacts "logs-<job>", only present for failed jobs); may be absent/expired
+    try:
+        sh("gh", "run", "download", str(run_id), "-D", os.path.join(d, "artifacts"), "-p", "logs-*")
+    except subprocess.CalledProcessError as e:
+        print(f"    no artifacts downloaded: {e.stderr.strip()}", flush=True)
+    print(f"    logs in {d}", flush=True)
 
 
 def main():
@@ -75,6 +87,7 @@ def main():
     ap.add_argument("--base", default="main")
     ap.add_argument("--target-branch", default="ci/flaky-hunt")
     ap.add_argument("--max-busy", type=int, default=2, help="max active self-hosted jobs to still count as idle")
+    ap.add_argument("--out", default="flaky-logs", help="where failed-run logs are saved")
     ap.add_argument("--poll", type=int, default=120)
     a = ap.parse_args()
 
@@ -94,7 +107,7 @@ def main():
         while active_ours():
             time.sleep(a.poll)
         last = sh("gh", "run", "list", "-w", WF, "-b", a.target_branch, "-L", "1", "--json", "databaseId", "-q", ".[0].databaseId")
-        report(last)
+        report(last, a.out)
 
 
 if __name__ == "__main__":
