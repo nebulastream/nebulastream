@@ -16,6 +16,7 @@ add_source_files(nes-logical-operators
         SelectionLogicalOperator.cpp
         ProjectionLogicalOperator.cpp
         UnionLogicalOperator.cpp
+        OriginSplitLogicalOperator.cpp
         IngestionTimeWatermarkAssignerLogicalOperator.cpp
         EventTimeWatermarkAssignerLogicalOperator.cpp
         InferModelLogicalOperator.cpp
@@ -30,6 +31,7 @@ add_subdirectory(Windows)
 add_unreflection_entry(LogicalOperator Selection)
 add_unreflection_entry(LogicalOperator Projection)
 add_unreflection_entry(LogicalOperator Union)
+add_unreflection_entry(LogicalOperator OriginSplit)
 add_unreflection_entry(LogicalOperator IngestionTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator EventTimeWatermarkAssigner)
 add_unreflection_entry(LogicalOperator InferModel)

@@ -79,9 +79,10 @@ struct RewrittenQuery
     std::string sql;
     /// The query's number in the test file, so a reported result points back at it.
     SystestQueryId id;
-    /// Absent when there is nothing to compare: the sink discards its input (e.g., `VoidSink`), or the statement does not
+    /// One per sink, in the order the query lists them, so that each sink is checked against its own result block.
+    /// An entry is absent when the sink discards its input (e.g., `VoidSink`), and there is none when the statement does not
     /// parse and never runs.
-    std::optional<std::filesystem::path> resultFile;
+    std::vector<std::optional<std::filesystem::path>> resultFiles;
     std::vector<std::filesystem::path> inputFiles;
 
     Expectation expectation;

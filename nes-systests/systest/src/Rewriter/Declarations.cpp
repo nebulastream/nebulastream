@@ -48,12 +48,13 @@ void declareNames(const ClassifiedCreate& create, NameRegistry& registry, SinkBy
                 {
                     registry.declare(declaration.definition->sinkName->getText());
                 }
-                /// Inlining needs the type and the schema either way.
+                /// Inlining needs the type, the schema and the options either way.
                 sinkByName.emplace(
                     Identifier::parse(declaration.definition->sinkName->getText()),
                     SinkDefinition{
                         .type = declaration.definition->type->getText(),
-                        .schema = create.parse->textOf(declaration.definition->schemaDefinition())});
+                        .schema = create.parse->textOf(declaration.definition->schemaDefinition()),
+                        .options = writtenOptions(*create.parse, declaredOptions(declaration.definition))});
             }},
         create.declaration);
 }

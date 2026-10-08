@@ -143,6 +143,20 @@ TEST_F(LogicalPlanTest, GetOperatorByType)
     EXPECT_EQ(LogicalOperator{sourceOperators[0]}, sourceOp);
 }
 
+TEST_F(LogicalPlanTest, PlanOperatorsVisitsSharedOperatorsOnce)
+{
+    /// Two sinks reading one sub-plan, as a multi-sink query produces it.
+    const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("source"));
+    const auto selectionOp = SelectionLogicalOperator::create(UnboundFieldAccessLogicalFunction{Identifier::parse("field")})
+                                 .withChildrenUnsafe(std::vector<LogicalOperator>{sourceOp});
+    const LogicalOperator sinkA{SinkLogicalOperator::create(Identifier::parse("sinkA")).withChildrenUnsafe({selectionOp})};
+    const LogicalOperator sinkB{SinkLogicalOperator::create(Identifier::parse("sinkB")).withChildrenUnsafe({selectionOp})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {sinkA, sinkB});
+
+    EXPECT_EQ(planOperators(plan).size(), 4);
+    EXPECT_EQ(getOperatorByType<SourceNameLogicalOperator>(plan).size(), 1);
+}
+
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
     const auto sourceOp = SourceNameLogicalOperator::create(Identifier::parse("TestSource"));

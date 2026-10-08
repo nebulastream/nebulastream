@@ -112,7 +112,7 @@ TEST_F(TestFileParserTest, RunsAQueryOncePerListedAlternative)
     /// The alternatives are the same query asserting the same answer, so everything but the overrides agrees.
     EXPECT_EQ(first->sql, second->sql);
     EXPECT_EQ(first->id, second->id);
-    EXPECT_EQ(std::get<ExpectedRows>(first->expected).rows, std::get<ExpectedRows>(second->expected).rows);
+    EXPECT_EQ(std::get<ExpectedRows>(first->expected).rowsPerSink, std::get<ExpectedRows>(second->expected).rowsPerSink);
 }
 
 /// Two lines that each list values combine into every pairing of them, so the query runs once per pairing.
@@ -294,7 +294,29 @@ TEST_F(TestFileParserTest, ReadsCreatesAndQueryWithExpectedRows)
     EXPECT_EQ(query->id.getRawValue(), 1U);
     const auto* expectedRows = std::get_if<ExpectedRows>(&query->expected);
     ASSERT_NE(expectedRows, nullptr);
-    EXPECT_EQ(expectedRows->rows, std::vector<std::string>{"1"});
+    EXPECT_EQ(expectedRows->rowsPerSink, (std::vector<std::vector<std::string>>{{"1"}}));
+}
+
+/// A query with several sinks is followed by one result block per sink, so the blocks behind it are the rows of its sinks in
+/// order. The query runs once per listed alternative, and every run expects the rows of every sink.
+TEST_F(TestFileParserTest, ReadsOneResultBlockPerSink)
+{
+    const auto [path, statements] = readSlt("Configuration worker.query_engine.number_of_worker_threads: [1, 2]\n"
+                                            "SELECT field_1 FROM oneTuple INTO sinkA, sinkB;\n"
+                                            "----\n"
+                                            "1\n"
+                                            "----\n"
+                                            "2\n");
+
+    ASSERT_EQ(statements.size(), 2U);
+    for (const auto& statement : statements)
+    {
+        const auto* query = std::get_if<SelectStatement>(&statement);
+        ASSERT_NE(query, nullptr);
+        const auto* expectedRows = std::get_if<ExpectedRows>(&query->expected);
+        ASSERT_NE(expectedRows, nullptr);
+        EXPECT_EQ(expectedRows->rowsPerSink, (std::vector<std::vector<std::string>>{{"1"}, {"2"}}));
+    }
 }
 
 /// An ATTACH FILE source keeps the referenced path rather than materializing anything.
