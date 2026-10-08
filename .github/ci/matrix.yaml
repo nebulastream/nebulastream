@@ -137,7 +137,7 @@ jobs:
       nightly:
         build_type: [RelWithDebInfo, Release]
       flaky:
-        build_type: [RelWithDebInfo, Release]
+        build_type: [RelWithDebInfo, Release, Benchmark]
 
   # === Special flag builds ===
 

@@ -1,6 +1,6 @@
 name: Flaky Hunt
 description: |
-  Reduced nightly (tests only, no long-running/deterministic jobs) to spot flaky tests.
+  Reduced nightly (tests, large tests and distributed e2e; no long-running or deterministic jobs) to spot flaky tests.
   Meant to live on a throw-away branch and be dispatched repeatedly by tools/flaky_monitor.py.
   Tests the commit it is dispatched on (the branch tip = main + these CI changes).
 
@@ -33,3 +33,32 @@ jobs:
       head_sha: ${{ github.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       matrix_profile: flaky
+
+  # Large scale tests + distributed e2e (systest remote test); ~15-25 min each.
+  large-tests:
+    name: "Large Scale Tests (${{ matrix.name }})"
+    needs: get-dev-images
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: slice-cache-enabled
+            enable_slice_cache: true
+          - name: slice-cache-disabled
+            enable_slice_cache: false
+    uses: ./.github/workflows/large_test.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ github.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      enable_slice_cache: ${{ matrix.enable_slice_cache }}
+
+  # new random worker config on every run
+  large-tests-random-config:
+    name: Large Scale Tests Random Worker Config
+    needs: get-dev-images
+    uses: ./.github/workflows/large_tests_random_worker_config.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ github.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
