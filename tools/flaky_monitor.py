@@ -10,9 +10,12 @@ Needs `gh` (authenticated, push access) and git. No PR is ever opened.
 
     tools/flaky_monitor.py [--base main] [--max-busy 2] [--poll 120]
 """
-import argparse, json, os, re, subprocess, tempfile, time
+import argparse, json, os, re, shutil, subprocess, tempfile, time
 
-WF = "flaky-hunt.yml"
+SRC = ".github/workflows/flaky-hunt.yml"
+# workflow_dispatch only works for workflow files that exist on the default branch, so on the throw-away
+# branch we dispatch an existing one (nightly.yml) whose content is replaced by SRC. Runs are told apart by branch.
+WF = "nightly.yml"
 
 
 def sh(*cmd, cwd=None):
@@ -28,11 +31,11 @@ def runs(status):
             for r in page["workflow_runs"]]
 
 
-def busy_self_hosted():
+def busy_self_hosted(target):
     """Self-hosted jobs queued or running, across all active runs (ours excluded by caller)."""
     n = 0
     for r in runs("in_progress") + runs("queued"):
-        if r["path"].endswith(WF):
+        if r["head_branch"] == target:
             continue
         for page in gh(f"repos/{{owner}}/{{repo}}/actions/runs/{r['id']}/jobs?per_page=100"):
             n += sum(j["status"] in ("queued", "in_progress") and "self-hosted" in j["labels"]
@@ -49,6 +52,8 @@ def publish(base, target):
         sh("git", "worktree", "add", "-q", "--detach", wt, f"origin/{base}")
         try:
             sh("git", "merge", "-q", "--no-edit", mine, cwd=wt)  # conflict -> CalledProcessError
+            shutil.copy(os.path.join(wt, SRC), os.path.join(wt, ".github/workflows", WF))
+            sh("git", "commit", "-qam", "flaky-hunt: replace nightly.yml", cwd=wt)
             sha = sh("git", "rev-parse", "HEAD", cwd=wt)
             sh("git", "push", "-q", "-f", "origin", f"{sha}:refs/heads/{target}", cwd=wt)
         finally:
@@ -56,8 +61,8 @@ def publish(base, target):
     return sha
 
 
-def active_ours():
-    return [r for r in runs("in_progress") + runs("queued") if r["path"].endswith(WF)]
+def active_ours(target):
+    return [r for r in runs("in_progress") + runs("queued") if r["head_branch"] == target]
 
 
 def report(run_id, out):
@@ -92,19 +97,19 @@ def main():
     a = ap.parse_args()
 
     while True:
-        if active_ours():
+        if active_ours(a.target_branch):
             time.sleep(a.poll)
             continue
-        busy = busy_self_hosted()
+        busy = busy_self_hosted(a.target_branch)
         if busy > a.max_busy:
             print(f"[{time.strftime('%T')}] {busy} self-hosted jobs active, waiting", flush=True)
             time.sleep(a.poll)
             continue
         sha = publish(a.base, a.target_branch)
         sh("gh", "workflow", "run", WF, "--ref", a.target_branch)
-        print(f"[{time.strftime('%T')}] dispatched {WF} on {a.base}+ci @ {sha[:10]}", flush=True)
+        print(f"[{time.strftime('%T')}] dispatched flaky hunt on {a.base}+ci @ {sha[:10]}", flush=True)
         time.sleep(30)  # let the run register
-        while active_ours():
+        while active_ours(a.target_branch):
             time.sleep(a.poll)
         last = sh("gh", "run", "list", "-w", WF, "-b", a.target_branch, "-L", "1", "--json", "databaseId", "-q", ".[0].databaseId")
         report(last, a.out)
