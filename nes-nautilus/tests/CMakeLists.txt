@@ -28,6 +28,9 @@ target_link_libraries(var-val-unit-tests nes-nautilus-test-util)
 add_nes_unit_test(chained-hashmap-unit-tests "UnitTests/ChainedHashMapTest.cpp")
 target_link_libraries(chained-hashmap-unit-tests nes-nautilus-test-util)
 
+add_nes_unit_test(buffer-merge-unit-tests "UnitTests/BufferMergeTest.cpp")
+target_link_libraries(buffer-merge-unit-tests nes-nautilus-test-util)
+
 add_nes_unit_test(nautilus-exception-unit-tests "UnitTests/ExceptionTest.cpp")
 target_link_libraries(nautilus-exception-unit-tests nes-nautilus-test-util)
 

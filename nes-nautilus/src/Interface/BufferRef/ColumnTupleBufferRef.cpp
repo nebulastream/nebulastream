@@ -15,10 +15,12 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Interface/BufferRef/BufferMerge.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -72,6 +74,21 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
         successful = true;
     }
     return {.successful = successful, .writtenRecords = writtenRecords};
+}
+
+std::optional<BufferLayout> ColumnTupleBufferRef::getBufferLayout() const
+{
+    BufferLayout layout{.segments = {}, .references = {}, .capacity = getCapacity(), .bufferSize = getBufferSize()};
+    layout.segments.reserve(fields.size());
+    for (const auto& field : fields)
+    {
+        layout.segments.push_back({.offset = field.columnOffset, .stride = field.dataTypeSize});
+        if (field.type.isType(DataType::Type::VARSIZED))
+        {
+            layout.references.push_back({.offset = field.columnOffset + getNullFlagSize(field.type), .stride = field.dataTypeSize});
+        }
+    }
+    return layout;
 }
 
 std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const

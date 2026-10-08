@@ -57,7 +57,10 @@
 #include <Identifiers/Identifier.hpp>
 #include <Schema/Schema.hpp>
 #include <Schema/SchemaFwd.hpp>
+#include <Arena.hpp>
 #include <BaseUnitTest.hpp>
+#include <CoalescingEmitOperatorHandler.hpp>
+#include <CoalescingEmitPhysicalOperator.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -73,6 +76,7 @@ constexpr uint32_t NUMBER_OF_POOLED_BUFFERS = 100000;
 constexpr NES::BufferAlignment BUFFER_ALIGNMENT{64};
 constexpr double UNPOOLED_MEMORY_FRACTION = 0.9;
 constexpr size_t TOTAL_MEMORY_IN_BYTES = 10 * static_cast<size_t>(NUMBER_OF_POOLED_BUFFERS) * POOLED_BUFFER_SIZE;
+constexpr size_t MAX_HELD_RUNS = 64;
 }
 
 class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
@@ -105,20 +109,25 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
-        MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
-            : buffers(buffers), bufferManager(std::move(bufferManager))
+        MockedPipelineContext(
+            folly::Synchronized<std::vector<TupleBuffer>>& buffers,
+            folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>>& callbacks,
+            std::shared_ptr<BufferManager> bufferManager)
+            : buffers(buffers), callbacks(callbacks), bufferManager(std::move(bufferManager))
         {
         }
 
         void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
-        void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)>) override
+        void scheduleCallback(std::chrono::microseconds, std::function<void(PipelineExecutionContext&)> callback) override
         {
-            INVARIANT(false, "This function should not be called");
+            callbacks.wlock()->emplace_back(std::move(callback));
         }
 
-        ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
+        ///NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
+        folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>>& callbacks;
+        ///NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     };
@@ -145,9 +154,40 @@ public:
         return emit;
     }
 
+    CoalescingEmitPhysicalOperator createCoalescingUUT(const std::chrono::microseconds maxDelay)
+    {
+        const auto emit = createUUT();
+        auto layout = emit.getBufferLayout();
+        INVARIANT(layout.has_value(), "A row layout can be concatenated");
+        handlers.insert_or_assign(
+            emit.getOperatorHandlerId(), std::make_shared<CoalescingEmitOperatorHandler>(std::move(*layout), maxDelay, MAX_HELD_RUNS));
+        return CoalescingEmitPhysicalOperator(emit);
+    }
+
+    void withContext(const std::function<void(ExecutionContext&)>& test)
+    {
+        MockedPipelineContext pec{buffers, callbacks, bm};
+        pec.setOperatorHandlers(handlers);
+        Arena arena(bm);
+        ExecutionContext executionContext{&pec, &arena};
+        test(executionContext);
+    }
+
+    /// Runs the callbacks scheduled so far, ignoring their delays.
+    void runCallbacks()
+    {
+        std::vector<std::function<void(PipelineExecutionContext&)>> due;
+        callbacks.wlock()->swap(due);
+        MockedPipelineContext pec{buffers, callbacks, bm};
+        for (auto& callback : due)
+        {
+            callback(pec);
+        }
+    }
+
     void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
     {
-        MockedPipelineContext pec{buffers, bm};
+        MockedPipelineContext pec{buffers, callbacks, bm};
         pec.setOperatorHandlers(handlers);
         Arena arena(bm);
 
@@ -253,7 +293,11 @@ public:
 
     ///NOLINTEND(fuchsia-default-arguments-declarations)
 
-    void reset() { buffers.wlock()->clear(); }
+    void reset()
+    {
+        buffers.wlock()->clear();
+        callbacks.wlock()->clear();
+    }
 
     void runTask(const EmitPhysicalOperator& emit, TupleBuffer buffer, const uint32_t numberOfRecords)
     {
@@ -295,6 +339,7 @@ public:
     }
 
     folly::Synchronized<std::vector<TupleBuffer>> buffers;
+    folly::Synchronized<std::vector<std::function<void(PipelineExecutionContext&)>>> callbacks;
     std::shared_ptr<BufferManager> bm = BufferManager::create(
         TOTAL_MEMORY_IN_BYTES,
         UNPOOLED_MEMORY_FRACTION,
@@ -469,6 +514,58 @@ TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
 TEST_F(EmitPhysicalOperatorTest, SpilledOutputIsChunkedAndKeepsRange)
 {
     expectSpilledOutputKeepsRange(createUUT());
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitMergesCompleteOutputsUntilTerminate)
+{
+    const auto emit = createCoalescingUUT(std::chrono::hours(1));
+    for (SequenceNumber::Underlying sequence = SequenceNumber::INITIAL; sequence < SequenceNumber::INITIAL + 3; ++sequence)
+    {
+        runTask(emit, createBuffer(sequence, ChunkNumber::INITIAL, true), 3);
+    }
+    checkNumberOfBuffers(0);
+
+    withContext([&](ExecutionContext& executionContext) { emit.terminate(executionContext); });
+    checkNumberOfBuffers(1);
+    checkBufferAt(0, SequenceNumber::INITIAL + 2, ChunkNumber::INITIAL, true, INITIAL<OriginId>, 9);
+    EXPECT_EQ(buffers.rlock()->at(0).getSequenceRangeOffset(), 2);
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitPassesChunkedInputsThrough)
+{
+    const auto emit = createCoalescingUUT(std::chrono::hours(1));
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false), 1);
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, true), 1);
+    checkNumberOfBuffers(2);
+    checkForDups();
+    checkLastChunks();
+
+    withContext([&](ExecutionContext& executionContext) { emit.terminate(executionContext); });
+    checkNumberOfBuffers(2);
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitPassesSpilledOutputThrough)
+{
+    expectSpilledOutputKeepsRange(createCoalescingUUT(std::chrono::hours(1)));
+    EXPECT_TRUE(callbacks.rlock()->empty());
+}
+
+TEST_F(EmitPhysicalOperatorTest, CoalescingEmitFlushesHeldOutputsFromItsTimer)
+{
+    const auto emit = createCoalescingUUT(std::chrono::microseconds(1));
+    runTask(emit, createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true), 3);
+    checkNumberOfBuffers(0);
+    ASSERT_EQ(callbacks.rlock()->size(), 1);
+
+    /// The callback arms itself again until the deadline has passed.
+    while (buffers.rlock()->empty())
+    {
+        ASSERT_EQ(callbacks.rlock()->size(), 1);
+        runCallbacks();
+    }
+    checkNumberOfBuffers(1);
+    checkBufferAt(0, SequenceNumber::INITIAL, ChunkNumber::INITIAL, true, INITIAL<OriginId>, 3);
+    EXPECT_TRUE(callbacks.rlock()->empty());
 }
 
 }

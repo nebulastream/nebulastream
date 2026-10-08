@@ -29,23 +29,12 @@
 #include <EmitOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
-
-class EmitState : public OperatorState
-{
-public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
-
-    nautilus::val<uint64_t> outputIndex = 0;
-    RecordBuffer resultBuffer;
-    nautilus::val<int8_t*> bufferMemoryArea;
-};
 
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
@@ -69,6 +58,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     if (!writeResult.successful)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+        onFullBufferEmitted(*emitState);
         emitState->resultBuffer = RecordBuffer{ctx.allocateBuffer()};
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = uint64_t{0};
@@ -125,15 +115,19 @@ void EmitPhysicalOperator::emitRecordBuffer(
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
+    setMetadata(ctx, recordBuffer, numRecords);
+    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
+
+    ctx.emitBuffer(recordBuffer);
+}
+
+void EmitPhysicalOperator::setMetadata(const ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords)
+{
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceRange(ctx.sequenceNumber, ctx.sequenceRangeOffset);
     recordBuffer.setCreationTs(ctx.currentTs);
-
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
-
-    ctx.emitBuffer(recordBuffer);
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)

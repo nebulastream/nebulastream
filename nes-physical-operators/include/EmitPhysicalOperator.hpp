@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <Interface/BufferRef/BufferMerge.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
@@ -24,14 +25,25 @@
 #include <nautilus/val.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
+#include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
+class EmitState : public OperatorState
+{
+public:
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+
+    nautilus::val<uint64_t> outputIndex = 0;
+    RecordBuffer resultBuffer;
+    nautilus::val<int8_t*> bufferMemoryArea;
+};
+
 /// @brief Basic emit operator that receives records from an upstream operator and
 /// writes them to a tuple buffer according to a memory layout.
-class EmitPhysicalOperator final : public PhysicalOperatorConcept
+class EmitPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
@@ -51,6 +63,18 @@ public:
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
+
+    [[nodiscard]] OperatorHandlerId getOperatorHandlerId() const { return operatorHandlerId; }
+
+    /// The layout of the emitted buffers, or nullopt if they cannot be concatenated (@see appendTuples).
+    [[nodiscard]] std::optional<BufferLayout> getBufferLayout() const { return bufferRef->getBufferLayout(); }
+
+protected:
+    /// Writes the tuple count and the metadata of the current input into `recordBuffer`.
+    static void setMetadata(const ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords);
+
+    /// Called by `execute` after it emitted a full buffer and before it writes into the next one.
+    virtual void onFullBufferEmitted(EmitState&) const { }
 
 private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;

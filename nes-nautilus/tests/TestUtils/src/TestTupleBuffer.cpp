@@ -228,9 +228,13 @@ TestTupleBuffer::TestTupleBuffer(TestSchema schema) : schema(std::move(schema))
 {
 }
 
+TestTupleBuffer::TestTupleBuffer(TestSchema schema, const MemoryLayoutType layout) : schema(std::move(schema)), layout(layout)
+{
+}
+
 TestTupleBufferView TestTupleBuffer::open(TupleBuffer& buffer, AbstractBufferProvider* bufferProvider)
 {
-    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto bufRef = LowerSchemaProvider::lowerSchema(buffer.getBufferSize(), schema, layout);
 
     TestTupleBufferView view;
     view.impl = std::make_shared<TestTupleBufferView::Impl>(
