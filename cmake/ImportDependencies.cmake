@@ -118,6 +118,10 @@ else ()
     list(APPEND VCPKG_ENV_PASSTHROUGH "LLVM_DIR")
 endif ()
 
+# The arm64 cross compiler wrappers read the sysroot from the environment, also when invoked by name from a port's own
+# build system (e.g. scons in openvino).
+list(APPEND VCPKG_ENV_PASSTHROUGH "NES_ARM64_SYSROOT")
+
 if (NOT NES_SKIP_VCPKG)
     SET(VCPKG_STDLIB "libcxx")
     if (NOT USE_LIBCXX_IF_AVAILABLE)
@@ -125,7 +129,7 @@ if (NOT NES_SKIP_VCPKG)
     endif ()
 
     SET(VCPKG_TARGET_TRIPLET "${NES_ARCH}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
-    SET(VCPKG_HOST_TRIPLET "${NES_ARCH}-linux-none-${VCPKG_STDLIB}")
+    SET(VCPKG_HOST_TRIPLET "${NES_HOST_ARCH}-linux-none-${VCPKG_STDLIB}")
 
     message(STATUS "VPCKG target triplet: ${VCPKG_TARGET_TRIPLET}")
     message(STATUS "VPCKG host triplet: ${VCPKG_HOST_TRIPLET}")

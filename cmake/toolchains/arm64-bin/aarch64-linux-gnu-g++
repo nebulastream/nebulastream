@@ -1,0 +1,13 @@
+#!/bin/bash
+# meson 0.58 probes the C++ compiler with `-E -dM -` and no `-x`, so clang reads stdin as C and rejects our
+# -std=c++23. For that probe, say it is C++ explicitly.
+for a in "$@"; do
+    if [[ "$a" == "-dM" ]]; then
+        exec clang++-19 --target=aarch64-linux-gnu ${NES_ARM64_SYSROOT:+--sysroot=$NES_ARM64_SYSROOT} -x c++ "$@"
+    fi
+done
+for a in "$@"; do
+    case "$a" in -c|-E|-S) exec clang++-19 --target=aarch64-linux-gnu ${NES_ARM64_SYSROOT:+--sysroot=$NES_ARM64_SYSROOT} "$@" ;; esac
+done
+# Host /usr/bin/ld cannot link aarch64 and cmake try_compile drops the toolchain linker flags, so pick mold when linking.
+exec clang++-19 --target=aarch64-linux-gnu ${NES_ARM64_SYSROOT:+--sysroot=$NES_ARM64_SYSROOT} -fuse-ld=mold "$@"

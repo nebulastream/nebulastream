@@ -1,0 +1,7 @@
+#!/bin/bash
+# name must end in -gcc so vcpkg autotools ports detect --host=aarch64-linux-gnu
+# Host /usr/bin/ld cannot link aarch64 and cmake try_compile drops the toolchain linker flags, so pick mold when linking.
+for a in "$@"; do
+    case "$a" in -c|-E|-S) exec clang-19 --target=aarch64-linux-gnu ${NES_ARM64_SYSROOT:+--sysroot=$NES_ARM64_SYSROOT} "$@" ;; esac
+done
+exec clang-19 --target=aarch64-linux-gnu ${NES_ARM64_SYSROOT:+--sysroot=$NES_ARM64_SYSROOT} -fuse-ld=mold "$@"

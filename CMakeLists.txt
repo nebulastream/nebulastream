@@ -120,6 +120,10 @@ set_nes_log_level_value()
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-invalid-offsetof -Wno-nullability-extension -Wno-c2y-extensions")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAGS}")
+if (CMAKE_CROSSCOMPILING)
+    # Keep the --target/--sysroot flags the toolchain file seeded into the cache.
+    set(CMAKE_CXX_FLAGS "$CACHE{CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS}")
+endif ()
 
 # setup rpath for linker
 list(APPEND CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")

@@ -17,6 +17,9 @@
 
 find_program(UNAME uname REQUIRED)
 
+# Cross compilation: `-DNES_TARGET_ARCH=arm64` (on an x64 host) selects the target architecture. `NES_HOST_ARCH` is
+# always the architecture of the machine running the build and is used for vcpkg host tools.
+
 execute_process(COMMAND ${UNAME} -m OUTPUT_VARIABLE UNAME_HOST_PROCESSOR)
 if (UNAME_HOST_PROCESSOR MATCHES "x86_64")
     MESSAGE(STATUS "Found x64 architecture")
@@ -26,6 +29,15 @@ elseif (UNAME_HOST_PROCESSOR MATCHES "arm64" OR UNAME_HOST_PROCESSOR MATCHES "aa
     SET(NES_ARCH "arm64")
 else ()
     message(FATAL_ERROR "Only x86_64 and arm64 supported")
+endif ()
+
+set(NES_HOST_ARCH "${NES_ARCH}")
+if (NES_TARGET_ARCH AND NOT NES_TARGET_ARCH STREQUAL NES_HOST_ARCH)
+    if (NOT NES_TARGET_ARCH MATCHES "^(x64|arm64)$")
+        message(FATAL_ERROR "NES_TARGET_ARCH must be x64 or arm64")
+    endif ()
+    message(STATUS "Cross compiling ${NES_HOST_ARCH} -> ${NES_TARGET_ARCH}")
+    set(NES_ARCH "${NES_TARGET_ARCH}")
 endif ()
 
 execute_process(COMMAND ${UNAME} -s OUTPUT_VARIABLE UNAME_HOST_OS)
