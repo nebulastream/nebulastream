@@ -45,7 +45,6 @@ struct Arena
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::vector<TupleBuffer> fixedSizeBuffers;
     std::vector<TupleBuffer> unpooledBuffers;
-    size_t lastAllocationSize{0};
     size_t currentOffset{0};
 };
 

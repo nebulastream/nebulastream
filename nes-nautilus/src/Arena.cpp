@@ -62,7 +62,6 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
             throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
         }
         unpooledBuffers.emplace_back(unpooledBufferOpt.value());
-        lastAllocationSize = sizeInBytes;
         const auto area = unpooledBuffers.back().getAvailableMemoryArea();
         /// The whole data region was unpoisoned on hand-out; re-poison the unused tail past the request so an
         /// overflow beyond the allocation is trapped under ASan.
@@ -72,7 +71,7 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 
     /// Case 2: no current buffer, or the request does not fit -> pull a fresh fixed-size buffer and poison it
     /// whole. Allocations then carve unpoisoned regions out of it; the unused tail stays poisoned.
-    if (fixedSizeBuffers.empty() || lastAllocationSize < currentOffset + sizeInBytes)
+    if (fixedSizeBuffers.empty() || fixedSizeBuffers.back().getBufferSize() < currentOffset + sizeInBytes)
     {
         fixedSizeBuffers.emplace_back(bufferProvider->getBufferBlocking());
         currentOffset = 0;
@@ -82,7 +81,6 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
 
     /// Case 3: bump-allocate from the current buffer.
     auto& lastBuffer = fixedSizeBuffers.back();
-    lastAllocationSize = lastBuffer.getBufferSize();
     const auto result = lastBuffer.getAvailableMemoryArea().subspan(currentOffset, sizeInBytes);
     /// Unpoison exactly the requested bytes; the alignment padding and the trailing redzone stay poisoned (the
     /// whole buffer was poisoned on acquire and is never unpoisoned outside of returned allocations), so they
