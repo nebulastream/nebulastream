@@ -24,6 +24,9 @@ link_plugin_library(nes-sinks mqtt_sink_plugin_library)
 add_registry_entry(Sink MQTT)
 add_registry_entry(SinkValidation MQTT)
 
+# Broker-free unit tests. Registered here so they only exist when this plugin is built at all.
+add_tests_if_enabled(tests)
+
 # These tests use docker CLI to run docker-compose from within the development container.
 add_e2e_test(
     NAME mqtt-sink-test
