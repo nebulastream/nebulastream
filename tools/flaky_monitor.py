@@ -5,12 +5,13 @@
 """Dispatch the reduced-nightly "Flaky Hunt" workflow whenever CI is (nearly) idle.
 
 Each round (up to --concurrency runs in parallel): wait until few self-hosted jobs of other runs are active -> publish <base>+this branch's CI changes as
-`--target-branch` (force-push!) -> dispatch flaky-hunt.yml -> wait for it -> print failed jobs.
+`--target-branch` (force-push!) -> dispatch -> wait -> print failed jobs + download logs.
+Own runs are cancelled as soon as another run has a self-hosted job queued for > --grace seconds.
 Needs `gh` (authenticated, push access) and git. No PR is ever opened.
 
-    tools/flaky_monitor.py [--base main] [--max-busy 2] [--poll 120]
+    tools/flaky_monitor.py [--base main] [--max-busy 2] [--concurrency 2] [--grace 60] [--poll 60]
 """
-import argparse, json, os, re, shutil, subprocess, tempfile, time
+import argparse, calendar, json, os, re, shutil, subprocess, tempfile, time
 
 SRC = ".github/workflows/flaky-hunt.yml"
 # workflow_dispatch only works for workflow files that exist on the default branch, so on the throw-away
@@ -31,16 +32,23 @@ def runs(status):
             for r in page["workflow_runs"]]
 
 
-def busy_self_hosted(target):
-    """Self-hosted jobs queued or running, across all active runs (ours excluded by caller)."""
-    n = 0
+def other_self_hosted_jobs(target):
+    """Self-hosted jobs queued or running in runs that are not ours."""
+    out = []
     for r in runs("in_progress") + runs("queued"):
         if r["head_branch"] == target:
             continue
         for page in gh(f"repos/{{owner}}/{{repo}}/actions/runs/{r['id']}/jobs?per_page=100"):
-            n += sum(j["status"] in ("queued", "in_progress") and "self-hosted" in j["labels"]
-                     for j in page["jobs"])
-    return n
+            out += [j for j in page["jobs"]
+                    if j["status"] in ("queued", "in_progress") and "self-hosted" in j["labels"]]
+    return out
+
+
+def waiting_longer_than(jobs, seconds):
+    """Queued jobs that have waited for a runner for more than `seconds`: somebody needs the runners."""
+    now = time.time()
+    return [j for j in jobs if j["status"] == "queued"
+            and now - calendar.timegm(time.strptime(j["created_at"], "%Y-%m-%dT%H:%M:%SZ")) > seconds]
 
 
 def publish(base, target):
@@ -98,7 +106,8 @@ def main():
     ap.add_argument("--max-busy", type=int, default=2, help="max active self-hosted jobs of OTHER runs to still count as idle")
     ap.add_argument("--concurrency", type=int, default=2, help="max simultaneous flaky runs")
     ap.add_argument("--out", default="flaky-logs", help="where failed-run logs are saved")
-    ap.add_argument("--poll", type=int, default=120)
+    ap.add_argument("--grace", type=int, default=60, help="cancel our runs when another run's self-hosted job has been queued this long (s)")
+    ap.add_argument("--poll", type=int, default=60)
     a = ap.parse_args()
     t = a.target_branch
     mine = {}  # run id -> url, runs we started and haven't reported yet
@@ -114,9 +123,17 @@ def main():
         for rid in [r for r in mine if r not in active]:
             report(rid, a.out)
             del mine[rid]
+        others = other_self_hosted_jobs(t)
+        needed = waiting_longer_than(others, a.grace)
+        if needed and active:
+            log(f"runner demand ({needed[0]['name']} queued): cancelling {len(active)} flaky run(s)")
+            for rid in active:
+                sh("gh", "run", "cancel", str(rid))
+            time.sleep(a.poll)
+            continue
         if len(active) < a.concurrency:
-            busy = busy_self_hosted(t)
-            if busy <= a.max_busy:
+            busy = len(others)
+            if busy <= a.max_busy and not any(j["status"] == "queued" for j in others):
                 known = set(run_ids(t))
                 sha = publish(a.base, t)
                 sh("gh", "workflow", "run", WF, "--ref", t)
@@ -132,7 +149,7 @@ def main():
                 else:
                     log("new run not visible yet, it will be picked up on the next round")
                 continue  # re-evaluate immediately (maybe start a second one)
-            log(f"{busy} self-hosted jobs of other runs active, waiting ({len(active)} of ours running)")
+            log(f"{busy} self-hosted jobs of other runs active or queued, waiting ({len(active)} of ours running)")
         time.sleep(a.poll)
 
 
