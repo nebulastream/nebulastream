@@ -10,7 +10,7 @@ After a run, failed jobs are printed and their logs saved. Needs `gh` (admin:org
 
     tools/flaky_monitor.py [--ref <this branch, pushed>] [--base main] [--max-busy 10] [--cooldown 1800] [--poll 60]
 """
-import argparse, json, os, re, subprocess, time
+import argparse, calendar, json, os, re, subprocess, time
 
 API = "repos/{owner}/{repo}/actions"
 WF = "nightly.yml"
@@ -18,7 +18,7 @@ JOB_TIMEOUT_MIN = 60  # keep in sync with timeout_minutes in nightly.yml; GitHub
 
 
 def sh(*cmd, cwd=None):
-    return subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=cwd).stdout.strip()
+    return subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=cwd, timeout=600).stdout.strip()
 
 
 def gh(path):
@@ -56,11 +56,16 @@ def report(run, out):
     os.makedirs(d, exist_ok=True)
     for j in failed:
         print(f"    {'TIMED OUT' if timed_out(j) else 'FAILED'} {j['name']}", flush=True)
-        text = sh("gh", "api", "--allow-escape-sequences", f"{API}/jobs/{j['id']}/logs")  # fetch before creating the file
-        with open(os.path.join(d, re.sub(r"[^\w.-]+", "_", j["name"]) + ".log"), "w") as f:
-            f.write(re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text))
+        try:
+            text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", sh("gh", "api", "--allow-escape-sequences", f"{API}/jobs/{j['id']}/logs"))
+        except subprocess.CalledProcessError as e:  # e.g. 404: GitHub keeps no log for a job cut off by its timeout
+            if "HTTP 404" not in e.stderr:
+                raise  # transient (offline...): the whole report is retried
+            text = f"no log available: {e.stderr.strip()[:200]}\n"
+        with open(os.path.join(d, re.sub(r"[^\w.-]+", "_", j["name"]) + ".log"), "w") as f:  # created only after a successful fetch
+            f.write(text)
     # test logs uploaded by the failed jobs (may be missing or expired)
-    subprocess.run(["gh", "run", "download", str(run["id"]), "-D", os.path.join(d, "artifacts"), "-p", "logs-*"])
+    subprocess.run(["gh", "run", "download", str(run["id"]), "-D", os.path.join(d, "artifacts"), "-p", "logs-*"], timeout=1800)
     print(f"    logs in {d}", flush=True)
 
 
@@ -70,37 +75,52 @@ def main():
     ap.add_argument("--base", default="main", help="branch/sha whose code is tested")
     ap.add_argument("--max-busy", type=int, default=10, help="don't start while more org runners than this are busy")
     ap.add_argument("--cooldown", type=int, default=1800, help="pause after a cancelled run (s)")
-    ap.add_argument("--out", default="flaky-logs")
+    ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "flaky-logs"), help="failed-run logs and the .reported record go here")
     ap.add_argument("--poll", type=int, default=60)
     a = ap.parse_args()
 
+    # State lives on GitHub plus the record of reported runs, so the monitor can be stopped, restarted or lose its
+    # connection at any point: every round reports finished runs not yet recorded, adopts an active run, or starts one.
+    reported_file = os.path.join(a.out, ".reported")
+    os.makedirs(a.out, exist_ok=True)
+    reported = set(open(reported_file).read().split()) if os.path.exists(reported_file) else set()
+    watching = None
+
     while True:
         try:
-            run = next((r for r in our_runs(a.ref).values() if r["status"] != "completed"), None)  # e.g. from an earlier start
-            if run:
-                log(f"watching {run['html_url']}")
+            runs = sorted(our_runs(a.ref).values(), key=lambda r: r["id"])
+            for r in runs:
+                if r["status"] == "completed" and str(r["id"]) not in reported:
+                    report(r, a.out)
+                    reported.add(str(r["id"]))  # only after a successful report, so a failed one is retried
+                    with open(reported_file, "a") as f:
+                        f.write(f"{r['id']}\n")
+            active = [r for r in runs if r["status"] != "completed"]
+            if active:
+                if watching != active[0]["id"]:
+                    watching = active[0]["id"]
+                    log(f"watching {active[0]['html_url']}")
             else:
-                busy, online = busy_runners()
-                if busy > a.max_busy:
-                    log(f"{busy}/{online} runners busy (> {a.max_busy}), waiting")
-                    time.sleep(a.poll)
-                    continue
-                known = set(our_runs(a.ref))
-                sh("gh", "workflow", "run", WF, "--ref", a.ref, "-f", f"head_sha={a.base}")
-                while not run:  # the dispatch call returns no run id, wait for the new run to show up
-                    time.sleep(5)
-                    run = next((r for i, r in our_runs(a.ref).items() if i not in known), None)
-                log(f"dispatched ({busy}/{online} runners busy): {run['html_url']}")
-            while run["status"] != "completed":
-                time.sleep(a.poll)
-                run = our_runs(a.ref)[run["id"]]
-            report(run, a.out)
-            if run["conclusion"] == "cancelled":  # probably to free runners: stay away for a while
-                log(f"cancelled, pausing {a.cooldown}s")
-                time.sleep(a.cooldown)
-        except subprocess.CalledProcessError as e:  # transient gh/git failure: retry next round
-            log(f"{' '.join(e.cmd[:3])} failed: {(e.stderr or '').strip()[:300]}")
-            time.sleep(a.poll)
+                last = runs[-1] if runs else None
+                since = time.time() - calendar.timegm(time.strptime(last["updated_at"], "%Y-%m-%dT%H:%M:%SZ")) if last else a.cooldown
+                if last and last["conclusion"] == "cancelled" and since < a.cooldown:  # probably cancelled to free runners
+                    log(f"last run was cancelled, pausing {int(a.cooldown - since)}s")
+                else:
+                    busy, online = busy_runners()
+                    if busy > a.max_busy:
+                        log(f"{busy}/{online} runners busy (> {a.max_busy}), waiting")
+                    else:
+                        known = {r["id"] for r in runs}
+                        sh("gh", "workflow", "run", WF, "--ref", a.ref, "-f", f"head_sha={a.base}")
+                        new = None
+                        while not new:  # the dispatch call returns no run id, wait for the new run to show up
+                            time.sleep(5)
+                            new = next((r for i, r in our_runs(a.ref).items() if i not in known), None)
+                        watching = new["id"]
+                        log(f"dispatched ({busy}/{online} runners busy): {new['html_url']}")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:  # offline etc.: retry next round
+            log(f"{' '.join(e.cmd[:3])} failed: {(getattr(e, 'stderr', None) or 'timeout').strip()[:300]}")
+        time.sleep(a.poll)
 
 
 if __name__ == "__main__":
