@@ -33,6 +33,7 @@ add_plugin("DataTypes/Reading")
 add_plugin("DataTypes/GeoSpatial")
 add_plugin("DataTypes/Matrices")
 add_plugin("DataTypes/Time")
+add_plugin("DataTypes/NestedVarsized")
 
 # MEOS is a dependency
 add_plugin("MEOS")

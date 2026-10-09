@@ -13,6 +13,7 @@
 */
 #include <DataTypes/DataType.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <ostream>
@@ -278,6 +279,44 @@ bool DataType::isFlat() const
         case Type::UINT64:
         case Type::UNDEFINED:
             return true;
+    }
+}
+
+uint32_t DataType::getVarsizedNestingDepth() const
+{
+    switch (this->type)
+    {
+        case Type::BOOLEAN:
+        case Type::CHAR:
+        case Type::FLOAT32:
+        case Type::FLOAT64:
+        case Type::INT8:
+        case Type::INT16:
+        case Type::INT32:
+        case Type::INT64:
+        case Type::UINT8:
+        case Type::UINT16:
+        case Type::UINT32:
+        case Type::UINT64:
+        case Type::UNDEFINED:
+            return 0;
+        case Type::VARSIZED:
+            return 1;
+        case Type::STRUCT: {
+            /// Return maximum varsized nesting depth of the fields
+            uint32_t maxFound = 0;
+            for (const auto& field : fields | std::views::values)
+            {
+                maxFound = std::max(maxFound, field.getVarsizedNestingDepth());
+            }
+            return maxFound;
+        }
+        case Type::FIXEDSIZED:
+            /// Get maximum varsized nesting depth of element type
+            return elementType->getVarsizedNestingDepth();
+        case Type::VECTOR:
+            /// Vectors are variable-sized arrays, return maximum varsized nesting depth of element + 1
+            return elementType->getVarsizedNestingDepth() + 1;
     }
 }
 

@@ -1,0 +1,15 @@
+# name: InvalidPlugin.test
+# description: Tests whether the system correctly throws an error, if the user tries to use a registered plugin type that nests two or more variable-sized types.
+# groups: [Formatter, DataType]
+
+CREATE LOGICAL SOURCE mySchema(field1 VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR mySchema TYPE File SET(
+'JSON' as INPUT_FORMATTER."TYPE"
+);
+ATTACH INLINE
+{"FIELD1": "Hello world"}
+
+# Besides the fact that the type of the sink's field does not match the incoming data at all, it uses a plugin that nests two variable-sized types, which we do not support.
+SELECT * FROM mySchema INTO FILE(SCHEMA(field1 Invalid NOT NULL) AS "SINK"."SCHEMA");
+----
+ERROR 2046
