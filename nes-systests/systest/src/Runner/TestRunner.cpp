@@ -99,6 +99,7 @@ TestRunner::TestRunner(const SystestConfiguration& config, std::vector<RunnableP
     , clusterConfig{config.clusterConfig}
     , remote{config.remoteWorker.getValue()}
     , baseWorker{config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{})}
+    , queryTimeout{std::chrono::seconds{config.queryTimeoutSeconds.getValue()}}
 {
     if (not config.workerConfig.getValue().empty())
     {
@@ -140,7 +141,8 @@ void TestRunner::setUp(std::vector<RunnablePartition> partitions)
 QuerySubmitter TestRunner::createSubmitterFor(const ConfigurationOverride& overrides) const
 {
     auto backend = remote ? createGRPCBackend() : createEmbeddedBackend(applyOverrides(baseWorker, overrides));
-    return QuerySubmitter{std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend))};
+    return QuerySubmitter{
+        std::make_unique<QueryManager>(std::make_shared<WorkerCatalog>(clusterConfig.workers), std::move(backend)), queryTimeout};
 }
 
 std::optional<DistributedQueryId> TestRunner::submitNext(QuerySubmitter& submitter, TestCaseRun& run)
@@ -216,17 +218,18 @@ void TestRunner::submitGroup(
             continue;
         }
 
-        for (auto& snapshot : submission.submitter.finishedQueries())
+        for (auto& [queryId, outcome] : submission.submitter.finishedQueries())
         {
-            auto node = submission.running.extract(snapshot.queryId);
+            auto node = submission.running.extract(queryId);
             INVARIANT(not node.empty(), "a finished query was submitted by this run");
             auto& run = node.mapped();
 
             const auto& [plan, explained] = run.remaining.front();
-            const auto executionTime = extractExecutionTime(snapshot);
-            const auto stopped = snapshot.getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
+            /// A query that ran past the timeout has no status, so it shows no time and counts as not stopped.
+            const auto executionTime = outcome.has_value() ? extractExecutionTime(*outcome) : std::chrono::nanoseconds::zero();
+            const auto stopped = outcome.has_value() and outcome->getGlobalQueryStatus() == DistributedQueryStatus::Stopped;
             run.outcomes.push_back(StatementOutcome{
-                .reached = std::move(snapshot),
+                .reached = std::move(outcome),
                 .sinkOutputSchema = plan.has_value() ? std::optional{plan->sinkOutputSchema} : std::nullopt,
                 .explained = std::nullopt});
             run.timings.push_back(StatementTiming{.execution = executionTime});
