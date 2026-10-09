@@ -182,6 +182,28 @@ std::string indentPythonBody(const std::string_view body)
     return indented;
 }
 
+/// Splits the body's leading import statements off so they run at module scope. Codon then executes the imported modules'
+/// top-level code once in the module initializer (see addModuleInitializationPrologue in PythonUdfFilesystem.cpp) rather than lazily during the
+/// first invocation, whose arena does not outlive it.
+std::pair<std::string, std::string> splitLeadingImports(const std::string_view body)
+{
+    std::string imports;
+    size_t position = 0;
+    while (position < body.size())
+    {
+        const auto lineEnd = body.find('\n', position);
+        const auto line = body.substr(position, lineEnd == std::string_view::npos ? std::string_view::npos : lineEnd - position);
+        if (!line.starts_with("import ") && !line.starts_with("from "))
+        {
+            break;
+        }
+        imports.append(line).append("\n");
+        position = lineEnd == std::string_view::npos ? body.size() : lineEnd + 1;
+    }
+    auto remaining = std::string{body.substr(position)};
+    return {std::move(imports), remaining.empty() ? std::string{"pass"} : std::move(remaining)};
+}
+
 std::string createPythonUdfSource(
     const std::string& symbol,
     const std::vector<std::string>& parameterNames,
@@ -247,7 +269,9 @@ std::string createPythonUdfSource(
 
     const auto bodySymbol = symbol + "_body";
     const auto pythonResultType = pythonTypeName(returnType);
-    auto source = fmt::format(
+    const auto [imports, functionBody] = splitLeadingImports(body);
+    auto source = imports;
+    source += fmt::format(
         "@tuple\n"
         "class UdfErrorHolder:\n"
         "    error_ptr: Ptr[byte]\n"
@@ -258,7 +282,7 @@ std::string createPythonUdfSource(
         returnType.nullable ? "Optional[" : "",
         pythonResultType,
         returnType.nullable ? "]" : "",
-        indentPythonBody(body));
+        indentPythonBody(functionBody));
 
     const auto abiResultType = returnType.type == DataType::Type::BOOLEAN ? std::string{"u8"} : codonTypeName(returnType);
     if (returnType.type == DataType::Type::VARSIZED)
@@ -563,10 +587,11 @@ CompiledPythonUdf compilePythonUdf(
     {
         loadCodonPlugin(NES_CODON_BLAS_PLUGIN_PATH);
         loadCodonPlugin(NES_CODON_OPENCV_PLUGIN_PATH);
+        loadCodonPlugin(NES_CODON_COMPAT_PLUGIN_PATH);
         const auto source = createPythonUdfSource(symbol, parameterNames, body, argumentTypes, returnType);
         const auto sourcePath
             = (std::filesystem::temp_directory_path() / fmt::format("{}_{}.py", symbol, static_cast<uint64_t>(::getpid()))).string();
-        const auto codonResult = compileWithCodon(sourcePath, source, importPaths);
+        const auto codonResult = compileWithCodon(sourcePath, source, symbol, importPaths);
         llvm::LLVMContext llvmContext;
         auto parsedModule = llvm::parseBitcodeFile(
             llvm::MemoryBufferRef{llvm::StringRef{codonResult.llvmBitcode.data(), codonResult.llvmBitcode.size()}, sourcePath},

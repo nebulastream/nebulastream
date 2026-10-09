@@ -3,21 +3,25 @@
 #include <Functions/PythonUDF/PythonUdfRuntime.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
+#include <cctype>
 #include <charconv>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unistd.h>
 #include <unwind.h>
-#include <fmt/format.h>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 
@@ -26,6 +30,9 @@ namespace NES
 namespace
 {
 thread_local Arena* currentPythonUdfArena = nullptr;
+/// Set while a UDF module's globals are initialized: those allocations back module-level state that outlives every
+/// invocation, so they bypass the per-invocation arena. Bounded by the module's globals; never freed.
+thread_local bool persistentPythonUdfAllocation = false;
 
 void setCurrentPythonUdfArena(Arena* arena)
 {
@@ -34,6 +41,10 @@ void setCurrentPythonUdfArena(Arena* arena)
 
 void* allocatePythonUdfMemory(const size_t size)
 {
+    if (persistentPythonUdfAllocation)
+    {
+        return std::calloc(1, std::max<size_t>(size, 1));
+    }
     PRECONDITION(currentPythonUdfArena != nullptr, "Python UDF allocation attempted without an active NES arena");
     constexpr auto alignment = alignof(std::max_align_t);
     constexpr auto alignmentMask = alignment - 1;
@@ -469,6 +480,17 @@ extern "C" __attribute__((visibility("default"), used)) void* seq_stdout()
     return stdout;
 }
 
+/// Referenced by Codon's module initializer (sys.stdin / sys.stderr).
+extern "C" __attribute__((visibility("default"), used)) void* seq_stdin()
+{
+    return stdin;
+}
+
+extern "C" __attribute__((visibility("default"), used)) void* seq_stderr()
+{
+    return stderr;
+}
+
 /// Codon's NumPy Generator owns a lock even when the generator is local to one
 /// invocation. NES does not permit Codon threading, and no UDF value may escape
 /// its invocation, so these locks cannot contend in the supported POC subset.
@@ -501,6 +523,43 @@ extern "C" __attribute__((visibility("default"), used)) int64_t seq_time_monoton
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
+namespace
+{
+/// Runs Codon's module initializer (its top-level code, including the stdlib's module globals) once per compiled UDF
+/// module. Called at the start of every invocation (see addModuleInitializationPrologue); `initialized` is a module global.
+void codonEnsureModuleInitialized(void (*initialize)(), uint8_t* initialized)
+{
+    const std::atomic_ref<uint8_t> flag{*initialized};
+    if (flag.load(std::memory_order_acquire) != 0)
+    {
+        return;
+    }
+    static std::mutex initializationMutex;
+    const std::scoped_lock lock{initializationMutex};
+    if (flag.load(std::memory_order_relaxed) != 0)
+    {
+        return;
+    }
+
+    /// Resets the allocation mode even if the initializer throws.
+    struct PersistentAllocationScope
+    {
+        PersistentAllocationScope() { persistentPythonUdfAllocation = true; }
+
+        ~PersistentAllocationScope() { persistentPythonUdfAllocation = false; }
+
+        PersistentAllocationScope(const PersistentAllocationScope&) = delete;
+        PersistentAllocationScope& operator=(const PersistentAllocationScope&) = delete;
+    };
+
+    {
+        const PersistentAllocationScope scope;
+        initialize();
+    }
+    flag.store(1, std::memory_order_release);
+}
+}
+
 std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
 {
     static const PythonUdfRuntimeSymbol symbols[]{
@@ -518,12 +577,20 @@ std::span<const PythonUdfRuntimeSymbol> getPythonUdfRuntimeSymbols()
         {"seq_str_float", reinterpret_cast<void*>(&seq_str_float)},
         {"seq_float_from_str", reinterpret_cast<void*>(&seq_float_from_str)},
         {"seq_stdout", reinterpret_cast<void*>(&seq_stdout)},
+        {"seq_stdin", reinterpret_cast<void*>(&seq_stdin)},
+        {"seq_stderr", reinterpret_cast<void*>(&seq_stderr)},
         {"seq_lock_new", reinterpret_cast<void*>(&seq_lock_new)},
         {"seq_lock_acquire", reinterpret_cast<void*>(&seq_lock_acquire)},
         {"seq_lock_release", reinterpret_cast<void*>(&seq_lock_release)},
         {"seq_pid", reinterpret_cast<void*>(&seq_pid)},
         {"seq_time", reinterpret_cast<void*>(&seq_time)},
         {"seq_time_monotonic", reinterpret_cast<void*>(&seq_time_monotonic)},
+        {"nes_codon_ensure_module_initialized", reinterpret_cast<void*>(&codonEnsureModuleInitialized)},
+        /// Pure libc functions that Codon's stdlib calls directly: str.lower/upper, str search, float hashing.
+        {"tolower", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::tolower))},
+        {"toupper", reinterpret_cast<void*>(static_cast<int (*)(int)>(&::toupper))},
+        {"memchr", reinterpret_cast<void*>(static_cast<const void* (*)(const void*, int, size_t)>(&std::memchr))},
+        {"frexp", reinterpret_cast<void*>(static_cast<double (*)(double, int*)>(&std::frexp))},
     };
     return symbols;
 }

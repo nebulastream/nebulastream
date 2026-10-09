@@ -27,6 +27,7 @@ struct CodonCompilationResult
     double optimizeMilliseconds;
 };
 
-CodonCompilationResult
-compileWithCodon(const std::string& sourcePath, const std::string& source, const std::vector<std::string>& importPaths);
+/// Compiles a generated UDF source whose exported entry point is `entrySymbol`.
+CodonCompilationResult compileWithCodon(
+    const std::string& sourcePath, const std::string& source, const std::string& entrySymbol, const std::vector<std::string>& importPaths);
 }
