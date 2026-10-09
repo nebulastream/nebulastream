@@ -148,4 +148,5 @@ LogicalFunctionRegistryReturnType ConstructStructLogicalFunction::createConstruc
     std::unreachable();
 }
 
+/// NOLINTEND(performance-unnecessary-value-param)
 }
