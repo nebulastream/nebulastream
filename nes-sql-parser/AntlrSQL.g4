@@ -361,7 +361,7 @@ timeUnit: MS
         ;
 
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY;
 
 sinkClause: INTO sink (',' sink)*;
 

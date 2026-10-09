@@ -1,0 +1,183 @@
+# name: ArrayConstruction.test
+# description: Exercises the `ARRAY(...)` constructor: element type inference from constants, fields and expressions, implicit casting to the joined element type, nested arrays, arrays of existing array/vector columns, arrays of registered struct plugins (Point), and rejection of element types that cannot be joined.
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE numbers(id UINT64 NOT NULL, a INT32 NOT NULL, b INT32 NOT NULL, c INT64 NOT NULL, f FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR numbers TYPE File;
+ATTACH INLINE
+1,1,2,3,0.5
+2,-4,5,-6,1.25
+
+# Array from typed constants
+SELECT id, ARRAY(INT32(1), INT32(2), INT32(3)) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1,2,3]}
+{"ID":2,"ARR":[1,2,3]}
+
+# Array from raw literals
+SELECT id, ARRAY(7, 8, 9) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[7,8,9]}
+{"ID":2,"ARR":[7,8,9]}
+
+# Array with a single element
+SELECT id, ARRAY(a) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1]}
+{"ID":2,"ARR":[-4]}
+
+# Array from fields of the same type
+SELECT id, ARRAY(a, b) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1,2]}
+{"ID":2,"ARR":[-4,5]}
+
+# Array mixing fields and constants
+SELECT id, ARRAY(a, INT32(100), b) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1,100,2]}
+{"ID":2,"ARR":[-4,100,5]}
+
+# Array from expressions
+SELECT id, ARRAY(a + b, a * INT32(2), b - a) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[3,2,1]}
+{"ID":2,"ARR":[1,-8,9]}
+
+# INT32 and INT64 elements are joined to INT64; negative INT32 values must be sign-extended by the cast
+SELECT id, ARRAY(a, c) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1,3]}
+{"ID":2,"ARR":[-4,-6]}
+
+# Integer and float elements are joined to FLOAT64
+SELECT id, ARRAY(a, f) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1.0,0.5]}
+{"ID":2,"ARR":[-4.0,1.25]}
+
+# Constructed arrays can be written into a sink with an explicitly declared array type
+SELECT id, ARRAY(a, b) AS arr FROM numbers INTO File(SCHEMA(id UINT64 NOT NULL, arr INT32 ARRAY[2] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":[1,2]}
+{"ID":2,"ARR":[-4,5]}
+
+# Array of strings (fixed-size array of VARSIZED, nesting depth 1)
+SELECT id, ARRAY('Hello', 'World') AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"ARR":["Hello","World"]}
+{"ID":2,"ARR":["Hello","World"]}
+
+# Nested arrays: 2x2 matrix
+SELECT id, ARRAY(ARRAY(a, b), ARRAY(b, a)) AS matrix FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2],[2,1]]}
+{"ID":2,"MATRIX":[[-4,5],[5,-4]]}
+
+# Nested arrays: 3x2 matrix
+SELECT id, ARRAY(ARRAY(a, b), ARRAY(b, b), ARRAY(INT32(0), a)) AS matrix FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2],[2,2],[0,1]]}
+{"ID":2,"MATRIX":[[-4,5],[5,5],[0,-4]]}
+
+# Element types of nested arrays are not promoted: INT32 ARRAY[2] and INT64 ARRAY[2] cannot be joined
+SELECT id, ARRAY(ARRAY(a, b), ARRAY(c, c)) AS matrix FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
+
+# Three levels of nesting: 2x2x2 cube
+SELECT id, ARRAY(ARRAY(ARRAY(a, b), ARRAY(b, a)), ARRAY(ARRAY(INT32(0), INT32(1)), ARRAY(a, a))) AS cube FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"CUBE":[[[1,2],[2,1]],[[0,1],[1,1]]]}
+{"ID":2,"CUBE":[[[-4,5],[5,-4]],[[0,1],[-4,-4]]]}
+
+# Nested arrays match a sink schema declared with the multi-dimensional array syntax
+SELECT id, ARRAY(ARRAY(a, b, a), ARRAY(b, a, b)) AS matrix FROM numbers INTO File(SCHEMA(id UINT64 NOT NULL, matrix INT32 ARRAY[2][3] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2,1],[2,1,2]]}
+{"ID":2,"MATRIX":[[-4,5,-4],[5,-4,5]]}
+
+# Inner arrays of different sizes cannot be joined
+SELECT id, ARRAY(ARRAY(a, b), ARRAY(a, b, a)) AS matrix FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
+
+# A scalar and an array cannot be joined
+SELECT id, ARRAY(a, ARRAY(a, b)) AS arr FROM numbers INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
+
+# Arrays of existing fixed-size array columns
+CREATE LOGICAL SOURCE pairs(id UINT64 NOT NULL, p1 INT32 ARRAY[2] NOT NULL, p2 INT32 ARRAY[2] NOT NULL, v INT32 VECTOR NOT NULL, w INT32 VECTOR NOT NULL);
+CREATE PHYSICAL SOURCE FOR pairs TYPE File SET('JSON' AS INPUT_FORMATTER."TYPE");
+ATTACH INLINE
+{"ID": 1, "P1": [1, 2], "P2": [3, 4], "V": [1, 2, 3], "W": [4]}
+{"ID": 2, "P1": [5, 6], "P2": [7, 8], "V": [9], "W": [10, 11]}
+
+SELECT id, ARRAY(p1, p2) AS matrix FROM pairs INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2],[3,4]]}
+{"ID":2,"MATRIX":[[5,6],[7,8]]}
+
+# Mixing existing array columns with constructed arrays
+SELECT id, ARRAY(p1, ARRAY(INT32(0), INT32(0)), p2) AS matrix FROM pairs INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"MATRIX":[[1,2],[0,0],[3,4]]}
+{"ID":2,"MATRIX":[[5,6],[0,0],[7,8]]}
+
+# Fixed-size array of vectors (INT32 ARRAY[2][], nesting depth 1) is allowed; the vectors may differ in length
+SELECT id, ARRAY(v, w) AS vecs FROM pairs INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"VECS":[[1,2,3],[4]]}
+{"ID":2,"VECS":[[9],[10,11]]}
+
+# A vector and a fixed-size array cannot be joined
+SELECT id, ARRAY(v, p1) AS arr FROM pairs INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
+
+# Arrays of struct plugins (Point)
+CREATE LOGICAL SOURCE coords(id UINT64 NOT NULL, x1 FLOAT64 NOT NULL, y1 FLOAT64 NOT NULL, x2 FLOAT64 NOT NULL, y2 FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR coords TYPE File;
+ATTACH INLINE
+1,1.0,2.0,3.0,4.0
+2,-1.5,0.5,10.0,20.0
+
+SELECT id, ARRAY(Point(x1, y1), Point(x2, y2)) AS points FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"POINTS":[{"x":1.0,"y":2.0},{"x":3.0,"y":4.0}]}
+{"ID":2,"POINTS":[{"x":-1.5,"y":0.5},{"x":10.0,"y":20.0}]}
+
+# Points from constants and expressions
+SELECT id, ARRAY(Point(FLOAT64(0.0), FLOAT64(0.0)), Point(x1 + x2, y1 + y2)) AS points FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"POINTS":[{"x":0.0,"y":0.0},{"x":4.0,"y":6.0}]}
+{"ID":2,"POINTS":[{"x":0.0,"y":0.0},{"x":8.5,"y":20.5}]}
+
+# Array of points matches a sink schema declared as Point ARRAY[2]
+SELECT id, ARRAY(Point(x1, y1), Point(x2, y2)) AS points FROM coords INTO File(SCHEMA(id UINT64 NOT NULL, points Point ARRAY[2] NOT NULL) AS "SINK"."SCHEMA", 'JSON' AS "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"POINTS":[{"x":1.0,"y":2.0},{"x":3.0,"y":4.0}]}
+{"ID":2,"POINTS":[{"x":-1.5,"y":0.5},{"x":10.0,"y":20.0}]}
+
+# Nested arrays of points: 2x2 grid
+SELECT id, ARRAY(ARRAY(Point(x1, y1), Point(x2, y2)), ARRAY(Point(x2, y2), Point(x1, y1))) AS grid FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"GRID":[[{"x":1.0,"y":2.0},{"x":3.0,"y":4.0}],[{"x":3.0,"y":4.0},{"x":1.0,"y":2.0}]]}
+{"ID":2,"GRID":[[{"x":-1.5,"y":0.5},{"x":10.0,"y":20.0}],[{"x":10.0,"y":20.0},{"x":-1.5,"y":0.5}]]}
+
+# Arrays of structs that themselves contain a struct plugin (Circle contains a Point)
+SELECT id, ARRAY(Circle(Point(x1, y1), FLOAT64(1.0)), Circle(Point(x2, y2), FLOAT64(2.0))) AS circles FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+{"ID":1,"CIRCLES":[{"center":{"x":1.0,"y":2.0},"radius":1.0},{"center":{"x":3.0,"y":4.0},"radius":2.0}]}
+{"ID":2,"CIRCLES":[{"center":{"x":-1.5,"y":0.5},"radius":1.0},{"center":{"x":10.0,"y":20.0},"radius":2.0}]}
+
+# A struct and a scalar cannot be joined
+SELECT id, ARRAY(Point(x1, y1), x2) AS arr FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
+
+# Two different struct types cannot be joined
+SELECT id, ARRAY(Point(x1, y1), Circle(Point(x2, y2), FLOAT64(1.0))) AS arr FROM coords INTO File('JSON' as "SINK".OUTPUT_FORMAT);
+----
+ERROR 2007
