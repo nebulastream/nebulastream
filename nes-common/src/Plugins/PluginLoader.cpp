@@ -29,20 +29,21 @@ void announceRegistries(const PluginDescriptor& descriptor)
 {
     for (const auto& provision : descriptor.registries)
     {
-        if (const auto existing = RegistryCatalog::instance().find(provision.registryClassName))
+        if (const auto existing = RegistryCatalog::instance().find(provision.correspondingParametrizedTypeClass.getFullyQualifiedName()))
         {
-            if (existing->instanceAddress == provision.instanceAddress)
+            if (existing->correspondingParametrizedTypeClass == provision.correspondingParametrizedTypeClass)
             {
                 continue;
             }
             throw CannotLoadPlugin(
                 "{} provides registry {}, but a different registry is already announced under that name",
                 descriptor.name,
-                provision.registryClassName);
+                provision.correspondingParametrizedTypeClass.getFullyQualifiedName());
         }
-        if (!RegistryCatalog::instance().addEntry(provision.registryClassName, provision))
+        if (!RegistryCatalog::instance().addEntry(provision.correspondingParametrizedTypeClass.getFullyQualifiedName(), provision))
         {
-            throw CannotLoadPlugin("{} failed to announce registry {}", descriptor.name, provision.registryClassName);
+            throw CannotLoadPlugin(
+                "{} failed to announce registry {}", descriptor.name, provision.correspondingParametrizedTypeClass.getFullyQualifiedName());
         }
     }
 }
@@ -51,33 +52,33 @@ void registerEntries(const PluginDescriptor& descriptor)
 {
     for (const auto& entry : descriptor.entries)
     {
-        const auto provision = RegistryCatalog::instance().find(entry.registryClassName);
+        const auto provision = RegistryCatalog::instance().find(entry.correspondingFunctor.getFullyQualifiedName());
         if (!provision)
         {
             if (entry.optional)
             {
                 NES_DEBUG(
                     "Skipping optional entry \"{}\": registry {} is not available in this host ({})",
-                    entry.key,
-                    entry.registryClassName,
+                    entry.correspondingFunctor.getFullyQualifiedName(),
+                    entry.registryName,
                     descriptor.name);
                 continue;
             }
             throw CannotLoadPlugin(
                 "{} requires registry {} for entry \"{}\", but it is not available in this host",
                 descriptor.name,
-                entry.registryClassName,
-                entry.key);
+                entry.registryName,
+                entry.correspondingFunctor.getFullyQualifiedName());
         }
-        switch (provision->insertEntry(entry.key, entry.entry))
+        switch (provision->insertEntry(entry.correspondingFunctor))
         {
             case InsertResult::Success:
                 break;
             case InsertResult::DuplicateKey:
-                throw CannotLoadPlugin("{}: duplicate registration for \"{}\" in {}", descriptor.name, entry.key, entry.registryClassName);
+                throw CannotLoadPlugin("{}: duplicate registration for \"{}\" in {}", descriptor.name, entry.correspondingFunctor.getFullyQualifiedName(), entry.registryName);
             case InsertResult::EntryTypeMismatch:
                 throw CannotLoadPlugin(
-                    "{}: entry \"{}\" does not match the entry type of {}", descriptor.name, entry.key, entry.registryClassName);
+                    "{}: entry \"{}\" does not match the entry type of {}", descriptor.name, entry.correspondingFunctor.getFullyQualifiedName(), entry.registryName);
         }
     }
 }

@@ -26,7 +26,7 @@ namespace NES
 /// RegistryProvisions that plugins (built-in and dynamic) describe. Entries are registered
 /// through the stored provisions' type-erased inserters, which keeps optional cross-plugin
 /// registrations a plain lookup miss instead of an unresolved-symbol load failure.
-class RegistryCatalog : public RuntimeRegistry<RegistryCatalog, std::string, RegistryProvision>
+class RegistryCatalog : public RuntimeRegistry<RegistryCatalog, QualifiedIdentifier, RegistryProvision>
 {
 public:
     /// Defined out-of-line (RegistryCatalog.cpp) instead of inheriting the base's inline

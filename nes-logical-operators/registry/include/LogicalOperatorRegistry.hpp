@@ -17,10 +17,12 @@
 #include <functional>
 #include <string>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/RuntimeRegistry.hpp>
+#include "Types/NESType.hpp"
 
 namespace NES
 {
@@ -42,6 +44,8 @@ class LogicalOperatorRegistry : public RuntimeRegistry<LogicalOperatorRegistry, 
 {
 public:
     static LogicalOperatorRegistry& instance();
+
+    static NamedNESParametrizedTypeClass getParametrizedTypeClass();
 };
 
 }
