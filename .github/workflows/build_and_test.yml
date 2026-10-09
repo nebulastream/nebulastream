@@ -60,6 +60,10 @@ jobs:
         with:
           ref: ${{ inputs.head_sha }}
 
+      # ctest gets killed by `timeout` before the job timeout would cancel the job: a cancelled job skips the log upload
+      - name: Set test deadline
+        run: echo "TEST_DEADLINE=$(( $(date +%s) + (${{ inputs.timeout_minutes }} - 5) * 60 ))" >> "$GITHUB_ENV"
+
       - uses: ./.github/steps/setup-sccache
         with:
           bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
@@ -104,7 +108,7 @@ jobs:
           docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
-            ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+            timeout -k 60 $(( ${{ env.TEST_DEADLINE }} - $(date +%s) )) ctest --test-dir build --no-tests=error -j -LE "Systest|DockerCompose" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
       - uses: ./.github/steps/run-in-container
         name: Run System Tests
@@ -113,7 +117,7 @@ jobs:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
-            ctest --test-dir build --no-tests=error -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+            timeout -k 60 $(( ${{ env.TEST_DEADLINE }} - $(date +%s) )) ctest --test-dir build --no-tests=error -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
 
       - uses: ./.github/steps/run-in-container
         name: Run Docker Tests
@@ -122,7 +126,7 @@ jobs:
           image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
           run: |
             source .github/.env/test-${{ matrix.sanitizer }}.env
-            ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+            timeout -k 60 $(( ${{ env.TEST_DEADLINE }} - $(date +%s) )) ctest --test-dir build --no-tests=error -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
 
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v5
